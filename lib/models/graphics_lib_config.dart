@@ -17,6 +17,11 @@ class GraphicsLibConfig {
       required this.areGfxLibMaterialMapsEnabled,
       required this.areGfxLibSurfaceMapsEnabled});
 
+  @override
+  String toString() {
+    return "GraphicsLibConfig(areAnyEffectsEnabled: $areAnyEffectsEnabled, areGfxLibNormalMapsEnabled: $areGfxLibNormalMapsEnabled, areGfxLibMaterialMapsEnabled: $areGfxLibMaterialMapsEnabled, areGfxLibSurfaceMapsEnabled: $areGfxLibSurfaceMapsEnabled)";
+  }
+
   static final Disabled = GraphicsLibConfig(
       areAnyEffectsEnabled: false,
       areGfxLibNormalMapsEnabled: false,

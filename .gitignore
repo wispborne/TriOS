@@ -218,3 +218,7 @@ chipper.config/chippertheme.lock
 *.hive
 
 *.lock
+
+# Wisp custom
+# https://pub.dev/packages/dart_json_mapper
+*.mapper.g.dart

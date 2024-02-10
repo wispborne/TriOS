@@ -1,3 +1,5 @@
+import 'package:collection/collection.dart';
+
 import 'mod_image.dart';
 import 'mod_info.dart';
 
@@ -8,7 +10,6 @@ class Mod {
 
   Mod(this.info, this.isEnabled, this.images);
 
-  late final totalBytesForMod = images
-      .fold(0.00, (prev, next) => prev + next.bytesUsed.toDouble())
-      .round();
+  late final totalBytesForMod = images.map((e) => e.bytesUsed).sum;
+      // .fold(0, (prev, next) => prev + next.bytesUsed);
 }

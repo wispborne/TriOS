@@ -19,9 +19,9 @@ import 'models/mod_info_json.dart';
 import 'models/mod_result.dart';
 
 class VramChecker {
-  List<String>? enabledModIds; // TODO change back to list
-  List<String>? modIdsToCheck; // TODO change back to list
-  List<Directory> foldersToCheck; // TODO change back to list
+  List<String>? enabledModIds;
+  List<String>? modIdsToCheck;
+  List<Directory> foldersToCheck;
   bool showGfxLibDebugOutput;
   bool showPerformance;
   bool showSkippedFiles;
@@ -148,10 +148,13 @@ class VramChecker {
             verboseOut);
       }
 
-      final modImages = (await Future.wait(filesInMod
-              // .filter(
-              //     (it) => it.path.endsWith(".png") || it.path.endsWith(".jpg"))
-              .map((file) async {
+      final modImages = (await Future.wait(filesInMod.filter((it) {
+        final ext = p.extension(it.path).toLowerCase();
+        return ext.endsWith(".png") ||
+            ext.endsWith(".jpg") ||
+            ext.endsWith(".jpeg") ||
+            ext.endsWith(".gif");
+      }).map((file) async {
         // TODO parallelMap
         img.Image? image;
         try {
@@ -251,26 +254,29 @@ class VramChecker {
       for (var image in imagesToSumUp) {
         if (showCountedFiles) {
           progressText.appendAndPrint(
-              "${image.file.relativePath(modInfo.modFolder)} - TexHeight: ${image.textureHeight}, TexWidth: ${image.textureWidth}, Mult: ${image.multiplier}\n   --> ${image.textureHeight} * ${image.textureWidth} * ${image.bitsInAllChannelsSum} * ${image.multiplier} = ${image.bytesUsed} bytes added over vanilla",
+              "${image.file.relativePath(modInfo.modFolder)} - TexHeight: ${image.textureHeight}, TexWidth: ${image.textureWidth}, ChannelBits: ${image.bitsInAllChannelsSum}, Mult: ${image.multiplier}\n   --> ${image.textureHeight} * ${image.textureWidth} * ${image.bitsInAllChannelsSum} * ${image.multiplier} = ${image.bytesUsed} bytes added over vanilla",
               verboseOut);
         }
       }
 
-      final imagesWithoutExcludedGfxLibMaps =
-          (myGraphicsLibFilesToExcludeForMod != null)
-              ? imagesToSumUp
-                  .whereNot((image) => myGraphicsLibFilesToExcludeForMod
-                      .map((it) => p.relative(it.relativeFilePath))
-                      .contains(image.file.relativeTo(modInfo.modFolder)))
-                  .toList()
-              : imagesToSumUp;
+      final List<ModImage> imagesWithoutExcludedGfxLibMaps;
+      if ((myGraphicsLibFilesToExcludeForMod != null)) {
+        final glibPaths =
+            myGraphicsLibFilesToExcludeForMod.map((it) => it.relativeFilePath);
+        imagesWithoutExcludedGfxLibMaps = imagesToSumUp
+            .whereNot((image) =>
+                glibPaths.contains(image.file.relativeTo(modInfo.modFolder)))
+            .toList();
+      } else {
+        imagesWithoutExcludedGfxLibMaps = imagesToSumUp;
+      }
 
       final mod = Mod(modInfo, (enabledModIds ?? []).contains(modInfo.id),
           imagesWithoutExcludedGfxLibMaps);
 
       if (showPerformance) {
         progressText.appendAndPrint(
-            "Finished calculating file sizes for ${mod.info.formattedName} in ${(DateTime.timestamp().millisecondsSinceEpoch - timeFinishedGettingFileData)} ms",
+            "Finished calculating ${mod.images.length} file sizes for ${mod.info.formattedName} in ${(DateTime.timestamp().millisecondsSinceEpoch - timeFinishedGettingFileData)} ms",
             verboseOut);
       }
       progressText.appendAndPrint(
@@ -422,8 +428,7 @@ class VramChecker {
         .filter((it) => it.name.endsWith(".csv"))
         .map((file) {
           try {
-            return (csvReader.convert(file.readAsStringSync())
-                as List<List<dynamic>>);
+            return csvReader.convert(file.readAsStringSync());
           } catch (e) {
             progressText.appendAndPrint(
                 "Unable to read ${file.path}: ${e}", verboseOut);
@@ -446,7 +451,7 @@ class VramChecker {
             return null;
           }
 
-          it
+          return it
               .map((List<dynamic>? row) {
                 try {
                   final mapType = switch (row![mapColumn]) {
@@ -461,7 +466,7 @@ class VramChecker {
                   }
 
                   final path = row[pathColumn].trim();
-                  return GraphicsLibInfo(mapType, path);
+                  return GraphicsLibInfo(mapType, p.normalize(path));
                 } catch (e) {
                   progressText.appendAndPrint("$row - ${e}", verboseOut);
                 }
@@ -485,7 +490,7 @@ class VramChecker {
                   }
                 }
               })
-              ?.toList();
+              .toList();
         });
   }
 }

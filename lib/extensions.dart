@@ -27,14 +27,19 @@ extension StringExt on String {
 
 extension FileExt on File {
   String relativePath(Directory modFolder) =>
-      p.relative(toString(), from: modFolder.toString());
+      p.normalize(p.relative(absolute.path, from: modFolder.absolute.path));
 
-  String relativeTo(Directory modFolder) =>
-      p.relative(toString(), from: modFolder.toString());
+  String relativeTo(Directory modFolder) => relativePath(modFolder);
 
   String get nameWithoutExtension => p.basenameWithoutExtension(path);
 
   String get name => p.basename(path);
+}
+
+extension FileSystemEntityExt on FileSystemEntity {
+  FileSystemEntity resolve(String path) {
+    return File(p.join(absolute.path, path));
+  }
 }
 
 extension IterableExt<T> on Iterable<T> {
@@ -70,10 +75,6 @@ extension IterableExt<T> on Iterable<T> {
     return maxElement;
   }
 
-  Iterable<T> removeAll(Iterable<T> elements) {
-    return where((element) => !elements.contains(element));
-  }
-
   Iterable<T> sortedByDescending<R extends Comparable<R>>(
       R Function(T) selector) {
     return toList()..sort((a, b) => selector(b).compareTo(selector(a)));
@@ -81,6 +82,12 @@ extension IterableExt<T> on Iterable<T> {
 
   bool containsAll(Iterable<T> elements) {
     return elements.every(contains);
+  }
+}
+
+extension ListExt<T> on List<T> {
+  void removeAll(Iterable<T> elements) {
+    removeWhere((element) => elements.contains(element));
   }
 }
 

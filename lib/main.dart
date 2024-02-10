@@ -1,8 +1,11 @@
 import 'dart:io';
 
+import 'package:dart_json_mapper/dart_json_mapper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:vram_estimator_flutter/models/enabled_mods.dart';
 import 'package:vram_estimator_flutter/util.dart';
 import 'package:vram_estimator_flutter/vram_checker.dart';
 
@@ -93,8 +96,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _incrementCounter() {
     VramChecker(
-      enabledModIds: const ["wisp_perseanchronicles"],
-      modIdsToCheck: const ["wisp_perseanchronicles"],
+      enabledModIds: getEnabledMods(),
+      modIdsToCheck: null,
       foldersToCheck: modsFolder == null ? [] : [modsFolder!],
       graphicsLibConfig: GraphicsLibConfig(
         areAnyEffectsEnabled: false,
@@ -113,6 +116,13 @@ class _MyHomePageState extends State<MyHomePage> {
       _counter++;
     });
   }
+
+  List<String>? getEnabledMods() => modsFolder == null
+      ? null
+      : JsonMapper.deserialize<EnabledMods>(
+              File(p.join(modsFolder!.path, "enabled_mods.json"))
+                  .readAsStringSync())
+          ?.enabledMods;
 
   @override
   Widget build(BuildContext context) {

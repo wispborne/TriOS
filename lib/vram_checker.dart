@@ -8,6 +8,7 @@ import 'package:dart_json_mapper/dart_json_mapper.dart';
 import 'package:image/image.dart' as img;
 import 'package:path/path.dart' as p;
 import 'package:vram_estimator_flutter/extensions.dart';
+import 'package:vram_estimator_flutter/image_readers/png_chatgpt.dart';
 import 'package:yaml/yaml.dart';
 
 import 'models/gpu_info.dart';
@@ -155,31 +156,6 @@ class VramChecker {
             ext.endsWith(".jpeg") ||
             ext.endsWith(".gif");
       }).map((file) async {
-        // TODO parallelMap
-        img.Image? image;
-        try {
-          if (img.findDecoderForNamedImage(file.path) == null) {
-            throw Exception("Not an image.");
-          }
-// withContext(Dispatchers.IO) {
-          final cmd =
-              ((img.Command()..decodeImageFile(file.path)).executeThread());
-          image = (await cmd).outputImage;
-          // image = ImageIO.read(file.inputStream())!;
-          if (image == null) {
-            throw Exception("Image is null");
-          }
-// }
-        } catch (e) {
-          if (showSkippedFiles) {
-            progressText.appendAndPrint(
-                "Skipped non-image ${file.relativePath(modInfo.modFolder)} ($e)",
-                verboseOut);
-          }
-
-          return null;
-        }
-
         ImageType imageType;
         if (file
             .relativePath(modInfo.modFolder)
@@ -192,13 +168,67 @@ class VramChecker {
           imageType = ImageType.Texture;
         }
 
-        return ModImage(
-            file,
-            (image.width == 1) ? 1 : (image.width - 1).highestOneBit() * 2,
-            (image.height == 1) ? 1 : (image.height - 1).highestOneBit() * 2,
-            // image!.colorModel.componentSize.toList(),
-            image.bitsPerChannel * image.numChannels,
-            imageType);
+        if (file.name.endsWith(".png")) {
+          ImageHeader? image;
+          try {
+            image = await readPngFileHeaders(file.path);
+
+            if (image == null) {
+              throw Exception("Image is null");
+            }
+
+            return ModImage(
+                file,
+                (image.width == 1) ? 1 : (image.width - 1).highestOneBit() * 2,
+                (image.height == 1)
+                    ? 1
+                    : (image.height - 1).highestOneBit() * 2,
+                // image!.colorModel.componentSize.toList(),
+                image.bitDepth * image.numChannels,
+                imageType);
+          } catch (e) {
+            if (showSkippedFiles) {
+              progressText.appendAndPrint(
+                  "Skipped non-image ${file.relativePath(modInfo.modFolder)} ($e)",
+                  verboseOut);
+            }
+
+            return null;
+          }
+        } else {
+          img.Image? image;
+          try {
+            if (img.findDecoderForNamedImage(file.path) == null) {
+              throw Exception("Not an image.");
+            }
+// withContext(Dispatchers.IO) {
+            final cmd = ((img.Command()
+                  ..decodeNamedImage(file.path, file.readAsBytesSync()))
+                .executeThread());
+            image = (await cmd).outputImage;
+            // image = ImageIO.read(file.inputStream())!;
+            if (image == null) {
+              throw Exception("Image is null");
+            }
+// }
+          } catch (e) {
+            if (showSkippedFiles) {
+              progressText.appendAndPrint(
+                  "Skipped non-image ${file.relativePath(modInfo.modFolder)} ($e)",
+                  verboseOut);
+            }
+
+            return null;
+          }
+
+          return ModImage(
+              file,
+              (image.width == 1) ? 1 : (image.width - 1).highestOneBit() * 2,
+              (image.height == 1) ? 1 : (image.height - 1).highestOneBit() * 2,
+              // image!.colorModel.componentSize.toList(),
+              image.bitsPerChannel * image.numChannels,
+              imageType);
+        }
       })))
           .whereNotNull();
 
@@ -370,8 +400,18 @@ class VramChecker {
     summaryText.writeln(
         "** Unused images in mods are counted unless they contain one of ${UNUSED_INDICATOR.joinToString(transform: (it) => "\"$it\"")} in the file name.");
 
+    var currentFolder = Directory.current.path;
+    var outputFile = File("$currentFolder/VRAM_usage_of_mods.txt");
+    if (outputFile.existsSync()) outputFile.delete();
+    outputFile.create();
+    outputFile.writeAsStringSync("$progressText\n$modTotals\n$summaryText");
+
+    summaryText.writeln(
+        "\nFile written to ${outputFile.absolute.path}.\nSummary copied to clipboard, ready to paste.");
+
     verboseOut(modTotals.toString());
     debugOut(summaryText.toString());
+
     return mods;
   }
 

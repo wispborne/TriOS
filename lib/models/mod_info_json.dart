@@ -42,13 +42,13 @@ class ModInfoJsonModel_095a {
 @jsonSerializable
 class Version_095a {
 // @JsonProperty("major")
-  final String major;
+  final dynamic major;
 
 // @JsonProperty("minor")
-  final String minor;
+  final dynamic minor;
 
 // @JsonProperty("patch")
-  final String patch;
+  final dynamic patch;
 
   Version_095a(this.major, this.minor, this.patch);
 }

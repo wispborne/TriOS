@@ -50,6 +50,12 @@ dependencies:
   image_size_getter: ^2.1.2
   squadron: ^5.1.6
   squadron_builder: ^2.4.5
+  desktop_window: ^0.4.0
+  window_size:
+    git:
+      url: https://github.com/google/flutter-desktop-embedding.git
+      path: plugins/window_size
+      ref: 5c51870ced62a00e809ba4b81a846a052d241c9f
 
 dev_dependencies:
   # dart run build_runner watch --delete-conflicting-outputs

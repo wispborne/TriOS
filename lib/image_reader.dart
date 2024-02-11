@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:image/image.dart' as img;
 import 'package:squadron/squadron.dart';
 import 'package:squadron/squadron_annotations.dart';
-import 'package:vram_estimator_flutter/extensions.dart';
 
 import 'image_reader.activator.g.dart';
 import 'image_reader/png_chatgpt.dart';
@@ -38,9 +37,6 @@ class ReadImageHeaders {
     }
 
     return ImageHeader(
-        image.width,
-        image.height,
-        image.bitsPerChannel,
-        image.numChannels);
+        image.width, image.height, image.bitsPerChannel, image.numChannels);
   }
 }

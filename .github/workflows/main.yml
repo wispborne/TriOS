@@ -1,0 +1,159 @@
+name: Flutter CI
+
+# https://gist.github.com/youhide/121750fc4878801ea8e908080b535beb
+
+on: push
+#  push:
+#    branches: [ master ]
+#  pull_request:
+#    branches: [ master ]
+
+env:
+  flutter_channel: "beta" # or: 'stable' or 'dev' or 'beta'
+  #flutter_version: '2.2.2'
+  macos_path: "build/macos/Build/Products/Release/VRAM Estimator.app"
+  windows_path: "build/windows/x64/runner/Release/*"
+#  linux_path: "build/linux/runner/Release/*"
+
+jobs:
+  upload-release:
+
+    runs-on: ubuntu-latest
+    needs: [ build-macos,
+      #            build-linux,
+             build-windows ]
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: 'Create GitHub release'
+        id: create_release
+        uses: ncipollo/release-action@v1
+        with:
+          commit: '${{ github.sha }}'
+          tag: '${{ github.run_number }}'
+          name: "Build ${{ github.run_number }}"
+          #          artifacts: "build/windows/runner/Release/*"
+          prerelease: true # improve later
+
+      #      - name: create release
+      #        id: create_release
+      #        uses: actions/create-release@master
+      #        env:
+      #          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+      #        with:
+      #          tag_name: ${{ github.ref }}
+      #          release_name: Release ${{ github.ref }}
+      #          draft: false
+      #          prerelease: true
+
+      - name: download artifacts
+        uses: actions/download-artifact@v1
+        with:
+          name: uploads
+
+      - name: upload macos
+        id: upload-macos
+        uses: shogo82148/actions-upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./uploads/macos.zip
+          asset_name: macos.zip
+
+      #      - name: upload linux
+      #        id: upload-linux
+      #        uses: actions/upload-release-asset@v1.0.1
+      #        env:
+      #          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #        with:
+      #          upload_url: ${{ steps.create_release.outputs.upload_url }}
+      #          asset_path: ./uploads/linux.zip
+      #          asset_name: linux.zip
+      #          asset_content_type: application/zip
+
+      - name: upload windows
+        id: upload-windows
+        uses: shogo82148/actions-upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./uploads/windows.zip
+          asset_name: windows.zip
+          asset_content_type: application/zip
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: $flutter_channel
+          architecture: x64
+          cache: true
+      - run: flutter config --enable-macos-desktop
+      - run: flutter build macos
+      - name: zip macos artifact
+        # Fix macos path
+        run: |
+          zip -yr9 macos ${{ env.macos_path }}
+      - name: upload macos artifact
+        uses: actions/upload-artifact@v1
+        with:
+          name: uploads
+          path: macos.zip
+
+  build-windows:
+
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: $flutter_channel
+          architecture: x64
+          cache: true
+      - run: flutter config --enable-windows-desktop
+      - run: flutter build windows
+      - name: zip win artifact
+        run: |
+          powershell Compress-Archive ${{ env.windows_path }} windows.zip
+      - name: upload windows artifact
+        uses: actions/upload-artifact@v1
+        with:
+          name: uploads
+          path: windows.zip
+
+
+          #  build-linux:
+          #
+          #    runs-on: ubuntu-18.04
+          #
+          #    strategy:
+          #      matrix:
+          #        node-version: [12.x]
+          #
+          #    steps:
+          #      - uses: actions/checkout@v1
+          #      - name: Use Node.js ${{ matrix.node-version }}
+          #        uses: actions/setup-node@v1
+          #        with:
+          #          node-version: ${{ matrix.node-version }}
+          #      - name: npm install, build, and test
+          #        run: |
+          #          npm ci
+          #          npm test
+          #      - name: npm run build
+          #        run: |
+          #          npm run build
+          #      - name: zip linux artifact
+          #        run: |
+          #          zip -r linux $linux_path
+          #      - name: upload linux artifact
+          #        uses: actions/upload-artifact@v1
+          #        with:
+          #          name: uploads
+          #          path: $linux_path

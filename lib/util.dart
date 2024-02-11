@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 
+import 'extensions.dart';
+
 MaterialColor createMaterialColor(Color color) {
   List strengths = <double>[.05];
   Map<int, Color> swatch = {};
@@ -81,4 +83,21 @@ List<File> getAllRulesCsvsInModsFolder(Directory modsFolder) {
 
 File getVanillaRulesCsvInGameFiles(Directory gameFiles) {
   return File(getRulesCsvInModFolder(gameFiles)!.absolute.path);
+}
+
+/// https://stackoverflow.com/a/16348977/1622788
+Color stringToColor(String str) {
+  var hash = 0;
+  for (var i = 0; i < str.length; i++) {
+    hash = str.codeUnitAt(i) + ((hash << 5) - hash);
+  }
+
+  var colour = '#';
+
+  for (var i = 0; i < 3; i++) {
+    var value = (hash >> (i * 8)) & 0xFF;
+    colour += (value.toRadixString(16)).padLeft(2, '0');
+  }
+
+  return HexColor.fromHex(colour);
 }

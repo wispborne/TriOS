@@ -221,4 +221,4 @@ chipper.config/chippertheme.lock
 
 # Wisp custom
 # https://pub.dev/packages/dart_json_mapper
-*.g.dart
+# *.g.dart # oops, need these for CI/CD

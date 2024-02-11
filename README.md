@@ -1,6 +1,6 @@
-# vram_estimator_flutter
+# VRAM Estimator
 
-Estimate mod VRAM usage.
+Estimate mod VRAM usage. Now with visualization.
 
 ## Building
 

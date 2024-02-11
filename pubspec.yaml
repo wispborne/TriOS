@@ -48,6 +48,8 @@ dependencies:
   yaml: ^3.1.2
   fimber: ^0.7.0
   image_size_getter: ^2.1.2
+  squadron: ^5.1.6
+  squadron_builder: ^2.4.5
 
 dev_dependencies:
   # dart run build_runner watch --delete-conflicting-outputs
@@ -64,8 +66,7 @@ dev_dependencies:
   riverpod_generator: ^2.3.11
   build_runner: ^2.4.8
   custom_lint: ^0.6.0
-#  riverpod_lint: ^2.3.9 # <https://github.com/google/reflectable.dart/pull/326>
-  fimber: ^0.7.0
+  #  riverpod_lint: ^2.3.9 # <https://github.com/google/reflectable.dart/pull/326>
 #  analyzer: ^6.4.1
 
 # For information on the generic Dart part of this file, see the

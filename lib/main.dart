@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:squadron/squadron.dart';
+import 'package:vram_estimator_flutter/image_reader.dart';
 import 'package:vram_estimator_flutter/models/enabled_mods.dart';
 import 'package:vram_estimator_flutter/util.dart';
 import 'package:vram_estimator_flutter/vram_checker.dart';
@@ -142,6 +144,20 @@ class _MyHomePageState extends State<MyHomePage> {
               '$_counter',
               style: Theme.of(context).textTheme.headlineMedium,
             ),
+            ElevatedButton(
+              onPressed: () async {
+                Squadron.setId('HELLO_WORLD');
+                Squadron.logLevel = SquadronLogLevel.config;
+                Squadron.setLogger(ConsoleSquadronLogger());
+
+                final worker = ReadImageHeadersWorker();
+                var path =
+                    "C:/Program Files (x86)/Fractal Softworks/Starsector-0.97a/mods/persean-chronicles/graphics/telos/ships/telos_avalok.png";
+                Squadron.info(await worker.readGeneric(path));
+                Squadron.info(await worker.readPng(path));
+              },
+              child: const Text('Test'),
+            )
           ],
         ),
       ),

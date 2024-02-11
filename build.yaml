@@ -2,6 +2,9 @@ targets:
   $default:
     builders:
       dart_json_mapper:
+        options:
+          build_extensions:
+            '^lib/{{}}.dart': 'lib/generated/{{}}.g.dart'
         generate_for:
           # here should be listed entry point files having 'void main()' function
           - lib/main.dart
@@ -11,3 +14,13 @@ targets:
       reflectable:
         generate_for:
           - no/files
+
+      source_gen|combining_builder:
+        options:
+          build_extensions:
+            '^lib/{{}}.dart': 'lib/generated/{{}}.g.dart'
+
+      freezed:
+        options:
+          build_extensions:
+            '^lib/{{}}.dart': 'lib/generated/{{}}.freezed.dart'

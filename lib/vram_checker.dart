@@ -5,12 +5,13 @@ import 'dart:io';
 import 'package:collection/collection.dart';
 import 'package:csv/csv.dart';
 import 'package:dart_json_mapper/dart_json_mapper.dart';
-import 'package:image/image.dart' as img;
 import 'package:path/path.dart' as p;
+import 'package:squadron/squadron.dart';
 import 'package:vram_estimator_flutter/extensions.dart';
-import 'package:vram_estimator_flutter/image_readers/png_chatgpt.dart';
+import 'package:vram_estimator_flutter/image_reader/png_chatgpt.dart';
 import 'package:yaml/yaml.dart';
 
+import 'image_reader.dart';
 import 'models/gpu_info.dart';
 import 'models/graphics_lib_config.dart';
 import 'models/graphics_lib_info.dart';
@@ -30,6 +31,7 @@ class VramChecker {
   GraphicsLibConfig graphicsLibConfig;
   Function(String) verboseOut = (it) => (it);
   Function(String) debugOut = (it) => (it);
+  int maxFileHandles;
 
   VramChecker({
     this.enabledModIds,
@@ -40,6 +42,7 @@ class VramChecker {
     required this.showSkippedFiles,
     required this.showCountedFiles,
     required this.graphicsLibConfig,
+    this.maxFileHandles = 2000,
     Function(String)? verboseOut,
     Function(String)? debugOut,
   }) {
@@ -60,19 +63,15 @@ class VramChecker {
   /// If one of these strings is in the filename, the file is skipped *
   static const UNUSED_INDICATOR = ["CURRENTLY_UNUSED", "DO_NOT_USE"];
   static const BACKGROUND_FOLDER_NAME = "backgrounds";
+  var currentFileHandles = 0;
 
   var progressText = StringBuffer();
 
-// private set
   var modTotals = StringBuffer();
 
-// private set
   var summaryText = StringBuffer();
 
-// private set
   var startTime = DateTime.timestamp().millisecondsSinceEpoch;
-
-// private set
 
   Future<List<Mod>> check() async {
     progressText = StringBuffer();
@@ -115,16 +114,26 @@ class VramChecker {
         "Mods folders: ${foldersToCheck.joinToString(transform: (it) => it.absolute.toString())}",
         verboseOut);
 
-    final mods = (await Future.wait(foldersToCheck
-            .filter((it) => it.existsSync())
-            .flatMap((it) => it.listSync())
-            .filter((it) => FileSystemEntity.isDirectorySync(it.path))
-            .mapNotNull((it) =>
+    Squadron.setId('VRAM_CHECKER');
+    // Squadron.logLevel = SquadronLogLevel.config;
+    // Squadron.setLogger(ConsoleSquadronLogger());
+    const settings =
+        ConcurrencySettings(minWorkers: 1, maxWorkers: 4, maxParallel: 4);
+    final imageHeaderReaderPool =
+        ReadImageHeadersWorkerPool(concurrencySettings: settings);
+
+    final mods = (await Stream.fromIterable(foldersToCheck)
+            .where((it) => it.existsSync())
+            .expand((it) => it.listSync())
+            .where((it) => FileSystemEntity.isDirectorySync(it.path))
+            .asyncMap((it) =>
                 getModInfo(jsonMapper, Directory(it.path), progressText))
-            .filter((it) => (modIdsToCheck == null)
+            .where((it) => it != null)
+            .map((modInfo) => modInfo!)
+            .where((it) => (modIdsToCheck == null)
                 ? true
                 : modIdsToCheck?.contains(it.id) == true)
-            .map((modInfo) async {
+            .asyncMap((modInfo) async {
       progressText.appendAndPrint("\nFolder: ${modInfo.name}", verboseOut);
       final startTimeForMod = DateTime.timestamp().millisecondsSinceEpoch;
 
@@ -169,65 +178,13 @@ class VramChecker {
         }
 
         if (file.name.endsWith(".png")) {
-          ImageHeader? image;
-          try {
-            image = await readPngFileHeaders(file.path);
-
-            if (image == null) {
-              throw Exception("Image is null");
-            }
-
-            return ModImage(
-                file,
-                (image.width == 1) ? 1 : (image.width - 1).highestOneBit() * 2,
-                (image.height == 1)
-                    ? 1
-                    : (image.height - 1).highestOneBit() * 2,
-                // image!.colorModel.componentSize.toList(),
-                image.bitDepth * image.numChannels,
-                imageType);
-          } catch (e) {
-            if (showSkippedFiles) {
-              progressText.appendAndPrint(
-                  "Skipped non-image ${file.relativePath(modInfo.modFolder)} ($e)",
-                  verboseOut);
-            }
-
-            return null;
-          }
+          return await getModImagePng(
+                  imageHeaderReaderPool, file, imageType, modInfo) ??
+              await getModImageGeneric(
+                  imageHeaderReaderPool, file, modInfo, imageType);
         } else {
-          img.Image? image;
-          try {
-            if (img.findDecoderForNamedImage(file.path) == null) {
-              throw Exception("Not an image.");
-            }
-// withContext(Dispatchers.IO) {
-            final cmd = ((img.Command()
-                  ..decodeNamedImage(file.path, file.readAsBytesSync()))
-                .executeThread());
-            image = (await cmd).outputImage;
-            // image = ImageIO.read(file.inputStream())!;
-            if (image == null) {
-              throw Exception("Image is null");
-            }
-// }
-          } catch (e) {
-            if (showSkippedFiles) {
-              progressText.appendAndPrint(
-                  "Skipped non-image ${file.relativePath(modInfo.modFolder)} ($e)",
-                  verboseOut);
-            }
-
-            return null;
-          }
-
-          return ModImage(
-              file,
-              (image.width == 1) ? 1 : (image.width - 1).highestOneBit() * 2,
-              (image.height == 1) ? 1 : (image.height - 1).highestOneBit() * 2,
-              // image!.colorModel.componentSize.toList(),
-              image.bitsPerChannel * image.numChannels,
-              imageType);
+          return await getModImageGeneric(
+              imageHeaderReaderPool, file, modInfo, imageType);
         }
       })))
           .whereNotNull();
@@ -313,7 +270,7 @@ class VramChecker {
           mod.totalBytesForMod.bytesAsReadableMB(), verboseOut);
 
       return mod;
-    })))
+    }).toList())
         .sortedByDescending<num>((it) => it.totalBytesForMod)
         .toList();
 
@@ -412,19 +369,91 @@ class VramChecker {
     verboseOut(modTotals.toString());
     debugOut(summaryText.toString());
 
+    imageHeaderReaderPool.stop();
+
     return mods;
   }
 
+  Future<ModImage?> getModImagePng(
+      ReadImageHeadersWorkerPool imageHeaderReaderPool,
+      File file,
+      ImageType imageType,
+      ModInfo modInfo) async {
+    ImageHeader? image;
+    try {
+      image =
+          // await withFileHandleLimit(() => readPngFileHeaders(file.path));
+          await withFileHandleLimit(
+              () => imageHeaderReaderPool.readPng(file.path));
+
+      if (image == null) {
+        throw Exception("Image is null");
+      }
+
+      return ModImage(
+          file,
+          (image.width == 1) ? 1 : (image.width - 1).highestOneBit() * 2,
+          (image.height == 1) ? 1 : (image.height - 1).highestOneBit() * 2,
+          // image!.colorModel.componentSize.toList(),
+          image.bitDepth * image.numChannels,
+          imageType);
+    } catch (e) {
+      if (showSkippedFiles) {
+        progressText.appendAndPrint(
+            "Skipped non-image ${file.relativePath(modInfo.modFolder)} ($e)",
+            verboseOut);
+      }
+
+      return null;
+    }
+  }
+
+  Future<ModImage?> getModImageGeneric(
+      ReadImageHeadersWorkerPool imageHeaderReaderPool,
+      File file,
+      ModInfo modInfo,
+      ImageType imageType) async {
+    ImageHeader? image;
+    try {
+      image =
+          // await withFileHandleLimit(() => readPngFileHeaders(file.path));
+          await withFileHandleLimit(
+              () => imageHeaderReaderPool.readGeneric(file.path));
+
+      if (image == null) {
+        throw Exception("Image is null");
+      }
+      // }
+    } catch (e) {
+      if (showSkippedFiles) {
+        progressText.appendAndPrint(
+            "Skipped non-image ${file.relativePath(modInfo.modFolder)} ($e)",
+            verboseOut);
+      }
+
+      return null;
+    }
+
+    return ModImage(
+        file,
+        (image.width == 1) ? 1 : (image.width - 1).highestOneBit() * 2,
+        (image.height == 1) ? 1 : (image.height - 1).highestOneBit() * 2,
+        // image!.colorModel.componentSize.toList(),
+        image.bitDepth * image.numChannels,
+        imageType);
+  }
+
   // Future<ModInfo?> loadModInfo(File file) async {
-  ModInfo? getModInfo(
-      JsonMapper jsonMapper, Directory modFolder, StringBuffer progressText) {
+  Future<ModInfo?> getModInfo(JsonMapper jsonMapper, Directory modFolder,
+      StringBuffer progressText) async {
     try {
       return modFolder
           .listSync()
           .whereType<File>()
           .firstWhereOrNull((file) => file.name == "mod_info.json")
-          ?.let((modInfoFile) {
-        var rawString = modInfoFile.readAsStringSync();
+          ?.let((modInfoFile) async {
+        var rawString =
+            await withFileHandleLimit(() => modInfoFile.readAsString());
         var jsonEncodedYaml =
             json.encode(loadYaml((rawString).replaceAll("\t", "  ")));
         // final jsonAsMap = jsonDecode(jsonEncodedYaml) as Map<String, dynamic>;
@@ -532,5 +561,19 @@ class VramChecker {
               })
               .toList();
         });
+  }
+
+  Future<T> withFileHandleLimit<T>(Future<T> Function() function) async {
+    while (currentFileHandles + 1 > maxFileHandles) {
+      verboseOut(
+          "Waiting for file handles to free up. Current file handles: $currentFileHandles");
+      await Future.delayed(const Duration(milliseconds: 100));
+    }
+    currentFileHandles++;
+    try {
+      return await function();
+    } finally {
+      currentFileHandles--;
+    }
   }
 }

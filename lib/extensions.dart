@@ -99,7 +99,7 @@ extension IntExt on int {
     return this & (MIN_VALUE >>> numberOfLeadingZeros());
   }
 
-  String bytesAsReadableMB() => "${(this / 1000000).toStringAsFixed(3)} MB";
+  String bytesAsReadableMB() => "${(this / 1000000).toStringAsFixed(2)} MB";
 
   /// From Java
   int numberOfLeadingZeros() {

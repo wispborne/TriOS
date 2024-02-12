@@ -1,10 +1,9 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
-
-import 'extensions.dart';
 
 MaterialColor createMaterialColor(Color color) {
   List strengths = <double>[.05];
@@ -85,19 +84,64 @@ File getVanillaRulesCsvInGameFiles(Directory gameFiles) {
   return File(getRulesCsvInModFolder(gameFiles)!.absolute.path);
 }
 
-/// https://stackoverflow.com/a/16348977/1622788
-Color stringToColor(String str) {
-  var hash = 0;
-  for (var i = 0; i < str.length; i++) {
-    hash = str.codeUnitAt(i) + ((hash << 5) - hash);
+class HexColor extends Color {
+  static int _getColorFromHex(String hexColor) {
+    hexColor = hexColor.toUpperCase().replaceAll('#', '');
+    if (hexColor.length == 6) {
+      hexColor = 'FF' + hexColor;
+    }
+    return int.parse(hexColor, radix: 16);
   }
 
-  var colour = '#';
+  HexColor.fromHex(String hexColor) : super(_getColorFromHex(hexColor));
+}
 
-  for (var i = 0; i < 3; i++) {
-    var value = (hash >> (i * 8)) & 0xFF;
-    colour += (value.toRadixString(16)).padLeft(2, '0');
+class ColorGenerator {
+  /// https://stackoverflow.com/a/16348977/1622788
+  Color stringToColor(String str) {
+    var hash = 0;
+    for (var i = 0; i < str.length; i++) {
+      hash = str.codeUnitAt(i) + ((hash << 5) - hash);
+    }
+
+    var colour = '#';
+
+    for (var i = 0; i < 3; i++) {
+      var value = (hash >> (i * 8)) & 0xFF;
+      colour += (value.toRadixString(16)).padLeft(2, '0');
+    }
+
+    return HexColor.fromHex(colour);
   }
 
-  return HexColor.fromHex(colour);
+  // New: Generate colors based on an existing color
+  static Color generateFromColor(String text, Color baseColor,
+      {bool complementary = false}) {
+    final random = Random(text.hashCode);
+
+    // 1. Manipulation Options
+    if (complementary) {
+      return ColorGenerator.complementary(baseColor);
+    } else {
+      // Apply adjustments from string's hash
+      int lightnessOffset = random.nextInt(70) - 35; // Range: -35 to 35
+      double newLightness =
+          (baseColor.computeLuminance() + lightnessOffset / 100)
+              .clamp(0.0, 1.0);
+
+      return HSLColor.fromColor(baseColor)
+          .withLightness(newLightness)
+          .toColor();
+    }
+  }
+
+  // Helper for finding complementary color
+  static Color complementary(Color color) {
+    return Color.fromRGBO(
+      255 - color.red,
+      255 - color.green,
+      255 - color.blue,
+      1.0,
+    );
+  }
 }

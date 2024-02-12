@@ -1,0 +1,130 @@
+import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter/material.dart';
+import 'package:vram_estimator_flutter/extensions.dart';
+
+import '../models/mod_result.dart';
+import '../util.dart';
+
+class VramPieChart extends StatefulWidget {
+  final List<Mod> modVramInfo;
+
+  const VramPieChart({super.key, required this.modVramInfo});
+
+  @override
+  State<StatefulWidget> createState() => VramPieChartState();
+}
+
+class VramPieChartState extends State<VramPieChart> {
+  int touchedIndex = -1;
+
+  List<PieChartSectionData> createSections(BuildContext context) {
+    final baseColor = Theme.of(context).colorScheme.primary;
+
+    return widget.modVramInfo
+        .where((element) => element.totalBytesForMod > 0)
+        .map((mod) {
+      final isTouched = false; //i == touchedIndex;
+      final fontSize = isTouched ? 25.0 : 12.0;
+      final radius = isTouched ? 60.0 : 50.0;
+      const shadows = [Shadow(color: Colors.black, blurRadius: 2)];
+      return PieChartSectionData(
+        color: ColorGenerator.generateFromColor(mod.info.id, baseColor)
+            .createMaterialColor()
+            .shade700,
+        value: mod.totalBytesForMod.toDouble(),
+        title: "${mod.info.name}\n${mod.totalBytesForMod.bytesAsReadableMB()}",
+        radius: radius,
+        titleStyle: TextStyle(
+          fontSize: fontSize,
+          fontWeight: FontWeight.bold,
+          // color: AppColors.mainTextColor1,
+          shadows: shadows,
+        ),
+      );
+    }).toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AspectRatio(
+      aspectRatio: 1.3,
+      child: Row(
+        children: <Widget>[
+          const SizedBox(
+            height: 18,
+          ),
+          Expanded(
+            child: AspectRatio(
+              aspectRatio: 1,
+              child: PieChart(
+                PieChartData(
+                  // pieTouchData: PieTouchData(
+                  // touchCallback: (FlTouchEvent event, pieTouchResponse) {
+                  //   setState(() {
+                  //     if (!event.isInterestedForInteractions ||
+                  //         pieTouchResponse == null ||
+                  //         pieTouchResponse.touchedSection == null) {
+                  //       touchedIndex = -1;
+                  //       return;
+                  //     }
+                  //     touchedIndex = pieTouchResponse
+                  //         .touchedSection!.touchedSectionIndex;
+                  //   });
+                  // },
+                  // ),
+                  borderData: FlBorderData(
+                    show: false,
+                  ),
+                  sectionsSpace: 1,
+                  // centerSpaceRadius: 130,
+                  sections: createSections(context),
+                ),
+              ),
+            ),
+          ),
+          // const Column(
+          //   mainAxisAlignment: MainAxisAlignment.end,
+          //   crossAxisAlignment: CrossAxisAlignment.start,
+          //   children: <Widget>[
+          //     Indicator(
+          //       color: AppColors.contentColorBlue,
+          //       text: 'First',
+          //       isSquare: true,
+          //     ),
+          //     SizedBox(
+          //       height: 4,
+          //     ),
+          //     Indicator(
+          //       color: AppColors.contentColorYellow,
+          //       text: 'Second',
+          //       isSquare: true,
+          //     ),
+          //     SizedBox(
+          //       height: 4,
+          //     ),
+          //     Indicator(
+          //       color: AppColors.contentColorPurple,
+          //       text: 'Third',
+          //       isSquare: true,
+          //     ),
+          //     SizedBox(
+          //       height: 4,
+          //     ),
+          //     Indicator(
+          //       color: AppColors.contentColorGreen,
+          //       text: 'Fourth',
+          //       isSquare: true,
+          //     ),
+          //     SizedBox(
+          //       height: 18,
+          //     ),
+          //   ],
+          // ),
+          // const SizedBox(
+          //   width: 28,
+          // ),
+        ],
+      ),
+    );
+  }
+}

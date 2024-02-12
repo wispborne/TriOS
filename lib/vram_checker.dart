@@ -11,7 +11,7 @@ import 'package:vram_estimator_flutter/extensions.dart';
 import 'package:vram_estimator_flutter/image_reader/png_chatgpt.dart';
 import 'package:yaml/yaml.dart';
 
-import 'image_reader.dart';
+import 'image_reader/image_reader_async.dart';
 import 'models/gpu_info.dart';
 import 'models/graphics_lib_config.dart';
 import 'models/graphics_lib_info.dart';
@@ -29,10 +29,12 @@ class VramChecker {
   bool showSkippedFiles;
   bool showCountedFiles;
   GraphicsLibConfig graphicsLibConfig;
+  Function(Mod) modProgressOut = (it) => (it);
   Function(String) verboseOut = (it) => (it);
   Function(String) debugOut = (it) => (it);
   int maxFileHandles;
 
+  /// [modProgressOut] is called with each mod as it is processed.
   VramChecker({
     this.enabledModIds,
     this.modIdsToCheck,
@@ -43,6 +45,7 @@ class VramChecker {
     required this.showCountedFiles,
     required this.graphicsLibConfig,
     this.maxFileHandles = 2000,
+    Function(Mod)? modProgressOut,
     Function(String)? verboseOut,
     Function(String)? debugOut,
   }) {
@@ -51,6 +54,9 @@ class VramChecker {
     }
     if (debugOut != null) {
       this.debugOut = debugOut;
+    }
+    if (modProgressOut != null) {
+      this.modProgressOut = modProgressOut;
     }
   }
 
@@ -268,7 +274,7 @@ class VramChecker {
       }
       progressText.appendAndPrint(
           mod.totalBytesForMod.bytesAsReadableMB(), verboseOut);
-
+      modProgressOut(mod);
       return mod;
     }).toList())
         .sortedByDescending<num>((it) => it.totalBytesForMod)

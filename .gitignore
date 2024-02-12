@@ -222,3 +222,4 @@ chipper.config/chippertheme.lock
 # Wisp custom
 # https://pub.dev/packages/dart_json_mapper
 # *.g.dart # oops, need these for CI/CD
+VRAM_usage_of_mods.txt

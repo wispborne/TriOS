@@ -10,6 +10,7 @@ import 'package:vram_estimator_flutter/models/enabled_mods.dart';
 import 'package:vram_estimator_flutter/util.dart';
 import 'package:vram_estimator_flutter/vram_checker.dart';
 import 'package:vram_estimator_flutter/widgets/bar_chart.dart';
+import 'package:vram_estimator_flutter/widgets/disable.dart';
 import 'package:vram_estimator_flutter/widgets/graph_radio_selector.dart';
 import 'package:vram_estimator_flutter/widgets/pie_chart.dart';
 import 'package:vram_estimator_flutter/widgets/spinning_refresh_button.dart';
@@ -20,7 +21,7 @@ import 'models/graphics_lib_config.dart';
 import 'models/mod_result.dart';
 
 const version = "1.0.0";
-const appTitle = "VRAM Estimator v$version";
+const appTitle = "TriOS v$version";
 const appSubtitle = "by Wisp";
 
 void main() {
@@ -39,7 +40,7 @@ class MyApp extends ConsumerWidget {
       title: 'Flutter Demo',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-            seedColor: Colors.blue, brightness: Brightness.dark),
+            seedColor: Colors.indigoAccent, brightness: Brightness.dark),
         useMaterial3: true,
       ),
       home: const MyHomePage(title: appTitle, subtitle: appSubtitle),
@@ -66,9 +67,11 @@ class _MyHomePageState extends State<MyHomePage> {
   List<File> modRulesCsvs = [];
   final gamePathTextController = TextEditingController();
   String? pathError;
-  Map<String, Mod> modVramInfo = {};
   bool isScanning = false;
   GraphType graphType = GraphType.pie;
+  Map<String, Mod> modVramInfo = {};
+  List<Mod> modVramInfoToShow = [];
+  Tuple2<int?, int?> viewRangeEnds = Tuple2(null, null);
 
   @override
   void initState() {
@@ -95,6 +98,18 @@ class _MyHomePageState extends State<MyHomePage> {
           Directory(defaultGamePath()!.path);
     });
     _updatePaths();
+  }
+
+  @override
+  void didUpdateWidget(oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // if (oldWidget. != modVramInfoToShow) {
+    setState(() {
+      modVramInfoToShow = modVramInfo.values.toList().sublist(
+          viewRangeEnds.item1 ?? 0, viewRangeEnds.item2 ?? modVramInfo.length);
+    });
+    // }
   }
 
   _updatePaths() {
@@ -157,7 +172,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    var sortedModData = modVramInfo.values
+    var sortedModData = modVramInfoToShow
         .sortedByDescending<num>((mod) => mod.totalBytesForMod)
         .toList();
     return Scaffold(
@@ -172,7 +187,6 @@ class _MyHomePageState extends State<MyHomePage> {
         padding: const EdgeInsets.all(16.0),
         child: Center(
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
               Row(
                 children: [
@@ -182,27 +196,57 @@ class _MyHomePageState extends State<MyHomePage> {
                     },
                     isScanning: isScanning,
                     tooltip: 'Estimate VRAM',
+                    // needsAttention: modVramInfo.isEmpty && !isScanning,
                   ),
                   Padding(
                     padding: const EdgeInsets.only(left: 16.0),
-                    child: Text(
-                      '${modVramInfo.length} mods scanned',
-                      style: Theme.of(context).textTheme.labelMedium,
+                    child: Disable(
+                      isEnabled: sortedModData.isNotEmpty,
+                      child: Text(
+                        '${modVramInfo.length} mods scanned',
+                        style: Theme.of(context).textTheme.labelMedium,
+                      ),
                     ),
                   ),
-                  Spacer(),
+                  const Spacer(),
                   Padding(
                     padding: const EdgeInsets.only(left: 32.0),
-                    child: Card.outlined(
-                      child: SizedBox(
-                        width: 300,
-                        child: GraphTypeSelector(
-                            onGraphTypeChanged: (GraphType type) {
-                          setState(() {
-                            graphType = type;
-                          });
-                        }),
+                    child: Disable(
+                      isEnabled: sortedModData.isNotEmpty,
+                      child: Card.outlined(
+                        child: SizedBox(
+                          width: 300,
+                          child: GraphTypeSelector(
+                              onGraphTypeChanged: (GraphType type) {
+                            setState(() {
+                              graphType = type;
+                            });
+                          }),
+                        ),
                       ),
+                    ),
+                  ),
+                  Disable(
+                    isEnabled: sortedModData.isNotEmpty,
+                    child: RangeSlider(
+                      values: RangeValues(
+                          viewRangeEnds.item1?.toDouble() ?? 0,
+                          viewRangeEnds.item2?.toDouble() ??
+                              sortedModData.length.toDouble()),
+                      min: 0,
+                      max: sortedModData.length.toDouble(),
+                      divisions:
+                          sortedModData.isEmpty ? null : sortedModData.length,
+                      labels: RangeLabels(
+                          viewRangeEnds.item1?.toString() ?? '0',
+                          viewRangeEnds.item2?.toString() ??
+                              sortedModData.length.toString()),
+                      onChanged: (RangeValues values) {
+                        setState(() {
+                          viewRangeEnds =
+                              Tuple2(values.start.toInt(), values.end.toInt());
+                        });
+                      },
                     ),
                   ),
                 ],
@@ -219,20 +263,6 @@ class _MyHomePageState extends State<MyHomePage> {
                           VramBarChart(modVramInfo: sortedModData),
                       })),
                 ),
-              // ElevatedButton(
-              //   onPressed: () async {
-              //     Squadron.setId('HELLO_WORLD');
-              //     Squadron.logLevel = SquadronLogLevel.config;
-              //     Squadron.setLogger(ConsoleSquadronLogger());
-              //
-              //     final worker = ReadImageHeadersWorker();
-              //     var path =
-              //         "C:/Program Files (x86)/Fractal Softworks/Starsector-0.97a/mods/persean-chronicles/graphics/telos/ships/telos_avalok.png";
-              //     Squadron.info(await worker.readGeneric(path));
-              //     Squadron.info(await worker.readPng(path));
-              //   },
-              //   child: const Text('Test'),
-              // )
             ],
           ),
         ),

@@ -32,8 +32,9 @@ class VramPieChartState extends State<VramPieChart> {
             .createMaterialColor()
             .shade700,
         value: mod.totalBytesForMod.toDouble(),
-        title: "${mod.info.name}\n${mod.totalBytesForMod.bytesAsReadableMB()}",
+        title: "${mod.info.name} ${mod.info.version}\n${mod.totalBytesForMod.bytesAsReadableMB()}",
         radius: radius,
+        titlePositionPercentageOffset: 2,
         titleStyle: TextStyle(
           fontSize: fontSize,
           fontWeight: FontWeight.bold,
@@ -50,34 +51,34 @@ class VramPieChartState extends State<VramPieChart> {
       aspectRatio: 1.3,
       child: Row(
         children: <Widget>[
-          const SizedBox(
-            height: 18,
-          ),
           Expanded(
-            child: AspectRatio(
-              aspectRatio: 1,
-              child: PieChart(
-                PieChartData(
-                  // pieTouchData: PieTouchData(
-                  // touchCallback: (FlTouchEvent event, pieTouchResponse) {
-                  //   setState(() {
-                  //     if (!event.isInterestedForInteractions ||
-                  //         pieTouchResponse == null ||
-                  //         pieTouchResponse.touchedSection == null) {
-                  //       touchedIndex = -1;
-                  //       return;
-                  //     }
-                  //     touchedIndex = pieTouchResponse
-                  //         .touchedSection!.touchedSectionIndex;
-                  //   });
-                  // },
-                  // ),
-                  borderData: FlBorderData(
-                    show: false,
+            child: Padding(
+              padding: const EdgeInsets.all(32.0),
+              child: AspectRatio(
+                aspectRatio: 1,
+                child: PieChart(
+                  PieChartData(
+                    // pieTouchData: PieTouchData(
+                    // touchCallback: (FlTouchEvent event, pieTouchResponse) {
+                    //   setState(() {
+                    //     if (!event.isInterestedForInteractions ||
+                    //         pieTouchResponse == null ||
+                    //         pieTouchResponse.touchedSection == null) {
+                    //       touchedIndex = -1;
+                    //       return;
+                    //     }
+                    //     touchedIndex = pieTouchResponse
+                    //         .touchedSection!.touchedSectionIndex;
+                    //   });
+                    // },
+                    // ),
+                    borderData: FlBorderData(
+                      show: false,
+                    ),
+                    sectionsSpace: 1,
+                    // centerSpaceRadius: 130,
+                    sections: createSections(context),
                   ),
-                  sectionsSpace: 1,
-                  // centerSpaceRadius: 130,
-                  sections: createSections(context),
                 ),
               ),
             ),

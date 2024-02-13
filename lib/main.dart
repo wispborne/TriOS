@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:dart_json_mapper/dart_json_mapper.dart';
@@ -7,17 +8,14 @@ import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vram_estimator_flutter/extensions.dart';
 import 'package:vram_estimator_flutter/models/enabled_mods.dart';
+import 'package:vram_estimator_flutter/settings/settings.dart';
+import 'package:vram_estimator_flutter/settings/settingsSaver.dart';
 import 'package:vram_estimator_flutter/util.dart';
-import 'package:vram_estimator_flutter/vram_checker.dart';
-import 'package:vram_estimator_flutter/widgets/bar_chart.dart';
-import 'package:vram_estimator_flutter/widgets/disable.dart';
+import 'package:vram_estimator_flutter/vram_estimator/vram_estimator.dart';
 import 'package:vram_estimator_flutter/widgets/graph_radio_selector.dart';
-import 'package:vram_estimator_flutter/widgets/pie_chart.dart';
-import 'package:vram_estimator_flutter/widgets/spinning_refresh_button.dart';
 import 'package:window_size/window_size.dart';
 
 import 'main.mapper.g.dart' show initializeJsonMapper;
-import 'models/graphics_lib_config.dart';
 import 'models/mod_result.dart';
 
 const version = "1.0.0";
@@ -26,21 +24,27 @@ const appSubtitle = "by Wisp";
 
 void main() {
   initializeJsonMapper();
-  runApp(const ProviderScope(child: MyApp()));
+
+  runApp(ProviderScope(observers: [SettingSaver()], child: const TriOSApp()));
   setWindowTitle(appTitle);
 }
 
-class MyApp extends ConsumerWidget {
-  const MyApp({super.key});
+class TriOSApp extends ConsumerWidget {
+  const TriOSApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (settingsFile.existsSync()) {
+      // Settings.fromJson(jsonDecode(settingsFile.readAsStringSync()));
+      ref.read(appSettings.notifier).state =
+          Settings.fromJson(jsonDecode(settingsFile.readAsStringSync()));
+    }
+
     return MaterialApp(
-      title: 'Flutter Demo',
+      // title: 'Flutter Demo',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-            seedColor: Colors.indigoAccent, brightness: Brightness.dark),
+            seedColor: Colors.blue, brightness: Brightness.dark),
         useMaterial3: true,
       ),
       home: const MyHomePage(title: appTitle, subtitle: appSubtitle),
@@ -123,46 +127,6 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  void _getVramUsage() async {
-    if (isScanning) return;
-
-    setState(() {
-      isScanning = true;
-    });
-
-    final info = await VramChecker(
-      enabledModIds: getEnabledMods(),
-      modIdsToCheck: null,
-      foldersToCheck: modsFolder == null ? [] : [modsFolder!],
-      graphicsLibConfig: GraphicsLibConfig(
-        areAnyEffectsEnabled: false,
-        areGfxLibMaterialMapsEnabled: false,
-        areGfxLibNormalMapsEnabled: false,
-        areGfxLibSurfaceMapsEnabled: false,
-      ),
-      showCountedFiles: true,
-      showSkippedFiles: true,
-      showGfxLibDebugOutput: true,
-      showPerformance: true,
-      modProgressOut: (mod) {
-        // update modVramInfo with each mod's progress
-        setState(() {
-          modVramInfo = modVramInfo..[mod.info.id] = mod;
-        });
-      },
-      debugOut: print,
-      verboseOut: print,
-    ).check();
-
-    setState(() {
-      isScanning = false;
-      modVramInfo = info.fold<Map<String, Mod>>(
-          {},
-          (previousValue, element) =>
-              previousValue..[element.info.id] = element); // sort by mod size
-    });
-  }
-
   List<String>? getEnabledMods() => modsFolder == null
       ? null
       : JsonMapper.deserialize<EnabledMods>(
@@ -172,9 +136,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    var sortedModData = modVramInfoToShow
-        .sortedByDescending<num>((mod) => mod.totalBytesForMod)
-        .toList();
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
@@ -183,88 +144,11 @@ class _MyHomePageState extends State<MyHomePage> {
           Text(widget.subtitle, style: Theme.of(context).textTheme.bodyMedium)
         ]),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Center(
-          child: Column(
-            children: <Widget>[
-              Row(
-                children: [
-                  SpinningRefreshButton(
-                    onPressed: () {
-                      if (!isScanning) _getVramUsage();
-                    },
-                    isScanning: isScanning,
-                    tooltip: 'Estimate VRAM',
-                    // needsAttention: modVramInfo.isEmpty && !isScanning,
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 16.0),
-                    child: Disable(
-                      isEnabled: sortedModData.isNotEmpty,
-                      child: Text(
-                        '${modVramInfo.length} mods scanned',
-                        style: Theme.of(context).textTheme.labelMedium,
-                      ),
-                    ),
-                  ),
-                  const Spacer(),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 32.0),
-                    child: Disable(
-                      isEnabled: sortedModData.isNotEmpty,
-                      child: Card.outlined(
-                        child: SizedBox(
-                          width: 300,
-                          child: GraphTypeSelector(
-                              onGraphTypeChanged: (GraphType type) {
-                            setState(() {
-                              graphType = type;
-                            });
-                          }),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Disable(
-                    isEnabled: sortedModData.isNotEmpty,
-                    child: RangeSlider(
-                      values: RangeValues(
-                          viewRangeEnds.item1?.toDouble() ?? 0,
-                          viewRangeEnds.item2?.toDouble() ??
-                              sortedModData.length.toDouble()),
-                      min: 0,
-                      max: sortedModData.length.toDouble(),
-                      divisions:
-                          sortedModData.isEmpty ? null : sortedModData.length,
-                      labels: RangeLabels(
-                          viewRangeEnds.item1?.toString() ?? '0',
-                          viewRangeEnds.item2?.toString() ??
-                              sortedModData.length.toString()),
-                      onChanged: (RangeValues values) {
-                        setState(() {
-                          viewRangeEnds =
-                              Tuple2(values.start.toInt(), values.end.toInt());
-                        });
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              if (modVramInfo.isNotEmpty)
-                Expanded(
-                  child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: SizedBox(
-                          child: switch (graphType) {
-                        GraphType.pie =>
-                          VramPieChart(modVramInfo: sortedModData),
-                        GraphType.bar =>
-                          VramBarChart(modVramInfo: sortedModData),
-                      })),
-                ),
-            ],
-          ),
+      body: const Padding(
+        padding: EdgeInsets.all(16.0),
+        child: VramEstimatorPage(
+          title: "VRAM Estimator",
+          subtitle: "Estimate VRAM usage for mods",
         ),
       ),
     );

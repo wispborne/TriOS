@@ -3,16 +3,13 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:squadron/squadron.dart';
-
 class ImageHeader {
   int width;
   int height;
   int bitDepth;
   int numChannels;
 
-  ImageHeader(
-      this.width, this.height, this.bitDepth, this.numChannels);
+  ImageHeader(this.width, this.height, this.bitDepth, this.numChannels);
 
   @override
   String toString() {
@@ -23,51 +20,56 @@ class ImageHeader {
 Future<ImageHeader?> readPngFileHeaders(String path) async {
   // Open the file
   var file = File(path);
-  var fileStream = file.openRead();
+  RandomAccessFile? fileStream;
+  try {
+    fileStream = await file.open();
 
-  // Read the PNG signature plus the first chunk (IHDR)
-  var bytes = await fileStream.take(8 + 8 + 13).toList();
+    // Read the PNG signature plus the first chunk (IHDR)
+    var bytes = (await fileStream.read(8 + 8 + 13)).toList();
 
-  // Flatten the list of lists into a single list of bytes
-  var flatList = bytes.expand((byteList) => byteList).toList();
+    // Flatten the list of lists into a single list of bytes
+    var flatList = bytes; //.expand((byteList) => byteList).toList();
 
-  // Verify PNG signature
-  var pngSignature = [137, 80, 78, 71, 13, 10, 26, 10];
-  for (int i = 0; i < pngSignature.length; i++) {
-    if (flatList[i] != pngSignature[i]) {
-      print('This file is not a PNG.');
+    // Verify PNG signature
+    var pngSignature = [137, 80, 78, 71, 13, 10, 26, 10];
+    for (int i = 0; i < pngSignature.length; i++) {
+      if (flatList[i] != pngSignature[i]) {
+        print('This file is not a PNG.');
+        return null;
+      }
+    }
+
+    // Assuming the file is a PNG, proceed to read the IHDR chunk
+    // IHDR starts at byte 8, after the PNG signature
+    var ihdrStart = 8 + 4; // Skip the length field of the IHDR chunk
+    var type = utf8.decode(flatList.sublist(ihdrStart, ihdrStart + 4));
+    if (type != 'IHDR') {
+      print('IHDR chunk not found.');
       return null;
     }
+
+    // Read IHDR content
+    var ihdrContentStart = ihdrStart + 4;
+    var width = _bytesToUint32(
+        flatList.sublist(ihdrContentStart, ihdrContentStart + 4));
+    var height = _bytesToUint32(
+        flatList.sublist(ihdrContentStart + 4, ihdrContentStart + 8));
+    var bitDepth = flatList[ihdrContentStart + 8];
+    var colorType = flatList[ihdrContentStart + 9];
+
+    final numChannels = switch (colorType) {
+      0 => 1,
+      3 => 1,
+      2 => 3,
+      4 => 2,
+      6 => 4,
+      _ => throw Exception('Invalid color type: $colorType')
+    };
+
+    return ImageHeader(width, height, bitDepth, numChannels);
+  } finally {
+    fileStream?.close();
   }
-
-  // Assuming the file is a PNG, proceed to read the IHDR chunk
-  // IHDR starts at byte 8, after the PNG signature
-  var ihdrStart = 8 + 4; // Skip the length field of the IHDR chunk
-  var type = utf8.decode(flatList.sublist(ihdrStart, ihdrStart + 4));
-  if (type != 'IHDR') {
-    print('IHDR chunk not found.');
-    return null;
-  }
-
-  // Read IHDR content
-  var ihdrContentStart = ihdrStart + 4;
-  var width =
-      _bytesToUint32(flatList.sublist(ihdrContentStart, ihdrContentStart + 4));
-  var height = _bytesToUint32(
-      flatList.sublist(ihdrContentStart + 4, ihdrContentStart + 8));
-  var bitDepth = flatList[ihdrContentStart + 8];
-  var colorType = flatList[ihdrContentStart + 9];
-
-  final numChannels = switch (colorType) {
-    0 => 1,
-    3 => 1,
-    2 => 3,
-    4 => 2,
-    6 => 4,
-    _ => throw Exception('Invalid color type: $colorType')
-  };
-
-  return ImageHeader(width, height, bitDepth, numChannels);
 }
 
 // Utility function to convert 4 bytes into a uint32

@@ -45,6 +45,8 @@ dependencies:
   path: ^1.9.0
   windows_system_info: ^0.0.4
   shared_preferences: ^2.2.2
+  ktx: ^1.1.6
+  dart_extensions_methods: ^2.0.0
   yaml: ^3.1.2
   fimber: ^0.7.0
   image_size_getter: ^2.1.2
@@ -56,6 +58,8 @@ dependencies:
       url: https://github.com/google/flutter-desktop-embedding.git
       path: plugins/window_size
       ref: 5c51870ced62a00e809ba4b81a846a052d241c9f
+  freezed_annotation: ^2.4.1
+  json_annotation: ^4.8.1
 
 dev_dependencies:
   # dart run build_runner watch --delete-conflicting-outputs
@@ -72,6 +76,8 @@ dev_dependencies:
   riverpod_generator: ^2.3.11
   build_runner: ^2.4.8
   custom_lint: ^0.6.0
+  freezed: ^2.4.7
+  json_serializable: ^6.7.1
   #  riverpod_lint: ^2.3.9 # <https://github.com/google/reflectable.dart/pull/326>
 #  analyzer: ^6.4.1
 

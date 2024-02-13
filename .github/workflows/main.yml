@@ -2,11 +2,13 @@ name: Flutter CI
 
 # https://gist.github.com/youhide/121750fc4878801ea8e908080b535beb
 
-on: push
-#  push:
-#    branches: [ master ]
-#  pull_request:
-#    branches: [ master ]
+on: #push
+  push:
+    branches: [ main ]
+    tags:
+      - '*'
+  pull_request:
+    branches: [ main ]
 
 env:
   flutter_channel: "beta" # or: 'stable' or 'dev' or 'beta'

@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:dart_json_mapper/dart_json_mapper.dart';
@@ -8,7 +7,6 @@ import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vram_estimator_flutter/extensions.dart';
 import 'package:vram_estimator_flutter/models/enabled_mods.dart';
-import 'package:vram_estimator_flutter/settings/settings.dart';
 import 'package:vram_estimator_flutter/settings/settingsSaver.dart';
 import 'package:vram_estimator_flutter/util.dart';
 import 'package:vram_estimator_flutter/vram_estimator/vram_estimator.dart';
@@ -34,12 +32,6 @@ class TriOSApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (settingsFile.existsSync()) {
-      // Settings.fromJson(jsonDecode(settingsFile.readAsStringSync()));
-      ref.read(appSettings.notifier).state =
-          Settings.fromJson(jsonDecode(settingsFile.readAsStringSync()));
-    }
-
     return MaterialApp(
       // title: 'Flutter Demo',
       theme: ThemeData(
@@ -139,10 +131,24 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(widget.title, style: Theme.of(context).textTheme.titleLarge),
-          Text(widget.subtitle, style: Theme.of(context).textTheme.bodyMedium)
-        ]),
+        title: Row(
+          children: [
+            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(widget.title, style: Theme.of(context).textTheme.titleLarge),
+              Text(widget.subtitle,
+                  style: Theme.of(context).textTheme.bodyMedium)
+            ]),
+            Expanded(
+              child: TextField(
+                controller: gamePathTextController,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  labelText: 'Starsector Folder',
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
       body: const Padding(
         padding: EdgeInsets.all(16.0),

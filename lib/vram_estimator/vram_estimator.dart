@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:fimber/fimber.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vram_estimator_flutter/extensions.dart';
 import 'package:vram_estimator_flutter/vram_checker.dart';
 import 'package:vram_estimator_flutter/widgets/bar_chart.dart';
@@ -28,28 +27,18 @@ class VramEstimatorPage extends ConsumerStatefulWidget {
 }
 
 class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage> {
-  late SharedPreferences _prefs;
   bool isScanning = false;
   GraphType graphType = GraphType.pie;
   Map<String, Mod> modVramInfo = {};
-  List<Mod> modVramInfoToShow = [];
+
+  List<Mod> get modVramInfoToShow => modVramInfo.values.toList().sublist(
+      viewRangeEnds.item1 ?? 0, viewRangeEnds.item2 ?? modVramInfo.length);
+
   Tuple2<int?, int?> viewRangeEnds = Tuple2(null, null);
 
   @override
   void initState() {
     super.initState();
-  }
-
-  @override
-  void didUpdateWidget(oldWidget) {
-    super.didUpdateWidget(oldWidget);
-
-    // if (oldWidget. != modVramInfoToShow) {
-    setState(() {
-      modVramInfoToShow = modVramInfo.values.toList().sublist(
-          viewRangeEnds.item1 ?? 0, viewRangeEnds.item2 ?? modVramInfo.length);
-    });
-    // }
   }
 
   void _getVramUsage() async {
@@ -147,28 +136,31 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage> {
                 ),
               ),
             ),
-            Disable(
-              isEnabled: sortedModData.isNotEmpty,
-              child: RangeSlider(
-                values: RangeValues(
-                    viewRangeEnds.item1?.toDouble() ?? 0,
-                    viewRangeEnds.item2?.toDouble() ??
-                        sortedModData.length.toDouble()),
-                min: 0,
-                max: sortedModData.length.toDouble(),
-                divisions: sortedModData.isEmpty ? 1 : sortedModData.length,
-                labels: RangeLabels(
-                    viewRangeEnds.item1?.toString() ?? '0',
-                    viewRangeEnds.item2?.toString() ??
-                        sortedModData.length.toString()),
-                onChanged: (RangeValues values) {
-                  setState(() {
-                    viewRangeEnds =
-                        Tuple2(values.start.toInt(), values.end.toInt());
-                  });
-                },
-              ),
-            ),
+            // Disable(
+            // isEnabled: sortedModData.isNotEmpty,
+            // child: RangeSlider(
+            // values: RangeValues(
+            // viewRangeEnds.item1?.toDouble() ?? 0,
+            // viewRangeEnds.item2?.toDouble() ??
+            //     (sortedModData.isEmpty
+            //         ? 1
+            //         : sortedModData.length.toDouble())),
+            // min: 0,
+            // max:
+            //     sortedModData.isEmpty ? 1 : sortedModData.length.toDouble(),
+            // divisions: sortedModData.isEmpty ? 1 : sortedModData.length,
+            // labels: RangeLabels(
+            //     viewRangeEnds.item1?.toString() ?? '0',
+            //     viewRangeEnds.item2?.toString() ??
+            //         sortedModData.length.toString()),
+            // onChanged: (RangeValues values) {
+            // setState(() {
+            //   viewRangeEnds =
+            //       Tuple2(values.start.toInt(), values.end.toInt());
+            // });
+            // }),
+            // ),
+            // ),
           ],
         ),
         if (modVramInfo.isNotEmpty)

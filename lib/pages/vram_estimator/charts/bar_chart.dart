@@ -1,9 +1,9 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:vram_estimator_flutter/extensions.dart';
+import 'package:vram_estimator_flutter/utils/extensions.dart';
 
 import '../models/mod_result.dart';
-import '../util.dart';
+import '../../../utils/util.dart';
 // ...  (Import extensions, any custom models, and util as in your existing code)
 
 class VramBarChart extends StatefulWidget {
@@ -62,7 +62,7 @@ class VramBarChartState extends State<VramBarChart> {
             getTitlesWidget: (value, meta) => _buildBottomLabel(value, meta),
           ),
         ),
-        leftTitles: AxisTitles(
+        leftTitles: const AxisTitles(
           sideTitles: SideTitles(showTitles: true),
         ),
       );

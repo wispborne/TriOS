@@ -1,7 +1,7 @@
 import 'package:collection/collection.dart';
 
 import 'mod_image.dart';
-import 'mod_info.dart';
+import '../../../models/mod_info.dart';
 
 class Mod {
   ModInfo info;

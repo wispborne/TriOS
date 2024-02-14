@@ -1,9 +1,9 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:vram_estimator_flutter/extensions.dart';
+import 'package:vram_estimator_flutter/utils/extensions.dart';
 
 import '../models/mod_result.dart';
-import '../util.dart';
+import '../../../utils/util.dart';
 
 class VramPieChart extends StatefulWidget {
   final List<Mod> modVramInfo;

@@ -1,26 +1,28 @@
 import 'dart:io';
 
+import 'package:dart_json_mapper/dart_json_mapper.dart';
 import 'package:fimber/fimber.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:vram_estimator_flutter/extensions.dart';
-import 'package:vram_estimator_flutter/vram_checker.dart';
-import 'package:vram_estimator_flutter/widgets/bar_chart.dart';
+import 'package:path/path.dart' as p;
+import 'package:vram_estimator_flutter/pages/vram_estimator/charts/bar_chart.dart';
+import 'package:vram_estimator_flutter/pages/vram_estimator/charts/pie_chart.dart';
+import 'package:vram_estimator_flutter/pages/vram_estimator/vram_checker.dart';
+import 'package:vram_estimator_flutter/utils/extensions.dart';
 import 'package:vram_estimator_flutter/widgets/disable.dart';
 import 'package:vram_estimator_flutter/widgets/graph_radio_selector.dart';
-import 'package:vram_estimator_flutter/widgets/pie_chart.dart';
 import 'package:vram_estimator_flutter/widgets/spinning_refresh_button.dart';
 
-import '../models/graphics_lib_config.dart';
-import '../models/mod_result.dart';
-import '../settings/settings.dart';
+import '../../models/enabled_mods.dart';
+import '../../models/graphics_lib_config.dart';
+import '../../settings/settings.dart';
+import 'models/mod_result.dart';
 
 class VramEstimatorPage extends ConsumerStatefulWidget {
-  const VramEstimatorPage(
-      {super.key, required this.title, required this.subtitle});
+  const VramEstimatorPage({super.key});
 
-  final String title;
-  final String subtitle;
+  final String title = "VRAM Estimator";
+  final String subtitle = "Estimate VRAM usage for mods";
 
   @override
   ConsumerState<VramEstimatorPage> createState() => _VramEstimatorPageState();
@@ -36,9 +38,17 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage> {
 
   Tuple2<int?, int?> viewRangeEnds = Tuple2(null, null);
 
-  @override
-  void initState() {
-    super.initState();
+  List<String>? getEnabledMods() {
+    var settings = ref.read(appSettings);
+    var modsFolder =
+        settings.modsDir == null ? null : Directory(settings.modsDir!);
+
+    return modsFolder == null
+        ? null
+        : JsonMapper.deserialize<EnabledMods>(
+                File(p.join(modsFolder!.path, "enabled_mods.json"))
+                    .readAsStringSync())
+            ?.enabledMods;
   }
 
   void _getVramUsage() async {

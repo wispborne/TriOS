@@ -7,18 +7,18 @@ import 'package:csv/csv.dart';
 import 'package:dart_json_mapper/dart_json_mapper.dart';
 import 'package:path/path.dart' as p;
 import 'package:squadron/squadron.dart';
-import 'package:vram_estimator_flutter/extensions.dart';
-import 'package:vram_estimator_flutter/image_reader/png_chatgpt.dart';
+import 'package:vram_estimator_flutter/utils/extensions.dart';
 import 'package:yaml/yaml.dart';
 
-import 'image_reader/image_reader_async.dart';
-import 'models/gpu_info.dart';
-import 'models/graphics_lib_config.dart';
-import 'models/graphics_lib_info.dart';
+import '../../models/gpu_info.dart';
+import '../../models/graphics_lib_config.dart';
+import '../../models/graphics_lib_info.dart';
 import 'models/mod_image.dart';
-import 'models/mod_info.dart';
-import 'models/mod_info_json.dart';
+import '../../models/mod_info.dart';
+import '../../models/mod_info_json.dart';
 import 'models/mod_result.dart';
+import 'image_reader/image_reader_async.dart';
+import 'image_reader/png_chatgpt.dart';
 
 class VramChecker {
   List<String>? enabledModIds;

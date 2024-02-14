@@ -22,10 +22,10 @@ Future<ImageHeader?> readPngFileHeaders(String path) async {
   var file = File(path);
   RandomAccessFile? fileStream;
   try {
-    fileStream = await file.open();
+    fileStream = file.openSync();
 
     // Read the PNG signature plus the first chunk (IHDR)
-    var bytes = (await fileStream.read(8 + 8 + 13)).toList();
+    var bytes = fileStream.readSync(8 + 8 + 13).toList();
 
     // Flatten the list of lists into a single list of bytes
     var flatList = bytes; //.expand((byteList) => byteList).toList();

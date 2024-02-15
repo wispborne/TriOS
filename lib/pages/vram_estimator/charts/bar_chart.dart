@@ -35,7 +35,7 @@ class VramBarChartState extends State<VramBarChart> {
               barTouchData: BarTouchData(enabled: false),
               // No touch behavior needed
               titlesData: _buildTitlesData(),
-              gridData: FlGridData(show: false),
+              gridData: const FlGridData(show: false),
               // Optionally remove grid lines
               barGroups: _buildBarGroups(context),
             ),

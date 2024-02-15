@@ -34,8 +34,7 @@ Future<ImageHeader?> readPngFileHeaders(String path) async {
     var pngSignature = [137, 80, 78, 71, 13, 10, 26, 10];
     for (int i = 0; i < pngSignature.length; i++) {
       if (flatList[i] != pngSignature[i]) {
-        print('This file is not a PNG.');
-        return null;
+        throw Exception('This file is not a PNG.');
       }
     }
 
@@ -44,8 +43,7 @@ Future<ImageHeader?> readPngFileHeaders(String path) async {
     var ihdrStart = 8 + 4; // Skip the length field of the IHDR chunk
     var type = utf8.decode(flatList.sublist(ihdrStart, ihdrStart + 4));
     if (type != 'IHDR') {
-      print('IHDR chunk not found.');
-      return null;
+      throw Exception('IHDR chunk not found.');
     }
 
     // Read IHDR content

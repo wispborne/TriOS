@@ -506,7 +506,7 @@ class VramChecker {
             return csvReader.convert(file.readAsStringSync());
           } catch (e) {
             progressText.appendAndPrint(
-                "Unable to read ${file.path}: ${e}", verboseOut);
+                "Unable to read ${file.path}: $e", verboseOut);
           }
 
           return [null];
@@ -543,7 +543,7 @@ class VramChecker {
                   final path = row[pathColumn].trim();
                   return GraphicsLibInfo(mapType, p.normalize(path));
                 } catch (e) {
-                  progressText.appendAndPrint("$row - ${e}", verboseOut);
+                  progressText.appendAndPrint("$row - $e", verboseOut);
                 }
 
                 return null;

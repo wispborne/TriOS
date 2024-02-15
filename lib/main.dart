@@ -8,13 +8,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vram_estimator_flutter/pages/settings/settings_page.dart';
 import 'package:vram_estimator_flutter/pages/vram_estimator/vram_estimator.dart';
 import 'package:vram_estimator_flutter/settings/settingsSaver.dart';
+import 'package:vram_estimator_flutter/utils/extensions.dart';
 import 'package:window_size/window_size.dart';
 
 import 'main.mapper.g.dart' show initializeJsonMapper;
 
 const version = "1.0.0";
 const appTitle = "TriOS v$version";
-const appSubtitle = "by Wisp";
+String appSubtitle = ["Corporate Toolkit", "by Wisp", "Hegemony Tolerated", "TriTachyon Approved", "Random Subtitle"].random();
 
 void main() {
   initializeJsonMapper();
@@ -126,31 +127,48 @@ class _AppShellState extends State<AppShell> {
   // }
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Row(
-          children: [
-            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(appTitle, style: Theme.of(context).textTheme.titleLarge),
-              Text(appSubtitle, style: Theme.of(context).textTheme.bodyMedium)
-            ]),
-            ElevatedButton(
-                onPressed: () {
-                  context.go(pageVramEstimator);
-                },
-                child: const Text("VRAM Estimator")),
-            ElevatedButton(
-                onPressed: () {
-                  context.go(pageSettings);
-                },
-                child: const Text("Settings")),
-          ],
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+          title: Row(
+            children: [
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(appTitle, style: Theme.of(context).textTheme.titleLarge),
+                Text(appSubtitle, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 12))
+              ]),
+              const Expanded(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  child: TabBar(tabs: [
+                    Tab(text: "VRAM Estimator"),
+                    Tab(text: "Settings"),
+                  ]),
+                ),
+              )
+              // ElevatedButton(
+              //     onPressed: () {
+              //       context.go(pageVramEstimator);
+              //     },
+              //     child: const Text("VRAM Estimator")),
+              // ElevatedButton(
+              //     onPressed: () {
+              //       context.go(pageSettings);
+              //     },
+              //     child: const Text("Settings")),
+            ],
+          ),
         ),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: widget.child, // Render the nested content widget
+        body: Padding(
+            padding: const EdgeInsets.all(16.0),
+            // child: widget.child,
+            child: const TabBarView(
+              children: [
+                VramEstimatorPage(),
+                SettingsPage(),
+              ],
+            )),
       ),
     );
   }

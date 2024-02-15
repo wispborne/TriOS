@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:collection/collection.dart';
 
 class ModImage {
   static const VANILLA_BACKGROUND_TEXTURE_SIZE_IN_BYTES = 12582912.0;

@@ -32,6 +32,7 @@ class WindowsGPUInfo implements GPUInfo {
     gpuString = [controller.model];
   }
 
+  @override
   String toString() {
     return "GPUInfo(freeVRAM: $freeVRAM, gpuString: $gpuString)";
   }

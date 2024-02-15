@@ -35,6 +35,12 @@ extension FileExt on File {
   String get nameWithoutExtension => p.basenameWithoutExtension(path);
 
   String get name => p.basename(path);
+
+  File get normalize => File(p.normalize(absolute.path));
+}
+
+extension DirectoryExt on Directory {
+  Directory get normalize => Directory(p.normalize(absolute.path));
 }
 
 extension FileSystemEntityExt on FileSystemEntity {
@@ -83,6 +89,10 @@ extension IterableExt<T> on Iterable<T> {
 
   bool containsAll(Iterable<T> elements) {
     return elements.every(contains);
+  }
+
+  T random () {
+    return elementAt(DateTime.now().microsecond % length);
   }
 }
 

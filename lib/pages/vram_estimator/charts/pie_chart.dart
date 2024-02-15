@@ -23,9 +23,9 @@ class VramPieChartState extends State<VramPieChart> {
     return widget.modVramInfo
         .where((element) => element.totalBytesForMod > 0)
         .map((mod) {
-      final isTouched = false; //i == touchedIndex;
-      final fontSize = isTouched ? 25.0 : 12.0;
-      final radius = isTouched ? 60.0 : 50.0;
+      const isTouched = false; //i == touchedIndex;
+      const fontSize = isTouched ? 25.0 : 12.0;
+      const radius = isTouched ? 60.0 : 50.0;
       const shadows = [Shadow(color: Colors.black, blurRadius: 2)];
       return PieChartSectionData(
         color: ColorGenerator.generateFromColor(mod.info.id, baseColor)
@@ -35,7 +35,7 @@ class VramPieChartState extends State<VramPieChart> {
         title: "${mod.info.name} ${mod.info.version}\n${mod.totalBytesForMod.bytesAsReadableMB()}",
         radius: radius,
         titlePositionPercentageOffset: 2,
-        titleStyle: TextStyle(
+        titleStyle: const TextStyle(
           fontSize: fontSize,
           fontWeight: FontWeight.bold,
           // color: AppColors.mainTextColor1,

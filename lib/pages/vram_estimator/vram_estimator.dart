@@ -28,7 +28,11 @@ class VramEstimatorPage extends ConsumerStatefulWidget {
   ConsumerState<VramEstimatorPage> createState() => _VramEstimatorPageState();
 }
 
-class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage> {
+class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
+    with AutomaticKeepAliveClientMixin<VramEstimatorPage> {
+  @override
+  bool get wantKeepAlive => true;
+
   bool isScanning = false;
   GraphType graphType = GraphType.pie;
   Map<String, Mod> modVramInfo = {};
@@ -46,7 +50,7 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage> {
     return modsFolder == null
         ? null
         : JsonMapper.deserialize<EnabledMods>(
-                File(p.join(modsFolder!.path, "enabled_mods.json"))
+                File(p.join(modsFolder.path, "enabled_mods.json"))
                     .readAsStringSync())
             ?.enabledMods;
   }
@@ -54,11 +58,16 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage> {
   void _getVramUsage() async {
     if (isScanning) return;
 
+    var settings = ref.read(appSettings);
+    if (settings.modsDir == null ||
+        !Directory(settings.modsDir!).existsSync()) {
+      Fimber.e('Mods folder not set');
+      return;
+    }
+
     setState(() {
       isScanning = true;
     });
-
-    var settings = ref.read(appSettings);
 
     try {
       final info = await VramChecker(

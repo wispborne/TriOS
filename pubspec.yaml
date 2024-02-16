@@ -37,11 +37,11 @@ dependencies:
   cupertino_icons: ^1.0.6
   flutter_riverpod: ^2.4.10
   riverpod_annotation: ^2.3.4
-  fl_chart: ^0.66.1
+  fl_chart: ^0.66.2
   collection: ^1.18.0
   csv: ^5.1.1
   dart_json_mapper: ^2.2.10
-  image: ^4.1.6
+  image: ^4.1.7
   path: ^1.9.0
   windows_system_info: ^0.0.4
   shared_preferences: ^2.2.2
@@ -62,6 +62,7 @@ dependencies:
       ref: 5c51870ced62a00e809ba4b81a846a052d241c9f
   freezed_annotation: ^2.4.1
   json_annotation: ^4.8.1
+  http: ^1.2.0
 
 dev_dependencies:
   # dart run build_runner watch --delete-conflicting-outputs

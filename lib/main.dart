@@ -1,6 +1,8 @@
 import 'dart:io';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:fimber/fimber.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -15,9 +17,24 @@ import 'main.mapper.g.dart' show initializeJsonMapper;
 
 const version = "1.0.0";
 const appTitle = "TriOS v$version";
-String appSubtitle = ["Corporate Toolkit", "by Wisp", "Hegemony Tolerated", "TriTachyon Approved", "Random Subtitle"].random();
+String appSubtitle = [
+  "Corporate Toolkit",
+  "by Wisp",
+  "Hegemony Tolerated",
+  "TriTachyon Approved",
+  "Random Subtitle"
+].random();
+
+configureLogging() {
+  const logLevels = kDebugMode ? ["V", "D", "I", "W", "E"] : ["I", "W", "E"];
+  Fimber.plantTree(DebugTree.elapsed(logLevels: logLevels, useColors: true));
+}
 
 void main() {
+  configureLogging();
+  Fimber.i("$appTitle logging started.");
+  Fimber.i(
+      "Platform: ${Platform.operatingSystem} ${Platform.operatingSystemVersion}.");
   initializeJsonMapper();
 
   runApp(ProviderScope(observers: [SettingSaver()], child: const TriOSApp()));
@@ -136,7 +153,11 @@ class _AppShellState extends State<AppShell> {
             children: [
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(appTitle, style: Theme.of(context).textTheme.titleLarge),
-                Text(appSubtitle, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 12))
+                Text(appSubtitle,
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyMedium
+                        ?.copyWith(fontSize: 12))
               ]),
               const Expanded(
                 child: Padding(

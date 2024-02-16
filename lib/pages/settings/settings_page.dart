@@ -1,10 +1,14 @@
 import 'dart:io';
 
+import 'package:fimber/fimber.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:vram_estimator_flutter/self_updater/script_generator.dart';
 import 'package:vram_estimator_flutter/settings/settings.dart';
 import 'package:vram_estimator_flutter/utils/extensions.dart';
 import 'package:vram_estimator_flutter/utils/util.dart';
+
+import '../../self_updater/checker.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
@@ -55,6 +59,22 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           Padding(
             padding: const EdgeInsets.only(left: 4, top: 8.0),
             child: Text("Mods Folder: ${ref.read(appSettings).modsDir}"),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: 32, bottom: 8.0),
+            child: ElevatedButton(
+              onPressed: () async {
+                await SelfUpdater.checkForUpdate();
+              },
+              child: const Text('Test Update Checker'),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Fimber.i(ScriptGenerator.generateFileUpdateScript(
+                  [Tuple2(null, File("test.txt"))], "windows", 5));
+            },
+            child: const Text('Print Update Script'),
           )
         ],
       ),

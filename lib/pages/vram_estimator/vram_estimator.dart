@@ -16,6 +16,7 @@ import 'package:vram_estimator_flutter/widgets/spinning_refresh_button.dart';
 import '../../models/enabled_mods.dart';
 import '../../models/graphics_lib_config.dart';
 import '../../settings/settings.dart';
+import '../../utils/util.dart';
 import 'models/mod_result.dart';
 
 class VramEstimatorPage extends ConsumerStatefulWidget {

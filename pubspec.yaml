@@ -1,5 +1,5 @@
-name: vram_estimator_flutter
-description: "Estimate mod VRAM usage."
+name: trios
+description: "Starsector toolkit."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -37,25 +37,32 @@ dependencies:
   cupertino_icons: ^1.0.6
   flutter_riverpod: ^2.4.10
   riverpod_annotation: ^2.3.4
-  fl_chart: ^0.66.1
+  fl_chart: ^0.66.2
   collection: ^1.18.0
   csv: ^5.1.1
   dart_json_mapper: ^2.2.10
-  image: ^4.1.6
+  image: ^4.1.7
   path: ^1.9.0
   windows_system_info: ^0.0.4
   shared_preferences: ^2.2.2
+  ktx: ^1.1.6
+  dart_extensions_methods: ^2.0.0
   yaml: ^3.1.2
   fimber: ^0.7.0
   image_size_getter: ^2.1.2
   squadron: ^5.1.6
   squadron_builder: ^2.4.5
   desktop_window: ^0.4.0
+  go_router: ^13.2.0
+  adaptive_theme: ^3.6.0
   window_size:
     git:
       url: https://github.com/google/flutter-desktop-embedding.git
       path: plugins/window_size
       ref: 5c51870ced62a00e809ba4b81a846a052d241c9f
+  freezed_annotation: ^2.4.1
+  json_annotation: ^4.8.1
+  http: ^1.2.0
 
 dev_dependencies:
   # dart run build_runner watch --delete-conflicting-outputs
@@ -72,6 +79,8 @@ dev_dependencies:
   riverpod_generator: ^2.3.11
   build_runner: ^2.4.8
   custom_lint: ^0.6.0
+  freezed: ^2.4.7
+  json_serializable: ^6.7.1
   #  riverpod_lint: ^2.3.9 # <https://github.com/google/reflectable.dart/pull/326>
 #  analyzer: ^6.4.1
 

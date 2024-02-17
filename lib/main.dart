@@ -1,272 +1,227 @@
 import 'dart:io';
 
-import 'package:dart_json_mapper/dart_json_mapper.dart';
+import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:fimber/fimber.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:path/path.dart' as p;
+import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:vram_estimator_flutter/extensions.dart';
-import 'package:vram_estimator_flutter/models/enabled_mods.dart';
-import 'package:vram_estimator_flutter/util.dart';
-import 'package:vram_estimator_flutter/vram_checker.dart';
-import 'package:vram_estimator_flutter/widgets/bar_chart.dart';
-import 'package:vram_estimator_flutter/widgets/disable.dart';
-import 'package:vram_estimator_flutter/widgets/graph_radio_selector.dart';
-import 'package:vram_estimator_flutter/widgets/pie_chart.dart';
-import 'package:vram_estimator_flutter/widgets/spinning_refresh_button.dart';
+import 'package:trios/pages/settings/settings_page.dart';
+import 'package:trios/pages/vram_estimator/vram_estimator.dart';
+import 'package:trios/settings/settingsSaver.dart';
+import 'package:trios/utils/extensions.dart';
 import 'package:window_size/window_size.dart';
 
 import 'main.mapper.g.dart' show initializeJsonMapper;
-import 'models/graphics_lib_config.dart';
-import 'models/mod_result.dart';
 
 const version = "1.0.0";
 const appTitle = "TriOS v$version";
-const appSubtitle = "by Wisp";
+String appSubtitle = [
+  "Corporate Toolkit",
+  "by Wisp",
+  "Hegemony Tolerated",
+  "TriTachyon Approved",
+  "Random Subtitle"
+].random();
+
+configureLogging() {
+  const logLevels = kDebugMode ? ["V", "D", "I", "W", "E"] : ["I", "W", "E"];
+  Fimber.plantTree(DebugTree.elapsed(logLevels: logLevels, useColors: true));
+}
 
 void main() {
+  configureLogging();
+  Fimber.i("$appTitle logging started.");
+  Fimber.i(
+      "Platform: ${Platform.operatingSystem} ${Platform.operatingSystemVersion}.");
   initializeJsonMapper();
-  runApp(const ProviderScope(child: MyApp()));
+
+  runApp(ProviderScope(observers: [SettingSaver()], child: const TriOSApp()));
   setWindowTitle(appTitle);
 }
 
-class MyApp extends ConsumerWidget {
-  const MyApp({super.key});
+class TriOSApp extends ConsumerStatefulWidget {
+  const TriOSApp({super.key});
 
-  // This widget is the root of your application.
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-            seedColor: Colors.indigoAccent, brightness: Brightness.dark),
-        useMaterial3: true,
-      ),
-      home: const MyHomePage(title: appTitle, subtitle: appSubtitle),
-    );
-  }
+  TriOSAppState createState() => TriOSAppState();
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title, required this.subtitle});
+final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
-  final String title;
-  final String subtitle;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  late SharedPreferences _prefs;
-  Directory? gamePath = defaultGamePath();
-  Directory? gameFiles;
-  File? vanillaRulesCsv;
-  Directory? modsFolder;
-  List<File> modRulesCsvs = [];
-  final gamePathTextController = TextEditingController();
-  String? pathError;
-  bool isScanning = false;
-  GraphType graphType = GraphType.pie;
-  Map<String, Mod> modVramInfo = {};
-  List<Mod> modVramInfoToShow = [];
-  Tuple2<int?, int?> viewRangeEnds = Tuple2(null, null);
-
-  @override
-  void initState() {
-    super.initState();
-
-    SharedPreferences.getInstance().then((prefs) {
-      _prefs = prefs;
-      setState(() {
-        gamePath =
-            Directory(_prefs.getString('gamePath') ?? defaultGamePath()!.path);
-        if (!gamePath!.existsSync()) {
-          gamePath = Directory(defaultGamePath()!.path);
-        }
-      });
-      _updatePaths();
-    });
-  }
-
-  _do() async {
-    _prefs = await SharedPreferences.getInstance();
-    setState(() {
-      gamePath =
-          // Directory(_prefs.getString('gamePath') ?? defaultGamePath()!.path);
-          Directory(defaultGamePath()!.path);
-    });
-    _updatePaths();
-  }
-
-  @override
-  void didUpdateWidget(oldWidget) {
-    super.didUpdateWidget(oldWidget);
-
-    // if (oldWidget. != modVramInfoToShow) {
-    setState(() {
-      modVramInfoToShow = modVramInfo.values.toList().sublist(
-          viewRangeEnds.item1 ?? 0, viewRangeEnds.item2 ?? modVramInfo.length);
-    });
-    // }
-  }
-
-  _updatePaths() {
-    setState(() {
-      gameFiles = gameFilesPath(gamePath!)!;
-      vanillaRulesCsv = getVanillaRulesCsvInGameFiles(gameFiles!);
-      modsFolder = modFolderPath(gamePath!)!;
-      modRulesCsvs = getAllRulesCsvsInModsFolder(modsFolder!);
-
-      gamePathTextController.text = gamePath!.path;
-    });
-  }
-
-  void _getVramUsage() async {
-    if (isScanning) return;
-
-    setState(() {
-      isScanning = true;
-    });
-
-    final info = await VramChecker(
-      enabledModIds: getEnabledMods(),
-      modIdsToCheck: null,
-      foldersToCheck: modsFolder == null ? [] : [modsFolder!],
-      graphicsLibConfig: GraphicsLibConfig(
-        areAnyEffectsEnabled: false,
-        areGfxLibMaterialMapsEnabled: false,
-        areGfxLibNormalMapsEnabled: false,
-        areGfxLibSurfaceMapsEnabled: false,
-      ),
-      showCountedFiles: true,
-      showSkippedFiles: true,
-      showGfxLibDebugOutput: true,
-      showPerformance: true,
-      modProgressOut: (mod) {
-        // update modVramInfo with each mod's progress
-        setState(() {
-          modVramInfo = modVramInfo..[mod.info.id] = mod;
-        });
-      },
-      debugOut: print,
-      verboseOut: print,
-    ).check();
-
-    setState(() {
-      isScanning = false;
-      modVramInfo = info.fold<Map<String, Mod>>(
-          {},
-          (previousValue, element) =>
-              previousValue..[element.info.id] = element); // sort by mod size
-    });
-  }
-
-  List<String>? getEnabledMods() => modsFolder == null
-      ? null
-      : JsonMapper.deserialize<EnabledMods>(
-              File(p.join(modsFolder!.path, "enabled_mods.json"))
-                  .readAsStringSync())
-          ?.enabledMods;
-
+class TriOSAppState extends ConsumerState<TriOSApp> {
   @override
   Widget build(BuildContext context) {
-    var sortedModData = modVramInfoToShow
-        .sortedByDescending<num>((mod) => mod.totalBytesForMod)
-        .toList();
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(widget.title, style: Theme.of(context).textTheme.titleLarge),
-          Text(widget.subtitle, style: Theme.of(context).textTheme.bodyMedium)
-        ]),
+    return AdaptiveTheme(
+        light: ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+              seedColor: Colors.blue, brightness: Brightness.dark),
+          useMaterial3: true,
+        ),
+        // dark: Themes.starsectorLauncher,
+        initial: AdaptiveThemeMode.light,
+        builder: (theme, darkTheme) => MaterialApp.router(
+              title: appTitle,
+              theme: theme,
+              debugShowCheckedModeBanner: false,
+              darkTheme: darkTheme,
+              routerConfig: _router,
+            ));
+  }
+
+  final GoRouter _router = GoRouter(
+    navigatorKey: _rootNavigatorKey,
+    routes: [
+      GoRoute(
+        path: pageHome,
+        builder: (context, state) => const AppShell(child: VramEstimatorPage()),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Center(
-          child: Column(
-            children: <Widget>[
-              Row(
-                children: [
-                  SpinningRefreshButton(
-                    onPressed: () {
-                      if (!isScanning) _getVramUsage();
-                    },
-                    isScanning: isScanning,
-                    tooltip: 'Estimate VRAM',
-                    // needsAttention: modVramInfo.isEmpty && !isScanning,
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 16.0),
-                    child: Disable(
-                      isEnabled: sortedModData.isNotEmpty,
-                      child: Text(
-                        '${modVramInfo.length} mods scanned',
-                        style: Theme.of(context).textTheme.labelMedium,
-                      ),
-                    ),
-                  ),
-                  const Spacer(),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 32.0),
-                    child: Disable(
-                      isEnabled: sortedModData.isNotEmpty,
-                      child: Card.outlined(
-                        child: SizedBox(
-                          width: 300,
-                          child: GraphTypeSelector(
-                              onGraphTypeChanged: (GraphType type) {
-                            setState(() {
-                              graphType = type;
-                            });
-                          }),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Disable(
-                    isEnabled: sortedModData.isNotEmpty,
-                    child: RangeSlider(
-                      values: RangeValues(
-                          viewRangeEnds.item1?.toDouble() ?? 0,
-                          viewRangeEnds.item2?.toDouble() ??
-                              sortedModData.length.toDouble()),
-                      min: 0,
-                      max: sortedModData.length.toDouble(),
-                      divisions:
-                          sortedModData.isEmpty ? null : sortedModData.length,
-                      labels: RangeLabels(
-                          viewRangeEnds.item1?.toString() ?? '0',
-                          viewRangeEnds.item2?.toString() ??
-                              sortedModData.length.toString()),
-                      onChanged: (RangeValues values) {
-                        setState(() {
-                          viewRangeEnds =
-                              Tuple2(values.start.toInt(), values.end.toInt());
-                        });
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              if (modVramInfo.isNotEmpty)
-                Expanded(
-                  child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: SizedBox(
-                          child: switch (graphType) {
-                        GraphType.pie =>
-                          VramPieChart(modVramInfo: sortedModData),
-                        GraphType.bar =>
-                          VramBarChart(modVramInfo: sortedModData),
-                      })),
+      GoRoute(
+        path: pageVramEstimator,
+        builder: (context, state) => const AppShell(child: VramEstimatorPage()),
+      ),
+      GoRoute(
+        path: pageSettings,
+        builder: (context, state) => const AppShell(child: SettingsPage()),
+      ),
+    ],
+  );
+}
+
+const String pageHome = "/";
+const String pageVramEstimator = "/vram_estimator";
+const String pageSettings = "/settings";
+
+class AppShell extends StatefulWidget {
+  const AppShell({super.key, required this.child});
+
+  final Widget? child;
+
+  @override
+  State<AppShell> createState() => _AppShellState();
+}
+
+class _AppShellState extends State<AppShell> {
+  late SharedPreferences _prefs;
+  Directory? modsFolder;
+  List<File> modRulesCsvs = [];
+
+  // @override
+  // void initState() {
+  //   super.initState();
+  //
+  //   SharedPreferences.getInstance().then((prefs) {
+  //     _prefs = prefs;
+  //     setState(() {
+  //       gamePath =
+  //           Directory(_prefs.getString('gamePath') ?? defaultGamePath()!.path);
+  //       if (!gamePath!.existsSync()) {
+  //         gamePath = Directory(defaultGamePath()!.path);
+  //       }
+  //     });
+  //     _updatePaths();
+  //   });
+  // }
+  //
+  // _do() async {
+  //   _prefs = await SharedPreferences.getInstance();
+  //   setState(() {
+  //     gamePath =
+  //         // Directory(_prefs.getString('gamePath') ?? defaultGamePath()!.path);
+  //         Directory(defaultGamePath()!.path);
+  //   });
+  //   _updatePaths();
+  // }
+  //
+  // _updatePaths() {
+  //   setState(() {
+  //     gameFiles = gameFilesPath(gamePath!)!;
+  //     vanillaRulesCsv = getVanillaRulesCsvInGameFiles(gameFiles!);
+  //     modsFolder = modFolderPath(gamePath!)!;
+  //     modRulesCsvs = getAllRulesCsvsInModsFolder(modsFolder!);
+  //   });
+  // }
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+          title: Row(
+            children: [
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(appTitle, style: Theme.of(context).textTheme.titleLarge),
+                Text(appSubtitle,
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyMedium
+                        ?.copyWith(fontSize: 12))
+              ]),
+              const Expanded(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  child: TabBar(tabs: [
+                    Tab(text: "VRAM Estimator"),
+                    Tab(text: "Settings"),
+                  ]),
                 ),
+              )
+              // ElevatedButton(
+              //     onPressed: () {
+              //       context.go(pageVramEstimator);
+              //     },
+              //     child: const Text("VRAM Estimator")),
+              // ElevatedButton(
+              //     onPressed: () {
+              //       context.go(pageSettings);
+              //     },
+              //     child: const Text("Settings")),
             ],
           ),
         ),
+        body: Padding(
+            padding: const EdgeInsets.all(16.0),
+            // child: widget.child,
+            child: const TabBarView(
+              children: [
+                VramEstimatorPage(),
+                SettingsPage(),
+              ],
+            )),
       ),
     );
   }
+// @override
+// Widget build(BuildContext context) {
+//   return Scaffold(
+//     appBar: AppBar(
+//       backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+//       title: Row(
+//         children: [
+//           Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+//             Text(widget.title, style: Theme.of(context).textTheme.titleLarge),
+//             Text(widget.subtitle,
+//                 style: Theme.of(context).textTheme.bodyMedium)
+//           ]),
+//           ElevatedButton(
+//               onPressed: () {
+//                 context.go("/$pageVramEstimator");
+//               },
+//               child: Text("VRAM Estimator")),
+//           ElevatedButton(
+//               onPressed: () {
+//                 context.go("/$pageSettings");
+//               },
+//               child: Text("Settings")),
+//         ],
+//       ),
+//     ),
+//     body: Padding(
+//       padding: EdgeInsets.all(16.0),
+//       child: widget.child,
+//     ),
+//   );
+// }
 }

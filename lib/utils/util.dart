@@ -88,7 +88,7 @@ class HexColor extends Color {
   static int _getColorFromHex(String hexColor) {
     hexColor = hexColor.toUpperCase().replaceAll('#', '');
     if (hexColor.length == 6) {
-      hexColor = 'FF' + hexColor;
+      hexColor = 'FF$hexColor';
     }
     return int.parse(hexColor, radix: 16);
   }
@@ -144,4 +144,11 @@ class ColorGenerator {
       1.0,
     );
   }
+}
+
+class Tuple2<T1, T2> {
+  final T1 item1;
+  final T2 item2;
+
+  Tuple2(this.item1, this.item2);
 }

@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:vram_estimator_flutter/extensions.dart';
+import 'package:trios/utils/extensions.dart';
 import 'package:windows_system_info/windows_system_info.dart';
 
 abstract class GPUInfo {
@@ -32,6 +32,7 @@ class WindowsGPUInfo implements GPUInfo {
     gpuString = [controller.model];
   }
 
+  @override
   String toString() {
     return "GPUInfo(freeVRAM: $freeVRAM, gpuString: $gpuString)";
   }

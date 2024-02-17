@@ -2,16 +2,18 @@ name: Flutter CI
 
 # https://gist.github.com/youhide/121750fc4878801ea8e908080b535beb
 
-on: push
-#  push:
-#    branches: [ master ]
-#  pull_request:
-#    branches: [ master ]
+on: #push
+  push:
+    branches: [ main ]
+    tags:
+      - '*'
+  pull_request:
+    branches: [ main ]
 
 env:
   flutter_channel: "beta" # or: 'stable' or 'dev' or 'beta'
   #flutter_version: '2.2.2'
-  macos_path: "build/macos/Build/Products/Release/VRAM_Estimator.app"
+  macos_path: "build/macos/Build/Products/Release/TriOS.app"
   windows_path: "build/windows/x64/runner/Release/*"
 #  linux_path: "build/linux/runner/Release/*"
 

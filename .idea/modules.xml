@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/vram_estimator_flutter.iml" filepath="$PROJECT_DIR$/vram_estimator_flutter.iml" />
+      <module fileurl="file://$PROJECT_DIR$/trios.iml" filepath="$PROJECT_DIR$/trios.iml" />
     </modules>
   </component>
 </project>

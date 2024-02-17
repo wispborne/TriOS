@@ -3,8 +3,9 @@ import 'dart:io';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
+import 'package:trios/utils/util.dart';
 
-import 'models/mod_result.dart';
+import '../pages/vram_estimator/models/mod_result.dart';
 
 extension DoubleExt on double {
   String bytesAsReadableMB() => "${(this / 1000000).toStringAsFixed(3)} MB";
@@ -35,6 +36,12 @@ extension FileExt on File {
   String get nameWithoutExtension => p.basenameWithoutExtension(path);
 
   String get name => p.basename(path);
+
+  File get normalize => File(p.normalize(absolute.path));
+}
+
+extension DirectoryExt on Directory {
+  Directory get normalize => Directory(p.normalize(absolute.path));
 }
 
 extension FileSystemEntityExt on FileSystemEntity {
@@ -83,6 +90,10 @@ extension IterableExt<T> on Iterable<T> {
 
   bool containsAll(Iterable<T> elements) {
     return elements.every(contains);
+  }
+
+  T random() {
+    return elementAt(DateTime.now().microsecond % length);
   }
 }
 
@@ -157,13 +168,6 @@ extension ObjectExt<T> on T {
   T run(T Function() block) {
     return block();
   }
-}
-
-class Tuple2<T1, T2> {
-  final T1 item1;
-  final T2 item2;
-
-  Tuple2(this.item1, this.item2);
 }
 
 extension HexColor on Color {

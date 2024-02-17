@@ -7,18 +7,18 @@ import 'package:csv/csv.dart';
 import 'package:dart_json_mapper/dart_json_mapper.dart';
 import 'package:path/path.dart' as p;
 import 'package:squadron/squadron.dart';
-import 'package:vram_estimator_flutter/extensions.dart';
-import 'package:vram_estimator_flutter/image_reader/png_chatgpt.dart';
+import 'package:trios/utils/extensions.dart';
 import 'package:yaml/yaml.dart';
 
-import 'image_reader/image_reader_async.dart';
-import 'models/gpu_info.dart';
-import 'models/graphics_lib_config.dart';
-import 'models/graphics_lib_info.dart';
+import '../../models/gpu_info.dart';
+import '../../models/graphics_lib_config.dart';
+import '../../models/graphics_lib_info.dart';
 import 'models/mod_image.dart';
-import 'models/mod_info.dart';
-import 'models/mod_info_json.dart';
+import '../../models/mod_info.dart';
+import '../../models/mod_info_json.dart';
 import 'models/mod_result.dart';
+import 'image_reader/image_reader_async.dart';
+import 'image_reader/png_chatgpt.dart';
 
 class VramChecker {
   List<String>? enabledModIds;
@@ -506,7 +506,7 @@ class VramChecker {
             return csvReader.convert(file.readAsStringSync());
           } catch (e) {
             progressText.appendAndPrint(
-                "Unable to read ${file.path}: ${e}", verboseOut);
+                "Unable to read ${file.path}: $e", verboseOut);
           }
 
           return [null];
@@ -543,7 +543,7 @@ class VramChecker {
                   final path = row[pathColumn].trim();
                   return GraphicsLibInfo(mapType, p.normalize(path));
                 } catch (e) {
-                  progressText.appendAndPrint("$row - ${e}", verboseOut);
+                  progressText.appendAndPrint("$row - $e", verboseOut);
                 }
 
                 return null;

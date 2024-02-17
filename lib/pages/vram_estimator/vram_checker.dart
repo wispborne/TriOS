@@ -7,7 +7,7 @@ import 'package:csv/csv.dart';
 import 'package:dart_json_mapper/dart_json_mapper.dart';
 import 'package:path/path.dart' as p;
 import 'package:squadron/squadron.dart';
-import 'package:vram_estimator_flutter/utils/extensions.dart';
+import 'package:trios/utils/extensions.dart';
 import 'package:yaml/yaml.dart';
 
 import '../../models/gpu_info.dart';

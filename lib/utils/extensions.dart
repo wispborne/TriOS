@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
-import 'package:vram_estimator_flutter/utils/util.dart';
+import 'package:trios/utils/util.dart';
 
 import '../pages/vram_estimator/models/mod_result.dart';
 

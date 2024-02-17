@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:fimber/fimber.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as path;
-import 'package:vram_estimator_flutter/settings/settings.dart';
+import 'package:trios/settings/settings.dart';
 
 var settingsFile = File("trios-settings.json");
 

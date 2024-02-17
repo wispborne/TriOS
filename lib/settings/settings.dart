@@ -3,8 +3,8 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:vram_estimator_flutter/settings/settingsSaver.dart';
-import 'package:vram_estimator_flutter/utils/util.dart';
+import 'package:trios/settings/settingsSaver.dart';
+import 'package:trios/utils/util.dart';
 
 part '../generated/settings/settings.freezed.dart';
 

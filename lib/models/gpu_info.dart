@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:vram_estimator_flutter/utils/extensions.dart';
+import 'package:trios/utils/extensions.dart';
 import 'package:windows_system_info/windows_system_info.dart';
 
 abstract class GPUInfo {

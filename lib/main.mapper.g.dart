@@ -12,8 +12,8 @@ import 'widgets/graph_radio_selector.dart' as x4 show GraphType;
 
 import 'dart:core';
 import 'package:dart_json_mapper/src/model/annotations.dart' as prefix0;
-import 'package:vram_estimator_flutter/models/enabled_mods.dart' as prefix1;
-import 'package:vram_estimator_flutter/models/mod_info_json.dart' as prefix2;
+import 'package:trios/models/enabled_mods.dart' as prefix1;
+import 'package:trios/models/mod_info_json.dart' as prefix2;
 
 // ignore_for_file: camel_case_types
 // ignore_for_file: implementation_imports
@@ -42,8 +42,8 @@ void _initializeReflectable(JsonMapperAdapter adapter) {
 }
 
 final mainGeneratedAdapter = JsonMapperAdapter(
-  title: 'vram_estimator_flutter',
-  url: 'package:vram_estimator_flutter/main.dart',
+  title: 'trios',
+  url: 'package:trios/main.dart',
   reflectableData: _data,
   memberSymbolMap: _memberSymbolMap,
   valueDecorators: {

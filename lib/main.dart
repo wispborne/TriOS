@@ -7,10 +7,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:vram_estimator_flutter/pages/settings/settings_page.dart';
-import 'package:vram_estimator_flutter/pages/vram_estimator/vram_estimator.dart';
-import 'package:vram_estimator_flutter/settings/settingsSaver.dart';
-import 'package:vram_estimator_flutter/utils/extensions.dart';
+import 'package:trios/pages/settings/settings_page.dart';
+import 'package:trios/pages/vram_estimator/vram_estimator.dart';
+import 'package:trios/settings/settingsSaver.dart';
+import 'package:trios/utils/extensions.dart';
 import 'package:window_size/window_size.dart';
 
 import 'main.mapper.g.dart' show initializeJsonMapper;

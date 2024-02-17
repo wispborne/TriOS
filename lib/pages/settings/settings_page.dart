@@ -3,10 +3,10 @@ import 'dart:io';
 import 'package:fimber/fimber.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:vram_estimator_flutter/self_updater/script_generator.dart';
-import 'package:vram_estimator_flutter/settings/settings.dart';
-import 'package:vram_estimator_flutter/utils/extensions.dart';
-import 'package:vram_estimator_flutter/utils/util.dart';
+import 'package:trios/self_updater/script_generator.dart';
+import 'package:trios/settings/settings.dart';
+import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/util.dart';
 
 import '../../self_updater/checker.dart';
 

@@ -191,10 +191,10 @@ class _AppShellState extends State<AppShell> {
             ],
           ),
         ),
-        body: Padding(
-            padding: const EdgeInsets.all(16.0),
+        body: const Padding(
+            padding: EdgeInsets.all(16.0),
             // child: widget.child,
-            child: const TabBarView(
+            child: TabBarView(
               children: [
                 VramEstimatorPage(),
                 SettingsPage(),

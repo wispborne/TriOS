@@ -4,7 +4,7 @@ name: Flutter CI
 
 on: #push
   push:
-#    branches: [ dev ]
+    #    branches: [ dev ]
     tags:
       - '*'
 #  pull_request:
@@ -29,38 +29,55 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-#      - name: 'Get Previous tag'
-#        id: previoustag
-#        uses: "WyriHaximus/github-action-get-previous-tag@v1"
-#        with:
-#          fallback: 0.0.1 # Optional fallback tag to use when no tag can be found
+      #      - name: 'Get Previous tag'
+      #        id: previoustag
+      #        uses: "WyriHaximus/github-action-get-previous-tag@v1"
+      #        with:
+      #          fallback: 0.0.1 # Optional fallback tag to use when no tag can be found
 
-#      - name: 'Get current time'
-#        uses: josStorer/get-current-time@v2
-#        id: current-time
-#        with:
-#          format: 'YYYYMMDD-HH'
-#          utcOffset: "+08:00"
+      #      - name: 'Get current time'
+      #        uses: josStorer/get-current-time@v2
+      #        id: current-time
+      #        with:
+      #          format: 'YYYYMMDD-HH'
+      #          utcOffset: "+08:00"
+
+      - name: Fetch Tags
+        run: git fetch --prune --unshallow --tags
+
+        # Tags with unstable, dev, qa, or rc in them will be marked as prerelease.
+      - name: Set Variables
+        run: |
+          echo "VERSION=$(git describe --tags)" >> $GITHUB_ENV
+          git log --format=%B -n 1 $(git log -1 --pretty=format:"%h") | cat - > changes.txt
+          prerelease_regex=".*dev|qa|rc|unstable.*|^0.*"
+          if [[ "$(git describe --tags)" =~ $prerelease_regex ]]; then
+            echo "IS_PRERELEASE=true" >> $GITHUB_ENV;
+          else
+            echo "IS_PRERELEASE=false" >> $GITHUB_ENV;
+          fi
 
       - name: 'Create GitHub release from a tag'
         id: create_release
-        if: ${{ ! startsWith(github.ref, 'refs/tags/') }}
+#        if: ${{ ! startsWith(github.ref, 'refs/tags/') }}
         uses: ncipollo/release-action@v1
         with:
           commit: '${{ github.sha }}'
-          tag: '${{ github.ref }}'
-          name: "Build ${{ github.ref }}"
-          prerelease: false # improve later
+          name: ${{ env.VERSION }}
+          tag: ${{ env.VERSION }}
+          bodyFile: changes.txt
+          draft: false
+          prerelease: '${{ env.IS_PRERELEASE }}'
 
-#      - name: 'Create GitHub release from dev'
-#        id: create_release
-#        if: ${{ ! startsWith(github.ref, 'refs/heads/dev') }}
-#        uses: ncipollo/release-action@v1
-#        with:
-#          commit: '${{ github.sha }}'
-#          tag: '${{ steps.previoustag.outputs.tag }}-${{ steps.current-time.outputs.time }}'
-#          name: "Build ${{ steps.previoustag.outputs.tag }}-${{ steps.current-time.outputs.time }}"
-#          prerelease: true
+      #      - name: 'Create GitHub release from dev'
+      #        id: create_release
+      #        if: ${{ ! startsWith(github.ref, 'refs/heads/dev') }}
+      #        uses: ncipollo/release-action@v1
+      #        with:
+      #          commit: '${{ github.sha }}'
+      #          tag: '${{ steps.previoustag.outputs.tag }}-${{ steps.current-time.outputs.time }}'
+      #          name: "Build ${{ steps.previoustag.outputs.tag }}-${{ steps.current-time.outputs.time }}"
+      #          prerelease: true
 
       #      - name: create release
       #        id: create_release

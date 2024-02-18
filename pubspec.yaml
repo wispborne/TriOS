@@ -62,7 +62,10 @@ dependencies:
       ref: 5c51870ced62a00e809ba4b81a846a052d241c9f
   freezed_annotation: ^2.4.1
   json_annotation: ^4.8.1
-  http: ^1.2.0
+  http: ^1.2.1
+  flutter_svg: ^2.0.9
+  pub_semver: ^2.1.4
+
 
 dev_dependencies:
   # dart run build_runner watch --delete-conflicting-outputs
@@ -96,9 +99,8 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
-  #   - images/a_dot_ham.jpeg
+  assets:
+    - images/telos_faction_crest.svg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

@@ -5,6 +5,7 @@ import 'package:fimber/fimber.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trios/pages/settings/settings_page.dart';
@@ -151,6 +152,15 @@ class _AppShellState extends State<AppShell> {
           backgroundColor: Theme.of(context).colorScheme.inversePrimary,
           title: Row(
             children: [
+              Padding(
+                padding: const EdgeInsets.only(right: 16.0),
+                child: SvgPicture.asset(("images/telos_faction_crest.svg"),
+                    colorFilter: ColorFilter.mode(
+                        Theme.of(context).colorScheme.primary,
+                        BlendMode.srcIn),
+                    width: 48,
+                    height: 48),
+              ),
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(appTitle, style: Theme.of(context).textTheme.titleLarge),
                 Text(appSubtitle,

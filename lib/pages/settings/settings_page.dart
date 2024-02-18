@@ -8,6 +8,7 @@ import 'package:trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/util.dart';
 
+import '../../main.dart';
 import '../../self_updater/checker.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
@@ -64,15 +65,21 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             padding: const EdgeInsets.only(top: 32, bottom: 8.0),
             child: ElevatedButton(
               onPressed: () async {
-                await SelfUpdater.checkForUpdate();
+                var release = await SelfUpdater.getLatestRelease();
+                Fimber.i(
+                    "Current version: $version. Latest version: ${release?.tagName}. Newer? ${SelfUpdater.hasNewVersion(version, release!)}");
               },
               child: const Text('Test Update Checker'),
             ),
           ),
           ElevatedButton(
             onPressed: () async {
-              Fimber.i(ScriptGenerator.generateFileUpdateScript(
-                  [Tuple2(null, File("test.txt"))], "windows", 5));
+              Fimber.i(ScriptGenerator.generateFileUpdateScript([
+                Tuple2(File("F:/Code/Starsector/TriOS/VRAM_usage_of_mods.txt2"),
+                    File("F:/Code/Starsector/TriOS/VRAM_usage_of_mods.txt")),
+                Tuple2(File("F:/Code/Starsector/TriOS/VRAM_usage_of_mods.txt"),
+                    File("F:/Code/Starsector/TriOS/VRAM_usage_of_mods.txt2"))
+              ], "windows", 2));
             },
             child: const Text('Print Update Script'),
           )

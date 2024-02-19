@@ -150,7 +150,7 @@ flutter:
 # https://pub.dev/packages/ffigen
 # Usage: `dart run ffigen`
 ffigen:
-  name: LibArchive
+  name: LibArchiveBinding
   output: lib/libarchive/libarchive_bindings.dart
   headers:
     entry-points:

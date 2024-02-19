@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:fimber/fimber.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/libarchive/libarchive.dart';
 import 'package:trios/self_updater/script_generator.dart';
 import 'package:trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
@@ -82,7 +83,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               ], "windows", 2));
             },
             child: const Text('Print Update Script'),
-          )
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              getArchive();
+            },
+            child: const Text('Load libarchive'),
+          ),
         ],
       ),
     );

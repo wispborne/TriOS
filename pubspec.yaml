@@ -65,7 +65,8 @@ dependencies:
   http: ^1.2.1
   flutter_svg: ^2.0.9
   pub_semver: ^2.1.4
-
+  ffi: ^2.1.2
+  dynamic_library: ^0.9.0
 
 dev_dependencies:
   # dart run build_runner watch --delete-conflicting-outputs
@@ -87,11 +88,12 @@ dev_dependencies:
   #  riverpod_lint: ^2.3.9 # <https://github.com/google/reflectable.dart/pull/326>
   #  analyzer: ^6.4.1
   flutter_launcher_icons: "^0.13.1"
+  ffigen: ^11.0.0
 
 flutter_launcher_icons:
-  image_path: "images/telos_faction_crest.png"
-#  web:
-#    generate: true
+  image_path: "assets/images/telos_faction_crest.png"
+  #  web:
+  #    generate: true
   #    image_path: "path/to/image.png"
   #    background_color: "#hexcode"
   #    theme_color: "#hexcode"
@@ -114,8 +116,9 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
-    - images/telos_faction_crest.svg
-    - images/telos_faction_crest.png
+    - assets/images/telos_faction_crest.svg
+    - assets/images/telos_faction_crest.png
+    - assets/libarchive/windows/bin/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
@@ -142,3 +145,20 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
+
+# LIBARCHIVE
+# https://pub.dev/packages/ffigen
+# Usage: `dart run ffigen`
+ffigen:
+  name: LibArchive
+  output: lib/libarchive/libarchive_bindings.dart
+  headers:
+    entry-points:
+      - assets/libarchive/windows/include/archive.h
+      - assets/libarchive/windows/include/archive_entry.h
+#  structs:
+#    rename:
+#      '_(.*)': '$1' # Removes prefix underscores from all structures.
+#    member-rename:
+#      '.*': # Matches any struct.
+#        '_(.*)': '$1' # Removes prefix underscores from members.

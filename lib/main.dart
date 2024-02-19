@@ -154,7 +154,7 @@ class _AppShellState extends State<AppShell> {
             children: [
               Padding(
                 padding: const EdgeInsets.only(right: 16.0),
-                child: SvgPicture.asset(("images/telos_faction_crest.svg"),
+                child: SvgPicture.asset(("assets/images/telos_faction_crest.svg"),
                     colorFilter: ColorFilter.mode(
                         Theme.of(context).colorScheme.primary,
                         BlendMode.srcIn),

@@ -45,7 +45,7 @@ jobs:
       - name: Fetch Tags
         run: git fetch --prune --unshallow --tags
 
-        # Tags with unstable, dev, qa, or rc in them will be marked as prerelease.
+        # Tags starting with 0 or with unstable, dev, qa, or rc in them will be marked as prerelease.
       - name: Set Variables
         run: |
           echo "VERSION=$(git describe --tags)" >> $GITHUB_ENV

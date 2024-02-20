@@ -8,7 +8,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trios/libarchive/libarchive.dart';
-import 'package:trios/libarchive/libarchive_bindings.dart';
 import 'package:trios/main.dart';
 
 void main() {
@@ -30,9 +29,13 @@ void main() {
   });
 
   test("LibArchive test", () {
-    var libArchive = getArchive();
-    final archive = libArchive.archive_read_new();
+    configureLogging();
+    final libArchive = LibArchive();
+    final fileStrings = libArchive.listPathsInArchive("F:/Downloads/Combat-Activators-v1.1.3.zip");
+    for (var element in fileStrings) {
+      print(element);
+    }
 
-    libArchive.archive_free(archive);
+    expect(fileStrings.length,findsAtLeast(1));
   });
 }

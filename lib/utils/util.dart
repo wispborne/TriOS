@@ -115,8 +115,7 @@ class ColorGenerator {
   }
 
   // New: Generate colors based on an existing color
-  static Color generateFromColor(String text, Color baseColor,
-      {bool complementary = false}) {
+  static Color generateFromColor(String text, Color baseColor, {bool complementary = false}) {
     final random = Random(text.hashCode);
 
     // 1. Manipulation Options
@@ -125,13 +124,9 @@ class ColorGenerator {
     } else {
       // Apply adjustments from string's hash
       int lightnessOffset = random.nextInt(70) - 35; // Range: -35 to 35
-      double newLightness =
-          (baseColor.computeLuminance() + lightnessOffset / 100)
-              .clamp(0.0, 1.0);
+      double newLightness = (baseColor.computeLuminance() + lightnessOffset / 100).clamp(0.0, 1.0);
 
-      return HSLColor.fromColor(baseColor)
-          .withLightness(newLightness)
-          .toColor();
+      return HSLColor.fromColor(baseColor).withLightness(newLightness).toColor();
     }
   }
 
@@ -151,4 +146,15 @@ class Tuple2<T1, T2> {
   final T2 item2;
 
   Tuple2(this.item1, this.item2);
+}
+
+class NestedException implements Exception {
+  final String cause;
+  final exception;
+  final stacktrace;
+
+  NestedException(this.cause, [this.exception, this.stacktrace]);
+
+  @override
+  String toString() => '$cause\n\tCaused by: $exception${stacktrace != null ? "\n$stacktrace" : ""}';
 }

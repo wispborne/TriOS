@@ -86,7 +86,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           ),
           ElevatedButton(
             onPressed: () async {
-              getArchive();
+              // getArchive();
             },
             child: const Text('Load libarchive'),
           ),

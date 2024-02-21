@@ -10,7 +10,7 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/util.dart';
 
 import '../../main.dart';
-import '../../self_updater/checker.dart';
+import '../../self_updater/self_updater.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
@@ -67,8 +67,31 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             child: ElevatedButton(
               onPressed: () async {
                 var release = await SelfUpdater.getLatestRelease();
+                if (release == null) {
+                  Fimber.e("No release found");
+                  return;
+                }
+
+                final zipDest = Directory.systemTemp.createTempSync("trios_update");
+                // final zipFile = File("$zipDest/trios_update.zip");
+                final downloadedFile =
+                    await SelfUpdater.downloadRelease(release, zipDest, onProgress: (received, total) {
+                  Fimber.v(
+                      "Bytes received: ${received.bytesAsReadableMB()}, Total bytes: ${total.bytesAsReadableMB()}");
+                });
+
+                if (downloadedFile == null) {
+                  return;
+                }
+
+                Fimber.i("Downloaded release to: ${downloadedFile.path}");
+
+                await LibArchive().extractEntriesInArchive(downloadedFile, zipDest.absolute.path);
+                Fimber.i("Extracted release to: ${zipDest.path}");
+                downloadedFile.deleteSync();
+
                 Fimber.i(
-                    "Current version: $version. Latest version: ${release?.tagName}. Newer? ${SelfUpdater.hasNewVersion(version, release!)}");
+                    "Current version: $version. Latest version: ${release.tagName}. Newer? ${SelfUpdater.hasNewVersion(version, release!)}");
               },
               child: const Text('Test Update Checker'),
             ),
@@ -86,7 +109,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           ),
           ElevatedButton(
             onPressed: () async {
-              // getArchive();
+              // LibArchive().getEntriesInArchive();
             },
             child: const Text('Load libarchive'),
           ),

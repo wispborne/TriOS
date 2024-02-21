@@ -1,16 +1,19 @@
 import 'dart:convert';
+import 'dart:io';
 
+import 'package:collection/collection.dart';
 import 'package:fimber/fimber.dart';
 import 'package:http/http.dart' as http;
 import 'package:pub_semver/pub_semver.dart';
+
+import '../utils/util.dart';
 
 class SelfUpdateInfo {
   final String version;
   final String url;
   final String releaseNote;
 
-  SelfUpdateInfo(
-      {required this.version, required this.url, required this.releaseNote});
+  SelfUpdateInfo({required this.version, required this.url, required this.releaseNote});
 
   factory SelfUpdateInfo.fromJson(Map<String, dynamic> json) {
     return SelfUpdateInfo(
@@ -23,8 +26,7 @@ class SelfUpdateInfo {
 
 class SelfUpdater {
   static const String githubBase = "https://api.github.com";
-  static const String githubLatestRelease =
-      "$githubBase/repos/wispborne/trios/releases/latest";
+  static const String githubLatestRelease = "$githubBase/repos/wispborne/trios/releases/latest";
 
   static bool hasNewVersion(String currentVersion, Release latestRelease) {
     try {
@@ -86,6 +88,34 @@ class SelfUpdater {
     }
 
     return null;
+  }
+
+  /// Downloads the release asset for the given platform.
+  /// If [platform] is not provided, it will use the current platform.
+  /// Returns the path of the downloaded file.
+  static Future<File?> downloadRelease(Release release, Directory destDir,
+      {String? platform, ProgressCallback? onProgress}) async {
+    final platformToUse = platform ?? Platform.operatingSystem;
+    final assetNameForPlatform = switch (platformToUse) {
+      "windows" => "windows",
+      "linux" => "linux",
+      "macos" => "macos",
+      _ => throw UnsupportedError("Unsupported platform: $platformToUse"),
+    };
+
+    final downloadLink = release.assets
+        .firstWhereOrNull((element) => element.name.toLowerCase().contains(assetNameForPlatform))
+        ?.browserDownloadUrl;
+
+    if (downloadLink == null) {
+      Fimber.e("No download link found for platform: $assetNameForPlatform");
+      return null;
+    }
+
+    Fimber.i("Download link: $downloadLink");
+
+    final downloadResult = await downloadFile(downloadLink, destDir.absolute.path, onProgress: onProgress);
+    return downloadResult;
   }
 }
 

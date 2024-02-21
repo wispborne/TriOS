@@ -36,9 +36,9 @@ class LibArchiveEntry {
 }
 
 class LibArchive {
-  late var binding = _getArchive();
+  static var binding = _getArchive();
 
-  LibArchiveBinding _getArchive() {
+  static LibArchiveBinding _getArchive() {
     final currentLibarchivePath = p.join(Directory.current.absolute.path, "assets/libarchive");
 
     final libArchivePathForPlatform = switch (Platform.operatingSystem) {
@@ -134,7 +134,7 @@ class LibArchive {
     return readArchiveAndDoOnEach(archivePath, (archivePtr, entryPtrPtr) => _getEntryInArchive(entryPtrPtr));
   }
 
-  List<LibArchiveEntry?> extractEntriesInArchive(String archivePath, String destinationPath) {
+  Future<List<LibArchiveEntry?>> extractEntriesInArchive(File archivePath, String destinationPath) async {
     final writePtr = binding.archive_write_disk_new();
     try {
       const writeFlags = ARCHIVE_EXTRACT_TIME | ARCHIVE_EXTRACT_PERM | ARCHIVE_EXTRACT_ACL | ARCHIVE_EXTRACT_FFLAGS;
@@ -143,7 +143,7 @@ class LibArchive {
       var errCode = 0;
 
       // Iterate through the archive and extract each entry
-      return readArchiveAndDoOnEach(archivePath, (archivePtr, entryPtrPtr) {
+      return readArchiveAndDoOnEach(archivePath.absolute.path, (archivePtr, entryPtrPtr) {
         final entry = _getEntryInArchive(entryPtrPtr);
 
         // Add the destination path to the entry

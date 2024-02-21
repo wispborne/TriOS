@@ -1,8 +1,10 @@
 import 'dart:io';
 import 'dart:math';
 
+import 'package:fimber/fimber.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
 
 MaterialColor createMaterialColor(Color color) {
@@ -138,6 +140,41 @@ class ColorGenerator {
       255 - color.blue,
       1.0,
     );
+  }
+}
+
+typedef ProgressCallback = void Function(int bytesReceived, int contentLengthBytes);
+
+Future<File?> downloadFile(String url, String savePath, {ProgressCallback? onProgress}) async {
+  try {
+    final request = http.Request('GET', Uri.parse(url));
+    final streamedResponse = await http.Client().send(request);
+
+    final contentLength = streamedResponse.contentLength ?? -1;
+    int bytesReceived = 0;
+
+    var fileName = request.headers['content-disposition']?.split('=')[1] ?? url.split('/').last;
+    final file = File(p.join(savePath, fileName));
+
+    if (file.existsSync()) {
+      file.deleteSync();
+    }
+
+    final sink = file.openWrite();
+    await streamedResponse.stream.listen((chunk) {
+      bytesReceived += chunk.length;
+      sink.add(chunk);
+      if (onProgress != null) {
+        onProgress(bytesReceived, contentLength);
+      }
+    }).asFuture();
+    await sink.close();
+
+    Fimber.d('File downloaded successfully: ${file.path} from $url.');
+    return file;
+  } catch (error) {
+    Fimber.d('Error downloading file: $error from $url');
+    rethrow;
   }
 }
 

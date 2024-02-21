@@ -145,20 +145,3 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
-
-# LIBARCHIVE
-# https://pub.dev/packages/ffigen
-# Usage: `dart run ffigen`
-ffigen:
-  name: LibArchiveBinding
-  output: lib/libarchive/libarchive_bindings.dart
-  headers:
-    entry-points:
-      - assets/libarchive/windows/include/archive.h
-      - assets/libarchive/windows/include/archive_entry.h
-#  structs:
-#    rename:
-#      '_(.*)': '$1' # Removes prefix underscores from all structures.
-#    member-rename:
-#      '.*': # Matches any struct.
-#        '_(.*)': '$1' # Removes prefix underscores from members.

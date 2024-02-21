@@ -42,17 +42,25 @@ class LibArchive {
     final currentLibarchivePath = p.join(Directory.current.absolute.path, "assets/libarchive");
 
     final libArchivePathForPlatform = switch (Platform.operatingSystem) {
-      "windows" => Directory("$currentLibarchivePath/windows/bin/archive.dll").absolute.normalize.path,
-      "linux" => Directory("$currentLibarchivePath/linux/archive.so").absolute.normalize.path,
-      "macos" => Directory("$currentLibarchivePath/macos/archive.dylib").absolute.normalize.path,
+      "windows" => File("$currentLibarchivePath/windows/bin/archive.dll").absolute.normalize,
+      "linux" => File("$currentLibarchivePath/linux/archive.so").absolute.normalize,
+      "macos" => File("$currentLibarchivePath/macos/archive.dylib").absolute.normalize,
       _ => throw UnimplementedError('Libarchive not supported for this platform')
     };
 
-    if (!File(libArchivePathForPlatform).existsSync()) {
+    if (!libArchivePathForPlatform.existsSync()) {
       throw Exception("Libarchive not found at $libArchivePathForPlatform");
     }
 
-    var dynamicLibrary = DynamicLibrary.open(libArchivePathForPlatform);
+    DynamicLibrary.open(libArchivePathForPlatform.parent.resolve("zstd.dll").path);
+    DynamicLibrary.open(libArchivePathForPlatform.parent.resolve("libcrypto-3-x64.dll").path);
+    DynamicLibrary.open(libArchivePathForPlatform.parent.resolve("lz4.dll").path);
+    DynamicLibrary.open(libArchivePathForPlatform.parent.resolve("zlib1.dll").path);
+    DynamicLibrary.open(libArchivePathForPlatform.parent.resolve("iconv-2.dll").path);
+    DynamicLibrary.open(libArchivePathForPlatform.parent.resolve("liblzma.dll").path);
+    DynamicLibrary.open(libArchivePathForPlatform.parent.resolve("bz2.dll").path);
+    DynamicLibrary.open(libArchivePathForPlatform.parent.resolve("libxml2.dll").path);
+    var dynamicLibrary = DynamicLibrary.open(libArchivePathForPlatform.path);
     return LibArchiveBinding(dynamicLibrary);
   }
 
@@ -68,13 +76,13 @@ class LibArchive {
     try {
       errCode = binding.archive_read_support_filter_all(archivePtr);
       if (errCode != ARCHIVE_OK) {
-        throw Exception("Failed to support all filters. Error code: ${_errorCodeToString(errCode)}."
+        throw Exception("Failed to support all filters. Error code: ${_errorCodeToString(errCode)}. "
             "Message: ${binding.archive_error_string(archivePtr).toDartStringSafe()}. ");
       }
 
       errCode = binding.archive_read_support_format_all(archivePtr);
       if (errCode != ARCHIVE_OK) {
-        throw Exception("Failed to support all formats. Error code: ${_errorCodeToString(errCode)}."
+        throw Exception("Failed to support all formats. Error code: ${_errorCodeToString(errCode)}. "
             "Message: ${binding.archive_error_string(archivePtr).toDartStringSafe()}. ");
       }
 
@@ -82,7 +90,7 @@ class LibArchive {
       var readPointer = binding.archive_read_open_filename(archivePtr, pathPtr, 10240);
       calloc.free(pathPtr);
       if (readPointer != ARCHIVE_OK) {
-        throw Exception("Failed to open archive. Error code: ${_errorCodeToString(readPointer)}."
+        throw Exception("Failed to open archive. Error code: ${_errorCodeToString(readPointer)}. "
             "Message: ${binding.archive_error_string(archivePtr).toDartStringSafe()}. ");
       }
 
@@ -97,10 +105,10 @@ class LibArchive {
         }
 
         if (readPointer < ARCHIVE_OK) {
-          throw Exception("Failed to read next header. Error code: ${_errorCodeToString(readPointer)}."
+          throw Exception("Failed to read next header. Error code: ${_errorCodeToString(readPointer)}. "
               "Message: ${binding.archive_error_string(archivePtr).toDartStringSafe()}. ");
         } else if (readPointer < ARCHIVE_WARN) {
-          throw Exception("Warning while reading next header. Error code: ${_errorCodeToString(readPointer)}."
+          throw Exception("Warning while reading next header. Error code: ${_errorCodeToString(readPointer)}. "
               "Message: ${binding.archive_error_string(archivePtr).toDartStringSafe()}. ");
         } else {
           // Combat-Activators-v1.1.3/src/activators/examples/ToggledDriveActivator.java

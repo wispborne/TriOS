@@ -28,8 +28,7 @@ extension StringExt on String {
 }
 
 extension FileExt on File {
-  String relativePath(Directory modFolder) =>
-      p.normalize(p.relative(absolute.path, from: modFolder.absolute.path));
+  String relativePath(Directory modFolder) => p.normalize(p.relative(absolute.path, from: modFolder.absolute.path));
 
   String relativeTo(Directory modFolder) => relativePath(modFolder);
 
@@ -51,9 +50,7 @@ extension FileSystemEntityExt on FileSystemEntity {
 }
 
 extension IterableExt<T> on Iterable<T> {
-  String joinToString(
-      {String separator = ", ",
-      required String Function(T element) transform}) {
+  String joinToString({String separator = ", ", required String Function(T element) transform}) {
     return map(transform).join(separator);
   }
 
@@ -83,8 +80,7 @@ extension IterableExt<T> on Iterable<T> {
     return maxElement;
   }
 
-  Iterable<T> sortedByDescending<R extends Comparable<R>>(
-      R Function(T) selector) {
+  Iterable<T> sortedByDescending<R extends Comparable<R>>(R Function(T) selector) {
     return toList()..sort((a, b) => selector(b).compareTo(selector(a)));
   }
 
@@ -147,8 +143,7 @@ extension IntExt on int {
 
 extension ModListExt on Iterable<Mod> {
   int getBytesUsedByDedupedImages() {
-    return expand(
-            (mod) => mod.images.map((img) => Tuple2(mod.info.modFolder, img)))
+    return expand((mod) => mod.images.map((img) => Tuple2(mod.info.modFolder, img)))
         .toSet()
         .map((pair) => pair.item2.bytesUsed)
         .sum;

@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:math';
 
+import 'package:collection/collection.dart';
 import 'package:fimber/fimber.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -194,4 +195,8 @@ class NestedException implements Exception {
 
   @override
   String toString() => '$cause\n\tCaused by: $exception${stacktrace != null ? "\n$stacktrace" : ""}';
+}
+
+TargetPlatform? get currentPlatform {
+  return TargetPlatform.values.firstWhereOrNull((element) => element.name.toLowerCase() == Platform.operatingSystem);
 }

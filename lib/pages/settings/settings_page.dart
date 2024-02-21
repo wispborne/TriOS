@@ -91,18 +91,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 Fimber.i("Extracted release to: ${zipDest.path}");
                 downloadedFile.deleteSync();
 
-                final filePairs = zipDest
-                    .listSync()
-                    .map((e) {
-                      if (e is File) {
-                        return Tuple2(e, File(p.join(ref.read(appSettings).gameDir!, e.path.split("/").last)));
-                      }
-                      return null;
-                    })
-                    .whereType<Tuple2<File, File>>()
-                    .toList();
-
-                final updateScriptFile = await ScriptGenerator.writeUpdateScriptToFile(filePairs, zipDest);
+                final updateScriptFile = await ScriptGenerator.writeUpdateScriptToFileSimple(
+                    zipDest, Directory(p.join(Directory.current.path, "update-test")));
                 Fimber.i("Wrote update script to: ${updateScriptFile.path}");
 
                 Fimber.i(
@@ -110,17 +100,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               },
               child: const Text('Test Update Checker'),
             ),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Fimber.i(ScriptGenerator.generateFileUpdateScript([
-                Tuple2(File("F:/Code/Starsector/TriOS/VRAM_usage_of_mods.txt2"),
-                    File("F:/Code/Starsector/TriOS/VRAM_usage_of_mods.txt")),
-                Tuple2(File("F:/Code/Starsector/TriOS/VRAM_usage_of_mods.txt"),
-                    File("F:/Code/Starsector/TriOS/VRAM_usage_of_mods.txt2"))
-              ], "windows", 2));
-            },
-            child: const Text('Print Update Script'),
           ),
           ElevatedButton(
             onPressed: () async {

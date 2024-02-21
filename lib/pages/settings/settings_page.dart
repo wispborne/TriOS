@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:fimber/fimber.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as p;
 import 'package:trios/libarchive/libarchive.dart';
 import 'package:trios/self_updater/script_generator.dart';
 import 'package:trios/settings/settings.dart';
@@ -89,6 +90,20 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 await LibArchive().extractEntriesInArchive(downloadedFile, zipDest.absolute.path);
                 Fimber.i("Extracted release to: ${zipDest.path}");
                 downloadedFile.deleteSync();
+
+                final filePairs = zipDest
+                    .listSync()
+                    .map((e) {
+                      if (e is File) {
+                        return Tuple2(e, File(p.join(ref.read(appSettings).gameDir!, e.path.split("/").last)));
+                      }
+                      return null;
+                    })
+                    .whereType<Tuple2<File, File>>()
+                    .toList();
+
+                final updateScriptFile = await ScriptGenerator.writeUpdateScriptToFile(filePairs, zipDest);
+                Fimber.i("Wrote update script to: ${updateScriptFile.path}");
 
                 Fimber.i(
                     "Current version: $version. Latest version: ${release.tagName}. Newer? ${SelfUpdater.hasNewVersion(version, release!)}");

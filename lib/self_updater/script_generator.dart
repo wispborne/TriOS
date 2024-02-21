@@ -3,6 +3,22 @@ import 'dart:io';
 import '../utils/util.dart';
 
 class ScriptGenerator {
+  /// Write a script to a file that will update the files in [filePairs] and then run the current executable.
+  /// For destDir, use `Directory.systemTemp` to write to the system temp directory.
+  static Future<File> writeUpdateScriptToFile(List<Tuple2<File?, File>> filePairs, Directory destDir,
+      {int delaySeconds = 3}) async {
+    final tempFileNameExt = switch (Platform.operatingSystem) {
+      "windows" => "bat",
+      "linux" => "sh",
+      "macos" => "sh",
+      _ => throw UnsupportedError("Unsupported platform: ${Platform.operatingSystem}"),
+    };
+
+    final tempFile = File('${destDir.path}/TriOS_self_updater.$tempFileNameExt');
+    await tempFile.writeAsString(generateFileUpdateScript(filePairs, Platform.operatingSystem, delaySeconds));
+    return tempFile;
+  }
+
   static String generateFileUpdateScript(List<Tuple2<File?, File>> filePairs, String platform, int delaySeconds) {
     switch (platform) {
       case "windows":

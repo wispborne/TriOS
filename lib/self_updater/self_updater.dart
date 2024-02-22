@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:fimber/fimber.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
 import 'package:pub_semver/pub_semver.dart';
@@ -26,6 +27,11 @@ class SelfUpdateInfo {
       url: json['url'],
       releaseNote: json['releaseNote'],
     );
+  }
+
+  @override
+  String toString() {
+    return 'SelfUpdateInfo{version: $version, url: $url, releaseNote: $releaseNote}';
   }
 }
 
@@ -62,16 +68,20 @@ class SelfUpdater {
       Fimber.i('Extracted ${extractedFiles.length} files in the ${release.tagName} release to ${extractedDir.path}');
 
       // Generate the update script and write it to a file.
-      final updateScriptFile = await ScriptGenerator.writeUpdateScriptToFileSimple(
-          updateWorkingDir, Directory(p.join(Directory.current.path, "update-test")));
+      final scriptDest = kDebugMode ? Directory(p.join(Directory.current.path, "update-test")) : Directory.current;
+      final updateScriptFile = await ScriptGenerator.writeUpdateScriptToFileSimple(updateWorkingDir, scriptDest);
       Fimber.i("Wrote update script to: ${updateScriptFile.path}");
 
       Fimber.i('Running update script: ${updateScriptFile.path}');
 
+      // Run the update script.
+      // Do NOT wait for it. We want to exit immediately after starting the update script.
       if (Platform.isWindows) {
-        final process = await Process.start('cmd', ['/c', updateScriptFile.path]);
+        await Process.start("start", ["", updateScriptFile.absolute.normalize.path],
+            runInShell: true, mode: ProcessStartMode.detached);
       } else {
-        final process = await Process.start('sh', [updateScriptFile.path]);
+        await Process.start('', [updateScriptFile.absolute.normalize.path, "&"],
+            runInShell: true, mode: ProcessStartMode.detached);
       }
 
       if (exitSelfAfter) {

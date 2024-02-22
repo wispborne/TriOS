@@ -321,6 +321,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.7.0"
+  fimber_io:
+    dependency: "direct main"
+    description:
+      name: fimber_io
+      sha256: "6b80d4628c717c03e3e8a3a801b2d67b71f0ff2cfd9754b67943576313dbac57"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.7.0"
   fixnum:
     dependency: transitive
     description:

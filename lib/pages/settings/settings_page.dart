@@ -61,7 +61,36 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             child: Text("Mods Folder: ${ref.read(appSettings).modsDir}"),
           ),
           Padding(
-            padding: const EdgeInsets.only(top: 32, bottom: 8.0),
+            padding: const EdgeInsets.only(top: 32),
+            child: ElevatedButton(
+              onPressed: () async {
+                var release = await SelfUpdater.getLatestRelease();
+                if (release == null) {
+                  Fimber.e("No release found");
+                  return;
+                }
+
+                Fimber.i(
+                    "Current version: $version. Latest version: ${release.tagName}. Newer? ${SelfUpdater.hasNewVersion(release)}");
+              },
+              child: const Text('Has new release?'),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: 16),
+            child: ElevatedButton(
+              onPressed: () async {
+                final scriptPath = File("F:\\Code\\Starsector\\TriOS\\update-test\\TriOS_self_updater.bat");
+                Fimber.v("${scriptPath.path} ${scriptPath.existsSync()}");
+
+                Process.start("start", ["",  scriptPath.path],
+                    runInShell: true, includeParentEnvironment: true, mode: ProcessStartMode.detached);
+              },
+              child: const Text('Run self-update script'),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: 16),
             child: ElevatedButton(
               onPressed: () async {
                 var release = await SelfUpdater.getLatestRelease();
@@ -80,19 +109,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               },
               child: const Text('Force Self-Update'),
             ),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              var release = await SelfUpdater.getLatestRelease();
-              if (release == null) {
-                Fimber.e("No release found");
-                return;
-              }
-
-              Fimber.i(
-                  "Current version: $version. Latest version: ${release.tagName}. Newer? ${SelfUpdater.hasNewVersion(release)}");
-            },
-            child: const Text('Has new release?'),
           ),
         ],
       ),

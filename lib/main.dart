@@ -1,15 +1,15 @@
 import 'dart:io';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
-import 'package:fimber/fimber.dart';
+import 'package:fimber_io/fimber_io.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trios/pages/settings/settings_page.dart';
 import 'package:trios/pages/vram_estimator/vram_estimator.dart';
+import 'package:trios/self_updater/script_generator.dart';
 import 'package:trios/self_updater/self_updater.dart';
 import 'package:trios/settings/settingsSaver.dart';
 import 'package:trios/utils/extensions.dart';
@@ -17,14 +17,15 @@ import 'package:window_size/window_size.dart';
 
 import 'main.mapper.g.dart' show initializeJsonMapper;
 
-const version = "0.0.3";
+const version = "0.0.2";
 const appTitle = "TriOS v$version";
 String appSubtitle =
-    ["Corporate Toolkit", "by Wisp", "Hegemony Tolerated", "TriTachyon Approved", "Random Subtitle"].random();
+    ["Corporate Toolkit", "by Wisp", "Hegemony Tolerated", "TriTachyon Approved", "Powered by Moloch"].random();
 
 configureLogging() {
   const logLevels = kDebugMode ? ["V", "D", "I", "W", "E"] : ["I", "W", "E"];
   Fimber.plantTree(DebugTree.elapsed(logLevels: logLevels, useColors: true));
+  Fimber.plantTree(SizeRollingFileTree(DataSize.mega(10), filenamePrefix: "TriOS_log.", filenamePostfix: ".log"));
 }
 
 void main() async {
@@ -36,20 +37,32 @@ void main() async {
   runApp(ProviderScope(observers: [SettingSaver()], child: const TriOSApp()));
   setWindowTitle(appTitle);
 
-  if (!kDebugMode) {
-    var latestRelease = await SelfUpdater.getLatestRelease();
+  // Clean up old self-update script file.
+  Directory.current.list().listen((file) {
+    if (file is File && file.path.toLowerCase().contains(ScriptGenerator.SELF_UPDATE_FILE_NAME.toLowerCase())) {
+      file.delete();
+    }
+  });
 
-    if (latestRelease != null) {
-      final hasNewVersion = SelfUpdater.hasNewVersion(latestRelease);
-      if (hasNewVersion) {
-        Fimber.i("New version available: ${latestRelease.tagName}");
-        final updateInfo = SelfUpdateInfo(
-            version: latestRelease.tagName,
-            url: latestRelease.assets.first.browserDownloadUrl,
-            releaseNote: latestRelease.body);
-        Fimber.i("Update info: $updateInfo");
-        SelfUpdater.update(latestRelease);
+  if (!kDebugMode) {
+
+    try {
+      var latestRelease = await SelfUpdater.getLatestRelease();
+
+      if (latestRelease != null) {
+        final hasNewVersion = SelfUpdater.hasNewVersion(latestRelease);
+        if (hasNewVersion) {
+          Fimber.i("New version available: ${latestRelease.tagName}");
+          final updateInfo = SelfUpdateInfo(
+              version: latestRelease.tagName,
+              url: latestRelease.assets.first.browserDownloadUrl,
+              releaseNote: latestRelease.body);
+          Fimber.i("Update info: $updateInfo");
+          SelfUpdater.update(latestRelease);
+        }
       }
+    } catch (e, s) {
+      Fimber.e("Error checking for updates: $e", ex: e, stacktrace: s);
     }
   }
 }
@@ -115,7 +128,6 @@ class AppShell extends StatefulWidget {
 }
 
 class _AppShellState extends State<AppShell> {
-  late SharedPreferences _prefs;
   Directory? modsFolder;
   List<File> modRulesCsvs = [];
 

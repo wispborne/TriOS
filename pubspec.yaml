@@ -49,6 +49,7 @@ dependencies:
   dart_extensions_methods: ^2.0.0
   yaml: ^3.1.2
   fimber: ^0.7.0
+  fimber_io: ^0.7.0
   image_size_getter: ^2.1.2
   squadron: ^5.1.6
   squadron_builder: ^2.4.5

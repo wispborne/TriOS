@@ -7,10 +7,12 @@ import '../utils/extensions.dart';
 import '../utils/util.dart';
 
 class ScriptGenerator {
+  static const SELF_UPDATE_FILE_NAME = "TriOS_self_updater";
+
   /// Write a script to a file that will update the files in [filePairs] and then run the current executable.
   /// For destDir, use `Directory.systemTemp` to write to the system temp directory.
   static Future<File> writeUpdateScriptToFileManual(List<Tuple2<File?, File>> filePairs, Directory scriptDestDir,
-      {int delaySeconds = 3}) async {
+      {int delaySeconds = 2}) async {
     final tempFileNameExt = switch (currentPlatform) {
       TargetPlatform.windows => "bat",
       TargetPlatform.macOS => "sh",
@@ -22,13 +24,14 @@ class ScriptGenerator {
       scriptDestDir.createSync(recursive: true);
     }
 
-    final tempFile = File('${scriptDestDir.path}/TriOS_self_updater.$tempFileNameExt');
-    await tempFile.writeAsString(generateFileUpdateScript(filePairs, Platform.operatingSystem, delaySeconds));
+    final tempFile = File('${scriptDestDir.path}/$SELF_UPDATE_FILE_NAME.$tempFileNameExt');
+    await tempFile.writeAsString(generateFileUpdateScript(
+        filePairs, scriptDestDir.resolve(Platform.executable) as File, Platform.operatingSystem, delaySeconds));
     return tempFile;
   }
 
   static Future<File> writeUpdateScriptToFileSimple(Directory sourceDir, Directory destDir,
-      {int delaySeconds = 3}) async {
+      {int delaySeconds = 2}) async {
     final filePairs = sourceDir
         .listSync(recursive: true)
         .map((e) {
@@ -43,19 +46,20 @@ class ScriptGenerator {
     return writeUpdateScriptToFileManual(filePairs, destDir, delaySeconds: delaySeconds);
   }
 
-  static String generateFileUpdateScript(List<Tuple2<File?, File>> filePairs, String platform, int delaySeconds) {
+  static String generateFileUpdateScript(
+      List<Tuple2<File?, File>> filePairs, File triOSFile, String platform, int delaySeconds) {
     switch (platform) {
       case "windows":
-        return _generateBatchScript(filePairs, delaySeconds);
+        return _generateBatchScript(filePairs, triOSFile, delaySeconds);
       case "linux":
       case "macos":
-        return _generateBashScript(filePairs, delaySeconds);
+        return _generateBashScript(filePairs, triOSFile, delaySeconds);
       default:
         throw UnimplementedError('Script generation not supported for this platform');
     }
   }
 
-  static String _generateBatchScript(List<Tuple2<File?, File?>> filePairs, int delaySeconds) {
+  static String _generateBatchScript(List<Tuple2<File?, File?>> filePairs, File triOSFile, int delaySeconds) {
     final commands = <String>[];
     commands.add('@echo off');
     commands.add('timeout /t $delaySeconds'); // Windows wait command
@@ -72,14 +76,15 @@ class ScriptGenerator {
     }
 
     // windows batch command to run Platform.executable in a new thread
-    commands.add('echo Update complete. Running ${Platform.executable}...');
-    commands.add('start "" "${Platform.executable}"');
-    commands.add('pause');
+    commands.add('echo Update complete. Running ${triOSFile.absolute.path}...');
+    commands.add('start "" "${triOSFile.absolute.path}"');
+    // commands.add('pause'); // Pausing somehow ties the terminal window to TriOS so closing the window will close TriOS
+    commands.add('exit');
 
     return commands.join('\r\n');
   }
 
-  static String _generateBashScript(List<Tuple2<File?, File?>> filePairs, int delaySeconds) {
+  static String _generateBashScript(List<Tuple2<File?, File?>> filePairs, File triOSFile, int delaySeconds) {
     final commands = <String>[];
     commands.add('#!/bin/bash');
     commands.add('sleep $delaySeconds'); // Unix wait command
@@ -95,7 +100,7 @@ class ScriptGenerator {
       }
     }
     // bash command to run Platform.executable in a new thread
-    commands.add("${Platform.executable} &");
+    commands.add("${triOSFile.absolute.path} &");
 
     return commands.join('\n');
   }

@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:ffi/ffi.dart';
 import 'package:fimber/fimber.dart';
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:trios/libarchive/libarchive_bindings.dart';
 import 'package:trios/utils/extensions.dart';
@@ -39,7 +40,8 @@ class LibArchive {
   static var binding = _getArchive();
 
   static LibArchiveBinding _getArchive() {
-    final currentLibarchivePath = p.join(Directory.current.absolute.path, "assets/libarchive");
+    const assetsPath = kDebugMode ? "assets" : "data/flutter_assets/assets";
+    final currentLibarchivePath = p.join(Directory.current.absolute.path, assetsPath, "libarchive");
 
     final libArchivePathForPlatform = switch (Platform.operatingSystem) {
       "windows" => File("$currentLibarchivePath/windows/bin/archive.dll").absolute.normalize,

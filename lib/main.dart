@@ -44,8 +44,8 @@ void main() async {
     }
   });
 
+  // On release builds, check for updates on launch and install if available.
   if (!kDebugMode) {
-
     try {
       var latestRelease = await SelfUpdater.getLatestRelease();
 

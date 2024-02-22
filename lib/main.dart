@@ -17,10 +17,10 @@ import 'package:window_size/window_size.dart';
 
 import 'main.mapper.g.dart' show initializeJsonMapper;
 
-const version = "0.0.4";
+const version = "0.0.5";
 const appTitle = "TriOS v$version";
 String appSubtitle =
-    ["Corporate Toolkit", "by Wisp", "Hegemony Tolerated", "TriTachyon Approved", "Powered by Moloch"].random();
+    ["Corporate Toolkit", "by Wisp", "Hegemony Tolerated", "TriTachyon Approved", "Powered by Moloch", "Prerelease"].random();
 
 configureLogging() {
   const logLevels = kDebugMode ? ["V", "D", "I", "W", "E"] : ["I", "W", "E"];

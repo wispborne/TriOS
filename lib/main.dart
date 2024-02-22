@@ -17,7 +17,7 @@ import 'package:window_size/window_size.dart';
 
 import 'main.mapper.g.dart' show initializeJsonMapper;
 
-const version = "0.0.2";
+const version = "0.0.4";
 const appTitle = "TriOS v$version";
 String appSubtitle =
     ["Corporate Toolkit", "by Wisp", "Hegemony Tolerated", "TriTachyon Approved", "Powered by Moloch"].random();

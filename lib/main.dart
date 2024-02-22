@@ -10,36 +10,48 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trios/pages/settings/settings_page.dart';
 import 'package:trios/pages/vram_estimator/vram_estimator.dart';
+import 'package:trios/self_updater/self_updater.dart';
 import 'package:trios/settings/settingsSaver.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:window_size/window_size.dart';
 
 import 'main.mapper.g.dart' show initializeJsonMapper;
 
-const version = "1.0.0";
+const version = "0.0.3";
 const appTitle = "TriOS v$version";
-String appSubtitle = [
-  "Corporate Toolkit",
-  "by Wisp",
-  "Hegemony Tolerated",
-  "TriTachyon Approved",
-  "Random Subtitle"
-].random();
+String appSubtitle =
+    ["Corporate Toolkit", "by Wisp", "Hegemony Tolerated", "TriTachyon Approved", "Random Subtitle"].random();
 
 configureLogging() {
   const logLevels = kDebugMode ? ["V", "D", "I", "W", "E"] : ["I", "W", "E"];
   Fimber.plantTree(DebugTree.elapsed(logLevels: logLevels, useColors: true));
 }
 
-void main() {
+void main() async {
   configureLogging();
   Fimber.i("$appTitle logging started.");
-  Fimber.i(
-      "Platform: ${Platform.operatingSystem} ${Platform.operatingSystemVersion}.");
+  Fimber.i("Platform: ${Platform.operatingSystem} ${Platform.operatingSystemVersion}.");
   initializeJsonMapper();
 
   runApp(ProviderScope(observers: [SettingSaver()], child: const TriOSApp()));
   setWindowTitle(appTitle);
+
+  if (!kDebugMode) {
+    var latestRelease = await SelfUpdater.getLatestRelease();
+
+    if (latestRelease != null) {
+      final hasNewVersion = SelfUpdater.hasNewVersion(latestRelease);
+      if (hasNewVersion) {
+        Fimber.i("New version available: ${latestRelease.tagName}");
+        final updateInfo = SelfUpdateInfo(
+            version: latestRelease.tagName,
+            url: latestRelease.assets.first.browserDownloadUrl,
+            releaseNote: latestRelease.body);
+        Fimber.i("Update info: $updateInfo");
+        SelfUpdater.update(latestRelease);
+      }
+    }
+  }
 }
 
 class TriOSApp extends ConsumerStatefulWidget {
@@ -56,8 +68,7 @@ class TriOSAppState extends ConsumerState<TriOSApp> {
   Widget build(BuildContext context) {
     return AdaptiveTheme(
         light: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-              seedColor: Colors.blue, brightness: Brightness.dark),
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue, brightness: Brightness.dark),
           useMaterial3: true,
         ),
         // dark: Themes.starsectorLauncher,
@@ -155,19 +166,13 @@ class _AppShellState extends State<AppShell> {
               Padding(
                 padding: const EdgeInsets.only(right: 16.0),
                 child: SvgPicture.asset(("assets/images/telos_faction_crest.svg"),
-                    colorFilter: ColorFilter.mode(
-                        Theme.of(context).colorScheme.primary,
-                        BlendMode.srcIn),
+                    colorFilter: ColorFilter.mode(Theme.of(context).colorScheme.primary, BlendMode.srcIn),
                     width: 48,
                     height: 48),
               ),
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(appTitle, style: Theme.of(context).textTheme.titleLarge),
-                Text(appSubtitle,
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyMedium
-                        ?.copyWith(fontSize: 12))
+                Text(appSubtitle, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 12))
               ]),
               const Expanded(
                 child: Padding(

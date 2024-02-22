@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trios/libarchive/libarchive.dart';
 import 'package:trios/main.dart';
@@ -16,11 +18,11 @@ void main() {
     }
   });
 
-  test("LibArchive write test", () {
+  test("LibArchive write test", () async {
     configureLogging();
     final libArchive = LibArchive();
     var archivePath = "F:/Downloads/MoreMilitaryMissions-0.4.1.7z";
-    final archiveEntries = libArchive.extractEntriesInArchive(archivePath, "F:/Downloads/extractTest");
+    final archiveEntries = await libArchive.extractEntriesInArchive(File(archivePath), "F:/Downloads/extractTest");
 
     print("Extracting archive file: $archivePath");
     for (var element in archiveEntries) {

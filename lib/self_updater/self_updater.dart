@@ -4,8 +4,13 @@ import 'dart:io';
 import 'package:collection/collection.dart';
 import 'package:fimber/fimber.dart';
 import 'package:http/http.dart' as http;
+import 'package:path/path.dart' as p;
 import 'package:pub_semver/pub_semver.dart';
+import 'package:trios/self_updater/script_generator.dart';
+import 'package:trios/utils/extensions.dart';
 
+import '../libarchive/libarchive.dart';
+import '../main.dart';
 import '../utils/util.dart';
 
 class SelfUpdateInfo {
@@ -28,7 +33,7 @@ class SelfUpdater {
   static const String githubBase = "https://api.github.com";
   static const String githubLatestRelease = "$githubBase/repos/wispborne/trios/releases/latest";
 
-  static bool hasNewVersion(String currentVersion, Release latestRelease) {
+  static bool hasNewVersion(Release latestRelease, {String currentVersion = version}) {
     try {
       final latestVersion = Version.parse(latestRelease.tagName);
       return Version.parse(currentVersion).compareTo(latestVersion) < 0;
@@ -37,6 +42,43 @@ class SelfUpdater {
     }
 
     return false;
+  }
+
+  static Future<void> update(Release release, {bool exitSelfAfter = true}) async {
+    final updateWorkingDir = Directory.systemTemp.createTempSync('trios_update').absolute.normalize;
+
+    // Download the release asset.
+    final downloadFile = await downloadRelease(release, updateWorkingDir, onProgress: (bytesReceived, contentLength) {
+      Fimber.v('Downloaded: ${bytesReceived.bytesAsReadableMB()} / ${contentLength.bytesAsReadableMB()}');
+    });
+
+    Fimber.i('Downloaded update file: ${downloadFile.path}');
+    final extractedDir = updateWorkingDir;
+    // Extract the downloaded update archive.
+    final extractedFiles = await LibArchive().extractEntriesInArchive(downloadFile, extractedDir.path);
+
+    if (extractedFiles.isNotEmpty) {
+      downloadFile.deleteSync(); // Clean up the .zip file, we don't want to end up moving it in as part of the update.
+      Fimber.i('Extracted ${extractedFiles.length} files in the ${release.tagName} release to ${extractedDir.path}');
+
+      // Generate the update script and write it to a file.
+      final updateScriptFile = await ScriptGenerator.writeUpdateScriptToFileSimple(
+          updateWorkingDir, Directory(p.join(Directory.current.path, "update-test")));
+      Fimber.i("Wrote update script to: ${updateScriptFile.path}");
+
+      Fimber.i('Running update script: ${updateScriptFile.path}');
+
+      if (Platform.isWindows) {
+        final process = await Process.start('cmd', ['/c', updateScriptFile.path]);
+      } else {
+        final process = await Process.start('sh', [updateScriptFile.path]);
+      }
+
+      if (exitSelfAfter) {
+        Fimber.i('Exiting self while update runs to avoid locking files.');
+        exit(0);
+      }
+    }
   }
 
   static Future<Release?> getLatestRelease() async {
@@ -93,7 +135,7 @@ class SelfUpdater {
   /// Downloads the release asset for the given platform.
   /// If [platform] is not provided, it will use the current platform.
   /// Returns the path of the downloaded file.
-  static Future<File?> downloadRelease(Release release, Directory destDir,
+  static Future<File> downloadRelease(Release release, Directory destDir,
       {String? platform, ProgressCallback? onProgress}) async {
     final platformToUse = platform ?? Platform.operatingSystem;
     final assetNameForPlatform = switch (platformToUse) {
@@ -108,8 +150,7 @@ class SelfUpdater {
         ?.browserDownloadUrl;
 
     if (downloadLink == null) {
-      Fimber.e("No download link found for platform: $assetNameForPlatform");
-      return null;
+      throw Exception("No download link found for platform: $assetNameForPlatform");
     }
 
     Fimber.i("Download link: $downloadLink");

@@ -3,9 +3,6 @@ import 'dart:io';
 import 'package:fimber/fimber.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:path/path.dart' as p;
-import 'package:trios/libarchive/libarchive.dart';
-import 'package:trios/self_updater/script_generator.dart';
 import 'package:trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/util.dart';
@@ -73,39 +70,29 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   return;
                 }
 
-                final zipDest = Directory.systemTemp.createTempSync("trios_update");
-                // final zipFile = File("$zipDest/trios_update.zip");
-                final downloadedFile =
-                    await SelfUpdater.downloadRelease(release, zipDest, onProgress: (received, total) {
-                  Fimber.v(
-                      "Bytes received: ${received.bytesAsReadableMB()}, Total bytes: ${total.bytesAsReadableMB()}");
-                });
-
-                if (downloadedFile == null) {
-                  return;
+                if (SelfUpdater.hasNewVersion(release)) {
+                  Fimber.i("New version found: ${release.tagName}");
+                } else {
+                  Fimber.i("No new version found. Force updating anyway.");
                 }
 
-                Fimber.i("Downloaded release to: ${downloadedFile.path}");
-
-                await LibArchive().extractEntriesInArchive(downloadedFile, zipDest.absolute.path);
-                Fimber.i("Extracted release to: ${zipDest.path}");
-                downloadedFile.deleteSync();
-
-                final updateScriptFile = await ScriptGenerator.writeUpdateScriptToFileSimple(
-                    zipDest, Directory(p.join(Directory.current.path, "update-test")));
-                Fimber.i("Wrote update script to: ${updateScriptFile.path}");
-
-                Fimber.i(
-                    "Current version: $version. Latest version: ${release.tagName}. Newer? ${SelfUpdater.hasNewVersion(version, release!)}");
+                SelfUpdater.update(release);
               },
-              child: const Text('Test Update Checker'),
+              child: const Text('Force Self-Update'),
             ),
           ),
           ElevatedButton(
             onPressed: () async {
-              // LibArchive().getEntriesInArchive();
+              var release = await SelfUpdater.getLatestRelease();
+              if (release == null) {
+                Fimber.e("No release found");
+                return;
+              }
+
+              Fimber.i(
+                  "Current version: $version. Latest version: ${release.tagName}. Newer? ${SelfUpdater.hasNewVersion(release)}");
             },
-            child: const Text('Load libarchive'),
+            child: const Text('Has new release?'),
           ),
         ],
       ),

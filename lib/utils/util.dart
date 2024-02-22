@@ -146,7 +146,7 @@ class ColorGenerator {
 
 typedef ProgressCallback = void Function(int bytesReceived, int contentLengthBytes);
 
-Future<File?> downloadFile(String url, String savePath, {ProgressCallback? onProgress}) async {
+Future<File> downloadFile(String url, String savePath, {ProgressCallback? onProgress}) async {
   try {
     final request = http.Request('GET', Uri.parse(url));
     final streamedResponse = await http.Client().send(request);

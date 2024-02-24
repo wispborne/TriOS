@@ -50,12 +50,14 @@ class SelfUpdater {
     return false;
   }
 
-  static Future<void> update(Release release, {bool exitSelfAfter = true}) async {
+  static Future<void> update(Release release,
+      {bool exitSelfAfter = true, void Function(int, int)? downloadProgress}) async {
     final updateWorkingDir = Directory.systemTemp.createTempSync('trios_update').absolute.normalize;
 
     // Download the release asset.
     final downloadFile = await downloadRelease(release, updateWorkingDir, onProgress: (bytesReceived, contentLength) {
       Fimber.v('Downloaded: ${bytesReceived.bytesAsReadableMB()} / ${contentLength.bytesAsReadableMB()}');
+      downloadProgress?.call(bytesReceived, contentLength);
     });
 
     Fimber.i('Downloaded update file: ${downloadFile.path}');

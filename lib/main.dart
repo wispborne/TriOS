@@ -5,27 +5,39 @@ import 'package:fimber_io/fimber_io.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:toastification/toastification.dart';
 import 'package:trios/pages/settings/settings_page.dart';
 import 'package:trios/pages/vram_estimator/vram_estimator.dart';
 import 'package:trios/self_updater/script_generator.dart';
 import 'package:trios/self_updater/self_updater.dart';
 import 'package:trios/settings/settingsSaver.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/widgets/TriOSAppIcon.dart';
+import 'package:trios/widgets/trios_toast.dart';
 import 'package:window_size/window_size.dart';
 
+import 'app_state.dart';
 import 'main.mapper.g.dart' show initializeJsonMapper;
 
-const version = "0.0.5";
-const appTitle = "TriOS v$version";
-String appSubtitle =
-    ["Corporate Toolkit", "by Wisp", "Hegemony Tolerated", "TriTachyon Approved", "Powered by Moloch", "Prerelease"].random();
+const version = "0.0.6";
+const appName = "TriOS";
+const appTitle = "$appName v$version";
+String appSubtitle = [
+  "Corporate Toolkit",
+  "by Wisp",
+  "Hegemony Tolerated",
+  "TriTachyon Approved",
+  "Powered by Moloch",
+  "Prerelease"
+].random();
+
+const logFileName = "TriOS_log.";
 
 configureLogging() {
   const logLevels = kDebugMode ? ["V", "D", "I", "W", "E"] : ["I", "W", "E"];
   Fimber.plantTree(DebugTree.elapsed(logLevels: logLevels, useColors: true));
-  Fimber.plantTree(SizeRollingFileTree(DataSize.mega(10), filenamePrefix: "TriOS_log.", filenamePostfix: ".log"));
+  Fimber.plantTree(SizeRollingFileTree(DataSize.mega(10), filenamePrefix: logFileName, filenamePostfix: ".log"));
 }
 
 void main() async {
@@ -37,34 +49,17 @@ void main() async {
   runApp(ProviderScope(observers: [SettingSaver()], child: const TriOSApp()));
   setWindowTitle(appTitle);
 
-  // Clean up old self-update script file.
+  // Clean up old files.
+  final filePatternsToClean = [logFileName, ScriptGenerator.SELF_UPDATE_FILE_NAME];
   Directory.current.list().listen((file) {
-    if (file is File && file.path.toLowerCase().contains(ScriptGenerator.SELF_UPDATE_FILE_NAME.toLowerCase())) {
-      file.delete();
-    }
-  });
-
-  // On release builds, check for updates on launch and install if available.
-  if (!kDebugMode) {
-    try {
-      var latestRelease = await SelfUpdater.getLatestRelease();
-
-      if (latestRelease != null) {
-        final hasNewVersion = SelfUpdater.hasNewVersion(latestRelease);
-        if (hasNewVersion) {
-          Fimber.i("New version available: ${latestRelease.tagName}");
-          final updateInfo = SelfUpdateInfo(
-              version: latestRelease.tagName,
-              url: latestRelease.assets.first.browserDownloadUrl,
-              releaseNote: latestRelease.body);
-          Fimber.i("Update info: $updateInfo");
-          SelfUpdater.update(latestRelease);
+    if (file is File) {
+      for (var pattern in filePatternsToClean) {
+        if (file.path.toLowerCase().contains(pattern.toLowerCase())) {
+          file.delete();
         }
       }
-    } catch (e, s) {
-      Fimber.e("Error checking for updates: $e", ex: e, stacktrace: s);
     }
-  }
+  });
 }
 
 class TriOSApp extends ConsumerStatefulWidget {
@@ -86,13 +81,17 @@ class TriOSAppState extends ConsumerState<TriOSApp> {
         ),
         // dark: Themes.starsectorLauncher,
         initial: AdaptiveThemeMode.light,
-        builder: (theme, darkTheme) => MaterialApp.router(
+        builder: (theme, darkTheme) => ToastificationConfigProvider(
+            config: const ToastificationConfig(
+              alignment: Alignment.bottomRight,
+            ),
+            child: MaterialApp.router(
               title: appTitle,
               theme: theme,
               debugShowCheckedModeBanner: false,
               darkTheme: darkTheme,
               routerConfig: _router,
-            ));
+            )));
   }
 
   final GoRouter _router = GoRouter(
@@ -118,18 +117,52 @@ const String pageHome = "/";
 const String pageVramEstimator = "/vram_estimator";
 const String pageSettings = "/settings";
 
-class AppShell extends StatefulWidget {
+class AppShell extends ConsumerStatefulWidget {
   const AppShell({super.key, required this.child});
 
   final Widget? child;
 
   @override
-  State<AppShell> createState() => _AppShellState();
+  ConsumerState createState() => _AppShellState();
 }
 
-class _AppShellState extends State<AppShell> {
+class _AppShellState extends ConsumerState<AppShell> {
   Directory? modsFolder;
   List<File> modRulesCsvs = [];
+
+  @override
+  void initState() {
+    super.initState();
+
+    // On release builds, check for updates on launch and install if available.
+    SelfUpdater.getLatestRelease().then((latestRelease) {
+      try {
+        if (latestRelease != null) {
+          final hasNewVersion = SelfUpdater.hasNewVersion(latestRelease);
+          if (hasNewVersion) {
+            Fimber.i("New version available: ${latestRelease.tagName}");
+            final updateInfo = SelfUpdateInfo(
+                version: latestRelease.tagName,
+                url: latestRelease.assets.first.browserDownloadUrl,
+                releaseNote: latestRelease.body);
+            Fimber.i("Update info: $updateInfo");
+            double progress = -1;
+
+            toastification.showCustom(context: context, builder: (context, item) => TriOSToast(latestRelease, item));
+
+            if (!kDebugMode) {
+              SelfUpdater.update(latestRelease, downloadProgress: (bytesReceived, contentLength) {
+                progress = bytesReceived / contentLength;
+                ref.read(selfUpdateDownloadProgress.notifier).update((_) => progress);
+              });
+            }
+          }
+        }
+      } catch (e, s) {
+        Fimber.e("Error checking for updates: $e", ex: e, stacktrace: s);
+      }
+    });
+  }
 
   // @override
   // void initState() {
@@ -175,12 +208,9 @@ class _AppShellState extends State<AppShell> {
           backgroundColor: Theme.of(context).colorScheme.inversePrimary,
           title: Row(
             children: [
-              Padding(
-                padding: const EdgeInsets.only(right: 16.0),
-                child: SvgPicture.asset(("assets/images/telos_faction_crest.svg"),
-                    colorFilter: ColorFilter.mode(Theme.of(context).colorScheme.primary, BlendMode.srcIn),
-                    width: 48,
-                    height: 48),
+              const Padding(
+                padding: EdgeInsets.only(right: 16.0),
+                child: TriOSAppIcon(),
               ),
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(appTitle, style: Theme.of(context).textTheme.titleLarge),

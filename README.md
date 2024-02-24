@@ -5,7 +5,7 @@ All-in-one Starsector toolkit. Very very early development.
 ## Tools
 
 - (WIP) **VRAM Estimator**: Now with visualization.
-- (TODO) **Chipper**: Logfile viewer.
+- **Chipper**: Logfile viewer.
 - (TODO) **StarModder**: Mod database viewer.
 - (TODO) **Rules.csv Autoreloader**: Hot reload for your mod rules.csv.
 - (TODO) **Mod Manager**: SMOL 2.0.

@@ -43,7 +43,7 @@ class _DesktopDropState extends ConsumerState<DesktopDrop> {
         _parsing = true;
       });
       compute(handleNewLogContent, value.contents).then((LogChips? chips) {
-        ChipperState.loadedLog.chips = chips?..filename = value.filename;
+        ChipperState.loadedLog.chips = chips?..filepath = value.filepath;
         setState(() {
           Fimber.i("Parsing false");
           _parsing = false;
@@ -59,7 +59,7 @@ class _DesktopDropState extends ConsumerState<DesktopDrop> {
           final filePath = file.path;
           _handleDroppedFile(filePath).then((content) {
             if (content == null) return ref.read(state.logRawContents.notifier);
-            return ref.read(state.logRawContents.notifier).update((state) => LogFile(file.name, content));
+            return ref.read(state.logRawContents.notifier).update((state) => LogFile(file.path, content));
           });
         },
         onDragUpdated: (details) {

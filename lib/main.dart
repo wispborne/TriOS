@@ -23,7 +23,7 @@ import 'package:window_size/window_size.dart';
 import 'app_state.dart';
 import 'main.mapper.g.dart' show initializeJsonMapper;
 
-const version = "0.0.8";
+const version = "0.0.9";
 const appName = "TriOS";
 const appTitle = "$appName v$version";
 String appSubtitle = [

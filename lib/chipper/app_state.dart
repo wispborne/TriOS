@@ -26,14 +26,14 @@ class LoadedLog extends ChangeNotifier {
 }
 
 class LogFile {
-  final String? filename;
+  final String? filepath;
   final String contents;
 
-  LogFile(this.filename, this.contents);
+  LogFile(this.filepath, this.contents);
 }
 
 class LogChips {
-  String? filename;
+  String? filepath;
   final String? gameVersion;
   final String? os;
   final String? javaVersion;
@@ -41,5 +41,5 @@ class LogChips {
   UnmodifiableListView<LogLine> errorBlock = UnmodifiableListView([]);
   final int timeTaken;
 
-  LogChips(this.filename, this.gameVersion, this.os, this.javaVersion, this.modList, this.errorBlock, this.timeTaken);
+  LogChips(this.filepath, this.gameVersion, this.os, this.javaVersion, this.modList, this.errorBlock, this.timeTaken);
 }

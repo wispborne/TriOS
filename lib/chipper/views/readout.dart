@@ -63,10 +63,10 @@ class Readout extends StatelessWidget {
                               style: theme.textTheme.labelSmall
                                   ?.copyWith(color: theme.textTheme.labelSmall?.color?.withAlpha(120)),
                               children: [
-                                _chips.filename == null
+                                _chips.filepath == null
                                     ? const TextSpan(text: "log")
                                     : TextSpan(
-                                        text: basename(_chips.filename!),
+                                        text: basename(_chips.filepath!),
                                         style: TextStyle(
                                             color: theme.textTheme.labelSmall?.color?.withAlpha(200),
                                             fontWeight: FontWeight.w500)),

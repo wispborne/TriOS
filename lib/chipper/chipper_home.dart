@@ -6,6 +6,8 @@ import 'package:fimber/fimber.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:open_filex/open_filex.dart';
+import 'package:path/path.dart';
 import 'package:platform_info/platform_info.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/util.dart';
@@ -86,7 +88,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
     if (gameFilesPath != null && gameFilesPath.existsSync()) {
       gameFilesPath.readAsBytes().then((bytes) async {
         final content = utf8.decode(bytes.toList(), allowMalformed: true);
-        return ref.read(state.logRawContents.notifier).state = LogFile(gameFilesPath.name, content);
+        return ref.read(state.logRawContents.notifier).state = LogFile(gameFilesPath.path, content);
       });
     }
   }
@@ -127,6 +129,17 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                       icon: const Icon(Icons.copy),
                       style: ButtonStyle(foregroundColor: MaterialStateProperty.all(theme.colorScheme.onBackground)),
                       label: const Text("Copy all")),
+                if (chips != null)
+                  TextButton.icon(
+                      onPressed: () {
+                        if (chips != null && chips!.filepath != null) {
+                          final file = File(chips!.filepath!);
+                          OpenFilex.open(file.absolute.normalize.path);
+                        }
+                      },
+                      icon: const Icon(Icons.launch),
+                      style: ButtonStyle(foregroundColor: MaterialStateProperty.all(theme.colorScheme.onBackground)),
+                      label: const Text("Open File")),
               ]),
               Row(mainAxisSize: MainAxisSize.min, children: [
                 // Padding(
@@ -181,10 +194,10 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
 
                       if (Platform.I.isWeb) {
                         final content = utf8.decode(file.bytes!.toList(), allowMalformed: true);
-                        ref.read(state.logRawContents.notifier).update((state) => LogFile(file.name, content));
+                        ref.read(state.logRawContents.notifier).update((state) => LogFile(file.path, content));
                       } else {
                         final content = utf8.decode(file.bytes!.toList(), allowMalformed: true);
-                        ref.read(state.logRawContents.notifier).update((state) => LogFile(file.name, content));
+                        ref.read(state.logRawContents.notifier).update((state) => LogFile(file.path, content));
                       }
                     } else {
                       Fimber.w("Error reading file! $result");

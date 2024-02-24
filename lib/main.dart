@@ -81,7 +81,7 @@ class TriOSAppState extends ConsumerState<TriOSApp> {
     var material3 = AppState.theme.isMaterial3();
 
     final starsectorSwatch = StarsectorSwatch();
-    final seedColor = starsectorSwatch.primary;
+    final seedColor = starsectorSwatch.background;
     var swatch = switch (DateTime.now().month) {
       DateTime.october => HalloweenSwatch(),
       DateTime.december => XmasSwatch(),

@@ -1,8 +1,11 @@
 import 'dart:io';
 import 'dart:math';
 
+import 'package:collection/collection.dart';
+import 'package:fimber/fimber.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
 
 MaterialColor createMaterialColor(Color color) {
@@ -49,6 +52,10 @@ Directory? gameFilesPath(Directory gamePath) {
   } else {
     return null;
   }
+}
+
+Directory? defaultGameFilesPath() {
+  return defaultGamePath() == null ? null : gameFilesPath(defaultGamePath()!);
 }
 
 Directory? modFolderPath(Directory gamePath) {
@@ -115,8 +122,7 @@ class ColorGenerator {
   }
 
   // New: Generate colors based on an existing color
-  static Color generateFromColor(String text, Color baseColor,
-      {bool complementary = false}) {
+  static Color generateFromColor(String text, Color baseColor, {bool complementary = false}) {
     final random = Random(text.hashCode);
 
     // 1. Manipulation Options
@@ -125,13 +131,9 @@ class ColorGenerator {
     } else {
       // Apply adjustments from string's hash
       int lightnessOffset = random.nextInt(70) - 35; // Range: -35 to 35
-      double newLightness =
-          (baseColor.computeLuminance() + lightnessOffset / 100)
-              .clamp(0.0, 1.0);
+      double newLightness = (baseColor.computeLuminance() + lightnessOffset / 100).clamp(0.0, 1.0);
 
-      return HSLColor.fromColor(baseColor)
-          .withLightness(newLightness)
-          .toColor();
+      return HSLColor.fromColor(baseColor).withLightness(newLightness).toColor();
     }
   }
 
@@ -146,9 +148,59 @@ class ColorGenerator {
   }
 }
 
+typedef ProgressCallback = void Function(int bytesReceived, int contentLengthBytes);
+
+Future<File> downloadFile(String url, String savePath, {ProgressCallback? onProgress}) async {
+  try {
+    final request = http.Request('GET', Uri.parse(url));
+    final streamedResponse = await http.Client().send(request);
+
+    final contentLength = streamedResponse.contentLength ?? -1;
+    int bytesReceived = 0;
+
+    var fileName = request.headers['content-disposition']?.split('=')[1] ?? url.split('/').last;
+    final file = File(p.join(savePath, fileName));
+
+    if (file.existsSync()) {
+      file.deleteSync();
+    }
+
+    final sink = file.openWrite();
+    await streamedResponse.stream.listen((chunk) {
+      bytesReceived += chunk.length;
+      sink.add(chunk);
+      if (onProgress != null) {
+        onProgress(bytesReceived, contentLength);
+      }
+    }).asFuture();
+    await sink.close();
+
+    Fimber.d('File downloaded successfully: ${file.path} from $url.');
+    return file;
+  } catch (error) {
+    Fimber.d('Error downloading file: $error from $url');
+    rethrow;
+  }
+}
+
 class Tuple2<T1, T2> {
   final T1 item1;
   final T2 item2;
 
   Tuple2(this.item1, this.item2);
+}
+
+class NestedException implements Exception {
+  final String cause;
+  final exception;
+  final stacktrace;
+
+  NestedException(this.cause, [this.exception, this.stacktrace]);
+
+  @override
+  String toString() => '$cause\n\tCaused by: $exception${stacktrace != null ? "\n$stacktrace" : ""}';
+}
+
+TargetPlatform? get currentPlatform {
+  return TargetPlatform.values.firstWhereOrNull((element) => element.name.toLowerCase() == Platform.operatingSystem);
 }

@@ -1,6 +1,7 @@
 /// Copyright 2023 Lukasz Majda (lukasz.majda@gmail.com)
 ///
 ///
+library;
 
 import 'package:flutter/material.dart';
 

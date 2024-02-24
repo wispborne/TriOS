@@ -3,12 +3,14 @@ import 'dart:io';
 import 'package:fimber/fimber.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:trios/self_updater/script_generator.dart';
-import 'package:trios/settings/settings.dart';
+import 'package:toastification/toastification.dart';
+import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/util.dart';
 
-import '../../self_updater/checker.dart';
+import 'package:trios/app_state.dart';
+import 'package:trios/main.dart';
+import 'package:trios/trios/self_updater/self_updater.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
@@ -60,22 +62,90 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             padding: const EdgeInsets.only(left: 4, top: 8.0),
             child: Text("Mods Folder: ${ref.read(appSettings).modsDir}"),
           ),
+          SizedBox.fromSize(size: const Size.fromHeight(20)),
+          Text("Debugging stuff below here, please ignore.",
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.red, fontWeight: FontWeight.bold)),
           Padding(
-            padding: const EdgeInsets.only(top: 32, bottom: 8.0),
+            padding: const EdgeInsets.only(top: 16),
             child: ElevatedButton(
               onPressed: () async {
-                await SelfUpdater.checkForUpdate();
+                var release = await SelfUpdater.getLatestRelease();
+                if (release == null) {
+                  Fimber.e("No release found");
+                  return;
+                }
+
+                Fimber.i(
+                    "Current version: $version. Latest version: ${release.tagName}. Newer? ${SelfUpdater.hasNewVersion(release)}");
               },
-              child: const Text('Test Update Checker'),
+              child: const Text('Has new release?'),
             ),
           ),
-          ElevatedButton(
-            onPressed: () async {
-              Fimber.i(ScriptGenerator.generateFileUpdateScript(
-                  [Tuple2(null, File("test.txt"))], "windows", 5));
-            },
-            child: const Text('Print Update Script'),
-          )
+          Padding(
+            padding: const EdgeInsets.only(top: 16),
+            child: ElevatedButton(
+              onPressed: () async {
+                final scriptPath = File("F:\\Code\\Starsector\\TriOS\\update-test\\TriOS_self_updater.bat");
+                Fimber.v("${scriptPath.path} ${scriptPath.existsSync()}");
+
+                Process.start("start", ["", scriptPath.path],
+                    runInShell: true, includeParentEnvironment: true, mode: ProcessStartMode.detached);
+              },
+              child: const Text('Run self-update script'),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: 16),
+            child: ElevatedButton(
+              onPressed: () async {
+                var release = await SelfUpdater.getLatestRelease();
+                if (release == null) {
+                  Fimber.e("No release found");
+                  return;
+                }
+
+                if (SelfUpdater.hasNewVersion(release)) {
+                  Fimber.i("New version found: ${release.tagName}");
+                } else {
+                  Fimber.i("No new version found. Force updating anyway.");
+                }
+
+                SelfUpdater.update(release);
+              },
+              child: const Text('Force Self-Update'),
+            ),
+          ),
+          Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: ElevatedButton(
+                  onPressed: () {
+                    toastification.show(context: context, title: const Text("Test toast"));
+                  },
+                  child: const Text('Show toast'))),
+          SizedBox(
+            width: 200,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: 16.0),
+                  child: ElevatedButton(
+                      onPressed: () {
+                        ref.read(selfUpdateDownloadProgress.notifier).update((_) => 0.5);
+                        // SelfUpdater.update(latestRelease, downloadProgress: (bytesReceived, contentLength) {
+                        //   Fimber.i(
+                        //       "Downloaded: ${bytesReceived.bytesAsReadableMB()} / ${contentLength.bytesAsReadableMB()}");
+                        // });
+                      },
+                      child: const Text("Fake Update")),
+                ),
+                LinearProgressIndicator(
+                  value: ref.watch(selfUpdateDownloadProgress),
+                  valueColor: AlwaysStoppedAnimation(Colors.blue),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );

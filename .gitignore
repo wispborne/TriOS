@@ -225,3 +225,7 @@ chipper.config/chippertheme.lock
 VRAM_usage_of_mods.txt
 
 trios-settings.json
+
+update-test/
+
+*.log

@@ -15,7 +15,7 @@ import 'package:trios/widgets/spinning_refresh_button.dart';
 
 import '../../models/enabled_mods.dart';
 import '../../models/graphics_lib_config.dart';
-import '../../settings/settings.dart';
+import '../../trios/settings/settings.dart';
 import '../../utils/util.dart';
 import 'models/mod_result.dart';
 
@@ -38,21 +38,18 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
   GraphType graphType = GraphType.pie;
   Map<String, Mod> modVramInfo = {};
 
-  List<Mod> get modVramInfoToShow => modVramInfo.values.toList().sublist(
-      viewRangeEnds.item1 ?? 0, viewRangeEnds.item2 ?? modVramInfo.length);
+  List<Mod> get modVramInfoToShow =>
+      modVramInfo.values.toList().sublist(viewRangeEnds.item1 ?? 0, viewRangeEnds.item2 ?? modVramInfo.length);
 
   Tuple2<int?, int?> viewRangeEnds = Tuple2(null, null);
 
   List<String>? getEnabledMods() {
     var settings = ref.read(appSettings);
-    var modsFolder =
-        settings.modsDir == null ? null : Directory(settings.modsDir!);
+    var modsFolder = settings.modsDir == null ? null : Directory(settings.modsDir!);
 
     return modsFolder == null
         ? null
-        : JsonMapper.deserialize<EnabledMods>(
-                File(p.join(modsFolder.path, "enabled_mods.json"))
-                    .readAsStringSync())
+        : JsonMapper.deserialize<EnabledMods>(File(p.join(modsFolder.path, "enabled_mods.json")).readAsStringSync())
             ?.enabledMods;
   }
 
@@ -60,8 +57,7 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
     if (isScanning) return;
 
     var settings = ref.read(appSettings);
-    if (settings.modsDir == null ||
-        !Directory(settings.modsDir!).existsSync()) {
+    if (settings.modsDir == null || !Directory(settings.modsDir!).existsSync()) {
       Fimber.e('Mods folder not set');
       return;
     }
@@ -74,8 +70,7 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
       final info = await VramChecker(
         enabledModIds: settings.enabledModIds,
         modIdsToCheck: null,
-        foldersToCheck:
-            settings.modsDir == null ? [] : [Directory(settings.modsDir!)],
+        foldersToCheck: settings.modsDir == null ? [] : [Directory(settings.modsDir!)],
         graphicsLibConfig: GraphicsLibConfig(
           areAnyEffectsEnabled: false,
           areGfxLibMaterialMapsEnabled: false,
@@ -99,9 +94,7 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
       setState(() {
         isScanning = false;
         modVramInfo = info.fold<Map<String, Mod>>(
-            {},
-            (previousValue, element) =>
-                previousValue..[element.info.id] = element); // sort by mod size
+            {}, (previousValue, element) => previousValue..[element.info.id] = element); // sort by mod size
       });
     } catch (e) {
       Fimber.w('Error scanning for VRAM usage: $e');
@@ -113,9 +106,7 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
 
   @override
   Widget build(BuildContext context) {
-    var sortedModData = modVramInfoToShow
-        .sortedByDescending<num>((mod) => mod.totalBytesForMod)
-        .toList();
+    var sortedModData = modVramInfoToShow.sortedByDescending<num>((mod) => mod.totalBytesForMod).toList();
     return Column(
       children: <Widget>[
         Row(
@@ -146,8 +137,7 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
                 child: Card.outlined(
                   child: SizedBox(
                     width: 300,
-                    child:
-                        GraphTypeSelector(onGraphTypeChanged: (GraphType type) {
+                    child: GraphTypeSelector(onGraphTypeChanged: (GraphType type) {
                       setState(() {
                         graphType = type;
                       });

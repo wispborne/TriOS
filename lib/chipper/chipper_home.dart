@@ -77,6 +77,10 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
       });
     });
 
+    loadDefaultLog();
+  }
+
+  loadDefaultLog() {
     // Load default log file
     var gameFilesPath = defaultGameFilesPath()?.resolve("starsector.log") as File?;
     if (gameFilesPath != null && gameFilesPath.existsSync()) {
@@ -97,13 +101,20 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
             child: Row(children: [
               Row(mainAxisSize: MainAxisSize.min, children: [
                 Padding(
-                  padding: const EdgeInsets.only(right: 24.0),
+                  padding: const EdgeInsets.only(right: 16.0),
                   child: Image(
                       image: const AssetImage("assets/images/chipper/icon.png"),
                       width: 36,
                       height: 36,
                       color: theme.colorScheme.onBackground),
                 ),
+                TextButton.icon(
+                    onPressed: () {
+                      loadDefaultLog();
+                    },
+                    icon: const Icon(Icons.refresh),
+                    style: ButtonStyle(foregroundColor: MaterialStateProperty.all(theme.colorScheme.onBackground)),
+                    label: const Text("Load my log")),
                 if (chips != null)
                   TextButton.icon(
                       onPressed: () {

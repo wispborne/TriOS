@@ -23,7 +23,7 @@ import 'package:window_size/window_size.dart';
 import 'app_state.dart';
 import 'main.mapper.g.dart' show initializeJsonMapper;
 
-const version = "0.0.7";
+const version = "0.0.8";
 const appName = "TriOS";
 const appTitle = "$appName v$version";
 String appSubtitle = [
@@ -81,12 +81,13 @@ class TriOSAppState extends ConsumerState<TriOSApp> {
     var material3 = AppState.theme.isMaterial3();
 
     final starsectorSwatch = StarsectorSwatch();
-    final seedColor = starsectorSwatch.background;
     var swatch = switch (DateTime.now().month) {
       DateTime.october => HalloweenSwatch(),
       DateTime.december => XmasSwatch(),
       _ => starsectorSwatch
     };
+
+    final seedColor = swatch.primary;
 
     // Dark theme
     var darkThemeBase = ThemeData(
@@ -267,7 +268,6 @@ class _AppShellState extends ConsumerState<AppShell> {
       animationDuration: const Duration(milliseconds: 0),
       child: Scaffold(
         appBar: AppBar(
-          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
           title: Row(
             children: [
               const Padding(
@@ -313,7 +313,7 @@ class _AppShellState extends ConsumerState<AppShell> {
           ),
         ),
         body: const Padding(
-            padding: EdgeInsets.all(16.0),
+            padding: EdgeInsets.all(8.0),
             // child: widget.child,
             child: TabBarView(
               children: [

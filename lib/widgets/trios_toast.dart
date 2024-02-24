@@ -2,12 +2,12 @@ import 'package:fimber_io/fimber_io.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:toastification/toastification.dart';
-import 'package:trios/self_updater/self_updater.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/TriOSAppIcon.dart';
 
 import '../app_state.dart';
 import '../main.dart';
+import '../trios/self_updater/self_updater.dart';
 
 class TriOSToast extends ConsumerWidget {
   const TriOSToast(this.latestRelease, this.item, {super.key});

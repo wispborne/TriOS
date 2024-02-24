@@ -7,12 +7,12 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
 import 'package:pub_semver/pub_semver.dart';
-import 'package:trios/self_updater/script_generator.dart';
+import 'package:trios/trios/self_updater/script_generator.dart';
 import 'package:trios/utils/extensions.dart';
 
-import '../libarchive/libarchive.dart';
-import '../main.dart';
-import '../utils/util.dart';
+import 'package:trios/libarchive/libarchive.dart';
+import 'package:trios/main.dart';
+import 'package:trios/utils/util.dart';
 
 class SelfUpdateInfo {
   final String version;

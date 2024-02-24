@@ -51,7 +51,7 @@ jobs:
           echo "VERSION=$(git describe --tags)" >> $GITHUB_ENV
           git log --format=%B -n 1 $(git log -1 --pretty=format:"%h") | cat - > changes.txt
 #          prerelease_regex=".*dev|qa|rc|unstable.*|^0.*"
-          prerelease_regex=".*dev|qa|rc|unstable.*"
+          prerelease_regex=.*"dev"|"qa"|"unstable".*
           if [[ "$(git describe --tags)" =~ $prerelease_regex ]]; then
             echo "IS_PRERELEASE=true" >> $GITHUB_ENV;
           else

@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of '../../settings/settings.dart';
+part of '../../../trios/settings/settings.dart';
 
 // **************************************************************************
 // JsonSerializableGenerator

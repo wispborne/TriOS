@@ -3,8 +3,8 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 
-import '../utils/extensions.dart';
-import '../utils/util.dart';
+import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/util.dart';
 
 class ScriptGenerator {
   static const SELF_UPDATE_FILE_NAME = "TriOS_self_updater";

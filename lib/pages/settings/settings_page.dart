@@ -4,13 +4,13 @@ import 'package:fimber/fimber.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:toastification/toastification.dart';
-import 'package:trios/settings/settings.dart';
+import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/util.dart';
 
-import '../../app_state.dart';
-import '../../main.dart';
-import '../../self_updater/self_updater.dart';
+import 'package:trios/app_state.dart';
+import 'package:trios/main.dart';
+import 'package:trios/trios/self_updater/self_updater.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});

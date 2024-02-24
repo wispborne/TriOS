@@ -54,6 +54,10 @@ Directory? gameFilesPath(Directory gamePath) {
   }
 }
 
+Directory? defaultGameFilesPath() {
+  return defaultGamePath() == null ? null : gameFilesPath(defaultGamePath()!);
+}
+
 Directory? modFolderPath(Directory gamePath) {
   if (Platform.isWindows || Platform.isMacOS) {
     return Directory(p.join(gamePath.path, "mods"));

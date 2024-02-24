@@ -4,14 +4,13 @@ import 'dart:io';
 import 'package:fimber/fimber.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as path;
-import 'package:trios/settings/settings.dart';
+import 'package:trios/trios/settings/settings.dart';
 
 var settingsFile = File("trios-settings.json");
 
 class SettingSaver extends ProviderObserver {
   @override
-  void didUpdateProvider(ProviderBase provider, Object? previousValue,
-      Object? newValue, ProviderContainer container) {
+  void didUpdateProvider(ProviderBase provider, Object? previousValue, Object? newValue, ProviderContainer container) {
     if (provider == appSettings) {
       var settings = newValue as Settings;
 
@@ -33,9 +32,5 @@ class SettingSaver extends ProviderObserver {
 
 List<String> getModFolderNames(String gameDir) {
   var modsDir = "$gameDir/mods";
-  return Directory(modsDir)
-      .listSync()
-      .whereType<Directory>()
-      .map((e) => path.split(e.path).last)
-      .toList();
+  return Directory(modsDir).listSync().whereType<Directory>().map((e) => path.split(e.path).last).toList();
 }

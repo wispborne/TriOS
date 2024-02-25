@@ -29,8 +29,8 @@ class TriOSToast extends ConsumerWidget {
                 Text("${latestRelease.tagName} is now available!", style: Theme.of(context).textTheme.labelLarge),
                 ElevatedButton(
                     onPressed: () {
-                      ref.read(selfUpdateDownloadProgress.notifier).update((_) => 0.5);
                       SelfUpdater.update(latestRelease, downloadProgress: (bytesReceived, contentLength) {
+                        ref.read(selfUpdateDownloadProgress.notifier).update((_) => bytesReceived / contentLength);
                         Fimber.i(
                             "Downloaded: ${bytesReceived.bytesAsReadableMB()} / ${contentLength.bytesAsReadableMB()}");
                       });

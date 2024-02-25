@@ -24,7 +24,7 @@ import 'package:window_size/window_size.dart';
 import 'app_state.dart';
 import 'main.mapper.g.dart' show initializeJsonMapper;
 
-const version = "0.0.11";
+const version = "0.0.12";
 const appName = "TriOS";
 const appTitle = "$appName v$version";
 String appSubtitle = [
@@ -210,12 +210,12 @@ class _AppShellState extends ConsumerState<AppShell> {
 
             toastification.showCustom(context: context, builder: (context, item) => TriOSToast(latestRelease, item));
 
-            if (!kDebugMode) {
-              SelfUpdater.update(latestRelease, downloadProgress: (bytesReceived, contentLength) {
-                progress = bytesReceived / contentLength;
-                ref.read(selfUpdateDownloadProgress.notifier).update((_) => progress);
-              });
-            }
+            // if (!kDebugMode) {
+            //   SelfUpdater.update(latestRelease, downloadProgress: (bytesReceived, contentLength) {
+            //     progress = bytesReceived / contentLength;
+            //     ref.read(selfUpdateDownloadProgress.notifier).update((_) => progress);
+            //   });
+            // }
           }
         }
       } catch (e, s) {

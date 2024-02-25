@@ -21,7 +21,7 @@ class FadingEyeState extends State<FadingEye> with SingleTickerProviderStateMixi
     _controller = AnimationController(
       duration: Duration(milliseconds: widget.durationMillis),
       vsync: this,
-    )..repeat(reverse: true); // Repeat the animation
+    )..repeat(reverse: true);
 
     _animation = Tween(begin: 1.0, end: 0.2).animate(_controller);
   }
@@ -35,7 +35,6 @@ class FadingEyeState extends State<FadingEye> with SingleTickerProviderStateMixi
   @override
   Widget build(BuildContext context) {
     return FadeTransition(
-      // Use FadeTransition for the fading effect
       opacity: _animation,
       child: Icon(Icons.visibility, size: widget.size),
     );

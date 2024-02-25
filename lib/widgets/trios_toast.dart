@@ -36,10 +36,10 @@ class TriOSToast extends ConsumerWidget {
                       });
                     },
                     child: const Text("Update")),
-                LinearProgressIndicator(
-                  value: ref.watch(selfUpdateDownloadProgress),
-                  valueColor: AlwaysStoppedAnimation(Colors.blue),
-                ),
+                if (ref.read(selfUpdateDownloadProgress) != null)
+                  LinearProgressIndicator(
+                    value: ref.watch(selfUpdateDownloadProgress),
+                  ),
               ],
             ),
           ),

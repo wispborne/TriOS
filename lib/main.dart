@@ -24,7 +24,7 @@ import 'app_state.dart';
 import 'chipper/views/chipper_dropper.dart';
 import 'main.mapper.g.dart' show initializeJsonMapper;
 
-const version = "0.0.13";
+const version = "0.0.14";
 const appName = "TriOS";
 const appTitle = "$appName v$version";
 String appSubtitle = [
@@ -66,8 +66,6 @@ class TriOSApp extends ConsumerStatefulWidget {
   TriOSAppState createState() => TriOSAppState();
 }
 
-final _rootNavigatorKey = GlobalKey<NavigatorState>();
-
 class TriOSAppState extends ConsumerState<TriOSApp> {
   @override
   void initState() {
@@ -76,7 +74,7 @@ class TriOSAppState extends ConsumerState<TriOSApp> {
       setState(() {});
     });
 
-    loadDefaultLog(ref);
+    // loadDefaultLog(ref);
   }
 
   @override
@@ -246,7 +244,7 @@ class _AppShellState extends ConsumerState<AppShell> with SingleTickerProviderSt
         ),
         body: ChipperDropper(
           child: Padding(
-              padding: EdgeInsets.all(8.0),
+              padding: const EdgeInsets.all(8.0),
               child: TabBarView(
                 controller: tabController,
                 children: tabChildren,
@@ -254,35 +252,4 @@ class _AppShellState extends ConsumerState<AppShell> with SingleTickerProviderSt
           onDropped: (_) => tabController.animateTo(1),
         ));
   }
-// @override
-// Widget build(BuildContext context) {
-//   return Scaffold(
-//     appBar: AppBar(
-//       backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-//       title: Row(
-//         children: [
-//           Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-//             Text(widget.title, style: Theme.of(context).textTheme.titleLarge),
-//             Text(widget.subtitle,
-//                 style: Theme.of(context).textTheme.bodyMedium)
-//           ]),
-//           ElevatedButton(
-//               onPressed: () {
-//                 context.go("/$pageVramEstimator");
-//               },
-//               child: Text("VRAM Estimator")),
-//           ElevatedButton(
-//               onPressed: () {
-//                 context.go("/$pageSettings");
-//               },
-//               child: Text("Settings")),
-//         ],
-//       ),
-//     ),
-//     body: Padding(
-//       padding: EdgeInsets.all(16.0),
-//       child: widget.child,
-//     ),
-//   );
-// }
 }

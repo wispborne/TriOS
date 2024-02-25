@@ -40,6 +40,9 @@ void main() async {
   configureLogging();
   Fimber.i("$appTitle logging started.");
   Fimber.i("Platform: ${Platform.operatingSystem} ${Platform.operatingSystemVersion}.");
+  FlutterError.onError = (details) {
+    Fimber.e("${details.exceptionAsString()}\n${details.stack}", ex: details.exception, stacktrace: details.stack);
+  };
   initializeJsonMapper();
   sharedPrefs = await SharedPreferences.getInstance();
 
@@ -231,14 +234,12 @@ class _AppShellState extends ConsumerState<AppShell> with SingleTickerProviderSt
                   tooltip: "Switch density",
                   onPressed: () => AppState.theme.switchMaterial(),
                   icon: Icon(AppState.theme.isMaterial3() ? Icons.view_compact : Icons.view_cozy)),
-              Tooltip(
-                message: "Hot reloading rules.csv.\nWatching ${ref.read(modRulesCsvs)?.length ?? 0} mods for changes.",
-                textAlign: TextAlign.center,
-                child: const Padding(
-                  padding: EdgeInsets.only(left: 16.0),
-                  child: RulesHotReload(),
-                ),
-              ),
+              // Tooltip(
+              //   message: "Hot reloading rules.csv.\nWatching ${ref.read(modRulesCsvs)?.length ?? 0} mods for changes.",
+              //   textAlign: TextAlign.center,
+              //   child: const Padding(padding: EdgeInsets.only(left: 16.0), child: RulesHotReload(),
+              //       ),
+              // ),
             ],
           ),
         ),

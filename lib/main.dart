@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:fimber_io/fimber_io.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:toastification/toastification.dart';
 import 'package:trios/chipper/chipper_home.dart';
@@ -22,9 +21,10 @@ import 'package:trios/widgets/trios_toast.dart';
 import 'package:window_size/window_size.dart';
 
 import 'app_state.dart';
+import 'chipper/views/chipper_dropper.dart';
 import 'main.mapper.g.dart' show initializeJsonMapper;
 
-const version = "0.0.12";
+const version = "0.0.13";
 const appName = "TriOS";
 const appTitle = "$appName v$version";
 String appSubtitle = [
@@ -75,6 +75,8 @@ class TriOSAppState extends ConsumerState<TriOSApp> {
     AppState.theme.addListener(() {
       setState(() {});
     });
+
+    loadDefaultLog(ref);
   }
 
   @override
@@ -126,49 +128,16 @@ class TriOSAppState extends ConsumerState<TriOSApp> {
         config: const ToastificationConfig(
           alignment: Alignment.bottomRight,
         ),
-        child: MaterialApp.router(
+        child: MaterialApp(
           title: appTitle,
           theme: lightTheme,
           themeMode: AppState.theme.currentTheme(),
           debugShowCheckedModeBanner: false,
           darkTheme: darkTheme,
-          routerConfig: _router,
+          home: const AppShell(child: VramEstimatorPage()),
         ));
   }
-
-  // Router config
-  final GoRouter _router = GoRouter(
-    navigatorKey: _rootNavigatorKey,
-    routes: <RouteBase>[
-      StatefulShellRoute.indexedStack(branches: [
-        StatefulShellBranch(routes: [
-          GoRoute(
-              path: pageHome,
-              pageBuilder: (context, state) => const NoTransitionPage(
-                    child: VramEstimatorPage(),
-                  )),
-          GoRoute(
-            path: pageVramEstimator,
-            pageBuilder: (context, state) => const NoTransitionPage(child: VramEstimatorPage()),
-          ),
-          GoRoute(
-            path: pageChipper,
-            pageBuilder: (context, state) => const NoTransitionPage(child: ChipperApp()),
-          ),
-          GoRoute(
-            path: pageSettings,
-            pageBuilder: (context, state) => const NoTransitionPage(child: SettingsPage()),
-          ),
-        ]),
-      ], builder: (context, state, navigationShell) => AppShell(child: navigationShell)),
-    ],
-  );
 }
-
-const String pageHome = "/";
-const String pageVramEstimator = "/vram_estimator";
-const String pageChipper = "/chipper";
-const String pageSettings = "/settings";
 
 class AppShell extends ConsumerStatefulWidget {
   const AppShell({super.key, required this.child});
@@ -179,10 +148,17 @@ class AppShell extends ConsumerStatefulWidget {
   ConsumerState createState() => _AppShellState();
 }
 
-class _AppShellState extends ConsumerState<AppShell> {
+class _AppShellState extends ConsumerState<AppShell> with SingleTickerProviderStateMixin {
+  late TabController tabController;
+
   @override
   void initState() {
     super.initState();
+    tabController = TabController(
+      length: 3,
+      vsync: this,
+      animationDuration: const Duration(milliseconds: 0),
+    );
 
     // Check for updates on launch and show toast if available.
     SelfUpdater.getLatestRelease().then((latestRelease) {
@@ -215,6 +191,12 @@ class _AppShellState extends ConsumerState<AppShell> {
 
   @override
   Widget build(BuildContext context) {
+    const tabChildren = [
+      VramEstimatorPage(),
+      ChipperApp(),
+      SettingsPage(),
+    ];
+
     return Scaffold(
         appBar: AppBar(
           title: Row(
@@ -230,24 +212,14 @@ class _AppShellState extends ConsumerState<AppShell> {
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(mainAxisSize: MainAxisSize.max, children: [
-                    InkWell(
-                        child: const Column(children: [Text("VRAM Estimator"), Icon(Icons.scale)]),
-                        onTap: () {
-                          context.go(pageVramEstimator);
-                        }),
-                    InkWell(
-                        child: const Column(
-                            children: [Text("Chipper"), ImageIcon(AssetImage("assets/images/chipper/icon.png"))]),
-                        onTap: () {
-                          context.go(pageChipper);
-                        }),
-                    InkWell(
-                        child: const Column(children: [Text("Settings"), Icon(Icons.settings)]),
-                        onTap: () {
-                          context.go(pageSettings);
-                        }),
-                  ]),
+                  child: TabBar(tabs: const [
+                    Tab(text: "VRAM Estimator", icon: Icon(Icons.scale), iconMargin: EdgeInsets.zero),
+                    Tab(
+                        text: chipperTitle,
+                        icon: ImageIcon(AssetImage("assets/images/chipper/icon.png")),
+                        iconMargin: EdgeInsets.zero),
+                    Tab(text: "Settings", icon: Icon(Icons.settings), iconMargin: EdgeInsets.zero),
+                  ], controller: tabController),
                 ),
               ),
               IconButton(
@@ -269,22 +241,17 @@ class _AppShellState extends ConsumerState<AppShell> {
                   child: RulesHotReload(),
                 ),
               ),
-              // ElevatedButton(
-              //     onPressed: () {
-              //       context.go(pageVramEstimator);
-              //     },
-              //     child: const Text("VRAM Estimator")),
-              // ElevatedButton(
-              //     onPressed: () {
-              //       context.go(pageSettings);
-              //     },
-              //     child: const Text("Settings")),
             ],
           ),
         ),
-        body: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: widget.child,
+        body: ChipperDropper(
+          child: Padding(
+              padding: EdgeInsets.all(8.0),
+              child: TabBarView(
+                controller: tabController,
+                children: tabChildren,
+              )),
+          onDropped: (_) => tabController.animateTo(1),
         ));
   }
 // @override

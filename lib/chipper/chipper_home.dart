@@ -15,7 +15,7 @@ import 'app_state.dart' as state;
 import 'app_state.dart';
 import 'copy.dart';
 import 'views/about_view.dart';
-import 'views/desktop_drop_view.dart';
+import 'views/chipper_home.dart';
 
 const chipperTitle = "Chipper";
 const chipperVersion = "1.14.2";
@@ -29,7 +29,19 @@ class ChipperApp extends ConsumerStatefulWidget {
   ConsumerState createState() => _ChipperAppState();
 }
 
+loadDefaultLog(WidgetRef ref) {
+  // Load default log file
+  var gameFilesPath = defaultGameFilesPath()?.resolve("starsector.log") as File?;
+  if (gameFilesPath != null && gameFilesPath.existsSync()) {
+    gameFilesPath.readAsBytes().then((bytes) async {
+      final content = utf8.decode(bytes.toList(), allowMalformed: true);
+      return ref.read(state.logRawContents.notifier).state = LogFile(gameFilesPath.path, content);
+    });
+  }
+}
+
 class _ChipperAppState extends ConsumerState<ChipperApp> with AutomaticKeepAliveClientMixin<ChipperApp> {
+  @override
   bool get wantKeepAlive => true;
 
   @override
@@ -78,17 +90,8 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
       });
     });
 
-    loadDefaultLog();
-  }
-
-  loadDefaultLog() {
-    // Load default log file
-    var gameFilesPath = defaultGameFilesPath()?.resolve("starsector.log") as File?;
-    if (gameFilesPath != null && gameFilesPath.existsSync()) {
-      gameFilesPath.readAsBytes().then((bytes) async {
-        final content = utf8.decode(bytes.toList(), allowMalformed: true);
-        return ref.read(state.logRawContents.notifier).state = LogFile(gameFilesPath.path, content);
-      });
+    if (ref.read(state.logRawContents) == null) {
+      loadDefaultLog(ref);
     }
   }
 
@@ -111,7 +114,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                 ),
                 TextButton.icon(
                     onPressed: () {
-                      loadDefaultLog();
+                      loadDefaultLog(ref);
                     },
                     icon: const Icon(Icons.refresh),
                     style: ButtonStyle(foregroundColor: MaterialStateProperty.all(theme.colorScheme.onBackground)),

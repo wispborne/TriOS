@@ -10,6 +10,7 @@ import 'package:toastification/toastification.dart';
 import 'package:trios/chipper/chipper_home.dart';
 import 'package:trios/pages/settings/settings_page.dart';
 import 'package:trios/pages/vram_estimator/vram_estimator.dart';
+import 'package:trios/rules_autofresh/rules_hotreload.dart';
 import 'package:trios/trios/MyTheme.dart';
 import 'package:trios/trios/self_updater/script_generator.dart';
 import 'package:trios/trios/self_updater/self_updater.dart';
@@ -23,7 +24,7 @@ import 'package:window_size/window_size.dart';
 import 'app_state.dart';
 import 'main.mapper.g.dart' show initializeJsonMapper;
 
-const version = "0.0.9";
+const version = "0.0.10";
 const appName = "TriOS";
 const appTitle = "$appName v$version";
 String appSubtitle = [
@@ -189,9 +190,6 @@ class AppShell extends ConsumerStatefulWidget {
 }
 
 class _AppShellState extends ConsumerState<AppShell> {
-  Directory? modsFolder;
-  List<File> modRulesCsvs = [];
-
   @override
   void initState() {
     super.initState();
@@ -264,66 +262,71 @@ class _AppShellState extends ConsumerState<AppShell> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 3,
-      animationDuration: const Duration(milliseconds: 0),
-      child: Scaffold(
-        appBar: AppBar(
-          title: Row(
-            children: [
-              const Padding(
-                padding: EdgeInsets.only(right: 16.0),
-                child: TriOSAppIcon(),
-              ),
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(appTitle, style: Theme.of(context).textTheme.titleLarge),
-                Text(appSubtitle, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 12))
-              ]),
-              const Expanded(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16),
-                  child: TabBar(tabs: [
-                    Tab(text: "VRAM Estimator", icon: Icon(Icons.scale), iconMargin: EdgeInsets.zero),
-                    Tab(
-                        text: chipperTitle,
-                        icon: ImageIcon(AssetImage("assets/images/chipper/icon.png")),
-                        iconMargin: EdgeInsets.zero),
-                    Tab(text: "Settings", icon: Icon(Icons.settings), iconMargin: EdgeInsets.zero),
+        length: 3,
+        animationDuration: const Duration(milliseconds: 0),
+        child: Scaffold(
+            appBar: AppBar(
+              title: Row(
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.only(right: 16.0),
+                    child: TriOSAppIcon(),
+                  ),
+                  Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(appTitle, style: Theme.of(context).textTheme.titleLarge),
+                    Text(appSubtitle, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 12))
                   ]),
-                ),
+                  const Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      child: TabBar(tabs: [
+                        Tab(text: "VRAM Estimator", icon: Icon(Icons.scale), iconMargin: EdgeInsets.zero),
+                        Tab(
+                            text: chipperTitle,
+                            icon: ImageIcon(AssetImage("assets/images/chipper/icon.png")),
+                            iconMargin: EdgeInsets.zero),
+                        Tab(text: "Settings", icon: Icon(Icons.settings), iconMargin: EdgeInsets.zero),
+                      ]),
+                    ),
+                  ),
+                  IconButton(
+                      tooltip: "Switch theme",
+                      onPressed: () => AppState.theme.switchThemes(context),
+                      icon: Icon(AppState.theme.currentTheme() == ThemeMode.dark ? Icons.sunny : Icons.mode_night)),
+                  IconButton(
+                      tooltip: "Switch density",
+                      onPressed: () => AppState.theme.switchMaterial(),
+                      icon: Icon(AppState.theme.isMaterial3() ? Icons.view_compact : Icons.view_cozy)),
+                  const Tooltip(
+                    message: "Hot reloading rules.csv.",
+                    child: Padding(
+                      padding: EdgeInsets.only(left: 16.0),
+                      child: RulesHotReload(),
+                    ),
+                  ),
+                  // ElevatedButton(
+                  //     onPressed: () {
+                  //       context.go(pageVramEstimator);
+                  //     },
+                  //     child: const Text("VRAM Estimator")),
+                  // ElevatedButton(
+                  //     onPressed: () {
+                  //       context.go(pageSettings);
+                  //     },
+                  //     child: const Text("Settings")),
+                ],
               ),
-              IconButton(
-                  tooltip: "Switch theme",
-                  onPressed: () => AppState.theme.switchThemes(context),
-                  icon: Icon(AppState.theme.currentTheme() == ThemeMode.dark ? Icons.sunny : Icons.mode_night)),
-              IconButton(
-                  tooltip: "Switch density",
-                  onPressed: () => AppState.theme.switchMaterial(),
-                  icon: Icon(AppState.theme.isMaterial3() ? Icons.view_compact : Icons.view_cozy)),
-              // ElevatedButton(
-              //     onPressed: () {
-              //       context.go(pageVramEstimator);
-              //     },
-              //     child: const Text("VRAM Estimator")),
-              // ElevatedButton(
-              //     onPressed: () {
-              //       context.go(pageSettings);
-              //     },
-              //     child: const Text("Settings")),
-            ],
-          ),
-        ),
-        body: const Padding(
-            padding: EdgeInsets.all(8.0),
-            // child: widget.child,
-            child: TabBarView(
-              children: [
-                VramEstimatorPage(),
-                ChipperApp(),
-                SettingsPage(),
-              ],
-            )),
-      ),
-    );
+            ),
+            body: const Padding(
+                padding: EdgeInsets.all(8.0),
+                // child: widget.child,
+                child: TabBarView(
+                  children: [
+                    VramEstimatorPage(),
+                    ChipperApp(),
+                    SettingsPage(),
+                  ],
+                ))));
   }
 // @override
 // Widget build(BuildContext context) {

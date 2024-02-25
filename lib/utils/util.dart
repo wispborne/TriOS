@@ -5,8 +5,10 @@ import 'package:collection/collection.dart';
 import 'package:fimber/fimber.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
+import 'package:trios/utils/extensions.dart';
 
 MaterialColor createMaterialColor(Color color) {
   List strengths = <double>[.05];
@@ -55,12 +57,12 @@ Directory? gameFilesPath(Directory gamePath) {
 }
 
 Directory? defaultGameFilesPath() {
-  return defaultGamePath() == null ? null : gameFilesPath(defaultGamePath()!);
+  return defaultGamePath() == null ? null : gameFilesPath(defaultGamePath()!)?.normalize;
 }
 
-Directory? modFolderPath(Directory gamePath) {
+Directory? generateModFolderPath(Directory gamePath) {
   if (Platform.isWindows || Platform.isMacOS) {
-    return Directory(p.join(gamePath.path, "mods"));
+    return Directory(p.join(gamePath.path, "mods")).normalize;
   } else if (kIsWeb) {
     return null; // huh
   } else {
@@ -76,6 +78,8 @@ File? getRulesCsvInModFolder(Directory modFolder) {
     return null;
   }
 }
+
+final allRulesCsvsInModsFolder = StateProvider<File?>((ref) => null);
 
 List<File> getAllRulesCsvsInModsFolder(Directory modsFolder) {
   return modsFolder

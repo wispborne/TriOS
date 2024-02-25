@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:open_filex/open_filex.dart';
-import 'package:path/path.dart';
 import 'package:platform_info/platform_info.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/util.dart';

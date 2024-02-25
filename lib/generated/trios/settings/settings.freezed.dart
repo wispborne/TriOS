@@ -23,6 +23,7 @@ mixin _$Settings {
   String? get gameDir => throw _privateConstructorUsedError;
   String? get modsDir => throw _privateConstructorUsedError;
   List<String>? get enabledModIds => throw _privateConstructorUsedError;
+  bool get shouldAutoUpdateOnLaunch => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -35,7 +36,11 @@ abstract class $SettingsCopyWith<$Res> {
   factory $SettingsCopyWith(Settings value, $Res Function(Settings) then) =
       _$SettingsCopyWithImpl<$Res, Settings>;
   @useResult
-  $Res call({String? gameDir, String? modsDir, List<String>? enabledModIds});
+  $Res call(
+      {String? gameDir,
+      String? modsDir,
+      List<String>? enabledModIds,
+      bool shouldAutoUpdateOnLaunch});
 }
 
 /// @nodoc
@@ -54,6 +59,7 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
     Object? gameDir = freezed,
     Object? modsDir = freezed,
     Object? enabledModIds = freezed,
+    Object? shouldAutoUpdateOnLaunch = null,
   }) {
     return _then(_value.copyWith(
       gameDir: freezed == gameDir
@@ -68,6 +74,10 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
           ? _value.enabledModIds
           : enabledModIds // ignore: cast_nullable_to_non_nullable
               as List<String>?,
+      shouldAutoUpdateOnLaunch: null == shouldAutoUpdateOnLaunch
+          ? _value.shouldAutoUpdateOnLaunch
+          : shouldAutoUpdateOnLaunch // ignore: cast_nullable_to_non_nullable
+              as bool,
     ) as $Val);
   }
 }
@@ -80,7 +90,11 @@ abstract class _$$SettingsImplCopyWith<$Res>
       __$$SettingsImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String? gameDir, String? modsDir, List<String>? enabledModIds});
+  $Res call(
+      {String? gameDir,
+      String? modsDir,
+      List<String>? enabledModIds,
+      bool shouldAutoUpdateOnLaunch});
 }
 
 /// @nodoc
@@ -97,6 +111,7 @@ class __$$SettingsImplCopyWithImpl<$Res>
     Object? gameDir = freezed,
     Object? modsDir = freezed,
     Object? enabledModIds = freezed,
+    Object? shouldAutoUpdateOnLaunch = null,
   }) {
     return _then(_$SettingsImpl(
       gameDir: freezed == gameDir
@@ -111,6 +126,10 @@ class __$$SettingsImplCopyWithImpl<$Res>
           ? _value._enabledModIds
           : enabledModIds // ignore: cast_nullable_to_non_nullable
               as List<String>?,
+      shouldAutoUpdateOnLaunch: null == shouldAutoUpdateOnLaunch
+          ? _value.shouldAutoUpdateOnLaunch
+          : shouldAutoUpdateOnLaunch // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -119,7 +138,10 @@ class __$$SettingsImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
   _$SettingsImpl(
-      {this.gameDir, this.modsDir, final List<String>? enabledModIds})
+      {this.gameDir,
+      this.modsDir,
+      final List<String>? enabledModIds,
+      this.shouldAutoUpdateOnLaunch = false})
       : _enabledModIds = enabledModIds;
 
   factory _$SettingsImpl.fromJson(Map<String, dynamic> json) =>
@@ -140,8 +162,12 @@ class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
   }
 
   @override
+  @JsonKey()
+  final bool shouldAutoUpdateOnLaunch;
+
+  @override
   String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
-    return 'Settings(gameDir: $gameDir, modsDir: $modsDir, enabledModIds: $enabledModIds)';
+    return 'Settings(gameDir: $gameDir, modsDir: $modsDir, enabledModIds: $enabledModIds, shouldAutoUpdateOnLaunch: $shouldAutoUpdateOnLaunch)';
   }
 
   @override
@@ -151,7 +177,9 @@ class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
       ..add(DiagnosticsProperty('type', 'Settings'))
       ..add(DiagnosticsProperty('gameDir', gameDir))
       ..add(DiagnosticsProperty('modsDir', modsDir))
-      ..add(DiagnosticsProperty('enabledModIds', enabledModIds));
+      ..add(DiagnosticsProperty('enabledModIds', enabledModIds))
+      ..add(DiagnosticsProperty(
+          'shouldAutoUpdateOnLaunch', shouldAutoUpdateOnLaunch));
   }
 
   @override
@@ -162,13 +190,20 @@ class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
             (identical(other.gameDir, gameDir) || other.gameDir == gameDir) &&
             (identical(other.modsDir, modsDir) || other.modsDir == modsDir) &&
             const DeepCollectionEquality()
-                .equals(other._enabledModIds, _enabledModIds));
+                .equals(other._enabledModIds, _enabledModIds) &&
+            (identical(
+                    other.shouldAutoUpdateOnLaunch, shouldAutoUpdateOnLaunch) ||
+                other.shouldAutoUpdateOnLaunch == shouldAutoUpdateOnLaunch));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(runtimeType, gameDir, modsDir,
-      const DeepCollectionEquality().hash(_enabledModIds));
+  int get hashCode => Object.hash(
+      runtimeType,
+      gameDir,
+      modsDir,
+      const DeepCollectionEquality().hash(_enabledModIds),
+      shouldAutoUpdateOnLaunch);
 
   @JsonKey(ignore: true)
   @override
@@ -188,7 +223,8 @@ abstract class _Settings implements Settings {
   factory _Settings(
       {final String? gameDir,
       final String? modsDir,
-      final List<String>? enabledModIds}) = _$SettingsImpl;
+      final List<String>? enabledModIds,
+      final bool shouldAutoUpdateOnLaunch}) = _$SettingsImpl;
 
   factory _Settings.fromJson(Map<String, dynamic> json) =
       _$SettingsImpl.fromJson;
@@ -199,6 +235,8 @@ abstract class _Settings implements Settings {
   String? get modsDir;
   @override
   List<String>? get enabledModIds;
+  @override
+  bool get shouldAutoUpdateOnLaunch;
   @override
   @JsonKey(ignore: true)
   _$$SettingsImplCopyWith<_$SettingsImpl> get copyWith =>

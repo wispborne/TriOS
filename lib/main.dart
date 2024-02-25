@@ -1,20 +1,20 @@
 import 'dart:io';
 
 import 'package:fimber_io/fimber_io.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:toastification/toastification.dart';
 import 'package:trios/chipper/chipper_home.dart';
-import 'package:trios/pages/settings/settings_page.dart';
 import 'package:trios/pages/vram_estimator/vram_estimator.dart';
 import 'package:trios/rules_autofresh/rules_hotreload.dart';
 import 'package:trios/trios/MyTheme.dart';
 import 'package:trios/trios/self_updater/script_generator.dart';
 import 'package:trios/trios/self_updater/self_updater.dart';
+import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/trios/settings/settingsSaver.dart';
+import 'package:trios/trios/settings/settings_page.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/widgets/TriOSAppIcon.dart';
@@ -134,50 +134,40 @@ class TriOSAppState extends ConsumerState<TriOSApp> {
           darkTheme: darkTheme,
           routerConfig: _router,
         ));
-    // return AdaptiveTheme(
-    //     light: lightTheme,
-    //     dark: darkTheme,
-    //     initial: AdaptiveThemeMode.light,
-    //     builder: (theme, dark) => ToastificationConfigProvider(
-    //         config: const ToastificationConfig(
-    //           alignment: Alignment.bottomRight,
-    //         ),
-    //         child: MaterialApp.router(
-    //           title: appTitle,
-    //           theme: theme,
-    //           // themeMode: AppState.theme.currentTheme(),
-    //           debugShowCheckedModeBanner: false,
-    //           darkTheme: dark,
-    //           routerConfig: _router,
-    //         )));
   }
 
+  // Router config
   final GoRouter _router = GoRouter(
     navigatorKey: _rootNavigatorKey,
-    routes: [
-      GoRoute(
-        path: pageHome,
-        builder: (context, state) => const AppShell(child: VramEstimatorPage()),
-      ),
-      GoRoute(
-        path: pageVramEstimator,
-        builder: (context, state) => const AppShell(child: VramEstimatorPage()),
-      ),
-      GoRoute(
-        path: pageChipper,
-        builder: (context, state) => const AppShell(child: ChipperApp()),
-      ),
-      GoRoute(
-        path: pageSettings,
-        builder: (context, state) => const AppShell(child: SettingsPage()),
-      ),
+    routes: <RouteBase>[
+      StatefulShellRoute.indexedStack(branches: [
+        StatefulShellBranch(routes: [
+          GoRoute(
+              path: pageHome,
+              pageBuilder: (context, state) => const NoTransitionPage(
+                    child: VramEstimatorPage(),
+                  )),
+          GoRoute(
+            path: pageVramEstimator,
+            pageBuilder: (context, state) => const NoTransitionPage(child: VramEstimatorPage()),
+          ),
+          GoRoute(
+            path: pageChipper,
+            pageBuilder: (context, state) => const NoTransitionPage(child: ChipperApp()),
+          ),
+          GoRoute(
+            path: pageSettings,
+            pageBuilder: (context, state) => const NoTransitionPage(child: SettingsPage()),
+          ),
+        ]),
+      ], builder: (context, state, navigationShell) => AppShell(child: navigationShell)),
     ],
   );
 }
 
 const String pageHome = "/";
 const String pageVramEstimator = "/vram_estimator";
-const String pageChipper = "/vram_estimator";
+const String pageChipper = "/chipper";
 const String pageSettings = "/settings";
 
 class AppShell extends ConsumerStatefulWidget {
@@ -194,7 +184,7 @@ class _AppShellState extends ConsumerState<AppShell> {
   void initState() {
     super.initState();
 
-    // On release builds, check for updates on launch and install if available.
+    // Check for updates on launch and show toast if available.
     SelfUpdater.getLatestRelease().then((latestRelease) {
       try {
         if (latestRelease != null) {
@@ -206,16 +196,15 @@ class _AppShellState extends ConsumerState<AppShell> {
                 url: latestRelease.assets.first.browserDownloadUrl,
                 releaseNote: latestRelease.body);
             Fimber.i("Update info: $updateInfo");
-            double progress = -1;
 
             toastification.showCustom(context: context, builder: (context, item) => TriOSToast(latestRelease, item));
 
-            // if (!kDebugMode) {
-            //   SelfUpdater.update(latestRelease, downloadProgress: (bytesReceived, contentLength) {
-            //     progress = bytesReceived / contentLength;
-            //     ref.read(selfUpdateDownloadProgress.notifier).update((_) => progress);
-            //   });
-            // }
+            if (ref.read(appSettings).shouldAutoUpdateOnLaunch) {
+              SelfUpdater.update(latestRelease, downloadProgress: (bytesReceived, contentLength) {
+                final progress = bytesReceived / contentLength;
+                ref.read(selfUpdateDownloadProgress.notifier).update((_) => progress);
+              });
+            }
           }
         }
       } catch (e, s) {
@@ -224,114 +213,79 @@ class _AppShellState extends ConsumerState<AppShell> {
     });
   }
 
-  // @override
-  // void initState() {
-  //   super.initState();
-  //
-  //   SharedPreferences.getInstance().then((prefs) {
-  //     _prefs = prefs;
-  //     setState(() {
-  //       gamePath =
-  //           Directory(_prefs.getString('gamePath') ?? defaultGamePath()!.path);
-  //       if (!gamePath!.existsSync()) {
-  //         gamePath = Directory(defaultGamePath()!.path);
-  //       }
-  //     });
-  //     _updatePaths();
-  //   });
-  // }
-  //
-  // _do() async {
-  //   _prefs = await SharedPreferences.getInstance();
-  //   setState(() {
-  //     gamePath =
-  //         // Directory(_prefs.getString('gamePath') ?? defaultGamePath()!.path);
-  //         Directory(defaultGamePath()!.path);
-  //   });
-  //   _updatePaths();
-  // }
-  //
-  // _updatePaths() {
-  //   setState(() {
-  //     gameFiles = gameFilesPath(gamePath!)!;
-  //     vanillaRulesCsv = getVanillaRulesCsvInGameFiles(gameFiles!);
-  //     modsFolder = modFolderPath(gamePath!)!;
-  //     modRulesCsvs = getAllRulesCsvsInModsFolder(modsFolder!);
-  //   });
-  // }
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-        length: 3,
-        animationDuration: const Duration(milliseconds: 0),
-        child: Scaffold(
-            appBar: AppBar(
-              title: Row(
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.only(right: 16.0),
-                    child: TriOSAppIcon(),
-                  ),
-                  Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(appTitle, style: Theme.of(context).textTheme.titleLarge),
-                    Text(appSubtitle, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 12))
-                  ]),
-                  const Expanded(
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16),
-                      child: TabBar(tabs: [
-                        Tab(text: "VRAM Estimator", icon: Icon(Icons.scale), iconMargin: EdgeInsets.zero),
-                        Tab(
-                            text: chipperTitle,
-                            icon: ImageIcon(AssetImage("assets/images/chipper/icon.png")),
-                            iconMargin: EdgeInsets.zero),
-                        Tab(text: "Settings", icon: Icon(Icons.settings), iconMargin: EdgeInsets.zero),
-                      ]),
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: AppState.theme.currentTheme() == ThemeMode.dark
-                        ? "THE SUN THE SUN THE SUN\nTHE SUN THE SUN THE SUN\nTHE SUN THE SUN THE SUN"
-                        : "Dark theme",
-                    onPressed: () => AppState.theme.switchThemes(context),
-                    icon: Icon(AppState.theme.currentTheme() == ThemeMode.dark ? Icons.sunny : Icons.mode_night),
-                  ),
-                  IconButton(
-                      tooltip: "Switch density",
-                      onPressed: () => AppState.theme.switchMaterial(),
-                      icon: Icon(AppState.theme.isMaterial3() ? Icons.view_compact : Icons.view_cozy)),
-                  Tooltip(
-                    message:
-                        "Hot reloading rules.csv.\nWatching ${ref.read(modRulesCsvs)?.length ?? 0} mods for changes.",
-                    textAlign: TextAlign.center,
-                    child: const Padding(
-                      padding: EdgeInsets.only(left: 16.0),
-                      child: RulesHotReload(),
-                    ),
-                  ),
-                  // ElevatedButton(
-                  //     onPressed: () {
-                  //       context.go(pageVramEstimator);
-                  //     },
-                  //     child: const Text("VRAM Estimator")),
-                  // ElevatedButton(
-                  //     onPressed: () {
-                  //       context.go(pageSettings);
-                  //     },
-                  //     child: const Text("Settings")),
-                ],
+    return Scaffold(
+        appBar: AppBar(
+          title: Row(
+            children: [
+              const Padding(
+                padding: EdgeInsets.only(right: 16.0),
+                child: TriOSAppIcon(),
               ),
-            ),
-            body: const Padding(
-                padding: EdgeInsets.all(8.0),
-                // child: widget.child,
-                child: TabBarView(
-                  children: [
-                    VramEstimatorPage(),
-                    ChipperApp(),
-                    SettingsPage(),
-                  ],
-                ))));
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(appTitle, style: Theme.of(context).textTheme.titleLarge),
+                Text(appSubtitle, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 12))
+              ]),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(mainAxisSize: MainAxisSize.max, children: [
+                    InkWell(
+                        child: const Column(children: [Text("VRAM Estimator"), Icon(Icons.scale)]),
+                        onTap: () {
+                          context.go(pageVramEstimator);
+                        }),
+                    InkWell(
+                        child: const Column(
+                            children: [Text("Chipper"), ImageIcon(AssetImage("assets/images/chipper/icon.png"))]),
+                        onTap: () {
+                          context.go(pageChipper);
+                        }),
+                    InkWell(
+                        child: const Column(children: [Text("Settings"), Icon(Icons.settings)]),
+                        onTap: () {
+                          context.go(pageSettings);
+                        }),
+                  ]),
+                ),
+              ),
+              IconButton(
+                tooltip: AppState.theme.currentTheme() == ThemeMode.dark
+                    ? "THE SUN THE SUN THE SUN\nTHE SUN THE SUN THE SUN\nTHE SUN THE SUN THE SUN"
+                    : "Dark theme",
+                onPressed: () => AppState.theme.switchThemes(context),
+                icon: Icon(AppState.theme.currentTheme() == ThemeMode.dark ? Icons.sunny : Icons.mode_night),
+              ),
+              IconButton(
+                  tooltip: "Switch density",
+                  onPressed: () => AppState.theme.switchMaterial(),
+                  icon: Icon(AppState.theme.isMaterial3() ? Icons.view_compact : Icons.view_cozy)),
+              Tooltip(
+                message: "Hot reloading rules.csv.\nWatching ${ref.read(modRulesCsvs)?.length ?? 0} mods for changes.",
+                textAlign: TextAlign.center,
+                child: const Padding(
+                  padding: EdgeInsets.only(left: 16.0),
+                  child: RulesHotReload(),
+                ),
+              ),
+              // ElevatedButton(
+              //     onPressed: () {
+              //       context.go(pageVramEstimator);
+              //     },
+              //     child: const Text("VRAM Estimator")),
+              // ElevatedButton(
+              //     onPressed: () {
+              //       context.go(pageSettings);
+              //     },
+              //     child: const Text("Settings")),
+            ],
+          ),
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: widget.child,
+        ));
   }
 // @override
 // Widget build(BuildContext context) {

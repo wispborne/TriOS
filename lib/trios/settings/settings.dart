@@ -26,7 +26,7 @@ final appSettings = StateProvider<Settings>((ref) {
 
 @freezed
 class Settings with _$Settings {
-  factory Settings({final String? gameDir, final String? modsDir, final List<String>? enabledModIds}) = _Settings;
+  factory Settings({final String? gameDir, final String? modsDir, final List<String>? enabledModIds, @Default(false) final bool shouldAutoUpdateOnLaunch}) = _Settings;
 
   factory Settings.fromJson(Map<String, Object?> json) => _$SettingsFromJson(json);
 }

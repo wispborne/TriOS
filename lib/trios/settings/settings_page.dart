@@ -9,6 +9,7 @@ import 'package:trios/main.dart';
 import 'package:trios/trios/self_updater/self_updater.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/widgets/checkbox_with_label.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
@@ -59,6 +60,19 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             padding: const EdgeInsets.only(left: 4, top: 8.0),
             child: Text("Mods Folder: ${ref.read(appSettings).modsDir}"),
           ),
+          Padding(
+            padding: const EdgeInsets.only(top: 24.0),
+            child: CheckboxWithLabel(
+              value: ref.watch(appSettings).shouldAutoUpdateOnLaunch,
+              onChanged: (value) {
+                ref
+                    .read(appSettings.notifier)
+                    .update((state) => state.copyWith(shouldAutoUpdateOnLaunch: value ?? false));
+              },
+              label: "Auto-update on launch",
+            ),
+          ),
+          // Debugging line here
           SizedBox.fromSize(size: const Size.fromHeight(20)),
           Text("Debugging stuff below here, please ignore.",
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.red, fontWeight: FontWeight.bold)),

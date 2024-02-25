@@ -13,6 +13,8 @@ _$SettingsImpl _$$SettingsImplFromJson(Map<String, dynamic> json) =>
       enabledModIds: (json['enabledModIds'] as List<dynamic>?)
           ?.map((e) => e as String)
           .toList(),
+      shouldAutoUpdateOnLaunch:
+          json['shouldAutoUpdateOnLaunch'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$$SettingsImplToJson(_$SettingsImpl instance) =>
@@ -20,4 +22,5 @@ Map<String, dynamic> _$$SettingsImplToJson(_$SettingsImpl instance) =>
       'gameDir': instance.gameDir,
       'modsDir': instance.modsDir,
       'enabledModIds': instance.enabledModIds,
+      'shouldAutoUpdateOnLaunch': instance.shouldAutoUpdateOnLaunch,
     };

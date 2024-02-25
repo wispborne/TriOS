@@ -24,7 +24,7 @@ import 'package:window_size/window_size.dart';
 import 'app_state.dart';
 import 'main.mapper.g.dart' show initializeJsonMapper;
 
-const version = "0.0.10";
+const version = "0.0.11";
 const appName = "TriOS";
 const appTitle = "$appName v$version";
 String appSubtitle = [
@@ -290,16 +290,21 @@ class _AppShellState extends ConsumerState<AppShell> {
                     ),
                   ),
                   IconButton(
-                      tooltip: "Switch theme",
-                      onPressed: () => AppState.theme.switchThemes(context),
-                      icon: Icon(AppState.theme.currentTheme() == ThemeMode.dark ? Icons.sunny : Icons.mode_night)),
+                    tooltip: AppState.theme.currentTheme() == ThemeMode.dark
+                        ? "THE SUN THE SUN THE SUN\nTHE SUN THE SUN THE SUN\nTHE SUN THE SUN THE SUN"
+                        : "Dark theme",
+                    onPressed: () => AppState.theme.switchThemes(context),
+                    icon: Icon(AppState.theme.currentTheme() == ThemeMode.dark ? Icons.sunny : Icons.mode_night),
+                  ),
                   IconButton(
                       tooltip: "Switch density",
                       onPressed: () => AppState.theme.switchMaterial(),
                       icon: Icon(AppState.theme.isMaterial3() ? Icons.view_compact : Icons.view_cozy)),
-                  const Tooltip(
-                    message: "Hot reloading rules.csv.",
-                    child: Padding(
+                  Tooltip(
+                    message:
+                        "Hot reloading rules.csv.\nWatching ${ref.read(modRulesCsvs)?.length ?? 0} mods for changes.",
+                    textAlign: TextAlign.center,
+                    child: const Padding(
                       padding: EdgeInsets.only(left: 16.0),
                       child: RulesHotReload(),
                     ),

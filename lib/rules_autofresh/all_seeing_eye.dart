@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 /// Thanks Gemini
 class FadingEye extends StatefulWidget {
   final double size;
+  final int durationMillis;
 
-  const FadingEye({super.key, this.size = 24});
+  const FadingEye({super.key, this.size = 24, this.durationMillis = 1500});
 
   @override
   FadingEyeState createState() => FadingEyeState();
@@ -18,7 +19,7 @@ class FadingEyeState extends State<FadingEye> with SingleTickerProviderStateMixi
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(seconds: 2),
+      duration: Duration(milliseconds: widget.durationMillis),
       vsync: this,
     )..repeat(reverse: true); // Repeat the animation
 

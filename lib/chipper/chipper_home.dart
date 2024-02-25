@@ -197,8 +197,8 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                       if (Platform.I.isWeb) {
                         final content = utf8.decode(file.bytes!.toList(), allowMalformed: true);
                         ref.read(state.logRawContents.notifier).update((state) => LogFile(file.path, content));
-                      } else {
-                        final content = utf8.decode(file.bytes!.toList(), allowMalformed: true);
+                      } else if (file.path != null) {
+                        final content = utf8.decode(File(file.path!).readAsBytesSync().toList(), allowMalformed: true);
                         ref.read(state.logRawContents.notifier).update((state) => LogFile(file.path, content));
                       }
                     } else {

@@ -7,7 +7,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:toastification/toastification.dart';
 import 'package:trios/chipper/chipper_home.dart';
 import 'package:trios/pages/vram_estimator/vram_estimator.dart';
-import 'package:trios/rules_autofresh/rules_hotreload.dart';
 import 'package:trios/trios/MyTheme.dart';
 import 'package:trios/trios/self_updater/script_generator.dart';
 import 'package:trios/trios/self_updater/self_updater.dart';
@@ -24,7 +23,7 @@ import 'app_state.dart';
 import 'chipper/views/chipper_dropper.dart';
 import 'main.mapper.g.dart' show initializeJsonMapper;
 
-const version = "0.0.15";
+const version = "0.0.16";
 const appName = "TriOS";
 const appTitle = "$appName v$version";
 String appSubtitle = [

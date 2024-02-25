@@ -24,7 +24,7 @@ import 'app_state.dart';
 import 'chipper/views/chipper_dropper.dart';
 import 'main.mapper.g.dart' show initializeJsonMapper;
 
-const version = "0.0.14";
+const version = "0.0.15";
 const appName = "TriOS";
 const appTitle = "$appName v$version";
 String appSubtitle = [

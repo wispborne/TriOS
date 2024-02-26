@@ -76,6 +76,7 @@ dependencies:
   flutter_linkify: ^6.0.0
   url_launcher: ^6.2.5
   open_filex: ^4.4.0
+  flutter_animate: ^4.5.0
 
 dev_dependencies:
   # dart run build_runner watch --delete-conflicting-outputs
@@ -91,11 +92,11 @@ dev_dependencies:
   flutter_lints: ^3.0.1
   riverpod_generator: ^2.3.11
   build_runner: ^2.4.8
-  custom_lint: ^0.6.0
+  custom_lint: ^0.6.2
   freezed: ^2.4.7
   json_serializable: ^6.7.1
   #  riverpod_lint: ^2.3.9 # <https://github.com/google/reflectable.dart/pull/326>
-  #  analyzer: ^6.4.1
+  #analyzer: ^6.4.1
   flutter_launcher_icons: "^0.13.1"
   ffigen: ^11.0.0
 
@@ -125,9 +126,7 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
-    - assets/images/telos_faction_crest.svg
-    - assets/images/telos_faction_crest.png
-    - assets/images/chipper/
+    - assets/images/
     - assets/libarchive/windows/bin/
 
   # An image asset can refer to one or more resolution-specific "variants", see

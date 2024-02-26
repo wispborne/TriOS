@@ -15,6 +15,8 @@ _$SettingsImpl _$$SettingsImplFromJson(Map<String, dynamic> json) =>
           .toList(),
       shouldAutoUpdateOnLaunch:
           json['shouldAutoUpdateOnLaunch'] as bool? ?? false,
+      isRulesHotReloadEnabled:
+          json['isRulesHotReloadEnabled'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$$SettingsImplToJson(_$SettingsImpl instance) =>
@@ -23,4 +25,5 @@ Map<String, dynamic> _$$SettingsImplToJson(_$SettingsImpl instance) =>
       'modsDir': instance.modsDir,
       'enabledModIds': instance.enabledModIds,
       'shouldAutoUpdateOnLaunch': instance.shouldAutoUpdateOnLaunch,
+      'isRulesHotReloadEnabled': instance.isRulesHotReloadEnabled,
     };

@@ -7,12 +7,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:toastification/toastification.dart';
 import 'package:trios/chipper/chipper_home.dart';
 import 'package:trios/pages/vram_estimator/vram_estimator.dart';
-import 'package:trios/trios/MyTheme.dart';
+import 'package:trios/rules_autofresh/rules_hotreload.dart';
 import 'package:trios/trios/self_updater/script_generator.dart';
 import 'package:trios/trios/self_updater/self_updater.dart';
 import 'package:trios/trios/settings/settings.dart';
-import 'package:trios/trios/settings/settingsSaver.dart';
 import 'package:trios/trios/settings/settings_page.dart';
+import 'package:trios/trios/trios_theme.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/widgets/TriOSAppIcon.dart';
@@ -23,7 +23,7 @@ import 'app_state.dart';
 import 'chipper/views/chipper_dropper.dart';
 import 'main.mapper.g.dart' show initializeJsonMapper;
 
-const version = "0.0.16";
+const version = "0.0.17";
 const appName = "TriOS";
 const appTitle = "$appName v$version";
 String appSubtitle = [
@@ -197,6 +197,7 @@ class _AppShellState extends ConsumerState<AppShell> with SingleTickerProviderSt
       SettingsPage(),
     ];
 
+    var isRulesHotReloadEnabled = ref.watch(appSettings).isRulesHotReloadEnabled;
     return Scaffold(
         appBar: AppBar(
           title: Row(
@@ -213,7 +214,7 @@ class _AppShellState extends ConsumerState<AppShell> with SingleTickerProviderSt
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: TabBar(tabs: const [
-                    Tab(text: "VRAM Estimator", icon: Icon(Icons.scale), iconMargin: EdgeInsets.zero),
+                    Tab(text: "VRAM Estimator", icon: ImageIcon(AssetImage("assets/images/weight.png"))),
                     Tab(
                         text: chipperTitle,
                         icon: ImageIcon(AssetImage("assets/images/chipper/icon.png")),
@@ -233,12 +234,22 @@ class _AppShellState extends ConsumerState<AppShell> with SingleTickerProviderSt
                   tooltip: "Switch density",
                   onPressed: () => AppState.theme.switchMaterial(),
                   icon: Icon(AppState.theme.isMaterial3() ? Icons.view_compact : Icons.view_cozy)),
-              // Tooltip(
-              //   message: "Hot reloading rules.csv.\nWatching ${ref.read(modRulesCsvs)?.length ?? 0} mods for changes.",
-              //   textAlign: TextAlign.center,
-              //   child: const Padding(padding: EdgeInsets.only(left: 16.0), child: RulesHotReload(),
-              //       ),
-              // ),
+              Tooltip(
+                message:
+                    "When enabled, modifying a mod\'s rules.csv will\nreload in-game rules as long as dev mode is enabled."
+                    "\n\nrules.csv hot reload is ${isRulesHotReloadEnabled ? "enabled" : "disabled"}."
+                    "\nClick to ${isRulesHotReloadEnabled ? "disable" : "enable"}.",
+                textAlign: TextAlign.center,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(TriOSTheme.cornerRadius),
+                  onTap: () => ref
+                      .read(appSettings.notifier)
+                      .update((state) => state.copyWith(isRulesHotReloadEnabled: !isRulesHotReloadEnabled)),
+                  child: Padding(
+                      padding: const EdgeInsets.only(left: 16.0),
+                      child: RulesHotReload(isEnabled: isRulesHotReloadEnabled)),
+                ),
+              ),
             ],
           ),
         ),

@@ -141,18 +141,18 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 Padding(
                   padding: const EdgeInsets.only(top: 16.0),
                   child: ElevatedButton(
-                      onPressed: () {
-                        ref.read(selfUpdateDownloadProgress.notifier).update((_) => 0.5);
-                        // SelfUpdater.update(latestRelease, downloadProgress: (bytesReceived, contentLength) {
-                        //   Fimber.i(
-                        //       "Downloaded: ${bytesReceived.bytesAsReadableMB()} / ${contentLength.bytesAsReadableMB()}");
-                        // });
+                      onPressed: () async {
+                        final latestRelease = await SelfUpdater.getLatestRelease();
+                        SelfUpdater.update(latestRelease!, downloadProgress: (bytesReceived, contentLength) {
+                          Fimber.i(
+                              "Downloaded: ${bytesReceived.bytesAsReadableMB()} / ${contentLength.bytesAsReadableMB()}");
+                          ref.read(selfUpdateDownloadProgress.notifier).update((_) => bytesReceived / contentLength);
+                        });
                       },
-                      child: const Text("Fake Update")),
+                      child: const Text("Force Update")),
                 ),
                 LinearProgressIndicator(
-                  value: ref.watch(selfUpdateDownloadProgress),
-                  valueColor: AlwaysStoppedAnimation(Colors.blue),
+                  value: ref.watch(selfUpdateDownloadProgress) ?? 0,
                 ),
               ],
             ),

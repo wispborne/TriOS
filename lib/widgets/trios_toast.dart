@@ -36,10 +36,9 @@ class TriOSToast extends ConsumerWidget {
                       });
                     },
                     child: const Text("Update")),
-                if (ref.read(selfUpdateDownloadProgress) != null)
-                  LinearProgressIndicator(
-                    value: ref.watch(selfUpdateDownloadProgress),
-                  ),
+                LinearProgressIndicator(
+                  value: ref.watch(selfUpdateDownloadProgress) ?? 0,
+                ),
               ],
             ),
           ),

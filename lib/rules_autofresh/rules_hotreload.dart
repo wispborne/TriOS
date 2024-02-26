@@ -9,29 +9,14 @@ import '../app_state.dart';
 import '../utils/util.dart';
 import 'all_seeing_eye.dart';
 
-final vanillaRulesCsv = StateProvider<File?>((ref) => null);
-final modRulesCsvs =
+final vanillaRulesCsvFile = StateProvider<File?>((ref) => null);
+final modRulesCsvFiles =
     StateProvider<List<File>?>((ref) => ref.read(modFolderPath)?.let((path) => getAllRulesCsvsInModsFolder(path)));
 
-var fileChanges = StreamController();
-
-/// Should probably be a way to stop this.
-pollFileForModification(File file, int interval) async {
-  var lastModified = file.lastModifiedSync();
-  final fileChangesInstance = fileChanges;
-
-  while (!fileChangesInstance.isClosed) {
-    await Future.delayed(Duration(seconds: interval));
-    final newModified = file.lastModifiedSync();
-    if (newModified.isAfter(lastModified)) {
-      lastModified = newModified;
-      fileChanges.add(file);
-    }
-  }
-}
-
 class RulesHotReload extends ConsumerStatefulWidget {
-  const RulesHotReload({super.key});
+  final bool isEnabled;
+
+  const RulesHotReload({super.key, required this.isEnabled});
 
   @override
   ConsumerState createState() => _RulesHotReloadState();
@@ -39,13 +24,29 @@ class RulesHotReload extends ConsumerStatefulWidget {
 
 class _RulesHotReloadState extends ConsumerState<RulesHotReload> {
   int _counter = 0;
-  int _modsBeingWatched = 0;
 
   _saveVanillaRulesCsv(WidgetRef ref) {
-    ref.read(vanillaRulesCsv.notifier).update((file) => file?..setLastModified(DateTime.now()));
+    ref.read(vanillaRulesCsvFile.notifier).update((file) => file?..setLastModified(DateTime.now()));
     setState(() {
       _counter++;
     });
+  }
+
+  var fileChanges = StreamController();
+
+  /// Should probably be a way to stop this.
+  pollFileForModification(File file, int interval) async {
+    var lastModified = file.lastModifiedSync();
+    final fileChangesInstance = fileChanges;
+
+    while (!fileChangesInstance.isClosed) {
+      await Future.delayed(Duration(seconds: interval));
+      final newModified = file.lastModifiedSync();
+      if (newModified.isAfter(lastModified)) {
+        lastModified = newModified;
+        fileChanges.add(file);
+      }
+    }
   }
 
   @override
@@ -56,38 +57,45 @@ class _RulesHotReloadState extends ConsumerState<RulesHotReload> {
   @override
   Widget build(BuildContext context) {
     fileChanges.close();
-    fileChanges = StreamController();
 
-    _modsBeingWatched = ref.watch(modRulesCsvs)?.length ?? 0;
+    if (widget.isEnabled) {
+      fileChanges = StreamController();
 
-    fileChanges.stream.listen((event) {
-      _saveVanillaRulesCsv(ref);
-    });
+      fileChanges.stream.listen((event) {
+        _saveVanillaRulesCsv(ref);
+      });
 
-    for (var element in ref.watch(modRulesCsvs) ?? []) {
-      pollFileForModification(element, 1);
+      for (var element in ref.watch(modRulesCsvFiles) ?? []) {
+        pollFileForModification(element, 1);
+      }
     }
 
-    return Column(children: [
-      // Text(
-      //   '$_counter',
-      //   style: Theme.of(context).textTheme.headlineMedium,
-      // ),
-      const FadingEye(),
-      RichText(
-        textAlign: TextAlign.center,
-        text: TextSpan(
-          children: [
-            TextSpan(
-              text: '$_modsBeingWatched',
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const TextSpan(text: 'x rules.csv'),
-          ],
-        ),
-      ),
-    ]);
+    final modsBeingWatched = fileChanges.isClosed ? 0 : ref.watch(modRulesCsvFiles)?.length ?? 0;
+
+    return Opacity(
+      opacity: widget.isEnabled ? 1 : 0.5,
+      child: Column(children: [
+        // Text(
+        //   '$_counter',
+        //   style: Theme.of(context).textTheme.headlineMedium,
+        // ),
+        FadingEye(shouldAnimate: widget.isEnabled),
+        Text('rules.csv reload', style: Theme.of(context).textTheme.labelMedium),
+        // RichText(
+        //   textAlign: TextAlign.center,
+        //   text: TextSpan(
+        //     children: [
+        //       TextSpan(
+        //         text: '$modsBeingWatched',
+        //         style: const TextStyle(
+        //           fontWeight: FontWeight.bold,
+        //         ),
+        //       ),
+        //       const TextSpan(text: 'x rules.csv'),
+        //     ],
+        //   ),
+        // ),
+      ]),
+    );
   }
 }

@@ -3,13 +3,15 @@ import 'package:flutter_color/flutter_color.dart';
 
 import '../app_state.dart';
 
-class MyTheme with ChangeNotifier {
+class TriOSTheme with ChangeNotifier {
+  static double cornerRadius = 8;
+
   static bool _isDark = true;
   static bool _isMaterial3 = false;
   static const String _key = "currentTheme";
   static const String _keyMaterial = "isMaterial";
 
-  MyTheme() {
+  TriOSTheme() {
     if (sharedPrefs.containsKey(_key)) {
       _isDark = sharedPrefs.getBool(_key) ?? true;
       _isMaterial3 = sharedPrefs.getBool(_keyMaterial) ?? false;

@@ -10,12 +10,13 @@ import 'package:trios/utils/util.dart';
 part '../../generated/trios/settings/settings.freezed.dart';
 part '../../generated/trios/settings/settings.g.dart';
 
-const _sharedPrefsKey = "settings";
+const sharedPrefsSettingsKey = "settings";
 
 /// Settings State Provider
 final appSettings = StateProvider<Settings>((ref) {
-  if (sharedPrefs.containsKey(_sharedPrefsKey)) {
-    return Settings.fromJson(jsonDecode(sharedPrefs.getString(_sharedPrefsKey)!));
+  final settings = readAppSettings();
+  if (settings != null) {
+    return settings;
   }
 
   final gameDir = defaultGamePath()?.absolute;
@@ -26,16 +27,30 @@ final appSettings = StateProvider<Settings>((ref) {
   }
 });
 
+Settings? readAppSettings() {
+  if (sharedPrefs.containsKey(sharedPrefsSettingsKey)) {
+    return Settings.fromJson(jsonDecode(sharedPrefs.getString(sharedPrefsSettingsKey)!));
+  } else {
+    return null;
+  }
+}
+
 /// Settings object model
 @freezed
 class Settings with _$Settings {
-  factory Settings(
-      {final String? gameDir,
-      final String? modsDir,
-      final List<String>? enabledModIds,
-      @Default(false) final bool shouldAutoUpdateOnLaunch,
-      @Default(false) final bool isRulesHotReloadEnabled,
-      }) = _Settings;
+  factory Settings({
+    final String? gameDir,
+    final String? modsDir,
+    final List<String>? enabledModIds,
+    @Default(false) final bool shouldAutoUpdateOnLaunch,
+    @Default(false) final bool isRulesHotReloadEnabled,
+    final double? windowXPos,
+    final double? windowYPos,
+    final double? windowWidth,
+    final double? windowHeight,
+    final bool? isMaximized,
+    final bool? isMinimized,
+  }) = _Settings;
 
   factory Settings.fromJson(Map<String, Object?> json) => _$SettingsFromJson(json);
 }
@@ -48,13 +63,13 @@ class SettingSaver extends ProviderObserver {
       var settings = newValue as Settings;
 
       if (newValue == previousValue) {
-        Fimber.d("No settings change: $settings");
+        Fimber.v("No settings change: $settings");
         return;
       }
 
       Fimber.d("Updated settings: $settings");
 
-      sharedPrefs.setString(_sharedPrefsKey, jsonEncode(settings.toJson()));
+      sharedPrefs.setString(sharedPrefsSettingsKey, jsonEncode(settings.toJson()));
 
       if (settings.gameDir == null) {
         return;

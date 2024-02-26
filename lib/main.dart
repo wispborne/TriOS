@@ -16,7 +16,9 @@ import 'package:trios/trios/trios_theme.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/widgets/TriOSAppIcon.dart';
+import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:trios/widgets/trios_toast.dart';
+import 'package:window_manager/window_manager.dart';
 import 'package:window_size/window_size.dart';
 
 import 'app_state.dart';
@@ -42,11 +44,23 @@ void main() async {
   FlutterError.onError = (details) {
     Fimber.e("${details.exceptionAsString()}\n${details.stack}", ex: details.exception, stacktrace: details.stack);
   };
+  WidgetsFlutterBinding.ensureInitialized();
+  await windowManager.ensureInitialized();
   initializeJsonMapper();
   sharedPrefs = await SharedPreferences.getInstance();
 
   runApp(ProviderScope(observers: [SettingSaver()], child: const TriOSApp()));
   setWindowTitle(appTitle);
+
+  // Restore window position and size
+  final settings = readAppSettings();
+  if (settings != null && settings.windowWidth != null && settings.windowHeight != null) {
+    setWindowFrame(Rect.fromLTWH(
+        settings.windowXPos ?? 0, settings.windowYPos ?? 0, settings.windowWidth ?? 800, settings.windowHeight ?? 600));
+    if (settings.isMaximized ?? false) {
+      windowManager.maximize();
+    }
+  }
 
   // Clean up old files.
   final filePatternsToClean = [logFileName, ScriptGenerator.SELF_UPDATE_FILE_NAME];
@@ -68,7 +82,7 @@ class TriOSApp extends ConsumerStatefulWidget {
   TriOSAppState createState() => TriOSAppState();
 }
 
-class TriOSAppState extends ConsumerState<TriOSApp> {
+class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
   @override
   void initState() {
     super.initState();
@@ -76,6 +90,7 @@ class TriOSAppState extends ConsumerState<TriOSApp> {
       setState(() {});
     });
 
+    windowManager.addListener(this);
     // loadDefaultLog(ref);
   }
 
@@ -136,6 +151,32 @@ class TriOSAppState extends ConsumerState<TriOSApp> {
           darkTheme: darkTheme,
           home: const AppShell(child: VramEstimatorPage()),
         ));
+  }
+
+  @override
+  void dispose() {
+    windowManager.removeListener(this);
+    super.dispose();
+  }
+
+  void _saveWindowPosition() async {
+    final windowFrame = await windowManager.getBounds();
+    final isMaximized = await windowManager.isMaximized();
+    ref.read(appSettings.notifier).update((state) {
+      return state.copyWith(
+        windowXPos: windowFrame.left,
+        windowYPos: windowFrame.top,
+        windowWidth: windowFrame.width,
+        windowHeight: windowFrame.height,
+        isMaximized: isMaximized,
+      );
+    });
+  }
+
+  @override
+  void onWindowEvent(String eventName) {
+    // Could avoid saving on every event but it's probably fine.
+    _saveWindowPosition();
   }
 }
 
@@ -214,7 +255,7 @@ class _AppShellState extends ConsumerState<AppShell> with SingleTickerProviderSt
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: TabBar(tabs: const [
-                    Tab(text: "VRAM Estimator", icon: ImageIcon(AssetImage("assets/images/weight.png"))),
+                    Tab(text: "VRAM Estimator", icon: SvgImageIcon("assets/images/weight.svg")),
                     Tab(
                         text: chipperTitle,
                         icon: ImageIcon(AssetImage("assets/images/chipper/icon.png")),

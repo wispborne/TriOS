@@ -9,6 +9,14 @@ import '../pages/vram_estimator/models/mod_result.dart';
 
 extension DoubleExt on double {
   String bytesAsReadableMB() => "${(this / 1000000).toStringAsFixed(3)} MB";
+
+  double coerceAtLeast(double minimumValue) {
+    return this < minimumValue ? minimumValue : this;
+  }
+
+  double coerceAtMost(double maximumValue) {
+    return this > maximumValue ? maximumValue : this;
+  }
 }
 // Long.bytesAsReadableMB: String
 // get() = "%.3f MB".format(this / 1000000f)
@@ -133,6 +141,14 @@ extension IntExt on int {
       i >>>= 2;
     }
     return n - (i >>> 1);
+  }
+
+  int coerceAtLeast(int minimumValue) {
+    return this < minimumValue ? minimumValue : this;
+  }
+
+  int coerceAtMost(int maximumValue) {
+    return this > maximumValue ? maximumValue : this;
   }
 }
 

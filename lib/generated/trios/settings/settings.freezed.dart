@@ -25,6 +25,12 @@ mixin _$Settings {
   List<String>? get enabledModIds => throw _privateConstructorUsedError;
   bool get shouldAutoUpdateOnLaunch => throw _privateConstructorUsedError;
   bool get isRulesHotReloadEnabled => throw _privateConstructorUsedError;
+  double? get windowXPos => throw _privateConstructorUsedError;
+  double? get windowYPos => throw _privateConstructorUsedError;
+  double? get windowWidth => throw _privateConstructorUsedError;
+  double? get windowHeight => throw _privateConstructorUsedError;
+  bool? get isMaximized => throw _privateConstructorUsedError;
+  bool? get isMinimized => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -42,7 +48,13 @@ abstract class $SettingsCopyWith<$Res> {
       String? modsDir,
       List<String>? enabledModIds,
       bool shouldAutoUpdateOnLaunch,
-      bool isRulesHotReloadEnabled});
+      bool isRulesHotReloadEnabled,
+      double? windowXPos,
+      double? windowYPos,
+      double? windowWidth,
+      double? windowHeight,
+      bool? isMaximized,
+      bool? isMinimized});
 }
 
 /// @nodoc
@@ -63,6 +75,12 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
     Object? enabledModIds = freezed,
     Object? shouldAutoUpdateOnLaunch = null,
     Object? isRulesHotReloadEnabled = null,
+    Object? windowXPos = freezed,
+    Object? windowYPos = freezed,
+    Object? windowWidth = freezed,
+    Object? windowHeight = freezed,
+    Object? isMaximized = freezed,
+    Object? isMinimized = freezed,
   }) {
     return _then(_value.copyWith(
       gameDir: freezed == gameDir
@@ -85,6 +103,30 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
           ? _value.isRulesHotReloadEnabled
           : isRulesHotReloadEnabled // ignore: cast_nullable_to_non_nullable
               as bool,
+      windowXPos: freezed == windowXPos
+          ? _value.windowXPos
+          : windowXPos // ignore: cast_nullable_to_non_nullable
+              as double?,
+      windowYPos: freezed == windowYPos
+          ? _value.windowYPos
+          : windowYPos // ignore: cast_nullable_to_non_nullable
+              as double?,
+      windowWidth: freezed == windowWidth
+          ? _value.windowWidth
+          : windowWidth // ignore: cast_nullable_to_non_nullable
+              as double?,
+      windowHeight: freezed == windowHeight
+          ? _value.windowHeight
+          : windowHeight // ignore: cast_nullable_to_non_nullable
+              as double?,
+      isMaximized: freezed == isMaximized
+          ? _value.isMaximized
+          : isMaximized // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      isMinimized: freezed == isMinimized
+          ? _value.isMinimized
+          : isMinimized // ignore: cast_nullable_to_non_nullable
+              as bool?,
     ) as $Val);
   }
 }
@@ -102,7 +144,13 @@ abstract class _$$SettingsImplCopyWith<$Res>
       String? modsDir,
       List<String>? enabledModIds,
       bool shouldAutoUpdateOnLaunch,
-      bool isRulesHotReloadEnabled});
+      bool isRulesHotReloadEnabled,
+      double? windowXPos,
+      double? windowYPos,
+      double? windowWidth,
+      double? windowHeight,
+      bool? isMaximized,
+      bool? isMinimized});
 }
 
 /// @nodoc
@@ -121,6 +169,12 @@ class __$$SettingsImplCopyWithImpl<$Res>
     Object? enabledModIds = freezed,
     Object? shouldAutoUpdateOnLaunch = null,
     Object? isRulesHotReloadEnabled = null,
+    Object? windowXPos = freezed,
+    Object? windowYPos = freezed,
+    Object? windowWidth = freezed,
+    Object? windowHeight = freezed,
+    Object? isMaximized = freezed,
+    Object? isMinimized = freezed,
   }) {
     return _then(_$SettingsImpl(
       gameDir: freezed == gameDir
@@ -143,6 +197,30 @@ class __$$SettingsImplCopyWithImpl<$Res>
           ? _value.isRulesHotReloadEnabled
           : isRulesHotReloadEnabled // ignore: cast_nullable_to_non_nullable
               as bool,
+      windowXPos: freezed == windowXPos
+          ? _value.windowXPos
+          : windowXPos // ignore: cast_nullable_to_non_nullable
+              as double?,
+      windowYPos: freezed == windowYPos
+          ? _value.windowYPos
+          : windowYPos // ignore: cast_nullable_to_non_nullable
+              as double?,
+      windowWidth: freezed == windowWidth
+          ? _value.windowWidth
+          : windowWidth // ignore: cast_nullable_to_non_nullable
+              as double?,
+      windowHeight: freezed == windowHeight
+          ? _value.windowHeight
+          : windowHeight // ignore: cast_nullable_to_non_nullable
+              as double?,
+      isMaximized: freezed == isMaximized
+          ? _value.isMaximized
+          : isMaximized // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      isMinimized: freezed == isMinimized
+          ? _value.isMinimized
+          : isMinimized // ignore: cast_nullable_to_non_nullable
+              as bool?,
     ));
   }
 }
@@ -155,7 +233,13 @@ class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
       this.modsDir,
       final List<String>? enabledModIds,
       this.shouldAutoUpdateOnLaunch = false,
-      this.isRulesHotReloadEnabled = false})
+      this.isRulesHotReloadEnabled = false,
+      this.windowXPos,
+      this.windowYPos,
+      this.windowWidth,
+      this.windowHeight,
+      this.isMaximized,
+      this.isMinimized})
       : _enabledModIds = enabledModIds;
 
   factory _$SettingsImpl.fromJson(Map<String, dynamic> json) =>
@@ -181,10 +265,22 @@ class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
   @override
   @JsonKey()
   final bool isRulesHotReloadEnabled;
+  @override
+  final double? windowXPos;
+  @override
+  final double? windowYPos;
+  @override
+  final double? windowWidth;
+  @override
+  final double? windowHeight;
+  @override
+  final bool? isMaximized;
+  @override
+  final bool? isMinimized;
 
   @override
   String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
-    return 'Settings(gameDir: $gameDir, modsDir: $modsDir, enabledModIds: $enabledModIds, shouldAutoUpdateOnLaunch: $shouldAutoUpdateOnLaunch, isRulesHotReloadEnabled: $isRulesHotReloadEnabled)';
+    return 'Settings(gameDir: $gameDir, modsDir: $modsDir, enabledModIds: $enabledModIds, shouldAutoUpdateOnLaunch: $shouldAutoUpdateOnLaunch, isRulesHotReloadEnabled: $isRulesHotReloadEnabled, windowXPos: $windowXPos, windowYPos: $windowYPos, windowWidth: $windowWidth, windowHeight: $windowHeight, isMaximized: $isMaximized, isMinimized: $isMinimized)';
   }
 
   @override
@@ -198,7 +294,13 @@ class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
       ..add(DiagnosticsProperty(
           'shouldAutoUpdateOnLaunch', shouldAutoUpdateOnLaunch))
       ..add(DiagnosticsProperty(
-          'isRulesHotReloadEnabled', isRulesHotReloadEnabled));
+          'isRulesHotReloadEnabled', isRulesHotReloadEnabled))
+      ..add(DiagnosticsProperty('windowXPos', windowXPos))
+      ..add(DiagnosticsProperty('windowYPos', windowYPos))
+      ..add(DiagnosticsProperty('windowWidth', windowWidth))
+      ..add(DiagnosticsProperty('windowHeight', windowHeight))
+      ..add(DiagnosticsProperty('isMaximized', isMaximized))
+      ..add(DiagnosticsProperty('isMinimized', isMinimized));
   }
 
   @override
@@ -215,7 +317,19 @@ class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
                 other.shouldAutoUpdateOnLaunch == shouldAutoUpdateOnLaunch) &&
             (identical(
                     other.isRulesHotReloadEnabled, isRulesHotReloadEnabled) ||
-                other.isRulesHotReloadEnabled == isRulesHotReloadEnabled));
+                other.isRulesHotReloadEnabled == isRulesHotReloadEnabled) &&
+            (identical(other.windowXPos, windowXPos) ||
+                other.windowXPos == windowXPos) &&
+            (identical(other.windowYPos, windowYPos) ||
+                other.windowYPos == windowYPos) &&
+            (identical(other.windowWidth, windowWidth) ||
+                other.windowWidth == windowWidth) &&
+            (identical(other.windowHeight, windowHeight) ||
+                other.windowHeight == windowHeight) &&
+            (identical(other.isMaximized, isMaximized) ||
+                other.isMaximized == isMaximized) &&
+            (identical(other.isMinimized, isMinimized) ||
+                other.isMinimized == isMinimized));
   }
 
   @JsonKey(ignore: true)
@@ -226,7 +340,13 @@ class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
       modsDir,
       const DeepCollectionEquality().hash(_enabledModIds),
       shouldAutoUpdateOnLaunch,
-      isRulesHotReloadEnabled);
+      isRulesHotReloadEnabled,
+      windowXPos,
+      windowYPos,
+      windowWidth,
+      windowHeight,
+      isMaximized,
+      isMinimized);
 
   @JsonKey(ignore: true)
   @override
@@ -248,7 +368,13 @@ abstract class _Settings implements Settings {
       final String? modsDir,
       final List<String>? enabledModIds,
       final bool shouldAutoUpdateOnLaunch,
-      final bool isRulesHotReloadEnabled}) = _$SettingsImpl;
+      final bool isRulesHotReloadEnabled,
+      final double? windowXPos,
+      final double? windowYPos,
+      final double? windowWidth,
+      final double? windowHeight,
+      final bool? isMaximized,
+      final bool? isMinimized}) = _$SettingsImpl;
 
   factory _Settings.fromJson(Map<String, dynamic> json) =
       _$SettingsImpl.fromJson;
@@ -263,6 +389,18 @@ abstract class _Settings implements Settings {
   bool get shouldAutoUpdateOnLaunch;
   @override
   bool get isRulesHotReloadEnabled;
+  @override
+  double? get windowXPos;
+  @override
+  double? get windowYPos;
+  @override
+  double? get windowWidth;
+  @override
+  double? get windowHeight;
+  @override
+  bool? get isMaximized;
+  @override
+  bool? get isMinimized;
   @override
   @JsonKey(ignore: true)
   _$$SettingsImplCopyWith<_$SettingsImpl> get copyWith =>

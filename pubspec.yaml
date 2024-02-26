@@ -53,8 +53,9 @@ dependencies:
   image_size_getter: ^2.1.2
   squadron: ^5.1.6
   squadron_builder: ^2.4.5
-  desktop_window: ^0.4.0
+#  desktop_window: ^0.4.0
 #  adaptive_theme: ^3.6.0
+  window_manager: ^0.3.8
   window_size:
     git:
       url: https://github.com/google/flutter-desktop-embedding.git

@@ -146,31 +146,22 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
                 ),
               ),
             ),
-            // Disable(
-            // isEnabled: sortedModData.isNotEmpty,
-            // child: RangeSlider(
-            // values: RangeValues(
-            // viewRangeEnds.item1?.toDouble() ?? 0,
-            // viewRangeEnds.item2?.toDouble() ??
-            //     (sortedModData.isEmpty
-            //         ? 1
-            //         : sortedModData.length.toDouble())),
-            // min: 0,
-            // max:
-            //     sortedModData.isEmpty ? 1 : sortedModData.length.toDouble(),
-            // divisions: sortedModData.isEmpty ? 1 : sortedModData.length,
-            // labels: RangeLabels(
-            //     viewRangeEnds.item1?.toString() ?? '0',
-            //     viewRangeEnds.item2?.toString() ??
-            //         sortedModData.length.toString()),
-            // onChanged: (RangeValues values) {
-            // setState(() {
-            //   viewRangeEnds =
-            //       Tuple2(values.start.toInt(), values.end.toInt());
-            // });
-            // }),
-            // ),
-            // ),
+            Disable(
+              isEnabled: sortedModData.isNotEmpty,
+              child: RangeSlider(
+                  values: RangeValues(viewRangeEnds.item1?.toDouble() ?? 0,
+                      (viewRangeEnds.item2?.toDouble() ?? (sortedModData.length.toDouble())).coerceAtLeast(2)),
+                  min: 0,
+                  max: sortedModData.length.toDouble().coerceAtLeast(2),
+                  divisions: sortedModData.isEmpty ? 1 : sortedModData.length,
+                  labels: RangeLabels(viewRangeEnds.item1?.toString() ?? '0',
+                      viewRangeEnds.item2?.toString() ?? sortedModData.length.toString()),
+                  onChanged: (RangeValues values) {
+                    setState(() {
+                      viewRangeEnds = Tuple2(values.start.toInt(), values.end.toInt());
+                    });
+                  }),
+            ),
           ],
         ),
         if (modVramInfo.isNotEmpty)

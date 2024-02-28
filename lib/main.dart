@@ -68,7 +68,11 @@ void main() async {
     if (file is File) {
       for (var pattern in filePatternsToClean) {
         if (file.path.toLowerCase().contains(pattern.toLowerCase())) {
-          file.delete();
+          try {
+            file.delete();
+          } catch (e) {
+            Fimber.e("Error deleting file: $file", ex: e);
+          }
         }
       }
     }

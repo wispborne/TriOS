@@ -10,7 +10,7 @@ import '../utils/util.dart';
 import 'all_seeing_eye.dart';
 
 final vanillaRulesCsvFile = StateProvider<File?>((ref) => null);
-final modRulesCsvFiles =
+final modRulesDotCsvFiles =
     StateProvider<List<File>?>((ref) => ref.read(modFolderPath)?.let((path) => getAllRulesCsvsInModsFolder(path)));
 
 class RulesHotReload extends ConsumerStatefulWidget {
@@ -25,7 +25,7 @@ class RulesHotReload extends ConsumerStatefulWidget {
 class _RulesHotReloadState extends ConsumerState<RulesHotReload> {
   int _counter = 0;
 
-  _saveVanillaRulesCsv(WidgetRef ref) {
+  _saveVanillaRulesDotCsv(WidgetRef ref) {
     ref.read(vanillaRulesCsvFile.notifier).update((file) => file?..setLastModified(DateTime.now()));
     setState(() {
       _counter++;
@@ -35,12 +35,12 @@ class _RulesHotReloadState extends ConsumerState<RulesHotReload> {
   var fileChanges = StreamController();
 
   /// Should probably be a way to stop this.
-  pollFileForModification(File file, int interval) async {
+  pollFileForModification(File file, int intervalSeconds) async {
     var lastModified = file.lastModifiedSync();
     final fileChangesInstance = fileChanges;
 
     while (!fileChangesInstance.isClosed) {
-      await Future.delayed(Duration(seconds: interval));
+      await Future.delayed(Duration(seconds: intervalSeconds));
       final newModified = file.lastModifiedSync();
       if (newModified.isAfter(lastModified)) {
         lastModified = newModified;
@@ -62,15 +62,15 @@ class _RulesHotReloadState extends ConsumerState<RulesHotReload> {
       fileChanges = StreamController();
 
       fileChanges.stream.listen((event) {
-        _saveVanillaRulesCsv(ref);
+        _saveVanillaRulesDotCsv(ref);
       });
 
-      for (var element in ref.watch(modRulesCsvFiles) ?? []) {
-        pollFileForModification(element, 1);
+      for (var modRulesDotCsv in ref.watch(modRulesDotCsvFiles) ?? []) {
+        pollFileForModification(modRulesDotCsv, 1);
       }
     }
 
-    final modsBeingWatched = fileChanges.isClosed ? 0 : ref.watch(modRulesCsvFiles)?.length ?? 0;
+    final modsBeingWatched = fileChanges.isClosed ? 0 : ref.watch(modRulesDotCsvFiles)?.length ?? 0;
 
     return Opacity(
       opacity: widget.isEnabled ? 1 : 0.5,

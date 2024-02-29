@@ -63,22 +63,7 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
     try {
       final info = await VramChecker(
         enabledModIds: settings.enabledModIds,
-        modIdsToCheck: [
-          "exoticatechnologies",
-          "lockedAndLoaded",
-          "lunalib",
-          "lw_console",
-          "lw_lazylib",
-          "MagicLib",
-          "shaderLib",
-          "ShipCatalogVariantEditor",
-          "speedUp",
-          "uaf",
-          "uaf-deanime",
-          "wisp_magicAchievementsVanillaPack",
-          "wisp_NeutrinoDetectorMkII",
-          "wisp_perseanchronicles"
-        ],
+        modIdsToCheck: null,
         foldersToCheck: settings.modsDir == null ? [] : [Directory(settings.modsDir!)],
         graphicsLibConfig: GraphicsLibConfig(
           areAnyEffectsEnabled: false,

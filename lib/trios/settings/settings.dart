@@ -54,14 +54,16 @@ class SettingSaver extends Notifier<Settings> {
     final settings = readAppSettings();
     if (settings != null) {
       return settings;
+    } else {
+      return Settings();
     }
 
-    final gameDir = defaultGamePath()?.absolute;
-    if (gameDir == null) {
-      return Settings();
-    } else {
-      return Settings(gameDir: gameDir.path, modsDir: ref.read(modFolderPath)?.path);
-    }
+    // final gameDir = defaultGamePath()?.absolute;
+    // if (gameDir == null) {
+    //   return Settings();
+    // } else {
+    //   return Settings(gameDir: gameDir.path, modsDir: ref.read(modFolderPath)?.path);
+    // }
   }
 
   void update(Settings Function(Settings) update) {

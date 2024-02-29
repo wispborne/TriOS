@@ -9,6 +9,7 @@ import 'package:trios/main.dart';
 import 'package:trios/trios/self_updater/self_updater.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/util.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
@@ -43,12 +44,18 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               errorText: gamePathExists ? null : "Path does not exist",
               labelText: 'Starsector Folder',
             ),
-            onChanged: (value) {
-              var dirExists = Directory(value).normalize.existsSync();
+            onChanged: (newGameDir) {
+              var dirExists = Directory(newGameDir).normalize.existsSync();
+              final settings = ref.read(appSettings);
 
               if (dirExists) {
-                ref.read(appSettings.notifier).update((state) => state.copyWith(
-                    gameDir: Directory(value).normalize.path, modsDir: ref.read(modFolderPath)?.normalize.path));
+                ref.read(appSettings.notifier).update((state) {
+                  var newModDirPath = settings.hasCustomModsDir
+                      ? settings.modsDir?.toDirectory()
+                      : generateModFolderPath(newGameDir.toDirectory());
+
+                  return state.copyWith(gameDir: Directory(newGameDir).normalize.path, modsDir: newModDirPath?.path);
+                });
               }
 
               setState(() {

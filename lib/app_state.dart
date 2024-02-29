@@ -14,11 +14,6 @@ class AppState {
 
 final selfUpdateDownloadProgress = StateProvider<double?>((ref) => null);
 
-final gameFolderPath = StateProvider<Directory?>((ref) => defaultGamePath());
-
-final modFolderPath =
-    StateProvider<Directory?>((ref) => ref.read(gameFolderPath)?.let((value) => generateModFolderPath(value)));
-
 /// Initialized in main.dart
 late SharedPreferences sharedPrefs;
 

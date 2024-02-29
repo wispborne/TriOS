@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 
 import '../app_state.dart';
@@ -11,7 +12,7 @@ import 'all_seeing_eye.dart';
 
 final vanillaRulesCsvFile = StateProvider<File?>((ref) => null);
 final modRulesDotCsvFiles =
-    StateProvider<List<File>?>((ref) => ref.read(modFolderPath)?.let((path) => getAllRulesCsvsInModsFolder(path)));
+    StateProvider<List<File>?>((ref) => ref.read(appSettings).modsDir?.let((path) => getAllRulesCsvsInModsFolder(path.toDirectory())));
 
 class RulesHotReload extends ConsumerStatefulWidget {
   final bool isEnabled;

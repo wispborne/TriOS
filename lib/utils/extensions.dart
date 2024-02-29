@@ -33,6 +33,9 @@ extension StringExt on String {
     if (isEmpty) return str;
     return this;
   }
+
+  Directory toDirectory() => Directory(this);
+  File toFile() => File(this);
 }
 
 extension FileExt on File {

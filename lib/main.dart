@@ -8,6 +8,7 @@ import 'package:toastification/toastification.dart';
 import 'package:trios/chipper/chipper_home.dart';
 import 'package:trios/pages/vram_estimator/vram_estimator.dart';
 import 'package:trios/rules_autofresh/rules_hotreload.dart';
+import 'package:trios/trios/navigation.dart';
 import 'package:trios/trios/self_updater/script_generator.dart';
 import 'package:trios/trios/self_updater/self_updater.dart';
 import 'package:trios/trios/settings/settings.dart';
@@ -49,7 +50,7 @@ void main() async {
   initializeJsonMapper();
   sharedPrefs = await SharedPreferences.getInstance();
 
-  runApp(ProviderScope(observers: [SettingSaver()], child: const TriOSApp()));
+  runApp(const ProviderScope(observers: [], child: TriOSApp()));
   setWindowTitle(appTitle);
 
   // Restore window position and size
@@ -196,6 +197,12 @@ class AppShell extends ConsumerStatefulWidget {
 class _AppShellState extends ConsumerState<AppShell> with SingleTickerProviderStateMixin {
   late TabController tabController;
 
+  final tabToolMap = {
+    0: TriOSTools.vramEstimator,
+    1: TriOSTools.chipper,
+    2: null,
+  };
+
   @override
   void initState() {
     super.initState();
@@ -204,6 +211,17 @@ class _AppShellState extends ConsumerState<AppShell> with SingleTickerProviderSt
       vsync: this,
       animationDuration: const Duration(milliseconds: 0),
     );
+    tabController.addListener(() {
+      if (tabToolMap[tabController.index] != null) {
+        ref.read(appSettings.notifier).update((state) => state.copyWith(defaultTool: tabToolMap[tabController.index]!));
+      }
+    });
+
+    final defaultTool = ref.read(appSettings).defaultTool;
+    if (defaultTool != null) {
+      // Using index is a bit of a hack but if I change the tab order then people will simply fix it with a click.
+      tabController.index = tabToolMap.keys.firstWhere((k) => tabToolMap[k] == defaultTool, orElse: () => 0);
+    }
 
     // Check for updates on launch and show toast if available.
     SelfUpdater.getLatestRelease().then((latestRelease) {
@@ -259,6 +277,7 @@ class _AppShellState extends ConsumerState<AppShell> with SingleTickerProviderSt
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: TabBar(tabs: const [
+                    // TODO IF YOU CHANGE THESE, UPDATE tabToolMap!
                     Tab(text: "VRAM Estimator", icon: SvgImageIcon("assets/images/weight.svg")),
                     Tab(
                         text: chipperTitle,

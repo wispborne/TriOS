@@ -22,6 +22,7 @@ Settings _$SettingsFromJson(Map<String, dynamic> json) {
 mixin _$Settings {
   String? get gameDir => throw _privateConstructorUsedError;
   String? get modsDir => throw _privateConstructorUsedError;
+  bool get hasCustomModsDir => throw _privateConstructorUsedError;
   List<String>? get enabledModIds => throw _privateConstructorUsedError;
   bool get shouldAutoUpdateOnLaunch => throw _privateConstructorUsedError;
   bool get isRulesHotReloadEnabled => throw _privateConstructorUsedError;
@@ -31,6 +32,7 @@ mixin _$Settings {
   double? get windowHeight => throw _privateConstructorUsedError;
   bool? get isMaximized => throw _privateConstructorUsedError;
   bool? get isMinimized => throw _privateConstructorUsedError;
+  TriOSTools? get defaultTool => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -46,6 +48,7 @@ abstract class $SettingsCopyWith<$Res> {
   $Res call(
       {String? gameDir,
       String? modsDir,
+      bool hasCustomModsDir,
       List<String>? enabledModIds,
       bool shouldAutoUpdateOnLaunch,
       bool isRulesHotReloadEnabled,
@@ -54,7 +57,8 @@ abstract class $SettingsCopyWith<$Res> {
       double? windowWidth,
       double? windowHeight,
       bool? isMaximized,
-      bool? isMinimized});
+      bool? isMinimized,
+      TriOSTools? defaultTool});
 }
 
 /// @nodoc
@@ -72,6 +76,7 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
   $Res call({
     Object? gameDir = freezed,
     Object? modsDir = freezed,
+    Object? hasCustomModsDir = null,
     Object? enabledModIds = freezed,
     Object? shouldAutoUpdateOnLaunch = null,
     Object? isRulesHotReloadEnabled = null,
@@ -81,6 +86,7 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
     Object? windowHeight = freezed,
     Object? isMaximized = freezed,
     Object? isMinimized = freezed,
+    Object? defaultTool = freezed,
   }) {
     return _then(_value.copyWith(
       gameDir: freezed == gameDir
@@ -91,6 +97,10 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
           ? _value.modsDir
           : modsDir // ignore: cast_nullable_to_non_nullable
               as String?,
+      hasCustomModsDir: null == hasCustomModsDir
+          ? _value.hasCustomModsDir
+          : hasCustomModsDir // ignore: cast_nullable_to_non_nullable
+              as bool,
       enabledModIds: freezed == enabledModIds
           ? _value.enabledModIds
           : enabledModIds // ignore: cast_nullable_to_non_nullable
@@ -127,6 +137,10 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
           ? _value.isMinimized
           : isMinimized // ignore: cast_nullable_to_non_nullable
               as bool?,
+      defaultTool: freezed == defaultTool
+          ? _value.defaultTool
+          : defaultTool // ignore: cast_nullable_to_non_nullable
+              as TriOSTools?,
     ) as $Val);
   }
 }
@@ -142,6 +156,7 @@ abstract class _$$SettingsImplCopyWith<$Res>
   $Res call(
       {String? gameDir,
       String? modsDir,
+      bool hasCustomModsDir,
       List<String>? enabledModIds,
       bool shouldAutoUpdateOnLaunch,
       bool isRulesHotReloadEnabled,
@@ -150,7 +165,8 @@ abstract class _$$SettingsImplCopyWith<$Res>
       double? windowWidth,
       double? windowHeight,
       bool? isMaximized,
-      bool? isMinimized});
+      bool? isMinimized,
+      TriOSTools? defaultTool});
 }
 
 /// @nodoc
@@ -166,6 +182,7 @@ class __$$SettingsImplCopyWithImpl<$Res>
   $Res call({
     Object? gameDir = freezed,
     Object? modsDir = freezed,
+    Object? hasCustomModsDir = null,
     Object? enabledModIds = freezed,
     Object? shouldAutoUpdateOnLaunch = null,
     Object? isRulesHotReloadEnabled = null,
@@ -175,6 +192,7 @@ class __$$SettingsImplCopyWithImpl<$Res>
     Object? windowHeight = freezed,
     Object? isMaximized = freezed,
     Object? isMinimized = freezed,
+    Object? defaultTool = freezed,
   }) {
     return _then(_$SettingsImpl(
       gameDir: freezed == gameDir
@@ -185,6 +203,10 @@ class __$$SettingsImplCopyWithImpl<$Res>
           ? _value.modsDir
           : modsDir // ignore: cast_nullable_to_non_nullable
               as String?,
+      hasCustomModsDir: null == hasCustomModsDir
+          ? _value.hasCustomModsDir
+          : hasCustomModsDir // ignore: cast_nullable_to_non_nullable
+              as bool,
       enabledModIds: freezed == enabledModIds
           ? _value._enabledModIds
           : enabledModIds // ignore: cast_nullable_to_non_nullable
@@ -221,6 +243,10 @@ class __$$SettingsImplCopyWithImpl<$Res>
           ? _value.isMinimized
           : isMinimized // ignore: cast_nullable_to_non_nullable
               as bool?,
+      defaultTool: freezed == defaultTool
+          ? _value.defaultTool
+          : defaultTool // ignore: cast_nullable_to_non_nullable
+              as TriOSTools?,
     ));
   }
 }
@@ -231,6 +257,7 @@ class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
   _$SettingsImpl(
       {this.gameDir,
       this.modsDir,
+      this.hasCustomModsDir = false,
       final List<String>? enabledModIds,
       this.shouldAutoUpdateOnLaunch = false,
       this.isRulesHotReloadEnabled = false,
@@ -239,7 +266,8 @@ class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
       this.windowWidth,
       this.windowHeight,
       this.isMaximized,
-      this.isMinimized})
+      this.isMinimized,
+      this.defaultTool})
       : _enabledModIds = enabledModIds;
 
   factory _$SettingsImpl.fromJson(Map<String, dynamic> json) =>
@@ -249,6 +277,9 @@ class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
   final String? gameDir;
   @override
   final String? modsDir;
+  @override
+  @JsonKey()
+  final bool hasCustomModsDir;
   final List<String>? _enabledModIds;
   @override
   List<String>? get enabledModIds {
@@ -277,10 +308,12 @@ class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
   final bool? isMaximized;
   @override
   final bool? isMinimized;
+  @override
+  final TriOSTools? defaultTool;
 
   @override
   String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
-    return 'Settings(gameDir: $gameDir, modsDir: $modsDir, enabledModIds: $enabledModIds, shouldAutoUpdateOnLaunch: $shouldAutoUpdateOnLaunch, isRulesHotReloadEnabled: $isRulesHotReloadEnabled, windowXPos: $windowXPos, windowYPos: $windowYPos, windowWidth: $windowWidth, windowHeight: $windowHeight, isMaximized: $isMaximized, isMinimized: $isMinimized)';
+    return 'Settings(gameDir: $gameDir, modsDir: $modsDir, hasCustomModsDir: $hasCustomModsDir, enabledModIds: $enabledModIds, shouldAutoUpdateOnLaunch: $shouldAutoUpdateOnLaunch, isRulesHotReloadEnabled: $isRulesHotReloadEnabled, windowXPos: $windowXPos, windowYPos: $windowYPos, windowWidth: $windowWidth, windowHeight: $windowHeight, isMaximized: $isMaximized, isMinimized: $isMinimized, defaultTool: $defaultTool)';
   }
 
   @override
@@ -290,6 +323,7 @@ class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
       ..add(DiagnosticsProperty('type', 'Settings'))
       ..add(DiagnosticsProperty('gameDir', gameDir))
       ..add(DiagnosticsProperty('modsDir', modsDir))
+      ..add(DiagnosticsProperty('hasCustomModsDir', hasCustomModsDir))
       ..add(DiagnosticsProperty('enabledModIds', enabledModIds))
       ..add(DiagnosticsProperty(
           'shouldAutoUpdateOnLaunch', shouldAutoUpdateOnLaunch))
@@ -300,7 +334,8 @@ class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
       ..add(DiagnosticsProperty('windowWidth', windowWidth))
       ..add(DiagnosticsProperty('windowHeight', windowHeight))
       ..add(DiagnosticsProperty('isMaximized', isMaximized))
-      ..add(DiagnosticsProperty('isMinimized', isMinimized));
+      ..add(DiagnosticsProperty('isMinimized', isMinimized))
+      ..add(DiagnosticsProperty('defaultTool', defaultTool));
   }
 
   @override
@@ -310,6 +345,8 @@ class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
             other is _$SettingsImpl &&
             (identical(other.gameDir, gameDir) || other.gameDir == gameDir) &&
             (identical(other.modsDir, modsDir) || other.modsDir == modsDir) &&
+            (identical(other.hasCustomModsDir, hasCustomModsDir) ||
+                other.hasCustomModsDir == hasCustomModsDir) &&
             const DeepCollectionEquality()
                 .equals(other._enabledModIds, _enabledModIds) &&
             (identical(
@@ -329,7 +366,9 @@ class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
             (identical(other.isMaximized, isMaximized) ||
                 other.isMaximized == isMaximized) &&
             (identical(other.isMinimized, isMinimized) ||
-                other.isMinimized == isMinimized));
+                other.isMinimized == isMinimized) &&
+            (identical(other.defaultTool, defaultTool) ||
+                other.defaultTool == defaultTool));
   }
 
   @JsonKey(ignore: true)
@@ -338,6 +377,7 @@ class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
       runtimeType,
       gameDir,
       modsDir,
+      hasCustomModsDir,
       const DeepCollectionEquality().hash(_enabledModIds),
       shouldAutoUpdateOnLaunch,
       isRulesHotReloadEnabled,
@@ -346,7 +386,8 @@ class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
       windowWidth,
       windowHeight,
       isMaximized,
-      isMinimized);
+      isMinimized,
+      defaultTool);
 
   @JsonKey(ignore: true)
   @override
@@ -366,6 +407,7 @@ abstract class _Settings implements Settings {
   factory _Settings(
       {final String? gameDir,
       final String? modsDir,
+      final bool hasCustomModsDir,
       final List<String>? enabledModIds,
       final bool shouldAutoUpdateOnLaunch,
       final bool isRulesHotReloadEnabled,
@@ -374,7 +416,8 @@ abstract class _Settings implements Settings {
       final double? windowWidth,
       final double? windowHeight,
       final bool? isMaximized,
-      final bool? isMinimized}) = _$SettingsImpl;
+      final bool? isMinimized,
+      final TriOSTools? defaultTool}) = _$SettingsImpl;
 
   factory _Settings.fromJson(Map<String, dynamic> json) =
       _$SettingsImpl.fromJson;
@@ -383,6 +426,8 @@ abstract class _Settings implements Settings {
   String? get gameDir;
   @override
   String? get modsDir;
+  @override
+  bool get hasCustomModsDir;
   @override
   List<String>? get enabledModIds;
   @override
@@ -401,6 +446,8 @@ abstract class _Settings implements Settings {
   bool? get isMaximized;
   @override
   bool? get isMinimized;
+  @override
+  TriOSTools? get defaultTool;
   @override
   @JsonKey(ignore: true)
   _$$SettingsImplCopyWith<_$SettingsImpl> get copyWith =>

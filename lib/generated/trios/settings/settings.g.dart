@@ -10,6 +10,7 @@ _$SettingsImpl _$$SettingsImplFromJson(Map<String, dynamic> json) =>
     _$SettingsImpl(
       gameDir: json['gameDir'] as String?,
       modsDir: json['modsDir'] as String?,
+      hasCustomModsDir: json['hasCustomModsDir'] as bool? ?? false,
       enabledModIds: (json['enabledModIds'] as List<dynamic>?)
           ?.map((e) => e as String)
           .toList(),
@@ -23,12 +24,15 @@ _$SettingsImpl _$$SettingsImplFromJson(Map<String, dynamic> json) =>
       windowHeight: (json['windowHeight'] as num?)?.toDouble(),
       isMaximized: json['isMaximized'] as bool?,
       isMinimized: json['isMinimized'] as bool?,
+      defaultTool:
+          $enumDecodeNullable(_$TriOSToolsEnumMap, json['defaultTool']),
     );
 
 Map<String, dynamic> _$$SettingsImplToJson(_$SettingsImpl instance) =>
     <String, dynamic>{
       'gameDir': instance.gameDir,
       'modsDir': instance.modsDir,
+      'hasCustomModsDir': instance.hasCustomModsDir,
       'enabledModIds': instance.enabledModIds,
       'shouldAutoUpdateOnLaunch': instance.shouldAutoUpdateOnLaunch,
       'isRulesHotReloadEnabled': instance.isRulesHotReloadEnabled,
@@ -38,4 +42,10 @@ Map<String, dynamic> _$$SettingsImplToJson(_$SettingsImpl instance) =>
       'windowHeight': instance.windowHeight,
       'isMaximized': instance.isMaximized,
       'isMinimized': instance.isMinimized,
+      'defaultTool': _$TriOSToolsEnumMap[instance.defaultTool],
     };
+
+const _$TriOSToolsEnumMap = {
+  TriOSTools.vramEstimator: 'vramEstimator',
+  TriOSTools.chipper: 'chipper',
+};

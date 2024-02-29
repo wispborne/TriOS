@@ -1,0 +1,4 @@
+enum TriOSTools {
+  vramEstimator,
+  chipper
+}

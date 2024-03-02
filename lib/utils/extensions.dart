@@ -33,6 +33,18 @@ extension StringExt on String {
   Directory toDirectory() => Directory(this);
 
   File toFile() => File(this);
+
+  String take(int n) => length < n ? this : substring(0, n);
+
+  String takeLast(int n) => length < n ? this : substring(length - n);
+
+  String takeWhile(bool Function(String) predicate) {
+    var index = 0;
+    while (index < length && predicate(this[index])) {
+      index++;
+    }
+    return substring(0, index);
+  }
 }
 
 extension FileExt on File {
@@ -51,6 +63,21 @@ extension DirectoryExt on Directory {
   Directory get normalize => Directory(p.normalize(absolute.path));
 
   String get name => p.basename(path);
+
+  Future<void> moveDirectory(Directory destDir) async {
+    if (!(await rename(destDir.path)).existsSync()) {
+      // TODO handle directory rename failing.
+      throw FileSystemException("Failed to move directory: $this to $destDir");
+      // if (destDir.path.startsWith(path + Platform.pathSeparator)) {
+      //   throw FileSystemException("Cannot move directory: $this to a subdirectory of itself: $destDir");
+      // }
+      // copySync(destDir.path);
+      // deleteSync();
+      // if (existsSync()) {
+      //   throw FileSystemException("Failed to delete original directory '$this' after copy to '$destDir'");
+      // }
+    }
+  }
 }
 
 extension FileSystemEntityExt on FileSystemEntity {

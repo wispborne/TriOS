@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 
@@ -207,4 +208,18 @@ class NestedException implements Exception {
 
 TargetPlatform? get currentPlatform {
   return TargetPlatform.values.firstWhereOrNull((element) => element.name.toLowerCase() == Platform.operatingSystem);
+}
+
+pollFileForModification(File file, StreamController streamController, {int intervalSeconds = 1}) async {
+  var lastModified = file.lastModifiedSync();
+  final fileChangesInstance = streamController;
+
+  while (!fileChangesInstance.isClosed) {
+    await Future.delayed(Duration(seconds: intervalSeconds));
+    final newModified = file.lastModifiedSync();
+    if (newModified.isAfter(lastModified)) {
+      lastModified = newModified;
+      streamController.add(file);
+    }
+  }
 }

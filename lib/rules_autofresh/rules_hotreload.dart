@@ -6,13 +6,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 
-import '../app_state.dart';
 import '../utils/util.dart';
 import 'all_seeing_eye.dart';
 
 final vanillaRulesCsvFile = StateProvider<File?>((ref) => null);
-final modRulesDotCsvFiles =
-    StateProvider<List<File>?>((ref) => ref.read(appSettings).modsDir?.let((path) => getAllRulesCsvsInModsFolder(path.toDirectory())));
+final modRulesDotCsvFiles = StateProvider<List<File>?>(
+    (ref) => ref.read(appSettings).modsDir?.let((path) => getAllRulesCsvsInModsFolder(path.toDirectory())));
 
 class RulesHotReload extends ConsumerStatefulWidget {
   final bool isEnabled;
@@ -35,21 +34,6 @@ class _RulesHotReloadState extends ConsumerState<RulesHotReload> {
 
   var fileChanges = StreamController();
 
-  /// Should probably be a way to stop this.
-  pollFileForModification(File file, int intervalSeconds) async {
-    var lastModified = file.lastModifiedSync();
-    final fileChangesInstance = fileChanges;
-
-    while (!fileChangesInstance.isClosed) {
-      await Future.delayed(Duration(seconds: intervalSeconds));
-      final newModified = file.lastModifiedSync();
-      if (newModified.isAfter(lastModified)) {
-        lastModified = newModified;
-        fileChanges.add(file);
-      }
-    }
-  }
-
   @override
   void initState() {
     super.initState();
@@ -67,11 +51,11 @@ class _RulesHotReloadState extends ConsumerState<RulesHotReload> {
       });
 
       for (var modRulesDotCsv in ref.watch(modRulesDotCsvFiles) ?? []) {
-        pollFileForModification(modRulesDotCsv, 1);
+        pollFileForModification(modRulesDotCsv, fileChanges);
       }
     }
 
-    final modsBeingWatched = fileChanges.isClosed ? 0 : ref.watch(modRulesDotCsvFiles)?.length ?? 0;
+    final modsBeingWatchedCount = fileChanges.isClosed ? 0 : ref.watch(modRulesDotCsvFiles)?.length ?? 0;
 
     return Opacity(
       opacity: widget.isEnabled ? 1 : 0.5,

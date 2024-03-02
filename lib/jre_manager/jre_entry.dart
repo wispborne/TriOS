@@ -29,7 +29,7 @@ class JreEntry {
   int get version {
     try {
       if (versionString.startsWith("1.")) return int.parse(versionString.substring(2, 3));
-      return int.parse(versionString.substring(0, versionString.indexOf('.')));
+      return int.parse(versionString.takeWhile((char) => char != '.' && char != '-' && char != '+'));
     } catch (e, st) {
       Fimber.d(e.toString(), ex: e, stacktrace: st);
       return 0;

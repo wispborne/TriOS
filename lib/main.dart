@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:fimber_io/fimber_io.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:toastification/toastification.dart';
@@ -17,6 +18,7 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/vram_estimator/vram_estimator.dart';
 import 'package:trios/widgets/TriOSAppIcon.dart';
+import 'package:trios/widgets/blur.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:trios/widgets/trios_toast.dart';
 import 'package:window_manager/window_manager.dart';
@@ -268,9 +270,16 @@ class _AppShellState extends ConsumerState<AppShell> with SingleTickerProviderSt
         appBar: AppBar(
           title: Row(
             children: [
-              const Padding(
-                padding: EdgeInsets.only(right: 16.0),
-                child: TriOSAppIcon(),
+              Padding(
+                padding: const EdgeInsets.only(right: 16.0),
+                child: Stack(children: [
+                  const Blur(child: TriOSAppIcon(), blurX: 8, blurY: 8)
+                      .animate(onComplete: (c) => c.repeat(reverse: true))
+                      .fadeIn(duration: const Duration(seconds: 5))
+                      .then()
+                      .fadeOut(duration: const Duration(seconds: 5)),
+                  const TriOSAppIcon(),
+                ]),
               ),
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(appTitle, style: Theme.of(context).textTheme.titleLarge),

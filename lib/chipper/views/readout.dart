@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart';
 
-import '../app_state.dart';
+import '../chipper_state.dart';
 import '../copy.dart';
 import '../models/error_lines.dart';
 import '../models/mod_entry.dart';

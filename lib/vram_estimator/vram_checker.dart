@@ -10,9 +10,10 @@ import 'package:squadron/squadron.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:yaml/yaml.dart';
 
-import '../../models/gpu_info.dart';
-import '../../models/graphics_lib_config.dart';
-import '../../models/graphics_lib_info.dart';
+import 'models/gpu_info.dart';
+import 'models/graphics_lib_config.dart';
+import 'models/graphics_lib_info.dart';
+import '../utils/util.dart';
 import 'models/mod_image.dart';
 import '../../models/mod_info.dart';
 import '../../models/mod_info_json.dart';
@@ -183,7 +184,7 @@ class VramChecker {
           imageType = ImageType.Texture;
         }
 
-        if (file.name.endsWith(".png")) {
+        if (file.nameWithExtension.endsWith(".png")) {
           return await getModImagePng(
                   imageHeaderReaderPool, file, imageType, modInfo) ??
               await getModImageGeneric(
@@ -456,7 +457,7 @@ class VramChecker {
       return modFolder
           .listSync()
           .whereType<File>()
-          .firstWhereOrNull((file) => file.name == "mod_info.json")
+          .firstWhereOrNull((file) => file.nameWithExtension == "mod_info.json")
           ?.let((modInfoFile) async {
         var rawString =
             await withFileHandleLimit(() => modInfoFile.readAsString());
@@ -500,7 +501,7 @@ class VramChecker {
       bool showGfxLibDebugOutput,
       GraphicsLibConfig graphicsLibConfig) {
     return filesInMod
-        .filter((it) => it.name.endsWith(".csv"))
+        .filter((it) => it.nameWithExtension.endsWith(".csv"))
         .map((file) {
           try {
             return csvReader.convert(file.readAsStringSync());
@@ -581,5 +582,14 @@ class VramChecker {
     } finally {
       currentFileHandles--;
     }
+  }
+}
+
+extension ModListExt on Iterable<Mod> {
+  int getBytesUsedByDedupedImages() {
+    return expand((mod) => mod.images.map((img) => Tuple2(mod.info.modFolder, img)))
+        .toSet()
+        .map((pair) => pair.item2.bytesUsed)
+        .sum;
   }
 }

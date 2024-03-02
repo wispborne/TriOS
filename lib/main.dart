@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:toastification/toastification.dart';
 import 'package:trios/chipper/chipper_home.dart';
-import 'package:trios/pages/vram_estimator/vram_estimator.dart';
 import 'package:trios/rules_autofresh/rules_hotreload.dart';
 import 'package:trios/trios/navigation.dart';
 import 'package:trios/trios/self_updater/script_generator.dart';
@@ -16,6 +15,7 @@ import 'package:trios/trios/settings/settings_page.dart';
 import 'package:trios/trios/trios_theme.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/vram_estimator/vram_estimator.dart';
 import 'package:trios/widgets/TriOSAppIcon.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:trios/widgets/trios_toast.dart';
@@ -24,9 +24,10 @@ import 'package:window_size/window_size.dart';
 
 import 'app_state.dart';
 import 'chipper/views/chipper_dropper.dart';
+import 'jre_manager/jre_manager.dart';
 import 'main.mapper.g.dart' show initializeJsonMapper;
 
-const version = "0.0.17";
+const version = "0.0.18";
 const appName = "TriOS";
 const appTitle = "$appName v$version";
 String appSubtitle = [
@@ -200,14 +201,15 @@ class _AppShellState extends ConsumerState<AppShell> with SingleTickerProviderSt
   final tabToolMap = {
     0: TriOSTools.vramEstimator,
     1: TriOSTools.chipper,
-    2: null,
+    2: TriOSTools.jreManager,
+    3: null,
   };
 
   @override
   void initState() {
     super.initState();
     tabController = TabController(
-      length: 3,
+      length: tabToolMap.length,
       vsync: this,
       animationDuration: const Duration(milliseconds: 0),
     );
@@ -217,7 +219,7 @@ class _AppShellState extends ConsumerState<AppShell> with SingleTickerProviderSt
       }
     });
 
-    final defaultTool = ref.read(appSettings).defaultTool;
+    final defaultTool = ref.read(appSettings.select((value) => value.defaultTool));
     if (defaultTool != null) {
       // Using index is a bit of a hack but if I change the tab order then people will simply fix it with a click.
       tabController.index = tabToolMap.keys.firstWhere((k) => tabToolMap[k] == defaultTool, orElse: () => 0);
@@ -238,7 +240,7 @@ class _AppShellState extends ConsumerState<AppShell> with SingleTickerProviderSt
 
             toastification.showCustom(context: context, builder: (context, item) => TriOSToast(latestRelease, item));
 
-            if (ref.read(appSettings).shouldAutoUpdateOnLaunch) {
+            if (ref.read(appSettings.select((value) => value.shouldAutoUpdateOnLaunch))) {
               SelfUpdater.update(latestRelease, downloadProgress: (bytesReceived, contentLength) {
                 final progress = bytesReceived / contentLength;
                 ref.read(selfUpdateDownloadProgress.notifier).update((_) => progress);
@@ -257,10 +259,11 @@ class _AppShellState extends ConsumerState<AppShell> with SingleTickerProviderSt
     const tabChildren = [
       VramEstimatorPage(),
       ChipperApp(),
+      JreManager(),
       SettingsPage(),
     ];
 
-    var isRulesHotReloadEnabled = ref.watch(appSettings).isRulesHotReloadEnabled;
+    var isRulesHotReloadEnabled = ref.watch(appSettings.select((value) => value.isRulesHotReloadEnabled));
     return Scaffold(
         appBar: AppBar(
           title: Row(
@@ -283,6 +286,7 @@ class _AppShellState extends ConsumerState<AppShell> with SingleTickerProviderSt
                         text: chipperTitle,
                         icon: ImageIcon(AssetImage("assets/images/chipper/icon.png")),
                         iconMargin: EdgeInsets.zero),
+                    Tab(text: "JRE Manager", icon: SvgImageIcon("assets/images/weight.svg")),
                     Tab(text: "Settings", icon: Icon(Icons.settings), iconMargin: EdgeInsets.zero),
                   ], controller: tabController),
                 ),
@@ -322,6 +326,7 @@ class _AppShellState extends ConsumerState<AppShell> with SingleTickerProviderSt
               padding: const EdgeInsets.all(8.0),
               child: TabBarView(
                 controller: tabController,
+                physics: const NeverScrollableScrollPhysics(),
                 children: tabChildren,
               )),
           onDropped: (_) => tabController.animateTo(1),

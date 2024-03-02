@@ -1,11 +1,7 @@
 import 'dart:io';
 
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
-import 'package:trios/utils/util.dart';
-
-import '../pages/vram_estimator/models/mod_result.dart';
 
 extension DoubleExt on double {
   String bytesAsReadableMB() => "${(this / 1000000).toStringAsFixed(3)} MB";
@@ -35,6 +31,7 @@ extension StringExt on String {
   }
 
   Directory toDirectory() => Directory(this);
+
   File toFile() => File(this);
 }
 
@@ -45,13 +42,15 @@ extension FileExt on File {
 
   String get nameWithoutExtension => p.basenameWithoutExtension(path);
 
-  String get name => p.basename(path);
+  String get nameWithExtension => p.basename(path);
 
   File get normalize => File(p.normalize(absolute.path));
 }
 
 extension DirectoryExt on Directory {
   Directory get normalize => Directory(p.normalize(absolute.path));
+
+  String get name => p.basename(path);
 }
 
 extension FileSystemEntityExt on FileSystemEntity {
@@ -159,15 +158,6 @@ extension IntExt on int {
 // .flatMap { mod -> mod.images.map { img -> mod.info.modFolder to img } }
 // .distinctBy { (modFolder: Path, image: ModImage) -> image.file.relativeTo(modFolder).pathString + image.file.name }
 //     .sumOf { it.second.bytesUsed }
-
-extension ModListExt on Iterable<Mod> {
-  int getBytesUsedByDedupedImages() {
-    return expand((mod) => mod.images.map((img) => Tuple2(mod.info.modFolder, img)))
-        .toSet()
-        .map((pair) => pair.item2.bytesUsed)
-        .sum;
-  }
-}
 
 extension ObjectExt<T> on T {
   also(Function(T) block) {

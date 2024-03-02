@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 
-import '../app_state.dart';
+import '../chipper_state.dart';
 import '../logparser.dart';
 import '../utils.dart';
 import 'chipper_dropper.dart';
@@ -151,7 +151,11 @@ class DesktopDropState extends ConsumerState<DesktopDrop> {
                                       fontSize: 14, color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6)),
                                 ))
                           ])))
-            : Readout(widget.chips!));
+            : LayoutBuilder(builder: (context, constraints) {
+                  return SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: SizedBox(width: constraints.maxWidth, child: Readout(widget.chips!)));
+                }));
   }
 }
 

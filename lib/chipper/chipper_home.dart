@@ -11,8 +11,8 @@ import 'package:platform_info/platform_info.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/util.dart';
 
-import 'app_state.dart' as state;
-import 'app_state.dart';
+import 'chipper_state.dart' as state;
+import 'chipper_state.dart';
 import 'copy.dart';
 import 'views/about_view.dart';
 import 'views/chipper_home.dart';
@@ -173,14 +173,10 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
         //   color: theme.colorScheme.primary,
         // ),
         Expanded(
-            child: Stack(children: [
-          SizedBox(
-              width: double.infinity,
-              child: DesktopDrop(
-                chips: chips,
-              )),
-          // const IgnorePointer(child: ChristmasLights())
-        ]))
+          child: DesktopDrop(
+            chips: chips,
+          ),
+        ),
       ]),
       Align(
           alignment: Alignment.bottomRight,

@@ -70,7 +70,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           Padding(
             padding: const EdgeInsets.only(top: 24.0),
             child: CheckboxWithLabel(
-              value: ref.watch(appSettings).shouldAutoUpdateOnLaunch,
+              value: ref.watch(appSettings.select((value) => value.shouldAutoUpdateOnLaunch)),
               onChanged: (value) {
                 ref
                     .read(appSettings.notifier)

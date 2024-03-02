@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:collection/collection.dart';
 import 'package:fimber/fimber.dart';
 
-import 'app_state.dart';
+import 'chipper_state.dart';
 import 'logging.dart';
 import 'models/error_lines.dart';
 import 'models/mod_entry.dart';

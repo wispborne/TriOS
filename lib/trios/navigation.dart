@@ -1,4 +1,5 @@
 enum TriOSTools {
   vramEstimator,
-  chipper
+  chipper,
+  jreManager
 }

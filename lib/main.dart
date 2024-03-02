@@ -295,7 +295,7 @@ class _AppShellState extends ConsumerState<AppShell> with SingleTickerProviderSt
                         text: chipperTitle,
                         icon: ImageIcon(AssetImage("assets/images/chipper/icon.png")),
                         iconMargin: EdgeInsets.zero),
-                    Tab(text: "JRE Manager", icon: SvgImageIcon("assets/images/weight.svg")),
+                    Tab(text: "JRE Manager", icon: Icon(Icons.coffee)),
                     Tab(text: "Settings", icon: Icon(Icons.settings), iconMargin: EdgeInsets.zero),
                   ], controller: tabController),
                 ),

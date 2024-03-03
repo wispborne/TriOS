@@ -58,29 +58,15 @@ class _LauncherState extends ConsumerState<Launcher> {
       launchPreferences = _getStarsectorLaunchPrefsWindows();
       final overrideArgs = _generateVmparamOverrides(launchPreferences, gameCorePath, vmParamsContent);
 
-      var processArgs = vmParamsContent..addAll(overrideArgs.entries.map((e) => '${e.key}=${e.value}'));
       List<String> result = overrideArgs.entries.map((entry) => '${entry.key}=${entry.value}').toList() +
           vmParamsContent
+              // Remove any vanilla params that we're overriding.
               .filter((vanillaParam) => overrideArgs.entries.none((entry) => vanillaParam.startsWith(entry.key)))
               .toList();
 
       Fimber.d('processArgs: $result');
       Process.start(javaExe!.absolute.path, result,
-          workingDirectory: gameCorePath?.path, mode: ProcessStartMode.inheritStdio, includeParentEnvironment: true);
-
-      // runCommandInTerminal(
-      //     args = listOf(gameLauncher?.absolutePathString() ?: "missing game path")
-      //         + overrideArgs.map { it.key + "=" + it.value } + vmparams
-      //     .filter { vanillaParam ->
-      // // Remove any vanilla params that we're overriding.
-      // overrideArgs.none { overrideArg ->
-      // vanillaParam.startsWith(
-      // overrideArg.key
-      // )
-      // }
-      // },
-      //     workingDirectory = workingDir?.toFile()
-      // )
+          workingDirectory: gameCorePath?.path, mode: ProcessStartMode.detached, includeParentEnvironment: true);
     } else {
       Fimber.w('Platform not yet supported');
       return;

@@ -9,6 +9,7 @@ part of '../../../trios/settings/settings.dart';
 _$SettingsImpl _$$SettingsImplFromJson(Map<String, dynamic> json) =>
     _$SettingsImpl(
       gameDir: json['gameDir'] as String?,
+      gameCoreDir: json['gameCoreDir'] as String?,
       modsDir: json['modsDir'] as String?,
       hasCustomModsDir: json['hasCustomModsDir'] as bool? ?? false,
       enabledModIds: (json['enabledModIds'] as List<dynamic>?)
@@ -31,6 +32,7 @@ _$SettingsImpl _$$SettingsImplFromJson(Map<String, dynamic> json) =>
 Map<String, dynamic> _$$SettingsImplToJson(_$SettingsImpl instance) =>
     <String, dynamic>{
       'gameDir': instance.gameDir,
+      'gameCoreDir': instance.gameCoreDir,
       'modsDir': instance.modsDir,
       'hasCustomModsDir': instance.hasCustomModsDir,
       'enabledModIds': instance.enabledModIds,

@@ -21,6 +21,7 @@ Settings _$SettingsFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$Settings {
   String? get gameDir => throw _privateConstructorUsedError;
+  String? get gameCoreDir => throw _privateConstructorUsedError;
   String? get modsDir => throw _privateConstructorUsedError;
   bool get hasCustomModsDir => throw _privateConstructorUsedError;
   List<String>? get enabledModIds => throw _privateConstructorUsedError;
@@ -47,6 +48,7 @@ abstract class $SettingsCopyWith<$Res> {
   @useResult
   $Res call(
       {String? gameDir,
+      String? gameCoreDir,
       String? modsDir,
       bool hasCustomModsDir,
       List<String>? enabledModIds,
@@ -75,6 +77,7 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
   @override
   $Res call({
     Object? gameDir = freezed,
+    Object? gameCoreDir = freezed,
     Object? modsDir = freezed,
     Object? hasCustomModsDir = null,
     Object? enabledModIds = freezed,
@@ -92,6 +95,10 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
       gameDir: freezed == gameDir
           ? _value.gameDir
           : gameDir // ignore: cast_nullable_to_non_nullable
+              as String?,
+      gameCoreDir: freezed == gameCoreDir
+          ? _value.gameCoreDir
+          : gameCoreDir // ignore: cast_nullable_to_non_nullable
               as String?,
       modsDir: freezed == modsDir
           ? _value.modsDir
@@ -155,6 +162,7 @@ abstract class _$$SettingsImplCopyWith<$Res>
   @useResult
   $Res call(
       {String? gameDir,
+      String? gameCoreDir,
       String? modsDir,
       bool hasCustomModsDir,
       List<String>? enabledModIds,
@@ -181,6 +189,7 @@ class __$$SettingsImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? gameDir = freezed,
+    Object? gameCoreDir = freezed,
     Object? modsDir = freezed,
     Object? hasCustomModsDir = null,
     Object? enabledModIds = freezed,
@@ -198,6 +207,10 @@ class __$$SettingsImplCopyWithImpl<$Res>
       gameDir: freezed == gameDir
           ? _value.gameDir
           : gameDir // ignore: cast_nullable_to_non_nullable
+              as String?,
+      gameCoreDir: freezed == gameCoreDir
+          ? _value.gameCoreDir
+          : gameCoreDir // ignore: cast_nullable_to_non_nullable
               as String?,
       modsDir: freezed == modsDir
           ? _value.modsDir
@@ -256,6 +269,7 @@ class __$$SettingsImplCopyWithImpl<$Res>
 class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
   _$SettingsImpl(
       {this.gameDir,
+      this.gameCoreDir,
       this.modsDir,
       this.hasCustomModsDir = false,
       final List<String>? enabledModIds,
@@ -275,6 +289,8 @@ class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
 
   @override
   final String? gameDir;
+  @override
+  final String? gameCoreDir;
   @override
   final String? modsDir;
   @override
@@ -313,7 +329,7 @@ class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
 
   @override
   String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
-    return 'Settings(gameDir: $gameDir, modsDir: $modsDir, hasCustomModsDir: $hasCustomModsDir, enabledModIds: $enabledModIds, shouldAutoUpdateOnLaunch: $shouldAutoUpdateOnLaunch, isRulesHotReloadEnabled: $isRulesHotReloadEnabled, windowXPos: $windowXPos, windowYPos: $windowYPos, windowWidth: $windowWidth, windowHeight: $windowHeight, isMaximized: $isMaximized, isMinimized: $isMinimized, defaultTool: $defaultTool)';
+    return 'Settings(gameDir: $gameDir, gameCoreDir: $gameCoreDir, modsDir: $modsDir, hasCustomModsDir: $hasCustomModsDir, enabledModIds: $enabledModIds, shouldAutoUpdateOnLaunch: $shouldAutoUpdateOnLaunch, isRulesHotReloadEnabled: $isRulesHotReloadEnabled, windowXPos: $windowXPos, windowYPos: $windowYPos, windowWidth: $windowWidth, windowHeight: $windowHeight, isMaximized: $isMaximized, isMinimized: $isMinimized, defaultTool: $defaultTool)';
   }
 
   @override
@@ -322,6 +338,7 @@ class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
     properties
       ..add(DiagnosticsProperty('type', 'Settings'))
       ..add(DiagnosticsProperty('gameDir', gameDir))
+      ..add(DiagnosticsProperty('gameCoreDir', gameCoreDir))
       ..add(DiagnosticsProperty('modsDir', modsDir))
       ..add(DiagnosticsProperty('hasCustomModsDir', hasCustomModsDir))
       ..add(DiagnosticsProperty('enabledModIds', enabledModIds))
@@ -344,6 +361,8 @@ class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
         (other.runtimeType == runtimeType &&
             other is _$SettingsImpl &&
             (identical(other.gameDir, gameDir) || other.gameDir == gameDir) &&
+            (identical(other.gameCoreDir, gameCoreDir) ||
+                other.gameCoreDir == gameCoreDir) &&
             (identical(other.modsDir, modsDir) || other.modsDir == modsDir) &&
             (identical(other.hasCustomModsDir, hasCustomModsDir) ||
                 other.hasCustomModsDir == hasCustomModsDir) &&
@@ -376,6 +395,7 @@ class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
   int get hashCode => Object.hash(
       runtimeType,
       gameDir,
+      gameCoreDir,
       modsDir,
       hasCustomModsDir,
       const DeepCollectionEquality().hash(_enabledModIds),
@@ -406,6 +426,7 @@ class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
 abstract class _Settings implements Settings {
   factory _Settings(
       {final String? gameDir,
+      final String? gameCoreDir,
       final String? modsDir,
       final bool hasCustomModsDir,
       final List<String>? enabledModIds,
@@ -424,6 +445,8 @@ abstract class _Settings implements Settings {
 
   @override
   String? get gameDir;
+  @override
+  String? get gameCoreDir;
   @override
   String? get modsDir;
   @override

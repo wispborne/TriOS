@@ -31,7 +31,7 @@ class ChipperApp extends ConsumerStatefulWidget {
 
 loadDefaultLog(WidgetRef ref) {
   // Load default log file
-  var gameFilesPath = defaultGameFilesPath()?.resolve("starsector.log") as File?;
+  var gameFilesPath = defaultGameCorePath()?.resolve("starsector.log") as File?;
   if (gameFilesPath != null && gameFilesPath.existsSync()) {
     gameFilesPath.readAsBytes().then((bytes) async {
       final content = utf8.decode(bytes.toList(), allowMalformed: true);

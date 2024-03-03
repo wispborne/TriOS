@@ -30,6 +30,7 @@ Settings? readAppSettings() {
 class Settings with _$Settings {
   factory Settings({
     final String? gameDir,
+    final String? gameCoreDir,
     final String? modsDir,
     @Default(false) final bool hasCustomModsDir,
     final List<String>? enabledModIds,
@@ -75,11 +76,13 @@ class SettingSaver extends Notifier<Settings> {
       return;
     }
 
-    if (!newState.hasCustomModsDir) {
-      if (newState.gameDir != null) {
+    if (newState.gameDir != null) {
+      if (!newState.hasCustomModsDir) {
         var newModsDir = generateModFolderPath(Directory(newState.gameDir!))?.path;
         newState = newState.copyWith(modsDir: newModsDir);
       }
+
+      newState = newState.copyWith(gameCoreDir: generateGameCorePath(Directory(newState.gameDir!))?.path);
     }
 
     Fimber.d("Updated settings: $newState");

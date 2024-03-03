@@ -45,6 +45,13 @@ extension StringExt on String {
     }
     return substring(0, index);
   }
+
+  String removePrefix(String prefix) {
+    if (startsWith(prefix)) {
+      return substring(prefix.length);
+    }
+    return this;
+  }
 }
 
 extension FileExt on File {
@@ -83,6 +90,10 @@ extension DirectoryExt on Directory {
 extension FileSystemEntityExt on FileSystemEntity {
   FileSystemEntity resolve(String path) {
     return File(p.join(absolute.path, path));
+  }
+
+  FileSystemEntity normalize() {
+    return File(p.normalize(absolute.path));
   }
 }
 
@@ -127,6 +138,11 @@ extension IterableExt<T> on Iterable<T> {
 
   T random() {
     return elementAt(DateTime.now().microsecond % length);
+  }
+
+  T? getOrNull(int index) {
+    if (index < 0 || index >= length) return null;
+    return elementAt(index);
   }
 }
 

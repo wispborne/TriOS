@@ -45,7 +45,7 @@ Directory? defaultGamePath() {
   }
 }
 
-Directory? gameFilesPath(Directory gamePath) {
+Directory? generateGameCorePath(Directory gamePath) {
   if (Platform.isWindows) {
     return Directory(p.join(gamePath.path, "starsector-core"));
   } else if (Platform.isMacOS) {
@@ -57,8 +57,8 @@ Directory? gameFilesPath(Directory gamePath) {
   }
 }
 
-Directory? defaultGameFilesPath() {
-  return defaultGamePath() == null ? null : gameFilesPath(defaultGamePath()!)?.normalize;
+Directory? defaultGameCorePath() {
+  return defaultGamePath() == null ? null : generateGameCorePath(defaultGamePath()!)?.normalize;
 }
 
 Directory? generateModFolderPath(Directory gamePath) {

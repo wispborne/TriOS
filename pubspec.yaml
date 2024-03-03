@@ -74,6 +74,7 @@ dependencies:
   url_launcher: ^6.2.5
   open_filex: ^4.4.0
   flutter_animate: ^4.5.0
+  win32_registry: ^1.1.2
 
 dev_dependencies:
   # dart run build_runner watch --delete-conflicting-outputs

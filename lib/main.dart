@@ -27,9 +27,10 @@ import 'package:window_size/window_size.dart';
 import 'app_state.dart';
 import 'chipper/views/chipper_dropper.dart';
 import 'jre_manager/jre_manager.dart';
+import 'launcher/launcher.dart';
 import 'main.mapper.g.dart' show initializeJsonMapper;
 
-const version = "0.0.18";
+const version = "0.0.19";
 const appName = "TriOS";
 const appTitle = "$appName v$version";
 String appSubtitle = [
@@ -280,6 +281,10 @@ class _AppShellState extends ConsumerState<AppShell> with SingleTickerProviderSt
                       .fadeOut(duration: const Duration(seconds: 5)),
                   const TriOSAppIcon(),
                 ]),
+              ),
+              const Padding(
+                padding: EdgeInsets.only(right: 16.0),
+                child: Launcher(),
               ),
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(appTitle, style: Theme.of(context).textTheme.titleLarge),

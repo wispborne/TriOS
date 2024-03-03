@@ -9,22 +9,40 @@ import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:win32_registry/win32_registry.dart';
 
-class Launcher extends ConsumerStatefulWidget {
+class Launcher extends ConsumerWidget {
   const Launcher({super.key});
 
-  @override
-  ConsumerState createState() => _LauncherState();
-}
+  static StarsectorLaunchPreferences? getStarsectorLaunchPrefs() {
+    if (Platform.isWindows) {
+      return _getStarsectorLaunchPrefsWindows();
+    } else {
+      Fimber.w('Platform not yet supported');
+      return null;
+    }
+  }
 
-class _LauncherState extends ConsumerState<Launcher> {
+  static StarsectorLaunchPreferences _getStarsectorLaunchPrefsWindows() {
+    const registryPath = r'Software\JavaSoft\Prefs\com\fs\starfarer';
+    final key = Registry.openPath(RegistryHive.currentUser, path: registryPath);
+    final prefs = StarsectorLaunchPreferences(
+      isFullscreen: key.getValueAsString('fullscreen')?.equalsIgnoreCase("true") ?? false,
+      resolution: key.getValueAsString('resolution') ?? '1920x1080',
+      hasSound: key.getValueAsString('sound')?.equalsIgnoreCase("true") ?? true,
+    );
+    key.close();
+
+    Fimber.i('Reading Starsector settings from Registry:\n${prefs.toString()}');
+    return prefs;
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return ElevatedButton(
-        onPressed: _launchGame,
+        onPressed: () => launchGame(ref),
         child: const Text('Launch', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)));
   }
 
-  _launchGame() {
+  static launchGame(WidgetRef ref) {
     // Starsector folder
     var gamePath = ref.read(appSettings.select((value) => value.gameDir))?.toDirectory();
     final gameCorePath = ref.read(appSettings.select((value) => value.gameCoreDir))?.toDirectory();
@@ -55,7 +73,7 @@ class _LauncherState extends ConsumerState<Launcher> {
     StarsectorLaunchPreferences? launchPreferences;
 
     if (Platform.isWindows) {
-      launchPreferences = _getStarsectorLaunchPrefsWindows();
+      launchPreferences = Launcher.getStarsectorLaunchPrefs()!;
       final overrideArgs = _generateVmparamOverrides(launchPreferences, gameCorePath, vmParamsContent);
 
       List<String> result = overrideArgs.entries.map((entry) => '${entry.key}=${entry.value}').toList() +
@@ -73,21 +91,7 @@ class _LauncherState extends ConsumerState<Launcher> {
     }
   }
 
-  StarsectorLaunchPreferences _getStarsectorLaunchPrefsWindows() {
-    const registryPath = r'Software\JavaSoft\Prefs\com\fs\starfarer';
-    final key = Registry.openPath(RegistryHive.currentUser, path: registryPath);
-    final prefs = StarsectorLaunchPreferences(
-      isFullscreen: key.getValueAsString('fullscreen')?.equalsIgnoreCase("true") ?? false,
-      resolution: key.getValueAsString('resolution') ?? '1920x1080',
-      hasSound: key.getValueAsString('sound')?.equalsIgnoreCase("true") ?? true,
-    );
-    key.close();
-
-    Fimber.i('Reading Starsector settings from Registry:\n${prefs.toString()}');
-    return prefs;
-  }
-
-  Map<String, String?> _generateVmparamOverrides(
+  static Map<String, String?> _generateVmparamOverrides(
     StarsectorLaunchPreferences launchPrefs,
     Directory? starsectorCoreDir,
     List<String> vanillaVmparams,

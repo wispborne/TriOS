@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:toastification/toastification.dart';
 import 'package:trios/chipper/chipper_home.dart';
+import 'package:trios/dashboard/dashboard.dart';
 import 'package:trios/rules_autofresh/rules_hotreload.dart';
 import 'package:trios/trios/navigation.dart';
 import 'package:trios/trios/self_updater/script_generator.dart';
@@ -185,7 +186,9 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
   @override
   void onWindowEvent(String eventName) {
     // Could avoid saving on every event but it's probably fine.
-    _saveWindowPosition();
+    if (eventName != "blur" && eventName != "focus" && eventName != "move" && eventName != "resize") {
+      _saveWindowPosition();
+    }
   }
 }
 
@@ -202,10 +205,11 @@ class _AppShellState extends ConsumerState<AppShell> with SingleTickerProviderSt
   late TabController tabController;
 
   final tabToolMap = {
-    0: TriOSTools.vramEstimator,
-    1: TriOSTools.chipper,
-    2: TriOSTools.jreManager,
-    3: null,
+    0: TriOSTools.dashboard,
+    1: TriOSTools.vramEstimator,
+    2: TriOSTools.chipper,
+    3: TriOSTools.jreManager,
+    4: null,
   };
 
   @override
@@ -260,6 +264,7 @@ class _AppShellState extends ConsumerState<AppShell> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     const tabChildren = [
+      Dashboard(),
       VramEstimatorPage(),
       ChipperApp(),
       JreManager(),
@@ -295,6 +300,7 @@ class _AppShellState extends ConsumerState<AppShell> with SingleTickerProviderSt
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: TabBar(tabs: const [
                     // TODO IF YOU CHANGE THESE, UPDATE tabToolMap!
+                    Tab(text: "Dashboard", icon: Icon(Icons.dashboard)),
                     Tab(text: "VRAM Estimator", icon: SvgImageIcon("assets/images/weight.svg")),
                     Tab(
                         text: chipperTitle,
@@ -343,7 +349,7 @@ class _AppShellState extends ConsumerState<AppShell> with SingleTickerProviderSt
                 physics: const NeverScrollableScrollPhysics(),
                 children: tabChildren,
               )),
-          onDropped: (_) => tabController.animateTo(1),
+          onDropped: (_) => tabController.animateTo(TriOSTools.chipper.index),
         ));
   }
 }

@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
+import 'package:yaml/yaml.dart';
 
 extension DoubleExt on double {
   String bytesAsReadableMB() => "${(this / 1000000).toStringAsFixed(3)} MB";
@@ -51,6 +53,15 @@ extension StringExt on String {
       return substring(prefix.length);
     }
     return this;
+  }
+
+  /// Warning: probably not fast.
+  String fixJson() {
+    return json.encode(loadYaml(this));
+  }
+
+  Map<String, dynamic> fixJsonToMap() {
+    return jsonDecode(fixJson());
   }
 }
 

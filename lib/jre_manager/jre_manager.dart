@@ -1,16 +1,17 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:fimber/fimber.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/jre_manager/jre_23.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/ConditionalWrap.dart';
 
 import 'jre_entry.dart';
+import 'jre_manager_logic.dart';
 
 const gameJreFolderName = "jre";
 
@@ -31,11 +32,12 @@ class _JreManagerState extends ConsumerState<JreManager> {
     super.initState();
     _reloadJres();
     _watchJres();
+    Jre23.getVersionCheckerInfo();
   }
 
   _reloadJres() {
     if (isModifyingFiles) return;
-    _findJREs().then((value) {
+    findJREs(ref.read(appSettings.select((value) => value.gameDir))).then((value) {
       jres = value;
       setState(() {});
     });
@@ -117,42 +119,6 @@ class _JreManagerState extends ConsumerState<JreManager> {
         ),
       ],
     );
-  }
-
-  final versionRegex = RegExp(r'"(\.*?\d+.*?)"');
-
-  Future<List<JreEntry>> _findJREs() async {
-    var gameDir = ref.read(appSettings.select((value) => value.gameDir));
-    var gamePath = gameDir?.toDirectory();
-    if (gamePath == null || !gamePath.existsSync()) {
-      return [];
-    }
-
-    return (await Future.wait(gamePath.listSync().whereType<Directory>().map((path) async {
-      var javaExe = (path.resolve("bin/java.exe") as File).normalize;
-      if (!javaExe.existsSync()) {
-        return null;
-      }
-
-      String? versionString;
-      var cmd = javaExe.absolute.normalize.path;
-      try {
-        var process = await Process.start(cmd, ["-version"]);
-        var lines = await process.stderr.transform(utf8.decoder).transform(const LineSplitter()).toList();
-        var versionLine = lines.firstWhere((line) => line.contains(versionRegex), orElse: () => lines.first);
-        versionString = versionRegex.firstMatch(versionLine)?.group(1) ?? versionLine;
-      } catch (e, st) {
-        Fimber.e("Error getting java version from '$cmd'.", ex: e, stacktrace: st);
-      }
-
-      if (versionString == null) {
-        return null;
-      }
-
-      return JreEntry(versionString, path);
-    })))
-        .whereType<JreEntry>()
-        .toList();
   }
 
   Future<void> _changeJre(JreEntry newJre) async {

@@ -8,6 +8,7 @@ import 'package:trios/widgets/TriOSAppIcon.dart';
 import '../app_state.dart';
 import '../main.dart';
 import '../trios/self_updater/self_updater.dart';
+import '../utils/network_util.dart';
 
 class TriOSToast extends ConsumerWidget {
   const TriOSToast(this.latestRelease, this.item, {super.key});

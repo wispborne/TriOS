@@ -2,7 +2,6 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:collection/collection.dart';
-import 'package:dart_json_mapper/dart_json_mapper.dart';
 import 'package:fimber/fimber.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,10 +13,10 @@ import 'package:trios/widgets/graph_radio_selector.dart';
 import 'package:trios/widgets/spinning_refresh_button.dart';
 
 import '../../models/enabled_mods.dart';
-import 'models/graphics_lib_config.dart';
 import '../../trios/settings/settings.dart';
 import 'charts/bar_chart.dart';
 import 'charts/pie_chart.dart';
+import 'models/graphics_lib_config.dart';
 import 'models/mod_result.dart';
 
 class VramEstimatorPage extends ConsumerStatefulWidget {
@@ -221,7 +220,7 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
 
     return modsFolder == null
         ? null
-        : JsonMapper.deserialize<EnabledMods>(File(p.join(modsFolder.path, "enabled_mods.json")).readAsStringSync())
-            ?.enabledMods;
+        : EnabledMods.fromJson(File(p.join(modsFolder.path, "enabled_mods.json")).readAsStringSync().fixJsonToMap())
+            .enabledMods;
   }
 }

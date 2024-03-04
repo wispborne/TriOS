@@ -1,54 +1,76 @@
 import 'dart:core';
-import 'package:dart_json_mapper/dart_json_mapper.dart' show JsonMapper, jsonSerializable, JsonProperty;
 
+import 'package:freezed_annotation/freezed_annotation.dart';
 
+part '../generated/models/mod_info_json.freezed.dart';
+part '../generated/models/mod_info_json.g.dart';
 
-@jsonSerializable
-class EnabledModsJsonMode {
-  // @JsonProperty("enabledMods")
-  final List<String> enabledMods;
+@freezed
+class EnabledModsJsonMode with _$EnabledModsJsonMode {
+  const factory EnabledModsJsonMode(List<String> enabledMods) = _EnabledModsJsonMode;
 
-  EnabledModsJsonMode(this.enabledMods);
+  factory EnabledModsJsonMode.fromJson(Map<String, dynamic> json) => _$EnabledModsJsonModeFromJson(json);
 }
 
-@jsonSerializable
-class ModInfoJsonModel_091a {
-// @JsonProperty("id")
-  final String id;
+@freezed
+class ModInfoJsonModel_091a with _$ModInfoJsonModel_091a {
+  const factory ModInfoJsonModel_091a({
+    required final String id,
+    required final String name,
+    required final String version,
+  }) = _ModInfoJsonModel_091a;
 
-// @JsonProperty("name")
-  final String name;
-
-// @JsonProperty("version")
-  final String version;
-
-  ModInfoJsonModel_091a(this.id, this.name, this.version);
+  factory ModInfoJsonModel_091a.fromJson(Map<String, dynamic> json) => _$ModInfoJsonModel_091aFromJson(json);
 }
 
-@jsonSerializable
-class ModInfoJsonModel_095a {
-// @JsonProperty("id")
-  final String id;
 
-// @JsonProperty("name")
-  final String name;
+@freezed
+class ModInfoJsonModel_095a with _$ModInfoJsonModel_095a {
+  const factory ModInfoJsonModel_095a({
+    required final String id,
+    required final String name,
+    required final Version_095a version,
+  }) = _ModInfoJsonModel_095a;
 
-// @JsonProperty("version")
-  Version_095a version;
-
-  ModInfoJsonModel_095a(this.id, this.name, this.version);
+  factory ModInfoJsonModel_095a.fromJson(Map<String, dynamic> json) => _$ModInfoJsonModel_095aFromJson(json);
 }
 
-@jsonSerializable
-class Version_095a {
-// @JsonProperty("major")
-  final dynamic major;
+@freezed
+class Version_095a with _$Version_095a {
+  const factory Version_095a(
+    final dynamic major,
+    final dynamic minor,
+    final dynamic patch,
+  ) = _Version_095a;
 
-// @JsonProperty("minor")
-  final dynamic minor;
-
-// @JsonProperty("patch")
-  final dynamic patch;
-
-  Version_095a(this.major, this.minor, this.patch);
+  factory Version_095a.fromJson(Map<String, dynamic> json) => _$Version_095aFromJson(json);
 }
+
+// class ToStringJsonConverter implements ICustomConverter<String> {
+//   const ToStringJsonConverter() : super();
+//
+//   @override
+//   String fromJSON(dynamic jsonValue, DeserializationContext context) {
+//     return jsonValue.toString();
+//   }
+//
+//   @override
+//   dynamic toJSON(String object, SerializationContext context) {
+//     return object;
+//   }
+// }
+//
+//
+// class ToNullableStringJsonConverter implements ICustomConverter<String?> {
+//   const ToNullableStringJsonConverter() : super();
+//
+//   @override
+//   String? fromJSON(dynamic jsonValue, DeserializationContext context) {
+//     return jsonValue?.toString();
+//   }
+//
+//   @override
+//   dynamic toJSON(String? object, SerializationContext context) {
+//     return object;
+//   }
+// }

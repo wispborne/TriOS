@@ -29,9 +29,10 @@ import 'app_state.dart';
 import 'chipper/views/chipper_dropper.dart';
 import 'jre_manager/jre_manager.dart';
 import 'launcher/launcher.dart';
-import 'main.mapper.g.dart' show initializeJsonMapper;
+// import 'main.mapper.g.dart' show initializeJsonMapper;
 
-const version = "0.0.19";
+const version = "0.0.20";
+
 const appName = "TriOS";
 const appTitle = "$appName v$version";
 String appSubtitle = [
@@ -52,7 +53,7 @@ void main() async {
   };
   WidgetsFlutterBinding.ensureInitialized();
   await windowManager.ensureInitialized();
-  initializeJsonMapper();
+  // initializeJsonMapper();
   sharedPrefs = await SharedPreferences.getInstance();
 
   runApp(const ProviderScope(observers: [], child: TriOSApp()));
@@ -226,39 +227,46 @@ class _AppShellState extends ConsumerState<AppShell> with SingleTickerProviderSt
       }
     });
 
-    final defaultTool = ref.read(appSettings.select((value) => value.defaultTool));
-    if (defaultTool != null) {
-      // Using index is a bit of a hack but if I change the tab order then people will simply fix it with a click.
-      tabController.index = tabToolMap.keys.firstWhere((k) => tabToolMap[k] == defaultTool, orElse: () => 0);
+    var defaultTool = TriOSTools.dashboard;
+    try {
+      defaultTool = ref.read(appSettings.select((value) => value.defaultTool ?? defaultTool));
+    } catch (e) {
+      Fimber.i("No default tool found in settings: $e");
     }
+    // Set the current tab to the index of the previously selected tool.
+    tabController.index = tabToolMap.keys.firstWhere((k) => tabToolMap[k] == defaultTool, orElse: () => 0);
 
-    // Check for updates on launch and show toast if available.
-    SelfUpdater.getLatestRelease().then((latestRelease) {
-      try {
-        if (latestRelease != null) {
-          final hasNewVersion = SelfUpdater.hasNewVersion(latestRelease);
-          if (hasNewVersion) {
-            Fimber.i("New version available: ${latestRelease.tagName}");
-            final updateInfo = SelfUpdateInfo(
-                version: latestRelease.tagName,
-                url: latestRelease.assets.first.browserDownloadUrl,
-                releaseNote: latestRelease.body);
-            Fimber.i("Update info: $updateInfo");
+    try {
+      // Check for updates on launch and show toast if available.
+      SelfUpdater.getLatestRelease().then((latestRelease) {
+        try {
+          if (latestRelease != null) {
+            final hasNewVersion = SelfUpdater.hasNewVersion(latestRelease);
+            if (hasNewVersion) {
+              Fimber.i("New version available: ${latestRelease.tagName}");
+              final updateInfo = SelfUpdateInfo(
+                  version: latestRelease.tagName,
+                  url: latestRelease.assets.first.browserDownloadUrl,
+                  releaseNote: latestRelease.body);
+              Fimber.i("Update info: $updateInfo");
 
-            toastification.showCustom(context: context, builder: (context, item) => TriOSToast(latestRelease, item));
+              toastification.showCustom(context: context, builder: (context, item) => TriOSToast(latestRelease, item));
 
-            if (ref.read(appSettings.select((value) => value.shouldAutoUpdateOnLaunch))) {
-              SelfUpdater.update(latestRelease, downloadProgress: (bytesReceived, contentLength) {
-                final progress = bytesReceived / contentLength;
-                ref.read(selfUpdateDownloadProgress.notifier).update((_) => progress);
-              });
+              if (ref.read(appSettings.select((value) => value.shouldAutoUpdateOnLaunch))) {
+                SelfUpdater.update(latestRelease, downloadProgress: (bytesReceived, contentLength) {
+                  final progress = bytesReceived / contentLength;
+                  ref.read(selfUpdateDownloadProgress.notifier).update((_) => progress);
+                });
+              }
             }
           }
+        } catch (e, s) {
+          Fimber.e("Error checking for updates: $e", ex: e, stacktrace: s);
         }
-      } catch (e, s) {
-        Fimber.e("Error checking for updates: $e", ex: e, stacktrace: s);
-      }
-    });
+      });
+    } catch (e, st) {
+      Fimber.e("Error checking for updates: $e", ex: e, stacktrace: st);
+    }
   }
 
   @override

@@ -9,7 +9,9 @@ import 'package:trios/jre_manager/jre_23.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/ConditionalWrap.dart';
+import 'package:trios/widgets/download_progress_indicator.dart';
 
+import '../models/download_progress.dart';
 import 'jre_entry.dart';
 import 'jre_manager_logic.dart';
 
@@ -115,6 +117,34 @@ class _JreManagerState extends ConsumerState<JreManager> {
                       : SizedBox(width: iconSize, height: iconSize, child: const Icon(Icons.coffee)),
                 ),
               ),
+            ElevatedButton(onPressed: () {
+              Jre23.installJre23(ref);
+            }, child: Text("Install JRE 23 ")),
+            Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: SizedBox(
+                  width: 200,
+                  child: Column(
+                    children: [
+                      Text("Starsector Himemi Config"),
+                      DownloadProgressIndicator(
+                          value:
+                              ref.watch(jdk23ConfigDownloadProgress) ?? DownloadProgress(0, 0, isIndeterminate: true)),
+                    ],
+                  )),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: SizedBox(
+                  width: 200,
+                  child: Column(
+                    children: [
+                      Text("JDK 23"),
+                      DownloadProgressIndicator(
+                          value: ref.watch(jre23jdkDownloadProgress) ?? DownloadProgress(0, 0, isIndeterminate: true)),
+                    ],
+                  )),
+            ),
           ],
         ),
       ],

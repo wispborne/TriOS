@@ -155,7 +155,7 @@ class ColorGenerator {
 
 typedef ProgressCallback = void Function(int bytesReceived, int contentLengthBytes);
 
-Future<File> downloadFile(String url, String savePath, {ProgressCallback? onProgress}) async {
+Future<File> downloadFile(String url, Directory savePath, String? filename, {ProgressCallback? onProgress}) async {
   try {
     final request = http.Request('GET', Uri.parse(url));
     final streamedResponse = await http.Client().send(request);
@@ -163,8 +163,8 @@ Future<File> downloadFile(String url, String savePath, {ProgressCallback? onProg
     final contentLength = streamedResponse.contentLength ?? -1;
     int bytesReceived = 0;
 
-    var fileName = request.headers['content-disposition']?.split('=')[1] ?? url.split('/').last;
-    final file = File(p.join(savePath, fileName));
+    var desiredFilename = filename ?? request.headers['content-disposition']?.split('=')[1] ?? url.split('/').last;
+    final file = File(p.join(savePath.path, desiredFilename));
 
     if (file.existsSync()) {
       file.deleteSync();

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:fimber/fimber.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 import 'package:yaml/yaml.dart';
@@ -65,6 +66,32 @@ extension StringExt on String {
   }
 }
 
+extension FileSystemEntityExt on FileSystemEntity {
+  FileSystemEntity resolve(String path) {
+    return File(p.join(absolute.path, path));
+  }
+
+  FileSystemEntity normalize() {
+    return File(p.normalize(absolute.path));
+  }
+
+  void moveTo(Directory destDir, {bool overwrite = false}) {
+    if (this is Directory) {
+      (this as Directory).moveDirectory(destDir, overwrite: overwrite);
+    } else if (this is File) {
+      (this as File).moveTo(destDir, overwrite: overwrite);
+    }
+  }
+
+  bool isFile() => statSync().type == FileSystemEntityType.file;
+
+  bool isDirectory() => statSync().type == FileSystemEntityType.directory;
+
+  File toFile() => File(absolute.path);
+
+  Directory toDirectory() => Directory(absolute.path);
+}
+
 extension FileExt on File {
   String relativePath(Directory modFolder) => p.normalize(p.relative(absolute.path, from: modFolder.absolute.path));
 
@@ -75,6 +102,19 @@ extension FileExt on File {
   String get nameWithExtension => p.basename(path);
 
   File get normalize => File(p.normalize(absolute.path));
+
+  File moveTo(Directory destDir, {bool overwrite = false}) {
+    var destFile = destDir.resolve(nameWithExtension);
+    if (destFile.existsSync()) {
+      if (overwrite) {
+        destFile.deleteSync();
+      } else {
+        Fimber.i("Skipping file move (file already exists): $this to $destFile");
+        return this;
+      }
+    }
+    return renameSync(destFile.path).normalize;
+  }
 }
 
 extension DirectoryExt on Directory {
@@ -82,29 +122,34 @@ extension DirectoryExt on Directory {
 
   String get name => p.basename(path);
 
-  Future<void> moveDirectory(Directory destDir) async {
-    if (!(await rename(destDir.path)).existsSync()) {
-      // TODO handle directory rename failing.
-      throw FileSystemException("Failed to move directory: $this to $destDir");
-      // if (destDir.path.startsWith(path + Platform.pathSeparator)) {
-      //   throw FileSystemException("Cannot move directory: $this to a subdirectory of itself: $destDir");
-      // }
-      // copySync(destDir.path);
-      // deleteSync();
-      // if (existsSync()) {
-      //   throw FileSystemException("Failed to delete original directory '$this' after copy to '$destDir'");
-      // }
+  Future<void> moveDirectory(Directory destDir, {bool overwrite = false}) async {
+    try {
+      renameSync(destDir.absolute.path);
+    } catch (e) {
+      // Simple rename didn't work. Time to get real.
+      copyDirectory(destDir, overwrite: overwrite);
+      deleteSync(recursive: true);
     }
   }
-}
 
-extension FileSystemEntityExt on FileSystemEntity {
-  FileSystemEntity resolve(String path) {
-    return File(p.join(absolute.path, path));
-  }
+  /// Copied from FileUtils.java::doCopyDirectory in Apache Commons IO.
+  Future<void> copyDirectory(Directory destDir, {bool overwrite = false}) async {
+    final srcFiles = listSync(recursive: false).map((e) => e.path.toFile());
+    destDir.createSync(recursive: true); // mkdirs
 
-  FileSystemEntity normalize() {
-    return File(p.normalize(absolute.path));
+    for (var srcFile in srcFiles) {
+      final destFile = destDir.resolve(srcFile.nameWithExtension);
+      if (srcFile.isDirectory()) {
+        srcFile.toDirectory().copyDirectory(destFile.toDirectory(), overwrite: overwrite);
+      } else if (srcFile.isFile()) {
+        if (destFile.existsSync() && !overwrite) {
+          Fimber.d("Skipping file copy (file already exists): $srcFile to $destFile");
+          continue;
+        } else {
+          srcFile.copy(destFile.path);
+        }
+      }
+    }
   }
 }
 
@@ -154,6 +199,20 @@ extension IterableExt<T> on Iterable<T> {
   T? getOrNull(int index) {
     if (index < 0 || index >= length) return null;
     return elementAt(index);
+  }
+
+  T? minByOrNull<R extends Comparable<R>>(R Function(T) selector) {
+    if (isEmpty) return null;
+    var minElement = first;
+    var minValue = selector(minElement);
+    for (var element in skip(1)) {
+      var value = selector(element);
+      if (value.compareTo(minValue) < 0) {
+        minElement = element;
+        minValue = value;
+      }
+    }
+    return minElement;
   }
 }
 

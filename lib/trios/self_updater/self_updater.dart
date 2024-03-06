@@ -121,7 +121,7 @@ class SelfUpdater {
 
     Fimber.i("Download link: $downloadLink");
 
-    final downloadResult = await downloadFile(downloadLink, destDir.absolute.path, onProgress: onProgress);
+    final downloadResult = await downloadFile(downloadLink, destDir, null, onProgress: onProgress);
     return downloadResult;
   }
 }

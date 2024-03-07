@@ -216,6 +216,13 @@ extension IterableExt<T> on Iterable<T> {
   }
 }
 
+extension IterableFileExt on Iterable<File> {
+  Directory? rootFolder() {
+    final result = minByOrNull<num>((File file) => file.path.length);
+    return result?.isDirectory() != true ? null : result?.toDirectory();
+  }
+}
+
 extension ListExt<T> on List<T> {
   void removeAll(Iterable<T> elements) {
     removeWhere((element) => elements.contains(element));
@@ -271,6 +278,29 @@ extension IntExt on int {
 // .flatMap { mod -> mod.images.map { img -> mod.info.modFolder to img } }
 // .distinctBy { (modFolder: Path, image: ModImage) -> image.file.relativeTo(modFolder).pathString + image.file.name }
 //     .sumOf { it.second.bytesUsed }
+
+extension NumListExt on List<num> {
+  num sum() {
+    return fold(0, (previousValue, element) => previousValue + element);
+  }
+
+  // From Gemini
+  num findClosest(num targetValue) {
+    num? closestValue;
+    num? minDistance;
+
+    for (final value in this) {
+      final distance = (targetValue - value).abs(); // Calculate absolute distance
+
+      if (minDistance == null || distance < minDistance) {
+        closestValue = value;
+        minDistance = distance;
+      }
+    }
+
+    return closestValue!; // Assuming the list 'values' will not be empty
+  }
+}
 
 extension ObjectExt<T> on T {
   also(Function(T) block) {

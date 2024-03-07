@@ -27,6 +27,7 @@ _$SettingsImpl _$$SettingsImplFromJson(Map<String, dynamic> json) =>
       isMinimized: json['isMinimized'] as bool?,
       defaultTool:
           $enumDecodeNullable(_$TriOSToolsEnumMap, json['defaultTool']),
+      jre23VmparamsFilename: json['jre23VmparamsFilename'] as String?,
     );
 
 Map<String, dynamic> _$$SettingsImplToJson(_$SettingsImpl instance) =>
@@ -45,6 +46,7 @@ Map<String, dynamic> _$$SettingsImplToJson(_$SettingsImpl instance) =>
       'isMaximized': instance.isMaximized,
       'isMinimized': instance.isMinimized,
       'defaultTool': _$TriOSToolsEnumMap[instance.defaultTool],
+      'jre23VmparamsFilename': instance.jre23VmparamsFilename,
     };
 
 const _$TriOSToolsEnumMap = {

@@ -36,7 +36,7 @@ dependencies:
   fl_chart: ^0.66.2
   collection: ^1.18.0
   csv: ^6.0.0
-#  dart_json_mapper: ^2.2.10
+  #  dart_json_mapper: ^2.2.10
   image: ^4.1.7
   path: ^1.9.0
   windows_system_info: ^0.0.4
@@ -69,13 +69,14 @@ dependencies:
   desktop_drop: ^0.4.4
   platform_info: ^4.0.2
   cross_file: ^0.3.4+1
-  file_picker: ^6.1.1
+  file_picker: ^6.2.0
   flutter_linkify: ^6.0.0
   url_launcher: ^6.2.5
   open_filex: ^4.4.0
   flutter_animate: ^4.5.0
   win32_registry: ^1.1.2
   intl: ^0.19.0
+  styled_text: ^8.1.0
 
 dev_dependencies:
   # dart run build_runner watch --delete-conflicting-outputs

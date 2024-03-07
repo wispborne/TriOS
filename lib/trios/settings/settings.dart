@@ -43,6 +43,7 @@ class Settings with _$Settings {
     final bool? isMaximized,
     final bool? isMinimized,
     final TriOSTools? defaultTool,
+    final String? jre23VmparamsFilename
   }) = _Settings;
 
   factory Settings.fromJson(Map<String, Object?> json) => _$SettingsFromJson(json);

@@ -130,6 +130,7 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
         scaffoldBackgroundColor: swatch.background,
         dialogBackgroundColor: swatch.background,
         cardColor: swatch.card,
+        cardTheme: darkThemeBase.cardTheme.copyWith(color: swatch.card, elevation: 4, surfaceTintColor: Colors.transparent),
         appBarTheme: darkThemeBase.appBarTheme.copyWith(backgroundColor: swatch.card),
         floatingActionButtonTheme: darkThemeBase.floatingActionButtonTheme
             .copyWith(backgroundColor: swatch.primary, foregroundColor: darkThemeBase.colorScheme.surface),

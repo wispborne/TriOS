@@ -6,6 +6,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:http/http.dart' as http;
+import 'package:trios/jre_manager/jre_manager_logic.dart';
 import 'package:trios/models/download_progress.dart';
 import 'package:trios/models/mod_info_json.dart';
 import 'package:trios/utils/extensions.dart';
@@ -21,6 +22,9 @@ final jre23jdkDownloadProgress = StateProvider<DownloadProgress?>((ref) => null)
 final jdk23ConfigDownloadProgress = StateProvider<DownloadProgress?>((ref) => null);
 
 class Jre23 {
+  static const _gameFolderFilesFolderNamePart = "Files to put into starsector";
+  static const _vmParamsFolderNamePart = "Pick VMParam";
+
   static Future<void> installJre23(WidgetRef ref) async {
     await downloadJre23JdkForPlatform(ref, (await getVersionCheckerInfo())!);
   }
@@ -35,7 +39,7 @@ class Jre23 {
     final savePath = Directory.systemTemp.createTempSync('trios_jre23-').absolute.normalize;
     var libArchive = LibArchive();
 
-    // installJRE23Jdk(ref, versionChecker, libArchive, gamePath, savePath);
+    installJRE23Jdk(ref, versionChecker, libArchive, gamePath, savePath);
     installJRE23Config(ref, versionChecker, libArchive, gamePath, savePath);
   }
 
@@ -51,25 +55,57 @@ class Jre23 {
       Fimber.e("No JRE 23 Himi/config download link for $currentPlatform");
       return;
     }
+    // Download config zip
     final configZip = downloadFile(himiUrl, savePath, null, onProgress: (bytesReceived, contentLength) {
       ref.read(jdk23ConfigDownloadProgress.notifier).state = DownloadProgress(bytesReceived, contentLength);
     });
 
+    // Extract config zip
     final filesInConfigZip = (await libArchive.extractEntriesInArchive(await configZip, savePath.absolute.path))
         .map((e) => e?.extractedFile.normalize)
         .whereType<File>()
         .toList();
 
-    const gameFolderFilesFolderName = "Files to put into starsector";
     final gameFolderFilesFolder = filesInConfigZip
-        .filter((file) => file.path.containsIgnoreCase(gameFolderFilesFolderName))
-        .minByOrNull<num>((p0) => p0.path.length)!
+        .filter((file) => file.path.containsIgnoreCase(_gameFolderFilesFolderNamePart))
+        .rootFolder()!
         .path
         .toDirectory();
 
-    // final tmp = (savePath.path + Platform.pathSeparator + "tmp").toDirectory()..createSync();
+    // Move to game folder
     Fimber.i('Moving "$gameFolderFilesFolder" to "$gamePath"');
     gameFolderFilesFolder.moveDirectory(gamePath, overwrite: true);
+
+    // Find VMParams
+    final vmParamsFile = filesInConfigZip
+        .filter((file) => file.path.containsIgnoreCase(_vmParamsFolderNamePart))
+        .rootFolder()! // \1. Pick VMParam Size Here\
+        .listSync()
+        .first // \1. Pick VMParam Size Here\10GB\
+        .toDirectory()
+        .listSync()
+        .first
+        .toFile(); // \1. Pick VMParam Size Here\10GB\Miko_R3.txt
+
+    if (!vmParamsFile.existsSync()) {
+      Fimber.e("VMParams file not found in '$savePath'");
+      return;
+    }
+
+    final vmParams = vmParamsFile.readAsStringSync();
+    Fimber.i("VMParams: $vmParams");
+    // Save the filename of the VMParams file, in case it changes later from "Miko_R3.txt".
+    ref.read(appSettings.notifier).update((it) => it.copyWith(jre23VmparamsFilename: vmParamsFile.nameWithExtension));
+
+    // Set ram to player's vanilla amount
+    final vanillaRam = ref.read(currentRamAmountInMb).value;
+    final newVmparams = vmParams
+        .replaceAll(maxRamInVmparamsRegex, "-Xmx${vanillaRam}m")
+        .replaceAll(minRamInVmparamsRegex, "-Xms${vanillaRam}m");
+
+    // Move VMParams to game folder
+    Fimber.i('Moving "$vmParamsFile" to "$gamePath"');
+    gamePath.resolve(vmParamsFile.nameWithExtension).toFile().writeAsStringSync(newVmparams);
   }
 
   static Future<void> installJRE23Jdk(WidgetRef ref, Jre23VersionChecker versionChecker, LibArchive libArchive,

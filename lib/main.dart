@@ -31,7 +31,7 @@ import 'jre_manager/jre_manager.dart';
 import 'launcher/launcher.dart';
 // import 'main.mapper.g.dart' show initializeJsonMapper;
 
-const version = "0.0.20";
+const version = "0.0.21";
 
 const appName = "TriOS";
 const appTitle = "$appName v$version";

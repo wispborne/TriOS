@@ -23,25 +23,24 @@ final currentRamAmountInMb = FutureProvider<String?>((ref) async {
   return getRamAmountFromVmparamsInMb(vmparams) ?? "";
 });
 
-final maxRamInVmparamsRegex = RegExp(r"-Xmx(\d+\D)");
-final minRamInVmparamsRegex = RegExp(r"-Xms(\d+\D)");
+final minRamInVmparamsRegex = RegExp(r"(?<=xms).*?(?=\s)", caseSensitive: false);
+final maxRamInVmparamsRegex = RegExp(r"(?<=xmx).*?(?=\s)", caseSensitive: false);
 const mbPerGb = 1024;
 
 /// Parses the amount of RAM from the vmparams file
 String? getRamAmountFromVmparamsInMb(String vmparams) {
-  var ramMatch = maxRamInVmparamsRegex.firstMatch(vmparams);
+  var ramMatch = maxRamInVmparamsRegex.stringMatch(vmparams);
   if (ramMatch == null) {
     return null;
   }
   // eg 2048m
-  var amountWithLowercaseChar = ramMatch.group(1)?.toLowerCase();
-  if (amountWithLowercaseChar == null) {
-    return null;
-  }
+  var amountWithLowercaseChar = ramMatch.toLowerCase();
+  // remove all non-numeric characters
+  final replace = RegExp(r"[^\d]");
   final amountInMb = amountWithLowercaseChar.endsWith("g")
       // Convert from GB to MB
-      ? (double.parse(amountWithLowercaseChar.replaceAll("g", "")) * mbPerGb).toStringAsFixed(0)
-      : double.parse(amountWithLowercaseChar).toStringAsFixed(0);
+      ? (double.parse(amountWithLowercaseChar.replaceAll(replace, "")) * mbPerGb).toStringAsFixed(0)
+      : double.parse(amountWithLowercaseChar.replaceAll(replace, "")).toStringAsFixed(0);
   return amountInMb;
 }
 
@@ -52,11 +51,11 @@ Future<void> changeRamAmount(WidgetRef ref, double ramInMb, {bool alsoChangeCust
     return;
   }
   final vmParams = getVmparamsFile(gamePath);
-  final newRamStr = "${ramInMb}m";
+  final newRamStr = "${ramInMb.toStringAsFixed(0)}m";
   final newVmparams = vmParams
       .readAsStringSync()
-      .replaceAll(maxRamInVmparamsRegex, "-Xmx${newRamStr}m")
-      .replaceAll(minRamInVmparamsRegex, "-Xms${newRamStr}m");
+      .replaceAll(maxRamInVmparamsRegex, newRamStr)
+      .replaceAll(minRamInVmparamsRegex, newRamStr);
   await vmParams.writeAsString(newVmparams);
 
   if (alsoChangeCustomVmparams) {
@@ -69,8 +68,8 @@ Future<void> changeRamAmount(WidgetRef ref, double ramInMb, {bool alsoChangeCust
 
     jre23Vmparams.writeAsStringSync(jre23Vmparams
         .readAsStringSync()
-        .replaceAll(maxRamInVmparamsRegex, "-Xmx${newRamStr}m")
-        .replaceAll(minRamInVmparamsRegex, "-Xms${newRamStr}m"));
+        .replaceAll(maxRamInVmparamsRegex, newRamStr)
+        .replaceAll(minRamInVmparamsRegex, newRamStr));
   }
 
   ref.refresh(vmparamsVanillaContent);

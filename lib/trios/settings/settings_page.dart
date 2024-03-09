@@ -12,6 +12,8 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/util.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
 
+import '../../jre_manager/jre_23.dart';
+
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
 
@@ -32,6 +34,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final settings = ref.watch(appSettings);
+
     return Padding(
       padding: const EdgeInsets.all(4.0),
       child: Column(
@@ -46,7 +50,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             ),
             onChanged: (newGameDir) {
               var dirExists = Directory(newGameDir).normalize.existsSync();
-              final settings = ref.read(appSettings);
 
               if (dirExists) {
                 ref.read(appSettings.notifier).update((state) {
@@ -67,8 +70,20 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             padding: const EdgeInsets.only(left: 4, top: 8.0),
             child: Text("Mods Folder: ${ref.read(appSettings).modsDir}"),
           ),
+          SizedBox.fromSize(size: const Size.fromHeight(8)),
+          if (ref.watch(doesJre23ExistInGameFolder).value == true)
+            Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: CheckboxWithLabel(
+                value: ref.watch(appSettings.select((value) => value.useJre23)),
+                onChanged: (value) {
+                  ref.read(appSettings.notifier).update((state) => state.copyWith(useJre23: value ?? false));
+                },
+                label: "Use JRE 23",
+              ),
+            ),
           Padding(
-            padding: const EdgeInsets.only(top: 24.0),
+            padding: const EdgeInsets.only(top: 8.0),
             child: CheckboxWithLabel(
               value: ref.watch(appSettings.select((value) => value.shouldAutoUpdateOnLaunch)),
               onChanged: (value) {

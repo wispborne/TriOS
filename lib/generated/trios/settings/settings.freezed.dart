@@ -35,6 +35,7 @@ mixin _$Settings {
   bool? get isMinimized => throw _privateConstructorUsedError;
   TriOSTools? get defaultTool => throw _privateConstructorUsedError;
   String? get jre23VmparamsFilename => throw _privateConstructorUsedError;
+  bool get useJre23 => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -62,7 +63,8 @@ abstract class $SettingsCopyWith<$Res> {
       bool? isMaximized,
       bool? isMinimized,
       TriOSTools? defaultTool,
-      String? jre23VmparamsFilename});
+      String? jre23VmparamsFilename,
+      bool useJre23});
 }
 
 /// @nodoc
@@ -93,6 +95,7 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
     Object? isMinimized = freezed,
     Object? defaultTool = freezed,
     Object? jre23VmparamsFilename = freezed,
+    Object? useJre23 = null,
   }) {
     return _then(_value.copyWith(
       gameDir: freezed == gameDir
@@ -155,6 +158,10 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
           ? _value.jre23VmparamsFilename
           : jre23VmparamsFilename // ignore: cast_nullable_to_non_nullable
               as String?,
+      useJre23: null == useJre23
+          ? _value.useJre23
+          : useJre23 // ignore: cast_nullable_to_non_nullable
+              as bool,
     ) as $Val);
   }
 }
@@ -182,7 +189,8 @@ abstract class _$$SettingsImplCopyWith<$Res>
       bool? isMaximized,
       bool? isMinimized,
       TriOSTools? defaultTool,
-      String? jre23VmparamsFilename});
+      String? jre23VmparamsFilename,
+      bool useJre23});
 }
 
 /// @nodoc
@@ -211,6 +219,7 @@ class __$$SettingsImplCopyWithImpl<$Res>
     Object? isMinimized = freezed,
     Object? defaultTool = freezed,
     Object? jre23VmparamsFilename = freezed,
+    Object? useJre23 = null,
   }) {
     return _then(_$SettingsImpl(
       gameDir: freezed == gameDir
@@ -273,6 +282,10 @@ class __$$SettingsImplCopyWithImpl<$Res>
           ? _value.jre23VmparamsFilename
           : jre23VmparamsFilename // ignore: cast_nullable_to_non_nullable
               as String?,
+      useJre23: null == useJre23
+          ? _value.useJre23
+          : useJre23 // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -295,7 +308,8 @@ class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
       this.isMaximized,
       this.isMinimized,
       this.defaultTool,
-      this.jre23VmparamsFilename})
+      this.jre23VmparamsFilename,
+      this.useJre23 = true})
       : _enabledModIds = enabledModIds;
 
   factory _$SettingsImpl.fromJson(Map<String, dynamic> json) =>
@@ -342,10 +356,13 @@ class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
   final TriOSTools? defaultTool;
   @override
   final String? jre23VmparamsFilename;
+  @override
+  @JsonKey()
+  final bool useJre23;
 
   @override
   String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
-    return 'Settings(gameDir: $gameDir, gameCoreDir: $gameCoreDir, modsDir: $modsDir, hasCustomModsDir: $hasCustomModsDir, enabledModIds: $enabledModIds, shouldAutoUpdateOnLaunch: $shouldAutoUpdateOnLaunch, isRulesHotReloadEnabled: $isRulesHotReloadEnabled, windowXPos: $windowXPos, windowYPos: $windowYPos, windowWidth: $windowWidth, windowHeight: $windowHeight, isMaximized: $isMaximized, isMinimized: $isMinimized, defaultTool: $defaultTool, jre23VmparamsFilename: $jre23VmparamsFilename)';
+    return 'Settings(gameDir: $gameDir, gameCoreDir: $gameCoreDir, modsDir: $modsDir, hasCustomModsDir: $hasCustomModsDir, enabledModIds: $enabledModIds, shouldAutoUpdateOnLaunch: $shouldAutoUpdateOnLaunch, isRulesHotReloadEnabled: $isRulesHotReloadEnabled, windowXPos: $windowXPos, windowYPos: $windowYPos, windowWidth: $windowWidth, windowHeight: $windowHeight, isMaximized: $isMaximized, isMinimized: $isMinimized, defaultTool: $defaultTool, jre23VmparamsFilename: $jre23VmparamsFilename, useJre23: $useJre23)';
   }
 
   @override
@@ -369,8 +386,8 @@ class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
       ..add(DiagnosticsProperty('isMaximized', isMaximized))
       ..add(DiagnosticsProperty('isMinimized', isMinimized))
       ..add(DiagnosticsProperty('defaultTool', defaultTool))
-      ..add(
-          DiagnosticsProperty('jre23VmparamsFilename', jre23VmparamsFilename));
+      ..add(DiagnosticsProperty('jre23VmparamsFilename', jre23VmparamsFilename))
+      ..add(DiagnosticsProperty('useJre23', useJre23));
   }
 
   @override
@@ -407,7 +424,9 @@ class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
             (identical(other.defaultTool, defaultTool) ||
                 other.defaultTool == defaultTool) &&
             (identical(other.jre23VmparamsFilename, jre23VmparamsFilename) ||
-                other.jre23VmparamsFilename == jre23VmparamsFilename));
+                other.jre23VmparamsFilename == jre23VmparamsFilename) &&
+            (identical(other.useJre23, useJre23) ||
+                other.useJre23 == useJre23));
   }
 
   @JsonKey(ignore: true)
@@ -428,7 +447,8 @@ class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
       isMaximized,
       isMinimized,
       defaultTool,
-      jre23VmparamsFilename);
+      jre23VmparamsFilename,
+      useJre23);
 
   @JsonKey(ignore: true)
   @override
@@ -460,7 +480,8 @@ abstract class _Settings implements Settings {
       final bool? isMaximized,
       final bool? isMinimized,
       final TriOSTools? defaultTool,
-      final String? jre23VmparamsFilename}) = _$SettingsImpl;
+      final String? jre23VmparamsFilename,
+      final bool useJre23}) = _$SettingsImpl;
 
   factory _Settings.fromJson(Map<String, dynamic> json) =
       _$SettingsImpl.fromJson;
@@ -495,6 +516,8 @@ abstract class _Settings implements Settings {
   TriOSTools? get defaultTool;
   @override
   String? get jre23VmparamsFilename;
+  @override
+  bool get useJre23;
   @override
   @JsonKey(ignore: true)
   _$$SettingsImplCopyWith<_$SettingsImpl> get copyWith =>

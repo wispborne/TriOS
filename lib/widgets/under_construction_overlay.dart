@@ -1,11 +1,12 @@
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class UnderConstructionOverlay extends StatelessWidget {
   final Widget child;
 
-  const UnderConstructionOverlay({Key? key, required this.child}) : super(key: key);
+  const UnderConstructionOverlay({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +19,7 @@ class UnderConstructionOverlay extends StatelessWidget {
               painter: ConstructionTapePainter(),
             ),
           ),
-        ),
+        )
       ],
     );
   }
@@ -31,7 +32,7 @@ class ConstructionTapePainter extends CustomPainter {
   final rotateDegree = 45.0;
   final stripeColor = Colors.yellow;
   final bgColor = Colors.transparent;
-  final opacity = 0.5;
+  final opacity = kDebugMode ? 0.2 : 0.5;
 
   @override
   void paint(Canvas canvas, Size size) {

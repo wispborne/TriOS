@@ -43,6 +43,25 @@ class Launcher extends ConsumerWidget {
   }
 
   static launchGame(WidgetRef ref) {
+    if (ref.read(appSettings.select((value) => value.useJre23))) {
+      launchGameJre23(ref);
+    } else {
+      launchGameVanilla(ref);
+    }
+  }
+
+  // TODO: mac and linux
+  static launchGameJre23(WidgetRef ref) {
+    // Starsector folder
+    var gamePath = ref.read(appSettings.select((value) => value.gameDir))?.toDirectory();
+    final gameCorePath = ref.read(appSettings.select((value) => value.gameCoreDir))?.toDirectory();
+
+    Process.start(gamePath!.resolve("Miko_Rouge.bat").absolute.path, [],
+        workingDirectory: gameCorePath?.path, mode: ProcessStartMode.detached, includeParentEnvironment: true);
+  }
+
+  // TODO: mac and linux
+  static launchGameVanilla(WidgetRef ref) {
     // Starsector folder
     var gamePath = ref.read(appSettings.select((value) => value.gameDir))?.toDirectory();
     final gameCorePath = ref.read(appSettings.select((value) => value.gameCoreDir))?.toDirectory();
@@ -53,7 +72,7 @@ class Launcher extends ConsumerWidget {
       Fimber.w('Java not found at $javaExe');
       return;
     } else if (vmParams?.existsSync() != true) {
-      Fimber.w('vmparams not found at $vmParams.'); // TODO: mac and linux
+      Fimber.w('vmparams not found at $vmParams.');
       return;
     }
 

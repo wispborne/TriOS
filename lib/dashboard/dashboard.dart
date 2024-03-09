@@ -13,7 +13,10 @@ class Dashboard extends ConsumerStatefulWidget {
   ConsumerState createState() => _DashboardState();
 }
 
-class _DashboardState extends ConsumerState<Dashboard> {
+class _DashboardState extends ConsumerState<Dashboard> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
   @override
   Widget build(BuildContext context) {
     var starsectorLaunchPrefs = Launcher.getStarsectorLaunchPrefs();

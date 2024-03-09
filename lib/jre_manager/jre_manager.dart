@@ -11,6 +11,7 @@ import 'package:trios/jre_manager/ram_changer.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/ConditionalWrap.dart';
+import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/download_progress_indicator.dart';
 
 import '../models/download_progress.dart';
@@ -26,10 +27,11 @@ class JreManager extends ConsumerStatefulWidget {
   ConsumerState createState() => _JreManagerState();
 }
 
-class _JreManagerState extends ConsumerState<JreManager> {
+class _JreManagerState extends ConsumerState<JreManager> with AutomaticKeepAliveClientMixin {
   List<JreEntry> jres = [];
   StreamSubscription? jreWatcherSubscription;
   bool isModifyingFiles = false;
+  bool? installingJre23State;
 
   @override
   void initState() {
@@ -200,11 +202,20 @@ class _JreManagerState extends ConsumerState<JreManager> {
                       padding: const EdgeInsets.only(bottom: 8.0),
                       child: Text("JRE 23", style: Theme.of(context).textTheme.titleLarge),
                     ),
-                    ElevatedButton(
-                        onPressed: () {
-                          Jre23.installJre23(ref);
-                        },
-                        child: const Text("Install")),
+                    Disable(
+                      isEnabled: installingJre23State != true,
+                      child: ElevatedButton(
+                          onPressed: () async {
+                            setState(() {
+                              installingJre23State = true;
+                            });
+                            await Jre23.installJre23(ref);
+                            setState(() {
+                              installingJre23State = false;
+                            });
+                          },
+                          child: const Text("Install")),
+                    ),
                     Padding(
                       padding: const EdgeInsets.only(top: 8.0),
                       child: SizedBox(
@@ -231,6 +242,12 @@ class _JreManagerState extends ConsumerState<JreManager> {
                             ],
                           )),
                     ),
+                    Text(switch (installingJre23State) {
+                      true => "Installing JRE 23...",
+                      false => "JRE 23 installed!",
+                      _ => ""
+                    }),
+                    const Spacer(),
                     Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Text("This will overwrite any existing JRE23 install.\nJRE23 is provided by Himemi.",
@@ -293,4 +310,7 @@ class _JreManagerState extends ConsumerState<JreManager> {
       }
     }
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }

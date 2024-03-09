@@ -18,6 +18,13 @@ import '../trios/settings/settings.dart';
 part '../generated/jre_manager/jre_23.freezed.dart';
 part '../generated/jre_manager/jre_23.g.dart';
 
+final doesJre23ExistInGameFolder = FutureProvider<bool>((ref) async {
+  final gamePath = ref.read(appSettings.select((value) => value.gameDir))?.toDirectory();
+  if (gamePath == null) {
+    return false;
+  }
+  return gamePath.resolve("mikohime").toDirectory().existsSync();
+});
 final jre23jdkDownloadProgress = StateProvider<DownloadProgress?>((ref) => null);
 final jdk23ConfigDownloadProgress = StateProvider<DownloadProgress?>((ref) => null);
 
@@ -26,25 +33,75 @@ class Jre23 {
   static const _vmParamsFolderNamePart = "Pick VMParam";
 
   static Future<void> installJre23(WidgetRef ref) async {
-    await downloadJre23JdkForPlatform(ref, (await getVersionCheckerInfo())!);
-  }
-
-  static Future<void> downloadJre23JdkForPlatform(WidgetRef ref, Jre23VersionChecker versionChecker) async {
     final gamePath = ref.read(appSettings.select((value) => value.gameDir))?.toDirectory();
     if (gamePath == null) {
       Fimber.e("Game path not set");
       return;
     }
-
-    final savePath = Directory.systemTemp.createTempSync('trios_jre23-').absolute.normalize;
     var libArchive = LibArchive();
+    var versionChecker = (await getVersionCheckerInfo())!;
+    final savePath = Directory.systemTemp.createTempSync('trios_jre23-').absolute.normalize;
 
-    installJRE23Jdk(ref, versionChecker, libArchive, gamePath, savePath);
-    installJRE23Config(ref, versionChecker, libArchive, gamePath, savePath);
+    final jdkZip = downloadJre23JdkForPlatform(ref, versionChecker, savePath);
+    final configZip = downloadJre23Config(ref, versionChecker, savePath);
+
+    installJRE23Jdk(ref, libArchive, gamePath, await jdkZip);
+    installJRE23Config(ref, libArchive, gamePath, savePath, await configZip);
   }
 
-  static Future<void> installJRE23Config(WidgetRef ref, Jre23VersionChecker versionChecker, LibArchive libArchive,
-      Directory gamePath, Directory savePath) async {
+  static Future<File> downloadJre23JdkForPlatform(
+      WidgetRef ref, Jre23VersionChecker versionChecker, Directory savePath) async {
+    final jdkUrl = switch (currentPlatform) {
+      TargetPlatform.linux => versionChecker.linuxJDKDownload,
+      TargetPlatform.windows => versionChecker.windowsJDKDownload,
+      _ => throw UnsupportedError("$currentPlatform not supported for JRE 23"),
+    };
+
+    if (jdkUrl == null) {
+      Fimber.e("No JRE 23 JDK download link for $currentPlatform");
+      throw UnsupportedError("No JRE 23 JDK download link for $currentPlatform");
+    }
+    final jdkZip = downloadFile(jdkUrl, savePath, null, onProgress: (bytesReceived, contentLength) {
+      ref.read(jre23jdkDownloadProgress.notifier).state = DownloadProgress(bytesReceived, contentLength);
+    });
+
+    return jdkZip;
+  }
+
+  static Future<void> installJRE23Jdk(WidgetRef ref, LibArchive libArchive, Directory gamePath, File jdkZip) async {
+    final filesInJdkZip = libArchive.listEntriesInArchive(jdkZip);
+
+    if (filesInJdkZip.isEmpty) {
+      Fimber.e("No files in JRE 23 JDK zip");
+      return;
+    }
+
+    final topLevelFolder = filesInJdkZip.minByOrNull<num>((element) => element.pathName.length)!.pathName;
+    if (gamePath.resolve(topLevelFolder).path.toDirectory().existsSync()) {
+      Fimber.i("JRE 23 JDK already exists in game folder. Aborting.");
+      return;
+    }
+
+    final extractedJdkFiles = await libArchive.extractEntriesInArchive(jdkZip, gamePath.absolute.path);
+    Fimber.i("Extracted JRE 23 JDK files: $extractedJdkFiles");
+  }
+
+  static Future<Jre23VersionChecker?> getVersionCheckerInfo() async {
+    const versionCheckerUrl = "https://raw.githubusercontent.com/Yumeris/Mikohime_Repo/main/Java23.version";
+
+    final response = await http.get(Uri.parse(versionCheckerUrl));
+
+    if (response.statusCode == 200) {
+      final parsableJson = response.body.fixJsonToMap();
+      final versionChecker = Jre23VersionChecker.fromJson(parsableJson);
+      Fimber.i("Jre23VersionChecker: $versionChecker");
+      return versionChecker;
+    }
+
+    return null;
+  }
+
+  static Future<File> downloadJre23Config(WidgetRef ref, Jre23VersionChecker versionChecker, Directory savePath) async {
     final himiUrl = switch (currentPlatform) {
       TargetPlatform.linux => versionChecker.linuxConfigDownload,
       TargetPlatform.windows => versionChecker.windowsConfigDownload,
@@ -53,15 +110,20 @@ class Jre23 {
 
     if (himiUrl == null) {
       Fimber.e("No JRE 23 Himi/config download link for $currentPlatform");
-      return;
+      throw UnsupportedError("No JRE 23 Hime/config download link for $currentPlatform");
     }
     // Download config zip
     final configZip = downloadFile(himiUrl, savePath, null, onProgress: (bytesReceived, contentLength) {
       ref.read(jdk23ConfigDownloadProgress.notifier).state = DownloadProgress(bytesReceived, contentLength);
     });
 
+    return configZip;
+  }
+
+  static Future<void> installJRE23Config(
+      WidgetRef ref, LibArchive libArchive, Directory gamePath, Directory savePath, File configZip) async {
     // Extract config zip
-    final filesInConfigZip = (await libArchive.extractEntriesInArchive(await configZip, savePath.absolute.path))
+    final filesInConfigZip = (await libArchive.extractEntriesInArchive(configZip, savePath.absolute.path))
         .map((e) => e?.extractedFile.normalize)
         .whereType<File>()
         .toList();
@@ -107,74 +169,7 @@ class Jre23 {
     Fimber.i('Moving "$vmParamsFile" to "$gamePath"');
     gamePath.resolve(vmParamsFile.nameWithExtension).toFile().writeAsStringSync(newVmparams);
   }
-
-  static Future<void> installJRE23Jdk(WidgetRef ref, Jre23VersionChecker versionChecker, LibArchive libArchive,
-      Directory gamePath, Directory savePath) async {
-    final jdkUrl = switch (currentPlatform) {
-      TargetPlatform.linux => versionChecker.linuxJDKDownload,
-      TargetPlatform.windows => versionChecker.windowsJDKDownload,
-      _ => throw UnsupportedError("$currentPlatform not supported for JRE 23"),
-    };
-
-    if (jdkUrl == null) {
-      Fimber.e("No JRE 23 JDK download link for $currentPlatform");
-      return;
-    }
-    final jdkZip = downloadFile(jdkUrl, savePath, null, onProgress: (bytesReceived, contentLength) {
-      ref.read(jre23jdkDownloadProgress.notifier).state = DownloadProgress(bytesReceived, contentLength);
-    });
-
-    final filesInJdkZip = libArchive.listEntriesInArchive(await jdkZip);
-
-    if (filesInJdkZip.isEmpty) {
-      Fimber.e("No files in JRE 23 JDK zip");
-      return;
-    }
-
-    final topLevelFolder = filesInJdkZip.minByOrNull<num>((element) => element.pathName.length)!.pathName;
-    if (gamePath.resolve(topLevelFolder).path.toDirectory().existsSync()) {
-      Fimber.i("JRE 23 JDK already exists in game folder. Aborting.");
-      return;
-    }
-
-    final extractedJdkFiles = await libArchive.extractEntriesInArchive(await jdkZip, gamePath.absolute.path);
-    Fimber.i("Extracted JRE 23 JDK files: $extractedJdkFiles");
-  }
-
-  static Future<Jre23VersionChecker?> getVersionCheckerInfo() async {
-    const versionCheckerUrl = "https://raw.githubusercontent.com/Yumeris/Mikohime_Repo/main/Java23.version";
-
-    final response = await http.get(Uri.parse(versionCheckerUrl));
-
-    if (response.statusCode == 200) {
-      final parsableJson = response.body.fixJsonToMap();
-      final versionChecker = Jre23VersionChecker.fromJson(parsableJson);
-      Fimber.i("Jre23VersionChecker: $versionChecker");
-      return versionChecker;
-    }
-
-    return null;
-  }
 }
-
-// @jsonSerializable
-// class Jre23VersionChecker {
-//   String masterVersionFile;
-//   String modName;
-//   // @JsonProperty(converter: ToNullableStringJsonConverter())
-//   int? modThreadId;
-//   Version_095a modVersion;
-//   String starsectorVersion;
-//
-//   String? windowsJDKDownload;
-//   String? windowsConfigDownload;
-//
-//   String? linuxJDKDownload;
-//   String? linuxConfigDownload;
-//
-//   Jre23VersionChecker(this.masterVersionFile, this.modName, this.modThreadId, this.modVersion, this.starsectorVersion,
-//       this.windowsJDKDownload, this.windowsConfigDownload, this.linuxJDKDownload, this.linuxConfigDownload);
-// }
 
 @freezed
 class Jre23VersionChecker with _$Jre23VersionChecker {

@@ -25,13 +25,13 @@ import 'package:trios/widgets/trios_toast.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:window_size/window_size.dart';
 
-import 'app_state.dart';
 import 'chipper/views/chipper_dropper.dart';
 import 'jre_manager/jre_manager.dart';
 import 'launcher/launcher.dart';
+import 'trios/app_state.dart';
 // import 'main.mapper.g.dart' show initializeJsonMapper;
 
-const version = "0.0.23";
+const version = "0.0.24";
 
 const appName = "TriOS";
 const appTitle = "$appName v$version";
@@ -101,7 +101,7 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
   @override
   void initState() {
     super.initState();
-    AppState.theme.addListener(() {
+    appState.theme.addListener(() {
       setState(() {});
     });
 
@@ -111,7 +111,7 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
 
   @override
   Widget build(BuildContext context) {
-    var material3 = AppState.theme.isMaterial3();
+    var material3 = appState.theme.isMaterial3();
 
     final starsectorSwatch = StarsectorSwatch();
     var swatch = switch (DateTime.now().month) {
@@ -163,7 +163,7 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
         child: MaterialApp(
           title: appTitle,
           theme: lightTheme,
-          themeMode: AppState.theme.currentTheme(),
+          themeMode: appState.theme.currentTheme(),
           debugShowCheckedModeBanner: false,
           darkTheme: darkTheme,
           home: const AppShell(child: VramEstimatorPage()),
@@ -261,7 +261,7 @@ class _AppShellState extends ConsumerState<AppShell> with SingleTickerProviderSt
               if (ref.read(appSettings.select((value) => value.shouldAutoUpdateOnLaunch))) {
                 SelfUpdater.update(latestRelease, downloadProgress: (bytesReceived, contentLength) {
                   final progress = bytesReceived / contentLength;
-                  ref.read(selfUpdateDownloadProgress.notifier).update((_) => progress);
+                  ref.read(appState.selfUpdateDownloadProgress.notifier).update((_) => progress);
                 });
               }
             }
@@ -293,7 +293,7 @@ class _AppShellState extends ConsumerState<AppShell> with SingleTickerProviderSt
               Padding(
                 padding: const EdgeInsets.only(right: 16.0),
                 child: Stack(children: [
-                  const Blur(child: TriOSAppIcon(), blurX: 8, blurY: 8)
+                  const Blur(blurX: 8, blurY: 8, child: TriOSAppIcon())
                       .animate(onComplete: (c) => c.repeat(reverse: true))
                       .fadeIn(duration: const Duration(seconds: 5))
                       .then()
@@ -302,7 +302,7 @@ class _AppShellState extends ConsumerState<AppShell> with SingleTickerProviderSt
                 ]),
               ),
               Padding(
-                  padding: const EdgeInsets.only(right: 16.0),
+                  padding: const EdgeInsets.only(right: 24.0),
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text(appTitle, style: Theme.of(context).textTheme.titleLarge),
                     Text(appSubtitle, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 12))
@@ -310,7 +310,7 @@ class _AppShellState extends ConsumerState<AppShell> with SingleTickerProviderSt
               const Launcher(),
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.only(left: 8, right: 16),
                   child: TabBar(tabs: const [
                     // TODO IF YOU CHANGE THESE, UPDATE tabToolMap!
                     Tab(text: "Dashboard", icon: Icon(Icons.dashboard)),
@@ -325,11 +325,11 @@ class _AppShellState extends ConsumerState<AppShell> with SingleTickerProviderSt
                 ),
               ),
               IconButton(
-                tooltip: AppState.theme.currentTheme() == ThemeMode.dark
+                tooltip: appState.theme.currentTheme() == ThemeMode.dark
                     ? "THE SUN THE SUN THE SUN\nTHE SUN THE SUN THE SUN\nTHE SUN THE SUN THE SUN"
                     : "Dark theme",
-                onPressed: () => AppState.theme.switchThemes(context),
-                icon: Icon(AppState.theme.currentTheme() == ThemeMode.dark ? Icons.sunny : Icons.mode_night),
+                onPressed: () => appState.theme.switchThemes(context),
+                icon: Icon(appState.theme.currentTheme() == ThemeMode.dark ? Icons.sunny : Icons.mode_night),
               ),
               Tooltip(
                 message:

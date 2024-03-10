@@ -12,6 +12,8 @@ _$LaunchSettingsImpl _$$LaunchSettingsImplFromJson(Map<String, dynamic> json) =>
       hasSound: json['hasSound'] as bool?,
       resolutionWidth: json['resolutionWidth'] as int?,
       resolutionHeight: json['resolutionHeight'] as int?,
+      numAASamples: json['numAASamples'] as int?,
+      screenScaling: (json['screenScaling'] as num?)?.toDouble(),
     );
 
 Map<String, dynamic> _$$LaunchSettingsImplToJson(
@@ -21,4 +23,6 @@ Map<String, dynamic> _$$LaunchSettingsImplToJson(
       'hasSound': instance.hasSound,
       'resolutionWidth': instance.resolutionWidth,
       'resolutionHeight': instance.resolutionHeight,
+      'numAASamples': instance.numAASamples,
+      'screenScaling': instance.screenScaling,
     };

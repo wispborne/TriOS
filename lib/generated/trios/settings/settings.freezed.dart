@@ -24,7 +24,6 @@ mixin _$Settings {
   String? get gameCoreDir => throw _privateConstructorUsedError;
   String? get modsDir => throw _privateConstructorUsedError;
   bool get hasCustomModsDir => throw _privateConstructorUsedError;
-  List<String>? get enabledModIds => throw _privateConstructorUsedError;
   bool get shouldAutoUpdateOnLaunch => throw _privateConstructorUsedError;
   bool get isRulesHotReloadEnabled => throw _privateConstructorUsedError;
   double? get windowXPos => throw _privateConstructorUsedError;
@@ -54,7 +53,6 @@ abstract class $SettingsCopyWith<$Res> {
       String? gameCoreDir,
       String? modsDir,
       bool hasCustomModsDir,
-      List<String>? enabledModIds,
       bool shouldAutoUpdateOnLaunch,
       bool isRulesHotReloadEnabled,
       double? windowXPos,
@@ -88,7 +86,6 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
     Object? gameCoreDir = freezed,
     Object? modsDir = freezed,
     Object? hasCustomModsDir = null,
-    Object? enabledModIds = freezed,
     Object? shouldAutoUpdateOnLaunch = null,
     Object? isRulesHotReloadEnabled = null,
     Object? windowXPos = freezed,
@@ -119,10 +116,6 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
           ? _value.hasCustomModsDir
           : hasCustomModsDir // ignore: cast_nullable_to_non_nullable
               as bool,
-      enabledModIds: freezed == enabledModIds
-          ? _value.enabledModIds
-          : enabledModIds // ignore: cast_nullable_to_non_nullable
-              as List<String>?,
       shouldAutoUpdateOnLaunch: null == shouldAutoUpdateOnLaunch
           ? _value.shouldAutoUpdateOnLaunch
           : shouldAutoUpdateOnLaunch // ignore: cast_nullable_to_non_nullable
@@ -196,7 +189,6 @@ abstract class _$$SettingsImplCopyWith<$Res>
       String? gameCoreDir,
       String? modsDir,
       bool hasCustomModsDir,
-      List<String>? enabledModIds,
       bool shouldAutoUpdateOnLaunch,
       bool isRulesHotReloadEnabled,
       double? windowXPos,
@@ -229,7 +221,6 @@ class __$$SettingsImplCopyWithImpl<$Res>
     Object? gameCoreDir = freezed,
     Object? modsDir = freezed,
     Object? hasCustomModsDir = null,
-    Object? enabledModIds = freezed,
     Object? shouldAutoUpdateOnLaunch = null,
     Object? isRulesHotReloadEnabled = null,
     Object? windowXPos = freezed,
@@ -260,10 +251,6 @@ class __$$SettingsImplCopyWithImpl<$Res>
           ? _value.hasCustomModsDir
           : hasCustomModsDir // ignore: cast_nullable_to_non_nullable
               as bool,
-      enabledModIds: freezed == enabledModIds
-          ? _value._enabledModIds
-          : enabledModIds // ignore: cast_nullable_to_non_nullable
-              as List<String>?,
       shouldAutoUpdateOnLaunch: null == shouldAutoUpdateOnLaunch
           ? _value.shouldAutoUpdateOnLaunch
           : shouldAutoUpdateOnLaunch // ignore: cast_nullable_to_non_nullable
@@ -324,7 +311,6 @@ class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
       this.gameCoreDir,
       this.modsDir,
       this.hasCustomModsDir = false,
-      final List<String>? enabledModIds,
       this.shouldAutoUpdateOnLaunch = false,
       this.isRulesHotReloadEnabled = false,
       this.windowXPos,
@@ -336,8 +322,7 @@ class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
       this.defaultTool,
       this.jre23VmparamsFilename,
       this.useJre23 = true,
-      this.launchSettings = const LaunchSettings()})
-      : _enabledModIds = enabledModIds;
+      this.launchSettings = const LaunchSettings()});
 
   factory _$SettingsImpl.fromJson(Map<String, dynamic> json) =>
       _$$SettingsImplFromJson(json);
@@ -351,16 +336,6 @@ class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
   @override
   @JsonKey()
   final bool hasCustomModsDir;
-  final List<String>? _enabledModIds;
-  @override
-  List<String>? get enabledModIds {
-    final value = _enabledModIds;
-    if (value == null) return null;
-    if (_enabledModIds is EqualUnmodifiableListView) return _enabledModIds;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(value);
-  }
-
   @override
   @JsonKey()
   final bool shouldAutoUpdateOnLaunch;
@@ -392,7 +367,7 @@ class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
 
   @override
   String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
-    return 'Settings(gameDir: $gameDir, gameCoreDir: $gameCoreDir, modsDir: $modsDir, hasCustomModsDir: $hasCustomModsDir, enabledModIds: $enabledModIds, shouldAutoUpdateOnLaunch: $shouldAutoUpdateOnLaunch, isRulesHotReloadEnabled: $isRulesHotReloadEnabled, windowXPos: $windowXPos, windowYPos: $windowYPos, windowWidth: $windowWidth, windowHeight: $windowHeight, isMaximized: $isMaximized, isMinimized: $isMinimized, defaultTool: $defaultTool, jre23VmparamsFilename: $jre23VmparamsFilename, useJre23: $useJre23, launchSettings: $launchSettings)';
+    return 'Settings(gameDir: $gameDir, gameCoreDir: $gameCoreDir, modsDir: $modsDir, hasCustomModsDir: $hasCustomModsDir, shouldAutoUpdateOnLaunch: $shouldAutoUpdateOnLaunch, isRulesHotReloadEnabled: $isRulesHotReloadEnabled, windowXPos: $windowXPos, windowYPos: $windowYPos, windowWidth: $windowWidth, windowHeight: $windowHeight, isMaximized: $isMaximized, isMinimized: $isMinimized, defaultTool: $defaultTool, jre23VmparamsFilename: $jre23VmparamsFilename, useJre23: $useJre23, launchSettings: $launchSettings)';
   }
 
   @override
@@ -404,7 +379,6 @@ class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
       ..add(DiagnosticsProperty('gameCoreDir', gameCoreDir))
       ..add(DiagnosticsProperty('modsDir', modsDir))
       ..add(DiagnosticsProperty('hasCustomModsDir', hasCustomModsDir))
-      ..add(DiagnosticsProperty('enabledModIds', enabledModIds))
       ..add(DiagnosticsProperty(
           'shouldAutoUpdateOnLaunch', shouldAutoUpdateOnLaunch))
       ..add(DiagnosticsProperty(
@@ -432,8 +406,6 @@ class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
             (identical(other.modsDir, modsDir) || other.modsDir == modsDir) &&
             (identical(other.hasCustomModsDir, hasCustomModsDir) ||
                 other.hasCustomModsDir == hasCustomModsDir) &&
-            const DeepCollectionEquality()
-                .equals(other._enabledModIds, _enabledModIds) &&
             (identical(
                     other.shouldAutoUpdateOnLaunch, shouldAutoUpdateOnLaunch) ||
                 other.shouldAutoUpdateOnLaunch == shouldAutoUpdateOnLaunch) &&
@@ -470,7 +442,6 @@ class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
       gameCoreDir,
       modsDir,
       hasCustomModsDir,
-      const DeepCollectionEquality().hash(_enabledModIds),
       shouldAutoUpdateOnLaunch,
       isRulesHotReloadEnabled,
       windowXPos,
@@ -504,7 +475,6 @@ abstract class _Settings implements Settings {
       final String? gameCoreDir,
       final String? modsDir,
       final bool hasCustomModsDir,
-      final List<String>? enabledModIds,
       final bool shouldAutoUpdateOnLaunch,
       final bool isRulesHotReloadEnabled,
       final double? windowXPos,
@@ -529,8 +499,6 @@ abstract class _Settings implements Settings {
   String? get modsDir;
   @override
   bool get hasCustomModsDir;
-  @override
-  List<String>? get enabledModIds;
   @override
   bool get shouldAutoUpdateOnLaunch;
   @override

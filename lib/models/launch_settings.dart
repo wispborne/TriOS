@@ -12,6 +12,8 @@ class LaunchSettings with _$LaunchSettings {
     final bool? hasSound,
     final int? resolutionWidth,
     final int? resolutionHeight,
+    final int? numAASamples,
+    final double? screenScaling,
   }) = _LaunchSettings;
 
   factory LaunchSettings.fromJson(Map<String, Object?> json) => _$LaunchSettingsFromJson(json);
@@ -22,6 +24,8 @@ class LaunchSettings with _$LaunchSettings {
       hasSound: other?.hasSound ?? hasSound,
       resolutionWidth: other?.resolutionWidth ?? resolutionWidth,
       resolutionHeight: other?.resolutionHeight ?? resolutionHeight,
+      numAASamples: other?.numAASamples ?? numAASamples,
+      screenScaling: other?.screenScaling ?? screenScaling,
     );
   }
 }

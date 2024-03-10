@@ -24,6 +24,8 @@ mixin _$LaunchSettings {
   bool? get hasSound => throw _privateConstructorUsedError;
   int? get resolutionWidth => throw _privateConstructorUsedError;
   int? get resolutionHeight => throw _privateConstructorUsedError;
+  int? get numAASamples => throw _privateConstructorUsedError;
+  double? get screenScaling => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -41,7 +43,9 @@ abstract class $LaunchSettingsCopyWith<$Res> {
       {bool? isFullscreen,
       bool? hasSound,
       int? resolutionWidth,
-      int? resolutionHeight});
+      int? resolutionHeight,
+      int? numAASamples,
+      double? screenScaling});
 }
 
 /// @nodoc
@@ -61,6 +65,8 @@ class _$LaunchSettingsCopyWithImpl<$Res, $Val extends LaunchSettings>
     Object? hasSound = freezed,
     Object? resolutionWidth = freezed,
     Object? resolutionHeight = freezed,
+    Object? numAASamples = freezed,
+    Object? screenScaling = freezed,
   }) {
     return _then(_value.copyWith(
       isFullscreen: freezed == isFullscreen
@@ -79,6 +85,14 @@ class _$LaunchSettingsCopyWithImpl<$Res, $Val extends LaunchSettings>
           ? _value.resolutionHeight
           : resolutionHeight // ignore: cast_nullable_to_non_nullable
               as int?,
+      numAASamples: freezed == numAASamples
+          ? _value.numAASamples
+          : numAASamples // ignore: cast_nullable_to_non_nullable
+              as int?,
+      screenScaling: freezed == screenScaling
+          ? _value.screenScaling
+          : screenScaling // ignore: cast_nullable_to_non_nullable
+              as double?,
     ) as $Val);
   }
 }
@@ -95,7 +109,9 @@ abstract class _$$LaunchSettingsImplCopyWith<$Res>
       {bool? isFullscreen,
       bool? hasSound,
       int? resolutionWidth,
-      int? resolutionHeight});
+      int? resolutionHeight,
+      int? numAASamples,
+      double? screenScaling});
 }
 
 /// @nodoc
@@ -113,6 +129,8 @@ class __$$LaunchSettingsImplCopyWithImpl<$Res>
     Object? hasSound = freezed,
     Object? resolutionWidth = freezed,
     Object? resolutionHeight = freezed,
+    Object? numAASamples = freezed,
+    Object? screenScaling = freezed,
   }) {
     return _then(_$LaunchSettingsImpl(
       isFullscreen: freezed == isFullscreen
@@ -131,6 +149,14 @@ class __$$LaunchSettingsImplCopyWithImpl<$Res>
           ? _value.resolutionHeight
           : resolutionHeight // ignore: cast_nullable_to_non_nullable
               as int?,
+      numAASamples: freezed == numAASamples
+          ? _value.numAASamples
+          : numAASamples // ignore: cast_nullable_to_non_nullable
+              as int?,
+      screenScaling: freezed == screenScaling
+          ? _value.screenScaling
+          : screenScaling // ignore: cast_nullable_to_non_nullable
+              as double?,
     ));
   }
 }
@@ -142,7 +168,9 @@ class _$LaunchSettingsImpl extends _LaunchSettings {
       {this.isFullscreen,
       this.hasSound,
       this.resolutionWidth,
-      this.resolutionHeight})
+      this.resolutionHeight,
+      this.numAASamples,
+      this.screenScaling})
       : super._();
 
   factory _$LaunchSettingsImpl.fromJson(Map<String, dynamic> json) =>
@@ -156,10 +184,14 @@ class _$LaunchSettingsImpl extends _LaunchSettings {
   final int? resolutionWidth;
   @override
   final int? resolutionHeight;
+  @override
+  final int? numAASamples;
+  @override
+  final double? screenScaling;
 
   @override
   String toString() {
-    return 'LaunchSettings(isFullscreen: $isFullscreen, hasSound: $hasSound, resolutionWidth: $resolutionWidth, resolutionHeight: $resolutionHeight)';
+    return 'LaunchSettings(isFullscreen: $isFullscreen, hasSound: $hasSound, resolutionWidth: $resolutionWidth, resolutionHeight: $resolutionHeight, numAASamples: $numAASamples, screenScaling: $screenScaling)';
   }
 
   @override
@@ -174,13 +206,17 @@ class _$LaunchSettingsImpl extends _LaunchSettings {
             (identical(other.resolutionWidth, resolutionWidth) ||
                 other.resolutionWidth == resolutionWidth) &&
             (identical(other.resolutionHeight, resolutionHeight) ||
-                other.resolutionHeight == resolutionHeight));
+                other.resolutionHeight == resolutionHeight) &&
+            (identical(other.numAASamples, numAASamples) ||
+                other.numAASamples == numAASamples) &&
+            (identical(other.screenScaling, screenScaling) ||
+                other.screenScaling == screenScaling));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(
-      runtimeType, isFullscreen, hasSound, resolutionWidth, resolutionHeight);
+  int get hashCode => Object.hash(runtimeType, isFullscreen, hasSound,
+      resolutionWidth, resolutionHeight, numAASamples, screenScaling);
 
   @JsonKey(ignore: true)
   @override
@@ -202,7 +238,9 @@ abstract class _LaunchSettings extends LaunchSettings {
       {final bool? isFullscreen,
       final bool? hasSound,
       final int? resolutionWidth,
-      final int? resolutionHeight}) = _$LaunchSettingsImpl;
+      final int? resolutionHeight,
+      final int? numAASamples,
+      final double? screenScaling}) = _$LaunchSettingsImpl;
   const _LaunchSettings._() : super._();
 
   factory _LaunchSettings.fromJson(Map<String, dynamic> json) =
@@ -216,6 +254,10 @@ abstract class _LaunchSettings extends LaunchSettings {
   int? get resolutionWidth;
   @override
   int? get resolutionHeight;
+  @override
+  int? get numAASamples;
+  @override
+  double? get screenScaling;
   @override
   @JsonKey(ignore: true)
   _$$LaunchSettingsImplCopyWith<_$LaunchSettingsImpl> get copyWith =>

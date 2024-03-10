@@ -5,8 +5,8 @@ import 'package:toastification/toastification.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/TriOSAppIcon.dart';
 
-import '../app_state.dart';
 import '../main.dart';
+import '../trios/app_state.dart';
 import '../trios/self_updater/self_updater.dart';
 import '../utils/network_util.dart';
 
@@ -31,14 +31,16 @@ class TriOSToast extends ConsumerWidget {
                 ElevatedButton(
                     onPressed: () {
                       SelfUpdater.update(latestRelease, downloadProgress: (bytesReceived, contentLength) {
-                        ref.read(selfUpdateDownloadProgress.notifier).update((_) => bytesReceived / contentLength);
+                        ref
+                            .read(appState.selfUpdateDownloadProgress.notifier)
+                            .update((_) => bytesReceived / contentLength);
                         Fimber.i(
                             "Downloaded: ${bytesReceived.bytesAsReadableMB()} / ${contentLength.bytesAsReadableMB()}");
                       });
                     },
                     child: const Text("Update")),
                 LinearProgressIndicator(
-                  value: ref.watch(selfUpdateDownloadProgress) ?? 0,
+                  value: ref.watch(appState.selfUpdateDownloadProgress) ?? 0,
                 ),
               ],
             ),

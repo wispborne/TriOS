@@ -100,75 +100,78 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
     final theme = Theme.of(context);
     return Stack(children: [
       Column(children: [
-        Padding(
-            padding: const EdgeInsets.all(0),
-            child: Row(children: [
-              Row(mainAxisSize: MainAxisSize.min, children: [
-                Padding(
-                  padding: const EdgeInsets.only(right: 16.0),
-                  child: Image(
-                      image: const AssetImage("assets/images/chipper/icon.png"),
-                      width: 36,
-                      height: 36,
-                      color: theme.colorScheme.onBackground),
-                ),
-                TextButton.icon(
-                    onPressed: () {
-                      loadDefaultLog(ref);
-                    },
-                    icon: const Icon(Icons.refresh),
-                    style: ButtonStyle(foregroundColor: MaterialStateProperty.all(theme.colorScheme.onBackground)),
-                    label: const Text("Load my log")),
-                if (chips != null)
+        Card(
+          margin: const EdgeInsets.all(0),
+          child: Padding(
+              padding: const EdgeInsets.all(4),
+              child: Row(children: [
+                Row(mainAxisSize: MainAxisSize.min, children: [
+                  // Padding(
+                  //   padding: const EdgeInsets.only(right: 16.0),
+                  //   child: Image(
+                  //       image: const AssetImage("assets/images/chipper/icon.png"),
+                  //       width: 36,
+                  //       height: 36,
+                  //       color: theme.colorScheme.onBackground),
+                  // ),
                   TextButton.icon(
                       onPressed: () {
-                        if (chips != null) {
-                          Clipboard.setData(ClipboardData(
-                              text:
-                                  "${createSystemCopyString(chips)}\n\n${createModsCopyString(chips)}\n\n${createErrorsCopyString(chips)}"));
-                        }
+                        loadDefaultLog(ref);
                       },
-                      icon: const Icon(Icons.copy),
+                      icon: const Icon(Icons.refresh),
                       style: ButtonStyle(foregroundColor: MaterialStateProperty.all(theme.colorScheme.onBackground)),
-                      label: const Text("Copy all")),
-                if (chips != null)
-                  TextButton.icon(
-                      onPressed: () {
-                        if (chips != null && chips!.filepath != null) {
-                          final file = File(chips!.filepath!);
-                          OpenFilex.open(file.absolute.normalize.path);
-                        }
-                      },
-                      icon: const Icon(Icons.launch),
-                      style: ButtonStyle(foregroundColor: MaterialStateProperty.all(theme.colorScheme.onBackground)),
-                      label: const Text("Open File")),
-              ]),
-              Row(mainAxisSize: MainAxisSize.min, children: [
-                // Padding(
-                //     padding: const EdgeInsets.only(top: 7),
-                //     child: IconButton(
-                //         onPressed: () => showMyDialog(context,
-                //             title: const Text("Happy Halloween"), body: [Image.asset("assets/images/spooky.png")]),
-                //         padding: EdgeInsets.zero,
-                //         icon: const ImageIcon(
-                //           AssetImage("assets/images/halloween.png"),
-                //           size: 48,
-                //         ))),
-                Padding(
-                  padding: const EdgeInsets.only(left: 8),
-                  child: Row(
-                    children: [
-                      TextButton.icon(
-                          label: const Text("About Chipper"),
-                          onPressed: () => showChipperAboutDialog(context, theme),
-                          icon: const Icon(Icons.info),
-                          style:
-                              ButtonStyle(foregroundColor: MaterialStateProperty.all(theme.colorScheme.onBackground))),
-                    ],
-                  ),
-                )
-              ])
-            ])),
+                      label: const Text("Load my log")),
+                  if (chips != null)
+                    TextButton.icon(
+                        onPressed: () {
+                          if (chips != null) {
+                            Clipboard.setData(ClipboardData(
+                                text:
+                                    "${createSystemCopyString(chips)}\n\n${createModsCopyString(chips)}\n\n${createErrorsCopyString(chips)}"));
+                          }
+                        },
+                        icon: const Icon(Icons.copy),
+                        style: ButtonStyle(foregroundColor: MaterialStateProperty.all(theme.colorScheme.onBackground)),
+                        label: const Text("Copy all")),
+                  if (chips != null)
+                    TextButton.icon(
+                        onPressed: () {
+                          if (chips != null && chips!.filepath != null) {
+                            final file = File(chips!.filepath!);
+                            OpenFilex.open(file.absolute.normalize.path);
+                          }
+                        },
+                        icon: const Icon(Icons.launch),
+                        style: ButtonStyle(foregroundColor: MaterialStateProperty.all(theme.colorScheme.onBackground)),
+                        label: const Text("Open File")),
+                ]),
+                Row(mainAxisSize: MainAxisSize.min, children: [
+                  // Padding(
+                  //     padding: const EdgeInsets.only(top: 7),
+                  //     child: IconButton(
+                  //         onPressed: () => showMyDialog(context,
+                  //             title: const Text("Happy Halloween"), body: [Image.asset("assets/images/spooky.png")]),
+                  //         padding: EdgeInsets.zero,
+                  //         icon: const ImageIcon(
+                  //           AssetImage("assets/images/halloween.png"),
+                  //           size: 48,
+                  //         ))),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8),
+                    child: Row(
+                      children: [
+                        TextButton.icon(
+                            label: const Text("About Chipper"),
+                            onPressed: () => showChipperAboutDialog(context, theme),
+                            icon: const Icon(Icons.info),
+                            style: ButtonStyle(
+                                foregroundColor: MaterialStateProperty.all(theme.colorScheme.onBackground))),
+                      ],
+                    ),
+                  )
+                ])
+              ])),
+        ),
         // WavyLineWidget(
         //   color: theme.colorScheme.primary,
         // ),

@@ -6,6 +6,7 @@ import 'package:fimber/fimber.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
+import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/vram_estimator/vram_checker.dart';
 import 'package:trios/widgets/disable.dart';
@@ -61,7 +62,7 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
 
     try {
       final info = await VramChecker(
-        enabledModIds: settings.enabledModIds,
+        enabledModIds: ref.read(appState.enabledModIds).value,
         modIdsToCheck: null,
         foldersToCheck: settings.modsDir == null ? [] : [Directory(settings.modsDir!)],
         graphicsLibConfig: GraphicsLibConfig(
@@ -74,7 +75,7 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
         showSkippedFiles: true,
         showGfxLibDebugOutput: true,
         showPerformance: true,
-        modProgressOut: (mod) {
+        modProgressOut: (Mod mod) {
           // update modVramInfo with each mod's progress
           setState(() {
             modVramInfo = modVramInfo..[mod.info.id] = mod;
@@ -212,15 +213,5 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
 
   double _maxRange() {
     return modVramInfo.values.sortedBy<num>((mod) => mod.totalBytesForMod).lastOrNull?.totalBytesForMod.toDouble() ?? 2;
-  }
-
-  List<String>? getEnabledMods() {
-    var settings = ref.read(appSettings);
-    var modsFolder = settings.modsDir == null ? null : Directory(settings.modsDir!);
-
-    return modsFolder == null
-        ? null
-        : EnabledMods.fromJson(File(p.join(modsFolder.path, "enabled_mods.json")).readAsStringSync().fixJsonToMap())
-            .enabledMods;
   }
 }

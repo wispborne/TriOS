@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_color/flutter_color.dart';
 
-import '../app_state.dart';
+import '../trios/app_state.dart';
 
 class TriOSTheme with ChangeNotifier {
   static double cornerRadius = 8;

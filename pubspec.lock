@@ -1157,6 +1157,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "14.0.0"
+  vs_scrollbar:
+    dependency: "direct main"
+    description:
+      name: vs_scrollbar
+      sha256: "6a2df5e2597064e8dbb8fc3679065d8e748d711fa979f045328c98b7100b1665"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.0"
   watcher:
     dependency: transitive
     description:

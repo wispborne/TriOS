@@ -12,9 +12,6 @@ _$SettingsImpl _$$SettingsImplFromJson(Map<String, dynamic> json) =>
       gameCoreDir: json['gameCoreDir'] as String?,
       modsDir: json['modsDir'] as String?,
       hasCustomModsDir: json['hasCustomModsDir'] as bool? ?? false,
-      enabledModIds: (json['enabledModIds'] as List<dynamic>?)
-          ?.map((e) => e as String)
-          .toList(),
       shouldAutoUpdateOnLaunch:
           json['shouldAutoUpdateOnLaunch'] as bool? ?? false,
       isRulesHotReloadEnabled:
@@ -41,7 +38,6 @@ Map<String, dynamic> _$$SettingsImplToJson(_$SettingsImpl instance) =>
       'gameCoreDir': instance.gameCoreDir,
       'modsDir': instance.modsDir,
       'hasCustomModsDir': instance.hasCustomModsDir,
-      'enabledModIds': instance.enabledModIds,
       'shouldAutoUpdateOnLaunch': instance.shouldAutoUpdateOnLaunch,
       'isRulesHotReloadEnabled': instance.isRulesHotReloadEnabled,
       'windowXPos': instance.windowXPos,

@@ -2,13 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:trios/trios/trios_theme.dart';
 
 class CheckboxWithLabel extends StatelessWidget {
-  final String label;
+  final String? label;
+  final Widget? labelWidget;
   final bool value;
   final ValueChanged<bool?> onChanged;
   final TextStyle? labelStyle;
+  final bool expand;
 
   const CheckboxWithLabel(
-      {super.key, required this.label, required this.value, required this.onChanged, this.labelStyle});
+      {super.key,
+      this.label,
+      this.labelWidget,
+      required this.value,
+      required this.onChanged,
+      this.labelStyle,
+      this.expand = false})
+      : assert(label != null || labelWidget != null);
 
   @override
   Widget build(BuildContext context) {
@@ -22,12 +31,16 @@ class CheckboxWithLabel extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
+          mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
           children: <Widget>[
-            Checkbox(materialTapTargetSize: MaterialTapTargetSize.shrinkWrap, value: value, onChanged: onChanged),
-            Padding(
-              padding: const EdgeInsets.only(left: 8.0, bottom: 2),
-              child: Text(label, style: labelStyle),
+            IgnorePointer(
+                child: Checkbox(
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap, value: value, onChanged: onChanged)),
+            Flexible(
+              child: Padding(
+                padding: const EdgeInsets.only(left: 8.0, bottom: 2),
+                child: label != null ? Text(label!, style: labelStyle) : labelWidget,
+              ),
             ),
           ],
         ),

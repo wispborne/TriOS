@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:trios/trios/trios_theme.dart';
 
 class CheckboxWithLabel extends StatelessWidget {
   final String label;
@@ -15,16 +16,21 @@ class CheckboxWithLabel extends StatelessWidget {
       onTap: () {
         onChanged(!value);
       },
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: <Widget>[
-          Checkbox(materialTapTargetSize: MaterialTapTargetSize.shrinkWrap, value: value, onChanged: onChanged),
-          Padding(
-            padding: const EdgeInsets.only(left: 8.0, bottom: 2),
-            child: Text(label, style: labelStyle),
-          ),
-        ],
+      borderRadius: BorderRadius.circular(TriOSTheme.cornerRadius),
+      child: Padding(
+        padding: const EdgeInsets.only(right: 7),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Checkbox(materialTapTargetSize: MaterialTapTargetSize.shrinkWrap, value: value, onChanged: onChanged),
+            Padding(
+              padding: const EdgeInsets.only(left: 8.0, bottom: 2),
+              child: Text(label, style: labelStyle),
+            ),
+          ],
+        ),
       ),
     );
   }

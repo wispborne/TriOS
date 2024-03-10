@@ -36,6 +36,7 @@ mixin _$Settings {
   TriOSTools? get defaultTool => throw _privateConstructorUsedError;
   String? get jre23VmparamsFilename => throw _privateConstructorUsedError;
   bool get useJre23 => throw _privateConstructorUsedError;
+  LaunchSettings get launchSettings => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -64,7 +65,10 @@ abstract class $SettingsCopyWith<$Res> {
       bool? isMinimized,
       TriOSTools? defaultTool,
       String? jre23VmparamsFilename,
-      bool useJre23});
+      bool useJre23,
+      LaunchSettings launchSettings});
+
+  $LaunchSettingsCopyWith<$Res> get launchSettings;
 }
 
 /// @nodoc
@@ -96,6 +100,7 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
     Object? defaultTool = freezed,
     Object? jre23VmparamsFilename = freezed,
     Object? useJre23 = null,
+    Object? launchSettings = null,
   }) {
     return _then(_value.copyWith(
       gameDir: freezed == gameDir
@@ -162,7 +167,19 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
           ? _value.useJre23
           : useJre23 // ignore: cast_nullable_to_non_nullable
               as bool,
+      launchSettings: null == launchSettings
+          ? _value.launchSettings
+          : launchSettings // ignore: cast_nullable_to_non_nullable
+              as LaunchSettings,
     ) as $Val);
+  }
+
+  @override
+  @pragma('vm:prefer-inline')
+  $LaunchSettingsCopyWith<$Res> get launchSettings {
+    return $LaunchSettingsCopyWith<$Res>(_value.launchSettings, (value) {
+      return _then(_value.copyWith(launchSettings: value) as $Val);
+    });
   }
 }
 
@@ -190,7 +207,11 @@ abstract class _$$SettingsImplCopyWith<$Res>
       bool? isMinimized,
       TriOSTools? defaultTool,
       String? jre23VmparamsFilename,
-      bool useJre23});
+      bool useJre23,
+      LaunchSettings launchSettings});
+
+  @override
+  $LaunchSettingsCopyWith<$Res> get launchSettings;
 }
 
 /// @nodoc
@@ -220,6 +241,7 @@ class __$$SettingsImplCopyWithImpl<$Res>
     Object? defaultTool = freezed,
     Object? jre23VmparamsFilename = freezed,
     Object? useJre23 = null,
+    Object? launchSettings = null,
   }) {
     return _then(_$SettingsImpl(
       gameDir: freezed == gameDir
@@ -286,6 +308,10 @@ class __$$SettingsImplCopyWithImpl<$Res>
           ? _value.useJre23
           : useJre23 // ignore: cast_nullable_to_non_nullable
               as bool,
+      launchSettings: null == launchSettings
+          ? _value.launchSettings
+          : launchSettings // ignore: cast_nullable_to_non_nullable
+              as LaunchSettings,
     ));
   }
 }
@@ -309,7 +335,8 @@ class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
       this.isMinimized,
       this.defaultTool,
       this.jre23VmparamsFilename,
-      this.useJre23 = true})
+      this.useJre23 = true,
+      this.launchSettings = const LaunchSettings()})
       : _enabledModIds = enabledModIds;
 
   factory _$SettingsImpl.fromJson(Map<String, dynamic> json) =>
@@ -359,10 +386,13 @@ class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
   @override
   @JsonKey()
   final bool useJre23;
+  @override
+  @JsonKey()
+  final LaunchSettings launchSettings;
 
   @override
   String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
-    return 'Settings(gameDir: $gameDir, gameCoreDir: $gameCoreDir, modsDir: $modsDir, hasCustomModsDir: $hasCustomModsDir, enabledModIds: $enabledModIds, shouldAutoUpdateOnLaunch: $shouldAutoUpdateOnLaunch, isRulesHotReloadEnabled: $isRulesHotReloadEnabled, windowXPos: $windowXPos, windowYPos: $windowYPos, windowWidth: $windowWidth, windowHeight: $windowHeight, isMaximized: $isMaximized, isMinimized: $isMinimized, defaultTool: $defaultTool, jre23VmparamsFilename: $jre23VmparamsFilename, useJre23: $useJre23)';
+    return 'Settings(gameDir: $gameDir, gameCoreDir: $gameCoreDir, modsDir: $modsDir, hasCustomModsDir: $hasCustomModsDir, enabledModIds: $enabledModIds, shouldAutoUpdateOnLaunch: $shouldAutoUpdateOnLaunch, isRulesHotReloadEnabled: $isRulesHotReloadEnabled, windowXPos: $windowXPos, windowYPos: $windowYPos, windowWidth: $windowWidth, windowHeight: $windowHeight, isMaximized: $isMaximized, isMinimized: $isMinimized, defaultTool: $defaultTool, jre23VmparamsFilename: $jre23VmparamsFilename, useJre23: $useJre23, launchSettings: $launchSettings)';
   }
 
   @override
@@ -387,7 +417,8 @@ class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
       ..add(DiagnosticsProperty('isMinimized', isMinimized))
       ..add(DiagnosticsProperty('defaultTool', defaultTool))
       ..add(DiagnosticsProperty('jre23VmparamsFilename', jre23VmparamsFilename))
-      ..add(DiagnosticsProperty('useJre23', useJre23));
+      ..add(DiagnosticsProperty('useJre23', useJre23))
+      ..add(DiagnosticsProperty('launchSettings', launchSettings));
   }
 
   @override
@@ -426,7 +457,9 @@ class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
             (identical(other.jre23VmparamsFilename, jre23VmparamsFilename) ||
                 other.jre23VmparamsFilename == jre23VmparamsFilename) &&
             (identical(other.useJre23, useJre23) ||
-                other.useJre23 == useJre23));
+                other.useJre23 == useJre23) &&
+            (identical(other.launchSettings, launchSettings) ||
+                other.launchSettings == launchSettings));
   }
 
   @JsonKey(ignore: true)
@@ -448,7 +481,8 @@ class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
       isMinimized,
       defaultTool,
       jre23VmparamsFilename,
-      useJre23);
+      useJre23,
+      launchSettings);
 
   @JsonKey(ignore: true)
   @override
@@ -481,7 +515,8 @@ abstract class _Settings implements Settings {
       final bool? isMinimized,
       final TriOSTools? defaultTool,
       final String? jre23VmparamsFilename,
-      final bool useJre23}) = _$SettingsImpl;
+      final bool useJre23,
+      final LaunchSettings launchSettings}) = _$SettingsImpl;
 
   factory _Settings.fromJson(Map<String, dynamic> json) =
       _$SettingsImpl.fromJson;
@@ -518,6 +553,8 @@ abstract class _Settings implements Settings {
   String? get jre23VmparamsFilename;
   @override
   bool get useJre23;
+  @override
+  LaunchSettings get launchSettings;
   @override
   @JsonKey(ignore: true)
   _$$SettingsImplCopyWith<_$SettingsImpl> get copyWith =>

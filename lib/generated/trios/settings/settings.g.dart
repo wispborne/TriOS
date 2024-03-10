@@ -29,6 +29,10 @@ _$SettingsImpl _$$SettingsImplFromJson(Map<String, dynamic> json) =>
           $enumDecodeNullable(_$TriOSToolsEnumMap, json['defaultTool']),
       jre23VmparamsFilename: json['jre23VmparamsFilename'] as String?,
       useJre23: json['useJre23'] as bool? ?? true,
+      launchSettings: json['launchSettings'] == null
+          ? const LaunchSettings()
+          : LaunchSettings.fromJson(
+              json['launchSettings'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$$SettingsImplToJson(_$SettingsImpl instance) =>
@@ -49,6 +53,7 @@ Map<String, dynamic> _$$SettingsImplToJson(_$SettingsImpl instance) =>
       'defaultTool': _$TriOSToolsEnumMap[instance.defaultTool],
       'jre23VmparamsFilename': instance.jre23VmparamsFilename,
       'useJre23': instance.useJre23,
+      'launchSettings': instance.launchSettings,
     };
 
 const _$TriOSToolsEnumMap = {

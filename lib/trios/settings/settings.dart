@@ -9,6 +9,8 @@ import 'package:trios/app_state.dart';
 import 'package:trios/trios/navigation.dart';
 import 'package:trios/utils/util.dart';
 
+import '../../models/launch_settings.dart';
+
 part '../../generated/trios/settings/settings.freezed.dart';
 part '../../generated/trios/settings/settings.g.dart';
 
@@ -44,7 +46,8 @@ class Settings with _$Settings {
     final bool? isMinimized,
     final TriOSTools? defaultTool,
     final String? jre23VmparamsFilename,
-    @Default(true) final bool useJre23
+    @Default(true) final bool useJre23,
+    @Default(LaunchSettings()) final LaunchSettings launchSettings,
   }) = _Settings;
 
   factory Settings.fromJson(Map<String, Object?> json) => _$SettingsFromJson(json);

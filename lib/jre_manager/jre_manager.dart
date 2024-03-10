@@ -89,82 +89,84 @@ class _JreManagerState extends ConsumerState<JreManager> with AutomaticKeepAlive
                 child: Card(
                   child: Padding(
                     padding: const EdgeInsets.all(16),
-                    child: Column(children: [
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 8.0),
-                        child: Text("Change JRE", style: Theme.of(context).textTheme.titleLarge),
-                      ),
-                      for (var jre in jres..sort((a, b) => a.versionString.compareTo(b.versionString)))
-                        ConditionalWrap(
-                          condition: !jre.isUsedByGame,
-                          wrapper: (child) => InkWell(
-                            onTap: () async {
-                              if (!jreVersionSupportCheck(jre.version)) {
-                                showDialog(
-                                    context: context,
-                                    builder: (context) => const AlertDialog(
-                                        title: Text("Only JRE 8 and below supported"),
-                                        content: Text("JRE 9+ requires custom game changes.")));
-                              } else {
-                                setState(() {
-                                  isModifyingFiles = true;
-                                });
-                                await _changeJre(jre);
-                                setState(() {
-                                  isModifyingFiles = false;
-                                });
-                                _reloadJres();
-                              }
-                            },
-                            mouseCursor: MaterialStateMouseCursor.clickable,
-                            child: child,
-                          ),
-                          child: Opacity(
-                            opacity: jreVersionSupportCheck(jre.version) ? 1 : 0.5,
-                            child: Padding(
-                              padding: const EdgeInsets.only(left: 16.0),
-                              child: Row(
-                                children: [
-                                  jre.isUsedByGame
-                                      ? Container(
-                                          width: iconSize,
-                                          height: iconSize,
-                                          decoration: BoxDecoration(
-                                              shape: BoxShape.circle, color: Theme.of(context).colorScheme.primary),
-                                          child: Icon(Icons.coffee, color: Theme.of(context).colorScheme.onPrimary))
-                                      : SizedBox(width: iconSize, height: iconSize, child: const Icon(Icons.coffee)),
-                                  Padding(
-                                    padding: const EdgeInsets.only(left: 16.0, bottom: 8, top: 8),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text.rich(TextSpan(children: [
-                                          WidgetSpan(
-                                              alignment: PlaceholderAlignment.middle,
-                                              child: Text(jre.version.toString(),
-                                                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                                      color: jre.isUsedByGame
-                                                          ? Theme.of(context).colorScheme.primary
-                                                          : null))),
-                                          TextSpan(
-                                              text: "  (${jre.versionString})",
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .titleMedium
-                                                  ?.copyWith(fontWeight: FontWeight.normal)),
-                                        ])),
-                                        Opacity(
-                                            opacity: 0.8,
-                                            child: Text(jre.path.name, style: Theme.of(context).textTheme.bodySmall)),
-                                      ],
-                                    ),
-                                  )
-                                ],
+                    child: SingleChildScrollView(
+                      child: Column(children: [
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8.0),
+                          child: Text("Change JRE", style: Theme.of(context).textTheme.titleLarge),
+                        ),
+                        for (var jre in jres..sort((a, b) => a.versionString.compareTo(b.versionString)))
+                          ConditionalWrap(
+                            condition: !jre.isUsedByGame,
+                            wrapper: (child) => InkWell(
+                              onTap: () async {
+                                if (!jreVersionSupportCheck(jre.version)) {
+                                  showDialog(
+                                      context: context,
+                                      builder: (context) => const AlertDialog(
+                                          title: Text("Only JRE 8 and below supported"),
+                                          content: Text("JRE 9+ requires custom game changes.")));
+                                } else {
+                                  setState(() {
+                                    isModifyingFiles = true;
+                                  });
+                                  await _changeJre(jre);
+                                  setState(() {
+                                    isModifyingFiles = false;
+                                  });
+                                  _reloadJres();
+                                }
+                              },
+                              mouseCursor: MaterialStateMouseCursor.clickable,
+                              child: child,
+                            ),
+                            child: Opacity(
+                              opacity: jreVersionSupportCheck(jre.version) ? 1 : 0.5,
+                              child: Padding(
+                                padding: const EdgeInsets.only(left: 16.0),
+                                child: Row(
+                                  children: [
+                                    jre.isUsedByGame
+                                        ? Container(
+                                            width: iconSize,
+                                            height: iconSize,
+                                            decoration: BoxDecoration(
+                                                shape: BoxShape.circle, color: Theme.of(context).colorScheme.primary),
+                                            child: Icon(Icons.coffee, color: Theme.of(context).colorScheme.onPrimary))
+                                        : SizedBox(width: iconSize, height: iconSize, child: const Icon(Icons.coffee)),
+                                    Padding(
+                                      padding: const EdgeInsets.only(left: 16.0, bottom: 8, top: 8),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text.rich(TextSpan(children: [
+                                            WidgetSpan(
+                                                alignment: PlaceholderAlignment.middle,
+                                                child: Text("Java ${jre.version}",
+                                                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                                        color: jre.isUsedByGame
+                                                            ? Theme.of(context).colorScheme.primary
+                                                            : null))),
+                                            TextSpan(
+                                                text: "  (${jre.versionString})",
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .titleMedium
+                                                    ?.copyWith(fontWeight: FontWeight.normal)),
+                                          ])),
+                                          Opacity(
+                                              opacity: 0.8,
+                                              child: Text(jre.path.name, style: Theme.of(context).textTheme.bodySmall)),
+                                        ],
+                                      ),
+                                    )
+                                  ],
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                    ]),
+                      ]),
+                    ),
                   ),
                 )),
             SizedBox(
@@ -172,23 +174,25 @@ class _JreManagerState extends ConsumerState<JreManager> with AutomaticKeepAlive
               child: Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      Text("Change RAM", style: Theme.of(context).textTheme.titleLarge),
-                      StyledText(
-                          text: vmparams == null || getRamAmountFromVmparamsInMb(vmparams) == null
-                              ? "No vmparams file found."
-                              : "Assigned: <b>${getRamAmountFromVmparamsInMb(vmparams)!} MB</b>",
-                          tags: {
-                            "b": StyledTextTag(
-                                style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold))
-                          }),
-                      const Center(
-                          child: Padding(
-                        padding: EdgeInsets.only(top: 8, left: 4.0, right: 4.0, bottom: 8),
-                        child: RamChanger(),
-                      )),
-                    ],
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        Text("Change RAM", style: Theme.of(context).textTheme.titleLarge),
+                        StyledText(
+                            text: vmparams == null || getRamAmountFromVmparamsInMb(vmparams) == null
+                                ? "No vmparams file found."
+                                : "Assigned: <b>${getRamAmountFromVmparamsInMb(vmparams)!} MB</b>",
+                            tags: {
+                              "b": StyledTextTag(
+                                  style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold))
+                            }),
+                        const Center(
+                            child: Padding(
+                          padding: EdgeInsets.only(top: 8, left: 4.0, right: 4.0, bottom: 8),
+                          child: RamChanger(),
+                        )),
+                      ],
+                    ),
                   ),
                 ),
               ),

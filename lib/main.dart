@@ -31,17 +31,21 @@ import 'jre_manager/jre_manager.dart';
 import 'launcher/launcher.dart';
 // import 'main.mapper.g.dart' show initializeJsonMapper;
 
-const version = "0.0.22";
+const version = "0.0.23";
 
 const appName = "TriOS";
 const appTitle = "$appName v$version";
 String appSubtitle = [
+  "Prerelease",
   "Corporate Toolkit",
   "by Wisp",
   "Hegemony Tolerated",
-  "TriTachyon Approved",
+  "Tri-Tachyon Approved",
   "Powered by Moloch",
-  "Prerelease"
+  "COMSEC Compliant",
+  "Wave to Sebestyan",
+  "Gargoyle-resistant",
+  "Unavailable on Asher"
 ].random();
 
 void main() async {
@@ -130,7 +134,8 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
         scaffoldBackgroundColor: swatch.background,
         dialogBackgroundColor: swatch.background,
         cardColor: swatch.card,
-        cardTheme: darkThemeBase.cardTheme.copyWith(color: swatch.card, elevation: 4, surfaceTintColor: Colors.transparent),
+        cardTheme:
+            darkThemeBase.cardTheme.copyWith(color: swatch.card, elevation: 4, surfaceTintColor: Colors.transparent),
         appBarTheme: darkThemeBase.appBarTheme.copyWith(backgroundColor: swatch.card),
         floatingActionButtonTheme: darkThemeBase.floatingActionButtonTheme
             .copyWith(backgroundColor: swatch.primary, foregroundColor: darkThemeBase.colorScheme.surface),
@@ -296,14 +301,13 @@ class _AppShellState extends ConsumerState<AppShell> with SingleTickerProviderSt
                   const TriOSAppIcon(),
                 ]),
               ),
-              const Padding(
-                padding: EdgeInsets.only(right: 16.0),
-                child: Launcher(),
-              ),
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(appTitle, style: Theme.of(context).textTheme.titleLarge),
-                Text(appSubtitle, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 12))
-              ]),
+              Padding(
+                  padding: const EdgeInsets.only(right: 16.0),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(appTitle, style: Theme.of(context).textTheme.titleLarge),
+                    Text(appSubtitle, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 12))
+                  ])),
+              const Launcher(),
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -327,10 +331,6 @@ class _AppShellState extends ConsumerState<AppShell> with SingleTickerProviderSt
                 onPressed: () => AppState.theme.switchThemes(context),
                 icon: Icon(AppState.theme.currentTheme() == ThemeMode.dark ? Icons.sunny : Icons.mode_night),
               ),
-              IconButton(
-                  tooltip: "Switch density",
-                  onPressed: () => AppState.theme.switchMaterial(),
-                  icon: Icon(AppState.theme.isMaterial3() ? Icons.view_compact : Icons.view_cozy)),
               Tooltip(
                 message:
                     "When enabled, modifying a mod\'s rules.csv will\nreload in-game rules as long as dev mode is enabled."

@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
 
 import 'package:fimber/fimber.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,6 +16,7 @@ import 'package:trios/utils/extensions.dart';
 class appState {
   static TriOSTheme theme = TriOSTheme();
   static final selfUpdateDownloadProgress = StateProvider<double?>((ref) => null);
+  static final isLoadingLog = StateProvider<bool>((ref) => false);
 
   static final modInfos = FutureProvider<List<ModInfo>>((ref) async {
     final gamePath = ref.read(appSettings.select((value) => value.gameDir))?.toDirectory();
@@ -32,6 +35,45 @@ class appState {
       return getEnabledMods(modsFolder);
     }
   });
+
+  static final starsectorVersion = FutureProvider<String?>((ref) async {
+    final gameCorePath = ref.read(appSettings.select((value) => value.gameCoreDir))?.toDirectory();
+    if (gameCorePath == null) {
+      return null;
+    }
+    final versionInLog = await readStarsectorVersionFromLog(gameCorePath);
+    if (versionInLog != null) {
+      // If found in log, update the last saved version
+      ref.read(appSettings.notifier).update((s) => s.copyWith(lastStarsectorVersion: versionInLog));
+      return versionInLog;
+    } else {
+      // Fallback to last saved version
+      return ref.read(appSettings.select((value) => value.lastStarsectorVersion));
+    }
+  });
+}
+
+Future<String?> readStarsectorVersionFromLog(Directory gameCorePath) async {
+  const versionContains = r"Starting Starsector";
+  final versionRegex = RegExp(r"Starting Starsector (.*) launcher");
+  final logfile =
+      utf8.decode(gameCorePath.resolve("starsector.log").toFile().readAsBytesSync().toList(), allowMalformed: true);
+  for (var line in logfile.split("\n")) {
+    if (line.contains(versionContains)) {
+      try {
+        final version = versionRegex.firstMatch(line)!.group(1);
+        if (version == null) {
+          continue;
+        }
+
+        return version;
+      } catch (_) {
+        continue;
+      }
+    }
+  }
+
+  return null;
 }
 
 /// Initialized in main.dart

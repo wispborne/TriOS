@@ -396,13 +396,13 @@ class VramChecker {
           progressText.appendAndPrint("Using 0.9.5a mod_info.json format for ${modInfoFile.absolute}", verboseOut);
 
           return ModInfo(
-              model.id, modFolder, model.name, "${model.version.major}.${model.version.minor}.${model.version.patch}");
+              model.id, modFolder, model.name, "${model.version.major}.${model.version.minor}.${model.version.patch}", model.gameVersion);
         } catch (e) {
           final model = ModInfoJsonModel_091a.fromJson(jsonEncodedYaml);
 
           progressText.appendAndPrint("Using 0.9.1a mod_info.json format for ${modInfoFile.absolute}", verboseOut);
 
-          return ModInfo(model.id, modFolder, model.name, model.version);
+          return ModInfo(model.id, modFolder, model.name, model.version, model.gameVersion);
         }
       });
     } catch (e, st) {

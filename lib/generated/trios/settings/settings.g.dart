@@ -30,6 +30,7 @@ _$SettingsImpl _$$SettingsImplFromJson(Map<String, dynamic> json) =>
           ? const LaunchSettings()
           : LaunchSettings.fromJson(
               json['launchSettings'] as Map<String, dynamic>),
+      lastStarsectorVersion: json['lastStarsectorVersion'] as String?,
     );
 
 Map<String, dynamic> _$$SettingsImplToJson(_$SettingsImpl instance) =>
@@ -50,6 +51,7 @@ Map<String, dynamic> _$$SettingsImplToJson(_$SettingsImpl instance) =>
       'jre23VmparamsFilename': instance.jre23VmparamsFilename,
       'useJre23': instance.useJre23,
       'launchSettings': instance.launchSettings,
+      'lastStarsectorVersion': instance.lastStarsectorVersion,
     };
 
 const _$TriOSToolsEnumMap = {

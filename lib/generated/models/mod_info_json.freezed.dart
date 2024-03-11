@@ -170,6 +170,7 @@ mixin _$ModInfoJsonModel_091a {
   String get id => throw _privateConstructorUsedError;
   String get name => throw _privateConstructorUsedError;
   String get version => throw _privateConstructorUsedError;
+  String? get gameVersion => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -183,7 +184,7 @@ abstract class $ModInfoJsonModel_091aCopyWith<$Res> {
           $Res Function(ModInfoJsonModel_091a) then) =
       _$ModInfoJsonModel_091aCopyWithImpl<$Res, ModInfoJsonModel_091a>;
   @useResult
-  $Res call({String id, String name, String version});
+  $Res call({String id, String name, String version, String? gameVersion});
 }
 
 /// @nodoc
@@ -203,6 +204,7 @@ class _$ModInfoJsonModel_091aCopyWithImpl<$Res,
     Object? id = null,
     Object? name = null,
     Object? version = null,
+    Object? gameVersion = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -217,6 +219,10 @@ class _$ModInfoJsonModel_091aCopyWithImpl<$Res,
           ? _value.version
           : version // ignore: cast_nullable_to_non_nullable
               as String,
+      gameVersion: freezed == gameVersion
+          ? _value.gameVersion
+          : gameVersion // ignore: cast_nullable_to_non_nullable
+              as String?,
     ) as $Val);
   }
 }
@@ -230,7 +236,7 @@ abstract class _$$ModInfoJsonModel_091aImplCopyWith<$Res>
       __$$ModInfoJsonModel_091aImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String id, String name, String version});
+  $Res call({String id, String name, String version, String? gameVersion});
 }
 
 /// @nodoc
@@ -248,6 +254,7 @@ class __$$ModInfoJsonModel_091aImplCopyWithImpl<$Res>
     Object? id = null,
     Object? name = null,
     Object? version = null,
+    Object? gameVersion = freezed,
   }) {
     return _then(_$ModInfoJsonModel_091aImpl(
       id: null == id
@@ -262,6 +269,10 @@ class __$$ModInfoJsonModel_091aImplCopyWithImpl<$Res>
           ? _value.version
           : version // ignore: cast_nullable_to_non_nullable
               as String,
+      gameVersion: freezed == gameVersion
+          ? _value.gameVersion
+          : gameVersion // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -270,7 +281,10 @@ class __$$ModInfoJsonModel_091aImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$ModInfoJsonModel_091aImpl implements _ModInfoJsonModel_091a {
   const _$ModInfoJsonModel_091aImpl(
-      {required this.id, required this.name, required this.version});
+      {required this.id,
+      required this.name,
+      required this.version,
+      required this.gameVersion});
 
   factory _$ModInfoJsonModel_091aImpl.fromJson(Map<String, dynamic> json) =>
       _$$ModInfoJsonModel_091aImplFromJson(json);
@@ -281,10 +295,12 @@ class _$ModInfoJsonModel_091aImpl implements _ModInfoJsonModel_091a {
   final String name;
   @override
   final String version;
+  @override
+  final String? gameVersion;
 
   @override
   String toString() {
-    return 'ModInfoJsonModel_091a(id: $id, name: $name, version: $version)';
+    return 'ModInfoJsonModel_091a(id: $id, name: $name, version: $version, gameVersion: $gameVersion)';
   }
 
   @override
@@ -294,12 +310,14 @@ class _$ModInfoJsonModel_091aImpl implements _ModInfoJsonModel_091a {
             other is _$ModInfoJsonModel_091aImpl &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.name, name) || other.name == name) &&
-            (identical(other.version, version) || other.version == version));
+            (identical(other.version, version) || other.version == version) &&
+            (identical(other.gameVersion, gameVersion) ||
+                other.gameVersion == gameVersion));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(runtimeType, id, name, version);
+  int get hashCode => Object.hash(runtimeType, id, name, version, gameVersion);
 
   @JsonKey(ignore: true)
   @override
@@ -320,7 +338,8 @@ abstract class _ModInfoJsonModel_091a implements ModInfoJsonModel_091a {
   const factory _ModInfoJsonModel_091a(
       {required final String id,
       required final String name,
-      required final String version}) = _$ModInfoJsonModel_091aImpl;
+      required final String version,
+      required final String? gameVersion}) = _$ModInfoJsonModel_091aImpl;
 
   factory _ModInfoJsonModel_091a.fromJson(Map<String, dynamic> json) =
       _$ModInfoJsonModel_091aImpl.fromJson;
@@ -331,6 +350,8 @@ abstract class _ModInfoJsonModel_091a implements ModInfoJsonModel_091a {
   String get name;
   @override
   String get version;
+  @override
+  String? get gameVersion;
   @override
   @JsonKey(ignore: true)
   _$$ModInfoJsonModel_091aImplCopyWith<_$ModInfoJsonModel_091aImpl>
@@ -347,6 +368,7 @@ mixin _$ModInfoJsonModel_095a {
   String get id => throw _privateConstructorUsedError;
   String get name => throw _privateConstructorUsedError;
   Version_095a get version => throw _privateConstructorUsedError;
+  String? get gameVersion => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -360,7 +382,8 @@ abstract class $ModInfoJsonModel_095aCopyWith<$Res> {
           $Res Function(ModInfoJsonModel_095a) then) =
       _$ModInfoJsonModel_095aCopyWithImpl<$Res, ModInfoJsonModel_095a>;
   @useResult
-  $Res call({String id, String name, Version_095a version});
+  $Res call(
+      {String id, String name, Version_095a version, String? gameVersion});
 
   $Version_095aCopyWith<$Res> get version;
 }
@@ -382,6 +405,7 @@ class _$ModInfoJsonModel_095aCopyWithImpl<$Res,
     Object? id = null,
     Object? name = null,
     Object? version = null,
+    Object? gameVersion = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -396,6 +420,10 @@ class _$ModInfoJsonModel_095aCopyWithImpl<$Res,
           ? _value.version
           : version // ignore: cast_nullable_to_non_nullable
               as Version_095a,
+      gameVersion: freezed == gameVersion
+          ? _value.gameVersion
+          : gameVersion // ignore: cast_nullable_to_non_nullable
+              as String?,
     ) as $Val);
   }
 
@@ -417,7 +445,8 @@ abstract class _$$ModInfoJsonModel_095aImplCopyWith<$Res>
       __$$ModInfoJsonModel_095aImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String id, String name, Version_095a version});
+  $Res call(
+      {String id, String name, Version_095a version, String? gameVersion});
 
   @override
   $Version_095aCopyWith<$Res> get version;
@@ -438,6 +467,7 @@ class __$$ModInfoJsonModel_095aImplCopyWithImpl<$Res>
     Object? id = null,
     Object? name = null,
     Object? version = null,
+    Object? gameVersion = freezed,
   }) {
     return _then(_$ModInfoJsonModel_095aImpl(
       id: null == id
@@ -452,6 +482,10 @@ class __$$ModInfoJsonModel_095aImplCopyWithImpl<$Res>
           ? _value.version
           : version // ignore: cast_nullable_to_non_nullable
               as Version_095a,
+      gameVersion: freezed == gameVersion
+          ? _value.gameVersion
+          : gameVersion // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -460,7 +494,10 @@ class __$$ModInfoJsonModel_095aImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$ModInfoJsonModel_095aImpl implements _ModInfoJsonModel_095a {
   const _$ModInfoJsonModel_095aImpl(
-      {required this.id, required this.name, required this.version});
+      {required this.id,
+      required this.name,
+      required this.version,
+      required this.gameVersion});
 
   factory _$ModInfoJsonModel_095aImpl.fromJson(Map<String, dynamic> json) =>
       _$$ModInfoJsonModel_095aImplFromJson(json);
@@ -471,10 +508,12 @@ class _$ModInfoJsonModel_095aImpl implements _ModInfoJsonModel_095a {
   final String name;
   @override
   final Version_095a version;
+  @override
+  final String? gameVersion;
 
   @override
   String toString() {
-    return 'ModInfoJsonModel_095a(id: $id, name: $name, version: $version)';
+    return 'ModInfoJsonModel_095a(id: $id, name: $name, version: $version, gameVersion: $gameVersion)';
   }
 
   @override
@@ -484,12 +523,14 @@ class _$ModInfoJsonModel_095aImpl implements _ModInfoJsonModel_095a {
             other is _$ModInfoJsonModel_095aImpl &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.name, name) || other.name == name) &&
-            (identical(other.version, version) || other.version == version));
+            (identical(other.version, version) || other.version == version) &&
+            (identical(other.gameVersion, gameVersion) ||
+                other.gameVersion == gameVersion));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(runtimeType, id, name, version);
+  int get hashCode => Object.hash(runtimeType, id, name, version, gameVersion);
 
   @JsonKey(ignore: true)
   @override
@@ -510,7 +551,8 @@ abstract class _ModInfoJsonModel_095a implements ModInfoJsonModel_095a {
   const factory _ModInfoJsonModel_095a(
       {required final String id,
       required final String name,
-      required final Version_095a version}) = _$ModInfoJsonModel_095aImpl;
+      required final Version_095a version,
+      required final String? gameVersion}) = _$ModInfoJsonModel_095aImpl;
 
   factory _ModInfoJsonModel_095a.fromJson(Map<String, dynamic> json) =
       _$ModInfoJsonModel_095aImpl.fromJson;
@@ -521,6 +563,8 @@ abstract class _ModInfoJsonModel_095a implements ModInfoJsonModel_095a {
   String get name;
   @override
   Version_095a get version;
+  @override
+  String? get gameVersion;
   @override
   @JsonKey(ignore: true)
   _$$ModInfoJsonModel_095aImplCopyWith<_$ModInfoJsonModel_095aImpl>

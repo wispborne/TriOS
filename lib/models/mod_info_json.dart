@@ -18,6 +18,7 @@ class ModInfoJsonModel_091a with _$ModInfoJsonModel_091a {
     required final String id,
     required final String name,
     required final String version,
+    required final String? gameVersion,
   }) = _ModInfoJsonModel_091a;
 
   factory ModInfoJsonModel_091a.fromJson(Map<String, dynamic> json) => _$ModInfoJsonModel_091aFromJson(json);
@@ -30,6 +31,7 @@ class ModInfoJsonModel_095a with _$ModInfoJsonModel_095a {
     required final String id,
     required final String name,
     required final Version_095a version,
+    required final String? gameVersion,
   }) = _ModInfoJsonModel_095a;
 
   factory ModInfoJsonModel_095a.fromJson(Map<String, dynamic> json) => _$ModInfoJsonModel_095aFromJson(json);

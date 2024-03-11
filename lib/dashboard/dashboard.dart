@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/launcher/launcher.dart';
 import 'package:trios/models/launch_settings.dart';
+import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/trios/trios_theme.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
@@ -51,31 +52,40 @@ class _DashboardState extends ConsumerState<Dashboard> with AutomaticKeepAliveCl
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Padding(
-              padding: const EdgeInsets.all(32.0),
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(TriOSTheme.cornerRadius),
-                  border: Border.all(
-                    color: Theme.of(context).colorScheme.secondary,
-                    strokeAlign: BorderSide.strokeAlignOutside,
-                    width: 2,
-                  ),
-                ),
-                child: ElevatedButton(
-                  onPressed: () => Launcher.launchGame(ref),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.secondary,
-                    shape: RoundedRectangleBorder(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(TriOSTheme.cornerRadius),
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.secondary,
+                        strokeAlign: BorderSide.strokeAlignOutside,
+                        width: 2,
+                      ),
+                    ),
+                    child: ElevatedButton(
+                      onPressed: () => Launcher.launchGame(ref),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).colorScheme.secondary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(TriOSTheme.cornerRadius),
+                        ),
+                      ),
+                      child: Text('LAUNCH',
+                          style: TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontFamily: "Orbitron",
+                              fontSize: 27,
+                              color: Theme.of(context).colorScheme.onPrimary)),
                     ),
                   ),
-                  child: Text('LAUNCH',
-                      style: TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontFamily: "Orbitron",
-                          fontSize: 27,
-                          color: Theme.of(context).colorScheme.onPrimary)),
-                ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(ref.watch(appState.starsectorVersion).valueOrNull ?? "Starsector version unknown",
+                        style: Theme.of(context).textTheme.labelMedium),
+                  ),
+                ],
               ),
             ),
             Tooltip(

@@ -47,6 +47,7 @@ class Settings with _$Settings {
     final String? jre23VmparamsFilename,
     @Default(true) final bool useJre23,
     @Default(LaunchSettings()) final LaunchSettings launchSettings,
+    final String? lastStarsectorVersion,
   }) = _Settings;
 
   factory Settings.fromJson(Map<String, Object?> json) => _$SettingsFromJson(json);

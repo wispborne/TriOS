@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
 import 'package:vs_scrollbar/vs_scrollbar.dart';
 
+import '../mod_manager/mod_manager_logic.dart';
 import '../trios/app_state.dart';
 
 class ModListMini extends ConsumerStatefulWidget {
@@ -43,13 +44,22 @@ class _ModListMiniState extends ConsumerState<ModListMini> {
                         itemCount: modInfos.length,
                         itemBuilder: (context, index) {
                           var modInfo = modInfos[index];
+                          final color = switch (
+                              compareGameVersions(modInfo.gameVersion, ref.read(appState.starsectorVersion).value)) {
+                            GameCompatibility.DiffVersion => const Color.fromARGB(255, 252, 99, 0),
+                            GameCompatibility.DiffRC => const Color.fromARGB(255, 253, 212, 24),
+                            GameCompatibility.SameRC => null,
+                          };
                           return Row(
                             mainAxisSize: MainAxisSize.max,
                             children: [
                               Flexible(
                                 child: CheckboxWithLabel(
                                   labelWidget: Text("${modInfo.name} ${modInfo.version}",
-                                      overflow: TextOverflow.fade, softWrap: false, maxLines: 1),
+                                      overflow: TextOverflow.fade,
+                                      softWrap: false,
+                                      maxLines: 1,
+                                      style: Theme.of(context).textTheme.labelLarge?.copyWith(color: color)),
                                   value: enabledMods?.contains(modInfo.id) ?? false,
                                   expand: true,
                                   onChanged: (_) {

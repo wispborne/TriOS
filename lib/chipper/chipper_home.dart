@@ -8,9 +8,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:platform_info/platform_info.dart';
+import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/extensions.dart';
-import 'package:trios/utils/util.dart';
 
+import '../trios/settings/settings.dart';
 import 'chipper_state.dart' as state;
 import 'chipper_state.dart';
 import 'copy.dart';
@@ -30,14 +31,22 @@ class ChipperApp extends ConsumerStatefulWidget {
 }
 
 loadDefaultLog(WidgetRef ref) {
-  // Load default log file
-  var gameFilesPath = defaultGameCorePath()?.resolve("starsector.log") as File?;
-  if (gameFilesPath != null && gameFilesPath.existsSync()) {
-    gameFilesPath.readAsBytes().then((bytes) async {
-      final content = utf8.decode(bytes.toList(), allowMalformed: true);
-      return ref.read(state.logRawContents.notifier).state = LogFile(gameFilesPath.path, content);
-    });
-  }
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    try {
+      ref.read(appState.isLoadingLog.notifier).state = true;
+      final gameCorePath = ref.read(appSettings.select((value) => value.gameCoreDir))?.toDirectory();
+      var gameFilesPath = gameCorePath?.resolve("starsector.log") as File?;
+
+      if (gameFilesPath != null && gameFilesPath.existsSync()) {
+        gameFilesPath.readAsBytes().then((bytes) async {
+          final content = utf8.decode(bytes.toList(), allowMalformed: true);
+          return ref.read(state.logRawContents.notifier).state = LogFile(gameFilesPath.path, content);
+        });
+      }
+    } finally {
+      ref.read(appState.isLoadingLog.notifier).state = false;
+    }
+  });
 }
 
 class _ChipperAppState extends ConsumerState<ChipperApp> with AutomaticKeepAliveClientMixin<ChipperApp> {

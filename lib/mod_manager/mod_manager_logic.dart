@@ -37,14 +37,14 @@ Future<ModInfo?> getModInfo(Directory modFolder, StringBuffer progressText) asyn
 
         Fimber.v("Using 0.9.5a mod_info.json format for ${modInfoFile.absolute}");
 
-        return ModInfo(
-            model.id, modFolder, model.name, "${model.version.major}.${model.version.minor}.${model.version.patch}");
+        return ModInfo(model.id, modFolder, model.name,
+            "${model.version.major}.${model.version.minor}.${model.version.patch}", model.gameVersion);
       } catch (e) {
         final model = ModInfoJsonModel_091a.fromJson(jsonEncodedYaml);
 
         Fimber.v("Using 0.9.1a mod_info.json format for ${modInfoFile.absolute}");
 
-        return ModInfo(model.id, modFolder, model.name, model.version);
+        return ModInfo(model.id, modFolder, model.name, model.version, model.gameVersion);
       }
     });
   } catch (e, st) {
@@ -56,4 +56,26 @@ Future<ModInfo?> getModInfo(Directory modFolder, StringBuffer progressText) asyn
 Future<List<String>> getEnabledMods(Directory modsFolder) async {
   return EnabledMods.fromJson((await File(p.join(modsFolder.path, "enabled_mods.json")).readAsString()).fixJsonToMap())
       .enabledMods;
+}
+
+GameCompatibility compareGameVersions(String? modGameVersion, String? gameVersion) {
+  if (modGameVersion == null || gameVersion == null) {
+    return GameCompatibility.DiffVersion;
+  }
+
+  if (modGameVersion == gameVersion) {
+    return GameCompatibility.SameRC;
+  }
+
+  if (modGameVersion.contains(RegExp(r"RC\d+")) && gameVersion.contains(RegExp(r"RC\d+"))) {
+    return GameCompatibility.DiffRC;
+  }
+
+  return GameCompatibility.DiffVersion;
+}
+
+enum GameCompatibility {
+  SameRC,
+  DiffRC,
+  DiffVersion
 }

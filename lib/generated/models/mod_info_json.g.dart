@@ -24,6 +24,7 @@ _$ModInfoJsonModel_091aImpl _$$ModInfoJsonModel_091aImplFromJson(
       id: json['id'] as String,
       name: json['name'] as String,
       version: json['version'] as String,
+      gameVersion: json['gameVersion'] as String?,
     );
 
 Map<String, dynamic> _$$ModInfoJsonModel_091aImplToJson(
@@ -32,6 +33,7 @@ Map<String, dynamic> _$$ModInfoJsonModel_091aImplToJson(
       'id': instance.id,
       'name': instance.name,
       'version': instance.version,
+      'gameVersion': instance.gameVersion,
     };
 
 _$ModInfoJsonModel_095aImpl _$$ModInfoJsonModel_095aImplFromJson(
@@ -40,6 +42,7 @@ _$ModInfoJsonModel_095aImpl _$$ModInfoJsonModel_095aImplFromJson(
       id: json['id'] as String,
       name: json['name'] as String,
       version: Version_095a.fromJson(json['version'] as Map<String, dynamic>),
+      gameVersion: json['gameVersion'] as String?,
     );
 
 Map<String, dynamic> _$$ModInfoJsonModel_095aImplToJson(
@@ -48,6 +51,7 @@ Map<String, dynamic> _$$ModInfoJsonModel_095aImplToJson(
       'id': instance.id,
       'name': instance.name,
       'version': instance.version,
+      'gameVersion': instance.gameVersion,
     };
 
 _$Version_095aImpl _$$Version_095aImplFromJson(Map<String, dynamic> json) =>

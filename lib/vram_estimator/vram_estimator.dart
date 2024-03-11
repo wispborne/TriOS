@@ -5,7 +5,6 @@ import 'package:collection/collection.dart';
 import 'package:fimber/fimber.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:path/path.dart' as p;
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/vram_estimator/vram_checker.dart';
@@ -13,7 +12,6 @@ import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/graph_radio_selector.dart';
 import 'package:trios/widgets/spinning_refresh_button.dart';
 
-import '../../models/enabled_mods.dart';
 import '../../trios/settings/settings.dart';
 import 'charts/bar_chart.dart';
 import 'charts/pie_chart.dart';
@@ -164,7 +162,7 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
               })),
         ),
       if (showRangeSlider)
-        Container(
+        SizedBox(
           width: 300,
           child: Disable(
             isEnabled: showRangeSlider,

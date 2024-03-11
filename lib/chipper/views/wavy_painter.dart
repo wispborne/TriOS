@@ -49,7 +49,7 @@ class WavyLineWidget extends StatelessWidget {
   final Color color;
   final double height;
 
-  WavyLineWidget({this.color = Colors.black, this.height = 1.0});
+  const WavyLineWidget({super.key, this.color = Colors.black, this.height = 1.0});
 
   @override
   Widget build(BuildContext context) {

@@ -64,6 +64,19 @@ class _ModListMiniState extends ConsumerState<ModListMini> {
                                   expand: true,
                                   onChanged: (_) {
                                     if (enabledMods == null) return;
+                                    showDialog(
+                                        context: context,
+                                        builder: (context) => AlertDialog(
+                                              content: const Text("Not implemented...yet."),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () {
+                                                    Navigator.of(context).pop();
+                                                  },
+                                                  child: const Text("Close"),
+                                                ),
+                                              ],
+                                            ));
                                   },
                                 ),
                               ),

@@ -73,6 +73,7 @@ Future<void> pasteLog(WidgetRef ref) async {
       } else {
         LogFile(null, clipboardData);
       }
+      return null;
     });
   }
 }

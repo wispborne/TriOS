@@ -333,7 +333,7 @@ class _AppShellState extends ConsumerState<AppShell> with SingleTickerProviderSt
               ),
               Tooltip(
                 message:
-                    "When enabled, modifying a mod\'s rules.csv will\nreload in-game rules as long as dev mode is enabled."
+                    "When enabled, modifying a mod's rules.csv will\nreload in-game rules as long as dev mode is enabled."
                     "\n\nrules.csv hot reload is ${isRulesHotReloadEnabled ? "enabled" : "disabled"}."
                     "\nClick to ${isRulesHotReloadEnabled ? "disable" : "enable"}.",
                 textAlign: TextAlign.center,

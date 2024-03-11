@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 
 class Blur extends StatelessWidget {
   const Blur({
-    Key? key,
+    super.key,
     required this.child,
     this.blurX = 5,
     this.blurY = 5,
@@ -13,7 +13,7 @@ class Blur extends StatelessWidget {
     this.colorOpacity = 0.0,
     this.overlay,
     this.alignment = Alignment.center,
-  }) : super(key: key);
+  });
 
   final Widget child;
   final double blurX;

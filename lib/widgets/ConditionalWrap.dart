@@ -3,12 +3,12 @@ import 'package:flutter/widgets.dart';
 class ConditionalWrap extends StatelessWidget {
   /// Creates a widget that conditionally wraps its [child].
   const ConditionalWrap({
-    Key? key,
+    super.key,
     required this.condition,
     required this.wrapper,
     this.fallback,
     required this.child,
-  }) : super(key: key);
+  });
 
   /// Decides on which [Wrapper] to use.
   final bool condition;

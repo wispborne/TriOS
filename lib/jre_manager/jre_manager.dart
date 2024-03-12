@@ -43,7 +43,7 @@ class _JreManagerState extends ConsumerState<JreManager> with AutomaticKeepAlive
 
   _reloadJres() {
     if (isModifyingFiles) return;
-    findJREs(ref.read(appSettings.select((value) => value.gameDir))).then((value) {
+    findJREs(ref.read(appSettings.select((value) => value.gameDir))?.path).then((value) {
       jres = value;
       setState(() {});
     });

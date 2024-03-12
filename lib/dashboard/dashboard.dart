@@ -45,8 +45,9 @@ class _DashboardState extends ConsumerState<Dashboard> with AutomaticKeepAliveCl
         1;
 
     return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
+        Spacer(),
         Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -82,7 +83,7 @@ class _DashboardState extends ConsumerState<Dashboard> with AutomaticKeepAliveCl
                   ),
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
-                    child: Text(ref.watch(appState.starsectorVersion).valueOrNull ?? "Starsector version unknown",
+                    child: Text(ref.watch(AppState.starsectorVersion).valueOrNull ?? "Starsector version unknown",
                         style: Theme.of(context).textTheme.labelMedium),
                   ),
                 ],
@@ -241,6 +242,7 @@ class _DashboardState extends ConsumerState<Dashboard> with AutomaticKeepAliveCl
                 )),
           ],
         ),
+        Spacer(),
         const SizedBox(width: 300, child: Card(child: ModListMini()))
       ],
     );

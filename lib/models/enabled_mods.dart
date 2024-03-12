@@ -5,7 +5,7 @@ part '../generated/models/enabled_mods.g.dart';
 
 @freezed
 class EnabledMods with _$EnabledMods {
-  const factory EnabledMods(List<String> enabledMods) = _EnabledMods;
+  const factory EnabledMods(Set<String> enabledMods) = _EnabledMods;
 
   factory EnabledMods.fromJson(Map<String, dynamic> json) => _$EnabledModsFromJson(json);
 }

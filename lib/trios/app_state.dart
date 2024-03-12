@@ -10,10 +10,13 @@ import 'package:trios/models/mod_info.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/trios/trios_theme.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/util.dart';
+
+import '../models/enabled_mods.dart';
 
 // part 'generated/app_state.g.dart';
 
-class appState {
+class AppState {
   static TriOSTheme theme = TriOSTheme();
   static final selfUpdateDownloadProgress = StateProvider<double?>((ref) => null);
   static final isLoadingLog = StateProvider<bool>((ref) => false);
@@ -27,13 +30,35 @@ class appState {
     return await getModsInFolder(gamePath.resolve("mods").toDirectory());
   });
 
-  static final enabledModIds = FutureProvider<List<String>>((ref) async {
+  static StreamController<File>? _enabledModsWatcher;
+
+  static final enabledMods = FutureProvider<EnabledMods>((ref) async {
     final modsFolder = ref.read(appSettings.select((value) => value.modsDir))?.toDirectory();
-    if (modsFolder == null) {
-      return [];
+
+    if (modsFolder == null || !modsFolder.existsSync()) {
+      return const EnabledMods({});
     } else {
-      return getEnabledMods(modsFolder);
+      final enabledModsFile = getEnabledModsFile(modsFolder);
+      if (!enabledModsFile.existsSync()) {
+        return const EnabledMods({});
+      }
+
+      if (_enabledModsWatcher == null) {
+        _enabledModsWatcher = StreamController<File>();
+        _enabledModsWatcher?.stream.listen((event) {
+          ref.invalidateSelf();
+        });
+
+        pollFileForModification(enabledModsFile, _enabledModsWatcher!);
+      }
+
+      var enabledMods = await getEnabledMods(modsFolder);
+      return enabledMods;
     }
+  });
+
+  static final enabledModIds = FutureProvider<List<String>>((ref) async {
+    return ref.watch(enabledMods).value?.enabledMods.toList() ?? [];
   });
 
   static final starsectorVersion = FutureProvider<String?>((ref) async {

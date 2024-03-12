@@ -32,7 +32,7 @@ class TriOSToast extends ConsumerWidget {
                     onPressed: () {
                       SelfUpdater.update(latestRelease, downloadProgress: (bytesReceived, contentLength) {
                         ref
-                            .read(appState.selfUpdateDownloadProgress.notifier)
+                            .read(AppState.selfUpdateDownloadProgress.notifier)
                             .update((_) => bytesReceived / contentLength);
                         Fimber.i(
                             "Downloaded: ${bytesReceived.bytesAsReadableMB()} / ${contentLength.bytesAsReadableMB()}");
@@ -40,7 +40,7 @@ class TriOSToast extends ConsumerWidget {
                     },
                     child: const Text("Update")),
                 LinearProgressIndicator(
-                  value: ref.watch(appState.selfUpdateDownloadProgress) ?? 0,
+                  value: ref.watch(AppState.selfUpdateDownloadProgress) ?? 0,
                 ),
               ],
             ),

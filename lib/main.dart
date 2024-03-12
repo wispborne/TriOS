@@ -29,9 +29,8 @@ import 'chipper/views/chipper_dropper.dart';
 import 'jre_manager/jre_manager.dart';
 import 'launcher/launcher.dart';
 import 'trios/app_state.dart';
-// import 'main.mapper.g.dart' show initializeJsonMapper;
 
-const version = "0.0.24";
+const version = "0.0.25";
 
 const appName = "TriOS";
 const appTitle = "$appName v$version";
@@ -101,7 +100,7 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
   @override
   void initState() {
     super.initState();
-    appState.theme.addListener(() {
+    AppState.theme.addListener(() {
       setState(() {});
     });
 
@@ -111,7 +110,7 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
 
   @override
   Widget build(BuildContext context) {
-    var material3 = appState.theme.isMaterial3();
+    var material3 = AppState.theme.isMaterial3();
 
     final starsectorSwatch = StarsectorSwatch();
     var swatch = switch (DateTime.now().month) {
@@ -163,7 +162,7 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
         child: MaterialApp(
           title: appTitle,
           theme: lightTheme,
-          themeMode: appState.theme.currentTheme(),
+          themeMode: AppState.theme.currentTheme(),
           debugShowCheckedModeBanner: false,
           darkTheme: darkTheme,
           home: const AppShell(child: VramEstimatorPage()),
@@ -261,7 +260,7 @@ class _AppShellState extends ConsumerState<AppShell> with SingleTickerProviderSt
               if (ref.read(appSettings.select((value) => value.shouldAutoUpdateOnLaunch))) {
                 SelfUpdater.update(latestRelease, downloadProgress: (bytesReceived, contentLength) {
                   final progress = bytesReceived / contentLength;
-                  ref.read(appState.selfUpdateDownloadProgress.notifier).update((_) => progress);
+                  ref.read(AppState.selfUpdateDownloadProgress.notifier).update((_) => progress);
                 });
               }
             }
@@ -325,11 +324,11 @@ class _AppShellState extends ConsumerState<AppShell> with SingleTickerProviderSt
                 ),
               ),
               IconButton(
-                tooltip: appState.theme.currentTheme() == ThemeMode.dark
+                tooltip: AppState.theme.currentTheme() == ThemeMode.dark
                     ? "THE SUN THE SUN THE SUN\nTHE SUN THE SUN THE SUN\nTHE SUN THE SUN THE SUN"
                     : "Dark theme",
-                onPressed: () => appState.theme.switchThemes(context),
-                icon: Icon(appState.theme.currentTheme() == ThemeMode.dark ? Icons.sunny : Icons.mode_night),
+                onPressed: () => AppState.theme.switchThemes(context),
+                icon: Icon(AppState.theme.currentTheme() == ThemeMode.dark ? Icons.sunny : Icons.mode_night),
               ),
               Tooltip(
                 message:

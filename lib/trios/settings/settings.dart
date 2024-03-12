@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:trios/trios/navigation.dart';
+import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/util.dart';
 
 import '../../models/launch_settings.dart';
@@ -31,9 +32,9 @@ Settings? readAppSettings() {
 @freezed
 class Settings with _$Settings {
   factory Settings({
-    final String? gameDir,
-    final String? gameCoreDir,
-    final String? modsDir,
+    @JsonDirectoryConverter() final Directory? gameDir,
+    @JsonDirectoryConverter() final Directory? gameCoreDir,
+    @JsonDirectoryConverter() final Directory? modsDir,
     @Default(false) final bool hasCustomModsDir,
     @Default(false) final bool shouldAutoUpdateOnLaunch,
     @Default(false) final bool isRulesHotReloadEnabled,
@@ -83,16 +84,34 @@ class SettingSaver extends Notifier<Settings> {
 
     if (newState.gameDir != null) {
       if (!newState.hasCustomModsDir) {
-        var newModsDir = generateModFolderPath(Directory(newState.gameDir!))?.path;
-        newState = newState.copyWith(modsDir: newModsDir);
+        var newModsDir = generateModFolderPath(newState.gameDir!)?.path;
+        newState = newState.copyWith(modsDir: newModsDir?.toDirectory());
       }
 
-      newState = newState.copyWith(gameCoreDir: generateGameCorePath(Directory(newState.gameDir!))?.path);
+      newState = newState.copyWith(gameCoreDir: generateGameCorePath(newState.gameDir!));
     }
 
     Fimber.d("Updated settings: $newState");
 
     sharedPrefs.setString(sharedPrefsSettingsKey, jsonEncode(newState.toJson()));
     state = newState;
+  }
+}
+
+class JsonDirectoryConverter implements JsonConverter<Directory?, String?> {
+  const JsonDirectoryConverter();
+
+  @override
+  Directory? fromJson(String? json) {
+    if (json == null) {
+      return null;
+    } else {
+      return json.toDirectory();
+    }
+  }
+
+  @override
+  String? toJson(Directory? object) {
+    return object?.path;
   }
 }

@@ -210,12 +210,12 @@ TargetPlatform? get currentPlatform {
   return TargetPlatform.values.firstWhereOrNull((element) => element.name.toLowerCase() == Platform.operatingSystem);
 }
 
-pollFileForModification(File file, StreamController streamController, {int intervalSeconds = 1}) async {
+pollFileForModification(File file, StreamController<File> streamController, {int intervalMillis = 1000}) async {
   var lastModified = file.lastModifiedSync();
   final fileChangesInstance = streamController;
 
   while (!fileChangesInstance.isClosed) {
-    await Future.delayed(Duration(seconds: intervalSeconds));
+    await Future.delayed(Duration(milliseconds: intervalMillis));
     final newModified = file.lastModifiedSync();
     if (newModified.isAfter(lastModified)) {
       lastModified = newModified;

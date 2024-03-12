@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:fimber/fimber.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:trios/models/enabled_mods.dart';
 import 'package:trios/models/mod_info.dart';
@@ -53,9 +55,27 @@ Future<ModInfo?> getModInfo(Directory modFolder, StringBuffer progressText) asyn
   }
 }
 
-Future<List<String>> getEnabledMods(Directory modsFolder) async {
-  return EnabledMods.fromJson((await File(p.join(modsFolder.path, "enabled_mods.json")).readAsString()).fixJsonToMap())
-      .enabledMods;
+File getEnabledModsFile(Directory modsFolder) {
+  return File(p.join(modsFolder.path, "enabled_mods.json"));
+}
+
+Future<EnabledMods> getEnabledMods(Directory modsFolder) async {
+  return EnabledMods.fromJson((await getEnabledModsFile(modsFolder).readAsString()).fixJsonToMap());
+}
+
+Future<void> disableMod(String modInfoId, Directory modsFolder, WidgetRef ref) async {
+  var enabledMods = await getEnabledMods(modsFolder);
+  enabledMods = enabledMods.copyWith(enabledMods: enabledMods.enabledMods.filter((id) => id != modInfoId).toSet());
+
+  await getEnabledModsFile(modsFolder).writeAsString(jsonEncode(enabledMods.toJson()));
+  ref.invalidate(AppState.enabledMods);
+}
+
+Future<void> enableMod(String modInfoId, Directory modsFolder, WidgetRef ref) async {
+  var enabledMods = await getEnabledMods(modsFolder);
+  enabledMods = enabledMods.copyWith(enabledMods: enabledMods.enabledMods.toSet()..add(modInfoId));
+  await getEnabledModsFile(modsFolder).writeAsString(jsonEncode(enabledMods.toJson()));
+  ref.invalidate(AppState.enabledMods);
 }
 
 GameCompatibility compareGameVersions(String? modGameVersion, String? gameVersion) {
@@ -74,8 +94,4 @@ GameCompatibility compareGameVersions(String? modGameVersion, String? gameVersio
   return GameCompatibility.DiffVersion;
 }
 
-enum GameCompatibility {
-  SameRC,
-  DiffRC,
-  DiffVersion
-}
+enum GameCompatibility { SameRC, DiffRC, DiffVersion }

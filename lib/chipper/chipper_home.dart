@@ -33,7 +33,7 @@ class ChipperApp extends ConsumerStatefulWidget {
 loadDefaultLog(WidgetRef ref) {
   WidgetsBinding.instance.addPostFrameCallback((_) {
     try {
-      ref.read(appState.isLoadingLog.notifier).state = true;
+      ref.read(AppState.isLoadingLog.notifier).state = true;
       final gameCorePath = ref.read(appSettings.select((value) => value.gameCoreDir))?.toDirectory();
       var gameFilesPath = gameCorePath?.resolve("starsector.log") as File?;
 
@@ -44,7 +44,7 @@ loadDefaultLog(WidgetRef ref) {
         });
       }
     } finally {
-      ref.read(appState.isLoadingLog.notifier).state = false;
+      ref.read(AppState.isLoadingLog.notifier).state = false;
     }
   });
 }

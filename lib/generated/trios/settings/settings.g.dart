@@ -8,9 +8,12 @@ part of '../../../trios/settings/settings.dart';
 
 _$SettingsImpl _$$SettingsImplFromJson(Map<String, dynamic> json) =>
     _$SettingsImpl(
-      gameDir: json['gameDir'] as String?,
-      gameCoreDir: json['gameCoreDir'] as String?,
-      modsDir: json['modsDir'] as String?,
+      gameDir:
+          const JsonDirectoryConverter().fromJson(json['gameDir'] as String?),
+      gameCoreDir: const JsonDirectoryConverter()
+          .fromJson(json['gameCoreDir'] as String?),
+      modsDir:
+          const JsonDirectoryConverter().fromJson(json['modsDir'] as String?),
       hasCustomModsDir: json['hasCustomModsDir'] as bool? ?? false,
       shouldAutoUpdateOnLaunch:
           json['shouldAutoUpdateOnLaunch'] as bool? ?? false,
@@ -35,9 +38,10 @@ _$SettingsImpl _$$SettingsImplFromJson(Map<String, dynamic> json) =>
 
 Map<String, dynamic> _$$SettingsImplToJson(_$SettingsImpl instance) =>
     <String, dynamic>{
-      'gameDir': instance.gameDir,
-      'gameCoreDir': instance.gameCoreDir,
-      'modsDir': instance.modsDir,
+      'gameDir': const JsonDirectoryConverter().toJson(instance.gameDir),
+      'gameCoreDir':
+          const JsonDirectoryConverter().toJson(instance.gameCoreDir),
+      'modsDir': const JsonDirectoryConverter().toJson(instance.modsDir),
       'hasCustomModsDir': instance.hasCustomModsDir,
       'shouldAutoUpdateOnLaunch': instance.shouldAutoUpdateOnLaunch,
       'isRulesHotReloadEnabled': instance.isRulesHotReloadEnabled,

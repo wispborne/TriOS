@@ -20,7 +20,7 @@ EnabledMods _$EnabledModsFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$EnabledMods {
-  List<String> get enabledMods => throw _privateConstructorUsedError;
+  Set<String> get enabledMods => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -34,7 +34,7 @@ abstract class $EnabledModsCopyWith<$Res> {
           EnabledMods value, $Res Function(EnabledMods) then) =
       _$EnabledModsCopyWithImpl<$Res, EnabledMods>;
   @useResult
-  $Res call({List<String> enabledMods});
+  $Res call({Set<String> enabledMods});
 }
 
 /// @nodoc
@@ -56,7 +56,7 @@ class _$EnabledModsCopyWithImpl<$Res, $Val extends EnabledMods>
       enabledMods: null == enabledMods
           ? _value.enabledMods
           : enabledMods // ignore: cast_nullable_to_non_nullable
-              as List<String>,
+              as Set<String>,
     ) as $Val);
   }
 }
@@ -69,7 +69,7 @@ abstract class _$$EnabledModsImplCopyWith<$Res>
       __$$EnabledModsImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({List<String> enabledMods});
+  $Res call({Set<String> enabledMods});
 }
 
 /// @nodoc
@@ -89,7 +89,7 @@ class __$$EnabledModsImplCopyWithImpl<$Res>
       null == enabledMods
           ? _value._enabledMods
           : enabledMods // ignore: cast_nullable_to_non_nullable
-              as List<String>,
+              as Set<String>,
     ));
   }
 }
@@ -97,18 +97,18 @@ class __$$EnabledModsImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$EnabledModsImpl implements _EnabledMods {
-  const _$EnabledModsImpl(final List<String> enabledMods)
+  const _$EnabledModsImpl(final Set<String> enabledMods)
       : _enabledMods = enabledMods;
 
   factory _$EnabledModsImpl.fromJson(Map<String, dynamic> json) =>
       _$$EnabledModsImplFromJson(json);
 
-  final List<String> _enabledMods;
+  final Set<String> _enabledMods;
   @override
-  List<String> get enabledMods {
-    if (_enabledMods is EqualUnmodifiableListView) return _enabledMods;
+  Set<String> get enabledMods {
+    if (_enabledMods is EqualUnmodifiableSetView) return _enabledMods;
     // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_enabledMods);
+    return EqualUnmodifiableSetView(_enabledMods);
   }
 
   @override
@@ -145,14 +145,13 @@ class _$EnabledModsImpl implements _EnabledMods {
 }
 
 abstract class _EnabledMods implements EnabledMods {
-  const factory _EnabledMods(final List<String> enabledMods) =
-      _$EnabledModsImpl;
+  const factory _EnabledMods(final Set<String> enabledMods) = _$EnabledModsImpl;
 
   factory _EnabledMods.fromJson(Map<String, dynamic> json) =
       _$EnabledModsImpl.fromJson;
 
   @override
-  List<String> get enabledMods;
+  Set<String> get enabledMods;
   @override
   @JsonKey(ignore: true)
   _$$EnabledModsImplCopyWith<_$EnabledModsImpl> get copyWith =>

@@ -46,7 +46,7 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
     if (isScanning) return;
 
     var settings = ref.read(appSettings);
-    if (settings.modsDir == null || !Directory(settings.modsDir!).existsSync()) {
+    if (settings.modsDir == null || !settings.modsDir!.existsSync()) {
       Fimber.e('Mods folder not set');
       return;
     }
@@ -60,9 +60,9 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
 
     try {
       final info = await VramChecker(
-        enabledModIds: ref.read(appState.enabledModIds).value,
+        enabledModIds: ref.read(AppState.enabledModIds).value,
         modIdsToCheck: null,
-        foldersToCheck: settings.modsDir == null ? [] : [Directory(settings.modsDir!)],
+        foldersToCheck: settings.modsDir == null ? [] : [settings.modsDir!],
         graphicsLibConfig: GraphicsLibConfig(
           areAnyEffectsEnabled: false,
           areGfxLibMaterialMapsEnabled: false,

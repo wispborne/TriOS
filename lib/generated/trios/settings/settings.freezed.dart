@@ -20,9 +20,12 @@ Settings _$SettingsFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$Settings {
-  String? get gameDir => throw _privateConstructorUsedError;
-  String? get gameCoreDir => throw _privateConstructorUsedError;
-  String? get modsDir => throw _privateConstructorUsedError;
+  @JsonDirectoryConverter()
+  Directory? get gameDir => throw _privateConstructorUsedError;
+  @JsonDirectoryConverter()
+  Directory? get gameCoreDir => throw _privateConstructorUsedError;
+  @JsonDirectoryConverter()
+  Directory? get modsDir => throw _privateConstructorUsedError;
   bool get hasCustomModsDir => throw _privateConstructorUsedError;
   bool get shouldAutoUpdateOnLaunch => throw _privateConstructorUsedError;
   bool get isRulesHotReloadEnabled => throw _privateConstructorUsedError;
@@ -50,9 +53,9 @@ abstract class $SettingsCopyWith<$Res> {
       _$SettingsCopyWithImpl<$Res, Settings>;
   @useResult
   $Res call(
-      {String? gameDir,
-      String? gameCoreDir,
-      String? modsDir,
+      {@JsonDirectoryConverter() Directory? gameDir,
+      @JsonDirectoryConverter() Directory? gameCoreDir,
+      @JsonDirectoryConverter() Directory? modsDir,
       bool hasCustomModsDir,
       bool shouldAutoUpdateOnLaunch,
       bool isRulesHotReloadEnabled,
@@ -106,15 +109,15 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
       gameDir: freezed == gameDir
           ? _value.gameDir
           : gameDir // ignore: cast_nullable_to_non_nullable
-              as String?,
+              as Directory?,
       gameCoreDir: freezed == gameCoreDir
           ? _value.gameCoreDir
           : gameCoreDir // ignore: cast_nullable_to_non_nullable
-              as String?,
+              as Directory?,
       modsDir: freezed == modsDir
           ? _value.modsDir
           : modsDir // ignore: cast_nullable_to_non_nullable
-              as String?,
+              as Directory?,
       hasCustomModsDir: null == hasCustomModsDir
           ? _value.hasCustomModsDir
           : hasCustomModsDir // ignore: cast_nullable_to_non_nullable
@@ -192,9 +195,9 @@ abstract class _$$SettingsImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {String? gameDir,
-      String? gameCoreDir,
-      String? modsDir,
+      {@JsonDirectoryConverter() Directory? gameDir,
+      @JsonDirectoryConverter() Directory? gameCoreDir,
+      @JsonDirectoryConverter() Directory? modsDir,
       bool hasCustomModsDir,
       bool shouldAutoUpdateOnLaunch,
       bool isRulesHotReloadEnabled,
@@ -247,15 +250,15 @@ class __$$SettingsImplCopyWithImpl<$Res>
       gameDir: freezed == gameDir
           ? _value.gameDir
           : gameDir // ignore: cast_nullable_to_non_nullable
-              as String?,
+              as Directory?,
       gameCoreDir: freezed == gameCoreDir
           ? _value.gameCoreDir
           : gameCoreDir // ignore: cast_nullable_to_non_nullable
-              as String?,
+              as Directory?,
       modsDir: freezed == modsDir
           ? _value.modsDir
           : modsDir // ignore: cast_nullable_to_non_nullable
-              as String?,
+              as Directory?,
       hasCustomModsDir: null == hasCustomModsDir
           ? _value.hasCustomModsDir
           : hasCustomModsDir // ignore: cast_nullable_to_non_nullable
@@ -320,9 +323,9 @@ class __$$SettingsImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
   _$SettingsImpl(
-      {this.gameDir,
-      this.gameCoreDir,
-      this.modsDir,
+      {@JsonDirectoryConverter() this.gameDir,
+      @JsonDirectoryConverter() this.gameCoreDir,
+      @JsonDirectoryConverter() this.modsDir,
       this.hasCustomModsDir = false,
       this.shouldAutoUpdateOnLaunch = false,
       this.isRulesHotReloadEnabled = false,
@@ -342,11 +345,14 @@ class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
       _$$SettingsImplFromJson(json);
 
   @override
-  final String? gameDir;
+  @JsonDirectoryConverter()
+  final Directory? gameDir;
   @override
-  final String? gameCoreDir;
+  @JsonDirectoryConverter()
+  final Directory? gameCoreDir;
   @override
-  final String? modsDir;
+  @JsonDirectoryConverter()
+  final Directory? modsDir;
   @override
   @JsonKey()
   final bool hasCustomModsDir;
@@ -492,9 +498,9 @@ class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
 
 abstract class _Settings implements Settings {
   factory _Settings(
-      {final String? gameDir,
-      final String? gameCoreDir,
-      final String? modsDir,
+      {@JsonDirectoryConverter() final Directory? gameDir,
+      @JsonDirectoryConverter() final Directory? gameCoreDir,
+      @JsonDirectoryConverter() final Directory? modsDir,
       final bool hasCustomModsDir,
       final bool shouldAutoUpdateOnLaunch,
       final bool isRulesHotReloadEnabled,
@@ -514,11 +520,14 @@ abstract class _Settings implements Settings {
       _$SettingsImpl.fromJson;
 
   @override
-  String? get gameDir;
+  @JsonDirectoryConverter()
+  Directory? get gameDir;
   @override
-  String? get gameCoreDir;
+  @JsonDirectoryConverter()
+  Directory? get gameCoreDir;
   @override
-  String? get modsDir;
+  @JsonDirectoryConverter()
+  Directory? get modsDir;
   @override
   bool get hasCustomModsDir;
   @override

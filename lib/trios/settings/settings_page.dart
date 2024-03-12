@@ -28,7 +28,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   @override
   void initState() {
     super.initState();
-    gamePathTextController.text = ref.read(appSettings).gameDir ?? "";
+    gamePathTextController.text = ref.read(appSettings).gameDir?.path ?? "";
     gamePathExists = Directory(gamePathTextController.text).existsSync();
   }
 
@@ -57,7 +57,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       ? settings.modsDir?.toDirectory()
                       : generateModFolderPath(newGameDir.toDirectory());
 
-                  return state.copyWith(gameDir: Directory(newGameDir).normalize.path, modsDir: newModDirPath?.path);
+                  return state.copyWith(gameDir: Directory(newGameDir).normalize, modsDir: newModDirPath);
                 });
               }
 
@@ -100,8 +100,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 padding: const EdgeInsets.only(top: 8.0),
                 child: CheckboxWithLabel(
                     label: "Use Material Design 3",
-                    onChanged: (_) => appState.theme.switchMaterial(),
-                    value: appState.theme.isMaterial3()),
+                    onChanged: (_) => AppState.theme.switchMaterial(),
+                    value: AppState.theme.isMaterial3()),
               )),
           // Debugging line here
           SizedBox.fromSize(size: const Size.fromHeight(20)),
@@ -178,14 +178,14 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                           Fimber.i(
                               "Downloaded: ${bytesReceived.bytesAsReadableMB()} / ${contentLength.bytesAsReadableMB()}");
                           ref
-                              .read(appState.selfUpdateDownloadProgress.notifier)
+                              .read(AppState.selfUpdateDownloadProgress.notifier)
                               .update((_) => bytesReceived / contentLength);
                         });
                       },
                       child: const Text("Force Update")),
                 ),
                 LinearProgressIndicator(
-                  value: ref.watch(appState.selfUpdateDownloadProgress) ?? 0,
+                  value: ref.watch(AppState.selfUpdateDownloadProgress) ?? 0,
                 ),
               ],
             ),

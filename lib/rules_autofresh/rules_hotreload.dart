@@ -32,7 +32,7 @@ class _RulesHotReloadState extends ConsumerState<RulesHotReload> {
     });
   }
 
-  var fileChanges = StreamController();
+  var fileChanges = StreamController<File>();
 
   @override
   void initState() {

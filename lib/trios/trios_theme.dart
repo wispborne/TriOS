@@ -1,5 +1,8 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_color/flutter_color.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../trios/app_state.dart';
 
@@ -10,6 +13,10 @@ class TriOSTheme with ChangeNotifier {
   static bool _isMaterial3 = false;
   static const String _key = "currentTheme";
   static const String _keyMaterial = "isMaterial";
+
+  // static final backgroundShader = FutureProvider<FragmentProgram>((ref) async {
+  //   return FragmentProgram.fromAsset("assets/shaders/grain.frag");
+  // });
 
   TriOSTheme() {
     if (sharedPrefs.containsKey(_key)) {

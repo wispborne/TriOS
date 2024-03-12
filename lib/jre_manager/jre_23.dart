@@ -177,7 +177,8 @@ class Jre23VersionChecker with _$Jre23VersionChecker {
     required final String masterVersionFile,
     required final String modName,
     final int? modThreadId,
-    required final Version_095a modVersion,
+    @VersionJsonConverter()
+    required final String modVersion,
     required final String starsectorVersion,
     final String? windowsJDKDownload,
     final String? windowsConfigDownload,

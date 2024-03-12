@@ -402,7 +402,7 @@ class VramChecker {
 
           progressText.appendAndPrint("Using 0.9.1a mod_info.json format for ${modInfoFile.absolute}", verboseOut);
 
-          return ModInfo(model.id, modFolder, model.name, model.version, model.gameVersion);
+          return ModInfo(model.id, modFolder, model.name, model.version.toString(), model.gameVersion);
         }
       });
     } catch (e, st) {

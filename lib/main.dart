@@ -160,13 +160,12 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
           alignment: Alignment.bottomRight,
         ),
         child: MaterialApp(
-          title: appTitle,
-          theme: lightTheme,
-          themeMode: AppState.theme.currentTheme(),
-          debugShowCheckedModeBanner: false,
-          darkTheme: darkTheme,
-          home: const AppShell(child: VramEstimatorPage()),
-        ));
+            title: appTitle,
+            theme: lightTheme,
+            themeMode: AppState.theme.currentTheme(),
+            debugShowCheckedModeBanner: false,
+            darkTheme: darkTheme,
+            home: const AppShell(child: VramEstimatorPage())));
   }
 
   @override

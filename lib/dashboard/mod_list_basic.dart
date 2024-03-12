@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
@@ -39,7 +40,7 @@ class _ModListMiniState extends ConsumerState<ModListMini> {
                         controller: _scrollController,
                         itemCount: modInfos.length,
                         itemBuilder: (context, index) {
-                          var modInfo = modInfos[index];
+                          var modInfo = modInfos.sortedBy((info) => info.name).toList()[index];
                           final color = switch (
                               compareGameVersions(modInfo.gameVersion, ref.read(AppState.starsectorVersion).value)) {
                             GameCompatibility.DiffVersion => const Color.fromARGB(255, 252, 99, 0),
@@ -50,41 +51,45 @@ class _ModListMiniState extends ConsumerState<ModListMini> {
                             mainAxisSize: MainAxisSize.max,
                             children: [
                               Flexible(
-                                child: CheckboxWithLabel(
-                                  labelWidget: Text("${modInfo.name} ${modInfo.version}",
-                                      overflow: TextOverflow.fade,
-                                      softWrap: false,
-                                      maxLines: 1,
-                                      style: Theme.of(context).textTheme.labelLarge?.copyWith(color: color)),
-                                  value: enabledMods?.contains(modInfo.id) ?? false,
-                                  expand: true,
-                                  onChanged: (_) {
-                                    if (enabledMods == null) return;
-                                    var isCurrentlyEnabled = enabledMods!.contains(modInfo.id);
+                                child: SizedBox(
+                                  height: 26,
+                                  child: CheckboxWithLabel(
+                                    labelWidget: Text("${modInfo.name} ${modInfo.version}",
+                                        overflow: TextOverflow.fade,
+                                        softWrap: false,
+                                        maxLines: 1,
+                                        style: Theme.of(context).textTheme.labelLarge?.copyWith(color: color)),
+                                    value: enabledMods?.contains(modInfo.id) ?? false,
+                                    expand: true,
+                                    onChanged: (_) {
+                                      if (enabledMods == null) return;
+                                      var isCurrentlyEnabled = enabledMods.contains(modInfo.id);
 
-                                    // We can disable mods without checking compatibility, but we can't enable them without checking.
-                                    if (!isCurrentlyEnabled) {
-                                      final compatResult = compareGameVersions(
-                                          modInfo.gameVersion, ref.read(AppState.starsectorVersion).value);
-                                      if (compatResult == GameCompatibility.DiffVersion) {
-                                        ScaffoldMessenger.of(context).clearSnackBars();
-                                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                          content: Text(
-                                              "Mod ${modInfo.name} is not compatible with your game version (${ref.read(AppState.starsectorVersion).value})"),
-                                        ));
-                                        return;
+                                      // TODO check mod dependencies.
+                                      // We can disable mods without checking compatibility, but we can't enable them without checking.
+                                      if (!isCurrentlyEnabled) {
+                                        final compatResult = compareGameVersions(
+                                            modInfo.gameVersion, ref.read(AppState.starsectorVersion).value);
+                                        if (compatResult == GameCompatibility.DiffVersion) {
+                                          ScaffoldMessenger.of(context).clearSnackBars();
+                                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                            content: Text(
+                                                "Mod ${modInfo.name} is not compatible with your game version (${ref.read(AppState.starsectorVersion).value})"),
+                                          ));
+                                          return;
+                                        }
                                       }
-                                    }
 
-                                    var modsFolder = ref.read(appSettings.select((value) => value.modsDir));
-                                    if (modsFolder == null) return;
+                                      var modsFolder = ref.read(appSettings.select((value) => value.modsDir));
+                                      if (modsFolder == null) return;
 
-                                    if (isCurrentlyEnabled) {
-                                      disableMod(modInfo.id, modsFolder, ref);
-                                    } else {
-                                      enableMod(modInfo.id, modsFolder, ref);
-                                    }
-                                  },
+                                      if (isCurrentlyEnabled) {
+                                        disableMod(modInfo.id, modsFolder, ref);
+                                      } else {
+                                        enableMod(modInfo.id, modsFolder, ref);
+                                      }
+                                    },
+                                  ),
                                 ),
                               ),
                             ],
@@ -93,7 +98,8 @@ class _ModListMiniState extends ConsumerState<ModListMini> {
                       ),
                     );
                   },
-                  loading: () => const CircularProgressIndicator(),
+                  loading: () =>
+                      const Center(child: SizedBox(width: 48, height: 48, child: CircularProgressIndicator())),
                   error: (error, stackTrace) => Text('Error: $error'),
                 ),
           ),

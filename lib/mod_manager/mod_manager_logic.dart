@@ -46,7 +46,7 @@ Future<ModInfo?> getModInfo(Directory modFolder, StringBuffer progressText) asyn
 
         Fimber.v("Using 0.9.1a mod_info.json format for ${modInfoFile.absolute}");
 
-        return ModInfo(model.id, modFolder, model.name, model.version, model.gameVersion);
+        return ModInfo(model.id, modFolder, model.name, model.version.toString(), model.gameVersion);
       }
     });
   } catch (e, st) {

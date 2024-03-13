@@ -11,6 +11,8 @@ import 'package:trios/models/mod_info_json.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/extensions.dart';
 
+import '../models/version.dart';
+
 Future<List<ModInfo>> getModsInFolder(Directory modsFolder) async {
   var mods = <ModInfo?>[];
 
@@ -79,19 +81,25 @@ Future<void> enableMod(String modInfoId, Directory modsFolder, WidgetRef ref) as
 }
 
 GameCompatibility compareGameVersions(String? modGameVersion, String? gameVersion) {
+  // game is versioned like 0.95.1a-RC5 and 0.95.0a-RC5
+  // they are fully compatible if the first three numbers are the same
+  // they are partially compatible if the first two numbers are the same
+  // they are incompatible if the first or second number is different
   if (modGameVersion == null || gameVersion == null) {
-    return GameCompatibility.DiffVersion;
+    return GameCompatibility.Compatible;
   }
 
-  if (modGameVersion == gameVersion) {
-    return GameCompatibility.SameRC;
+  final modVersion = Version.parse(modGameVersion);
+  final gameVersionParsed = Version.parse(gameVersion);
+  if (modVersion.major == gameVersionParsed.major &&
+      modVersion.minor == gameVersionParsed.minor &&
+      modVersion.patch == gameVersionParsed.patch) {
+    return GameCompatibility.Compatible;
+  } else if (modVersion.major == gameVersionParsed.major && modVersion.minor == gameVersionParsed.minor) {
+    return GameCompatibility.Warning;
+  } else {
+    return GameCompatibility.Incompatible;
   }
-
-  if (modGameVersion.contains(RegExp(r"RC\d+")) && gameVersion.contains(RegExp(r"RC\d+"))) {
-    return GameCompatibility.DiffRC;
-  }
-
-  return GameCompatibility.DiffVersion;
 }
 
-enum GameCompatibility { SameRC, DiffRC, DiffVersion }
+enum GameCompatibility { Compatible, Warning, Incompatible }

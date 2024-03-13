@@ -43,9 +43,9 @@ class _ModListMiniState extends ConsumerState<ModListMini> {
                           var modInfo = modInfos.sortedBy((info) => info.name).toList()[index];
                           final color = switch (
                               compareGameVersions(modInfo.gameVersion, ref.read(AppState.starsectorVersion).value)) {
-                            GameCompatibility.DiffVersion => const Color.fromARGB(255, 252, 99, 0),
-                            GameCompatibility.DiffRC => const Color.fromARGB(255, 253, 212, 24),
-                            GameCompatibility.SameRC => null,
+                            GameCompatibility.Incompatible => const Color.fromARGB(255, 252, 99, 0),
+                            GameCompatibility.Warning => const Color.fromARGB(255, 253, 212, 24),
+                            GameCompatibility.Compatible => null,
                           };
                           return Row(
                             mainAxisSize: MainAxisSize.max,
@@ -53,42 +53,60 @@ class _ModListMiniState extends ConsumerState<ModListMini> {
                               Flexible(
                                 child: SizedBox(
                                   height: 26,
-                                  child: CheckboxWithLabel(
-                                    labelWidget: Text("${modInfo.name} ${modInfo.version}",
-                                        overflow: TextOverflow.fade,
-                                        softWrap: false,
-                                        maxLines: 1,
-                                        style: Theme.of(context).textTheme.labelLarge?.copyWith(color: color)),
-                                    value: enabledMods?.contains(modInfo.id) ?? false,
-                                    expand: true,
-                                    onChanged: (_) {
-                                      if (enabledMods == null) return;
-                                      var isCurrentlyEnabled = enabledMods.contains(modInfo.id);
-
-                                      // TODO check mod dependencies.
-                                      // We can disable mods without checking compatibility, but we can't enable them without checking.
-                                      if (!isCurrentlyEnabled) {
-                                        final compatResult = compareGameVersions(
-                                            modInfo.gameVersion, ref.read(AppState.starsectorVersion).value);
-                                        if (compatResult == GameCompatibility.DiffVersion) {
-                                          ScaffoldMessenger.of(context).clearSnackBars();
-                                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                            content: Text(
-                                                "Mod ${modInfo.name} is not compatible with your game version (${ref.read(AppState.starsectorVersion).value})"),
-                                          ));
+                                  child: Tooltip(
+                                    message: "$modInfo",
+                                    child: CheckboxWithLabel(
+                                      labelWidget: Text("${modInfo.name} ${modInfo.version}",
+                                          overflow: TextOverflow.fade,
+                                          softWrap: false,
+                                          maxLines: 1,
+                                          style: Theme.of(context).textTheme.labelLarge?.copyWith(color: color)),
+                                      value: enabledMods?.contains(modInfo.id) ?? false,
+                                      expand: true,
+                                      onChanged: (_) {
+                                        if (true) {
+                                          showDialog(
+                                              context: context,
+                                              builder: (context) => AlertDialog(
+                                                    title: Text("Mod dependencies"),
+                                                    content: Text("This feature is not yet implemented."),
+                                                    actions: [
+                                                      TextButton(
+                                                        onPressed: () => Navigator.of(context).pop(),
+                                                        child: Text("Close"),
+                                                      ),
+                                                    ],
+                                                  ));
                                           return;
                                         }
-                                      }
+                                        if (enabledMods == null) return;
+                                        var isCurrentlyEnabled = enabledMods.contains(modInfo.id);
 
-                                      var modsFolder = ref.read(appSettings.select((value) => value.modsDir));
-                                      if (modsFolder == null) return;
+                                        // TODO check mod dependencies.
+                                        // We can disable mods without checking compatibility, but we can't enable them without checking.
+                                        if (!isCurrentlyEnabled) {
+                                          final compatResult = compareGameVersions(
+                                              modInfo.gameVersion, ref.read(AppState.starsectorVersion).value);
+                                          if (compatResult == GameCompatibility.Incompatible) {
+                                            ScaffoldMessenger.of(context).clearSnackBars();
+                                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                              content: Text(
+                                                  "Mod ${modInfo.name} is not compatible with your game version (${ref.read(AppState.starsectorVersion).value})"),
+                                            ));
+                                            return;
+                                          }
+                                        }
 
-                                      if (isCurrentlyEnabled) {
-                                        disableMod(modInfo.id, modsFolder, ref);
-                                      } else {
-                                        enableMod(modInfo.id, modsFolder, ref);
-                                      }
-                                    },
+                                        var modsFolder = ref.read(appSettings.select((value) => value.modsDir));
+                                        if (modsFolder == null) return;
+
+                                        if (isCurrentlyEnabled) {
+                                          disableMod(modInfo.id, modsFolder, ref);
+                                        } else {
+                                          enableMod(modInfo.id, modsFolder, ref);
+                                        }
+                                      },
+                                    ),
                                   ),
                                 ),
                               ),

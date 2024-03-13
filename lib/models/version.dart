@@ -52,7 +52,7 @@ class Version implements Comparable<Version> {
 
     return Version(
       raw: versionString,
-      major: versionParts.length > 0 ? versionParts[0] : "0",
+      major: versionParts.isNotEmpty ? versionParts[0] : "0",
       minor: versionParts.length > 1 ? versionParts[1] : "0",
       patch: versionParts.length > 2 ? versionParts[2] : "0",
       build: versionParts.length > 3 ? versionParts[3] : null,

@@ -2,7 +2,7 @@ import 'dart:core';
 
 import 'package:fimber/fimber.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:pub_semver/pub_semver.dart';
+import 'package:trios/models/version.dart';
 
 part '../generated/models/mod_info_json.freezed.dart';
 part '../generated/models/mod_info_json.g.dart';
@@ -52,6 +52,8 @@ class ModInfoJson with _$ModInfoJson {
 
 @freezed
 class Version_095a with _$Version_095a {
+  const Version_095a._();
+
   const factory Version_095a(
     final dynamic major,
     final dynamic minor,
@@ -59,6 +61,9 @@ class Version_095a with _$Version_095a {
   ) = _Version_095a;
 
   factory Version_095a.fromJson(Map<String, dynamic> json) => _$Version_095aFromJson(json);
+
+  @override
+  String toString() => "$major.$minor.$patch";
 }
 
 class VersionJsonConverter implements JsonConverter<Version, dynamic> {
@@ -67,9 +72,12 @@ class VersionJsonConverter implements JsonConverter<Version, dynamic> {
   @override
   Version fromJson(dynamic json) {
     try {
+      if (json is Map<String, dynamic>) {
+        return Version.parse(Version_095a.fromJson(json).toString());
+      }
       return Version.parse(json);
-    } catch (e) {
-      Fimber.d("Unable to parse version from json: $json");
+    } catch (e, st) {
+      Fimber.d("Unable to parse version from json: $json", ex: e, stacktrace: st);
       rethrow;
     }
   }

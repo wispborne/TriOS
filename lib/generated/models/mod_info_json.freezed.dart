@@ -883,8 +883,8 @@ class __$$Version_095aImplCopyWithImpl<$Res>
 
 /// @nodoc
 @JsonSerializable()
-class _$Version_095aImpl implements _Version_095a {
-  const _$Version_095aImpl(this.major, this.minor, this.patch);
+class _$Version_095aImpl extends _Version_095a {
+  const _$Version_095aImpl(this.major, this.minor, this.patch) : super._();
 
   factory _$Version_095aImpl.fromJson(Map<String, dynamic> json) =>
       _$$Version_095aImplFromJson(json);
@@ -895,11 +895,6 @@ class _$Version_095aImpl implements _Version_095a {
   final dynamic minor;
   @override
   final dynamic patch;
-
-  @override
-  String toString() {
-    return 'Version_095a(major: $major, minor: $minor, patch: $patch)';
-  }
 
   @override
   bool operator ==(Object other) {
@@ -933,10 +928,11 @@ class _$Version_095aImpl implements _Version_095a {
   }
 }
 
-abstract class _Version_095a implements Version_095a {
+abstract class _Version_095a extends Version_095a {
   const factory _Version_095a(
           final dynamic major, final dynamic minor, final dynamic patch) =
       _$Version_095aImpl;
+  const _Version_095a._() : super._();
 
   factory _Version_095a.fromJson(Map<String, dynamic> json) =
       _$Version_095aImpl.fromJson;

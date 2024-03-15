@@ -64,6 +64,15 @@ extension StringExt on String {
   Map<String, dynamic> fixJsonToMap() {
     return jsonDecode(fixJson());
   }
+
+  /// Returns a string having leading characters from the chars array removed.
+  String trimStart(String prefix) {
+    var index = 0;
+    while (index < length && prefix.contains(this[index])) {
+      index++;
+    }
+    return substring(index);
+  }
 }
 
 extension FileSystemEntityExt on FileSystemEntity {

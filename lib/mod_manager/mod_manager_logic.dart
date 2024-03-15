@@ -2,28 +2,71 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:collection/collection.dart';
+import 'package:csv/csv.dart';
 import 'package:fimber/fimber.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:trios/models/enabled_mods.dart';
 import 'package:trios/models/mod_info_json.dart';
+import 'package:trios/models/mod_variant.dart';
+import 'package:trios/models/version_checker_info.dart';
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/extensions.dart';
 
 import '../models/mod_info.dart';
 import '../models/version.dart';
 
-Future<List<ModInfo>> getModsInFolder(Directory modsFolder) async {
-  var mods = <ModInfo?>[];
+Future<List<ModVariant>> getModsInFolder(Directory modsFolder) async {
+  var mods = <ModVariant?>[];
 
   for (var modFolder in modsFolder.listSync().whereType<Directory>()) {
     var progressText = StringBuffer();
-    var modInfo = getModInfo(modFolder, progressText);
+    var modInfo = await getModInfo(modFolder, progressText);
+    if (modInfo == null) {
+      continue;
+    }
 
-    mods.add(await modInfo);
+    final modVariant = ModVariant(
+        modInfo: modInfo,
+        modsFolder: modFolder,
+        versionCheckerInfo: getVersionFile(modFolder)?.let((it) => getVersionCheckerInfo(it)));
+
+    mods.add(modVariant);
   }
 
-  return mods.whereType<ModInfo>().toList();
+  return mods.whereType<ModVariant>().toList();
+}
+
+VersionCheckerInfo? getVersionCheckerInfo(File versionFile) {
+  if (!versionFile.existsSync()) return null;
+  try {
+    var info = VersionCheckerInfo.fromJson(versionFile.readAsStringSync().fixJsonToMap());
+
+    if (info.modThreadId != null) {
+      info = info.copyWith(modThreadId: info.modThreadId?.replaceAll(RegExp(r'[^0-9]'), ''));
+
+      if (info.modThreadId!.trimStart("0").isEmpty) {
+        info = info.copyWith(modThreadId: null);
+      }
+    }
+
+    return info;
+  } catch (e, st) {
+    Fimber.e("Unable to read version checker json file in ${versionFile.absolute}. ($e)\n$st");
+    return null;
+  }
+}
+
+File? getVersionFile(Directory modFolder) {
+  final csv = File(p.join(modFolder.path, Constants.VERSION_CHECKER_CSV_PATH));
+  if (!csv.existsSync()) return null;
+  try {
+    return const CsvToListConverter().convert(csv.readAsStringSync())[1][0].toFile();
+  } catch (e, st) {
+    Fimber.e("Unable to read version checker csv file in ${modFolder.absolute}. ($e)\n$st");
+    return null;
+  }
 }
 
 Future<ModInfo?> getModInfo(Directory modFolder, StringBuffer progressText) async {
@@ -118,13 +161,13 @@ extension DependencyExt on Dependency {
     return DependencyStateType.Satisfied;
   }
 
-  DependencyStateType isSatisfiedByAny(List<ModInfo> allMods, EnabledMods enabledMods) {
-    var foundDependencies = allMods.filter((mod) => mod.id == id);
+  DependencyStateType isSatisfiedByAny(List<ModVariant> allMods, EnabledMods enabledMods) {
+    var foundDependencies = allMods.filter((mod) => mod.modInfo.id == id);
     if (foundDependencies.isEmpty) {
       return DependencyStateType.Missing;
     }
 
-    final satisfyResults = foundDependencies.map((mod) => isSatisfiedBy(mod, enabledMods)).toList();
+    final satisfyResults = foundDependencies.map((mod) => isSatisfiedBy(mod.modInfo, enabledMods)).toList();
     if (satisfyResults.contains(DependencyStateType.Satisfied)) {
       return DependencyStateType.Satisfied;
     } else if (satisfyResults.contains(DependencyStateType.Disabled)) {

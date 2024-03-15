@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/mod_info.dart';
+import 'package:trios/models/mod_variant.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/trios/trios_theme.dart';
 import 'package:trios/utils/extensions.dart';
@@ -21,7 +22,7 @@ class AppState {
   static final selfUpdateDownloadProgress = StateProvider<double?>((ref) => null);
   static final isLoadingLog = StateProvider<bool>((ref) => false);
 
-  static final modInfos = FutureProvider<List<ModInfo>>((ref) async {
+  static final modVariants = FutureProvider<List<ModVariant>>((ref) async {
     final gamePath = ref.read(appSettings.select((value) => value.gameDir))?.toDirectory();
     if (gamePath == null) {
       return [];

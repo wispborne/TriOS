@@ -31,8 +31,8 @@ dependencies:
   flutter:
     sdk: flutter
 
-  flutter_riverpod: ^2.4.10
-  riverpod_annotation: ^2.3.4
+  flutter_riverpod: ^2.5.1
+  riverpod_annotation: ^2.3.5
   fl_chart: ^0.66.2
   collection: ^1.18.0
   csv: ^6.0.0
@@ -90,7 +90,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^3.0.1
-  riverpod_generator: ^2.3.11
+  riverpod_generator: ^2.4.0
   build_runner: ^2.4.8
   custom_lint: ^0.6.2
   freezed: ^2.4.7

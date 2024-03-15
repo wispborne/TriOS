@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/jre_manager/jre_manager_logic.dart';
 import 'package:trios/utils/extensions.dart';
-import 'package:trios/widgets/ConditionalWrap.dart';
+import 'package:trios/widgets/conditional_wrap.dart';
 
 import '../trios/trios_theme.dart';
 

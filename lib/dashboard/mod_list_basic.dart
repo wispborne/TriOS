@@ -1,6 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/dashboard/mod_summary_widget.dart';
 import 'package:trios/trios/trios_theme.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
@@ -23,8 +24,7 @@ class _ModListMiniState extends ConsumerState<ModListMini> {
   @override
   Widget build(BuildContext context) {
     final enabledModIds = ref.watch(AppState.enabledModIds).valueOrNull;
-    final enabledMods = ref.watch(AppState.enabledMods).valueOrNull;
-    var modList = ref.watch(AppState.modInfos).valueOrNull;
+    final modList = ref.watch(AppState.modVariants).valueOrNull;
 
     return Padding(
       padding: const EdgeInsets.all(8.0),
@@ -35,8 +35,8 @@ class _ModListMiniState extends ConsumerState<ModListMini> {
           Text(modList != null ? " ${enabledModIds?.length ?? 0} of ${modList.length} enabled" : "",
               style: Theme.of(context).textTheme.labelMedium),
           Expanded(
-            child: ref.watch(AppState.modInfos).when(
-                  data: (modInfos) {
+            child: ref.watch(AppState.modVariants).when(
+                  data: (modVariants) {
                     return VsScrollbar(
                       controller: _scrollController,
                       isAlwaysShown: true,
@@ -44,10 +44,11 @@ class _ModListMiniState extends ConsumerState<ModListMini> {
                       child: ListView.builder(
                         shrinkWrap: true,
                         controller: _scrollController,
-                        itemCount: modInfos.length,
+                        itemCount: modVariants.length,
                         itemBuilder: (context, index) {
-                          var modInfo = modInfos.sortedBy((info) => info.name).toList()[index];
-                          var compatWithGame =
+                          final modVariant = modVariants.sortedBy((info) => info.modInfo.name).toList()[index];
+                          final modInfo = modVariant.modInfo;
+                          final compatWithGame =
                               compareGameVersions(modInfo.gameVersion, ref.read(AppState.starsectorVersion).value);
                           final compatTextColor = switch (compatWithGame) {
                             GameCompatibility.Incompatible => TriOSTheme.vanillaErrorColor,
@@ -74,88 +75,10 @@ class _ModListMiniState extends ConsumerState<ModListMini> {
                                             ),
                                             child: Padding(
                                               padding: const EdgeInsets.all(16.0),
-                                              child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(modInfo.name, style: theme.textTheme.titleMedium),
-                                                  Text(modInfo.id, style: theme.textTheme.labelSmall),
-                                                  Text(modInfo.version.toString(), style: theme.textTheme.labelMedium),
-                                                  const SizedBox(height: 8),
-                                                  Text("${modInfo.description}",
-                                                      maxLines: 4,
-                                                      overflow: TextOverflow.ellipsis,
-                                                      style: theme.textTheme.bodySmall),
-                                                  const SizedBox(height: 8),
-                                                  Text("Required game version:",
-                                                      style: theme.textTheme.labelMedium
-                                                          ?.copyWith(color: theme.disabledColor)),
-                                                  Padding(
-                                                    padding: const EdgeInsets.only(left: 8.0),
-                                                    child: Text(modInfo.gameVersion ?? "",
-                                                        style: theme.textTheme.labelMedium
-                                                            ?.copyWith(color: compatTextColor)),
-                                                  ),
-                                                  Text("Game version:",
-                                                      style: theme.textTheme.labelMedium
-                                                          ?.copyWith(color: theme.disabledColor)),
-                                                  Padding(
-                                                    padding: const EdgeInsets.only(left: 8.0),
-                                                    child: Text(ref.read(AppState.starsectorVersion).value ?? "",
-                                                        style: theme.textTheme.labelMedium),
-                                                  ),
-                                                  if (compatWithGame == GameCompatibility.Incompatible)
-                                                    Text("Error: this mod requires a different version of the game.",
-                                                        style: theme.textTheme.labelMedium
-                                                            ?.copyWith(color: compatTextColor)),
-                                                  const SizedBox(height: 8),
-                                                  if (modInfo.dependencies.isNotEmpty)
-                                                    Padding(
-                                                      padding: const EdgeInsets.only(top: 8.0),
-                                                      child: Text("Required Mods:", style: theme.textTheme.labelMedium),
-                                                    ),
-                                                  for (var dep in modInfo.dependencies)
-                                                    Padding(
-                                                      padding: const EdgeInsets.only(left: 8.0),
-                                                      child: Text("${dep.name ?? dep.id} ${dep.version ?? ""}",
-                                                          style: theme.textTheme.labelMedium?.copyWith(
-                                                              color: switch (
-                                                                  dep.isSatisfiedByAny(modInfos, enabledMods!)) {
-                                                            DependencyStateType.Satisfied => null,
-                                                            DependencyStateType.Missing => TriOSTheme.vanillaErrorColor,
-                                                            DependencyStateType.Disabled =>
-                                                              null, // Disabled means it's present, so we can just enable it.
-                                                            DependencyStateType.WrongVersion =>
-                                                              TriOSTheme.vanillaWarningColor
-                                                          })),
-                                                    ),
-                                                  const SizedBox(height: 8),
-                                                  if (modInfo.dependencies.any((dep) =>
-                                                      dep.isSatisfiedByAny(modInfos, enabledMods!) ==
-                                                      DependencyStateType.WrongVersion))
-                                                    Text(
-                                                        "Warning: this mod requires a different version of a mod that you have installed, but might run with this one.",
-                                                        style: theme.textTheme.labelMedium
-                                                            ?.copyWith(color: TriOSTheme.vanillaErrorColor)),
-                                                  const SizedBox(height: 8),
-                                                  if (modInfo.author != null)
-                                                    Row(
-                                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                                      children: [
-                                                        Text("Author: ",
-                                                            style: theme.textTheme.labelMedium
-                                                                ?.copyWith(color: theme.disabledColor)),
-                                                        Expanded(
-                                                          child: Padding(
-                                                            padding: const EdgeInsets.only(left: 2.0),
-                                                            child: Text(modInfo.author!,
-                                                                maxLines: 3,
-                                                                overflow: TextOverflow.ellipsis,
-                                                                style: theme.textTheme.labelMedium),
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                ],
+                                              child: ModSummaryWidget(
+                                                modVariant: modVariant,
+                                                compatWithGame: compatWithGame,
+                                                compatTextColor: compatTextColor,
                                               ),
                                             ),
                                           ),

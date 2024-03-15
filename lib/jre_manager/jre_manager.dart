@@ -10,7 +10,7 @@ import 'package:trios/jre_manager/jre_23.dart';
 import 'package:trios/jre_manager/ram_changer.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
-import 'package:trios/widgets/ConditionalWrap.dart';
+import 'package:trios/widgets/conditional_wrap.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/download_progress_indicator.dart';
 

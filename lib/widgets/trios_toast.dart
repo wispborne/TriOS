@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:toastification/toastification.dart';
 import 'package:trios/utils/extensions.dart';
-import 'package:trios/widgets/TriOSAppIcon.dart';
+import 'package:trios/widgets/trios_app_icon.dart';
 
 import '../main.dart';
 import '../trios/app_state.dart';

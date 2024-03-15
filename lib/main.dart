@@ -18,7 +18,7 @@ import 'package:trios/trios/trios_theme.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/vram_estimator/vram_estimator.dart';
-import 'package:trios/widgets/TriOSAppIcon.dart';
+import 'package:trios/widgets/trios_app_icon.dart';
 import 'package:trios/widgets/blur.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:trios/widgets/trios_toast.dart';

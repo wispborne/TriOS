@@ -6,11 +6,11 @@ import 'package:fimber/fimber.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:trios/models/enabled_mods.dart';
-import 'package:trios/models/mod_info.dart';
 import 'package:trios/models/mod_info_json.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/extensions.dart';
 
+import '../models/mod_info.dart';
 import '../models/version.dart';
 
 Future<List<ModInfo>> getModsInFolder(Directory modsFolder) async {
@@ -36,20 +36,19 @@ Future<ModInfo?> getModInfo(Directory modFolder, StringBuffer progressText) asyn
       var rawString = await withFileHandleLimit(() => modInfoFile.readAsString());
       var jsonEncodedYaml = (rawString).replaceAll("\t", "  ").fixJsonToMap();
 
-      try {
-        final model = ModInfoJsonModel_095a.fromJson(jsonEncodedYaml);
+      // try {
+      final model = ModInfo.fromJsonModel(ModInfoJson.fromJson(jsonEncodedYaml), modFolder);
 
-        Fimber.v("Using 0.9.5a mod_info.json format for ${modInfoFile.absolute}");
+      // Fimber.v("Using 0.9.5a mod_info.json format for ${modInfoFile.absolute}");
 
-        return ModInfo(model.id, modFolder, model.name,
-            "${model.version.major}.${model.version.minor}.${model.version.patch}", model.gameVersion);
-      } catch (e) {
-        final model = ModInfoJsonModel_091a.fromJson(jsonEncodedYaml);
-
-        Fimber.v("Using 0.9.1a mod_info.json format for ${modInfoFile.absolute}");
-
-        return ModInfo(model.id, modFolder, model.name, model.version.toString(), model.gameVersion);
-      }
+      return model;
+      // } catch (e) {
+      //   final model = ModInfoModel_091a.fromJson(jsonEncodedYaml);
+      //
+      //   Fimber.v("Using 0.9.1a mod_info.json format for ${modInfoFile.absolute}");
+      //
+      //   return ModInfo(model.id, modFolder, model.name, model.version.toString(), model.gameVersion);
+      // }
     });
   } catch (e, st) {
     Fimber.v("Unable to find or read 'mod_info.json' in ${modFolder.absolute}. ($e)\n$st");
@@ -102,4 +101,66 @@ GameCompatibility compareGameVersions(String? modGameVersion, String? gameVersio
   }
 }
 
+extension DependencyExt on Dependency {
+  DependencyStateType isSatisfiedBy(ModInfo mod, EnabledMods enabledMods) {
+    if (mod.id != id) {
+      return DependencyStateType.Missing;
+    }
+
+    if (version != null && mod.version.compareTo(version!) < 0) {
+      return DependencyStateType.WrongVersion;
+    }
+
+    if (!mod.isEnabled(enabledMods)) {
+      return DependencyStateType.Disabled;
+    }
+
+    return DependencyStateType.Satisfied;
+  }
+
+  DependencyStateType isSatisfiedByAny(List<ModInfo> allMods, EnabledMods enabledMods) {
+    var foundDependencies = allMods.filter((mod) => mod.id == id);
+    if (foundDependencies.isEmpty) {
+      return DependencyStateType.Missing;
+    }
+
+    final satisfyResults = foundDependencies.map((mod) => isSatisfiedBy(mod, enabledMods)).toList();
+    if (satisfyResults.contains(DependencyStateType.Satisfied)) {
+      return DependencyStateType.Satisfied;
+    } else if (satisfyResults.contains(DependencyStateType.Disabled)) {
+      return DependencyStateType.Disabled;
+    } else if (satisfyResults.contains(DependencyStateType.WrongVersion)) {
+      return DependencyStateType.WrongVersion;
+    } else {
+      return DependencyStateType.Missing;
+    }
+  }
+}
+
+extension ModInfoExt on ModInfo {
+  GameCompatibility isCompatibleWithGame(String? gameVersion) {
+    return compareGameVersions(gameVersion, this.gameVersion);
+  }
+
+  bool isEnabled(EnabledMods enabledMods) {
+    return enabledMods.enabledMods.contains(id);
+  }
+}
+
 enum GameCompatibility { Compatible, Warning, Incompatible }
+
+//     sealed class DependencyState {
+//         abstract val dependency: Dependency
+//
+//         data class Missing(override val dependency: Dependency, val outdatedModIfFound: Mod?) : DependencyState()
+//         data class Disabled(override val dependency: Dependency, val variant: ModVariant) : DependencyState()
+//         data class Enabled(override val dependency: Dependency, val variant: ModVariant) : DependencyState()
+//     }
+
+class DependencyState {
+  final Dependency dependency;
+
+  DependencyState(this.dependency);
+}
+
+enum DependencyStateType { Missing, Disabled, WrongVersion, Satisfied }

@@ -18,48 +18,18 @@ Map<String, dynamic> _$$EnabledModsJsonModeImplToJson(
       'enabledMods': instance.enabledMods,
     };
 
-_$ModInfoJsonModel_091aImpl _$$ModInfoJsonModel_091aImplFromJson(
-        Map<String, dynamic> json) =>
-    _$ModInfoJsonModel_091aImpl(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      version: const VersionJsonConverter().fromJson(json['version']),
-      gameVersion: json['gameVersion'] as String?,
-    );
-
-Map<String, dynamic> _$$ModInfoJsonModel_091aImplToJson(
-        _$ModInfoJsonModel_091aImpl instance) =>
-    <String, dynamic>{
-      'id': instance.id,
-      'name': instance.name,
-      'version': const VersionJsonConverter().toJson(instance.version),
-      'gameVersion': instance.gameVersion,
-    };
-
-_$ModInfoJsonModel_095aImpl _$$ModInfoJsonModel_095aImplFromJson(
-        Map<String, dynamic> json) =>
-    _$ModInfoJsonModel_095aImpl(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      version: const VersionJsonConverter().fromJson(json['version']),
-      gameVersion: json['gameVersion'] as String?,
-    );
-
-Map<String, dynamic> _$$ModInfoJsonModel_095aImplToJson(
-        _$ModInfoJsonModel_095aImpl instance) =>
-    <String, dynamic>{
-      'id': instance.id,
-      'name': instance.name,
-      'version': const VersionJsonConverter().toJson(instance.version),
-      'gameVersion': instance.gameVersion,
-    };
-
 _$ModInfoJsonImpl _$$ModInfoJsonImplFromJson(Map<String, dynamic> json) =>
     _$ModInfoJsonImpl(
       json['id'] as String,
-      json['name'] as String,
-      const VersionJsonConverter().fromJson(json['version']),
-      json['gameVersion'] as String?,
+      name: json['name'] as String? ?? "",
+      version: const VersionJsonConverter().fromJson(json['version']),
+      author: json['author'] as String?,
+      gameVersion: json['gameVersion'] as String?,
+      dependencies: (json['dependencies'] as List<dynamic>?)
+              ?.map((e) => Dependency.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
+      description: json['description'] as String?,
     );
 
 Map<String, dynamic> _$$ModInfoJsonImplToJson(_$ModInfoJsonImpl instance) =>
@@ -67,7 +37,24 @@ Map<String, dynamic> _$$ModInfoJsonImplToJson(_$ModInfoJsonImpl instance) =>
       'id': instance.id,
       'name': instance.name,
       'version': const VersionJsonConverter().toJson(instance.version),
+      'author': instance.author,
       'gameVersion': instance.gameVersion,
+      'dependencies': instance.dependencies,
+      'description': instance.description,
+    };
+
+_$DependencyImpl _$$DependencyImplFromJson(Map<String, dynamic> json) =>
+    _$DependencyImpl(
+      id: json['id'] as String?,
+      name: json['name'] as String?,
+      version: const VersionJsonConverterNullable().fromJson(json['version']),
+    );
+
+Map<String, dynamic> _$$DependencyImplToJson(_$DependencyImpl instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'name': instance.name,
+      'version': const VersionJsonConverterNullable().toJson(instance.version),
     };
 
 _$Version_095aImpl _$$Version_095aImplFromJson(Map<String, dynamic> json) =>

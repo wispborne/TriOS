@@ -17,7 +17,7 @@ class NetworkUtils {
           'Request: ${response.request}. Headers: ${response.request?.headers}.\nRequest Status: ${response.statusCode}. Body: ${response.body}';
 
       if (response.statusCode == 200) {
-        Fimber.i(message);
+        // Fimber.v(message);
         final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
         /*
         * "url" -> "https://api.github.com/repos/wispborne/TriOS/releases/142440421"

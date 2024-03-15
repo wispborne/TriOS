@@ -7,8 +7,8 @@ import 'package:path/path.dart' as p;
 import 'package:squadron/squadron.dart';
 import 'package:trios/utils/extensions.dart';
 
-import '../../models/mod_info.dart';
 import '../../models/mod_info_json.dart';
+import '../models/version.dart';
 import '../utils/util.dart';
 import 'image_reader/image_reader_async.dart';
 import 'image_reader/png_chatgpt.dart';
@@ -323,7 +323,7 @@ class VramChecker {
   }
 
   Future<ModImage?> getModImagePng(
-      ReadImageHeadersWorkerPool imageHeaderReaderPool, File file, ImageType imageType, ModInfo modInfo) async {
+      ReadImageHeadersWorkerPool imageHeaderReaderPool, File file, ImageType imageType, VramCheckerMod modInfo) async {
     ImageHeader? image;
     try {
       image =
@@ -351,7 +351,7 @@ class VramChecker {
   }
 
   Future<ModImage?> getModImageGeneric(
-      ReadImageHeadersWorkerPool imageHeaderReaderPool, File file, ModInfo modInfo, ImageType imageType) async {
+      ReadImageHeadersWorkerPool imageHeaderReaderPool, File file, VramCheckerMod modInfo, ImageType imageType) async {
     ImageHeader? image;
     try {
       image =
@@ -380,7 +380,7 @@ class VramChecker {
   }
 
   // Future<ModInfo?> loadModInfo(File file) async {
-  Future<ModInfo?> getModInfo(Directory modFolder, StringBuffer progressText) async {
+  Future<VramCheckerMod?> getModInfo(Directory modFolder, StringBuffer progressText) async {
     try {
       return modFolder
           .listSync()
@@ -390,20 +390,19 @@ class VramChecker {
         var rawString = await withFileHandleLimit(() => modInfoFile.readAsString());
         var jsonEncodedYaml = (rawString).replaceAll("\t", "  ").fixJsonToMap();
 
-        try {
-          final model = ModInfoJsonModel_095a.fromJson(jsonEncodedYaml);
+        // try {
+        final model = ModInfoJson.fromJson(jsonEncodedYaml);
 
-          progressText.appendAndPrint("Using 0.9.5a mod_info.json format for ${modInfoFile.absolute}", verboseOut);
+        // progressText.appendAndPrint("Using 0.9.5a mod_info.json format for ${modInfoFile.absolute}", verboseOut);
 
-          return ModInfo(
-              model.id, modFolder, model.name, "${model.version.major}.${model.version.minor}.${model.version.patch}", model.gameVersion);
-        } catch (e) {
-          final model = ModInfoJsonModel_091a.fromJson(jsonEncodedYaml);
-
-          progressText.appendAndPrint("Using 0.9.1a mod_info.json format for ${modInfoFile.absolute}", verboseOut);
-
-          return ModInfo(model.id, modFolder, model.name, model.version.toString(), model.gameVersion);
-        }
+        return VramCheckerMod(model, modFolder);
+        // } catch (e) {
+        //   final model = ModInfoJsonModel_091a.fromJson(jsonEncodedYaml);
+        //
+        //   progressText.appendAndPrint("Using 0.9.1a mod_info.json format for ${modInfoFile.absolute}", verboseOut);
+        //
+        //   return ModInfo(model.id, modFolder, model.name, model.version.toString(), model.gameVersion);
+        // }
       });
     } catch (e, st) {
       progressText.appendAndPrint(
@@ -490,6 +489,21 @@ class VramChecker {
       currentFileHandles--;
     }
   }
+}
+
+class VramCheckerMod {
+  final ModInfoJson modInfo;
+  final Directory modFolder;
+
+  VramCheckerMod(this.modInfo, this.modFolder);
+
+  String get id => modInfo.id;
+
+  String get name => modInfo.name;
+
+  Version? get version => modInfo.version;
+
+  String get formattedName => "$name $version ($id)";
 }
 
 extension ModListExt on Iterable<Mod> {

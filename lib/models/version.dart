@@ -20,7 +20,9 @@ class Version implements Comparable<Version> {
   String toString() => raw ?? [major, minor, patch, build].whereNotNull().join(".");
 
   @override
-  int compareTo(Version other) {
+  int compareTo(Version? other) {
+    if (other == null) return -1;
+
     var result = _compareRecognizingNumbers(major, other.major);
     if (result != 0) return result;
 

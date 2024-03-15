@@ -9,6 +9,7 @@ import 'package:http/http.dart' as http;
 import 'package:trios/jre_manager/jre_manager_logic.dart';
 import 'package:trios/models/download_progress.dart';
 import 'package:trios/models/mod_info_json.dart';
+import 'package:trios/models/version.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/util.dart';
 
@@ -178,7 +179,7 @@ class Jre23VersionChecker with _$Jre23VersionChecker {
     required final String modName,
     final int? modThreadId,
     @VersionJsonConverter()
-    required final String modVersion,
+    required final Version modVersion,
     required final String starsectorVersion,
     final String? windowsJDKDownload,
     final String? windowsConfigDownload,

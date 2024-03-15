@@ -24,7 +24,7 @@ mixin _$Jre23VersionChecker {
   String get modName => throw _privateConstructorUsedError;
   int? get modThreadId => throw _privateConstructorUsedError;
   @VersionJsonConverter()
-  String get modVersion => throw _privateConstructorUsedError;
+  Version get modVersion => throw _privateConstructorUsedError;
   String get starsectorVersion => throw _privateConstructorUsedError;
   String? get windowsJDKDownload => throw _privateConstructorUsedError;
   String? get windowsConfigDownload => throw _privateConstructorUsedError;
@@ -47,7 +47,7 @@ abstract class $Jre23VersionCheckerCopyWith<$Res> {
       {String masterVersionFile,
       String modName,
       int? modThreadId,
-      @VersionJsonConverter() String modVersion,
+      @VersionJsonConverter() Version modVersion,
       String starsectorVersion,
       String? windowsJDKDownload,
       String? windowsConfigDownload,
@@ -94,7 +94,7 @@ class _$Jre23VersionCheckerCopyWithImpl<$Res, $Val extends Jre23VersionChecker>
       modVersion: null == modVersion
           ? _value.modVersion
           : modVersion // ignore: cast_nullable_to_non_nullable
-              as String,
+              as Version,
       starsectorVersion: null == starsectorVersion
           ? _value.starsectorVersion
           : starsectorVersion // ignore: cast_nullable_to_non_nullable
@@ -131,7 +131,7 @@ abstract class _$$Jre23VersionCheckerImplCopyWith<$Res>
       {String masterVersionFile,
       String modName,
       int? modThreadId,
-      @VersionJsonConverter() String modVersion,
+      @VersionJsonConverter() Version modVersion,
       String starsectorVersion,
       String? windowsJDKDownload,
       String? windowsConfigDownload,
@@ -176,7 +176,7 @@ class __$$Jre23VersionCheckerImplCopyWithImpl<$Res>
       modVersion: null == modVersion
           ? _value.modVersion
           : modVersion // ignore: cast_nullable_to_non_nullable
-              as String,
+              as Version,
       starsectorVersion: null == starsectorVersion
           ? _value.starsectorVersion
           : starsectorVersion // ignore: cast_nullable_to_non_nullable
@@ -226,7 +226,7 @@ class _$Jre23VersionCheckerImpl implements _Jre23VersionChecker {
   final int? modThreadId;
   @override
   @VersionJsonConverter()
-  final String modVersion;
+  final Version modVersion;
   @override
   final String starsectorVersion;
   @override
@@ -301,7 +301,7 @@ abstract class _Jre23VersionChecker implements Jre23VersionChecker {
       {required final String masterVersionFile,
       required final String modName,
       final int? modThreadId,
-      @VersionJsonConverter() required final String modVersion,
+      @VersionJsonConverter() required final Version modVersion,
       required final String starsectorVersion,
       final String? windowsJDKDownload,
       final String? windowsConfigDownload,
@@ -319,7 +319,7 @@ abstract class _Jre23VersionChecker implements Jre23VersionChecker {
   int? get modThreadId;
   @override
   @VersionJsonConverter()
-  String get modVersion;
+  Version get modVersion;
   @override
   String get starsectorVersion;
   @override

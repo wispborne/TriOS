@@ -1,7 +1,9 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/trios/trios_theme.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
+import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:vs_scrollbar/vs_scrollbar.dart';
 
 import '../mod_manager/mod_manager_logic.dart';
@@ -20,7 +22,9 @@ class _ModListMiniState extends ConsumerState<ModListMini> {
 
   @override
   Widget build(BuildContext context) {
-    final enabledMods = ref.watch(AppState.enabledModIds).value;
+    final enabledModIds = ref.watch(AppState.enabledModIds).valueOrNull;
+    final enabledMods = ref.watch(AppState.enabledMods).valueOrNull;
+    var modList = ref.watch(AppState.modInfos).valueOrNull;
 
     return Padding(
       padding: const EdgeInsets.all(8.0),
@@ -28,6 +32,8 @@ class _ModListMiniState extends ConsumerState<ModListMini> {
         mainAxisSize: MainAxisSize.max,
         children: [
           Text("Mods", style: Theme.of(context).textTheme.titleLarge),
+          Text(modList != null ? " ${enabledModIds?.length ?? 0} of ${modList.length} enabled" : "",
+              style: Theme.of(context).textTheme.labelMedium),
           Expanded(
             child: ref.watch(AppState.modInfos).when(
                   data: (modInfos) {
@@ -41,52 +47,150 @@ class _ModListMiniState extends ConsumerState<ModListMini> {
                         itemCount: modInfos.length,
                         itemBuilder: (context, index) {
                           var modInfo = modInfos.sortedBy((info) => info.name).toList()[index];
-                          final color = switch (
-                              compareGameVersions(modInfo.gameVersion, ref.read(AppState.starsectorVersion).value)) {
-                            GameCompatibility.Incompatible => const Color.fromARGB(255, 252, 99, 0),
-                            GameCompatibility.Warning => const Color.fromARGB(255, 253, 212, 24),
+                          var compatWithGame =
+                              compareGameVersions(modInfo.gameVersion, ref.read(AppState.starsectorVersion).value);
+                          final compatTextColor = switch (compatWithGame) {
+                            GameCompatibility.Incompatible => TriOSTheme.vanillaErrorColor,
+                            GameCompatibility.Warning => TriOSTheme.vanillaWarningColor,
                             GameCompatibility.Compatible => null,
                           };
+                          var theme = Theme.of(context);
                           return Row(
                             mainAxisSize: MainAxisSize.max,
                             children: [
                               Flexible(
                                 child: SizedBox(
                                   height: 26,
-                                  child: Tooltip(
-                                    message: "$modInfo",
+                                  child: MovingTooltipWidget(
+                                    tooltipWidget: SizedBox(
+                                        width: 350,
+                                        height: 400,
+                                        child: Card(
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                              color: theme.cardColor,
+                                              borderRadius: BorderRadius.circular(TriOSTheme.cornerRadius),
+                                              border: Border.all(color: theme.colorScheme.onBackground),
+                                            ),
+                                            child: Padding(
+                                              padding: const EdgeInsets.all(16.0),
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(modInfo.name, style: theme.textTheme.titleMedium),
+                                                  Text(modInfo.id, style: theme.textTheme.labelSmall),
+                                                  Text(modInfo.version.toString(), style: theme.textTheme.labelMedium),
+                                                  const SizedBox(height: 8),
+                                                  Text("${modInfo.description}",
+                                                      maxLines: 4,
+                                                      overflow: TextOverflow.ellipsis,
+                                                      style: theme.textTheme.bodySmall),
+                                                  const SizedBox(height: 8),
+                                                  Text("Required game version:",
+                                                      style: theme.textTheme.labelMedium
+                                                          ?.copyWith(color: theme.disabledColor)),
+                                                  Padding(
+                                                    padding: const EdgeInsets.only(left: 8.0),
+                                                    child: Text(modInfo.gameVersion ?? "",
+                                                        style: theme.textTheme.labelMedium
+                                                            ?.copyWith(color: compatTextColor)),
+                                                  ),
+                                                  Text("Game version:",
+                                                      style: theme.textTheme.labelMedium
+                                                          ?.copyWith(color: theme.disabledColor)),
+                                                  Padding(
+                                                    padding: const EdgeInsets.only(left: 8.0),
+                                                    child: Text(ref.read(AppState.starsectorVersion).value ?? "",
+                                                        style: theme.textTheme.labelMedium),
+                                                  ),
+                                                  if (compatWithGame == GameCompatibility.Incompatible)
+                                                    Text("Error: this mod requires a different version of the game.",
+                                                        style: theme.textTheme.labelMedium
+                                                            ?.copyWith(color: compatTextColor)),
+                                                  const SizedBox(height: 8),
+                                                  if (modInfo.dependencies.isNotEmpty)
+                                                    Padding(
+                                                      padding: const EdgeInsets.only(top: 8.0),
+                                                      child: Text("Required Mods:", style: theme.textTheme.labelMedium),
+                                                    ),
+                                                  for (var dep in modInfo.dependencies)
+                                                    Padding(
+                                                      padding: const EdgeInsets.only(left: 8.0),
+                                                      child: Text("${dep.name ?? dep.id} ${dep.version ?? ""}",
+                                                          style: theme.textTheme.labelMedium?.copyWith(
+                                                              color: switch (
+                                                                  dep.isSatisfiedByAny(modInfos, enabledMods!)) {
+                                                            DependencyStateType.Satisfied => null,
+                                                            DependencyStateType.Missing => TriOSTheme.vanillaErrorColor,
+                                                            DependencyStateType.Disabled =>
+                                                              null, // Disabled means it's present, so we can just enable it.
+                                                            DependencyStateType.WrongVersion =>
+                                                              TriOSTheme.vanillaWarningColor
+                                                          })),
+                                                    ),
+                                                  const SizedBox(height: 8),
+                                                  if (modInfo.dependencies.any((dep) =>
+                                                      dep.isSatisfiedByAny(modInfos, enabledMods!) ==
+                                                      DependencyStateType.WrongVersion))
+                                                    Text(
+                                                        "Warning: this mod requires a different version of a mod that you have installed, but might run with this one.",
+                                                        style: theme.textTheme.labelMedium
+                                                            ?.copyWith(color: TriOSTheme.vanillaErrorColor)),
+                                                  const SizedBox(height: 8),
+                                                  if (modInfo.author != null)
+                                                    Row(
+                                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                                      children: [
+                                                        Text("Author: ",
+                                                            style: theme.textTheme.labelMedium
+                                                                ?.copyWith(color: theme.disabledColor)),
+                                                        Expanded(
+                                                          child: Padding(
+                                                            padding: const EdgeInsets.only(left: 2.0),
+                                                            child: Text(modInfo.author!,
+                                                                maxLines: 3,
+                                                                overflow: TextOverflow.ellipsis,
+                                                                style: theme.textTheme.labelMedium),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        )),
                                     child: CheckboxWithLabel(
                                       labelWidget: Text("${modInfo.name} ${modInfo.version}",
                                           overflow: TextOverflow.fade,
                                           softWrap: false,
                                           maxLines: 1,
-                                          style: Theme.of(context).textTheme.labelLarge?.copyWith(color: color)),
-                                      value: enabledMods?.contains(modInfo.id) ?? false,
+                                          style: theme.textTheme.labelLarge?.copyWith(color: compatTextColor)),
+                                      value: enabledModIds?.contains(modInfo.id) ?? false,
                                       expand: true,
                                       onChanged: (_) {
                                         if (true) {
                                           showDialog(
                                               context: context,
                                               builder: (context) => AlertDialog(
-                                                    title: Text("Mod dependencies"),
-                                                    content: Text("This feature is not yet implemented."),
+                                                    title: const Text("Nope"),
+                                                    content: const Text("This feature is not yet implemented."),
                                                     actions: [
                                                       TextButton(
                                                         onPressed: () => Navigator.of(context).pop(),
-                                                        child: Text("Close"),
+                                                        child: const Text("Close"),
                                                       ),
                                                     ],
                                                   ));
                                           return;
                                         }
-                                        if (enabledMods == null) return;
-                                        var isCurrentlyEnabled = enabledMods.contains(modInfo.id);
+                                        if (enabledModIds == null) return;
+                                        var isCurrentlyEnabled = enabledModIds.contains(modInfo.id);
 
                                         // TODO check mod dependencies.
                                         // We can disable mods without checking compatibility, but we can't enable them without checking.
                                         if (!isCurrentlyEnabled) {
-                                          final compatResult = compareGameVersions(
-                                              modInfo.gameVersion, ref.read(AppState.starsectorVersion).value);
+                                          final compatResult = compatWithGame;
                                           if (compatResult == GameCompatibility.Incompatible) {
                                             ScaffoldMessenger.of(context).clearSnackBars();
                                             ScaffoldMessenger.of(context).showSnackBar(SnackBar(

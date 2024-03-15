@@ -1,13 +1,12 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_color/flutter_color.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../trios/app_state.dart';
 
 class TriOSTheme with ChangeNotifier {
   static double cornerRadius = 8;
+  static Color vanillaErrorColor = const Color.fromARGB(255, 252, 99, 0);
+  static Color vanillaWarningColor = const Color.fromARGB(255, 253, 212, 24);
 
   static bool _isDark = true;
   static bool _isMaterial3 = false;

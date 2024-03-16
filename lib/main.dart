@@ -21,7 +21,7 @@ import 'package:trios/vram_estimator/vram_estimator.dart';
 import 'package:trios/widgets/trios_app_icon.dart';
 import 'package:trios/widgets/blur.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
-import 'package:trios/widgets/trios_toast.dart';
+import 'package:trios/widgets/self_update_toast.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:window_size/window_size.dart';
 
@@ -254,7 +254,7 @@ class _AppShellState extends ConsumerState<AppShell> with SingleTickerProviderSt
                   releaseNote: latestRelease.body);
               Fimber.i("Update info: $updateInfo");
 
-              toastification.showCustom(context: context, builder: (context, item) => TriOSToast(latestRelease, item));
+              toastification.showCustom(context: context, builder: (context, item) => SelfUpdateToast(latestRelease, item));
 
               if (ref.read(appSettings.select((value) => value.shouldAutoUpdateOnLaunch))) {
                 SelfUpdater.update(latestRelease, downloadProgress: (bytesReceived, contentLength) {

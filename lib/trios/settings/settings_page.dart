@@ -12,6 +12,7 @@ import 'package:trios/utils/util.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
 
 import '../../jre_manager/jre_23.dart';
+import '../../widgets/self_update_toast.dart';
 import '../app_state.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
@@ -160,8 +161,16 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           Padding(
               padding: const EdgeInsets.only(top: 16),
               child: ElevatedButton(
-                  onPressed: () {
-                    toastification.show(context: context, title: const Text("Test toast"));
+                  onPressed: () async {
+                    SelfUpdater.getLatestRelease().then((release) {
+                      if (release == null) {
+                        Fimber.d("No release found");
+                        return;
+                      }
+
+                      toastification.showCustom(
+                          context: context, builder: (context, item) => SelfUpdateToast(release, item));
+                    });
                   },
                   child: const Text('Show toast'))),
           SizedBox(

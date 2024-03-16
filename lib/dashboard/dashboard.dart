@@ -40,14 +40,14 @@ class _DashboardState extends ConsumerState<Dashboard> with AutomaticKeepAliveCl
             starsectorLaunchPrefs?.resolution.split("x")[0]);
 
     var isUsingJre23 = ref.watch(appSettings.select((value) => value.useJre23));
-    var currentScreenScaling = ref.watch(appSettings.select((value) => value.launchSettings)).screenScaling ??
-        starsectorLaunchPrefs?.screenScaling ??
-        1;
+    // var currentScreenScaling = ref.watch(appSettings.select((value) => value.launchSettings)).screenScaling ??
+    //     starsectorLaunchPrefs?.screenScaling ??
+    //     1;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        Spacer(),
+        const Spacer(),
         Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -242,8 +242,8 @@ class _DashboardState extends ConsumerState<Dashboard> with AutomaticKeepAliveCl
                 )),
           ],
         ),
-        Spacer(),
-        const SizedBox(width: 300, child: Card(child: ModListMini()))
+        const Spacer(),
+        const SizedBox(width: 350, child: Card(child: ModListMini()))
       ],
     );
   }

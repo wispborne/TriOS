@@ -27,6 +27,7 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
     if (modVariants == null || enabledMods == null) return const SizedBox();
 
     final theme = Theme.of(context);
+    var remoteVersionCheck = ref.watch(versionCheckResults).valueOrNull?[widget.modVariant.smolId];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -61,7 +62,7 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
             padding: const EdgeInsets.only(left: 8.0),
             child: Text("${dep.name ?? dep.id} ${dep.version ?? ""}",
                 style: theme.textTheme.labelMedium?.copyWith(
-                    color: switch (dep.isSatisfiedByAny(modVariants, enabledMods!)) {
+                    color: switch (dep.isSatisfiedByAny(modVariants, enabledMods)) {
                   DependencyStateType.Satisfied => null,
                   DependencyStateType.Missing => TriOSTheme.vanillaErrorColor,
                   DependencyStateType.Disabled => null, // Disabled means it's present, so we can just enable it.
@@ -70,7 +71,7 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
           ),
         const SizedBox(height: 8),
         if (modInfo.dependencies
-            .any((dep) => dep.isSatisfiedByAny(modVariants, enabledMods!) == DependencyStateType.WrongVersion))
+            .any((dep) => dep.isSatisfiedByAny(modVariants, enabledMods) == DependencyStateType.WrongVersion))
           Text(
               "Warning: this mod requires a different version of a mod that you have installed, but might run with this one.",
               style: theme.textTheme.labelMedium?.copyWith(color: TriOSTheme.vanillaErrorColor)),
@@ -89,10 +90,27 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
               ),
             ],
           ),
-        Text("Local VC: ${widget.modVariant.versionCheckerInfo?.modVersion ?? "N/A"}",
-            style: theme.textTheme.labelMedium),
-        Text("Remote VC: ${ref.watch(versionCheckResults).valueOrNull?[widget.modVariant.smolId] ?? "N/A"}",
-            style: theme.textTheme.labelMedium),
+        const SizedBox(height: 8),
+        if (widget.modVariant.versionCheckerInfo != null)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text("Local VC: ${widget.modVariant.versionCheckerInfo?.modVersion ?? "N/A"}",
+                  style: theme.textTheme.labelMedium),
+              Text(
+                  "Remote VC: ${remoteVersionCheck?.remoteVersion?.modVersion ?? (remoteVersionCheck?.error != null ? "Error" : "N/A")}",
+                  style: theme.textTheme.labelMedium?.copyWith(
+                      color: switch (remoteVersionCheck?.remoteVersion?.modVersion
+                              ?.compareTo(widget.modVariant.versionCheckerInfo?.modVersion) ??
+                          0) {
+                        1 => theme.colorScheme.secondary,
+                        _ => null,
+                  })),
+            ],
+          ),
+        if (widget.modVariant.versionCheckerInfo == null)
+          Text("No version checker info",
+              style: theme.textTheme.labelMedium?.copyWith(color: TriOSTheme.vanillaWarningColor)),
       ],
     );
   }

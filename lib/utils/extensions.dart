@@ -58,7 +58,13 @@ extension StringExt on String {
 
   /// Warning: probably not fast.
   String fixJson() {
-    return json.encode(loadYaml(this));
+    var fixed = replaceAll(r"\#", "#");
+    try {
+      return json.encode(loadYaml(fixed));
+    } catch (e) {
+      Fimber.d("Unable to fix json: $fixed");
+      rethrow;
+    }
   }
 
   Map<String, dynamic> fixJsonToMap() {
@@ -72,6 +78,50 @@ extension StringExt on String {
       index++;
     }
     return substring(index);
+  }
+
+  // Helper for comparing number-like strings
+  int compareRecognizingNumbers(String str2) {
+    final chunks1 = splitIntoAlphaAndNumeric();
+    final chunks2 = str2.splitIntoAlphaAndNumeric();
+
+    for (var i = 0; i < chunks1.length || i < chunks2.length; i++) {
+      final chunk1 = _getSafeChunk(chunks1, i);
+      final chunk2 = _getSafeChunk(chunks2, i);
+
+      final result = _compareChunks(chunk1, chunk2);
+      if (result != 0) return result;
+    }
+
+    return 0;
+  }
+
+  String filter(bool Function(String) predicate) => characters.where(predicate).join();
+
+  /// Breaks a string into chunks of letters and numbers.
+  /// "55hhb3vv-5 s" -> ["55", "hhb", "3", "vv", "5", "s"]
+  List<String> splitIntoAlphaAndNumeric() {
+    final str = this;
+
+    return ([0] + _letterDigitSplitterRegex.allMatches(str).map((m) => m.start).toList() + [str.length])
+        .zipWithNext((l, r) => str.substring(l, r).filter((it) => RegExp(r"[a-zA-Z0-9]").hasMatch(it)))
+        .filter((p0) => p0.isNotEmpty)
+        .toList();
+  }
+}
+
+final _letterDigitSplitterRegex = RegExp(r"(?<=\D)(?=\d)|(?<=\d)(?=\D)");
+
+String _getSafeChunk(List<String> chunks, int index) => index < chunks.length ? chunks[index] : "0";
+
+int _compareChunks(String chunk1, String chunk2) {
+  final int1 = int.tryParse(chunk1);
+  final int2 = int.tryParse(chunk2);
+
+  if (int1 != null && int2 != null) {
+    return int1.compareTo(int2);
+  } else {
+    return chunk1.compareTo(chunk2);
   }
 }
 
@@ -222,6 +272,31 @@ extension IterableExt<T> on Iterable<T> {
       }
     }
     return minElement;
+  }
+
+  /// Combines the current element with the next element in the iterable using the provided [transform] function.
+  /// From Gemini.
+  ///
+  /// Example:
+  /// ```dart
+  /// final numbers = [1, 4, 9, 16];
+  /// final differences = numbers.zipWithNext((a, b) => b - a);
+  /// print(differences); // Output: [3, 5, 7]
+  /// ```
+  List<R> zipWithNext<R>(R Function(T a, T b) transform) {
+    final iterator = this.iterator;
+    if (!iterator.moveNext()) return <R>[];
+
+    final result = <R>[];
+    var current = iterator.current;
+
+    while (iterator.moveNext()) {
+      final next = iterator.current;
+      result.add(transform(current, next));
+      current = next;
+    }
+
+    return result;
   }
 }
 

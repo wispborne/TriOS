@@ -8,6 +8,7 @@ import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:vs_scrollbar/vs_scrollbar.dart';
 
 import '../mod_manager/mod_manager_logic.dart';
+import '../mod_manager/version_checker.dart';
 import '../trios/app_state.dart';
 import '../trios/settings/settings.dart';
 
@@ -25,6 +26,7 @@ class _ModListMiniState extends ConsumerState<ModListMini> {
   Widget build(BuildContext context) {
     final enabledModIds = ref.watch(AppState.enabledModIds).valueOrNull;
     final modList = ref.watch(AppState.modVariants).valueOrNull;
+    var versionCheck = ref.watch(versionCheckResults).valueOrNull;
 
     return Padding(
       padding: const EdgeInsets.all(8.0),
@@ -48,6 +50,8 @@ class _ModListMiniState extends ConsumerState<ModListMini> {
                         itemBuilder: (context, index) {
                           final modVariant = modVariants.sortedBy((info) => info.modInfo.name).toList()[index];
                           final modInfo = modVariant.modInfo;
+                          final localVersionCheck = modVariant.versionCheckerInfo;
+                          final remoteVersionCheck = versionCheck?[modVariant.smolId];
                           final compatWithGame =
                               compareGameVersions(modInfo.gameVersion, ref.read(AppState.starsectorVersion).value);
                           final compatTextColor = switch (compatWithGame) {
@@ -84,11 +88,44 @@ class _ModListMiniState extends ConsumerState<ModListMini> {
                                           ),
                                         )),
                                     child: CheckboxWithLabel(
-                                      labelWidget: Text("${modInfo.name} ${modInfo.version}",
-                                          overflow: TextOverflow.fade,
-                                          softWrap: false,
-                                          maxLines: 1,
-                                          style: theme.textTheme.labelLarge?.copyWith(color: compatTextColor)),
+                                      labelWidget: Row(
+                                        children: [
+                                          if (localVersionCheck?.modVersion != null &&
+                                              remoteVersionCheck?.remoteVersion?.modVersion != null)
+                                            Padding(
+                                              padding: const EdgeInsets.only(right: 4),
+                                              child: Icon(
+                                                  switch (localVersionCheck?.modVersion
+                                                      ?.compareTo(remoteVersionCheck?.remoteVersion?.modVersion)) {
+                                                    -1 => Icons.download,
+                                                    0 => Icons.check,
+                                                    _ => Icons.check,
+                                                  },
+                                                  size: 20,
+                                                  color: switch (localVersionCheck?.modVersion
+                                                      ?.compareTo(remoteVersionCheck?.remoteVersion?.modVersion)) {
+                                                    -1 => theme.colorScheme.secondary,
+                                                    _ => null,
+                                                  }),
+                                            ),
+                                          if (localVersionCheck?.modVersion == null ||
+                                              remoteVersionCheck?.remoteVersion?.modVersion == null)
+                                            Padding(
+                                              padding: const EdgeInsets.only(right: 4),
+                                              child: ColorFiltered(
+                                                colorFilter: greyscale,
+                                                child: Text("🥱",
+                                                    style: theme.textTheme.labelMedium
+                                                        ?.copyWith(color: theme.disabledColor.withOpacity(0.35))),
+                                              ),
+                                            ),
+                                          Text("${modInfo.name} ${modInfo.version}",
+                                              overflow: TextOverflow.fade,
+                                              softWrap: false,
+                                              maxLines: 1,
+                                              style: theme.textTheme.labelLarge?.copyWith(color: compatTextColor)),
+                                        ],
+                                      ),
                                       value: enabledModIds?.contains(modInfo.id) ?? false,
                                       expand: true,
                                       onChanged: (_) {

@@ -1,6 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:trios/models/mod_info_json.dart';
 import 'package:trios/models/version.dart';
+import 'package:trios/utils/util.dart';
 
 part '../generated/models/version_checker_info.freezed.dart';
 part '../generated/models/version_checker_info.g.dart';
@@ -11,9 +12,9 @@ class VersionCheckerInfo with _$VersionCheckerInfo {
 
   const factory VersionCheckerInfo({
     String? masterVersionFile,
-    String? modNexusId,
-    String? modThreadId,
-    @VersionJsonConverterNullable() Version? modVersion,
+    @JsonConverterToString() String? modNexusId,
+    @JsonConverterToString() String? modThreadId,
+    VersionObject? modVersion,
     String? directDownloadUrl,
     String? changelogUrl,
   }) = _VersionCheckerInfo;

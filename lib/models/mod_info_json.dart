@@ -2,6 +2,8 @@ import 'dart:core';
 
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:trios/models/version.dart';
+import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/util.dart';
 
 part '../generated/models/mod_info_json.freezed.dart';
 part '../generated/models/mod_info_json.g.dart';
@@ -19,7 +21,7 @@ class ModInfoJson with _$ModInfoJson {
 
   const factory ModInfoJson(final String id,
       {@Default("") final String name,
-      @VersionJsonConverter() required final Version version,
+      @JsonConverterVersion() required final Version version,
       final String? author,
       final String? gameVersion,
       @Default([]) final List<Dependency> dependencies,
@@ -37,7 +39,7 @@ class Dependency with _$Dependency {
   const factory Dependency({
     final String? id,
     final String? name,
-    @VersionJsonConverterNullable() final Version? version,
+    @JsonConverterVersionNullable() final Version? version,
     // String? version,
   }) = _Dependency;
 
@@ -45,60 +47,31 @@ class Dependency with _$Dependency {
 }
 
 @freezed
-class Version_095a with _$Version_095a {
-  const Version_095a._();
+class VersionObject with _$VersionObject {
+  const VersionObject._();
 
-  const factory Version_095a(
+  const factory VersionObject(
     final dynamic major,
     final dynamic minor,
     final dynamic patch,
-  ) = _Version_095a;
+  ) = _VersionObject;
 
-  factory Version_095a.fromJson(Map<String, dynamic> json) => _$Version_095aFromJson(json);
+  factory VersionObject.fromJson(Map<String, dynamic> json) => _$VersionObjectFromJson(json);
 
   @override
   String toString() => "$major.$minor.$patch";
-}
 
-class VersionJsonConverter implements JsonConverter<Version, dynamic> {
-  const VersionJsonConverter();
+  int compareTo(VersionObject? other) {
+    if (other == null) return -1;
 
-  @override
-  Version fromJson(dynamic json) {
-    try {
-      if (json is Map<String, dynamic>) {
-        return Version.parse(Version_095a.fromJson(json).toString());
-      }
-      return Version.parse(json);
-    } catch (e, st) {
-      rethrow;
-    }
-  }
+    var result = (major.toString().compareRecognizingNumbers(other.major.toString()));
+    if (result != 0) return result;
 
-  @override
-  String toJson(dynamic object) {
-    if (object is Version_095a) {
-      return "${object.major}.${object.minor}.${object.patch}";
-    } else {
-      return object.toString();
-    }
-  }
-}
+    result = (minor.toString().compareRecognizingNumbers(other.minor.toString()));
+    if (result != 0) return result;
 
-class VersionJsonConverterNullable implements JsonConverter<Version?, dynamic> {
-  const VersionJsonConverterNullable();
-
-  @override
-  Version? fromJson(dynamic json) {
-    try {
-      return VersionJsonConverter().fromJson(json);
-    } catch (e, st) {
-      return null;
-    }
-  }
-
-  @override
-  String toJson(dynamic object) {
-    return VersionJsonConverter().toJson(object);
+    result = (patch.toString().compareRecognizingNumbers(other.patch.toString()));
+    if (result != 0) return result;
+    return result;
   }
 }

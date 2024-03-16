@@ -9,30 +9,66 @@ import '../models/version_checker_info.dart';
 import '../trios/app_state.dart';
 
 /// String is the smolId
-final versionCheckResults = FutureProvider<Map<String, VersionCheckerInfo>>((ref) async {
-  final mods = ref.read(AppState.modVariants);
+final versionCheckResults = FutureProvider<Map<String, VersionCheckResult>>((ref) async {
+  final mods = ref.watch(AppState.modVariants);
   if (mods.value.isNullOrEmpty()) return {};
 
-  var entries = mods.value!.map((mod) async => MapEntry(mod.smolId, (await checkRemoteVersion(mod))!));
-  return Map.fromEntries(await Future.wait(entries));
+  // TODO caching
+  try {
+    final entries = mods.value!.map((mod) {
+      if (_versionCheckResultsCache[mod.smolId] != null) {
+        var future = Future.value(_versionCheckResultsCache[mod.smolId]!);
+        return (smolId: mod.smolId, remoteVersionFuture: future);
+      } else {
+        var checkRemoteVersion2 = (checkRemoteVersion(mod));
+        return (smolId: mod.smolId, remoteVersionFuture: checkRemoteVersion2);
+      }
+    });
+
+    final result = Map.fromEntries(await Future.wait(entries.map((entry) async {
+      return MapEntry(entry.smolId, await entry.remoteVersionFuture);
+    })));
+    return result;
+  } catch (e, st) {
+    Fimber.e("Error fetching remote version info: $e\n$st");
+    rethrow;
+  }
 });
 
-Future<VersionCheckerInfo?> checkRemoteVersion(ModVariant modVariant) async {
+Map<String, VersionCheckResult> _versionCheckResultsCache = {};
+
+class VersionCheckResult {
+  final VersionCheckerInfo? remoteVersion;
+  final Object? error;
+
+  VersionCheckResult(this.remoteVersion, this.error);
+}
+
+Future<VersionCheckResult> checkRemoteVersion(ModVariant modVariant) async {
   var remoteVersionUrl = modVariant.versionCheckerInfo?.masterVersionFile;
-  if (remoteVersionUrl == null) return null;
+  if (remoteVersionUrl == null) {
+    return VersionCheckResult(null, Exception("No remote version url for ${modVariant.modInfo.id}"));
+  }
   final fixedUrl = fixUrl(remoteVersionUrl);
 
   try {
-    final response = await http.get(Uri.parse(fixedUrl));
+    final response = await http.get(
+      Uri.parse(fixedUrl),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    );
     final body = response.body;
     if (response.statusCode == 200) {
-      return VersionCheckerInfo.fromJson(body.fixJsonToMap());
+      return VersionCheckResult(VersionCheckerInfo.fromJson(body.fixJsonToMap()), null);
+    } else {
+      throw Exception(
+          "Failed to fetch remote version info for ${modVariant.modInfo.id}: ${response.statusCode} - $body");
     }
   } catch (e, st) {
     Fimber.d("Error fetching remote version info for ${modVariant.modInfo.id}: $e\n$st");
+    return VersionCheckResult(null, e);
   }
-
-  return null;
 }
 
 /// User linked to the page for their version file on github instead of to the raw file.

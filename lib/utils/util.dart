@@ -7,8 +7,11 @@ import 'package:fimber/fimber.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
+import 'package:trios/models/mod_info_json.dart';
+import 'package:trios/models/version.dart';
 import 'package:trios/utils/extensions.dart';
 
 MaterialColor createMaterialColor(Color color) {
@@ -221,5 +224,62 @@ pollFileForModification(File file, StreamController<File> streamController, {int
       lastModified = newModified;
       streamController.add(file);
     }
+  }
+}
+
+class JsonConverterVersion implements JsonConverter<Version, dynamic> {
+  const JsonConverterVersion();
+
+  @override
+  Version fromJson(dynamic json) {
+    try {
+      if (json is Map<String, dynamic>) {
+        return Version.parse(VersionObject.fromJson(json).toString());
+      }
+      return Version.parse(json);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  String toJson(dynamic object) {
+    if (object is VersionObject) {
+      return "${object.major}.${object.minor}.${object.patch}";
+    } else {
+      return object.toString();
+    }
+  }
+}
+
+class JsonConverterVersionNullable implements JsonConverter<Version?, dynamic> {
+  const JsonConverterVersionNullable();
+
+  @override
+  Version? fromJson(dynamic json) {
+    try {
+      return const JsonConverterVersion().fromJson(json);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  @override
+  String toJson(dynamic object) {
+    return const JsonConverterVersion().toJson(object);
+  }
+}
+
+class JsonConverterToString implements JsonConverter<String, dynamic> {
+  const JsonConverterToString();
+
+  @override
+  String fromJson(dynamic json) {
+    return json.toString();
+  }
+
+  @override
+  dynamic toJson(String object) {
+    return object;
   }
 }

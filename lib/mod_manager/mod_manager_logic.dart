@@ -62,7 +62,7 @@ File? getVersionFile(Directory modFolder) {
   final csv = File(p.join(modFolder.path, Constants.VERSION_CHECKER_CSV_PATH));
   if (!csv.existsSync()) return null;
   try {
-    return const CsvToListConverter().convert(csv.readAsStringSync())[1][0].toFile();
+    return modFolder.resolve((const CsvToListConverter(eol: "\n").convert(csv.readAsStringSync().replaceAll("\r\n", "\n"))[1][0] as String)).toFile();
   } catch (e, st) {
     Fimber.e("Unable to read version checker csv file in ${modFolder.absolute}. ($e)\n$st");
     return null;

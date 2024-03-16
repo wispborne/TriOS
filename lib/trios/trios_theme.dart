@@ -48,6 +48,30 @@ class TriOSTheme with ChangeNotifier {
   }
 }
 
+/// For use with ColorFiltered
+const ColorFilter greyscale = ColorFilter.matrix(<double>[
+  0.2126,
+  0.7152,
+  0.0722,
+  0,
+  0,
+  0.2126,
+  0.7152,
+  0.0722,
+  0,
+  0,
+  0.2126,
+  0.7152,
+  0.0722,
+  0,
+  0,
+  0,
+  0,
+  0,
+  1,
+  0,
+]);
+
 class Swatch {
   final Color primary;
   final Color secondary;

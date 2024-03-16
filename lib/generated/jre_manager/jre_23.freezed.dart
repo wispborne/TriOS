@@ -23,7 +23,7 @@ mixin _$Jre23VersionChecker {
   String get masterVersionFile => throw _privateConstructorUsedError;
   String get modName => throw _privateConstructorUsedError;
   int? get modThreadId => throw _privateConstructorUsedError;
-  @VersionJsonConverter()
+  @JsonConverterVersion()
   Version get modVersion => throw _privateConstructorUsedError;
   String get starsectorVersion => throw _privateConstructorUsedError;
   String? get windowsJDKDownload => throw _privateConstructorUsedError;
@@ -47,7 +47,7 @@ abstract class $Jre23VersionCheckerCopyWith<$Res> {
       {String masterVersionFile,
       String modName,
       int? modThreadId,
-      @VersionJsonConverter() Version modVersion,
+      @JsonConverterVersion() Version modVersion,
       String starsectorVersion,
       String? windowsJDKDownload,
       String? windowsConfigDownload,
@@ -131,7 +131,7 @@ abstract class _$$Jre23VersionCheckerImplCopyWith<$Res>
       {String masterVersionFile,
       String modName,
       int? modThreadId,
-      @VersionJsonConverter() Version modVersion,
+      @JsonConverterVersion() Version modVersion,
       String starsectorVersion,
       String? windowsJDKDownload,
       String? windowsConfigDownload,
@@ -208,7 +208,7 @@ class _$Jre23VersionCheckerImpl implements _Jre23VersionChecker {
       {required this.masterVersionFile,
       required this.modName,
       this.modThreadId,
-      @VersionJsonConverter() required this.modVersion,
+      @JsonConverterVersion() required this.modVersion,
       required this.starsectorVersion,
       this.windowsJDKDownload,
       this.windowsConfigDownload,
@@ -225,7 +225,7 @@ class _$Jre23VersionCheckerImpl implements _Jre23VersionChecker {
   @override
   final int? modThreadId;
   @override
-  @VersionJsonConverter()
+  @JsonConverterVersion()
   final Version modVersion;
   @override
   final String starsectorVersion;
@@ -301,7 +301,7 @@ abstract class _Jre23VersionChecker implements Jre23VersionChecker {
       {required final String masterVersionFile,
       required final String modName,
       final int? modThreadId,
-      @VersionJsonConverter() required final Version modVersion,
+      @JsonConverterVersion() required final Version modVersion,
       required final String starsectorVersion,
       final String? windowsJDKDownload,
       final String? windowsConfigDownload,
@@ -318,7 +318,7 @@ abstract class _Jre23VersionChecker implements Jre23VersionChecker {
   @override
   int? get modThreadId;
   @override
-  @VersionJsonConverter()
+  @JsonConverterVersion()
   Version get modVersion;
   @override
   String get starsectorVersion;

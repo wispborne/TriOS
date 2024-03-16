@@ -168,7 +168,7 @@ ModInfoJson _$ModInfoJsonFromJson(Map<String, dynamic> json) {
 mixin _$ModInfoJson {
   String get id => throw _privateConstructorUsedError;
   String get name => throw _privateConstructorUsedError;
-  @VersionJsonConverter()
+  @JsonConverterVersion()
   Version get version => throw _privateConstructorUsedError;
   String? get author => throw _privateConstructorUsedError;
   String? get gameVersion => throw _privateConstructorUsedError;
@@ -190,7 +190,7 @@ abstract class $ModInfoJsonCopyWith<$Res> {
   $Res call(
       {String id,
       String name,
-      @VersionJsonConverter() Version version,
+      @JsonConverterVersion() Version version,
       String? author,
       String? gameVersion,
       List<Dependency> dependencies,
@@ -262,7 +262,7 @@ abstract class _$$ModInfoJsonImplCopyWith<$Res>
   $Res call(
       {String id,
       String name,
-      @VersionJsonConverter() Version version,
+      @JsonConverterVersion() Version version,
       String? author,
       String? gameVersion,
       List<Dependency> dependencies,
@@ -326,7 +326,7 @@ class __$$ModInfoJsonImplCopyWithImpl<$Res>
 class _$ModInfoJsonImpl extends _ModInfoJson {
   const _$ModInfoJsonImpl(this.id,
       {this.name = "",
-      @VersionJsonConverter() required this.version,
+      @JsonConverterVersion() required this.version,
       this.author,
       this.gameVersion,
       final List<Dependency> dependencies = const [],
@@ -343,7 +343,7 @@ class _$ModInfoJsonImpl extends _ModInfoJson {
   @JsonKey()
   final String name;
   @override
-  @VersionJsonConverter()
+  @JsonConverterVersion()
   final Version version;
   @override
   final String? author;
@@ -412,7 +412,7 @@ class _$ModInfoJsonImpl extends _ModInfoJson {
 abstract class _ModInfoJson extends ModInfoJson {
   const factory _ModInfoJson(final String id,
       {final String name,
-      @VersionJsonConverter() required final Version version,
+      @JsonConverterVersion() required final Version version,
       final String? author,
       final String? gameVersion,
       final List<Dependency> dependencies,
@@ -427,7 +427,7 @@ abstract class _ModInfoJson extends ModInfoJson {
   @override
   String get name;
   @override
-  @VersionJsonConverter()
+  @JsonConverterVersion()
   Version get version;
   @override
   String? get author;
@@ -451,7 +451,7 @@ Dependency _$DependencyFromJson(Map<String, dynamic> json) {
 mixin _$Dependency {
   String? get id => throw _privateConstructorUsedError;
   String? get name => throw _privateConstructorUsedError;
-  @VersionJsonConverterNullable()
+  @JsonConverterVersionNullable()
   Version? get version => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -469,7 +469,7 @@ abstract class $DependencyCopyWith<$Res> {
   $Res call(
       {String? id,
       String? name,
-      @VersionJsonConverterNullable() Version? version});
+      @JsonConverterVersionNullable() Version? version});
 }
 
 /// @nodoc
@@ -517,7 +517,7 @@ abstract class _$$DependencyImplCopyWith<$Res>
   $Res call(
       {String? id,
       String? name,
-      @VersionJsonConverterNullable() Version? version});
+      @JsonConverterVersionNullable() Version? version});
 }
 
 /// @nodoc
@@ -556,7 +556,7 @@ class __$$DependencyImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$DependencyImpl extends _Dependency {
   const _$DependencyImpl(
-      {this.id, this.name, @VersionJsonConverterNullable() this.version})
+      {this.id, this.name, @JsonConverterVersionNullable() this.version})
       : super._();
 
   factory _$DependencyImpl.fromJson(Map<String, dynamic> json) =>
@@ -567,7 +567,7 @@ class _$DependencyImpl extends _Dependency {
   @override
   final String? name;
   @override
-  @VersionJsonConverterNullable()
+  @JsonConverterVersionNullable()
   final Version? version;
 
   @override
@@ -607,7 +607,7 @@ abstract class _Dependency extends Dependency {
   const factory _Dependency(
           {final String? id,
           final String? name,
-          @VersionJsonConverterNullable() final Version? version}) =
+          @JsonConverterVersionNullable() final Version? version}) =
       _$DependencyImpl;
   const _Dependency._() : super._();
 
@@ -619,7 +619,7 @@ abstract class _Dependency extends Dependency {
   @override
   String? get name;
   @override
-  @VersionJsonConverterNullable()
+  @JsonConverterVersionNullable()
   Version? get version;
   @override
   @JsonKey(ignore: true)
@@ -627,35 +627,35 @@ abstract class _Dependency extends Dependency {
       throw _privateConstructorUsedError;
 }
 
-Version_095a _$Version_095aFromJson(Map<String, dynamic> json) {
-  return _Version_095a.fromJson(json);
+VersionObject _$VersionObjectFromJson(Map<String, dynamic> json) {
+  return _VersionObject.fromJson(json);
 }
 
 /// @nodoc
-mixin _$Version_095a {
+mixin _$VersionObject {
   dynamic get major => throw _privateConstructorUsedError;
   dynamic get minor => throw _privateConstructorUsedError;
   dynamic get patch => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
-  $Version_095aCopyWith<Version_095a> get copyWith =>
+  $VersionObjectCopyWith<VersionObject> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class $Version_095aCopyWith<$Res> {
-  factory $Version_095aCopyWith(
-          Version_095a value, $Res Function(Version_095a) then) =
-      _$Version_095aCopyWithImpl<$Res, Version_095a>;
+abstract class $VersionObjectCopyWith<$Res> {
+  factory $VersionObjectCopyWith(
+          VersionObject value, $Res Function(VersionObject) then) =
+      _$VersionObjectCopyWithImpl<$Res, VersionObject>;
   @useResult
   $Res call({dynamic major, dynamic minor, dynamic patch});
 }
 
 /// @nodoc
-class _$Version_095aCopyWithImpl<$Res, $Val extends Version_095a>
-    implements $Version_095aCopyWith<$Res> {
-  _$Version_095aCopyWithImpl(this._value, this._then);
+class _$VersionObjectCopyWithImpl<$Res, $Val extends VersionObject>
+    implements $VersionObjectCopyWith<$Res> {
+  _$VersionObjectCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
   final $Val _value;
@@ -687,22 +687,22 @@ class _$Version_095aCopyWithImpl<$Res, $Val extends Version_095a>
 }
 
 /// @nodoc
-abstract class _$$Version_095aImplCopyWith<$Res>
-    implements $Version_095aCopyWith<$Res> {
-  factory _$$Version_095aImplCopyWith(
-          _$Version_095aImpl value, $Res Function(_$Version_095aImpl) then) =
-      __$$Version_095aImplCopyWithImpl<$Res>;
+abstract class _$$VersionObjectImplCopyWith<$Res>
+    implements $VersionObjectCopyWith<$Res> {
+  factory _$$VersionObjectImplCopyWith(
+          _$VersionObjectImpl value, $Res Function(_$VersionObjectImpl) then) =
+      __$$VersionObjectImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call({dynamic major, dynamic minor, dynamic patch});
 }
 
 /// @nodoc
-class __$$Version_095aImplCopyWithImpl<$Res>
-    extends _$Version_095aCopyWithImpl<$Res, _$Version_095aImpl>
-    implements _$$Version_095aImplCopyWith<$Res> {
-  __$$Version_095aImplCopyWithImpl(
-      _$Version_095aImpl _value, $Res Function(_$Version_095aImpl) _then)
+class __$$VersionObjectImplCopyWithImpl<$Res>
+    extends _$VersionObjectCopyWithImpl<$Res, _$VersionObjectImpl>
+    implements _$$VersionObjectImplCopyWith<$Res> {
+  __$$VersionObjectImplCopyWithImpl(
+      _$VersionObjectImpl _value, $Res Function(_$VersionObjectImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -712,7 +712,7 @@ class __$$Version_095aImplCopyWithImpl<$Res>
     Object? minor = freezed,
     Object? patch = freezed,
   }) {
-    return _then(_$Version_095aImpl(
+    return _then(_$VersionObjectImpl(
       freezed == major
           ? _value.major
           : major // ignore: cast_nullable_to_non_nullable
@@ -731,11 +731,11 @@ class __$$Version_095aImplCopyWithImpl<$Res>
 
 /// @nodoc
 @JsonSerializable()
-class _$Version_095aImpl extends _Version_095a {
-  const _$Version_095aImpl(this.major, this.minor, this.patch) : super._();
+class _$VersionObjectImpl extends _VersionObject {
+  const _$VersionObjectImpl(this.major, this.minor, this.patch) : super._();
 
-  factory _$Version_095aImpl.fromJson(Map<String, dynamic> json) =>
-      _$$Version_095aImplFromJson(json);
+  factory _$VersionObjectImpl.fromJson(Map<String, dynamic> json) =>
+      _$$VersionObjectImplFromJson(json);
 
   @override
   final dynamic major;
@@ -748,7 +748,7 @@ class _$Version_095aImpl extends _Version_095a {
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$Version_095aImpl &&
+            other is _$VersionObjectImpl &&
             const DeepCollectionEquality().equals(other.major, major) &&
             const DeepCollectionEquality().equals(other.minor, minor) &&
             const DeepCollectionEquality().equals(other.patch, patch));
@@ -765,25 +765,25 @@ class _$Version_095aImpl extends _Version_095a {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$Version_095aImplCopyWith<_$Version_095aImpl> get copyWith =>
-      __$$Version_095aImplCopyWithImpl<_$Version_095aImpl>(this, _$identity);
+  _$$VersionObjectImplCopyWith<_$VersionObjectImpl> get copyWith =>
+      __$$VersionObjectImplCopyWithImpl<_$VersionObjectImpl>(this, _$identity);
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$Version_095aImplToJson(
+    return _$$VersionObjectImplToJson(
       this,
     );
   }
 }
 
-abstract class _Version_095a extends Version_095a {
-  const factory _Version_095a(
+abstract class _VersionObject extends VersionObject {
+  const factory _VersionObject(
           final dynamic major, final dynamic minor, final dynamic patch) =
-      _$Version_095aImpl;
-  const _Version_095a._() : super._();
+      _$VersionObjectImpl;
+  const _VersionObject._() : super._();
 
-  factory _Version_095a.fromJson(Map<String, dynamic> json) =
-      _$Version_095aImpl.fromJson;
+  factory _VersionObject.fromJson(Map<String, dynamic> json) =
+      _$VersionObjectImpl.fromJson;
 
   @override
   dynamic get major;
@@ -793,6 +793,6 @@ abstract class _Version_095a extends Version_095a {
   dynamic get patch;
   @override
   @JsonKey(ignore: true)
-  _$$Version_095aImplCopyWith<_$Version_095aImpl> get copyWith =>
+  _$$VersionObjectImplCopyWith<_$VersionObjectImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

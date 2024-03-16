@@ -30,7 +30,7 @@ import 'jre_manager/jre_manager.dart';
 import 'launcher/launcher.dart';
 import 'trios/app_state.dart';
 
-const version = "0.0.26";
+const version = "0.0.27";
 
 const appName = "TriOS";
 const appTitle = "$appName v$version";

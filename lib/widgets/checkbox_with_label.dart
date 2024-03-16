@@ -7,6 +7,7 @@ class CheckboxWithLabel extends StatelessWidget {
   final bool value;
   final ValueChanged<bool?> onChanged;
   final TextStyle? labelStyle;
+  final double padding;
   final bool expand;
 
   const CheckboxWithLabel(
@@ -16,6 +17,7 @@ class CheckboxWithLabel extends StatelessWidget {
       required this.value,
       required this.onChanged,
       this.labelStyle,
+      this.padding = 8,
       this.expand = false})
       : assert(label != null || labelWidget != null);
 
@@ -35,10 +37,13 @@ class CheckboxWithLabel extends StatelessWidget {
           children: <Widget>[
             IgnorePointer(
                 child: Checkbox(
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap, value: value, onChanged: onChanged)),
+                    checkColor: Theme.of(context).colorScheme.primary, // Hides the check
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    value: value,
+                    onChanged: onChanged)),
             Flexible(
               child: Padding(
-                padding: const EdgeInsets.only(left: 8.0, bottom: 2),
+                padding: EdgeInsets.only(left: padding, bottom: 2),
                 child: label != null ? Text(label!, style: labelStyle) : labelWidget,
               ),
             ),

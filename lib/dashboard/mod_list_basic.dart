@@ -69,7 +69,6 @@ class _ModListMiniState extends ConsumerState<ModListMini> {
                                   child: MovingTooltipWidget(
                                     tooltipWidget: SizedBox(
                                         width: 350,
-                                        height: 400,
                                         child: Card(
                                           child: Container(
                                             decoration: BoxDecoration(
@@ -93,7 +92,7 @@ class _ModListMiniState extends ConsumerState<ModListMini> {
                                           if (localVersionCheck?.modVersion != null &&
                                               remoteVersionCheck?.remoteVersion?.modVersion != null)
                                             Padding(
-                                              padding: const EdgeInsets.only(right: 4),
+                                              padding: const EdgeInsets.only(right: 6),
                                               child: Icon(
                                                   switch (localVersionCheck?.modVersion
                                                       ?.compareTo(remoteVersionCheck?.remoteVersion?.modVersion)) {
@@ -105,13 +104,13 @@ class _ModListMiniState extends ConsumerState<ModListMini> {
                                                   color: switch (localVersionCheck?.modVersion
                                                       ?.compareTo(remoteVersionCheck?.remoteVersion?.modVersion)) {
                                                     -1 => theme.colorScheme.secondary,
-                                                    _ => null,
+                                                    _ => theme.disabledColor.withOpacity(0.35),
                                                   }),
                                             ),
                                           if (localVersionCheck?.modVersion == null ||
                                               remoteVersionCheck?.remoteVersion?.modVersion == null)
                                             Padding(
-                                              padding: const EdgeInsets.only(right: 4),
+                                              padding: const EdgeInsets.only(right: 6),
                                               child: ColorFiltered(
                                                 colorFilter: greyscale,
                                                 child: Text("🥱",
@@ -128,6 +127,7 @@ class _ModListMiniState extends ConsumerState<ModListMini> {
                                           ),
                                         ],
                                       ),
+                                      padding: 0,
                                       value: enabledModIds?.contains(modInfo.id) ?? false,
                                       expand: true,
                                       onChanged: (_) {

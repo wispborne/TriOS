@@ -3,8 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/dashboard/mod_summary_widget.dart';
 import 'package:trios/trios/trios_theme.dart';
+import 'package:trios/widgets/blur.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
+import 'package:trios/widgets/conditional_wrap.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:trios/widgets/tooltip_frame.dart';
 import 'package:vs_scrollbar/vs_scrollbar.dart';
 
 import '../mod_manager/mod_manager_logic.dart';
@@ -60,6 +63,8 @@ class _ModListMiniState extends ConsumerState<ModListMini> {
                             GameCompatibility.Compatible => null,
                           };
                           var theme = Theme.of(context);
+                          var versionCheckComparison =
+                              localVersionCheck?.modVersion?.compareTo(remoteVersionCheck?.remoteVersion?.modVersion);
                           return Row(
                             mainAxisSize: MainAxisSize.max,
                             children: [
@@ -68,24 +73,15 @@ class _ModListMiniState extends ConsumerState<ModListMini> {
                                   height: 26,
                                   child: MovingTooltipWidget(
                                     tooltipWidget: SizedBox(
-                                        width: 350,
-                                        child: Card(
-                                          child: Container(
-                                            decoration: BoxDecoration(
-                                              color: theme.cardColor,
-                                              borderRadius: BorderRadius.circular(TriOSTheme.cornerRadius),
-                                              border: Border.all(color: theme.colorScheme.onBackground),
-                                            ),
-                                            child: Padding(
-                                              padding: const EdgeInsets.all(16.0),
-                                              child: ModSummaryWidget(
-                                                modVariant: modVariant,
-                                                compatWithGame: compatWithGame,
-                                                compatTextColor: compatTextColor,
-                                              ),
-                                            ),
-                                          ),
-                                        )),
+                                      width: 350,
+                                      child: TooltipFrame(
+                                        child: ModSummaryWidget(
+                                          modVariant: modVariant,
+                                          compatWithGame: compatWithGame,
+                                          compatTextColor: compatTextColor,
+                                        ),
+                                      ),
+                                    ),
                                     child: CheckboxWithLabel(
                                       labelWidget: Row(
                                         children: [
@@ -93,31 +89,53 @@ class _ModListMiniState extends ConsumerState<ModListMini> {
                                               remoteVersionCheck?.remoteVersion?.modVersion != null)
                                             Padding(
                                               padding: const EdgeInsets.only(right: 6),
-                                              child: Icon(
-                                                  switch (localVersionCheck?.modVersion
-                                                      ?.compareTo(remoteVersionCheck?.remoteVersion?.modVersion)) {
-                                                    -1 => Icons.download,
-                                                    0 => Icons.check,
-                                                    _ => Icons.check,
-                                                  },
-                                                  size: 20,
-                                                  color: switch (localVersionCheck?.modVersion
-                                                      ?.compareTo(remoteVersionCheck?.remoteVersion?.modVersion)) {
-                                                    -1 => theme.colorScheme.secondary,
-                                                    _ => theme.disabledColor.withOpacity(0.35),
-                                                  }),
+                                              child: ConditionalWrap(
+                                                condition: versionCheckComparison == -1,
+                                                wrapper: (child) => MovingTooltipWidget(
+                                                    tooltipWidget: TooltipFrame(child: Text("Update found!")),
+                                                    child: Blur(blurX: 4, blurY: 4, blurOpacity: 0.7, child: child)),
+                                                child: Icon(
+                                                    switch (versionCheckComparison) {
+                                                      -1 => Icons.download,
+                                                      0 => Icons.check,
+                                                      _ => Icons.check,
+                                                    },
+                                                    size: 20,
+                                                    color: switch (versionCheckComparison) {
+                                                      -1 => theme.colorScheme.secondary,
+                                                      _ => theme.disabledColor.withOpacity(0.35),
+                                                    }),
+                                              ),
                                             ),
-                                          if (localVersionCheck?.modVersion == null ||
-                                              remoteVersionCheck?.remoteVersion?.modVersion == null)
+                                          if (localVersionCheck?.modVersion != null &&
+                                              remoteVersionCheck?.error != null)
+                                            Padding(
+                                              padding: const EdgeInsets.only(right: 6),
+                                              child: Icon(Icons.error,
+                                                  size: 20, color: TriOSTheme.vanillaErrorColor.withOpacity(0.35)),
+                                            ),
+                                          if (localVersionCheck?.modVersion == null)
                                             Padding(
                                               padding: const EdgeInsets.only(right: 6),
                                               child: ColorFiltered(
                                                 colorFilter: greyscale,
                                                 child: Text("🥱",
-                                                    style: theme.textTheme.labelMedium
+                                                    style: theme.textTheme.labelLarge
                                                         ?.copyWith(color: theme.disabledColor.withOpacity(0.35))),
                                               ),
                                             ),
+                                          if (localVersionCheck != null && remoteVersionCheck == null)
+                                            Padding(
+                                                padding: const EdgeInsets.only(right: 6),
+                                                child: ColorFiltered(
+                                                  colorFilter: greyscale,
+                                                  child: ColorFiltered(
+                                                    colorFilter: greyscale,
+                                                    child: Text("…",
+                                                        style: theme.textTheme.labelLarge
+                                                            ?.copyWith(color: theme.disabledColor.withOpacity(0.35))),
+                                                  ),
+                                                )),
                                           Expanded(
                                             child: Text("${modInfo.name} ${modInfo.version}",
                                                 overflow: TextOverflow.fade,

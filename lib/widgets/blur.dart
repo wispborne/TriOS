@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class Blur extends StatelessWidget {
@@ -9,43 +10,38 @@ class Blur extends StatelessWidget {
     this.blurX = 5,
     this.blurY = 5,
     this.blurColor = Colors.white,
-    this.borderRadius,
+    this.blurOpacity = 1.0,
     this.colorOpacity = 0.0,
-    this.overlay,
-    this.alignment = Alignment.center,
+    this.alignment,
   });
 
   final Widget child;
   final double blurX;
   final double blurY;
   final Color blurColor;
-  final BorderRadius? borderRadius;
+  final double blurOpacity;
   final double colorOpacity;
-  final Widget? overlay;
-  final AlignmentGeometry alignment;
+  final AlignmentGeometry? alignment;
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: borderRadius ?? BorderRadius.zero,
-      clipBehavior: borderRadius == null ? Clip.none : Clip.antiAlias,
-      child: Stack(
-        children: [
-          child,
-          Positioned.fill(
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: blurX, sigmaY: blurY),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: blurColor.withOpacity(colorOpacity),
-                ),
-                alignment: alignment,
-                child: overlay,
+    return Stack(
+      children: [
+        Opacity(
+          opacity: blurOpacity,
+          child: ImageFiltered(
+            imageFilter: ImageFilter.blur(sigmaX: blurX, sigmaY: blurY),
+            child: Container(
+              decoration: BoxDecoration(
+                color: blurColor.withOpacity(colorOpacity),
               ),
+              alignment: alignment,
+              child: child,
             ),
           ),
-        ],
-      ),
+        ),
+        child,
+      ],
     );
   }
 }

@@ -6,8 +6,8 @@ import 'package:trios/trios/trios_theme.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/trios_app_icon.dart';
 
-import '../main.dart';
 import '../trios/app_state.dart';
+import '../trios/constants.dart';
 import '../trios/self_updater/self_updater.dart';
 import '../utils/network_util.dart';
 
@@ -40,7 +40,7 @@ class SelfUpdateToast extends ConsumerWidget {
             Expanded(
               child: Column(
                 children: [
-                  const Text("New $appName version"),
+                  const Text("New ${Constants.appName} version"),
                   Text("${latestRelease.tagName} is now available!", style: Theme.of(context).textTheme.labelLarge),
                   Padding(
                     padding: const EdgeInsets.all(8.0),

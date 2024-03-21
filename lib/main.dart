@@ -9,6 +9,7 @@ import 'package:toastification/toastification.dart';
 import 'package:trios/chipper/chipper_home.dart';
 import 'package:trios/dashboard/dashboard.dart';
 import 'package:trios/rules_autofresh/rules_hotreload.dart';
+import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/navigation.dart';
 import 'package:trios/trios/self_updater/script_generator.dart';
 import 'package:trios/trios/self_updater/self_updater.dart';
@@ -30,26 +31,9 @@ import 'jre_manager/jre_manager.dart';
 import 'launcher/launcher.dart';
 import 'trios/app_state.dart';
 
-const version = "0.0.28";
-
-const appName = "TriOS";
-const appTitle = "$appName v$version";
-String appSubtitle = [
-  "Prerelease",
-  "Corporate Toolkit",
-  "by Wisp",
-  "Hegemony Tolerated",
-  "Tri-Tachyon Approved",
-  "Powered by Moloch",
-  "COMSEC Compliant",
-  "Wave to Sebestyan",
-  "Gargoyle-resistant",
-  "Unavailable on Asher"
-].random();
-
 void main() async {
   configureLogging();
-  Fimber.i("$appTitle logging started.");
+  Fimber.i("${Constants.appTitle} logging started.");
   Fimber.i("Platform: ${Platform.operatingSystem} ${Platform.operatingSystemVersion}.");
   FlutterError.onError = (details) {
     Fimber.e("${details.exceptionAsString()}\n${details.stack}", ex: details.exception, stacktrace: details.stack);
@@ -60,7 +44,7 @@ void main() async {
   sharedPrefs = await SharedPreferences.getInstance();
 
   runApp(const ProviderScope(observers: [], child: TriOSApp()));
-  setWindowTitle(appTitle);
+  setWindowTitle(Constants.appTitle);
 
   // Restore window position and size
   final settings = readAppSettings();
@@ -160,7 +144,7 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
           alignment: Alignment.bottomRight,
         ),
         child: MaterialApp(
-            title: appTitle,
+            title: Constants.appTitle,
             theme: lightTheme,
             themeMode: AppState.theme.currentTheme(),
             debugShowCheckedModeBanner: false,
@@ -302,8 +286,8 @@ class _AppShellState extends ConsumerState<AppShell> with SingleTickerProviderSt
               Padding(
                   padding: const EdgeInsets.only(right: 24.0),
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(appTitle, style: Theme.of(context).textTheme.titleLarge),
-                    Text(appSubtitle, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 12))
+                    Text(Constants.appTitle, style: Theme.of(context).textTheme.titleLarge),
+                    Text(Constants.appSubtitle, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 12))
                   ])),
               const Launcher(),
               Expanded(
@@ -312,7 +296,7 @@ class _AppShellState extends ConsumerState<AppShell> with SingleTickerProviderSt
                   child: TabBar(tabs: const [
                     // TODO IF YOU CHANGE THESE, UPDATE tabToolMap!
                     Tab(text: "Dashboard", icon: Icon(Icons.dashboard)),
-                    Tab(text: "VRAM Estimator", icon: SvgImageIcon("assets/images/weight.svg")),
+                    Tab(text: "VRAM Estimator", icon: SvgImageIcon("assets/images/icon-weight.svg")),
                     Tab(
                         text: chipperTitle,
                         icon: ImageIcon(AssetImage("assets/images/chipper/icon.png")),

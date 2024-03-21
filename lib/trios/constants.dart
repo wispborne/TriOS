@@ -3,6 +3,23 @@ import 'dart:io';
 import 'package:trios/utils/extensions.dart';
 
 class Constants {
+  static const version = "0.0.28";
+
+  static const appName = "TriOS";
+  static const appTitle = "$appName v$version";
+  static String appSubtitle = [
+    "Prerelease",
+    "Corporate Toolkit",
+    "by Wisp",
+    "Hegemony Tolerated",
+    "Tri-Tachyon Approved",
+    "Powered by Moloch",
+    "COMSEC Compliant",
+    "Wave to Sebestyan",
+    "Gargoyle-resistant",
+    "Unavailable on Asher"
+  ].random();
+
   static const ENABLED_MODS_FILENAME = "enabled_mods.json";
   static const MODS_FOLDER_NAME = "mods";
   static const SAVES_FOLDER_NAME = "saves";

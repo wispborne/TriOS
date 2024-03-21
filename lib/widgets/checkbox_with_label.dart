@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:trios/trios/trios_theme.dart';
+import 'package:trios/widgets/conditional_wrap.dart';
 
 class CheckboxWithLabel extends StatelessWidget {
   final String? label;
@@ -9,6 +10,7 @@ class CheckboxWithLabel extends StatelessWidget {
   final TextStyle? labelStyle;
   final double padding;
   final bool expand;
+  final Widget Function(Widget)? checkWrapper;
 
   const CheckboxWithLabel(
       {super.key,
@@ -16,6 +18,7 @@ class CheckboxWithLabel extends StatelessWidget {
       this.labelWidget,
       required this.value,
       required this.onChanged,
+      this.checkWrapper,
       this.labelStyle,
       this.padding = 8,
       this.expand = false})
@@ -35,12 +38,17 @@ class CheckboxWithLabel extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
           children: <Widget>[
-            IgnorePointer(
+            ConditionalWrap(
+              condition: checkWrapper != null,
+              wrapper: (child) => checkWrapper!(child),
+              child: IgnorePointer(
                 child: Checkbox(
                     checkColor: Theme.of(context).colorScheme.primary, // Hides the check
                     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     value: value,
-                    onChanged: onChanged)),
+                    onChanged: onChanged),
+              ),
+            ),
             Flexible(
               child: Padding(
                 padding: EdgeInsets.only(left: padding, bottom: 2),

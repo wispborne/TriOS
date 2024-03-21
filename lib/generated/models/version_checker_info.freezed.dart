@@ -26,7 +26,7 @@ mixin _$VersionCheckerInfo {
   @JsonConverterToString()
   String? get modThreadId => throw _privateConstructorUsedError;
   VersionObject? get modVersion => throw _privateConstructorUsedError;
-  String? get directDownloadUrl => throw _privateConstructorUsedError;
+  String? get directDownloadURL => throw _privateConstructorUsedError;
   String? get changelogUrl => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -46,7 +46,7 @@ abstract class $VersionCheckerInfoCopyWith<$Res> {
       @JsonConverterToString() String? modNexusId,
       @JsonConverterToString() String? modThreadId,
       VersionObject? modVersion,
-      String? directDownloadUrl,
+      String? directDownloadURL,
       String? changelogUrl});
 
   $VersionObjectCopyWith<$Res>? get modVersion;
@@ -69,7 +69,7 @@ class _$VersionCheckerInfoCopyWithImpl<$Res, $Val extends VersionCheckerInfo>
     Object? modNexusId = freezed,
     Object? modThreadId = freezed,
     Object? modVersion = freezed,
-    Object? directDownloadUrl = freezed,
+    Object? directDownloadURL = freezed,
     Object? changelogUrl = freezed,
   }) {
     return _then(_value.copyWith(
@@ -89,9 +89,9 @@ class _$VersionCheckerInfoCopyWithImpl<$Res, $Val extends VersionCheckerInfo>
           ? _value.modVersion
           : modVersion // ignore: cast_nullable_to_non_nullable
               as VersionObject?,
-      directDownloadUrl: freezed == directDownloadUrl
-          ? _value.directDownloadUrl
-          : directDownloadUrl // ignore: cast_nullable_to_non_nullable
+      directDownloadURL: freezed == directDownloadURL
+          ? _value.directDownloadURL
+          : directDownloadURL // ignore: cast_nullable_to_non_nullable
               as String?,
       changelogUrl: freezed == changelogUrl
           ? _value.changelogUrl
@@ -126,7 +126,7 @@ abstract class _$$VersionCheckerInfoImplCopyWith<$Res>
       @JsonConverterToString() String? modNexusId,
       @JsonConverterToString() String? modThreadId,
       VersionObject? modVersion,
-      String? directDownloadUrl,
+      String? directDownloadURL,
       String? changelogUrl});
 
   @override
@@ -148,7 +148,7 @@ class __$$VersionCheckerInfoImplCopyWithImpl<$Res>
     Object? modNexusId = freezed,
     Object? modThreadId = freezed,
     Object? modVersion = freezed,
-    Object? directDownloadUrl = freezed,
+    Object? directDownloadURL = freezed,
     Object? changelogUrl = freezed,
   }) {
     return _then(_$VersionCheckerInfoImpl(
@@ -168,9 +168,9 @@ class __$$VersionCheckerInfoImplCopyWithImpl<$Res>
           ? _value.modVersion
           : modVersion // ignore: cast_nullable_to_non_nullable
               as VersionObject?,
-      directDownloadUrl: freezed == directDownloadUrl
-          ? _value.directDownloadUrl
-          : directDownloadUrl // ignore: cast_nullable_to_non_nullable
+      directDownloadURL: freezed == directDownloadURL
+          ? _value.directDownloadURL
+          : directDownloadURL // ignore: cast_nullable_to_non_nullable
               as String?,
       changelogUrl: freezed == changelogUrl
           ? _value.changelogUrl
@@ -188,7 +188,7 @@ class _$VersionCheckerInfoImpl extends _VersionCheckerInfo {
       @JsonConverterToString() this.modNexusId,
       @JsonConverterToString() this.modThreadId,
       this.modVersion,
-      this.directDownloadUrl,
+      this.directDownloadURL,
       this.changelogUrl})
       : super._();
 
@@ -206,13 +206,13 @@ class _$VersionCheckerInfoImpl extends _VersionCheckerInfo {
   @override
   final VersionObject? modVersion;
   @override
-  final String? directDownloadUrl;
+  final String? directDownloadURL;
   @override
   final String? changelogUrl;
 
   @override
   String toString() {
-    return 'VersionCheckerInfo(masterVersionFile: $masterVersionFile, modNexusId: $modNexusId, modThreadId: $modThreadId, modVersion: $modVersion, directDownloadUrl: $directDownloadUrl, changelogUrl: $changelogUrl)';
+    return 'VersionCheckerInfo(masterVersionFile: $masterVersionFile, modNexusId: $modNexusId, modThreadId: $modThreadId, modVersion: $modVersion, directDownloadURL: $directDownloadURL, changelogUrl: $changelogUrl)';
   }
 
   @override
@@ -228,8 +228,8 @@ class _$VersionCheckerInfoImpl extends _VersionCheckerInfo {
                 other.modThreadId == modThreadId) &&
             (identical(other.modVersion, modVersion) ||
                 other.modVersion == modVersion) &&
-            (identical(other.directDownloadUrl, directDownloadUrl) ||
-                other.directDownloadUrl == directDownloadUrl) &&
+            (identical(other.directDownloadURL, directDownloadURL) ||
+                other.directDownloadURL == directDownloadURL) &&
             (identical(other.changelogUrl, changelogUrl) ||
                 other.changelogUrl == changelogUrl));
   }
@@ -237,7 +237,7 @@ class _$VersionCheckerInfoImpl extends _VersionCheckerInfo {
   @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(runtimeType, masterVersionFile, modNexusId,
-      modThreadId, modVersion, directDownloadUrl, changelogUrl);
+      modThreadId, modVersion, directDownloadURL, changelogUrl);
 
   @JsonKey(ignore: true)
   @override
@@ -260,7 +260,7 @@ abstract class _VersionCheckerInfo extends VersionCheckerInfo {
       @JsonConverterToString() final String? modNexusId,
       @JsonConverterToString() final String? modThreadId,
       final VersionObject? modVersion,
-      final String? directDownloadUrl,
+      final String? directDownloadURL,
       final String? changelogUrl}) = _$VersionCheckerInfoImpl;
   const _VersionCheckerInfo._() : super._();
 
@@ -278,7 +278,7 @@ abstract class _VersionCheckerInfo extends VersionCheckerInfo {
   @override
   VersionObject? get modVersion;
   @override
-  String? get directDownloadUrl;
+  String? get directDownloadURL;
   @override
   String? get changelogUrl;
   @override

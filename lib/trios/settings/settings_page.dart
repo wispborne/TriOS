@@ -14,6 +14,7 @@ import 'package:trios/widgets/checkbox_with_label.dart';
 import '../../jre_manager/jre_23.dart';
 import '../../widgets/self_update_toast.dart';
 import '../app_state.dart';
+import '../constants.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
@@ -92,7 +93,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                     .read(appSettings.notifier)
                     .update((state) => state.copyWith(shouldAutoUpdateOnLaunch: value ?? false));
               },
-              label: "Auto-update $appName on launch",
+              label: "Auto-update ${Constants.appName} on launch",
             ),
           ),
           Tooltip(
@@ -119,7 +120,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 }
 
                 Fimber.i(
-                    "Current version: $version. Latest version: ${release.tagName}. Newer? ${SelfUpdater.hasNewVersion(release)}");
+                    "Current version: ${Constants.version}. Latest version: ${release.tagName}. Newer? ${SelfUpdater.hasNewVersion(release)}");
               },
               child: const Text('Has new release?'),
             ),

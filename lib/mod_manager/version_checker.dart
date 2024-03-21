@@ -9,45 +9,55 @@ import '../models/version_checker_info.dart';
 import '../trios/app_state.dart';
 
 /// String is the smolId
-final versionCheckResults = FutureProvider<Map<String, VersionCheckResult>>((ref) async {
-  final mods = ref.watch(AppState.modVariants);
-  if (mods.value.isNullOrEmpty()) return {};
+final versionCheckResults =
+    AsyncNotifierProvider<_VersionCheckerNotifier, Map<String, VersionCheckResult>>(_VersionCheckerNotifier.new);
 
-  // TODO caching
-  try {
-    final entries = mods.value!.map((mod) {
-      if (_versionCheckResultsCache[mod.smolId] != null) {
-        var future = Future.value(_versionCheckResultsCache[mod.smolId]!);
-        return (smolId: mod.smolId, remoteVersionFuture: future);
-      } else {
-        var checkRemoteVersion2 = (checkRemoteVersion(mod));
-        return (smolId: mod.smolId, remoteVersionFuture: checkRemoteVersion2);
-      }
-    });
-
-    final result = Map.fromEntries(await Future.wait(entries.map((entry) async {
-      return MapEntry(entry.smolId, await entry.remoteVersionFuture);
-    })));
-    return result;
-  } catch (e, st) {
-    Fimber.e("Error fetching remote version info: $e\n$st");
-    rethrow;
+class _VersionCheckerNotifier extends AsyncNotifier<Map<String, VersionCheckResult>> {
+  @override
+  Map<String, VersionCheckResult> build() {
+    refresh();
+    return {};
   }
-});
 
-Map<String, VersionCheckResult> _versionCheckResultsCache = {};
+  // Executes async, updates state every time a Version Check http request is completed.
+  void refresh() {
+    state = AsyncValue.data({});
+    final _versionCheckResultsCache = state.value ?? {}; // TODO change to just state
+
+    final mods = ref.watch(AppState.modVariants);
+    if (mods.value.isNullOrEmpty()) return;
+
+    // TODO refresh cache button
+    try {
+      final entries = mods.value!.map((mod) {
+        if (_versionCheckResultsCache[mod.smolId] != null) {
+          return Future.value(_versionCheckResultsCache[mod.smolId]!);
+        } else {
+          return checkRemoteVersion(mod);
+        }
+      }).forEach((futResult) => futResult.then((result) {
+            state = AsyncValue.data(state.value!..update(result.smolId, (value) => result, ifAbsent: () => result));
+          }));
+    } catch (e, st) {
+      Fimber.e("Error fetching remote version info: $e\n$st");
+    }
+  }
+}
+
+// Map<String, VersionCheckResult> _versionCheckResultsCache = {};
 
 class VersionCheckResult {
+  final String smolId;
   final VersionCheckerInfo? remoteVersion;
   final Object? error;
 
-  VersionCheckResult(this.remoteVersion, this.error);
+  VersionCheckResult(this.smolId, this.remoteVersion, this.error);
 }
 
 Future<VersionCheckResult> checkRemoteVersion(ModVariant modVariant) async {
   var remoteVersionUrl = modVariant.versionCheckerInfo?.masterVersionFile;
   if (remoteVersionUrl == null) {
-    return VersionCheckResult(null, Exception("No remote version url for ${modVariant.modInfo.id}"));
+    return VersionCheckResult(modVariant.smolId, null, Exception("No remote version url for ${modVariant.modInfo.id}"));
   }
   final fixedUrl = fixUrl(remoteVersionUrl);
 
@@ -60,14 +70,14 @@ Future<VersionCheckResult> checkRemoteVersion(ModVariant modVariant) async {
     );
     final body = response.body;
     if (response.statusCode == 200) {
-      return VersionCheckResult(VersionCheckerInfo.fromJson(body.fixJsonToMap()), null);
+      return VersionCheckResult(modVariant.smolId, VersionCheckerInfo.fromJson(body.fixJsonToMap()), null);
     } else {
       throw Exception(
           "Failed to fetch remote version info for ${modVariant.modInfo.id}: ${response.statusCode} - $body");
     }
   } catch (e, st) {
     Fimber.d("Error fetching remote version info for ${modVariant.modInfo.id}: $e\n$st");
-    return VersionCheckResult(null, e);
+    return VersionCheckResult(modVariant.smolId, null, e);
   }
 }
 

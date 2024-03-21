@@ -5,13 +5,13 @@ import 'package:fimber/fimber.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:pub_semver/pub_semver.dart';
+import 'package:trios/libarchive/libarchive.dart';
 import 'package:trios/trios/self_updater/script_generator.dart';
 import 'package:trios/utils/extensions.dart';
-
-import 'package:trios/libarchive/libarchive.dart';
-import 'package:trios/main.dart';
 import 'package:trios/utils/network_util.dart';
 import 'package:trios/utils/util.dart';
+
+import '../constants.dart';
 
 class SelfUpdateInfo {
   final String version;
@@ -38,7 +38,7 @@ class SelfUpdater {
   static const String githubBase = "https://api.github.com";
   static const String githubLatestRelease = "$githubBase/repos/wispborne/trios/releases/latest";
 
-  static bool hasNewVersion(Release latestRelease, {String currentVersion = version}) {
+  static bool hasNewVersion(Release latestRelease, {String currentVersion = Constants.version}) {
     try {
       final latestVersion = Version.parse(latestRelease.tagName);
       return Version.parse(currentVersion).compareTo(latestVersion) < 0;

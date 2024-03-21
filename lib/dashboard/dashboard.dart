@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/jre_manager/jre_manager.dart';
+import 'package:trios/jre_manager/jre_manager_logic.dart';
 import 'package:trios/launcher/launcher.dart';
 import 'package:trios/models/launch_settings.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/trios/trios_theme.dart';
+import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
 import 'package:trios/widgets/disable.dart';
 

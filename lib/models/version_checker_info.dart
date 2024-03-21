@@ -15,7 +15,7 @@ class VersionCheckerInfo with _$VersionCheckerInfo {
     @JsonConverterToString() String? modNexusId,
     @JsonConverterToString() String? modThreadId,
     VersionObject? modVersion,
-    String? directDownloadUrl,
+    String? directDownloadURL,
     String? changelogUrl,
   }) = _VersionCheckerInfo;
 

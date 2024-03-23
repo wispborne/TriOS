@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:collection/collection.dart';
@@ -5,6 +6,7 @@ import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:fimber/fimber.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:plist_parser/plist_parser.dart';
 import 'package:trios/models/launch_settings.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
@@ -58,6 +60,8 @@ class Launcher extends ConsumerWidget {
   static StarsectorVanillaLaunchPreferences? getStarsectorLaunchPrefs() {
     if (Platform.isWindows) {
       return _getStarsectorLaunchPrefsWindows();
+    } else if (Platform.isMacOS) {
+      return _getStarsectorLaunchPrefsMacOS();
     } else {
       Fimber.w('Platform not yet supported');
       return null;
@@ -100,9 +104,28 @@ class Launcher extends ConsumerWidget {
 
   static StarsectorVanillaLaunchPreferences? _getStarsectorLaunchPrefsMacOS() {
     // /Users/username/Library/Preferences/com.fs.starfarer.plist
-    final prefsFile = File(
-        '${Platform.environment['HOME']}/Library/Preferences/com.fs.starfarer.plist');
-    if (!prefsFile.existsSync()) {}
+    try {
+      final prefsFile = File(
+          '${Platform.environment['HOME']}/Library/Preferences/com.fs.starfarer.plist');
+      if (prefsFile.existsSync()) {
+        final result = PlistParser()
+            .parseFileSync(prefsFile.absolute.path)["/com/fs/starfarer/"];
+        return StarsectorVanillaLaunchPreferences(
+          isFullscreen:
+              (result['fullscreen'] as String?)?.equalsIgnoreCase("true") ??
+                  false,
+          resolution: (result['resolution'] as String?) ?? '1920x1080',
+          hasSound:
+              (result['sound'] as String?)?.equalsIgnoreCase("true") ?? true,
+          numAASamples: (result['numAASamples'] as String?)?.toIntOrNull(),
+          screenScaling: (result['screenScale'] as String?)?.toDoubleOrNull(),
+        );
+      } else {
+        Fimber.w('Starsector settings plist not found at $prefsFile');
+      }
+    } catch (e) {
+      Fimber.e('Error reading Starsector settings from plist: $e');
+    }
   }
 
   // TODO: mac and linux
@@ -121,7 +144,7 @@ class Launcher extends ConsumerWidget {
   }
 
   // TODO: mac and linux
-  static launchGameVanilla(WidgetRef ref) {
+  static launchGameVanilla(WidgetRef ref) async {
     // Starsector folder
     var gamePath =
         ref.read(appSettings.select((value) => value.gameDir))?.toDirectory();
@@ -134,18 +157,23 @@ class Launcher extends ConsumerWidget {
     if (javaExe.existsSync() != true) {
       Fimber.w('Java not found at $javaExe');
       return;
-    } else if (vmParams?.existsSync() != true) {
+    } else if (vmParams.existsSync() != true) {
       Fimber.w('vmparams not found at $vmParams.');
       return;
     }
 
     var vmParamsContent = vmParams
-        ?.readAsStringSync()
-        .removePrefix("java.exe")
-        .split(" ")
+        .readAsStringSync()
+        .let((it) {
+          if (Platform.isWindows) {
+            return it.removePrefix("java.exe").split(' ');
+          } else {
+            return it.removePrefix("java").split('\n');
+          }
+        })
         .where((element) => element.isNotEmpty)
         .toList();
-    Fimber.d('vmParamsContent: $vmParamsContent');
+    // Fimber.d('vmParamsContent: $vmParamsContent');
 
     if (vmParamsContent == null) {
       Fimber.w('vmparams is empty');
@@ -155,15 +183,13 @@ class Launcher extends ConsumerWidget {
     LaunchSettings? launchPreferences;
     final customLaunchPrefs =
         ref.read(appSettings.select((value) => value.launchSettings));
+    var vanillaPrefs = Launcher.getStarsectorLaunchPrefs()!.toLaunchSettings();
+    launchPreferences = vanillaPrefs.overrideWith(customLaunchPrefs);
+    final overrideArgs = _generateVmparamOverrides(
+        launchPreferences, gameCorePath, vmParamsContent);
 
     if (Platform.isWindows) {
-      var vanillaPrefs =
-          Launcher.getStarsectorLaunchPrefs()!.toLaunchSettings();
-      launchPreferences = vanillaPrefs.overrideWith(customLaunchPrefs);
-      final overrideArgs = _generateVmparamOverrides(
-          launchPreferences, gameCorePath, vmParamsContent);
-
-      List<String> result = overrideArgs.entries
+      List<String> finalVmparams = overrideArgs.entries
               .map((entry) => '${entry.key}=${entry.value}')
               .toList() +
           vmParamsContent
@@ -172,11 +198,53 @@ class Launcher extends ConsumerWidget {
                   .none((entry) => vanillaParam.startsWith(entry.key)))
               .toList();
 
-      Fimber.d('processArgs: $result');
-      Process.start(javaExe!.absolute.path, result,
+      Fimber.d('processArgs: $finalVmparams');
+      Process.start(javaExe!.absolute.path, finalVmparams,
           workingDirectory: gameCorePath?.path,
           mode: ProcessStartMode.detached,
           includeParentEnvironment: true);
+    } else if (Platform.isMacOS) {
+      const harcodedVmparams = r""" \
+      -Xdock:name="Starsector" \
+    -Xdock:icon=../../Resources/s_icon128.icns \
+    -Dapple.laf.useScreenMenuBar=false \
+    -Dcom.apple.macos.useScreenMenuBar=false \
+    -Dapple.awt.showGrowBox=false \
+    -Dfile.encoding=UTF-8 \
+    ${EXTRAARGS} \
+    -Xverify:none \
+	-server \
+	-XX:CompilerThreadPriority=1 \
+	-XX:+CompilerThreadHintNoPreempt \
+	-Djava.library.path=../../Resources/Java/native/macosx \
+	-Dcom.fs.starfarer.settings.paths.saves=../../../saves \
+	-Dcom.fs.starfarer.settings.paths.screenshots=../../../screenshots \
+	-Dcom.fs.starfarer.settings.paths.mods=../../../mods \
+	-Dcom.fs.starfarer.settings.paths.logs=../../../logs \
+	-Dcom.fs.starfarer.settings.osx=true \
+    -Xms4096m \
+    -Xmx4096m \
+    -Xss2048k \
+	-cp ../../Resources/Java/AppleJavaExtensions.jar:../../Resources/Java/commons-compiler-jdk.jar:../../Resources/Java/commons-compiler.jar:../../Resources/Java/fs.sound_obf.jar:../../Resources/Java/janino.jar:../../Resources/Java/jinput.jar:../../Resources/Java/jogg-0.0.7.jar:../../Resources/Java/jorbis-0.0.15.jar:../../Resources/Java/json.jar:../../Resources/Java/log4j-1.2.9.jar:../../Resources/Java/lwjgl.jar:../../Resources/Java/lwjgl_util.jar:../../Resources/Java/starfarer.api.jar:../../Resources/Java/starfarer_obf.jar:../../Resources/Java/fs.common_obf.jar:../../Resources/Java/xstream-1.4.10.jar \
+    com.fs.starfarer.StarfarerLauncher
+      """;
+      // Replace ${EXTRAARGS} (part of vanilla script) with the custom args.
+      final launchScript = harcodedVmparams.split("\\\n").map((e) => e.trim()).join(' ');
+          // .replaceAll(
+          // "\${EXTRAARGS}",
+          // overrideArgs.entries
+          //     .map((entry) => '${entry.key}=${entry.value}')
+          //     .join('\\ \n'));
+      Fimber.d('launchScript: $launchScript');
+      final process = await Process.start(javaExe.absolute.path, [launchScript],
+          workingDirectory: gameCorePath?.path,
+          mode: ProcessStartMode.normal,
+          // runInShell: true,
+          includeParentEnvironment: true);
+      Fimber.d(
+          "Stdout: ${await process.stdout.transform(utf8.decoder).join()}");
+      Fimber.w(
+          "Stderr: ${await process.stderr.transform(utf8.decoder).join()}");
     } else {
       Fimber.w(
           'Platform not yet supported for direct launch, using normal launch');

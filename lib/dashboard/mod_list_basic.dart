@@ -53,23 +53,21 @@ class _ModListMiniState extends ConsumerState<ModListMini> {
                             style: Theme.of(context).textTheme.titleLarge)),
                     Align(
                       alignment: Alignment.topRight,
-                      child: SizedBox(
-                        height: 24,
-                        child: IconButton(
-                          icon: const Icon(Icons.copy),
-                          padding: EdgeInsets.zero,
-                          constraints: BoxConstraints(),
-                          onPressed: () {
-                            if (modList == null) return;
-                            Clipboard.setData(ClipboardData(
-                                text:
-                                    "Mods (${modList.length})\n${modList.map((e) => false ? "${e.modInfo.id} ${e.modInfo.version}" : "${e.modInfo.name}  v${e.modInfo.version}  [${e.modInfo.id}]").join('\n')}"));
-                            ScaffoldMessenger.of(context)
-                                .showSnackBar(const SnackBar(
-                              content: Text("Copied mod info to clipboard."),
-                            ));
-                          },
-                        ),
+                      child: IconButton(
+                        icon: const Icon(Icons.copy),
+                        padding: EdgeInsets.zero,
+                        iconSize: 20,
+                        constraints: const BoxConstraints(),
+                        onPressed: () {
+                          if (modList == null) return;
+                          Clipboard.setData(ClipboardData(
+                              text:
+                                  "Mods (${modList.length})\n${modList.map((e) => false ? "${e.modInfo.id} ${e.modInfo.version}" : "${e.modInfo.name}  v${e.modInfo.version}  [${e.modInfo.id}]").join('\n')}"));
+                          ScaffoldMessenger.of(context)
+                              .showSnackBar(const SnackBar(
+                            content: Text("Copied mod info to clipboard."),
+                          ));
+                        },
                       ),
                     ),
                   ],

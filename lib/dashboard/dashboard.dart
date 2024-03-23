@@ -93,9 +93,9 @@ class _DashboardState extends ConsumerState<Dashboard> with AutomaticKeepAliveCl
               ),
             ),
             Tooltip(
-              message: isUsingJre23 ? "Currently unavailable using JRE 23" : "",
+              message: isUsingJre23 ?? false ? "Currently unavailable using JRE 23" : "",
               child: Disable(
-                isEnabled: !isUsingJre23,
+                isEnabled: !(isUsingJre23 ?? false),
                 child: Card(
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),

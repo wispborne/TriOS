@@ -25,7 +25,6 @@ class Constants {
   static const SAVES_FOLDER_NAME = "saves";
   static const ARCHIVES_FOLDER_NAME = "Mod_Backups";
 
-  static File getGameLogPath(Directory gamePath) => gamePath.resolve("starsector-core/starsector.log").toFile();
   static const VERSION_CHECKER_CSV_PATH = "data/config/version/version_files.csv";
   static const VERSION_CHECKER_FILE_ENDING = ".version";
   static const FORUM_URL = "https://fractalsoftworks.com/forum/index.php";

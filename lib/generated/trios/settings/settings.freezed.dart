@@ -37,7 +37,7 @@ mixin _$Settings {
   bool? get isMinimized => throw _privateConstructorUsedError;
   TriOSTools? get defaultTool => throw _privateConstructorUsedError;
   String? get jre23VmparamsFilename => throw _privateConstructorUsedError;
-  bool get useJre23 => throw _privateConstructorUsedError;
+  bool? get useJre23 => throw _privateConstructorUsedError;
   LaunchSettings get launchSettings => throw _privateConstructorUsedError;
   String? get lastStarsectorVersion => throw _privateConstructorUsedError;
 
@@ -67,7 +67,7 @@ abstract class $SettingsCopyWith<$Res> {
       bool? isMinimized,
       TriOSTools? defaultTool,
       String? jre23VmparamsFilename,
-      bool useJre23,
+      bool? useJre23,
       LaunchSettings launchSettings,
       String? lastStarsectorVersion});
 
@@ -101,7 +101,7 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
     Object? isMinimized = freezed,
     Object? defaultTool = freezed,
     Object? jre23VmparamsFilename = freezed,
-    Object? useJre23 = null,
+    Object? useJre23 = freezed,
     Object? launchSettings = null,
     Object? lastStarsectorVersion = freezed,
   }) {
@@ -162,10 +162,10 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
           ? _value.jre23VmparamsFilename
           : jre23VmparamsFilename // ignore: cast_nullable_to_non_nullable
               as String?,
-      useJre23: null == useJre23
+      useJre23: freezed == useJre23
           ? _value.useJre23
           : useJre23 // ignore: cast_nullable_to_non_nullable
-              as bool,
+              as bool?,
       launchSettings: null == launchSettings
           ? _value.launchSettings
           : launchSettings // ignore: cast_nullable_to_non_nullable
@@ -209,7 +209,7 @@ abstract class _$$SettingsImplCopyWith<$Res>
       bool? isMinimized,
       TriOSTools? defaultTool,
       String? jre23VmparamsFilename,
-      bool useJre23,
+      bool? useJre23,
       LaunchSettings launchSettings,
       String? lastStarsectorVersion});
 
@@ -242,7 +242,7 @@ class __$$SettingsImplCopyWithImpl<$Res>
     Object? isMinimized = freezed,
     Object? defaultTool = freezed,
     Object? jre23VmparamsFilename = freezed,
-    Object? useJre23 = null,
+    Object? useJre23 = freezed,
     Object? launchSettings = null,
     Object? lastStarsectorVersion = freezed,
   }) {
@@ -303,10 +303,10 @@ class __$$SettingsImplCopyWithImpl<$Res>
           ? _value.jre23VmparamsFilename
           : jre23VmparamsFilename // ignore: cast_nullable_to_non_nullable
               as String?,
-      useJre23: null == useJre23
+      useJre23: freezed == useJre23
           ? _value.useJre23
           : useJre23 // ignore: cast_nullable_to_non_nullable
-              as bool,
+              as bool?,
       launchSettings: null == launchSettings
           ? _value.launchSettings
           : launchSettings // ignore: cast_nullable_to_non_nullable
@@ -337,7 +337,7 @@ class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
       this.isMinimized,
       this.defaultTool,
       this.jre23VmparamsFilename,
-      this.useJre23 = true,
+      this.useJre23,
       this.launchSettings = const LaunchSettings(),
       this.lastStarsectorVersion});
 
@@ -379,8 +379,7 @@ class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
   @override
   final String? jre23VmparamsFilename;
   @override
-  @JsonKey()
-  final bool useJre23;
+  final bool? useJre23;
   @override
   @JsonKey()
   final LaunchSettings launchSettings;
@@ -512,7 +511,7 @@ abstract class _Settings implements Settings {
       final bool? isMinimized,
       final TriOSTools? defaultTool,
       final String? jre23VmparamsFilename,
-      final bool useJre23,
+      final bool? useJre23,
       final LaunchSettings launchSettings,
       final String? lastStarsectorVersion}) = _$SettingsImpl;
 
@@ -551,7 +550,7 @@ abstract class _Settings implements Settings {
   @override
   String? get jre23VmparamsFilename;
   @override
-  bool get useJre23;
+  bool? get useJre23;
   @override
   LaunchSettings get launchSettings;
   @override

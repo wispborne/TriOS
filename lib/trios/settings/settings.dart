@@ -5,6 +5,7 @@ import 'package:fimber/fimber.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:trios/jre_manager/jre_23.dart';
 import 'package:trios/trios/navigation.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/util.dart';
@@ -13,16 +14,20 @@ import '../../models/launch_settings.dart';
 import '../app_state.dart';
 
 part '../../generated/trios/settings/settings.freezed.dart';
+
 part '../../generated/trios/settings/settings.g.dart';
 
 const sharedPrefsSettingsKey = "settings";
 
 /// Settings State Provider
-final appSettings = NotifierProvider<SettingSaver, Settings>(() => SettingSaver());
+final appSettings =
+    NotifierProvider<SettingSaver, Settings>(() => SettingSaver());
 
+/// MacOs: /Users/<user>/Library/Preferences/org.wisp.TriOS.plist
 Settings? readAppSettings() {
   if (sharedPrefs.containsKey(sharedPrefsSettingsKey)) {
-    return Settings.fromJson(jsonDecode(sharedPrefs.getString(sharedPrefsSettingsKey)!));
+    return Settings.fromJson(
+        jsonDecode(sharedPrefs.getString(sharedPrefsSettingsKey)!));
   } else {
     return null;
   }
@@ -46,23 +51,44 @@ class Settings with _$Settings {
     final bool? isMinimized,
     final TriOSTools? defaultTool,
     final String? jre23VmparamsFilename,
-    @Default(true) final bool useJre23,
+    final bool? useJre23,
     @Default(LaunchSettings()) final LaunchSettings launchSettings,
     final String? lastStarsectorVersion,
   }) = _Settings;
 
-  factory Settings.fromJson(Map<String, Object?> json) => _$SettingsFromJson(json);
+  factory Settings.fromJson(Map<String, Object?> json) =>
+      _$SettingsFromJson(json);
 }
 
 /// When settings change, save them to shared prefs
 class SettingSaver extends Notifier<Settings> {
+  Settings _setDefaults(Settings settings) {
+    if (settings.gameDir == null) {
+      settings = settings.copyWith(gameDir: defaultGamePath());
+    }
+
+    final jre23existInGameFolder =
+        doesJre23ExistInGameFolder(settings.gameDir!);
+    if (settings.useJre23 == null) {
+      settings = settings.copyWith(useJre23: (jre23existInGameFolder));
+    } else {
+      // If useJRe23 is set to true, but it doesn't exist, set it to false.
+      // Otherwise they might be unable to launch the game or turn off 23.
+      if (settings.useJre23 == true && !jre23existInGameFolder) {
+        settings = settings.copyWith(useJre23: false);
+      }
+    }
+
+    return settings;
+  }
+
   @override
   Settings build() {
-    final settings = readAppSettings();
+    var settings = readAppSettings();
     if (settings != null) {
-      return settings;
+      return _setDefaults(settings);
     } else {
-      return Settings();
+      return _setDefaults(Settings());
     }
 
     // final gameDir = defaultGamePath()?.absolute;
@@ -88,12 +114,14 @@ class SettingSaver extends Notifier<Settings> {
         newState = newState.copyWith(modsDir: newModsDir?.toDirectory());
       }
 
-      newState = newState.copyWith(gameCoreDir: generateGameCorePath(newState.gameDir!));
+      newState = newState.copyWith(
+          gameCoreDir: generateGameCorePath(newState.gameDir!));
     }
 
     Fimber.d("Updated settings: $newState");
 
-    sharedPrefs.setString(sharedPrefsSettingsKey, jsonEncode(newState.toJson()));
+    sharedPrefs.setString(
+        sharedPrefsSettingsKey, jsonEncode(newState.toJson()));
     state = newState;
   }
 }

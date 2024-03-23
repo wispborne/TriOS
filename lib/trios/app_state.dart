@@ -11,6 +11,7 @@ import 'package:trios/models/mod_variant.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/trios/trios_theme.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/platform_paths.dart';
 import 'package:trios/utils/util.dart';
 
 import '../models/enabled_mods.dart';
@@ -19,11 +20,13 @@ import '../models/enabled_mods.dart';
 
 class AppState {
   static TriOSTheme theme = TriOSTheme();
-  static final selfUpdateDownloadProgress = StateProvider<double?>((ref) => null);
+  static final selfUpdateDownloadProgress =
+      StateProvider<double?>((ref) => null);
   static final isLoadingLog = StateProvider<bool>((ref) => false);
 
   static final modVariants = FutureProvider<List<ModVariant>>((ref) async {
-    final gamePath = ref.read(appSettings.select((value) => value.gameDir))?.toDirectory();
+    final gamePath =
+        ref.read(appSettings.select((value) => value.gameDir))?.toDirectory();
     if (gamePath == null) {
       return [];
     }
@@ -34,7 +37,8 @@ class AppState {
   static StreamController<File>? _enabledModsWatcher;
 
   static final enabledMods = FutureProvider<EnabledMods>((ref) async {
-    final modsFolder = ref.read(appSettings.select((value) => value.modsDir))?.toDirectory();
+    final modsFolder =
+        ref.read(appSettings.select((value) => value.modsDir))?.toDirectory();
 
     if (modsFolder == null || !modsFolder.existsSync()) {
       return const EnabledMods({});
@@ -63,27 +67,42 @@ class AppState {
   });
 
   static final starsectorVersion = FutureProvider<String?>((ref) async {
-    final gameCorePath = ref.read(appSettings.select((value) => value.gameCoreDir))?.toDirectory();
-    if (gameCorePath == null) {
+    final gamePath = ref
+        .read(appSettings.select((value) => value.gameDir))
+        ?.toDirectory();
+    if (gamePath == null) {
       return null;
     }
-    final versionInLog = await readStarsectorVersionFromLog(gameCorePath);
-    if (versionInLog != null) {
-      // If found in log, update the last saved version
-      ref.read(appSettings.notifier).update((s) => s.copyWith(lastStarsectorVersion: versionInLog));
-      return versionInLog;
-    } else {
-      // Fallback to last saved version
-      return ref.read(appSettings.select((value) => value.lastStarsectorVersion));
+    try {
+      final versionInLog = await readStarsectorVersionFromLog(gamePath);
+      if (versionInLog != null) {
+        // If found in log, update the last saved version
+        ref
+            .read(appSettings.notifier)
+            .update((s) => s.copyWith(lastStarsectorVersion: versionInLog));
+        return versionInLog;
+      } else {
+        // Fallback to last saved version
+        return ref
+            .read(appSettings.select((value) => value.lastStarsectorVersion));
+      }
+    } catch (e, stack) {
+      Fimber.w("Failed to read starsector version from log",
+          ex: e, stacktrace: stack);
+      return ref
+          .read(appSettings.select((value) => value.lastStarsectorVersion));
     }
   });
 }
 
-Future<String?> readStarsectorVersionFromLog(Directory gameCorePath) async {
+Future<String?> readStarsectorVersionFromLog(Directory gamePath) async {
   const versionContains = r"Starting Starsector";
   final versionRegex = RegExp(r"Starting Starsector (.*) launcher");
-  final logfile =
-      utf8.decode(gameCorePath.resolve("starsector.log").toFile().readAsBytesSync().toList(), allowMalformed: true);
+  final logfile = utf8.decode(
+      getLogPath(gamePath)
+          .readAsBytesSync()
+          .toList(),
+      allowMalformed: true);
   for (var line in logfile.split("\n")) {
     if (line.contains(versionContains)) {
       try {
@@ -110,7 +129,8 @@ var maxFileHandles = 2000;
 
 Future<T> withFileHandleLimit<T>(Future<T> Function() function) async {
   while (currentFileHandles + 1 > maxFileHandles) {
-    Fimber.v("Waiting for file handles to free up. Current file handles: $currentFileHandles");
+    Fimber.v(
+        "Waiting for file handles to free up. Current file handles: $currentFileHandles");
     await Future.delayed(const Duration(milliseconds: 100));
   }
   currentFileHandles++;

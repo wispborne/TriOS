@@ -41,7 +41,10 @@ class _ModListMiniState extends ConsumerState<ModListMini> {
         mainAxisSize: MainAxisSize.max,
         children: [
           Text("Mods", style: Theme.of(context).textTheme.titleLarge),
-          Text(modList != null ? " ${enabledModIds?.length ?? 0} of ${modList.length} enabled" : "",
+          Text(
+              modList != null
+                  ? " ${enabledModIds?.length ?? 0} of ${modList.length} enabled"
+                  : "",
               style: Theme.of(context).textTheme.labelMedium),
           Expanded(
             child: ref.watch(AppState.modVariants).when(
@@ -53,7 +56,9 @@ class _ModListMiniState extends ConsumerState<ModListMini> {
 
                           final localVersionCheck = mod!.versionCheckerInfo;
                           final remoteVersionCheck = versionCheck?[mod.smolId];
-                          return _doVersionCheck(localVersionCheck, remoteVersionCheck) == -1 &&
+                          return _doVersionCheck(
+                                      localVersionCheck, remoteVersionCheck) ==
+                                  -1 &&
                               remoteVersionCheck?.error == null;
                         })
                         .sortedBy((info) => info?.modInfo.name ?? "")
@@ -77,12 +82,18 @@ class _ModListMiniState extends ConsumerState<ModListMini> {
                               return const Divider();
                             }
                             return ModListBasicEntry(
-                                mod: modVariant, isEnabled: enabledModIds?.contains(modVariant.modInfo.id) ?? false);
+                                mod: modVariant,
+                                isEnabled: enabledModIds
+                                        ?.contains(modVariant.modInfo.id) ??
+                                    false);
                           }),
                     );
                   },
-                  loading: () =>
-                      const Center(child: SizedBox(width: 48, height: 48, child: CircularProgressIndicator())),
+                  loading: () => const Center(
+                      child: SizedBox(
+                          width: 48,
+                          height: 48,
+                          child: CircularProgressIndicator())),
                   error: (error, stackTrace) => Text('Error: $error'),
                 ),
           ),
@@ -102,7 +113,8 @@ class ModListBasicEntry extends ConsumerStatefulWidget {
   final ModVariant mod;
   final bool isEnabled;
 
-  const ModListBasicEntry({super.key, required this.mod, required this.isEnabled});
+  const ModListBasicEntry(
+      {super.key, required this.mod, required this.isEnabled});
 
   @override
   ConsumerState createState() => _ModListBasicCustomState();
@@ -118,14 +130,16 @@ class _ModListBasicCustomState extends ConsumerState<ModListBasicEntry> {
     final modInfo = modVariant.modInfo;
     final localVersionCheck = modVariant.versionCheckerInfo;
     final remoteVersionCheck = versionCheck?[modVariant.smolId];
-    final compatWithGame = compareGameVersions(modInfo.gameVersion, ref.read(AppState.starsectorVersion).value);
+    final compatWithGame = compareGameVersions(
+        modInfo.gameVersion, ref.read(AppState.starsectorVersion).value);
     final compatTextColor = switch (compatWithGame) {
       GameCompatibility.Incompatible => TriOSTheme.vanillaErrorColor,
       GameCompatibility.Warning => TriOSTheme.vanillaWarningColor,
       GameCompatibility.Compatible => null,
     };
     final theme = Theme.of(context);
-    final versionCheckComparison = _doVersionCheck(localVersionCheck, remoteVersionCheck);
+    final versionCheckComparison =
+        _doVersionCheck(localVersionCheck, remoteVersionCheck);
     infoTooltip({required Widget child}) => MovingTooltipWidget(
         tooltipWidget: SizedBox(
           width: 350,
@@ -138,7 +152,8 @@ class _ModListBasicCustomState extends ConsumerState<ModListBasicEntry> {
           ),
         ),
         child: child);
-    var hasDirectDownload = remoteVersionCheck?.remoteVersion?.directDownloadURL != null;
+    var hasDirectDownload =
+        remoteVersionCheck?.remoteVersion?.directDownloadURL != null;
     final iconColor = switch (versionCheckComparison) {
       -1 => theme.colorScheme.secondary,
       _ => theme.disabledColor.withOpacity(0.5),
@@ -159,59 +174,58 @@ class _ModListBasicCustomState extends ConsumerState<ModListBasicEntry> {
                             overflow: TextOverflow.fade,
                             softWrap: false,
                             maxLines: 1,
-                            style: theme.textTheme.labelLarge?.copyWith(color: compatTextColor))),
+                            style: theme.textTheme.labelLarge
+                                ?.copyWith(color: compatTextColor))),
                   ),
                   MovingTooltipWidget(
                     tooltipWidget: SizedBox(
                       width: 500,
                       child: TooltipFrame(
-                          child: switch (versionCheckComparison) {
-                            -1 => Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text("New version available: ${localVersionCheck?.modVersion}"),
-                                Text("Current version: ${remoteVersionCheck?.remoteVersion?.modVersion}"),
-                                if (hasDirectDownload)
-                                  Text("File: ${remoteVersionCheck?.remoteVersion?.directDownloadURL}"),
-                                Text(
-                                    "\nUpdate information is provided by the mod author, not TriOS, and cannot be guaranteed.",
-                                    style: theme.textTheme.bodyMedium?.copyWith(fontStyle: FontStyle.italic)),
-                                if (remoteVersionCheck?.remoteVersion?.directDownloadURL == null)
-                                  Text("This mod does not support direct download and should be downloaded manually.",
-                                      style: theme.textTheme.bodyMedium?.copyWith(fontStyle: FontStyle.italic)),
-                                Text("\nClick to download.",
-                                    style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
-                              ],
-                            ),
-                            _ => const Text(
-                                "This mod does not support Version Checker.\nPlease visit the mod page to manually find updates.")
-                          }),
+                          child: VersionCheckInfo(versionCheckComparison,
+                              localVersionCheck, remoteVersionCheck)),
                     ),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 3.0),
                       child: Row(children: [
                         if (localVersionCheck?.modVersion != null &&
-                            remoteVersionCheck?.remoteVersion?.modVersion != null)
+                            remoteVersionCheck?.remoteVersion?.modVersion !=
+                                null)
                           Padding(
                               padding: const EdgeInsets.only(right: 6),
                               child: ConditionalWrap(
                                   condition: versionCheckComparison == -1,
-                                  wrapper: (child) => Blur(blurX: 0, blurY: 0, blurOpacity: 0.7, child: child),
+                                  wrapper: (child) => Blur(
+                                      blurX: 0,
+                                      blurY: 0,
+                                      blurOpacity: 0.7,
+                                      child: child),
                                   child: Builder(builder: (context) {
-                                    if (versionCheckComparison == -1 && hasDirectDownload) {
-                                      return Icon(Icons.download, size: updateIconSize, color: iconColor);
-                                    } else if (versionCheckComparison == -1 && !hasDirectDownload) {
-                                      return SvgImageIcon("assets/images/icon-update-badge.svg",
-                                          width: updateIconSize, height: updateIconSize, color: iconColor);
+                                    if (versionCheckComparison == -1 &&
+                                        hasDirectDownload) {
+                                      return Icon(Icons.download,
+                                          size: updateIconSize,
+                                          color: iconColor);
+                                    } else if (versionCheckComparison == -1 &&
+                                        !hasDirectDownload) {
+                                      return SvgImageIcon(
+                                          "assets/images/icon-update-badge.svg",
+                                          width: updateIconSize,
+                                          height: updateIconSize,
+                                          color: iconColor);
                                     } else {
-                                      return Icon(Icons.check, size: updateIconSize, color: iconColor);
+                                      return Icon(Icons.check,
+                                          size: updateIconSize,
+                                          color: iconColor);
                                     }
                                   }))),
-                        if (localVersionCheck?.modVersion != null && remoteVersionCheck?.error != null)
+                        if (localVersionCheck?.modVersion != null &&
+                            remoteVersionCheck?.error != null)
                           Padding(
                             padding: const EdgeInsets.only(right: 6),
                             child: Icon(Icons.error_outline,
-                                size: updateIconSize, color: TriOSTheme.vanillaWarningColor.withOpacity(0.5)),
+                                size: updateIconSize,
+                                color: TriOSTheme.vanillaWarningColor
+                                    .withOpacity(0.5)),
                           ),
                         if (localVersionCheck?.modVersion == null)
                           Padding(
@@ -221,20 +235,24 @@ class _ModListBasicCustomState extends ConsumerState<ModListBasicEntry> {
                                 child: Center(
                                   child: ColorFiltered(
                                       colorFilter: greyscale,
-                                      child: SvgImageIcon("assets/images/icon-help.svg",
+                                      child: SvgImageIcon(
+                                          "assets/images/icon-help.svg",
                                           width: updateIconSize,
                                           height: updateIconSize,
-                                          color: theme.disabledColor.withOpacity(0.35))),
+                                          color: theme.disabledColor
+                                              .withOpacity(0.35))),
                                 ),
                               )),
-                        if (localVersionCheck != null && remoteVersionCheck == null)
+                        if (localVersionCheck != null &&
+                            remoteVersionCheck == null)
                           Padding(
                               padding: const EdgeInsets.only(right: 6),
                               child: ColorFiltered(
                                 colorFilter: greyscale,
                                 child: Text("…",
-                                    style: theme.textTheme.labelLarge
-                                        ?.copyWith(color: theme.disabledColor.withOpacity(0.35))),
+                                    style: theme.textTheme.labelLarge?.copyWith(
+                                        color: theme.disabledColor
+                                            .withOpacity(0.35))),
                               )),
                       ]),
                     ),
@@ -251,7 +269,8 @@ class _ModListBasicCustomState extends ConsumerState<ModListBasicEntry> {
                       context: context,
                       builder: (context) => AlertDialog(
                             title: const Text("Nope"),
-                            content: const Text("This feature is not yet implemented."),
+                            content: const Text(
+                                "This feature is not yet implemented."),
                             actions: [
                               TextButton(
                                 onPressed: () => Navigator.of(context).pop(),
@@ -278,7 +297,8 @@ class _ModListBasicCustomState extends ConsumerState<ModListBasicEntry> {
                   }
                 }
 
-                var modsFolder = ref.read(appSettings.select((value) => value.modsDir));
+                var modsFolder =
+                    ref.read(appSettings.select((value) => value.modsDir));
                 if (modsFolder == null) return;
 
                 if (isCurrentlyEnabled) {
@@ -291,6 +311,61 @@ class _ModListBasicCustomState extends ConsumerState<ModListBasicEntry> {
           ),
         ),
       ],
+    );
+  }
+}
+
+class VersionCheckInfo extends ConsumerStatefulWidget {
+  final int? versionCheckComparison;
+  final VersionCheckerInfo? localVersionCheck;
+  final VersionCheckResult? remoteVersionCheck;
+
+  const VersionCheckInfo(this.versionCheckComparison, this.localVersionCheck,
+      this.remoteVersionCheck,
+      {super.key});
+
+  @override
+  ConsumerState createState() => _VersionCheckInfoState();
+}
+
+class _VersionCheckInfoState extends ConsumerState<VersionCheckInfo> {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final versionCheckComparison = widget.versionCheckComparison;
+    final localVersionCheck = widget.localVersionCheck;
+    final remoteVersionCheck = widget.remoteVersionCheck;
+    final hasDirectDownload =
+        remoteVersionCheck?.remoteVersion?.directDownloadURL != null;
+
+    return Container(
+      child: switch (versionCheckComparison) {
+        -1 => Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text("New version available: ${localVersionCheck?.modVersion}"),
+              Text(
+                  "Current version: ${remoteVersionCheck?.remoteVersion?.modVersion}"),
+              if (hasDirectDownload)
+                Text(
+                    "File: ${remoteVersionCheck?.remoteVersion?.directDownloadURL}"),
+              Text(
+                  "\nUpdate information is provided by the mod author, not TriOS, and cannot be guaranteed.",
+                  style: theme.textTheme.bodyMedium
+                      ?.copyWith(fontStyle: FontStyle.italic)),
+              if (remoteVersionCheck?.remoteVersion?.directDownloadURL == null)
+                Text(
+                    "This mod does not support direct download and should be downloaded manually.",
+                    style: theme.textTheme.bodyMedium
+                        ?.copyWith(fontStyle: FontStyle.italic)),
+              Text("\nClick to download.",
+                  style: theme.textTheme.bodyMedium
+                      ?.copyWith(fontWeight: FontWeight.bold)),
+            ],
+          ),
+        _ => const Text(
+            "This mod does not support Version Checker.\nPlease visit the mod page to manually find updates.")
+      },
     );
   }
 }

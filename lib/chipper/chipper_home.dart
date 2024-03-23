@@ -10,6 +10,7 @@ import 'package:open_filex/open_filex.dart';
 import 'package:platform_info/platform_info.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/platform_paths.dart';
 
 import '../trios/settings/settings.dart';
 import 'chipper_state.dart' as state;
@@ -34,10 +35,10 @@ loadDefaultLog(WidgetRef ref) {
   WidgetsBinding.instance.addPostFrameCallback((_) {
     try {
       ref.read(AppState.isLoadingLog.notifier).state = true;
-      final gameCorePath = ref.read(appSettings.select((value) => value.gameCoreDir))?.toDirectory();
-      var gameFilesPath = gameCorePath?.resolve("starsector.log") as File?;
+      final gamePath = ref.read(appSettings.select((value) => value.gameDir))?.toDirectory();
+      var gameFilesPath = getLogPath(gamePath!);
 
-      if (gameFilesPath != null && gameFilesPath.existsSync()) {
+      if (gameFilesPath.existsSync()) {
         gameFilesPath.readAsBytes().then((bytes) async {
           final content = utf8.decode(bytes.toList(), allowMalformed: true);
           return ref.read(state.logRawContents.notifier).state = LogFile(gameFilesPath.path, content);

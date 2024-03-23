@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/models/launch_settings.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/platform_paths.dart';
 import 'package:win32_registry/win32_registry.dart';
 
 import '../trios/trios_theme.dart';
@@ -47,7 +48,7 @@ class Launcher extends ConsumerWidget {
   }
 
   static launchGame(WidgetRef ref) {
-    if (ref.read(appSettings.select((value) => value.useJre23))) {
+    if (ref.read(appSettings.select((value) => value.useJre23 ?? false))) {
       launchGameJre23(ref);
     } else {
       launchGameVanilla(ref);
@@ -84,7 +85,8 @@ class Launcher extends ConsumerWidget {
     const registryPath = r'Software\JavaSoft\Prefs\com\fs\starfarer';
     final key = Registry.openPath(RegistryHive.currentUser, path: registryPath);
     final prefs = StarsectorVanillaLaunchPreferences(
-      isFullscreen: key.getValueAsString('fullscreen')?.equalsIgnoreCase("true") ?? false,
+      isFullscreen:
+          key.getValueAsString('fullscreen')?.equalsIgnoreCase("true") ?? false,
       resolution: key.getValueAsString('resolution') ?? '1920x1080',
       hasSound: key.getValueAsString('sound')?.equalsIgnoreCase("true") ?? true,
       numAASamples: key.getValueAsString('num/A/A/Samples')?.toIntOrNull(),
@@ -96,25 +98,40 @@ class Launcher extends ConsumerWidget {
     return prefs;
   }
 
+  static StarsectorVanillaLaunchPreferences? _getStarsectorLaunchPrefsMacOS() {
+    // /Users/username/Library/Preferences/com.fs.starfarer.plist
+    final prefsFile = File(
+        '${Platform.environment['HOME']}/Library/Preferences/com.fs.starfarer.plist');
+    if (!prefsFile.existsSync()) {}
+  }
+
   // TODO: mac and linux
   static launchGameJre23(WidgetRef ref) {
     // Starsector folder
-    var gamePath = ref.read(appSettings.select((value) => value.gameDir))?.toDirectory();
-    final gameCorePath = ref.read(appSettings.select((value) => value.gameCoreDir))?.toDirectory();
+    var gamePath =
+        ref.read(appSettings.select((value) => value.gameDir))?.toDirectory();
+    final gameCorePath = ref
+        .read(appSettings.select((value) => value.gameCoreDir))
+        ?.toDirectory();
 
     Process.start(gamePath!.resolve("Miko_Rouge.bat").absolute.path, [],
-        workingDirectory: gameCorePath?.path, mode: ProcessStartMode.detached, includeParentEnvironment: true);
+        workingDirectory: gameCorePath?.path,
+        mode: ProcessStartMode.detached,
+        includeParentEnvironment: true);
   }
 
   // TODO: mac and linux
   static launchGameVanilla(WidgetRef ref) {
     // Starsector folder
-    var gamePath = ref.read(appSettings.select((value) => value.gameDir))?.toDirectory();
-    final gameCorePath = ref.read(appSettings.select((value) => value.gameCoreDir))?.toDirectory();
-    var javaExe = gamePath?.resolve('jre/bin/java.exe') as File?;
-    var vmParams = gamePath?.resolve('vmparams') as File?;
+    var gamePath =
+        ref.read(appSettings.select((value) => value.gameDir))?.toDirectory();
+    final gameCorePath = ref
+        .read(appSettings.select((value) => value.gameCoreDir))
+        ?.toDirectory();
+    var javaExe = getJavaExecutable(getJreDir(gamePath!));
+    var vmParams = getVmparamsFile(gamePath);
 
-    if (javaExe?.existsSync() != true) {
+    if (javaExe.existsSync() != true) {
       Fimber.w('Java not found at $javaExe');
       return;
     } else if (vmParams?.existsSync() != true) {
@@ -136,24 +153,51 @@ class Launcher extends ConsumerWidget {
     }
 
     LaunchSettings? launchPreferences;
-    final customLaunchPrefs = ref.read(appSettings.select((value) => value.launchSettings));
+    final customLaunchPrefs =
+        ref.read(appSettings.select((value) => value.launchSettings));
 
     if (Platform.isWindows) {
-      var vanillaPrefs = Launcher.getStarsectorLaunchPrefs()!.toLaunchSettings();
+      var vanillaPrefs =
+          Launcher.getStarsectorLaunchPrefs()!.toLaunchSettings();
       launchPreferences = vanillaPrefs.overrideWith(customLaunchPrefs);
-      final overrideArgs = _generateVmparamOverrides(launchPreferences, gameCorePath, vmParamsContent);
+      final overrideArgs = _generateVmparamOverrides(
+          launchPreferences, gameCorePath, vmParamsContent);
 
-      List<String> result = overrideArgs.entries.map((entry) => '${entry.key}=${entry.value}').toList() +
+      List<String> result = overrideArgs.entries
+              .map((entry) => '${entry.key}=${entry.value}')
+              .toList() +
           vmParamsContent
               // Remove any vanilla params that we're overriding.
-              .filter((vanillaParam) => overrideArgs.entries.none((entry) => vanillaParam.startsWith(entry.key)))
+              .filter((vanillaParam) => overrideArgs.entries
+                  .none((entry) => vanillaParam.startsWith(entry.key)))
               .toList();
 
       Fimber.d('processArgs: $result');
       Process.start(javaExe!.absolute.path, result,
-          workingDirectory: gameCorePath?.path, mode: ProcessStartMode.detached, includeParentEnvironment: true);
+          workingDirectory: gameCorePath?.path,
+          mode: ProcessStartMode.detached,
+          includeParentEnvironment: true);
     } else {
-      Fimber.w('Platform not yet supported');
+      Fimber.w(
+          'Platform not yet supported for direct launch, using normal launch');
+      final gameExe = getGameExecutable(gamePath);
+      // Use this was of checking if it exists because the MacOs one is actually a folder, not a file.
+      if (FileSystemEntity.typeSync(gameExe.path) !=
+          FileSystemEntityType.notFound) {
+        if (Platform.isMacOS) {
+          Process.start("open", [gameExe.absolute.path],
+              workingDirectory: gamePath.path,
+              mode: ProcessStartMode.detached,
+              includeParentEnvironment: true);
+        } else if (Platform.isLinux) {
+          Process.start("xdg-open", [gameExe.absolute.path],
+              workingDirectory: gamePath.path,
+              mode: ProcessStartMode.detached,
+              includeParentEnvironment: true);
+        }
+      } else {
+        Fimber.e('Game executable not found at $gameExe');
+      }
       return;
     }
   }
@@ -175,7 +219,8 @@ class Launcher extends ConsumerWidget {
       '-DlaunchDirect': 'true',
       '-DstartFS': launchPrefs.isFullscreen.toString(),
       '-DstartSound': launchPrefs.hasSound.toString(),
-      '-DstartRes': "${launchPrefs.resolutionWidth}x${launchPrefs.resolutionHeight}",
+      '-DstartRes':
+          "${launchPrefs.resolutionWidth}x${launchPrefs.resolutionHeight}",
       '-DaaSamplesOverride': launchPrefs.numAASamples?.toString(),
       '-DscreenScale': launchPrefs.screenScaling?.toString(),
     };
@@ -183,11 +228,13 @@ class Launcher extends ConsumerWidget {
     for (var key in vmparamsKeysToAbsolutize) {
       // Look through vmparams for the matching key, grab the value of it, and treat it as a relative path
       // to return an absolute one.
-      final pair = vanillaVmparams.firstWhereOrNull((element) => element.startsWith('$key='));
+      final pair = vanillaVmparams
+          .firstWhereOrNull((element) => element.startsWith('$key='));
       if (pair != null) {
         var value = pair.split('=').getOrNull(1);
         if (value != null) {
-          overrideArgs[key] = starsectorCoreDir?.resolve(value).normalize().absolute.path;
+          overrideArgs[key] =
+              starsectorCoreDir?.resolve(value).normalize().absolute.path;
         }
       }
     }

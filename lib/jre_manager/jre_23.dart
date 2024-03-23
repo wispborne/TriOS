@@ -19,13 +19,18 @@ import '../trios/settings/settings.dart';
 part '../generated/jre_manager/jre_23.freezed.dart';
 part '../generated/jre_manager/jre_23.g.dart';
 
-final doesJre23ExistInGameFolder = FutureProvider<bool>((ref) async {
+final doesJre23ExistInGameFolderProvider = FutureProvider<bool>((ref) async {
   final gamePath = ref.read(appSettings.select((value) => value.gameDir))?.toDirectory();
   if (gamePath == null) {
     return false;
   }
-  return gamePath.resolve("mikohime").toDirectory().existsSync();
+  return doesJre23ExistInGameFolder(gamePath);
 });
+
+bool doesJre23ExistInGameFolder(Directory gameDir) {
+  return gameDir.resolve("mikohime").toDirectory().existsSync();
+}
+
 final jre23jdkDownloadProgress = StateProvider<DownloadProgress?>((ref) => null);
 final jdk23ConfigDownloadProgress = StateProvider<DownloadProgress?>((ref) => null);
 

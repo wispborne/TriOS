@@ -1,6 +1,8 @@
 import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/dashboard/mod_summary_widget.dart';
 import 'package:trios/models/version_checker_info.dart';
@@ -13,6 +15,7 @@ import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:trios/widgets/tooltip_frame.dart';
 import 'package:vs_scrollbar/vs_scrollbar.dart';
 
+import '../chipper/copy.dart';
 import '../mod_manager/mod_manager_logic.dart';
 import '../mod_manager/version_checker.dart';
 import '../models/mod_variant.dart';
@@ -40,7 +43,40 @@ class _ModListMiniState extends ConsumerState<ModListMini> {
       child: Column(
         mainAxisSize: MainAxisSize.max,
         children: [
-          Text("Mods", style: Theme.of(context).textTheme.titleLarge),
+          Row(
+            children: [
+              Expanded(
+                child: Stack(
+                  children: [
+                    Center(
+                        child: Text("Mods",
+                            style: Theme.of(context).textTheme.titleLarge)),
+                    Align(
+                      alignment: Alignment.topRight,
+                      child: SizedBox(
+                        height: 24,
+                        child: IconButton(
+                          icon: const Icon(Icons.copy),
+                          padding: EdgeInsets.zero,
+                          constraints: BoxConstraints(),
+                          onPressed: () {
+                            if (modList == null) return;
+                            Clipboard.setData(ClipboardData(
+                                text:
+                                    "Mods (${modList.length})\n${modList.map((e) => false ? "${e.modInfo.id} ${e.modInfo.version}" : "${e.modInfo.name}  v${e.modInfo.version}  [${e.modInfo.id}]").join('\n')}"));
+                            ScaffoldMessenger.of(context)
+                                .showSnackBar(const SnackBar(
+                              content: Text("Copied mod info to clipboard."),
+                            ));
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
           Text(
               modList != null
                   ? " ${enabledModIds?.length ?? 0} of ${modList.length} enabled"

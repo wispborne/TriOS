@@ -43,7 +43,6 @@ class CheckboxWithLabel extends StatelessWidget {
               wrapper: (child) => checkWrapper!(child),
               child: IgnorePointer(
                 child: Checkbox(
-                    checkColor: Theme.of(context).colorScheme.primary, // Hides the check
                     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     value: value,
                     onChanged: onChanged),

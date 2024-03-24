@@ -42,32 +42,37 @@ class _ModListMiniState extends ConsumerState<ModListMini> {
       padding: const EdgeInsets.all(8.0),
       child: Column(
         mainAxisSize: MainAxisSize.max,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Expanded(
                 child: Stack(
                   children: [
-                    Center(
-                        child: Text("Mods",
-                            style: Theme.of(context).textTheme.titleLarge)),
+                    Text("Mods", style: Theme.of(context).textTheme.titleLarge),
                     Align(
                       alignment: Alignment.topRight,
-                      child: IconButton(
-                        icon: const Icon(Icons.copy),
-                        padding: EdgeInsets.zero,
-                        iconSize: 20,
-                        constraints: const BoxConstraints(),
-                        onPressed: () {
-                          if (modList == null) return;
-                          Clipboard.setData(ClipboardData(
-                              text:
-                                  "Mods (${modList.length})\n${modList.map((e) => false ? "${e.modInfo.id} ${e.modInfo.version}" : "${e.modInfo.name}  v${e.modInfo.version}  [${e.modInfo.id}]").join('\n')}"));
-                          ScaffoldMessenger.of(context)
-                              .showSnackBar(const SnackBar(
-                            content: Text("Copied mod info to clipboard."),
-                          ));
-                        },
+                      child: Padding(
+                        padding: const EdgeInsets.all(4.0),
+                        child: Tooltip(
+                          message: "Copy mod info",
+                          child: IconButton(
+                            icon: const Icon(Icons.copy),
+                            padding: EdgeInsets.zero,
+                            iconSize: 20,
+                            constraints: const BoxConstraints(),
+                            onPressed: () {
+                              if (modList == null) return;
+                              Clipboard.setData(ClipboardData(
+                                  text:
+                                      "Mods (${modList.length})\n${modList.map((e) => false ? "${e.modInfo.id} ${e.modInfo.version}" : "${e.modInfo.name}  v${e.modInfo.version}  [${e.modInfo.id}]").join('\n')}"));
+                              ScaffoldMessenger.of(context)
+                                  .showSnackBar(const SnackBar(
+                                content: Text("Copied mod info to clipboard."),
+                              ));
+                            },
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -77,27 +82,28 @@ class _ModListMiniState extends ConsumerState<ModListMini> {
           ),
           Text(
               modList != null
-                  ? " ${enabledModIds?.length ?? 0} of ${modList.length} enabled"
+                  ? "${enabledModIds?.length ?? 0} of ${modList.length} enabled"
                   : "",
               style: Theme.of(context).textTheme.labelMedium),
           Expanded(
             child: ref.watch(AppState.modVariants).when(
                   data: (modVariants) {
-                    final listItems = modVariants
+                    var modsWithUpdates = modVariants
                         .map((e) => e as ModVariant?)
                         .filter((mod) {
                           if (mod?.versionCheckerInfo == null) return false;
 
                           final localVersionCheck = mod!.versionCheckerInfo;
                           final remoteVersionCheck = versionCheck?[mod.smolId];
-                          return _doVersionCheck(
+                          return compareLocalAndRemoteVersions(
                                       localVersionCheck, remoteVersionCheck) ==
                                   -1 &&
                               remoteVersionCheck?.error == null;
                         })
                         .sortedBy((info) => info?.modInfo.name ?? "")
                         .toList()
-                      ..add(null)
+                      ..add(null);
+                    final listItems = modsWithUpdates
                       ..addAll(modVariants
                           // .filter((mod) => mod.versionCheckerInfo == null)
                           .sortedBy((info) => info.modInfo.name)
@@ -109,11 +115,39 @@ class _ModListMiniState extends ConsumerState<ModListMini> {
                       child: ListView.builder(
                           shrinkWrap: true,
                           controller: _scrollController,
-                          itemCount: listItems.length,
+                          itemCount: listItems.length +
+                              (modsWithUpdates.isNotEmpty ? 1 : 0),
                           itemBuilder: (context, index) {
-                            final modVariant = listItems[index];
+                            if (index == 0 && modsWithUpdates.isNotEmpty) {
+                              return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Divider(),
+                                    Padding(
+                                      padding:
+                                          const EdgeInsets.only(bottom: 4.0),
+                                      child: Text("UPDATES",
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .labelMedium),
+                                    ),
+                                  ]);
+                            }
+                            final modVariant = listItems[index - 1]; // ?????? TODO
                             if (modVariant == null) {
-                              return const Divider();
+                              return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Divider(),
+                                    Padding(
+                                      padding:
+                                          const EdgeInsets.only(bottom: 4.0),
+                                      child: Text("ALL MODS",
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .labelMedium),
+                                    ),
+                                  ]);
                             }
                             return ModListBasicEntry(
                                 mod: modVariant,
@@ -135,11 +169,6 @@ class _ModListMiniState extends ConsumerState<ModListMini> {
       ),
     );
   }
-}
-
-int? _doVersionCheck(VersionCheckerInfo? local, VersionCheckResult? remote) {
-  if (local == null || remote == null) return 0;
-  return local.modVersion?.compareTo(remote.remoteVersion?.modVersion);
 }
 
 /// Displays just the mods specified.
@@ -164,6 +193,8 @@ class _ModListBasicCustomState extends ConsumerState<ModListBasicEntry> {
     final modInfo = modVariant.modInfo;
     final localVersionCheck = modVariant.versionCheckerInfo;
     final remoteVersionCheck = versionCheck?[modVariant.smolId];
+    final versionCheckComparison =
+        compareLocalAndRemoteVersions(localVersionCheck, remoteVersionCheck);
     final compatWithGame = compareGameVersions(
         modInfo.gameVersion, ref.read(AppState.starsectorVersion).value);
     final compatTextColor = switch (compatWithGame) {
@@ -172,8 +203,6 @@ class _ModListBasicCustomState extends ConsumerState<ModListBasicEntry> {
       GameCompatibility.Compatible => null,
     };
     final theme = Theme.of(context);
-    final versionCheckComparison =
-        _doVersionCheck(localVersionCheck, remoteVersionCheck);
     infoTooltip({required Widget child}) => MovingTooltipWidget(
         tooltipWidget: SizedBox(
           width: 350,

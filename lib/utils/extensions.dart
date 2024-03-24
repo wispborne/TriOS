@@ -166,6 +166,8 @@ extension FileSystemEntityExt on FileSystemEntity {
   File toFile() => File(absolute.path);
 
   Directory toDirectory() => Directory(absolute.path);
+  
+  bool existsSync() => FileSystemEntity.typeSync(path) != FileSystemEntityType.notFound;
 }
 
 extension FileExt on File {

@@ -54,6 +54,11 @@ class VersionCheckResult {
   VersionCheckResult(this.smolId, this.remoteVersion, this.error);
 }
 
+int? compareLocalAndRemoteVersions(VersionCheckerInfo? local, VersionCheckResult? remote) {
+  if (local == null || remote == null) return 0;
+  return local.modVersion?.compareTo(remote.remoteVersion?.modVersion);
+}
+
 Future<VersionCheckResult> checkRemoteVersion(ModVariant modVariant) async {
   var remoteVersionUrl = modVariant.versionCheckerInfo?.masterVersionFile;
   if (remoteVersionUrl == null) {

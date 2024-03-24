@@ -46,6 +46,73 @@ class TriOSTheme with ChangeNotifier {
     print("Changed material. Material: $_isMaterial3");
     notifyListeners();
   }
+
+  static ThemeData getDarkTheme(Swatch swatch, bool material3) {
+    final seedColor = swatch.primary;
+
+    var darkThemeBase = ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+            seedColor: seedColor, brightness: Brightness.dark),
+        useMaterial3: material3);
+
+    return customizeTheme(darkThemeBase, swatch).copyWith();
+  }
+
+  static ThemeData getLightTheme(Swatch swatch, bool material3) {
+    final seedColor = swatch.primary;
+
+    var lightThemeBase = ThemeData(
+      colorScheme: ColorScheme.fromSeed(
+          seedColor: seedColor, brightness: Brightness.light),
+      useMaterial3: material3,
+    );
+
+    return customizeTheme(
+            lightThemeBase,
+            swatch
+              ..background = lightThemeBase.colorScheme.onInverseSurface
+              ..card = lightThemeBase.colorScheme.onInverseSurface)
+        .copyWith(
+            colorScheme: lightThemeBase.colorScheme.copyWith(
+                primary: swatch.primary,
+                secondary: swatch.secondary,
+                tertiary: swatch.tertiary),
+            textTheme: lightThemeBase.textTheme.copyWith(
+                bodyMedium: lightThemeBase.textTheme.bodyMedium
+                    ?.copyWith(fontSize: 16)),
+            iconTheme: lightThemeBase.iconTheme
+                .copyWith(color: lightThemeBase.colorScheme.onSurface),
+            tabBarTheme: lightThemeBase.tabBarTheme.copyWith(
+                labelColor: lightThemeBase.colorScheme.onSurface,
+                unselectedLabelColor: lightThemeBase.colorScheme.onSurface),
+            snackBarTheme: const SnackBarThemeData());
+  }
+
+  static ThemeData customizeTheme(ThemeData themeBase, Swatch swatch) {
+    return themeBase.copyWith(
+        colorScheme: themeBase.colorScheme.copyWith(
+          primary: swatch.primary,
+          secondary: swatch.secondary,
+          tertiary: swatch.tertiary,
+        ),
+        scaffoldBackgroundColor: swatch.background,
+        dialogBackgroundColor: swatch.background,
+        cardColor: swatch.card,
+        cardTheme: themeBase.cardTheme.copyWith(
+            color: swatch.card,
+            elevation: 4,
+            surfaceTintColor: Colors.transparent),
+        appBarTheme:
+            themeBase.appBarTheme.copyWith(backgroundColor: swatch.card),
+        floatingActionButtonTheme: themeBase.floatingActionButtonTheme.copyWith(
+            backgroundColor: swatch.primary,
+            foregroundColor: themeBase.colorScheme.surface),
+        checkboxTheme: themeBase.checkboxTheme.copyWith(
+            checkColor: MaterialStateProperty.all(Colors.transparent)),
+        textTheme: themeBase.textTheme.copyWith(
+            bodyMedium:
+                themeBase.textTheme.bodyMedium?.copyWith(fontSize: 16)));
+  }
 }
 
 /// For use with ColorFiltered
@@ -73,13 +140,14 @@ const ColorFilter greyscale = ColorFilter.matrix(<double>[
 ]);
 
 class Swatch {
-  final Color primary;
-  final Color secondary;
-  final Color tertiary;
-  final Color background;
-  final Color card;
+  Color primary;
+  Color secondary;
+  Color tertiary;
+  Color background;
+  Color card;
 
-  Swatch(this.primary, this.secondary, this.tertiary, this.background, this.card);
+  Swatch(
+      this.primary, this.secondary, this.tertiary, this.background, this.card);
 }
 
 class StarsectorSwatch extends Swatch {

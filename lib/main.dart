@@ -104,7 +104,8 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
 
   @override
   Widget build(BuildContext context) {
-    var material3 = AppState.theme.isMaterial3();
+    // Let's only manage one theme.
+    var material3 = true; //AppState.theme.isMaterial3();
 
     final starsectorSwatch = StarsectorSwatch();
     var swatch = switch (DateTime.now().month) {
@@ -113,51 +114,8 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
       _ => starsectorSwatch
     };
 
-    final seedColor = swatch.primary;
-
-    // Dark theme
-    var darkThemeBase = ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-            seedColor: seedColor, brightness: Brightness.dark),
-        useMaterial3: material3);
-    final darkTheme = darkThemeBase.copyWith(
-        colorScheme: darkThemeBase.colorScheme.copyWith(
-          primary: swatch.primary,
-          secondary: swatch.secondary,
-          tertiary: swatch.tertiary,
-        ),
-        scaffoldBackgroundColor: swatch.background,
-        dialogBackgroundColor: swatch.background,
-        cardColor: swatch.card,
-        cardTheme: darkThemeBase.cardTheme.copyWith(
-            color: swatch.card,
-            elevation: 4,
-            surfaceTintColor: Colors.transparent),
-        appBarTheme:
-            darkThemeBase.appBarTheme.copyWith(backgroundColor: swatch.card),
-        floatingActionButtonTheme: darkThemeBase.floatingActionButtonTheme
-            .copyWith(
-                backgroundColor: swatch.primary,
-                foregroundColor: darkThemeBase.colorScheme.surface),
-        textTheme: darkThemeBase.textTheme.copyWith(
-            bodyMedium:
-                darkThemeBase.textTheme.bodyMedium?.copyWith(fontSize: 16)));
-
-    // Light theme
-    var lightThemeBase = ThemeData(
-      colorScheme: ColorScheme.fromSeed(
-          seedColor: seedColor, brightness: Brightness.light),
-      useMaterial3: material3,
-    );
-    final lightTheme = lightThemeBase.copyWith(
-        colorScheme: lightThemeBase.colorScheme.copyWith(
-            primary: starsectorSwatch.primary,
-            secondary: starsectorSwatch.secondary,
-            tertiary: starsectorSwatch.tertiary),
-        textTheme: lightThemeBase.textTheme.copyWith(
-            bodyMedium:
-                lightThemeBase.textTheme.bodyMedium?.copyWith(fontSize: 16)),
-        snackBarTheme: const SnackBarThemeData());
+    final darkTheme = TriOSTheme.getDarkTheme(swatch, material3);
+    final lightTheme = TriOSTheme.getLightTheme(swatch, material3);
 
     return MaterialApp(
         title: Constants.appTitle,

@@ -99,16 +99,16 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               label: "Auto-update ${Constants.appName} on launch",
             ),
           ),
-          Tooltip(
-              message:
-                  "Switches between versions 2 and 3 of Google's 'Material Design' UI style.",
-              child: Padding(
-                padding: const EdgeInsets.only(top: 8.0),
-                child: CheckboxWithLabel(
-                    label: "Use Material Design 3",
-                    onChanged: (_) => AppState.theme.switchMaterial(),
-                    value: AppState.theme.isMaterial3()),
-              )),
+          // Tooltip(
+          //     message:
+          //         "Switches between versions 2 and 3 of Google's 'Material Design' UI style.",
+          //     child: Padding(
+          //       padding: const EdgeInsets.only(top: 8.0),
+          //       child: CheckboxWithLabel(
+          //           label: "Use Material Design 3",
+          //           onChanged: (_) => AppState.theme.switchMaterial(),
+          //           value: AppState.theme.isMaterial3()),
+          //     )),
           // Debugging line here
           SizedBox.fromSize(size: const Size.fromHeight(20)),
           Text("Debugging stuff below here, please ignore.",

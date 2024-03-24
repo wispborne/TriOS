@@ -80,6 +80,14 @@ extension StringExt on String {
     return substring(index);
   }
 
+  String trimEnd(String suffix) {
+    var index = length - 1;
+    while (index >= 0 && suffix.contains(this[index])) {
+      index--;
+    }
+    return substring(0, index + 1);
+  }
+
   // Helper for comparing number-like strings
   int compareRecognizingNumbers(String str2) {
     final chunks1 = splitIntoAlphaAndNumeric();
@@ -320,6 +328,18 @@ extension IterableExt<T> on Iterable<T> {
     }
 
     return result;
+  }
+
+  Iterable<T> dropUntil(bool Function(T) predicate) {
+    var found = false;
+    return where((element) {
+      if (found) return true;
+      if (predicate(element)) {
+        found = true;
+        return true;
+      }
+      return false;
+    });
   }
 }
 

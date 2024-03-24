@@ -11,6 +11,7 @@ import 'package:trios/models/launch_settings.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/platform_paths.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:win32_registry/win32_registry.dart';
 
 import '../trios/trios_theme.dart';
@@ -199,48 +200,41 @@ class Launcher extends ConsumerWidget {
               .toList();
 
       Fimber.d('processArgs: $finalVmparams');
-      Process.start(javaExe!.absolute.path, finalVmparams,
+      Process.start(javaExe.absolute.path, finalVmparams,
           workingDirectory: gameCorePath?.path,
           mode: ProcessStartMode.detached,
           includeParentEnvironment: true);
     } else if (Platform.isMacOS) {
-      const harcodedVmparams = r""" \
-      -Xdock:name="Starsector" \
-    -Xdock:icon=../../Resources/s_icon128.icns \
-    -Dapple.laf.useScreenMenuBar=false \
-    -Dcom.apple.macos.useScreenMenuBar=false \
-    -Dapple.awt.showGrowBox=false \
-    -Dfile.encoding=UTF-8 \
-    ${EXTRAARGS} \
-    -Xverify:none \
-	-server \
-	-XX:CompilerThreadPriority=1 \
-	-XX:+CompilerThreadHintNoPreempt \
-	-Djava.library.path=../../Resources/Java/native/macosx \
-	-Dcom.fs.starfarer.settings.paths.saves=../../../saves \
-	-Dcom.fs.starfarer.settings.paths.screenshots=../../../screenshots \
-	-Dcom.fs.starfarer.settings.paths.mods=../../../mods \
-	-Dcom.fs.starfarer.settings.paths.logs=../../../logs \
-	-Dcom.fs.starfarer.settings.osx=true \
-    -Xms4096m \
-    -Xmx4096m \
-    -Xss2048k \
-	-cp ../../Resources/Java/AppleJavaExtensions.jar:../../Resources/Java/commons-compiler-jdk.jar:../../Resources/Java/commons-compiler.jar:../../Resources/Java/fs.sound_obf.jar:../../Resources/Java/janino.jar:../../Resources/Java/jinput.jar:../../Resources/Java/jogg-0.0.7.jar:../../Resources/Java/jorbis-0.0.15.jar:../../Resources/Java/json.jar:../../Resources/Java/log4j-1.2.9.jar:../../Resources/Java/lwjgl.jar:../../Resources/Java/lwjgl_util.jar:../../Resources/Java/starfarer.api.jar:../../Resources/Java/starfarer_obf.jar:../../Resources/Java/fs.common_obf.jar:../../Resources/Java/xstream-1.4.10.jar \
-    com.fs.starfarer.StarfarerLauncher
-      """;
+      final vmparamsInFile = vmParams
+          .readAsStringSync()
+          .split("\n")
+          .dropUntil((it) => it.contains("\$JAVA_HOME/bin/java"))
+          .skip(1) // Skip the java line
+          .takeWhile((it) => !it.contains('"\$@"'))
+          .join("\n");
       // Replace ${EXTRAARGS} (part of vanilla script) with the custom args.
-      final launchScript = harcodedVmparams.split("\\\n").map((e) => e.trim()).join(' ');
-          // .replaceAll(
-          // "\${EXTRAARGS}",
-          // overrideArgs.entries
-          //     .map((entry) => '${entry.key}=${entry.value}')
-          //     .join('\\ \n'));
+      final launchScript = vmparamsInFile
+          .replaceAll("-cp",
+              "-cp\n") // -cp needs to be a separate argument from its value
+          // Otherwise the application will be called "Starsector" (with quotes)
+          .replaceAll('"', "")
+          .replaceAll(
+              // Replace ${EXTRAARGS} with our Direct Launch args
+              "\${EXTRAARGS}",
+              overrideArgs.entries
+                  .map((entry) => '${entry.key}=${entry.value}')
+                  .join('\\ \n'))
+          .split("\n")
+          .map((e) => e.trim().trimEnd("\\").trim())
+          .filter((it) => it.isNotNullOrEmpty())
+          .toList();
+
       Fimber.d('launchScript: $launchScript');
-      final process = await Process.start(javaExe.absolute.path, [launchScript],
-          workingDirectory: gameCorePath?.path,
-          mode: ProcessStartMode.normal,
-          // runInShell: true,
-          includeParentEnvironment: true);
+      final process = await Process.start(javaExe.path, launchScript,
+          workingDirectory: gameCorePath?.absolute.path,
+          mode: ProcessStartMode.detachedWithStdio,
+          includeParentEnvironment: true,
+          runInShell: true);
       Fimber.d(
           "Stdout: ${await process.stdout.transform(utf8.decoder).join()}");
       Fimber.w(

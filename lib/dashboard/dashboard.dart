@@ -216,8 +216,8 @@ class _DashboardState extends ConsumerState<Dashboard> with AutomaticKeepAliveCl
                               Padding(
                                 padding: const EdgeInsets.only(top: 32),
                                 child: Tooltip(
-                                  message: "Revert to use default Vanilla settings.",
-                                  child: ElevatedButton(
+                                  message: "Use your non-TriOS launcher settings instead",
+                                  child: OutlinedButton(
                                       onPressed: () {
                                         ref
                                             .read(appSettings.notifier)

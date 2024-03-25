@@ -68,7 +68,7 @@ dependencies:
   desktop_drop: ^0.4.4
   platform_info: ^4.0.2
   cross_file: ^0.3.4+1
-  file_picker: ^6.2.0
+  file_picker: ^8.0.0+1
   flutter_linkify: ^6.0.0
   url_launcher: ^6.2.5
   open_filex: ^4.4.0
@@ -78,6 +78,7 @@ dependencies:
   styled_text: ^8.1.0
   vs_scrollbar: ^1.0.0
   plist_parser: ^0.0.11
+  flutter_download_manager: ^0.5.5
 
 dev_dependencies:
   # dart run build_runner watch --delete-conflicting-outputs

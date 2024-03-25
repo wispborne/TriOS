@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:toastification/toastification.dart';
 import 'package:trios/trios/trios_theme.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/trios_app_icon.dart';
 
 import '../trios/app_state.dart';
@@ -44,17 +45,20 @@ class SelfUpdateToast extends ConsumerWidget {
                   Text("${latestRelease.tagName} is now available!", style: Theme.of(context).textTheme.labelLarge),
                   Padding(
                     padding: const EdgeInsets.all(8.0),
-                    child: ElevatedButton(
-                        onPressed: () {
-                          SelfUpdater.update(latestRelease, downloadProgress: (bytesReceived, contentLength) {
-                            ref
-                                .read(AppState.selfUpdateDownloadProgress.notifier)
-                                .update((_) => bytesReceived / contentLength);
-                            Fimber.i(
-                                "Downloaded: ${bytesReceived.bytesAsReadableMB()} / ${contentLength.bytesAsReadableMB()}");
-                          });
-                        },
-                        child: const Text("Update")),
+                    child: Disable(
+                      isEnabled: ref.watch(AppState.selfUpdateDownloadProgress) == null,
+                      child: ElevatedButton(
+                          onPressed: () {
+                            SelfUpdater.update(latestRelease, downloadProgress: (bytesReceived, contentLength) {
+                              ref
+                                  .read(AppState.selfUpdateDownloadProgress.notifier)
+                                  .update((_) => bytesReceived / contentLength);
+                              Fimber.i(
+                                  "Downloaded: ${bytesReceived.bytesAsReadableMB()} / ${contentLength.bytesAsReadableMB()}");
+                            });
+                          },
+                          child: const Text("Update")),
+                    ),
                   ),
                   LinearProgressIndicator(
                     value: ref.watch(AppState.selfUpdateDownloadProgress) ?? 0,

@@ -21,17 +21,17 @@ class _VersionCheckerNotifier extends AsyncNotifier<Map<String, VersionCheckResu
 
   // Executes async, updates state every time a Version Check http request is completed.
   void refresh() {
-    state = AsyncValue.data({});
-    final _versionCheckResultsCache = state.value ?? {}; // TODO change to just state
+    state = const AsyncValue.data({});
+    final versionCheckResultsCache = state.value ?? {}; // TODO change to just state
 
     final mods = ref.watch(AppState.modVariants);
     if (mods.value.isNullOrEmpty()) return;
 
     // TODO refresh cache button
     try {
-      final entries = mods.value!.map((mod) {
-        if (_versionCheckResultsCache[mod.smolId] != null) {
-          return Future.value(_versionCheckResultsCache[mod.smolId]!);
+      mods.value!.map((mod) {
+        if (versionCheckResultsCache[mod.smolId] != null) {
+          return Future.value(versionCheckResultsCache[mod.smolId]!);
         } else {
           return checkRemoteVersion(mod);
         }

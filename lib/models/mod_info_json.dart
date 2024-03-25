@@ -62,7 +62,7 @@ class VersionObject with _$VersionObject {
   String toString() => "$major.$minor.$patch";
 
   int compareTo(VersionObject? other) {
-    if (other == null) return -1;
+    if (other == null) return 0;
 
     var result = (major.toString().compareRecognizingNumbers(other.major.toString()));
     if (result != 0) return result;

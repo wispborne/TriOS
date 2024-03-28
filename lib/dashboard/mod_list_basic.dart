@@ -50,23 +50,39 @@ class _ModListMiniState extends ConsumerState<ModListMini> {
                       alignment: Alignment.topRight,
                       child: Padding(
                         padding: const EdgeInsets.all(4.0),
-                        child: Tooltip(
-                          message: "Copy mod info",
-                          child: IconButton(
-                            icon: const Icon(Icons.copy),
-                            padding: EdgeInsets.zero,
-                            iconSize: 20,
-                            constraints: const BoxConstraints(),
-                            onPressed: () {
-                              if (modList == null) return;
-                              Clipboard.setData(ClipboardData(
-                                  text:
-                                      "Mods (${modList.length})\n${modList.map((e) => false ? "${e.modInfo.id} ${e.modInfo.version}" : "${e.modInfo.name}  v${e.modInfo.version}  [${e.modInfo.id}]").join('\n')}"));
-                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                                content: Text("Copied mod info to clipboard."),
-                              ));
-                            },
-                          ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Tooltip(
+                              message: "Refresh mods and recheck versions",
+                              child: IconButton(
+                                icon: const Icon(Icons.refresh),
+                                padding: const EdgeInsets.only(right: 8.0),
+                                constraints: const BoxConstraints(),
+                                onPressed: () {
+                                  ref.invalidate(AppState.modVariants);
+                                },
+                              ),
+                            ),
+                            Tooltip(
+                              message: "Copy mod info",
+                              child: IconButton(
+                                icon: const Icon(Icons.copy),
+                                padding: EdgeInsets.zero,
+                                iconSize: 20,
+                                constraints: const BoxConstraints(),
+                                onPressed: () {
+                                  if (modList == null) return;
+                                  Clipboard.setData(ClipboardData(
+                                      text:
+                                          "Mods (${modList.length})\n${modList.map((e) => false ? "${e.modInfo.id} ${e.modInfo.version}" : "${e.modInfo.name}  v${e.modInfo.version}  [${e.modInfo.id}]").join('\n')}"));
+                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                                    content: Text("Copied mod info to clipboard."),
+                                  ));
+                                },
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),

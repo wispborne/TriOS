@@ -85,7 +85,7 @@ class TriOSTheme with ChangeNotifier {
 
   static ThemeData customizeTheme(ThemeData themeBase, Swatch swatch) {
     // Choose font here
-    final textTheme = GoogleFonts.notoSansCarianTextTheme(themeBase.textTheme);
+    final textTheme = GoogleFonts.ibmPlexSansTextTheme(themeBase.textTheme);
 
     return themeBase.copyWith(
         colorScheme: themeBase.colorScheme.copyWith(

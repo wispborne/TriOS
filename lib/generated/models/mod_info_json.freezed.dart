@@ -168,8 +168,8 @@ ModInfoJson _$ModInfoJsonFromJson(Map<String, dynamic> json) {
 mixin _$ModInfoJson {
   String get id => throw _privateConstructorUsedError;
   String get name => throw _privateConstructorUsedError;
-  @JsonConverterVersion()
-  Version get version => throw _privateConstructorUsedError;
+  @JsonConverterVersionNullable()
+  Version? get version => throw _privateConstructorUsedError;
   String? get author => throw _privateConstructorUsedError;
   String? get gameVersion => throw _privateConstructorUsedError;
   List<Dependency> get dependencies => throw _privateConstructorUsedError;
@@ -190,7 +190,7 @@ abstract class $ModInfoJsonCopyWith<$Res> {
   $Res call(
       {String id,
       String name,
-      @JsonConverterVersion() Version version,
+      @JsonConverterVersionNullable() Version? version,
       String? author,
       String? gameVersion,
       List<Dependency> dependencies,
@@ -212,7 +212,7 @@ class _$ModInfoJsonCopyWithImpl<$Res, $Val extends ModInfoJson>
   $Res call({
     Object? id = null,
     Object? name = null,
-    Object? version = null,
+    Object? version = freezed,
     Object? author = freezed,
     Object? gameVersion = freezed,
     Object? dependencies = null,
@@ -227,10 +227,10 @@ class _$ModInfoJsonCopyWithImpl<$Res, $Val extends ModInfoJson>
           ? _value.name
           : name // ignore: cast_nullable_to_non_nullable
               as String,
-      version: null == version
+      version: freezed == version
           ? _value.version
           : version // ignore: cast_nullable_to_non_nullable
-              as Version,
+              as Version?,
       author: freezed == author
           ? _value.author
           : author // ignore: cast_nullable_to_non_nullable
@@ -262,7 +262,7 @@ abstract class _$$ModInfoJsonImplCopyWith<$Res>
   $Res call(
       {String id,
       String name,
-      @JsonConverterVersion() Version version,
+      @JsonConverterVersionNullable() Version? version,
       String? author,
       String? gameVersion,
       List<Dependency> dependencies,
@@ -282,7 +282,7 @@ class __$$ModInfoJsonImplCopyWithImpl<$Res>
   $Res call({
     Object? id = null,
     Object? name = null,
-    Object? version = null,
+    Object? version = freezed,
     Object? author = freezed,
     Object? gameVersion = freezed,
     Object? dependencies = null,
@@ -297,10 +297,10 @@ class __$$ModInfoJsonImplCopyWithImpl<$Res>
           ? _value.name
           : name // ignore: cast_nullable_to_non_nullable
               as String,
-      version: null == version
+      version: freezed == version
           ? _value.version
           : version // ignore: cast_nullable_to_non_nullable
-              as Version,
+              as Version?,
       author: freezed == author
           ? _value.author
           : author // ignore: cast_nullable_to_non_nullable
@@ -326,7 +326,7 @@ class __$$ModInfoJsonImplCopyWithImpl<$Res>
 class _$ModInfoJsonImpl extends _ModInfoJson {
   const _$ModInfoJsonImpl(this.id,
       {this.name = "",
-      @JsonConverterVersion() required this.version,
+      @JsonConverterVersionNullable() this.version,
       this.author,
       this.gameVersion,
       final List<Dependency> dependencies = const [],
@@ -343,8 +343,8 @@ class _$ModInfoJsonImpl extends _ModInfoJson {
   @JsonKey()
   final String name;
   @override
-  @JsonConverterVersion()
-  final Version version;
+  @JsonConverterVersionNullable()
+  final Version? version;
   @override
   final String? author;
   @override
@@ -412,7 +412,7 @@ class _$ModInfoJsonImpl extends _ModInfoJson {
 abstract class _ModInfoJson extends ModInfoJson {
   const factory _ModInfoJson(final String id,
       {final String name,
-      @JsonConverterVersion() required final Version version,
+      @JsonConverterVersionNullable() final Version? version,
       final String? author,
       final String? gameVersion,
       final List<Dependency> dependencies,
@@ -427,8 +427,8 @@ abstract class _ModInfoJson extends ModInfoJson {
   @override
   String get name;
   @override
-  @JsonConverterVersion()
-  Version get version;
+  @JsonConverterVersionNullable()
+  Version? get version;
   @override
   String? get author;
   @override

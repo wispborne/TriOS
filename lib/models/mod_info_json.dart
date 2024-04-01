@@ -1,5 +1,6 @@
 import 'dart:core';
 
+import 'package:collection/collection.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/utils/extensions.dart';
@@ -21,7 +22,7 @@ class ModInfoJson with _$ModInfoJson {
 
   const factory ModInfoJson(final String id,
       {@Default("") final String name,
-      @JsonConverterVersion() required final Version version,
+      @JsonConverterVersionNullable() final Version? version,
       final String? author,
       final String? gameVersion,
       @Default([]) final List<Dependency> dependencies,
@@ -59,7 +60,7 @@ class VersionObject with _$VersionObject {
   factory VersionObject.fromJson(Map<String, dynamic> json) => _$VersionObjectFromJson(json);
 
   @override
-  String toString() => "$major.$minor.$patch";
+  String toString() => [major, minor, patch].whereNotNull().join(".");
 
   int compareTo(VersionObject? other) {
     if (other == null) return 0;

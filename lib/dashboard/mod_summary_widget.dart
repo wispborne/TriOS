@@ -50,7 +50,7 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
             ],
           ),
         Text(modInfo.name, style: theme.textTheme.titleMedium),
-        Text("${modInfo.id} • ${modInfo.version}", style: theme.textTheme.labelSmall),
+        Text("${modInfo.id} • ${modInfo.version ?? ""}", style: theme.textTheme.labelSmall),
         const SizedBox(height: spacing),
         if (modInfo.author != null)
           Column(

@@ -10,7 +10,7 @@ _$ModInfoImpl _$$ModInfoImplFromJson(Map<String, dynamic> json) =>
     _$ModInfoImpl(
       id: json['id'] as String,
       name: json['name'] as String,
-      version: const JsonConverterVersion().fromJson(json['version']),
+      version: const JsonConverterVersionNullable().fromJson(json['version']),
       description: json['description'] as String?,
       gameVersion: json['gameVersion'] as String?,
       author: json['author'] as String?,
@@ -24,7 +24,7 @@ Map<String, dynamic> _$$ModInfoImplToJson(_$ModInfoImpl instance) =>
     <String, dynamic>{
       'id': instance.id,
       'name': instance.name,
-      'version': const JsonConverterVersion().toJson(instance.version),
+      'version': const JsonConverterVersionNullable().toJson(instance.version),
       'description': instance.description,
       'gameVersion': instance.gameVersion,
       'author': instance.author,

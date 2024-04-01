@@ -69,7 +69,7 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                   children: [
                     Expanded(
                       child: infoTooltip(
-                          child: Text("${modInfo.name} ${modInfo.version}",
+                          child: Text("${modInfo.name} ${modInfo.version ?? ""}",
                               overflow: TextOverflow.fade,
                               softWrap: false,
                               maxLines: 1,

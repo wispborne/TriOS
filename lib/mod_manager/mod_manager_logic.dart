@@ -22,18 +22,25 @@ Future<List<ModVariant>> getModsInFolder(Directory modsFolder) async {
   var mods = <ModVariant?>[];
 
   for (var modFolder in modsFolder.listSync().whereType<Directory>()) {
-    var progressText = StringBuffer();
-    var modInfo = await getModInfo(modFolder, progressText);
-    if (modInfo == null) {
-      continue;
+    try {
+      var progressText = StringBuffer();
+      var modInfo = await getModInfo(modFolder, progressText);
+      if (modInfo == null) {
+        continue;
+      }
+
+      final modVariant = ModVariant(
+          modInfo: modInfo,
+          modsFolder: modFolder,
+          versionCheckerInfo: getVersionFile(modFolder)?.let((it) => getVersionCheckerInfo(it)));
+
+      // Screenshot mode
+      // if (modVariant.modInfo.isCompatibleWithGame("0.97a-RC10") == GameCompatibility.compatible || (Random().nextBool() && Random().nextBool())) {
+      mods.add(modVariant);
+      // }
+    } catch (e, st) {
+      Fimber.w("Unable to read mod in ${modFolder.absolute}. ($e)\n$st");
     }
-
-    final modVariant = ModVariant(
-        modInfo: modInfo,
-        modsFolder: modFolder,
-        versionCheckerInfo: getVersionFile(modFolder)?.let((it) => getVersionCheckerInfo(it)));
-
-    mods.add(modVariant);
   }
 
   return mods.whereType<ModVariant>().toList();
@@ -60,7 +67,7 @@ VersionCheckerInfo? getVersionCheckerInfo(File versionFile) {
 }
 
 File? getVersionFile(Directory modFolder) {
-  final csv = File(p.join(modFolder.path, Constants.VERSION_CHECKER_CSV_PATH));
+  final csv = File(p.join(modFolder.path, Constants.versionCheckerCsvPath));
   if (!csv.existsSync()) return null;
   try {
     return modFolder
@@ -127,7 +134,7 @@ Future<void> enableMod(String modInfoId, Directory modsFolder, WidgetRef ref) as
 }
 
 Future<void> forceChangeModGameVersion(ModVariant modVariant, String newGameVersion) async {
-  final modInfoFile = modVariant.modsFolder.resolve(Constants.MOD_INFO_FILE_NAME).toFile();
+  final modInfoFile = modVariant.modsFolder.resolve(Constants.modInfoFileName).toFile();
   // Replace the game version in the mod_info.json file.
   // Don't use the code model, we want to keep any extra fields that might not be in the model.
   final modInfoJson = modInfoFile.readAsStringSync().fixJsonToMap();
@@ -165,9 +172,9 @@ extension DependencyExt on Dependency {
 
     //  && mod.version.compareTo(version!) < 0
     if (version != null) {
-      if (mod.version.major != version!.major) {
+      if (mod.version?.major != version!.major) {
         return VersionInvalid(mod);
-      } else if (mod.version.minor != version!.minor) {
+      } else if (mod.version?.minor != version!.minor) {
         return VersionWarning(mod);
       }
     }

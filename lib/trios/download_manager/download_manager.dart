@@ -37,9 +37,9 @@ downloadUpdateViaBrowser(VersionCheckerInfo remoteVersion) {
     launchUrl(Uri.parse(remoteVersion!.directDownloadURL!));
   } else if (remoteVersion.modThreadId != null) {
     launchUrl(Uri.parse(
-        "${Constants.FORUM_MOD_PAGE_URL}${remoteVersion.modThreadId}"));
+        "${Constants.forumModPageUrl}${remoteVersion.modThreadId}"));
   } else if (remoteVersion.modNexusId != null) {
     launchUrl(Uri.parse(
-        "${Constants.NEXUS_MODS_PAGE_URL}${remoteVersion.modNexusId}"));
+        "${Constants.nexusModsPageUrl}${remoteVersion.modNexusId}"));
   }
 }

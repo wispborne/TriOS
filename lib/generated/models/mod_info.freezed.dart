@@ -22,8 +22,8 @@ ModInfo _$ModInfoFromJson(Map<String, dynamic> json) {
 mixin _$ModInfo {
   String get id => throw _privateConstructorUsedError;
   String get name => throw _privateConstructorUsedError;
-  @JsonConverterVersion()
-  Version get version => throw _privateConstructorUsedError;
+  @JsonConverterVersionNullable()
+  Version? get version => throw _privateConstructorUsedError;
   String? get description => throw _privateConstructorUsedError;
   String? get gameVersion => throw _privateConstructorUsedError;
   String? get author => throw _privateConstructorUsedError;
@@ -42,7 +42,7 @@ abstract class $ModInfoCopyWith<$Res> {
   $Res call(
       {String id,
       String name,
-      @JsonConverterVersion() Version version,
+      @JsonConverterVersionNullable() Version? version,
       String? description,
       String? gameVersion,
       String? author,
@@ -64,7 +64,7 @@ class _$ModInfoCopyWithImpl<$Res, $Val extends ModInfo>
   $Res call({
     Object? id = null,
     Object? name = null,
-    Object? version = null,
+    Object? version = freezed,
     Object? description = freezed,
     Object? gameVersion = freezed,
     Object? author = freezed,
@@ -79,10 +79,10 @@ class _$ModInfoCopyWithImpl<$Res, $Val extends ModInfo>
           ? _value.name
           : name // ignore: cast_nullable_to_non_nullable
               as String,
-      version: null == version
+      version: freezed == version
           ? _value.version
           : version // ignore: cast_nullable_to_non_nullable
-              as Version,
+              as Version?,
       description: freezed == description
           ? _value.description
           : description // ignore: cast_nullable_to_non_nullable
@@ -113,7 +113,7 @@ abstract class _$$ModInfoImplCopyWith<$Res> implements $ModInfoCopyWith<$Res> {
   $Res call(
       {String id,
       String name,
-      @JsonConverterVersion() Version version,
+      @JsonConverterVersionNullable() Version? version,
       String? description,
       String? gameVersion,
       String? author,
@@ -133,7 +133,7 @@ class __$$ModInfoImplCopyWithImpl<$Res>
   $Res call({
     Object? id = null,
     Object? name = null,
-    Object? version = null,
+    Object? version = freezed,
     Object? description = freezed,
     Object? gameVersion = freezed,
     Object? author = freezed,
@@ -148,10 +148,10 @@ class __$$ModInfoImplCopyWithImpl<$Res>
           ? _value.name
           : name // ignore: cast_nullable_to_non_nullable
               as String,
-      version: null == version
+      version: freezed == version
           ? _value.version
           : version // ignore: cast_nullable_to_non_nullable
-              as Version,
+              as Version?,
       description: freezed == description
           ? _value.description
           : description // ignore: cast_nullable_to_non_nullable
@@ -178,7 +178,7 @@ class _$ModInfoImpl extends _ModInfo {
   const _$ModInfoImpl(
       {required this.id,
       required this.name,
-      @JsonConverterVersion() required this.version,
+      @JsonConverterVersionNullable() this.version,
       this.description,
       this.gameVersion,
       this.author,
@@ -194,8 +194,8 @@ class _$ModInfoImpl extends _ModInfo {
   @override
   final String name;
   @override
-  @JsonConverterVersion()
-  final Version version;
+  @JsonConverterVersionNullable()
+  final Version? version;
   @override
   final String? description;
   @override
@@ -256,7 +256,7 @@ abstract class _ModInfo extends ModInfo {
   const factory _ModInfo(
       {required final String id,
       required final String name,
-      @JsonConverterVersion() required final Version version,
+      @JsonConverterVersionNullable() final Version? version,
       final String? description,
       final String? gameVersion,
       final String? author,
@@ -270,8 +270,8 @@ abstract class _ModInfo extends ModInfo {
   @override
   String get name;
   @override
-  @JsonConverterVersion()
-  Version get version;
+  @JsonConverterVersionNullable()
+  Version? get version;
   @override
   String? get description;
   @override

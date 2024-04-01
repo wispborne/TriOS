@@ -27,7 +27,7 @@ class ModVariant with _$ModVariant {
 
 final smolIdAllowedChars = RegExp(r'[^0-9a-zA-Z\\.\-_]');
 
-String createSmolId(String id, Version version) {
+String createSmolId(String id, Version? version) {
   return '${id.replaceAll(smolIdAllowedChars, '').take(6)}-${version.toString().replaceAll(smolIdAllowedChars, '').take(9)}-${(id.hashCode + version.hashCode).abs()}';
 }
 

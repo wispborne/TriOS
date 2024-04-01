@@ -4,11 +4,23 @@ All-in-one Starsector toolkit. Very very early development.
 
 ## Tools
 
+- **Launcher/Dashboard**: Replacement for the game launcher.
 - (WIP) **VRAM Estimator**: Now with visualization.
 - **Chipper**: Logfile viewer.
 - (TODO) **StarModder**: Mod database viewer.
 - **Rules.csv Autoreloader**: Hot reload for your mod rules.csv.
 - (TODO) **Mod Manager**: SMOL 2.0.
+
+## Screenshots
+
+### Dashboard/Launcher
+![Dashboard](readme_resources/dashboard.png)
+### Chipper
+![Chipper](readme_resources/chipper.png)
+### JRE Manager
+![JRE Manager](readme_resources/jre.png)
+### rules.csv Autoreloader
+![rules.csv Autoreloader](readme_resources/rules_reload.png)
 
 ## Building
 

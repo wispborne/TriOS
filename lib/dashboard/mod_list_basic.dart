@@ -12,6 +12,7 @@ import 'package:vs_scrollbar/vs_scrollbar.dart';
 
 import '../mod_manager/version_checker.dart';
 import '../models/mod_variant.dart';
+import '../models/version.dart';
 import '../trios/app_state.dart';
 import '../trios/download_manager/download_manager.dart';
 import 'mod_list_basic_entry.dart';
@@ -33,7 +34,7 @@ class _ModListMiniState extends ConsumerState<ModListMini> {
     final modList = modListAsync.valueOrNull
         ?.groupBy((ModVariant a) => a.modInfo.id)
         .values
-        .map((variants) => variants.maxByOrNull((variant) => variant.modInfo.version))
+        .map((variants) => variants.maxByOrNull((variant) => (variant.modInfo.version ?? const Version(raw: "0.0.0"))))
         .whereType<ModVariant>()
         .toList();
     var versionCheck = ref.watch(versionCheckResults).valueOrNull;

@@ -44,16 +44,12 @@ void main() async {
 
   // Restore window position and size
   final settings = readAppSettings();
-
-  // if (settings != null && settings.windowWidth != null && settings.windowHeight != null) {
   final windowFrame = Rect.fromLTWH(settings?.windowXPos ?? 0, settings?.windowYPos ?? 0, settings?.windowWidth ?? 800,
       settings?.windowHeight ?? 600);
-  // windowOptions = WindowOptions(size: windowFrame.size, minimumSize: minSize);
   setWindowFrame(windowFrame);
   if (settings?.isMaximized ?? false) {
     windowManager.maximize();
   }
-  // }
 
   runApp(const ProviderScope(observers: [], child: TriOSApp()));
   setWindowTitle(Constants.appTitle);

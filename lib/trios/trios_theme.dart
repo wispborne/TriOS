@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_color/flutter_color.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../trios/app_state.dart';
 
@@ -66,23 +67,26 @@ class TriOSTheme with ChangeNotifier {
     );
 
     return customizeTheme(
-            lightThemeBase,
-            swatch
-              ..background = lightThemeBase.colorScheme.onInverseSurface
-              ..card = lightThemeBase.colorScheme.onInverseSurface)
+        lightThemeBase,
+        swatch
+          ..background = lightThemeBase.colorScheme.onInverseSurface
+          ..card = lightThemeBase.colorScheme.onInverseSurface)
         .copyWith(
-            colorScheme: lightThemeBase.colorScheme
-                .copyWith(primary: swatch.primary, secondary: swatch.secondary, tertiary: swatch.tertiary),
-            textTheme: lightThemeBase.textTheme
-                .copyWith(bodyMedium: lightThemeBase.textTheme.bodyMedium?.copyWith(fontSize: 16)),
-            iconTheme: lightThemeBase.iconTheme.copyWith(color: lightThemeBase.colorScheme.onSurface),
-            tabBarTheme: lightThemeBase.tabBarTheme.copyWith(
-                labelColor: lightThemeBase.colorScheme.onSurface,
-                unselectedLabelColor: lightThemeBase.colorScheme.onSurface),
-            snackBarTheme: const SnackBarThemeData());
+        colorScheme: lightThemeBase.colorScheme
+            .copyWith(primary: swatch.primary, secondary: swatch.secondary, tertiary: swatch.tertiary),
+        textTheme: lightThemeBase.textTheme
+            .copyWith(bodyMedium: lightThemeBase.textTheme.bodyMedium?.copyWith(fontSize: 16)),
+        iconTheme: lightThemeBase.iconTheme.copyWith(color: lightThemeBase.colorScheme.onSurface),
+        tabBarTheme: lightThemeBase.tabBarTheme.copyWith(
+            labelColor: lightThemeBase.colorScheme.onSurface,
+            unselectedLabelColor: lightThemeBase.colorScheme.onSurface),
+        snackBarTheme: const SnackBarThemeData());
   }
 
   static ThemeData customizeTheme(ThemeData themeBase, Swatch swatch) {
+    // Choose font here
+    final textTheme = GoogleFonts.notoSansCarianTextTheme(themeBase.textTheme);
+
     return themeBase.copyWith(
         colorScheme: themeBase.colorScheme.copyWith(
           primary: swatch.primary,
@@ -97,7 +101,7 @@ class TriOSTheme with ChangeNotifier {
         floatingActionButtonTheme: themeBase.floatingActionButtonTheme
             .copyWith(backgroundColor: swatch.primary, foregroundColor: themeBase.colorScheme.surface),
         checkboxTheme: themeBase.checkboxTheme.copyWith(checkColor: MaterialStateProperty.all(Colors.transparent)),
-        textTheme: themeBase.textTheme.copyWith(bodyMedium: themeBase.textTheme.bodyMedium?.copyWith(fontSize: 16)));
+        textTheme: textTheme.copyWith(bodyMedium: textTheme.bodyMedium?.copyWith(fontSize: 16)));
   }
 }
 
@@ -137,13 +141,17 @@ showSnackBar({
   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
     content: type != null
         ? DefaultTextStyle.merge(
-            child: content, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))
+        child: content, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))
         : content,
     backgroundColor: switch (type) {
       SnackBarType.info => Colors.blue,
       SnackBarType.warn => vanillaWarningColor,
       SnackBarType.error => vanillaErrorColor,
-      null => Theme.of(context).snackBarTheme.backgroundColor
+      null =>
+      Theme
+          .of(context)
+          .snackBarTheme
+          .backgroundColor
     },
     elevation: elevation,
     margin: margin,
@@ -201,32 +209,32 @@ class Swatch {
 class StarsectorSwatch extends Swatch {
   StarsectorSwatch()
       : super(
-          const Color.fromRGBO(73, 252, 255, 1),
-          const Color.fromRGBO(59, 203, 232, 1),
-          const Color.fromRGBO(0, 255, 255, 1),
-          const Color.fromRGBO(14, 22, 43, 1),
-          const Color.fromRGBO(32, 41, 65, 1.0),
-        );
+    const Color.fromRGBO(73, 252, 255, 1),
+    const Color.fromRGBO(59, 203, 232, 1),
+    const Color.fromRGBO(0, 255, 255, 1),
+    const Color.fromRGBO(14, 22, 43, 1),
+    const Color.fromRGBO(32, 41, 65, 1.0),
+  );
 }
 
 class HalloweenSwatch extends Swatch {
   HalloweenSwatch()
       : super(
-          HexColor("#FF0000"),
-          HexColor("#FF4D00").lighter(10),
-          HexColor("#FF4D00").lighter(20),
-          HexColor("#272121"),
-          HexColor("#272121").lighter(3),
-        );
+    HexColor("#FF0000"),
+    HexColor("#FF4D00").lighter(10),
+    HexColor("#FF4D00").lighter(20),
+    HexColor("#272121"),
+    HexColor("#272121").lighter(3),
+  );
 }
 
 class XmasSwatch extends Swatch {
   XmasSwatch()
       : super(
-          HexColor("#f23942").darker(10),
-          HexColor("#70BA7F").lighter(10),
-          HexColor("#b47c4b").lighter(30),
-          const Color.fromRGBO(26, 46, 31, 1.0).darker(5),
-          HexColor("#171e13").lighter(8),
-        );
+    HexColor("#f23942").darker(10),
+    HexColor("#70BA7F").lighter(10),
+    HexColor("#b47c4b").lighter(30),
+    const Color.fromRGBO(26, 46, 31, 1.0).darker(5),
+    HexColor("#171e13").lighter(8),
+  );
 }

@@ -26,7 +26,7 @@ class AppState {
 
   static final modVariants = FutureProvider<List<ModVariant>>((ref) async {
     final gamePath =
-        ref.read(appSettings.select((value) => value.gameDir))?.toDirectory();
+        ref.watch(appSettings.select((value) => value.gameDir))?.toDirectory();
     if (gamePath == null) {
       return [];
     }
@@ -38,7 +38,7 @@ class AppState {
 
   static final enabledMods = FutureProvider<EnabledMods>((ref) async {
     final modsFolder =
-        ref.read(appSettings.select((value) => value.modsDir))?.toDirectory();
+        ref.watch(appSettings.select((value) => value.modsDir))?.toDirectory();
 
     if (modsFolder == null || !modsFolder.existsSync()) {
       return const EnabledMods({});
@@ -68,7 +68,7 @@ class AppState {
 
   static final starsectorVersion = FutureProvider<String?>((ref) async {
     final gamePath = ref
-        .read(appSettings.select((value) => value.gameDir))
+        .watch(appSettings.select((value) => value.gameDir))
         ?.toDirectory();
     if (gamePath == null) {
       return null;

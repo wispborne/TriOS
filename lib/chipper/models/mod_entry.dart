@@ -29,7 +29,7 @@ class ModEntry {
 class ModEntryWidget extends StatelessWidget {
   final ModEntry modEntry;
 
-  const ModEntryWidget({Key? key, required this.modEntry}) : super(key: key);
+  const ModEntryWidget({super.key, required this.modEntry});
 
   @override
   Widget build(BuildContext context) {

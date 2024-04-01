@@ -1,4 +1,3 @@
-import 'dart:ui';
 
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
@@ -6,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart';
 
-import '../app_state.dart';
+import '../chipper_state.dart';
 import '../copy.dart';
 import '../models/error_lines.dart';
 import '../models/mod_entry.dart';
@@ -14,7 +13,7 @@ import '../selection_transformer.dart';
 import '../utils.dart';
 
 class Readout extends StatelessWidget {
-  Readout(LogChips chips, {Key? key}) : super(key: key) {
+  Readout(LogChips chips, {super.key}) {
     _chips = chips;
 
     _gameVersion = _chips.gameVersion ?? "Not found in log.";
@@ -63,10 +62,10 @@ class Readout extends StatelessWidget {
                               style: theme.textTheme.labelSmall
                                   ?.copyWith(color: theme.textTheme.labelSmall?.color?.withAlpha(120)),
                               children: [
-                                _chips.filename == null
+                                _chips.filepath == null
                                     ? const TextSpan(text: "log")
                                     : TextSpan(
-                                        text: basename(_chips.filename!),
+                                        text: basename(_chips.filepath!),
                                         style: TextStyle(
                                             color: theme.textTheme.labelSmall?.color?.withAlpha(200),
                                             fontWeight: FontWeight.w500)),
@@ -318,7 +317,7 @@ class ModsList extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text("Mods (${mods?.length})", style: Theme.of(context).textTheme.titleLarge),
-          ...mods!.map((e) => e.createWidget(context)).toList()
+          ...mods!.map((e) => e.createWidget(context))
         ],
       );
 }

@@ -1,14 +1,22 @@
+import 'dart:convert';
 import 'dart:io';
 
-import 'package:collection/collection.dart';
+import 'package:fimber/fimber.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
-import 'package:trios/utils/util.dart';
-
-import '../pages/vram_estimator/models/mod_result.dart';
+import 'package:trios/trios/trios_theme.dart';
+import 'package:yaml/yaml.dart';
 
 extension DoubleExt on double {
   String bytesAsReadableMB() => "${(this / 1000000).toStringAsFixed(3)} MB";
+
+  double coerceAtLeast(double minimumValue) {
+    return this < minimumValue ? minimumValue : this;
+  }
+
+  double coerceAtMost(double maximumValue) {
+    return this > maximumValue ? maximumValue : this;
+  }
 }
 // Long.bytesAsReadableMB: String
 // get() = "%.3f MB".format(this / 1000000f)
@@ -25,6 +33,133 @@ extension StringExt on String {
     if (isEmpty) return str;
     return this;
   }
+
+  Directory toDirectory() => Directory(this);
+
+  File toFile() => File(this);
+
+  String take(int n) => length < n ? this : substring(0, n);
+
+  String takeLast(int n) => length < n ? this : substring(length - n);
+
+  String takeWhile(bool Function(String) predicate) {
+    var index = 0;
+    while (index < length && predicate(this[index])) {
+      index++;
+    }
+    return substring(0, index);
+  }
+
+  String removePrefix(String prefix) {
+    if (startsWith(prefix)) {
+      return substring(prefix.length);
+    }
+    return this;
+  }
+
+  /// Warning: probably not fast.
+  String fixJson() {
+    var fixed = replaceAll(r"\#", "#");
+    try {
+      return json.encode(loadYaml(fixed));
+    } catch (e) {
+      Fimber.d("Unable to fix json: $fixed");
+      rethrow;
+    }
+  }
+
+  Map<String, dynamic> fixJsonToMap() {
+    return jsonDecode(fixJson());
+  }
+
+  /// Returns a string having leading characters from the chars array removed.
+  String trimStart(String prefix) {
+    var index = 0;
+    while (index < length && prefix.contains(this[index])) {
+      index++;
+    }
+    return substring(index);
+  }
+
+  String trimEnd(String suffix) {
+    var index = length - 1;
+    while (index >= 0 && suffix.contains(this[index])) {
+      index--;
+    }
+    return substring(0, index + 1);
+  }
+
+  // Helper for comparing number-like strings
+  int compareRecognizingNumbers(String str2) {
+    final chunks1 = splitIntoAlphaAndNumeric();
+    final chunks2 = str2.splitIntoAlphaAndNumeric();
+
+    for (var i = 0; i < chunks1.length || i < chunks2.length; i++) {
+      final chunk1 = _getSafeChunk(chunks1, i);
+      final chunk2 = _getSafeChunk(chunks2, i);
+
+      final result = _compareChunks(chunk1, chunk2);
+      if (result != 0) return result;
+    }
+
+    return 0;
+  }
+
+  String filter(bool Function(String) predicate) => characters.where(predicate).join();
+
+  /// Breaks a string into chunks of letters and numbers.
+  /// "55hhb3vv-5 s" -> ["55", "hhb", "3", "vv", "5", "s"]
+  List<String> splitIntoAlphaAndNumeric() {
+    final str = this;
+
+    return ([0] + _letterDigitSplitterRegex.allMatches(str).map((m) => m.start).toList() + [str.length])
+        .zipWithNext((l, r) => str.substring(l, r).filter((it) => RegExp(r"[a-zA-Z0-9]").hasMatch(it)))
+        .filter((p0) => p0.isNotEmpty)
+        .toList();
+  }
+}
+
+final _letterDigitSplitterRegex = RegExp(r"(?<=\D)(?=\d)|(?<=\d)(?=\D)");
+
+String _getSafeChunk(List<String> chunks, int index) => index < chunks.length ? chunks[index] : "0";
+
+int _compareChunks(String chunk1, String chunk2) {
+  final int1 = int.tryParse(chunk1);
+  final int2 = int.tryParse(chunk2);
+
+  if (int1 != null && int2 != null) {
+    return int1.compareTo(int2);
+  } else {
+    return chunk1.compareTo(chunk2);
+  }
+}
+
+extension FileSystemEntityExt on FileSystemEntity {
+  FileSystemEntity resolve(String path) {
+    return File(p.join(absolute.path, path));
+  }
+
+  FileSystemEntity normalize() {
+    return File(p.normalize(absolute.path));
+  }
+
+  void moveTo(Directory destDir, {bool overwrite = false}) {
+    if (this is Directory) {
+      (this as Directory).moveDirectory(destDir, overwrite: overwrite);
+    } else if (this is File) {
+      (this as File).moveTo(destDir, overwrite: overwrite);
+    }
+  }
+
+  bool isFile() => statSync().type == FileSystemEntityType.file;
+
+  bool isDirectory() => statSync().type == FileSystemEntityType.directory;
+
+  File toFile() => File(absolute.path);
+
+  Directory toDirectory() => Directory(absolute.path);
+
+  bool existsSync() => FileSystemEntity.typeSync(path) != FileSystemEntityType.notFound;
 }
 
 extension FileExt on File {
@@ -34,18 +169,61 @@ extension FileExt on File {
 
   String get nameWithoutExtension => p.basenameWithoutExtension(path);
 
-  String get name => p.basename(path);
+  String get nameWithExtension => p.basename(path);
 
   File get normalize => File(p.normalize(absolute.path));
+
+  File moveTo(Directory destDir, {bool overwrite = false}) {
+    var destFile = destDir.resolve(nameWithExtension);
+    if (destFile.existsSync()) {
+      if (overwrite) {
+        destFile.deleteSync();
+      } else {
+        Fimber.i("Skipping file move (file already exists): $this to $destFile");
+        return this;
+      }
+    }
+    return renameSync(destFile.path).normalize;
+  }
+
+  String readAsStringSyncAllowingMalformed() {
+    return utf8.decode(readAsBytesSync(), allowMalformed: true);
+  }
 }
 
 extension DirectoryExt on Directory {
   Directory get normalize => Directory(p.normalize(absolute.path));
-}
 
-extension FileSystemEntityExt on FileSystemEntity {
-  FileSystemEntity resolve(String path) {
-    return File(p.join(absolute.path, path));
+  String get name => p.basename(path);
+
+  Future<void> moveDirectory(Directory destDir, {bool overwrite = false}) async {
+    try {
+      renameSync(destDir.absolute.path);
+    } catch (e) {
+      // Simple rename didn't work. Time to get real.
+      copyDirectory(destDir, overwrite: overwrite);
+      deleteSync(recursive: true);
+    }
+  }
+
+  /// Copied from FileUtils.java::doCopyDirectory in Apache Commons IO.
+  Future<void> copyDirectory(Directory destDir, {bool overwrite = false}) async {
+    final srcFiles = listSync(recursive: false).map((e) => e.path.toFile());
+    destDir.createSync(recursive: true); // mkdirs
+
+    for (var srcFile in srcFiles) {
+      final destFile = destDir.resolve(srcFile.nameWithExtension);
+      if (srcFile.isDirectory()) {
+        srcFile.toDirectory().copyDirectory(destFile.toDirectory(), overwrite: overwrite);
+      } else if (srcFile.isFile()) {
+        if (destFile.existsSync() && !overwrite) {
+          Fimber.d("Skipping file copy (file already exists): $srcFile to $destFile");
+          continue;
+        } else {
+          srcFile.copy(destFile.path);
+        }
+      }
+    }
   }
 }
 
@@ -91,6 +269,73 @@ extension IterableExt<T> on Iterable<T> {
   T random() {
     return elementAt(DateTime.now().microsecond % length);
   }
+
+  T? getOrNull(int index) {
+    if (index < 0 || index >= length) return null;
+    return elementAt(index);
+  }
+
+  T? minByOrNull<R extends Comparable<R>>(R Function(T) selector) {
+    if (isEmpty) return null;
+    var minElement = first;
+    var minValue = selector(minElement);
+    for (var element in skip(1)) {
+      var value = selector(element);
+      if (value.compareTo(minValue) < 0) {
+        minElement = element;
+        minValue = value;
+      }
+    }
+    return minElement;
+  }
+
+  /// Combines the current element with the next element in the iterable using the provided [transform] function.
+  /// From Gemini.
+  ///
+  /// Example:
+  /// ```dart
+  /// final numbers = [1, 4, 9, 16];
+  /// final differences = numbers.zipWithNext((a, b) => b - a);
+  /// print(differences); // Output: [3, 5, 7]
+  /// ```
+  List<R> zipWithNext<R>(R Function(T a, T b) transform) {
+    final iterator = this.iterator;
+    if (!iterator.moveNext()) return <R>[];
+
+    final result = <R>[];
+    var current = iterator.current;
+
+    while (iterator.moveNext()) {
+      final next = iterator.current;
+      result.add(transform(current, next));
+      current = next;
+    }
+
+    return result;
+  }
+
+  Iterable<T> dropUntil(bool Function(T) predicate) {
+    var found = false;
+    return where((element) {
+      if (found) return true;
+      if (predicate(element)) {
+        found = true;
+        return true;
+      }
+      return false;
+    });
+  }
+}
+
+extension NullableIterableExt<T> on Iterable<T>? {
+  Iterable<T> orEmpty() => this ?? [];
+}
+
+extension IterableFileExt on Iterable<File> {
+  Directory? rootFolder() {
+    final result = minByOrNull<num>((File file) => file.path.length);
+    return result?.isDirectory() != true ? null : result?.toDirectory();
+  }
 }
 
 extension ListExt<T> on List<T> {
@@ -134,6 +379,14 @@ extension IntExt on int {
     }
     return n - (i >>> 1);
   }
+
+  int coerceAtLeast(int minimumValue) {
+    return this < minimumValue ? minimumValue : this;
+  }
+
+  int coerceAtMost(int maximumValue) {
+    return this > maximumValue ? maximumValue : this;
+  }
 }
 
 // List<Mod>.getBytesUsedByDedupedImages(): Long = this
@@ -141,12 +394,26 @@ extension IntExt on int {
 // .distinctBy { (modFolder: Path, image: ModImage) -> image.file.relativeTo(modFolder).pathString + image.file.name }
 //     .sumOf { it.second.bytesUsed }
 
-extension ModListExt on Iterable<Mod> {
-  int getBytesUsedByDedupedImages() {
-    return expand((mod) => mod.images.map((img) => Tuple2(mod.info.modFolder, img)))
-        .toSet()
-        .map((pair) => pair.item2.bytesUsed)
-        .sum;
+extension NumListExt on List<num> {
+  num sum() {
+    return fold(0, (previousValue, element) => previousValue + element);
+  }
+
+  // From Gemini
+  num findClosest(num targetValue) {
+    num? closestValue;
+    num? minDistance;
+
+    for (final value in this) {
+      final distance = (targetValue - value).abs(); // Calculate absolute distance
+
+      if (minDistance == null || distance < minDistance) {
+        closestValue = value;
+        minDistance = distance;
+      }
+    }
+
+    return closestValue!; // Assuming the list 'values' will not be empty
   }
 }
 

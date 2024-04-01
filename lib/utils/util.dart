@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
@@ -5,8 +7,13 @@ import 'package:collection/collection.dart';
 import 'package:fimber/fimber.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
+import 'package:trios/models/mod_info_json.dart';
+import 'package:trios/models/version.dart';
+import 'package:trios/utils/extensions.dart';
 
 MaterialColor createMaterialColor(Color color) {
   List strengths = <double>[.05];
@@ -42,7 +49,7 @@ Directory? defaultGamePath() {
   }
 }
 
-Directory? gameFilesPath(Directory gamePath) {
+Directory? generateGameCorePath(Directory gamePath) {
   if (Platform.isWindows) {
     return Directory(p.join(gamePath.path, "starsector-core"));
   } else if (Platform.isMacOS) {
@@ -54,13 +61,13 @@ Directory? gameFilesPath(Directory gamePath) {
   }
 }
 
-Directory? defaultGameFilesPath() {
-  return defaultGamePath() == null ? null : gameFilesPath(defaultGamePath()!);
+Directory? defaultGameCorePath() {
+  return defaultGamePath() == null ? null : generateGameCorePath(defaultGamePath()!)?.normalize;
 }
 
-Directory? modFolderPath(Directory gamePath) {
+Directory? generateModFolderPath(Directory gamePath) {
   if (Platform.isWindows || Platform.isMacOS) {
-    return Directory(p.join(gamePath.path, "mods"));
+    return Directory(p.join(gamePath.path, "mods")).normalize;
   } else if (kIsWeb) {
     return null; // huh
   } else {
@@ -76,6 +83,8 @@ File? getRulesCsvInModFolder(Directory modFolder) {
     return null;
   }
 }
+
+final allRulesCsvsInModsFolder = StateProvider<File?>((ref) => null);
 
 List<File> getAllRulesCsvsInModsFolder(Directory modsFolder) {
   return modsFolder
@@ -150,7 +159,7 @@ class ColorGenerator {
 
 typedef ProgressCallback = void Function(int bytesReceived, int contentLengthBytes);
 
-Future<File> downloadFile(String url, String savePath, {ProgressCallback? onProgress}) async {
+Future<File> downloadFile(String url, Directory savePath, String? filename, {ProgressCallback? onProgress}) async {
   try {
     final request = http.Request('GET', Uri.parse(url));
     final streamedResponse = await http.Client().send(request);
@@ -158,8 +167,8 @@ Future<File> downloadFile(String url, String savePath, {ProgressCallback? onProg
     final contentLength = streamedResponse.contentLength ?? -1;
     int bytesReceived = 0;
 
-    var fileName = request.headers['content-disposition']?.split('=')[1] ?? url.split('/').last;
-    final file = File(p.join(savePath, fileName));
+    var desiredFilename = filename ?? request.headers['content-disposition']?.split('=')[1] ?? url.split('/').last;
+    final file = File(p.join(savePath.path, desiredFilename));
 
     if (file.existsSync()) {
       file.deleteSync();
@@ -203,4 +212,81 @@ class NestedException implements Exception {
 
 TargetPlatform? get currentPlatform {
   return TargetPlatform.values.firstWhereOrNull((element) => element.name.toLowerCase() == Platform.operatingSystem);
+}
+
+pollFileForModification(File file, StreamController<File> streamController, {int intervalMillis = 1000}) async {
+  var lastModified = file.lastModifiedSync();
+  final fileChangesInstance = streamController;
+
+  while (!fileChangesInstance.isClosed) {
+    await Future.delayed(Duration(milliseconds: intervalMillis));
+    final newModified = file.lastModifiedSync();
+    if (newModified.isAfter(lastModified)) {
+      lastModified = newModified;
+      streamController.add(file);
+    }
+  }
+}
+
+class JsonConverterVersion implements JsonConverter<Version, dynamic> {
+  const JsonConverterVersion();
+
+  @override
+  Version fromJson(dynamic json) {
+    try {
+      if (json is Map<String, dynamic>) {
+        return Version.parse(VersionObject.fromJson(json).toString());
+      }
+      return Version.parse(json);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  String toJson(dynamic object) {
+    if (object is VersionObject) {
+      return "${object.major}.${object.minor}.${object.patch}";
+    } else {
+      return object.toString();
+    }
+  }
+}
+
+class JsonConverterVersionNullable implements JsonConverter<Version?, dynamic> {
+  const JsonConverterVersionNullable();
+
+  @override
+  Version? fromJson(dynamic json) {
+    try {
+      return const JsonConverterVersion().fromJson(json);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  @override
+  String toJson(dynamic object) {
+    return const JsonConverterVersion().toJson(object);
+  }
+}
+
+class JsonConverterToString implements JsonConverter<String, dynamic> {
+  const JsonConverterToString();
+
+  @override
+  String fromJson(dynamic json) {
+    return json.toString();
+  }
+
+  @override
+  dynamic toJson(String object) {
+    return object;
+  }
+}
+
+String jsonEncodePrettily(dynamic json) {
+  var spaces = ' ' * 2;
+  var encoder = JsonEncoder.withIndent(spaces);
+  return encoder.convert(json);
 }

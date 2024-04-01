@@ -1,31 +1,145 @@
 import 'dart:convert';
+import 'dart:io';
 
+import 'package:fimber/fimber.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:trios/trios/settings/settingsSaver.dart';
+import 'package:trios/jre_manager/jre_23.dart';
+import 'package:trios/trios/navigation.dart';
+import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/util.dart';
 
+import '../../models/launch_settings.dart';
+import '../app_state.dart';
+
 part '../../generated/trios/settings/settings.freezed.dart';
+
 part '../../generated/trios/settings/settings.g.dart';
 
-final appSettings = StateProvider<Settings>((ref) {
-  if (settingsFile.existsSync()) {
-    // Settings.fromJson(jsonDecode(settingsFile.readAsStringSync()));
-    return Settings.fromJson(jsonDecode(settingsFile.readAsStringSync()));
-  }
+const sharedPrefsSettingsKey = "settings";
 
-  final gameDir = defaultGamePath()?.absolute;
-  if (gameDir == null) {
-    return Settings();
+/// Settings State Provider
+final appSettings =
+    NotifierProvider<SettingSaver, Settings>(() => SettingSaver());
+
+/// MacOs: /Users/<user>/Library/Preferences/org.wisp.TriOS.plist
+Settings? readAppSettings() {
+  if (sharedPrefs.containsKey(sharedPrefsSettingsKey)) {
+    return Settings.fromJson(
+        jsonDecode(sharedPrefs.getString(sharedPrefsSettingsKey)!));
   } else {
-    return Settings(gameDir: gameDir.path, modsDir: modFolderPath(gameDir)?.path);
+    return null;
   }
-});
+}
 
+/// Settings object model
 @freezed
 class Settings with _$Settings {
-  factory Settings({final String? gameDir, final String? modsDir, final List<String>? enabledModIds}) = _Settings;
+  factory Settings({
+    @JsonDirectoryConverter() final Directory? gameDir,
+    @JsonDirectoryConverter() final Directory? gameCoreDir,
+    @JsonDirectoryConverter() final Directory? modsDir,
+    @Default(false) final bool hasCustomModsDir,
+    @Default(false) final bool shouldAutoUpdateOnLaunch,
+    @Default(false) final bool isRulesHotReloadEnabled,
+    final double? windowXPos,
+    final double? windowYPos,
+    final double? windowWidth,
+    final double? windowHeight,
+    final bool? isMaximized,
+    final bool? isMinimized,
+    final TriOSTools? defaultTool,
+    final String? jre23VmparamsFilename,
+    final bool? useJre23,
+    @Default(LaunchSettings()) final LaunchSettings launchSettings,
+    final String? lastStarsectorVersion,
+  }) = _Settings;
 
-  factory Settings.fromJson(Map<String, Object?> json) => _$SettingsFromJson(json);
+  factory Settings.fromJson(Map<String, Object?> json) =>
+      _$SettingsFromJson(json);
+}
+
+/// When settings change, save them to shared prefs
+class SettingSaver extends Notifier<Settings> {
+  Settings _setDefaults(Settings settings) {
+    if (settings.gameDir == null) {
+      settings = settings.copyWith(gameDir: defaultGamePath());
+    }
+
+    final jre23existInGameFolder =
+        doesJre23ExistInGameFolder(settings.gameDir!);
+    if (settings.useJre23 == null) {
+      settings = settings.copyWith(useJre23: (jre23existInGameFolder));
+    } else {
+      // If useJRe23 is set to true, but it doesn't exist, set it to false.
+      // Otherwise they might be unable to launch the game or turn off 23.
+      if (settings.useJre23 == true && !jre23existInGameFolder) {
+        settings = settings.copyWith(useJre23: false);
+      }
+    }
+
+    return settings;
+  }
+
+  @override
+  Settings build() {
+    var settings = readAppSettings();
+    if (settings != null) {
+      return _setDefaults(settings);
+    } else {
+      return _setDefaults(Settings());
+    }
+
+    // final gameDir = defaultGamePath()?.absolute;
+    // if (gameDir == null) {
+    //   return Settings();
+    // } else {
+    //   return Settings(gameDir: gameDir.path, modsDir: ref.read(modFolderPath)?.path);
+    // }
+  }
+
+  void update(Settings Function(Settings) update) {
+    final prevState = state;
+    var newState = update(state);
+
+    if (prevState == newState) {
+      Fimber.v("No settings change: $newState");
+      return;
+    }
+
+    if (newState.gameDir != null) {
+      if (!newState.hasCustomModsDir) {
+        var newModsDir = generateModFolderPath(newState.gameDir!)?.path;
+        newState = newState.copyWith(modsDir: newModsDir?.toDirectory());
+      }
+
+      newState = newState.copyWith(
+          gameCoreDir: generateGameCorePath(newState.gameDir!));
+    }
+
+    Fimber.d("Updated settings: $newState");
+
+    sharedPrefs.setString(
+        sharedPrefsSettingsKey, jsonEncode(newState.toJson()));
+    state = newState;
+  }
+}
+
+class JsonDirectoryConverter implements JsonConverter<Directory?, String?> {
+  const JsonDirectoryConverter();
+
+  @override
+  Directory? fromJson(String? json) {
+    if (json == null) {
+      return null;
+    } else {
+      return json.toDirectory();
+    }
+  }
+
+  @override
+  String? toJson(Directory? object) {
+    return object?.path;
+  }
 }

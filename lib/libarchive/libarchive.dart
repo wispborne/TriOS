@@ -132,11 +132,11 @@ class LibArchive {
     }
   }
 
-  List<LibArchiveEntry> getEntriesInArchive(String archivePath) {
-    return readArchiveAndDoOnEach(archivePath, (archivePtr, entryPtrPtr) => _getEntryInArchive(entryPtrPtr));
+  List<LibArchiveEntry> listEntriesInArchive(File archivePath) {
+    return readArchiveAndDoOnEach(archivePath.path, (archivePtr, entryPtrPtr) => _getEntryInArchive(entryPtrPtr));
   }
 
-  Future<List<LibArchiveEntry?>> extractEntriesInArchive(File archivePath, String destinationPath) async {
+  Future<List<({LibArchiveEntry archiveFile, File extractedFile})?>> extractEntriesInArchive(File archivePath, String destinationPath) async {
     final writePtr = binding.archive_write_disk_new();
     try {
       const writeFlags = ARCHIVE_EXTRACT_TIME | ARCHIVE_EXTRACT_PERM | ARCHIVE_EXTRACT_ACL | ARCHIVE_EXTRACT_FFLAGS;
@@ -172,7 +172,7 @@ class LibArchive {
               "$outputPath");
         }
 
-        return entry;
+        return (archiveFile: entry, extractedFile: File(outputPath));
       });
     } finally {
       binding.archive_write_free(writePtr);

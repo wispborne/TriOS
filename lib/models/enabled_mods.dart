@@ -1,8 +1,11 @@
-import 'package:dart_json_mapper/dart_json_mapper.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-@jsonSerializable
-class EnabledMods {
-  List<String> enabledMods;
+part '../generated/models/enabled_mods.freezed.dart';
+part '../generated/models/enabled_mods.g.dart';
 
-  EnabledMods(this.enabledMods);
+@freezed
+class EnabledMods with _$EnabledMods {
+  const factory EnabledMods(Set<String> enabledMods) = _EnabledMods;
+
+  factory EnabledMods.fromJson(Map<String, dynamic> json) => _$EnabledModsFromJson(json);
 }

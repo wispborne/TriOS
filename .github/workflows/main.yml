@@ -50,7 +50,7 @@ jobs:
         run: |
                echo "VERSION=$(git describe --tags)" >> $GITHUB_ENV
                git log --format=%B -n 1 $(git log -1 --pretty=format:"%h") | cat - > changes.txt
-               prerelease_regex=.*"dev"|"qa"|"unstable".*
+               prerelease_regex=".*dev|qa|rc|unstable.*"
                if [[ "$(git describe --tags)" =~ $prerelease_regex ]]; then
                echo "IS_PRERELEASE=true" >> $GITHUB_ENV;
                else
@@ -153,7 +153,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@v2.12.0 # v2.13.0 is broken: https://github.com/subosito/flutter-action/issues/277#issuecomment-1974628019
         with:
           channel: $flutter_channel
           architecture: x64

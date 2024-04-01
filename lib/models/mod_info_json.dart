@@ -1,54 +1,78 @@
 import 'dart:core';
-import 'package:dart_json_mapper/dart_json_mapper.dart' show JsonMapper, jsonSerializable, JsonProperty;
 
+import 'package:collection/collection.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:trios/models/version.dart';
+import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/util.dart';
 
+part '../generated/models/mod_info_json.freezed.dart';
+part '../generated/models/mod_info_json.g.dart';
 
-@jsonSerializable
-class EnabledModsJsonMode {
-  // @JsonProperty("enabledMods")
-  final List<String> enabledMods;
+@freezed
+class EnabledModsJsonMode with _$EnabledModsJsonMode {
+  const factory EnabledModsJsonMode(List<String> enabledMods) = _EnabledModsJsonMode;
 
-  EnabledModsJsonMode(this.enabledMods);
+  factory EnabledModsJsonMode.fromJson(Map<String, dynamic> json) => _$EnabledModsJsonModeFromJson(json);
 }
 
-@jsonSerializable
-class ModInfoJsonModel_091a {
-// @JsonProperty("id")
-  final String id;
+@freezed
+class ModInfoJson with _$ModInfoJson {
+  const ModInfoJson._();
 
-// @JsonProperty("name")
-  final String name;
+  const factory ModInfoJson(final String id,
+      {@Default("") final String name,
+      @JsonConverterVersionNullable() final Version? version,
+      final String? author,
+      final String? gameVersion,
+      @Default([]) final List<Dependency> dependencies,
+      final String? description}) = _ModInfoJson;
 
-// @JsonProperty("version")
-  final String version;
+  factory ModInfoJson.fromJson(Map<String, dynamic> json) => _$ModInfoJsonFromJson(json);
 
-  ModInfoJsonModel_091a(this.id, this.name, this.version);
+  String get formattedName => "$name $version ($id)";
 }
 
-@jsonSerializable
-class ModInfoJsonModel_095a {
-// @JsonProperty("id")
-  final String id;
+@freezed
+class Dependency with _$Dependency {
+  const Dependency._();
 
-// @JsonProperty("name")
-  final String name;
+  const factory Dependency({
+    final String? id,
+    final String? name,
+    @JsonConverterVersionNullable() final Version? version,
+    // String? version,
+  }) = _Dependency;
 
-// @JsonProperty("version")
-  Version_095a version;
-
-  ModInfoJsonModel_095a(this.id, this.name, this.version);
+  factory Dependency.fromJson(Map<String, dynamic> json) => _$DependencyFromJson(json);
 }
 
-@jsonSerializable
-class Version_095a {
-// @JsonProperty("major")
-  final dynamic major;
+@freezed
+class VersionObject with _$VersionObject {
+  const VersionObject._();
 
-// @JsonProperty("minor")
-  final dynamic minor;
+  const factory VersionObject(
+    final dynamic major,
+    final dynamic minor,
+    final dynamic patch,
+  ) = _VersionObject;
 
-// @JsonProperty("patch")
-  final dynamic patch;
+  factory VersionObject.fromJson(Map<String, dynamic> json) => _$VersionObjectFromJson(json);
 
-  Version_095a(this.major, this.minor, this.patch);
+  @override
+  String toString() => [major, minor, patch].whereNotNull().join(".");
+
+  int compareTo(VersionObject? other) {
+    if (other == null) return 0;
+
+    var result = (major.toString().compareRecognizingNumbers(other.major.toString()));
+    if (result != 0) return result;
+
+    result = (minor.toString().compareRecognizingNumbers(other.minor.toString()));
+    if (result != 0) return result;
+
+    result = (patch.toString().compareRecognizingNumbers(other.patch.toString()));
+    if (result != 0) return result;
+    return result;
+  }
 }

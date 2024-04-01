@@ -2,14 +2,15 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trios/libarchive/libarchive.dart';
+import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 
 void main() {
   test("LibArchive read test", () {
     configureLogging();
     final libArchive = LibArchive();
-    var archivePath = "F:/Downloads/Combat-Activators-v1.1.3.zip";
-    final archiveEntries = libArchive.getEntriesInArchive(archivePath);
+    var archivePath = "F:/Downloads/Combat-Activators-v1.1.3.zip".toFile();
+    final archiveEntries = libArchive.listEntriesInArchive(archivePath);
 
     print("Archive file: $archivePath");
     for (var element in archiveEntries) {

@@ -229,3 +229,5 @@ trios-settings.json
 update-test/
 
 *.log
+
+.idea/csv-editor.xml

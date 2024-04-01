@@ -3,10 +3,11 @@ import 'package:flutter_color/flutter_color.dart';
 
 import '../trios/app_state.dart';
 
+const Color vanillaErrorColor = Color.fromARGB(255, 252, 99, 0);
+const Color vanillaWarningColor = Color.fromARGB(255, 253, 212, 24);
+
 class TriOSTheme with ChangeNotifier {
   static double cornerRadius = 8;
-  static Color vanillaErrorColor = const Color.fromARGB(255, 252, 99, 0);
-  static Color vanillaWarningColor = const Color.fromARGB(255, 253, 212, 24);
 
   static bool _isDark = true;
   static bool _isMaterial3 = false;
@@ -51,9 +52,7 @@ class TriOSTheme with ChangeNotifier {
     final seedColor = swatch.primary;
 
     var darkThemeBase = ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-            seedColor: seedColor, brightness: Brightness.dark),
-        useMaterial3: material3);
+        colorScheme: ColorScheme.fromSeed(seedColor: seedColor, brightness: Brightness.dark), useMaterial3: material3);
 
     return customizeTheme(darkThemeBase, swatch).copyWith();
   }
@@ -62,8 +61,7 @@ class TriOSTheme with ChangeNotifier {
     final seedColor = swatch.primary;
 
     var lightThemeBase = ThemeData(
-      colorScheme: ColorScheme.fromSeed(
-          seedColor: seedColor, brightness: Brightness.light),
+      colorScheme: ColorScheme.fromSeed(seedColor: seedColor, brightness: Brightness.light),
       useMaterial3: material3,
     );
 
@@ -73,15 +71,11 @@ class TriOSTheme with ChangeNotifier {
               ..background = lightThemeBase.colorScheme.onInverseSurface
               ..card = lightThemeBase.colorScheme.onInverseSurface)
         .copyWith(
-            colorScheme: lightThemeBase.colorScheme.copyWith(
-                primary: swatch.primary,
-                secondary: swatch.secondary,
-                tertiary: swatch.tertiary),
-            textTheme: lightThemeBase.textTheme.copyWith(
-                bodyMedium: lightThemeBase.textTheme.bodyMedium
-                    ?.copyWith(fontSize: 16)),
-            iconTheme: lightThemeBase.iconTheme
-                .copyWith(color: lightThemeBase.colorScheme.onSurface),
+            colorScheme: lightThemeBase.colorScheme
+                .copyWith(primary: swatch.primary, secondary: swatch.secondary, tertiary: swatch.tertiary),
+            textTheme: lightThemeBase.textTheme
+                .copyWith(bodyMedium: lightThemeBase.textTheme.bodyMedium?.copyWith(fontSize: 16)),
+            iconTheme: lightThemeBase.iconTheme.copyWith(color: lightThemeBase.colorScheme.onSurface),
             tabBarTheme: lightThemeBase.tabBarTheme.copyWith(
                 labelColor: lightThemeBase.colorScheme.onSurface,
                 unselectedLabelColor: lightThemeBase.colorScheme.onSurface),
@@ -98,21 +92,76 @@ class TriOSTheme with ChangeNotifier {
         scaffoldBackgroundColor: swatch.background,
         dialogBackgroundColor: swatch.background,
         cardColor: swatch.card,
-        cardTheme: themeBase.cardTheme.copyWith(
-            color: swatch.card,
-            elevation: 4,
-            surfaceTintColor: Colors.transparent),
-        appBarTheme:
-            themeBase.appBarTheme.copyWith(backgroundColor: swatch.card),
-        floatingActionButtonTheme: themeBase.floatingActionButtonTheme.copyWith(
-            backgroundColor: swatch.primary,
-            foregroundColor: themeBase.colorScheme.surface),
-        checkboxTheme: themeBase.checkboxTheme.copyWith(
-            checkColor: MaterialStateProperty.all(Colors.transparent)),
-        textTheme: themeBase.textTheme.copyWith(
-            bodyMedium:
-                themeBase.textTheme.bodyMedium?.copyWith(fontSize: 16)));
+        cardTheme: themeBase.cardTheme.copyWith(color: swatch.card, elevation: 4, surfaceTintColor: Colors.transparent),
+        appBarTheme: themeBase.appBarTheme.copyWith(backgroundColor: swatch.card),
+        floatingActionButtonTheme: themeBase.floatingActionButtonTheme
+            .copyWith(backgroundColor: swatch.primary, foregroundColor: themeBase.colorScheme.surface),
+        checkboxTheme: themeBase.checkboxTheme.copyWith(checkColor: MaterialStateProperty.all(Colors.transparent)),
+        textTheme: themeBase.textTheme.copyWith(bodyMedium: themeBase.textTheme.bodyMedium?.copyWith(fontSize: 16)));
   }
+}
+
+enum SnackBarType {
+  info,
+  warn,
+  error,
+}
+
+showSnackBar({
+  required BuildContext context,
+  required Widget content,
+  bool? clearPreviousSnackBars = true,
+  SnackBarType? type,
+  Color? backgroundColor,
+  double? elevation,
+  EdgeInsetsGeometry? margin,
+  EdgeInsetsGeometry? padding,
+  double? width,
+  ShapeBorder? shape,
+  HitTestBehavior? hitTestBehavior,
+  SnackBarBehavior? behavior,
+  SnackBarAction? action,
+  double? actionOverflowThreshold,
+  bool? showCloseIcon,
+  Color? closeIconColor,
+  Duration duration = const Duration(milliseconds: 4000),
+  Animation<double>? animation,
+  void Function()? onVisible,
+  DismissDirection? dismissDirection,
+  Clip clipBehavior = Clip.hardEdge,
+}) {
+  if (clearPreviousSnackBars == true) {
+    ScaffoldMessenger.of(context).clearSnackBars();
+  }
+
+  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+    content: type != null
+        ? DefaultTextStyle.merge(
+            child: content, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))
+        : content,
+    backgroundColor: switch (type) {
+      SnackBarType.info => Colors.blue,
+      SnackBarType.warn => vanillaWarningColor,
+      SnackBarType.error => vanillaErrorColor,
+      null => Theme.of(context).snackBarTheme.backgroundColor
+    },
+    elevation: elevation,
+    margin: margin,
+    padding: padding,
+    width: width,
+    shape: shape,
+    hitTestBehavior: hitTestBehavior,
+    behavior: behavior,
+    action: action,
+    actionOverflowThreshold: actionOverflowThreshold,
+    showCloseIcon: showCloseIcon,
+    closeIconColor: closeIconColor,
+    duration: duration,
+    animation: animation,
+    onVisible: onVisible,
+    dismissDirection: dismissDirection,
+    clipBehavior: clipBehavior,
+  ));
 }
 
 /// For use with ColorFiltered
@@ -146,8 +195,7 @@ class Swatch {
   Color background;
   Color card;
 
-  Swatch(
-      this.primary, this.secondary, this.tertiary, this.background, this.card);
+  Swatch(this.primary, this.secondary, this.tertiary, this.background, this.card);
 }
 
 class StarsectorSwatch extends Swatch {

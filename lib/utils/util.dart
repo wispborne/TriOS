@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
@@ -282,4 +283,10 @@ class JsonConverterToString implements JsonConverter<String, dynamic> {
   dynamic toJson(String object) {
     return object;
   }
+}
+
+String jsonEncodePrettily(dynamic json) {
+  var spaces = ' ' * 2;
+  var encoder = JsonEncoder.withIndent(spaces);
+  return encoder.convert(json);
 }

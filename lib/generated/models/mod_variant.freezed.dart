@@ -37,6 +37,7 @@ abstract class $ModVariantCopyWith<$Res> {
       VersionCheckerInfo? versionCheckerInfo,
       Directory modsFolder});
 
+  $ModInfoCopyWith<$Res> get modInfo;
   $VersionCheckerInfoCopyWith<$Res>? get versionCheckerInfo;
 }
 
@@ -75,6 +76,14 @@ class _$ModVariantCopyWithImpl<$Res, $Val extends ModVariant>
 
   @override
   @pragma('vm:prefer-inline')
+  $ModInfoCopyWith<$Res> get modInfo {
+    return $ModInfoCopyWith<$Res>(_value.modInfo, (value) {
+      return _then(_value.copyWith(modInfo: value) as $Val);
+    });
+  }
+
+  @override
+  @pragma('vm:prefer-inline')
   $VersionCheckerInfoCopyWith<$Res>? get versionCheckerInfo {
     if (_value.versionCheckerInfo == null) {
       return null;
@@ -100,6 +109,8 @@ abstract class _$$ModVariantImplCopyWith<$Res>
       VersionCheckerInfo? versionCheckerInfo,
       Directory modsFolder});
 
+  @override
+  $ModInfoCopyWith<$Res> get modInfo;
   @override
   $VersionCheckerInfoCopyWith<$Res>? get versionCheckerInfo;
 }

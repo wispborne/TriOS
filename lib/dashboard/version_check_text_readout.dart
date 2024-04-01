@@ -83,12 +83,12 @@ class _VersionCheckTextReadoutState extends ConsumerState<VersionCheckTextReadou
                   children: [
                     Text("Error checking for updates. This is not caused by ${Constants.appName}.",
                         style: theme.textTheme.labelLarge
-                            ?.copyWith(color: TriOSTheme.vanillaErrorColor, fontWeight: FontWeight.bold)),
+                            ?.copyWith(color: vanillaErrorColor, fontWeight: FontWeight.bold)),
                     Padding(
                       padding: const EdgeInsets.only(top: 2),
                       child: Text("Message:",
                           style: theme.textTheme.labelLarge
-                              ?.copyWith(color: TriOSTheme.vanillaErrorColor, fontWeight: FontWeight.bold)),
+                              ?.copyWith(color: vanillaErrorColor, fontWeight: FontWeight.bold)),
                     ),
                     Text("${remoteVersionCheck?.error}",
                         style:

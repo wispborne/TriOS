@@ -51,7 +51,7 @@ class VersionCheckIcon extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.only(right: 6),
           child:
-              Icon(Icons.error_outline, size: updateIconSize, color: TriOSTheme.vanillaWarningColor.withOpacity(0.5)),
+              Icon(Icons.error_outline, size: updateIconSize, color: vanillaWarningColor.withOpacity(0.5)),
         ),
       if (localVersionCheck?.modVersion == null)
         Padding(

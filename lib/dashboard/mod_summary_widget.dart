@@ -85,7 +85,7 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
           padding: const EdgeInsets.only(left: 8.0),
           child: Text(ref.read(AppState.starsectorVersion).value ?? "", style: theme.textTheme.labelMedium),
         ),
-        if (widget.compatWithGame == GameCompatibility.Incompatible)
+        if (widget.compatWithGame == GameCompatibility.incompatible)
           Text("Error: this mod requires a different version of the game.",
               style: theme.textTheme.labelMedium?.copyWith(color: widget.compatTextColor)),
         const SizedBox(height: spacing),
@@ -98,30 +98,31 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
           Builder(builder: (context) {
             var dependencyState = dep.isSatisfiedByAny(modVariants, enabledMods);
             return Padding(
-              padding: const EdgeInsets.only(left: 8.0),
+              padding: const EdgeInsets.only(left: 8),
               child: Text(
                   "${dep.name ?? dep.id} ${dep.version?.toString().append(" ") ?? ""}${switch (dependencyState) {
-                    DependencyStateType.Satisfied => "",
-                    DependencyStateType.Missing => "(missing)",
-                    DependencyStateType.Disabled => "(disabled)",
-                    DependencyStateType.WrongVersion => "(wrong version)",
+                    Satisfied _ => "(found ${dependencyState.mod?.version})",
+                    Missing _ => "(missing)",
+                    Disabled _ => "(not enabled: ${dependencyState.mod?.version})",
+                    VersionInvalid _ => "(wrong version: ${dependencyState.mod?.version})",
+                    VersionWarning _ => "(found: ${dependencyState.mod?.version})",
                   }}",
                   style: theme.textTheme.labelMedium?.copyWith(
                       color: switch (dependencyState) {
-                    DependencyStateType.Satisfied => null,
-                    DependencyStateType.Missing => TriOSTheme.vanillaErrorColor,
-                    DependencyStateType.Disabled =>
-                      TriOSTheme.vanillaWarningColor, // Disabled means it's present, so we can just enable it.
-                    DependencyStateType.WrongVersion => TriOSTheme.vanillaWarningColor
+                    Satisfied _ => null,
+                    Missing _ => vanillaErrorColor,
+                    Disabled _ =>
+                      vanillaWarningColor, // Disabled means it's present, so we can just enable it.
+                    VersionInvalid _ => vanillaErrorColor,
+                    VersionWarning _ => vanillaWarningColor,
                   })),
             );
           }),
         const SizedBox(height: spacing),
-        if (modInfo.dependencies
-            .any((dep) => dep.isSatisfiedByAny(modVariants, enabledMods) == DependencyStateType.WrongVersion))
+        if (modInfo.dependencies.any((dep) => dep.isSatisfiedByAny(modVariants, enabledMods) is VersionWarning))
           Text(
               "Warning: this mod requires a different version of a mod that you have installed, but might run with this one.",
-              style: theme.textTheme.labelMedium?.copyWith(color: TriOSTheme.vanillaErrorColor)),
+              style: theme.textTheme.labelMedium?.copyWith(color: vanillaErrorColor)),
       ],
     );
   }

@@ -2,8 +2,12 @@ import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/mod_manager/mod_manager_logic.dart';
+import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:vs_scrollbar/vs_scrollbar.dart';
 
 import '../mod_manager/version_checker.dart';
@@ -141,12 +145,42 @@ class _ModListMiniState extends ConsumerState<ModListMini> {
                                                 "Download all ${modsWithUpdates.whereType<ModVariant>().length} updates",
                                             child: IconButton(
                                                 onPressed: () {
-                                                  for (var mod in modsWithUpdates) {
-                                                    if (mod == null) continue;
-                                                    final remoteVersionCheck = versionCheck?[mod.smolId];
-                                                    if (remoteVersionCheck?.remoteVersion != null) {
-                                                      downloadUpdateViaBrowser(remoteVersionCheck!.remoteVersion!);
+                                                  _downloadUpdates() {
+                                                    for (var mod in modsWithUpdates) {
+                                                      if (mod == null) continue;
+                                                      final remoteVersionCheck = versionCheck?[mod.smolId];
+                                                      if (remoteVersionCheck?.remoteVersion != null) {
+                                                        downloadUpdateViaBrowser(remoteVersionCheck!.remoteVersion!);
+                                                      }
                                                     }
+                                                  }
+
+                                                  // Confirm if # updates is more than 5
+                                                  if (modsWithUpdates.length <= 5) {
+                                                    _downloadUpdates();
+                                                  } else {
+                                                    showDialog(
+                                                        context: context,
+                                                        builder: (context) {
+                                                          return AlertDialog(
+                                                            title: const Text("Are you sure?"),
+                                                            content: Text(
+                                                                "Download updates for ${modsWithUpdates.whereType<ModVariant>().length} mods?"),
+                                                            actions: [
+                                                              TextButton(
+                                                                  onPressed: () {
+                                                                    Navigator.of(context).pop();
+                                                                  },
+                                                                  child: const Text("Cancel")),
+                                                              TextButton(
+                                                                  onPressed: () {
+                                                                    Navigator.of(context).pop();
+                                                                    _downloadUpdates();
+                                                                  },
+                                                                  child: const Text("Download")),
+                                                            ],
+                                                          );
+                                                        });
                                                   }
                                                 },
                                                 icon:
@@ -166,8 +200,13 @@ class _ModListMiniState extends ConsumerState<ModListMini> {
                                   ),
                                 ]);
                               }
-                              return ModListBasicEntry(
-                                  mod: modVariant, isEnabled: enabledModIds?.contains(modVariant.modInfo.id) ?? false);
+
+                              return ContextMenuRegion(
+                                contextMenu: buildContextMenu(modVariant, ref),
+                                child: ModListBasicEntry(
+                                    mod: modVariant,
+                                    isEnabled: enabledModIds?.contains(modVariant.modInfo.id) ?? false),
+                              );
                             }),
                       ),
                     ),
@@ -180,6 +219,29 @@ class _ModListMiniState extends ConsumerState<ModListMini> {
           ),
         ],
       ),
+    );
+  }
+
+  ContextMenu buildContextMenu(ModVariant modVariant, WidgetRef ref) {
+    final currentStarsectorVersion = ref.read(appSettings.select((s) => s.lastStarsectorVersion));
+    return ContextMenu(
+      entries: <ContextMenuEntry>[
+        MenuItem(
+            label: 'Open Folder',
+            icon: Icons.folder,
+            onSelected: () {
+              launchUrl(Uri.parse("file:${modVariant.modsFolder.absolute.path}"));
+            }),
+        if (currentStarsectorVersion != null)
+          MenuItem(
+              label: 'Force to $currentStarsectorVersion',
+              icon: Icons.local_hospital,
+              onSelected: () {
+                forceChangeModGameVersion(modVariant, currentStarsectorVersion);
+                ref.invalidate(AppState.modVariants);
+              }),
+      ],
+      padding: const EdgeInsets.all(8.0),
     );
   }
 }

@@ -40,22 +40,29 @@ void main() async {
   };
   WidgetsFlutterBinding.ensureInitialized();
   await windowManager.ensureInitialized();
-  // initializeJsonMapper();
   sharedPrefs = await SharedPreferences.getInstance();
-
-  runApp(const ProviderScope(observers: [], child: TriOSApp()));
-  setWindowTitle(Constants.appTitle);
 
   // Restore window position and size
   final settings = readAppSettings();
-  if (settings != null && settings.windowWidth != null && settings.windowHeight != null) {
-    setWindowFrame(Rect.fromLTWH(
-        settings.windowXPos ?? 0, settings.windowYPos ?? 0, settings.windowWidth ?? 800, settings.windowHeight ?? 600));
-    if (settings.isMaximized ?? false) {
-      windowManager.maximize();
-    }
-  }
 
+  // if (settings != null && settings.windowWidth != null && settings.windowHeight != null) {
+  final windowFrame = Rect.fromLTWH(settings?.windowXPos ?? 0, settings?.windowYPos ?? 0, settings?.windowWidth ?? 800,
+      settings?.windowHeight ?? 600);
+  // windowOptions = WindowOptions(size: windowFrame.size, minimumSize: minSize);
+  setWindowFrame(windowFrame);
+  if (settings?.isMaximized ?? false) {
+    windowManager.maximize();
+  }
+  // }
+
+  runApp(const ProviderScope(observers: [], child: TriOSApp()));
+  setWindowTitle(Constants.appTitle);
+  const minSize = Size(900, 600);
+
+  windowManager.waitUntilReadyToShow(WindowOptions(size: windowFrame.size, minimumSize: minSize), () async {
+    await windowManager.show();
+    await windowManager.focus();
+  });
   // Clean up old files.
   final filePatternsToClean = [logFileName, ScriptGenerator.SELF_UPDATE_FILE_NAME];
   Directory.current.list().listen((file) {
@@ -129,15 +136,19 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
   void _saveWindowPosition() async {
     final windowFrame = await windowManager.getBounds();
     final isMaximized = await windowManager.isMaximized();
-    ref.read(appSettings.notifier).update((state) {
-      return state.copyWith(
-        windowXPos: windowFrame.left,
-        windowYPos: windowFrame.top,
-        windowWidth: windowFrame.width,
-        windowHeight: windowFrame.height,
-        isMaximized: isMaximized,
-      );
-    });
+
+    // Don't save window size is minimized, we want to restore to the previous size.
+    if (!await windowManager.isMinimized()) {
+      ref.read(appSettings.notifier).update((state) {
+        return state.copyWith(
+          windowXPos: windowFrame.left,
+          windowYPos: windowFrame.top,
+          windowWidth: windowFrame.width,
+          windowHeight: windowFrame.height,
+          isMaximized: isMaximized,
+        );
+      });
+    }
   }
 
   @override

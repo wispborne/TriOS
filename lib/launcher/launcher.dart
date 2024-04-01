@@ -51,6 +51,8 @@ class Launcher extends ConsumerWidget {
   }
 
   static launchGame(WidgetRef ref) {
+    // todo dependency check
+
     if (ref.read(appSettings.select((value) => value.useJre23 ?? false))) {
       launchGameJre23(ref);
     } else {

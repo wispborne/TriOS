@@ -4,6 +4,7 @@ import 'package:trios/dashboard/mod_summary_widget.dart';
 import 'package:trios/dashboard/version_check_icon.dart';
 import 'package:trios/dashboard/version_check_text_readout.dart';
 import 'package:trios/trios/trios_theme.dart';
+import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/tooltip_frame.dart';
@@ -38,9 +39,9 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
     final versionCheckComparison = compareLocalAndRemoteVersions(localVersionCheck, remoteVersionCheck);
     final compatWithGame = compareGameVersions(modInfo.gameVersion, ref.read(AppState.starsectorVersion).value);
     final compatTextColor = switch (compatWithGame) {
-      GameCompatibility.Incompatible => TriOSTheme.vanillaErrorColor,
-      GameCompatibility.Warning => TriOSTheme.vanillaWarningColor,
-      GameCompatibility.Compatible => null,
+      GameCompatibility.incompatible => vanillaErrorColor,
+      GameCompatibility.warning => vanillaWarningColor,
+      GameCompatibility.compatible => null,
     };
     final theme = Theme.of(context);
     infoTooltip({required Widget child}) => MovingTooltipWidget(
@@ -60,90 +61,125 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
       mainAxisSize: MainAxisSize.max,
       children: [
         Flexible(
-          child: SizedBox(
-            height: 26,
-            child: CheckboxWithLabel(
-              labelWidget: Row(
-                children: [
-                  Expanded(
-                    child: infoTooltip(
-                        child: Text("${modInfo.name} ${modInfo.version}",
-                            overflow: TextOverflow.fade,
-                            softWrap: false,
-                            maxLines: 1,
-                            style: theme.textTheme.labelLarge?.copyWith(color: compatTextColor))),
-                  ),
-                  MovingTooltipWidget(
-                    tooltipWidget: SizedBox(
-                      width: 500,
-                      child: TooltipFrame(
-                          child: VersionCheckTextReadout(
-                              versionCheckComparison, localVersionCheck, remoteVersionCheck, true)),
+          child: InkWell(
+            child: SizedBox(
+              height: 26,
+              child: CheckboxWithLabel(
+                labelWidget: Row(
+                  children: [
+                    Expanded(
+                      child: infoTooltip(
+                          child: Text("${modInfo.name} ${modInfo.version}",
+                              overflow: TextOverflow.fade,
+                              softWrap: false,
+                              maxLines: 1,
+                              style: theme.textTheme.labelLarge?.copyWith(color: compatTextColor))),
                     ),
-                    child: InkWell(
-                      onTap: () {
-                        if (remoteVersionCheck?.remoteVersion != null) {
-                          downloadUpdateViaBrowser(remoteVersionCheck!.remoteVersion!);
-                        }
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 3.0),
-                        child: VersionCheckIcon(
-                            localVersionCheck: localVersionCheck,
-                            remoteVersionCheck: remoteVersionCheck,
-                            versionCheckComparison: versionCheckComparison,
-                            theme: theme),
+                    MovingTooltipWidget(
+                      tooltipWidget: SizedBox(
+                        width: 500,
+                        child: TooltipFrame(
+                            child: VersionCheckTextReadout(
+                                versionCheckComparison, localVersionCheck, remoteVersionCheck, true)),
+                      ),
+                      child: InkWell(
+                        onTap: () {
+                          if (remoteVersionCheck?.remoteVersion != null) {
+                            downloadUpdateViaBrowser(remoteVersionCheck!.remoteVersion!);
+                          }
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 5.0),
+                          child: VersionCheckIcon(
+                              localVersionCheck: localVersionCheck,
+                              remoteVersionCheck: remoteVersionCheck,
+                              versionCheckComparison: versionCheckComparison,
+                              theme: theme),
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-              checkWrapper: (child) => infoTooltip(child: child),
-              padding: 0,
-              value: widget.isEnabled,
-              expand: true,
-              onChanged: (_) {
-                if (true) {
-                  showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                            title: const Text("Nope"),
-                            content: const Text("This feature is not yet implemented."),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.of(context).pop(),
-                                child: const Text("Close"),
-                              ),
-                            ],
-                          ));
-                  return;
-                }
-                // if (enabledModIds == null) return;
-                var isCurrentlyEnabled = widget.isEnabled;
-
-                // TODO check mod dependencies.
-                // We can disable mods without checking compatibility, but we can't enable them without checking.
-                if (!isCurrentlyEnabled) {
-                  final compatResult = compatWithGame;
-                  if (compatResult == GameCompatibility.Incompatible) {
-                    ScaffoldMessenger.of(context).clearSnackBars();
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                      content: Text(
-                          "Mod ${modInfo.name} is not compatible with your game version (${ref.read(AppState.starsectorVersion).value})"),
-                    ));
+                  ],
+                ),
+                checkWrapper: (child) => infoTooltip(child: child),
+                padding: 0,
+                value: widget.isEnabled,
+                expand: true,
+                onChanged: (_) {
+                  if (false) {
+                    showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                              title: const Text("Nope"),
+                              content: const Text("This feature is not yet implemented."),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.of(context).pop(),
+                                  child: const Text("Close"),
+                                ),
+                              ],
+                            ));
                     return;
                   }
-                }
+                  // if (enabledModIds == null) return;
+                  var isCurrentlyEnabled = widget.isEnabled;
 
-                var modsFolder = ref.read(appSettings.select((value) => value.modsDir));
-                if (modsFolder == null) return;
+                  // We can disable mods without checking compatibility, but we can't enable them without checking.
+                  if (!isCurrentlyEnabled) {
+                    // Check game version compatibility
+                    final compatResult = compatWithGame;
+                    if (compatResult == GameCompatibility.incompatible) {
+                      showSnackBar(
+                        context: context,
+                        type: SnackBarType.error,
+                        content: Text(
+                            "'${modInfo.name}' requires game version ${modInfo.gameVersion} but you have ${ref.read(AppState.starsectorVersion).value}"),
+                      );
+                      return;
+                    }
 
-                if (isCurrentlyEnabled) {
-                  disableMod(modInfo.id, modsFolder, ref);
-                } else {
-                  enableMod(modInfo.id, modsFolder, ref);
-                }
-              },
+                    // Check dependencies
+                    final dependencyCheck = modInfo.dependencies
+                        .map((dep) => (
+                              dependency: dep,
+                              satisfication: dep.isSatisfiedByAny(
+                                  ref.read(AppState.modVariants).value ?? [], ref.read(AppState.enabledMods).value!)
+                            ))
+                        .toList();
+
+                    // Check if any dependencies are completely missing
+                    final missingDependencies = dependencyCheck.where((element) => element.satisfication is Missing);
+                    if (missingDependencies.isNotEmpty) {
+                      showSnackBar(
+                          context: context,
+                          type: SnackBarType.error,
+                          content: Text(
+                            "'${modInfo.name}' is missing '${missingDependencies.joinToString(transform: (it) => it.dependency.name ?? it.dependency.id ?? "<unknown>")}'.",
+                          ));
+                      return;
+                    }
+
+                    // Check if any dependencies are disabled but present and can be enabled
+                    final disabledDependencies = dependencyCheck.where((element) => element.satisfication is Disabled);
+                    if (disabledDependencies.isNotEmpty) {
+                      showSnackBar(
+                          context: context,
+                          type: SnackBarType.error,
+                          content: Text(
+                              "'${modInfo.name}' has disabled dependency/s '${disabledDependencies.joinToString(transform: (it) => it.dependency.name ?? it.dependency.id ?? "<unknown>")}'."));
+                      return;
+                    }
+                  }
+
+                  var modsFolder = ref.read(appSettings.select((value) => value.modsDir));
+                  if (modsFolder == null) return;
+
+                  if (isCurrentlyEnabled) {
+                    disableMod(modInfo.id, modsFolder, ref);
+                  } else {
+                    enableMod(modInfo.id, modsFolder, ref);
+                  }
+                },
+              ),
             ),
           ),
         ),

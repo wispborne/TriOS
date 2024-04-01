@@ -1,30 +1,42 @@
 import 'dart:io';
 
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:trios/models/version.dart';
+import 'package:trios/utils/util.dart';
 
 import 'mod_info_json.dart';
 
-class ModInfo {
-  String id;
-  String name;
-  Version version;
-  String? description;
-  String? gameVersion;
-  String? author;
-  List<Dependency> dependencies = [];
+part '../generated/models/mod_info.freezed.dart';
+part '../generated/models/mod_info.g.dart';
 
-  // ModDependencies? dependencies;
+@freezed
+class ModInfo with _$ModInfo {
+  const ModInfo._();
 
-  ModInfo(this.id, this.name, this.version, this.author, this.description, this.gameVersion, this.dependencies);
+  const factory ModInfo({
+    required String id,
+    required String name,
+    @JsonConverterVersion() required Version version,
+    String? description,
+    String? gameVersion,
+    String? author,
+    @Default([]) List<Dependency> dependencies,
+  }) = _ModInfo;
 
-  ModInfo.fromJsonModel(ModInfoJson model, Directory modFolder)
-      : this(model.id, model.name, model.version, model.author, model.description, model.gameVersion,
-            model.dependencies);
+  factory ModInfo.fromJsonModel(ModInfoJson model, Directory modFolder) => ModInfo(
+        id: model.id,
+        name: model.name,
+        version: model.version,
+        author: model.author,
+        description: model.description,
+        gameVersion: model.gameVersion,
+        dependencies: model.dependencies,
+      );
 
-  // ModInfo.from091(ModInfoJsonModel_091a model) : this(model.id, model.name, model.version, model.gameVersion);
+  factory ModInfo.fromJson(Map<String, dynamic> json) => _$ModInfoFromJson(json);
 
-  late final formattedName = "$name $version ($id)";
+// late final formattedName = "$name $version ($id)";
 
-  @override
-  String toString() => "ModInfo(id: $id, name: $name, version: $version, gameVersion: $gameVersion)";
+// @override
+// String toString() => "ModInfo(id: $id, name: $name, version: $version, gameVersion: $gameVersion)";
 }

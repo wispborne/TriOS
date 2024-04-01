@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:trios/utils/extensions.dart';
 
 class Constants {
-  static const version = "0.0.30";
+  static const version = "0.0.31";
 
   static const appName = "TriOS";
   static const appTitle = "$appName v$version";
@@ -24,6 +24,7 @@ class Constants {
   static const MODS_FOLDER_NAME = "mods";
   static const SAVES_FOLDER_NAME = "saves";
   static const ARCHIVES_FOLDER_NAME = "Mod_Backups";
+  static const MOD_INFO_FILE_NAME = "mod_info.json";
 
   static const VERSION_CHECKER_CSV_PATH = "data/config/version/version_files.csv";
   static const VERSION_CHECKER_FILE_ENDING = ".version";

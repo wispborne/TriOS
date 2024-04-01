@@ -1,5 +1,5 @@
+![TriOS logo](assets/images/telos_faction_crest.png)
 # TriOS
-
 All-in-one Starsector toolkit. Very very early development.
 
 ## Tools

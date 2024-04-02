@@ -14,17 +14,49 @@
 import 'dart:io';
 
 import 'package:fimber/fimber.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/utils/extensions.dart';
 
+import '../models/download_progress.dart';
 import 'jre_manager.dart';
 
-class JreEntry {
-  final String versionString;
+abstract class JreEntryWrapper {
+  JreVersion get version;
+
+  int get versionInt => version.version;
+
+  String get versionString => version.versionString;
+}
+
+class JreEntry implements JreEntryWrapper {
+  @override
+  final JreVersion version;
   final Directory path;
 
-  JreEntry(this.versionString, this.path);
+  JreEntry(this.version, this.path);
 
-  bool get isUsedByGame => path.name == gameJreFolderName;
+  int get versionInt => version.version;
+
+  String get versionString => version.versionString;
+}
+
+class JreToDownload implements JreEntryWrapper {
+  @override
+  final JreVersion version;
+  final Function(WidgetRef ref) installRunner;
+  final StateProvider<DownloadProgress?> progressProvider;
+
+  JreToDownload(this.version, this.installRunner, this.progressProvider);
+
+  int get versionInt => version.version;
+
+  String get versionString => version.versionString;
+}
+
+class JreVersion {
+  final String versionString;
+
+  JreVersion(this.versionString);
 
   int get version {
     try {

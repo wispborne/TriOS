@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:trios/jre_manager/jre_manager.dart';
-import 'package:trios/jre_manager/jre_manager_logic.dart';
 import 'package:trios/launcher/launcher.dart';
 import 'package:trios/models/launch_settings.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/trios/trios_theme.dart';
-import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
 import 'package:trios/widgets/disable.dart';
 
@@ -48,13 +45,11 @@ class _DashboardState extends ConsumerState<Dashboard> with AutomaticKeepAliveCl
     //     1;
 
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        const Spacer(),
+        Spacer(),
         Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            Spacer(),
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Column(
@@ -161,58 +156,6 @@ class _DashboardState extends ConsumerState<Dashboard> with AutomaticKeepAliveCl
                                   )
                                 ],
                               ),
-                              // WISP: AA and scaling can't be passed as env variables.
-                              // They'd need to be written to the Windows Registry and equivalents, which is too risky for now.
-
-                              // Container(
-                              //   height: 16,
-                              // ),
-                              // Tooltip(
-                              //   message: "Anti-aliasing samples",
-                              //   child: Row(
-                              //     mainAxisAlignment: MainAxisAlignment.start,
-                              //     children: [
-                              //       const Text("AA Samples"),
-                              //       Padding(
-                              //         padding: const EdgeInsets.only(left: 16.0),
-                              //         child: DropdownButton(
-                              //             padding: const EdgeInsets.only(left: 8),
-                              //             borderRadius: BorderRadius.all(Radius.circular(TriOSTheme.cornerRadius)),
-                              //             value: ref
-                              //                     .watch(appSettings.select((value) => value.launchSettings))
-                              //                     .numAASamples ??
-                              //                 starsectorLaunchPrefs!.numAASamples,
-                              //             items: [0, 2, 4, 8, 16, 32]
-                              //                 .map((i) => DropdownMenuItem<int>(
-                              //                     value: i,
-                              //                     child: Text(
-                              //                       i.toString(),
-                              //                       // style: Theme.of(context).textTheme.bodySmall,
-                              //                     )))
-                              //                 .toList(),
-                              //             onChanged: (value) {
-                              //               ref.read(appSettings.notifier).update((state) => state.copyWith(
-                              //                   launchSettings: state.launchSettings.copyWith(numAASamples: value)));
-                              //             }),
-                              //       )
-                              //     ],
-                              //   ),
-                              // ),
-                              // Row(
-                              //   children: [
-                              //     const Text("Screen Scaling"),
-                              //     Slider(
-                              //         value: (currentScreenScaling) * 100,
-                              //         min: 100,
-                              //         max: 185,
-                              //         divisions: 17,
-                              //         label: "${((currentScreenScaling) * 100).toStringAsFixed(0)}%",
-                              //         onChanged: (value) {
-                              //           ref.read(appSettings.notifier).update((state) => state.copyWith(
-                              //               launchSettings: state.launchSettings.copyWith(screenScaling: value / 100)));
-                              //         })
-                              //   ],
-                              // ),
                               Padding(
                                 padding: const EdgeInsets.only(top: 32),
                                 child: Tooltip(
@@ -243,6 +186,34 @@ class _DashboardState extends ConsumerState<Dashboard> with AutomaticKeepAliveCl
                   child: Text("Note: These settings are separate from the normal launcher's settings.",
                       style: Theme.of(context).textTheme.labelMedium),
                 )),
+            Spacer()
+            // Expanded(
+            //   child: SizedBox(
+            //     height: 350,
+            //     child: Card(
+            //       child: Padding(
+            //         padding: const EdgeInsets.all(4),
+            //         child: Builder(builder: (context) {
+            //           ChipperState.loadedLog.addListener(() {
+            //             setState(() {});
+            //           });
+            //           final errors = ChipperState.loadedLog.chips?.errorBlock;
+            //           if (errors != null) {
+            //             return ChipperLog(errors: errors, showInfoLogs: true);
+            //           } else {
+            //             return const SizedBox(
+            //                 width: 350,
+            //                 child: Column(
+            //                   children: [
+            //                     Text("No log loaded"),
+            //                   ],
+            //                 ));
+            //           }
+            //         }),
+            //       ),
+            //     ),
+            //   ),
+            // )
           ],
         ),
         const Spacer(),

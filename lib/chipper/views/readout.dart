@@ -1,4 +1,3 @@
-
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -11,6 +10,7 @@ import '../models/error_lines.dart';
 import '../models/mod_entry.dart';
 import '../selection_transformer.dart';
 import '../utils.dart';
+import 'chipper_log.dart';
 
 class Readout extends StatelessWidget {
   Readout(LogChips chips, {super.key}) {
@@ -21,7 +21,6 @@ class Readout extends StatelessWidget {
     _javaVersion = _chips.javaVersion ?? "Not found in log.";
     _mods = _chips.modList.modList;
     _isPerfectList = _chips.modList.isPerfectList;
-    _errors = _chips.errorBlock.reversed.toList(growable: false);
   }
 
   late LogChips _chips;
@@ -30,7 +29,6 @@ class Readout extends StatelessWidget {
   String? _javaVersion;
   UnmodifiableListView<ModEntry>? _mods;
   bool _isPerfectList = false;
-  List<LogLine>? _errors;
 
   @override
   Widget build(BuildContext context) {
@@ -93,7 +91,8 @@ class Readout extends StatelessWidget {
                 Row(crossAxisAlignment: CrossAxisAlignment.center, mainAxisSize: MainAxisSize.min, children: [
                   if (!_isPerfectList && _mods?.isNotEmpty == true)
                     Tooltip(
-                        message: "This list may be incomplete.\n\"Running with the following mods\" block not found in log.",
+                        message:
+                            "This list may be incomplete.\n\"Running with the following mods\" block not found in log.",
                         child: Padding(
                           padding: const EdgeInsets.only(right: 8.0),
                           child: Icon(
@@ -156,7 +155,7 @@ class Readout extends StatelessWidget {
                 )
               ],
             )),
-      if (_errors != null)
+      if (_chips.errorBlock.isNotEmpty)
         Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
@@ -170,64 +169,9 @@ class Readout extends StatelessWidget {
               iconSize: 20,
             )
           ]),
-          Expanded(
-              child: SelectionArea(
-                  child: SelectionTransformer.tabular(
-                      columns: 2,
-                      separator: " ",
-                      child: ListView.builder(
-                          itemCount: _errors!.length,
-                          reverse: true,
-                          itemBuilder: (BuildContext context, int index) {
-                            return !showInfoLogs && _errors![index].isPreviousThreadLine
-                                ? Container(
-                                    height: 0,
-                                  )
-                                : Column(children: [
-                                    if (!isConsecutiveWithPreviousLine(index, showInfoLogs))
-                                      Divider(
-                                        color: theme.disabledColor,
-                                      ),
-                                    Container(
-                                        padding: (!isConsecutiveWithPreviousLine(index, showInfoLogs))
-                                            ? const EdgeInsets.only()
-                                            : const EdgeInsets.only(top: 1, bottom: 1),
-                                        child: IntrinsicHeight(
-                                            child: Row(children: [
-                                          Column(mainAxisAlignment: MainAxisAlignment.start, children: [
-                                            Row(children: [
-                                              if (!isConsecutiveWithPreviousLine(index, showInfoLogs))
-                                                ViewPreviousEntryButton(
-                                                    errors: _errors ?? [], theme: theme, index: index)
-                                              else
-                                                Container(
-                                                  width: 20,
-                                                ),
-                                              SizedBox(
-                                                  width: 85,
-                                                  child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-                                                    Text(
-                                                      "${_errors![index].lineNumber}    ",
-                                                      style: TextStyle(
-                                                          color: theme.hintColor.withAlpha(40),
-                                                          fontFeatures: const [FontFeature.tabularFigures()]),
-                                                    )
-                                                  ]))
-                                            ])
-                                          ]),
-                                          Expanded(child: _errors![index].createLogWidget(context))
-                                        ])))
-                                  ]);
-                          }))))
+          Expanded(child: ChipperLog(errors: _chips.errorBlock, showInfoLogs: showInfoLogs))
         ])),
     ]);
-  }
-
-  bool isConsecutiveWithPreviousLine(int index, bool showInfoLogs) {
-    if (index + 1 >= _errors!.length) return false;
-    var left = (_errors![index].lineNumber - 1);
-    var right = _errors![index + 1].lineNumber;
-    return left == right;
   }
 }
 

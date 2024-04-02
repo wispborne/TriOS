@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:collection/collection.dart';
 import 'package:fimber/fimber.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/trios/settings/settings.dart';
@@ -8,6 +9,7 @@ import 'package:trios/utils/extensions.dart';
 
 import '../utils/platform_paths.dart';
 import 'jre_entry.dart';
+import 'jre_manager.dart';
 
 final vmparamsVanillaContent = FutureProvider<String?>((ref) async {
   final gameDir = ref.watch(appSettings.select((value) => value.gameDir))?.toDirectory();
@@ -105,7 +107,7 @@ Future<List<JreEntry>> findJREs(String? gameDir) async {
       return null;
     }
 
-    return JreEntry(versionString, path);
+    return JreEntry(JreVersion(versionString), path);
   })))
       .whereType<JreEntry>()
       .toList();
@@ -127,4 +129,23 @@ Future<String?> readVanillaVmparams(String gameDir) async {
   }
 
   return await vmparamsFile.readAsString();
+}
+
+extension JreEntryWrapperExt on JreEntryWrapper {
+  bool isActive(WidgetRef ref, List<JreEntryWrapper> otherJres) {
+    if (this is JreEntry) {
+      var useJre23 = ref.watch(appSettings.select((value) => value.useJre23)) ?? false;
+
+      if (versionInt == 23) {
+        return useJre23;
+      }
+
+      // If JRE23 is enabled and exists, do not allow other JREs to be active.
+      // Otherwise, the active JRE will be named "jre".
+      return (!useJre23 || otherJres.none((jre) => jre.versionInt == 23)) &&
+          (this as JreEntry).path.name == gameJreFolderName;
+    } else {
+      return false;
+    }
+  }
 }

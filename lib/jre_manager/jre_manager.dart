@@ -11,7 +11,6 @@ import 'package:trios/jre_manager/ram_changer.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/conditional_wrap.dart';
-import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/download_progress_indicator.dart';
 
 import '../models/download_progress.dart';
@@ -28,10 +27,9 @@ class JreManager extends ConsumerStatefulWidget {
 }
 
 class _JreManagerState extends ConsumerState<JreManager> with AutomaticKeepAliveClientMixin {
-  List<JreEntry> jres = [];
+  List<JreEntryWrapper> jres = [];
   StreamSubscription? jreWatcherSubscription;
   bool isModifyingFiles = false;
-  bool? installingJre23State;
 
   @override
   void initState() {
@@ -44,7 +42,13 @@ class _JreManagerState extends ConsumerState<JreManager> with AutomaticKeepAlive
   _reloadJres() {
     if (isModifyingFiles) return;
     findJREs(ref.read(appSettings.select((value) => value.gameDir))?.path).then((value) {
-      jres = value;
+      jres = value.map((e) => e as JreEntryWrapper).toList();
+
+      if (!jres.any((jre) => jre is JreEntry && jre.versionInt == 23)) {
+        // Cheating a little by only passing in the progress provider for the JDK download, but it is a much larger download so it should always be the bottleneck.
+        jres += [JreToDownload(JreVersion("23-Himemi"), Jre23.installJre23, jre23jdkDownloadProgress)];
+      }
+
       setState(() {});
     });
   }
@@ -74,7 +78,7 @@ class _JreManagerState extends ConsumerState<JreManager> with AutomaticKeepAlive
     final vmparams = ref.watch(vmparamsVanillaContent).value;
 
     var iconSize = 40.0;
-    bool jreVersionSupportCheck(int version) => version <= 8;
+    bool jreVersionSupportCheck(int version) => version <= 8 || version == 23;
 
     return Stack(
       children: [
@@ -93,71 +97,125 @@ class _JreManagerState extends ConsumerState<JreManager> with AutomaticKeepAlive
                       child: Column(children: [
                         Padding(
                           padding: const EdgeInsets.only(bottom: 8.0),
-                          child: Text("Change JRE", style: Theme.of(context).textTheme.titleLarge),
+                          child: Stack(
+                            children: [
+                              Center(child: Text("Change JRE", style: Theme.of(context).textTheme.titleLarge)),
+                              // Align(
+                              //     alignment: Alignment.centerRight,
+                              //     child: IconButton(
+                              //         onPressed: _reloadJres,
+                              //         icon: const Icon(Icons.refresh),
+                              //         padding: EdgeInsets.zero)),
+                            ],
+                          ),
                         ),
                         for (var jre in jres..sort((a, b) => a.versionString.compareTo(b.versionString)))
                           ConditionalWrap(
-                            condition: !jre.isUsedByGame,
+                            condition: !jre.isActive(ref, jres),
                             wrapper: (child) => InkWell(
                               onTap: () async {
-                                if (!jreVersionSupportCheck(jre.version)) {
+                                if (jre is JreToDownload) {
+                                  // confirmation dialog
                                   showDialog(
                                       context: context,
-                                      builder: (context) => const AlertDialog(
-                                          title: Text("Only JRE 8 and below supported"),
-                                          content: Text("JRE 9+ requires custom game changes.")));
-                                } else {
-                                  setState(() {
-                                    isModifyingFiles = true;
-                                  });
-                                  await _changeJre(jre);
-                                  setState(() {
-                                    isModifyingFiles = false;
-                                  });
-                                  _reloadJres();
+                                      builder: (context) {
+                                        return AlertDialog(
+                                          title: const Text("Download JRE"),
+                                          content: Text("Are you sure you want to download Java ${jre.versionString}?"),
+                                          actions: [
+                                            TextButton(
+                                                onPressed: () {
+                                                  Navigator.of(context).pop();
+                                                },
+                                                child: const Text("Cancel")),
+                                            TextButton(
+                                                onPressed: () async {
+                                                  Navigator.of(context).pop();
+                                                  await jre.installRunner(ref);
+                                                  _reloadJres();
+                                                },
+                                                child: const Text("Download")),
+                                          ],
+                                        );
+                                      });
+                                } else if (jre is JreEntry) {
+                                  if (!jreVersionSupportCheck(jre.versionInt)) {
+                                    showDialog(
+                                        context: context,
+                                        builder: (context) => const AlertDialog(
+                                            title: Text("Only JRE 8 and below supported"),
+                                            content: Text("JRE 9+ requires custom game changes.")));
+                                  } else {
+                                    setState(() {
+                                      isModifyingFiles = true;
+                                    });
+                                    if (jre.versionInt == 23) {
+                                      ref.read(appSettings.notifier).update((it) => it.copyWith(useJre23: true));
+                                    } else {
+                                      ref.read(appSettings.notifier).update((it) => it.copyWith(useJre23: false));
+                                      await _changeJre(jre);
+                                    }
+                                    setState(() {
+                                      isModifyingFiles = false;
+                                    });
+                                    _reloadJres();
+                                  }
                                 }
                               },
                               mouseCursor: MaterialStateMouseCursor.clickable,
                               child: child,
                             ),
                             child: Opacity(
-                              opacity: jreVersionSupportCheck(jre.version) ? 1 : 0.5,
+                              opacity: jreVersionSupportCheck(jre.versionInt) ? 1 : 0.5,
                               child: Padding(
                                 padding: const EdgeInsets.only(left: 16.0),
                                 child: Row(
                                   children: [
-                                    jre.isUsedByGame
+                                    jre.isActive(ref, jres)
                                         ? Container(
                                             width: iconSize,
                                             height: iconSize,
                                             decoration: BoxDecoration(
                                                 shape: BoxShape.circle, color: Theme.of(context).colorScheme.primary),
-                                            child: Icon(Icons.coffee, color: Theme.of(context).colorScheme.onPrimary))
-                                        : SizedBox(width: iconSize, height: iconSize, child: const Icon(Icons.coffee)),
-                                    Padding(
-                                      padding: const EdgeInsets.only(left: 16.0, bottom: 8, top: 8),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text.rich(TextSpan(children: [
-                                            WidgetSpan(
-                                                alignment: PlaceholderAlignment.middle,
-                                                child: Text("Java ${jre.version}",
-                                                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                                        color: jre.isUsedByGame
-                                                            ? Theme.of(context).colorScheme.primary
-                                                            : null))),
-                                            TextSpan(
-                                                text: "  (${jre.versionString})",
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .titleMedium
-                                                    ?.copyWith(fontWeight: FontWeight.normal)),
-                                          ])),
-                                          Opacity(
-                                              opacity: 0.8,
-                                              child: Text(jre.path.name, style: Theme.of(context).textTheme.bodySmall)),
-                                        ],
+                                            child: Icon(jre is JreEntry ? Icons.coffee : Icons.download,
+                                                color: Theme.of(context).colorScheme.onPrimary))
+                                        : SizedBox(
+                                            width: iconSize,
+                                            height: iconSize,
+                                            child: Icon(jre is JreEntry ? Icons.coffee : Icons.download)),
+                                    Expanded(
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(left: 16.0, bottom: 8, top: 8),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text.rich(TextSpan(children: [
+                                              WidgetSpan(
+                                                  alignment: PlaceholderAlignment.middle,
+                                                  child: Text("Java ${jre.versionInt}",
+                                                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                                          color: jre.isActive(ref, jres)
+                                                              ? Theme.of(context).colorScheme.primary
+                                                              : null))),
+                                              TextSpan(
+                                                  text: "  (${jre.versionString})",
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .titleMedium
+                                                      ?.copyWith(fontWeight: FontWeight.normal)),
+                                            ])),
+                                            if (jre is JreEntry)
+                                              Opacity(
+                                                  opacity: 0.8,
+                                                  child: Text(jre.path.name ?? "",
+                                                      style: Theme.of(context).textTheme.bodySmall)),
+                                            if (jre is JreToDownload)
+                                              DownloadProgressIndicator(
+                                                value: ref.watch(jre.progressProvider) ??
+                                                    const DownloadProgress(0, 0, isIndeterminate: true),
+                                              ),
+                                          ],
+                                        ),
                                       ),
                                     )
                                   ],
@@ -197,70 +255,6 @@ class _JreManagerState extends ConsumerState<JreManager> with AutomaticKeepAlive
                 ),
               ),
             ),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8.0),
-                      child: Text("JRE 23", style: Theme.of(context).textTheme.titleLarge),
-                    ),
-                    Disable(
-                      isEnabled: installingJre23State != true,
-                      child: ElevatedButton(
-                          onPressed: () async {
-                            setState(() {
-                              installingJre23State = true;
-                            });
-                            await Jre23.installJre23(ref);
-                            setState(() {
-                              installingJre23State = false;
-                            });
-                          },
-                          child: const Text("Install")),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: SizedBox(
-                          width: 200,
-                          child: Column(
-                            children: [
-                              const Text("Starsector Himemi Config"),
-                              DownloadProgressIndicator(
-                                  value: ref.watch(jdk23ConfigDownloadProgress) ??
-                                      const DownloadProgress(0, 0, isIndeterminate: true)),
-                            ],
-                          )),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: SizedBox(
-                          width: 200,
-                          child: Column(
-                            children: [
-                              const Text("JDK 23"),
-                              DownloadProgressIndicator(
-                                  value: ref.watch(jre23jdkDownloadProgress) ??
-                                      const DownloadProgress(0, 0, isIndeterminate: true)),
-                            ],
-                          )),
-                    ),
-                    Text(switch (installingJre23State) {
-                      true => "Installing JRE 23...",
-                      false => "JRE 23 installed!",
-                      _ => ""
-                    }),
-                    const Spacer(),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text("This will overwrite any existing JRE23 install.\nJRE23 is provided by Himemi.",
-                          textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodySmall),
-                    ),
-                  ],
-                ),
-              ),
-            ),
           ],
         ),
       ],
@@ -273,7 +267,7 @@ class _JreManagerState extends ConsumerState<JreManager> with AutomaticKeepAlive
       return;
     }
 
-    var currentJreSource = jres.firstWhereOrNull((element) => element.isUsedByGame);
+    var currentJreSource = jres.firstWhereOrNull((element) => element.isActive(ref, jres)) as JreEntry?;
 
     Directory? currentJreDest;
     var gameJrePath = Directory(gamePath.resolve(gameJreFolderName).absolute.path);
@@ -299,7 +293,7 @@ class _JreManagerState extends ConsumerState<JreManager> with AutomaticKeepAlive
 
     // Rename target JRE to "jre".
     try {
-      await newJre.path.moveDirectory(gameJrePath);
+      await newJre.path!.moveDirectory(gameJrePath);
     } catch (e, st) {
       Fimber.w("Unable to move new JRE ${newJre.versionString} to '$gameJrePath'. Maybe you need to run as Admin?",
           ex: e, stacktrace: st);

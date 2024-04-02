@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:fimber/fimber.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:http/http.dart' as http;
@@ -14,6 +14,8 @@ import 'package:trios/utils/util.dart';
 
 import '../libarchive/libarchive.dart';
 import '../trios/settings/settings.dart';
+import '../widgets/disable.dart';
+import '../widgets/download_progress_indicator.dart';
 
 part '../generated/jre_manager/jre_23.freezed.dart';
 part '../generated/jre_manager/jre_23.g.dart';
@@ -167,8 +169,8 @@ class Jre23 {
     // Set ram to player's vanilla amount
     final vanillaRam = ref.read(currentRamAmountInMb).value;
     final newVmparams = vmParams
-        .replaceAll(maxRamInVmparamsRegex, "-Xmx${vanillaRam}m")
-        .replaceAll(minRamInVmparamsRegex, "-Xms${vanillaRam}m");
+        .replaceAll(maxRamInVmparamsRegex, "${vanillaRam}m")
+        .replaceAll(minRamInVmparamsRegex, "${vanillaRam}m");
 
     // Move VMParams to game folder
     Fimber.i('Moving "$vmParamsFile" to "$gamePath"');
@@ -191,4 +193,83 @@ class Jre23VersionChecker with _$Jre23VersionChecker {
   }) = _Jre23VersionChecker;
 
   factory Jre23VersionChecker.fromJson(Map<String, dynamic> json) => _$Jre23VersionCheckerFromJson(json);
+}
+
+class InstallJre23Card extends ConsumerStatefulWidget {
+  const InstallJre23Card({super.key});
+
+  @override
+  ConsumerState createState() => _InstallJre23CardState();
+}
+
+class _InstallJre23CardState extends ConsumerState<InstallJre23Card> {
+  bool? installingJre23State;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: Text("JRE 23", style: Theme.of(context).textTheme.titleLarge),
+            ),
+            Disable(
+              isEnabled: installingJre23State != true,
+              child: ElevatedButton(
+                  onPressed: () async {
+                    setState(() {
+                      installingJre23State = true;
+                    });
+                    await Jre23.installJre23(ref);
+                    setState(() {
+                      installingJre23State = false;
+                    });
+                  },
+                  child: const Text("Install")),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: SizedBox(
+                  width: 200,
+                  child: Column(
+                    children: [
+                      const Text("Starsector Himemi Config"),
+                      DownloadProgressIndicator(
+                          value: ref.watch(jdk23ConfigDownloadProgress) ??
+                              const DownloadProgress(0, 0, isIndeterminate: true)),
+                    ],
+                  )),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: SizedBox(
+                  width: 200,
+                  child: Column(
+                    children: [
+                      const Text("JDK 23"),
+                      DownloadProgressIndicator(
+                          value: ref.watch(jre23jdkDownloadProgress) ??
+                              const DownloadProgress(0, 0, isIndeterminate: true)),
+                    ],
+                  )),
+            ),
+            Text(switch (installingJre23State) {
+              true => "Installing JRE 23...",
+              false => "JRE 23 installed!",
+              _ => ""
+            }),
+            const Spacer(),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text("This will overwrite any existing JRE23 install.\nJRE23 is provided by Himemi.",
+                  textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodySmall),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

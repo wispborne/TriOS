@@ -1,7 +1,7 @@
 import 'package:trios/utils/extensions.dart';
 
 class Constants {
-  static const version = "0.0.35";
+  static const version = "0.0.36";
 
   static const appName = "TriOS";
   static const appTitle = "$appName v$version";
@@ -15,7 +15,7 @@ class Constants {
     "COMSEC Compliant",
     "Wave to Sebestyan",
     "Gargoyle-resistant",
-    "Unavailable on Asher"
+    "Unavailable on Asher",
   ].random();
 
   static const enabledModsFilename = "enabled_mods.json";

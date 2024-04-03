@@ -46,7 +46,7 @@ class DesktopDropState extends ConsumerState<DesktopDrop> {
 
   @override
   void initState() {
-    parseLogListener(ref.read(logRawContents));
+    parseLogListener(ref.read(ChipperState.logRawContents).value);
     super.initState();
   }
 

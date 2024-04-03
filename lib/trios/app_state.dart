@@ -22,7 +22,6 @@ class AppState {
   static TriOSTheme theme = TriOSTheme();
   static final selfUpdateDownloadProgress =
       StateProvider<double?>((ref) => null);
-  static final isLoadingLog = StateProvider<bool>((ref) => false);
 
   static final modVariants = FutureProvider<List<ModVariant>>((ref) async {
     final gamePath =

@@ -30,6 +30,9 @@ class _DashboardState extends ConsumerState<Dashboard> with AutomaticKeepAliveCl
   void initState() {
     super.initState();
     starsectorLaunchPrefs = Launcher.getStarsectorLaunchPrefs();
+    if (ref.read(logRawContents) == null) {
+      loadDefaultLog(ref);
+    }
   }
 
   @override

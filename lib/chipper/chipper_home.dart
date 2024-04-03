@@ -8,12 +8,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:platform_info/platform_info.dart';
-import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/platform_paths.dart';
 
 import '../trios/settings/settings.dart';
-import 'chipper_state.dart' as state;
 import 'chipper_state.dart';
 import 'copy.dart';
 import 'views/about_view.dart';
@@ -34,18 +32,18 @@ class ChipperApp extends ConsumerStatefulWidget {
 loadDefaultLog(WidgetRef ref) {
   WidgetsBinding.instance.addPostFrameCallback((_) {
     try {
-      ref.read(AppState.isLoadingLog.notifier).state = true;
+      ref.read(ChipperState.isLoadingLog.notifier).state = true;
       final gamePath = ref.read(appSettings.select((value) => value.gameDir))?.toDirectory();
       var gameFilesPath = getLogPath(gamePath!);
 
       if (gameFilesPath.existsSync()) {
         gameFilesPath.readAsBytes().then((bytes) async {
           final content = utf8.decode(bytes.toList(), allowMalformed: true);
-          return ref.read(state.logRawContents.notifier).state = LogFile(gameFilesPath.path, content);
+          return ref.read(ChipperState.logRawContents.notifier).state = LogFile(gameFilesPath.path, content);
         });
       }
     } finally {
-      ref.read(AppState.isLoadingLog.notifier).state = false;
+      ref.read(ChipperState.isLoadingLog.notifier).state = false;
     }
   });
 }
@@ -68,7 +66,7 @@ Future<void> pasteLog(WidgetRef ref) async {
   var clipboardData = (await Clipboard.getData(Clipboard.kTextPlain))?.text;
 
   if (clipboardData?.isNotEmpty == true) {
-    ref.read(state.logRawContents.notifier).update((state) {
+    ref.read(ChipperState.logRawContents.notifier).update((state) {
       if (clipboardData == null) {
         return null;
       } else {
@@ -101,7 +99,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
       });
     });
 
-    if (ref.read(state.logRawContents) == null) {
+    if (ref.read(ChipperState.logRawContents) == null) {
       loadDefaultLog(ref);
     }
   }
@@ -206,10 +204,10 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
 
                       if (Platform.I.isWeb) {
                         final content = utf8.decode(file.bytes!.toList(), allowMalformed: true);
-                        ref.read(state.logRawContents.notifier).update((state) => LogFile(file.path, content));
+                        ref.read(ChipperState.logRawContents.notifier).update((state) => LogFile(file.path, content));
                       } else if (file.path != null) {
                         final content = utf8.decode(File(file.path!).readAsBytesSync().toList(), allowMalformed: true);
-                        ref.read(state.logRawContents.notifier).update((state) => LogFile(file.path, content));
+                        ref.read(ChipperState.logRawContents.notifier).update((state) => LogFile(file.path, content));
                       }
                     } else {
                       Fimber.w("Error reading file! $result");

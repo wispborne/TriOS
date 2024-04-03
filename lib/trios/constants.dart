@@ -16,6 +16,7 @@ class Constants {
     "Wave to Sebestyan",
     "Gargoyle-resistant",
     "Unavailable on Asher",
+    "Developer Approved"
   ].random();
 
   static const enabledModsFilename = "enabled_mods.json";

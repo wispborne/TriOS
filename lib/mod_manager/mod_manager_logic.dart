@@ -139,6 +139,7 @@ Future<void> forceChangeModGameVersion(ModVariant modVariant, String newGameVers
   // Don't use the code model, we want to keep any extra fields that might not be in the model.
   final modInfoJson = modInfoFile.readAsStringSync().fixJsonToMap();
   modInfoJson["gameVersion"] = newGameVersion;
+  modInfoJson["originalGameVersion"] = modVariant.modInfo.gameVersion;
   await modInfoFile.writeAsString(jsonEncodePrettily(modInfoJson));
 }
 

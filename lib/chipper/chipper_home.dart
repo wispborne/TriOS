@@ -128,8 +128,8 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                       },
                       icon: const Icon(Icons.refresh),
                       style: ButtonStyle(
-                          foregroundColor: MaterialStateProperty.all(
-                              theme.colorScheme.onBackground)),
+                          foregroundColor: WidgetStateProperty.all(
+                              theme.colorScheme.onSurface)),
                       label: const Text("Load my log")),
                   if (chips != null)
                     TextButton.icon(

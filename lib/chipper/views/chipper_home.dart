@@ -24,29 +24,28 @@ class DesktopDrop extends ConsumerStatefulWidget {
 }
 
 class DesktopDropState extends ConsumerState<DesktopDrop> {
-  static bool parsing = false;
   final String _macPath = "/Applications/Starsector.app/logs/starsector.log";
   final String _winPath = "C:/Program Files (x86)/Fractal Softworks/Starsector/starsector-core/starsector.log";
   final String _linuxPath = "<game folder>/starsector.log";
 
-  parseLogListener(LogFile? next) {
-    if (next == null) return;
-    setState(() {
-      Fimber.i("Parsing true");
-      parsing = true;
-    });
-    compute(handleNewLogContent, next.contents).then((LogChips? chips) {
-      ChipperState.loadedLog.chips = chips?..filepath = next.filepath;
-      setState(() {
-        Fimber.i("Parsing false");
-        parsing = false;
-      });
-    });
-  }
+  // parseLogListener(LogFile? next) {
+  //   if (next == null) return;
+  //   setState(() {
+  //     Fimber.i("Parsing true");
+  //     parsing = true;
+  //   });
+  //   compute(handleNewLogContent, next.contents).then((LogChips? chips) {
+  //     ChipperState.loadedLog.chips = chips?..filepath = next.filepath;
+  //     setState(() {
+  //       Fimber.i("Parsing false");
+  //       parsing = false;
+  //     });
+  //   });
+  // }
 
   @override
   void initState() {
-    parseLogListener(ref.read(ChipperState.logRawContents).value);
+    ref.read(ChipperState.logRawContents.notifier).parseLog(null);
     super.initState();
   }
 
@@ -54,7 +53,8 @@ class DesktopDropState extends ConsumerState<DesktopDrop> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    ref.listen(logRawContents, (pref, next) => parseLogListener(next));
+    final parsing = ref.watch(ChipperState.isLoadingLog);
+    // ref.listen(logRawContents, (pref, next) => parseLogListener(next));
 
     return ChipperDropper(
         child: (parsing == true || widget.chips == null)

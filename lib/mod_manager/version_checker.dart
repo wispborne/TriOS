@@ -9,10 +9,11 @@ import '../models/version_checker_info.dart';
 import '../trios/app_state.dart';
 
 /// String is the smolId
-final versionCheckResults =
-    AsyncNotifierProvider<_VersionCheckerNotifier, Map<String, VersionCheckResult>>(_VersionCheckerNotifier.new);
+final versionCheckResults = AsyncNotifierProvider<_VersionCheckerNotifier,
+    Map<String, VersionCheckResult>>(_VersionCheckerNotifier.new);
 
-class _VersionCheckerNotifier extends AsyncNotifier<Map<String, VersionCheckResult>> {
+class _VersionCheckerNotifier
+    extends AsyncNotifier<Map<String, VersionCheckResult>> {
   @override
   Map<String, VersionCheckResult> build() {
     refresh();
@@ -22,12 +23,12 @@ class _VersionCheckerNotifier extends AsyncNotifier<Map<String, VersionCheckResu
   // Executes async, updates state every time a Version Check http request is completed.
   void refresh() {
     state = const AsyncValue.data({});
-    final versionCheckResultsCache = state.value ?? {}; // TODO change to just state
+    final versionCheckResultsCache =
+        state.value ?? {}; // TODO change to just state
 
     final mods = ref.watch(AppState.modVariants);
     if (mods.value.isNullOrEmpty()) return;
 
-    // TODO refresh cache button
     try {
       mods.value!.map((mod) {
         if (versionCheckResultsCache[mod.smolId] != null) {
@@ -36,7 +37,9 @@ class _VersionCheckerNotifier extends AsyncNotifier<Map<String, VersionCheckResu
           return checkRemoteVersion(mod);
         }
       }).forEach((futResult) => futResult.then((result) {
-            state = AsyncValue.data(state.value!..update(result.smolId, (value) => result, ifAbsent: () => result));
+            state = AsyncValue.data(state.value!
+              ..update(result.smolId, (value) => result,
+                  ifAbsent: () => result));
           }));
     } catch (e, st) {
       Fimber.e("Error fetching remote version info: $e\n$st");
@@ -50,11 +53,13 @@ class VersionCheckResult {
   final String smolId;
   final VersionCheckerInfo? remoteVersion;
   final Object? error;
+  final String? uri;
 
-  VersionCheckResult(this.smolId, this.remoteVersion, this.error);
+  VersionCheckResult(this.smolId, this.remoteVersion, this.error, this.uri);
 }
 
-int? compareLocalAndRemoteVersions(VersionCheckerInfo? local, VersionCheckResult? remote) {
+int? compareLocalAndRemoteVersions(
+    VersionCheckerInfo? local, VersionCheckResult? remote) {
   if (local == null || remote == null) return 0;
   return local.modVersion?.compareTo(remote.remoteVersion?.modVersion);
 }
@@ -62,7 +67,8 @@ int? compareLocalAndRemoteVersions(VersionCheckerInfo? local, VersionCheckResult
 Future<VersionCheckResult> checkRemoteVersion(ModVariant modVariant) async {
   var remoteVersionUrl = modVariant.versionCheckerInfo?.masterVersionFile;
   if (remoteVersionUrl == null) {
-    return VersionCheckResult(modVariant.smolId, null, Exception("No remote version url for ${modVariant.modInfo.id}"));
+    return VersionCheckResult(modVariant.smolId, null,
+        Exception("No remote version url for ${modVariant.modInfo.id}"), null);
   }
   final fixedUrl = fixUrl(remoteVersionUrl);
 
@@ -72,25 +78,34 @@ Future<VersionCheckResult> checkRemoteVersion(ModVariant modVariant) async {
       headers: {
         'Content-Type': 'application/json',
       },
-    );
+    ).timeout(const Duration(seconds: 5));
     final body = response.body;
     if (response.statusCode == 200) {
-      return VersionCheckResult(modVariant.smolId, VersionCheckerInfo.fromJson(body.fixJsonToMap()), null);
+      return VersionCheckResult(
+          modVariant.smolId,
+          VersionCheckerInfo.fromJson(body.fixJsonToMap()),
+          null,
+          remoteVersionUrl);
     } else {
       throw Exception(
           "Failed to fetch remote version info for ${modVariant.modInfo.id}: ${response.statusCode} - $body");
     }
   } catch (e, st) {
-    Fimber.d("Error fetching remote version info for ${modVariant.modInfo.id}: $e\n$st");
-    return VersionCheckResult(modVariant.smolId, null, e);
+    Fimber.d(
+        "Error fetching remote version info for ${modVariant.modInfo.id}: $e\n$st");
+    return VersionCheckResult(modVariant.smolId, null, e, remoteVersionUrl);
   }
 }
 
 /// User linked to the page for their version file on github instead of to the raw file.
-final _githubFilePageRegex = RegExp(r"https://github.com/.+/blob/.+/assets/.+.version", caseSensitive: false);
+final _githubFilePageRegex = RegExp(
+    r"https://github.com/.+/blob/.+/assets/.+.version",
+    caseSensitive: false);
 
 /// User set dl=0 instead of dl=1 when hosted on dropbox.
-final _dropboxDlPageRegex = RegExp("""https://www.dropbox.com/s/.+/.+.version\?dl=0""", caseSensitive: false);
+final _dropboxDlPageRegex = RegExp(
+    """https://www.dropbox.com/s/.+/.+.version\?dl=0""",
+    caseSensitive: false);
 
 //     private fun fixUrl(urlString: String): String {
 //         return when {
@@ -116,7 +131,9 @@ final _dropboxDlPageRegex = RegExp("""https://www.dropbox.com/s/.+/.+.version\?d
 
 String fixUrl(String urlString) {
   if (_githubFilePageRegex.hasMatch(urlString)) {
-    return urlString.replaceAll("github.com", "raw.githubusercontent.com").replaceAll("blob/", "");
+    return urlString
+        .replaceAll("github.com", "raw.githubusercontent.com")
+        .replaceAll("blob/", "");
   } else if (_dropboxDlPageRegex.hasMatch(urlString)) {
     return urlString.replaceAll("dl=0", "dl=1");
   } else {

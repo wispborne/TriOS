@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-class SpinningRefreshButton extends StatefulWidget {
+class SpinningRefreshFAB extends StatefulWidget {
   final VoidCallback onPressed;
   final bool isScanning;
   final String? tooltip;
 
-  const SpinningRefreshButton({
+  const SpinningRefreshFAB({
     super.key,
     required this.onPressed,
     required this.isScanning,
@@ -13,10 +13,10 @@ class SpinningRefreshButton extends StatefulWidget {
   });
 
   @override
-  SpinningRefreshButtonState createState() => SpinningRefreshButtonState();
+  SpinningRefreshFABState createState() => SpinningRefreshFABState();
 }
 
-class SpinningRefreshButtonState extends State<SpinningRefreshButton>
+class SpinningRefreshFABState extends State<SpinningRefreshFAB>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
 
@@ -30,7 +30,7 @@ class SpinningRefreshButtonState extends State<SpinningRefreshButton>
   }
 
   @override
-  void didUpdateWidget(SpinningRefreshButton oldWidget) {
+  void didUpdateWidget(SpinningRefreshFAB oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.isScanning) {
       _animationController.repeat();

@@ -9,7 +9,7 @@ import 'models/mod_entry.dart';
 import 'models/user_mods.dart';
 
 class ChipperState {
-  static LoadedLog loadedLog = LoadedLog();
+  // static LoadedLog loadedLog = LoadedLog();
   static final isLoadingLog = StateProvider<bool>((ref) => ref.watch(logRawContents).isLoading);
 
   // static final logRawContents = StateProvider<LogFile?>((ref) => null);
@@ -34,17 +34,6 @@ class _ChipperLogParserNotifier extends AsyncNotifier<LogChips?> {
       //   parsing = false;
       // });
     });
-  }
-}
-
-class LoadedLog extends ChangeNotifier {
-  LogChips? _chips;
-
-  LogChips? get chips => _chips;
-
-  set chips(LogChips? newChips) {
-    _chips = newChips;
-    notifyListeners();
   }
 }
 

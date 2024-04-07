@@ -21,7 +21,8 @@ class ModListBasicEntry extends ConsumerStatefulWidget {
   final ModVariant mod;
   final bool isEnabled;
 
-  const ModListBasicEntry({super.key, required this.mod, required this.isEnabled});
+  const ModListBasicEntry(
+      {super.key, required this.mod, required this.isEnabled});
 
   @override
   ConsumerState createState() => _ModListBasicEntryState();
@@ -36,8 +37,10 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
     final modInfo = modVariant.modInfo;
     final localVersionCheck = modVariant.versionCheckerInfo;
     final remoteVersionCheck = versionCheck?[modVariant.smolId];
-    final versionCheckComparison = compareLocalAndRemoteVersions(localVersionCheck, remoteVersionCheck);
-    final compatWithGame = compareGameVersions(modInfo.gameVersion, ref.read(AppState.starsectorVersion).value);
+    final versionCheckComparison =
+        compareLocalAndRemoteVersions(localVersionCheck, remoteVersionCheck);
+    final compatWithGame = compareGameVersions(
+        modInfo.gameVersion, ref.read(AppState.starsectorVersion).value);
     final compatTextColor = switch (compatWithGame) {
       GameCompatibility.incompatible => vanillaErrorColor,
       GameCompatibility.warning => vanillaWarningColor,
@@ -69,25 +72,55 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                   children: [
                     Expanded(
                       child: infoTooltip(
-                          child: Text("${modInfo.name} ${modInfo.version ?? ""}",
+                          child: Text(
+                              "${modInfo.name} ${modInfo.version ?? ""}",
                               overflow: TextOverflow.fade,
                               softWrap: false,
                               maxLines: 1,
-                              style: theme.textTheme.labelLarge?.copyWith(color: compatTextColor))),
+                              style: theme.textTheme.labelLarge
+                                  ?.copyWith(color: compatTextColor))),
                     ),
                     MovingTooltipWidget(
                       tooltipWidget: SizedBox(
                         width: 500,
                         child: TooltipFrame(
                             child: VersionCheckTextReadout(
-                                versionCheckComparison, localVersionCheck, remoteVersionCheck, true)),
+                                versionCheckComparison,
+                                localVersionCheck,
+                                remoteVersionCheck,
+                                true)),
                       ),
                       child: InkWell(
                         onTap: () {
-                          if (remoteVersionCheck?.remoteVersion != null) {
-                            downloadUpdateViaBrowser(remoteVersionCheck!.remoteVersion!);
+                          if (remoteVersionCheck?.remoteVersion != null &&
+                              compareLocalAndRemoteVersions(
+                                      localVersionCheck, remoteVersionCheck) ==
+                                  -1) {
+                            downloadUpdateViaBrowser(
+                                remoteVersionCheck!.remoteVersion!);
+                          } else {
+                            showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                        content: SelectionArea(
+                                      child: VersionCheckTextReadout(
+                                          versionCheckComparison,
+                                          localVersionCheck,
+                                          remoteVersionCheck,
+                                          true),
+                                    )));
                           }
                         },
+                        onSecondaryTap: () => showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                                    content: SelectionArea(
+                                  child: VersionCheckTextReadout(
+                                      versionCheckComparison,
+                                      localVersionCheck,
+                                      remoteVersionCheck,
+                                      true),
+                                ))),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 5.0),
                           child: VersionCheckIcon(
@@ -110,7 +143,8 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                         context: context,
                         builder: (context) => AlertDialog(
                               title: const Text("Nope"),
-                              content: const Text("This feature is not yet implemented."),
+                              content: const Text(
+                                  "This feature is not yet implemented."),
                               actions: [
                                 TextButton(
                                   onPressed: () => Navigator.of(context).pop(),
@@ -142,12 +176,14 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                         .map((dep) => (
                               dependency: dep,
                               satisfication: dep.isSatisfiedByAny(
-                                  ref.read(AppState.modVariants).value ?? [], ref.read(AppState.enabledMods).value!)
+                                  ref.read(AppState.modVariants).value ?? [],
+                                  ref.read(AppState.enabledMods).value!)
                             ))
                         .toList();
 
                     // Check if any dependencies are completely missing
-                    final missingDependencies = dependencyCheck.where((element) => element.satisfication is Missing);
+                    final missingDependencies = dependencyCheck
+                        .where((element) => element.satisfication is Missing);
                     if (missingDependencies.isNotEmpty) {
                       showSnackBar(
                           context: context,
@@ -159,7 +195,8 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                     }
 
                     // Check if any dependencies are disabled but present and can be enabled
-                    final disabledDependencies = dependencyCheck.where((element) => element.satisfication is Disabled);
+                    final disabledDependencies = dependencyCheck
+                        .where((element) => element.satisfication is Disabled);
                     if (disabledDependencies.isNotEmpty) {
                       showSnackBar(
                           context: context,
@@ -170,7 +207,8 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                     }
                   }
 
-                  var modsFolder = ref.read(appSettings.select((value) => value.modsDir));
+                  var modsFolder =
+                      ref.read(appSettings.select((value) => value.modsDir));
                   if (modsFolder == null) return;
 
                   if (isCurrentlyEnabled) {

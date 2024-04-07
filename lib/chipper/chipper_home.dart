@@ -31,24 +31,23 @@ class ChipperApp extends ConsumerStatefulWidget {
 
 loadDefaultLog(WidgetRef ref) {
   WidgetsBinding.instance.addPostFrameCallback((_) {
-    try {
-      ref.read(ChipperState.isLoadingLog.notifier).state = true;
-      final gamePath = ref.read(appSettings.select((value) => value.gameDir))?.toDirectory();
-      var gameFilesPath = getLogPath(gamePath!);
+    final gamePath =
+        ref.read(appSettings.select((value) => value.gameDir))?.toDirectory();
+    var gameFilesPath = getLogPath(gamePath!);
 
-      if (gameFilesPath.existsSync()) {
-        gameFilesPath.readAsBytes().then((bytes) async {
-          final content = utf8.decode(bytes.toList(), allowMalformed: true);
-          return ref.read(ChipperState.logRawContents.notifier).state = LogFile(gameFilesPath.path, content);
-        });
-      }
-    } finally {
-      ref.read(ChipperState.isLoadingLog.notifier).state = false;
+    if (gameFilesPath.existsSync()) {
+      gameFilesPath.readAsBytes().then((bytes) async {
+        final content = utf8.decode(bytes.toList(), allowMalformed: true);
+        return ref
+            .read(ChipperState.logRawContents.notifier)
+            .parseLog(LogFile(gameFilesPath.path, content));
+      });
     }
   });
 }
 
-class _ChipperAppState extends ConsumerState<ChipperApp> with AutomaticKeepAliveClientMixin<ChipperApp> {
+class _ChipperAppState extends ConsumerState<ChipperApp>
+    with AutomaticKeepAliveClientMixin<ChipperApp> {
   @override
   bool get wantKeepAlive => true;
 
@@ -56,8 +55,12 @@ class _ChipperAppState extends ConsumerState<ChipperApp> with AutomaticKeepAlive
   Widget build(BuildContext context) {
     super.build(context);
     return CallbackShortcuts(
-      bindings: {const SingleActivator(LogicalKeyboardKey.keyV, control: true): () => pasteLog(ref)},
-      child: const MyHomePage(title: chipperTitleAndVersion, subTitle: chipperSubtitle),
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.keyV, control: true): () =>
+            pasteLog(ref)
+      },
+      child: const MyHomePage(
+          title: chipperTitleAndVersion, subTitle: chipperSubtitle),
     );
   }
 }
@@ -93,13 +96,8 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
   @override
   void initState() {
     super.initState();
-    ChipperState.loadedLog.addListener(() {
-      setState(() {
-        chips = ChipperState.loadedLog.chips;
-      });
-    });
 
-    if (ref.read(ChipperState.logRawContents) == null) {
+    if (ref.read(ChipperState.logRawContents).valueOrNull == null) {
       loadDefaultLog(ref);
     }
   }
@@ -107,6 +105,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    chips = ref.watch(ChipperState.logRawContents).valueOrNull;
     return Stack(children: [
       Column(children: [
         Card(
@@ -128,7 +127,9 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                         loadDefaultLog(ref);
                       },
                       icon: const Icon(Icons.refresh),
-                      style: ButtonStyle(foregroundColor: MaterialStateProperty.all(theme.colorScheme.onBackground)),
+                      style: ButtonStyle(
+                          foregroundColor: MaterialStateProperty.all(
+                              theme.colorScheme.onBackground)),
                       label: const Text("Load my log")),
                   if (chips != null)
                     TextButton.icon(
@@ -140,7 +141,9 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                           }
                         },
                         icon: const Icon(Icons.copy),
-                        style: ButtonStyle(foregroundColor: MaterialStateProperty.all(theme.colorScheme.onBackground)),
+                        style: ButtonStyle(
+                            foregroundColor: MaterialStateProperty.all(
+                                theme.colorScheme.onBackground)),
                         label: const Text("Copy all")),
                   if (chips != null)
                     TextButton.icon(
@@ -151,7 +154,9 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                           }
                         },
                         icon: const Icon(Icons.launch),
-                        style: ButtonStyle(foregroundColor: MaterialStateProperty.all(theme.colorScheme.onBackground)),
+                        style: ButtonStyle(
+                            foregroundColor: MaterialStateProperty.all(
+                                theme.colorScheme.onBackground)),
                         label: const Text("Open File")),
                 ]),
                 Row(mainAxisSize: MainAxisSize.min, children: [
@@ -171,10 +176,12 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                       children: [
                         TextButton.icon(
                             label: const Text("About Chipper"),
-                            onPressed: () => showChipperAboutDialog(context, theme),
+                            onPressed: () =>
+                                showChipperAboutDialog(context, theme),
                             icon: const Icon(Icons.info),
                             style: ButtonStyle(
-                                foregroundColor: MaterialStateProperty.all(theme.colorScheme.onBackground))),
+                                foregroundColor: MaterialStateProperty.all(
+                                    theme.colorScheme.onBackground))),
                       ],
                     ),
                   )
@@ -197,23 +204,32 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
               child: FloatingActionButton(
                 onPressed: () async {
                   try {
-                    FilePickerResult? result = await FilePicker.platform.pickFiles();
+                    FilePickerResult? result =
+                        await FilePicker.platform.pickFiles();
 
                     if (result?.files.single != null) {
                       var file = result!.files.single;
 
                       if (Platform.I.isWeb) {
-                        final content = utf8.decode(file.bytes!.toList(), allowMalformed: true);
-                        ref.read(ChipperState.logRawContents.notifier).update((state) => LogFile(file.path, content));
+                        final content = utf8.decode(file.bytes!.toList(),
+                            allowMalformed: true);
+                        ref
+                            .read(ChipperState.logRawContents.notifier)
+                            .parseLog(LogFile(file.path, content));
                       } else if (file.path != null) {
-                        final content = utf8.decode(File(file.path!).readAsBytesSync().toList(), allowMalformed: true);
-                        ref.read(ChipperState.logRawContents.notifier).update((state) => LogFile(file.path, content));
+                        final content = utf8.decode(
+                            File(file.path!).readAsBytesSync().toList(),
+                            allowMalformed: true);
+                        ref
+                            .read(ChipperState.logRawContents.notifier)
+                            .parseLog(LogFile(file.path, content));
                       }
                     } else {
                       Fimber.w("Error reading file! $result");
                     }
                   } catch (e, stackTrace) {
-                    Fimber.e("Error reading log file.", ex: e, stacktrace: stackTrace);
+                    Fimber.e("Error reading log file.",
+                        ex: e, stacktrace: stackTrace);
                   }
                 },
                 tooltip: 'Upload log file',

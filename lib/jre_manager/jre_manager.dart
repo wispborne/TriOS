@@ -85,7 +85,7 @@ class _JreManagerState extends ConsumerState<JreManager> with AutomaticKeepAlive
         if (isModifyingFiles) const Center(child: RefreshProgressIndicator()),
         GridView(
           gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-              maxCrossAxisExtent: 350, crossAxisSpacing: 8, mainAxisSpacing: 8),
+              maxCrossAxisExtent: 380, crossAxisSpacing: 8, mainAxisSpacing: 8),
           shrinkWrap: true,
           children: [
             SizedBox(

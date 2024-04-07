@@ -10,7 +10,7 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/vram_estimator/vram_checker.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/graph_radio_selector.dart';
-import 'package:trios/widgets/spinning_refresh_button.dart';
+import 'package:trios/widgets/spinning_refresh_fab.dart';
 
 import '../../trios/settings/settings.dart';
 import 'charts/bar_chart.dart';
@@ -114,7 +114,7 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
     return Column(children: <Widget>[
       Row(
         children: [
-          SpinningRefreshButton(
+          SpinningRefreshFAB(
             onPressed: () {
               if (!isScanning) _getVramUsage();
             },

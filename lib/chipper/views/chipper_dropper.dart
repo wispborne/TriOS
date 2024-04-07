@@ -29,8 +29,8 @@ class _ChipperDropperState extends ConsumerState<ChipperDropper> {
         var file = detail.files.first;
         final filePath = file.path;
         handleDroppedFile(filePath).then((content) {
-          if (content == null) return ref.read(logRawContents.notifier);
-          return ref.read(logRawContents.notifier).update((state) => LogFile(file.path, content));
+          if (content == null) return;// TODO ref.read(ChipperState.logRawContents).valueOrNull;
+          return ref.read(ChipperState.logRawContents.notifier).parseLog(LogFile(file.path, content));
         });
         widget.onDropped?.call(filePath);
       },

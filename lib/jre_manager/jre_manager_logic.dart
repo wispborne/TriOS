@@ -74,7 +74,7 @@ Future<void> changeRamAmount(WidgetRef ref, double ramInMb, {bool alsoChangeCust
         .replaceAll(minRamInVmparamsRegex, newRamStr));
   }
 
-  ref.refresh(vmparamsVanillaContent);
+  ref.invalidate(vmparamsVanillaContent);
 }
 
 final versionRegex = RegExp(r'"(\.*?\d+.*?)"');

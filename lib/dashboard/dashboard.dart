@@ -30,7 +30,7 @@ class _DashboardState extends ConsumerState<Dashboard> with AutomaticKeepAliveCl
   void initState() {
     super.initState();
     starsectorLaunchPrefs = Launcher.getStarsectorLaunchPrefs();
-    if (ref.read(logRawContents) == null) {
+    if (ref.read(ChipperState.logRawContents).valueOrNull == null) {
       loadDefaultLog(ref);
     }
   }
@@ -216,10 +216,10 @@ class _DashboardState extends ConsumerState<Dashboard> with AutomaticKeepAliveCl
                   child: SizedBox(
                     height: 150,
                     child: Builder(builder: (context) {
-                      ChipperState.loadedLog.addListener(() {
-                        setState(() {});
-                      });
-                      final errors = ChipperState.loadedLog.chips?.errorBlock;
+                      // ChipperState.loadedLog.addListener(() {
+                      //   setState(() {});
+                      // });
+                      final errors = ref.watch(ChipperState.logRawContents).valueOrNull?.errorBlock;
                       if (errors != null) {
                         return DefaultTextStyle.merge(
                             child: ChipperLog(errors: errors, showInfoLogs: true),

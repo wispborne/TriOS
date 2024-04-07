@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:toastification/toastification.dart';
 import 'package:trios/chipper/chipper_home.dart';
 import 'package:trios/dashboard/dashboard.dart';
+import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/rules_autofresh/rules_hotreload.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/download_manager/download_toast_manager.dart';
@@ -20,9 +21,12 @@ import 'package:trios/trios/trios_theme.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/vram_estimator/vram_estimator.dart';
 import 'package:trios/widgets/blur.dart';
+import 'package:trios/widgets/conditional_wrap.dart';
+import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/self_update_toast.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:trios/widgets/trios_app_icon.dart';
+import 'package:trios/widgets/under_construction_overlay.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:window_size/window_size.dart';
 
@@ -34,9 +38,11 @@ import 'trios/app_state.dart';
 void main() async {
   configureLogging();
   Fimber.i("${Constants.appTitle} logging started.");
-  Fimber.i("Platform: ${Platform.operatingSystem} ${Platform.operatingSystemVersion}.");
+  Fimber.i(
+      "Platform: ${Platform.operatingSystem} ${Platform.operatingSystemVersion}.");
   FlutterError.onError = (details) {
-    Fimber.e("${details.exceptionAsString()}\n${details.stack}", ex: details.exception, stacktrace: details.stack);
+    Fimber.e("${details.exceptionAsString()}\n${details.stack}",
+        ex: details.exception, stacktrace: details.stack);
   };
   WidgetsFlutterBinding.ensureInitialized();
   await windowManager.ensureInitialized();
@@ -44,7 +50,10 @@ void main() async {
 
   // Restore window position and size
   final settings = readAppSettings();
-  final windowFrame = Rect.fromLTWH(settings?.windowXPos ?? 0, settings?.windowYPos ?? 0, settings?.windowWidth ?? 800,
+  final windowFrame = Rect.fromLTWH(
+      settings?.windowXPos ?? 0,
+      settings?.windowYPos ?? 0,
+      settings?.windowWidth ?? 800,
       settings?.windowHeight ?? 600);
   setWindowFrame(windowFrame);
   if (settings?.isMaximized ?? false) {
@@ -55,12 +64,16 @@ void main() async {
   setWindowTitle(Constants.appTitle);
   const minSize = Size(900, 600);
 
-  windowManager.waitUntilReadyToShow(WindowOptions(size: windowFrame.size, minimumSize: minSize), () async {
+  windowManager.waitUntilReadyToShow(
+      WindowOptions(size: windowFrame.size, minimumSize: minSize), () async {
     await windowManager.show();
     await windowManager.focus();
   });
   // Clean up old files.
-  final filePatternsToClean = [logFileName, ScriptGenerator.SELF_UPDATE_FILE_NAME];
+  final filePatternsToClean = [
+    logFileName,
+    ScriptGenerator.SELF_UPDATE_FILE_NAME
+  ];
   Directory.current.list().listen((file) {
     if (file is File) {
       for (var pattern in filePatternsToClean) {
@@ -150,7 +163,10 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
   @override
   void onWindowEvent(String eventName) {
     // Could avoid saving on every event but it's probably fine.
-    if (eventName != "blur" && eventName != "focus" && eventName != "move" && eventName != "resize") {
+    if (eventName != "blur" &&
+        eventName != "focus" &&
+        eventName != "move" &&
+        eventName != "resize") {
       _saveWindowPosition();
     }
   }
@@ -165,7 +181,8 @@ class AppShell extends ConsumerStatefulWidget {
   ConsumerState createState() => _AppShellState();
 }
 
-class _AppShellState extends ConsumerState<AppShell> with SingleTickerProviderStateMixin {
+class _AppShellState extends ConsumerState<AppShell>
+    with SingleTickerProviderStateMixin {
   late TabController tabController;
 
   final tabToolMap = {
@@ -186,18 +203,21 @@ class _AppShellState extends ConsumerState<AppShell> with SingleTickerProviderSt
     );
     tabController.addListener(() {
       if (tabToolMap[tabController.index] != null) {
-        ref.read(appSettings.notifier).update((state) => state.copyWith(defaultTool: tabToolMap[tabController.index]!));
+        ref.read(appSettings.notifier).update((state) =>
+            state.copyWith(defaultTool: tabToolMap[tabController.index]!));
       }
     });
 
     var defaultTool = TriOSTools.dashboard;
     try {
-      defaultTool = ref.read(appSettings.select((value) => value.defaultTool ?? defaultTool));
+      defaultTool = ref.read(
+          appSettings.select((value) => value.defaultTool ?? defaultTool));
     } catch (e) {
       Fimber.i("No default tool found in settings: $e");
     }
     // Set the current tab to the index of the previously selected tool.
-    tabController.index = tabToolMap.keys.firstWhere((k) => tabToolMap[k] == defaultTool, orElse: () => 0);
+    tabController.index = tabToolMap.keys
+        .firstWhere((k) => tabToolMap[k] == defaultTool, orElse: () => 0);
 
     try {
       // Check for updates on launch and show toast if available.
@@ -214,12 +234,18 @@ class _AppShellState extends ConsumerState<AppShell> with SingleTickerProviderSt
               Fimber.i("Update info: $updateInfo");
 
               toastification.showCustom(
-                  context: context, builder: (context, item) => SelfUpdateToast(latestRelease, item));
+                  context: context,
+                  builder: (context, item) =>
+                      SelfUpdateToast(latestRelease, item));
 
-              if (ref.read(appSettings.select((value) => value.shouldAutoUpdateOnLaunch))) {
-                SelfUpdater.update(latestRelease, downloadProgress: (bytesReceived, contentLength) {
+              if (ref.read(appSettings
+                  .select((value) => value.shouldAutoUpdateOnLaunch))) {
+                SelfUpdater.update(latestRelease,
+                    downloadProgress: (bytesReceived, contentLength) {
                   final progress = bytesReceived / contentLength;
-                  ref.read(AppState.selfUpdateDownloadProgress.notifier).update((_) => progress);
+                  ref
+                      .read(AppState.selfUpdateDownloadProgress.notifier)
+                      .update((_) => progress);
                 });
               }
             }
@@ -235,15 +261,19 @@ class _AppShellState extends ConsumerState<AppShell> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
-    const tabChildren = [
-      Dashboard(),
-      VramEstimatorPage(),
-      ChipperApp(),
-      JreManager(),
-      SettingsPage(),
+    final tabChildren = [
+      const Dashboard(),
+      const VramEstimatorPage(),
+      const ChipperApp(),
+      Platform.isWindows
+          ? const JreManager()
+          : const Center(
+              child: Text("Only supported on Windows for now, sorry.")),
+      const SettingsPage(),
     ];
 
-    var isRulesHotReloadEnabled = ref.watch(appSettings.select((value) => value.isRulesHotReloadEnabled));
+    var isRulesHotReloadEnabled =
+        ref.watch(appSettings.select((value) => value.isRulesHotReloadEnabled));
     return Scaffold(
         appBar: AppBar(
           title: Row(
@@ -262,24 +292,42 @@ class _AppShellState extends ConsumerState<AppShell> with SingleTickerProviderSt
               ),
               Padding(
                   padding: const EdgeInsets.only(right: 24.0),
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(Constants.appTitle, style: Theme.of(context).textTheme.titleLarge),
-                    Text(Constants.appSubtitle, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 12))
-                  ])),
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(Constants.appTitle,
+                            style: Theme.of(context).textTheme.titleLarge),
+                        Text(Constants.appSubtitle,
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(fontSize: 12))
+                      ])),
               const Launcher(),
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.only(left: 8, right: 16),
-                  child: TabBar(tabs: const [
+                  child: TabBar(tabs: [
                     // TODO IF YOU CHANGE THESE, UPDATE tabToolMap!
-                    Tab(text: "Dashboard", icon: Icon(Icons.dashboard)),
-                    Tab(text: "VRAM Estimator", icon: SvgImageIcon("assets/images/icon-weight.svg")),
-                    Tab(
+                    const Tab(text: "Dashboard", icon: Icon(Icons.dashboard)),
+                    const Tab(
+                        text: "VRAM Estimator",
+                        icon: SvgImageIcon("assets/images/icon-weight.svg")),
+                    const Tab(
                         text: chipperTitle,
-                        icon: ImageIcon(AssetImage("assets/images/chipper/icon.png")),
+                        icon: ImageIcon(
+                            AssetImage("assets/images/chipper/icon.png")),
                         iconMargin: EdgeInsets.zero),
-                    Tab(text: "JRE Manager", icon: Icon(Icons.coffee)),
-                    Tab(text: "Settings", icon: Icon(Icons.settings), iconMargin: EdgeInsets.zero),
+                    ConditionalWrap(
+                        condition: !Platform.isWindows,
+                        wrapper: (child) => Disable(
+                            isEnabled: Platform.isWindows, child: child),
+                        child: const Tab(
+                            text: "JRE Manager", icon: Icon(Icons.coffee))),
+                    const Tab(
+                        text: "Settings",
+                        icon: Icon(Icons.settings),
+                        iconMargin: EdgeInsets.zero),
                   ], controller: tabController),
                 ),
               ),
@@ -288,7 +336,9 @@ class _AppShellState extends ConsumerState<AppShell> with SingleTickerProviderSt
                     ? "THE SUN THE SUN THE SUN\nTHE SUN THE SUN THE SUN\nTHE SUN THE SUN THE SUN"
                     : "Dark theme",
                 onPressed: () => AppState.theme.switchThemes(context),
-                icon: Icon(AppState.theme.currentTheme() == ThemeMode.dark ? Icons.sunny : Icons.mode_night),
+                icon: Icon(AppState.theme.currentTheme() == ThemeMode.dark
+                    ? Icons.sunny
+                    : Icons.mode_night),
               ),
               Tooltip(
                 message:
@@ -298,12 +348,13 @@ class _AppShellState extends ConsumerState<AppShell> with SingleTickerProviderSt
                 textAlign: TextAlign.center,
                 child: InkWell(
                   borderRadius: BorderRadius.circular(TriOSTheme.cornerRadius),
-                  onTap: () => ref
-                      .read(appSettings.notifier)
-                      .update((state) => state.copyWith(isRulesHotReloadEnabled: !isRulesHotReloadEnabled)),
+                  onTap: () => ref.read(appSettings.notifier).update((state) =>
+                      state.copyWith(
+                          isRulesHotReloadEnabled: !isRulesHotReloadEnabled)),
                   child: Padding(
                       padding: const EdgeInsets.only(left: 16.0),
-                      child: RulesHotReload(isEnabled: isRulesHotReloadEnabled)),
+                      child:
+                          RulesHotReload(isEnabled: isRulesHotReloadEnabled)),
                 ),
               ),
             ],

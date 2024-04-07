@@ -13,14 +13,18 @@ class VersionCheckTextReadout extends ConsumerStatefulWidget {
   final bool showClickToDownloadIfPossible;
 
   const VersionCheckTextReadout(
-      this.versionCheckComparison, this.localVersionCheck, this.remoteVersionCheck, this.showClickToDownloadIfPossible,
+      this.versionCheckComparison,
+      this.localVersionCheck,
+      this.remoteVersionCheck,
+      this.showClickToDownloadIfPossible,
       {super.key});
 
   @override
   ConsumerState createState() => _VersionCheckTextReadoutState();
 }
 
-class _VersionCheckTextReadoutState extends ConsumerState<VersionCheckTextReadout> {
+class _VersionCheckTextReadoutState
+    extends ConsumerState<VersionCheckTextReadout> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -28,7 +32,8 @@ class _VersionCheckTextReadoutState extends ConsumerState<VersionCheckTextReadou
     final localVersionCheck = widget.localVersionCheck;
     final remoteVersionCheck = widget.remoteVersionCheck;
     final bool hasUpdate = versionCheckComparison == -1;
-    final hasDirectDownload = remoteVersionCheck?.remoteVersion?.directDownloadURL != null;
+    final hasDirectDownload =
+        remoteVersionCheck?.remoteVersion?.directDownloadURL != null;
 
     return Container(
       child: switch (versionCheckComparison) {
@@ -38,65 +43,105 @@ class _VersionCheckTextReadoutState extends ConsumerState<VersionCheckTextReadou
               if (widget.showClickToDownloadIfPossible && hasUpdate)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),
-                  child: Text("Note: full mod manager features will time some time to develop.",
-                      style: theme.textTheme.bodyMedium
-                          ?.copyWith(fontStyle: FontStyle.italic, color: theme.colorScheme.secondary)),
+                  child: Text(
+                      "Note: full mod manager features will time some time to develop.",
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                          fontStyle: FontStyle.italic,
+                          color: theme.colorScheme.secondary)),
                 ),
               if (widget.showClickToDownloadIfPossible && hasUpdate)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),
-                  child: Text("Click to download.",
-                      style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text("Click to download.",
+                          style: theme.textTheme.bodyMedium
+                              ?.copyWith(fontWeight: FontWeight.bold)),
+                      Text("Right-click to open in dialog.",
+                          style: theme.textTheme.labelLarge),
+                    ],
+                  ),
                 ),
-              Text("New version:      ${remoteVersionCheck?.remoteVersion?.modVersion}", style: theme.textTheme.labelLarge),
+              Text(
+                  "New version:      ${remoteVersionCheck?.remoteVersion?.modVersion}",
+                  style: theme.textTheme.labelLarge),
               Text("Current version: ${localVersionCheck?.modVersion}",
                   style: theme.textTheme.labelLarge),
               if (hasDirectDownload)
                 Padding(
                   padding: const EdgeInsets.only(top: 4),
-                  child: Text("File: ${remoteVersionCheck?.remoteVersion?.directDownloadURL}",
+                  child: Text(
+                      "File: ${remoteVersionCheck?.remoteVersion?.directDownloadURL}",
                       style: theme.textTheme.labelLarge),
                 ),
-              Text("\nUpdate information is provided by the mod author, not TriOS, and cannot be guaranteed.",
-                  style: theme.textTheme.labelLarge?.copyWith(fontStyle: FontStyle.italic)),
+              Text(
+                  "\nUpdate information is provided by the mod author, not TriOS, and cannot be guaranteed.",
+                  style: theme.textTheme.labelLarge
+                      ?.copyWith(fontStyle: FontStyle.italic)),
               if (remoteVersionCheck?.remoteVersion != null &&
                   remoteVersionCheck?.remoteVersion?.directDownloadURL == null)
                 Padding(
                   padding: const EdgeInsets.only(top: 4),
-                  child: Text("This mod does not support direct download and should be downloaded manually.",
-                      style: theme.textTheme.labelLarge?.copyWith(fontStyle: FontStyle.italic)),
+                  child: Text(
+                      "This mod does not support direct download and should be downloaded manually.",
+                      style: theme.textTheme.labelLarge
+                          ?.copyWith(fontStyle: FontStyle.italic)),
                 ),
             ],
           ),
         _ => Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (localVersionCheck != null && remoteVersionCheck != null && remoteVersionCheck.error == null)
-                Column(
-                  children: [
-                    Text("You are up to date.", style: theme.textTheme.labelLarge),
-                    Text("Current version: ${localVersionCheck.modVersion}", style: theme.textTheme.labelLarge),
-                  ],
-                ),
-              if (localVersionCheck != null && remoteVersionCheck?.error != null)
+              if (localVersionCheck != null &&
+                  remoteVersionCheck != null &&
+                  remoteVersionCheck.error == null)
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("Error checking for updates. This is not caused by ${Constants.appName}.",
-                        style: theme.textTheme.labelLarge
-                            ?.copyWith(color: vanillaErrorColor, fontWeight: FontWeight.bold)),
+                    Text("You are up to date.",
+                        style: theme.textTheme.labelLarge),
+                    Text("Current version: ${localVersionCheck.modVersion}",
+                        style: theme.textTheme.labelLarge),
+                  ],
+                ),
+              // Remote error.
+              if (localVersionCheck != null &&
+                  remoteVersionCheck?.error != null)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                        "Error checking for updates. This is not caused by ${Constants.appName}.",
+                        style: theme.textTheme.labelLarge?.copyWith(
+                            color: vanillaErrorColor,
+                            fontWeight: FontWeight.bold)),
                     Padding(
-                      padding: const EdgeInsets.only(top: 2),
-                      child: Text("Message:",
-                          style: theme.textTheme.labelLarge
-                              ?.copyWith(color: vanillaErrorColor, fontWeight: FontWeight.bold)),
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Text(
+                          "Version Checker url:\n${remoteVersionCheck?.uri}",
+                          style: theme.textTheme.labelMedium?.copyWith(
+                              fontFeatures: [
+                                const FontFeature.tabularFigures()
+                              ])),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text("Message",
+                          style: theme.textTheme.labelLarge?.copyWith(
+                              color: vanillaErrorColor,
+                              fontWeight: FontWeight.bold)),
                     ),
                     Text("${remoteVersionCheck?.error}",
-                        style:
-                            theme.textTheme.labelLarge?.copyWith(fontFeatures: [const FontFeature.tabularFigures()])),
+                        style: theme.textTheme.labelLarge?.copyWith(
+                            fontFeatures: [
+                              const FontFeature.tabularFigures()
+                            ])),
                   ],
                 ),
               if (localVersionCheck == null)
-                Text("This mod does not support Version Checker.\nPlease visit the mod page to manually find updates.",
+                Text(
+                    "This mod does not support Version Checker.\nPlease visit the mod page to manually find updates.",
                     style: theme.textTheme.labelLarge),
             ],
           )

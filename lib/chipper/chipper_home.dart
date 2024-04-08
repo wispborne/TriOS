@@ -128,7 +128,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                       },
                       icon: const Icon(Icons.refresh),
                       style: ButtonStyle(
-                          foregroundColor: WidgetStateProperty.all(
+                          foregroundColor: MaterialStateProperty.all(
                               theme.colorScheme.onSurface)),
                       label: const Text("Load my log")),
                   if (chips != null)
@@ -142,7 +142,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                         },
                         icon: const Icon(Icons.copy),
                         style: ButtonStyle(
-                            foregroundColor: WidgetStateProperty.all(
+                            foregroundColor: MaterialStateProperty.all(
                                 theme.colorScheme.onSurface)),
                         label: const Text("Copy all")),
                   if (chips != null)
@@ -155,7 +155,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                         },
                         icon: const Icon(Icons.launch),
                         style: ButtonStyle(
-                            foregroundColor: WidgetStateProperty.all(
+                            foregroundColor: MaterialStateProperty.all(
                                 theme.colorScheme.onSurface)),
                         label: const Text("Open File")),
                 ]),
@@ -180,7 +180,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                                 showChipperAboutDialog(context, theme),
                             icon: const Icon(Icons.info),
                             style: ButtonStyle(
-                                foregroundColor: WidgetStateProperty.all(
+                                foregroundColor: MaterialStateProperty.all(
                                     theme.colorScheme.onSurface))),
                       ],
                     ),

@@ -137,6 +137,7 @@ jobs:
           architecture: x64
           cache: true
       - run: flutter --version
+      - run: flutter upgrade
       - run: flutter config --enable-macos-desktop
       - run: flutter build macos
       - name: zip macos artifact
@@ -160,6 +161,7 @@ jobs:
           architecture: x64
           cache: true
       - run: flutter --version
+      - run: flutter upgrade
       - run: flutter config --enable-windows-desktop
       - run: flutter build windows
       - name: zip win artifact

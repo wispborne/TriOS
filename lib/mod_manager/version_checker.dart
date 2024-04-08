@@ -104,7 +104,7 @@ final _githubFilePageRegex = RegExp(
 
 /// User set dl=0 instead of dl=1 when hosted on dropbox.
 final _dropboxDlPageRegex = RegExp(
-    """https://www.dropbox.com/s/.+/.+.version\?dl=0""",
+    """https://www.dropbox.com/s/.+/.+.version?dl=0""",
     caseSensitive: false);
 
 //     private fun fixUrl(urlString: String): String {

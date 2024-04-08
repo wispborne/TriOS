@@ -15,7 +15,7 @@ class TooltipFrame extends StatelessWidget {
         decoration: BoxDecoration(
           color: theme.cardColor,
           borderRadius: BorderRadius.circular(TriOSTheme.cornerRadius),
-          border: Border.all(color: theme.colorScheme.onBackground),
+          border: Border.all(color: theme.colorScheme.onSurface),
         ),
         child: Padding(
           padding: const EdgeInsets.all(16.0),

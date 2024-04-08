@@ -100,7 +100,7 @@ class TriOSTheme with ChangeNotifier {
         appBarTheme: themeBase.appBarTheme.copyWith(backgroundColor: swatch.card),
         floatingActionButtonTheme: themeBase.floatingActionButtonTheme
             .copyWith(backgroundColor: swatch.primary, foregroundColor: themeBase.colorScheme.surface),
-        checkboxTheme: themeBase.checkboxTheme.copyWith(checkColor: MaterialStateProperty.all(Colors.transparent)),
+        checkboxTheme: themeBase.checkboxTheme.copyWith(checkColor: WidgetStateProperty.all(Colors.transparent)),
         textTheme: textTheme.copyWith(bodyMedium: textTheme.bodyMedium?.copyWith(fontSize: 16)));
   }
 }

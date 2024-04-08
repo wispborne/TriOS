@@ -11,7 +11,6 @@ import 'package:trios/models/launch_settings.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/platform_paths.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:win32_registry/win32_registry.dart';
 
 import '../trios/trios_theme.dart';
@@ -129,6 +128,7 @@ class Launcher extends ConsumerWidget {
     } catch (e) {
       Fimber.e('Error reading Starsector settings from plist: $e');
     }
+    return null;
   }
 
   // TODO: mac and linux
@@ -176,12 +176,6 @@ class Launcher extends ConsumerWidget {
         })
         .where((element) => element.isNotEmpty)
         .toList();
-    // Fimber.d('vmParamsContent: $vmParamsContent');
-
-    if (vmParamsContent == null) {
-      Fimber.w('vmparams is empty');
-      return;
-    }
 
     LaunchSettings? launchPreferences;
     final customLaunchPrefs =

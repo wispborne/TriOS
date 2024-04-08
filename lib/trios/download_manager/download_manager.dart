@@ -34,7 +34,7 @@ downloadUpdateViaBrowser(VersionCheckerInfo remoteVersion) {
     // ref
     //     .read(downloadManager.notifier)
     //     .addDownload(remoteVersion!.directDownloadURL!, Directory.systemTemp);
-    launchUrl(Uri.parse(remoteVersion!.directDownloadURL!));
+    launchUrl(Uri.parse(remoteVersion.directDownloadURL!));
   } else if (remoteVersion.modThreadId != null) {
     launchUrl(Uri.parse(
         "${Constants.forumModPageUrl}${remoteVersion.modThreadId}"));

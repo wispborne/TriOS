@@ -1,6 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:trios/models/mod_info_json.dart';
-import 'package:trios/models/version.dart';
 import 'package:trios/utils/util.dart';
 
 part '../generated/models/version_checker_info.freezed.dart';

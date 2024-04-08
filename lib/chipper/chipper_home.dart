@@ -142,8 +142,8 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                         },
                         icon: const Icon(Icons.copy),
                         style: ButtonStyle(
-                            foregroundColor: MaterialStateProperty.all(
-                                theme.colorScheme.onBackground)),
+                            foregroundColor: WidgetStateProperty.all(
+                                theme.colorScheme.onSurface)),
                         label: const Text("Copy all")),
                   if (chips != null)
                     TextButton.icon(
@@ -155,8 +155,8 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                         },
                         icon: const Icon(Icons.launch),
                         style: ButtonStyle(
-                            foregroundColor: MaterialStateProperty.all(
-                                theme.colorScheme.onBackground)),
+                            foregroundColor: WidgetStateProperty.all(
+                                theme.colorScheme.onSurface)),
                         label: const Text("Open File")),
                 ]),
                 Row(mainAxisSize: MainAxisSize.min, children: [
@@ -180,8 +180,8 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                                 showChipperAboutDialog(context, theme),
                             icon: const Icon(Icons.info),
                             style: ButtonStyle(
-                                foregroundColor: MaterialStateProperty.all(
-                                    theme.colorScheme.onBackground))),
+                                foregroundColor: WidgetStateProperty.all(
+                                    theme.colorScheme.onSurface))),
                       ],
                     ),
                   )

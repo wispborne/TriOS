@@ -162,7 +162,7 @@ class _JreManagerState extends ConsumerState<JreManager> with AutomaticKeepAlive
                                   }
                                 }
                               },
-                              mouseCursor: MaterialStateMouseCursor.clickable,
+                              mouseCursor: WidgetStateMouseCursor.clickable,
                               child: child,
                             ),
                             child: Opacity(
@@ -293,7 +293,7 @@ class _JreManagerState extends ConsumerState<JreManager> with AutomaticKeepAlive
 
     // Rename target JRE to "jre".
     try {
-      await newJre.path!.moveDirectory(gameJrePath);
+      await newJre.path.moveDirectory(gameJrePath);
     } catch (e, st) {
       Fimber.w("Unable to move new JRE ${newJre.versionString} to '$gameJrePath'. Maybe you need to run as Admin?",
           ex: e, stacktrace: st);

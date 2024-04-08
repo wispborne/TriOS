@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:fimber/fimber.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
-import 'package:trios/trios/trios_theme.dart';
 import 'package:yaml/yaml.dart';
 
 extension DoubleExt on double {

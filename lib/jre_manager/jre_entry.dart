@@ -18,7 +18,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/utils/extensions.dart';
 
 import '../models/download_progress.dart';
-import 'jre_manager.dart';
 
 abstract class JreEntryWrapper {
   JreVersion get version;
@@ -35,8 +34,10 @@ class JreEntry implements JreEntryWrapper {
 
   JreEntry(this.version, this.path);
 
+  @override
   int get versionInt => version.version;
 
+  @override
   String get versionString => version.versionString;
 }
 
@@ -48,8 +49,10 @@ class JreToDownload implements JreEntryWrapper {
 
   JreToDownload(this.version, this.installRunner, this.progressProvider);
 
+  @override
   int get versionInt => version.version;
 
+  @override
   String get versionString => version.versionString;
 }
 

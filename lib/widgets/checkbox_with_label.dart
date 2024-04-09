@@ -5,6 +5,7 @@ import 'package:trios/widgets/conditional_wrap.dart';
 class CheckboxWithLabel extends StatelessWidget {
   final String? label;
   final Widget? labelWidget;
+  final Widget? prefixWidget;
   final bool value;
   final ValueChanged<bool?> onChanged;
   final TextStyle? labelStyle;
@@ -16,6 +17,7 @@ class CheckboxWithLabel extends StatelessWidget {
       {super.key,
       this.label,
       this.labelWidget,
+      this.prefixWidget,
       required this.value,
       required this.onChanged,
       this.checkWrapper,
@@ -38,6 +40,7 @@ class CheckboxWithLabel extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
           children: <Widget>[
+            prefixWidget == null ? Container() : prefixWidget!,
             ConditionalWrap(
               condition: checkWrapper != null,
               wrapper: (child) => checkWrapper!(child),
@@ -51,7 +54,9 @@ class CheckboxWithLabel extends StatelessWidget {
             Flexible(
               child: Padding(
                 padding: EdgeInsets.only(left: padding, bottom: 2),
-                child: label != null ? Text(label!, style: labelStyle) : labelWidget,
+                child: label != null
+                    ? Text(label!, style: labelStyle)
+                    : labelWidget,
               ),
             ),
           ],

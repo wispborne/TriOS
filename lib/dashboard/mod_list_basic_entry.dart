@@ -60,16 +60,53 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
         ),
         child: child);
 
+    const rowHeight = 26.0;
+
     return Row(
       mainAxisSize: MainAxisSize.max,
       children: [
         Flexible(
           child: InkWell(
             child: SizedBox(
-              height: 26,
+              height: rowHeight,
               child: CheckboxWithLabel(
                 labelWidget: Row(
                   children: [
+                    Padding(
+                      padding: const EdgeInsets.only(right: 4),
+                      child: MovingTooltipWidget(
+                        tooltipWidget: SizedBox(
+                          width: 400,
+                          child: TooltipFrame(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                    "Tip: Add an icon.png file to the mod folder to get an icon like this!"),
+                                const Divider(),
+                                ModSummaryWidget(
+                                  modVariant: modVariant,
+                                  compatWithGame: compatWithGame,
+                                  compatTextColor: compatTextColor,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        child: SizedBox(
+                          height: rowHeight,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: modVariant.icoFilePath != null
+                                ? Image.asset(
+                                    modVariant.icoFilePath ?? "",
+                                    isAntiAlias: true,
+                                  )
+                                : Container(),
+                          ),
+                        ),
+                      ),
+                    ),
                     Expanded(
                       child: infoTooltip(
                           child: Text(

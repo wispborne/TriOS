@@ -33,7 +33,7 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
   bool get wantKeepAlive => true;
 
   bool isScanning = false;
-  GraphType graphType = GraphType.pie;
+  GraphType graphType = GraphType.bar;
   Map<String, Mod> modVramInfo = {};
 
   List<Mod> modVramInfoToShow = [];
@@ -86,7 +86,9 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
       setState(() {
         isScanning = false;
         modVramInfo = info.fold<Map<String, Mod>>(
-            {}, (previousValue, element) => previousValue..[element.info.id] = element); // sort by mod size
+            {},
+            (previousValue, element) =>
+                previousValue..[element.info.id] = element); // sort by mod size
         largestVramUsage = modVramInfo.values
                 .maxByOrNull<num>((mod) => mod.totalBytesForMod)
                 ?.totalBytesForMod
@@ -109,7 +111,9 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
     super.build(context);
     var rangeMax = _maxRange();
 
-    var showRangeSlider = selectedSliderValues != null && !isScanning && modVramInfoToShow.isNotEmpty;
+    var showRangeSlider = selectedSliderValues != null &&
+        !isScanning &&
+        modVramInfoToShow.isNotEmpty;
     return Column(children: <Widget>[
       Row(
         children: [
@@ -139,7 +143,8 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
               child: Card.outlined(
                 child: SizedBox(
                   width: 300,
-                  child: GraphTypeSelector(onGraphTypeChanged: (GraphType type) {
+                  child:
+                      GraphTypeSelector(onGraphTypeChanged: (GraphType type) {
                     setState(() {
                       graphType = type;
                     });
@@ -154,11 +159,10 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
         Expanded(
           child: Padding(
               padding: const EdgeInsets.all(16.0),
-              child: SizedBox(
-                  child: switch (graphType) {
-                GraphType.pie => VramPieChart(modVramInfo: modVramInfoToShow),
+              child: switch (graphType) {
                 GraphType.bar => VramBarChart(modVramInfo: modVramInfoToShow),
-              })),
+                GraphType.pie => VramPieChart(modVramInfo: modVramInfoToShow),
+              }),
         ),
       if (showRangeSlider)
         SizedBox(
@@ -166,14 +170,17 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
           child: Disable(
             isEnabled: showRangeSlider,
             child: RangeSlider(
-                values: selectedSliderValues
-                        ?.let((it) => RangeValues(it.start.coerceAtLeast(0), it.end.coerceAtMost(rangeMax))) ??
+                values: selectedSliderValues?.let((it) => RangeValues(
+                        it.start.coerceAtLeast(0),
+                        it.end.coerceAtMost(rangeMax))) ??
                     RangeValues(0, rangeMax),
                 min: 0,
                 max: rangeMax,
                 divisions: 50,
-                labels: RangeLabels((selectedSliderValues?.start ?? 0).bytesAsReadableMB(),
-                    (selectedSliderValues?.end ?? rangeMax).bytesAsReadableMB()),
+                labels: RangeLabels(
+                    (selectedSliderValues?.start ?? 0).bytesAsReadableMB(),
+                    (selectedSliderValues?.end ?? rangeMax)
+                        .bytesAsReadableMB()),
                 onChanged: (RangeValues values) {
                   setState(() {
                     selectedSliderValues = values;
@@ -209,6 +216,11 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
   }
 
   double _maxRange() {
-    return modVramInfo.values.sortedBy<num>((mod) => mod.totalBytesForMod).lastOrNull?.totalBytesForMod.toDouble() ?? 2;
+    return modVramInfo.values
+            .sortedBy<num>((mod) => mod.totalBytesForMod)
+            .lastOrNull
+            ?.totalBytesForMod
+            .toDouble() ??
+        2;
   }
 }

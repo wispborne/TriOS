@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:collection/collection.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/models/version_checker_info.dart';
@@ -22,8 +23,21 @@ class ModVariant with _$ModVariant {
   }) = _ModVariant;
 
   String get smolId => createSmolId(modInfo.id, modInfo.version);
+
+  String? get icoFilePath => modIconFilePaths
+      .map((path) => modsFolder.resolve(path))
+      .firstWhereOrNull((file) => file.existsSync())
+      ?.path;
 // required bool doesModInfoFileExist = modFolder.resolve(Constants.UNBRICKED_MOD_INFO_FILE).exists()
 }
+
+const modIconFilePaths = [
+  "icon.ico",
+  "icon.png",
+  "icon.jpg",
+  "icon.jpeg",
+  "icon.gif"
+];
 
 final smolIdAllowedChars = RegExp(r'[^0-9a-zA-Z\\.\-_]');
 

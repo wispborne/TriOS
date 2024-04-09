@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/vram_estimator/models/gpu_info.dart';
 
 import '../models/mod_result.dart';
 import '../../../utils/util.dart';
@@ -20,32 +21,76 @@ class VramBarChartState extends State<VramBarChart> {
 
   @override
   Widget build(BuildContext context) {
-    return AspectRatio(
-      aspectRatio: 1.3, // Adjust as needed
-      child: Card(
-        elevation: 4, // Add some visual elevation
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: BarChart(
-            BarChartData(
-              alignment: BarChartAlignment.spaceAround,
-              maxY: _calculateMaxY(),
-              // Helper to calculate max Y
-              barTouchData: BarTouchData(enabled: false),
-              // No touch behavior needed
-              titlesData: _buildTitlesData(),
-              gridData: const FlGridData(show: false),
-              // Optionally remove grid lines
-              barGroups: _buildBarGroups(context),
-            ),
-          ),
+    final mods = widget.modVramInfo;
+    final baseColor = Theme.of(context).colorScheme.primary;
+    final maxVramUsed = _calculateMostVramUse();
+    final theme = Theme.of(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8.0),
+          child: Text(
+              "Total System VRAM: ${getGPUInfo()?.freeVRAM.bytesAsReadableMB() ?? "unknown"}",
+              style: theme.textTheme.labelLarge),
         ),
-      ),
+        Expanded(
+          child: LayoutBuilder(builder: (context, layoutConstraints) {
+            return mods.isEmpty
+                ? const CircularProgressIndicator()
+                : ListView.builder(
+                    itemCount: mods.length,
+                    itemBuilder: (context, index) {
+                      final mod = mods[index];
+                      final percentOfMax = mod.totalBytesForMod / maxVramUsed;
+                      final width = layoutConstraints.maxWidth * percentOfMax;
+
+                      return Container(
+                        child: Card(
+                          clipBehavior: Clip.hardEdge,
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8.0),
+                                  child: Text(mod.info.formattedName,
+                                      style: theme.textTheme.labelLarge),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8.0),
+                                  child: Text(
+                                      mod.totalBytesForMod.bytesAsReadableMB(),
+                                      style: theme.textTheme.labelMedium),
+                                ),
+                                Opacity(
+                                  opacity: 0.6,
+                                  child: Container(
+                                    width: width,
+                                    height: 10,
+                                    color: ColorGenerator.generateFromColor(
+                                            mod.info.id, baseColor)
+                                        .createMaterialColor()
+                                        .shade700,
+                                  ),
+                                )
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    });
+          }),
+        ),
+      ],
     );
   }
 
-  double _calculateMaxY() {
+  double _calculateMostVramUse() {
     return widget.modVramInfo
             .maxByOrNull<num>((mod) => mod.totalBytesForMod)
             ?.totalBytesForMod

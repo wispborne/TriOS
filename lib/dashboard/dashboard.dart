@@ -66,7 +66,7 @@ class _DashboardState extends ConsumerState<Dashboard>
                                     icon: const Icon(Icons.refresh),
                                     style: ButtonStyle(
                                         foregroundColor:
-                                            MaterialStateProperty.all(
+                                            WidgetStateProperty.all(
                                                 Theme.of(context)
                                                     .colorScheme
                                                     .onSurface)),

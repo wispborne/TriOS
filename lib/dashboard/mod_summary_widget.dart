@@ -13,7 +13,11 @@ class ModSummaryWidget extends ConsumerStatefulWidget {
   final Color? compatTextColor;
   final GameCompatibility? compatWithGame;
 
-  const ModSummaryWidget({super.key, required this.modVariant, this.compatTextColor, this.compatWithGame});
+  const ModSummaryWidget(
+      {super.key,
+      required this.modVariant,
+      this.compatTextColor,
+      this.compatWithGame});
 
   @override
   ConsumerState createState() => _ModSummaryWidgetState();
@@ -28,14 +32,17 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
 
     final modVariant = widget.modVariant;
     final modInfo = modVariant.modInfo;
-    var remoteVersionCheck = ref.watch(versionCheckResults).valueOrNull?[modVariant.smolId];
+    var remoteVersionCheck =
+        ref.watch(versionCheckResults).valueOrNull?[modVariant.smolId];
     final localVersionCheck = modVariant.versionCheckerInfo;
     // final remoteVersionCheck = versionCheck?[modVariant.smolId];
-    final versionCheckComparison = compareLocalAndRemoteVersions(localVersionCheck, remoteVersionCheck);
+    final versionCheckComparison =
+        compareLocalAndRemoteVersions(localVersionCheck, remoteVersionCheck);
     final theme = Theme.of(context);
 
-    var versionTextStyle = theme.textTheme.labelLarge
-        ?.copyWith(fontFeatures: [const FontFeature.tabularFigures()], color: theme.colorScheme.primary);
+    var versionTextStyle = theme.textTheme.labelLarge?.copyWith(
+        fontFeatures: [const FontFeature.tabularFigures()],
+        color: theme.colorScheme.primary);
     const spacing = 4.0;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -44,23 +51,55 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text("New version:      ${remoteVersionCheck?.remoteVersion?.modVersion}", style: versionTextStyle),
-              Text("Current version: ${localVersionCheck?.modVersion}", style: versionTextStyle),
+              Text(
+                  "New version:      ${remoteVersionCheck?.remoteVersion?.modVersion}",
+                  style: versionTextStyle),
+              Text("Current version: ${localVersionCheck?.modVersion}",
+                  style: versionTextStyle),
               const Divider()
             ],
           ),
-        Text(modInfo.name, style: theme.textTheme.titleMedium),
-        Text("${modInfo.id} • ${modInfo.version ?? ""}", style: theme.textTheme.labelSmall),
+        Row(
+          children: [
+            SizedBox(
+              width: modVariant.icoFilePath != null ? 40 : 0,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 4),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: modVariant.icoFilePath != null
+                      ? Image.asset(
+                          modVariant.icoFilePath ?? "",
+                          isAntiAlias: true,
+                        )
+                      : Container(),
+                ),
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(modInfo.name, style: theme.textTheme.titleMedium),
+                Text("${modInfo.id} • ${modInfo.version ?? ""}",
+                    style: theme.textTheme.labelSmall),
+              ],
+            ),
+          ],
+        ),
         const SizedBox(height: spacing),
         if (modInfo.author != null)
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text("Author", style: theme.textTheme.labelMedium?.copyWith(color: theme.disabledColor)),
+              Text("Author",
+                  style: theme.textTheme.labelMedium
+                      ?.copyWith(color: theme.disabledColor)),
               Padding(
                 padding: const EdgeInsets.only(left: 0.0),
                 child: Text(modInfo.author!,
-                    maxLines: 3, overflow: TextOverflow.ellipsis, style: theme.textTheme.labelMedium),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.labelMedium),
               ),
             ],
           ),
@@ -68,26 +107,37 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("Description", style: theme.textTheme.labelMedium?.copyWith(color: theme.disabledColor)),
+            Text("Description",
+                style: theme.textTheme.labelMedium
+                    ?.copyWith(color: theme.disabledColor)),
             Text("${modInfo.description}",
-                maxLines: 4, overflow: TextOverflow.ellipsis, style: theme.textTheme.bodySmall),
+                maxLines: 4,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodySmall),
           ],
         ),
         const SizedBox(height: spacing),
-        Text("Required game version", style: theme.textTheme.labelMedium?.copyWith(color: theme.disabledColor)),
+        Text("Required game version",
+            style: theme.textTheme.labelMedium
+                ?.copyWith(color: theme.disabledColor)),
         Padding(
           padding: const EdgeInsets.only(left: 8.0),
           child: Text(modInfo.gameVersion ?? "",
-              style: theme.textTheme.labelMedium?.copyWith(color: widget.compatTextColor)),
+              style: theme.textTheme.labelMedium
+                  ?.copyWith(color: widget.compatTextColor)),
         ),
-        Text("Game version", style: theme.textTheme.labelMedium?.copyWith(color: theme.disabledColor)),
+        Text("Game version",
+            style: theme.textTheme.labelMedium
+                ?.copyWith(color: theme.disabledColor)),
         Padding(
           padding: const EdgeInsets.only(left: 8.0),
-          child: Text(ref.read(AppState.starsectorVersion).value ?? "", style: theme.textTheme.labelMedium),
+          child: Text(ref.read(AppState.starsectorVersion).value ?? "",
+              style: theme.textTheme.labelMedium),
         ),
         if (widget.compatWithGame == GameCompatibility.incompatible)
           Text("Error: this mod requires a different version of the game.",
-              style: theme.textTheme.labelMedium?.copyWith(color: widget.compatTextColor)),
+              style: theme.textTheme.labelMedium
+                  ?.copyWith(color: widget.compatTextColor)),
         const SizedBox(height: spacing),
         if (modInfo.dependencies.isNotEmpty)
           Padding(
@@ -96,16 +146,20 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
           ),
         for (var dep in modInfo.dependencies)
           Builder(builder: (context) {
-            var dependencyState = dep.isSatisfiedByAny(modVariants, enabledMods);
+            var dependencyState =
+                dep.isSatisfiedByAny(modVariants, enabledMods);
             return Padding(
               padding: const EdgeInsets.only(left: 8),
               child: Text(
                   "${dep.name ?? dep.id} ${dep.version?.toString().append(" ") ?? ""}${switch (dependencyState) {
                     Satisfied _ => "(found ${dependencyState.mod?.version})",
                     Missing _ => "(missing)",
-                    Disabled _ => "(not enabled: ${dependencyState.mod?.version})",
-                    VersionInvalid _ => "(wrong version: ${dependencyState.mod?.version})",
-                    VersionWarning _ => "(found: ${dependencyState.mod?.version})",
+                    Disabled _ =>
+                      "(not enabled: ${dependencyState.mod?.version})",
+                    VersionInvalid _ =>
+                      "(wrong version: ${dependencyState.mod?.version})",
+                    VersionWarning _ =>
+                      "(found: ${dependencyState.mod?.version})",
                   }}",
                   style: theme.textTheme.labelMedium?.copyWith(
                       color: switch (dependencyState) {
@@ -119,10 +173,12 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
             );
           }),
         const SizedBox(height: spacing),
-        if (modInfo.dependencies.any((dep) => dep.isSatisfiedByAny(modVariants, enabledMods) is VersionWarning))
+        if (modInfo.dependencies.any((dep) =>
+            dep.isSatisfiedByAny(modVariants, enabledMods) is VersionWarning))
           Text(
               "Warning: this mod requires a different version of a mod that you have installed, but might run with this one.",
-              style: theme.textTheme.labelMedium?.copyWith(color: vanillaErrorColor)),
+              style: theme.textTheme.labelMedium
+                  ?.copyWith(color: vanillaErrorColor)),
       ],
     );
   }

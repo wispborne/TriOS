@@ -12,7 +12,7 @@ class GraphTypeSelector extends StatefulWidget {
 }
 
 class GraphTypeSelectorState extends State<GraphTypeSelector> {
-  GraphType _selectedType = GraphType.pie;
+  GraphType _selectedType = GraphType.bar;
 
   @override
   Widget build(BuildContext context) {
@@ -21,10 +21,10 @@ class GraphTypeSelectorState extends State<GraphTypeSelector> {
       children: [
         Expanded(
           child: RadioListTile<GraphType>(
-            title: const Text('Pie Chart'),
-            value: GraphType.pie,
-            groupValue: _selectedType,
+            title: const Text('Bar Chart'),
+            value: GraphType.bar,
             dense: true,
+            groupValue: _selectedType,
             onChanged: (GraphType? value) {
               if (value != null) {
                 setState(() {
@@ -37,10 +37,10 @@ class GraphTypeSelectorState extends State<GraphTypeSelector> {
         ),
         Expanded(
           child: RadioListTile<GraphType>(
-            title: const Text('Bar Chart'),
-            value: GraphType.bar,
-            dense: true,
+            title: const Text('Pie Chart'),
+            value: GraphType.pie,
             groupValue: _selectedType,
+            dense: true,
             onChanged: (GraphType? value) {
               if (value != null) {
                 setState(() {

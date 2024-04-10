@@ -89,7 +89,7 @@ class Jre23 {
       return;
     }
 
-    final extractedJdkFiles = await libArchive.extractEntriesInArchive(jdkZip, gamePath.absolute.path);
+    final extractedJdkFiles = await libArchive.extractEntriesInArchive(jdkZip, gamePath.absolute.path, null);
     Fimber.i("Extracted JRE 23 JDK files: $extractedJdkFiles");
   }
 
@@ -130,7 +130,7 @@ class Jre23 {
   static Future<void> installJRE23Config(
       WidgetRef ref, LibArchive libArchive, Directory gamePath, Directory savePath, File configZip) async {
     // Extract config zip
-    final filesInConfigZip = (await libArchive.extractEntriesInArchive(configZip, savePath.absolute.path))
+    final filesInConfigZip = (await libArchive.extractEntriesInArchive(configZip, savePath.absolute.path, null))
         .map((e) => e?.extractedFile.normalize)
         .whereType<File>()
         .toList();

@@ -63,14 +63,14 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
         Row(
           children: [
             SizedBox(
-              width: modVariant.icoFilePath != null ? 40 : 0,
+              width: modVariant.iconFilePath != null ? 40 : 0,
               child: Padding(
                 padding: const EdgeInsets.only(right: 8),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(4),
-                  child: modVariant.icoFilePath != null
+                  child: modVariant.iconFilePath != null
                       ? Image.file(
-                          (modVariant.icoFilePath ?? "").toFile(),
+                          (modVariant.iconFilePath ?? "").toFile(),
                           isAntiAlias: true,
                         )
                       : Container(),

@@ -1,9 +1,11 @@
 import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:fimber/fimber.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:toastification/toastification.dart';
+import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/trios/self_updater/self_updater.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
@@ -58,7 +60,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       ? settings.modsDir?.toDirectory()
                       : generateModFolderPath(newGameDir.toDirectory());
 
-                  return state.copyWith(gameDir: Directory(newGameDir).normalize, modsDir: newModDirPath);
+                  return state.copyWith(
+                      gameDir: Directory(newGameDir).normalize,
+                      modsDir: newModDirPath);
                 });
               }
 
@@ -70,19 +74,19 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           Padding(
             padding: const EdgeInsets.only(left: 4, top: 8.0),
             child: Text("Mods Folder: ${ref.read(appSettings).modsDir?.path}",
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyMedium
-                    ?.copyWith(fontFeatures: [const FontFeature.tabularFigures()])),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontFeatures: [const FontFeature.tabularFigures()])),
           ),
           SizedBox.fromSize(size: const Size.fromHeight(8)),
           if (ref.watch(doesJre23ExistInGameFolderProvider).value == true)
             Padding(
               padding: const EdgeInsets.only(top: 8.0),
               child: CheckboxWithLabel(
-                value: ref.watch(appSettings.select((value) => value.useJre23 ?? false)),
+                value: ref.watch(
+                    appSettings.select((value) => value.useJre23 ?? false)),
                 onChanged: (value) {
-                  ref.read(appSettings.notifier).update((state) => state.copyWith(useJre23: value ?? false));
+                  ref.read(appSettings.notifier).update(
+                      (state) => state.copyWith(useJre23: value ?? false));
                 },
                 label: "Use JRE 23",
               ),
@@ -90,11 +94,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           Padding(
             padding: const EdgeInsets.only(top: 8.0),
             child: CheckboxWithLabel(
-              value: ref.watch(appSettings.select((value) => value.shouldAutoUpdateOnLaunch)),
+              value: ref.watch(appSettings
+                  .select((value) => value.shouldAutoUpdateOnLaunch)),
               onChanged: (value) {
-                ref
-                    .read(appSettings.notifier)
-                    .update((state) => state.copyWith(shouldAutoUpdateOnLaunch: value ?? false));
+                ref.read(appSettings.notifier).update((state) =>
+                    state.copyWith(shouldAutoUpdateOnLaunch: value ?? false));
               },
               label: "Auto-update ${Constants.appName} on launch",
             ),
@@ -112,7 +116,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           // Debugging line here
           SizedBox.fromSize(size: const Size.fromHeight(20)),
           Text("Debugging stuff below here, please ignore.",
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.red, fontWeight: FontWeight.bold)),
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(color: Colors.red, fontWeight: FontWeight.bold)),
           Padding(
             padding: const EdgeInsets.only(top: 16),
             child: ElevatedButton(
@@ -133,11 +140,14 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             padding: const EdgeInsets.only(top: 16),
             child: ElevatedButton(
               onPressed: () async {
-                final scriptPath = File("F:\\Code\\Starsector\\TriOS\\update-test\\TriOS_self_updater.bat");
+                final scriptPath = File(
+                    "F:\\Code\\Starsector\\TriOS\\update-test\\TriOS_self_updater.bat");
                 Fimber.v("${scriptPath.path} ${scriptPath.existsSync()}");
 
                 Process.start("start", ["", scriptPath.path],
-                    runInShell: true, includeParentEnvironment: true, mode: ProcessStartMode.detached);
+                    runInShell: true,
+                    includeParentEnvironment: true,
+                    mode: ProcessStartMode.detached);
               },
               child: const Text('Run self-update script'),
             ),
@@ -174,7 +184,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       }
 
                       toastification.showCustom(
-                          context: context, builder: (context, item) => SelfUpdateToast(release, item));
+                          context: context,
+                          builder: (context, item) =>
+                              SelfUpdateToast(release, item));
                     });
                   },
                   child: const Text('Show toast'))),
@@ -194,12 +206,15 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   padding: const EdgeInsets.only(top: 16.0),
                   child: ElevatedButton(
                       onPressed: () async {
-                        final latestRelease = await SelfUpdater.getLatestRelease();
-                        SelfUpdater.update(latestRelease!, downloadProgress: (bytesReceived, contentLength) {
+                        final latestRelease =
+                            await SelfUpdater.getLatestRelease();
+                        SelfUpdater.update(latestRelease!,
+                            downloadProgress: (bytesReceived, contentLength) {
                           Fimber.i(
                               "Downloaded: ${bytesReceived.bytesAsReadableMB()} / ${contentLength.bytesAsReadableMB()}");
                           ref
-                              .read(AppState.selfUpdateDownloadProgress.notifier)
+                              .read(
+                                  AppState.selfUpdateDownloadProgress.notifier)
                               .update((_) => bytesReceived / contentLength);
                         });
                       },
@@ -211,6 +226,21 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               ],
             ),
           ),
+          Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: ElevatedButton(
+                  onPressed: () {
+                    FilePicker.platform
+                        .pickFiles(allowMultiple: true)
+                        .then((value) {
+                      if (value == null) return;
+
+                      final file = File(value.files.single.path!);
+                      Fimber.i("Installing mod: ${file.path}");
+                      installModFromArchive(file);
+                    });
+                  },
+                  child: const Text('Install mod'))),
         ],
       ),
     );

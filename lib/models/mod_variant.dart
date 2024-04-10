@@ -1,6 +1,8 @@
 import 'dart:io';
 
 import 'package:collection/collection.dart';
+import 'package:dart_extensions_methods/dart_extension_methods.dart';
+import 'package:fimber/fimber.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/models/version_checker_info.dart';
@@ -24,10 +26,42 @@ class ModVariant with _$ModVariant {
 
   String get smolId => createSmolId(modInfo.id, modInfo.version);
 
-  String? get icoFilePath => modIconFilePaths
-      .map((path) => modsFolder.resolve(path))
-      .firstWhereOrNull((file) => file.existsSync())
-      ?.path;
+  // TODO this sucks, it does a file read every time it's called, but Freezed doesn't support lazy properties
+  String? get iconFilePath {
+    var path = modIconFilePaths
+        .map((path) => modsFolder.resolve(path))
+        .firstWhereOrNull((file) => file.existsSync())
+        ?.path;
+
+    if (path == null) {
+      final lunaSettings =
+          modsFolder.resolve("data/config/LunaSettingsConfig.json").toFile();
+      if (lunaSettings.existsSync()) {
+        try {
+          final lunaSettingsIconPath = (lunaSettings
+                  .readAsStringSyncAllowingMalformed()
+                  .fixJsonToMap()
+                  .entries
+                  .first
+                  .value as Map<String, dynamic>)
+              .entries
+              .firstWhereOrNull((entry) =>
+                  entry.key.toLowerCase().containsIgnoreCase("iconPath"))
+              ?.value;
+          if (lunaSettingsIconPath is String) {
+            final icon = modsFolder.resolve(lunaSettingsIconPath).toFile();
+            if (icon.existsSync()) {
+              path = icon.path;
+            }
+          }
+        } catch (e) {
+          Fimber.d("Error reading LunaSettingsConfig.json: $e");
+        }
+      }
+    }
+
+    return path;
+  }
 // required bool doesModInfoFileExist = modFolder.resolve(Constants.UNBRICKED_MOD_INFO_FILE).exists()
 }
 

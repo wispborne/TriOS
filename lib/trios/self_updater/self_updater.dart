@@ -62,7 +62,7 @@ class SelfUpdater {
     Fimber.i('Downloaded update file: ${downloadFile.path}');
     final extractedDir = updateWorkingDir;
     // Extract the downloaded update archive.
-    final extractedFiles = await LibArchive().extractEntriesInArchive(downloadFile, extractedDir.path);
+    final extractedFiles = await LibArchive().extractEntriesInArchive(downloadFile, extractedDir.path, null);
 
     if (extractedFiles.isNotEmpty) {
       downloadFile.deleteSync(); // Clean up the .zip file, we don't want to end up moving it in as part of the update.

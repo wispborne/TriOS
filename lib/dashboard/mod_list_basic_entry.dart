@@ -60,7 +60,7 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
         ),
         child: child);
 
-    const rowHeight = 26.0;
+    const rowHeight = 25.0;
 
     return Row(
       mainAxisSize: MainAxisSize.max,
@@ -73,7 +73,7 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                 labelWidget: Row(
                   children: [
                     Padding(
-                      padding: const EdgeInsets.only(right: 4),
+                      padding: const EdgeInsets.only(right: 6),
                       child: MovingTooltipWidget(
                         tooltipWidget: SizedBox(
                           width: 400,
@@ -84,7 +84,7 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                                 Padding(
                                   padding: const EdgeInsets.only(left: 16.0),
                                   child: Text(
-                                      "Tip: Add an icon.png file to the mod folder to get an icon like this!",
+                                      "Tip: Add a LunaSettings icon or add an icon.png file to the mod folder to get an icon like this!",
                                       style: Theme.of(context)
                                           .textTheme
                                           .labelLarge
@@ -105,9 +105,9 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                           height: rowHeight,
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(4),
-                            child: modVariant.icoFilePath != null
+                            child: modVariant.iconFilePath != null
                                 ? Image.file(
-                                    (modVariant.icoFilePath ?? "").toFile(),
+                                    (modVariant.iconFilePath ?? "").toFile(),
                                     isAntiAlias: true,
                                   )
                                 : Container(),

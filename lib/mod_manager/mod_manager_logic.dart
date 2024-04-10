@@ -34,7 +34,8 @@ Future<List<ModVariant>> getModsInFolder(Directory modsFolder) async {
       final modVariant = ModVariant(
           modInfo: modInfo,
           modsFolder: modFolder,
-          versionCheckerInfo: getVersionFile(modFolder)?.let((it) => getVersionCheckerInfo(it)));
+          versionCheckerInfo: getVersionFile(modFolder)
+              ?.let((it) => getVersionCheckerInfo(it)));
 
       // Screenshot mode
       // if (modVariant.modInfo.isCompatibleWithGame("0.97a-RC10") == GameCompatibility.compatible || (Random().nextBool() && Random().nextBool())) {
@@ -51,10 +52,12 @@ Future<List<ModVariant>> getModsInFolder(Directory modsFolder) async {
 VersionCheckerInfo? getVersionCheckerInfo(File versionFile) {
   if (!versionFile.existsSync()) return null;
   try {
-    var info = VersionCheckerInfo.fromJson(versionFile.readAsStringSync().fixJsonToMap());
+    var info = VersionCheckerInfo.fromJson(
+        versionFile.readAsStringSync().fixJsonToMap());
 
     if (info.modThreadId != null) {
-      info = info.copyWith(modThreadId: info.modThreadId?.replaceAll(RegExp(r'[^0-9]'), ''));
+      info = info.copyWith(
+          modThreadId: info.modThreadId?.replaceAll(RegExp(r'[^0-9]'), ''));
 
       if (info.modThreadId!.trimStart("0").isEmpty) {
         info = info.copyWith(modThreadId: null);
@@ -63,7 +66,8 @@ VersionCheckerInfo? getVersionCheckerInfo(File versionFile) {
 
     return info;
   } catch (e, st) {
-    Fimber.e("Unable to read version checker json file in ${versionFile.absolute}. ($e)\n$st");
+    Fimber.e(
+        "Unable to read version checker json file in ${versionFile.absolute}. ($e)\n$st");
     return null;
   }
 }
@@ -73,27 +77,32 @@ File? getVersionFile(Directory modFolder) {
   if (!csv.existsSync()) return null;
   try {
     return modFolder
-        .resolve((const CsvToListConverter(eol: "\n").convert(csv.readAsStringSync().replaceAll("\r\n", "\n"))[1][0]
+        .resolve((const CsvToListConverter(eol: "\n")
+                .convert(csv.readAsStringSync().replaceAll("\r\n", "\n"))[1][0]
             as String))
         .toFile();
   } catch (e, st) {
-    Fimber.e("Unable to read version checker csv file in ${modFolder.absolute}. ($e)\n$st");
+    Fimber.e(
+        "Unable to read version checker csv file in ${modFolder.absolute}. ($e)\n$st");
     return null;
   }
 }
 
-Future<ModInfo?> getModInfo(Directory modFolder, StringBuffer progressText) async {
+Future<ModInfo?> getModInfo(
+    Directory modFolder, StringBuffer progressText) async {
   try {
     return modFolder
         .listSync()
         .whereType<File>()
         .firstWhereOrNull((file) => file.nameWithExtension == "mod_info.json")
         ?.let((modInfoFile) async {
-      var rawString = await withFileHandleLimit(() => modInfoFile.readAsString());
+      var rawString =
+          await withFileHandleLimit(() => modInfoFile.readAsString());
       var jsonEncodedYaml = (rawString).replaceAll("\t", "  ").fixJsonToMap();
 
       // try {
-      final model = ModInfo.fromJsonModel(ModInfoJson.fromJson(jsonEncodedYaml), modFolder);
+      final model = ModInfo.fromJsonModel(
+          ModInfoJson.fromJson(jsonEncodedYaml), modFolder);
 
       // Fimber.v("Using 0.9.5a mod_info.json format for ${modInfoFile.absolute}");
 
@@ -107,7 +116,8 @@ Future<ModInfo?> getModInfo(Directory modFolder, StringBuffer progressText) asyn
       // }
     });
   } catch (e, st) {
-    Fimber.v("Unable to find or read 'mod_info.json' in ${modFolder.absolute}. ($e)\n$st");
+    Fimber.v(
+        "Unable to find or read 'mod_info.json' in ${modFolder.absolute}. ($e)\n$st");
     return null;
   }
 }
@@ -117,26 +127,36 @@ File getEnabledModsFile(Directory modsFolder) {
 }
 
 Future<EnabledMods> getEnabledMods(Directory modsFolder) async {
-  return EnabledMods.fromJson((await getEnabledModsFile(modsFolder).readAsString()).fixJsonToMap());
+  return EnabledMods.fromJson(
+      (await getEnabledModsFile(modsFolder).readAsString()).fixJsonToMap());
 }
 
-Future<void> disableMod(String modInfoId, Directory modsFolder, WidgetRef ref) async {
+Future<void> disableMod(
+    String modInfoId, Directory modsFolder, WidgetRef ref) async {
   var enabledMods = await getEnabledMods(modsFolder);
-  enabledMods = enabledMods.copyWith(enabledMods: enabledMods.enabledMods.filter((id) => id != modInfoId).toSet());
+  enabledMods = enabledMods.copyWith(
+      enabledMods:
+          enabledMods.enabledMods.filter((id) => id != modInfoId).toSet());
 
-  await getEnabledModsFile(modsFolder).writeAsString(jsonEncode(enabledMods.toJson()));
+  await getEnabledModsFile(modsFolder)
+      .writeAsString(jsonEncode(enabledMods.toJson()));
   ref.invalidate(AppState.enabledMods);
 }
 
-Future<void> enableMod(String modInfoId, Directory modsFolder, WidgetRef ref) async {
+Future<void> enableMod(
+    String modInfoId, Directory modsFolder, WidgetRef ref) async {
   var enabledMods = await getEnabledMods(modsFolder);
-  enabledMods = enabledMods.copyWith(enabledMods: enabledMods.enabledMods.toSet()..add(modInfoId));
-  await getEnabledModsFile(modsFolder).writeAsString(jsonEncode(enabledMods.toJson()));
+  enabledMods = enabledMods.copyWith(
+      enabledMods: enabledMods.enabledMods.toSet()..add(modInfoId));
+  await getEnabledModsFile(modsFolder)
+      .writeAsString(jsonEncode(enabledMods.toJson()));
   ref.invalidate(AppState.enabledMods);
 }
 
-Future<void> forceChangeModGameVersion(ModVariant modVariant, String newGameVersion) async {
-  final modInfoFile = modVariant.modsFolder.resolve(Constants.modInfoFileName).toFile();
+Future<void> forceChangeModGameVersion(
+    ModVariant modVariant, String newGameVersion) async {
+  final modInfoFile =
+      modVariant.modsFolder.resolve(Constants.modInfoFileName).toFile();
   // Replace the game version in the mod_info.json file.
   // Don't use the code model, we want to keep any extra fields that might not be in the model.
   final modInfoJson = modInfoFile.readAsStringSync().fixJsonToMap();
@@ -145,7 +165,8 @@ Future<void> forceChangeModGameVersion(ModVariant modVariant, String newGameVers
   await modInfoFile.writeAsString(jsonEncodePrettily(modInfoJson));
 }
 
-GameCompatibility compareGameVersions(String? modGameVersion, String? gameVersion) {
+GameCompatibility compareGameVersions(
+    String? modGameVersion, String? gameVersion) {
   // game is versioned like 0.95.1a-RC5 and 0.95.0a-RC5
   // they are fully compatible if the first three numbers are the same
   // they are partially compatible if the first two numbers are the same
@@ -160,7 +181,8 @@ GameCompatibility compareGameVersions(String? modGameVersion, String? gameVersio
       modVersion.minor == gameVersionParsed.minor &&
       modVersion.patch == gameVersionParsed.patch) {
     return GameCompatibility.compatible;
-  } else if (modVersion.major == gameVersionParsed.major && modVersion.minor == gameVersionParsed.minor) {
+  } else if (modVersion.major == gameVersionParsed.major &&
+      modVersion.minor == gameVersionParsed.minor) {
     return GameCompatibility.warning;
   } else {
     return GameCompatibility.incompatible;
@@ -189,13 +211,16 @@ extension DependencyExt on Dependency {
     return Satisfied(mod);
   }
 
-  DependencyStateType isSatisfiedByAny(List<ModVariant> allMods, EnabledMods enabledMods) {
+  DependencyStateType isSatisfiedByAny(
+      List<ModVariant> allMods, EnabledMods enabledMods) {
     var foundDependencies = allMods.filter((mod) => mod.modInfo.id == id);
     if (foundDependencies.isEmpty) {
       return Missing();
     }
 
-    final satisfyResults = foundDependencies.map((mod) => isSatisfiedBy(mod.modInfo, enabledMods)).toList();
+    final satisfyResults = foundDependencies
+        .map((mod) => isSatisfiedBy(mod.modInfo, enabledMods))
+        .toList();
 
     // Return the least severe state.
     return satisfyResults.firstWhereOrNull((it) => it is Satisfied) ??
@@ -225,7 +250,35 @@ Future<void> installModFromArchive(File archiveFile) async {
 
   final libArchive = LibArchive();
   final archiveFileList = libArchive.listEntriesInArchive(archiveFile);
-  final modInfoFiles = archiveFileList.filter((it) => it.pathName.containsIgnoreCase(Constants.modInfoFileName));
+  final modInfoFiles = archiveFileList.filter(
+      (it) => it.pathName.containsIgnoreCase(Constants.modInfoFileName));
+
+  if (modInfoFiles.isEmpty) {
+    throw Exception("No mod_info.json file found in archive.");
+  } else if (modInfoFiles.length > 1) {
+    // TODO support multiple mod_info.json files
+    throw Exception("Multiple mod_info.json files found in archive.");
+  }
+
+  final modInfoFile = modInfoFiles.first;
+  Fimber.i("Found mod_info.json file in archive: ${modInfoFile.pathName}");
+  final extractedModInfo = await libArchive.extractEntriesInArchive(
+      archiveFile,
+      Directory.systemTemp.path,
+      (entry) =>
+          entry.file.toFile().nameWithExtension == Constants.modInfoFileName);
+  final modInfo = ModInfo.fromJson(extractedModInfo.first!.extractedFile
+      .readAsStringSyncAllowingMalformed()
+      .fixJsonToMap());
+
+  var modInfoParent = p.dirname(modInfoFile.pathName);
+  final hasModFolder = archiveFileList.any((it) =>
+      it.pathName.startsWith(modInfoParent) && it.pathName != modInfoParent);
+  if (!hasModFolder) {
+    modInfoParent = "${modInfo.name}-${modInfo.version}";
+  }
+
+  await libArchive.extractEntriesInArchive(archiveFile, Directory.systemTemp.path, null);
 }
 
 extension ModInfoExt on ModInfo {

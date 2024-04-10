@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/chipper/chipper_home.dart';
+import 'package:trios/utils/extensions.dart';
 
 import '../chipper/chipper_state.dart';
 import '../chipper/views/chipper_log.dart';
@@ -70,14 +71,16 @@ class _DashboardState extends ConsumerState<Dashboard>
                                                 Theme.of(context)
                                                     .colorScheme
                                                     .onSurface)),
-                                    label: const Text("Load my log")),
+                                    label: const Text("Reload")),
                               ),
                               const Spacer(),
                               Text(
                                   ref
                                           .watch(ChipperState.logRawContents)
                                           .valueOrNull
-                                          ?.filepath ??
+                                          ?.filepath
+                                          ?.toFile()
+                                          .nameWithExtension ??
                                       "",
                                   style: Theme.of(context).textTheme.labelSmall)
                             ],

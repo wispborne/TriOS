@@ -81,8 +81,16 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
-                                    "Tip: Add an icon.png file to the mod folder to get an icon like this!"),
+                                Padding(
+                                  padding: const EdgeInsets.only(left: 16.0),
+                                  child: Text(
+                                      "Tip: Add an icon.png file to the mod folder to get an icon like this!",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelLarge
+                                          ?.copyWith(
+                                              fontStyle: FontStyle.italic)),
+                                ),
                                 const Divider(),
                                 ModSummaryWidget(
                                   modVariant: modVariant,
@@ -98,8 +106,8 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(4),
                             child: modVariant.icoFilePath != null
-                                ? Image.asset(
-                                    modVariant.icoFilePath ?? "",
+                                ? Image.file(
+                                    (modVariant.icoFilePath ?? "").toFile(),
                                     isAntiAlias: true,
                                   )
                                 : Container(),

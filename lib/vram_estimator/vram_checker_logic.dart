@@ -150,11 +150,11 @@ class VramChecker {
       }).map((file) async {
         ImageType imageType;
         if (file.relativePath(modInfo.modFolder).contains(BACKGROUND_FOLDER_NAME)) {
-          imageType = ImageType.Background;
+          imageType = ImageType.background;
         } else if (UNUSED_INDICATOR.any((suffix) => file.relativePath(modInfo.modFolder).contains(suffix))) {
-          imageType = ImageType.Unused;
+          imageType = ImageType.unused;
         } else {
-          imageType = ImageType.Texture;
+          imageType = ImageType.texture;
         }
 
         if (file.nameWithExtension.endsWith(".png")) {
@@ -176,7 +176,7 @@ class VramChecker {
       final imagesToSumUp = modImages.toList();
 
       final unusedImages = imagesToSumUp.where((it) {
-        return it.imageType == ImageType.Unused;
+        return it.imageType == ImageType.unused;
       });
 
       if (unusedImages.isNotEmpty && showSkippedFiles) {
@@ -192,11 +192,11 @@ class VramChecker {
 // The game only loads one background at a time and vanilla always has one loaded.
 // Therefore, a mod only increases the VRAM use by the size difference of the largest background over vanilla.
       final largestBackgroundBiggerThanVanilla = modImages
-          .filter((it) => it.imageType == ImageType.Background && it.textureWidth > VANILLA_BACKGROUND_WIDTH)
+          .filter((it) => it.imageType == ImageType.background && it.textureWidth > VANILLA_BACKGROUND_WIDTH)
           .maxByOrNull<num>((it) => it.bytesUsed);
 
       final modBackgroundsSmallerThanLargestVanilla =
-          modImages.filter((it) => it.imageType == ImageType.Background && it != largestBackgroundBiggerThanVanilla);
+          modImages.filter((it) => it.imageType == ImageType.background && it != largestBackgroundBiggerThanVanilla);
 
       if (modBackgroundsSmallerThanLargestVanilla.isNotEmpty) {
         progressText.appendAndPrint(
@@ -335,7 +335,7 @@ class VramChecker {
       }
 
       return ModImage(
-          file,
+          file.path,
           (image.width == 1) ? 1 : (image.width - 1).highestOneBit() * 2,
           (image.height == 1) ? 1 : (image.height - 1).highestOneBit() * 2,
           // image!.colorModel.componentSize.toList(),
@@ -371,7 +371,7 @@ class VramChecker {
     }
 
     return ModImage(
-        file,
+        file.path,
         (image.width == 1) ? 1 : (image.width - 1).highestOneBit() * 2,
         (image.height == 1) ? 1 : (image.height - 1).highestOneBit() * 2,
         // image!.colorModel.componentSize.toList(),

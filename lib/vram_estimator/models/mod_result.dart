@@ -1,6 +1,6 @@
 import 'package:collection/collection.dart';
 
-import '../vram_checker.dart';
+import '../vram_checker_logic.dart';
 import 'mod_image.dart';
 
 class Mod {

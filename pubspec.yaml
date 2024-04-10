@@ -46,7 +46,7 @@ dependencies:
   yaml: ^3.1.2
   fimber: ^0.7.0
   fimber_io: ^0.7.0
-  image_size_getter: ^2.1.2
+  image_size_getter: ^2.1.3
   squadron: ^5.1.6
   squadron_builder: ^2.4.5
   #  desktop_window: ^0.4.0
@@ -97,7 +97,7 @@ dev_dependencies:
   riverpod_generator: ^2.4.0
   build_runner: ^2.4.9
   custom_lint: ^0.6.4
-  freezed: ^2.4.7
+  freezed: ^2.5.1
   json_serializable: ^6.7.1
   #  riverpod_lint: ^2.3.9 # <https://github.com/google/reflectable.dart/pull/326>
   #analyzer: ^6.4.1
@@ -133,8 +133,8 @@ flutter:
     - assets/images/
     - assets/images/chipper/
     - assets/libarchive/windows/bin/
-#  shaders:
-#    - assets/shaders/grain.frag
+  #  shaders:
+  #    - assets/shaders/grain.frag
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

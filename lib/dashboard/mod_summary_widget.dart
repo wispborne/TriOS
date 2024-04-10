@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/chipper/utils.dart';
 import 'package:trios/mod_manager/version_checker.dart';
 import 'package:trios/models/mod_variant.dart';
+import 'package:trios/utils/extensions.dart';
 
 import '../mod_manager/mod_manager_logic.dart';
 import '../trios/app_state.dart';
@@ -64,12 +65,12 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
             SizedBox(
               width: modVariant.icoFilePath != null ? 40 : 0,
               child: Padding(
-                padding: const EdgeInsets.only(right: 4),
+                padding: const EdgeInsets.only(right: 8),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(4),
                   child: modVariant.icoFilePath != null
-                      ? Image.asset(
-                          modVariant.icoFilePath ?? "",
+                      ? Image.file(
+                          (modVariant.icoFilePath ?? "").toFile(),
                           isAntiAlias: true,
                         )
                       : Container(),

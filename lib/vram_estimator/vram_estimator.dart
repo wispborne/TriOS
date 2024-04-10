@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/extensions.dart';
-import 'package:trios/vram_estimator/vram_checker.dart';
+import 'package:trios/vram_estimator/vram_checker_logic.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/graph_radio_selector.dart';
 import 'package:trios/widgets/spinning_refresh_fab.dart';
@@ -197,6 +197,7 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
         .where((mod) =>
             mod.totalBytesForMod >= (selectedSliderValues?.start ?? 0) &&
             mod.totalBytesForMod <= (selectedSliderValues?.end ?? _maxRange()))
+        .sortedByDescending<num>((mod) => mod.totalBytesForMod)
         .toList();
   }
 

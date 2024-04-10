@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/vram_estimator/models/gpu_info.dart';
 
-import '../models/mod_result.dart';
 import '../../../utils/util.dart';
+import '../models/mod_result.dart';
 // ...  (Import extensions, any custom models, and util as in your existing code)
 
 class VramBarChart extends StatefulWidget {
@@ -42,6 +42,7 @@ class VramBarChartState extends State<VramBarChart> {
                 : ListView.builder(
                     itemCount: mods.length,
                     itemBuilder: (context, index) {
+                      if (index > mods.length - 1) return const SizedBox();
                       final mod = mods[index];
                       final percentOfMax = mod.totalBytesForMod / maxVramUsed;
                       final width = layoutConstraints.maxWidth * percentOfMax;

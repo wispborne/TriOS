@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:fimber/fimber.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
@@ -104,23 +105,40 @@ extension StringExt on String {
     return 0;
   }
 
-  String filter(bool Function(String) predicate) => characters.where(predicate).join();
+  String filter(bool Function(String) predicate) =>
+      characters.where(predicate).join();
 
   /// Breaks a string into chunks of letters and numbers.
   /// "55hhb3vv-5 s" -> ["55", "hhb", "3", "vv", "5", "s"]
   List<String> splitIntoAlphaAndNumeric() {
     final str = this;
 
-    return ([0] + _letterDigitSplitterRegex.allMatches(str).map((m) => m.start).toList() + [str.length])
-        .zipWithNext((l, r) => str.substring(l, r).filter((it) => RegExp(r"[a-zA-Z0-9]").hasMatch(it)))
+    return ([0] +
+            _letterDigitSplitterRegex
+                .allMatches(str)
+                .map((m) => m.start)
+                .toList() +
+            [str.length])
+        .zipWithNext((l, r) => str
+            .substring(l, r)
+            .filter((it) => RegExp(r"[a-zA-Z0-9]").hasMatch(it)))
         .filter((p0) => p0.isNotEmpty)
         .toList();
+  }
+
+  bool containsAny(Iterable<String> elements) {
+    return elements.any(contains);
+  }
+
+  bool containsAnyIgnoreCase(Iterable<String> elements) {
+    return elements.any(containsIgnoreCase);
   }
 }
 
 final _letterDigitSplitterRegex = RegExp(r"(?<=\D)(?=\d)|(?<=\d)(?=\D)");
 
-String _getSafeChunk(List<String> chunks, int index) => index < chunks.length ? chunks[index] : "0";
+String _getSafeChunk(List<String> chunks, int index) =>
+    index < chunks.length ? chunks[index] : "0";
 
 int _compareChunks(String chunk1, String chunk2) {
   final int1 = int.tryParse(chunk1);
@@ -158,11 +176,13 @@ extension FileSystemEntityExt on FileSystemEntity {
 
   Directory toDirectory() => Directory(absolute.path);
 
-  bool existsSync() => FileSystemEntity.typeSync(path) != FileSystemEntityType.notFound;
+  bool existsSync() =>
+      FileSystemEntity.typeSync(path) != FileSystemEntityType.notFound;
 }
 
 extension FileExt on File {
-  String relativePath(Directory modFolder) => p.normalize(p.relative(absolute.path, from: modFolder.absolute.path));
+  String relativePath(Directory modFolder) =>
+      p.normalize(p.relative(absolute.path, from: modFolder.absolute.path));
 
   String relativeTo(Directory modFolder) => relativePath(modFolder);
 
@@ -178,7 +198,8 @@ extension FileExt on File {
       if (overwrite) {
         destFile.deleteSync();
       } else {
-        Fimber.i("Skipping file move (file already exists): $this to $destFile");
+        Fimber.i(
+            "Skipping file move (file already exists): $this to $destFile");
         return this;
       }
     }
@@ -195,7 +216,8 @@ extension DirectoryExt on Directory {
 
   String get name => p.basename(path);
 
-  Future<void> moveDirectory(Directory destDir, {bool overwrite = false}) async {
+  Future<void> moveDirectory(Directory destDir,
+      {bool overwrite = false}) async {
     try {
       renameSync(destDir.absolute.path);
     } catch (e) {
@@ -206,17 +228,21 @@ extension DirectoryExt on Directory {
   }
 
   /// Copied from FileUtils.java::doCopyDirectory in Apache Commons IO.
-  Future<void> copyDirectory(Directory destDir, {bool overwrite = false}) async {
+  Future<void> copyDirectory(Directory destDir,
+      {bool overwrite = false}) async {
     final srcFiles = listSync(recursive: false).map((e) => e.path.toFile());
     destDir.createSync(recursive: true); // mkdirs
 
     for (var srcFile in srcFiles) {
       final destFile = destDir.resolve(srcFile.nameWithExtension);
       if (srcFile.isDirectory()) {
-        srcFile.toDirectory().copyDirectory(destFile.toDirectory(), overwrite: overwrite);
+        srcFile
+            .toDirectory()
+            .copyDirectory(destFile.toDirectory(), overwrite: overwrite);
       } else if (srcFile.isFile()) {
         if (destFile.existsSync() && !overwrite) {
-          Fimber.d("Skipping file copy (file already exists): $srcFile to $destFile");
+          Fimber.d(
+              "Skipping file copy (file already exists): $srcFile to $destFile");
           continue;
         } else {
           srcFile.copy(destFile.path);
@@ -227,7 +253,9 @@ extension DirectoryExt on Directory {
 }
 
 extension IterableExt<T> on Iterable<T> {
-  String joinToString({String separator = ", ", required String Function(T element) transform}) {
+  String joinToString(
+      {String separator = ", ",
+      required String Function(T element) transform}) {
     return map(transform).join(separator);
   }
 
@@ -257,7 +285,8 @@ extension IterableExt<T> on Iterable<T> {
     return maxElement;
   }
 
-  Iterable<T> sortedByDescending<R extends Comparable<R>>(R Function(T) selector) {
+  Iterable<T> sortedByDescending<R extends Comparable<R>>(
+      R Function(T) selector) {
     return toList()..sort((a, b) => selector(b).compareTo(selector(a)));
   }
 
@@ -404,7 +433,8 @@ extension NumListExt on List<num> {
     num? minDistance;
 
     for (final value in this) {
-      final distance = (targetValue - value).abs(); // Calculate absolute distance
+      final distance =
+          (targetValue - value).abs(); // Calculate absolute distance
 
       if (minDistance == null || distance < minDistance) {
         closestValue = value;

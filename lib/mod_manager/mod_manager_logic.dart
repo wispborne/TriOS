@@ -3,9 +3,11 @@ import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:csv/csv.dart';
+import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:fimber/fimber.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
+import 'package:trios/libarchive/libarchive.dart';
 import 'package:trios/models/enabled_mods.dart';
 import 'package:trios/models/mod_info_json.dart';
 import 'package:trios/models/mod_variant.dart';
@@ -214,6 +216,16 @@ extension DependencyExt on Dependency {
     //   return DependencyStateType.Missing;
     // }
   }
+}
+
+Future<void> installModFromArchive(File archiveFile) async {
+  if (!archiveFile.existsSync()) {
+    throw Exception("File does not exist: ${archiveFile.path}");
+  }
+
+  final libArchive = LibArchive();
+  final archiveFileList = libArchive.listEntriesInArchive(archiveFile);
+  final modInfoFiles = archiveFileList.filter((it) => it.pathName.containsIgnoreCase(Constants.modInfoFileName));
 }
 
 extension ModInfoExt on ModInfo {

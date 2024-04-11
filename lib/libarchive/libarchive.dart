@@ -179,8 +179,12 @@ class LibArchive {
   }
 
   Future<List<({LibArchiveEntry archiveFile, File extractedFile})?>>
-      extractEntriesInArchive(File archivePath, String destinationPath,
-          bool Function(LibArchiveEntry entry)? fileFilter) async {
+      extractEntriesInArchive(
+    File archivePath,
+    String destinationPath, {
+    bool Function(LibArchiveEntry entry)? fileFilter,
+    String Function(LibArchiveEntry entry)? pathTransform,
+  }) async {
     final writePtr = binding.archive_write_disk_new();
     try {
       const writeFlags = ARCHIVE_EXTRACT_TIME |
@@ -199,7 +203,8 @@ class LibArchive {
           return null;
         } else {
           return extractSingleEntryInArchive(entryPtrPtr, destinationPath,
-              errCode, writePtr, archivePtr, entry);
+              errCode, writePtr, archivePtr, entry,
+              pathTransform: pathTransform);
         }
       });
     } finally {
@@ -209,14 +214,17 @@ class LibArchive {
 
   ({LibArchiveEntry archiveFile, File extractedFile})
       extractSingleEntryInArchive(
-          Pointer<Pointer<archive_entry>> entryPtrPtr,
-          String destinationPath,
-          int errCode,
-          Pointer<archive> writePtr,
-          Pointer<archive> archivePtr,
-          LibArchiveEntry entry) {
+    Pointer<Pointer<archive_entry>> entryPtrPtr,
+    String destinationPath,
+    int errCode,
+    Pointer<archive> writePtr,
+    Pointer<archive> archivePtr,
+    LibArchiveEntry entry, {
+    String Function(LibArchiveEntry entry)? pathTransform,
+  }) {
     // Add the destination path to the entry
-    final outputPath = p.join(destinationPath, entry.pathName);
+    final outputPath = p.join(destinationPath,
+        pathTransform != null ? pathTransform(entry) : entry.pathName);
     binding.archive_entry_set_pathname_utf8(
         entryPtrPtr.value, outputPath.toNativeChar());
 

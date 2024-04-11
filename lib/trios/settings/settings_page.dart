@@ -237,7 +237,32 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
                       final file = File(value.files.single.path!);
                       Fimber.i("Installing mod: ${file.path}");
-                      installModFromArchive(file);
+                      installModFromArchive(
+                        file,
+                        generateModFolderPath(settings.gameDir!)!,
+                        ref.read(AppState.mods),
+                        (modVariant) => {
+                          // show dialog alerting user the mod is already installed.
+                          showDialog(
+                            context: context,
+                            builder: (context) {
+                              return AlertDialog(
+                                title: const Text("Mod already installed"),
+                                content: Text(
+                                    "The mod ${modVariant.modInfo.name} ${modVariant.modInfo.version} is already installed."),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                    child: const Text("OK"),
+                                  ),
+                                ],
+                              );
+                            },
+                          )
+                        },
+                      );
                     });
                   },
                   child: const Text('Install mod'))),

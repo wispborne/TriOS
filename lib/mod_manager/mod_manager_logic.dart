@@ -5,6 +5,7 @@ import 'package:collection/collection.dart';
 import 'package:csv/csv.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:fimber/fimber.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:trios/libarchive/libarchive.dart';
@@ -17,10 +18,14 @@ import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/util.dart';
 
+import '../chipper/utils.dart';
+import '../models/mod.dart';
 import '../models/mod_info.dart';
 import '../models/version.dart';
+import '../trios/settings/settings.dart';
+import '../trios/trios_theme.dart';
 
-Future<List<ModVariant>> getModsInFolder(Directory modsFolder) async {
+Future<List<ModVariant>> getModsVariantsInFolder(Directory modsFolder) async {
   var mods = <ModVariant?>[];
 
   for (var modFolder in modsFolder.listSync().whereType<Directory>()) {
@@ -243,7 +248,12 @@ extension DependencyExt on Dependency {
   }
 }
 
-Future<void> installModFromArchive(File archiveFile) async {
+Future<ModInfo?> installModFromArchive(
+  File archiveFile,
+  Directory destinationFolder,
+  List<Mod> currentMods,
+  Function(ModVariant alreadyPresentModVariant) modAlreadyExistsHandler,
+) async {
   if (!archiveFile.existsSync()) {
     throw Exception("File does not exist: ${archiveFile.path}");
   }
@@ -263,22 +273,96 @@ Future<void> installModFromArchive(File archiveFile) async {
   final modInfoFile = modInfoFiles.first;
   Fimber.i("Found mod_info.json file in archive: ${modInfoFile.pathName}");
   final extractedModInfo = await libArchive.extractEntriesInArchive(
-      archiveFile,
-      Directory.systemTemp.path,
-      (entry) =>
+      archiveFile, Directory.systemTemp.createTempSync().path,
+      fileFilter: (entry) =>
           entry.file.toFile().nameWithExtension == Constants.modInfoFileName);
   final modInfo = ModInfo.fromJson(extractedModInfo.first!.extractedFile
       .readAsStringSyncAllowingMalformed()
       .fixJsonToMap());
 
-  var modInfoParent = p.dirname(modInfoFile.pathName);
-  final hasModFolder = archiveFileList.any((it) =>
-      it.pathName.startsWith(modInfoParent) && it.pathName != modInfoParent);
-  if (!hasModFolder) {
-    modInfoParent = "${modInfo.name}-${modInfo.version}";
+  final alreadyPresentModVariant = currentMods.variants.firstWhereOrNull((it) =>
+      it.modInfo.id == modInfo.id && it.modInfo.version == modInfo.version);
+
+  // TODO handle nicely.
+  if (alreadyPresentModVariant != null) {
+    Fimber.i("Mod already exists: ${modInfo.id} ${modInfo.version}");
+    modAlreadyExistsHandler(alreadyPresentModVariant);
+    return null;
   }
 
-  await libArchive.extractEntriesInArchive(archiveFile, Directory.systemTemp.path, null);
+  // We need to handle both when mod_info.json is at / and when at /mod/mod/mod/mod_info.json.
+  final generatedDestFolderName = ModVariant.generateVariantFolderName(modInfo);
+  final modInfoParentFolder = modInfoFile.file.parent;
+  final modInfoSiblings = archiveFileList
+      .filter((it) => it.file.parent.path == modInfoParentFolder.path)
+      .toList();
+  Fimber.d(
+      "Mod info siblings: ${modInfoSiblings.map((it) => it.pathName).toList()}");
+
+  final extractedMod = await libArchive.extractEntriesInArchive(
+    archiveFile,
+    destinationFolder.path,
+    fileFilter: (entry) => entry.file.isFile()
+        ? modInfoSiblings.contains(entry)
+        : p.isWithin(modInfoParentFolder.path, entry.file.path),
+    pathTransform: (entry) => p.join(
+      generatedDestFolderName,
+      p.relative(entry.file.path, from: modInfoParentFolder.path),
+    ),
+  );
+  Fimber.i(
+      "Extracted ${extractedMod.length} files in mod ${modInfo.id} ${modInfo.version} to '${destinationFolder.resolve(generatedDestFolderName)}'");
+  return modInfo;
+}
+
+Future<void> installModFromArchiveWithDefaultUI(
+  File archiveFile,
+  WidgetRef ref,
+  BuildContext context,
+) async {
+  try {
+    final installedModInfo = await installModFromArchive(
+      archiveFile,
+      generateModFolderPath(ref.read(appSettings).gameDir!)!,
+      ref.read(AppState.mods),
+      (modVariant) => {
+        // show dialog alerting user the mod is already installed.
+        showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: const Text("Mod already installed"),
+              content: Text(
+                  "The mod ${modVariant.modInfo.name} ${modVariant.modInfo.version} is already installed."),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text("OK"),
+                ),
+              ],
+            );
+          },
+        )
+      },
+    );
+
+    if (installedModInfo != null) {
+      ref.invalidate(AppState.modVariants);
+      showSnackBar(
+          context: context,
+          content: Text(
+              "Installed: ${installedModInfo.name} ${installedModInfo.version}"));
+    }
+  } catch (e, st) {
+    Fimber.e("Error installing mod from archive: $e");
+    showAlertDialog(
+      context,
+      title: "Error installing mod",
+      content: "$e",
+    );
+  }
 }
 
 extension ModInfoExt on ModInfo {

@@ -10,7 +10,7 @@ import 'package:http/http.dart' as http;
 import '../chipper_state.dart';
 import '../logparser.dart';
 import '../utils.dart';
-import 'chipper_dropper.dart';
+import '../../trios/drag_drop_handler.dart';
 import 'readout.dart';
 
 class DesktopDrop extends ConsumerStatefulWidget {
@@ -55,7 +55,7 @@ class DesktopDropState extends ConsumerState<DesktopDrop> {
     final parsing = ref.watch(ChipperState.isLoadingLog);
     // ref.listen(logRawContents, (pref, next) => parseLogListener(next));
 
-    return ChipperDropper(
+    return DragDropHandler(
         child: (parsing == true || widget.chips == null)
             ? Container(
                 constraints: const BoxConstraints(),
@@ -158,7 +158,7 @@ class DesktopDropState extends ConsumerState<DesktopDrop> {
   }
 }
 
-Future<String?> handleDroppedFile(String droppedFilePaths) async {
+Future<String?> handleDroppedLogFile(String droppedFilePaths) async {
   final files = [droppedFilePaths].map((e) => XFile(e));
   for (final file in files) {
     Fimber.i('  Path:${file.path}'

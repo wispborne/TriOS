@@ -62,7 +62,21 @@ class ModVariant with _$ModVariant {
 
     return path;
   }
-// required bool doesModInfoFileExist = modFolder.resolve(Constants.UNBRICKED_MOD_INFO_FILE).exists()
+
+  static final systemFolderNameAllowedChars = RegExp("[^0-9a-zA-Z\\.-_ ]");
+
+  String get generatedVariantFolderName => generateVariantFolderName(modInfo);
+
+  static String generateVariantFolderName(ModInfo modInfo) =>
+      "${modInfo.name?.replaceAll(systemFolderNameAllowedChars, "").take(100)}-${modInfo.version}";
+
+  /// Use the version in VersionChecker if possible (authors sometimes will do 0.35 in ModInfo but 0.3.5 in Version Checker).
+  Version? get bestVersion {
+    return versionCheckerInfo?.modVersion
+            ?.toString()
+            ?.let((it) => Version.parse(it)) ??
+        modInfo.version;
+  }
 }
 
 const modIconFilePaths = [

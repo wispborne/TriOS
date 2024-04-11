@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -106,6 +109,26 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                 },
                               ),
                             ),
+                            Tooltip(
+                              message: "Add new mod",
+                              child: IconButton(
+                                  icon: const Icon(Icons.add),
+                                  padding: EdgeInsets.only(left: 8),
+                                  iconSize: 20,
+                                  constraints: const BoxConstraints(),
+                                  onPressed: () {
+                                    FilePicker.platform
+                                        .pickFiles(allowMultiple: true)
+                                        .then((value) {
+                                      if (value == null) return;
+
+                                      final file =
+                                          File(value.files.single.path!);
+                                      installModFromArchiveWithDefaultUI(
+                                          file, ref, context);
+                                    });
+                                  }),
+                            )
                           ],
                         ),
                       ),
@@ -136,7 +159,7 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                     (modsWithUpdates.isEmpty ? [] : [null]) + // Divider
                     (modList
                         // .filter((mod) => mod.versionCheckerInfo == null)
-                        .sortedBy((info) => info.modInfo.name)
+                        .sortedBy((info) => info.modInfo.name ?? "")
                         .toList());
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -241,7 +264,7 @@ class _ModListMiniState extends ConsumerState<ModListMini>
         if (mod == null) continue;
         final remoteVersionCheck = versionCheck?[mod.smolId];
         if (remoteVersionCheck?.remoteVersion != null) {
-          downloadUpdateViaBrowser(remoteVersionCheck!.remoteVersion!);
+          downloadUpdateViaBrowser(remoteVersionCheck!.remoteVersion!, ref, context);
         }
       }
     }

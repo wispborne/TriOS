@@ -28,7 +28,7 @@ import 'package:trios/widgets/trios_app_icon.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:window_size/window_size.dart';
 
-import 'chipper/views/chipper_dropper.dart';
+import 'trios/drag_drop_handler.dart';
 import 'jre_manager/jre_manager.dart';
 import 'launcher/launcher.dart';
 import 'trios/app_state.dart';
@@ -358,7 +358,7 @@ class _AppShellState extends ConsumerState<AppShell>
             ],
           ),
         ),
-        body: ChipperDropper(
+        body: DragDropHandler(
           child: Padding(
               padding: const EdgeInsets.all(8.0),
               child: TabBarView(
@@ -366,7 +366,7 @@ class _AppShellState extends ConsumerState<AppShell>
                 physics: const NeverScrollableScrollPhysics(),
                 children: tabChildren,
               )),
-          onDropped: (_) => tabController.animateTo(TriOSTools.chipper.index),
+          onDroppedLog: (_) => tabController.animateTo(TriOSTools.chipper.index),
         ));
   }
 }

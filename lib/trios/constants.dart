@@ -1,7 +1,7 @@
 import 'package:trios/utils/extensions.dart';
 
 class Constants {
-  static const version = "0.0.39";
+  static const version = "0.0.40";
 
   static const appName = "TriOS";
   static const appTitle = "$appName v$version";
@@ -34,4 +34,5 @@ class Constants {
   static const forumModdingSubforumUrl = "$forumUrl?board=3.0";
   static const forumHostname = "fractalsoftworks.com";
   static const tipsFileRelativePath = "data/strings/tips.json";
+  static const supportedArchiveExtensions = [".zip", ".7z", ".rar", ".tar", ".gz", ".bz2"];
 }

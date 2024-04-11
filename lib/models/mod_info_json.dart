@@ -21,7 +21,7 @@ class ModInfoJson with _$ModInfoJson {
   const ModInfoJson._();
 
   const factory ModInfoJson(final String id,
-      {@Default("") final String name,
+      {final String? name,
       @JsonConverterVersionNullable() final Version? version,
       final String? author,
       final String? gameVersion,

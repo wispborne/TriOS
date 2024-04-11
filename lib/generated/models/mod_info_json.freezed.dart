@@ -167,7 +167,7 @@ ModInfoJson _$ModInfoJsonFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$ModInfoJson {
   String get id => throw _privateConstructorUsedError;
-  String get name => throw _privateConstructorUsedError;
+  String? get name => throw _privateConstructorUsedError;
   @JsonConverterVersionNullable()
   Version? get version => throw _privateConstructorUsedError;
   String? get author => throw _privateConstructorUsedError;
@@ -189,7 +189,7 @@ abstract class $ModInfoJsonCopyWith<$Res> {
   @useResult
   $Res call(
       {String id,
-      String name,
+      String? name,
       @JsonConverterVersionNullable() Version? version,
       String? author,
       String? gameVersion,
@@ -211,7 +211,7 @@ class _$ModInfoJsonCopyWithImpl<$Res, $Val extends ModInfoJson>
   @override
   $Res call({
     Object? id = null,
-    Object? name = null,
+    Object? name = freezed,
     Object? version = freezed,
     Object? author = freezed,
     Object? gameVersion = freezed,
@@ -223,10 +223,10 @@ class _$ModInfoJsonCopyWithImpl<$Res, $Val extends ModInfoJson>
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as String,
-      name: null == name
+      name: freezed == name
           ? _value.name
           : name // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
       version: freezed == version
           ? _value.version
           : version // ignore: cast_nullable_to_non_nullable
@@ -261,7 +261,7 @@ abstract class _$$ModInfoJsonImplCopyWith<$Res>
   @useResult
   $Res call(
       {String id,
-      String name,
+      String? name,
       @JsonConverterVersionNullable() Version? version,
       String? author,
       String? gameVersion,
@@ -281,7 +281,7 @@ class __$$ModInfoJsonImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? id = null,
-    Object? name = null,
+    Object? name = freezed,
     Object? version = freezed,
     Object? author = freezed,
     Object? gameVersion = freezed,
@@ -293,10 +293,10 @@ class __$$ModInfoJsonImplCopyWithImpl<$Res>
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as String,
-      name: null == name
+      name: freezed == name
           ? _value.name
           : name // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
       version: freezed == version
           ? _value.version
           : version // ignore: cast_nullable_to_non_nullable
@@ -325,7 +325,7 @@ class __$$ModInfoJsonImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$ModInfoJsonImpl extends _ModInfoJson {
   const _$ModInfoJsonImpl(this.id,
-      {this.name = "",
+      {this.name,
       @JsonConverterVersionNullable() this.version,
       this.author,
       this.gameVersion,
@@ -340,8 +340,7 @@ class _$ModInfoJsonImpl extends _ModInfoJson {
   @override
   final String id;
   @override
-  @JsonKey()
-  final String name;
+  final String? name;
   @override
   @JsonConverterVersionNullable()
   final Version? version;
@@ -411,7 +410,7 @@ class _$ModInfoJsonImpl extends _ModInfoJson {
 
 abstract class _ModInfoJson extends ModInfoJson {
   const factory _ModInfoJson(final String id,
-      {final String name,
+      {final String? name,
       @JsonConverterVersionNullable() final Version? version,
       final String? author,
       final String? gameVersion,
@@ -425,7 +424,7 @@ abstract class _ModInfoJson extends ModInfoJson {
   @override
   String get id;
   @override
-  String get name;
+  String? get name;
   @override
   @JsonConverterVersionNullable()
   Version? get version;

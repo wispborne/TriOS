@@ -499,7 +499,7 @@ class VramCheckerMod {
 
   String get id => modInfo.id;
 
-  String get name => modInfo.name;
+  String? get name => modInfo.name;
 
   Version? get version => modInfo.version;
 

@@ -23,7 +23,8 @@ void main() {
     configureLogging();
     final libArchive = LibArchive();
     var archivePath = "F:/Downloads/MoreMilitaryMissions-0.4.1.7z";
-    final archiveEntries = await libArchive.extractEntriesInArchive(File(archivePath), "F:/Downloads/extractTest");
+    final archiveEntries = await libArchive.extractEntriesInArchive(
+        File(archivePath), "F:/Downloads/extractTest");
 
     print("Extracting archive file: $archivePath");
     for (var element in archiveEntries) {

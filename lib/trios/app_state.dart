@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:fimber/fimber.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,6 +15,7 @@ import 'package:trios/utils/platform_paths.dart';
 import 'package:trios/utils/util.dart';
 
 import '../models/enabled_mods.dart';
+import '../models/mod.dart';
 
 // part 'generated/app_state.g.dart';
 
@@ -22,6 +24,7 @@ class AppState {
   static final selfUpdateDownloadProgress =
       StateProvider<double?>((ref) => null);
 
+  /// Master list of all mod variants found in the mods folder.
   static final modVariants = FutureProvider<List<ModVariant>>((ref) async {
     final gamePath =
         ref.watch(appSettings.select((value) => value.gameDir))?.toDirectory();
@@ -29,7 +32,19 @@ class AppState {
       return [];
     }
 
-    return await getModsInFolder(gamePath.resolve("mods").toDirectory());
+    return await getModsVariantsInFolder(
+        generateModFolderPath(gamePath)!.toDirectory());
+  });
+
+  /// Projection of [modVariants], grouping them by mod id.
+  static final mods = Provider<List<Mod>>((ref) {
+    final modVariants = ref.watch(AppState.modVariants).value ?? [];
+    return modVariants
+        .groupBy((ModVariant variant) => variant.modInfo.id)
+        .entries
+        .map((entry) {
+      return Mod(id: entry.key, modVariants: entry.value.toList());
+    }).toList();
   });
 
   static StreamController<File>? _enabledModsWatcher;
@@ -65,9 +80,8 @@ class AppState {
   });
 
   static final starsectorVersion = FutureProvider<String?>((ref) async {
-    final gamePath = ref
-        .watch(appSettings.select((value) => value.gameDir))
-        ?.toDirectory();
+    final gamePath =
+        ref.watch(appSettings.select((value) => value.gameDir))?.toDirectory();
     if (gamePath == null) {
       return null;
     }
@@ -96,10 +110,7 @@ class AppState {
 Future<String?> readStarsectorVersionFromLog(Directory gamePath) async {
   const versionContains = r"Starting Starsector";
   final versionRegex = RegExp(r"Starting Starsector (.*) launcher");
-  final logfile = utf8.decode(
-      getLogPath(gamePath)
-          .readAsBytesSync()
-          .toList(),
+  final logfile = utf8.decode(getLogPath(gamePath).readAsBytesSync().toList(),
       allowMalformed: true);
   for (var line in logfile.split("\n")) {
     if (line.contains(versionContains)) {

@@ -80,7 +80,7 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(modInfo.name, style: theme.textTheme.titleMedium),
+                Text(modInfo.name ?? "(no name)", style: theme.textTheme.titleMedium),
                 Text("${modInfo.id} • ${modInfo.version ?? ""}",
                     style: theme.textTheme.labelSmall),
               ],

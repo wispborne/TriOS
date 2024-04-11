@@ -133,6 +133,10 @@ extension StringExt on String {
   bool containsAnyIgnoreCase(Iterable<String> elements) {
     return elements.any(containsIgnoreCase);
   }
+
+  bool equalsAnyIgnoreCase(Iterable<String> elements) {
+    return elements.any(equalsIgnoreCase);
+  }
 }
 
 final _letterDigitSplitterRegex = RegExp(r"(?<=\D)(?=\d)|(?<=\d)(?=\D)");
@@ -189,6 +193,8 @@ extension FileExt on File {
   String get nameWithoutExtension => p.basenameWithoutExtension(path);
 
   String get nameWithExtension => p.basename(path);
+
+  String get extension => p.extension(path);
 
   File get normalize => File(p.normalize(absolute.path));
 

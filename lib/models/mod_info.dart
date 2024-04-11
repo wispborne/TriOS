@@ -15,7 +15,7 @@ class ModInfo with _$ModInfo {
 
   const factory ModInfo({
     required String id,
-    required String name,
+    String? name,
     @JsonConverterVersionNullable() Version? version,
     String? description,
     String? gameVersion,

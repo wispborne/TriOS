@@ -119,7 +119,7 @@ class VramBarChartState extends State<VramBarChart> {
       return Padding(
         padding: const EdgeInsets.only(top: 8.0),
         child: Text(
-          widget.modVramInfo[modIndex].info.name,
+          widget.modVramInfo[modIndex].info.name ?? '(no name)',
           style: const TextStyle(fontSize: 10),
         ),
       );

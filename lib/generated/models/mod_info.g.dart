@@ -9,7 +9,7 @@ part of '../../models/mod_info.dart';
 _$ModInfoImpl _$$ModInfoImplFromJson(Map<String, dynamic> json) =>
     _$ModInfoImpl(
       id: json['id'] as String,
-      name: json['name'] as String,
+      name: json['name'] as String?,
       version: const JsonConverterVersionNullable().fromJson(json['version']),
       description: json['description'] as String?,
       gameVersion: json['gameVersion'] as String?,

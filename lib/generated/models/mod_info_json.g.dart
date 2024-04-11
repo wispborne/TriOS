@@ -21,7 +21,7 @@ Map<String, dynamic> _$$EnabledModsJsonModeImplToJson(
 _$ModInfoJsonImpl _$$ModInfoJsonImplFromJson(Map<String, dynamic> json) =>
     _$ModInfoJsonImpl(
       json['id'] as String,
-      name: json['name'] as String? ?? "",
+      name: json['name'] as String?,
       version: const JsonConverterVersionNullable().fromJson(json['version']),
       author: json['author'] as String?,
       gameVersion: json['gameVersion'] as String?,

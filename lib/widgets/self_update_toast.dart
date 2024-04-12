@@ -1,4 +1,3 @@
-import 'package:fimber_io/fimber_io.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:toastification/toastification.dart';
@@ -10,6 +9,7 @@ import 'package:trios/widgets/trios_app_icon.dart';
 import '../trios/app_state.dart';
 import '../trios/constants.dart';
 import '../trios/self_updater/self_updater.dart';
+import '../utils/logging.dart';
 import '../utils/network_util.dart';
 
 class SelfUpdateToast extends ConsumerWidget {
@@ -42,16 +42,21 @@ class SelfUpdateToast extends ConsumerWidget {
               child: Column(
                 children: [
                   const Text("New ${Constants.appName} version"),
-                  Text("${latestRelease.tagName} is now available!", style: Theme.of(context).textTheme.labelLarge),
+                  Text("${latestRelease.tagName} is now available!",
+                      style: Theme.of(context).textTheme.labelLarge),
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Disable(
-                      isEnabled: ref.watch(AppState.selfUpdateDownloadProgress) == null,
+                      isEnabled:
+                          ref.watch(AppState.selfUpdateDownloadProgress) ==
+                              null,
                       child: ElevatedButton(
                           onPressed: () {
-                            SelfUpdater.update(latestRelease, downloadProgress: (bytesReceived, contentLength) {
+                            SelfUpdater.update(latestRelease, downloadProgress:
+                                (bytesReceived, contentLength) {
                               ref
-                                  .read(AppState.selfUpdateDownloadProgress.notifier)
+                                  .read(AppState
+                                      .selfUpdateDownloadProgress.notifier)
                                   .update((_) => bytesReceived / contentLength);
                               Fimber.i(
                                   "Downloaded: ${bytesReceived.bytesAsReadableMB()} / ${contentLength.bytesAsReadableMB()}");
@@ -66,7 +71,9 @@ class SelfUpdateToast extends ConsumerWidget {
                 ],
               ),
             ),
-            IconButton(onPressed: () => toastification.dismiss(item), icon: const Icon(Icons.close))
+            IconButton(
+                onPressed: () => toastification.dismiss(item),
+                icon: const Icon(Icons.close))
           ],
         ),
       ),

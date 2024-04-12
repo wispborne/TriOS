@@ -13,7 +13,7 @@
 
 import 'dart:io';
 
-import 'package:fimber/fimber.dart';
+import 'package:trios/utils/logging.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/utils/extensions.dart';
 

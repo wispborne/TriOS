@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
-import 'package:fimber/fimber.dart';
+import 'package:trios/utils/logging.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 import 'package:yaml/yaml.dart';

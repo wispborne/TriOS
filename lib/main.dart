@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:fimber_io/fimber_io.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,10 +27,10 @@ import 'package:trios/widgets/trios_app_icon.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:window_size/window_size.dart';
 
-import 'trios/drag_drop_handler.dart';
 import 'jre_manager/jre_manager.dart';
 import 'launcher/launcher.dart';
 import 'trios/app_state.dart';
+import 'trios/drag_drop_handler.dart';
 
 void main() async {
   configureLogging();
@@ -366,7 +365,8 @@ class _AppShellState extends ConsumerState<AppShell>
                 physics: const NeverScrollableScrollPhysics(),
                 children: tabChildren,
               )),
-          onDroppedLog: (_) => tabController.animateTo(TriOSTools.chipper.index),
+          onDroppedLog: (_) =>
+              tabController.animateTo(TriOSTools.chipper.index),
         ));
   }
 }

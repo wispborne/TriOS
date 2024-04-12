@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:fimber/fimber.dart';
+import 'package:trios/utils/logging.dart';
 import 'package:http/http.dart' as http;
 
 class NetworkUtils {

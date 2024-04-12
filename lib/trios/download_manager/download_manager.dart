@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:fimber/fimber.dart';
+import 'package:trios/utils/logging.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_download_manager/flutter_download_manager.dart';
@@ -11,6 +11,7 @@ import 'package:trios/models/version_checker_info.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../utils/logging.dart';
 import '../constants.dart';
 
 final downloadManager =

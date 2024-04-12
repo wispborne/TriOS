@@ -1,5 +1,5 @@
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
-import 'package:fimber/fimber.dart';
+import 'package:trios/utils/logging.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:trios/utils/extensions.dart';

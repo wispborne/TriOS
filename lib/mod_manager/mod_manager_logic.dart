@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:collection/collection.dart';
 import 'package:csv/csv.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
-import 'package:trios/utils/logging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
@@ -16,6 +15,7 @@ import 'package:trios/models/version_checker_info.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/util.dart';
 
 import '../chipper/utils.dart';

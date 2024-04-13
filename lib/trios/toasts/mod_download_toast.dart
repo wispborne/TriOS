@@ -1,8 +1,12 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:toastification/toastification.dart';
 import 'package:trios/models/download_progress.dart';
+import 'package:trios/models/mod_variant.dart';
+import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/trios_theme.dart';
+import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/download_progress_indicator.dart';
 
 import '../download_manager/download_manager.dart';
@@ -33,63 +37,122 @@ class ModDownloadToast extends ConsumerWidget {
             ),
           ],
         ),
-        child: Row(
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(right: 16),
-              child: Tooltip(
-                message: download.id,
-                child: Icon(switch (downloadTask.status.value) {
-                  DownloadStatus.queued => Icons.schedule,
-                  DownloadStatus.downloading => Icons.download,
-                  DownloadStatus.completed => Icons.check,
-                  DownloadStatus.failed => Icons.error,
-                  _ => Icons.download
-                }),
-              ),
-            ),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                      switch (downloadTask.status.value) {
-                        DownloadStatus.queued => "Queued\n$modString",
-                        DownloadStatus.downloading => "Downloading\n$modString",
-                        DownloadStatus.completed => "Downloaded\n$modString",
-                        DownloadStatus.failed => "Download failed\n$modString",
-                        _ => "Download\n${downloadTask.status.value.name}"
+        child: ValueListenableBuilder(
+          valueListenable: downloadTask.status,
+          builder: (context, status, child) {
+            var installedMod = download is ModDownload
+                ? ref
+                    .watch(AppState.modVariants)
+                    .value
+                    .orEmpty()
+                    .firstWhereOrNull((ModVariant element) =>
+                        element.smolId ==
+                        (download as ModDownload).modInfo.smolId)
+                : null;
+            return Row(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(right: 16),
+                  child: Tooltip(
+                    message: download.id,
+                    child: Icon(
+                      switch (status) {
+                        DownloadStatus.queued => Icons.schedule,
+                        DownloadStatus.downloading => Icons.downloading,
+                        DownloadStatus.completed => Icons.check_circle,
+                        DownloadStatus.failed => Icons.error,
+                        DownloadStatus.canceled => Icons.circle,
+                        _ => Icons.downloading
                       },
-                      style: Theme.of(context).textTheme.bodyMedium),
-                  // Padding(
-                  //   padding: const EdgeInsets.all(8.0),
-                  //   child: downloadTask.status.value != DownloadStatus.completed
-                  //       ? ElevatedButton(
-                  //           onPressed: () {}, child: const Text("Cancel"))
-                  //       : ElevatedButton(
-                  //           // TODO change to Open or something if already enabled
-                  //           onPressed: () {},
-                  //           child: const Text("Enable")),
-                  // ),
-                  Text(
-                    downloadTask.request.url,
-                    style: Theme.of(context).textTheme.labelSmall,
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: DownloadProgressIndicator(
-                      value: DownloadProgress(
-                          downloadTask.bytesReceived.value.toInt(),
-                          downloadTask.totalBytes.value.toInt()),
+                      color: switch (status) {
+                        DownloadStatus.queued => null,
+                        DownloadStatus.downloading => null,
+                        DownloadStatus.completed =>
+                          Theme.of(context).colorScheme.primary,
+                        DownloadStatus.failed => vanillaErrorColor,
+                        DownloadStatus.canceled => vanillaErrorColor,
+                        _ => null
+                      },
                     ),
                   ),
-                ],
-              ),
-            ),
-            IconButton(
-                onPressed: () => toastification.dismiss(item),
-                icon: const Icon(Icons.close))
-          ],
+                ),
+                Expanded(
+                  child: SelectionArea(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Text(
+                        //   switch (status) {
+                        //     DownloadStatus.queued => "Queued",
+                        //     DownloadStatus.downloading => "Downloading",
+                        //     DownloadStatus.completed => "Downloaded",
+                        //     DownloadStatus.failed => "Download failed",
+                        //     _ => "Download\n${status.name}"
+                        //   },
+                        //   style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 18),
+                        // ),
+                        Text(
+                          modString ?? "",
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(fontSize: 18),
+                        ),
+                        // installedMod != null
+                        //     ? Padding(
+                        //         padding: const EdgeInsets.all(8.0),
+                        //         child: ElevatedButton(
+                        //             // TODO change to Open or something if already enabled
+                        //             onPressed: () {
+                        //               // open folder in file explorer
+                        //               launchUrlString(
+                        //                   installedMod.modsFolder.path);
+                        //             },
+                        //             child: const Text("Open")),
+                        //       )
+                        //     : const SizedBox.shrink(),
+                        Opacity(
+                          opacity: 0.9,
+                          child: Text(
+                            downloadTask.request.url,
+                            style: Theme.of(context).textTheme.labelSmall,
+                          ),
+                        ),
+                        if (status == DownloadStatus.failed && downloadTask.error != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Text(
+                              downloadTask.error.toString(),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelSmall
+                                  ?.copyWith(color: vanillaErrorColor),
+                            ),
+                          ),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: ValueListenableBuilder(
+                            valueListenable: downloadTask.downloaded,
+                            builder: (context, downloaded, child) =>
+                                DownloadProgressIndicator(
+                              color: status == DownloadStatus.failed
+                                  ? vanillaErrorColor
+                                  : null,
+                              value: DownloadProgress(downloaded.bytesReceived,
+                                  downloaded.totalBytes),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                IconButton(
+                    onPressed: () => toastification.dismiss(item),
+                    icon: const Icon(Icons.close))
+              ],
+            );
+          },
         ),
       ),
     );

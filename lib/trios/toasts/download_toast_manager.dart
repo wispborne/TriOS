@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:toastification/toastification.dart';
-import 'package:trios/trios/download_manager/download_status.dart';
 
 import '../download_manager/download_manager.dart';
 import 'mod_download_toast.dart';
 
-// Hacky but what can you do
 class DownloadToastDisplayer extends ConsumerStatefulWidget {
   const DownloadToastDisplayer({super.key});
 
@@ -37,10 +35,9 @@ class _DownloadToastDisplayerState
       final download = element.download;
       final toast = element.toast;
 
-      if (download.task.status.value.isCompleted && toast != null) {
-        toastification.dismiss(toast, showRemoveAnimation: false);
-      } else if (toast == null) {
-        // do on next frame
+      // If the toast doesn't exist and has NEVER existed (don't re-show previously dismissed toasts)
+      // do on next frame
+      if (toast == null && !_downloadIdToToastIdMap.containsKey(download.id)) {
         WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
           toastification.showCustom(
               context: context,

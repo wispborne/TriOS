@@ -142,7 +142,7 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                                       localVersionCheck, remoteVersionCheck) ==
                                   -1) {
                             downloadUpdateViaBrowser(
-                                remoteVersionCheck!.remoteVersion!, ref, context);
+                                remoteVersionCheck!.remoteVersion!, ref, context, modInfo: modInfo);
                           } else {
                             showDialog(
                                 context: context,

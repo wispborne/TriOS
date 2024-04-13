@@ -55,7 +55,7 @@ class _VersionCheckTextReadoutState
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text("Click to download.",
+                      Text("Click to download",
                           style: theme.textTheme.bodyMedium
                               ?.copyWith(fontWeight: FontWeight.bold)),
                       Text("Right-click to open in dialog.",
@@ -79,8 +79,7 @@ class _VersionCheckTextReadoutState
                   "\nUpdate information is provided by the mod author, not TriOS, and cannot be guaranteed.",
                   style: theme.textTheme.labelLarge
                       ?.copyWith(fontStyle: FontStyle.italic)),
-              if (remoteVersionCheck?.remoteVersion != null &&
-                  remoteVersionCheck?.remoteVersion?.directDownloadURL == null)
+              if (!hasDirectDownload)
                 Padding(
                   padding: const EdgeInsets.only(top: 4),
                   child: Text(

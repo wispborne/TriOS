@@ -2,11 +2,11 @@ import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
-import 'package:trios/utils/logging.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/models/version_checker_info.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/logging.dart';
 
 import 'mod_info.dart';
 
@@ -63,18 +63,16 @@ class ModVariant with _$ModVariant {
     return path;
   }
 
-  static final systemFolderNameAllowedChars = RegExp("[^0-9a-zA-Z\\.-_ ]");
-
   String get generatedVariantFolderName => generateVariantFolderName(modInfo);
 
   static String generateVariantFolderName(ModInfo modInfo) =>
-      "${modInfo.name?.replaceAll(systemFolderNameAllowedChars, "").take(100)}-${modInfo.version}";
+      "${modInfo.name?.fixFilenameForFileSystem().take(100)}-${modInfo.version}";
 
   /// Use the version in VersionChecker if possible (authors sometimes will do 0.35 in ModInfo but 0.3.5 in Version Checker).
   Version? get bestVersion {
     return versionCheckerInfo?.modVersion
             ?.toString()
-            ?.let((it) => Version.parse(it)) ??
+            .let((it) => Version.parse(it)) ??
         modInfo.version;
   }
 }

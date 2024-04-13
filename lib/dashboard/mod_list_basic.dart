@@ -264,7 +264,9 @@ class _ModListMiniState extends ConsumerState<ModListMini>
         if (mod == null) continue;
         final remoteVersionCheck = versionCheck?[mod.smolId];
         if (remoteVersionCheck?.remoteVersion != null) {
-          downloadUpdateViaBrowser(remoteVersionCheck!.remoteVersion!, ref, context);
+          downloadUpdateViaBrowser(
+              remoteVersionCheck!.remoteVersion!, ref, context,
+              modInfo: mod.modInfo);
         }
       }
     }

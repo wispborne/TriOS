@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 
@@ -7,13 +8,14 @@ import 'download_status.dart';
 
 class DownloadTask {
   final DownloadRequest request;
-  ValueNotifier<DownloadStatus> status = ValueNotifier(DownloadStatus.queued);
-  ValueNotifier<double> progressRatio = ValueNotifier(0);
-  ValueNotifier<int> bytesReceived = ValueNotifier(0);
-  ValueNotifier<int> totalBytes = ValueNotifier(0);
+  final ValueNotifier<DownloadStatus> status = ValueNotifier(DownloadStatus.queued);
+  final ValueNotifier<DownloadedAmount> downloaded = ValueNotifier(DownloadedAmount(0, 0));
+  final File file;
+  Object? error;
 
   DownloadTask(
     this.request,
+    this.file,
   );
 
   Future<DownloadStatus> whenDownloadComplete(
@@ -36,4 +38,12 @@ class DownloadTask {
 
     return completer.future.timeout(timeout);
   }
+}
+
+class DownloadedAmount {
+  final int bytesReceived;
+  final int totalBytes;
+  late double progressRatio = totalBytes == 0 ? 0 : bytesReceived / totalBytes;
+
+  DownloadedAmount(this.bytesReceived, this.totalBytes);
 }

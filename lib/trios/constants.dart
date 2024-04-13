@@ -34,5 +34,14 @@ class Constants {
   static const forumModdingSubforumUrl = "$forumUrl?board=3.0";
   static const forumHostname = "fractalsoftworks.com";
   static const tipsFileRelativePath = "data/strings/tips.json";
-  static const supportedArchiveExtensions = [".zip", ".7z", ".rar", ".tar", ".gz", ".bz2"];
+  static const supportedArchiveExtensions = [
+    ".zip",
+    ".7z",
+    ".rar",
+    ".tar",
+    ".gz",
+    ".bz2",
+  ];
+
+  static final systemFolderNameDisallowedChars = RegExp("[^0-9a-zA-Z\\.-_ ]");
 }

@@ -2,10 +2,12 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
-import 'package:trios/utils/logging.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
+import 'package:trios/utils/logging.dart';
 import 'package:yaml/yaml.dart';
+
+import '../trios/constants.dart';
 
 extension DoubleExt on double {
   String bytesAsReadableMB() => "${(this / 1000000).toStringAsFixed(3)} MB";
@@ -136,6 +138,10 @@ extension StringExt on String {
 
   bool equalsAnyIgnoreCase(Iterable<String> elements) {
     return elements.any(equalsIgnoreCase);
+  }
+
+  String fixFilenameForFileSystem() {
+    return replaceAll(Constants.systemFolderNameDisallowedChars, "");
   }
 }
 

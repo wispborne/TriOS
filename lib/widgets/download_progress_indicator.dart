@@ -5,8 +5,9 @@ import 'package:trios/utils/extensions.dart';
 
 class DownloadProgressIndicator extends ConsumerStatefulWidget {
   final DownloadProgress value;
+  final Color? color;
 
-  const DownloadProgressIndicator({super.key, required this.value});
+  const DownloadProgressIndicator({super.key, required this.value, this.color});
 
   @override
   ConsumerState createState() => _DownloadProgressIndicatorState();
@@ -25,12 +26,15 @@ class _DownloadProgressIndicatorState
                 ? 0
                 : widget.value.progressPercent ?? 0,
             minHeight: 10,
+            color: widget.color,
           ),
         ),
         Text(
           widget.value.bytesReceived == 0 && widget.value.bytesTotal == 0
               ? ""
-              : "${widget.value.bytesReceived.bytesAsReadableMB() ?? "-"} / ${widget.value.bytesTotal.bytesAsReadableMB() ?? "-"}",
+              : widget.value.bytesReceived == widget.value.bytesTotal
+                  ? widget.value.bytesTotal.bytesAsReadableMB()
+                  : "${widget.value.bytesReceived.bytesAsReadableMB() ?? "-"} / ${widget.value.bytesTotal.bytesAsReadableMB() ?? "-"}",
           style: Theme.of(context).textTheme.labelSmall,
         ),
       ],

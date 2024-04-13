@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:trios/models/mod_variant.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/utils/util.dart';
 
@@ -23,7 +24,8 @@ class ModInfo with _$ModInfo {
     @Default([]) List<Dependency> dependencies,
   }) = _ModInfo;
 
-  factory ModInfo.fromJsonModel(ModInfoJson model, Directory modFolder) => ModInfo(
+  factory ModInfo.fromJsonModel(ModInfoJson model, Directory modFolder) =>
+      ModInfo(
         id: model.id,
         name: model.name,
         version: model.version,
@@ -33,7 +35,10 @@ class ModInfo with _$ModInfo {
         dependencies: model.dependencies,
       );
 
-  factory ModInfo.fromJson(Map<String, dynamic> json) => _$ModInfoFromJson(json);
+  factory ModInfo.fromJson(Map<String, dynamic> json) =>
+      _$ModInfoFromJson(json);
+
+  String get smolId => createSmolId(id, version);
 
 // late final formattedName = "$name $version ($id)";
 

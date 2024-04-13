@@ -4,7 +4,9 @@ import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:dio/dio.dart';
+import 'package:fimber/fimber.dart';
 import 'package:flutter/foundation.dart';
+import 'package:trios/utils/extensions.dart';
 
 import 'download_request.dart';
 import 'download_status.dart';
@@ -35,10 +37,10 @@ class DownloadManager {
 
   void Function(int, int) createCallback(url, int partialFileLength) =>
       (int received, int total) {
-        getDownload(url)?.progressRatio.value =
-            (received + partialFileLength) / (total + partialFileLength);
-        getDownload(url)?.bytesReceived.value = received;
-        getDownload(url)?.totalBytes.value = total;
+        final download = DownloadedAmount(received, total);
+        // getDownload(url)?.progressRatio.value =
+        //     (received + partialFileLength) / (total + partialFileLength);
+        getDownload(url)?.downloaded.value = download;
 
         if (total == -1) {}
       };
@@ -110,6 +112,7 @@ class DownloadManager {
       var task = getDownload(url)!;
       if (task.status.value != DownloadStatus.canceled &&
           task.status.value != DownloadStatus.paused) {
+        task.error = e;
         setStatus(task, DownloadStatus.failed);
         runningTasks--;
 
@@ -158,7 +161,7 @@ class DownloadManager {
 
       var isDirectory = await Directory(savedDir).exists();
       var downloadFilename = isDirectory
-          ? savedDir + Platform.pathSeparator + getFileNameFromUrl(url)
+          ? savedDir + Platform.pathSeparator + await getFileNameFromUrl(url)
           : savedDir;
 
       return _addDownloadRequest(DownloadRequest(url, downloadFilename));
@@ -179,7 +182,7 @@ class DownloadManager {
     }
 
     _queue.add(DownloadRequest(downloadRequest.url, downloadRequest.path));
-    var task = DownloadTask(_queue.last);
+    var task = DownloadTask(_queue.last, File(downloadRequest.path));
 
     _cache[downloadRequest.url] = task;
 
@@ -275,8 +278,9 @@ class DownloadManager {
     });
   }
 
-  ValueNotifier<double> getBatchDownloadProgress(List<String> urls) {
-    ValueNotifier<double> progress = ValueNotifier(0);
+  ValueNotifier<DownloadedAmount> getBatchDownloadProgress(List<String> urls) {
+    ValueNotifier<DownloadedAmount> progress =
+        ValueNotifier(DownloadedAmount(0, 0));
     var total = urls.length;
 
     if (total == 0) {
@@ -284,10 +288,10 @@ class DownloadManager {
     }
 
     if (total == 1) {
-      return getDownload(urls.first)?.progressRatio ?? progress;
+      return getDownload(urls.first)?.downloaded ?? progress;
     }
 
-    var progressMap = Map<String, double>();
+    var progressMap = <String, double>{};
 
     urls.forEach((url) {
       DownloadTask? task = getDownload(url);
@@ -297,24 +301,27 @@ class DownloadManager {
 
         if (task.status.value.isCompleted) {
           progressMap[url] = 1.0;
-          progress.value = progressMap.values.sum / total;
+          progress.value =
+              DownloadedAmount(progressMap.values.sum.toInt(), total);
         }
 
-        var progressListener;
+        Null Function() progressListener;
         progressListener = () {
-          progressMap[url] = task.progressRatio.value;
-          progress.value = progressMap.values.sum / total;
+          progressMap[url] = task.downloaded.value.progressRatio;
+          progress.value =
+              DownloadedAmount(progressMap.values.sum.toInt(), total);
         };
 
-        task.progressRatio.addListener(progressListener);
+        task.downloaded.addListener(progressListener);
 
         var listener;
         listener = () {
           if (task.status.value.isCompleted) {
             progressMap[url] = 1.0;
-            progress.value = progressMap.values.sum / total;
+            progress.value =
+                DownloadedAmount(progressMap.values.sum.toInt(), total);
             task.status.removeListener(listener);
-            task.progressRatio.removeListener(progressListener);
+            task.downloaded.removeListener(progressListener);
           }
         };
 
@@ -391,7 +398,24 @@ class DownloadManager {
   }
 
   /// This function is used for get file name with extension from url
-  String getFileNameFromUrl(String url) {
-    return url.split('/').last;
+  Future<String> getFileNameFromUrl(String url) async {
+    // val conn = URL(url).openConnection()
+    // Timber.v { "Url $url has headers ${conn.headerFields.entries.joinToString(separator = "\n")}" }
+    //
+    // Timber.i { "Downloadable file clicked: $url." }
+    // val contentDisposition = ContentDisposition.parse(conn.getHeaderField("Content-Disposition"))
+    // val filename = contentDisposition.parameter("filename")
+
+    try {
+      final uri = Uri.parse(url);
+      final headers = (await dio.headUri(uri)).headers;
+      Fimber.d("Url $url has headers ${headers.map.entries.join("\n")}");
+      final contentDisposition = headers.value("Content-Disposition");
+      return contentDisposition?.fixFilenameForFileSystem() ??
+          uri.pathSegments.last.fixFilenameForFileSystem();
+    } catch (e) {
+      Fimber.w("Error getting filename from url: $e");
+      return Uri.parse(url).pathSegments.last.fixFilenameForFileSystem();
+    }
   }
 }

@@ -3,11 +3,15 @@ import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/mod_manager/version_checker.dart';
 import 'package:trios/models/version_checker_info.dart';
+import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../mod_manager/mod_manager_logic.dart';
+import '../../models/mod_info.dart';
 import '../constants.dart';
 import 'download_status.dart';
 import 'download_task.dart';
@@ -22,14 +26,20 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
   final _downloads = List<Download>.empty(growable: true);
 
   Future<Download?> addDownload(
-      String displayName, String uri, Directory destination) async {
+    String displayName,
+    String uri,
+    Directory destination, {
+    ModInfo? modInfo,
+  }) async {
     return _downloadManager.addDownload(uri, destination.path).then((value) {
       if (value == null) {
         return null;
       }
       // generate guid for id
       final id = const Uuid().v4();
-      var download = Download(id, displayName, value);
+      var download = modInfo == null
+          ? Download(id, displayName, value)
+          : ModDownload(id, displayName, value, modInfo);
       _downloads.add(download);
       state = AsyncValue.data(_downloads);
 
@@ -75,8 +85,15 @@ class Download {
   Download(this.id, this.displayName, this.task);
 }
 
+class ModDownload extends Download {
+  final ModInfo modInfo;
+
+  ModDownload(super.id, super.displayName, super.task, this.modInfo);
+}
+
 downloadUpdateViaBrowser(
-    VersionCheckerInfo remoteVersion, WidgetRef ref, BuildContext context) {
+    VersionCheckerInfo remoteVersion, WidgetRef ref, BuildContext context,
+    {ModInfo? modInfo}) {
   if (remoteVersion.directDownloadURL != null) {
     // ref
     //     .read(downloadManager.notifier)
@@ -86,17 +103,19 @@ downloadUpdateViaBrowser(
     ref
         .read(downloadManager.notifier)
         .addDownload(
-            "${remoteVersion.modName ?? "(no name"} ${remoteVersion.modVersion}",
-            remoteVersion.directDownloadURL!,
-            tempFolder)
+          "${remoteVersion.modName ?? "(no name"} ${remoteVersion.modVersion}",
+          remoteVersion.directDownloadURL!.fixModDownloadUrl(),
+          tempFolder,
+          modInfo: modInfo,
+        )
         .then((value) {
       value?.task.whenDownloadComplete().then((status) {
         if (status == DownloadStatus.completed) {
           Fimber.d(
               "Downloaded ${value.task.request.url} to ${tempFolder.path}. Installing...");
           try {
-            // installModFromArchiveWithDefaultUI(
-            //     tempFolder.listSync().first.toFile(), ref, context);
+            installModFromArchiveWithDefaultUI(
+                tempFolder.listSync().first.toFile(), ref, context);
           } catch (e) {
             Fimber.e("Error installing mod from archive", ex: e);
           }

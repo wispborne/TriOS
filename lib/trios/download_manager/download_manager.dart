@@ -1,44 +1,78 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:trios/utils/logging.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter_animate/flutter_animate.dart';
-import 'package:flutter_download_manager/flutter_download_manager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/version_checker_info.dart';
-import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/logging.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:uuid/uuid.dart';
 
-import '../../utils/logging.dart';
 import '../constants.dart';
+import 'download_status.dart';
+import 'download_task.dart';
+import 'downloader.dart';
 
 final downloadManager =
-    AsyncNotifierProvider<TriOSDownloadManager, List<DownloadTask>>(
+    AsyncNotifierProvider<TriOSDownloadManager, List<Download>>(
         TriOSDownloadManager.new);
 
-class TriOSDownloadManager extends AsyncNotifier<List<DownloadTask>> {
+class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
   static final _downloadManager = DownloadManager();
+  final _downloads = List<Download>.empty(growable: true);
 
-  Future<DownloadTask?> addDownload(String uri, Directory destination) async {
+  Future<Download?> addDownload(
+      String displayName, String uri, Directory destination) async {
     return _downloadManager.addDownload(uri, destination.path).then((value) {
-      ref.invalidateSelf(); // Refresh the download list after adding a new download
-      return value;
-    }).onError((error, stackTrace) {
-      ref.invalidateSelf(); // Refresh the download list after adding a new download
-      return null;
-    }).whenComplete(() async {
-      await Future.delayed(1.seconds);
-      _downloadManager.removeDownload(uri);
-      ref.invalidateSelf();
+      if (value == null) {
+        return null;
+      }
+      // generate guid for id
+      final id = const Uuid().v4();
+      var download = Download(id, displayName, value);
+      _downloads.add(download);
+      state = AsyncValue.data(_downloads);
+
+      // Just for debugging.
+      value.status.addListener(() async {
+        switch (value.status.value) {
+          case DownloadStatus.completed:
+            Fimber.d("Download complete: $uri");
+            break;
+          case DownloadStatus.failed:
+            Fimber.e("Download failed: $uri");
+            break;
+          case DownloadStatus.paused:
+            Fimber.d("Download paused: $uri");
+            break;
+          case DownloadStatus.queued:
+            Fimber.d("Download queued: $uri");
+            break;
+          case DownloadStatus.downloading:
+            Fimber.d("Downloading: $uri");
+            break;
+          case DownloadStatus.canceled:
+            Fimber.d("Download canceled: $uri");
+            break;
+        }
+        ref.invalidateSelf(); // Forces a call to build() to re-fetch the list of downloads
+      });
+      return download;
     });
   }
 
   @override
-  FutureOr<List<DownloadTask>> build() {
-    return _downloadManager.getAllDownloads();
+  FutureOr<List<Download>> build() {
+    return _downloads;
   }
+}
+
+class Download {
+  final String id;
+  final String displayName;
+  final DownloadTask task;
+
+  Download(this.id, this.displayName, this.task);
 }
 
 downloadUpdateViaBrowser(
@@ -51,15 +85,18 @@ downloadUpdateViaBrowser(
     var tempFolder = Directory.systemTemp.createTempSync();
     ref
         .read(downloadManager.notifier)
-        .addDownload(remoteVersion.directDownloadURL!, tempFolder)
+        .addDownload(
+            "${remoteVersion.modName ?? "(no name"} ${remoteVersion.modVersion}",
+            remoteVersion.directDownloadURL!,
+            tempFolder)
         .then((value) {
-      value?.whenDownloadComplete().then((status) {
+      value?.task.whenDownloadComplete().then((status) {
         if (status == DownloadStatus.completed) {
           Fimber.d(
-              "Downloaded ${value.request.url} to ${tempFolder.path}. Installing...");
+              "Downloaded ${value.task.request.url} to ${tempFolder.path}. Installing...");
           try {
-            installModFromArchiveWithDefaultUI(
-                tempFolder.listSync().first.toFile(), ref, context);
+            // installModFromArchiveWithDefaultUI(
+            //     tempFolder.listSync().first.toFile(), ref, context);
           } catch (e) {
             Fimber.e("Error installing mod from archive", ex: e);
           }

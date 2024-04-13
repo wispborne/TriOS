@@ -20,6 +20,7 @@ VersionCheckerInfo _$VersionCheckerInfoFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$VersionCheckerInfo {
+  String? get modName => throw _privateConstructorUsedError;
   String? get masterVersionFile => throw _privateConstructorUsedError;
   @JsonConverterToString()
   String? get modNexusId => throw _privateConstructorUsedError;
@@ -42,7 +43,8 @@ abstract class $VersionCheckerInfoCopyWith<$Res> {
       _$VersionCheckerInfoCopyWithImpl<$Res, VersionCheckerInfo>;
   @useResult
   $Res call(
-      {String? masterVersionFile,
+      {String? modName,
+      String? masterVersionFile,
       @JsonConverterToString() String? modNexusId,
       @JsonConverterToString() String? modThreadId,
       VersionObject? modVersion,
@@ -65,6 +67,7 @@ class _$VersionCheckerInfoCopyWithImpl<$Res, $Val extends VersionCheckerInfo>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
+    Object? modName = freezed,
     Object? masterVersionFile = freezed,
     Object? modNexusId = freezed,
     Object? modThreadId = freezed,
@@ -73,6 +76,10 @@ class _$VersionCheckerInfoCopyWithImpl<$Res, $Val extends VersionCheckerInfo>
     Object? changelogUrl = freezed,
   }) {
     return _then(_value.copyWith(
+      modName: freezed == modName
+          ? _value.modName
+          : modName // ignore: cast_nullable_to_non_nullable
+              as String?,
       masterVersionFile: freezed == masterVersionFile
           ? _value.masterVersionFile
           : masterVersionFile // ignore: cast_nullable_to_non_nullable
@@ -122,7 +129,8 @@ abstract class _$$VersionCheckerInfoImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {String? masterVersionFile,
+      {String? modName,
+      String? masterVersionFile,
       @JsonConverterToString() String? modNexusId,
       @JsonConverterToString() String? modThreadId,
       VersionObject? modVersion,
@@ -144,6 +152,7 @@ class __$$VersionCheckerInfoImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
+    Object? modName = freezed,
     Object? masterVersionFile = freezed,
     Object? modNexusId = freezed,
     Object? modThreadId = freezed,
@@ -152,6 +161,10 @@ class __$$VersionCheckerInfoImplCopyWithImpl<$Res>
     Object? changelogUrl = freezed,
   }) {
     return _then(_$VersionCheckerInfoImpl(
+      modName: freezed == modName
+          ? _value.modName
+          : modName // ignore: cast_nullable_to_non_nullable
+              as String?,
       masterVersionFile: freezed == masterVersionFile
           ? _value.masterVersionFile
           : masterVersionFile // ignore: cast_nullable_to_non_nullable
@@ -184,7 +197,8 @@ class __$$VersionCheckerInfoImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$VersionCheckerInfoImpl extends _VersionCheckerInfo {
   const _$VersionCheckerInfoImpl(
-      {this.masterVersionFile,
+      {this.modName,
+      this.masterVersionFile,
       @JsonConverterToString() this.modNexusId,
       @JsonConverterToString() this.modThreadId,
       this.modVersion,
@@ -195,6 +209,8 @@ class _$VersionCheckerInfoImpl extends _VersionCheckerInfo {
   factory _$VersionCheckerInfoImpl.fromJson(Map<String, dynamic> json) =>
       _$$VersionCheckerInfoImplFromJson(json);
 
+  @override
+  final String? modName;
   @override
   final String? masterVersionFile;
   @override
@@ -212,7 +228,7 @@ class _$VersionCheckerInfoImpl extends _VersionCheckerInfo {
 
   @override
   String toString() {
-    return 'VersionCheckerInfo(masterVersionFile: $masterVersionFile, modNexusId: $modNexusId, modThreadId: $modThreadId, modVersion: $modVersion, directDownloadURL: $directDownloadURL, changelogUrl: $changelogUrl)';
+    return 'VersionCheckerInfo(modName: $modName, masterVersionFile: $masterVersionFile, modNexusId: $modNexusId, modThreadId: $modThreadId, modVersion: $modVersion, directDownloadURL: $directDownloadURL, changelogUrl: $changelogUrl)';
   }
 
   @override
@@ -220,6 +236,7 @@ class _$VersionCheckerInfoImpl extends _VersionCheckerInfo {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$VersionCheckerInfoImpl &&
+            (identical(other.modName, modName) || other.modName == modName) &&
             (identical(other.masterVersionFile, masterVersionFile) ||
                 other.masterVersionFile == masterVersionFile) &&
             (identical(other.modNexusId, modNexusId) ||
@@ -236,8 +253,8 @@ class _$VersionCheckerInfoImpl extends _VersionCheckerInfo {
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(runtimeType, masterVersionFile, modNexusId,
-      modThreadId, modVersion, directDownloadURL, changelogUrl);
+  int get hashCode => Object.hash(runtimeType, modName, masterVersionFile,
+      modNexusId, modThreadId, modVersion, directDownloadURL, changelogUrl);
 
   @JsonKey(ignore: true)
   @override
@@ -256,7 +273,8 @@ class _$VersionCheckerInfoImpl extends _VersionCheckerInfo {
 
 abstract class _VersionCheckerInfo extends VersionCheckerInfo {
   const factory _VersionCheckerInfo(
-      {final String? masterVersionFile,
+      {final String? modName,
+      final String? masterVersionFile,
       @JsonConverterToString() final String? modNexusId,
       @JsonConverterToString() final String? modThreadId,
       final VersionObject? modVersion,
@@ -267,6 +285,8 @@ abstract class _VersionCheckerInfo extends VersionCheckerInfo {
   factory _VersionCheckerInfo.fromJson(Map<String, dynamic> json) =
       _$VersionCheckerInfoImpl.fromJson;
 
+  @override
+  String? get modName;
   @override
   String? get masterVersionFile;
   @override

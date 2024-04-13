@@ -12,17 +12,23 @@ class DownloadProgressIndicator extends ConsumerStatefulWidget {
   ConsumerState createState() => _DownloadProgressIndicatorState();
 }
 
-class _DownloadProgressIndicatorState extends ConsumerState<DownloadProgressIndicator> {
+class _DownloadProgressIndicatorState
+    extends ConsumerState<DownloadProgressIndicator> {
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        LinearProgressIndicator(
-          value: widget.value.isIndeterminate ? 0 : widget.value.progressPercent ?? 0,
-          minHeight: 10,
+        ClipRRect(
+          borderRadius: BorderRadius.circular(3),
+          child: LinearProgressIndicator(
+            value: widget.value.isIndeterminate
+                ? 0
+                : widget.value.progressPercent ?? 0,
+            minHeight: 10,
+          ),
         ),
         Text(
-          widget.value.bytesReceived == 0
+          widget.value.bytesReceived == 0 && widget.value.bytesTotal == 0
               ? ""
               : "${widget.value.bytesReceived.bytesAsReadableMB() ?? "-"} / ${widget.value.bytesTotal.bytesAsReadableMB() ?? "-"}",
           style: Theme.of(context).textTheme.labelSmall,

@@ -13,7 +13,8 @@ configureLogging({bool printPlatformInfo = false}) {
     _logger = Logger(
       level: kDebugMode ? Level.debug : Level.info,
       printer: PrettyPrinter(
-        methodCount: 0, // Anything other than 0 halves the speed of logging.
+        stackTraceBeginIndex: 1,
+        methodCount: 3, // Anything other than 0 halves the speed of logging.
         // errorMethodCount: 5,
         // lineLength: 50,
         colors: true,

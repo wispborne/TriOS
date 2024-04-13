@@ -10,6 +10,7 @@ class VersionCheckerInfo with _$VersionCheckerInfo {
   const VersionCheckerInfo._();
 
   const factory VersionCheckerInfo({
+    String? modName,
     String? masterVersionFile,
     @JsonConverterToString() String? modNexusId,
     @JsonConverterToString() String? modThreadId,

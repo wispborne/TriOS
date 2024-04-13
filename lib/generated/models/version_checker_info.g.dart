@@ -9,6 +9,7 @@ part of '../../models/version_checker_info.dart';
 _$VersionCheckerInfoImpl _$$VersionCheckerInfoImplFromJson(
         Map<String, dynamic> json) =>
     _$VersionCheckerInfoImpl(
+      modName: json['modName'] as String?,
       masterVersionFile: json['masterVersionFile'] as String?,
       modNexusId: const JsonConverterToString().fromJson(json['modNexusId']),
       modThreadId: const JsonConverterToString().fromJson(json['modThreadId']),
@@ -22,6 +23,7 @@ _$VersionCheckerInfoImpl _$$VersionCheckerInfoImplFromJson(
 Map<String, dynamic> _$$VersionCheckerInfoImplToJson(
         _$VersionCheckerInfoImpl instance) =>
     <String, dynamic>{
+      'modName': instance.modName,
       'masterVersionFile': instance.masterVersionFile,
       'modNexusId': _$JsonConverterToJson<dynamic, String>(
           instance.modNexusId, const JsonConverterToString().toJson),

@@ -9,7 +9,7 @@ import 'package:trios/chipper/chipper_home.dart';
 import 'package:trios/dashboard/dashboard.dart';
 import 'package:trios/rules_autofresh/rules_hotreload.dart';
 import 'package:trios/trios/constants.dart';
-import 'package:trios/trios/download_manager/download_toast_manager.dart';
+import 'package:trios/trios/toasts/download_toast_manager.dart';
 import 'package:trios/trios/navigation.dart';
 import 'package:trios/trios/self_updater/script_generator.dart';
 import 'package:trios/trios/self_updater/self_updater.dart';
@@ -129,6 +129,8 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
         home: const ToastificationConfigProvider(
             config: ToastificationConfig(
               alignment: Alignment.bottomRight,
+              animationDuration: Duration(milliseconds: 200),
+              itemWidth: 500,
             ),
             child: AppShell(child: VramEstimatorPage())));
   }

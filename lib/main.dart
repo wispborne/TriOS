@@ -9,12 +9,12 @@ import 'package:trios/chipper/chipper_home.dart';
 import 'package:trios/dashboard/dashboard.dart';
 import 'package:trios/rules_autofresh/rules_hotreload.dart';
 import 'package:trios/trios/constants.dart';
-import 'package:trios/trios/toasts/download_toast_manager.dart';
 import 'package:trios/trios/navigation.dart';
 import 'package:trios/trios/self_updater/script_generator.dart';
 import 'package:trios/trios/self_updater/self_updater.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/trios/settings/settings_page.dart';
+import 'package:trios/trios/toasts/download_toast_manager.dart';
 import 'package:trios/trios/trios_theme.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/vram_estimator/vram_estimator.dart';
@@ -281,7 +281,11 @@ class _AppShellState extends ConsumerState<AppShell>
               Padding(
                 padding: const EdgeInsets.only(right: 16.0),
                 child: Stack(children: [
-                  const Blur(blurX: 8, blurY: 8, child: TriOSAppIcon())
+                  const Blur(
+                    blurX: 8,
+                    blurY: 8,
+                    child: TriOSAppIcon(),
+                  )
                       .animate(onComplete: (c) => c.repeat(reverse: true))
                       .fadeIn(duration: const Duration(seconds: 5))
                       .then()

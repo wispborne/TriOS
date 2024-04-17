@@ -143,8 +143,8 @@ Future<void> disableMod(
       enabledMods:
           enabledMods.enabledMods.filter((id) => id != modInfoId).toSet());
 
-  await getEnabledModsFile(modsFolder)
-      .writeAsString(jsonEncode(enabledMods.toJson()));
+  final enabledModsFile = getEnabledModsFile(modsFolder);
+  await enabledModsFile.writeAsString(jsonEncode(enabledMods.toJson()));
   ref.invalidate(AppState.enabledMods);
 }
 
@@ -153,8 +153,8 @@ Future<void> enableMod(
   var enabledMods = await getEnabledMods(modsFolder);
   enabledMods = enabledMods.copyWith(
       enabledMods: enabledMods.enabledMods.toSet()..add(modInfoId));
-  await getEnabledModsFile(modsFolder)
-      .writeAsString(jsonEncode(enabledMods.toJson()));
+  final enabledModsFile = getEnabledModsFile(modsFolder);
+  await enabledModsFile.writeAsString(jsonEncode(enabledMods.toJson()));
   ref.invalidate(AppState.enabledMods);
 }
 
@@ -248,11 +248,12 @@ extension DependencyExt on Dependency {
   }
 }
 
-Future<ModInfo?> installModFromArchive(
+Future<(ModInfo modInfo, List<(Object err, StackTrace st)> errors)?>
+    installModFromArchive(
   File archiveFile,
   Directory destinationFolder,
   List<Mod> currentMods,
-  Function(ModVariant alreadyPresentModVariant) modAlreadyExistsHandler,
+  Function(ModVariant alreadyPresentModVariant) variantAlreadyExistsHandler,
 ) async {
   if (!archiveFile.existsSync()) {
     throw Exception("File does not exist: ${archiveFile.path}");
@@ -273,20 +274,22 @@ Future<ModInfo?> installModFromArchive(
   final modInfoFile = modInfoFiles.first;
   Fimber.i("Found mod_info.json file in archive: ${modInfoFile.pathName}");
   final extractedModInfo = await libArchive.extractEntriesInArchive(
-      archiveFile, Directory.systemTemp.createTempSync().path,
-      fileFilter: (entry) =>
-          entry.file.toFile().nameWithExtension == Constants.modInfoFileName);
+    archiveFile,
+    Directory.systemTemp.createTempSync().path,
+    fileFilter: (entry) =>
+        entry.file.toFile().nameWithExtension == Constants.modInfoFileName,
+  );
   final modInfo = ModInfo.fromJson(extractedModInfo.first!.extractedFile
       .readAsStringSyncAllowingMalformed()
       .fixJsonToMap());
 
-  final alreadyPresentModVariant = currentMods.variants.firstWhereOrNull((it) =>
-      it.modInfo.id == modInfo.id && it.modInfo.version == modInfo.version);
+  final alreadyPresentModVariant = currentMods.variants
+      .firstWhereOrNull((it) => it.modInfo.smolId == modInfo.smolId);
 
   // TODO handle nicely.
   if (alreadyPresentModVariant != null) {
     Fimber.i("Mod already exists: ${modInfo.id} ${modInfo.version}");
-    modAlreadyExistsHandler(alreadyPresentModVariant);
+    variantAlreadyExistsHandler(alreadyPresentModVariant);
     return null;
   }
 
@@ -298,6 +301,7 @@ Future<ModInfo?> installModFromArchive(
       .toList();
   Fimber.d(
       "Mod info siblings: ${modInfoSiblings.map((it) => it.pathName).toList()}");
+  final errors = <(Object err, StackTrace st)>[];
 
   final extractedMod = await libArchive.extractEntriesInArchive(
     archiveFile,
@@ -309,10 +313,15 @@ Future<ModInfo?> installModFromArchive(
       generatedDestFolderName,
       p.relative(entry.file.path, from: modInfoParentFolder.path),
     ),
+    onError: (e, st) {
+      errors.add((e, st));
+      Fimber.e("Error extracting file: $e", ex: e, stacktrace: st);
+      return true;
+    },
   );
   Fimber.i(
       "Extracted ${extractedMod.length} files in mod ${modInfo.id} ${modInfo.version} to '${destinationFolder.resolve(generatedDestFolderName)}'");
-  return modInfo;
+  return (modInfo, errors);
 }
 
 Future<void> installModFromArchiveWithDefaultUI(
@@ -353,7 +362,16 @@ Future<void> installModFromArchiveWithDefaultUI(
       showSnackBar(
           context: context,
           content: Text(
-              "Installed: ${installedModInfo.name} ${installedModInfo.version}"));
+              "Installed: ${installedModInfo.$1.name} ${installedModInfo.$1.version}"));
+
+      if (installedModInfo.$2.isNotEmpty) {
+        showAlertDialog(
+          context,
+          title: "Error extracting files",
+          content:
+              "Some files could not be extracted. Check the logs for more information.\n${installedModInfo.$2.join("\n")}",
+        );
+      }
     }
   } catch (e, st) {
     Fimber.e("Error installing mod from archive: $e");

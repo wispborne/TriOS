@@ -24,6 +24,13 @@ class _ChipperLogState extends ConsumerState<ChipperLog> {
     final errors = widget.errors.reversed.toList(growable: false);
     final showInfoLogs = widget.showInfoLogs;
 
+    final width = ((errors
+                    .maxByOrNull<num>((e) => e.fullError.length)
+                    ?.fullError
+                    .length ??
+                20) *
+            10)
+        .toDouble();
     return SelectionArea(
         child: SelectionTransformer.tabular(
             columns: 2,
@@ -31,15 +38,11 @@ class _ChipperLogState extends ConsumerState<ChipperLog> {
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: SizedBox(
-                width: (errors
-                            .maxByOrNull<num>((e) => e.fullError.length)
-                            ?.fullError
-                            .length ??
-                        20) *
-                    5,
+                width: width,
                 child: ListView.builder(
                     itemCount: errors.length,
                     reverse: true,
+                    scrollDirection: Axis.vertical,
                     shrinkWrap: true,
                     itemBuilder: (BuildContext context, int index) {
                       return !showInfoLogs && errors[index].isPreviousThreadLine
@@ -48,7 +51,8 @@ class _ChipperLogState extends ConsumerState<ChipperLog> {
                             )
                           : SingleChildScrollView(
                               scrollDirection: Axis.horizontal,
-                              child: IntrinsicWidth(
+                              child: SizedBox(
+                                width: width,
                                 child: Column(children: [
                                   if (!isConsecutiveWithPreviousLine(
                                       index, showInfoLogs))

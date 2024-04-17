@@ -6,6 +6,7 @@ import 'package:trios/dashboard/version_check_text_readout.dart';
 import 'package:trios/trios/trios_theme.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
+import 'package:trios/widgets/disable_if_cannot_write_mods.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/tooltip_frame.dart';
 
@@ -142,7 +143,10 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                                       localVersionCheck, remoteVersionCheck) ==
                                   -1) {
                             downloadUpdateViaBrowser(
-                                remoteVersionCheck!.remoteVersion!, ref, context, modInfo: modInfo);
+                                remoteVersionCheck!.remoteVersion!,
+                                ref,
+                                context,
+                                modInfo: modInfo);
                           } else {
                             showDialog(
                                 context: context,
@@ -182,23 +186,7 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                 padding: 0,
                 value: widget.isEnabled,
                 expand: true,
-                onChanged: (_) {
-                  if (false) {
-                    showDialog(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                              title: const Text("Nope"),
-                              content: const Text(
-                                  "This feature is not yet implemented."),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.of(context).pop(),
-                                  child: const Text("Close"),
-                                ),
-                              ],
-                            ));
-                    return;
-                  }
+                onChanged: (_) async {
                   // if (enabledModIds == null) return;
                   var isCurrentlyEnabled = widget.isEnabled;
 
@@ -256,10 +244,17 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                       ref.read(appSettings.select((value) => value.modsDir));
                   if (modsFolder == null) return;
 
-                  if (isCurrentlyEnabled) {
-                    disableMod(modInfo.id, modsFolder, ref);
-                  } else {
-                    enableMod(modInfo.id, modsFolder, ref);
+                  try {
+                    if (isCurrentlyEnabled) {
+                      disableMod(modInfo.id, modsFolder, ref);
+                    } else {
+                      enableMod(modInfo.id, modsFolder, ref);
+                    }
+                  } catch (e) {
+                    showSnackBar(
+                        context: context,
+                        type: SnackBarType.error,
+                        content: Text(e.toString()));
                   }
                 },
               ),

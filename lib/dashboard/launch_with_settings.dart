@@ -95,7 +95,7 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
             ),
             Tooltip(
               message: isUsingJre23 ?? false
-                  ? "Currently unavailable using JRE 23"
+                  ? "Currently unavailable using JRE 23\nClick Launch, then edit settings in the launcher that opens."
                   : "",
               child: Disable(
                 isEnabled: !(isUsingJre23 ?? false),

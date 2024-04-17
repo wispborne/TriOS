@@ -29,7 +29,7 @@ final doesJre23ExistInGameFolderProvider = FutureProvider<bool>((ref) async {
 });
 
 bool doesJre23ExistInGameFolder(Directory gameDir) {
-  return gameDir.resolve("mikohime").toDirectory().existsSync();
+  return gameDir.resolve("mikohime").toDirectory().existsSync() && gameDir.resolve("Miko_Rouge.bat").toFile().existsSync();
 }
 
 final jre23jdkDownloadProgress = StateProvider<DownloadProgress?>((ref) => null);

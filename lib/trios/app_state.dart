@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
-import 'package:trios/utils/logging.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
@@ -11,6 +11,7 @@ import 'package:trios/models/mod_variant.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/trios/trios_theme.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/platform_paths.dart';
 import 'package:trios/utils/util.dart';
 
@@ -104,6 +105,45 @@ class AppState {
       return ref
           .read(appSettings.select((value) => value.lastStarsectorVersion));
     }
+  });
+
+  static final canWriteToModsFolder = FutureProvider<bool>((ref) async {
+    final gamePath =
+        ref.watch(appSettings.select((value) => value.gameDir))?.toDirectory();
+    if (gamePath == null) {
+      return false;
+    }
+
+    final filesAndFolders = [
+      getEnabledModsFile(gamePath),
+      generateModFolderPath(gamePath)?.toFile(),
+    ].whereNotNull();
+
+    for (var file in filesAndFolders) {
+      if (!file.existsSync() || await file.isNotWritable()) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+
+  static final canWriteToStarsectorFolder = FutureProvider<bool>((ref) async {
+    final gamePath =
+        ref.watch(appSettings.select((value) => value.gameDir))?.toDirectory();
+    if (gamePath == null) {
+      return false;
+    }
+
+    final filesAndFolders = [getVmparamsFile(gamePath)].whereNotNull();
+
+    for (var file in filesAndFolders) {
+      if (!file.existsSync() || await file.isNotWritable()) {
+        return false;
+      }
+    }
+
+    return true;
   });
 }
 

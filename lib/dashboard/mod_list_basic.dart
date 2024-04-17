@@ -12,6 +12,7 @@ import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/conditional_wrap.dart';
+import 'package:trios/widgets/disable_if_cannot_write_mods.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vs_scrollbar/vs_scrollbar.dart';
 
@@ -111,23 +112,25 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                             ),
                             Tooltip(
                               message: "Add new mod",
-                              child: IconButton(
-                                  icon: const Icon(Icons.add),
-                                  padding: EdgeInsets.only(left: 8),
-                                  iconSize: 20,
-                                  constraints: const BoxConstraints(),
-                                  onPressed: () {
-                                    FilePicker.platform
-                                        .pickFiles(allowMultiple: true)
-                                        .then((value) {
-                                      if (value == null) return;
+                              child: DisableIfCannotWriteMods(
+                                child: IconButton(
+                                    icon: const Icon(Icons.add),
+                                    padding: EdgeInsets.only(left: 8),
+                                    iconSize: 20,
+                                    constraints: const BoxConstraints(),
+                                    onPressed: () {
+                                      FilePicker.platform
+                                          .pickFiles(allowMultiple: true)
+                                          .then((value) {
+                                        if (value == null) return;
 
-                                      final file =
-                                          File(value.files.single.path!);
-                                      installModFromArchiveWithDefaultUI(
-                                          file, ref, context);
-                                    });
-                                  }),
+                                        final file =
+                                            File(value.files.single.path!);
+                                        installModFromArchiveWithDefaultUI(
+                                            file, ref, context);
+                                      });
+                                    }),
+                              ),
                             )
                           ],
                         ),
@@ -172,73 +175,77 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                         controller: _scrollController,
                         isAlwaysShown: true,
                         showTrackOnHover: true,
-                        child: ListView.builder(
-                            shrinkWrap: true,
-                            controller: _scrollController,
-                            itemCount: listItems.length, // UPDATES title
-                            itemBuilder: (context, index) {
-                              if (index == 0 && modsWithUpdates.isNotEmpty) {
-                                return Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      const Divider(),
-                                      Padding(
-                                        padding: const EdgeInsets.only(
-                                            bottom: 4, right: 8),
-                                        child: Row(
-                                          children: [
-                                            Text("UPDATES",
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .labelMedium),
-                                            const Spacer(),
-                                            Tooltip(
-                                                message:
-                                                    "Download all ${modsWithUpdates.whereType<ModVariant>().length} updates",
-                                                child: IconButton(
-                                                    onPressed: () {
-                                                      _onClickedDownloadModUpdatesDialog(
-                                                          modsWithUpdates,
-                                                          versionCheck,
-                                                          context);
-                                                    },
-                                                    icon: Icon(Icons.update,
-                                                        color: Theme.of(context)
-                                                            .colorScheme
-                                                            .primary))),
-                                          ],
+                        child: DisableIfCannotWriteMods(
+                          child: ListView.builder(
+                              shrinkWrap: true,
+                              controller: _scrollController,
+                              itemCount: listItems.length, // UPDATES title
+                              itemBuilder: (context, index) {
+                                if (index == 0 && modsWithUpdates.isNotEmpty) {
+                                  return Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const Divider(),
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                              bottom: 4, right: 8),
+                                          child: Row(
+                                            children: [
+                                              Text("UPDATES",
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .labelMedium),
+                                              const Spacer(),
+                                              Tooltip(
+                                                  message:
+                                                      "Download all ${modsWithUpdates.whereType<ModVariant>().length} updates",
+                                                  child: IconButton(
+                                                      onPressed: () {
+                                                        _onClickedDownloadModUpdatesDialog(
+                                                            modsWithUpdates,
+                                                            versionCheck,
+                                                            context);
+                                                      },
+                                                      icon: Icon(Icons.update,
+                                                          color:
+                                                              Theme.of(context)
+                                                                  .colorScheme
+                                                                  .primary))),
+                                            ],
+                                          ),
                                         ),
-                                      ),
-                                    ]);
-                              }
-                              final modVariant = listItems[index];
-                              if (modVariant == null) {
-                                return Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      const Divider(),
-                                      Padding(
-                                        padding:
-                                            const EdgeInsets.only(bottom: 4.0),
-                                        child: Text("ALL MODS",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .labelMedium),
-                                      ),
-                                    ]);
-                              }
+                                      ]);
+                                }
+                                final modVariant = listItems[index];
+                                if (modVariant == null) {
+                                  return Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const Divider(),
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                              bottom: 4.0),
+                                          child: Text("ALL MODS",
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .labelMedium),
+                                        ),
+                                      ]);
+                                }
 
-                              return ContextMenuRegion(
-                                contextMenu: buildContextMenu(modVariant, ref),
-                                child: ModListBasicEntry(
-                                    mod: modVariant,
-                                    isEnabled: enabledModIds
-                                            ?.contains(modVariant.modInfo.id) ??
-                                        false),
-                              );
-                            }),
+                                return ContextMenuRegion(
+                                  contextMenu:
+                                      buildContextMenu(modVariant, ref),
+                                  child: ModListBasicEntry(
+                                      mod: modVariant,
+                                      isEnabled: enabledModIds?.contains(
+                                              modVariant.modInfo.id) ??
+                                          false),
+                                );
+                              }),
+                        ),
                       ),
                     ),
                   ],

@@ -33,14 +33,15 @@ dart run build_runner watch --delete-conflicting-outputs
 ### Building libarchive
 #### Windows
 1. Download latest source: https://github.com/libarchive/libarchive/releases.
-2. Download/install Visual Studio, add C/C++ support module stuff.
-3. Download `vcpkg` and use it to install `libarchive`. https://vcpkg.io/en/getting-started
-4. Add the following to CMakeLists.txt before the first PROJECT() call:
-```
-set(CMAKE_TOOLCHAIN_FILE "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake"
-  CACHE STRING "Vcpkg toolchain file")
-```
-5. Download and install CMake for Windows. https://cmake.org/download/
-6. symlink the `vcpkg` folder into the  `libarchive` folder, or just move it there.
-7. Run the CMake GUI, set output to `libarchive/build`, hit Configure, wait, hit Generate, then open in Visual Studio.
-8. In VS, pick a Release Configuration and Run. It'll appear in `build/bin`. `MinSizeRel` seems good.
+1. Download/install Visual Studio, add C/C++ support module stuff.
+1. Download `vcpkg`. https://vcpkg.io/en/getting-started
+1. Symlink the `vcpkg` folder into the  `libarchive` folder, or just move it there.
+1. Use vcpkg to install libarchive: `./vcpkg/vcpkg.exe install libarchive:x64-windows`.
+1. Add the following to CMakeLists.txt before the first PROJECT() call:
+    ```
+    set(CMAKE_TOOLCHAIN_FILE "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake"
+      CACHE STRING "Vcpkg toolchain file")
+    ```
+1. Download and install CMake for Windows. https://cmake.org/download/
+1. Run the CMake GUI, set output to `libarchive/build`, hit `Configure`, wait, hit `Generate`, then click `Open Project`.
+1. In VS, pick a Release Configuration and Run. It'll appear in `build/bin`. `MinSizeRel` seems good.

@@ -221,6 +221,22 @@ extension FileExt on File {
   String readAsStringSyncAllowingMalformed() {
     return utf8.decode(readAsBytesSync(), allowMalformed: true);
   }
+
+  /// From https://stackoverflow.com/a/64569532/1622788
+  Future<bool> isWritable() async {
+    try {
+      final tmp = openWrite(mode: FileMode.append);
+      await tmp.flush();
+      await tmp.close(); // errors from opening will be thrown at this point
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> isNotWritable() async {
+    return !(await isWritable());
+  }
 }
 
 extension DirectoryExt on Directory {

@@ -1,12 +1,13 @@
 import 'dart:ffi';
 import 'dart:io';
 
+import 'package:collection/collection.dart';
 import 'package:ffi/ffi.dart';
-import 'package:trios/utils/logging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:trios/libarchive/libarchive_bindings.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/util.dart';
 
 class LibArchiveEntry {
@@ -178,12 +179,24 @@ class LibArchive {
         (archivePtr, entryPtrPtr) => _getEntryInArchive(entryPtrPtr));
   }
 
+  final _ignorableErrors = [
+    // Thrown by .rar for all folders.
+    "Can't decompress an entry marked as a directory",
+  ];
+
+  /// Extracts all entries in the archive to the destination path.
+  /// - `archivePath` is the path to the archive file.
+  /// - `destinationPath` is the path to the directory where the archive will be extracted.
+  /// - `fileFilter` is a function that filters the files to be extracted. If it returns `false`, the file will not be extracted.
+  /// - `pathTransform` is a function that transforms the path of the extracted file. If it is not provided, the path will be the same as the path in the archive.
+  /// - `onError` is a function that is called when an error occurs. If it returns `true`, the error will be ignored and the extraction will continue. If it returns `false`, the error will be thrown.
   Future<List<({LibArchiveEntry archiveFile, File extractedFile})?>>
       extractEntriesInArchive(
     File archivePath,
     String destinationPath, {
     bool Function(LibArchiveEntry entry)? fileFilter,
     String Function(LibArchiveEntry entry)? pathTransform,
+    bool Function(Object ex, StackTrace st)? onError,
   }) async {
     final writePtr = binding.archive_write_disk_new();
     try {
@@ -202,11 +215,26 @@ class LibArchive {
         if (fileFilter != null && !fileFilter(entry)) {
           return null;
         } else {
-          return extractSingleEntryInArchive(entryPtrPtr, destinationPath,
-              errCode, writePtr, archivePtr, entry,
-              pathTransform: pathTransform);
+          try {
+            return extractSingleEntryInArchive(entryPtrPtr, destinationPath,
+                errCode, writePtr, archivePtr, entry,
+                pathTransform: pathTransform);
+          } catch (e, st) {
+            if (_ignorableErrors.contains(e.toString())) {
+              return null;
+            }
+
+            // If onError exists and handles the error, continue with the next entry
+            if (onError != null && onError(e, st)) {
+              return null;
+            } else {
+              rethrow;
+            }
+          }
         }
-      });
+      })
+      .whereNotNull()
+      .toList();
     } finally {
       binding.archive_write_free(writePtr);
     }

@@ -1,12 +1,12 @@
 import 'package:desktop_drop/desktop_drop.dart';
-import 'package:trios/utils/logging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/chipper/chipper_state.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
+import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/logging.dart';
 
-import '../chipper/utils.dart';
 import '../chipper/views/chipper_home.dart';
 import 'constants.dart';
 
@@ -24,12 +24,41 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
   bool _dragging = false;
   bool _inProgress = false;
   Offset? _offset;
+  static int _lastDropTimestamp = 0;
+  static const _minDropInterval = 400;
 
   @override
   Widget build(BuildContext context) {
     return DropTarget(
       onDragDone: (detail) async {
+        // The onDragDone callback is called twice for the same drop event, add a timer to avoid it.
+        if (DateTime.now().millisecondsSinceEpoch - _lastDropTimestamp <
+            _minDropInterval) {
+          return;
+        } else {
+          _lastDropTimestamp = DateTime.now().millisecondsSinceEpoch;
+        }
+
         Fimber.i('onDragDone:');
+        if (ref.read(AppState.canWriteToModsFolder).value == false) {
+          showDialog(
+              context: context,
+              builder: (context) {
+                return AlertDialog(
+                  title: const Text("Cannot modify mods folder"),
+                  content: const Text("Try running TriOS as administrator."),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text("OK"),
+                    ),
+                  ],
+                );
+              });
+          return;
+        }
 
         var file = detail.files.first;
         final filePath = file.path;

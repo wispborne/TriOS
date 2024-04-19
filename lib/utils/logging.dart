@@ -18,6 +18,7 @@ configureLogging({bool printPlatformInfo = false}) {
 
     _consoleLogger = Logger(
       level: kDebugMode ? Level.debug : Level.warning,
+      filter: DevelopmentFilter(), // No console logs in release mode.
       printer: PrettyPrinter(
         stackTraceBeginIndex: 1,
         methodCount: 3,
@@ -32,7 +33,8 @@ configureLogging({bool printPlatformInfo = false}) {
       output: ConsoleOutput(),
     );
     _fileLogger = Logger(
-      level: kDebugMode ? Level.debug : Level.info,
+      level: kDebugMode ? Level.debug : Level.debug,
+      filter: ProductionFilter(),
       printer: PrettyPrinter(
         stackTraceBeginIndex: 1,
         methodCount: 3,

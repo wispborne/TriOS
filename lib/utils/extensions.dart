@@ -230,6 +230,7 @@ extension FileExt on File {
       await tmp.close(); // errors from opening will be thrown at this point
       return true;
     } catch (e) {
+      Fimber.d("File $path is not writable: $e");
       return false;
     }
   }

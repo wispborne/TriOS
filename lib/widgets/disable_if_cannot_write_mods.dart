@@ -5,6 +5,7 @@ import 'package:trios/widgets/conditional_wrap.dart';
 import 'package:trios/widgets/disable.dart';
 
 import '../trios/app_state.dart';
+import '../utils/logging.dart';
 
 class DisableIfCannotWriteMods extends ConsumerStatefulWidget {
   final Widget child;
@@ -20,6 +21,7 @@ class _DisableIfCannotWriteModsState
   @override
   Widget build(BuildContext context) {
     final canWriteMods = ref.watch(AppState.canWriteToModsFolder).value ?? true;
+
     return ConditionalWrap(
         condition: !canWriteMods,
         wrapper: (child) => Tooltip(

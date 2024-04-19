@@ -114,13 +114,12 @@ class AppState {
       return false;
     }
 
-    final filesAndFolders = [
-      getEnabledModsFile(gamePath),
-      generateModFolderPath(gamePath)?.toFile(),
-    ].whereNotNull();
+    var modsFolder = generateModFolderPath(gamePath)?.toDirectory();
+    final filesAndFolders = [getEnabledModsFile(modsFolder!)].whereNotNull();
 
     for (var file in filesAndFolders) {
-      if (!file.existsSync() || await file.isNotWritable()) {
+      if (!file.existsSync() || await file.toFile().isNotWritable()) {
+        Fimber.d("Cannot find or write to: $file");
         return false;
       }
     }
@@ -139,6 +138,7 @@ class AppState {
 
     for (var file in filesAndFolders) {
       if (!file.existsSync() || await file.isNotWritable()) {
+        Fimber.d("Cannot find or write to: $file");
         return false;
       }
     }

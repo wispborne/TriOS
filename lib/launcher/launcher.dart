@@ -3,13 +3,13 @@ import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
-import 'package:trios/utils/logging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plist_parser/plist_parser.dart';
 import 'package:trios/models/launch_settings.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/platform_paths.dart';
 import 'package:win32_registry/win32_registry.dart';
 
@@ -30,7 +30,13 @@ class Launcher extends ConsumerWidget {
         ),
       ),
       child: ElevatedButton(
-          onPressed: () => launchGame(ref),
+          onPressed: () {
+            try {
+              launchGame(ref);
+            } catch (e) {
+              Fimber.e('Error launching game: $e');
+            }
+          },
           style: ElevatedButton.styleFrom(
             padding: const EdgeInsets.symmetric(horizontal: 12.0),
             backgroundColor: Theme.of(context).colorScheme.secondary,
@@ -49,6 +55,7 @@ class Launcher extends ConsumerWidget {
     );
   }
 
+  /// Can throw exception
   static launchGame(WidgetRef ref) {
     // todo dependency check
 
@@ -132,18 +139,26 @@ class Launcher extends ConsumerWidget {
   }
 
   // TODO: mac and linux
-  static launchGameJre23(WidgetRef ref) {
+  static launchGameJre23(WidgetRef ref) async {
     // Starsector folder
     var gamePath =
         ref.read(appSettings.select((value) => value.gameDir))?.toDirectory();
-    final gameCorePath = ref
-        .read(appSettings.select((value) => value.gameCoreDir))
-        ?.toDirectory();
-
-    Process.start(gamePath!.resolve("Miko_Rouge.bat").absolute.path, [],
-        workingDirectory: gameCorePath?.path,
-        mode: ProcessStartMode.detached,
-        includeParentEnvironment: true);
+    final gameDir =
+        ref.read(appSettings.select((value) => value.gameDir))?.toDirectory();
+    Fimber.d("gameDir: $gameDir");
+    final process = await Process.start(
+      "Miko_Rouge.bat",
+      [],
+      workingDirectory: gameDir?.path,
+      runInShell: true,
+    );
+    process.stdout.transform(utf8.decoder).listen((data) {
+      Fimber.i(data);
+    });
+    process.stderr.transform(utf8.decoder).listen((data) {
+      Fimber.e(data);
+    });
+    // process.stdin.writeln("go");
   }
 
   // TODO: mac and linux

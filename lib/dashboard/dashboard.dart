@@ -53,6 +53,7 @@ class _DashboardState extends ConsumerState<Dashboard>
                           padding: const EdgeInsets.only(bottom: 4),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Text("Chipper Log Viewer",
                                   style: Theme.of(context)
@@ -60,7 +61,7 @@ class _DashboardState extends ConsumerState<Dashboard>
                                       .titleLarge
                                       ?.copyWith(fontSize: 20)),
                               Padding(
-                                padding: const EdgeInsets.only(left: 8),
+                                padding: const EdgeInsets.only(left: 8, top: 4),
                                 child: TextButton.icon(
                                     onPressed: () {
                                       loadDefaultLog(ref);

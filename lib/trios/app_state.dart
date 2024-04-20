@@ -7,6 +7,7 @@ import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
+import 'package:trios/models/download_progress.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/trios/trios_theme.dart';
@@ -23,7 +24,7 @@ import '../models/mod.dart';
 class AppState {
   static TriOSTheme theme = TriOSTheme();
   static final selfUpdateDownloadProgress =
-      StateProvider<double?>((ref) => null);
+      StateProvider<DownloadProgress?>((ref) => null);
 
   /// Master list of all mod variants found in the mods folder.
   static final modVariants = FutureProvider<List<ModVariant>>((ref) async {

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:toastification/toastification.dart';
+import 'package:trios/models/download_progress.dart';
 import 'package:trios/trios/trios_theme.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/disable.dart';
+import 'package:trios/widgets/download_progress_indicator.dart';
 import 'package:trios/widgets/trios_app_icon.dart';
 
 import '../trios/app_state.dart';
@@ -57,7 +59,9 @@ class SelfUpdateToast extends ConsumerWidget {
                               ref
                                   .read(AppState
                                       .selfUpdateDownloadProgress.notifier)
-                                  .update((_) => bytesReceived / contentLength);
+                                  .update((_) => DownloadProgress(
+                                      bytesReceived, contentLength,
+                                      isIndeterminate: false));
                               Fimber.i(
                                   "Downloaded: ${bytesReceived.bytesAsReadableMB()} / ${contentLength.bytesAsReadableMB()}");
                             });
@@ -65,8 +69,9 @@ class SelfUpdateToast extends ConsumerWidget {
                           child: const Text("Update")),
                     ),
                   ),
-                  LinearProgressIndicator(
-                    value: ref.watch(AppState.selfUpdateDownloadProgress) ?? 0,
+                  DownloadProgressIndicator(
+                    value: ref.watch(AppState.selfUpdateDownloadProgress) ??
+                        const DownloadProgress(0, 0, isIndeterminate: true),
                   ),
                 ],
               ),

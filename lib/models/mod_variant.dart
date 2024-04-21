@@ -26,7 +26,7 @@ class ModVariant with _$ModVariant {
 
   String get smolId => createSmolId(modInfo.id, modInfo.version);
 
-  // TODO this sucks, it does a file read every time it's called, but Freezed doesn't support lazy properties
+  // TODO this sucks, it does a file read (or 3) every time it's called, but Freezed doesn't support lazy properties
   String? get iconFilePath {
     var path = modIconFilePaths
         .map((path) => modsFolder.resolve(path))

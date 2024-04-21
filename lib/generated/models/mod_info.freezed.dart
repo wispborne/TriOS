@@ -28,6 +28,7 @@ mixin _$ModInfo {
   String? get gameVersion => throw _privateConstructorUsedError;
   String? get author => throw _privateConstructorUsedError;
   List<Dependency> get dependencies => throw _privateConstructorUsedError;
+  String? get originalGameVersion => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -46,7 +47,8 @@ abstract class $ModInfoCopyWith<$Res> {
       String? description,
       String? gameVersion,
       String? author,
-      List<Dependency> dependencies});
+      List<Dependency> dependencies,
+      String? originalGameVersion});
 }
 
 /// @nodoc
@@ -69,6 +71,7 @@ class _$ModInfoCopyWithImpl<$Res, $Val extends ModInfo>
     Object? gameVersion = freezed,
     Object? author = freezed,
     Object? dependencies = null,
+    Object? originalGameVersion = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -99,6 +102,10 @@ class _$ModInfoCopyWithImpl<$Res, $Val extends ModInfo>
           ? _value.dependencies
           : dependencies // ignore: cast_nullable_to_non_nullable
               as List<Dependency>,
+      originalGameVersion: freezed == originalGameVersion
+          ? _value.originalGameVersion
+          : originalGameVersion // ignore: cast_nullable_to_non_nullable
+              as String?,
     ) as $Val);
   }
 }
@@ -117,7 +124,8 @@ abstract class _$$ModInfoImplCopyWith<$Res> implements $ModInfoCopyWith<$Res> {
       String? description,
       String? gameVersion,
       String? author,
-      List<Dependency> dependencies});
+      List<Dependency> dependencies,
+      String? originalGameVersion});
 }
 
 /// @nodoc
@@ -138,6 +146,7 @@ class __$$ModInfoImplCopyWithImpl<$Res>
     Object? gameVersion = freezed,
     Object? author = freezed,
     Object? dependencies = null,
+    Object? originalGameVersion = freezed,
   }) {
     return _then(_$ModInfoImpl(
       id: null == id
@@ -168,6 +177,10 @@ class __$$ModInfoImplCopyWithImpl<$Res>
           ? _value._dependencies
           : dependencies // ignore: cast_nullable_to_non_nullable
               as List<Dependency>,
+      originalGameVersion: freezed == originalGameVersion
+          ? _value.originalGameVersion
+          : originalGameVersion // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -182,7 +195,8 @@ class _$ModInfoImpl extends _ModInfo {
       this.description,
       this.gameVersion,
       this.author,
-      final List<Dependency> dependencies = const []})
+      final List<Dependency> dependencies = const [],
+      this.originalGameVersion})
       : _dependencies = dependencies,
         super._();
 
@@ -212,8 +226,11 @@ class _$ModInfoImpl extends _ModInfo {
   }
 
   @override
+  final String? originalGameVersion;
+
+  @override
   String toString() {
-    return 'ModInfo(id: $id, name: $name, version: $version, description: $description, gameVersion: $gameVersion, author: $author, dependencies: $dependencies)';
+    return 'ModInfo(id: $id, name: $name, version: $version, description: $description, gameVersion: $gameVersion, author: $author, dependencies: $dependencies, originalGameVersion: $originalGameVersion)';
   }
 
   @override
@@ -230,13 +247,23 @@ class _$ModInfoImpl extends _ModInfo {
                 other.gameVersion == gameVersion) &&
             (identical(other.author, author) || other.author == author) &&
             const DeepCollectionEquality()
-                .equals(other._dependencies, _dependencies));
+                .equals(other._dependencies, _dependencies) &&
+            (identical(other.originalGameVersion, originalGameVersion) ||
+                other.originalGameVersion == originalGameVersion));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(runtimeType, id, name, version, description,
-      gameVersion, author, const DeepCollectionEquality().hash(_dependencies));
+  int get hashCode => Object.hash(
+      runtimeType,
+      id,
+      name,
+      version,
+      description,
+      gameVersion,
+      author,
+      const DeepCollectionEquality().hash(_dependencies),
+      originalGameVersion);
 
   @JsonKey(ignore: true)
   @override
@@ -260,7 +287,8 @@ abstract class _ModInfo extends ModInfo {
       final String? description,
       final String? gameVersion,
       final String? author,
-      final List<Dependency> dependencies}) = _$ModInfoImpl;
+      final List<Dependency> dependencies,
+      final String? originalGameVersion}) = _$ModInfoImpl;
   const _ModInfo._() : super._();
 
   factory _ModInfo.fromJson(Map<String, dynamic> json) = _$ModInfoImpl.fromJson;
@@ -280,6 +308,8 @@ abstract class _ModInfo extends ModInfo {
   String? get author;
   @override
   List<Dependency> get dependencies;
+  @override
+  String? get originalGameVersion;
   @override
   @JsonKey(ignore: true)
   _$$ModInfoImplCopyWith<_$ModInfoImpl> get copyWith =>

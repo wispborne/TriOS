@@ -50,6 +50,8 @@ class LibArchiveEntry {
   late bool isDirectory = file is Directory;
 }
 
+typedef LibArchiveExtractedFile = ({LibArchiveEntry archiveFile, File extractedFile});
+
 class LibArchive {
   static var binding = _getArchive();
 
@@ -190,7 +192,7 @@ class LibArchive {
   /// - `fileFilter` is a function that filters the files to be extracted. If it returns `false`, the file will not be extracted.
   /// - `pathTransform` is a function that transforms the path of the extracted file. If it is not provided, the path will be the same as the path in the archive.
   /// - `onError` is a function that is called when an error occurs. If it returns `true`, the error will be ignored and the extraction will continue. If it returns `false`, the error will be thrown.
-  Future<List<({LibArchiveEntry archiveFile, File extractedFile})?>>
+  Future<List<LibArchiveExtractedFile?>>
       extractEntriesInArchive(
     File archivePath,
     String destinationPath, {
@@ -240,7 +242,7 @@ class LibArchive {
     }
   }
 
-  ({LibArchiveEntry archiveFile, File extractedFile})
+  LibArchiveExtractedFile
       extractSingleEntryInArchive(
     Pointer<Pointer<archive_entry>> entryPtrPtr,
     String destinationPath,

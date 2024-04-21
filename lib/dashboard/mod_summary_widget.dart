@@ -34,7 +34,7 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
     final modVariant = widget.modVariant;
     final modInfo = modVariant.modInfo;
     var remoteVersionCheck =
-        ref.watch(versionCheckResults).valueOrNull?[modVariant.smolId];
+        ref.watch(AppState.versionCheckResults).valueOrNull?[modVariant.smolId];
     final localVersionCheck = modVariant.versionCheckerInfo;
     // final remoteVersionCheck = versionCheck?[modVariant.smolId];
     final versionCheckComparison =
@@ -80,7 +80,8 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(modInfo.name ?? "(no name)", style: theme.textTheme.titleMedium),
+                Text(modInfo.name ?? "(no name)",
+                    style: theme.textTheme.titleMedium),
                 Text("${modInfo.id} • ${modInfo.version ?? ""}",
                     style: theme.textTheme.labelSmall),
               ],
@@ -127,6 +128,21 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
               style: theme.textTheme.labelMedium
                   ?.copyWith(color: widget.compatTextColor)),
         ),
+        if (modInfo.originalGameVersion != null)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text("Original game version",
+                  style: theme.textTheme.labelMedium
+                      ?.copyWith(color: vanillaWarningColor.withOpacity(0.8))),
+              Padding(
+                padding: const EdgeInsets.only(left: 8.0),
+                child: Text(modInfo.originalGameVersion ?? "",
+                    style: theme.textTheme.labelMedium
+                        ?.copyWith(color: vanillaWarningColor)),
+              ),
+            ],
+          ),
         Text("Game version",
             style: theme.textTheme.labelMedium
                 ?.copyWith(color: theme.disabledColor)),

@@ -1,16 +1,18 @@
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
-import 'package:trios/utils/logging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:toastification/toastification.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
+import 'package:trios/models/download_progress.dart';
 import 'package:trios/trios/self_updater/self_updater.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/util.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
+import 'package:trios/widgets/download_progress_indicator.dart';
 
 import '../../jre_manager/jre_23.dart';
 import '../../widgets/self_update_toast.dart';
@@ -215,13 +217,15 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                           ref
                               .read(
                                   AppState.selfUpdateDownloadProgress.notifier)
-                              .update((_) => bytesReceived / contentLength);
+                              .update((_) => DownloadProgress(
+                                  bytesReceived, contentLength));
                         });
                       },
                       child: const Text("Force Update")),
                 ),
-                LinearProgressIndicator(
-                  value: ref.watch(AppState.selfUpdateDownloadProgress) ?? 0,
+                DownloadProgressIndicator(
+                  value: ref.watch(AppState.selfUpdateDownloadProgress) ??
+                      const DownloadProgress(0, 0, isIndeterminate: true),
                 ),
               ],
             ),
@@ -237,32 +241,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
                       final file = File(value.files.single.path!);
                       Fimber.i("Installing mod: ${file.path}");
-                      installModFromArchive(
-                        file,
-                        generateModFolderPath(settings.gameDir!)!,
-                        ref.read(AppState.mods),
-                        (modVariant) => {
-                          // show dialog alerting user the mod is already installed.
-                          showDialog(
-                            context: context,
-                            builder: (context) {
-                              return AlertDialog(
-                                title: const Text("Mod already installed"),
-                                content: Text(
-                                    "The mod ${modVariant.modInfo.name} ${modVariant.modInfo.version} is already installed."),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () {
-                                      Navigator.of(context).pop();
-                                    },
-                                    child: const Text("OK"),
-                                  ),
-                                ],
-                              );
-                            },
-                          )
-                        },
-                      );
+                      installModFromArchiveWithDefaultUI(file, ref, context);
                     });
                   },
                   child: const Text('Install mod'))),

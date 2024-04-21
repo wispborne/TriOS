@@ -22,6 +22,7 @@ class ModInfo with _$ModInfo {
     String? gameVersion,
     String? author,
     @Default([]) List<Dependency> dependencies,
+    String? originalGameVersion,
   }) = _ModInfo;
 
   factory ModInfo.fromJsonModel(ModInfoJson model, Directory modFolder) =>
@@ -33,11 +34,13 @@ class ModInfo with _$ModInfo {
         description: model.description,
         gameVersion: model.gameVersion,
         dependencies: model.dependencies,
+        originalGameVersion: model.originalGameVersion,
       );
 
   factory ModInfo.fromJson(Map<String, dynamic> json) =>
       _$ModInfoFromJson(json);
 
+  // TODO swap this to id, change id to modId.
   String get smolId => createSmolId(id, version);
 
 // late final formattedName = "$name $version ($id)";

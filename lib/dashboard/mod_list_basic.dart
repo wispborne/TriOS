@@ -45,9 +45,9 @@ class _ModListMiniState extends ConsumerState<ModListMini>
             (variant.modInfo.version ?? const Version(raw: "0.0.0"))))
         .whereType<ModVariant>()
         .toList();
-    final versionCheck = ref.watch(versionCheckResults).valueOrNull;
-    final isRefreshing =
-        (modListAsync.isLoading || ref.watch(versionCheckResults).isLoading);
+    final versionCheck = ref.watch(AppState.versionCheckResults).valueOrNull;
+    final isRefreshing = (modListAsync.isLoading ||
+        ref.watch(AppState.versionCheckResults).isLoading);
 
     return Padding(
       padding: const EdgeInsets.all(8.0),
@@ -87,6 +87,7 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                   padding: const EdgeInsets.only(right: 8.0),
                                   constraints: const BoxConstraints(),
                                   onPressed: () {
+                                    AppState.skipCacheOnNextVersionCheck = true;
                                     ref.invalidate(AppState.modVariants);
                                   },
                                 )),

@@ -147,7 +147,7 @@ class Launcher extends ConsumerWidget {
         ref.read(appSettings.select((value) => value.gameDir))?.toDirectory();
     Fimber.d("gameDir: $gameDir");
     final process = await Process.start(
-      "Miko_Rouge.bat",
+      "start "" Miko_Rouge.bat", // Remove the `start ""` part to log all console output, including all Starsector logs.
       [],
       workingDirectory: gameDir?.path,
       runInShell: true,

@@ -16,6 +16,7 @@ import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/platform_paths.dart';
 import 'package:trios/utils/util.dart';
 
+import '../mod_manager/version_checker.dart';
 import '../models/enabled_mods.dart';
 import '../models/mod.dart';
 
@@ -37,6 +38,13 @@ class AppState {
     return await getModsVariantsInFolder(
         generateModFolderPath(gamePath)!.toDirectory());
   });
+
+  /// String is the smolId
+  static final versionCheckResults = AsyncNotifierProvider<
+      VersionCheckerNotifier,
+      Map<String, VersionCheckResult>>(VersionCheckerNotifier.new);
+
+  static var skipCacheOnNextVersionCheck = false;
 
   /// Projection of [modVariants], grouping them by mod id.
   static final mods = Provider<List<Mod>>((ref) {

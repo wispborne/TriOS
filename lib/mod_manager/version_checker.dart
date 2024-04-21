@@ -1,4 +1,4 @@
-import 'package:dart_extensions_methods/dart_extension_methods.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:trios/utils/extensions.dart';
@@ -8,31 +8,46 @@ import '../models/mod_variant.dart';
 import '../models/version_checker_info.dart';
 import '../trios/app_state.dart';
 
-/// String is the smolId
-final versionCheckResults = AsyncNotifierProvider<_VersionCheckerNotifier,
-    Map<String, VersionCheckResult>>(_VersionCheckerNotifier.new);
-
-class _VersionCheckerNotifier
+class VersionCheckerNotifier
     extends AsyncNotifier<Map<String, VersionCheckResult>> {
   @override
   Map<String, VersionCheckResult> build() {
-    refresh();
+    refresh(skipCache: false);
     return {};
   }
 
+  /// Time before the next version check can be done. Tracked per mod.
+  static const versionCheckCooldown = Duration(minutes: 5);
+
   // Executes async, updates state every time a Version Check http request is completed.
-  void refresh() {
-    state = const AsyncValue.data({});
+  void refresh({required bool skipCache}) {
+    if (AppState.skipCacheOnNextVersionCheck || skipCache) {
+      state = const AsyncValue.data({}); // clears state
+      AppState.skipCacheOnNextVersionCheck = false;
+    }
+
     final versionCheckResultsCache =
         state.value ?? {}; // TODO change to just state
+    var currentTime = DateTime.now();
 
-    final mods = ref.watch(AppState.modVariants);
-    if (mods.value.isNullOrEmpty()) return;
+    // Automatically refreshes whenever the modVariants change.
+    final modsRef = ref.watch(AppState.mods);
+    // Only need to check the highest version of each mod for a new version, not every single variant lol.
+    final mods =
+        modsRef.map((mod) => mod.findHighestVersion).whereNotNull().toList();
 
     try {
-      mods.value!.map((mod) {
+      mods.map((mod) {
         if (versionCheckResultsCache[mod.smolId] != null) {
-          return Future.value(versionCheckResultsCache[mod.smolId]!);
+          final lastCheck = versionCheckResultsCache[mod.smolId]!.timestamp;
+          if (skipCache ||
+              currentTime.difference(lastCheck) > versionCheckCooldown) {
+            // If enough time has passed since the last check (or we're ignoring the cache), check again.
+            return checkRemoteVersion(mod);
+          } else {
+            // Otherwise, return the cached result.
+            return Future.value(versionCheckResultsCache[mod.smolId]!);
+          }
         } else {
           return checkRemoteVersion(mod);
         }
@@ -54,8 +69,11 @@ class VersionCheckResult {
   final VersionCheckerInfo? remoteVersion;
   final Object? error;
   final String? uri;
+  final DateTime timestamp;
 
-  VersionCheckResult(this.smolId, this.remoteVersion, this.error, this.uri);
+  VersionCheckResult(this.smolId, this.remoteVersion, this.error, this.uri,
+      {DateTime? timestamp})
+      : timestamp = timestamp ?? DateTime.now();
 }
 
 int? compareLocalAndRemoteVersions(

@@ -32,7 +32,7 @@ class ModListBasicEntry extends ConsumerStatefulWidget {
 class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
   @override
   Widget build(BuildContext context) {
-    var versionCheck = ref.watch(versionCheckResults).valueOrNull;
+    var versionCheck = ref.watch(AppState.versionCheckResults).valueOrNull;
     final modVariant = widget.mod;
 
     final modInfo = modVariant.modInfo;

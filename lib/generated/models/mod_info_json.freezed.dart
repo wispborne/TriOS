@@ -174,6 +174,7 @@ mixin _$ModInfoJson {
   String? get gameVersion => throw _privateConstructorUsedError;
   List<Dependency> get dependencies => throw _privateConstructorUsedError;
   String? get description => throw _privateConstructorUsedError;
+  String? get originalGameVersion => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -194,7 +195,8 @@ abstract class $ModInfoJsonCopyWith<$Res> {
       String? author,
       String? gameVersion,
       List<Dependency> dependencies,
-      String? description});
+      String? description,
+      String? originalGameVersion});
 }
 
 /// @nodoc
@@ -217,6 +219,7 @@ class _$ModInfoJsonCopyWithImpl<$Res, $Val extends ModInfoJson>
     Object? gameVersion = freezed,
     Object? dependencies = null,
     Object? description = freezed,
+    Object? originalGameVersion = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -247,6 +250,10 @@ class _$ModInfoJsonCopyWithImpl<$Res, $Val extends ModInfoJson>
           ? _value.description
           : description // ignore: cast_nullable_to_non_nullable
               as String?,
+      originalGameVersion: freezed == originalGameVersion
+          ? _value.originalGameVersion
+          : originalGameVersion // ignore: cast_nullable_to_non_nullable
+              as String?,
     ) as $Val);
   }
 }
@@ -266,7 +273,8 @@ abstract class _$$ModInfoJsonImplCopyWith<$Res>
       String? author,
       String? gameVersion,
       List<Dependency> dependencies,
-      String? description});
+      String? description,
+      String? originalGameVersion});
 }
 
 /// @nodoc
@@ -287,6 +295,7 @@ class __$$ModInfoJsonImplCopyWithImpl<$Res>
     Object? gameVersion = freezed,
     Object? dependencies = null,
     Object? description = freezed,
+    Object? originalGameVersion = freezed,
   }) {
     return _then(_$ModInfoJsonImpl(
       null == id
@@ -317,6 +326,10 @@ class __$$ModInfoJsonImplCopyWithImpl<$Res>
           ? _value.description
           : description // ignore: cast_nullable_to_non_nullable
               as String?,
+      originalGameVersion: freezed == originalGameVersion
+          ? _value.originalGameVersion
+          : originalGameVersion // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -330,7 +343,8 @@ class _$ModInfoJsonImpl extends _ModInfoJson {
       this.author,
       this.gameVersion,
       final List<Dependency> dependencies = const [],
-      this.description})
+      this.description,
+      this.originalGameVersion})
       : _dependencies = dependencies,
         super._();
 
@@ -359,10 +373,12 @@ class _$ModInfoJsonImpl extends _ModInfoJson {
 
   @override
   final String? description;
+  @override
+  final String? originalGameVersion;
 
   @override
   String toString() {
-    return 'ModInfoJson(id: $id, name: $name, version: $version, author: $author, gameVersion: $gameVersion, dependencies: $dependencies, description: $description)';
+    return 'ModInfoJson(id: $id, name: $name, version: $version, author: $author, gameVersion: $gameVersion, dependencies: $dependencies, description: $description, originalGameVersion: $originalGameVersion)';
   }
 
   @override
@@ -379,7 +395,9 @@ class _$ModInfoJsonImpl extends _ModInfoJson {
             const DeepCollectionEquality()
                 .equals(other._dependencies, _dependencies) &&
             (identical(other.description, description) ||
-                other.description == description));
+                other.description == description) &&
+            (identical(other.originalGameVersion, originalGameVersion) ||
+                other.originalGameVersion == originalGameVersion));
   }
 
   @JsonKey(ignore: true)
@@ -392,7 +410,8 @@ class _$ModInfoJsonImpl extends _ModInfoJson {
       author,
       gameVersion,
       const DeepCollectionEquality().hash(_dependencies),
-      description);
+      description,
+      originalGameVersion);
 
   @JsonKey(ignore: true)
   @override
@@ -415,7 +434,8 @@ abstract class _ModInfoJson extends ModInfoJson {
       final String? author,
       final String? gameVersion,
       final List<Dependency> dependencies,
-      final String? description}) = _$ModInfoJsonImpl;
+      final String? description,
+      final String? originalGameVersion}) = _$ModInfoJsonImpl;
   const _ModInfoJson._() : super._();
 
   factory _ModInfoJson.fromJson(Map<String, dynamic> json) =
@@ -436,6 +456,8 @@ abstract class _ModInfoJson extends ModInfoJson {
   List<Dependency> get dependencies;
   @override
   String? get description;
+  @override
+  String? get originalGameVersion;
   @override
   @JsonKey(ignore: true)
   _$$ModInfoJsonImplCopyWith<_$ModInfoJsonImpl> get copyWith =>

@@ -248,80 +248,182 @@ extension DependencyExt on Dependency {
   }
 }
 
-Future<(ModInfo modInfo, List<(Object err, StackTrace st)> errors)?>
-    installModFromArchive(
+typedef ExtractedModInfo = ({
+  LibArchiveExtractedFile extractedFile,
+  ModInfo modInfo
+});
+
+typedef InstallModResult = ({ModInfo modInfo, Object? err, StackTrace? st});
+
+// Things to handle:
+// - One or more mods already installed.
+// - One or more mods in the archive.
+// - Ask user which they want to install and optionally delete previous.
+/// Given an archive file, attempts to install the mod(s) contained within it.
+/// If there are multiple mods in the archive, or one or more mods are already installed, the user will be asked which mods to install/delete.
+/// Returns a list of ModInfos and any errors that occurred when installing each.
+/// userInputNeededHandler should return the list of SmolIds to install.
+Future<List<InstallModResult>> installModFromArchive(
   File archiveFile,
   Directory destinationFolder,
   List<Mod> currentMods,
-  Function(ModVariant alreadyPresentModVariant) variantAlreadyExistsHandler,
+  Future<List<String>?> Function(
+          List<({ExtractedModInfo modInfo, ModVariant? alreadyExistingVariant})>
+              modInfosFound)
+      userInputNeededHandler,
 ) async {
   if (!archiveFile.existsSync()) {
     throw Exception("File does not exist: ${archiveFile.path}");
   }
+  final results = <InstallModResult>[];
 
   final libArchive = LibArchive();
   final archiveFileList = libArchive.listEntriesInArchive(archiveFile);
-  final modInfoFiles = archiveFileList.filter(
+  var modInfoFiles = archiveFileList.filter(
       (it) => it.pathName.containsIgnoreCase(Constants.modInfoFileName));
 
   if (modInfoFiles.isEmpty) {
     throw Exception("No mod_info.json file found in archive.");
-  } else if (modInfoFiles.length > 1) {
-    // TODO support multiple mod_info.json files
-    throw Exception("Multiple mod_info.json files found in archive.");
   }
 
-  final modInfoFile = modInfoFiles.first;
-  Fimber.i("Found mod_info.json file in archive: ${modInfoFile.pathName}");
-  final extractedModInfo = await libArchive.extractEntriesInArchive(
+  Fimber.i(
+      "Found mod_info.json(s) file in archive: ${modInfoFiles.map((it) => it.pathName).toList()}");
+
+  // Extract just mod_info.json files to a temp folder.
+  var modInfosTempFolder = Directory.systemTemp.createTempSync();
+  final extractedModInfos = await libArchive.extractEntriesInArchive(
     archiveFile,
-    Directory.systemTemp.createTempSync().path,
+    modInfosTempFolder.path,
     fileFilter: (entry) =>
         entry.file.toFile().nameWithExtension == Constants.modInfoFileName,
   );
-  final modInfo = ModInfo.fromJson(extractedModInfo.first!.extractedFile
-      .readAsStringSyncAllowingMalformed()
-      .fixJsonToMap());
+  final modInfos = await Future.wait(
+      extractedModInfos.whereNotNull().map((modInfoFile) async {
+    ExtractedModInfo modInfo = (
+      extractedFile: modInfoFile,
+      modInfo: ModInfo.fromJson(modInfoFile.extractedFile
+          .readAsStringSyncAllowingMalformed()
+          .fixJsonToMap())
+    );
+    return modInfo;
+  }).toList());
 
-  final alreadyPresentModVariant = currentMods.variants
-      .firstWhereOrNull((it) => it.modInfo.smolId == modInfo.smolId);
+  // Check for mods that are already installed.
+  var allModVariants = currentMods.variants;
+  final alreadyPresentModVariants = modInfos
+      .map((it) => getModVariantForModInfo(it.modInfo, allModVariants))
+      .whereNotNull()
+      .toList();
 
-  // TODO handle nicely.
-  if (alreadyPresentModVariant != null) {
-    Fimber.i("Mod already exists: ${modInfo.id} ${modInfo.version}");
-    variantAlreadyExistsHandler(alreadyPresentModVariant);
-    return null;
+  if (alreadyPresentModVariants.isNotEmpty) {
+    Fimber.i(
+        "Mod already exists: ${alreadyPresentModVariants.map((it) => "${it.modInfo.id} ${it.modInfo.version}").toList()}");
   }
 
-  // We need to handle both when mod_info.json is at / and when at /mod/mod/mod/mod_info.json.
-  final generatedDestFolderName = ModVariant.generateVariantFolderName(modInfo);
-  final modInfoParentFolder = modInfoFile.file.parent;
-  final modInfoSiblings = archiveFileList
-      .filter((it) => it.file.parent.path == modInfoParentFolder.path)
-      .toList();
-  Fimber.d(
-      "Mod info siblings: ${modInfoSiblings.map((it) => it.pathName).toList()}");
-  final errors = <(Object err, StackTrace st)>[];
+  // User can choose to install only some of the mods (if multiple were found).
+  var modInfosToInstall = modInfos;
 
-  final extractedMod = await libArchive.extractEntriesInArchive(
-    archiveFile,
-    destinationFolder.path,
-    fileFilter: (entry) => entry.file.isFile()
-        ? modInfoSiblings.contains(entry)
-        : p.isWithin(modInfoParentFolder.path, entry.file.path),
-    pathTransform: (entry) => p.join(
-      generatedDestFolderName,
-      p.relative(entry.file.path, from: modInfoParentFolder.path),
-    ),
-    onError: (e, st) {
-      errors.add((e, st));
-      Fimber.e("Error extracting file: $e", ex: e, stacktrace: st);
-      return true;
-    },
-  );
-  Fimber.i(
-      "Extracted ${extractedMod.length} files in mod ${modInfo.id} ${modInfo.version} to '${destinationFolder.resolve(generatedDestFolderName)}'");
-  return (modInfo, errors);
+  // If there are multiple mod_info.json files or one or more mods were already installed, ask user for input.
+  if (alreadyPresentModVariants.isNotEmpty || modInfos.length > 1) {
+    final userInput = await userInputNeededHandler(
+      modInfos
+          .map((modInfo) => (
+                modInfo: modInfo,
+                alreadyExistingVariant: getModVariantForModInfo(
+                    modInfo.modInfo, alreadyPresentModVariants),
+              ))
+          .toList(),
+    );
+    Fimber.i("User has chosen to install mods: $userInput");
+    if (userInput == null) {
+      return [];
+    }
+    // Grab just the modInfos that the user wants to install.
+    modInfosToInstall = userInput
+        .map((smolId) =>
+            modInfos.firstWhere((modInfo) => modInfo.modInfo.smolId == smolId))
+        .toList();
+
+    // Find any mods that are already installed.
+    final modsToDeleteFirst = modInfosToInstall
+        .map((it) => getModVariantForModInfo(it.modInfo, allModVariants))
+        .whereNotNull();
+    // Delete the existing mod folders first.
+    for (var modToDelete in modsToDeleteFirst) {
+      try {
+        modToDelete.modsFolder.deleteSync(recursive: true);
+        Fimber.i(
+            "Deleted mod folder before reinstalling same variant: ${modToDelete.modsFolder}");
+      } catch (e, st) {
+        Fimber.e("Error deleting mod folder: ${modToDelete.modsFolder}",
+            ex: e, stacktrace: st);
+        results.add((
+          modInfo: modToDelete.modInfo,
+          err: e,
+          st: st,
+        ));
+        // If there was an error deleting the mod folder, don't install the new version.
+        modInfosToInstall.removeWhere(
+            (it) => it.modInfo.smolId == modToDelete.modInfo.smolId);
+      }
+    }
+  }
+
+  for (final modInfoToInstall in modInfosToInstall) {
+    final modInfo = modInfoToInstall.modInfo;
+    try {
+      // We need to handle both when mod_info.json is at / and when at /mod/mod/mod/mod_info.json.
+      final generatedDestFolderName =
+          ModVariant.generateVariantFolderName(modInfo);
+      final modInfoParentFolder =
+          modInfoToInstall.extractedFile.archiveFile.file.parent;
+      final modInfoSiblings = archiveFileList
+          .filter((it) => it.file.parent.path == modInfoParentFolder.path)
+          .toList();
+      Fimber.d(
+          "Mod info (${modInfoToInstall.extractedFile.archiveFile.file.path}) siblings: ${modInfoSiblings.map((it) => it.pathName).toList()}");
+      final errors = <(Object err, StackTrace st)>[];
+
+      final extractedMod = await libArchive.extractEntriesInArchive(
+        archiveFile,
+        destinationFolder.path,
+        fileFilter: (entry) => entry.file.isFile()
+            ? modInfoSiblings.contains(entry)
+            : p.isWithin(modInfoParentFolder.path, entry.file.path),
+        pathTransform: (entry) => p.join(
+          generatedDestFolderName,
+          p.relative(entry.file.path, from: modInfoParentFolder.path),
+        ),
+        onError: (e, st) {
+          errors.add((e, st));
+          Fimber.e("Error extracting file: $e", ex: e, stacktrace: st);
+          return true;
+        },
+      );
+      Fimber.i(
+          "Extracted ${extractedMod.length} files in mod ${modInfo.id} ${modInfo.version} to '${destinationFolder.resolve(generatedDestFolderName)}'");
+      results.add((
+        modInfo: modInfo,
+        err: null,
+        st: null,
+      ));
+    } catch (e, st) {
+      Fimber.e("Error installing mod: $e", ex: e, stacktrace: st);
+      results.add((
+        modInfo: modInfo,
+        err: e,
+        st: st,
+      ));
+    }
+  }
+
+  return results;
+}
+
+ModVariant? getModVariantForModInfo(
+    ModInfo modInfo, List<ModVariant> modVariants) {
+  return modVariants
+      .firstWhereOrNull((it) => it.modInfo.smolId == modInfo.smolId);
 }
 
 Future<void> installModFromArchiveWithDefaultUI(
@@ -330,51 +432,113 @@ Future<void> installModFromArchiveWithDefaultUI(
   BuildContext context,
 ) async {
   try {
-    final installedModInfo = await installModFromArchive(
-      archiveFile,
-      generateModFolderPath(ref.read(appSettings).gameDir!)!,
-      ref.read(AppState.mods),
-      (modVariant) => {
-        // show dialog alerting user the mod is already installed.
-        showDialog(
-          context: context,
-          builder: (context) {
-            return AlertDialog(
-              title: const Text("Mod already installed"),
-              content: Text(
-                  "The mod ${modVariant.modInfo.name} ${modVariant.modInfo.version} is already installed."),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text("OK"),
-                ),
-              ],
-            );
-          },
-        )
-      },
-    );
+    final installModsResult = await installModFromArchive(
+        archiveFile,
+        generateModFolderPath(ref.read(appSettings).gameDir!)!,
+        ref.read(AppState.mods),
+        (modsBeingInstalled) => showDialog<List<String>>(
+            context: context,
+            builder: (context) {
+              // Start by selecting to install variants that are not already installed.
+              final smolIdsToInstall = modsBeingInstalled
+                  .where((it) => it.alreadyExistingVariant == null)
+                  .map((it) => it.modInfo.modInfo.smolId)
+                  .toList();
+              return StatefulBuilder(builder: (context, setState) {
+                return AlertDialog(
+                  title: const Text("Install mods"),
+                  content: ConstrainedBox(
+                    constraints: const BoxConstraints(minWidth: 400),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: modsBeingInstalled
+                          .map((it) => Builder(builder: (context) {
+                                final isSelected = smolIdsToInstall
+                                    .contains(it.modInfo.modInfo.smolId);
+                                return CheckboxListTile(
+                                  title: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                          "${it.modInfo.modInfo.name} ${it.modInfo.modInfo.version}"),
+                                      Text(
+                                          it.modInfo.modInfo.description
+                                                  ?.takeWhile(
+                                                      (it) => it != "\n")
+                                                  .take(50) ??
+                                              "",
+                                          style: const TextStyle(fontSize: 12)),
+                                      it.alreadyExistingVariant != null
+                                          ? Text(
+                                              isSelected
+                                                  ? "(existing mod will be replaced)"
+                                                  : "(already exists)",
+                                              style: const TextStyle(
+                                                  color: vanillaWarningColor,
+                                                  fontSize: 12),
+                                            )
+                                          : const SizedBox(),
+                                    ],
+                                  ),
+                                  value: isSelected,
+                                  onChanged: (value) {
+                                    if (value == false) {
+                                      setState(() {
+                                        smolIdsToInstall
+                                            .remove(it.modInfo.modInfo.smolId);
+                                      });
+                                    } else {
+                                      setState(() {
+                                        smolIdsToInstall
+                                            .add(it.modInfo.modInfo.smolId);
+                                      });
+                                    }
+                                  },
+                                );
+                              }))
+                          .toList(),
+                    ),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop(<String>[]);
+                      },
+                      child: const Text("Cancel"),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop(smolIdsToInstall);
+                      },
+                      child: const Text("Install"),
+                    ),
+                  ],
+                );
+              });
+            }));
 
-    if (installedModInfo != null) {
-      ref.invalidate(AppState.modVariants);
-      showSnackBar(
-          context: context,
-          content: Text(
-              "Installed: ${installedModInfo.$1.name} ${installedModInfo.$1.version}"));
+    if (installModsResult.isEmpty) {
+      return;
+    }
+    ref.invalidate(AppState.modVariants);
+    showSnackBar(
+        context: context,
+        content: Text(installModsResult.length == 1
+            ? "Installed: ${installModsResult.first.modInfo.name} ${installModsResult.first.modInfo.version}"
+            : "Installed ${installModsResult.length} mods (${installModsResult.map((it) => "${it.modInfo.name} ${it.modInfo.version}").join(", ")})"));
 
-      if (installedModInfo.$2.isNotEmpty) {
-        showAlertDialog(
-          context,
-          title: "Error extracting files",
-          content:
-              "Some files could not be extracted. Check the logs for more information.\n${installedModInfo.$2.join("\n")}",
-        );
-      }
+    final errors = installModsResult.where((it) => it.err != null).toList();
+    if (errors.isNotEmpty) {
+      showAlertDialog(
+        context,
+        title: "Error",
+        content:
+            "One or more mods could not be extracted. Check the logs for more information.\n${errors.map((it) => "${it.modInfo.name} ${it.modInfo.version}\n${it.err}").toList()}",
+      );
     }
   } catch (e, st) {
-    Fimber.e("Error installing mod from archive: $e");
+    Fimber.w("Error installing mod from archive: $e", ex: e, stacktrace: st);
     showAlertDialog(
       context,
       title: "Error installing mod",

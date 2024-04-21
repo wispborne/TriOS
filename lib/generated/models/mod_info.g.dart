@@ -18,6 +18,7 @@ _$ModInfoImpl _$$ModInfoImplFromJson(Map<String, dynamic> json) =>
               ?.map((e) => Dependency.fromJson(e as Map<String, dynamic>))
               .toList() ??
           const [],
+      originalGameVersion: json['originalGameVersion'] as String?,
     );
 
 Map<String, dynamic> _$$ModInfoImplToJson(_$ModInfoImpl instance) =>
@@ -29,4 +30,5 @@ Map<String, dynamic> _$$ModInfoImplToJson(_$ModInfoImpl instance) =>
       'gameVersion': instance.gameVersion,
       'author': instance.author,
       'dependencies': instance.dependencies,
+      'originalGameVersion': instance.originalGameVersion,
     };

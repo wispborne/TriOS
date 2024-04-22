@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:toastification/toastification.dart';
 import 'package:trios/models/download_progress.dart';
-import 'package:trios/trios/trios_theme.dart';
+import 'package:trios/themes/trios_manager.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/download_progress_indicator.dart';
@@ -28,7 +28,7 @@ class SelfUpdateToast extends ConsumerWidget {
         padding: const EdgeInsets.all(16.0),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(TriOSTheme.cornerRadius),
+          borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
           boxShadow: const [
             BoxShadow(
               color: Colors.black26,

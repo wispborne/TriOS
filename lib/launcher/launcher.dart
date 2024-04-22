@@ -6,14 +6,22 @@ import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plist_parser/plist_parser.dart';
+import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/launch_settings.dart';
+import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/platform_paths.dart';
 import 'package:win32_registry/win32_registry.dart';
 
-import '../trios/trios_theme.dart';
+import '../themes/trios_manager.dart';
+
+typedef LaunchPrecheckError = ({
+  String message,
+  String? fixActionName,
+  Function? doFix
+});
 
 class Launcher extends ConsumerWidget {
   const Launcher({super.key});
@@ -22,7 +30,7 @@ class Launcher extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(TriOSTheme.cornerRadius),
+        borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
         border: Border.all(
           color: Theme.of(context).colorScheme.secondary,
           strokeAlign: BorderSide.strokeAlignOutside,
@@ -32,7 +40,7 @@ class Launcher extends ConsumerWidget {
       child: ElevatedButton(
           onPressed: () {
             try {
-              launchGame(ref);
+              launchGame(ref, context);
             } catch (e) {
               Fimber.e('Error launching game: $e');
             }
@@ -41,7 +49,7 @@ class Launcher extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12.0),
             backgroundColor: Theme.of(context).colorScheme.secondary,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(TriOSTheme.cornerRadius),
+              borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
             ),
           ),
           child: Text(
@@ -50,20 +58,115 @@ class Launcher extends ConsumerWidget {
                 fontWeight: FontWeight.w900,
                 fontFamily: "Orbitron",
                 fontSize: 20,
-                color: Theme.of(context).colorScheme.onPrimary),
+                color: Theme.of(context).colorScheme.onSecondary),
           )),
     );
   }
 
   /// Can throw exception
-  static launchGame(WidgetRef ref) {
-    // todo dependency check
+  static launchGame(WidgetRef ref, BuildContext context) {
+    final launchPrecheckFailures = performLaunchPrecheck(ref);
+
+    if (launchPrecheckFailures.isNotEmpty) {
+      showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: const Text('Launch precheck failed'),
+              content: Column(
+                children: launchPrecheckFailures.map((failure) {
+                  return ListTile(
+                    title: Text(failure.message),
+                    trailing: failure.fixActionName != null
+                        ? ElevatedButton(
+                            onPressed: () async {
+                              await failure.doFix!();
+                              Navigator.of(context).pop();
+                            },
+                            child: Text(failure.fixActionName!),
+                          )
+                        : null,
+                  );
+                }).toList(),
+              ),
+            );
+          });
+    }
 
     if (ref.read(appSettings.select((value) => value.useJre23 ?? false))) {
       launchGameJre23(ref);
     } else {
       launchGameVanilla(ref);
     }
+  }
+
+  static List<LaunchPrecheckError> performLaunchPrecheck(WidgetRef ref) {
+    final launchPrecheckFailures = <LaunchPrecheckError>[];
+    final mods = ref.read(AppState.mods);
+    final modsFolder = ref.read(appSettings.select((it) => it.modsDir));
+    final enabledMods = ref.read(AppState.enabledMods).valueOrNull;
+    final allVariants = ref.read(AppState.modVariants).valueOrNull ?? [];
+    final enabledVariants =
+        mods.map((mod) => mod.findFirstEnabled).whereNotNull().toList();
+    final result = <LaunchPrecheckError>[];
+
+    if (enabledMods == null ||
+        enabledMods.enabledMods.isEmpty ||
+        modsFolder == null) {
+      return [];
+    }
+
+    for (final variant in enabledVariants) {
+      final modInfo = variant.modInfo;
+      final dependencies = modInfo.dependencies;
+      for (final dependency in dependencies) {
+        var satisfication =
+            dependency.isSatisfiedByAny(allVariants, enabledMods);
+
+        switch (satisfication.runtimeType) {
+          case Missing _:
+            launchPrecheckFailures.add((
+              message:
+                  'Dependency ${dependency.name ?? dependency.id} is missing',
+              fixActionName: null,
+              doFix: null,
+            ));
+            break;
+          case Disabled _:
+            launchPrecheckFailures.add((
+              message:
+                  'Dependency ${dependency.name ?? dependency.id} is disabled',
+              fixActionName: "Enable",
+              doFix: () async {
+                enableMod(dependency.id!, modsFolder.toDirectory(), ref);
+              },
+            ));
+            break;
+          case VersionInvalid _:
+            launchPrecheckFailures.add((
+              message:
+                  'Dependency ${dependency.name ?? dependency.id} has wrong version',
+              fixActionName: null,
+              doFix: null,
+            ));
+            break;
+          case VersionWarning _:
+            launchPrecheckFailures.add((
+              message:
+                  'Dependency ${dependency.name ?? dependency.id} has a different version, but may work.',
+              fixActionName: "Enable",
+              doFix: () async {
+                enableMod(dependency.id!, modsFolder.toDirectory(), ref);
+              },
+            ));
+            break;
+          case Satisfied _:
+            break;
+        }
+      }
+    }
+
+    return launchPrecheckFailures;
   }
 
   static StarsectorVanillaLaunchPreferences? getStarsectorLaunchPrefs() {
@@ -147,7 +250,9 @@ class Launcher extends ConsumerWidget {
         ref.read(appSettings.select((value) => value.gameDir))?.toDirectory();
     Fimber.d("gameDir: $gameDir");
     final process = await Process.start(
-      "start "" Miko_Rouge.bat", // Remove the `start ""` part to log all console output, including all Starsector logs.
+      "start "
+      " Miko_Rouge.bat",
+      // Remove the `start ""` part to log all console output, including all Starsector logs.
       [],
       workingDirectory: gameDir?.path,
       runInShell: true,

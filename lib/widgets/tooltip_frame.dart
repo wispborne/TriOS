@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../trios/trios_theme.dart';
+import '../themes/trios_manager.dart';
 
 class TooltipFrame extends StatelessWidget {
   final Widget child;
@@ -14,7 +14,7 @@ class TooltipFrame extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: theme.cardColor,
-          borderRadius: BorderRadius.circular(TriOSTheme.cornerRadius),
+          borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
           border: Border.all(color: theme.colorScheme.onSurface),
         ),
         child: Padding(

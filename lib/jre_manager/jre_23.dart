@@ -59,8 +59,8 @@ class Jre23 {
     final configZip = downloadJre23Config(ref, versionChecker, savePath);
 
     try {
-      installJRE23Jdk(ref, libArchive, gamePath, await jdkZip);
       installJRE23Config(ref, libArchive, gamePath, savePath, await configZip);
+      installJRE23Jdk(ref, libArchive, gamePath, await jdkZip);
     } catch (e, stackTrace) {
       Fimber.e("Error installing JRE 23", ex: e, stacktrace: stackTrace);
     } finally {
@@ -110,7 +110,8 @@ class Jre23 {
 
     final extractedJdkFiles = await libArchive.extractEntriesInArchive(
         jdkZip, gamePath.absolute.path);
-    Fimber.i("Extracted JRE 23 JDK files: $extractedJdkFiles");
+    Fimber.i(
+        "Extracted JRE 23 JDK files: ${extractedJdkFiles.joinToString(separator: ', ', transform: (it) => it?.extractedFile.path ?? "")}");
   }
 
   static Future<Jre23VersionChecker?> getVersionCheckerInfo() async {
@@ -160,6 +161,8 @@ class Jre23 {
         .map((e) => e?.extractedFile.normalize)
         .whereType<File>()
         .toList();
+    Fimber.i(
+        "Extracted JRE 23 Himemi files: ${filesInConfigZip.joinToString(separator: ', ', transform: (it) => it.path)}");
 
     final gameFolderFilesFolder = filesInConfigZip
         .filter((file) =>

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:trios/trios/trios_theme.dart';
+import 'package:trios/themes/trios_manager.dart';
 import 'package:trios/widgets/conditional_wrap.dart';
 
 class CheckboxWithLabel extends StatelessWidget {
@@ -32,7 +32,7 @@ class CheckboxWithLabel extends StatelessWidget {
       onTap: () {
         onChanged(!value);
       },
-      borderRadius: BorderRadius.circular(TriOSTheme.cornerRadius),
+      borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
       child: Padding(
         padding: const EdgeInsets.only(right: 7),
         child: Row(

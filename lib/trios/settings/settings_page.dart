@@ -15,6 +15,8 @@ import 'package:trios/widgets/checkbox_with_label.dart';
 import 'package:trios/widgets/download_progress_indicator.dart';
 
 import '../../jre_manager/jre_23.dart';
+import '../../themes/theme.dart';
+import '../../themes/trios_manager.dart';
 import '../../widgets/self_update_toast.dart';
 import '../app_state.dart';
 import '../constants.dart';
@@ -115,6 +117,29 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           //           onChanged: (_) => AppState.theme.switchMaterial(),
           //           value: AppState.theme.isMaterial3()),
           //     )),
+          SizedBox.fromSize(size: const Size.fromHeight(20)),
+          Text("Theme", style: Theme.of(context).textTheme.bodyLarge),
+          Row(
+            children: [
+              DropdownMenu(
+                enableSearch: false,
+                enableFilter: false,
+                dropdownMenuEntries: ThemeManager.allThemes.entries
+                    .map((theme) =>
+                        DropdownMenuEntry(value: theme.value, label: theme.key))
+                    .toList(),
+                onSelected: (TriOSTheme? theme) =>
+                    AppState.theme.switchThemes(context, theme!),
+                initialSelection: AppState.theme.currentTheme(),
+              ),
+              IconButton(
+                tooltip: "I'm feeling lucky",
+                onPressed: () => AppState.theme.switchThemes(
+                    context, ThemeManager.allThemes.values.random()),
+                icon: Icon(Icons.percent),
+              ),
+            ],
+          ),
           // Debugging line here
           SizedBox.fromSize(size: const Size.fromHeight(20)),
           Text("Debugging stuff below here, please ignore.",

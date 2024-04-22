@@ -4,7 +4,7 @@ import 'package:trios/jre_manager/jre_manager_logic.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/conditional_wrap.dart';
 
-import '../trios/trios_theme.dart';
+import '../themes/trios_manager.dart';
 import '../widgets/fixed_height_grid_item.dart';
 
 class RamChanger extends ConsumerStatefulWidget {
@@ -39,7 +39,7 @@ class _RamChangerState extends ConsumerState<RamChanger> {
                     ram,
             wrapper: (child) => Container(
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(TriOSTheme.cornerRadius),
+                borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
                 border: Border.all(
                   width: 2,
                   color: Theme.of(context).colorScheme.primary,

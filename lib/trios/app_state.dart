@@ -10,7 +10,7 @@ import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/download_progress.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/trios/settings/settings.dart';
-import 'package:trios/trios/trios_theme.dart';
+import 'package:trios/themes/trios_manager.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/platform_paths.dart';
@@ -23,7 +23,7 @@ import '../models/mod.dart';
 // part 'generated/app_state.g.dart';
 
 class AppState {
-  static TriOSTheme theme = TriOSTheme();
+  static ThemeManager theme = ThemeManager();
   static final selfUpdateDownloadProgress =
       StateProvider<DownloadProgress?>((ref) => null);
 

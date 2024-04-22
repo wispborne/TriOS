@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/models/version_checker_info.dart';
 import 'package:trios/trios/constants.dart';
-import 'package:trios/trios/trios_theme.dart';
+import 'package:trios/themes/trios_manager.dart';
 
 import '../mod_manager/version_checker.dart';
 

@@ -22,8 +22,8 @@ import '../chipper/utils.dart';
 import '../models/mod.dart';
 import '../models/mod_info.dart';
 import '../models/version.dart';
+import '../themes/trios_manager.dart';
 import '../trios/settings/settings.dart';
-import '../trios/trios_theme.dart';
 
 Future<List<ModVariant>> getModsVariantsInFolder(Directory modsFolder) async {
   var mods = <ModVariant?>[];
@@ -216,6 +216,7 @@ extension DependencyExt on Dependency {
     return Satisfied(mod);
   }
 
+  /// Searches [allMods] for the best possible match for this dependency.
   DependencyStateType isSatisfiedByAny(
       List<ModVariant> allMods, EnabledMods enabledMods) {
     var foundDependencies = allMods.filter((mod) => mod.modInfo.id == id);
@@ -565,6 +566,7 @@ class DependencyState {
   DependencyState(this.dependency);
 }
 
+/// mod: The mod that was checked as a possible dependency.
 sealed class DependencyStateType {
   final ModInfo? mod;
 
@@ -583,6 +585,7 @@ class VersionInvalid extends DependencyStateType {
   VersionInvalid(ModInfo mod) : super(mod: mod);
 }
 
+/// Minor version mismatch.
 class VersionWarning extends DependencyStateType {
   VersionWarning(ModInfo mod) : super(mod: mod);
 }

@@ -8,6 +8,7 @@ import 'package:toastification/toastification.dart';
 import 'package:trios/chipper/chipper_home.dart';
 import 'package:trios/dashboard/dashboard.dart';
 import 'package:trios/rules_autofresh/rules_hotreload.dart';
+import 'package:trios/themes/trios_manager.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/navigation.dart';
 import 'package:trios/trios/self_updater/script_generator.dart';
@@ -15,7 +16,7 @@ import 'package:trios/trios/self_updater/self_updater.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/trios/settings/settings_page.dart';
 import 'package:trios/trios/toasts/download_toast_manager.dart';
-import 'package:trios/trios/trios_theme.dart';
+import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/vram_estimator/vram_estimator.dart';
 import 'package:trios/widgets/blur.dart';
@@ -111,20 +112,21 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
     // Let's only manage one theme.
     var material3 = true; //AppState.theme.isMaterial3();
 
-    final starsectorSwatch = StarsectorSwatch();
-    var swatch = switch (DateTime.now().month) {
-      DateTime.october => HalloweenSwatch(),
-      DateTime.december => XmasSwatch(),
-      _ => starsectorSwatch
-    };
+    // final starsectorSwatch = StarsectorTriOSTheme();
+    // var swatch = switch (DateTime.now().month) {
+    //   DateTime.october => HalloweenTriOSTheme(),
+    //   DateTime.december => XmasTriOSTheme(),
+    //   _ => starsectorSwatch
+    // };
+    final currentTheme = AppState.theme.currentTheme();
 
-    final darkTheme = TriOSTheme.getDarkTheme(swatch, material3);
-    final lightTheme = TriOSTheme.getLightTheme(swatch, material3);
+    final darkTheme = ThemeManager.getDarkTheme(currentTheme, material3);
+    final lightTheme = ThemeManager.getLightTheme(currentTheme, material3);
 
     return MaterialApp(
         title: Constants.appTitle,
         theme: lightTheme,
-        themeMode: AppState.theme.currentTheme(),
+        themeMode: AppState.theme.currentThemeBrightness(),
         debugShowCheckedModeBanner: false,
         darkTheme: darkTheme,
         home: const ToastificationConfigProvider(
@@ -334,15 +336,6 @@ class _AppShellState extends ConsumerState<AppShell>
                   ], controller: tabController),
                 ),
               ),
-              IconButton(
-                tooltip: AppState.theme.currentTheme() == ThemeMode.dark
-                    ? "THE SUN THE SUN THE SUN\nTHE SUN THE SUN THE SUN\nTHE SUN THE SUN THE SUN"
-                    : "Dark theme",
-                onPressed: () => AppState.theme.switchThemes(context),
-                icon: Icon(AppState.theme.currentTheme() == ThemeMode.dark
-                    ? Icons.sunny
-                    : Icons.mode_night),
-              ),
               Tooltip(
                 message:
                     "When enabled, modifying a mod's rules.csv will\nreload in-game rules as long as dev mode is enabled."
@@ -350,7 +343,8 @@ class _AppShellState extends ConsumerState<AppShell>
                     "\nClick to ${isRulesHotReloadEnabled ? "disable" : "enable"}.",
                 textAlign: TextAlign.center,
                 child: InkWell(
-                  borderRadius: BorderRadius.circular(TriOSTheme.cornerRadius),
+                  borderRadius:
+                      BorderRadius.circular(ThemeManager.cornerRadius),
                   onTap: () => ref.read(appSettings.notifier).update((state) =>
                       state.copyWith(
                           isRulesHotReloadEnabled: !isRulesHotReloadEnabled)),

@@ -6,7 +6,7 @@ import '../launcher/launcher.dart';
 import '../models/launch_settings.dart';
 import '../trios/app_state.dart';
 import '../trios/settings/settings.dart';
-import '../trios/trios_theme.dart';
+import '../themes/trios_manager.dart';
 import '../widgets/checkbox_with_label.dart';
 import '../widgets/disable.dart';
 
@@ -58,7 +58,7 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                   Container(
                     decoration: BoxDecoration(
                       borderRadius:
-                          BorderRadius.circular(TriOSTheme.cornerRadius),
+                          BorderRadius.circular(ThemeManager.cornerRadius),
                       border: Border.all(
                         color: Theme.of(context).colorScheme.secondary,
                         strokeAlign: BorderSide.strokeAlignOutside,
@@ -66,13 +66,13 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                       ),
                     ),
                     child: ElevatedButton(
-                      onPressed: () => Launcher.launchGame(ref),
+                      onPressed: () => Launcher.launchGame(ref, context),
                       style: ElevatedButton.styleFrom(
                         backgroundColor:
                             Theme.of(context).colorScheme.secondary,
                         shape: RoundedRectangleBorder(
                           borderRadius:
-                              BorderRadius.circular(TriOSTheme.cornerRadius),
+                              BorderRadius.circular(ThemeManager.cornerRadius),
                         ),
                       ),
                       child: Text('LAUNCH',
@@ -80,7 +80,7 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                               fontWeight: FontWeight.w900,
                               fontFamily: "Orbitron",
                               fontSize: 27,
-                              color: Theme.of(context).colorScheme.onPrimary)),
+                              color: Theme.of(context).colorScheme.onSecondary)),
                     ),
                   ),
                   Padding(

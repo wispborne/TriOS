@@ -5,7 +5,7 @@ import 'package:toastification/toastification.dart';
 import 'package:trios/models/download_progress.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/trios/app_state.dart';
-import 'package:trios/themes/trios_manager.dart';
+import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/download_progress_indicator.dart';
 

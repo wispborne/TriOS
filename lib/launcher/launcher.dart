@@ -15,7 +15,7 @@ import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/platform_paths.dart';
 import 'package:win32_registry/win32_registry.dart';
 
-import '../themes/trios_manager.dart';
+import '../themes/theme_manager.dart';
 
 typedef LaunchPrecheckError = ({
   String message,

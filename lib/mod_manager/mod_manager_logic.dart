@@ -22,7 +22,7 @@ import '../chipper/utils.dart';
 import '../models/mod.dart';
 import '../models/mod_info.dart';
 import '../models/version.dart';
-import '../themes/trios_manager.dart';
+import '../themes/theme_manager.dart';
 import '../trios/settings/settings.dart';
 
 Future<List<ModVariant>> getModsVariantsInFolder(Directory modsFolder) async {

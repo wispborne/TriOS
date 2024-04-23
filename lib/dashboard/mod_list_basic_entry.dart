@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/dashboard/mod_summary_widget.dart';
 import 'package:trios/dashboard/version_check_icon.dart';
 import 'package:trios/dashboard/version_check_text_readout.dart';
-import 'package:trios/themes/trios_manager.dart';
+import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
 import 'package:trios/widgets/disable_if_cannot_write_mods.dart';

@@ -4,7 +4,7 @@ import 'package:trios/jre_manager/jre_manager_logic.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/conditional_wrap.dart';
 
-import '../themes/trios_manager.dart';
+import '../themes/theme_manager.dart';
 import '../widgets/fixed_height_grid_item.dart';
 
 class RamChanger extends ConsumerStatefulWidget {

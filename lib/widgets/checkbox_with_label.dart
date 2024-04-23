@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:trios/themes/trios_manager.dart';
+import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/widgets/conditional_wrap.dart';
 
 class CheckboxWithLabel extends StatelessWidget {

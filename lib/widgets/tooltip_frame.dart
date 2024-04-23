@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../themes/trios_manager.dart';
+import '../themes/theme_manager.dart';
 
 class TooltipFrame extends StatelessWidget {
   final Widget child;

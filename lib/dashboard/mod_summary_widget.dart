@@ -7,7 +7,7 @@ import 'package:trios/utils/extensions.dart';
 
 import '../mod_manager/mod_manager_logic.dart';
 import '../trios/app_state.dart';
-import '../themes/trios_manager.dart';
+import '../themes/theme_manager.dart';
 
 class ModSummaryWidget extends ConsumerStatefulWidget {
   final ModVariant modVariant;

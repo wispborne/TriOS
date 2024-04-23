@@ -6,7 +6,7 @@ import '../launcher/launcher.dart';
 import '../models/launch_settings.dart';
 import '../trios/app_state.dart';
 import '../trios/settings/settings.dart';
-import '../themes/trios_manager.dart';
+import '../themes/theme_manager.dart';
 import '../widgets/checkbox_with_label.dart';
 import '../widgets/disable.dart';
 

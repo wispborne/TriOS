@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_color/flutter_color.dart';
@@ -17,7 +18,7 @@ class ThemeManager with ChangeNotifier {
 
   static TriOSTheme _theme = StarsectorTriOSTheme();
   static bool _isMaterial3 = false;
-  static const String _key = "currentTheme";
+  static const String _key = "currentThemeId";
   static const String _keyMaterial = "isMaterial";
   static final allThemes = {
     "StarsectorTriOSTheme": StarsectorTriOSTheme(),
@@ -30,15 +31,28 @@ class ThemeManager with ChangeNotifier {
   // });
 
   ThemeManager() {
-    loadThemes();
-    if (sharedPrefs.containsKey(_key)) {
-      _theme = allThemes[sharedPrefs.getString(_key) ?? allThemes.keys.first]!;
-      _isMaterial3 = sharedPrefs.getBool(_keyMaterial) ?? false;
-    }
+    // Load themes, then load the current theme from shared prefs and switch to it.
+    loadThemes().then((_) {
+      if (sharedPrefs.containsKey(_key)) {
+        try {
+          _theme = allThemes[sharedPrefs.getString(_key)]!;
+          notifyListeners();
+        } catch (e, st) {
+          Fimber.w("Error loading theme from shared prefs.",
+              ex: e, stacktrace: st);
+          _theme = allThemes.values.first;
+        }
+        _isMaterial3 = sharedPrefs.getBool(_keyMaterial) ?? false;
+      }
+    });
   }
 
   TriOSTheme currentTheme() {
     return _theme;
+  }
+
+  ThemeData currentThemeData() {
+    return convertToThemeData(_theme);
   }
 
   ThemeMode currentThemeBrightness() {
@@ -50,11 +64,12 @@ class ThemeManager with ChangeNotifier {
   }
 
   void switchThemes(BuildContext context, TriOSTheme theme) {
-    sharedPrefs.setString(_key, theme.runtimeType.toString());
     _theme = theme;
-    // AdaptiveTheme.of(context).setThemeMode(_isDark ? AdaptiveThemeMode.dark : AdaptiveThemeMode.light);
-    Fimber.i("Changed theme: ${theme}.");
     notifyListeners();
+    final themeKey =
+        allThemes.entries.firstWhereOrNull((it) => it.value == theme)!.key;
+    Fimber.i("Changed theme: $themeKey.");
+    sharedPrefs.setString(_key, themeKey);
   }
 
   void switchMaterial() {
@@ -64,7 +79,7 @@ class ThemeManager with ChangeNotifier {
     notifyListeners();
   }
 
-  loadThemes() async {
+  Future<void> loadThemes() async {
     final themesJsonString =
         await rootBundle.loadString("assets/SMOL_Themes.json");
     final themesJson = (jsonDecode(themesJsonString)
@@ -94,6 +109,12 @@ class ThemeManager with ChangeNotifier {
     }
 
     Fimber.i("Loaded themes: ${allThemes.keys}");
+  }
+
+  static ThemeData convertToThemeData(TriOSTheme theme) {
+    return theme.isDark
+        ? getDarkTheme(theme, _isMaterial3)
+        : getLightTheme(theme, _isMaterial3);
   }
 
   static ThemeData getDarkTheme(TriOSTheme swatch, bool material3) {

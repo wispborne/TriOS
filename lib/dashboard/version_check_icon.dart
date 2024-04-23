@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:trios/models/version_checker_info.dart';
-import 'package:trios/themes/trios_manager.dart';
+import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/widgets/blur.dart';
 import 'package:trios/widgets/conditional_wrap.dart';
 import 'package:trios/widgets/svg_image_icon.dart';

@@ -8,7 +8,7 @@ import 'package:toastification/toastification.dart';
 import 'package:trios/chipper/chipper_home.dart';
 import 'package:trios/dashboard/dashboard.dart';
 import 'package:trios/rules_autofresh/rules_hotreload.dart';
-import 'package:trios/themes/trios_manager.dart';
+import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/navigation.dart';
 import 'package:trios/trios/self_updater/script_generator.dart';
@@ -16,7 +16,6 @@ import 'package:trios/trios/self_updater/self_updater.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/trios/settings/settings_page.dart';
 import 'package:trios/trios/toasts/download_toast_manager.dart';
-import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/vram_estimator/vram_estimator.dart';
 import 'package:trios/widgets/blur.dart';
@@ -45,7 +44,13 @@ void main() async {
   };
   WidgetsFlutterBinding.ensureInitialized();
   await windowManager.ensureInitialized();
-  sharedPrefs = await SharedPreferences.getInstance();
+  try {
+    sharedPrefs = await SharedPreferences.getInstance();
+  } catch (e) {
+    Fimber.e(
+        "Error initializing shared prefs.\nDelete `%APPDATA%/org.wisp/TriOS/shared_preferences.json\n(or look here for MacOS/Linux: https://pub.dev/packages/shared_preferences#storage-location-by-platform).",
+        ex: e);
+  }
 
   // Restore window position and size
   final settings = readAppSettings();
@@ -118,17 +123,14 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
     //   DateTime.december => XmasTriOSTheme(),
     //   _ => starsectorSwatch
     // };
-    final currentTheme = AppState.theme.currentTheme();
-
-    final darkTheme = ThemeManager.getDarkTheme(currentTheme, material3);
-    final lightTheme = ThemeManager.getLightTheme(currentTheme, material3);
+    final currentTheme = AppState.theme.currentThemeData();
 
     return MaterialApp(
         title: Constants.appTitle,
-        theme: lightTheme,
+        theme: currentTheme,
         themeMode: AppState.theme.currentThemeBrightness(),
         debugShowCheckedModeBanner: false,
-        darkTheme: darkTheme,
+        darkTheme: currentTheme,
         home: const ToastificationConfigProvider(
             config: ToastificationConfig(
               alignment: Alignment.bottomRight,

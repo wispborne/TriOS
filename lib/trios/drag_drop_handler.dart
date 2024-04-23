@@ -60,20 +60,26 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
           return;
         }
 
-        var file = detail.files.first;
-        final filePath = file.path;
+        final files = detail.files.map((e) => e.path.toFile()).toList();
 
-        if (filePath
-            .toFile()
-            .extension
-            .equalsAnyIgnoreCase(Constants.supportedArchiveExtensions)) {
+        if (files.any((file) => file.extension
+            .equalsAnyIgnoreCase(Constants.supportedArchiveExtensions))) {
           {
             setState(() {
               _inProgress = true;
             });
             try {
-              installModFromArchiveWithDefaultUI(
-                  filePath.toFile(), ref, context);
+              // Install each dropped archive in turn.
+              // Log any errors and continue with the next archive.
+              for (var filePath in files) {
+                try {
+                  await installModFromArchiveWithDefaultUI(
+                      filePath.toFile(), ref, context);
+                } catch (e, st) {
+                  Fimber.e("Failed to install mod from archive",
+                      ex: e, stacktrace: st);
+                }
+              }
             } finally {
               setState(() {
                 _inProgress = false;
@@ -81,15 +87,16 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
             }
           }
         } else {
-          handleDroppedLogFile(filePath).then((content) {
+          final firstFile = files.first;
+          handleDroppedLogFile(firstFile.path).then((content) {
             if (content == null) {
               return; // TODO ref.read(ChipperState.logRawContents).valueOrNull;
             }
             return ref
                 .read(ChipperState.logRawContents.notifier)
-                .parseLog(LogFile(file.path, content));
+                .parseLog(LogFile(firstFile.path, content));
           });
-          widget.onDroppedLog?.call(filePath);
+          widget.onDroppedLog?.call(firstFile.path);
         }
       },
       onDragUpdated: (details) {

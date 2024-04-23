@@ -129,7 +129,7 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
         title: Constants.appTitle,
         theme: currentTheme,
         themeMode: AppState.theme.currentThemeBrightness(),
-        debugShowCheckedModeBanner: false,
+        debugShowCheckedModeBanner: true,
         darkTheme: currentTheme,
         home: const ToastificationConfigProvider(
             config: ToastificationConfig(

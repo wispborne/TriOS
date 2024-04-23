@@ -284,7 +284,7 @@ Future<List<InstallModResult>> installModFromArchive(
       (it) => it.pathName.containsIgnoreCase(Constants.modInfoFileName));
 
   if (modInfoFiles.isEmpty) {
-    throw Exception("No mod_info.json file found in archive.");
+    throw Exception("No mod_info.json file found in archive:\n${archiveFile.path}");
   }
 
   Fimber.i(

@@ -277,6 +277,7 @@ class _AppShellState extends ConsumerState<AppShell>
 
     var isRulesHotReloadEnabled =
         ref.watch(appSettings.select((value) => value.isRulesHotReloadEnabled));
+
     return Scaffold(
         appBar: AppBar(
           title: Row(
@@ -314,28 +315,31 @@ class _AppShellState extends ConsumerState<AppShell>
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.only(left: 8, right: 16),
-                  child: TabBar(tabs: [
-                    // TODO IF YOU CHANGE THESE, UPDATE tabToolMap!
-                    const Tab(text: "Dashboard", icon: Icon(Icons.dashboard)),
-                    const Tab(
-                        text: "VRAM Estimator",
-                        icon: SvgImageIcon("assets/images/icon-weight.svg")),
-                    const Tab(
-                        text: chipperTitle,
-                        icon: ImageIcon(
-                            AssetImage("assets/images/chipper/icon.png")),
-                        iconMargin: EdgeInsets.zero),
-                    ConditionalWrap(
-                        condition: !Platform.isWindows,
-                        wrapper: (child) => Disable(
-                            isEnabled: Platform.isWindows, child: child),
-                        child: const Tab(
-                            text: "JRE Manager", icon: Icon(Icons.coffee))),
-                    const Tab(
-                        text: "Settings",
-                        icon: Icon(Icons.settings),
-                        iconMargin: EdgeInsets.zero),
-                  ], controller: tabController),
+                  child: TabBar(
+                    tabs: [
+                      // TODO IF YOU CHANGE THESE, UPDATE tabToolMap!
+                      const Tab(text: "Dashboard", icon: Icon(Icons.dashboard)),
+                      const Tab(
+                          text: "VRAM Estimator",
+                          icon: SvgImageIcon("assets/images/icon-weight.svg")),
+                      const Tab(
+                          text: chipperTitle,
+                          icon: ImageIcon(
+                              AssetImage("assets/images/chipper/icon.png")),
+                          iconMargin: EdgeInsets.zero),
+                      ConditionalWrap(
+                          condition: !Platform.isWindows,
+                          wrapper: (child) => Disable(
+                              isEnabled: Platform.isWindows, child: child),
+                          child: const Tab(
+                              text: "JRE Manager", icon: Icon(Icons.coffee))),
+                      const Tab(
+                          text: "Settings",
+                          icon: Icon(Icons.settings),
+                          iconMargin: EdgeInsets.zero),
+                    ],
+                    controller: tabController,
+                  ),
                 ),
               ),
               Tooltip(

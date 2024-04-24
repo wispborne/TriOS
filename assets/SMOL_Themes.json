@@ -168,6 +168,16 @@
       "secondaryVariant": "#18D1D1",
       "surface": "#21242B"
     },
+    "Society": {
+      "background": "#3c2154",
+      "hyperlink": "#6FA9E2",
+      "isDark": true,
+      "primary": "#1cdd32",
+      "primaryVariant": "#20ff48",
+      "secondary": "#1cdd32",
+      "secondaryVariant": "#20ff48",
+      "surface": "#743fa1"
+    },
     "Starfarer": {
       "background": "#011E26",
       "hyperlink": "#00FFFF",

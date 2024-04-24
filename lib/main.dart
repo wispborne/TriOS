@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:toastification/toastification.dart';
 import 'package:trios/chipper/chipper_home.dart';
 import 'package:trios/dashboard/dashboard.dart';
+import 'package:trios/mod_manager/smol2.dart';
 import 'package:trios/rules_autofresh/rules_hotreload.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/constants.dart';
@@ -191,10 +192,11 @@ class _AppShellState extends ConsumerState<AppShell>
 
   final tabToolMap = {
     0: TriOSTools.dashboard,
-    1: TriOSTools.vramEstimator,
-    2: TriOSTools.chipper,
-    3: TriOSTools.jreManager,
-    4: null,
+    1: TriOSTools.modManager,
+    2: TriOSTools.vramEstimator,
+    3: TriOSTools.chipper,
+    4: TriOSTools.jreManager,
+    5: null,
   };
 
   @override
@@ -266,6 +268,7 @@ class _AppShellState extends ConsumerState<AppShell>
   Widget build(BuildContext context) {
     final tabChildren = [
       const Dashboard(),
+      const Smol2(),
       const VramEstimatorPage(),
       const ChipperApp(),
       Platform.isWindows
@@ -319,6 +322,14 @@ class _AppShellState extends ConsumerState<AppShell>
                     tabs: [
                       // TODO IF YOU CHANGE THESE, UPDATE tabToolMap!
                       const Tab(text: "Dashboard", icon: Icon(Icons.dashboard)),
+                      Tab(
+                          text: "Mods",
+                          icon: Transform.rotate(
+                              angle: 0.7,
+                              child: const SvgImageIcon(
+                                "assets/images/icon-onslaught.svg",
+                                height: 23,
+                              ))),
                       const Tab(
                           text: "VRAM Estimator",
                           icon: SvgImageIcon("assets/images/icon-weight.svg")),

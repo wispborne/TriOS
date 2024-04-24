@@ -11,6 +11,6 @@ class Smol2 extends ConsumerStatefulWidget {
 class _Smol2State extends ConsumerState<Smol2> {
   @override
   Widget build(BuildContext context) {
-    return Container();
+    return Center(child: Image.asset("assets/images/construction.png"));
   }
 }

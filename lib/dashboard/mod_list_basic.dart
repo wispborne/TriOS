@@ -9,6 +9,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
+import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/conditional_wrap.dart';
@@ -320,14 +321,114 @@ class _ModListMiniState extends ConsumerState<ModListMini>
               launchUrl(
                   Uri.parse("file:${modVariant.modsFolder.absolute.path}"));
             }),
+        MenuItem(
+          label:
+              'Open Forum Page${modVariant.versionCheckerInfo?.modThreadId == null ? ' (not set)' : ''}',
+          icon: Icons.open_in_browser,
+          onSelected: () {
+            if (modVariant.versionCheckerInfo?.modThreadId == null) {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                content: Text(
+                    "Mod has not set up Version Checker, or it does not contain a forum thread id."),
+              ));
+              return;
+            }
+            launchUrl(Uri.parse(
+                "${Constants.forumModPageUrl}${modVariant.versionCheckerInfo?.modThreadId}"));
+          },
+        ),
         if (currentStarsectorVersion != null)
           MenuItem(
               label: 'Force to $currentStarsectorVersion',
-              icon: Icons.local_hospital,
+              icon: Icons.electric_bolt,
               onSelected: () {
                 forceChangeModGameVersion(modVariant, currentStarsectorVersion);
                 ref.invalidate(AppState.modVariants);
               }),
+        MenuItem(
+            label: "Show Raw Info",
+            icon: Icons.info,
+            onSelected: () {
+              showDialog(
+                  context: context,
+                  builder: (context) {
+                    return AlertDialog(
+                      title: Text("${modVariant.modInfo.name}"),
+                      content: SingleChildScrollView(
+                          child: SelectionArea(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Card(
+                              child: Padding(
+                                padding: const EdgeInsets.all(10),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text("Misc info",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyLarge
+                                            ?.copyWith(
+                                                fontWeight: FontWeight.bold)),
+                                    Text("Id: ${modVariant.modInfo.id}"),
+                                    Text("Internal id: ${modVariant.smolId}"),
+                                    Text(
+                                        "Mod Folder: ${modVariant.modsFolder.path}"),
+                                    Text(
+                                        "Icon:${modVariant.iconFilePath ?? ""}"),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            Card(
+                              child: Padding(
+                                padding: const EdgeInsets.all(10),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text("mod_info.json",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyLarge
+                                            ?.copyWith(
+                                                fontWeight: FontWeight.bold)),
+                                    Text(modVariant.modInfo.toString()),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            Card(
+                              child: Padding(
+                                padding: const EdgeInsets.all(10),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text("Version Checker",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyLarge
+                                            ?.copyWith(
+                                                fontWeight: FontWeight.bold)),
+                                    Text(modVariant.versionCheckerInfo
+                                        .toString()),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )),
+                      actions: [
+                        TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                            child: const Text("Close")),
+                      ],
+                    );
+                  });
+            }),
       ],
       padding: const EdgeInsets.all(8.0),
     );

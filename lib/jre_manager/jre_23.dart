@@ -59,12 +59,14 @@ class Jre23 {
     final configZip = downloadJre23Config(ref, versionChecker, savePath);
 
     try {
-      installJRE23Config(ref, libArchive, gamePath, savePath, await configZip);
-      installJRE23Jdk(ref, libArchive, gamePath, await jdkZip);
+      await installJRE23Config(
+          ref, libArchive, gamePath, savePath, await configZip);
+      await installJRE23Jdk(ref, libArchive, gamePath, await jdkZip);
     } catch (e, stackTrace) {
       Fimber.e("Error installing JRE 23", ex: e, stacktrace: stackTrace);
     } finally {
       // clean up temp folder
+      Fimber.i("Deleting temp folder $savePath");
       savePath.deleteSync(recursive: true);
     }
   }
@@ -164,6 +166,7 @@ class Jre23 {
     Fimber.i(
         "Extracted JRE 23 Himemi files: ${filesInConfigZip.joinToString(separator: ', ', transform: (it) => it.path)}");
 
+    // 0. Files to put into starsector
     final gameFolderFilesFolder = filesInConfigZip
         .filter((file) =>
             file.path.containsIgnoreCase(_gameFolderFilesFolderNamePart))
@@ -173,9 +176,11 @@ class Jre23 {
 
     // Move to game folder
     Fimber.i('Moving "$gameFolderFilesFolder" to "$gamePath"');
-    gameFolderFilesFolder.moveDirectory(gamePath, overwrite: true);
+    await gameFolderFilesFolder.moveDirectory(gamePath, overwrite: true);
+    Fimber.i('Moved "$gameFolderFilesFolder" to "$gamePath"');
 
     // Find VMParams
+    Fimber.i("Looking for VMParams file");
     final vmParamsFile = filesInConfigZip
         .filter((file) => file.path.containsIgnoreCase(_vmParamsFolderNamePart))
         .rootFolder()! // \1. Pick VMParam Size Here\
@@ -189,10 +194,12 @@ class Jre23 {
     if (!vmParamsFile.existsSync()) {
       Fimber.e("VMParams file not found in '$savePath'");
       return;
+    } else {
+      Fimber.i("Found VMParams file: $vmParamsFile");
     }
 
     final vmParams = vmParamsFile.readAsStringSync();
-    Fimber.i("VMParams: $vmParams");
+    Fimber.d("VMParams: $vmParams");
     // Save the filename of the VMParams file, in case it changes later from "Miko_R3.txt".
     ref.read(appSettings.notifier).update((it) =>
         it.copyWith(jre23VmparamsFilename: vmParamsFile.nameWithExtension));
@@ -204,7 +211,7 @@ class Jre23 {
         .replaceAll(minRamInVmparamsRegex, "${vanillaRam}m");
 
     // Move VMParams to game folder
-    Fimber.i('Moving "$vmParamsFile" to "$gamePath"');
+    Fimber.i('Writing "$vmParamsFile" to "$gamePath"');
     gamePath
         .resolve(vmParamsFile.nameWithExtension)
         .toFile()

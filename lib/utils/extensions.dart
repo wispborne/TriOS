@@ -251,7 +251,7 @@ extension DirectoryExt on Directory {
       renameSync(destDir.absolute.path);
     } catch (e) {
       // Simple rename didn't work. Time to get real.
-      copyDirectory(destDir, overwrite: overwrite);
+      await copyDirectory(destDir, overwrite: overwrite);
       deleteSync(recursive: true);
     }
   }
@@ -265,7 +265,7 @@ extension DirectoryExt on Directory {
     for (var srcFile in srcFiles) {
       final destFile = destDir.resolve(srcFile.nameWithExtension);
       if (srcFile.isDirectory()) {
-        srcFile
+        await srcFile
             .toDirectory()
             .copyDirectory(destFile.toDirectory(), overwrite: overwrite);
       } else if (srcFile.isFile()) {
@@ -274,7 +274,7 @@ extension DirectoryExt on Directory {
               "Skipping file copy (file already exists): $srcFile to $destFile");
           continue;
         } else {
-          srcFile.copy(destFile.path);
+          await srcFile.copy(destFile.path);
         }
       }
     }

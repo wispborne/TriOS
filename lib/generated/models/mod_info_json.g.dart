@@ -31,6 +31,12 @@ _$ModInfoJsonImpl _$$ModInfoJsonImplFromJson(Map<String, dynamic> json) =>
           const [],
       description: json['description'] as String?,
       originalGameVersion: json['originalGameVersion'] as String?,
+      utility: json['utility'] == null
+          ? false
+          : const JsonConverterBool().fromJson(json['utility']),
+      totalConversion: json['totalConversion'] == null
+          ? false
+          : const JsonConverterBool().fromJson(json['totalConversion']),
     );
 
 Map<String, dynamic> _$$ModInfoJsonImplToJson(_$ModInfoJsonImpl instance) =>
@@ -43,6 +49,9 @@ Map<String, dynamic> _$$ModInfoJsonImplToJson(_$ModInfoJsonImpl instance) =>
       'dependencies': instance.dependencies,
       'description': instance.description,
       'originalGameVersion': instance.originalGameVersion,
+      'utility': const JsonConverterBool().toJson(instance.utility),
+      'totalConversion':
+          const JsonConverterBool().toJson(instance.totalConversion),
     };
 
 _$DependencyImpl _$$DependencyImplFromJson(Map<String, dynamic> json) =>

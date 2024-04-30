@@ -82,19 +82,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   fontFeatures: [const FontFeature.tabularFigures()])),
         ),
         SizedBox.fromSize(size: const Size.fromHeight(8)),
-        if (ref.watch(doesJre23ExistInGameFolderProvider).value == true)
-          Padding(
-            padding: const EdgeInsets.only(top: 8.0),
-            child: CheckboxWithLabel(
-              value: ref.watch(
-                  appSettings.select((value) => value.useJre23 ?? false)),
-              onChanged: (value) {
-                ref.read(appSettings.notifier).update(
-                    (state) => state.copyWith(useJre23: value ?? false));
-              },
-              label: "Use JRE 23",
-            ),
-          ),
         Padding(
           padding: const EdgeInsets.only(top: 8.0),
           child: CheckboxWithLabel(

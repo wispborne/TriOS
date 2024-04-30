@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   version="1.1"
+   width="24"
+   height="24"
+   viewBox="0 0 24 24"
+   id="svg27"
+   sodipodi:docname="icon-new-update-search.svg"
+   inkscape:version="1.1.1 (3bf5ae0d25, 2021-09-20)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs31" />
+  <sodipodi:namedview
+     id="namedview29"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     showgrid="false"
+     inkscape:zoom="18.1875"
+     inkscape:cx="1.1821306"
+     inkscape:cy="12.28866"
+     inkscape:window-width="2560"
+     inkscape:window-height="1377"
+     inkscape:window-x="-8"
+     inkscape:window-y="271"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg27" />
+  <path
+     id="path25"
+     d="M 8.5996094 1.5390625 L 6.7109375 4.7207031 L 3.0996094 5.5292969 L 3.4394531 9.2109375 L 1 12 L 3.4394531 14.779297 L 3.0996094 18.470703 L 6.7109375 19.289062 L 8.5996094 22.470703 L 12 21 L 15.400391 22.460938 L 17.289062 19.279297 L 20.900391 18.460938 L 20.560547 14.779297 L 23 12 L 20.560547 9.2207031 L 20.900391 5.5390625 L 17.289062 4.7207031 L 15.400391 1.5390625 L 12 3 L 8.5996094 1.5390625 z M 10.720703 7.0253906 A 3.6953283 3.6953283 0 0 1 14.416016 10.720703 C 14.416016 11.636006 14.080754 12.476898 13.529297 13.125 L 13.683594 13.279297 L 14.132812 13.279297 L 16.974609 16.121094 L 16.121094 16.974609 L 13.279297 14.132812 L 13.279297 13.683594 L 13.125 13.529297 C 12.476897 14.080754 11.636007 14.416016 10.720703 14.416016 A 3.6953283 3.6953283 0 0 1 7.0253906 10.720703 A 3.6953283 3.6953283 0 0 1 10.720703 7.0253906 z M 10.720703 8.1621094 C 9.2994228 8.1621094 8.1621094 9.2994223 8.1621094 10.720703 C 8.1621094 12.141982 9.2994228 13.279297 10.720703 13.279297 C 12.141983 13.279297 13.279297 12.141982 13.279297 10.720703 C 13.279297 9.2994223 12.141983 8.1621094 10.720703 8.1621094 z " />
+</svg>

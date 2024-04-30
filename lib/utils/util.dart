@@ -4,7 +4,6 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:collection/collection.dart';
-import 'package:trios/utils/logging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,6 +13,7 @@ import 'package:path/path.dart' as p;
 import 'package:trios/models/mod_info_json.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/logging.dart';
 
 MaterialColor createMaterialColor(Color color) {
   List strengths = <double>[.05];
@@ -62,7 +62,9 @@ Directory? generateGameCorePath(Directory gamePath) {
 }
 
 Directory? defaultGameCorePath() {
-  return defaultGamePath() == null ? null : generateGameCorePath(defaultGamePath()!)?.normalize;
+  return defaultGamePath() == null
+      ? null
+      : generateGameCorePath(defaultGamePath()!)?.normalize;
 }
 
 Directory? generateModFolderPath(Directory gamePath) {
@@ -131,7 +133,8 @@ class ColorGenerator {
   }
 
   // New: Generate colors based on an existing color
-  static Color generateFromColor(String text, Color baseColor, {bool complementary = false}) {
+  static Color generateFromColor(String text, Color baseColor,
+      {bool complementary = false}) {
     final random = Random(text.hashCode);
 
     // 1. Manipulation Options
@@ -140,9 +143,13 @@ class ColorGenerator {
     } else {
       // Apply adjustments from string's hash
       int lightnessOffset = random.nextInt(70) - 35; // Range: -35 to 35
-      double newLightness = (baseColor.computeLuminance() + lightnessOffset / 100).clamp(0.0, 1.0);
+      double newLightness =
+          (baseColor.computeLuminance() + lightnessOffset / 100)
+              .clamp(0.0, 1.0);
 
-      return HSLColor.fromColor(baseColor).withLightness(newLightness).toColor();
+      return HSLColor.fromColor(baseColor)
+          .withLightness(newLightness)
+          .toColor();
     }
   }
 
@@ -157,9 +164,11 @@ class ColorGenerator {
   }
 }
 
-typedef ProgressCallback = void Function(int bytesReceived, int contentLengthBytes);
+typedef ProgressCallback = void Function(
+    int bytesReceived, int contentLengthBytes);
 
-Future<File> downloadFile(String url, Directory savePath, String? filename, {ProgressCallback? onProgress}) async {
+Future<File> downloadFile(String url, Directory savePath, String? filename,
+    {ProgressCallback? onProgress}) async {
   try {
     final request = http.Request('GET', Uri.parse(url));
     final streamedResponse = await http.Client().send(request);
@@ -167,7 +176,9 @@ Future<File> downloadFile(String url, Directory savePath, String? filename, {Pro
     final contentLength = streamedResponse.contentLength ?? -1;
     int bytesReceived = 0;
 
-    var desiredFilename = filename ?? request.headers['content-disposition']?.split('=')[1] ?? url.split('/').last;
+    var desiredFilename = filename ??
+        request.headers['content-disposition']?.split('=')[1] ??
+        url.split('/').last;
     final file = File(p.join(savePath.path, desiredFilename));
 
     if (file.existsSync()) {
@@ -207,14 +218,17 @@ class NestedException implements Exception {
   NestedException(this.cause, [this.exception, this.stacktrace]);
 
   @override
-  String toString() => '$cause\n\tCaused by: $exception${stacktrace != null ? "\n$stacktrace" : ""}';
+  String toString() =>
+      '$cause\n\tCaused by: $exception${stacktrace != null ? "\n$stacktrace" : ""}';
 }
 
 TargetPlatform? get currentPlatform {
-  return TargetPlatform.values.firstWhereOrNull((element) => element.name.toLowerCase() == Platform.operatingSystem);
+  return TargetPlatform.values.firstWhereOrNull(
+      (element) => element.name.toLowerCase() == Platform.operatingSystem);
 }
 
-pollFileForModification(File file, StreamController<File> streamController, {int intervalMillis = 1000}) async {
+pollFileForModification(File file, StreamController<File> streamController,
+    {int intervalMillis = 1000}) async {
   var lastModified = file.lastModifiedSync();
   final fileChangesInstance = streamController;
 
@@ -282,6 +296,23 @@ class JsonConverterToString implements JsonConverter<String, dynamic> {
   @override
   dynamic toJson(String object) {
     return object;
+  }
+}
+
+class JsonConverterBool implements JsonConverter<bool, dynamic> {
+  const JsonConverterBool();
+
+  @override
+  bool fromJson(dynamic json) {
+    if (json == null) return false;
+    if (json is bool) return json;
+    if (json is String) return bool.tryParse(json, caseSensitive: false) ?? false;
+    return false;
+  }
+
+  @override
+  dynamic toJson(bool object) {
+    return object.toString();
   }
 }
 

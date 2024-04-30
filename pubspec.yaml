@@ -59,7 +59,7 @@ dependencies:
       path: plugins/window_size
       ref: 5c51870ced62a00e809ba4b81a846a052d241c9f
   freezed_annotation: ^2.4.1
-  json_annotation: ^4.8.1
+  json_annotation: ^4.9.0
   http: ^1.2.1
   flutter_svg: ^2.0.10+1
   ffi: ^2.1.2
@@ -69,7 +69,7 @@ dependencies:
   desktop_drop: ^0.4.4
   platform_info: ^4.0.2
   cross_file: ^0.3.4+1
-  file_picker: ^8.0.1
+  file_picker: ^8.0.2
   flutter_linkify: ^6.0.0
   url_launcher: ^6.2.6
   open_filex: ^4.4.0
@@ -84,6 +84,8 @@ dependencies:
   google_fonts: ^6.2.1
   uuid: ^4.4.0
   dio: ^5.4.3+1
+  msix: ^3.16.7
+#  data_table_2: ^2.5.12
 
 dev_dependencies:
   # dart run build_runner watch --delete-conflicting-outputs
@@ -101,7 +103,7 @@ dev_dependencies:
   build_runner: ^2.4.9
   custom_lint: ^0.6.4
   freezed: ^2.5.2
-  json_serializable: ^6.7.1
+  json_serializable: ^6.8.0
   #  riverpod_lint: ^2.3.9 # <https://github.com/google/reflectable.dart/pull/326>
   #analyzer: ^6.4.1
   flutter_launcher_icons: "^0.13.1"

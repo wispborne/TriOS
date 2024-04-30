@@ -10,9 +10,9 @@ _$LaunchSettingsImpl _$$LaunchSettingsImplFromJson(Map<String, dynamic> json) =>
     _$LaunchSettingsImpl(
       isFullscreen: json['isFullscreen'] as bool?,
       hasSound: json['hasSound'] as bool?,
-      resolutionWidth: json['resolutionWidth'] as int?,
-      resolutionHeight: json['resolutionHeight'] as int?,
-      numAASamples: json['numAASamples'] as int?,
+      resolutionWidth: (json['resolutionWidth'] as num?)?.toInt(),
+      resolutionHeight: (json['resolutionHeight'] as num?)?.toInt(),
+      numAASamples: (json['numAASamples'] as num?)?.toInt(),
       screenScaling: (json['screenScaling'] as num?)?.toDouble(),
     );
 

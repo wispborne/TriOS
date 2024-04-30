@@ -31,6 +31,8 @@ class ModInfoJson with _$ModInfoJson {
     @Default([]) final List<Dependency> dependencies,
     final String? description,
     final String? originalGameVersion,
+    @JsonConverterBool() @Default(false) final bool utility,
+    @JsonConverterBool() @Default(false) final bool totalConversion,
   }) = _ModInfoJson;
 
   factory ModInfoJson.fromJson(Map<String, dynamic> json) =>

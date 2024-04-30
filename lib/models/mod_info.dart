@@ -10,6 +10,7 @@ import 'mod_info_json.dart';
 part '../generated/models/mod_info.freezed.dart';
 part '../generated/models/mod_info.g.dart';
 
+// TODO should prob merge this into ModInfoJson
 @freezed
 class ModInfo with _$ModInfo {
   const ModInfo._();
@@ -23,6 +24,8 @@ class ModInfo with _$ModInfo {
     String? author,
     @Default([]) List<Dependency> dependencies,
     String? originalGameVersion,
+    @JsonConverterBool() @Default(false) final bool isUtility,
+    @JsonConverterBool() @Default(false) final bool isTotalConversion,
   }) = _ModInfo;
 
   factory ModInfo.fromJsonModel(ModInfoJson model, Directory modFolder) =>
@@ -35,6 +38,8 @@ class ModInfo with _$ModInfo {
         gameVersion: model.gameVersion,
         dependencies: model.dependencies,
         originalGameVersion: model.originalGameVersion,
+        isUtility: model.utility,
+        isTotalConversion: model.totalConversion,
       );
 
   factory ModInfo.fromJson(Map<String, dynamic> json) =>

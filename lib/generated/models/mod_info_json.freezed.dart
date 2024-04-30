@@ -175,6 +175,10 @@ mixin _$ModInfoJson {
   List<Dependency> get dependencies => throw _privateConstructorUsedError;
   String? get description => throw _privateConstructorUsedError;
   String? get originalGameVersion => throw _privateConstructorUsedError;
+  @JsonConverterBool()
+  bool get utility => throw _privateConstructorUsedError;
+  @JsonConverterBool()
+  bool get totalConversion => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -196,7 +200,9 @@ abstract class $ModInfoJsonCopyWith<$Res> {
       String? gameVersion,
       List<Dependency> dependencies,
       String? description,
-      String? originalGameVersion});
+      String? originalGameVersion,
+      @JsonConverterBool() bool utility,
+      @JsonConverterBool() bool totalConversion});
 }
 
 /// @nodoc
@@ -220,6 +226,8 @@ class _$ModInfoJsonCopyWithImpl<$Res, $Val extends ModInfoJson>
     Object? dependencies = null,
     Object? description = freezed,
     Object? originalGameVersion = freezed,
+    Object? utility = null,
+    Object? totalConversion = null,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -254,6 +262,14 @@ class _$ModInfoJsonCopyWithImpl<$Res, $Val extends ModInfoJson>
           ? _value.originalGameVersion
           : originalGameVersion // ignore: cast_nullable_to_non_nullable
               as String?,
+      utility: null == utility
+          ? _value.utility
+          : utility // ignore: cast_nullable_to_non_nullable
+              as bool,
+      totalConversion: null == totalConversion
+          ? _value.totalConversion
+          : totalConversion // ignore: cast_nullable_to_non_nullable
+              as bool,
     ) as $Val);
   }
 }
@@ -274,7 +290,9 @@ abstract class _$$ModInfoJsonImplCopyWith<$Res>
       String? gameVersion,
       List<Dependency> dependencies,
       String? description,
-      String? originalGameVersion});
+      String? originalGameVersion,
+      @JsonConverterBool() bool utility,
+      @JsonConverterBool() bool totalConversion});
 }
 
 /// @nodoc
@@ -296,6 +314,8 @@ class __$$ModInfoJsonImplCopyWithImpl<$Res>
     Object? dependencies = null,
     Object? description = freezed,
     Object? originalGameVersion = freezed,
+    Object? utility = null,
+    Object? totalConversion = null,
   }) {
     return _then(_$ModInfoJsonImpl(
       null == id
@@ -330,6 +350,14 @@ class __$$ModInfoJsonImplCopyWithImpl<$Res>
           ? _value.originalGameVersion
           : originalGameVersion // ignore: cast_nullable_to_non_nullable
               as String?,
+      utility: null == utility
+          ? _value.utility
+          : utility // ignore: cast_nullable_to_non_nullable
+              as bool,
+      totalConversion: null == totalConversion
+          ? _value.totalConversion
+          : totalConversion // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -344,7 +372,9 @@ class _$ModInfoJsonImpl extends _ModInfoJson {
       this.gameVersion,
       final List<Dependency> dependencies = const [],
       this.description,
-      this.originalGameVersion})
+      this.originalGameVersion,
+      @JsonConverterBool() this.utility = false,
+      @JsonConverterBool() this.totalConversion = false})
       : _dependencies = dependencies,
         super._();
 
@@ -375,10 +405,18 @@ class _$ModInfoJsonImpl extends _ModInfoJson {
   final String? description;
   @override
   final String? originalGameVersion;
+  @override
+  @JsonKey()
+  @JsonConverterBool()
+  final bool utility;
+  @override
+  @JsonKey()
+  @JsonConverterBool()
+  final bool totalConversion;
 
   @override
   String toString() {
-    return 'ModInfoJson(id: $id, name: $name, version: $version, author: $author, gameVersion: $gameVersion, dependencies: $dependencies, description: $description, originalGameVersion: $originalGameVersion)';
+    return 'ModInfoJson(id: $id, name: $name, version: $version, author: $author, gameVersion: $gameVersion, dependencies: $dependencies, description: $description, originalGameVersion: $originalGameVersion, utility: $utility, totalConversion: $totalConversion)';
   }
 
   @override
@@ -397,7 +435,10 @@ class _$ModInfoJsonImpl extends _ModInfoJson {
             (identical(other.description, description) ||
                 other.description == description) &&
             (identical(other.originalGameVersion, originalGameVersion) ||
-                other.originalGameVersion == originalGameVersion));
+                other.originalGameVersion == originalGameVersion) &&
+            (identical(other.utility, utility) || other.utility == utility) &&
+            (identical(other.totalConversion, totalConversion) ||
+                other.totalConversion == totalConversion));
   }
 
   @JsonKey(ignore: true)
@@ -411,7 +452,9 @@ class _$ModInfoJsonImpl extends _ModInfoJson {
       gameVersion,
       const DeepCollectionEquality().hash(_dependencies),
       description,
-      originalGameVersion);
+      originalGameVersion,
+      utility,
+      totalConversion);
 
   @JsonKey(ignore: true)
   @override
@@ -435,7 +478,9 @@ abstract class _ModInfoJson extends ModInfoJson {
       final String? gameVersion,
       final List<Dependency> dependencies,
       final String? description,
-      final String? originalGameVersion}) = _$ModInfoJsonImpl;
+      final String? originalGameVersion,
+      @JsonConverterBool() final bool utility,
+      @JsonConverterBool() final bool totalConversion}) = _$ModInfoJsonImpl;
   const _ModInfoJson._() : super._();
 
   factory _ModInfoJson.fromJson(Map<String, dynamic> json) =
@@ -458,6 +503,12 @@ abstract class _ModInfoJson extends ModInfoJson {
   String? get description;
   @override
   String? get originalGameVersion;
+  @override
+  @JsonConverterBool()
+  bool get utility;
+  @override
+  @JsonConverterBool()
+  bool get totalConversion;
   @override
   @JsonKey(ignore: true)
   _$$ModInfoJsonImplCopyWith<_$ModInfoJsonImpl> get copyWith =>

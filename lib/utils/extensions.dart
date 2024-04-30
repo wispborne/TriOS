@@ -314,7 +314,7 @@ extension IterableExt<T> on Iterable<T> {
     return maxElement;
   }
 
-  Iterable<T> sortedByDescending<R extends Comparable<R>>(
+  List<T> sortedByDescending<R extends Comparable<R>>(
       R Function(T) selector) {
     return toList()..sort((a, b) => selector(b).compareTo(selector(a)));
   }

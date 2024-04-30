@@ -11,7 +11,7 @@ _$Jre23VersionCheckerImpl _$$Jre23VersionCheckerImplFromJson(
     _$Jre23VersionCheckerImpl(
       masterVersionFile: json['masterVersionFile'] as String,
       modName: json['modName'] as String,
-      modThreadId: json['modThreadId'] as int?,
+      modThreadId: (json['modThreadId'] as num?)?.toInt(),
       modVersion: const JsonConverterVersion().fromJson(json['modVersion']),
       starsectorVersion: json['starsectorVersion'] as String,
       windowsJDKDownload: json['windowsJDKDownload'] as String?,

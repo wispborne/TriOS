@@ -16,7 +16,6 @@ class Constants {
     "Wave to Sebestyan",
     "Gargoyle-resistant",
     "Unavailable on Asher",
-    "Developer Approved",
     "Artemisia's Choice",
     "Persean Chronicles Died For This",
     "where is omega?",

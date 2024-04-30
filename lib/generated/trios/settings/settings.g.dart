@@ -60,6 +60,7 @@ Map<String, dynamic> _$$SettingsImplToJson(_$SettingsImpl instance) =>
 
 const _$TriOSToolsEnumMap = {
   TriOSTools.dashboard: 'dashboard',
+  TriOSTools.modManager: 'modManager',
   TriOSTools.vramEstimator: 'vramEstimator',
   TriOSTools.chipper: 'chipper',
   TriOSTools.jreManager: 'jreManager',

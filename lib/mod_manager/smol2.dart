@@ -48,6 +48,7 @@ class _Smol2State extends ConsumerState<Smol2> {
     final alternateRowColor = false;
     final enabledMods =
         ref.watch(AppState.enabledMods).value?.enabledMods ?? {};
+    const double versionSelectorWidth = 150;
 
     return !kDebugMode
         ? Center(child: Image.asset("assets/images/construction.png"))
@@ -79,7 +80,7 @@ class _Smol2State extends ConsumerState<Smol2> {
                 columns: [
                   DataColumn3(
                     label: const Text(''), // Version selector
-                    fixedWidth: 30,
+                    fixedWidth: versionSelectorWidth,
                   ),
                   const DataColumn3(
                     label: Text(''), // Utility/Total Conversion icon
@@ -128,9 +129,9 @@ class _Smol2State extends ConsumerState<Smol2> {
                             ""),
                   ),
                 ],
-                rows: _modsToDisplay
-                    .mapIndexed((index, mod) {
-                      final bestVersion = mod.findFirstEnabledOrHighestVersion;
+                rows: (await Future.wait(_modsToDisplay
+                    .mapIndexed((index, mod) async {
+                      final bestVersion = await mod.findFirstEnabledOrHighestVersion;
                       if (bestVersion == null) return null;
 
                       return DataRow3(
@@ -139,7 +140,7 @@ class _Smol2State extends ConsumerState<Smol2> {
                         },
                         cells: [
                           DataCell(
-                            ModVersionSelectionDropdown(mod: mod),
+                            ModVersionSelectionDropdown(mod: mod, width: versionSelectorWidth),
                           ),
                           DataCell(
                             Tooltip(
@@ -200,7 +201,7 @@ class _Smol2State extends ConsumerState<Smol2> {
                                 Theme.of(context).highlightColor)
                             : null),
                       );
-                    })
+                    })))
                     .whereNotNull()
                     .toList(),
                 empty: Center(

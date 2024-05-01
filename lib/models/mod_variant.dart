@@ -3,8 +3,10 @@ import 'dart:io';
 import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:trios/models/enabled_mods.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/models/version_checker_info.dart';
+import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 
@@ -74,6 +76,12 @@ class ModVariant with _$ModVariant {
             ?.toString()
             .let((it) => Version.parse(it)) ??
         modInfo.version;
+  }
+
+  Future<bool> get isModInfoEnabled async {
+    return await modsFolder
+        .resolve(Constants.unbrickedModInfoFileName)
+        .exists();
   }
 }
 

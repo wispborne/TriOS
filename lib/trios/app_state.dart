@@ -9,8 +9,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/download_progress.dart';
 import 'package:trios/models/mod_variant.dart';
-import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/themes/theme_manager.dart';
+import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/platform_paths.dart';
@@ -49,11 +49,18 @@ class AppState {
   /// Projection of [modVariants], grouping them by mod id.
   static final mods = Provider<List<Mod>>((ref) {
     final modVariants = ref.watch(AppState.modVariants).value ?? [];
+    final enabledMods =
+        ref.watch(AppState.enabledModIds).value.orEmpty().toList();
+
     return modVariants
         .groupBy((ModVariant variant) => variant.modInfo.id)
         .entries
         .map((entry) {
-      return Mod(id: entry.key, modVariants: entry.value.toList());
+      return Mod(
+        id: entry.key,
+        isEnabledInGame: enabledMods.contains(entry.key),
+        modVariants: entry.value.toList(),
+      );
     }).toList();
   });
 

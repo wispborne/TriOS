@@ -689,7 +689,7 @@ packages:
     source: hosted
     version: "1.0.5"
   msix:
-    dependency: "direct main"
+    dependency: "direct dev"
     description:
       name: msix
       sha256: "519b183d15dc9f9c594f247e2d2339d855cf0eaacc30e19b128e14f3ecc62047"
@@ -1054,7 +1054,7 @@ packages:
     source: hosted
     version: "2.4.5"
   stack_trace:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: stack_trace
       sha256: "73713990125a6d93122541237550ee3352a2d84baad52d375a4cad2eb9b7ce0b"

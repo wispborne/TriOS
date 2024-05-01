@@ -64,8 +64,8 @@ class Launcher extends ConsumerWidget {
   }
 
   /// Can throw exception
-  static launchGame(WidgetRef ref, BuildContext context) {
-    final launchPrecheckFailures = performLaunchPrecheck(ref);
+  static launchGame(WidgetRef ref, BuildContext context) async {
+    final launchPrecheckFailures = await performLaunchPrecheck(ref);
 
     if (launchPrecheckFailures.isNotEmpty) {
       showDialog(
@@ -100,14 +100,16 @@ class Launcher extends ConsumerWidget {
     }
   }
 
-  static List<LaunchPrecheckError> performLaunchPrecheck(WidgetRef ref) {
+  static Future<List<LaunchPrecheckError>> performLaunchPrecheck(
+      WidgetRef ref) async {
     final launchPrecheckFailures = <LaunchPrecheckError>[];
     final mods = ref.read(AppState.mods);
     final modsFolder = ref.read(appSettings.select((it) => it.modsDir));
     final enabledMods = ref.read(AppState.enabledMods).valueOrNull;
     final allVariants = ref.read(AppState.modVariants).valueOrNull ?? [];
     final enabledVariants =
-        mods.map((mod) => mod.findFirstEnabled).whereNotNull().toList();
+        (await Future.wait(mods.map((mod) => mod.findFirstEnabled)))
+            .whereNotNull();
     final result = <LaunchPrecheckError>[];
 
     if (enabledMods == null ||

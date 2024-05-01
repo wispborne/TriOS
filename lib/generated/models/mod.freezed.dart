@@ -17,6 +17,7 @@ final _privateConstructorUsedError = UnsupportedError(
 /// @nodoc
 mixin _$Mod {
   String get id => throw _privateConstructorUsedError;
+  bool get isEnabledInGame => throw _privateConstructorUsedError;
   List<ModVariant> get modVariants => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
@@ -28,7 +29,7 @@ abstract class $ModCopyWith<$Res> {
   factory $ModCopyWith(Mod value, $Res Function(Mod) then) =
       _$ModCopyWithImpl<$Res, Mod>;
   @useResult
-  $Res call({String id, List<ModVariant> modVariants});
+  $Res call({String id, bool isEnabledInGame, List<ModVariant> modVariants});
 }
 
 /// @nodoc
@@ -44,6 +45,7 @@ class _$ModCopyWithImpl<$Res, $Val extends Mod> implements $ModCopyWith<$Res> {
   @override
   $Res call({
     Object? id = null,
+    Object? isEnabledInGame = null,
     Object? modVariants = null,
   }) {
     return _then(_value.copyWith(
@@ -51,6 +53,10 @@ class _$ModCopyWithImpl<$Res, $Val extends Mod> implements $ModCopyWith<$Res> {
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as String,
+      isEnabledInGame: null == isEnabledInGame
+          ? _value.isEnabledInGame
+          : isEnabledInGame // ignore: cast_nullable_to_non_nullable
+              as bool,
       modVariants: null == modVariants
           ? _value.modVariants
           : modVariants // ignore: cast_nullable_to_non_nullable
@@ -65,7 +71,7 @@ abstract class _$$ModImplCopyWith<$Res> implements $ModCopyWith<$Res> {
       __$$ModImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String id, List<ModVariant> modVariants});
+  $Res call({String id, bool isEnabledInGame, List<ModVariant> modVariants});
 }
 
 /// @nodoc
@@ -78,6 +84,7 @@ class __$$ModImplCopyWithImpl<$Res> extends _$ModCopyWithImpl<$Res, _$ModImpl>
   @override
   $Res call({
     Object? id = null,
+    Object? isEnabledInGame = null,
     Object? modVariants = null,
   }) {
     return _then(_$ModImpl(
@@ -85,6 +92,10 @@ class __$$ModImplCopyWithImpl<$Res> extends _$ModCopyWithImpl<$Res, _$ModImpl>
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as String,
+      isEnabledInGame: null == isEnabledInGame
+          ? _value.isEnabledInGame
+          : isEnabledInGame // ignore: cast_nullable_to_non_nullable
+              as bool,
       modVariants: null == modVariants
           ? _value._modVariants
           : modVariants // ignore: cast_nullable_to_non_nullable
@@ -97,12 +108,16 @@ class __$$ModImplCopyWithImpl<$Res> extends _$ModCopyWithImpl<$Res, _$ModImpl>
 
 class _$ModImpl extends _Mod {
   const _$ModImpl(
-      {required this.id, required final List<ModVariant> modVariants})
+      {required this.id,
+      required this.isEnabledInGame,
+      required final List<ModVariant> modVariants})
       : _modVariants = modVariants,
         super._();
 
   @override
   final String id;
+  @override
+  final bool isEnabledInGame;
   final List<ModVariant> _modVariants;
   @override
   List<ModVariant> get modVariants {
@@ -113,7 +128,7 @@ class _$ModImpl extends _Mod {
 
   @override
   String toString() {
-    return 'Mod(id: $id, modVariants: $modVariants)';
+    return 'Mod(id: $id, isEnabledInGame: $isEnabledInGame, modVariants: $modVariants)';
   }
 
   @override
@@ -122,13 +137,15 @@ class _$ModImpl extends _Mod {
         (other.runtimeType == runtimeType &&
             other is _$ModImpl &&
             (identical(other.id, id) || other.id == id) &&
+            (identical(other.isEnabledInGame, isEnabledInGame) ||
+                other.isEnabledInGame == isEnabledInGame) &&
             const DeepCollectionEquality()
                 .equals(other._modVariants, _modVariants));
   }
 
   @override
-  int get hashCode => Object.hash(
-      runtimeType, id, const DeepCollectionEquality().hash(_modVariants));
+  int get hashCode => Object.hash(runtimeType, id, isEnabledInGame,
+      const DeepCollectionEquality().hash(_modVariants));
 
   @JsonKey(ignore: true)
   @override
@@ -140,11 +157,14 @@ class _$ModImpl extends _Mod {
 abstract class _Mod extends Mod {
   const factory _Mod(
       {required final String id,
+      required final bool isEnabledInGame,
       required final List<ModVariant> modVariants}) = _$ModImpl;
   const _Mod._() : super._();
 
   @override
   String get id;
+  @override
+  bool get isEnabledInGame;
   @override
   List<ModVariant> get modVariants;
   @override

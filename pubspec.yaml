@@ -84,7 +84,7 @@ dependencies:
   google_fonts: ^6.2.1
   uuid: ^4.4.0
   dio: ^5.4.3+1
-  msix: ^3.16.7
+  stack_trace: ^1.11.1
 #  data_table_2: ^2.5.12
 
 dev_dependencies:
@@ -108,6 +108,7 @@ dev_dependencies:
   #analyzer: ^6.4.1
   flutter_launcher_icons: "^0.13.1"
   ffigen: ^11.0.0
+  msix: ^3.16.7
 
 flutter_launcher_icons:
   image_path: "assets/images/telos_faction_crest.png"
@@ -171,3 +172,14 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
+
+# Requires a signing certificate.
+msix_config:
+  display_name: TriOS
+  publisher_display_name: Wisp
+  identity_name: org.wisp.trios
+  msix_version: 1.0.0.0
+  logo_path: assets/images/telos_faction_crest.png
+  capabilities: internetClient
+  app_installer: #<-- app installer configuration
+    publish_folder_path: 'publish'

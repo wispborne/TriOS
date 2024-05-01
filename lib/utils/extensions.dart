@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -314,8 +315,7 @@ extension IterableExt<T> on Iterable<T> {
     return maxElement;
   }
 
-  List<T> sortedByDescending<R extends Comparable<R>>(
-      R Function(T) selector) {
+  List<T> sortedByDescending<R extends Comparable<R>>(R Function(T) selector) {
     return toList()..sort((a, b) => selector(b).compareTo(selector(a)));
   }
 
@@ -381,6 +381,17 @@ extension IterableExt<T> on Iterable<T> {
       }
       return false;
     });
+  }
+
+  Future<Iterable<T>> whereAsync(
+      FutureOr<bool> Function(T element) test) async {
+    var result = <T>[];
+    for (final element in this) {
+      if (await test(element)) {
+        result.add(element);
+      }
+    }
+    return result;
   }
 }
 

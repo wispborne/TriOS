@@ -27,6 +27,7 @@ class Constants {
   static const savesFolderName = "saves";
   static const archivesFolderName = "Mod_Backups";
   static const modInfoFileName = "mod_info.json";
+  static const unbrickedModInfoFileName = modInfoFileName;
 
   static const versionCheckerCsvPath = "data/config/version/version_files.csv";
   static const versionCheckerFileEnding = ".version";

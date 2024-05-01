@@ -4,7 +4,9 @@ import 'package:fimber/fimber.dart' as f;
 import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
 import 'package:platform_info/platform_info.dart';
+import 'package:stack_trace/stack_trace.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/pretty_printer_custom.dart';
 
 const logFileName = "TriOS_log.";
 
@@ -15,11 +17,7 @@ const useFimber = false;
 configureLogging({bool printPlatformInfo = false}) {
   if (!useFimber) {
     const logFolderName = "logs";
-
-    _consoleLogger = Logger(
-      level: kDebugMode ? Level.debug : Level.warning,
-      filter: DevelopmentFilter(), // No console logs in release mode.
-      printer: PrettyPrinter(
+    var consolePrinter = PrettyPrinterCustom(
         stackTraceBeginIndex: 1,
         methodCount: 3,
         // Anything other than 0 halves the speed of logging.
@@ -29,18 +27,30 @@ configureLogging({bool printPlatformInfo = false}) {
         printEmojis: true,
         printTime: true,
         // noBoxingByDefault: true,
-      ),
+        stackTraceMaxLines: 20,
+      );
+    FlutterError.onError = (FlutterErrorDetails details) {
+      print("Error :  ${details.exception}");
+      print(Trace.from(details.stack!).terse);
+    };
+
+
+    _consoleLogger = Logger(
+      level: kDebugMode ? Level.debug : Level.warning,
+      filter: DevelopmentFilter(), // No console logs in release mode.
+      printer: consolePrinter,
       output: ConsoleOutput(),
     );
     _fileLogger = Logger(
       level: kDebugMode ? Level.debug : Level.debug,
       filter: ProductionFilter(),
-      printer: PrettyPrinter(
+      printer: PrettyPrinterCustom(
         stackTraceBeginIndex: 1,
         methodCount: 3,
         colors: false,
         printEmojis: true,
         printTime: true,
+        stackTraceMaxLines: 20,
       ),
       output: AdvancedFileOutput(path: logFolderName, maxFileSizeKB: 25000),
     );

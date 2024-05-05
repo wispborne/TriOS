@@ -171,11 +171,11 @@ extension FileSystemEntityExt on FileSystemEntity {
     return File(p.normalize(absolute.path));
   }
 
-  void moveTo(Directory destDir, {bool overwrite = false}) {
+  Future<void> moveTo(Directory destDir, {bool overwrite = false}) async {
     if (this is Directory) {
-      (this as Directory).moveDirectory(destDir, overwrite: overwrite);
+      await (this as Directory).moveDirectory(destDir, overwrite: overwrite);
     } else if (this is File) {
-      (this as File).moveTo(destDir, overwrite: overwrite);
+      await (this as File).moveTo(destDir, overwrite: overwrite);
     }
   }
 
@@ -205,18 +205,18 @@ extension FileExt on File {
 
   File get normalize => File(p.normalize(absolute.path));
 
-  File moveTo(Directory destDir, {bool overwrite = false}) {
+  Future<File> moveTo(Directory destDir, {bool overwrite = false}) async {
     var destFile = destDir.resolve(nameWithExtension);
-    if (destFile.existsSync()) {
+    if (await destFile.exists()) {
       if (overwrite) {
-        destFile.deleteSync();
+        await destFile.delete();
       } else {
         Fimber.i(
             "Skipping file move (file already exists): $this to $destFile");
         return this;
       }
     }
-    return renameSync(destFile.path).normalize;
+    return (await rename(destFile.path)).normalize;
   }
 
   String readAsStringSyncAllowingMalformed() {
@@ -315,8 +315,38 @@ extension IterableExt<T> on Iterable<T> {
     return maxElement;
   }
 
-  List<T> sortedByDescending<R extends Comparable<R>>(R Function(T) selector) {
-    return toList()..sort((a, b) => selector(b).compareTo(selector(a)));
+  List<T> sortedByButBetter<R extends Comparable<R>>(
+      R? Function(T item) selector,
+      {bool nullsLast = false}) {
+    if (isEmpty) return toList();
+    return toList()
+      ..sort((a, b) {
+        final aValue = selector(a);
+        final bValue = selector(b);
+        if (aValue == null) {
+          return nullsLast ? 1 : -1;
+        } else if (bValue == null) {
+          return nullsLast ? -1 : 1;
+        }
+        return aValue.compareTo(bValue);
+      });
+  }
+
+  List<T> sortedByDescending<R extends Comparable<R>>(
+      R? Function(T item) selector,
+      {bool nullsLast = true}) {
+    if (isEmpty) return toList();
+    return toList()
+      ..sort((a, b) {
+        final aValue = selector(a);
+        final bValue = selector(b);
+        if (aValue == null) {
+          return nullsLast ? 1 : -1;
+        } else if (bValue == null) {
+          return nullsLast ? -1 : 1;
+        }
+        return bValue.compareTo(aValue);
+      });
   }
 
   bool containsAll(Iterable<T> elements) {

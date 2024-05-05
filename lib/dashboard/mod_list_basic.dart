@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:collection/collection.dart';
-import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -18,8 +17,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:vs_scrollbar/vs_scrollbar.dart';
 
 import '../mod_manager/version_checker.dart';
+import '../models/mod.dart';
 import '../models/mod_variant.dart';
-import '../models/version.dart';
 import '../trios/app_state.dart';
 import '../trios/download_manager/download_manager.dart';
 import 'mod_list_basic_entry.dart';
@@ -38,16 +37,11 @@ class _ModListMiniState extends ConsumerState<ModListMini>
   @override
   Widget build(BuildContext context) {
     final enabledModIds = ref.watch(AppState.enabledModIds).valueOrNull;
-    final modListAsync = ref.watch(AppState.modVariants);
-    final modList = modListAsync.valueOrNull
-        ?.groupBy((ModVariant a) => a.modInfo.id)
-        .values
-        .map((variants) => variants.maxByOrNull((variant) =>
-            (variant.modInfo.version ?? const Version(raw: "0.0.0"))))
-        .whereType<ModVariant>()
-        .toList();
+    final modListAsync = ref.watch(AppState.mods);
+    final modVariants = ref.watch(AppState.modVariants);
+    final modList = modListAsync;
     final versionCheck = ref.watch(AppState.versionCheckResults).valueOrNull;
-    final isRefreshing = (modListAsync.isLoading ||
+    final isRefreshing = (modVariants.isLoading ||
         ref.watch(AppState.versionCheckResults).isLoading);
 
     return Padding(
@@ -100,10 +94,15 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                 iconSize: 20,
                                 constraints: const BoxConstraints(),
                                 onPressed: () {
-                                  if (modList == null) return;
                                   Clipboard.setData(ClipboardData(
                                       text:
-                                          "Mods (${modList.length})\n${modList.map((e) => false ? "${e.modInfo.id} ${e.modInfo.version}" : "${e.modInfo.name}  v${e.modInfo.version}  [${e.modInfo.id}]").join('\n')}"));
+                                          "Mods (${modList.length})\n${modList.map((mod) {
+                                    final variant =
+                                        mod.findFirstEnabledOrHighestVersion;
+                                    return false
+                                        ? "${mod.id} ${variant?.modInfo.version}"
+                                        : "${variant?.modInfo.name}  v${variant?.modInfo.version}  [${mod.id}]";
+                                  }).join('\n')}"));
                                   ScaffoldMessenger.of(context)
                                       .showSnackBar(const SnackBar(
                                     content:
@@ -144,27 +143,33 @@ class _ModListMiniState extends ConsumerState<ModListMini>
             ],
           ),
           Expanded(
-            child: modListAsync.when(
+            child: modVariants.when(
               data: (_) {
-                var modsWithUpdates = modList!
-                    .map((e) => e as ModVariant?)
+                var modsWithUpdates = modList
+                    .map((e) => e as Mod?)
                     .filter((mod) {
-                      if (mod?.versionCheckerInfo == null) return false;
+                      final variant = mod?.findHighestVersion;
+                      if (variant?.versionCheckerInfo == null) return false;
 
-                      final localVersionCheck = mod!.versionCheckerInfo;
-                      final remoteVersionCheck = versionCheck?[mod.smolId];
+                      final localVersionCheck = variant!.versionCheckerInfo;
+                      final remoteVersionCheck = versionCheck?[variant.smolId];
                       return compareLocalAndRemoteVersions(
                                   localVersionCheck, remoteVersionCheck) ==
                               -1 &&
                           remoteVersionCheck?.error == null;
                     })
-                    .sortedBy((info) => info?.modInfo.name ?? "")
+                    .sortedBy((info) =>
+                        info?.findFirstEnabledOrHighestVersion?.modInfo.name ??
+                        "")
                     .toList();
                 final listItems = modsWithUpdates +
                     (modsWithUpdates.isEmpty ? [] : [null]) + // Divider
                     (modList
                         // .filter((mod) => mod.versionCheckerInfo == null)
-                        .sortedBy((info) => info.modInfo.name ?? "")
+                        .sortedBy((info) =>
+                            info.findFirstEnabledOrHighestVersion?.modInfo
+                                .name ??
+                            "")
                         .toList());
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -219,8 +224,8 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                         ),
                                       ]);
                                 }
-                                final modVariant = listItems[index];
-                                if (modVariant == null) {
+                                final mod = listItems[index];
+                                if (mod == null) {
                                   return Column(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
@@ -238,13 +243,12 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                 }
 
                                 return ContextMenuRegion(
-                                  contextMenu:
-                                      buildContextMenu(modVariant, ref),
+                                  contextMenu: buildContextMenu(mod, ref),
                                   child: ModListBasicEntry(
-                                      mod: modVariant,
-                                      isEnabled: enabledModIds?.contains(
-                                              modVariant.modInfo.id) ??
-                                          false),
+                                      mod: mod,
+                                      isEnabled:
+                                          enabledModIds?.contains(mod.id) ??
+                                              false),
                                 );
                               }),
                         ),
@@ -266,16 +270,17 @@ class _ModListMiniState extends ConsumerState<ModListMini>
     );
   }
 
-  void _onClickedDownloadModUpdatesDialog(List<ModVariant?> modsWithUpdates,
+  void _onClickedDownloadModUpdatesDialog(List<Mod?> modsWithUpdates,
       Map<String, VersionCheckResult>? versionCheck, BuildContext context) {
     downloadUpdates() {
       for (var mod in modsWithUpdates) {
         if (mod == null) continue;
-        final remoteVersionCheck = versionCheck?[mod.smolId];
+        final variant = mod.findHighestVersion!;
+        final remoteVersionCheck = versionCheck?[variant.smolId];
         if (remoteVersionCheck?.remoteVersion != null) {
           downloadUpdateViaBrowser(
               remoteVersionCheck!.remoteVersion!, ref, context,
-              modInfo: mod.modInfo);
+              modInfo: variant.modInfo);
         }
       }
     }
@@ -309,9 +314,10 @@ class _ModListMiniState extends ConsumerState<ModListMini>
     }
   }
 
-  ContextMenu buildContextMenu(ModVariant modVariant, WidgetRef ref) {
+  ContextMenu buildContextMenu(Mod mod, WidgetRef ref) {
     final currentStarsectorVersion =
         ref.read(appSettings.select((s) => s.lastStarsectorVersion));
+    final modVariant = mod.findFirstEnabledOrHighestVersion!;
     return ContextMenu(
       entries: <ContextMenuEntry>[
         MenuItem(

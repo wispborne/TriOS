@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/extensions.dart';
 
 import '../models/mod.dart';
 import '../models/mod_variant.dart';
+import '../models/version.dart';
+import '../utils/logging.dart';
 
 class ModVersionSelectionDropdown extends ConsumerStatefulWidget {
   final Mod mod;
@@ -26,10 +29,25 @@ class _ModVersionSelectionDropdownState
 
     if (isSingleVariant) {
       return ElevatedButton(
-          onPressed: () {},
-          child: Text(widget.mod.modVariants.first.isEnabled(enabledMods)
-              ? "Disable"
-              : "Enable"));
+          onPressed: () async {
+            // Enable if disabled, disable if enabled
+            try {
+              if (widget.mod.hasEnabledVariant) {
+                await changeActiveModVariant(widget.mod, null, ref);
+              } else {
+                await changeActiveModVariant(
+                    widget.mod, widget.mod.findHighestVersion, ref);
+              }
+            } catch (e, st) {
+              Fimber.e("Error changing active mod variant: $e\n$st");
+            }
+
+            // TODO update ONLY the mod that changed and any dependents/dependencies.
+            ref.invalidate(AppState.modVariants);
+          },
+          child: Text(
+            widget.mod.hasEnabledVariant ? "Disable" : "Enable",
+          ));
     }
 
     // Multiple variants tracked
@@ -42,10 +60,8 @@ class _ModVersionSelectionDropdownState
           ),
         )
         .toList()
-        .sortedByDescending<String>(
-            // TODO implement comparable in Version
-            (item) => item.value?.modInfo.version.toString() ?? "")
-      ..add(const DropdownMenuItem(child: Text("Disable"), value: null)));
+        .sortedByDescending<Version>((item) => item.value?.modInfo.version)
+      ..add(const DropdownMenuItem(value: null, child: Text("Disabled"))));
 
     return DropdownButton(
       items: items,

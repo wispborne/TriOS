@@ -37,10 +37,14 @@ Future<List<ModVariant>> getModsVariantsInFolder(Directory modsFolder) async {
       }
 
       final modVariant = ModVariant(
-          modInfo: modInfo,
-          modsFolder: modFolder,
-          versionCheckerInfo: getVersionFile(modFolder)
-              ?.let((it) => getVersionCheckerInfo(it)));
+        modInfo: modInfo,
+        modsFolder: modFolder,
+        versionCheckerInfo:
+            getVersionFile(modFolder)?.let((it) => getVersionCheckerInfo(it)),
+        hasNonBrickedModInfo: await modFolder
+            .resolve(Constants.unbrickedModInfoFileName)
+            .exists(),
+      );
 
       // Screenshot mode
       // if (modVariant.modInfo.isCompatibleWithGame("0.97a-RC10") == GameCompatibility.compatible || (Random().nextBool() && Random().nextBool())) {
@@ -99,7 +103,8 @@ Future<ModInfo?> getModInfo(
     return modFolder
         .listSync()
         .whereType<File>()
-        .firstWhereOrNull((file) => file.nameWithExtension == "mod_info.json")
+        .firstWhereOrNull((file) => file.nameWithExtension.equalsAnyIgnoreCase(
+            [Constants.modInfoFileName, ...Constants.modInfoFileDisabledNames]))
         ?.let((modInfoFile) async {
       var rawString =
           await withFileHandleLimit(() => modInfoFile.readAsString());
@@ -136,26 +141,224 @@ Future<EnabledMods> getEnabledMods(Directory modsFolder) async {
       (await getEnabledModsFile(modsFolder).readAsString()).fixJsonToMap());
 }
 
-Future<void> disableMod(
-    String modInfoId, Directory modsFolder, WidgetRef ref) async {
-  var enabledMods = await getEnabledMods(modsFolder);
-  enabledMods = enabledMods.copyWith(
-      enabledMods:
-          enabledMods.enabledMods.filter((id) => id != modInfoId).toSet());
+// Future<void> disableMod(
+//     String modInfoId, Directory modsFolder, WidgetRef ref) async {
+//   var enabledMods = await getEnabledMods(modsFolder);
+//   enabledMods = enabledMods.copyWith(
+//       enabledMods:
+//           enabledMods.enabledMods.filter((id) => id != modInfoId).toSet());
+//
+//   final enabledModsFile = getEnabledModsFile(modsFolder);
+//   await enabledModsFile.writeAsString(jsonEncode(enabledMods.toJson()));
+//   ref.invalidate(AppState.enabledMods);
+// }
 
-  final enabledModsFile = getEnabledModsFile(modsFolder);
-  await enabledModsFile.writeAsString(jsonEncode(enabledMods.toJson()));
-  ref.invalidate(AppState.enabledMods);
+Future<void> changeActiveModVariant(
+    Mod mod, ModVariant? modVariant, WidgetRef ref) async {
+  Fimber.i(
+      "Changing active variant of ${mod.id} to ${modVariant?.smolId}. (current: ${mod.findFirstEnabled?.smolId}).");
+
+  final modVariantParentModId = modVariant?.modInfo;
+  if (modVariantParentModId != null && mod.id != modVariantParentModId.id) {
+    final errMsg =
+        "Mod variant ${modVariant?.smolId} does not belong to mod ${mod.id}.";
+    Fimber.e(errMsg);
+    throw Exception(errMsg);
+  }
+
+  // Optimization: If the mod variant is already enabled, don't do anything.
+  if (modVariant != null && mod.isEnabled(modVariant)) {
+    // Ensure that this is the only active variant.
+    // If there are somehow more than one active variant for the mod, don't return here,
+    // run the rest of the method to clean that up.
+    if (mod.modVariants.countWhere((it) => mod.isEnabled(it)) <= 1) {
+      Fimber.i("Variant ${modVariant.smolId} is already enabled.");
+      return;
+    }
+  }
+
+  final activeVariants =
+      mod.modVariants.where((it) => mod.isEnabled(it)).toList();
+  if (modVariant == null && activeVariants.isEmpty) {
+    Fimber.i("No variants active, nothing to do! $mod");
+    return;
+  }
+
+  // Disable all active mod variants
+  // or variants that in the mod folder while the mod itself is disabled
+  // (except for the variant we want to actually enable, if that's already active).
+  // There should only ever be one active but might as well be careful.
+  for (var variant in activeVariants) {
+    if (variant != modVariant) {
+      try {
+        await _disableModVariant(variant, ref, changeFileExtension: true);
+      } catch (e, st) {
+        Fimber.e("Error disabling mod variant: $e", ex: e, stacktrace: st);
+      }
+    }
+  }
+
+  // Enable the new variant
+//   val result = if (modVariant != null) {
+//     // Enable the one we want.
+//     // Slower: Reload, since we just disabled it
+// //                val freshModVariant =
+//     modLoader.reload(listOf(mod.id))?.mods?.flatMap { it.variants }
+//       ?.first { it.smolId == modVariant.smolId }
+//   ?: kotlin.run {
+//   val error = "After disabling, couldn't find mod variant ${modVariant.smolId}."
+//   Timber.w { error }
+//   return Result.failure(RuntimeException(error))
+//   }
+//   // Faster: Assume we disabled it and change the mod to be disabled.
+// //                modVariant.mod = modVariant.mod.copy(isEnabledInGame = false)
+//   modModificationStateHolder.state.update {
+//   it.toMutableMap().apply {
+//   this[mod.id] =
+//   ModModificationState.EnablingVariant
+//   }
+//   }
+//   staging.enableModVariant(modVariant, modLoader)
+//   } else {
+//   Result.success(Unit)
+//   }
+
+  if (modVariant != null) {
+    _enableModVariant(modVariant, ref, enableInVanillaLauncher: true);
+  }
 }
 
-Future<void> enableMod(
-    String modInfoId, Directory modsFolder, WidgetRef ref) async {
-  var enabledMods = await getEnabledMods(modsFolder);
+Future<void> _enableModVariant(
+  ModVariant modVariant,
+  WidgetRef ref, {
+  bool enableInVanillaLauncher = true,
+}) async {
+  final mods = ref.read(AppState.mods);
+  final mod = mods.firstWhereOrNull((mod) => mod.id == modVariant.modInfo.id);
+  final enabledMods = ref.read(AppState.enabledMods).valueOrNull;
+  Fimber.i("Enabling variant ${modVariant.smolId}");
+  final modsFolderPath = ref.read(appSettings).modsDir;
+
+  if (modsFolderPath == null || !modsFolderPath.existsSync()) {
+    throw Exception("Mods folder does not exist: $modsFolderPath");
+  }
+
+  if (enabledMods == null) {
+    throw Exception(
+        "Enabled mods is null, can't enable mod ${modVariant.smolId}.");
+  }
+
+  if (mod == null) {
+    throw Exception("Mod ${modVariant.modInfo.id} not found in mods.");
+  }
+
+  if (mod.isEnabled(modVariant)) {
+    Fimber.i("Variant ${modVariant.smolId} is already enabled.");
+    return;
+  }
+
+  // Look for any disabled mod_info files in the folder.
+  final disabledModInfoFiles = (await Constants.modInfoFileDisabledNames
+          .map((it) => modVariant.modsFolder.resolve(it).toFile())
+          .whereAsync((it) async => await it.isWritable()))
+      .toList();
+
+  // And re-enable one.
+  if (!modVariant.isModInfoEnabled) {
+    disabledModInfoFiles.firstOrNull?.let((disabledModInfoFile) async {
+      disabledModInfoFile.renameSync(
+          modVariant.modsFolder.resolve(Constants.modInfoFileName).path);
+      Fimber.i(
+          "Re-enabled ${modVariant.smolId}: renamed ${disabledModInfoFile.nameWithExtension} to ${Constants.modInfoFileName}.");
+    });
+  }
+
+  if (enableInVanillaLauncher && !mod.isEnabledInGame) {
+    await _enableModInEnabledMods(modVariant.modInfo.id, ref);
+  }
+}
+
+Future<void> _disableModVariant(
+  ModVariant modVariant,
+  WidgetRef ref, {
+  bool changeFileExtension = false,
+  bool disableInVanillaLauncher = true,
+}) async {
+  final mods = ref.read(AppState.mods);
+  Fimber.i("Disabling variant ${modVariant.smolId}");
+  final modInfoFile =
+      modVariant.modsFolder.resolve(Constants.unbrickedModInfoFileName);
+
+  if (!modInfoFile.existsSync()) {
+    throw Exception(
+        "mod_info.json not found in ${modVariant.modsFolder.absolute}");
+  }
+
+  if (changeFileExtension) {
+    modInfoFile.renameSync(modInfoFile.parent
+        .resolve(Constants.modInfoFileDisabledNames.first)
+        .path);
+    Fimber.i(
+        "Disabled ${modVariant.smolId}: renamed to ${Constants.modInfoFileDisabledNames.first}.");
+
+    if (disableInVanillaLauncher) {
+      final mod = modVariant.mod(mods)!;
+      if (mod.isEnabledInGame) {
+        Fimber.i(
+            "Disabling mod ${modVariant.modInfo.id} as part of disabling variant ${modVariant.smolId}.");
+        _disableModInEnabledMods(modVariant.modInfo.id, ref);
+      } else {
+        Fimber.i(
+            "Mod ${modVariant.modInfo.id} was already disabled in enabled_mods.json and won't be disabled as part of disabling variant ${modVariant.smolId}.");
+      }
+    }
+  }
+
+  // if (disableInVanillaLauncher) {
+  //   val mod = modVariant.mod(modsCache) ?: return Result.failure(NullPointerException())
+  //   if (mod.isEnabledInGame) {
+  //     Timber.i { "Disabling mod ${modVariant.modInfo.id} as part of disabling variant ${modVariant.smolId}." }
+  //     gameEnabledMods.disable(modVariant.modInfo.id)
+  //   } else {
+  //     Timber.i { "Mod ${modVariant.modInfo.id} was already disabled in enabled_mods.json and won't be disabled as part of disabling variant ${modVariant.smolId}." }
+  //   }
+  // }
+
+  Fimber.i("Disabling ${modVariant.smolId}: success.");
+}
+
+Future<void> _disableModInEnabledMods(String modId, WidgetRef ref) async {
+  var enabledMods = ref.read(AppState.enabledMods).valueOrNull;
+  final modsFolder = ref.read(appSettings).modsDir;
+  if (enabledMods == null || modsFolder == null) {
+    // We could create a new enabled_mods.json file, but if TriOS simply failed to
+    // get the file for some reason, we don't want to overwrite the existing file
+    // and wipe out the user's enabled mods.
+    Fimber.e("Enabled mods is null, can't disable mod $modId.");
+    return;
+  }
+
   enabledMods = enabledMods.copyWith(
-      enabledMods: enabledMods.enabledMods.toSet()..add(modInfoId));
+      enabledMods: enabledMods.enabledMods.filter((id) => id != modId).toSet());
+
   final enabledModsFile = getEnabledModsFile(modsFolder);
   await enabledModsFile.writeAsString(jsonEncode(enabledMods.toJson()));
-  ref.invalidate(AppState.enabledMods);
+}
+
+Future<void> _enableModInEnabledMods(String modId, WidgetRef ref) async {
+  var enabledMods = ref.read(AppState.enabledMods).valueOrNull;
+  final modsFolder = ref.read(appSettings).modsDir;
+  if (enabledMods == null || modsFolder == null) {
+    // We could create a new enabled_mods.json file, but if TriOS simply failed to
+    // get the file for some reason, we don't want to overwrite the existing file
+    // and wipe out the user's enabled mods.
+    Fimber.e("Enabled mods is null, can't enable mod $modId.");
+    return;
+  }
+  enabledMods = enabledMods.copyWith(
+      enabledMods: enabledMods.enabledMods.toSet()..add(modId));
+  final enabledModsFile = getEnabledModsFile(modsFolder);
+  await enabledModsFile.writeAsString(jsonEncode(enabledMods.toJson()));
 }
 
 Future<void> forceChangeModGameVersion(
@@ -195,25 +398,26 @@ GameCompatibility compareGameVersions(
 }
 
 extension DependencyExt on Dependency {
-  DependencyStateType isSatisfiedBy(ModInfo mod, EnabledMods enabledMods) {
-    if (id != mod.id) {
+  DependencyStateType isSatisfiedBy(
+      ModVariant variant, EnabledMods enabledMods) {
+    if (id != variant.modInfo.id) {
       return Missing();
     }
 
     //  && mod.version.compareTo(version!) < 0
     if (version != null) {
-      if (mod.version?.major != version!.major) {
-        return VersionInvalid(mod);
-      } else if (mod.version?.minor != version!.minor) {
-        return VersionWarning(mod);
+      if (variant.modInfo.version?.major != version!.major) {
+        return VersionInvalid(variant);
+      } else if (variant.modInfo.version?.minor != version!.minor) {
+        return VersionWarning(variant);
       }
     }
 
-    if (!mod.isEnabled(enabledMods)) {
-      return Disabled(mod);
+    if (!variant.modInfo.isEnabled(enabledMods)) {
+      return Disabled(variant);
     }
 
-    return Satisfied(mod);
+    return Satisfied(variant);
   }
 
   /// Searches [allMods] for the best possible match for this dependency.
@@ -225,7 +429,7 @@ extension DependencyExt on Dependency {
     }
 
     final satisfyResults = foundDependencies
-        .map((mod) => isSatisfiedBy(mod.modInfo, enabledMods))
+        .map((variant) => isSatisfiedBy(variant, enabledMods))
         .toList();
 
     // Return the least severe state.
@@ -284,7 +488,8 @@ Future<List<InstallModResult>> installModFromArchive(
       (it) => it.pathName.containsIgnoreCase(Constants.modInfoFileName));
 
   if (modInfoFiles.isEmpty) {
-    throw Exception("No mod_info.json file found in archive:\n${archiveFile.path}");
+    throw Exception(
+        "No mod_info.json file found in archive:\n${archiveFile.path}");
   }
 
   Fimber.i(
@@ -568,9 +773,9 @@ class DependencyState {
 
 /// mod: The mod that was checked as a possible dependency.
 sealed class DependencyStateType {
-  final ModInfo? mod;
+  final ModVariant? modVariant;
 
-  DependencyStateType({this.mod});
+  DependencyStateType({this.modVariant});
 }
 
 class Missing extends DependencyStateType {
@@ -578,18 +783,18 @@ class Missing extends DependencyStateType {
 }
 
 class Disabled extends DependencyStateType {
-  Disabled(ModInfo mod) : super(mod: mod);
+  Disabled(ModVariant modVariant) : super(modVariant: modVariant);
 }
 
 class VersionInvalid extends DependencyStateType {
-  VersionInvalid(ModInfo mod) : super(mod: mod);
+  VersionInvalid(ModVariant modVariant) : super(modVariant: modVariant);
 }
 
 /// Minor version mismatch.
 class VersionWarning extends DependencyStateType {
-  VersionWarning(ModInfo mod) : super(mod: mod);
+  VersionWarning(ModVariant modVariant) : super(modVariant: modVariant);
 }
 
 class Satisfied extends DependencyStateType {
-  Satisfied(ModInfo mod) : super(mod: mod);
+  Satisfied(ModVariant modVariant) : super(modVariant: modVariant);
 }

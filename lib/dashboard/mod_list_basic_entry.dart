@@ -12,6 +12,7 @@ import 'package:trios/widgets/tooltip_frame.dart';
 
 import '../mod_manager/mod_manager_logic.dart';
 import '../mod_manager/version_checker.dart';
+import '../models/mod.dart';
 import '../models/mod_variant.dart';
 import '../trios/app_state.dart';
 import '../trios/download_manager/download_manager.dart';
@@ -19,7 +20,7 @@ import '../trios/settings/settings.dart';
 
 /// Displays just the mods specified.
 class ModListBasicEntry extends ConsumerStatefulWidget {
-  final ModVariant mod;
+  final Mod mod;
   final bool isEnabled;
 
   const ModListBasicEntry(
@@ -33,7 +34,8 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
   @override
   Widget build(BuildContext context) {
     var versionCheck = ref.watch(AppState.versionCheckResults).valueOrNull;
-    final modVariant = widget.mod;
+    final mod = widget.mod;
+    final modVariant = mod.findFirstEnabledOrHighestVersion ?? mod.modVariants.first;
 
     final modInfo = modVariant.modInfo;
     final localVersionCheck = modVariant.versionCheckerInfo;
@@ -246,9 +248,11 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
 
                   try {
                     if (isCurrentlyEnabled) {
-                      disableMod(modInfo.id, modsFolder, ref);
+                      // Disable
+                      changeActiveModVariant(mod, null, ref);
                     } else {
-                      enableMod(modInfo.id, modsFolder, ref);
+                      // Enable highest version
+                      changeActiveModVariant(mod, mod.findHighestVersion, ref);
                     }
                   } catch (e) {
                     showSnackBar(

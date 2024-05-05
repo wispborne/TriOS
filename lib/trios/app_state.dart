@@ -96,6 +96,10 @@ class AppState {
     return ref.watch(enabledMods).value?.enabledMods.toList() ?? [];
   });
 
+  static final modsState = Provider<Map<String, ModState>>((ref) {
+    return {};
+  });
+
   static final starsectorVersion = FutureProvider<String?>((ref) async {
     final gamePath =
         ref.watch(appSettings.select((value) => value.gameDir))?.toDirectory();
@@ -204,4 +208,11 @@ Future<T> withFileHandleLimit<T>(Future<T> Function() function) async {
   } finally {
     currentFileHandles--;
   }
+}
+
+enum ModState {
+  disablingVariants,
+  deletingVariants,
+  enablingVariant,
+  backingUpVariant,
 }

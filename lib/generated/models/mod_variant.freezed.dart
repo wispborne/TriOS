@@ -20,6 +20,7 @@ mixin _$ModVariant {
   VersionCheckerInfo? get versionCheckerInfo =>
       throw _privateConstructorUsedError;
   Directory get modsFolder => throw _privateConstructorUsedError;
+  bool get hasNonBrickedModInfo => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
   $ModVariantCopyWith<ModVariant> get copyWith =>
@@ -35,7 +36,8 @@ abstract class $ModVariantCopyWith<$Res> {
   $Res call(
       {ModInfo modInfo,
       VersionCheckerInfo? versionCheckerInfo,
-      Directory modsFolder});
+      Directory modsFolder,
+      bool hasNonBrickedModInfo});
 
   $ModInfoCopyWith<$Res> get modInfo;
   $VersionCheckerInfoCopyWith<$Res>? get versionCheckerInfo;
@@ -57,6 +59,7 @@ class _$ModVariantCopyWithImpl<$Res, $Val extends ModVariant>
     Object? modInfo = null,
     Object? versionCheckerInfo = freezed,
     Object? modsFolder = null,
+    Object? hasNonBrickedModInfo = null,
   }) {
     return _then(_value.copyWith(
       modInfo: null == modInfo
@@ -71,6 +74,10 @@ class _$ModVariantCopyWithImpl<$Res, $Val extends ModVariant>
           ? _value.modsFolder
           : modsFolder // ignore: cast_nullable_to_non_nullable
               as Directory,
+      hasNonBrickedModInfo: null == hasNonBrickedModInfo
+          ? _value.hasNonBrickedModInfo
+          : hasNonBrickedModInfo // ignore: cast_nullable_to_non_nullable
+              as bool,
     ) as $Val);
   }
 
@@ -107,7 +114,8 @@ abstract class _$$ModVariantImplCopyWith<$Res>
   $Res call(
       {ModInfo modInfo,
       VersionCheckerInfo? versionCheckerInfo,
-      Directory modsFolder});
+      Directory modsFolder,
+      bool hasNonBrickedModInfo});
 
   @override
   $ModInfoCopyWith<$Res> get modInfo;
@@ -129,6 +137,7 @@ class __$$ModVariantImplCopyWithImpl<$Res>
     Object? modInfo = null,
     Object? versionCheckerInfo = freezed,
     Object? modsFolder = null,
+    Object? hasNonBrickedModInfo = null,
   }) {
     return _then(_$ModVariantImpl(
       modInfo: null == modInfo
@@ -143,6 +152,10 @@ class __$$ModVariantImplCopyWithImpl<$Res>
           ? _value.modsFolder
           : modsFolder // ignore: cast_nullable_to_non_nullable
               as Directory,
+      hasNonBrickedModInfo: null == hasNonBrickedModInfo
+          ? _value.hasNonBrickedModInfo
+          : hasNonBrickedModInfo // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -153,7 +166,8 @@ class _$ModVariantImpl extends _ModVariant {
   const _$ModVariantImpl(
       {required this.modInfo,
       required this.versionCheckerInfo,
-      required this.modsFolder})
+      required this.modsFolder,
+      required this.hasNonBrickedModInfo})
       : super._();
 
   @override
@@ -162,10 +176,12 @@ class _$ModVariantImpl extends _ModVariant {
   final VersionCheckerInfo? versionCheckerInfo;
   @override
   final Directory modsFolder;
+  @override
+  final bool hasNonBrickedModInfo;
 
   @override
   String toString() {
-    return 'ModVariant(modInfo: $modInfo, versionCheckerInfo: $versionCheckerInfo, modsFolder: $modsFolder)';
+    return 'ModVariant(modInfo: $modInfo, versionCheckerInfo: $versionCheckerInfo, modsFolder: $modsFolder, hasNonBrickedModInfo: $hasNonBrickedModInfo)';
   }
 
   @override
@@ -177,12 +193,14 @@ class _$ModVariantImpl extends _ModVariant {
             (identical(other.versionCheckerInfo, versionCheckerInfo) ||
                 other.versionCheckerInfo == versionCheckerInfo) &&
             (identical(other.modsFolder, modsFolder) ||
-                other.modsFolder == modsFolder));
+                other.modsFolder == modsFolder) &&
+            (identical(other.hasNonBrickedModInfo, hasNonBrickedModInfo) ||
+                other.hasNonBrickedModInfo == hasNonBrickedModInfo));
   }
 
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, modInfo, versionCheckerInfo, modsFolder);
+  int get hashCode => Object.hash(runtimeType, modInfo, versionCheckerInfo,
+      modsFolder, hasNonBrickedModInfo);
 
   @JsonKey(ignore: true)
   @override
@@ -195,7 +213,8 @@ abstract class _ModVariant extends ModVariant {
   const factory _ModVariant(
       {required final ModInfo modInfo,
       required final VersionCheckerInfo? versionCheckerInfo,
-      required final Directory modsFolder}) = _$ModVariantImpl;
+      required final Directory modsFolder,
+      required final bool hasNonBrickedModInfo}) = _$ModVariantImpl;
   const _ModVariant._() : super._();
 
   @override
@@ -204,6 +223,8 @@ abstract class _ModVariant extends ModVariant {
   VersionCheckerInfo? get versionCheckerInfo;
   @override
   Directory get modsFolder;
+  @override
+  bool get hasNonBrickedModInfo;
   @override
   @JsonKey(ignore: true)
   _$$ModVariantImplCopyWith<_$ModVariantImpl> get copyWith =>

@@ -28,6 +28,12 @@ class Constants {
   static const archivesFolderName = "Mod_Backups";
   static const modInfoFileName = "mod_info.json";
   static const unbrickedModInfoFileName = modInfoFileName;
+  //     // Backwards compat, first one is the one used for new disable actions.
+  static const modInfoFileDisabledNames = [
+    "mod_info.json.disabled-by-TriOS",
+    "mod_info.json.disabled-by-SMOL",
+    "mod_info.json.disabled"
+  ];
 
   static const versionCheckerCsvPath = "data/config/version/version_files.csv";
   static const versionCheckerFileEnding = ".version";

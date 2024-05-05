@@ -44,8 +44,8 @@ class _Smol2State extends ConsumerState<Smol2> {
 
   @override
   Widget build(BuildContext context) {
-    final _modsToDisplay = sortFunction(ref.watch(AppState.mods));
-    final alternateRowColor = false;
+    final modsToDisplay = sortFunction(ref.watch(AppState.mods));
+    const alternateRowColor = false;
     final enabledMods =
         ref.watch(AppState.enabledMods).value?.enabledMods ?? {};
     const double versionSelectorWidth = 150;
@@ -129,9 +129,9 @@ class _Smol2State extends ConsumerState<Smol2> {
                             ""),
                   ),
                 ],
-                rows: (await Future.wait(_modsToDisplay
-                    .mapIndexed((index, mod) async {
-                      final bestVersion = await mod.findFirstEnabledOrHighestVersion;
+                rows: modsToDisplay
+                    .mapIndexed((index, mod) {
+                      final bestVersion = mod.findFirstEnabledOrHighestVersion;
                       if (bestVersion == null) return null;
 
                       return DataRow3(
@@ -140,7 +140,8 @@ class _Smol2State extends ConsumerState<Smol2> {
                         },
                         cells: [
                           DataCell(
-                            ModVersionSelectionDropdown(mod: mod, width: versionSelectorWidth),
+                            ModVersionSelectionDropdown(
+                                mod: mod, width: versionSelectorWidth),
                           ),
                           DataCell(
                             Tooltip(
@@ -201,7 +202,7 @@ class _Smol2State extends ConsumerState<Smol2> {
                                 Theme.of(context).highlightColor)
                             : null),
                       );
-                    })))
+                    })
                     .whereNotNull()
                     .toList(),
                 empty: Center(

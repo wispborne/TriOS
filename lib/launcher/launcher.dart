@@ -65,7 +65,7 @@ class Launcher extends ConsumerWidget {
 
   /// Can throw exception
   static launchGame(WidgetRef ref, BuildContext context) async {
-    final launchPrecheckFailures = await performLaunchPrecheck(ref);
+    final launchPrecheckFailures = performLaunchPrecheck(ref);
 
     if (launchPrecheckFailures.isNotEmpty) {
       showDialog(
@@ -100,16 +100,14 @@ class Launcher extends ConsumerWidget {
     }
   }
 
-  static Future<List<LaunchPrecheckError>> performLaunchPrecheck(
-      WidgetRef ref) async {
+  static List<LaunchPrecheckError> performLaunchPrecheck(WidgetRef ref) {
     final launchPrecheckFailures = <LaunchPrecheckError>[];
     final mods = ref.read(AppState.mods);
     final modsFolder = ref.read(appSettings.select((it) => it.modsDir));
     final enabledMods = ref.read(AppState.enabledMods).valueOrNull;
     final allVariants = ref.read(AppState.modVariants).valueOrNull ?? [];
     final enabledVariants =
-        (await Future.wait(mods.map((mod) => mod.findFirstEnabled)))
-            .whereNotNull();
+        (mods.map((mod) => mod.findFirstEnabled)).whereNotNull();
     final result = <LaunchPrecheckError>[];
 
     if (enabledMods == null ||
@@ -134,13 +132,16 @@ class Launcher extends ConsumerWidget {
               doFix: null,
             ));
             break;
-          case Disabled _:
+          case Disabled disabled:
             launchPrecheckFailures.add((
               message:
                   'Dependency ${dependency.name ?? dependency.id} is disabled',
               fixActionName: "Enable",
               doFix: () async {
-                enableMod(dependency.id!, modsFolder.toDirectory(), ref);
+                final mod = mods.firstWhereOrNull((mod) => mod.id == dependency.id);
+                if (mod != null) {
+                  changeActiveModVariant(mod, disabled.modVariant, ref);
+                }
               },
             ));
             break;
@@ -152,13 +153,16 @@ class Launcher extends ConsumerWidget {
               doFix: null,
             ));
             break;
-          case VersionWarning _:
+          case VersionWarning versionWarning:
             launchPrecheckFailures.add((
               message:
                   'Dependency ${dependency.name ?? dependency.id} has a different version, but may work.',
               fixActionName: "Enable",
               doFix: () async {
-                enableMod(dependency.id!, modsFolder.toDirectory(), ref);
+                final mod = mods.firstWhereOrNull((mod) => mod.id == dependency.id);
+                if (mod != null) {
+                  changeActiveModVariant(mod, versionWarning.modVariant, ref);
+                }
               },
             ));
             break;

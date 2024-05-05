@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/utils/extensions.dart';
@@ -16,32 +17,25 @@ class Mod with _$Mod {
     required List<ModVariant> modVariants,
   }) = _Mod;
 
-  Future<bool> isEnabled(ModVariant variant) async {
-    return isEnabledInGame && await variant.isModInfoEnabled;
+  bool isEnabled(ModVariant variant) {
+    return isEnabledInGame && variant.isModInfoEnabled;
   }
 
-  Future<List<ModVariant>> get enabledVariants async {
-    return (await modVariants.whereAsync((variant) => isEnabled(variant)))
-        .toList();
+  List<ModVariant> get enabledVariants {
+    return modVariants.where((variant) => isEnabled(variant)).toList();
   }
 
-  Future<ModVariant?> get findFirstEnabled async {
+  ModVariant? get findFirstEnabled {
     for (var variant in modVariants) {
-      if (await isEnabled(variant)) {
+      if (isEnabled(variant)) {
         return variant;
       }
     }
     return null;
   }
 
-  Future<ModVariant?> get findFirstDisabled async {
-    // return modVariants.firstWhereOrNull((variant) => !isEnabled(variant));
-    for (var variant in modVariants) {
-      if (!(await isEnabled(variant))) {
-        return variant;
-      }
-    }
-    return null;
+  ModVariant? get findFirstDisabled {
+    return modVariants.firstWhereOrNull((variant) => !isEnabled(variant));
   }
 
   ModVariant? get findHighestVersion {
@@ -49,16 +43,16 @@ class Mod with _$Mod {
         (variant) => variant.bestVersion ?? Version.parse("0.0.0"));
   }
 
-  Future<ModVariant?> get findFirstEnabledOrHighestVersion async {
-    return await findFirstEnabled ?? findHighestVersion;
+  ModVariant? get findFirstEnabledOrHighestVersion {
+    return findFirstEnabled ?? findHighestVersion;
   }
 
-  Future<bool> get hasEnabledVariant async {
-    return (await findFirstEnabled) != null;
+  bool get hasEnabledVariant {
+    return (findFirstEnabled) != null;
   }
 
-  Future<bool> get hasDisabledVariant async {
-    return (await findFirstDisabled) != null;
+  bool get hasDisabledVariant {
+    return (findFirstDisabled) != null;
   }
 }
 

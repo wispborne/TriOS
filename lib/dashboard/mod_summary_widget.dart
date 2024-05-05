@@ -169,14 +169,14 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
               padding: const EdgeInsets.only(left: 8),
               child: Text(
                   "${dep.name ?? dep.id} ${dep.version?.toString().append(" ") ?? ""}${switch (dependencyState) {
-                    Satisfied _ => "(found ${dependencyState.mod?.version})",
+                    Satisfied _ => "(found ${dependencyState.modVariant?.modInfo.version})",
                     Missing _ => "(missing)",
                     Disabled _ =>
-                      "(not enabled: ${dependencyState.mod?.version})",
+                      "(not enabled: ${dependencyState.modVariant?.modInfo.version})",
                     VersionInvalid _ =>
-                      "(wrong version: ${dependencyState.mod?.version})",
+                      "(wrong version: ${dependencyState.modVariant?.modInfo.version})",
                     VersionWarning _ =>
-                      "(found: ${dependencyState.mod?.version})",
+                      "(found: ${dependencyState.modVariant?.modInfo.version})",
                   }}",
                   style: theme.textTheme.labelMedium?.copyWith(
                       color: switch (dependencyState) {

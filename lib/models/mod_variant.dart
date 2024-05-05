@@ -3,10 +3,9 @@ import 'dart:io';
 import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:trios/models/enabled_mods.dart';
+import 'package:trios/models/mod.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/models/version_checker_info.dart';
-import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 
@@ -23,6 +22,7 @@ class ModVariant with _$ModVariant {
     required ModInfo modInfo,
     required VersionCheckerInfo? versionCheckerInfo,
     required Directory modsFolder,
+    required bool hasNonBrickedModInfo,
     // required File? backupFile,
   }) = _ModVariant;
 
@@ -78,10 +78,10 @@ class ModVariant with _$ModVariant {
         modInfo.version;
   }
 
-  Future<bool> get isModInfoEnabled async {
-    return await modsFolder
-        .resolve(Constants.unbrickedModInfoFileName)
-        .exists();
+  bool get isModInfoEnabled => hasNonBrickedModInfo;
+
+  Mod? mod(List<Mod> mods) {
+    return mods.firstWhereOrNull((mod) => mod.id == modInfo.id);
   }
 }
 

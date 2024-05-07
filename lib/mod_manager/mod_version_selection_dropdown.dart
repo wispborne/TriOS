@@ -77,10 +77,10 @@ class _ModVersionSelectionDropdownState
           );
         }).toList();
       },
-      onChanged: (ModVariant? variant) {
-        if (variant != null) {
-          // context.read(modManagerLogicProvider).selectModVariant(variant);
-        }
+      onChanged: (ModVariant? variant) async {
+        await changeActiveModVariant(widget.mod, variant, ref);
+        // TODO update ONLY the mod that changed and any dependents/dependencies.
+        ref.invalidate(AppState.modVariants);
       },
     );
   }

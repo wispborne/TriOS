@@ -13,56 +13,71 @@ class VersionCheckerNotifier
   @override
   Map<String, VersionCheckResult> build() {
     refresh(skipCache: false);
-    return {};
+    return _versionCheckResultsCache;
   }
 
   /// Time before the next version check can be done. Tracked per mod.
   static const versionCheckCooldown = Duration(minutes: 5);
 
+  /// Actual source of truth for the state, persists between rebuilds.
+  final Map<String, VersionCheckResult> _versionCheckResultsCache = {};
+
   // Executes async, updates state every time a Version Check http request is completed.
   void refresh({required bool skipCache}) {
     if (AppState.skipCacheOnNextVersionCheck || skipCache) {
-      state = const AsyncValue.data({}); // clears state
+      _versionCheckResultsCache.clear();
+      state = AsyncValue.data(_versionCheckResultsCache); // clears state
       AppState.skipCacheOnNextVersionCheck = false;
     }
-
-    final versionCheckResultsCache =
-        state.value ?? {}; // TODO change to just state
     var currentTime = DateTime.now();
 
-    // Automatically refreshes whenever the modVariants change.
+    // IMPORTANT: Automatically refreshes whenever the modVariants change.
     final modsRef = ref.watch(AppState.mods);
     // Only need to check the highest version of each mod for a new version, not every single variant lol.
-    final mods =
+    final variantsToCheck =
         modsRef.map((mod) => mod.findHighestVersion).whereNotNull().toList();
 
-    try {
-      mods.map((mod) {
-        if (versionCheckResultsCache[mod.smolId] != null) {
-          final lastCheck = versionCheckResultsCache[mod.smolId]!.timestamp;
-          if (skipCache ||
-              currentTime.difference(lastCheck) > versionCheckCooldown) {
-            // If enough time has passed since the last check (or we're ignoring the cache), check again.
-            return checkRemoteVersion(mod);
-          } else {
-            // Otherwise, return the cached result.
-            return Future.value(versionCheckResultsCache[mod.smolId]!);
-          }
+    final versionCheckFutures = variantsToCheck.map((mod) {
+      // Always check if never checked before.
+      if (_versionCheckResultsCache[mod.smolId] != null) {
+        final lastCheck = _versionCheckResultsCache[mod.smolId]!.timestamp;
+        if (skipCache ||
+            currentTime.difference(lastCheck) > versionCheckCooldown) {
+          // If enough time has passed since the last check (or we're ignoring the cache), check again.
+          return (mod, checkRemoteVersion(mod), wasCached: false);
         } else {
-          return checkRemoteVersion(mod);
+          // Otherwise, return the cached result.
+          return (
+            mod,
+            Future.value(_versionCheckResultsCache[mod.smolId]!),
+            wasCached: true
+          );
         }
-      }).forEach((futResult) => futResult.then((result) {
-            state = AsyncValue.data(state.value!
-              ..update(result.smolId, (value) => result,
-                  ifAbsent: () => result));
-          }));
-    } catch (e, st) {
-      Fimber.e("Error fetching remote version info: $e\n$st");
+      } else {
+        return (mod, checkRemoteVersion(mod), wasCached: false);
+      }
+    }).toList();
+
+    // Set up handlers for the futures.
+    for (var futResult in versionCheckFutures) {
+      final (mod, future, wasCached: wasCached) = futResult;
+      if (wasCached) {
+        continue; // No need to do anything if the data was already there.
+      }
+
+      future.then((result) {
+        Fimber.d("Caching remote version info for ${mod.modInfo.id}: $result");
+        _versionCheckResultsCache[mod.smolId] = result;
+        state = AsyncValue.data(_versionCheckResultsCache);
+      }).catchError((e, st) {
+        Fimber.e("Error fetching remote version info. Storing error. $e\n$st");
+        final errResult = VersionCheckResult(mod.smolId, null, e, null);
+        _versionCheckResultsCache[mod.smolId] = errResult;
+        state = AsyncValue.data(_versionCheckResultsCache);
+      });
     }
   }
 }
-
-// Map<String, VersionCheckResult> _versionCheckResultsCache = {};
 
 class VersionCheckResult {
   final String smolId;
@@ -74,6 +89,11 @@ class VersionCheckResult {
   VersionCheckResult(this.smolId, this.remoteVersion, this.error, this.uri,
       {DateTime? timestamp})
       : timestamp = timestamp ?? DateTime.now();
+
+  @override
+  String toString() {
+    return 'VersionCheckResult{smolId: $smolId, remoteVersion: $remoteVersion, error: $error, uri: $uri, timestamp: $timestamp}';
+  }
 }
 
 int? compareLocalAndRemoteVersions(

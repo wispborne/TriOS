@@ -212,7 +212,7 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                               dependency: dep,
                               satisfication: dep.isSatisfiedByAny(
                                   ref.read(AppState.modVariants).value ?? [],
-                                  ref.read(AppState.enabledMods).value!)
+                                  ref.read(AppState.enabledModsFile).value!)
                             ))
                         .toList();
 

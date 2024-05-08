@@ -104,7 +104,7 @@ class Launcher extends ConsumerWidget {
     final launchPrecheckFailures = <LaunchPrecheckError>[];
     final mods = ref.read(AppState.mods);
     final modsFolder = ref.read(appSettings.select((it) => it.modsDir));
-    final enabledMods = ref.read(AppState.enabledMods).valueOrNull;
+    final enabledMods = ref.read(AppState.enabledModsFile).valueOrNull;
     final allVariants = ref.read(AppState.modVariants).valueOrNull ?? [];
     final enabledVariants =
         (mods.map((mod) => mod.findFirstEnabled)).whereNotNull();

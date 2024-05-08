@@ -35,8 +35,16 @@ class AppState {
       return [];
     }
 
-    return await getModsVariantsInFolder(
+    final variants = await getModsVariantsInFolder(
         generateModFolderPath(gamePath)!.toDirectory());
+    for (var variant in variants) {
+      watchModFolder(
+          variant,
+          (ModVariant variant, File? modInfoFile) =>
+              Fimber.i("${variant.smolId} mod_info.json file changed: $modInfoFile"));
+    }
+
+    return variants;
   });
 
   /// String is the smolId
@@ -66,7 +74,7 @@ class AppState {
 
   static StreamController<File>? _enabledModsWatcher;
 
-  static final enabledMods = FutureProvider<EnabledMods>((ref) async {
+  static final enabledModsFile = FutureProvider<EnabledMods>((ref) async {
     final modsFolder =
         ref.watch(appSettings.select((value) => value.modsDir))?.toDirectory();
 
@@ -78,13 +86,19 @@ class AppState {
         return const EnabledMods({});
       }
 
+      // If the watcher is closed somehow, we need to recreate it.
+      if (_enabledModsWatcher != null && _enabledModsWatcher!.isClosed) {
+        _enabledModsWatcher = null;
+      }
+
+      // Watch the enabled_mods.json file for changes
       if (_enabledModsWatcher == null) {
         _enabledModsWatcher = StreamController<File>();
         _enabledModsWatcher?.stream.listen((event) {
           ref.invalidateSelf();
         });
 
-        pollFileForModification(enabledModsFile, _enabledModsWatcher!);
+        pollFileForModification(enabledModsFile, _enabledModsWatcher!, intervalMillis: 1500);
       }
 
       var enabledMods = await getEnabledMods(modsFolder);
@@ -93,7 +107,7 @@ class AppState {
   });
 
   static final enabledModIds = FutureProvider<List<String>>((ref) async {
-    return ref.watch(enabledMods).value?.enabledMods.toList() ?? [];
+    return ref.watch(enabledModsFile).value?.enabledMods.toList() ?? [];
   });
 
   static final modsState = Provider<Map<String, ModState>>((ref) {

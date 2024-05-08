@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -228,6 +229,37 @@ Future<void> changeActiveModVariant(
   }
 }
 
+/// SmolId, StreamController.
+final Map<String, StreamController<File?>> _modFoldersBeingWatched = {};
+
+watchModFolder(ModVariant variant,
+    Function(ModVariant variant, File? modInfoFile) onUpdated) async {
+  if (_modFoldersBeingWatched[variant.smolId]?.isClosed != true &&
+      _modFoldersBeingWatched[variant.smolId]?.hasListener == true) {
+    Fimber.i(
+        "Watcher for ${variant.smolId} is open and has a listener, not rewatching.");
+    return;
+  }
+
+  var controller =
+      _modFoldersBeingWatched[variant.smolId] ?? StreamController<File?>();
+
+  // If the watcher is closed somehow, we need to recreate it.
+  if (controller.isClosed) {
+    controller = StreamController<File?>();
+    _modFoldersBeingWatched[variant.smolId] = controller;
+  }
+
+  // Watch the enabled_mods.json file for changes.
+  final modInfoFile =
+      variant.modsFolder.resolve(Constants.modInfoFileName).toFile();
+  Fimber.i("Watching for changes: ${modInfoFile.absolute}");
+  pollFileForModification(modInfoFile, controller);
+  controller.stream.listen((event) {
+    onUpdated(variant, event);
+  });
+}
+
 Future<void> _enableModVariant(
   ModVariant modVariant,
   WidgetRef ref, {
@@ -235,7 +267,7 @@ Future<void> _enableModVariant(
 }) async {
   final mods = ref.read(AppState.mods);
   final mod = mods.firstWhereOrNull((mod) => mod.id == modVariant.modInfo.id);
-  final enabledMods = ref.read(AppState.enabledMods).valueOrNull;
+  final enabledMods = ref.read(AppState.enabledModsFile).valueOrNull;
   Fimber.i("Enabling variant ${modVariant.smolId}");
   final modsFolderPath = ref.read(appSettings).modsDir;
 
@@ -328,7 +360,7 @@ Future<void> _disableModVariant(
 }
 
 Future<void> _disableModInEnabledMods(String modId, WidgetRef ref) async {
-  var enabledMods = ref.read(AppState.enabledMods).valueOrNull;
+  var enabledMods = ref.read(AppState.enabledModsFile).valueOrNull;
   final modsFolder = ref.read(appSettings).modsDir;
   if (enabledMods == null || modsFolder == null) {
     // We could create a new enabled_mods.json file, but if TriOS simply failed to
@@ -346,7 +378,7 @@ Future<void> _disableModInEnabledMods(String modId, WidgetRef ref) async {
 }
 
 Future<void> _enableModInEnabledMods(String modId, WidgetRef ref) async {
-  var enabledMods = ref.read(AppState.enabledMods).valueOrNull;
+  var enabledMods = ref.read(AppState.enabledModsFile).valueOrNull;
   final modsFolder = ref.read(appSettings).modsDir;
   if (enabledMods == null || modsFolder == null) {
     // We could create a new enabled_mods.json file, but if TriOS simply failed to

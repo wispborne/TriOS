@@ -227,18 +227,36 @@ TargetPlatform? get currentPlatform {
       (element) => element.name.toLowerCase() == Platform.operatingSystem);
 }
 
-pollFileForModification(File file, StreamController<File> streamController,
+/// CAREFUL. Make sure to close the stream controller when you're done with it.
+/// Does not return.
+/// Starts async polling every [intervalMillis] for changes in the file's last modified date.
+pollFileForModification(File file, StreamController<File?> streamController,
     {int intervalMillis = 1000}) async {
-  var lastModified = file.lastModifiedSync();
+  var didExistLastCheck = file.existsSync();
+  // If the file doesn't exist when we start, use the current time as the last modified date.
+  var lastModified =
+      didExistLastCheck ? file.lastModifiedSync() : DateTime.now();
   final fileChangesInstance = streamController;
 
   while (!fileChangesInstance.isClosed) {
     await Future.delayed(Duration(milliseconds: intervalMillis));
+    // If the file doesn't exist, we don't need to check the last modified date.
+    // We do want to notify the listener that the file is gone, once.
+    if (!file.existsSync()) {
+      if (didExistLastCheck) {
+        didExistLastCheck = false;
+        streamController.add(null);
+      }
+      continue;
+    }
+
+    // Update listener if file is modified OR if it suddenly exists after not existing.
     final newModified = file.lastModifiedSync();
-    if (newModified.isAfter(lastModified)) {
+    if (!didExistLastCheck || newModified.isAfter(lastModified)) {
       lastModified = newModified;
       streamController.add(file);
     }
+    didExistLastCheck = true;
   }
 }
 
@@ -306,7 +324,8 @@ class JsonConverterBool implements JsonConverter<bool, dynamic> {
   bool fromJson(dynamic json) {
     if (json == null) return false;
     if (json is bool) return json;
-    if (json is String) return bool.tryParse(json, caseSensitive: false) ?? false;
+    if (json is String)
+      return bool.tryParse(json, caseSensitive: false) ?? false;
     return false;
   }
 

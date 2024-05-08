@@ -27,7 +27,7 @@ class ModSummaryWidget extends ConsumerStatefulWidget {
 class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
   @override
   Widget build(BuildContext context) {
-    final enabledMods = ref.watch(AppState.enabledMods).valueOrNull;
+    final enabledMods = ref.watch(AppState.enabledModsFile).valueOrNull;
     final modVariants = ref.watch(AppState.modVariants).valueOrNull;
     if (modVariants == null || enabledMods == null) return const SizedBox();
 

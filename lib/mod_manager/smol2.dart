@@ -47,7 +47,7 @@ class _Smol2State extends ConsumerState<Smol2> {
     final modsToDisplay = sortFunction(ref.watch(AppState.mods));
     const alternateRowColor = false;
     final enabledMods =
-        ref.watch(AppState.enabledMods).value?.enabledMods ?? {};
+        ref.watch(AppState.enabledModsFile).value?.enabledMods ?? {};
     const double versionSelectorWidth = 150;
 
     return !kDebugMode

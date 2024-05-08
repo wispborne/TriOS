@@ -24,7 +24,7 @@ class _ModVersionSelectionDropdownState
     extends ConsumerState<ModVersionSelectionDropdown> {
   @override
   Widget build(BuildContext context) {
-    final enabledMods = ref.watch(AppState.enabledMods).valueOrNull;
+    final enabledMods = ref.watch(AppState.enabledModsFile).valueOrNull;
     final isSingleVariant = widget.mod.modVariants.length == 1;
 
     if (isSingleVariant) {

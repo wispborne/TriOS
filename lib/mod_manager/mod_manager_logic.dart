@@ -229,36 +229,86 @@ Future<void> changeActiveModVariant(
   }
 }
 
-/// SmolId, StreamController.
-final Map<String, StreamController<File?>> _modFoldersBeingWatched = {};
+watchModsFolder(
+  Directory modsFolder,
+  Function(List<File> modInfoFilesFound) onUpdated,
+  StreamController cancelController,
+) async {
+  final lastPathsAndLastModified = <File, DateTime>{};
 
-watchModFolder(ModVariant variant,
-    Function(ModVariant variant, File? modInfoFile) onUpdated) async {
-  if (_modFoldersBeingWatched[variant.smolId]?.isClosed != true &&
-      _modFoldersBeingWatched[variant.smolId]?.hasListener == true) {
-    Fimber.i(
-        "Watcher for ${variant.smolId} is open and has a listener, not rewatching.");
-    return;
+  while (!cancelController.isClosed) {
+    // TODO make this configurable
+    await Future.delayed(const Duration(seconds: 10));
+    Fimber.d("Checking mod_info.json files in ${modsFolder.absolute}.");
+    final modInfoFiles = modsFolder
+        .listSync()
+        .whereType<Directory>()
+        .map((it) => getModInfoFile(it))
+        .whereNotNull()
+        .toList();
+
+    final newPathsAndLastModified =
+        modInfoFiles.map((it) => MapEntry(it, it.lastModifiedSync())).toMap();
+
+    if (!const MapEquality()
+        .equals(lastPathsAndLastModified, newPathsAndLastModified)) {
+      // TODO return diff for more efficient updates
+      lastPathsAndLastModified.clear();
+      lastPathsAndLastModified.addAll(newPathsAndLastModified);
+      onUpdated(modInfoFiles);
+    }
   }
-
-  var controller =
-      _modFoldersBeingWatched[variant.smolId] ?? StreamController<File?>();
-
-  // If the watcher is closed somehow, we need to recreate it.
-  if (controller.isClosed) {
-    controller = StreamController<File?>();
-    _modFoldersBeingWatched[variant.smolId] = controller;
-  }
-
-  // Watch the enabled_mods.json file for changes.
-  final modInfoFile =
-      variant.modsFolder.resolve(Constants.modInfoFileName).toFile();
-  Fimber.i("Watching for changes: ${modInfoFile.absolute}");
-  pollFileForModification(modInfoFile, controller);
-  controller.stream.listen((event) {
-    onUpdated(variant, event);
-  });
 }
+
+/// Looks for a mod_info.json file in the mod folder. Returns a disabled one if no enabled one is found.
+File? getModInfoFile(Directory modFolder) {
+  final regularModInfoFile =
+      modFolder.resolve(Constants.modInfoFileName).toFile();
+  if (regularModInfoFile.existsSync()) {
+    return regularModInfoFile;
+  }
+
+  for (var disabledModInfoFileName in Constants.modInfoFileDisabledNames) {
+    final disabledModInfoFile =
+        modFolder.resolve(disabledModInfoFileName).toFile();
+    if (disabledModInfoFile.existsSync()) {
+      return disabledModInfoFile;
+    }
+  }
+
+  return null;
+}
+
+// /// SmolId, StreamController.
+// final Map<String, StreamController<File?>> _modFoldersBeingWatched = {};
+//
+// watchSingleModFolder(ModVariant variant,
+//     Function(ModVariant variant, File? modInfoFile) onUpdated) async {
+//   if (_modFoldersBeingWatched[variant.smolId]?.isClosed != true &&
+//       _modFoldersBeingWatched[variant.smolId]?.hasListener == true) {
+//     Fimber.i(
+//         "Watcher for ${variant.smolId} is open and has a listener, not rewatching.");
+//     return;
+//   }
+//
+//   var controller =
+//       _modFoldersBeingWatched[variant.smolId] ?? StreamController<File?>();
+//
+//   // If the watcher is closed somehow, we need to recreate it.
+//   if (controller.isClosed) {
+//     controller = StreamController<File?>();
+//     _modFoldersBeingWatched[variant.smolId] = controller;
+//   }
+//
+//   // Watch the enabled_mods.json file for changes.
+//   final modInfoFile =
+//       variant.modsFolder.resolve(Constants.modInfoFileName).toFile();
+//   Fimber.i("Watching for changes: ${modInfoFile.absolute}");
+//   pollFileForModification(modInfoFile, controller);
+//   controller.stream.listen((event) {
+//     onUpdated(variant, event);
+//   });
+// }
 
 Future<void> _enableModVariant(
   ModVariant modVariant,

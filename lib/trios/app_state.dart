@@ -28,6 +28,7 @@ class AppState {
       StateProvider<DownloadProgress?>((ref) => null);
 
   /// Master list of all mod variants found in the mods folder.
+  static var _cancelController = StreamController<void>();
   static final modVariants = FutureProvider<List<ModVariant>>((ref) async {
     final gamePath =
         ref.watch(appSettings.select((value) => value.gameDir))?.toDirectory();
@@ -37,12 +38,22 @@ class AppState {
 
     final variants = await getModsVariantsInFolder(
         generateModFolderPath(gamePath)!.toDirectory());
-    for (var variant in variants) {
-      watchModFolder(
-          variant,
-          (ModVariant variant, File? modInfoFile) =>
-              Fimber.i("${variant.smolId} mod_info.json file changed: $modInfoFile"));
-    }
+    // for (var variant in variants) {
+    //   watchSingleModFolder(
+    //       variant,
+    //       (ModVariant variant, File? modInfoFile) =>
+    //           Fimber.i("${variant.smolId} mod_info.json file changed: $modInfoFile"));
+    // }
+    _cancelController.close();
+    _cancelController = StreamController<void>();
+    watchModsFolder(
+      gamePath,
+      (event) {
+        Fimber.i("Mods folder changed, invalidating mod variants");
+        ref.invalidateSelf();
+      },
+      _cancelController,
+    );
 
     return variants;
   });
@@ -98,7 +109,8 @@ class AppState {
           ref.invalidateSelf();
         });
 
-        pollFileForModification(enabledModsFile, _enabledModsWatcher!, intervalMillis: 1500);
+        pollFileForModification(enabledModsFile, _enabledModsWatcher!,
+            intervalMillis: 1500);
       }
 
       var enabledMods = await getEnabledMods(modsFolder);

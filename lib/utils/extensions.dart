@@ -573,3 +573,9 @@ extension HexColor on Color {
     return MaterialColor(color.value, swatch);
   }
 }
+
+extension ToMapExt<T, V> on Iterable<MapEntry<T, V>> {
+  Map<T, V> toMap() {
+    return Map.fromEntries(this);
+  }
+}

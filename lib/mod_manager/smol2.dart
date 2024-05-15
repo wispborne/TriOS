@@ -1,6 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/mod_manager/mod_version_selection_dropdown.dart';
@@ -10,6 +11,7 @@ import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 
+import '../dashboard/mod_list_basic.dart';
 import '../datatable3/data_table_3.dart';
 import '../models/mod.dart';
 
@@ -78,8 +80,8 @@ class _Smol2State extends ConsumerState<Smol2> {
                 ),
                 // onSelectAll: (selected) {},
                 columns: [
-                  DataColumn3(
-                    label: const Text(''), // Version selector
+                  const DataColumn3(
+                    label: Text(''), // Version selector
                     fixedWidth: versionSelectorWidth,
                   ),
                   const DataColumn3(
@@ -139,11 +141,15 @@ class _Smol2State extends ConsumerState<Smol2> {
                           if (selected != null) {}
                         },
                         cells: [
-                          DataCell(
+                          DataCell3(
                             ModVersionSelectionDropdown(
                                 mod: mod, width: versionSelectorWidth),
+                            builder: (context, child) => ContextMenuRegion(
+                                contextMenu: ModListMini.buildContextMenu(
+                                    mod, ref, context),
+                                child: child),
                           ),
-                          DataCell(
+                          DataCell3(
                             Tooltip(
                               message: bestVersion.modInfo.isTotalConversion
                                   ? "Total Conversion mods should not be run with any other mods, except Utility mods, unless explicitly stated to be compatible."
@@ -165,8 +171,12 @@ class _Smol2State extends ConsumerState<Smol2> {
                                 ),
                               ),
                             ),
+                            builder: (context, child) => ContextMenuRegion(
+                                contextMenu: ModListMini.buildContextMenu(
+                                    mod, ref, context),
+                                child: child),
                           ),
-                          DataCell(
+                          DataCell3(
                             SizedBox(
                               width: 30,
                               child: bestVersion.iconFilePath == null
@@ -174,28 +184,61 @@ class _Smol2State extends ConsumerState<Smol2> {
                                   : Image.file(
                                       bestVersion.iconFilePath!.toFile()),
                             ),
+                            builder: (context, child) => ContextMenuRegion(
+                                contextMenu: ModListMini.buildContextMenu(
+                                    mod, ref, context),
+                                child: child),
                           ),
-                          DataCell(Text(bestVersion.modInfo.name ?? "(no name)",
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold))),
-                          DataCell(Text(
-                              bestVersion.modInfo.author ?? "(no author)")),
-                          DataCell(Text(mod.modVariants
-                              .map((e) => e.modInfo.version)
-                              .join(", "))),
-                          const DataCell(
-                              Opacity(opacity: 0.5, child: Text("todo"))),
-                          DataCell(Text(
-                              bestVersion.modInfo.gameVersion ??
-                                  "(no game version)",
-                              style: compareGameVersions(
-                                          bestVersion.modInfo.gameVersion,
-                                          ref
-                                              .watch(appSettings)
-                                              .lastStarsectorVersion) ==
-                                      GameCompatibility.compatible
-                                  ? const TextStyle()
-                                  : const TextStyle(color: vanillaErrorColor))),
+                          DataCell3(
+                            Text(bestVersion.modInfo.name ?? "(no name)",
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold)),
+                            builder: (context, child) => ContextMenuRegion(
+                                contextMenu: ModListMini.buildContextMenu(
+                                    mod, ref, context),
+                                child: child),
+                          ),
+                          DataCell3(
+                            Text(bestVersion.modInfo.author ?? "(no author)"),
+                            builder: (context, child) => ContextMenuRegion(
+                                contextMenu: ModListMini.buildContextMenu(
+                                    mod, ref, context),
+                                child: child),
+                          ),
+                          DataCell3(
+                            Text(mod.modVariants
+                                .map((e) => e.modInfo.version)
+                                .join(", ")),
+                            builder: (context, child) => ContextMenuRegion(
+                                contextMenu: ModListMini.buildContextMenu(
+                                    mod, ref, context),
+                                child: child),
+                          ),
+                          DataCell3(
+                            Opacity(opacity: 0.5, child: Text("todo")),
+                            builder: (context, child) => ContextMenuRegion(
+                                contextMenu: ModListMini.buildContextMenu(
+                                    mod, ref, context),
+                                child: child),
+                          ),
+                          DataCell3(
+                            Text(
+                                bestVersion.modInfo.gameVersion ??
+                                    "(no game version)",
+                                style: compareGameVersions(
+                                            bestVersion.modInfo.gameVersion,
+                                            ref
+                                                .watch(appSettings)
+                                                .lastStarsectorVersion) ==
+                                        GameCompatibility.compatible
+                                    ? const TextStyle()
+                                    : const TextStyle(
+                                        color: vanillaErrorColor)),
+                            builder: (context, child) => ContextMenuRegion(
+                                contextMenu: ModListMini.buildContextMenu(
+                                    mod, ref, context),
+                                child: child),
+                          ),
                         ],
                         color: (alternateRowColor && index.isEven
                             ? WidgetStateProperty.all(

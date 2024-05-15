@@ -6,14 +6,12 @@ import 'package:trios/dashboard/version_check_text_readout.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
-import 'package:trios/widgets/disable_if_cannot_write_mods.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/tooltip_frame.dart';
 
 import '../mod_manager/mod_manager_logic.dart';
 import '../mod_manager/version_checker.dart';
 import '../models/mod.dart';
-import '../models/mod_variant.dart';
 import '../trios/app_state.dart';
 import '../trios/download_manager/download_manager.dart';
 import '../trios/settings/settings.dart';

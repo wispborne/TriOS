@@ -16,7 +16,6 @@ import 'package:trios/widgets/checkbox_with_label.dart';
 import 'package:trios/widgets/download_progress_indicator.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 
-import '../../jre_manager/jre_23.dart';
 import '../../themes/theme.dart';
 import '../../themes/theme_manager.dart';
 import '../../widgets/self_update_toast.dart';
@@ -45,6 +44,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   Widget build(BuildContext context) {
     final settings = ref.watch(appSettings);
 
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.all(4.0),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -78,7 +78,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         Padding(
           padding: const EdgeInsets.only(left: 4, top: 8.0),
           child: Text("Mods Folder: ${ref.read(appSettings).modsDir?.path}",
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              style: theme.textTheme.bodyMedium?.copyWith(
                   fontFeatures: [const FontFeature.tabularFigures()])),
         ),
         SizedBox.fromSize(size: const Size.fromHeight(8)),
@@ -105,7 +105,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         //           value: AppState.theme.isMaterial3()),
         //     )),
         SizedBox.fromSize(size: const Size.fromHeight(20)),
-        Text("Theme", style: Theme.of(context).textTheme.bodyLarge),
+        Text("Theme", style: theme.textTheme.bodyLarge),
         Row(
           children: [
             DropdownMenu(
@@ -116,9 +116,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         ThemeManager.convertToThemeData(theme.value)
                       ))
                   .map((obj) {
-                    var (key, theme, themeData) = obj;
+                    var (key, triosTheme, themeData) = obj;
                     return DropdownMenuEntry(
-                      value: theme.value,
+                      value: triosTheme.value,
                       style: ButtonStyle(
                           backgroundColor: WidgetStateProperty.all(
                               themeData.scaffoldBackgroundColor)),
@@ -138,16 +138,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                   color: themeData.colorScheme.secondary,
                                   child: const SizedBox.shrink())),
                           const SizedBox(width: 16),
-                          Text(theme.key,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyLarge
-                                  ?.copyWith(
-                                    color: themeData.colorScheme.onSurface,
-                                  )),
+                          Text(triosTheme.key,
+                              style: theme.textTheme.bodyLarge?.copyWith(
+                                color: themeData.colorScheme.onSurface,
+                              )),
                         ],
                       ),
-                      label: theme.key,
+                      label: triosTheme.key,
                     );
                   })
                   .distinctBy((e) => e.value)
@@ -165,10 +162,48 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   context, ThemeManager.allThemes.values.random()),
               icon: SvgImageIcon(
                 "assets/images/icon-dice.svg",
-                color: Theme.of(context).colorScheme.onSurface,
+                color: theme.colorScheme.onSurface,
               ),
             ),
           ],
+        ),
+        // Slider for number of seconds between mod info update checks (secondsBetweenModFolderChecks in mod_manager_logic.dart).
+        Padding(
+          padding: const EdgeInsets.only(top: 16),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Tooltip(
+                  message:
+                      "The number of seconds between checks for new, removed, or modified mods in the mods folder.",
+                  child: Text(
+                      "Mod folder check interval (seconds): ${ref.watch(appSettings.select((value) => value.secondsBetweenModFolderChecks))}",
+                      style: theme.textTheme.bodyLarge),
+                ),
+                Slider(
+                  value: ref
+                      .watch(appSettings.select(
+                          (value) => value.secondsBetweenModFolderChecks))
+                      .toDouble(),
+                  min: 1,
+                  max: 60,
+                  divisions: 59,
+                  label: ref
+                      .watch(appSettings.select(
+                          (value) => value.secondsBetweenModFolderChecks))
+                      .toString(),
+                  onChanged: (value) {
+                    ref.read(appSettings.notifier).update((state) =>
+                        state.copyWith(
+                            secondsBetweenModFolderChecks: value.toInt()));
+                  },
+                  inactiveColor: theme.colorScheme.onSurface.withOpacity(0.5),
+                ),
+              ],
+            ),
+          ),
         ),
         // Debugging line here
         SizedBox.fromSize(size: const Size.fromHeight(20)),

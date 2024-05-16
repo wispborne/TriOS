@@ -32,12 +32,13 @@ class AppState {
   static final modVariants = FutureProvider<List<ModVariant>>((ref) async {
     final gamePath =
         ref.watch(appSettings.select((value) => value.gameDir))?.toDirectory();
-    if (gamePath == null) {
+    final modsPath = ref.watch(appSettings.select((value) => value.modsDir));
+    if (gamePath == null || modsPath == null) {
       return [];
     }
 
     final variants = await getModsVariantsInFolder(
-        generateModFolderPath(gamePath)!.toDirectory());
+        modsPath.toDirectory());
     // for (var variant in variants) {
     //   watchSingleModFolder(
     //       variant,
@@ -47,7 +48,8 @@ class AppState {
     _cancelController.close();
     _cancelController = StreamController<void>();
     watchModsFolder(
-      gamePath,
+      modsPath,
+      ref,
       (event) {
         Fimber.i("Mods folder changed, invalidating mod variants");
         ref.invalidateSelf();

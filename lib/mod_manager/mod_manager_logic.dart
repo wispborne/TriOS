@@ -17,6 +17,7 @@ import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/utils/map_diff.dart';
 import 'package:trios/utils/util.dart';
 
 import '../chipper/utils.dart';
@@ -229,16 +230,23 @@ Future<void> changeActiveModVariant(
   }
 }
 
+final lastPathsAndLastModified = <String, DateTime>{};
+
+/// NOT THREAD SAFE.
+/// Watches the mods folder for changes and calls [onUpdated] when a mod_info.json file is added, removed, or modified.
+/// [cancelController] is used to cancel the stream.
+/// [onUpdated] is called with a list of all mod_info.json files found in the mods folder.
+/// Uses a static variable to keep track of the last paths and last modified times of the mod_info.json files.
 watchModsFolder(
   Directory modsFolder,
+  FutureProviderRef ref,
   Function(List<File> modInfoFilesFound) onUpdated,
   StreamController cancelController,
 ) async {
-  final lastPathsAndLastModified = <File, DateTime>{};
-
   while (!cancelController.isClosed) {
-    // TODO make this configurable
-    await Future.delayed(const Duration(seconds: 10));
+    final secondsBetweenChecks = ref.read(
+        appSettings.select((value) => value.secondsBetweenModFolderChecks));
+    await Future.delayed(Duration(seconds: secondsBetweenChecks));
     Fimber.d("Checking mod_info.json files in ${modsFolder.absolute}.");
     final modInfoFiles = modsFolder
         .listSync()
@@ -247,16 +255,19 @@ watchModsFolder(
         .whereNotNull()
         .toList();
 
-    final newPathsAndLastModified =
-        modInfoFiles.map((it) => MapEntry(it, it.lastModifiedSync())).toMap();
+    final newPathsAndLastModified = modInfoFiles
+        .map((it) => MapEntry(it.path, it.lastModifiedSync()))
+        .toMap();
 
-    if (!const MapEquality()
-        .equals(lastPathsAndLastModified, newPathsAndLastModified)) {
+    // if (lastPathsAndLastModified.isNotEmpty) {
+    final diff = lastPathsAndLastModified.compareWith(newPathsAndLastModified);
+    if (diff.hasChanged) {
       // TODO return diff for more efficient updates
       lastPathsAndLastModified.clear();
       lastPathsAndLastModified.addAll(newPathsAndLastModified);
       onUpdated(modInfoFiles);
     }
+    // }
   }
 }
 

@@ -54,6 +54,7 @@ class Settings with _$Settings {
     final bool? useJre23,
     @Default(LaunchSettings()) final LaunchSettings launchSettings,
     final String? lastStarsectorVersion,
+    @Default(5) final int secondsBetweenModFolderChecks,
   }) = _Settings;
 
   factory Settings.fromJson(Map<String, Object?> json) =>

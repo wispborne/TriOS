@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/mod_manager/mod_version_selection_dropdown.dart';
 import 'package:trios/themes/theme_manager.dart';
@@ -51,13 +52,17 @@ class _Smol2State extends ConsumerState<Smol2> {
     final enabledMods =
         ref.watch(AppState.enabledModsFile).value?.enabledMods ?? {};
     const double versionSelectorWidth = 150;
+    final theme = Theme.of(context);
+    const lightTextOpacity = 0.75;
+    final lightTextColor =
+        theme.colorScheme.onSurface.withOpacity(lightTextOpacity);
 
     return !kDebugMode
         ? Center(child: Image.asset("assets/images/construction.png"))
         : Padding(
             padding: const EdgeInsets.all(0),
             child: Theme(
-              data: Theme.of(context).copyWith(
+              data: theme.copyWith(
                 //disable ripple
                 splashFactory: NoSplash.splashFactory,
               ),
@@ -86,7 +91,7 @@ class _Smol2State extends ConsumerState<Smol2> {
                   ),
                   const DataColumn3(
                     label: Text(''), // Utility/Total Conversion icon
-                    fixedWidth: 30,
+                    fixedWidth: 35,
                   ),
                   const DataColumn3(
                     label: Text(''), // Mod icon
@@ -134,6 +139,7 @@ class _Smol2State extends ConsumerState<Smol2> {
                 rows: modsToDisplay
                     .mapIndexed((index, mod) {
                       final bestVersion = mod.findFirstEnabledOrHighestVersion;
+                      final enabledVersion = mod.findFirstEnabled;
                       if (bestVersion == null) return null;
 
                       return DataRow3(
@@ -190,50 +196,85 @@ class _Smol2State extends ConsumerState<Smol2> {
                                 child: child),
                           ),
                           DataCell3(
-                            Text(bestVersion.modInfo.name ?? "(no name)",
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold)),
-                            builder: (context, child) => ContextMenuRegion(
-                                contextMenu: ModListMini.buildContextMenu(
-                                    mod, ref, context),
-                                child: child),
-                          ),
-                          DataCell3(
-                            Text(bestVersion.modInfo.author ?? "(no author)"),
-                            builder: (context, child) => ContextMenuRegion(
-                                contextMenu: ModListMini.buildContextMenu(
-                                    mod, ref, context),
-                                child: child),
-                          ),
-                          DataCell3(
-                            Text(mod.modVariants
-                                .map((e) => e.modInfo.version)
-                                .join(", ")),
-                            builder: (context, child) => ContextMenuRegion(
-                                contextMenu: ModListMini.buildContextMenu(
-                                    mod, ref, context),
-                                child: child),
-                          ),
-                          DataCell3(
-                            Opacity(opacity: 0.5, child: Text("todo")),
-                            builder: (context, child) => ContextMenuRegion(
-                                contextMenu: ModListMini.buildContextMenu(
-                                    mod, ref, context),
-                                child: child),
-                          ),
-                          DataCell3(
                             Text(
-                                bestVersion.modInfo.gameVersion ??
-                                    "(no game version)",
-                                style: compareGameVersions(
-                                            bestVersion.modInfo.gameVersion,
-                                            ref
-                                                .watch(appSettings)
-                                                .lastStarsectorVersion) ==
-                                        GameCompatibility.compatible
-                                    ? const TextStyle()
-                                    : const TextStyle(
-                                        color: vanillaErrorColor)),
+                              bestVersion.modInfo.name ?? "(no name)",
+                              style: GoogleFonts.roboto(
+                                textStyle: theme.textTheme.labelLarge
+                                    ?.copyWith(fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                            builder: (context, child) => ContextMenuRegion(
+                                contextMenu: ModListMini.buildContextMenu(
+                                    mod, ref, context),
+                                child: child),
+                          ),
+                          DataCell3(
+                            Text(bestVersion.modInfo.author ?? "(no author)",
+                                style: theme.textTheme.labelLarge
+                                    ?.copyWith(color: lightTextColor)),
+                            builder: (context, child) => ContextMenuRegion(
+                                contextMenu: ModListMini.buildContextMenu(
+                                    mod, ref, context),
+                                child: child),
+                          ),
+                          DataCell3(
+                            Text("todo",
+                                style: theme.textTheme.labelLarge
+                                    ?.copyWith(color: lightTextColor)),
+                            builder: (context, child) => ContextMenuRegion(
+                                contextMenu: ModListMini.buildContextMenu(
+                                    mod, ref, context),
+                                child: child),
+                          ),
+                          DataCell3(mod.modVariants.isEmpty
+                              ? const Text("")
+                              : RichText(
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  text: TextSpan(
+                                    children: [
+                                      for (var i = 0;
+                                          i < mod.modVariants.length;
+                                          i++) ...[
+                                        if (i > 0)
+                                          TextSpan(
+                                            text: ', ',
+                                            style: theme.textTheme.labelLarge
+                                                ?.copyWith(
+                                                    color:
+                                                        lightTextColor), // Style for the comma
+                                          ),
+                                        TextSpan(
+                                          text: mod
+                                              .modVariants[i].modInfo.version
+                                              .toString(),
+                                          style: theme.textTheme.labelLarge
+                                              ?.copyWith(
+                                                  color: enabledVersion ==
+                                                          mod.modVariants[i]
+                                                      ? null
+                                                      : lightTextColor), // Style for the remaining items
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                )),
+                          DataCell3(
+                            Opacity(
+                              opacity: lightTextOpacity,
+                              child: Text(
+                                  bestVersion.modInfo.gameVersion ??
+                                      "(no game version)",
+                                  style: compareGameVersions(
+                                              bestVersion.modInfo.gameVersion,
+                                              ref
+                                                  .watch(appSettings)
+                                                  .lastStarsectorVersion) ==
+                                          GameCompatibility.compatible
+                                      ? theme.textTheme.labelLarge
+                                      : theme.textTheme.labelLarge
+                                          ?.copyWith(color: vanillaErrorColor)),
+                            ),
                             builder: (context, child) => ContextMenuRegion(
                                 contextMenu: ModListMini.buildContextMenu(
                                     mod, ref, context),

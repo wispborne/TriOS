@@ -48,32 +48,33 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     return Padding(
       padding: const EdgeInsets.all(4.0),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        TextField(
-          controller: gamePathTextController,
-          decoration: InputDecoration(
-            border: const OutlineInputBorder(),
-            errorText: gamePathExists ? null : "Path does not exist",
-            labelText: 'Starsector Folder',
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: gamePathTextController,
+                  decoration: InputDecoration(
+                    border: const OutlineInputBorder(),
+                    errorText: gamePathExists ? null : "Path does not exist",
+                    labelText: 'Starsector Folder',
+                  ),
+                  onChanged: (newGameDir) {
+                    tryUpdateGamePath(newGameDir, settings);
+                  },
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.folder),
+                onPressed: () async {
+                  var newGameDir = await FilePicker.platform.getDirectoryPath();
+                  if (newGameDir == null) return;
+                  tryUpdateGamePath(newGameDir, settings);
+                },
+              ),
+            ],
           ),
-          onChanged: (newGameDir) {
-            var dirExists = Directory(newGameDir).normalize.existsSync();
-
-            if (dirExists) {
-              ref.read(appSettings.notifier).update((state) {
-                var newModDirPath = settings.hasCustomModsDir
-                    ? settings.modsDir?.toDirectory()
-                    : generateModFolderPath(newGameDir.toDirectory());
-
-                return state.copyWith(
-                    gameDir: Directory(newGameDir).normalize,
-                    modsDir: newModDirPath);
-              });
-            }
-
-            setState(() {
-              gamePathExists = dirExists;
-            });
-          },
         ),
         Padding(
           padding: const EdgeInsets.only(left: 4, top: 8.0),
@@ -188,8 +189,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                           (value) => value.secondsBetweenModFolderChecks))
                       .toDouble(),
                   min: 1,
-                  max: 60,
-                  divisions: 59,
+                  max: 30,
+                  divisions: 29,
                   label: ref
                       .watch(appSettings.select(
                           (value) => value.secondsBetweenModFolderChecks))
@@ -348,4 +349,26 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       ]),
     );
   }
+
+  void tryUpdateGamePath(String newGameDir, Settings settings) {
+    var dirExists = validateGameFolderPath(newGameDir);
+
+    if (dirExists) {
+      ref.read(appSettings.notifier).update((state) {
+        var newModDirPath = settings.hasCustomModsDir
+            ? settings.modsDir?.toDirectory()
+            : generateModFolderPath(newGameDir.toDirectory());
+
+        return state.copyWith(
+            gameDir: Directory(newGameDir).normalize, modsDir: newModDirPath);
+      });
+    }
+
+    setState(() {
+      gamePathExists = dirExists;
+    });
+  }
+
+  bool validateGameFolderPath(String newGameDir) =>
+      Directory(newGameDir).normalize.existsSync();
 }

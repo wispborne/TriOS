@@ -244,6 +244,7 @@ watchModsFolder(
   StreamController cancelController,
 ) async {
   while (!cancelController.isClosed) {
+    // TODO reduce when window is not focused
     final secondsBetweenChecks = ref.read(
         appSettings.select((value) => value.secondsBetweenModFolderChecks));
     await Future.delayed(Duration(seconds: secondsBetweenChecks));

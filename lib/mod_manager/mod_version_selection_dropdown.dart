@@ -1,6 +1,9 @@
+import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
+import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/extensions.dart';
 
@@ -26,9 +29,31 @@ class _ModVersionSelectionDropdownState
   Widget build(BuildContext context) {
     final enabledMods = ref.watch(AppState.enabledModsFile).valueOrNull;
     final isSingleVariant = widget.mod.modVariants.length == 1;
+    final theme = Theme.of(context);
+    const buttonHeight = 35.00;
+    final buttonWidth = widget.width;
+    final buttonStyle = ElevatedButton.styleFrom(
+      foregroundColor: theme.colorScheme.onSecondary,
+      disabledForegroundColor: theme.colorScheme.onSecondary,
+      backgroundColor: theme.colorScheme.secondary,
+      disabledBackgroundColor: theme.colorScheme.secondary,
+      textStyle:
+          const TextStyle(fontWeight: FontWeight.w900, fontFamily: "Orbitron"),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+        side: BorderSide(
+          color: theme.colorScheme.secondary.darker(20),
+          // Slightly darker color
+          width: 2.0,
+        ),
+      ),
+    );
 
     if (isSingleVariant) {
-      return ElevatedButton(
+      return SizedBox(
+        width: buttonWidth,
+        height: buttonHeight,
+        child: ElevatedButton(
           onPressed: () async {
             // Enable if disabled, disable if enabled
             try {
@@ -45,9 +70,12 @@ class _ModVersionSelectionDropdownState
             // TODO update ONLY the mod that changed and any dependents/dependencies.
             ref.invalidate(AppState.modVariants);
           },
+          style: buttonStyle,
           child: Text(
             widget.mod.hasEnabledVariant ? "Disable" : "Enable",
-          ));
+          ),
+        ),
+      );
     }
 
     // Multiple variants tracked
@@ -61,18 +89,44 @@ class _ModVersionSelectionDropdownState
         )
         .toList()
         .sortedByDescending<Version>((item) => item.value?.modInfo.version)
-      ..add(const DropdownMenuItem(value: null, child: Text("Disabled"))));
+      ..add(const DropdownMenuItem(
+          value: null,
+          child: Text("Enable", overflow: TextOverflow.ellipsis))));
 
-    return DropdownButton(
+    var dropdownWidth = buttonWidth - 6;
+    return DropdownButton2(
       items: items,
       value: widget.mod.findFirstEnabled,
+      alignment: Alignment.centerLeft,
+      iconStyleData: const IconStyleData(iconSize: 0),
+      buttonStyleData: ButtonStyleData(
+          height: buttonHeight,
+          width: dropdownWidth,
+          overlayColor: WidgetStateColor.transparent),
       selectedItemBuilder: (BuildContext context) {
         return items.map((item) {
           return SizedBox(
-            width: widget.width - 30,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              child: Align(alignment: Alignment.centerLeft, child: item.child),
+            width: dropdownWidth,
+            child: ElevatedButton(
+              onPressed: null,
+              style: buttonStyle,
+              child: Row(
+                children: [
+                  SizedBox(width: 10),
+                  Expanded(
+                      child: Align(
+                    alignment: Alignment.center,
+                    child: item.child,
+                  )),
+                  SizedBox(
+                    width: 10,
+                    child: Icon(
+                      Icons.arrow_drop_down,
+                      color: theme.colorScheme.onSecondary,
+                    ),
+                  ),
+                ],
+              ),
             ),
           );
         }).toList();

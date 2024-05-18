@@ -53,11 +53,11 @@ class _Smol2State extends ConsumerState<Smol2> {
         ref.watch(AppState.enabledModsFile).value?.enabledMods ?? {};
     const double versionSelectorWidth = 150;
     final theme = Theme.of(context);
-    const lightTextOpacity = 0.75;
+    const lightTextOpacity = 0.8;
     final lightTextColor =
         theme.colorScheme.onSurface.withOpacity(lightTextOpacity);
 
-    return !kDebugMode
+    return false
         ? Center(child: Image.asset("assets/images/construction.png"))
         : Padding(
             padding: const EdgeInsets.all(0),

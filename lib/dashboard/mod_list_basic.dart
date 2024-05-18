@@ -29,10 +29,12 @@ class ModListMini extends ConsumerStatefulWidget {
   @override
   ConsumerState createState() => _ModListMiniState();
 
-  static ContextMenu buildContextMenu(Mod mod, WidgetRef ref, BuildContext context) {
+  static ContextMenu buildContextMenu(
+      Mod mod, WidgetRef ref, BuildContext context) {
     final currentStarsectorVersion =
-    ref.read(appSettings.select((s) => s.lastStarsectorVersion));
+        ref.read(appSettings.select((s) => s.lastStarsectorVersion));
     final modVariant = mod.findFirstEnabledOrHighestVersion!;
+
     return ContextMenu(
       entries: <ContextMenuEntry>[
         MenuItem(
@@ -44,7 +46,7 @@ class ModListMini extends ConsumerStatefulWidget {
             }),
         MenuItem(
           label:
-          'Open Forum Page${modVariant.versionCheckerInfo?.modThreadId == null ? ' (not set)' : ''}',
+              'Open Forum Page${modVariant.versionCheckerInfo?.modThreadId == null ? ' (not set)' : ''}',
           icon: Icons.open_in_browser,
           onSelected: () {
             if (modVariant.versionCheckerInfo?.modThreadId == null) {
@@ -77,69 +79,69 @@ class ModListMini extends ConsumerStatefulWidget {
                       title: Text("${modVariant.modInfo.name}"),
                       content: SingleChildScrollView(
                           child: SelectionArea(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Card(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(10),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text("Misc info",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodyLarge
-                                                ?.copyWith(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Card(
+                              child: Padding(
+                                padding: const EdgeInsets.all(10),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text("Misc info",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyLarge
+                                            ?.copyWith(
                                                 fontWeight: FontWeight.bold)),
-                                        Text("Id: ${modVariant.modInfo.id}"),
-                                        Text("Internal id: ${modVariant.smolId}"),
-                                        Text(
-                                            "Mod Folder: ${modVariant.modsFolder.path}"),
-                                        Text(
-                                            "Icon:${modVariant.iconFilePath ?? ""}"),
-                                      ],
-                                    ),
-                                  ),
+                                    Text("Id: ${modVariant.modInfo.id}"),
+                                    Text("Internal id: ${modVariant.smolId}"),
+                                    Text(
+                                        "Mod Folder: ${modVariant.modsFolder.path}"),
+                                    Text(
+                                        "Icon:${modVariant.iconFilePath ?? ""}"),
+                                  ],
                                 ),
-                                Card(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(10),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text("mod_info.json",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodyLarge
-                                                ?.copyWith(
-                                                fontWeight: FontWeight.bold)),
-                                        Text(modVariant.modInfo.toString()),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                Card(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(10),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text("Version Checker",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodyLarge
-                                                ?.copyWith(
-                                                fontWeight: FontWeight.bold)),
-                                        Text(modVariant.versionCheckerInfo
-                                            .toString()),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
-                          )),
+                            Card(
+                              child: Padding(
+                                padding: const EdgeInsets.all(10),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text("mod_info.json",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyLarge
+                                            ?.copyWith(
+                                                fontWeight: FontWeight.bold)),
+                                    Text(modVariant.modInfo.toString()),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            Card(
+                              child: Padding(
+                                padding: const EdgeInsets.all(10),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text("Version Checker",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyLarge
+                                            ?.copyWith(
+                                                fontWeight: FontWeight.bold)),
+                                    Text(modVariant.versionCheckerInfo
+                                        .toString()),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )),
                       actions: [
                         TextButton(
                             onPressed: () {
@@ -369,7 +371,8 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                 }
 
                                 return ContextMenuRegion(
-                                  contextMenu: ModListMini.buildContextMenu(mod, ref, context),
+                                  contextMenu: ModListMini.buildContextMenu(
+                                      mod, ref, context),
                                   child: ModListBasicEntry(
                                       mod: mod,
                                       isEnabled:
@@ -439,5 +442,4 @@ class _ModListMiniState extends ConsumerState<ModListMini>
           });
     }
   }
-
 }

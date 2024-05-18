@@ -230,8 +230,6 @@ Future<void> changeActiveModVariant(
   }
 }
 
-final lastPathsAndLastModified = <String, DateTime>{};
-
 /// NOT THREAD SAFE.
 /// Watches the mods folder for changes and calls [onUpdated] when a mod_info.json file is added, removed, or modified.
 /// [cancelController] is used to cancel the stream.
@@ -243,32 +241,48 @@ watchModsFolder(
   Function(List<File> modInfoFilesFound) onUpdated,
   StreamController cancelController,
 ) async {
+  // Only run the mod folder check if the window is focused.
+  // Checks every second to see if it's still in the background.
   while (!cancelController.isClosed) {
-    // TODO reduce when window is not focused
-    final secondsBetweenChecks = ref.read(
-        appSettings.select((value) => value.secondsBetweenModFolderChecks));
-    await Future.delayed(Duration(seconds: secondsBetweenChecks));
-    Fimber.d("Checking mod_info.json files in ${modsFolder.absolute}.");
-    final modInfoFiles = modsFolder
-        .listSync()
-        .whereType<Directory>()
-        .map((it) => getModInfoFile(it))
-        .whereNotNull()
-        .toList();
-
-    final newPathsAndLastModified = modInfoFiles
-        .map((it) => MapEntry(it.path, it.lastModifiedSync()))
-        .toMap();
-
-    // if (lastPathsAndLastModified.isNotEmpty) {
-    final diff = lastPathsAndLastModified.compareWith(newPathsAndLastModified);
-    if (diff.hasChanged) {
-      // TODO return diff for more efficient updates
-      lastPathsAndLastModified.clear();
-      lastPathsAndLastModified.addAll(newPathsAndLastModified);
-      onUpdated(modInfoFiles);
+    var delaySeconds = ref.read(AppState.isWindowFocused)
+        ? ref.read(
+            appSettings.select((value) => value.secondsBetweenModFolderChecks))
+        : 1;
+    await Future.delayed(Duration(seconds: delaySeconds));
+    if (ref.read(AppState.isWindowFocused)) {
+      checkModsFolderForUpdates(modsFolder, onUpdated);
     }
-    // }
+  }
+}
+
+final _lastPathsAndLastModified = <String, DateTime>{};
+
+/// NOT THREAD SAFE.
+/// Watches the mods folder for changes and calls [onUpdated] when a mod_info.json file is added, removed, or modified.
+/// [cancelController] is used to cancel the stream.
+/// [onUpdated] is called with a list of all mod_info.json files found in the mods folder.
+/// Uses a static variable to keep track of the last paths and last modified times of the mod_info.json files.
+void checkModsFolderForUpdates(
+    Directory modsFolder, Function(List<File> modInfoFilesFound) onUpdated) {
+  Fimber.d("Checking mod_info.json files in ${modsFolder.absolute}.");
+  final modInfoFiles = modsFolder
+      .listSync()
+      .whereType<Directory>()
+      .map((it) => getModInfoFile(it))
+      .whereNotNull()
+      .toList();
+
+  final newPathsAndLastModified = modInfoFiles
+      .map((it) => MapEntry(it.path, it.lastModifiedSync()))
+      .toMap();
+
+  // if (lastPathsAndLastModified.isNotEmpty) {
+  final diff = _lastPathsAndLastModified.compareWith(newPathsAndLastModified);
+  if (diff.hasChanged) {
+    // TODO use diff for more efficient UI updates
+    _lastPathsAndLastModified.clear();
+    _lastPathsAndLastModified.addAll(newPathsAndLastModified);
+    onUpdated(modInfoFiles);
   }
 }
 

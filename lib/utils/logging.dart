@@ -18,8 +18,8 @@ configureLogging({bool printPlatformInfo = false}) {
   if (!useFimber) {
     const logFolderName = "logs";
     var consolePrinter = PrettyPrinterCustom(
-        stackTraceBeginIndex: 1,
-        methodCount: 3,
+        stackTraceBeginIndex: 4,
+        methodCount: 7,
         // Anything other than 0 halves the speed of logging.
         // errorMethodCount: 5,
         // lineLength: 50,

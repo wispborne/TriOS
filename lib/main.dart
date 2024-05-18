@@ -174,6 +174,12 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
         eventName != "resize") {
       _saveWindowPosition();
     }
+
+    if (eventName == "focus") {
+      ref.read(AppState.isWindowFocused.notifier).update((state) => true);
+    } else if (eventName == "blur") {
+      ref.read(AppState.isWindowFocused.notifier).update((state) => false);
+    }
   }
 }
 
@@ -289,15 +295,16 @@ class _AppShellState extends ConsumerState<AppShell>
               Padding(
                 padding: const EdgeInsets.only(right: 16.0),
                 child: Stack(children: [
-                  const Blur(
-                    blurX: 8,
-                    blurY: 8,
-                    child: TriOSAppIcon(),
-                  )
-                      .animate(onComplete: (c) => c.repeat(reverse: true))
-                      .fadeIn(duration: const Duration(seconds: 5))
-                      .then()
-                      .fadeOut(duration: const Duration(seconds: 5)),
+                  if (ref.watch(AppState.isWindowFocused))
+                    const Blur(
+                      blurX: 8,
+                      blurY: 8,
+                      child: TriOSAppIcon(),
+                    )
+                        .animate(onComplete: (c) => c.repeat(reverse: true))
+                        .fadeIn(duration: const Duration(seconds: 5))
+                        .then()
+                        .fadeOut(duration: const Duration(seconds: 5)),
                   const TriOSAppIcon(),
                 ]),
               ),

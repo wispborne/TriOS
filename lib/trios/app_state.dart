@@ -24,12 +24,14 @@ import '../models/mod.dart';
 
 class AppState {
   static ThemeManager theme = ThemeManager();
+  static final isWindowFocused = StateProvider<bool>((ref) => true);
   static final selfUpdateDownloadProgress =
       StateProvider<DownloadProgress?>((ref) => null);
 
   /// Master list of all mod variants found in the mods folder.
   static var _cancelController = StreamController<void>();
   static final modVariants = FutureProvider<List<ModVariant>>((ref) async {
+    Fimber.i("Fetching mod variants");
     final gamePath =
         ref.watch(appSettings.select((value) => value.gameDir))?.toDirectory();
     final modsPath = ref.watch(appSettings.select((value) => value.modsDir));
@@ -70,8 +72,7 @@ class AppState {
   /// Projection of [modVariants], grouping them by mod id.
   static final mods = Provider<List<Mod>>((ref) {
     final modVariants = ref.watch(AppState.modVariants).value ?? [];
-    final enabledMods =
-        ref.watch(AppState.enabledModIds).value.orEmpty().toList();
+    final enabledMods = ref.watch(AppState.enabledModIds).value.orEmpty().toList();
 
     return modVariants
         .groupBy((ModVariant variant) => variant.modInfo.id)

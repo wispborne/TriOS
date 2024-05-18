@@ -1,20 +1,19 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:trios/utils/logging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:trios/jre_manager/jre_23.dart';
 import 'package:trios/trios/navigation.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/util.dart';
 
 import '../../models/launch_settings.dart';
 import '../app_state.dart';
 
 part '../../generated/trios/settings/settings.freezed.dart';
-
 part '../../generated/trios/settings/settings.g.dart';
 
 const sharedPrefsSettingsKey = "settings";
@@ -109,7 +108,8 @@ class SettingSaver extends Notifier<Settings> {
       return;
     }
 
-    if (newState.gameDir != null) {
+    // Recalculate mod folder if the game path changes
+    if (newState.gameDir != null && newState.gameDir != prevState.gameDir) {
       if (!newState.hasCustomModsDir) {
         var newModsDir = generateModFolderPath(newState.gameDir!)?.path;
         newState = newState.copyWith(modsDir: newModsDir?.toDirectory());
@@ -121,8 +121,10 @@ class SettingSaver extends Notifier<Settings> {
 
     Fimber.d("Updated settings: $newState");
 
+    // Save to shared prefs
     sharedPrefs.setString(
         sharedPrefsSettingsKey, jsonEncode(newState.toJson()));
+    // Update state, triggering rebuilds
     state = newState;
   }
 }

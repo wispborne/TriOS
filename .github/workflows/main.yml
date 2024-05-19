@@ -11,7 +11,7 @@ on: #push
 #    branches: [ dev ]
 
 env:
-  flutter_channel: "beta" # or: 'stable' or 'dev' or 'beta'
+  flutter_channel: "stable" # or: 'stable' or 'dev' or 'beta'
   #flutter_version: '2.2.2'
   macos_path: "build/macos/Build/Products/Release/TriOS.app"
   windows_path: "build/windows/x64/runner/Release/*"

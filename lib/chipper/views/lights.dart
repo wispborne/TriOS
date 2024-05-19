@@ -43,9 +43,9 @@ class ChristmasLightsState extends State<ChristmasLights> with TickerProviderSta
 
   @override
   void dispose() {
-    for (var light in _lights) {
+    // for (var light in _lights) {
       // light.controller.dispose();
-    }
+    // }
     super.dispose();
   }
 }

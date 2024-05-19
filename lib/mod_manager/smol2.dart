@@ -217,15 +217,6 @@ class _Smol2State extends ConsumerState<Smol2> {
                                     mod, ref, context),
                                 child: child),
                           ),
-                          DataCell3(
-                            Text("todo",
-                                style: theme.textTheme.labelLarge
-                                    ?.copyWith(color: lightTextColor)),
-                            builder: (context, child) => ContextMenuRegion(
-                                contextMenu: ModListMini.buildContextMenu(
-                                    mod, ref, context),
-                                child: child),
-                          ),
                           DataCell3(mod.modVariants.isEmpty
                               ? const Text("")
                               : RichText(
@@ -259,6 +250,15 @@ class _Smol2State extends ConsumerState<Smol2> {
                                     ],
                                   ),
                                 )),
+                          DataCell3(
+                            Text("todo",
+                                style: theme.textTheme.labelLarge
+                                    ?.copyWith(color: lightTextColor)),
+                            builder: (context, child) => ContextMenuRegion(
+                                contextMenu: ModListMini.buildContextMenu(
+                                    mod, ref, context),
+                                child: child),
+                          ),
                           DataCell3(
                             Opacity(
                               opacity: lightTextOpacity,

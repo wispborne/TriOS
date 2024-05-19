@@ -8,7 +8,6 @@ abstract class LogLine {
   bool shouldWrap = false;
   bool isPreviousThreadLine;
 
-  @mustCallSuper
   LogLine(this.lineNumber, this.fullError, {required this.isPreviousThreadLine});
 
   Widget createLogWidget(BuildContext context);

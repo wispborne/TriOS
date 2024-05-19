@@ -331,12 +331,15 @@ class _AppShellState extends ConsumerState<AppShell>
                       const Tab(text: "Dashboard", icon: Icon(Icons.dashboard)),
                       Tab(
                           text: "Mods",
-                          icon: Transform.rotate(
-                              angle: 0.7,
-                              child: const SvgImageIcon(
-                                "assets/images/icon-onslaught.svg",
-                                height: 23,
-                              ))),
+                          icon: Tooltip(
+                            message: "Under Construction",
+                            child: Transform.rotate(
+                                angle: 0.7,
+                                child: const SvgImageIcon(
+                                  "assets/images/icon-onslaught.svg",
+                                  height: 23,
+                                )),
+                          )),
                       const Tab(
                           text: "VRAM Estimator",
                           icon: SvgImageIcon("assets/images/icon-weight.svg")),

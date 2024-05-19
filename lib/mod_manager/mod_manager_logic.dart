@@ -182,18 +182,25 @@ Future<void> changeActiveModVariant(
   final activeVariants =
       mod.modVariants.where((it) => mod.isEnabled(it)).toList();
   if (modVariant == null && activeVariants.isEmpty) {
-    Fimber.i("No variants active, nothing to do! $mod");
+    Fimber.i(
+        "Went to disable the mod but no variants were active, nothing to do! $mod");
     return;
   }
 
   // Disable all active mod variants
-  // or variants that in the mod folder while the mod itself is disabled
+  // or variants in the mod folder while the mod itself is disabled
   // (except for the variant we want to actually enable, if that's already active).
   // There should only ever be one active but might as well be careful.
   for (var variant in activeVariants) {
     if (variant != modVariant) {
       try {
-        await _disableModVariant(variant, ref, changeFileExtension: true);
+        await _disableModVariant(
+          variant, ref,
+          // If disabling mod, disable in vanilla launcher.
+          disableModInVanillaLauncher: modVariant == null,
+          // If there's just one variant, disable via enabled_mods.json only, don't rename mod_info.json.
+          changeFileExtension: mod.modVariants.length > 1,
+        );
       } catch (e, st) {
         Fimber.e("Error disabling mod variant: $e", ex: e, stacktrace: st);
       }
@@ -390,7 +397,7 @@ Future<void> _disableModVariant(
   ModVariant modVariant,
   WidgetRef ref, {
   bool changeFileExtension = false,
-  bool disableInVanillaLauncher = true,
+  bool disableModInVanillaLauncher = true,
 }) async {
   final mods = ref.read(AppState.mods);
   Fimber.i("Disabling variant ${modVariant.smolId}");
@@ -408,17 +415,17 @@ Future<void> _disableModVariant(
         .path);
     Fimber.i(
         "Disabled ${modVariant.smolId}: renamed to ${Constants.modInfoFileDisabledNames.first}.");
+  }
 
-    if (disableInVanillaLauncher) {
-      final mod = modVariant.mod(mods)!;
-      if (mod.isEnabledInGame) {
-        Fimber.i(
-            "Disabling mod ${modVariant.modInfo.id} as part of disabling variant ${modVariant.smolId}.");
-        _disableModInEnabledMods(modVariant.modInfo.id, ref);
-      } else {
-        Fimber.i(
-            "Mod ${modVariant.modInfo.id} was already disabled in enabled_mods.json and won't be disabled as part of disabling variant ${modVariant.smolId}.");
-      }
+  if (disableModInVanillaLauncher) {
+    final mod = modVariant.mod(mods)!;
+    if (mod.isEnabledInGame) {
+      Fimber.i(
+          "Disabling mod ${modVariant.modInfo.id} as part of disabling variant ${modVariant.smolId}.");
+      _disableModInEnabledMods(modVariant.modInfo.id, ref);
+    } else {
+      Fimber.i(
+          "Mod ${modVariant.modInfo.id} was already disabled in enabled_mods.json and won't be disabled as part of disabling variant ${modVariant.smolId}.");
     }
   }
 

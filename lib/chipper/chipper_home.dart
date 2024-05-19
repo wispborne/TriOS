@@ -2,13 +2,13 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
-import 'package:trios/utils/logging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:platform_info/platform_info.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/platform_paths.dart';
 
 import '../trios/settings/settings.dart';
@@ -69,14 +69,9 @@ Future<void> pasteLog(WidgetRef ref) async {
   var clipboardData = (await Clipboard.getData(Clipboard.kTextPlain))?.text;
 
   if (clipboardData?.isNotEmpty == true) {
-    ref.read(ChipperState.logRawContents.notifier).update((state) {
-      if (clipboardData == null) {
-        return null;
-      } else {
-        LogFile(null, clipboardData);
-      }
-      return null;
-    });
+    ref
+        .read(ChipperState.logRawContents.notifier)
+        .parseLog(clipboardData == null ? null : LogFile(null, clipboardData));
   }
 }
 

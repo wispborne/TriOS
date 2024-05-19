@@ -178,9 +178,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               children: [
                 Tooltip(
                   message:
-                      "The number of seconds between checks for new, removed, or modified mods in the mods folder.",
+                      "This sets how often we check if there are new or changed mods in your folder.\nA shorter time means more frequent checks.\nDoes not scan when ${Constants.appName} is in the background.",
                   child: Text(
-                      "Mod folder check interval (seconds): ${ref.watch(appSettings.select((value) => value.secondsBetweenModFolderChecks))}",
+                      "Rescan mod folder every: ${ref.watch(appSettings.select((value) => value.secondsBetweenModFolderChecks))} seconds",
                       style: theme.textTheme.bodyLarge),
                 ),
                 Slider(
@@ -191,10 +191,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   min: 1,
                   max: 30,
                   divisions: 29,
-                  label: ref
-                      .watch(appSettings.select(
-                          (value) => value.secondsBetweenModFolderChecks))
-                      .toString(),
+                  label:
+                      "${ref.watch(appSettings.select((value) => value.secondsBetweenModFolderChecks))}",
                   onChanged: (value) {
                     ref.read(appSettings.notifier).update((state) =>
                         state.copyWith(

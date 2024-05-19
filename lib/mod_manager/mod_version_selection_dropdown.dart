@@ -91,7 +91,7 @@ class _ModVersionSelectionDropdownState
         .sortedByDescending<Version>((item) => item.value?.modInfo.version)
       ..add(const DropdownMenuItem(
           value: null,
-          child: Text("Enable", overflow: TextOverflow.ellipsis))));
+          child: Text("Disable", overflow: TextOverflow.ellipsis))));
 
     var dropdownWidth = buttonWidth - 6;
     return DropdownButton2(
@@ -112,11 +112,12 @@ class _ModVersionSelectionDropdownState
               style: buttonStyle,
               child: Row(
                 children: [
-                  SizedBox(width: 10),
+                  const SizedBox(width: 10),
                   Expanded(
                       child: Align(
                     alignment: Alignment.center,
-                    child: item.child,
+                    child:
+                        item.value == null ? const Text("Enable") : item.child,
                   )),
                   SizedBox(
                     width: 10,

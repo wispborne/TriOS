@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:toastification/toastification.dart';
@@ -127,18 +126,19 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
     final currentTheme = AppState.theme.currentThemeData();
 
     return MaterialApp(
-        title: Constants.appTitle,
-        theme: currentTheme,
-        themeMode: AppState.theme.currentThemeBrightness(),
-        debugShowCheckedModeBanner: true,
-        darkTheme: currentTheme,
-        home: const ToastificationConfigProvider(
-            config: ToastificationConfig(
-              alignment: Alignment.bottomRight,
-              animationDuration: Duration(milliseconds: 200),
-              itemWidth: 500,
-            ),
-            child: AppShell(child: VramEstimatorPage())));
+      title: Constants.appTitle,
+      theme: currentTheme,
+      themeMode: AppState.theme.currentThemeBrightness(),
+      debugShowCheckedModeBanner: false,
+      darkTheme: currentTheme,
+      home: const ToastificationConfigProvider(
+          config: ToastificationConfig(
+            alignment: Alignment.bottomRight,
+            animationDuration: Duration(milliseconds: 200),
+            itemWidth: 500,
+          ),
+          child: AppShell(child: VramEstimatorPage())),
+    );
   }
 
   @override
@@ -295,16 +295,21 @@ class _AppShellState extends ConsumerState<AppShell>
               Padding(
                 padding: const EdgeInsets.only(right: 16.0),
                 child: Stack(children: [
-                  if (ref.watch(AppState.isWindowFocused))
-                    const Blur(
-                      blurX: 8,
-                      blurY: 8,
+                  // if (ref.watch(AppState.isWindowFocused))
+                  Opacity(
+                    opacity: 0.8,
+                    child: const Blur(
+                      blurX: 10, // 8 for animation
+                      blurY: 10, // 8 for animation
                       child: TriOSAppIcon(),
-                    )
-                        .animate(onComplete: (c) => c.repeat(reverse: true))
-                        .fadeIn(duration: const Duration(seconds: 5))
-                        .then()
-                        .fadeOut(duration: const Duration(seconds: 5)),
+                    ),
+                  ),
+                  // .animate(onComplete: (c) => c.repeat(reverse: true))
+                  // .fadeIn(duration: const Duration(seconds: 5))
+                  // .then()
+                  // .fadeOut(
+                  //   duration: const Duration(seconds: 5),
+                  // ),
                   const TriOSAppIcon(),
                 ]),
               ),
@@ -376,9 +381,9 @@ class _AppShellState extends ConsumerState<AppShell>
                       state.copyWith(
                           isRulesHotReloadEnabled: !isRulesHotReloadEnabled)),
                   child: Padding(
-                      padding: const EdgeInsets.only(left: 16.0),
-                      child:
-                          RulesHotReload(isEnabled: isRulesHotReloadEnabled)),
+                    padding: const EdgeInsets.only(left: 16.0),
+                    child: RulesHotReload(isEnabled: isRulesHotReloadEnabled),
+                  ),
                 ),
               ),
             ],

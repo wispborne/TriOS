@@ -5,6 +5,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/trios/settings/settings.dart';
+import 'package:trios/widgets/blur.dart';
 
 import '../trios/app_state.dart';
 import '../utils/logging.dart';
@@ -75,6 +76,7 @@ class _RulesHotReloadState extends ConsumerState<RulesHotReload> {
     final modsBeingWatchedCount =
         fileChanges.isClosed ? 0 : modRulesDotCsvFiles.length ?? 0;
 
+    var theme = Theme.of(context);
     return Opacity(
       opacity: widget.isEnabled ? 1 : 0.5,
       child: Column(children: [
@@ -82,9 +84,26 @@ class _RulesHotReloadState extends ConsumerState<RulesHotReload> {
         //   '$_counter',
         //   style: Theme.of(context).textTheme.headlineMedium,
         // ),
-        FadingEye(shouldAnimate: widget.isEnabled),
-        Text('rules.csv reload',
-            style: Theme.of(context).textTheme.labelMedium),
+        Stack(
+          children: [
+            if (widget.isEnabled)
+              Blur(
+                  blurX: 8,
+                  blurY: 8,
+                  child: FadingEye(
+                      shouldAnimate: false, color: theme.colorScheme.primary)),
+            FadingEye(
+                shouldAnimate: false,
+                color: widget.isEnabled
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.onSurface),
+          ],
+        ),
+        Text('rules reloader',
+            style: theme.textTheme.labelMedium?.copyWith(
+                color: widget.isEnabled
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.onSurface)),
         // RichText(
         //   textAlign: TextAlign.center,
         //   text: TextSpan(

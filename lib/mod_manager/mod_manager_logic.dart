@@ -27,6 +27,8 @@ import '../models/version.dart';
 import '../themes/theme_manager.dart';
 import '../trios/settings/settings.dart';
 
+// TODO move all this into a class lol
+
 Future<List<ModVariant>> getModsVariantsInFolder(Directory modsFolder) async {
   var mods = <ModVariant?>[];
 
@@ -876,6 +878,32 @@ extension ModInfoExt on ModInfo {
   bool isEnabled(EnabledMods enabledMods) {
     return enabledMods.enabledMods.contains(id);
   }
+
+  List<ModDependencyCheckResult> checkDependencies(
+    List<ModVariant> modVariants,
+    EnabledMods enabledMods,
+  ) {
+    return dependencies.map((dep) {
+      return ModDependencyCheckResult(
+          dep, dep.isSatisfiedByAny(modVariants, enabledMods));
+    }).toList();
+  }
+}
+
+extension ModVariantExt on ModVariant {
+  List<ModDependencyCheckResult> checkDependencies(
+    List<ModVariant> modVariants,
+    EnabledMods enabledMods,
+  ) =>
+      modInfo.checkDependencies(modVariants, enabledMods);
+}
+
+/// How much a given mod variant's dependency is satisfied.
+class ModDependencyCheckResult {
+  final Dependency dependency;
+  final DependencyStateType satisfiedAmount;
+
+  ModDependencyCheckResult(this.dependency, this.satisfiedAmount);
 }
 
 enum GameCompatibility { compatible, warning, incompatible }

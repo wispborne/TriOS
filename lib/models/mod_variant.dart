@@ -14,6 +14,8 @@ import 'mod_info.dart';
 part '../generated/models/mod_variant.freezed.dart';
 // part '../generated/models/mod_variant.g.dart';
 
+typedef SmolId = String;
+
 @freezed
 class ModVariant with _$ModVariant {
   const ModVariant._();

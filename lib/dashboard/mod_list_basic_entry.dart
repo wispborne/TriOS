@@ -33,7 +33,8 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
   Widget build(BuildContext context) {
     var versionCheck = ref.watch(AppState.versionCheckResults).valueOrNull;
     final mod = widget.mod;
-    final modVariant = mod.findFirstEnabledOrHighestVersion ?? mod.modVariants.first;
+    final modVariant =
+        mod.findFirstEnabledOrHighestVersion ?? mod.modVariants.first;
 
     final modInfo = modVariant.modInfo;
     final localVersionCheck = modVariant.versionCheckerInfo;
@@ -42,12 +43,9 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
         compareLocalAndRemoteVersions(localVersionCheck, remoteVersionCheck);
     final compatWithGame = compareGameVersions(
         modInfo.gameVersion, ref.read(AppState.starsectorVersion).value);
-    final compatTextColor = switch (compatWithGame) {
-      GameCompatibility.incompatible => vanillaErrorColor,
-      GameCompatibility.warning => vanillaWarningColor,
-      GameCompatibility.compatible => null,
-    };
     final theme = Theme.of(context);
+    final compatTextColor = getGameCompatibilityColor(compatWithGame);
+
     infoTooltip({required Widget child}) => MovingTooltipWidget(
         tooltipWidget: SizedBox(
           width: 400,
@@ -204,19 +202,15 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                       return;
                     }
 
+                    var allMods = ref.read(AppState.modVariants).value ?? [];
+                    var enabledMods = ref.read(AppState.enabledModsFile).value!;
                     // Check dependencies
-                    final dependencyCheck = modInfo.dependencies
-                        .map((dep) => (
-                              dependency: dep,
-                              satisfication: dep.isSatisfiedByAny(
-                                  ref.read(AppState.modVariants).value ?? [],
-                                  ref.read(AppState.enabledModsFile).value!)
-                            ))
-                        .toList();
+                    final dependencyCheck =
+                        modInfo.checkDependencies(allMods, enabledMods);
 
                     // Check if any dependencies are completely missing
                     final missingDependencies = dependencyCheck
-                        .where((element) => element.satisfication is Missing);
+                        .where((element) => element.satisfiedAmount is Missing);
                     if (missingDependencies.isNotEmpty) {
                       showSnackBar(
                           context: context,
@@ -228,8 +222,8 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                     }
 
                     // Check if any dependencies are disabled but present and can be enabled
-                    final disabledDependencies = dependencyCheck
-                        .where((element) => element.satisfication is Disabled);
+                    final disabledDependencies = dependencyCheck.where(
+                        (element) => element.satisfiedAmount is Disabled);
                     if (disabledDependencies.isNotEmpty) {
                       showSnackBar(
                           context: context,

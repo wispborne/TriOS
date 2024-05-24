@@ -33,11 +33,18 @@ class _ModVersionSelectionDropdownState
     final theme = Theme.of(context);
     const buttonHeight = 35.00;
     final buttonWidth = widget.width;
-    final isSupportedByGameVersion = compareGameVersions(
-            widget.mod.findFirstEnabledOrHighestVersion?.modInfo.gameVersion,
-            ref.read(AppState.starsectorVersion).value) !=
-        GameCompatibility.incompatible;
-    final isEnabled = isSupportedByGameVersion;
+    final mainVariant = widget.mod.findFirstEnabledOrHighestVersion;
+    final dependencyCheck =
+        ref.read(AppState.modCompatibility)[mainVariant?.smolId];
+    final isSupportedByGameVersion =
+        dependencyCheck?.gameCompatibility != GameCompatibility.incompatible;
+    final modDependenciesSatisfied = dependencyCheck?.dependencyChecks;
+
+    var areAllDependenciesSatisfied =
+        modDependenciesSatisfied?.every((d) => d.satisfiedAmount is Satisfied);
+    final isEnabled =
+        isSupportedByGameVersion && areAllDependenciesSatisfied == true;
+
     final buttonStyle = ElevatedButton.styleFrom(
       foregroundColor: theme.colorScheme.onSecondary,
       disabledForegroundColor: true ? theme.colorScheme.onSecondary : null,
@@ -55,7 +62,7 @@ class _ModVersionSelectionDropdownState
       ),
     );
 
-    final gameVersionMessage =
+    const gameVersionMessage =
         "This mod requires a different version of the game.";
 
     if (isSingleVariant) {

@@ -7,6 +7,7 @@ import 'package:flutter_color/flutter_color.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:trios/themes/theme.dart';
 
+import '../mod_manager/mod_manager_logic.dart';
 import '../trios/app_state.dart';
 import '../utils/logging.dart';
 
@@ -201,6 +202,17 @@ class ThemeManager with ChangeNotifier {
         bodyMedium: textTheme.bodyMedium?.copyWith(fontSize: 16),
       ),
     );
+  }
+}
+
+Color? getGameCompatibilityColor(GameCompatibility? compatWithGame) {
+  switch (compatWithGame) {
+    case GameCompatibility.incompatible:
+      return vanillaErrorColor;
+    case GameCompatibility.warning:
+      return vanillaWarningColor;
+    case _:
+      return null;
   }
 }
 

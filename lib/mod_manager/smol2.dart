@@ -1,20 +1,24 @@
 import 'package:collection/collection.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/mod_manager/mod_version_selection_dropdown.dart';
+import 'package:trios/models/mod_variant.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 
+import '../dashboard/mod_dependencies_widget.dart';
 import '../dashboard/mod_list_basic.dart';
+import '../dashboard/mod_summary_widget.dart';
 import '../datatable3/data_table_3.dart';
 import '../models/mod.dart';
+import '../widgets/moving_tooltip.dart';
+import '../widgets/tooltip_frame.dart';
 
 class Smol2 extends ConsumerStatefulWidget {
   const Smol2({super.key});
@@ -43,6 +47,31 @@ class _Smol2State extends ConsumerState<Smol2> {
       _sortAscending = isSameColumn ? !_sortAscending : true;
       sortFunction = (List<Mod> mods) => _sortModsBy(mods, comparableGetter);
     });
+  }
+
+  tooltippy(Widget child, ModVariant modVariant) {
+    final compatWithGame = ref
+        .read(AppState.modCompatibility)[modVariant.smolId]
+        ?.gameCompatibility;
+
+    return MovingTooltipWidget(
+      tooltipWidget: SizedBox(
+        width: 400,
+        child: TooltipFrame(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ModDependenciesWidget(
+                modVariant: modVariant,
+                compatWithGame: compatWithGame,
+                compatTextColor: getGameCompatibilityColor(compatWithGame),
+              ),
+            ],
+          ),
+        ),
+      ),
+      child: child,
+    );
   }
 
   @override
@@ -107,7 +136,7 @@ class _Smol2State extends ConsumerState<Smol2> {
                             ""),
                   ),
                   DataColumn3(
-                    label: Text('Author'),
+                    label: const Text('Author'),
                     onSort: (columnIndex, ascending) => _onSort(
                         columnIndex,
                         (mod) =>
@@ -116,18 +145,18 @@ class _Smol2State extends ConsumerState<Smol2> {
                             ""),
                   ),
                   DataColumn3(
-                    label: Text('Version(s)'),
+                    label: const Text('Version(s)'),
                     onSort: (columnIndex, ascending) => _onSort(
                         columnIndex,
                         (mod) => mod.modVariants
                             .map((e) => e.modInfo.version)
                             .join(", ")),
                   ),
-                  DataColumn3(
+                  const DataColumn3(
                     label: Text('VRAM Est.'),
                   ),
                   DataColumn3(
-                    label: Text('Req. Game Version'),
+                    label: const Text('Req. Game Version'),
                     onSort: (columnIndex, ascending) => _onSort(
                         columnIndex,
                         (mod) =>
@@ -147,14 +176,14 @@ class _Smol2State extends ConsumerState<Smol2> {
                           if (selected != null) {}
                         },
                         cells: [
+                          // Enable/Disable
                           DataCell3(
                             ModVersionSelectionDropdown(
                                 mod: mod, width: versionSelectorWidth),
-                            builder: (context, child) => ContextMenuRegion(
-                                contextMenu: ModListMini.buildContextMenu(
-                                    mod, ref, context),
-                                child: child),
+                            builder: (context, child) =>
+                                tooltippy(child, bestVersion),
                           ),
+                          // Utility/Total Conversion icon
                           DataCell3(
                             Tooltip(
                               message: bestVersion.modInfo.isTotalConversion
@@ -182,6 +211,7 @@ class _Smol2State extends ConsumerState<Smol2> {
                                     mod, ref, context),
                                 child: child),
                           ),
+                          // Icon
                           DataCell3(
                             SizedBox(
                               width: 30,
@@ -195,6 +225,7 @@ class _Smol2State extends ConsumerState<Smol2> {
                                     mod, ref, context),
                                 child: child),
                           ),
+                          // Name
                           DataCell3(
                             Text(
                               bestVersion.modInfo.name ?? "(no name)",
@@ -206,7 +237,7 @@ class _Smol2State extends ConsumerState<Smol2> {
                             builder: (context, child) => ContextMenuRegion(
                                 contextMenu: ModListMini.buildContextMenu(
                                     mod, ref, context),
-                                child: child),
+                                child: tooltippy(child, bestVersion)),
                           ),
                           DataCell3(
                             Text(bestVersion.modInfo.author ?? "(no author)",
@@ -309,6 +340,5 @@ class _Smol2State extends ConsumerState<Smol2> {
               ),
             ),
           );
-    ;
   }
 }

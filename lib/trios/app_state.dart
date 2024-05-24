@@ -20,8 +20,6 @@ import '../mod_manager/version_checker.dart';
 import '../models/enabled_mods.dart';
 import '../models/mod.dart';
 
-// part 'generated/app_state.g.dart';
-
 class AppState {
   static ThemeManager theme = ThemeManager();
   static final isWindowFocused = StateProvider<bool>((ref) => true);
@@ -39,8 +37,7 @@ class AppState {
       return [];
     }
 
-    final variants = await getModsVariantsInFolder(
-        modsPath.toDirectory());
+    final variants = await getModsVariantsInFolder(modsPath.toDirectory());
     // for (var variant in variants) {
     //   watchSingleModFolder(
     //       variant,
@@ -72,7 +69,8 @@ class AppState {
   /// Projection of [modVariants], grouping them by mod id.
   static final mods = Provider<List<Mod>>((ref) {
     final modVariants = ref.watch(AppState.modVariants).value ?? [];
-    final enabledMods = ref.watch(AppState.enabledModIds).value.orEmpty().toList();
+    final enabledMods =
+        ref.watch(AppState.enabledModIds).value.orEmpty().toList();
 
     return modVariants
         .groupBy((ModVariant variant) => variant.modInfo.id)
@@ -84,6 +82,34 @@ class AppState {
         modVariants: entry.value.toList(),
       );
     }).toList();
+  });
+
+  static final modCompatibility = Provider<
+      Map<
+          SmolId,
+          ({
+            GameCompatibility gameCompatibility,
+            List<ModDependencyCheckResult> dependencyChecks
+          })>>((ref) {
+    final modVariants = ref.watch(AppState.modVariants).valueOrNull ?? [];
+    final gameVersion = ref.watch(AppState.starsectorVersion).valueOrNull;
+    final enabledMods = ref.watch(AppState.enabledModsFile).valueOrNull;
+    if (enabledMods == null) {
+      return {};
+    }
+
+    return modVariants.map((variant) {
+      final compatibility =
+          compareGameVersions(variant.modInfo.gameVersion, gameVersion);
+
+      final dependencyCheckResult =
+          variant.checkDependencies(modVariants, enabledMods);
+
+      return MapEntry(variant.smolId, (
+        gameCompatibility: compatibility,
+        dependencyChecks: dependencyCheckResult,
+      ));
+    }).toMap();
   });
 
   static StreamController<File>? _enabledModsWatcher;

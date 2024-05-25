@@ -123,8 +123,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./uploads/windows.zip
-          asset_name: windows.zip
+          asset_path: ./uploads/TriOS-Windows.zip
+          asset_name: TriOS-Windows.zip
           asset_content_type: application/zip
 
   build-macos:

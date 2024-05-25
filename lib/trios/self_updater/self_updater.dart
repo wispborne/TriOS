@@ -102,6 +102,8 @@ class SelfUpdater {
   static Future<File> downloadRelease(Release release, Directory destDir,
       {String? platform, ProgressCallback? onProgress}) async {
     final platformToUse = platform ?? Platform.operatingSystem;
+
+    // Uses the file with the platform name somewhere in it.
     final assetNameForPlatform = switch (platformToUse) {
       "windows" => "windows",
       "linux" => "linux",

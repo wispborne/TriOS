@@ -166,27 +166,38 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
         ),
       if (showRangeSlider)
         SizedBox(
-          width: 300,
+          width: 420,
           child: Disable(
             isEnabled: showRangeSlider,
-            child: RangeSlider(
-                values: selectedSliderValues?.let((it) => RangeValues(
-                        it.start.coerceAtLeast(0),
-                        it.end.coerceAtMost(rangeMax))) ??
-                    RangeValues(0, rangeMax),
-                min: 0,
-                max: rangeMax,
-                divisions: 50,
-                labels: RangeLabels(
-                    (selectedSliderValues?.start ?? 0).bytesAsReadableMB(),
-                    (selectedSliderValues?.end ?? rangeMax)
-                        .bytesAsReadableMB()),
-                onChanged: (RangeValues values) {
-                  setState(() {
-                    selectedSliderValues = values;
-                    modVramInfoToShow = _calculateModsToShow();
-                  });
-                }),
+            child: Row(
+              children: [
+                Text(0.bytesAsReadableMB(),
+                    style: Theme.of(context).textTheme.labelLarge),
+                Expanded(
+                  child: RangeSlider(
+                      values: selectedSliderValues?.let((it) => RangeValues(
+                              it.start.coerceAtLeast(0),
+                              it.end.coerceAtMost(rangeMax))) ??
+                          RangeValues(0, rangeMax),
+                      min: 0,
+                      max: rangeMax,
+                      divisions: 50,
+                      labels: RangeLabels(
+                          (selectedSliderValues?.start ?? 0)
+                              .bytesAsReadableMB(),
+                          (selectedSliderValues?.end ?? rangeMax)
+                              .bytesAsReadableMB()),
+                      onChanged: (RangeValues values) {
+                        setState(() {
+                          selectedSliderValues = values;
+                          modVramInfoToShow = _calculateModsToShow();
+                        });
+                      }),
+                ),
+                Text(rangeMax.bytesAsReadableMB(),
+                    style: Theme.of(context).textTheme.labelLarge),
+              ],
+            ),
           ),
         ),
     ]);

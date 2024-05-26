@@ -44,6 +44,8 @@ class ThemeManager with ChangeNotifier {
           _theme = allThemes.values.first;
         }
         _isMaterial3 = sharedPrefs.getBool(_keyMaterial) ?? false;
+      } else {
+        _theme = allThemes.values.first;
       }
     });
   }

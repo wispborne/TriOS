@@ -48,6 +48,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     return Padding(
       padding: const EdgeInsets.all(4.0),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const SizedBox(
+          height: 15,
+        ),
         ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 600),
           child: Row(
@@ -343,6 +346,15 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               ],
             ),
           ],
+        ),
+        Spacer(),
+        Align(
+          alignment: Alignment.center,
+          child: Opacity(
+              opacity: 0.7,
+              child: Text("All settings are applied immediately.",
+                  style: theme.textTheme.labelLarge
+                      ?.copyWith(fontStyle: FontStyle.italic))),
         ),
       ]),
     );

@@ -12,6 +12,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../mod_manager/mod_manager_logic.dart';
 import '../../models/mod_info.dart';
+import '../app_state.dart';
 import '../constants.dart';
 import 'download_status.dart';
 import 'download_task.dart';
@@ -93,7 +94,7 @@ class ModDownload extends Download {
 
 downloadUpdateViaBrowser(
     VersionCheckerInfo remoteVersion, WidgetRef ref, BuildContext context,
-    {ModInfo? modInfo}) {
+    {required bool activateVariantOnComplete, ModInfo? modInfo}) {
   if (remoteVersion.directDownloadURL != null) {
     // ref
     //     .read(downloadManager.notifier)
@@ -115,7 +116,27 @@ downloadUpdateViaBrowser(
               "Downloaded ${value.task.request.url} to ${tempFolder.path}. Installing...");
           try {
             installModFromArchiveWithDefaultUI(
-                tempFolder.listSync().first.toFile(), ref, context);
+              tempFolder.listSync().first.toFile(),
+              ref,
+              context,
+            ).then((installedVariants) {
+              if (activateVariantOnComplete) {
+                final variants =
+                    ref.read(AppState.modVariants).valueOrNull ?? [];
+                final mods = ref.read(AppState.mods);
+                for (var installed in installedVariants) {
+                  try {
+                    final actualVariant = variants.firstWhere((variant) =>
+                        variant.smolId == installed.modInfo.smolId);
+                    changeActiveModVariant(
+                        actualVariant.mod(mods)!, actualVariant, ref);
+                  } catch (ex) {
+                    Fimber.w(
+                        "Failed to activate mod ${installed.modInfo.smolId} after updating: $ex");
+                  }
+                }
+              }
+            });
           } catch (e) {
             Fimber.e("Error installing mod from archive", ex: e);
           }

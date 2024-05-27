@@ -144,6 +144,7 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                                 remoteVersionCheck!.remoteVersion!,
                                 ref,
                                 context,
+                                activateVariantOnComplete: true,
                                 modInfo: modInfo);
                           } else {
                             showDialog(

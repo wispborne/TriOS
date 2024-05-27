@@ -42,8 +42,12 @@ void main() async {
     Fimber.e("${details.exceptionAsString()}\n${details.stack}",
         ex: details.exception, stacktrace: details.stack);
   };
-  WidgetsFlutterBinding.ensureInitialized();
-  await windowManager.ensureInitialized();
+  try {
+    WidgetsFlutterBinding.ensureInitialized();
+    await windowManager.ensureInitialized();
+  } catch (ex) {
+    Fimber.e("Error initializing!", ex: ex);
+  }
   try {
     sharedPrefs = await SharedPreferences.getInstance();
   } catch (e) {
@@ -52,45 +56,53 @@ void main() async {
         ex: e);
   }
 
-  // Restore window position and size
-  final settings = readAppSettings();
-  final windowFrame = Rect.fromLTWH(
-      settings?.windowXPos ?? 0,
-      settings?.windowYPos ?? 0,
-      settings?.windowWidth ?? 800,
-      settings?.windowHeight ?? 600);
-  setWindowFrame(windowFrame);
-  if (settings?.isMaximized ?? false) {
-    windowManager.maximize();
-  }
-
   runApp(const ProviderScope(observers: [], child: TriOSApp()));
   setWindowTitle(Constants.appTitle);
   const minSize = Size(900, 600);
 
-  windowManager.waitUntilReadyToShow(
-      WindowOptions(size: windowFrame.size, minimumSize: minSize), () async {
-    await windowManager.show();
-    await windowManager.focus();
-  });
+  try {
+    // Restore window position and size
+    final settings = readAppSettings();
+    Rect windowFrame = Rect.fromLTWH(
+        settings?.windowXPos ?? 0,
+        settings?.windowYPos ?? 0,
+        settings?.windowWidth ?? 800,
+        settings?.windowHeight ?? 600);
+    setWindowFrame(windowFrame);
+    if (settings?.isMaximized ?? false) {
+      windowManager.maximize();
+    }
+
+    windowManager.waitUntilReadyToShow(
+        WindowOptions(size: windowFrame.size, minimumSize: minSize), () async {
+      await windowManager.show();
+      await windowManager.focus();
+    });
+  } catch (e) {
+    Fimber.e("Error restoring window position and size.", ex: e);
+  }
   // Clean up old files.
   final filePatternsToClean = [
     logFileName,
     ScriptGenerator.SELF_UPDATE_FILE_NAME
   ];
-  Directory.current.list().listen((file) {
-    if (file is File) {
-      for (var pattern in filePatternsToClean) {
-        if (file.path.toLowerCase().contains(pattern.toLowerCase())) {
-          try {
-            file.delete();
-          } catch (e) {
-            Fimber.e("Error deleting file: $file", ex: e);
+  try {
+    Directory.current.list().listen((file) {
+      if (file is File) {
+        for (var pattern in filePatternsToClean) {
+          if (file.path.toLowerCase().contains(pattern.toLowerCase())) {
+            try {
+              file.delete();
+            } catch (e) {
+              Fimber.e("Error deleting file: $file", ex: e);
+            }
           }
         }
       }
-    }
-  });
+    });
+  } catch (e) {
+    Fimber.e("Error cleaning up old files.", ex: e);
+  }
 }
 
 class TriOSApp extends ConsumerStatefulWidget {

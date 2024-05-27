@@ -749,7 +749,7 @@ ModVariant? getModVariantForModInfo(
       .firstWhereOrNull((it) => it.modInfo.smolId == modInfo.smolId);
 }
 
-Future<void> installModFromArchiveWithDefaultUI(
+Future<List<InstallModResult>> installModFromArchiveWithDefaultUI(
   File archiveFile,
   WidgetRef ref,
   BuildContext context,
@@ -842,7 +842,7 @@ Future<void> installModFromArchiveWithDefaultUI(
             }));
 
     if (installModsResult.isEmpty) {
-      return;
+      return [];
     }
     ref.invalidate(AppState.modVariants);
     showSnackBar(
@@ -860,6 +860,8 @@ Future<void> installModFromArchiveWithDefaultUI(
             "One or more mods could not be extracted. Check the logs for more information.\n${errors.map((it) => "${it.modInfo.name} ${it.modInfo.version}\n${it.err}").toList()}",
       );
     }
+
+    return installModsResult;
   } catch (e, st) {
     Fimber.w("Error installing mod from archive: $e", ex: e, stacktrace: st);
     showAlertDialog(
@@ -867,6 +869,7 @@ Future<void> installModFromArchiveWithDefaultUI(
       title: "Error installing mod",
       content: "$e",
     );
+    return [];
   }
 }
 

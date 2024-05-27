@@ -50,7 +50,10 @@ class LibArchiveEntry {
   late bool isDirectory = file is Directory;
 }
 
-typedef LibArchiveExtractedFile = ({LibArchiveEntry archiveFile, File extractedFile});
+typedef LibArchiveExtractedFile = ({
+  LibArchiveEntry archiveFile,
+  File extractedFile
+});
 
 class LibArchive {
   static var binding = _getArchive();
@@ -66,8 +69,9 @@ class LibArchive {
           .normalize,
       "linux" =>
         File("$currentLibarchivePath/linux/archive.so").absolute.normalize,
-      "macos" =>
-        File("$currentLibarchivePath/macos/archive.dylib").absolute.normalize,
+      "macos" => File("$currentLibarchivePath/macos/lib/libarchive.dylib")
+          .absolute
+          .normalize,
       _ =>
         throw UnimplementedError('Libarchive not supported for this platform')
     };
@@ -76,23 +80,27 @@ class LibArchive {
       throw Exception("Libarchive not found at $libArchivePathForPlatform");
     }
 
-    DynamicLibrary.open(
-        libArchivePathForPlatform.parent.resolve("zstd.dll").path);
-    DynamicLibrary.open(
-        libArchivePathForPlatform.parent.resolve("libcrypto-3-x64.dll").path);
-    DynamicLibrary.open(
-        libArchivePathForPlatform.parent.resolve("lz4.dll").path);
-    DynamicLibrary.open(
-        libArchivePathForPlatform.parent.resolve("zlib1.dll").path);
-    DynamicLibrary.open(
-        libArchivePathForPlatform.parent.resolve("iconv-2.dll").path);
-    DynamicLibrary.open(
-        libArchivePathForPlatform.parent.resolve("liblzma.dll").path);
-    DynamicLibrary.open(
-        libArchivePathForPlatform.parent.resolve("bz2.dll").path);
-    DynamicLibrary.open(
-        libArchivePathForPlatform.parent.resolve("libxml2.dll").path);
+    final libraries = switch (currentPlatform) {
+      TargetPlatform.windows => [
+          "zstd.dll",
+          "libcrypto-3-x64.dll",
+          "lz4.dll",
+          "zlib1.dll",
+          "iconv-2.dll",
+          "liblzma.dll",
+          "bz2.dll",
+          "libxml2.dll"
+        ],
+      TargetPlatform.macOS => [],
+      _ => [],
+    };
+
+    for (String lib in libraries) {
+      DynamicLibrary.open(libArchivePathForPlatform.parent.resolve(lib).path);
+    }
+
     var dynamicLibrary = DynamicLibrary.open(libArchivePathForPlatform.path);
+
     return LibArchiveBinding(dynamicLibrary);
   }
 
@@ -144,6 +152,8 @@ class LibArchive {
         }
 
         if (readPointer < ARCHIVE_OK) {
+          // ARCHIVE_WARN. Message: Pathname cannot be converted from UTF-8 to current locale.
+          // [C](势力)趋光议会ApproLight 1.2.0.zip'
           throw Exception(
               "Failed to read next header. Error code: ${_errorCodeToString(readPointer)}. "
               "Message: ${binding.archive_error_string(archivePtr).toDartStringSafe()}. ");
@@ -192,8 +202,7 @@ class LibArchive {
   /// - `fileFilter` is a function that filters the files to be extracted. If it returns `false`, the file will not be extracted.
   /// - `pathTransform` is a function that transforms the path of the extracted file. If it is not provided, the path will be the same as the path in the archive.
   /// - `onError` is a function that is called when an error occurs. If it returns `true`, the error will be ignored and the extraction will continue. If it returns `false`, the error will be thrown.
-  Future<List<LibArchiveExtractedFile?>>
-      extractEntriesInArchive(
+  Future<List<LibArchiveExtractedFile?>> extractEntriesInArchive(
     File archivePath,
     String destinationPath, {
     bool Function(LibArchiveEntry entry)? fileFilter,
@@ -234,16 +243,13 @@ class LibArchive {
             }
           }
         }
-      })
-      .whereNotNull()
-      .toList();
+      }).whereNotNull().toList();
     } finally {
       binding.archive_write_free(writePtr);
     }
   }
 
-  LibArchiveExtractedFile
-      extractSingleEntryInArchive(
+  LibArchiveExtractedFile extractSingleEntryInArchive(
     Pointer<Pointer<archive_entry>> entryPtrPtr,
     String destinationPath,
     int errCode,

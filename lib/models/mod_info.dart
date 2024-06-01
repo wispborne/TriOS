@@ -47,6 +47,7 @@ class ModInfo with _$ModInfo {
 
   // TODO swap this to id, change id to modId.
   String get smolId => createSmolId(id, version);
+  String get nameOrId => name ?? id;
 
 // late final formattedName = "$name $version ($id)";
 

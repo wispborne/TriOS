@@ -125,11 +125,14 @@ downloadUpdateViaBrowser(
                     ref.read(AppState.modVariants).valueOrNull ?? [];
                 final mods = ref.read(AppState.mods);
                 for (var installed in installedVariants) {
+                  final actualVariant = variants.firstWhere(
+                      (variant) => variant.smolId == installed.modInfo.smolId);
                   try {
-                    final actualVariant = variants.firstWhere((variant) =>
-                        variant.smolId == installed.modInfo.smolId);
-                    changeActiveModVariant(
-                        actualVariant.mod(mods)!, actualVariant, ref);
+                    // If the mod was enabled, switch to the newly downloaded varsion.
+                    if (actualVariant.mod(mods)?.isEnabledInGame == true) {
+                      changeActiveModVariant(
+                          actualVariant.mod(mods)!, actualVariant, ref);
+                    }
                   } catch (ex) {
                     Fimber.w(
                         "Failed to activate mod ${installed.modInfo.smolId} after updating: $ex");

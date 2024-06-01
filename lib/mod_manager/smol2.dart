@@ -1,5 +1,6 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -11,6 +12,7 @@ import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/widgets/conditional_wrap.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 
 import '../dashboard/mod_dependencies_widget.dart';
@@ -78,7 +80,7 @@ class _Smol2State extends ConsumerState<Smol2> {
   @override
   Widget build(BuildContext context) {
     final modsToDisplay = sortFunction(ref.watch(AppState.mods));
-    const alternateRowColor = false;
+    const alternateRowColor = true;
     final enabledMods =
         ref.watch(AppState.enabledModsFile).value?.enabledMods ?? {};
     const double versionSelectorWidth = 150;
@@ -107,7 +109,7 @@ class _Smol2State extends ConsumerState<Smol2> {
                       columnSpacing: 12,
                       horizontalMargin: 12,
                       minWidth: 600,
-                      showCheckboxColumn: true,
+                      showCheckboxColumn: false,
                       dividerThickness: 0,
                       headingTextStyle:
                           const TextStyle(fontWeight: FontWeight.bold),
@@ -180,61 +182,133 @@ class _Smol2State extends ConsumerState<Smol2> {
                                 mod.findFirstEnabledOrHighestVersion;
                             final enabledVersion = mod.findFirstEnabled;
                             if (bestVersion == null) return null;
+                            final dependencies = ref.watch(
+                                AppState.modCompatibility)[bestVersion.smolId];
+                            final areDependenciesMet =
+                                dependencies?.dependencyChecks.every((e) =>
+                                        e.satisfiedAmount is Satisfied) !=
+                                    false;
+
+                            const rowHeight = kMinInteractiveDimension;
+                            final extraRowHeight =
+                                !areDependenciesMet ? 30.0 : 0.0;
+
+                            Widget affixToTop({required Widget child}) => Align(
+                                  alignment: Alignment.topCenter,
+                                  child: SizedBox(
+                                    height: rowHeight,
+                                    child: Center(child: child),
+                                  ),
+                                );
 
                             return DataRow3(
                               onSelectChanged: (selected) {
                                 if (selected != null) {}
                               },
+                              specificRowHeight: rowHeight + extraRowHeight,
+                              color: (alternateRowColor && index.isEven
+                                  ? WidgetStateProperty.all(
+                                      theme.colorScheme.surface.withOpacity(0.4))
+                                  : null),
                               cells: [
                                 // Enable/Disable
                                 DataCell3(
-                                  ModVersionSelectionDropdown(
-                                      mod: mod, width: versionSelectorWidth),
+                                  Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      affixToTop(
+                                        child: ModVersionSelectionDropdown(
+                                          mod: mod,
+                                          width: versionSelectorWidth,
+                                        ),
+                                      ),
+                                      if (!areDependenciesMet)
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                              bottom: 4, top: 4),
+                                          child: Text(
+                                            dependencies?.dependencyChecks
+                                                    .where((e) =>
+                                                        e.satisfiedAmount
+                                                            is! Satisfied)
+                                                    .map((e) =>
+                                                        "${e.dependency.formattedName}: ${switch (e.satisfiedAmount) {
+                                                          Satisfied _ => null,
+                                                          Missing _ =>
+                                                            "Missing",
+                                                          Disabled _ =>
+                                                            "Disabled",
+                                                          VersionInvalid _ =>
+                                                            "Version Invalid",
+                                                          VersionWarning _ =>
+                                                            "Version Warning"
+                                                        }}")
+                                                    .join(", ") ??
+                                                "",
+                                            style: theme.textTheme.labelMedium
+                                                ?.copyWith(
+                                                    color: vanillaErrorColor),
+                                            maxLines: 1,
+                                            softWrap: false,
+                                            overflow: TextOverflow.visible,
+                                          ),
+                                        ),
+                                    ],
+                                  ),
                                   builder: (context, child) =>
                                       tooltippy(child, bestVersion),
                                 ),
                                 // Utility/Total Conversion icon
                                 DataCell3(
                                   Tooltip(
-                                    message: bestVersion.modInfo.isTotalConversion
+                                    message: bestVersion
+                                            .modInfo.isTotalConversion
                                         ? "Total Conversion mods should not be run with any other mods, except Utility mods, unless explicitly stated to be compatible."
                                         : bestVersion.modInfo.isUtility
                                             ? "Utility mods may be added to or removed from a save at will."
                                             : "",
-                                    child: Opacity(
-                                      opacity: 0.7,
-                                      child: SizedBox(
-                                        width: 24,
-                                        height: 24,
-                                        child: bestVersion
-                                                .modInfo.isTotalConversion
-                                            ? const SvgImageIcon(
-                                                "assets/images/icon-death-star.svg")
-                                            : bestVersion.modInfo.isUtility
-                                                ? const SvgImageIcon(
-                                                    "assets/images/icon-utility-mod.svg")
-                                                : Container(),
+                                    child: affixToTop(
+                                      child: Opacity(
+                                        opacity: 0.7,
+                                        child: SizedBox(
+                                          width: 24,
+                                          height: 24,
+                                          child: bestVersion
+                                                  .modInfo.isTotalConversion
+                                              ? const SvgImageIcon(
+                                                  "assets/images/icon-death-star.svg")
+                                              : bestVersion.modInfo.isUtility
+                                                  ? const SvgImageIcon(
+                                                      "assets/images/icon-utility-mod.svg")
+                                                  : Container(),
+                                        ),
                                       ),
                                     ),
                                   ),
-                                  builder: (context, child) => ContextMenuRegion(
-                                      contextMenu: ModListMini.buildContextMenu(
-                                          mod, ref, context),
-                                      child: child),
+                                  builder: (context, child) =>
+                                      ContextMenuRegion(
+                                          contextMenu:
+                                              ModListMini.buildContextMenu(
+                                                  mod, ref, context),
+                                          child: child),
                                 ),
                                 // Icon
                                 DataCell3(
-                                  SizedBox(
-                                    width: 30,
-                                    child: bestVersion.iconFilePath == null
-                                        ? Container()
-                                        : Image.file(
-                                            bestVersion.iconFilePath!.toFile()),
+                                  affixToTop(
+                                    child: SizedBox(
+                                      width: 30,
+                                      child: bestVersion.iconFilePath == null
+                                          ? Container()
+                                          : Image.file(bestVersion.iconFilePath!
+                                              .toFile()),
+                                    ),
                                   ),
-                                  builder: (context, child) => ContextMenuRegion(
-                                      contextMenu: ModListMini.buildContextMenu(
-                                          mod, ref, context),
-                                      child: child),
+                                  builder: (context, child) =>
+                                      ContextMenuRegion(
+                                          contextMenu:
+                                              ModListMini.buildContextMenu(
+                                                  mod, ref, context),
+                                          child: child),
                                 ),
                                 // Name
                                 DataCell3(
@@ -242,66 +316,80 @@ class _Smol2State extends ConsumerState<Smol2> {
                                     bestVersion.modInfo.name ?? "(no name)",
                                     style: GoogleFonts.roboto(
                                       textStyle: theme.textTheme.labelLarge
-                                          ?.copyWith(fontWeight: FontWeight.bold),
+                                          ?.copyWith(
+                                              fontWeight: FontWeight.bold),
                                     ),
                                   ),
-                                  builder: (context, child) => ContextMenuRegion(
-                                      contextMenu: ModListMini.buildContextMenu(
-                                          mod, ref, context),
-                                      child: tooltippy(child, bestVersion)),
+                                  builder: (context, child) =>
+                                      ContextMenuRegion(
+                                          contextMenu:
+                                              ModListMini.buildContextMenu(
+                                                  mod, ref, context),
+                                          child: tooltippy(
+                                              affixToTop(child: child),
+                                              bestVersion)),
                                 ),
                                 DataCell3(
                                   Text(
-                                      bestVersion.modInfo.author ?? "(no author)",
+                                      bestVersion.modInfo.author ??
+                                          "(no author)",
                                       style: theme.textTheme.labelLarge
                                           ?.copyWith(color: lightTextColor)),
-                                  builder: (context, child) => ContextMenuRegion(
-                                      contextMenu: ModListMini.buildContextMenu(
-                                          mod, ref, context),
-                                      child: child),
+                                  builder: (context, child) =>
+                                      ContextMenuRegion(
+                                          contextMenu:
+                                              ModListMini.buildContextMenu(
+                                                  mod, ref, context),
+                                          child: affixToTop(child: child)),
                                 ),
-                                DataCell3(mod.modVariants.isEmpty
-                                    ? const Text("")
-                                    : RichText(
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        text: TextSpan(
-                                          children: [
-                                            for (var i = 0;
-                                                i < mod.modVariants.length;
-                                                i++) ...[
-                                              if (i > 0)
+                                DataCell3(affixToTop(
+                                  child: mod.modVariants.isEmpty
+                                      ? const Text("")
+                                      : RichText(
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          text: TextSpan(
+                                            children: [
+                                              for (var i = 0;
+                                                  i < mod.modVariants.length;
+                                                  i++) ...[
+                                                if (i > 0)
+                                                  TextSpan(
+                                                    text: ', ',
+                                                    style: theme
+                                                        .textTheme.labelLarge
+                                                        ?.copyWith(
+                                                            color:
+                                                                lightTextColor), // Style for the comma
+                                                  ),
                                                 TextSpan(
-                                                  text: ', ',
+                                                  text: mod.modVariants[i]
+                                                      .modInfo.version
+                                                      .toString(),
                                                   style: theme
                                                       .textTheme.labelLarge
                                                       ?.copyWith(
-                                                          color:
-                                                              lightTextColor), // Style for the comma
+                                                          color: enabledVersion ==
+                                                                  mod.modVariants[
+                                                                      i]
+                                                              ? null
+                                                              : lightTextColor), // Style for the remaining items
                                                 ),
-                                              TextSpan(
-                                                text: mod.modVariants[i].modInfo
-                                                    .version
-                                                    .toString(),
-                                                style: theme.textTheme.labelLarge
-                                                    ?.copyWith(
-                                                        color: enabledVersion ==
-                                                                mod.modVariants[i]
-                                                            ? null
-                                                            : lightTextColor), // Style for the remaining items
-                                              ),
+                                              ],
                                             ],
-                                          ],
+                                          ),
                                         ),
-                                      )),
+                                )),
                                 DataCell3(
                                   Text("todo",
                                       style: theme.textTheme.labelLarge
                                           ?.copyWith(color: lightTextColor)),
-                                  builder: (context, child) => ContextMenuRegion(
-                                      contextMenu: ModListMini.buildContextMenu(
-                                          mod, ref, context),
-                                      child: child),
+                                  builder: (context, child) =>
+                                      ContextMenuRegion(
+                                          contextMenu:
+                                              ModListMini.buildContextMenu(
+                                                  mod, ref, context),
+                                          child: affixToTop(child: child)),
                                 ),
                                 DataCell3(
                                   Opacity(
@@ -321,16 +409,14 @@ class _Smol2State extends ConsumerState<Smol2> {
                                                 ?.copyWith(
                                                     color: vanillaErrorColor)),
                                   ),
-                                  builder: (context, child) => ContextMenuRegion(
-                                      contextMenu: ModListMini.buildContextMenu(
-                                          mod, ref, context),
-                                      child: child),
+                                  builder: (context, child) =>
+                                      ContextMenuRegion(
+                                          contextMenu:
+                                              ModListMini.buildContextMenu(
+                                                  mod, ref, context),
+                                          child: affixToTop(child: child)),
                                 ),
                               ],
-                              color: (alternateRowColor && index.isEven
-                                  ? WidgetStateProperty.all(
-                                      Theme.of(context).highlightColor)
-                                  : null),
                             );
                           })
                           .whereNotNull()

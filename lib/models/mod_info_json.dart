@@ -54,6 +54,8 @@ class Dependency with _$Dependency {
 
   factory Dependency.fromJson(Map<String, dynamic> json) =>
       _$DependencyFromJson(json);
+
+  String get formattedName => "$name $version ($id)";
 }
 
 @freezed

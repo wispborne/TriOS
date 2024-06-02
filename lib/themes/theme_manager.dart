@@ -207,14 +207,27 @@ class ThemeManager with ChangeNotifier {
   }
 }
 
-Color? getGameCompatibilityColor(GameCompatibility? compatWithGame) {
-  switch (compatWithGame) {
-    case GameCompatibility.incompatible:
-      return vanillaErrorColor;
-    case GameCompatibility.warning:
-      return vanillaWarningColor;
-    case _:
-      return null;
+extension GameCompatibilityExt on GameCompatibility {
+  Color? getGameCompatibilityColor() {
+    switch (this) {
+      case GameCompatibility.incompatible:
+        return vanillaErrorColor;
+      case GameCompatibility.warning:
+        return vanillaWarningColor;
+      case _:
+        return null;
+    }
+  }
+}
+
+extension ModDependencySatisfiedStateExt on ModDependencySatisfiedState {
+  Color? getDependencySatisfiedColor() {
+    return switch (this) {
+      Satisfied _ => Colors.green,
+      Disabled _ => vanillaWarningColor,
+      VersionWarning _ => vanillaWarningColor,
+      _ => vanillaErrorColor,
+    };
   }
 }
 

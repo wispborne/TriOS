@@ -515,7 +515,7 @@ GameCompatibility compareGameVersions(
 }
 
 extension DependencyExt on Dependency {
-  DependencyStateType isSatisfiedBy(
+  ModDependencySatisfiedState isSatisfiedBy(
       ModVariant variant, EnabledMods enabledMods) {
     if (id != variant.modInfo.id) {
       return Missing();
@@ -538,7 +538,7 @@ extension DependencyExt on Dependency {
   }
 
   /// Searches [allMods] for the best possible match for this dependency.
-  DependencyStateType isSatisfiedByAny(
+  ModDependencySatisfiedState isSatisfiedByAny(
       List<ModVariant> allMods, EnabledMods enabledMods) {
     var foundDependencies = allMods.filter((mod) => mod.modInfo.id == id);
     if (foundDependencies.isEmpty) {
@@ -550,12 +550,7 @@ extension DependencyExt on Dependency {
         .toList();
 
     // Return the least severe state.
-    return satisfyResults.firstWhereOrNull((it) => it is Satisfied) ??
-        satisfyResults.firstWhereOrNull((it) => it is Disabled) ??
-        satisfyResults.firstWhereOrNull((it) => it is VersionWarning) ??
-        satisfyResults.firstWhereOrNull((it) => it is VersionInvalid) ??
-        satisfyResults.firstWhereOrNull((it) => it is Missing) ??
-        Missing();
+    return getTopDependencySeverity(satisfyResults, sortLeastSevere: true);
     // if (satisfyResults.contains(DependencyStateType.Satisfied)) {
     //   return DependencyStateType.Satisfied;
     // } else if (satisfyResults.contains(DependencyStateType.Disabled)) {
@@ -568,6 +563,24 @@ extension DependencyExt on Dependency {
     //   return DependencyStateType.Missing;
     // }
   }
+}
+
+ModDependencySatisfiedState getTopDependencySeverity(
+    List<ModDependencySatisfiedState> satisfyResults,
+    {required bool sortLeastSevere}) {
+  return sortLeastSevere
+      ? satisfyResults.firstWhereOrNull((it) => it is Satisfied) ??
+          satisfyResults.firstWhereOrNull((it) => it is Disabled) ??
+          satisfyResults.firstWhereOrNull((it) => it is VersionWarning) ??
+          satisfyResults.firstWhereOrNull((it) => it is VersionInvalid) ??
+          satisfyResults.firstWhereOrNull((it) => it is Missing) ??
+          Missing()
+      : satisfyResults.firstWhereOrNull((it) => it is Missing) ??
+          satisfyResults.firstWhereOrNull((it) => it is VersionInvalid) ??
+          satisfyResults.firstWhereOrNull((it) => it is VersionWarning) ??
+          satisfyResults.firstWhereOrNull((it) => it is Disabled) ??
+          satisfyResults.firstWhereOrNull((it) => it is Satisfied) ??
+          Missing();
 }
 
 typedef ExtractedModInfo = ({
@@ -901,10 +914,28 @@ extension ModVariantExt on ModVariant {
       modInfo.checkDependencies(modVariants, enabledMods);
 }
 
+class DependencyCheck {
+  final GameCompatibility gameCompatibility;
+  final List<ModDependencyCheckResult> dependencyChecks;
+
+  DependencyCheck(this.gameCompatibility, this.dependencyChecks);
+
+  List<ModDependencySatisfiedState> get dependencyStates =>
+      dependencyChecks.map((it) => it.satisfiedAmount).toList();
+
+  bool get isGameCompatible =>
+      gameCompatibility != GameCompatibility.incompatible;
+
+  ModDependencyCheckResult? get mostSevereDependency =>
+      getTopDependencySeverity(dependencyStates, sortLeastSevere: false).let(
+          (it) => dependencyChecks
+              .firstWhereOrNull((dep) => dep.satisfiedAmount == it));
+}
+
 /// How much a given mod variant's dependency is satisfied.
 class ModDependencyCheckResult {
   final Dependency dependency;
-  final DependencyStateType satisfiedAmount;
+  final ModDependencySatisfiedState satisfiedAmount;
 
   ModDependencyCheckResult(this.dependency, this.satisfiedAmount);
 }
@@ -918,29 +949,29 @@ class DependencyState {
 }
 
 /// mod: The mod that was checked as a possible dependency.
-sealed class DependencyStateType {
+sealed class ModDependencySatisfiedState {
   final ModVariant? modVariant;
 
-  DependencyStateType({this.modVariant});
+  ModDependencySatisfiedState({this.modVariant});
 }
 
-class Missing extends DependencyStateType {
+class Missing extends ModDependencySatisfiedState {
   Missing() : super();
 }
 
-class Disabled extends DependencyStateType {
+class Disabled extends ModDependencySatisfiedState {
   Disabled(ModVariant modVariant) : super(modVariant: modVariant);
 }
 
-class VersionInvalid extends DependencyStateType {
+class VersionInvalid extends ModDependencySatisfiedState {
   VersionInvalid(ModVariant modVariant) : super(modVariant: modVariant);
 }
 
 /// Minor version mismatch.
-class VersionWarning extends DependencyStateType {
+class VersionWarning extends ModDependencySatisfiedState {
   VersionWarning(ModVariant modVariant) : super(modVariant: modVariant);
 }
 
-class Satisfied extends DependencyStateType {
+class Satisfied extends ModDependencySatisfiedState {
   Satisfied(ModVariant modVariant) : super(modVariant: modVariant);
 }

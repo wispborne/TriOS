@@ -55,7 +55,9 @@ class Dependency with _$Dependency {
   factory Dependency.fromJson(Map<String, dynamic> json) =>
       _$DependencyFromJson(json);
 
-  String get formattedName => "$name $version ($id)";
+  String get formattedNameVersionId => "$name${version != null ? " $version" : ""}${id != null ? " ($id)" : ""}";
+  String get formattedNameVersion => "$nameOrId${version != null ? " $version" : ""}";
+  String get nameOrId => name ?? id ?? "(no name or id!)";
 }
 
 @freezed

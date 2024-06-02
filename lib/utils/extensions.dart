@@ -142,7 +142,13 @@ extension StringExt on String {
   }
 
   String fixFilenameForFileSystem() {
-    return replaceAll(Constants.systemFolderNameDisallowedChars, "");
+    // ChatGPT:
+    // This pattern matches any character that is not allowed in filenames on Windows, macOS, and Linux.
+    // < > : " / \ | ? * are disallowed characters.
+    // \x00-\x1F matches non-printable control characters.
+    return replaceAll(RegExp(r'[<>:"/\\|?*\x00-\x1F]'), '_')
+        .trim()
+        .substring(0, length > 255 ? 255 : length);
   }
 }
 

@@ -84,13 +84,7 @@ class AppState {
     }).toList();
   });
 
-  static final modCompatibility = Provider<
-      Map<
-          SmolId,
-          ({
-            GameCompatibility gameCompatibility,
-            List<ModDependencyCheckResult> dependencyChecks
-          })>>((ref) {
+  static final modCompatibility = Provider<Map<SmolId, DependencyCheck>>((ref) {
     final modVariants = ref.watch(AppState.modVariants).valueOrNull ?? [];
     final gameVersion = ref.watch(AppState.starsectorVersion).valueOrNull;
     final enabledMods = ref.watch(AppState.enabledModsFile).valueOrNull;
@@ -105,10 +99,12 @@ class AppState {
       final dependencyCheckResult =
           variant.checkDependencies(modVariants, enabledMods);
 
-      return MapEntry(variant.smolId, (
-        gameCompatibility: compatibility,
-        dependencyChecks: dependencyCheckResult,
-      ));
+      return MapEntry(
+          variant.smolId,
+          DependencyCheck(
+            compatibility,
+            dependencyCheckResult,
+          ));
     }).toMap();
   });
 

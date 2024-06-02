@@ -44,7 +44,7 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
     final compatWithGame = compareGameVersions(
         modInfo.gameVersion, ref.read(AppState.starsectorVersion).value);
     final theme = Theme.of(context);
-    final compatTextColor = getGameCompatibilityColor(compatWithGame);
+    final compatTextColor = compatWithGame.getGameCompatibilityColor();
 
     infoTooltip({required Widget child}) => MovingTooltipWidget(
         tooltipWidget: SizedBox(

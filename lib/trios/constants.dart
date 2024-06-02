@@ -52,6 +52,4 @@ class Constants {
     ".gz",
     ".bz2",
   ];
-
-  static final systemFolderNameDisallowedChars = RegExp("[^0-9a-zA-Z\\.-_ ]");
 }

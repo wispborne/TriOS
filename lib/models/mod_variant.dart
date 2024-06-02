@@ -72,7 +72,8 @@ class ModVariant with _$ModVariant {
   static String generateVariantFolderName(ModInfo modInfo) =>
       "${modInfo.name?.fixFilenameForFileSystem().take(100)}-${modInfo.version}";
 
-  /// Use the version in VersionChecker if possible (authors sometimes will do 0.35 in ModInfo but 0.3.5 in Version Checker).
+  /// Returns the version in Version Checker if possible (authors sometimes will do `0.35` in ModInfo but `0.3.5` in Version Checker)
+  /// and falls back to the `mod_info.json` version.
   Version? get bestVersion {
     return versionCheckerInfo?.modVersion
             ?.toString()

@@ -67,7 +67,7 @@ class _Smol2State extends ConsumerState<Smol2> {
               ModDependenciesWidget(
                 modVariant: modVariant,
                 compatWithGame: compatWithGame,
-                compatTextColor: getGameCompatibilityColor(compatWithGame),
+                compatTextColor: compatWithGame?.getGameCompatibilityColor(),
               ),
             ],
           ),
@@ -182,12 +182,18 @@ class _Smol2State extends ConsumerState<Smol2> {
                                 mod.findFirstEnabledOrHighestVersion;
                             final enabledVersion = mod.findFirstEnabled;
                             if (bestVersion == null) return null;
+                            final gameVersion = ref.watch(appSettings.select(
+                                (value) => value.lastStarsectorVersion));
                             final dependencies = ref.watch(
                                 AppState.modCompatibility)[bestVersion.smolId];
                             final areDependenciesMet =
                                 dependencies?.dependencyChecks.every((e) =>
-                                        e.satisfiedAmount is Satisfied) !=
-                                    false;
+                                            e.satisfiedAmount is Satisfied ||
+                                            e.satisfiedAmount
+                                                is VersionWarning) !=
+                                        false &&
+                                    dependencies?.gameCompatibility !=
+                                        GameCompatibility.incompatible;
 
                             const rowHeight = kMinInteractiveDimension;
                             final extraRowHeight =
@@ -207,8 +213,9 @@ class _Smol2State extends ConsumerState<Smol2> {
                               },
                               specificRowHeight: rowHeight + extraRowHeight,
                               color: (alternateRowColor && index.isEven
-                                  ? WidgetStateProperty.all(
-                                      theme.colorScheme.surface.withOpacity(0.4))
+                                  ? WidgetStateProperty.all(theme
+                                      .colorScheme.surface
+                                      .withOpacity(0.4))
                                   : null),
                               cells: [
                                 // Enable/Disable
@@ -226,32 +233,52 @@ class _Smol2State extends ConsumerState<Smol2> {
                                         Padding(
                                           padding: const EdgeInsets.only(
                                               bottom: 4, top: 4),
-                                          child: Text(
-                                            dependencies?.dependencyChecks
-                                                    .where((e) =>
-                                                        e.satisfiedAmount
-                                                            is! Satisfied)
-                                                    .map((e) =>
-                                                        "${e.dependency.formattedName}: ${switch (e.satisfiedAmount) {
-                                                          Satisfied _ => null,
-                                                          Missing _ =>
-                                                            "Missing",
-                                                          Disabled _ =>
-                                                            "Disabled",
-                                                          VersionInvalid _ =>
-                                                            "Version Invalid",
-                                                          VersionWarning _ =>
-                                                            "Version Warning"
-                                                        }}")
-                                                    .join(", ") ??
-                                                "",
-                                            style: theme.textTheme.labelMedium
-                                                ?.copyWith(
-                                                    color: vanillaErrorColor),
-                                            maxLines: 1,
-                                            softWrap: false,
-                                            overflow: TextOverflow.visible,
-                                          ),
+                                          child: Builder(builder: (context) {
+                                            return Text(
+                                              dependencies?.gameCompatibility ==
+                                                      GameCompatibility
+                                                          .incompatible
+                                                  ? "Incompatible with ${gameVersion ?? "game version"}."
+                                                  : dependencies
+                                                          ?.dependencyChecks
+                                                          .where((e) =>
+                                                              e.satisfiedAmount
+                                                                  is! Satisfied)
+                                                          .map((e) => switch (e
+                                                                  .satisfiedAmount) {
+                                                                Satisfied _ =>
+                                                                  null,
+                                                                Missing _ =>
+                                                                  "${e.dependency.formattedNameVersion} is missing.",
+                                                                Disabled _ =>
+                                                                  "${e.dependency.formattedNameVersion} is disabled and will be enabled.",
+                                                                VersionInvalid
+                                                                  _ =>
+                                                                  "Missing version ${e.dependency.version} of ${e.dependency.nameOrId}.",
+                                                                VersionWarning
+                                                                  version =>
+                                                                  "${e.dependency.nameOrId} version ${e.dependency.version} is wanted but ${version.modVariant!.bestVersion} may work.",
+                                                              })
+                                                          .join(" • ") ??
+                                                      "",
+                                              style: theme.textTheme.labelMedium?.copyWith(
+                                                  color: dependencies
+                                                              ?.gameCompatibility ==
+                                                          GameCompatibility
+                                                              .incompatible
+                                                      ? vanillaErrorColor
+                                                      : getTopDependencySeverity(
+                                                              dependencies
+                                                                      ?.dependencyStates ??
+                                                                  [],
+                                                              sortLeastSevere:
+                                                                  false)
+                                                          .getDependencySatisfiedColor()),
+                                              maxLines: 1,
+                                              softWrap: false,
+                                              overflow: TextOverflow.visible,
+                                            );
+                                          }),
                                         ),
                                     ],
                                   ),

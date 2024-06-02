@@ -17,7 +17,7 @@ old_library='libarchive.a'
 inherited_linker_flags=' '
 
 # Libraries that this one depends upon.
-dependency_libs=' -liconv -llzma -lbz2 -lz -lxml2'
+dependency_libs=' -L/opt/homebrew/opt/xz/lib -L/opt/homebrew/opt/zlib/lib -L/opt/homebrew/opt/lz4/lib -L/opt/homebrew/opt/zstd/lib -liconv -llzma -lzstd -llz4 -lbz2 -lz -lxml2'
 
 # Names of additional weak libraries provided by this library
 weak_library_names=''
@@ -38,4 +38,4 @@ dlopen=''
 dlpreopen=''
 
 # Directory that this library needs to be installed in:
-libdir='/usr/local/lib'
+libdir='/Users/davidwhitman/development/libarchive/out2/lib'

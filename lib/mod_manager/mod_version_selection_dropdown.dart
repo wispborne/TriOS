@@ -40,8 +40,9 @@ class _ModVersionSelectionDropdownState
         dependencyCheck?.gameCompatibility != GameCompatibility.incompatible;
     final modDependenciesSatisfied = dependencyCheck?.dependencyChecks;
 
+    // TODO consolidate this logic with the logic in smol2.
     var areAllDependenciesSatisfied =
-        modDependenciesSatisfied?.every((d) => d.satisfiedAmount is Satisfied);
+        modDependenciesSatisfied?.every((d) => d.satisfiedAmount is Satisfied || d.satisfiedAmount is VersionWarning || d.satisfiedAmount is Disabled);
     final isEnabled =
         isSupportedByGameVersion && areAllDependenciesSatisfied == true;
 

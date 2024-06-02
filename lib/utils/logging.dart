@@ -17,6 +17,8 @@ const useFimber = false;
 configureLogging({bool printPlatformInfo = false}) {
   if (!useFimber) {
     const logFolderName = "logs";
+    const stackTraceBeginIndex = 4;
+    const methodCount = 7;
     var consolePrinter = PrettyPrinterCustom(
         stackTraceBeginIndex: 4,
         methodCount: 7,
@@ -45,8 +47,8 @@ configureLogging({bool printPlatformInfo = false}) {
       level: kDebugMode ? Level.debug : Level.debug,
       filter: ProductionFilter(),
       printer: PrettyPrinterCustom(
-        stackTraceBeginIndex: 1,
-        methodCount: 3,
+        stackTraceBeginIndex: stackTraceBeginIndex,
+        methodCount: methodCount,
         colors: false,
         printEmojis: true,
         printTime: true,

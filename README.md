@@ -45,3 +45,27 @@ dart run build_runner watch --delete-conflicting-outputs
 1. Download and install CMake for Windows. https://cmake.org/download/
 1. Run the CMake GUI, set output to `libarchive/build`, hit `Configure`, wait, hit `Generate`, then click `Open Project`.
 1. In VS, pick a Release Configuration and Run. It'll appear in `build/bin`. `MinSizeRel` seems good.
+
+#### MacOS
+1. Install deps: 
+   ```
+   brew install autoconf automake libtool pkg-config bzip2 xz lz4 zlib zstd
+   ```
+1. Tell it where to find xz (use `whereis xz` to make sure the paths are right):
+   ```
+   export LDFLAGS="-L/opt/homebrew/opt/xz/lib -L/opt/homebrew/opt/zlib/lib -L/opt/homebrew/opt/lz4/lib -L/opt/homebrew/opt/zstd/lib"
+   export CPPFLAGS="-I/opt/homebrew/opt/xz/include -I/opt/homebrew/opt/zlib/include -I/opt/homebrew/opt/lz4/include -I/opt/homebrew/opt/zstd/include"
+   export PKG_CONFIG_PATH="/opt/homebrew/opt/xz/lib/pkgconfig:/opt/homebrew/opt/zlib/lib/pkgconfig:/opt/homebrew/opt/lz4/lib/pkgconfig:/opt/homebrew/opt/zstd/lib/pkgconfig"
+   ```
+1. Check out source:
+   ```
+   git clone https://github.com/libarchive/libarchive.git
+   cd libarchive
+   ```
+1. Build:
+   ```
+   ./build/autogen.sh
+   ./configure --prefix=$HOME/libarchve-output --with-bz2lib --with-lzma --with-lz4 --with-zlib --with-zstd
+   make
+   make install
+   ```

@@ -34,11 +34,10 @@ class _ModVersionSelectionDropdownState
     const buttonHeight = 35.00;
     final buttonWidth = widget.width;
     final mainVariant = widget.mod.findFirstEnabledOrHighestVersion;
-    final dependencyCheck =
-        ref.read(AppState.modCompatibility)[mainVariant?.smolId];
-    final isSupportedByGameVersion =
-        dependencyCheck?.gameCompatibility != GameCompatibility.incompatible;
-    final modDependenciesSatisfied = dependencyCheck?.dependencyChecks;
+    final dependencyChecks = widget.mod.modVariants.map((v) => ref.read(AppState.modCompatibility)[v.smolId]);
+    final isSupportedByGameVersion = dependencyChecks.any((d) => d?.gameCompatibility != GameCompatibility.incompatible);
+    final mainDependencyCheck = ref.read(AppState.modCompatibility)[mainVariant?.smolId];
+    final modDependenciesSatisfied = mainDependencyCheck?.dependencyChecks;
 
     // TODO consolidate this logic with the logic in smol2.
     var areAllDependenciesSatisfied =

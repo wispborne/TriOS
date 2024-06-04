@@ -19,6 +19,7 @@ import 'package:trios/utils/util.dart';
 import '../mod_manager/version_checker.dart';
 import '../models/enabled_mods.dart';
 import '../models/mod.dart';
+import 'enabled_mods.dart';
 
 class AppState {
   static ThemeManager theme = ThemeManager();
@@ -108,40 +109,9 @@ class AppState {
     }).toMap();
   });
 
-  static StreamController<File>? _enabledModsWatcher;
-
-  static final enabledModsFile = FutureProvider<EnabledMods>((ref) async {
-    final modsFolder =
-        ref.watch(appSettings.select((value) => value.modsDir))?.toDirectory();
-
-    if (modsFolder == null || !modsFolder.existsSync()) {
-      return const EnabledMods({});
-    } else {
-      final enabledModsFile = getEnabledModsFile(modsFolder);
-      if (!enabledModsFile.existsSync()) {
-        return const EnabledMods({});
-      }
-
-      // If the watcher is closed somehow, we need to recreate it.
-      if (_enabledModsWatcher != null && _enabledModsWatcher!.isClosed) {
-        _enabledModsWatcher = null;
-      }
-
-      // Watch the enabled_mods.json file for changes
-      if (_enabledModsWatcher == null) {
-        _enabledModsWatcher = StreamController<File>();
-        _enabledModsWatcher?.stream.listen((event) {
-          ref.invalidateSelf();
-        });
-
-        pollFileForModification(enabledModsFile, _enabledModsWatcher!,
-            intervalMillis: 1500);
-      }
-
-      var enabledMods = await getEnabledMods(modsFolder);
-      return enabledMods;
-    }
-  });
+  static final enabledModsFile =
+      AsyncNotifierProvider<EnabledModsNotifier, EnabledMods>(
+          EnabledModsNotifier.new);
 
   static final enabledModIds = FutureProvider<List<String>>((ref) async {
     return ref.watch(enabledModsFile).value?.enabledMods.toList() ?? [];

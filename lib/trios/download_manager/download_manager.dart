@@ -128,7 +128,7 @@ downloadUpdateViaBrowser(
                   final actualVariant = variants.firstWhere(
                       (variant) => variant.smolId == installed.modInfo.smolId);
                   try {
-                    // If the mod was enabled, switch to the newly downloaded varsion.
+                    // If the mod was enabled, switch to the newly downloaded version.
                     if (actualVariant.mod(mods)?.isEnabledInGame == true) {
                       changeActiveModVariant(
                           actualVariant.mod(mods)!, actualVariant, ref);

@@ -87,6 +87,7 @@ dependencies:
   dio: ^5.4.3+1
   stack_trace: ^1.11.1
   dropdown_button2: ^2.3.9
+  mutex: ^3.1.0
 #  data_table_2: ^2.5.12
 
 dev_dependencies:

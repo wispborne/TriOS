@@ -224,8 +224,8 @@ extension ModDependencySatisfiedStateExt on ModDependencySatisfiedState {
   Color? getDependencySatisfiedColor() {
     return switch (this) {
       Satisfied _ => Colors.green,
-      Disabled _ => vanillaWarningColor,
-      VersionWarning _ => vanillaWarningColor,
+      Disabled _ => vanillaWarningColor.withAlpha(200),
+      VersionWarning _ => vanillaWarningColor.withAlpha(200),
       _ => vanillaErrorColor,
     };
   }

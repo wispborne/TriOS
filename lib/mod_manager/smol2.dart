@@ -1,23 +1,19 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/mod_manager/mod_version_selection_dropdown.dart';
 import 'package:trios/models/mod_variant.dart';
-import 'package:trios/themes/theme.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
-import 'package:trios/widgets/conditional_wrap.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 
 import '../dashboard/mod_dependencies_widget.dart';
 import '../dashboard/mod_list_basic.dart';
-import '../dashboard/mod_summary_widget.dart';
 import '../datatable3/data_table_3.dart';
 import '../models/mod.dart';
 import '../widgets/moving_tooltip.dart';
@@ -33,7 +29,9 @@ class Smol2 extends ConsumerStatefulWidget {
 class _Smol2State extends ConsumerState<Smol2> {
   bool _sortAscending = true;
   int? _sortColumnIndex;
-  List<Mod> Function(List<Mod>) sortFunction = (mods) => mods;
+  /// Gets set to a different function when sorting changes.
+  /// TODO save this in shared preferences
+  List<Mod> Function(List<Mod>) sortFunction = (mods) => mods.sortedBy((mod) => mod.findFirstEnabledOrHighestVersion?.modInfo.name ?? "");
 
   List<Mod> _sortModsBy<T extends Comparable<T>>(
       List<Mod> mods, T Function(Mod) comparableGetter) {
@@ -101,7 +99,7 @@ class _Smol2State extends ConsumerState<Smol2> {
               child: Column(
                 children: [
                   Text(
-                    "Warning: the Mods section is not finished. Use the Dashboard section for now.",
+                    "The Mods section is not finished. It is safe to use but may not properly check dependencies.",
                     style: TextStyle(color: vanillaWarningColor),
                   ),
                   Expanded(

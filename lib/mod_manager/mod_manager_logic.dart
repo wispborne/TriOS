@@ -162,6 +162,10 @@ Future<void> changeActiveModVariant(
   Fimber.i(
       "Changing active variant of ${mod.id} to ${modVariant?.smolId}. (current: ${mod.findFirstEnabled?.smolId}).");
 
+  final allVariants = ref.read(AppState.modVariants).valueOrNull ?? [];
+  final enabledMods = ref.read(AppState.enabledModsFile).valueOrNull;
+  final allMods = ref.read(AppState.mods);
+
   final modVariantParentModId = modVariant?.modInfo;
   if (modVariantParentModId != null && mod.id != modVariantParentModId.id) {
     final errMsg =
@@ -205,6 +209,24 @@ Future<void> changeActiveModVariant(
         );
       } catch (e, st) {
         Fimber.e("Error disabling mod variant: $e", ex: e, stacktrace: st);
+      }
+    }
+  }
+
+  // Enable any disabled dependencies
+  if (modVariant != null && enabledMods != null) {
+    final disabledDependencies = modVariant
+        .checkDependencies(allVariants, enabledMods)
+        .where((it) => it.satisfiedAmount is Disabled)
+        .map((it) => it.satisfiedAmount.modVariant!)
+        .toList();
+    for (var dependency in disabledDependencies) {
+      try {
+        Fimber.i(
+            "Enabling dependency ${dependency.smolId} for ${modVariant.smolId}.");
+        await changeActiveModVariant(dependency.mod(allMods)!, dependency, ref);
+      } catch (e, st) {
+        Fimber.e("Error enabling dependency: $e", ex: e, stacktrace: st);
       }
     }
   }
@@ -445,37 +467,11 @@ Future<void> _disableModVariant(
 }
 
 Future<void> _disableModInEnabledMods(String modId, WidgetRef ref) async {
-  var enabledMods = ref.read(AppState.enabledModsFile).valueOrNull;
-  final modsFolder = ref.read(appSettings).modsDir;
-  if (enabledMods == null || modsFolder == null) {
-    // We could create a new enabled_mods.json file, but if TriOS simply failed to
-    // get the file for some reason, we don't want to overwrite the existing file
-    // and wipe out the user's enabled mods.
-    Fimber.e("Enabled mods is null, can't disable mod $modId.");
-    return;
-  }
-
-  enabledMods = enabledMods.copyWith(
-      enabledMods: enabledMods.enabledMods.filter((id) => id != modId).toSet());
-
-  final enabledModsFile = getEnabledModsFile(modsFolder);
-  await enabledModsFile.writeAsString(jsonEncode(enabledMods.toJson()));
+  ref.read(AppState.enabledModsFile.notifier).disableMod(modId);
 }
 
 Future<void> _enableModInEnabledMods(String modId, WidgetRef ref) async {
-  var enabledMods = ref.read(AppState.enabledModsFile).valueOrNull;
-  final modsFolder = ref.read(appSettings).modsDir;
-  if (enabledMods == null || modsFolder == null) {
-    // We could create a new enabled_mods.json file, but if TriOS simply failed to
-    // get the file for some reason, we don't want to overwrite the existing file
-    // and wipe out the user's enabled mods.
-    Fimber.e("Enabled mods is null, can't enable mod $modId.");
-    return;
-  }
-  enabledMods = enabledMods.copyWith(
-      enabledMods: enabledMods.enabledMods.toSet()..add(modId));
-  final enabledModsFile = getEnabledModsFile(modsFolder);
-  await enabledModsFile.writeAsString(jsonEncode(enabledMods.toJson()));
+  ref.read(AppState.enabledModsFile.notifier).enableMod(modId);
 }
 
 Future<void> forceChangeModGameVersion(
@@ -895,6 +891,7 @@ extension ModInfoExt on ModInfo {
     return enabledMods.enabledMods.contains(id);
   }
 
+  /// Searches [modVariants] for the best possible match for this dependency.
   List<ModDependencyCheckResult> checkDependencies(
     List<ModVariant> modVariants,
     EnabledMods enabledMods,
@@ -907,6 +904,7 @@ extension ModInfoExt on ModInfo {
 }
 
 extension ModVariantExt on ModVariant {
+  /// Searches [modVariants] for the best possible match for this dependency.
   List<ModDependencyCheckResult> checkDependencies(
     List<ModVariant> modVariants,
     EnabledMods enabledMods,

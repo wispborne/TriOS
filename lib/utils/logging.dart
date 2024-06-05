@@ -20,23 +20,21 @@ configureLogging({bool printPlatformInfo = false}) {
     const stackTraceBeginIndex = 4;
     const methodCount = 7;
     var consolePrinter = PrettyPrinterCustom(
-        stackTraceBeginIndex: 4,
-        methodCount: 7,
-        // Anything other than 0 halves the speed of logging.
-        // errorMethodCount: 5,
-        // lineLength: 50,
-        colors: true,
-        printEmojis: true,
-        printTime: true,
-        // noBoxingByDefault: true,
-        stackTraceMaxLines: 20,
-      );
+      stackTraceBeginIndex: 4,
+      methodCount: 7,
+      // Anything other than 0 halves the speed of logging.
+      // errorMethodCount: 5,
+      // lineLength: 50,
+      colors: true,
+      printEmojis: true,
+      printTime: true,
+      // noBoxingByDefault: true,
+      stackTraceMaxLines: 20,
+    );
     FlutterError.onError = (FlutterErrorDetails details) {
       Fimber.e("Error :  ${details.exception}");
       Fimber.e(Trace.from(details.stack!).terse.toString());
     };
-
-
 
     _consoleLogger = Logger(
       level: kDebugMode ? Level.debug : Level.warning,
@@ -44,6 +42,11 @@ configureLogging({bool printPlatformInfo = false}) {
       printer: consolePrinter,
       output: ConsoleOutput(),
     );
+
+    if (!logFolderName.toDirectory().existsSync()) {
+      // TODO check for MacOS permissions here.
+      logFolderName.toDirectory().createSync(recursive: true);
+    }
 
     _fileLogger = Logger(
       level: kDebugMode ? Level.debug : Level.debug,

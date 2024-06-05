@@ -33,16 +33,23 @@ import 'models/download_progress.dart';
 import 'trios/app_state.dart';
 import 'trios/drag_drop_handler.dart';
 
+Object? loggingError;
+
 void main() async {
-  print("Initializing TriOS logging framework...");
-  configureLogging();
-  Fimber.i("${Constants.appTitle} logging started.");
-  Fimber.i(
-      "Platform: ${Platform.operatingSystem} ${Platform.operatingSystemVersion}.");
-  FlutterError.onError = (details) {
-    Fimber.e("${details.exceptionAsString()}\n${details.stack}",
-        ex: details.exception, stacktrace: details.stack);
-  };
+  try {
+    print("Initializing TriOS logging framework...");
+    configureLogging();
+    Fimber.i("${Constants.appTitle} logging started.");
+    Fimber.i(
+        "Platform: ${Platform.operatingSystem} ${Platform.operatingSystemVersion}.");
+    FlutterError.onError = (details) {
+      Fimber.e("${details.exceptionAsString()}\n${details.stack}",
+          ex: details.exception, stacktrace: details.stack);
+    };
+  } catch (ex, st) {
+    print("Error initializing logging. $ex");
+    loggingError = ex;
+  }
   try {
     WidgetsFlutterBinding.ensureInitialized();
     await windowManager.ensureInitialized();
@@ -63,7 +70,7 @@ void main() async {
   const minSize = Size(900, 600);
 
   try {
-    // Restore window position and size
+// Restore window position and size
     final settings = readAppSettings();
     Rect windowFrame = Rect.fromLTWH(
         settings?.windowXPos ?? 0,
@@ -83,7 +90,7 @@ void main() async {
   } catch (e) {
     Fimber.e("Error restoring window position and size.", ex: e);
   }
-  // Clean up old files.
+// Clean up old files.
   final filePatternsToClean = [
     logFileName,
     ScriptGenerator.SELF_UPDATE_FILE_NAME
@@ -123,20 +130,20 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
     });
 
     windowManager.addListener(this);
-    // loadDefaultLog(ref);
+// loadDefaultLog(ref);
   }
 
   @override
   Widget build(BuildContext context) {
-    // Let's only manage one theme.
+// Let's only manage one theme.
     var material3 = true; //AppState.theme.isMaterial3();
 
-    // final starsectorSwatch = StarsectorTriOSTheme();
-    // var swatch = switch (DateTime.now().month) {
-    //   DateTime.october => HalloweenTriOSTheme(),
-    //   DateTime.december => XmasTriOSTheme(),
-    //   _ => starsectorSwatch
-    // };
+// final starsectorSwatch = StarsectorTriOSTheme();
+// var swatch = switch (DateTime.now().month) {
+//   DateTime.october => HalloweenTriOSTheme(),
+//   DateTime.december => XmasTriOSTheme(),
+//   _ => starsectorSwatch
+// };
     final currentTheme = AppState.theme.currentThemeData();
 
     return MaterialApp(
@@ -165,7 +172,7 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
     final windowFrame = await windowManager.getBounds();
     final isMaximized = await windowManager.isMaximized();
 
-    // Don't save window size is minimized, we want to restore to the previous size.
+// Don't save window size is minimized, we want to restore to the previous size.
     if (!await windowManager.isMinimized()) {
       ref.read(appSettings.notifier).update((state) {
         return state.copyWith(
@@ -181,7 +188,7 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
 
   @override
   void onWindowEvent(String eventName) {
-    // Could avoid saving on every event but it's probably fine.
+// Could avoid saving on every event but it's probably fine.
     if (eventName != "blur" &&
         eventName != "focus" &&
         eventName != "move" &&
@@ -241,12 +248,12 @@ class _AppShellState extends ConsumerState<AppShell>
     } catch (e) {
       Fimber.i("No default tool found in settings: $e");
     }
-    // Set the current tab to the index of the previously selected tool.
+// Set the current tab to the index of the previously selected tool.
     tabController.index = tabToolMap.keys
         .firstWhere((k) => tabToolMap[k] == defaultTool, orElse: () => 0);
 
     try {
-      // Check for updates on launch and show toast if available.
+// Check for updates on launch and show toast if available.
       SelfUpdater.getLatestRelease().then((latestRelease) {
         try {
           if (latestRelease != null) {
@@ -311,7 +318,7 @@ class _AppShellState extends ConsumerState<AppShell>
                 child: Tooltip(
                   message: Constants.appSubtitle,
                   child: const Stack(children: [
-                    // if (ref.watch(AppState.isWindowFocused))
+// if (ref.watch(AppState.isWindowFocused))
                     Opacity(
                       opacity: 0.8,
                       child: Blur(
@@ -320,12 +327,12 @@ class _AppShellState extends ConsumerState<AppShell>
                         child: TriOSAppIcon(),
                       ),
                     ),
-                    // .animate(onComplete: (c) => c.repeat(reverse: true))
-                    // .fadeIn(duration: const Duration(seconds: 5))
-                    // .then()
-                    // .fadeOut(
-                    //   duration: const Duration(seconds: 5),
-                    // ),
+// .animate(onComplete: (c) => c.repeat(reverse: true))
+// .fadeIn(duration: const Duration(seconds: 5))
+// .then()
+// .fadeOut(
+//   duration: const Duration(seconds: 5),
+// ),
                     TriOSAppIcon(),
                   ]),
                 ),
@@ -349,7 +356,7 @@ class _AppShellState extends ConsumerState<AppShell>
                   padding: const EdgeInsets.only(left: 8, right: 16),
                   child: TabBar(
                     tabs: [
-                      // TODO IF YOU CHANGE THESE, UPDATE tabToolMap!
+// TODO IF YOU CHANGE THESE, UPDATE tabToolMap!
                       const Tab(text: "Dashboard", icon: Icon(Icons.dashboard)),
                       Tab(
                           text: "Mods",
@@ -407,13 +414,24 @@ class _AppShellState extends ConsumerState<AppShell>
           ),
         ),
         body: DragDropHandler(
-          child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: TabBarView(
-                controller: tabController,
-                physics: const NeverScrollableScrollPhysics(),
-                children: tabChildren,
-              )),
+          child: Column(
+            children: [
+              if (loggingError != null)
+                Text(loggingError.toString(),
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: vanillaErrorColor,
+                        )),
+              Expanded(
+                child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: TabBarView(
+                      controller: tabController,
+                      physics: const NeverScrollableScrollPhysics(),
+                      children: tabChildren,
+                    )),
+              ),
+            ],
+          ),
           onDroppedLog: (_) =>
               tabController.animateTo(TriOSTools.chipper.index),
         ));

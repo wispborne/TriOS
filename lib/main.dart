@@ -308,33 +308,36 @@ class _AppShellState extends ConsumerState<AppShell>
               const DownloadToastDisplayer(),
               Padding(
                 padding: const EdgeInsets.only(right: 16.0),
-                child: Stack(children: [
-                  // if (ref.watch(AppState.isWindowFocused))
-                  Opacity(
-                    opacity: 0.8,
-                    child: const Blur(
-                      blurX: 10, // 8 for animation
-                      blurY: 10, // 8 for animation
-                      child: TriOSAppIcon(),
+                child: Tooltip(
+                  message: Constants.appSubtitle,
+                  child: const Stack(children: [
+                    // if (ref.watch(AppState.isWindowFocused))
+                    Opacity(
+                      opacity: 0.8,
+                      child: Blur(
+                        blurX: 10, // 8 for animation
+                        blurY: 10, // 8 for animation
+                        child: TriOSAppIcon(),
+                      ),
                     ),
-                  ),
-                  // .animate(onComplete: (c) => c.repeat(reverse: true))
-                  // .fadeIn(duration: const Duration(seconds: 5))
-                  // .then()
-                  // .fadeOut(
-                  //   duration: const Duration(seconds: 5),
-                  // ),
-                  const TriOSAppIcon(),
-                ]),
+                    // .animate(onComplete: (c) => c.repeat(reverse: true))
+                    // .fadeIn(duration: const Duration(seconds: 5))
+                    // .then()
+                    // .fadeOut(
+                    //   duration: const Duration(seconds: 5),
+                    // ),
+                    TriOSAppIcon(),
+                  ]),
+                ),
               ),
               Padding(
                   padding: const EdgeInsets.only(right: 24.0),
                   child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(Constants.appTitle,
+                        Text(Constants.appName,
                             style: Theme.of(context).textTheme.titleLarge),
-                        Text(Constants.appSubtitle,
+                        Text("v${Constants.version}",
                             style: Theme.of(context)
                                 .textTheme
                                 .bodyMedium

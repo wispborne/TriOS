@@ -19,7 +19,7 @@ class Constants {
     "Artemisia's Choice",
     "Persean Chronicles Died For This",
     "where is omega?",
-    "at com.fs.starfarer.oOOOOOOO"
+    "at com.fs.starfarer.oOOOOOOO",
   ].random();
 
   static const enabledModsFilename = "enabled_mods.json";
@@ -28,6 +28,7 @@ class Constants {
   static const archivesFolderName = "Mod_Backups";
   static const modInfoFileName = "mod_info.json";
   static const unbrickedModInfoFileName = modInfoFileName;
+
   //     // Backwards compat, first one is the one used for new disable actions.
   static const modInfoFileDisabledNames = [
     "mod_info.json.disabled-by-TriOS",

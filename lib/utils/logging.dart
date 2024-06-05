@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:fimber/fimber.dart' as f;
 import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
+import 'package:path/path.dart' as p;
 import 'package:platform_info/platform_info.dart';
 import 'package:stack_trace/stack_trace.dart';
 import 'package:trios/utils/extensions.dart';
@@ -10,7 +11,7 @@ import 'package:trios/utils/pretty_printer_custom.dart';
 
 const logFileName = "latest.log";
 const logFolderName = "logs";
-const logFilePath = "$logFolderName/$logFileName";
+final logFilePath = p.join(logFolderName, logFileName);
 
 var _consoleLogger = Logger();
 var _fileLogger = Logger();

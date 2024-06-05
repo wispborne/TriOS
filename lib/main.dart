@@ -17,7 +17,6 @@ import 'package:trios/trios/self_updater/self_updater.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/trios/settings/settings_page.dart';
 import 'package:trios/trios/toasts/download_toast_manager.dart';
-import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/vram_estimator/vram_estimator.dart';
 import 'package:trios/widgets/blur.dart';
@@ -353,17 +352,25 @@ class _AppShellState extends ConsumerState<AppShell>
                                 ?.copyWith(fontSize: 12))
                       ])),
               const Launcher(),
-              Expanded(
+              SizedBox(
+                width: 500,
                 child: Padding(
-                  padding: const EdgeInsets.only(left: 8, right: 16),
+                  padding: const EdgeInsets.only(left: 16, right: 16),
                   child: TabBar(
+                    isScrollable: true,
+                    // Makes tabs fit to content width instead of all same.
+                    tabAlignment: TabAlignment.start,
                     tabs: [
-// TODO IF YOU CHANGE THESE, UPDATE tabToolMap!
-                      const Tab(text: "Dashboard", icon: Icon(Icons.dashboard)),
+                      // TODO IF YOU CHANGE THESE, UPDATE tabToolMap!
+                      const Tab(
+                          text: "Dashboard",
+                          icon: Tooltip(
+                              message: "Dashboard",
+                              child: Icon(Icons.dashboard))),
                       Tab(
                           text: "Mods",
                           icon: Tooltip(
-                            message: "Under Construction",
+                            message: "Mods",
                             child: Transform.rotate(
                                 angle: 0.7,
                                 child: const SvgImageIcon(
@@ -372,29 +379,41 @@ class _AppShellState extends ConsumerState<AppShell>
                                 )),
                           )),
                       const Tab(
-                          text: "VRAM Estimator",
-                          icon: SvgImageIcon("assets/images/icon-weight.svg")),
+                          text: "VRAM",
+                          icon: Tooltip(
+                              message: "VRAM Estimator",
+                              child: SvgImageIcon(
+                                  "assets/images/icon-weight.svg"))),
                       const Tab(
                           text: chipperTitle,
-                          icon: ImageIcon(
-                              AssetImage("assets/images/chipper/icon.png")),
+                          icon: Tooltip(
+                            message: "$chipperTitle Log Viewer",
+                            child: ImageIcon(
+                                AssetImage("assets/images/chipper/icon.png")),
+                          ),
                           iconMargin: EdgeInsets.zero),
                       ConditionalWrap(
                           condition: !Platform.isWindows,
                           wrapper: (child) => Disable(
                               isEnabled: Platform.isWindows, child: child),
                           child: const Tab(
-                              text: "JRE Manager", icon: Icon(Icons.coffee))),
+                              text: "JREs",
+                              icon: Tooltip(
+                                  message: "JRE Manager",
+                                  child: Icon(Icons.coffee)))),
                       const Tab(
                           text: "Settings",
-                          icon: Icon(Icons.settings),
+                          icon: Tooltip(
+                              message: "Settings", child: Icon(Icons.settings)),
                           iconMargin: EdgeInsets.zero),
                     ],
                     controller: tabController,
                   ),
                 ),
               ),
-              Text("dot"),
+              // Spacer(),
+              // const Text("|"),
+              const Spacer(),
               Tooltip(
                 message: "Open log file",
                 child: IconButton(

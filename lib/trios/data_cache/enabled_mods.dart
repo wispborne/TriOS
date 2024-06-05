@@ -8,10 +8,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mutex/mutex.dart';
 import 'package:trios/trios/settings/settings.dart';
 
-import '../mod_manager/mod_manager_logic.dart';
-import '../models/enabled_mods.dart';
-import '../utils/logging.dart';
-import '../utils/util.dart';
+import '../../mod_manager/mod_manager_logic.dart';
+import '../../models/enabled_mods.dart';
+import '../../utils/logging.dart';
+import '../../utils/util.dart';
 
 class EnabledModsNotifier extends AsyncNotifier<EnabledMods> {
   StreamController<File>? _enabledModsWatcher;
@@ -19,6 +19,7 @@ class EnabledModsNotifier extends AsyncNotifier<EnabledMods> {
   // static StreamController<File>? _enabledModsWatcher;
   final fileLock = Mutex();
 
+  @override
   Future<EnabledMods> build() async {
     await refreshEnabledMods();
     return state.valueOrNull ?? const EnabledMods({});

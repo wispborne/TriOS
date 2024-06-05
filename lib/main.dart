@@ -34,6 +34,7 @@ import 'trios/app_state.dart';
 import 'trios/drag_drop_handler.dart';
 
 void main() async {
+  print("Initializing TriOS logging framework...");
   configureLogging();
   Fimber.i("${Constants.appTitle} logging started.");
   Fimber.i(
@@ -49,6 +50,7 @@ void main() async {
     Fimber.e("Error initializing!", ex: ex);
   }
   try {
+    // SharedPreferences.setMockInitialValues({});
     sharedPrefs = await SharedPreferences.getInstance();
   } catch (e) {
     Fimber.e(

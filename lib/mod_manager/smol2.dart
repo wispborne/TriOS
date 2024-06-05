@@ -98,7 +98,7 @@ class _Smol2State extends ConsumerState<Smol2> {
               ),
               child: Column(
                 children: [
-                  Text(
+                  const Text(
                     "The Mods section is not finished. It is safe to use but may not properly check dependencies.",
                     style: TextStyle(color: vanillaWarningColor),
                   ),

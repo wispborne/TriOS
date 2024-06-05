@@ -59,7 +59,14 @@ class LibArchive {
   static var binding = _getArchive();
 
   static LibArchiveBinding _getArchive() {
-    const assetsPath = kDebugMode ? "assets" : "data/flutter_assets/assets";
+    // TODO there's gotta be a better way to get the asset path.
+    final assetsPath = kDebugMode
+        ? "assets"
+        : switch (currentPlatform) {
+            TargetPlatform.windows => "data/flutter_assets/assets",
+            TargetPlatform.macOS => "TriOS.app/Contents/Frameworks/App.framework/Resources/flutter_assets/assets",
+            _ => "data/flutter_assets/assets",
+          };
     final currentLibarchivePath =
         p.join(Directory.current.absolute.path, assetsPath, "libarchive");
 

@@ -19,7 +19,8 @@ import 'package:trios/utils/util.dart';
 import '../mod_manager/version_checker.dart';
 import '../models/enabled_mods.dart';
 import '../models/mod.dart';
-import 'enabled_mods.dart';
+import 'data_cache/enabled_mods.dart';
+import 'mod_variants.dart';
 
 class AppState {
   static ThemeManager theme = ThemeManager();
@@ -28,37 +29,9 @@ class AppState {
       StateProvider<DownloadProgress?>((ref) => null);
 
   /// Master list of all mod variants found in the mods folder.
-  static var _cancelController = StreamController<void>();
-  static final modVariants = FutureProvider<List<ModVariant>>((ref) async {
-    Fimber.i("Fetching mod variants");
-    final gamePath =
-        ref.watch(appSettings.select((value) => value.gameDir))?.toDirectory();
-    final modsPath = ref.watch(appSettings.select((value) => value.modsDir));
-    if (gamePath == null || modsPath == null) {
-      return [];
-    }
-
-    final variants = await getModsVariantsInFolder(modsPath.toDirectory());
-    // for (var variant in variants) {
-    //   watchSingleModFolder(
-    //       variant,
-    //       (ModVariant variant, File? modInfoFile) =>
-    //           Fimber.i("${variant.smolId} mod_info.json file changed: $modInfoFile"));
-    // }
-    _cancelController.close();
-    _cancelController = StreamController<void>();
-    watchModsFolder(
-      modsPath,
-      ref,
-      (event) {
-        Fimber.i("Mods folder changed, invalidating mod variants");
-        ref.invalidateSelf();
-      },
-      _cancelController,
-    );
-
-    return variants;
-  });
+  static final modVariants =
+      AsyncNotifierProvider<ModVariantsNotifier, List<ModVariant>>(
+          ModVariantsNotifier.new);
 
   /// String is the smolId
   static final versionCheckResults = AsyncNotifierProvider<
@@ -69,6 +42,7 @@ class AppState {
 
   /// Projection of [modVariants], grouping them by mod id.
   static final mods = Provider<List<Mod>>((ref) {
+    Fimber.d("Recalculating mods from variants.");
     final modVariants = ref.watch(AppState.modVariants).value ?? [];
     final enabledMods =
         ref.watch(AppState.enabledModIds).value.orEmpty().toList();

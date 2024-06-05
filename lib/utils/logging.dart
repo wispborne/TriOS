@@ -32,17 +32,19 @@ configureLogging({bool printPlatformInfo = false}) {
         stackTraceMaxLines: 20,
       );
     FlutterError.onError = (FlutterErrorDetails details) {
-      print("Error :  ${details.exception}");
-      print(Trace.from(details.stack!).terse);
+      Fimber.e("Error :  ${details.exception}");
+      Fimber.e(Trace.from(details.stack!).terse.toString());
     };
+
 
 
     _consoleLogger = Logger(
       level: kDebugMode ? Level.debug : Level.warning,
-      filter: DevelopmentFilter(), // No console logs in release mode.
+      // filter: DevelopmentFilter(), // No console logs in release mode.
       printer: consolePrinter,
       output: ConsoleOutput(),
     );
+
     _fileLogger = Logger(
       level: kDebugMode ? Level.debug : Level.debug,
       filter: ProductionFilter(),
@@ -57,6 +59,7 @@ configureLogging({bool printPlatformInfo = false}) {
       output: AdvancedFileOutput(path: logFolderName, maxFileSizeKB: 25000),
     );
 
+    // Clean up old log files.
     logFolderName
         .toDirectory()
         .listSync()

@@ -157,8 +157,34 @@ Future<EnabledMods> getEnabledMods(Directory modsFolder) async {
 //   ref.invalidate(AppState.enabledMods);
 // }
 
+// Enable the new variant
+//   val result = if (modVariant != null) {
+//     // Enable the one we want.
+//     // Slower: Reload, since we just disabled it
+// //                val freshModVariant =
+//     modLoader.reload(listOf(mod.id))?.mods?.flatMap { it.variants }
+//       ?.first { it.smolId == modVariant.smolId }
+//   ?: kotlin.run {
+//   val error = "After disabling, couldn't find mod variant ${modVariant.smolId}."
+//   Timber.w { error }
+//   return Result.failure(RuntimeException(error))
+//   }
+//   // Faster: Assume we disabled it and change the mod to be disabled.
+// //                modVariant.mod = modVariant.mod.copy(isEnabledInGame = false)
+//   modModificationStateHolder.state.update {
+//   it.toMutableMap().apply {
+//   this[mod.id] =
+//   ModModificationState.EnablingVariant
+//   }
+//   }
+//   staging.enableModVariant(modVariant, modLoader)
+//   } else {
+//   Result.success(Unit)
+//   }
+
 Future<void> changeActiveModVariant(
-    Mod mod, ModVariant? modVariant, WidgetRef ref) async {
+    Mod mod, ModVariant? modVariant, WidgetRef ref,
+    {bool validateDependencies = true}) async {
   Fimber.i(
       "Changing active variant of ${mod.id} to ${modVariant?.smolId}. (current: ${mod.findFirstEnabled?.smolId}).");
 
@@ -213,52 +239,93 @@ Future<void> changeActiveModVariant(
     }
   }
 
-  // Enable any disabled dependencies
-  if (modVariant != null && enabledMods != null) {
-    final disabledDependencies = modVariant
-        .checkDependencies(allVariants, enabledMods)
-        .where((it) => it.satisfiedAmount is Disabled)
-        .map((it) => it.satisfiedAmount.modVariant!)
-        .toList();
-    for (var dependency in disabledDependencies) {
-      try {
-        Fimber.i(
-            "Enabling dependency ${dependency.smolId} for ${modVariant.smolId}.");
-        await changeActiveModVariant(dependency.mod(allMods)!, dependency, ref);
-      } catch (e, st) {
-        Fimber.e("Error enabling dependency: $e", ex: e, stacktrace: st);
+  if (modVariant != null) {
+    await _enableModVariant(modVariant, ref, enableInVanillaLauncher: true);
+  }
+
+  await ref.read(AppState.modVariants.notifier).reloadModVariants();
+
+  if (validateDependencies) {
+    validateModDependencies(ref, modsToFreeze: [mod.id]);
+  }
+}
+
+/// Check for multiple enabled variants for the same mod.
+/// If an enabled mod has a disabled dependency, enable the dependency.
+/// If an enabled mod's dependencies are not met, disable the mod.
+/// `modsToFreeze` is a list of mod ids that are being modified already and things should change around them.
+Future<void> validateModDependencies(
+  WidgetRef ref, {
+  List<String>? modsToFreeze,
+}) async {
+  final modifiedModIds = modsToFreeze.toSet();
+  var numModsChangedLastLoop = 0;
+
+  do {
+    numModsChangedLastLoop = 0;
+    final enabledMods = ref.read(AppState.enabledModsFile).valueOrNull;
+    if (enabledMods == null) return;
+
+    final allMods = ref.read(AppState.mods);
+    final allVariants = ref.read(AppState.modVariants).valueOrNull ?? [];
+    // final dependencyCheck = ref.read(AppState.modCompatibility);
+    for (final mod in allMods) {
+      if (!mod.isEnabledInGameSync(enabledMods)) continue;
+
+      // Check for multiple enabled variants for the same mod.
+      if (mod.enabledVariants.length > 1) {
+        for (var value in mod.enabledVariants.where((variant) =>
+            variant.smolId != mod.findHighestEnabledVersion?.smolId)) {
+          Fimber.i(
+              "Found multiple enabled versions for mod ${mod.id}. Disabling ${value.smolId}");
+          _disableModVariant(value, ref,
+              changeFileExtension: true, disableModInVanillaLauncher: false);
+        }
+      }
+
+      final enabledVariant = mod.findFirstEnabled;
+      if (enabledVariant == null) continue;
+
+      for (final dependencyCheck
+          in enabledVariant.checkDependencies(allVariants, enabledMods)) {
+        final wasAlreadyModified =
+            modifiedModIds.contains(dependencyCheck.dependency.id) == true;
+        Fimber.d(
+            "Dependency ${dependencyCheck.dependency.id} check for ${enabledVariant.smolId}: frozen? $wasAlreadyModified, ${dependencyCheck.satisfiedAmount}.");
+
+        // If an enabled mod has a disabled dependency, enable the dependency.
+        if (dependencyCheck.dependency.id == null) continue;
+
+        if (!modifiedModIds.contains(dependencyCheck.dependency.id) &&
+            dependencyCheck.satisfiedAmount is Disabled) {
+          final dependency = dependencyCheck.satisfiedAmount.modVariant!;
+          Fimber.i(
+              "Enabling dependency ${dependency.smolId} for ${enabledVariant.smolId}.");
+          modifiedModIds.add(mod.id);
+          await changeActiveModVariant(
+              dependency.mod(allMods)!, dependency, ref,
+              validateDependencies: false);
+          numModsChangedLastLoop++;
+        } else if (!modifiedModIds.contains(mod.id) &&
+                dependencyCheck.satisfiedAmount is VersionInvalid ||
+            dependencyCheck.satisfiedAmount is Missing ||
+            dependencyCheck.satisfiedAmount is Disabled) {
+          // If an enabled mod's dependencies are not met, disable the mod.
+          Fimber.i(
+              "Disabling ${mod.id} because ${dependencyCheck.dependency.formattedNameVersionId} was ${dependencyCheck.satisfiedAmount}.");
+          modifiedModIds.add(mod.id);
+          await changeActiveModVariant(mod, null, ref,
+              validateDependencies: false);
+          numModsChangedLastLoop++;
+        }
       }
     }
-  }
 
-  // Enable the new variant
-//   val result = if (modVariant != null) {
-//     // Enable the one we want.
-//     // Slower: Reload, since we just disabled it
-// //                val freshModVariant =
-//     modLoader.reload(listOf(mod.id))?.mods?.flatMap { it.variants }
-//       ?.first { it.smolId == modVariant.smolId }
-//   ?: kotlin.run {
-//   val error = "After disabling, couldn't find mod variant ${modVariant.smolId}."
-//   Timber.w { error }
-//   return Result.failure(RuntimeException(error))
-//   }
-//   // Faster: Assume we disabled it and change the mod to be disabled.
-// //                modVariant.mod = modVariant.mod.copy(isEnabledInGame = false)
-//   modModificationStateHolder.state.update {
-//   it.toMutableMap().apply {
-//   this[mod.id] =
-//   ModModificationState.EnablingVariant
-//   }
-//   }
-//   staging.enableModVariant(modVariant, modLoader)
-//   } else {
-//   Result.success(Unit)
-//   }
-
-  if (modVariant != null) {
-    _enableModVariant(modVariant, ref, enableInVanillaLauncher: true);
-  }
+    if (numModsChangedLastLoop > 0) {
+      Fimber.i(
+          "Doing another validation pass. Modified so far: ${modifiedModIds.join(", ")}.");
+    }
+  } while (numModsChangedLastLoop > 0);
 }
 
 /// NOT THREAD SAFE.
@@ -268,7 +335,7 @@ Future<void> changeActiveModVariant(
 /// Uses a static variable to keep track of the last paths and last modified times of the mod_info.json files.
 watchModsFolder(
   Directory modsFolder,
-  FutureProviderRef ref,
+  Ref ref,
   Function(List<File> modInfoFilesFound) onUpdated,
   StreamController cancelController,
 ) async {
@@ -936,6 +1003,10 @@ class ModDependencyCheckResult {
   final ModDependencySatisfiedState satisfiedAmount;
 
   ModDependencyCheckResult(this.dependency, this.satisfiedAmount);
+
+  @override
+  String toString() =>
+      "DependencyCheckResult{dependency: $dependency, satisfiedAmount: $satisfiedAmount}";
 }
 
 enum GameCompatibility { compatible, warning, incompatible }

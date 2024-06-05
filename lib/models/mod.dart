@@ -3,6 +3,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/utils/extensions.dart';
 
+import 'enabled_mods.dart';
 import 'mod_variant.dart';
 
 part '../generated/models/mod.freezed.dart';
@@ -20,6 +21,8 @@ class Mod with _$Mod {
   bool isEnabled(ModVariant variant) {
     return isEnabledInGame && variant.isModInfoEnabled;
   }
+
+  bool isEnabledInGameSync(EnabledMods enabledMods) => enabledMods.enabledMods.contains(id);
 
   List<ModVariant> get enabledVariants {
     return modVariants.where((variant) => isEnabled(variant)).toList();
@@ -45,6 +48,11 @@ class Mod with _$Mod {
 
   ModVariant? get findFirstEnabledOrHighestVersion {
     return findFirstEnabled ?? findHighestVersion;
+  }
+
+  ModVariant? get findHighestEnabledVersion {
+    return modVariants.where((v) => v.isModInfoEnabled).maxByOrNull(
+        (variant) => variant.bestVersion ?? Version.parse("0.0.0"));
   }
 
   bool get hasEnabledVariant {

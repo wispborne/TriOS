@@ -83,6 +83,8 @@ class ModVariant with _$ModVariant {
 
   bool get isModInfoEnabled => hasNonBrickedModInfo;
 
+  bool isEnabled(List<Mod> mods) => mod(mods)?.isEnabled(this) == true;
+
   Mod? mod(List<Mod> mods) {
     return mods.firstWhereOrNull((mod) => mod.id == modInfo.id);
   }

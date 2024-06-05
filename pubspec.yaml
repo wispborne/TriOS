@@ -142,6 +142,8 @@ flutter:
     - assets/images/
     - assets/images/chipper/
     - assets/libarchive/windows/bin/
+    - assets/libarchive/macos/bin/
+    - assets/libarchive/macos/lib/
     - assets/SMOL_Themes.json
   #  shaders:
   #    - assets/shaders/grain.frag

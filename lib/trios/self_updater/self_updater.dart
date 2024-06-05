@@ -82,7 +82,7 @@ class SelfUpdater {
       final scriptDest = kDebugMode
           ? Directory(p.join(Directory.current.path, "update-trios"))
           : Directory.current;
-      // If there's a subfolder, use the contents of the subfolder as the files to update.
+      // If there's a subfolder, use the contents of the subfolder as the files to update (added in 0.0.48).
       final filesToUpdateFromPath = updateWorkingDir.listSync().length == 1
           ? updateWorkingDir.listSync()[0].toDirectory()
           : updateWorkingDir;

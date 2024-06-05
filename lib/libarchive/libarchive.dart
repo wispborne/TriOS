@@ -64,24 +64,24 @@ class LibArchive {
         ? "assets"
         : switch (currentPlatform) {
             TargetPlatform.windows => "data/flutter_assets/assets",
-            TargetPlatform.macOS => "TriOS.app/Contents/Frameworks/App.framework/Resources/flutter_assets/assets",
+            TargetPlatform.macOS =>
+              "TriOS.app/Contents/Frameworks/App.framework/Resources/flutter_assets/assets",
             _ => "data/flutter_assets/assets",
           };
     final currentLibarchivePath =
         p.join(Directory.current.absolute.path, assetsPath, "libarchive");
 
     final libArchivePathForPlatform = switch (Platform.operatingSystem) {
-      "windows" => File("$currentLibarchivePath/windows/bin/archive.dll")
-          .absolute
-          .normalize,
-      "linux" =>
-        File("$currentLibarchivePath/linux/archive.so").absolute.normalize,
-      "macos" => File("$currentLibarchivePath/macos/lib/libarchive.dylib")
-          .absolute
-          .normalize,
+      "windows" => File("$currentLibarchivePath/windows/bin/archive.dll"),
+      "linux" => File("$currentLibarchivePath/linux/archive.so"),
+      "macos" => File("$currentLibarchivePath/macos/lib/libarchive.dylib"),
       _ =>
         throw UnimplementedError('Libarchive not supported for this platform')
-    };
+    }
+        .absolute
+        .normalize
+        .resolveSymbolicLinksSync()
+        .toFile();
 
     if (!libArchivePathForPlatform.existsSync()) {
       throw Exception("Libarchive not found at $libArchivePathForPlatform");

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:open_filex/open_filex.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:toastification/toastification.dart';
 import 'package:trios/chipper/chipper_home.dart';
@@ -16,6 +17,7 @@ import 'package:trios/trios/self_updater/self_updater.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/trios/settings/settings_page.dart';
 import 'package:trios/trios/toasts/download_toast_manager.dart';
+import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/vram_estimator/vram_estimator.dart';
 import 'package:trios/widgets/blur.dart';
@@ -390,6 +392,16 @@ class _AppShellState extends ConsumerState<AppShell>
                     ],
                     controller: tabController,
                   ),
+                ),
+              ),
+              Text("dot"),
+              Tooltip(
+                message: "Open log file",
+                child: IconButton(
+                  icon: const SvgImageIcon("assets/images/icon-debug.svg"),
+                  onPressed: () {
+                    OpenFilex.open(logFilePath);
+                  },
                 ),
               ),
               Tooltip(

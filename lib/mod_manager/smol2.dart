@@ -29,9 +29,11 @@ class Smol2 extends ConsumerStatefulWidget {
 class _Smol2State extends ConsumerState<Smol2> {
   bool _sortAscending = true;
   int? _sortColumnIndex;
+
   /// Gets set to a different function when sorting changes.
   /// TODO save this in shared preferences
-  List<Mod> Function(List<Mod>) sortFunction = (mods) => mods.sortedBy((mod) => mod.findFirstEnabledOrHighestVersion?.modInfo.name ?? "");
+  List<Mod> Function(List<Mod>) sortFunction = (mods) => mods.sortedBy(
+      (mod) => mod.findFirstEnabledOrHighestVersion?.modInfo.name ?? "");
 
   List<Mod> _sortModsBy<T extends Comparable<T>>(
       List<Mod> mods, T Function(Mod) comparableGetter) {
@@ -79,9 +81,9 @@ class _Smol2State extends ConsumerState<Smol2> {
   Widget build(BuildContext context) {
     final modsToDisplay = sortFunction(ref.watch(AppState.mods));
     const alternateRowColor = true;
-    final enabledMods =
-        ref.watch(AppState.enabledModsFile).value?.enabledMods ?? {};
-    const double versionSelectorWidth = 150;
+    // final enabledMods =
+    //     ref.watch(AppState.enabledModsFile).value?.enabledMods ?? {};
+    const double versionSelectorWidth = 130;
     final theme = Theme.of(context);
     const lightTextOpacity = 0.8;
     final lightTextColor =
@@ -98,10 +100,13 @@ class _Smol2State extends ConsumerState<Smol2> {
               ),
               child: Column(
                 children: [
-                  // const Text(
-                  //   "The Mods section is not finished. It is safe to use but may not properly check dependencies.",
-                  //   style: TextStyle(color: vanillaWarningColor),
-                  // ),
+                  Opacity(
+                    opacity: 0.6,
+                    child: Text(
+                        "Under construction: version checker icon, search, mod info, and more.",
+                        style: theme.textTheme.labelLarge
+                            ?.copyWith(color: vanillaWarningColor)),
+                  ),
                   Expanded(
                     child: DataTable3(
                       columnSpacing: 12,
@@ -195,7 +200,7 @@ class _Smol2State extends ConsumerState<Smol2> {
 
                             const rowHeight = kMinInteractiveDimension;
                             final extraRowHeight =
-                                !areDependenciesMet ? 30.0 : 0.0;
+                                !areDependenciesMet ? 16.0 : 0.0;
 
                             Widget affixToTop({required Widget child}) => Align(
                                   alignment: Alignment.topCenter,
@@ -229,8 +234,8 @@ class _Smol2State extends ConsumerState<Smol2> {
                                       ),
                                       if (!areDependenciesMet)
                                         Padding(
-                                          padding: const EdgeInsets.only(
-                                              bottom: 4, top: 4),
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 0),
                                           child: Builder(builder: (context) {
                                             return Text(
                                               dependencies?.gameCompatibility ==

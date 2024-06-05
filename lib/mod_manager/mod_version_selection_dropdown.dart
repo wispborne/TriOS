@@ -31,32 +31,43 @@ class _ModVersionSelectionDropdownState
     // final enabledMods = ref.watch(AppState.enabledModsFile).valueOrNull;
     final isSingleVariant = widget.mod.modVariants.length == 1;
     final theme = Theme.of(context);
-    const buttonHeight = 35.00;
+    const buttonHeight = 32.00;
     final buttonWidth = widget.width;
     final mainVariant = widget.mod.findFirstEnabledOrHighestVersion;
-    final dependencyChecks = widget.mod.modVariants.map((v) => ref.read(AppState.modCompatibility)[v.smolId]);
-    final isSupportedByGameVersion = dependencyChecks.any((d) => d?.gameCompatibility != GameCompatibility.incompatible);
-    final mainDependencyCheck = ref.read(AppState.modCompatibility)[mainVariant?.smolId];
+    final dependencyChecks = widget.mod.modVariants
+        .map((v) => ref.read(AppState.modCompatibility)[v.smolId]);
+    final isSupportedByGameVersion = dependencyChecks
+        .any((d) => d?.gameCompatibility != GameCompatibility.incompatible);
+    final mainDependencyCheck =
+        ref.read(AppState.modCompatibility)[mainVariant?.smolId];
     final modDependenciesSatisfied = mainDependencyCheck?.dependencyChecks;
 
     // TODO consolidate this logic with the logic in smol2.
-    var areAllDependenciesSatisfied =
-        modDependenciesSatisfied?.every((d) => d.satisfiedAmount is Satisfied || d.satisfiedAmount is VersionWarning || d.satisfiedAmount is Disabled);
+    var areAllDependenciesSatisfied = modDependenciesSatisfied?.every((d) =>
+        d.satisfiedAmount is Satisfied ||
+        d.satisfiedAmount is VersionWarning ||
+        d.satisfiedAmount is Disabled);
     final isEnabled =
         isSupportedByGameVersion && areAllDependenciesSatisfied == true;
 
+    final buttonColor = widget.mod.isEnabledInGame
+        ? theme.colorScheme.secondary
+        : theme.colorScheme.surface;
+    var textColor = widget.mod.isEnabledInGame
+        ? theme.colorScheme.onSecondary
+        : theme.colorScheme.onSurface;
     final buttonStyle = ElevatedButton.styleFrom(
-      foregroundColor: theme.colorScheme.onSecondary,
-      disabledForegroundColor: true ? theme.colorScheme.onSecondary : null,
-      backgroundColor: theme.colorScheme.secondary,
-      disabledBackgroundColor: true ? theme.colorScheme.secondary : null,
+      foregroundColor: textColor,
+      disabledForegroundColor: true ? textColor : null,
+      backgroundColor: buttonColor,
+      disabledBackgroundColor: true ? buttonColor : null,
       textStyle:
           const TextStyle(fontWeight: FontWeight.w900, fontFamily: "Orbitron"),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
         side: BorderSide(
           color: theme.colorScheme.secondary.darker(20),
-          // Slightly darker color
+          // Slightly darker buttonColor
           width: 2.0,
         ),
       ),
@@ -150,7 +161,7 @@ class _ModVersionSelectionDropdownState
                         width: 10,
                         child: Icon(
                           Icons.arrow_drop_down,
-                          color: theme.colorScheme.onSecondary,
+                          color: textColor,
                         ),
                       ),
                     ],

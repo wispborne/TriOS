@@ -8,7 +8,9 @@ import 'package:stack_trace/stack_trace.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/pretty_printer_custom.dart';
 
-const logFileName = "TriOS_log.";
+const logFileName = "latest.log";
+const logFolderName = "logs";
+const logFilePath = "$logFolderName/$logFileName";
 
 var _consoleLogger = Logger();
 var _fileLogger = Logger();
@@ -16,7 +18,6 @@ const useFimber = false;
 
 configureLogging({bool printPlatformInfo = false}) {
   if (!useFimber) {
-    const logFolderName = "logs";
     const stackTraceBeginIndex = 4;
     const methodCount = 7;
     var consolePrinter = PrettyPrinterCustom(
@@ -69,7 +70,7 @@ configureLogging({bool printPlatformInfo = false}) {
         .where((file) =>
             file is File &&
             file.extension == ".log" &&
-            file.nameWithExtension != "latest.log")
+            file.nameWithExtension != logFileName)
         .forEach((FileSystemEntity file) => file.deleteSync());
   } else {
     // const logLevels = kDebugMode ? ["V", "D", "I", "W", "E"] : ["I", "W", "E"];

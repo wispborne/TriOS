@@ -40,7 +40,6 @@ class NetworkUtils {
         * "body" -> "setting as a non-prerelease to test self-update"
          */
         if (jsonData.isNotEmpty) {
-          final latestRelease = jsonData['tag_name'] as String;
           final release = Release.fromJson(jsonData);
 
           return release;
@@ -48,8 +47,8 @@ class NetworkUtils {
       } else {
         Fimber.w(message);
       }
-    } catch (error) {
-      Fimber.w('Error fetching release data: $error');
+    } catch (error, st) {
+      Fimber.w('Error fetching release data: $error', ex: error, stacktrace: st);
     }
 
     return null;
@@ -64,17 +63,17 @@ class Release {
   final int id;
 
   // final Author author;
-  final String nodeId;
+  // final String nodeId;
   final String tagName;
-  final String targetCommitish;
+  // final String targetCommitish;
   final String name;
   final bool draft;
   final bool prerelease;
   final DateTime createdAt;
   final DateTime publishedAt;
   final List<Asset> assets;
-  final String tarballUrl;
-  final String zipballUrl;
+  // final String tarballUrl;
+  // final String zipballUrl;
   final String body;
 
   Release({
@@ -83,17 +82,17 @@ class Release {
     required this.uploadUrl,
     required this.htmlUrl,
     required this.id,
-    required this.nodeId,
+    // required this.nodeId,
     required this.tagName,
-    required this.targetCommitish,
+    // required this.targetCommitish,
     required this.name,
     required this.draft,
     required this.prerelease,
     required this.createdAt,
     required this.publishedAt,
     required this.assets,
-    required this.tarballUrl,
-    required this.zipballUrl,
+    // required this.tarballUrl,
+    // required this.zipballUrl,
     required this.body,
   });
 
@@ -105,17 +104,17 @@ class Release {
       uploadUrl: json['upload_url'],
       htmlUrl: json['html_url'],
       id: json['id'],
-      nodeId: json['node_id'],
+      // nodeId: json['node_id'],
       tagName: json['tag_name'],
-      targetCommitish: json['target_commitish'],
+      // targetCommitish: json['target_commitish'],
       name: json['name'],
       draft: json['draft'],
       prerelease: json['prerelease'],
       createdAt: DateTime.parse(json['created_at']),
       publishedAt: DateTime.parse(json['published_at']),
       assets: (json['assets'] as List).map((e) => Asset.fromJson(e)).toList(),
-      tarballUrl: json['tarball_url'],
-      zipballUrl: json['zipball_url'],
+      // tarballUrl: json['tarball_url'],
+      // zipballUrl: json['zipball_url'],
       body: json['body'],
     );
   }
@@ -124,31 +123,29 @@ class Release {
 class Asset {
   final String url;
   final int id;
-  final String nodeId;
+  // final String nodeId;
   final String name;
-  final String label;
-  final Uploader uploader;
+  // final String label;
   final String contentType;
-  final String state;
+  // final String state;
   final int size;
-  final int downloadCount;
-  final DateTime createdAt;
-  final DateTime updatedAt;
+  // final int downloadCount;
+  // final DateTime createdAt;
+  // final DateTime updatedAt;
   final String browserDownloadUrl;
 
   Asset({
     required this.url,
     required this.id,
-    required this.nodeId,
+    // required this.nodeId,
     required this.name,
-    required this.label,
-    required this.uploader,
+    // required this.label,
     required this.contentType,
-    required this.state,
+    // required this.state,
     required this.size,
-    required this.downloadCount,
-    required this.createdAt,
-    required this.updatedAt,
+    // required this.downloadCount,
+    // required this.createdAt,
+    // required this.updatedAt,
     required this.browserDownloadUrl,
   });
 
@@ -156,16 +153,16 @@ class Asset {
     return Asset(
       url: json['url'],
       id: json['id'],
-      nodeId: json['node_id'],
+      // nodeId: json['node_id'],
       name: json['name'],
-      label: json['label'],
-      uploader: Uploader.fromJson(json['uploader']),
+      // label: json['label'],
+      // uploader: Uploader.fromJson(json['uploader']),
       contentType: json['content_type'],
-      state: json['state'],
+      // state: json['state'],
       size: json['size'],
-      downloadCount: json['download_count'],
-      createdAt: DateTime.parse(json['created_at']),
-      updatedAt: DateTime.parse(json['updated_at']),
+      // downloadCount: json['download_count'],
+      // createdAt: DateTime.parse(json['created_at']),
+      // updatedAt: DateTime.parse(json['updated_at']),
       browserDownloadUrl: json['browser_download_url'],
     );
   }

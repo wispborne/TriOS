@@ -80,7 +80,6 @@ class LibArchive {
     }
         .absolute
         .normalize
-        .resolveSymbolicLinksSync()
         .toFile();
 
     if (!libArchivePathForPlatform.existsSync()) {

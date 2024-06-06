@@ -164,23 +164,14 @@ jobs:
       - run: flutter upgrade
       - run: flutter config --enable-windows-desktop
       - run: flutter build windows
-
-      - name: Create TriOS folder
-        run: New-Item -ItemType Directory -Path TriOS
-
-      - name: Move build output to TriOS folder
+      - name: zip win artifact
         run: |
-          Move-Item -Path ${{ env.windows_path }} -Destination TriOS
-
-      - name: Zip TriOS folder
-        run: |
-          powershell Compress-Archive -Path TriOS -DestinationPath TriOS-Windows.zip
-
-      - name: Upload windows artifact
+          powershell Compress-Archive ${{ env.windows_path }} TriOS-Windows.zip
+      - name: upload windows artifact
         uses: actions/upload-artifact@v1
         with:
           name: uploads
-          path: TriOS-Windows.zip
+          path: windows.zip
 
 
           #  build-linux:

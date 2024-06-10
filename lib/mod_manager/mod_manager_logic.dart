@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:collection/collection.dart';
@@ -188,10 +187,6 @@ Future<void> changeActiveModVariant(
   Fimber.i(
       "Changing active variant of ${mod.id} to ${modVariant?.smolId}. (current: ${mod.findFirstEnabled?.smolId}).");
 
-  final allVariants = ref.read(AppState.modVariants).valueOrNull ?? [];
-  final enabledMods = ref.read(AppState.enabledModsFile).valueOrNull;
-  final allMods = ref.read(AppState.mods);
-
   final modVariantParentModId = modVariant?.modInfo;
   if (modVariantParentModId != null && mod.id != modVariantParentModId.id) {
     final errMsg =
@@ -260,6 +255,7 @@ Future<void> validateModDependencies(
 }) async {
   final modifiedModIds = modsToFreeze.toSet();
   var numModsChangedLastLoop = 0;
+  final gameVersion = ref.read(AppState.starsectorVersion).valueOrNull;
 
   do {
     numModsChangedLastLoop = 0;
@@ -286,8 +282,12 @@ Future<void> validateModDependencies(
       final enabledVariant = mod.findFirstEnabled;
       if (enabledVariant == null) continue;
 
-      for (final dependencyCheck
-          in enabledVariant.checkDependencies(allVariants, enabledMods)) {
+      final dependenciesFound = enabledVariant.checkDependencies(
+          allVariants, enabledMods, gameVersion);
+      Fimber.d(
+          "Dependencies found for ${enabledVariant.smolId}: $dependenciesFound.");
+
+      for (final dependencyCheck in dependenciesFound) {
         final wasAlreadyModified =
             modifiedModIds.contains(dependencyCheck.dependency.id) == true;
         Fimber.d(
@@ -560,7 +560,7 @@ GameCompatibility compareGameVersions(
   // they are partially compatible if the first two numbers are the same
   // they are incompatible if the first or second number is different
   if (modGameVersion == null || gameVersion == null) {
-    return GameCompatibility.compatible;
+    return GameCompatibility.perfectMatch;
   }
 
   final modVersion = Version.parse(modGameVersion);
@@ -568,7 +568,7 @@ GameCompatibility compareGameVersions(
   if (modVersion.major == gameVersionParsed.major &&
       modVersion.minor == gameVersionParsed.minor &&
       modVersion.patch == gameVersionParsed.patch) {
-    return GameCompatibility.compatible;
+    return GameCompatibility.perfectMatch;
   } else if (modVersion.major == gameVersionParsed.major &&
       modVersion.minor == gameVersionParsed.minor) {
     return GameCompatibility.warning;
@@ -602,7 +602,10 @@ extension DependencyExt on Dependency {
 
   /// Searches [allMods] for the best possible match for this dependency.
   ModDependencySatisfiedState isSatisfiedByAny(
-      List<ModVariant> allMods, EnabledMods enabledMods) {
+    List<ModVariant> allMods,
+    EnabledMods enabledMods,
+    String? gameVersion,
+  ) {
     var foundDependencies = allMods.filter((mod) => mod.modInfo.id == id);
     if (foundDependencies.isEmpty) {
       return Missing();
@@ -613,7 +616,8 @@ extension DependencyExt on Dependency {
         .toList();
 
     // Return the least severe state.
-    return getTopDependencySeverity(satisfyResults, sortLeastSevere: true);
+    return getTopDependencySeverity(satisfyResults, gameVersion,
+        sortLeastSevere: true);
     // if (satisfyResults.contains(DependencyStateType.Satisfied)) {
     //   return DependencyStateType.Satisfied;
     // } else if (satisfyResults.contains(DependencyStateType.Disabled)) {
@@ -628,22 +632,70 @@ extension DependencyExt on Dependency {
   }
 }
 
+/// Determines the most or least severe dependency state from a list of dependency states.
+///
+/// @param sortLeastSevere A boolean flag indicating whether to sort the states in ascending order of severity.
+///                        If `true`, the method returns the least severe state. If `false`, it returns the most severe state.
 ModDependencySatisfiedState getTopDependencySeverity(
-    List<ModDependencySatisfiedState> satisfyResults,
-    {required bool sortLeastSevere}) {
-  return sortLeastSevere
-      ? satisfyResults.firstWhereOrNull((it) => it is Satisfied) ??
-          satisfyResults.firstWhereOrNull((it) => it is Disabled) ??
-          satisfyResults.firstWhereOrNull((it) => it is VersionWarning) ??
-          satisfyResults.firstWhereOrNull((it) => it is VersionInvalid) ??
-          satisfyResults.firstWhereOrNull((it) => it is Missing) ??
-          Missing()
-      : satisfyResults.firstWhereOrNull((it) => it is Missing) ??
-          satisfyResults.firstWhereOrNull((it) => it is VersionInvalid) ??
-          satisfyResults.firstWhereOrNull((it) => it is VersionWarning) ??
-          satisfyResults.firstWhereOrNull((it) => it is Disabled) ??
-          satisfyResults.firstWhereOrNull((it) => it is Satisfied) ??
-          Missing();
+  List<ModDependencySatisfiedState> satisfyResults,
+  String? gameVersion, {
+  required bool sortLeastSevere,
+}) {
+  final statePriority = sortLeastSevere
+      ? [
+          Satisfied,
+          Disabled,
+          VersionWarning,
+          VersionInvalid,
+          Missing,
+        ]
+      : [
+          Missing,
+          VersionInvalid,
+          VersionWarning,
+          Disabled,
+          Satisfied,
+        ];
+
+  // Add the most (or least) severe state(s) to a list.
+  final mostOrLeastSevere = <ModDependencySatisfiedState>[];
+  for (var state in statePriority) {
+    if (satisfyResults.any((it) => it.runtimeType == state)) {
+      for (var result in satisfyResults) {
+        if (result.runtimeType == state) {
+          mostOrLeastSevere.add(result);
+        }
+      }
+
+      break;
+    }
+  }
+
+  // These three states (Satisfied, Disabled, VersionWarning) are all roughly the same severity.
+  // They should all work, and even if we get an exact version match that's enabled,
+  // we should still prefer the highest version even if it's disabled.
+  if (mostOrLeastSevere.firstOrNull is Satisfied ||
+      mostOrLeastSevere.firstOrNull is Disabled ||
+      mostOrLeastSevere.firstOrNull is VersionWarning) {
+    // Find the highest version that's compatible.
+    final possibilities = satisfyResults
+        .where(
+            (it) => it is Satisfied || it is Disabled || it is VersionWarning)
+        .prefer((it) =>
+            gameVersion != null &&
+            it.modVariant?.isCompatibleWithGameVersionString(gameVersion) !=
+                GameCompatibility.incompatible)
+        .toList();
+
+    if (possibilities.isNotEmpty) {
+      // Find the highest version.
+      return possibilities.maxByOrNull((state) =>
+              state.modVariant?.bestVersion ?? Version.parse("0.0.0")) ??
+          possibilities.first;
+    }
+  }
+
+  return mostOrLeastSevere.firstOrNull ?? Missing();
 }
 
 typedef ExtractedModInfo = ({
@@ -962,21 +1014,13 @@ extension ModInfoExt on ModInfo {
   List<ModDependencyCheckResult> checkDependencies(
     List<ModVariant> modVariants,
     EnabledMods enabledMods,
+    String? gameVersion,
   ) {
     return dependencies.map((dep) {
       return ModDependencyCheckResult(
-          dep, dep.isSatisfiedByAny(modVariants, enabledMods));
+          dep, dep.isSatisfiedByAny(modVariants, enabledMods, gameVersion));
     }).toList();
   }
-}
-
-extension ModVariantExt on ModVariant {
-  /// Searches [modVariants] for the best possible match for this dependency.
-  List<ModDependencyCheckResult> checkDependencies(
-    List<ModVariant> modVariants,
-    EnabledMods enabledMods,
-  ) =>
-      modInfo.checkDependencies(modVariants, enabledMods);
 }
 
 class DependencyCheck {
@@ -991,9 +1035,10 @@ class DependencyCheck {
   bool get isGameCompatible =>
       gameCompatibility != GameCompatibility.incompatible;
 
-  ModDependencyCheckResult? get mostSevereDependency =>
-      getTopDependencySeverity(dependencyStates, sortLeastSevere: false).let(
-          (it) => dependencyChecks
+  ModDependencyCheckResult? mostSevereDependency(String? gameVersion) =>
+      getTopDependencySeverity(dependencyStates, gameVersion,
+              sortLeastSevere: false)
+          .let((it) => dependencyChecks
               .firstWhereOrNull((dep) => dep.satisfiedAmount == it));
 }
 
@@ -1009,7 +1054,7 @@ class ModDependencyCheckResult {
       "DependencyCheckResult{dependency: $dependency, satisfiedAmount: $satisfiedAmount}";
 }
 
-enum GameCompatibility { compatible, warning, incompatible }
+enum GameCompatibility { perfectMatch, warning, incompatible }
 
 class DependencyState {
   final Dependency dependency;
@@ -1022,6 +1067,9 @@ sealed class ModDependencySatisfiedState {
   final ModVariant? modVariant;
 
   ModDependencySatisfiedState({this.modVariant});
+
+  @override
+  String toString() => "${modVariant?.smolId} $runtimeType";
 }
 
 class Missing extends ModDependencySatisfiedState {

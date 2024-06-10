@@ -72,7 +72,7 @@ class AppState {
           compareGameVersions(variant.modInfo.gameVersion, gameVersion);
 
       final dependencyCheckResult =
-          variant.checkDependencies(modVariants, enabledMods);
+          variant.checkDependencies(modVariants, enabledMods, gameVersion);
 
       return MapEntry(
           variant.smolId,

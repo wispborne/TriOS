@@ -1,5 +1,6 @@
 import 'package:collection/collection.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/utils/extensions.dart';
 
@@ -22,7 +23,8 @@ class Mod with _$Mod {
     return isEnabledInGame && variant.isModInfoEnabled;
   }
 
-  bool isEnabledInGameSync(EnabledMods enabledMods) => enabledMods.enabledMods.contains(id);
+  bool isEnabledInGameSync(EnabledMods enabledMods) =>
+      enabledMods.enabledMods.contains(id);
 
   List<ModVariant> get enabledVariants {
     return modVariants.where((variant) => isEnabled(variant)).toList();
@@ -41,10 +43,7 @@ class Mod with _$Mod {
     return modVariants.firstWhereOrNull((variant) => !isEnabled(variant));
   }
 
-  ModVariant? get findHighestVersion {
-    return modVariants.maxByOrNull(
-        (variant) => variant.bestVersion ?? Version.parse("0.0.0"));
-  }
+  ModVariant? get findHighestVersion => modVariants.findHighestVersion;
 
   ModVariant? get findFirstEnabledOrHighestVersion {
     return findFirstEnabled ?? findHighestVersion;
@@ -67,5 +66,36 @@ class Mod with _$Mod {
 extension ModListExtensions on List<Mod> {
   List<ModVariant> get variants {
     return expand((mod) => mod.modVariants).toList();
+  }
+}
+
+extension ModVariantExt on ModVariant {
+  /// Searches [modVariants] for the best possible match for this dependency.
+  List<ModDependencyCheckResult> checkDependencies(
+    List<ModVariant> modVariants,
+    EnabledMods enabledMods,
+    String? gameVersion,
+  ) =>
+      modInfo.checkDependencies(modVariants, enabledMods, gameVersion);
+
+  GameCompatibility isCompatibleWithGameVersion(Version gameVersion) {
+    return modInfo.isCompatibleWithGame(gameVersion.toString());
+  }
+
+  GameCompatibility isCompatibleWithGameVersionString(String gameVersion) {
+    return modInfo.isCompatibleWithGame(gameVersion);
+  }
+}
+
+extension ModVariantsExt on List<ModVariant> {
+  ModVariant? highestVersionForGameVersion(Version gameVersion) {
+    return where((it) =>
+        it.isCompatibleWithGameVersion(gameVersion) !=
+        GameCompatibility.incompatible).toList().findHighestVersion;
+  }
+
+  ModVariant? get findHighestVersion {
+    return maxByOrNull(
+        (variant) => variant.bestVersion ?? Version.parse("0.0.0"));
   }
 }

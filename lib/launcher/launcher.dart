@@ -106,6 +106,7 @@ class Launcher extends ConsumerWidget {
     final modsFolder = ref.read(appSettings.select((it) => it.modsDir));
     final enabledMods = ref.read(AppState.enabledModsFile).valueOrNull;
     final allVariants = ref.read(AppState.modVariants).valueOrNull ?? [];
+    final gameVersion = ref.read(AppState.starsectorVersion).valueOrNull;
     final enabledVariants =
         (mods.map((mod) => mod.findFirstEnabled)).whereNotNull();
     final result = <LaunchPrecheckError>[];
@@ -121,7 +122,7 @@ class Launcher extends ConsumerWidget {
       final dependencies = modInfo.dependencies;
       for (final dependency in dependencies) {
         var satisfication =
-            dependency.isSatisfiedByAny(allVariants, enabledMods);
+            dependency.isSatisfiedByAny(allVariants, enabledMods, gameVersion);
 
         switch (satisfication.runtimeType) {
           case Missing _:

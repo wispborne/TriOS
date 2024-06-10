@@ -41,6 +41,7 @@ mixin _$Settings {
   LaunchSettings get launchSettings => throw _privateConstructorUsedError;
   String? get lastStarsectorVersion => throw _privateConstructorUsedError;
   int get secondsBetweenModFolderChecks => throw _privateConstructorUsedError;
+  bool get isUpdatesFieldShown => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -71,7 +72,8 @@ abstract class $SettingsCopyWith<$Res> {
       bool? useJre23,
       LaunchSettings launchSettings,
       String? lastStarsectorVersion,
-      int secondsBetweenModFolderChecks});
+      int secondsBetweenModFolderChecks,
+      bool isUpdatesFieldShown});
 
   $LaunchSettingsCopyWith<$Res> get launchSettings;
 }
@@ -107,6 +109,7 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
     Object? launchSettings = null,
     Object? lastStarsectorVersion = freezed,
     Object? secondsBetweenModFolderChecks = null,
+    Object? isUpdatesFieldShown = null,
   }) {
     return _then(_value.copyWith(
       gameDir: freezed == gameDir
@@ -181,6 +184,10 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
           ? _value.secondsBetweenModFolderChecks
           : secondsBetweenModFolderChecks // ignore: cast_nullable_to_non_nullable
               as int,
+      isUpdatesFieldShown: null == isUpdatesFieldShown
+          ? _value.isUpdatesFieldShown
+          : isUpdatesFieldShown // ignore: cast_nullable_to_non_nullable
+              as bool,
     ) as $Val);
   }
 
@@ -219,7 +226,8 @@ abstract class _$$SettingsImplCopyWith<$Res>
       bool? useJre23,
       LaunchSettings launchSettings,
       String? lastStarsectorVersion,
-      int secondsBetweenModFolderChecks});
+      int secondsBetweenModFolderChecks,
+      bool isUpdatesFieldShown});
 
   @override
   $LaunchSettingsCopyWith<$Res> get launchSettings;
@@ -254,6 +262,7 @@ class __$$SettingsImplCopyWithImpl<$Res>
     Object? launchSettings = null,
     Object? lastStarsectorVersion = freezed,
     Object? secondsBetweenModFolderChecks = null,
+    Object? isUpdatesFieldShown = null,
   }) {
     return _then(_$SettingsImpl(
       gameDir: freezed == gameDir
@@ -328,6 +337,10 @@ class __$$SettingsImplCopyWithImpl<$Res>
           ? _value.secondsBetweenModFolderChecks
           : secondsBetweenModFolderChecks // ignore: cast_nullable_to_non_nullable
               as int,
+      isUpdatesFieldShown: null == isUpdatesFieldShown
+          ? _value.isUpdatesFieldShown
+          : isUpdatesFieldShown // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -353,7 +366,8 @@ class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
       this.useJre23,
       this.launchSettings = const LaunchSettings(),
       this.lastStarsectorVersion,
-      this.secondsBetweenModFolderChecks = 5});
+      this.secondsBetweenModFolderChecks = 5,
+      this.isUpdatesFieldShown = true});
 
   factory _$SettingsImpl.fromJson(Map<String, dynamic> json) =>
       _$$SettingsImplFromJson(json);
@@ -402,10 +416,13 @@ class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
   @override
   @JsonKey()
   final int secondsBetweenModFolderChecks;
+  @override
+  @JsonKey()
+  final bool isUpdatesFieldShown;
 
   @override
   String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
-    return 'Settings(gameDir: $gameDir, gameCoreDir: $gameCoreDir, modsDir: $modsDir, hasCustomModsDir: $hasCustomModsDir, shouldAutoUpdateOnLaunch: $shouldAutoUpdateOnLaunch, isRulesHotReloadEnabled: $isRulesHotReloadEnabled, windowXPos: $windowXPos, windowYPos: $windowYPos, windowWidth: $windowWidth, windowHeight: $windowHeight, isMaximized: $isMaximized, isMinimized: $isMinimized, defaultTool: $defaultTool, jre23VmparamsFilename: $jre23VmparamsFilename, useJre23: $useJre23, launchSettings: $launchSettings, lastStarsectorVersion: $lastStarsectorVersion, secondsBetweenModFolderChecks: $secondsBetweenModFolderChecks)';
+    return 'Settings(gameDir: $gameDir, gameCoreDir: $gameCoreDir, modsDir: $modsDir, hasCustomModsDir: $hasCustomModsDir, shouldAutoUpdateOnLaunch: $shouldAutoUpdateOnLaunch, isRulesHotReloadEnabled: $isRulesHotReloadEnabled, windowXPos: $windowXPos, windowYPos: $windowYPos, windowWidth: $windowWidth, windowHeight: $windowHeight, isMaximized: $isMaximized, isMinimized: $isMinimized, defaultTool: $defaultTool, jre23VmparamsFilename: $jre23VmparamsFilename, useJre23: $useJre23, launchSettings: $launchSettings, lastStarsectorVersion: $lastStarsectorVersion, secondsBetweenModFolderChecks: $secondsBetweenModFolderChecks, isUpdatesFieldShown: $isUpdatesFieldShown)';
   }
 
   @override
@@ -433,7 +450,8 @@ class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
       ..add(DiagnosticsProperty('launchSettings', launchSettings))
       ..add(DiagnosticsProperty('lastStarsectorVersion', lastStarsectorVersion))
       ..add(DiagnosticsProperty(
-          'secondsBetweenModFolderChecks', secondsBetweenModFolderChecks));
+          'secondsBetweenModFolderChecks', secondsBetweenModFolderChecks))
+      ..add(DiagnosticsProperty('isUpdatesFieldShown', isUpdatesFieldShown));
   }
 
   @override
@@ -478,31 +496,35 @@ class _$SettingsImpl with DiagnosticableTreeMixin implements _Settings {
             (identical(other.secondsBetweenModFolderChecks,
                     secondsBetweenModFolderChecks) ||
                 other.secondsBetweenModFolderChecks ==
-                    secondsBetweenModFolderChecks));
+                    secondsBetweenModFolderChecks) &&
+            (identical(other.isUpdatesFieldShown, isUpdatesFieldShown) ||
+                other.isUpdatesFieldShown == isUpdatesFieldShown));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      gameDir,
-      gameCoreDir,
-      modsDir,
-      hasCustomModsDir,
-      shouldAutoUpdateOnLaunch,
-      isRulesHotReloadEnabled,
-      windowXPos,
-      windowYPos,
-      windowWidth,
-      windowHeight,
-      isMaximized,
-      isMinimized,
-      defaultTool,
-      jre23VmparamsFilename,
-      useJre23,
-      launchSettings,
-      lastStarsectorVersion,
-      secondsBetweenModFolderChecks);
+  int get hashCode => Object.hashAll([
+        runtimeType,
+        gameDir,
+        gameCoreDir,
+        modsDir,
+        hasCustomModsDir,
+        shouldAutoUpdateOnLaunch,
+        isRulesHotReloadEnabled,
+        windowXPos,
+        windowYPos,
+        windowWidth,
+        windowHeight,
+        isMaximized,
+        isMinimized,
+        defaultTool,
+        jre23VmparamsFilename,
+        useJre23,
+        launchSettings,
+        lastStarsectorVersion,
+        secondsBetweenModFolderChecks,
+        isUpdatesFieldShown
+      ]);
 
   @JsonKey(ignore: true)
   @override
@@ -537,7 +559,8 @@ abstract class _Settings implements Settings {
       final bool? useJre23,
       final LaunchSettings launchSettings,
       final String? lastStarsectorVersion,
-      final int secondsBetweenModFolderChecks}) = _$SettingsImpl;
+      final int secondsBetweenModFolderChecks,
+      final bool isUpdatesFieldShown}) = _$SettingsImpl;
 
   factory _Settings.fromJson(Map<String, dynamic> json) =
       _$SettingsImpl.fromJson;
@@ -581,6 +604,8 @@ abstract class _Settings implements Settings {
   String? get lastStarsectorVersion;
   @override
   int get secondsBetweenModFolderChecks;
+  @override
+  bool get isUpdatesFieldShown;
   @override
   @JsonKey(ignore: true)
   _$$SettingsImplCopyWith<_$SettingsImpl> get copyWith =>

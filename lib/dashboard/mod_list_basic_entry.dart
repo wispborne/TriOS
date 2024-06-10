@@ -35,14 +35,16 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
     final mod = widget.mod;
     final modVariant =
         mod.findFirstEnabledOrHighestVersion ?? mod.modVariants.first;
+    final highestModVariant = mod.findHighestVersion ?? modVariant;
 
+    final gameVersion = ref.watch(AppState.starsectorVersion).value!;
     final modInfo = modVariant.modInfo;
-    final localVersionCheck = modVariant.versionCheckerInfo;
-    final remoteVersionCheck = versionCheck?[modVariant.smolId];
+    final localVersionCheck = highestModVariant.versionCheckerInfo;
+    final remoteVersionCheck = versionCheck?[highestModVariant.smolId];
     final versionCheckComparison =
         compareLocalAndRemoteVersions(localVersionCheck, remoteVersionCheck);
-    final compatWithGame = compareGameVersions(
-        modInfo.gameVersion, ref.read(AppState.starsectorVersion).value);
+    final compatWithGame =
+        compareGameVersions(modInfo.gameVersion, gameVersion);
     final theme = Theme.of(context);
     final compatTextColor = compatWithGame.getGameCompatibilityColor();
 
@@ -198,16 +200,17 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                         context: context,
                         type: SnackBarType.error,
                         content: Text(
-                            "'${modInfo.name}' requires game version ${modInfo.gameVersion} but you have ${ref.read(AppState.starsectorVersion).value}"),
+                            "'${modInfo.name}' requires game version ${modInfo.gameVersion} but you have ${gameVersion}"),
                       );
                       return;
                     }
 
-                    var allMods = ref.read(AppState.modVariants).value ?? [];
-                    var enabledMods = ref.read(AppState.enabledModsFile).value!;
+                    final allMods = ref.read(AppState.modVariants).value ?? [];
+                    final enabledMods =
+                        ref.read(AppState.enabledModsFile).value!;
                     // Check dependencies
-                    final dependencyCheck =
-                        modInfo.checkDependencies(allMods, enabledMods);
+                    final dependencyCheck = modInfo.checkDependencies(
+                        allMods, enabledMods, gameVersion);
 
                     // Check if any dependencies are completely missing
                     final missingDependencies = dependencyCheck
@@ -219,18 +222,6 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                           content: Text(
                             "'${modInfo.name}' is missing '${missingDependencies.joinToString(transform: (it) => it.dependency.name ?? it.dependency.id ?? "<unknown>")}'.",
                           ));
-                      return;
-                    }
-
-                    // Check if any dependencies are disabled but present and can be enabled
-                    final disabledDependencies = dependencyCheck.where(
-                        (element) => element.satisfiedAmount is Disabled);
-                    if (disabledDependencies.isNotEmpty) {
-                      showSnackBar(
-                          context: context,
-                          type: SnackBarType.error,
-                          content: Text(
-                              "'${modInfo.name}' has disabled dependency/s '${disabledDependencies.joinToString(transform: (it) => it.dependency.name ?? it.dependency.id ?? "<unknown>")}'."));
                       return;
                     }
                   }

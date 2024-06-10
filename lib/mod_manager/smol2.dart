@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/mod_manager/mod_version_selection_dropdown.dart';
+import 'package:trios/mod_manager/version_checker.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/app_state.dart';
@@ -14,8 +15,11 @@ import 'package:trios/widgets/svg_image_icon.dart';
 
 import '../dashboard/mod_dependencies_widget.dart';
 import '../dashboard/mod_list_basic.dart';
+import '../dashboard/version_check_icon.dart';
+import '../dashboard/version_check_text_readout.dart';
 import '../datatable3/data_table_3.dart';
 import '../models/mod.dart';
+import '../trios/download_manager/download_manager.dart';
 import '../widgets/moving_tooltip.dart';
 import '../widgets/tooltip_frame.dart';
 
@@ -88,6 +92,7 @@ class _Smol2State extends ConsumerState<Smol2> {
     const lightTextOpacity = 0.8;
     final lightTextColor =
         theme.colorScheme.onSurface.withOpacity(lightTextOpacity);
+    var versionCheck = ref.watch(AppState.versionCheckResults).valueOrNull;
 
     return false
         ? Center(child: Image.asset("assets/images/construction.png"))
@@ -193,10 +198,19 @@ class _Smol2State extends ConsumerState<Smol2> {
                                 dependencies?.dependencyChecks.every((e) =>
                                             e.satisfiedAmount is Satisfied ||
                                             e.satisfiedAmount
-                                                is VersionWarning) !=
+                                                is VersionWarning ||
+                                            e.satisfiedAmount is Disabled) !=
                                         false &&
                                     dependencies?.gameCompatibility !=
                                         GameCompatibility.incompatible;
+
+                            final localVersionCheck =
+                                mod.findHighestVersion?.versionCheckerInfo;
+                            final remoteVersionCheck =
+                                versionCheck?[bestVersion.smolId];
+                            final versionCheckComparison =
+                                compareLocalAndRemoteVersions(
+                                    localVersionCheck, remoteVersionCheck);
 
                             const rowHeight = kMinInteractiveDimension;
                             final extraRowHeight =
@@ -254,7 +268,7 @@ class _Smol2State extends ConsumerState<Smol2> {
                                                                 Missing _ =>
                                                                   "${e.dependency.formattedNameVersion} is missing.",
                                                                 Disabled _ =>
-                                                                  "${e.dependency.formattedNameVersion} is disabled and will be enabled.",
+                                                                  null,
                                                                 VersionInvalid
                                                                   _ =>
                                                                   "Missing version ${e.dependency.version} of ${e.dependency.nameOrId}.",
@@ -274,6 +288,7 @@ class _Smol2State extends ConsumerState<Smol2> {
                                                               dependencies
                                                                       ?.dependencyStates ??
                                                                   [],
+                                                      gameVersion,
                                                               sortLeastSevere:
                                                                   false)
                                                           .getDependencySatisfiedColor()),
@@ -342,12 +357,17 @@ class _Smol2State extends ConsumerState<Smol2> {
                                 ),
                                 // Name
                                 DataCell3(
-                                  Text(
-                                    bestVersion.modInfo.name ?? "(no name)",
-                                    style: GoogleFonts.roboto(
-                                      textStyle: theme.textTheme.labelLarge
-                                          ?.copyWith(
-                                              fontWeight: FontWeight.bold),
+                                  ConstrainedBox(
+                                    constraints: const BoxConstraints(
+                                      minWidth: 600,
+                                    ),
+                                    child: Text(
+                                      bestVersion.modInfo.name ?? "(no name)",
+                                      style: GoogleFonts.roboto(
+                                        textStyle: theme.textTheme.labelLarge
+                                            ?.copyWith(
+                                                fontWeight: FontWeight.bold),
+                                      ),
                                     ),
                                   ),
                                   builder: (context, child) =>
@@ -375,39 +395,118 @@ class _Smol2State extends ConsumerState<Smol2> {
                                 DataCell3(affixToTop(
                                   child: mod.modVariants.isEmpty
                                       ? const Text("")
-                                      : RichText(
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          text: TextSpan(
-                                            children: [
-                                              for (var i = 0;
-                                                  i < mod.modVariants.length;
-                                                  i++) ...[
-                                                if (i > 0)
-                                                  TextSpan(
-                                                    text: ', ',
-                                                    style: theme
-                                                        .textTheme.labelLarge
-                                                        ?.copyWith(
-                                                            color:
-                                                                lightTextColor), // Style for the comma
-                                                  ),
-                                                TextSpan(
-                                                  text: mod.modVariants[i]
-                                                      .modInfo.version
-                                                      .toString(),
-                                                  style: theme
-                                                      .textTheme.labelLarge
-                                                      ?.copyWith(
-                                                          color: enabledVersion ==
-                                                                  mod.modVariants[
-                                                                      i]
-                                                              ? null
-                                                              : lightTextColor), // Style for the remaining items
+                                      : Row(
+                                          children: [
+                                            MovingTooltipWidget(
+                                              tooltipWidget: SizedBox(
+                                                width: 500,
+                                                child: TooltipFrame(
+                                                    child: VersionCheckTextReadout(
+                                                        versionCheckComparison,
+                                                        localVersionCheck,
+                                                        remoteVersionCheck,
+                                                        true)),
+                                              ),
+                                              child: InkWell(
+                                                onTap: () {
+                                                  if (remoteVersionCheck
+                                                              ?.remoteVersion !=
+                                                          null &&
+                                                      compareLocalAndRemoteVersions(
+                                                              localVersionCheck,
+                                                              remoteVersionCheck) ==
+                                                          -1) {
+                                                    downloadUpdateViaBrowser(
+                                                        remoteVersionCheck!
+                                                            .remoteVersion!,
+                                                        ref,
+                                                        context,
+                                                        activateVariantOnComplete:
+                                                            true,
+                                                        modInfo: bestVersion
+                                                            .modInfo);
+                                                  } else {
+                                                    showDialog(
+                                                        context: context,
+                                                        builder: (context) =>
+                                                            AlertDialog(
+                                                                content:
+                                                                    SelectionArea(
+                                                              child: VersionCheckTextReadout(
+                                                                  versionCheckComparison,
+                                                                  localVersionCheck,
+                                                                  remoteVersionCheck,
+                                                                  true),
+                                                            )));
+                                                  }
+                                                },
+                                                onSecondaryTap: () =>
+                                                    showDialog(
+                                                        context: context,
+                                                        builder: (context) =>
+                                                            AlertDialog(
+                                                                content:
+                                                                    SelectionArea(
+                                                              child: VersionCheckTextReadout(
+                                                                  versionCheckComparison,
+                                                                  localVersionCheck,
+                                                                  remoteVersionCheck,
+                                                                  true),
+                                                            ))),
+                                                child: Padding(
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
+                                                      horizontal: 5.0),
+                                                  child: VersionCheckIcon(
+                                                      localVersionCheck:
+                                                          localVersionCheck,
+                                                      remoteVersionCheck:
+                                                          remoteVersionCheck,
+                                                      versionCheckComparison:
+                                                          versionCheckComparison,
+                                                      theme: theme),
                                                 ),
-                                              ],
-                                            ],
-                                          ),
+                                              ),
+                                            ),
+                                            Expanded(
+                                              child: RichText(
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                text: TextSpan(
+                                                  children: [
+                                                    for (var i = 0;
+                                                        i <
+                                                            mod.modVariants
+                                                                .length;
+                                                        i++) ...[
+                                                      if (i > 0)
+                                                        TextSpan(
+                                                          text: ', ',
+                                                          style: theme.textTheme
+                                                              .labelLarge
+                                                              ?.copyWith(
+                                                                  color:
+                                                                      lightTextColor), // Style for the comma
+                                                        ),
+                                                      TextSpan(
+                                                        text: mod.modVariants[i]
+                                                            .modInfo.version
+                                                            .toString(),
+                                                        style: theme.textTheme
+                                                            .labelLarge
+                                                            ?.copyWith(
+                                                                color: enabledVersion ==
+                                                                        mod.modVariants[
+                                                                            i]
+                                                                    ? null
+                                                                    : lightTextColor), // Style for the remaining items
+                                                      ),
+                                                    ],
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                 )),
                                 DataCell3(
@@ -433,7 +532,7 @@ class _Smol2State extends ConsumerState<Smol2> {
                                                     ref
                                                         .watch(appSettings)
                                                         .lastStarsectorVersion) ==
-                                                GameCompatibility.compatible
+                                                GameCompatibility.perfectMatch
                                             ? theme.textTheme.labelLarge
                                             : theme.textTheme.labelLarge
                                                 ?.copyWith(

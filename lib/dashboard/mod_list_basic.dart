@@ -21,6 +21,7 @@ import '../models/mod.dart';
 import '../models/mod_variant.dart';
 import '../trios/app_state.dart';
 import '../trios/download_manager/download_manager.dart';
+import '../widgets/simple_data_row.dart';
 import 'mod_list_basic_entry.dart';
 
 class ModListMini extends ConsumerStatefulWidget {
@@ -80,66 +81,95 @@ class ModListMini extends ConsumerStatefulWidget {
                       content: SingleChildScrollView(
                           child: SelectionArea(
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Card(
-                              child: Padding(
-                                padding: const EdgeInsets.all(10),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text("Misc info",
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodyLarge
-                                            ?.copyWith(
-                                                fontWeight: FontWeight.bold)),
-                                    Text("Id: ${modVariant.modInfo.id}"),
-                                    Text("Internal id: ${modVariant.smolId}"),
-                                    Text(
-                                        "Mod Folder: ${modVariant.modsFolder.path}"),
-                                    Text(
-                                        "Icon:${modVariant.iconFilePath ?? ""}"),
-                                  ],
+                          children: mod.modVariants
+                              .map(
+                                (variant) => Card(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.all(10),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                                "${variant.modInfo.id} ${variant.modInfo.version}",
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .bodyLarge
+                                                    ?.copyWith(
+                                                        fontWeight:
+                                                            FontWeight.bold)),
+                                            SimpleDataRow(
+                                                label: "id: ",
+                                                value: variant.modInfo.id),
+                                            SimpleDataRow(
+                                              label: "Version: ",
+                                              value:
+                                                  '${variant.modInfo.version} • Version Checker: ${variant.versionCheckerInfo?.modVersion}',
+                                            ),
+                                            SimpleDataRow(
+                                                label: "Internal id: ",
+                                                value: variant.smolId),
+                                            SimpleDataRow(
+                                                label: "Mod Folder: ",
+                                                value: variant.modsFolder.path),
+                                            SimpleDataRow(
+                                                label: "Icon: ",
+                                                value:
+                                                    variant.iconFilePath ?? ""),
+                                          ],
+                                        ),
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.all(10),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text("mod_info.json",
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .bodyLarge
+                                                    ?.copyWith(
+                                                        fontWeight:
+                                                            FontWeight.bold)),
+                                            Text(variant.modInfo.toString(),
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .labelLarge),
+                                          ],
+                                        ),
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.all(10),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text("Version Checker",
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .bodyLarge
+                                                    ?.copyWith(
+                                                        fontWeight:
+                                                            FontWeight.bold)),
+                                            Text(
+                                                variant.versionCheckerInfo
+                                                    .toString(),
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .labelLarge),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ),
-                            Card(
-                              child: Padding(
-                                padding: const EdgeInsets.all(10),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text("mod_info.json",
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodyLarge
-                                            ?.copyWith(
-                                                fontWeight: FontWeight.bold)),
-                                    Text(modVariant.modInfo.toString()),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            Card(
-                              child: Padding(
-                                padding: const EdgeInsets.all(10),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text("Version Checker",
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodyLarge
-                                            ?.copyWith(
-                                                fontWeight: FontWeight.bold)),
-                                    Text(modVariant.versionCheckerInfo
-                                        .toString()),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
+                              )
+                              .toList(),
                         ),
                       )),
                       actions: [
@@ -171,6 +201,7 @@ class _ModListMiniState extends ConsumerState<ModListMini>
     final versionCheck = ref.watch(AppState.versionCheckResults).valueOrNull;
     final isRefreshing = (modVariants.isLoading ||
         ref.watch(AppState.versionCheckResults).isLoading);
+    final theme = Theme.of(context);
 
     return Padding(
       padding: const EdgeInsets.all(8.0),
@@ -273,6 +304,8 @@ class _ModListMiniState extends ConsumerState<ModListMini>
           Expanded(
             child: modVariants.when(
               data: (_) {
+                final isUpdatesFieldShown =
+                    ref.watch(appSettings.select((s) => s.isUpdatesFieldShown));
                 var modsWithUpdates = modList
                     .map((e) => e as Mod?)
                     .filter((mod) {
@@ -290,7 +323,9 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                         info?.findFirstEnabledOrHighestVersion?.modInfo.name ??
                         "")
                     .toList();
-                final listItems = modsWithUpdates +
+                final updatesToDisplay =
+                    (isUpdatesFieldShown ? modsWithUpdates : <Mod?>[null]);
+                final listItems = updatesToDisplay +
                     (modsWithUpdates.isEmpty ? [] : [null]) + // Divider
                     (modList
                         // .filter((mod) => mod.versionCheckerInfo == null)
@@ -299,6 +334,7 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                 .name ??
                             "")
                         .toList());
+
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -324,17 +360,32 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                         const Divider(),
                                         Padding(
                                           padding: const EdgeInsets.only(
-                                              bottom: 4, right: 8),
+                                              bottom: 0, right: 8),
                                           child: Row(
                                             children: [
-                                              Text("UPDATES",
+                                              Text(
+                                                  "UPDATES (${modsWithUpdates.whereNotNull().length}${isUpdatesFieldShown ? "" : " hidden"})",
                                                   style: Theme.of(context)
                                                       .textTheme
                                                       .labelMedium),
+                                              IconButton(
+                                                onPressed: () => ref
+                                                    .read(appSettings.notifier)
+                                                    .update((s) => s.copyWith(
+                                                        isUpdatesFieldShown: !s
+                                                            .isUpdatesFieldShown)),
+                                                icon: Icon(
+                                                    isUpdatesFieldShown
+                                                        ? Icons.visibility
+                                                        : Icons.visibility_off,
+                                                    size: 15,
+                                                    color: theme
+                                                        .colorScheme.onSurface),
+                                              ),
                                               const Spacer(),
                                               Tooltip(
                                                   message:
-                                                      "Download all ${modsWithUpdates.whereType<ModVariant>().length} updates",
+                                                      "Download all ${modsWithUpdates.whereNotNull().length} updates",
                                                   child: IconButton(
                                                       onPressed: () {
                                                         _onClickedDownloadModUpdatesDialog(

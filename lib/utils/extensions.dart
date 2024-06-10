@@ -8,8 +8,6 @@ import 'package:path/path.dart' as p;
 import 'package:trios/utils/logging.dart';
 import 'package:yaml/yaml.dart';
 
-import '../trios/constants.dart';
-
 extension DoubleExt on double {
   String bytesAsReadableMB() => "${(this / 1000000).toStringAsFixed(3)} MB";
 
@@ -432,6 +430,15 @@ extension IterableExt<T> on Iterable<T> {
       }
     }
     return result;
+  }
+
+  Iterable<T>? nullIfEmpty() => isEmpty ? null : this;
+
+  /// Filters the iterable based on the given predicate.
+  /// If the filtered result is empty, returns the original iterable.
+  Iterable<T> prefer(bool Function(T) predicate) {
+    var filtered = where(predicate);
+    return filtered.isEmpty ? this : filtered;
   }
 }
 

@@ -6,8 +6,8 @@ import 'package:trios/models/mod_variant.dart';
 import 'package:trios/utils/extensions.dart';
 
 import '../mod_manager/mod_manager_logic.dart';
-import '../trios/app_state.dart';
 import '../themes/theme_manager.dart';
+import '../trios/app_state.dart';
 
 class ModSummaryWidget extends ConsumerStatefulWidget {
   final ModVariant modVariant;
@@ -29,6 +29,7 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
   Widget build(BuildContext context) {
     final enabledMods = ref.watch(AppState.enabledModsFile).valueOrNull;
     final modVariants = ref.watch(AppState.modVariants).valueOrNull;
+    final gameVersion = ref.watch(AppState.starsectorVersion).valueOrNull;
     if (modVariants == null || enabledMods == null) return const SizedBox();
 
     final modVariant = widget.modVariant;
@@ -148,8 +149,7 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
                 ?.copyWith(color: theme.disabledColor)),
         Padding(
           padding: const EdgeInsets.only(left: 8.0),
-          child: Text(ref.read(AppState.starsectorVersion).value ?? "",
-              style: theme.textTheme.labelMedium),
+          child: Text(gameVersion ?? "", style: theme.textTheme.labelMedium),
         ),
         if (widget.compatWithGame == GameCompatibility.incompatible)
           Text("Error: this mod requires a different version of the game.",
@@ -164,12 +164,13 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
         for (var dep in modInfo.dependencies)
           Builder(builder: (context) {
             var dependencyState =
-                dep.isSatisfiedByAny(modVariants, enabledMods);
+                dep.isSatisfiedByAny(modVariants, enabledMods, gameVersion);
             return Padding(
               padding: const EdgeInsets.only(left: 8),
               child: Text(
                   "${dep.name ?? dep.id} ${dep.version?.toString().append(" ") ?? ""}${switch (dependencyState) {
-                    Satisfied _ => "(found ${dependencyState.modVariant?.modInfo.version})",
+                    Satisfied _ =>
+                      "(found ${dependencyState.modVariant?.modInfo.version})",
                     Missing _ => "(missing)",
                     Disabled _ =>
                       "(not enabled: ${dependencyState.modVariant?.modInfo.version})",
@@ -190,8 +191,8 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
             );
           }),
         const SizedBox(height: spacing),
-        if (modInfo.dependencies.any((dep) =>
-            dep.isSatisfiedByAny(modVariants, enabledMods) is VersionWarning))
+        if (modInfo.dependencies.any((dep) => dep.isSatisfiedByAny(
+            modVariants, enabledMods, gameVersion) is VersionWarning))
           Text(
               "Warning: this mod requires a different version of a mod that you have installed, but might run with this one.",
               style: theme.textTheme.labelMedium

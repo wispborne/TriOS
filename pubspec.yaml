@@ -88,6 +88,7 @@ dependencies:
   stack_trace: ^1.11.1
   dropdown_button2: ^2.3.9
   mutex: ^3.1.0
+  flutter_markdown: ^0.7.1
 #  data_table_2: ^2.5.12
 
 dev_dependencies:

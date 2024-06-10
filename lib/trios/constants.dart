@@ -1,7 +1,7 @@
 import 'package:trios/utils/extensions.dart';
 
 class Constants {
-  static const version = "0.0.49";
+  static const version = "0.0.50";
 
   static const appName = "TriOS";
   static const appTitle = "$appName v$version";
@@ -45,6 +45,7 @@ class Constants {
   static const forumModdingSubforumUrl = "$forumUrl?board=3.0";
   static const forumHostname = "fractalsoftworks.com";
   static const tipsFileRelativePath = "data/strings/tips.json";
+  static const changelogUrl = "https://raw.githubusercontent.com/wispborne/TriOS/main/changelog.md";
   static const supportedArchiveExtensions = [
     ".zip",
     ".7z",

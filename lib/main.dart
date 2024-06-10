@@ -20,6 +20,7 @@ import 'package:trios/trios/toasts/download_toast_manager.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/vram_estimator/vram_estimator.dart';
 import 'package:trios/widgets/blur.dart';
+import 'package:trios/widgets/changelog_viewer.dart';
 import 'package:trios/widgets/conditional_wrap.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/self_update_toast.dart';
@@ -414,6 +415,13 @@ class _AppShellState extends ConsumerState<AppShell>
               // Spacer(),
               // const Text("|"),
               const Spacer(),
+              Tooltip(
+                message: "View Changelog",
+                child: IconButton(
+                  icon: const SvgImageIcon("assets/images/icon-log.svg"),
+                  onPressed: () => showTriOSChangelogDialog(context),
+                ),
+              ),
               Tooltip(
                 message: "Open log file",
                 child: IconButton(

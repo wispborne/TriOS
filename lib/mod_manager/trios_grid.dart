@@ -11,7 +11,7 @@ class TriOSDataGrid extends ConsumerStatefulWidget {
 class _TriOSDataGridState extends ConsumerState<TriOSDataGrid> {
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return const Column(
       children: [
         Text("TriOS Data Grid"),
       ],
@@ -23,7 +23,8 @@ class TriosGridHeaderRow extends ConsumerStatefulWidget {
   final List<TriOSColumn> columns;
   final TextStyle? headerStyle;
 
-  TriosGridHeaderRow({super.key, required this.columns, this.headerStyle});
+  const TriosGridHeaderRow(
+      {super.key, required this.columns, this.headerStyle});
 
   @override
   ConsumerState createState() => _TriosGridHeaderRowState();
@@ -56,7 +57,7 @@ class TriosGridRow extends ConsumerStatefulWidget {
   final List<TriOSColumn> columns;
   final TextStyle? rowStyle;
 
-  TriosGridRow({super.key, required this.columns, this.rowStyle});
+  const TriosGridRow({super.key, required this.columns, this.rowStyle});
 
   @override
   ConsumerState createState() => _TriosGridRowState();

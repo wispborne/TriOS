@@ -1,8 +1,5 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:io';
 
-import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mutex/mutex.dart';
 import 'package:trios/models/mod_variant.dart';
@@ -10,9 +7,7 @@ import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 
 import '../mod_manager/mod_manager_logic.dart';
-import '../models/enabled_mods.dart';
 import '../utils/logging.dart';
-import '../utils/util.dart';
 
 class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
   /// Master list of all mod variants found in the mods folder.

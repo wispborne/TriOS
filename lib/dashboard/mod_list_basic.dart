@@ -275,7 +275,7 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                               child: DisableIfCannotWriteMods(
                                 child: IconButton(
                                     icon: const Icon(Icons.add),
-                                    padding: EdgeInsets.only(left: 8),
+                                    padding: const EdgeInsets.only(left: 8),
                                     iconSize: 20,
                                     constraints: const BoxConstraints(),
                                     onPressed: () {

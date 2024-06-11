@@ -324,8 +324,9 @@ class JsonConverterBool implements JsonConverter<bool, dynamic> {
   bool fromJson(dynamic json) {
     if (json == null) return false;
     if (json is bool) return json;
-    if (json is String)
+    if (json is String) {
       return bool.tryParse(json, caseSensitive: false) ?? false;
+    }
     return false;
   }
 

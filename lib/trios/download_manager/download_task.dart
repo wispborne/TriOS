@@ -8,8 +8,10 @@ import 'download_status.dart';
 
 class DownloadTask {
   final DownloadRequest request;
-  final ValueNotifier<DownloadStatus> status = ValueNotifier(DownloadStatus.queued);
-  final ValueNotifier<DownloadedAmount> downloaded = ValueNotifier(DownloadedAmount(0, 0));
+  final ValueNotifier<DownloadStatus> status =
+      ValueNotifier(DownloadStatus.queued);
+  final ValueNotifier<DownloadedAmount> downloaded =
+      ValueNotifier(DownloadedAmount(0, 0));
   final File file;
   Object? error;
 
@@ -26,11 +28,11 @@ class DownloadTask {
       completer.complete(status.value);
     }
 
-    var listener;
+    VoidCallback? listener;
     listener = () {
       if (status.value.isCompleted) {
         completer.complete(status.value);
-        status.removeListener(listener);
+        status.removeListener(listener!);
       }
     };
 

@@ -24,7 +24,7 @@ class DownloadManager {
   int maxConcurrentTasks = 2;
   int runningTasks = 0;
 
-  static final DownloadManager _dm = new DownloadManager._internal();
+  static final DownloadManager _dm = DownloadManager._internal();
 
   DownloadManager._internal();
 
@@ -89,9 +89,9 @@ class DownloadManager {
 
         if (response.statusCode == HttpStatus.partialContent) {
           var ioSink = partialFile.openWrite(mode: FileMode.writeOnlyAppend);
-          var _f = File(partialFilePath + tempExtension);
-          await ioSink.addStream(_f.openRead());
-          await _f.delete();
+          var f0 = File(partialFilePath + tempExtension);
+          await ioSink.addStream(f0.openRead());
+          await f0.delete();
           await ioSink.close();
           await partialFile.rename(savePath);
 
@@ -166,6 +166,8 @@ class DownloadManager {
 
       return _addDownloadRequest(DownloadRequest(url, downloadFilename));
     }
+
+    return null;
   }
 
   Future<DownloadTask> _addDownloadRequest(
@@ -177,7 +179,7 @@ class DownloadManager {
         // Do nothing
         return _cache[downloadRequest.url]!;
       } else {
-        _queue.remove(_cache[downloadRequest.url]);
+        _queue.remove(_cache[downloadRequest.url]?.request);
       }
     }
 
@@ -251,9 +253,9 @@ class DownloadManager {
 
   // Batch Download Mechanism
   Future<void> addBatchDownloads(List<String> urls, String savedDir) async {
-    urls.forEach((url) {
+    for (final url in urls) {
       addDownload(url, savedDir);
-    });
+    }
   }
 
   List<DownloadTask?> getBatchDownloads(List<String> urls) {
@@ -261,21 +263,21 @@ class DownloadManager {
   }
 
   Future<void> pauseBatchDownloads(List<String> urls) async {
-    urls.forEach((element) {
+    for (var element in urls) {
       pauseDownload(element);
-    });
+    }
   }
 
   Future<void> cancelBatchDownloads(List<String> urls) async {
-    urls.forEach((element) {
+    for (var element in urls) {
       cancelDownload(element);
-    });
+    }
   }
 
   Future<void> resumeBatchDownloads(List<String> urls) async {
-    urls.forEach((element) {
+    for (var element in urls) {
       resumeDownload(element);
-    });
+    }
   }
 
   ValueNotifier<DownloadedAmount> getBatchDownloadProgress(List<String> urls) {
@@ -293,7 +295,7 @@ class DownloadManager {
 
     var progressMap = <String, double>{};
 
-    urls.forEach((url) {
+    for (var url in urls) {
       DownloadTask? task = getDownload(url);
 
       if (task != null) {
@@ -314,13 +316,13 @@ class DownloadManager {
 
         task.downloaded.addListener(progressListener);
 
-        var listener;
+        VoidCallback? listener;
         listener = () {
           if (task.status.value.isCompleted) {
             progressMap[url] = 1.0;
             progress.value =
                 DownloadedAmount(progressMap.values.sum.toInt(), total);
-            task.status.removeListener(listener);
+            task.status.removeListener(listener!);
             task.downloaded.removeListener(progressListener);
           }
         };
@@ -329,7 +331,7 @@ class DownloadManager {
       } else {
         total--;
       }
-    });
+    }
 
     return progress;
   }
@@ -341,7 +343,7 @@ class DownloadManager {
     var completed = 0;
     var total = urls.length;
 
-    urls.forEach((url) {
+    for (var url in urls) {
       DownloadTask? task = getDownload(url);
 
       if (task != null) {
@@ -353,14 +355,14 @@ class DownloadManager {
           }
         }
 
-        var listener;
+        VoidCallback? listener;
         listener = () {
           if (task.status.value.isCompleted) {
             completed++;
 
             if (completed == total) {
               completer.complete(getBatchDownloads(urls));
-              task.status.removeListener(listener);
+              task.status.removeListener(listener!);
             }
           }
         };
@@ -373,7 +375,7 @@ class DownloadManager {
           completer.complete(null);
         }
       }
-    });
+    }
 
     return completer.future.timeout(timeout);
   }
@@ -393,7 +395,7 @@ class DownloadManager {
       download(
           currentRequest.url, currentRequest.path, currentRequest.cancelToken);
 
-      await Future.delayed(Duration(milliseconds: 500), null);
+      await Future.delayed(const Duration(milliseconds: 500), null);
     }
   }
 

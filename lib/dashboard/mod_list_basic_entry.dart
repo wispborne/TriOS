@@ -200,7 +200,7 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                         context: context,
                         type: SnackBarType.error,
                         content: Text(
-                            "'${modInfo.name}' requires game version ${modInfo.gameVersion} but you have ${gameVersion}"),
+                            "'${modInfo.name}' requires game version ${modInfo.gameVersion} but you have $gameVersion"),
                       );
                       return;
                     }

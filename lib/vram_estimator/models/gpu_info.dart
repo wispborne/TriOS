@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:trios/utils/logging.dart';
-import 'package:flutter/material.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:windows_system_info/windows_system_info.dart';
 

@@ -3,11 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/chipper/utils.dart';
 import 'package:trios/mod_manager/version_checker.dart';
 import 'package:trios/models/mod_variant.dart';
-import 'package:trios/utils/extensions.dart';
 
 import '../mod_manager/mod_manager_logic.dart';
-import '../trios/app_state.dart';
 import '../themes/theme_manager.dart';
+import '../trios/app_state.dart';
 
 class ModDependenciesWidget extends ConsumerStatefulWidget {
   final ModVariant modVariant;

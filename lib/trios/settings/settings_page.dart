@@ -347,7 +347,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             ),
           ],
         ),
-        Spacer(),
+        const Spacer(),
         Align(
           alignment: Alignment.center,
           child: Opacity(

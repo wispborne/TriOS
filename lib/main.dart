@@ -48,7 +48,7 @@ void main() async {
       Fimber.e("${details.exceptionAsString()}\n${details.stack}",
           ex: details.exception, stacktrace: details.stack);
     };
-  } catch (ex, st) {
+  } catch (ex) {
     print("Error initializing logging. $ex");
     loggingError = ex;
   }

@@ -34,7 +34,7 @@ class MapComparer<K, V> {
       if (!oldMap.containsKey(key)) {
         added[key] = newValue;
       } else if (oldMap[key] != newValue) {
-        modified[key] = MapEntry(oldMap[key]!, newValue);
+        modified[key] = MapEntry(oldMap[key] as V, newValue);
       }
     });
 
@@ -64,7 +64,7 @@ extension MapComparison<K, V> on Map<K, V> {
       if (!containsKey(key)) {
         added[key] = newValue;
       } else if (this[key] != newValue) {
-        modified[key] = MapEntry(this[key]!, newValue);
+        modified[key] = MapEntry(this[key] as V, newValue);
       }
     });
 

@@ -29,7 +29,12 @@ class SelfUpdateToast extends ConsumerWidget {
       child: Card(
         surfaceTintColor: Theme.of(context).colorScheme.secondary,
         elevation: 8,
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+        ),
         child: Container(
+          clipBehavior: Clip.antiAlias,
           padding: const EdgeInsets.all(16.0),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
@@ -40,67 +45,75 @@ class SelfUpdateToast extends ConsumerWidget {
           ),
           child: Stack(
             children: [
-              const TriOSAppIcon(),
-              Expanded(
-                child: Column(
-                  children: [
-                    const Text("New ${Constants.appName} version"),
-                    Text("${latestRelease.tagName} is now available!",
-                        style: Theme.of(context).textTheme.labelLarge),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+              Row(
+                children: [
+                  const TriOSAppIcon(),
+                  Expanded(
+                    child: Column(
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: ElevatedButton.icon(
-                              onPressed: () =>
-                                  showTriOSChangelogDialog(context),
-                              icon: const SvgImageIcon(
-                                "assets/images/icon-log.svg",
+                        const Text("New ${Constants.appName} version"),
+                        Text("${latestRelease.tagName} is now available!",
+                            style: Theme.of(context).textTheme.labelLarge),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: ElevatedButton.icon(
+                                  onPressed: () =>
+                                      showTriOSChangelogDialog(context),
+                                  icon: const SvgImageIcon(
+                                    "assets/images/icon-log.svg",
+                                  ),
+                                  label: const Text("View Changelog")),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Disable(
+                                isEnabled: ref.watch(
+                                        AppState.selfUpdateDownloadProgress) ==
+                                    null,
+                                child: ElevatedButton.icon(
+                                    onPressed: () {
+                                      SelfUpdater.update(latestRelease,
+                                          downloadProgress:
+                                              (bytesReceived, contentLength) {
+                                        ref
+                                            .read(AppState
+                                                .selfUpdateDownloadProgress
+                                                .notifier)
+                                            .update((_) => DownloadProgress(
+                                                bytesReceived, contentLength,
+                                                isIndeterminate: false));
+                                        Fimber.i(
+                                            "Downloaded: ${bytesReceived.bytesAsReadableMB()} / ${contentLength.bytesAsReadableMB()}");
+                                      });
+                                    },
+                                    icon: const Icon(Icons.download),
+                                    label: const Text("Update")),
                               ),
-                              label: const Text("View Changelog")),
+                            ),
+                          ],
                         ),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Disable(
-                            isEnabled: ref.watch(
-                                    AppState.selfUpdateDownloadProgress) ==
-                                null,
-                            child: ElevatedButton.icon(
-                                onPressed: () {
-                                  SelfUpdater.update(latestRelease,
-                                      downloadProgress:
-                                          (bytesReceived, contentLength) {
-                                    ref
-                                        .read(AppState
-                                            .selfUpdateDownloadProgress
-                                            .notifier)
-                                        .update((_) => DownloadProgress(
-                                            bytesReceived, contentLength,
-                                            isIndeterminate: false));
-                                    Fimber.i(
-                                        "Downloaded: ${bytesReceived.bytesAsReadableMB()} / ${contentLength.bytesAsReadableMB()}");
-                                  });
-                                },
-                                icon: const Icon(Icons.download),
-                                label: const Text("Update")),
-                          ),
+                        DownloadProgressIndicator(
+                          value:
+                              ref.watch(AppState.selfUpdateDownloadProgress) ??
+                                  const DownloadProgress(0, 0,
+                                      isIndeterminate: true),
                         ),
                       ],
                     ),
-                    DownloadProgressIndicator(
-                      value: ref.watch(AppState.selfUpdateDownloadProgress) ??
-                          const DownloadProgress(0, 0, isIndeterminate: true),
-                    ),
-                  ],
+                  ),
+                ],
+              ),
+              Positioned(
+                top: 0,
+                right: 0,
+                child: IconButton(
+                  onPressed: () => toastification.dismiss(item),
+                  icon: const Icon(Icons.close),
                 ),
               ),
-              Align(
-                alignment: Alignment.topRight,
-                child: IconButton(
-                    onPressed: () => toastification.dismiss(item),
-                    icon: const Icon(Icons.close)),
-              )
             ],
           ),
         ),

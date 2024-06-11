@@ -1,4 +1,9 @@
+# 0.0.51
+- Fixed
+  - Self-update toast didn't display.
+
 # 0.0.50
+(pulled in mins due to self-update bug)
 
 - Added
   - Hide mod updates button.

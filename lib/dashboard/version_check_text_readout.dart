@@ -43,15 +43,6 @@ class _VersionCheckTextReadoutState
               if (widget.showClickToDownloadIfPossible && hasUpdate)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),
-                  child: Text(
-                      "Note: full mod manager features will time some time to develop.",
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                          fontStyle: FontStyle.italic,
-                          color: theme.colorScheme.secondary)),
-                ),
-              if (widget.showClickToDownloadIfPossible && hasUpdate)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

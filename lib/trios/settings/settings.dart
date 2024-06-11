@@ -5,6 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:trios/jre_manager/jre_23.dart';
+import 'package:trios/mod_manager/mod_manager_logic.dart';
+import 'package:trios/models/enabled_mods.dart';
 import 'package:trios/trios/navigation.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
@@ -118,6 +120,20 @@ class SettingSaver extends Notifier<Settings> {
 
       newState = newState.copyWith(
           gameCoreDir: generateGameCorePath(newState.gameDir!));
+
+      final enabledModsFile = getEnabledModsFile(newState.modsDir!);
+      if (enabledModsFile.existsSync() == false) {
+        try {
+          enabledModsFile.createSync(recursive: true);
+          enabledModsFile
+              .writeAsStringSync(const EnabledMods({}).toJson().toJsonString());
+        } catch (e, stack) {
+          Fimber.e(
+              "Failed to create enabled mods file at ${enabledModsFile.path}",
+              ex: e,
+              stacktrace: stack);
+        }
+      }
     }
 
     Fimber.d("Updated settings: $newState");

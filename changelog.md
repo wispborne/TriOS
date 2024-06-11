@@ -1,3 +1,9 @@
+# 0.0.52
+- Fixed
+  - JRE manager failing if JRE 23 isn't present.
+- Changed
+  - Limit changelog to not show unreleased versions (except when viewed from self-update notification).
+
 # 0.0.51
 - Fixed
   - Self-update toast didn't display.

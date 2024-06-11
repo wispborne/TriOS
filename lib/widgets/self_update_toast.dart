@@ -61,7 +61,7 @@ class SelfUpdateToast extends ConsumerWidget {
                               padding: const EdgeInsets.all(8.0),
                               child: ElevatedButton.icon(
                                   onPressed: () =>
-                                      showTriOSChangelogDialog(context),
+                                      showTriOSChangelogDialog(context, showUnreleasedVersions: true),
                                   icon: const SvgImageIcon(
                                     "assets/images/icon-log.svg",
                                   ),

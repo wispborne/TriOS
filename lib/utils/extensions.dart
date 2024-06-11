@@ -51,6 +51,18 @@ extension StringExt on String {
     return substring(0, index);
   }
 
+  String skipLinesWhile(bool Function(String) predicate) {
+    final lines = split('\n');
+
+    for (var i = 0; i < lines.length; i++) {
+      if (!predicate(lines[i])) {
+        return lines.sublist(i).join('\n');
+      }
+    }
+
+    return this;
+  }
+
   String removePrefix(String prefix) {
     if (startsWith(prefix)) {
       return substring(prefix.length);
@@ -147,6 +159,12 @@ extension StringExt on String {
     return replaceAll(RegExp(r'[<>:"/\\|?*\x00-\x1F]'), '_')
         .trim()
         .substring(0, length > 255 ? 255 : length);
+  }
+}
+
+extension StringMapExt on Map<String, dynamic> {
+  String toJsonString() {
+    return jsonEncode(this);
   }
 }
 

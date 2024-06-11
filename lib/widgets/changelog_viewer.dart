@@ -4,11 +4,14 @@ import 'package:http/http.dart' as http;
 import 'package:trios/widgets/svg_image_icon.dart';
 
 import '../trios/constants.dart';
+import '../utils/extensions.dart';
 
 class ChangelogViewer extends StatefulWidget {
   final String url;
+  final bool showUnreleasedVersions;
 
-  const ChangelogViewer({super.key, required this.url});
+  const ChangelogViewer(
+      {super.key, required this.url, required this.showUnreleasedVersions});
 
   @override
   _ChangelogViewerState createState() => _ChangelogViewerState();
@@ -42,6 +45,11 @@ class _ChangelogViewerState extends State<ChangelogViewer> {
         } else if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));
         } else {
+          final text = widget.showUnreleasedVersions
+              ? snapshot.data
+              : snapshot.data
+                  ?.skipLinesWhile((line) => !line.contains(Constants.version));
+
           return Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -68,7 +76,7 @@ class _ChangelogViewerState extends State<ChangelogViewer> {
                   ),
                 ]),
               ),
-              Expanded(child: Markdown(data: snapshot.data ?? '')),
+              Expanded(child: Markdown(data: text ?? '')),
             ],
           );
         }
@@ -77,15 +85,18 @@ class _ChangelogViewerState extends State<ChangelogViewer> {
   }
 }
 
-showTriOSChangelogDialog(BuildContext context) {
+showTriOSChangelogDialog(BuildContext context,
+    {required bool showUnreleasedVersions}) {
   showDialog(
     context: context,
     builder: (context) {
       return AlertDialog(
-        content: const SizedBox(
+        content: SizedBox(
           width: 600,
           height: 400,
-          child: ChangelogViewer(url: Constants.changelogUrl),
+          child: ChangelogViewer(
+              url: Constants.changelogUrl,
+              showUnreleasedVersions: showUnreleasedVersions),
         ),
         actions: [
           TextButton(

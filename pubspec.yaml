@@ -29,8 +29,8 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
-#  flutter:
-#    sdk: flutter
+  flutter:
+    sdk: flutter
 
   flutter_riverpod: ^2.5.1
   riverpod_annotation: ^2.3.5

@@ -108,7 +108,7 @@ class _Smol2State extends ConsumerState<Smol2> {
                   Opacity(
                     opacity: 0.6,
                     child: Text(
-                        "Under construction: version checker icon, search, mod info, and more.",
+                        "Under construction: search, mod info, and more.",
                         style: theme.textTheme.labelLarge
                             ?.copyWith(color: vanillaWarningColor)),
                   ),

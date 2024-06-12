@@ -1,4 +1,6 @@
 # 0.0.52
+- Added
+  - Mods tab: side panel to display mod info.
 - Fixed
   - JRE manager failing if JRE 23 isn't present.
 - Changed

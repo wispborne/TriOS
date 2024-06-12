@@ -27,6 +27,14 @@ class ThemeManager with ChangeNotifier {
     "XmasTriOSTheme": XmasTriOSTheme(),
   };
 
+  static final boxShadow = BoxShadow(
+    color: Colors.black.withOpacity(0.5),
+    spreadRadius: 4,
+    blurRadius: 7,
+    offset:
+    const Offset(0, 3), // changes position of shadow
+  );
+
   // static final backgroundShader = FutureProvider<FragmentProgram>((ref) async {
   //   return FragmentProgram.fromAsset("assets/shaders/grain.frag");
   // });

@@ -14,7 +14,6 @@ import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/navigation.dart';
 import 'package:trios/trios/self_updater/script_generator.dart';
 import 'package:trios/trios/self_updater/self_updater.dart';
-import 'package:trios/trios/settings/config_manager.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/trios/settings/settings_page.dart';
 import 'package:trios/trios/toasts/download_toast_manager.dart';
@@ -44,8 +43,7 @@ void main() async {
     configureLogging();
     Fimber.i("${Constants.appTitle} logging started.");
     Fimber.i(
-        "Platform: ${Platform.operatingSystem} ${Platform
-            .operatingSystemVersion}.");
+        "Platform: ${Platform.operatingSystem} ${Platform.operatingSystemVersion}.");
     FlutterError.onError = (details) {
       Fimber.e("${details.exceptionAsString()}\n${details.stack}",
           ex: details.exception, stacktrace: details.stack);
@@ -294,12 +292,10 @@ class _AppShellState extends ConsumerState<AppShell>
                   .select((value) => value.shouldAutoUpdateOnLaunch))) {
                 SelfUpdater.update(latestRelease,
                     downloadProgress: (bytesReceived, contentLength) {
-                      ref.read(AppState.selfUpdateDownloadProgress.notifier)
-                          .update(
-                              (_) =>
-                              DownloadProgress(bytesReceived, contentLength,
-                                  isIndeterminate: false));
-                    });
+                  ref.read(AppState.selfUpdateDownloadProgress.notifier).update(
+                      (_) => DownloadProgress(bytesReceived, contentLength,
+                          isIndeterminate: false));
+                });
               }
             }
           }
@@ -317,17 +313,17 @@ class _AppShellState extends ConsumerState<AppShell>
     final tabChildren = [
       const Dashboard(),
       const Smol2(),
-      const VramEstimatorPage(),
-      const ChipperApp(),
+      const Padding(padding: EdgeInsets.all(8), child: VramEstimatorPage()),
+      const Padding(padding: EdgeInsets.all(8), child: ChipperApp()),
       Platform.isWindows
-          ? const JreManager()
+          ? const Padding(padding: EdgeInsets.all(8), child: JreManager())
           : const Center(
-          child: Text("Only supported on Windows for now, sorry.")),
+              child: Text("Only supported on Windows for now, sorry.")),
       const SettingsPage(),
     ];
 
     var isRulesHotReloadEnabled =
-    ref.watch(appSettings.select((value) => value.isRulesHotReloadEnabled));
+        ref.watch(appSettings.select((value) => value.isRulesHotReloadEnabled));
 
     return Scaffold(
         appBar: AppBar(
@@ -364,13 +360,9 @@ class _AppShellState extends ConsumerState<AppShell>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(Constants.appName,
-                            style: Theme
-                                .of(context)
-                                .textTheme
-                                .titleLarge),
+                            style: Theme.of(context).textTheme.titleLarge),
                         Text("v${Constants.version}",
-                            style: Theme
-                                .of(context)
+                            style: Theme.of(context)
                                 .textTheme
                                 .bodyMedium
                                 ?.copyWith(fontSize: 12))
@@ -418,9 +410,8 @@ class _AppShellState extends ConsumerState<AppShell>
                           iconMargin: EdgeInsets.zero),
                       ConditionalWrap(
                           condition: !Platform.isWindows,
-                          wrapper: (child) =>
-                              Disable(
-                                  isEnabled: Platform.isWindows, child: child),
+                          wrapper: (child) => Disable(
+                              isEnabled: Platform.isWindows, child: child),
                           child: const Tab(
                               text: "JREs",
                               icon: Tooltip(
@@ -443,7 +434,8 @@ class _AppShellState extends ConsumerState<AppShell>
                 message: "View Changelog",
                 child: IconButton(
                   icon: const SvgImageIcon("assets/images/icon-log.svg"),
-                  onPressed: () => showTriOSChangelogDialog(context, showUnreleasedVersions: false),
+                  onPressed: () => showTriOSChangelogDialog(context,
+                      showUnreleasedVersions: false),
                 ),
               ),
               Tooltip(
@@ -457,21 +449,16 @@ class _AppShellState extends ConsumerState<AppShell>
               ),
               Tooltip(
                 message:
-                "When enabled, modifying a mod's rules.csv will\nreload in-game rules as long as dev mode is enabled."
-                    "\n\nrules.csv hot reload is ${isRulesHotReloadEnabled
-                    ? "enabled"
-                    : "disabled"}."
-                    "\nClick to ${isRulesHotReloadEnabled
-                    ? "disable"
-                    : "enable"}.",
+                    "When enabled, modifying a mod's rules.csv will\nreload in-game rules as long as dev mode is enabled."
+                    "\n\nrules.csv hot reload is ${isRulesHotReloadEnabled ? "enabled" : "disabled"}."
+                    "\nClick to ${isRulesHotReloadEnabled ? "disable" : "enable"}.",
                 textAlign: TextAlign.center,
                 child: InkWell(
                   borderRadius:
-                  BorderRadius.circular(ThemeManager.cornerRadius),
-                  onTap: () =>
-                      ref.read(appSettings.notifier).update((state) =>
-                          state.copyWith(
-                              isRulesHotReloadEnabled: !isRulesHotReloadEnabled)),
+                      BorderRadius.circular(ThemeManager.cornerRadius),
+                  onTap: () => ref.read(appSettings.notifier).update((state) =>
+                      state.copyWith(
+                          isRulesHotReloadEnabled: !isRulesHotReloadEnabled)),
                   child: Padding(
                     padding: const EdgeInsets.only(left: 16.0),
                     child: RulesHotReload(isEnabled: isRulesHotReloadEnabled),
@@ -486,16 +473,12 @@ class _AppShellState extends ConsumerState<AppShell>
             children: [
               if (loggingError != null)
                 Text(loggingError.toString(),
-                    style: Theme
-                        .of(context)
-                        .textTheme
-                        .bodyLarge
-                        ?.copyWith(
-                      color: vanillaErrorColor,
-                    )),
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: vanillaErrorColor,
+                        )),
               Expanded(
                 child: Padding(
-                    padding: const EdgeInsets.all(8.0),
+                    padding: const EdgeInsets.all(0),
                     child: TabBarView(
                       controller: tabController,
                       physics: const NeverScrollableScrollPhysics(),

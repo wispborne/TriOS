@@ -151,8 +151,7 @@ class _Smol2State extends ConsumerState<Smol2> {
                   onSort: (columnIndex, ascending) => _onSort(
                       columnIndex,
                       (mod) =>
-                          mod.findFirstEnabledOrHighestVersion?.modInfo
-                              .name ??
+                          mod.findFirstEnabledOrHighestVersion?.modInfo.name ??
                           ""),
                 ),
                 DataColumn3(
@@ -282,8 +281,7 @@ class _Smol2State extends ConsumerState<Smol2> {
                                       style: theme.textTheme.labelMedium?.copyWith(
                                           color: dependencies
                                                       ?.gameCompatibility ==
-                                                  GameCompatibility
-                                                      .incompatible
+                                                  GameCompatibility.incompatible
                                               ? vanillaErrorColor
                                               : getTopDependencySeverity(
                                                       dependencies
@@ -386,16 +384,14 @@ class _Smol2State extends ConsumerState<Smol2> {
                                                     .remoteVersion!,
                                                 ref,
                                                 context,
-                                                activateVariantOnComplete:
-                                                    true,
+                                                activateVariantOnComplete: true,
                                                 modInfo: bestVersion.modInfo);
                                           } else {
                                             showDialog(
                                                 context: context,
                                                 builder: (context) =>
                                                     AlertDialog(
-                                                        content:
-                                                            SelectionArea(
+                                                        content: SelectionArea(
                                                       child: VersionCheckTextReadout(
                                                           versionCheckComparison,
                                                           localVersionCheck,
@@ -447,8 +443,8 @@ class _Smol2State extends ConsumerState<Smol2> {
                                                               lightTextColor), // Style for the comma
                                                 ),
                                               TextSpan(
-                                                text: mod.modVariants[i]
-                                                    .modInfo.version
+                                                text: mod.modVariants[i].modInfo
+                                                    .version
                                                     .toString(),
                                                 style: theme
                                                     .textTheme.labelLarge
@@ -512,8 +508,7 @@ class _Smol2State extends ConsumerState<Smol2> {
                             angle: .50,
                             child: SvgImageIcon(
                                 "assets/images/icon-ice-cream.svg",
-                                color:
-                                    Theme.of(context).colorScheme.onSurface,
+                                color: Theme.of(context).colorScheme.onSurface,
                                 width: 150),
                           ),
                           const Text("mmm, vanilla")
@@ -560,6 +555,127 @@ class _Smol2State extends ConsumerState<Smol2> {
                       return Stack(
                         children: [
                           Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: SingleChildScrollView(
+                              child: SelectionArea(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        if (variant.iconFilePath != null)
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                                right: 16),
+                                            child: Image.file(
+                                                variant.iconFilePath!.toFile(),
+                                                width: 48,
+                                                height: 48),
+                                          )
+                                        else
+                                          const SizedBox(width: 0, height: 48),
+                                        Text(
+                                            variant.modInfo.name ?? "(no name)",
+                                            style: theme.textTheme.headlineSmall
+                                                ?.copyWith(
+                                                    fontFamily: "Orbitron",
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 20)),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                        "${variant.modInfo.id} ${variant.modInfo.version}",
+                                        style: theme.textTheme.labelLarge
+                                            ?.copyWith(
+                                                fontFamily:
+                                                    GoogleFonts.sourceCodePro()
+                                                        .fontFamily)),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                        "Starsector ${variant.modInfo.gameVersion}",
+                                        style: theme.textTheme.labelLarge
+                                            ?.copyWith(
+                                                fontFamily:
+                                                    GoogleFonts.sourceCodePro()
+                                                        .fontFamily)),
+                                    if (variant.modInfo.isUtility ||
+                                        variant.modInfo.isTotalConversion)
+                                      Padding(
+                                          padding:
+                                              const EdgeInsets.only(top: 8),
+                                          child: Tooltip(
+                                            message: ModTypeIcon.getTooltipText(
+                                                variant),
+                                            child: Row(
+                                              children: [
+                                                ModTypeIcon(
+                                                    modVariant: variant),
+                                                const SizedBox(width: 8),
+                                                Text(
+                                                  variant.modInfo
+                                                          .isTotalConversion
+                                                      ? "Total Conversion"
+                                                      : variant
+                                                              .modInfo.isUtility
+                                                          ? "Utility Mod"
+                                                          : "",
+                                                ),
+                                              ],
+                                            ),
+                                          )),
+                                    if (variant.modInfo.author
+                                        .isNotNullOrEmpty())
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const SizedBox(height: 16),
+                                          const Text("Author",
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold)),
+                                          Text(variant.modInfo.author ??
+                                              "(no author)"),
+                                        ],
+                                      ),
+                                    if (variant.modInfo.description
+                                        .isNotNullOrEmpty())
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const SizedBox(height: 16),
+                                          const Text("Description",
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold)),
+                                          Text(variant.modInfo.description ??
+                                              "(no description)"),
+                                        ],
+                                      ),
+                                    if (versionCheck?.remoteVersion?.modThreadId
+                                            .isNotNullOrEmpty() ??
+                                        false)
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const SizedBox(height: 16),
+                                          TextButton(
+                                              child: const Text(
+                                                "Forum Thread",
+                                              ),
+                                              onPressed: () {
+                                                launchUrl(Uri.parse(
+                                                    "${Constants.forumModPageUrl}${versionCheck?.remoteVersion?.modThreadId}"));
+                                              }),
+                                        ],
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          Padding(
                             padding: const EdgeInsets.all(8),
                             child: Align(
                               alignment: Alignment.topRight,
@@ -571,112 +687,6 @@ class _Smol2State extends ConsumerState<Smol2> {
                                   });
                                 },
                               ),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    if (variant.iconFilePath != null)
-                                      Padding(
-                                        padding:
-                                            const EdgeInsets.only(right: 16),
-                                        child: Image.file(
-                                            variant.iconFilePath!.toFile(),
-                                            width: 48, height: 48),
-                                      )
-                                    else
-                                      const SizedBox(width: 0, height: 48),
-                                    Text(variant.modInfo.name ?? "(no name)",
-                                        style: theme.textTheme.headlineSmall
-                                            ?.copyWith(
-                                                fontFamily: "Orbitron",
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 20)),
-                                  ],
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                    "${variant.modInfo.id} ${variant.modInfo.version}",
-                                    style: theme.textTheme.labelLarge?.copyWith(
-                                        fontFamily: GoogleFonts.sourceCodePro()
-                                            .fontFamily)),
-                                const SizedBox(height: 4),
-                                Text(
-                                    "Starsector ${variant.modInfo.gameVersion}",
-                                    style: theme.textTheme.labelLarge?.copyWith(
-                                        fontFamily: GoogleFonts.sourceCodePro()
-                                            .fontFamily)),
-                                if (variant.modInfo.isUtility ||
-                                    variant.modInfo.isTotalConversion)
-                                  Padding(
-                                      padding: const EdgeInsets.only(top: 8),
-                                      child: Tooltip(
-                                        message:
-                                            ModTypeIcon.getTooltipText(variant),
-                                        child: Row(
-                                          children: [
-                                            ModTypeIcon(modVariant: variant),
-                                            const SizedBox(width: 8),
-                                            Text(
-                                              variant.modInfo.isTotalConversion
-                                                  ? "Total Conversion"
-                                                  : variant.modInfo.isUtility
-                                                      ? "Utility Mod"
-                                                      : "",
-                                            ),
-                                          ],
-                                        ),
-                                      )),
-                                if (variant.modInfo.author.isNotNullOrEmpty())
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      const SizedBox(height: 16),
-                                      const Text("Author",
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.bold)),
-                                      Text(variant.modInfo.author ??
-                                          "(no author)"),
-                                    ],
-                                  ),
-                                if (variant.modInfo.description
-                                    .isNotNullOrEmpty())
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      const SizedBox(height: 16),
-                                      const Text("Description",
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.bold)),
-                                      Text(variant.modInfo.description ??
-                                          "(no description)"),
-                                    ],
-                                  ),
-                                if (versionCheck?.remoteVersion?.modThreadId
-                                        .isNotNullOrEmpty() ??
-                                    false)
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      const SizedBox(height: 16),
-                                      TextButton(
-                                          child: const Text(
-                                            "Forum Thread",
-                                          ),
-                                          onPressed: () {
-                                            launchUrl(Uri.parse(
-                                                "${Constants.forumModPageUrl}${versionCheck?.remoteVersion?.modThreadId}"));
-                                          }),
-                                    ],
-                                  ),
-                              ],
                             ),
                           ),
                         ],

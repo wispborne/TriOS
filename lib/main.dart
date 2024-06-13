@@ -31,6 +31,7 @@ import 'package:window_size/window_size.dart';
 
 import 'jre_manager/jre_manager.dart';
 import 'launcher/launcher.dart';
+import 'mod_manager/smol3.dart';
 import 'models/download_progress.dart';
 import 'trios/app_state.dart';
 import 'trios/drag_drop_handler.dart';
@@ -312,7 +313,7 @@ class _AppShellState extends ConsumerState<AppShell>
   Widget build(BuildContext context) {
     final tabChildren = [
       const Dashboard(),
-      const Smol2(),
+      const Smol3(),
       const Padding(padding: EdgeInsets.all(8), child: VramEstimatorPage()),
       const Padding(padding: EdgeInsets.all(8), child: ChipperApp()),
       Platform.isWindows

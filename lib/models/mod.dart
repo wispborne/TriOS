@@ -51,7 +51,7 @@ class Mod with _$Mod {
 
   ModVariant? get findHighestEnabledVersion {
     return modVariants.where((v) => v.isModInfoEnabled).maxByOrNull(
-        (variant) => variant.bestVersion ?? Version.parse("0.0.0"));
+        (variant) => variant.bestVersion ?? Version.zero());
   }
 
   bool get hasEnabledVariant {
@@ -96,6 +96,6 @@ extension ModVariantsExt on List<ModVariant> {
 
   ModVariant? get findHighestVersion {
     return maxByOrNull(
-        (variant) => variant.bestVersion ?? Version.parse("0.0.0"));
+        (variant) => variant.bestVersion ?? Version.zero());
   }
 }

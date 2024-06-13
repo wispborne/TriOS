@@ -90,6 +90,7 @@ dependencies:
   mutex: ^3.1.0
   flutter_markdown: ^0.7.1
   pluto_grid: ^8.0.0
+  path_provider: ^2.0.11
 #  data_table_2: ^2.5.12
 
 dev_dependencies:

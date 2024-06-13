@@ -77,7 +77,7 @@ class ModVariant with _$ModVariant {
   Version? get bestVersion {
     return versionCheckerInfo?.modVersion
             ?.toString()
-            .let((it) => Version.parse(it)) ??
+            .let((it) => Version.parse(it, sanitizeInput: false)) ??
         modInfo.version;
   }
 

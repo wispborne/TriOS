@@ -280,9 +280,10 @@ class JsonConverterVersion implements JsonConverter<Version, dynamic> {
   Version fromJson(dynamic json) {
     try {
       if (json is Map<String, dynamic>) {
-        return Version.parse(VersionObject.fromJson(json).toString());
+        // Shouldn't have to sanitize the input if they used the major/minor/patch json format.
+        return Version.parse(VersionObject.fromJson(json).toString(), sanitizeInput: false);
       }
-      return Version.parse(json);
+      return Version.parse(json, sanitizeInput: true);
     } catch (e) {
       rethrow;
     }

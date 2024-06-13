@@ -1,7 +1,10 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/simple_data_row.dart';
 
 import '../models/mod.dart';
+import '../models/version.dart';
 
 class DebugInfo extends StatelessWidget {
   final Mod mod;
@@ -13,6 +16,7 @@ class DebugInfo extends StatelessWidget {
     return SelectionArea(
       child: Column(
         children: mod.modVariants
+        .sortedByDescending<Version>((variant) => variant.bestVersion ?? Version.zero())
             .map(
               (variant) => Card(
                 margin: EdgeInsets.symmetric(vertical: 4),

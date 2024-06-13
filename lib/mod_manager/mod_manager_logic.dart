@@ -563,8 +563,8 @@ GameCompatibility compareGameVersions(
     return GameCompatibility.perfectMatch;
   }
 
-  final modVersion = Version.parse(modGameVersion);
-  final gameVersionParsed = Version.parse(gameVersion);
+  final modVersion = Version.parse(modGameVersion, sanitizeInput: true);
+  final gameVersionParsed = Version.parse(gameVersion, sanitizeInput: true);
   if (modVersion.major == gameVersionParsed.major &&
       modVersion.minor == gameVersionParsed.minor &&
       modVersion.patch == gameVersionParsed.patch) {
@@ -690,7 +690,7 @@ ModDependencySatisfiedState getTopDependencySeverity(
     if (possibilities.isNotEmpty) {
       // Find the highest version.
       return possibilities.maxByOrNull((state) =>
-              state.modVariant?.bestVersion ?? Version.parse("0.0.0")) ??
+              state.modVariant?.bestVersion ?? Version.zero()) ??
           possibilities.first;
     }
   }

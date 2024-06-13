@@ -1,7 +1,6 @@
 import 'package:collection/collection.dart';
 import 'package:trios/utils/extensions.dart';
 
-// All Gemini created, not verified yet.
 class Version implements Comparable<Version> {
   final String? raw;
   final String major;
@@ -18,7 +17,8 @@ class Version implements Comparable<Version> {
   });
 
   @override
-  String toString() => raw ?? [major, minor, patch, build].whereNotNull().join(".");
+  String toString() =>
+      raw ?? [major, minor, patch, build].whereNotNull().join(".");
 
   @override
   int compareTo(Version? other) {
@@ -43,9 +43,12 @@ class Version implements Comparable<Version> {
   @override
   int get hashCode => raw.hashCode;
 
-  static Version parse(String versionString) {
+  /// - `sanitizeInput` should be true for `mod_info.json`, false for `.version`. Whether to remove all but numbers and symbols.
+  static Version parse(String versionString, {required bool sanitizeInput}) {
     // Remove non-version characters
-    final sanitizedString = versionString.replaceAll(RegExp(r"[^0-9.-]"), "");
+    final sanitizedString = sanitizeInput
+        ? versionString.replaceAll(RegExp(r"[^0-9.-]"), "")
+        : versionString;
 
     // Split into version and release candidate
     final parts = sanitizedString.split("-").take(2);
@@ -61,4 +64,6 @@ class Version implements Comparable<Version> {
       build: versionParts.length > 3 ? versionParts[3] : null,
     );
   }
+
+  static Version zero() => Version.parse("0.0.0", sanitizeInput: true);
 }

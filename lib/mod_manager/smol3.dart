@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
@@ -18,8 +20,11 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../dashboard/mod_dependencies_widget.dart';
 import '../dashboard/mod_list_basic.dart';
+import '../dashboard/version_check_icon.dart';
+import '../dashboard/version_check_text_readout.dart';
 import '../models/mod.dart';
 import '../trios/constants.dart';
+import '../trios/download_manager/download_manager.dart';
 import '../widgets/mod_type_icon.dart';
 import '../widgets/moving_tooltip.dart';
 import '../widgets/tooltip_frame.dart';
@@ -96,6 +101,10 @@ class _Smol3State extends ConsumerState<Smol3> {
         theme.colorScheme.onSurface.withOpacity(lightTextOpacity);
     var versionCheck = ref.watch(AppState.versionCheckResults).valueOrNull;
 
+    final gameVersion =
+        ref.watch(appSettings.select((value) => value.lastStarsectorVersion));
+    var modCompatibility = ref.watch(AppState.modCompatibility);
+
     const rowHeight = kMinInteractiveDimension;
 
     Widget affixToTop({required Widget child}) => Align(
@@ -124,17 +133,49 @@ class _Smol3State extends ConsumerState<Smol3> {
             Builder(builder: (context) {
               final theme = Theme.of(context);
               return PlutoGrid(
-                mode: PlutoGridMode.readOnly,
+                mode: PlutoGridMode.selectWithOneTap,
                 configuration: PlutoGridConfiguration(
+                    scrollbar: const PlutoGridScrollbarConfig(dragDevices: {
+                      PointerDeviceKind.stylus,
+                      PointerDeviceKind.touch,
+                      PointerDeviceKind.trackpad,
+                      PointerDeviceKind.invertedStylus
+                    }),
                     style: PlutoGridStyleConfig.dark(
-                  enableCellBorderHorizontal: false,
-                  enableCellBorderVertical: false,
-                  activatedBorderColor: Colors.transparent,
-                  inactivatedBorderColor: Colors.transparent,
-                  menuBackgroundColor: theme.colorScheme.surface,
-                  gridBackgroundColor: theme.colorScheme.surface,
-                  rowColor: Colors.transparent,
-                )),
+                        iconSize: 16,
+                        enableCellBorderHorizontal: false,
+                        enableCellBorderVertical: false,
+                        activatedBorderColor: Colors.transparent,
+                        inactivatedBorderColor: Colors.transparent,
+                        menuBackgroundColor: theme.colorScheme.surface,
+                        gridBackgroundColor:
+                            theme.colorScheme.surfaceContainerHighest,
+                        rowColor: Colors.transparent,
+                        borderColor: Colors.transparent,
+                        cellColorInReadOnlyState: Colors.transparent,
+                        gridBorderColor: Colors.transparent,
+                        checkedColor: Colors.transparent,
+                        activatedColor:
+                            theme.colorScheme.onSurface.withOpacity(0.1),
+                        evenRowColor:
+                            theme.colorScheme.surface.withOpacity(0.4),
+                        defaultCellPadding: EdgeInsets.zero,
+                        defaultColumnFilterPadding: EdgeInsets.zero,
+                        defaultColumnTitlePadding: EdgeInsets.zero,
+                        rowHeight: 40)),
+                onSelected: (event) {
+                  if (event.row != null) {
+                    final mod = modsToDisplay[event.row!.sortIdx];
+
+                    setState(() {
+                      if (selectedMod == mod) {
+                        selectedMod = null;
+                      } else {
+                        selectedMod = mod;
+                      }
+                    });
+                  }
+                },
                 // columnSpacing: 12,
                 // horizontalMargin: 12,
                 // bottomMargin: 16,
@@ -157,7 +198,7 @@ class _Smol3State extends ConsumerState<Smol3> {
                   PlutoColumn(
                       title: '',
                       // Version selector
-                      width: versionSelectorWidth,
+                      width: versionSelectorWidth + 20,
                       field: _Fields.versionSelector.toString(),
                       type: PlutoColumnType.text(),
                       enableSorting: false,
@@ -181,85 +222,37 @@ class _Smol3State extends ConsumerState<Smol3> {
                                     dependencies?.gameCompatibility !=
                                         GameCompatibility.incompatible;
 
-                            return Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                affixToTop(
-                                  child: ModVersionSelectionDropdown(
-                                    mod: mod,
-                                    width: versionSelectorWidth,
-                                  ),
-                                ),
-                                if (!areDependenciesMet)
-                                  Padding(
-                                    padding:
-                                        const EdgeInsets.symmetric(vertical: 0),
-                                    child: Builder(builder: (context) {
-                                      return Text(
-                                        dependencies?.gameCompatibility ==
-                                                GameCompatibility.incompatible
-                                            ? "Incompatible with ${gameVersion ?? "game version"}."
-                                            : dependencies?.dependencyChecks
-                                                    .where((e) =>
-                                                        e.satisfiedAmount
-                                                            is! Satisfied)
-                                                    .map((e) => switch (
-                                                            e.satisfiedAmount) {
-                                                          Satisfied _ => null,
-                                                          Missing _ =>
-                                                            "${e.dependency.formattedNameVersion} is missing.",
-                                                          Disabled _ => null,
-                                                          VersionInvalid _ =>
-                                                            "Missing version ${e.dependency.version} of ${e.dependency.nameOrId}.",
-                                                          VersionWarning
-                                                            version =>
-                                                            "${e.dependency.nameOrId} version ${e.dependency.version} is wanted but ${version.modVariant!.bestVersion} may work.",
-                                                        })
-                                                    .join(" • ") ??
-                                                "",
-                                        style: theme.textTheme.labelMedium?.copyWith(
-                                            color: dependencies
-                                                        ?.gameCompatibility ==
-                                                    GameCompatibility
-                                                        .incompatible
-                                                ? vanillaErrorColor
-                                                : getTopDependencySeverity(
-                                                        dependencies
-                                                                ?.dependencyStates ??
-                                                            [],
-                                                        gameVersion,
-                                                        sortLeastSevere: false)
-                                                    .getDependencySatisfiedColor()),
-                                        maxLines: 1,
-                                        softWrap: false,
-                                        overflow: TextOverflow.visible,
-                                      );
-                                    }),
-                                  ),
-                              ],
-                            );
+                            return ContextMenuRegion(
+                                contextMenu: ModListMini.buildContextMenu(
+                                    mod, ref, context),
+                                child: tooltippy(
+                                    ModVersionSelectionDropdown(
+                                        mod: mod,
+                                        width: versionSelectorWidth,
+                                        showTooltip: false),
+                                    bestVersion));
                           })),
                   PlutoColumn(
-                    title: '',
-                    // Utility/Total Conversion icon
-                    width: 35,
-                    field: _Fields.utilityIcon.toString(),
-                    type: PlutoColumnType.text(),
-                    renderer: (rendererContext) =>
-                        ModTypeIcon(modVariant: rendererContext.cell.value),
-                  ),
+                      title: '',
+                      // Utility/Total Conversion icon
+                      width: 40,
+                      field: _Fields.utilityIcon.toString(),
+                      type: PlutoColumnType.number(),
+                      renderer: (rendererContext) => ModTypeIcon(
+                          modVariant: modsToDisplay[rendererContext.row.sortIdx]
+                              .findFirstEnabledOrHighestVersion!)),
                   PlutoColumn(
                     title: '',
                     // Mod icon
-                    width: 38,
+                    width: 43,
                     field: _Fields.modIcon.toString(),
                     type: PlutoColumnType.text(),
                     enableSorting: false,
                     renderer: (rendererContext) => Builder(builder: (context) {
-                      ModVariant variant = rendererContext.cell.value;
-                      return variant.iconFilePath != null
+                      String? iconPath = rendererContext.cell.value;
+                      return iconPath != null
                           ? Image.file(
-                              variant.iconFilePath!.toFile(),
+                              iconPath.toFile(),
                               width: 32,
                               height: 32,
                             )
@@ -271,7 +264,7 @@ class _Smol3State extends ConsumerState<Smol3> {
                     field: _Fields.name.toString(),
                     type: PlutoColumnType.text(),
                     renderer: (rendererContext) => Builder(builder: (context) {
-                      Mod mod = rendererContext.cell.value;
+                      Mod mod = modsToDisplay[rendererContext.row.sortIdx];
                       final bestVersion = mod.findFirstEnabledOrHighestVersion;
                       return ContextMenuRegion(
                           contextMenu:
@@ -283,7 +276,7 @@ class _Smol3State extends ConsumerState<Smol3> {
                                   minWidth: 600,
                                 ),
                                 child: Text(
-                                  bestVersion?.modInfo.name ?? "(no name)",
+                                  rendererContext.cell.value ?? "(no name)",
                                   style: GoogleFonts.roboto(
                                     textStyle: theme.textTheme.labelLarge
                                         ?.copyWith(fontWeight: FontWeight.bold),
@@ -310,23 +303,139 @@ class _Smol3State extends ConsumerState<Smol3> {
                     //             .author ??
                     //         ""),
                     renderer: (rendererContext) => Builder(builder: (context) {
-                      Mod mod = rendererContext.cell.value;
+                      Mod mod = modsToDisplay[rendererContext.row.sortIdx];
                       return ContextMenuRegion(
                           contextMenu:
                               ModListMini.buildContextMenu(mod, ref, context),
-                          child: affixToTop(
-                              child: Text(
-                                  mod.findFirstEnabledOrHighestVersion?.modInfo
-                                          .author ??
-                                      "(no author)",
-                                  style: theme.textTheme.labelLarge
-                                      ?.copyWith(color: lightTextColor))));
+                          child: Text(
+                              rendererContext.cell.value ?? "(no author)",
+                              style: theme.textTheme.labelLarge
+                                  ?.copyWith(color: lightTextColor)));
                     }),
                   ),
                   PlutoColumn(
                     title: 'Version(s)',
                     field: _Fields.versions.toString(),
                     type: PlutoColumnType.text(),
+                    renderer: (rendererContext) => Builder(builder: (context) {
+                      Mod mod = modsToDisplay[rendererContext.row.sortIdx];
+                      final bestVersion = mod.findFirstEnabledOrHighestVersion;
+                      if (bestVersion == null) return const SizedBox();
+                      final enabledVersion = mod.findFirstEnabled;
+
+                      final localVersionCheck =
+                          mod.findHighestVersion?.versionCheckerInfo;
+                      final remoteVersionCheck =
+                          versionCheck?[bestVersion.smolId];
+                      final versionCheckComparison =
+                          compareLocalAndRemoteVersions(
+                              localVersionCheck, remoteVersionCheck);
+
+                      return affixToTop(
+                        child: mod.modVariants.isEmpty
+                            ? const Text("")
+                            : Row(
+                                children: [
+                                  MovingTooltipWidget(
+                                    tooltipWidget: SizedBox(
+                                      width: 500,
+                                      child: TooltipFrame(
+                                          child: VersionCheckTextReadout(
+                                              versionCheckComparison,
+                                              localVersionCheck,
+                                              remoteVersionCheck,
+                                              true)),
+                                    ),
+                                    child: InkWell(
+                                      onTap: () {
+                                        if (remoteVersionCheck?.remoteVersion !=
+                                                null &&
+                                            compareLocalAndRemoteVersions(
+                                                    localVersionCheck,
+                                                    remoteVersionCheck) ==
+                                                -1) {
+                                          downloadUpdateViaBrowser(
+                                              remoteVersionCheck!
+                                                  .remoteVersion!,
+                                              ref,
+                                              context,
+                                              activateVariantOnComplete: true,
+                                              modInfo: bestVersion.modInfo);
+                                        } else {
+                                          showDialog(
+                                              context: context,
+                                              builder: (context) => AlertDialog(
+                                                      content: SelectionArea(
+                                                    child: VersionCheckTextReadout(
+                                                        versionCheckComparison,
+                                                        localVersionCheck,
+                                                        remoteVersionCheck,
+                                                        true),
+                                                  )));
+                                        }
+                                      },
+                                      onSecondaryTap: () => showDialog(
+                                          context: context,
+                                          builder: (context) => AlertDialog(
+                                                  content: SelectionArea(
+                                                child: VersionCheckTextReadout(
+                                                    versionCheckComparison,
+                                                    localVersionCheck,
+                                                    remoteVersionCheck,
+                                                    true),
+                                              ))),
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 5.0),
+                                        child: VersionCheckIcon(
+                                            localVersionCheck:
+                                                localVersionCheck,
+                                            remoteVersionCheck:
+                                                remoteVersionCheck,
+                                            versionCheckComparison:
+                                                versionCheckComparison,
+                                            theme: theme),
+                                      ),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: RichText(
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      text: TextSpan(
+                                        children: [
+                                          for (var i = 0;
+                                              i < mod.modVariants.length;
+                                              i++) ...[
+                                            if (i > 0)
+                                              TextSpan(
+                                                text: ', ',
+                                                style: theme
+                                                    .textTheme.labelLarge
+                                                    ?.copyWith(
+                                                        color:
+                                                            lightTextColor), // Style for the comma
+                                              ),
+                                            TextSpan(
+                                              text: mod.modVariants[i].modInfo
+                                                  .version
+                                                  .toString(),
+                                              style: theme.textTheme.labelLarge
+                                                  ?.copyWith(
+                                                      color: enabledVersion ==
+                                                              mod.modVariants[i]
+                                                          ? null
+                                                          : lightTextColor), // Style for the remaining items
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                      );
+                    }),
                     // onSort: (columnIndex, ascending) => _onSort(
                     //     columnIndex,
                     //     (mod) => mod.modVariants
@@ -336,7 +445,19 @@ class _Smol3State extends ConsumerState<Smol3> {
                   PlutoColumn(
                     title: 'VRAM Est.',
                     field: _Fields.vramEstimate.toString(),
-                    type: PlutoColumnType.text(),
+                    width: PlutoGridSettings.minColumnWidth,
+                    type: PlutoColumnType.number(),
+                    renderer: (rendererContext) => Builder(builder: (context) {
+                      Mod mod = modsToDisplay[rendererContext.row.sortIdx];
+                      final bestVersion = mod.findFirstEnabledOrHighestVersion;
+                      if (bestVersion == null) return const SizedBox();
+                      return ContextMenuRegion(
+                          contextMenu:
+                              ModListMini.buildContextMenu(mod, ref, context),
+                          child: Text("todo",
+                              style: theme.textTheme.labelLarge
+                                  ?.copyWith(color: lightTextColor)));
+                    }),
                   ),
                   PlutoColumn(
                     title: 'Req. Game Version',
@@ -348,34 +469,35 @@ class _Smol3State extends ConsumerState<Smol3> {
                     //         mod.findFirstEnabledOrHighestVersion?.modInfo
                     //             .gameVersion ??
                     //         ""),
+                    renderer: (rendererContext) => Builder(builder: (context) {
+                      Mod mod = modsToDisplay[rendererContext.row.sortIdx];
+                      final bestVersion = mod.findFirstEnabledOrHighestVersion;
+
+                      return ContextMenuRegion(
+                          contextMenu:
+                              ModListMini.buildContextMenu(mod, ref, context),
+                          child: Opacity(
+                            opacity: lightTextOpacity,
+                            child: Text(
+                                rendererContext.cell.value ??
+                                    "(no game version)",
+                                style: compareGameVersions(
+                                            bestVersion?.modInfo.gameVersion,
+                                            ref
+                                                .watch(appSettings)
+                                                .lastStarsectorVersion) ==
+                                        GameCompatibility.perfectMatch
+                                    ? theme.textTheme.labelLarge
+                                    : theme.textTheme.labelLarge
+                                        ?.copyWith(color: vanillaErrorColor)),
+                          ));
+                    }),
                   ),
                 ],
                 rows: modsToDisplay
                     .mapIndexed((index, mod) {
                       final bestVersion = mod.findFirstEnabledOrHighestVersion;
-                      final enabledVersion = mod.findFirstEnabled;
                       if (bestVersion == null) return null;
-                      final gameVersion = ref.watch(appSettings
-                          .select((value) => value.lastStarsectorVersion));
-                      final dependencies = ref
-                          .watch(AppState.modCompatibility)[bestVersion.smolId];
-                      final areDependenciesMet = dependencies?.dependencyChecks
-                                  .every((e) =>
-                                      e.satisfiedAmount is Satisfied ||
-                                      e.satisfiedAmount is VersionWarning ||
-                                      e.satisfiedAmount is Disabled) !=
-                              false &&
-                          dependencies?.gameCompatibility !=
-                              GameCompatibility.incompatible;
-
-                      final localVersionCheck =
-                          mod.findHighestVersion?.versionCheckerInfo;
-                      final remoteVersionCheck =
-                          versionCheck?[bestVersion.smolId];
-                      final versionCheckComparison =
-                          compareLocalAndRemoteVersions(
-                              localVersionCheck, remoteVersionCheck);
-                      final extraRowHeight = !areDependenciesMet ? 16.0 : 0.0;
 
                       return PlutoRow(
                         // onSelectChanged: (selected) {
@@ -401,129 +523,27 @@ class _Smol3State extends ConsumerState<Smol3> {
                               PlutoCell(value: mod),
                           // Utility/Total Conversion icon
                           _Fields.utilityIcon.toString(): PlutoCell(
-                            value: bestVersion,
+                            value: bestVersion.modInfo.isUtility
+                                ? 1
+                                : bestVersion.modInfo.isTotalConversion
+                                    ? 2
+                                    : 0,
                           ),
                           // Icon
                           _Fields.modIcon.toString(): PlutoCell(
-                            value: bestVersion,
+                            value: bestVersion.iconFilePath,
                           ),
                           // Name
                           _Fields.name.toString(): PlutoCell(
-                            value: mod,
+                            value: bestVersion.modInfo.name,
                           ),
                           _Fields.author.toString(): PlutoCell(
-                            value: mod,
+                            value: mod.findFirstEnabledOrHighestVersion?.modInfo
+                                .author,
                           ),
                           _Fields.versions.toString(): PlutoCell(
-                              //   affixToTop(
-                              // child: mod.modVariants.isEmpty
-                              //     ? const Text("")
-                              //     : Row(
-                              //         children: [
-                              //           MovingTooltipWidget(
-                              //             tooltipWidget: SizedBox(
-                              //               width: 500,
-                              //               child: TooltipFrame(
-                              //                   child: VersionCheckTextReadout(
-                              //                       versionCheckComparison,
-                              //                       localVersionCheck,
-                              //                       remoteVersionCheck,
-                              //                       true)),
-                              //             ),
-                              //             child: InkWell(
-                              //               onTap: () {
-                              //                 if (remoteVersionCheck
-                              //                             ?.remoteVersion !=
-                              //                         null &&
-                              //                     compareLocalAndRemoteVersions(
-                              //                             localVersionCheck,
-                              //                             remoteVersionCheck) ==
-                              //                         -1) {
-                              //                   downloadUpdateViaBrowser(
-                              //                       remoteVersionCheck!
-                              //                           .remoteVersion!,
-                              //                       ref,
-                              //                       context,
-                              //                       activateVariantOnComplete: true,
-                              //                       modInfo: bestVersion.modInfo);
-                              //                 } else {
-                              //                   showDialog(
-                              //                       context: context,
-                              //                       builder: (context) =>
-                              //                           AlertDialog(
-                              //                               content: SelectionArea(
-                              //                             child: VersionCheckTextReadout(
-                              //                                 versionCheckComparison,
-                              //                                 localVersionCheck,
-                              //                                 remoteVersionCheck,
-                              //                                 true),
-                              //                           )));
-                              //                 }
-                              //               },
-                              //               onSecondaryTap: () => showDialog(
-                              //                   context: context,
-                              //                   builder: (context) => AlertDialog(
-                              //                           content: SelectionArea(
-                              //                         child: VersionCheckTextReadout(
-                              //                             versionCheckComparison,
-                              //                             localVersionCheck,
-                              //                             remoteVersionCheck,
-                              //                             true),
-                              //                       ))),
-                              //               child: Padding(
-                              //                 padding: const EdgeInsets.symmetric(
-                              //                     horizontal: 5.0),
-                              //                 child: VersionCheckIcon(
-                              //                     localVersionCheck:
-                              //                         localVersionCheck,
-                              //                     remoteVersionCheck:
-                              //                         remoteVersionCheck,
-                              //                     versionCheckComparison:
-                              //                         versionCheckComparison,
-                              //                     theme: theme),
-                              //               ),
-                              //             ),
-                              //           ),
-                              //           Expanded(
-                              //             child: RichText(
-                              //               maxLines: 1,
-                              //               overflow: TextOverflow.ellipsis,
-                              //               text: TextSpan(
-                              //                 children: [
-                              //                   for (var i = 0;
-                              //                       i < mod.modVariants.length;
-                              //                       i++) ...[
-                              //                     if (i > 0)
-                              //                       TextSpan(
-                              //                         text: ', ',
-                              //                         style: theme
-                              //                             .textTheme.labelLarge
-                              //                             ?.copyWith(
-                              //                                 color:
-                              //                                     lightTextColor), // Style for the comma
-                              //                       ),
-                              //                     TextSpan(
-                              //                       text: mod.modVariants[i].modInfo
-                              //                           .version
-                              //                           .toString(),
-                              //                       style: theme
-                              //                           .textTheme.labelLarge
-                              //                           ?.copyWith(
-                              //                               color: enabledVersion ==
-                              //                                       mod.modVariants[
-                              //                                           i]
-                              //                                   ? null
-                              //                                   : lightTextColor), // Style for the remaining items
-                              //                     ),
-                              //                   ],
-                              //                 ],
-                              //               ),
-                              //             ),
-                              //           ),
-                              //         ],
-                              //       ),
-                              // )
-                              ),
+                            value: bestVersion.modInfo.version?.raw,
+                          ),
                           _Fields.vramEstimate.toString(): PlutoCell(
                               // Text("todo",
                               //     style: theme.textTheme.labelLarge
@@ -534,26 +554,8 @@ class _Smol3State extends ConsumerState<Smol3> {
                               //     child: affixToTop(child: child)),
                               ),
                           _Fields.gameVersion.toString(): PlutoCell(
-                              // Opacity(
-                              //   opacity: lightTextOpacity,
-                              //   child: Text(
-                              //       bestVersion.modInfo.gameVersion ??
-                              //           "(no game version)",
-                              //       style: compareGameVersions(
-                              //                   bestVersion.modInfo.gameVersion,
-                              //                   ref
-                              //                       .watch(appSettings)
-                              //                       .lastStarsectorVersion) ==
-                              //               GameCompatibility.perfectMatch
-                              //           ? theme.textTheme.labelLarge
-                              //           : theme.textTheme.labelLarge
-                              //               ?.copyWith(color: vanillaErrorColor)),
-                              // ),
-                              // builder: (context, child) => ContextMenuRegion(
-                              //     contextMenu: ModListMini.buildContextMenu(
-                              //         mod, ref, context),
-                              //     child: affixToTop(child: child)),
-                              ),
+                            value: bestVersion.modInfo.gameVersion,
+                          ),
                         },
                       );
                     })
@@ -761,6 +763,44 @@ class _Smol3State extends ConsumerState<Smol3> {
           ],
         ),
       ),
+    );
+  }
+
+  Padding showCompatibilityErrorMessage(
+      DependencyCheck? dependencies, String? gameVersion, ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 0),
+      child: Builder(builder: (context) {
+        return Text(
+          dependencies?.gameCompatibility == GameCompatibility.incompatible
+              ? "Incompatible with ${gameVersion ?? "game version"}."
+              : dependencies?.dependencyChecks
+                      .where((e) => e.satisfiedAmount is! Satisfied)
+                      .map((e) => switch (e.satisfiedAmount) {
+                            Satisfied _ => null,
+                            Missing _ =>
+                              "${e.dependency.formattedNameVersion} is missing.",
+                            Disabled _ => null,
+                            VersionInvalid _ =>
+                              "Missing version ${e.dependency.version} of ${e.dependency.nameOrId}.",
+                            VersionWarning version =>
+                              "${e.dependency.nameOrId} version ${e.dependency.version} is wanted but ${version.modVariant!.bestVersion} may work.",
+                          })
+                      .join(" • ") ??
+                  "",
+          style: theme.textTheme.labelMedium?.copyWith(
+              color: dependencies?.gameCompatibility ==
+                      GameCompatibility.incompatible
+                  ? vanillaErrorColor
+                  : getTopDependencySeverity(
+                          dependencies?.dependencyStates ?? [], gameVersion,
+                          sortLeastSevere: false)
+                      .getDependencySatisfiedColor()),
+          maxLines: 1,
+          softWrap: false,
+          overflow: TextOverflow.visible,
+        );
+      }),
     );
   }
 }

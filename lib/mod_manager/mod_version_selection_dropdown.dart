@@ -16,9 +16,10 @@ import '../utils/logging.dart';
 class ModVersionSelectionDropdown extends ConsumerStatefulWidget {
   final Mod mod;
   final double width;
+  final showTooltip;
 
   const ModVersionSelectionDropdown(
-      {super.key, required this.mod, required this.width});
+      {super.key, required this.mod, required this.width, required this.showTooltip});
 
   @override
   ConsumerState createState() => _ModVersionSelectionDropdownState();
@@ -47,7 +48,7 @@ class _ModVersionSelectionDropdownState
         d.satisfiedAmount is Satisfied ||
         d.satisfiedAmount is VersionWarning ||
         d.satisfiedAmount is Disabled);
-    final isEnabled =
+    final isButtonEnabled =
         isSupportedByGameVersion && areAllDependenciesSatisfied == true;
 
     final buttonColor = widget.mod.isEnabledInGame
@@ -66,7 +67,9 @@ class _ModVersionSelectionDropdownState
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
         side: BorderSide(
-          color: theme.colorScheme.secondary.darker(20),
+          color: isButtonEnabled
+              ? theme.colorScheme.secondary.darker(20)
+              : vanillaErrorColor.withOpacity(0.4),
           // Slightly darker buttonColor
           width: 2.0,
         ),
@@ -78,9 +81,9 @@ class _ModVersionSelectionDropdownState
 
     if (isSingleVariant) {
       return Tooltip(
-        message: !isSupportedByGameVersion ? gameVersionMessage : "",
+        message: widget.showTooltip ? (!isSupportedByGameVersion ? gameVersionMessage : "") : "",
         child: Disable(
-          isEnabled: isEnabled,
+          isEnabled: isButtonEnabled,
           child: SizedBox(
             width: buttonWidth,
             height: buttonHeight,
@@ -128,14 +131,16 @@ class _ModVersionSelectionDropdownState
 
     var dropdownWidth = buttonWidth - 6;
     return Tooltip(
-      message: !isSupportedByGameVersion ? gameVersionMessage : "",
+      message: widget.showTooltip ? (!isSupportedByGameVersion ? gameVersionMessage : "") : "",
       child: Disable(
-        isEnabled: isEnabled,
+        isEnabled: isButtonEnabled,
         child: DropdownButton2(
           items: items,
           value: widget.mod.findFirstEnabled,
           alignment: Alignment.centerLeft,
           iconStyleData: const IconStyleData(iconSize: 0),
+          // Removes ugly grey line below text
+          underline: Container(),
           buttonStyleData: ButtonStyleData(
               height: buttonHeight,
               width: dropdownWidth,

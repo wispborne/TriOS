@@ -249,6 +249,7 @@ class _Smol2State extends ConsumerState<Smol2> {
                                 child: ModVersionSelectionDropdown(
                                   mod: mod,
                                   width: versionSelectorWidth,
+                                  showTooltip: true,
                                 ),
                               ),
                               if (!areDependenciesMet)

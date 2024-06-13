@@ -74,6 +74,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   var newGameDir = await FilePicker.platform.getDirectoryPath();
                   if (newGameDir == null) return;
                   tryUpdateGamePath(newGameDir, settings);
+                  gamePathTextController.text = newGameDir;
                 },
               ),
             ],
@@ -361,6 +362,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   }
 
   void tryUpdateGamePath(String newGameDir, Settings settings) {
+    newGameDir =
+        newGameDir.isNullOrEmpty() ? defaultGamePath().path : newGameDir;
+
     var dirExists = validateGameFolderPath(newGameDir);
 
     if (dirExists) {

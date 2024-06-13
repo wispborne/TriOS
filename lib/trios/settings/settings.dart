@@ -66,7 +66,7 @@ class Settings with _$Settings {
 /// When settings change, save them to shared prefs
 class SettingSaver extends Notifier<Settings> {
   Settings _setDefaults(Settings settings) {
-    if (settings.gameDir == null) {
+    if (settings.gameDir == null || settings.gameDir.toString().isEmpty) {
       settings = settings.copyWith(gameDir: defaultGamePath());
     }
 

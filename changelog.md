@@ -1,3 +1,11 @@
+# 0.0.53
+- Added
+  - On first run, uses your most recent Starsector install instead of the default install location.
+- Fixed
+  - Changing game path via filepicker changes text field.
+- Changed
+  - Can select text in the mod details panel.
+
 # 0.0.52
 - Added
   - Mods tab: side panel to display mod info.

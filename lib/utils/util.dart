@@ -14,6 +14,7 @@ import 'package:trios/models/mod_info_json.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:win32_registry/win32_registry.dart';
 
 MaterialColor createMaterialColor(Color color) {
   List strengths = <double>[.05];
@@ -36,16 +37,28 @@ MaterialColor createMaterialColor(Color color) {
   return MaterialColor(color.value, swatch);
 }
 
-Directory? defaultGamePath() {
+Directory defaultGamePath() {
   if (Platform.isWindows) {
     // todo read from registry
+    try {
+      const registryPath = r'Software\Fractal Softworks\Starsector';
+      final key =
+          Registry.openPath(RegistryHive.currentUser, path: registryPath);
+      final registryGamePath = key.getValueAsString("")?.toDirectory();
+      if (registryGamePath != null && registryGamePath.existsSync()) {
+        return registryGamePath;
+      }
+    } catch (e) {
+      Fimber.w("Error reading registry: $e");
+    }
+
     return Directory("C:/Program Files (x86)/Fractal Softworks/Starsector");
   } else if (Platform.isMacOS) {
     return Directory("/Applications/Starsector.app");
   } else if (kIsWeb) {
-    return null; // huh
+    return Directory(""); // huh
   } else {
-    return null;
+    return Directory("");
   }
 }
 

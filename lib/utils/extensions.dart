@@ -158,7 +158,7 @@ extension StringExt on String {
     // \x00-\x1F matches non-printable control characters.
     return replaceAll(RegExp(r'[<>:"/\\|?*\x00-\x1F]'), '_')
         .trim()
-        .substring(0, length > 255 ? 255 : length);
+        .substring(0, length > 255 ? 254 : length - 1);
   }
 }
 

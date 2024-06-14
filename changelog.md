@@ -3,7 +3,10 @@
   - On first run, uses your most recent Starsector install instead of the default install location.
 - Fixed
   - Changing game path via filepicker changes text field.
+  - Unable to install (certain?) mods due to "Invalid value: Not in inclusive range" error.
 - Changed
+  - Mod grid now shows more info at once and has a bunch of Excel-like features (move columns, filter, hide, etc).
+    - Settings are not yet saved between restarts.
   - Can select text in the mod details panel.
 
 # 0.0.52

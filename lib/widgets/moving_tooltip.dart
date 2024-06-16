@@ -1,11 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:trios/utils/extensions.dart';
 import 'package:window_size/window_size.dart';
 
 class MovingTooltipWidget extends StatefulWidget {
   final Widget child;
   final Widget tooltipWidget;
 
-  const MovingTooltipWidget({super.key, required this.child, required this.tooltipWidget});
+  const MovingTooltipWidget(
+      {super.key, required this.child, required this.tooltipWidget});
 
   @override
   State<MovingTooltipWidget> createState() => _MovingTooltipWidgetState();
@@ -14,6 +18,8 @@ class MovingTooltipWidget extends StatefulWidget {
 class _MovingTooltipWidgetState extends State<MovingTooltipWidget> {
   OverlayEntry? _overlayEntry;
   Size? _windowSize;
+  Size? _tooltipWidgetSize;
+  final GlobalKey _tooltipKey = GlobalKey();
 
   @override
   void initState() {
@@ -44,35 +50,38 @@ class _MovingTooltipWidgetState extends State<MovingTooltipWidget> {
     _overlayEntry = OverlayEntry(builder: (context) {
       return LayoutBuilder(
         builder: (context, constraints) {
-          final bool isLeft = position.dx < (_windowSize?.width ?? double.infinity) / 2;
-          final bool isTop = position.dy < (_windowSize?.height ?? double.infinity) / 2;
+          final bool isLeft =
+              position.dx < (_windowSize?.width ?? double.infinity) / 2;
+          final bool isTop =
+              position.dy < (_windowSize?.height ?? double.infinity) / 2;
+          const offset = Size(10, 10);
+          const edgePadding = 10.0;
+
           return Stack(
             children: [
-              // Not the ideal way of doing it but a simple shortcut that works as long as the panel is small.
-              if (isLeft && isTop)
-                Positioned(
-                  top: position.dy.clamp(0, (_windowSize?.height ?? double.infinity)),
-                  left: position.dx.clamp(0, (_windowSize?.width ?? double.infinity)),
-                  child: widget.tooltipWidget,
-                )
-              else if (!isLeft && isTop)
-                Positioned(
-                  top: position.dy.clamp(0, (_windowSize?.height ?? double.infinity)),
-                  right: (_windowSize?.width ?? double.infinity) - position.dx,
-                  child: widget.tooltipWidget,
-                )
-              else if (isLeft && !isTop)
-                Positioned(
-                  bottom: (_windowSize?.height ?? double.infinity) - position.dy,
-                  left: position.dx.clamp(0, (_windowSize?.width ?? double.infinity)),
-                  child: widget.tooltipWidget,
-                )
-              else if (!isLeft && !isTop)
-                Positioned(
-                  bottom: (_windowSize?.height ?? double.infinity) - position.dy,
-                  right: (_windowSize?.width ?? double.infinity) - position.dx,
-                  child: widget.tooltipWidget,
+              Positioned(
+                top: (position.dy + offset.height).clamp(
+                    edgePadding,
+                    ((_windowSize?.height.minus(edgePadding) ??
+                            double.infinity)) -
+                        (_tooltipWidgetSize?.height ?? 0)),
+                left: (position.dx + offset.width).clamp(
+                    edgePadding,
+                    ((((_windowSize?.width.minus(edgePadding) ?? 0)) -
+                            ((_tooltipWidgetSize?.width ?? 0))) ??
+                        double.infinity)),
+                child: Material(
+                  key: _tooltipKey,
+                  child: Builder(builder: (context) {
+                    _tooltipWidgetSize ??= (_tooltipKey.currentContext
+                            ?.findRenderObject() as RenderBox?)
+                        ?.size;
+
+                    return widget.tooltipWidget;
+                    // testTooltipContainer(position);
+                  }),
                 ),
+              )
             ],
           );
         },
@@ -80,6 +89,19 @@ class _MovingTooltipWidgetState extends State<MovingTooltipWidget> {
     });
 
     Overlay.of(context).insert(_overlayEntry!);
+  }
+
+  SizedBox testTooltipContainer(Offset position) {
+    return SizedBox(
+        width: 200,
+        height: 100,
+        child: Container(
+            color: Colors.black,
+            child: Text(
+              "Tooltip: ${_tooltipWidgetSize?.width}, ${_tooltipWidgetSize?.height}"
+              "\nCoords: ${position.dx}, ${position.dy}"
+              "\nWindow: ${_windowSize?.width}, ${_windowSize?.height}",
+            )));
   }
 
   void _updateTooltipPosition(Offset position) {

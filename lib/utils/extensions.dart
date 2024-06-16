@@ -18,6 +18,22 @@ extension DoubleExt on double {
   double coerceAtMost(double maximumValue) {
     return this > maximumValue ? maximumValue : this;
   }
+
+  double minus(double other) {
+    return this - other;
+  }
+
+  double plus(double other) {
+    return this + other;
+  }
+
+  double times(double other) {
+    return this * other;
+  }
+
+  double div(double other) {
+    return this / other;
+  }
 }
 // Long.bytesAsReadableMB: String
 // get() = "%.3f MB".format(this / 1000000f)

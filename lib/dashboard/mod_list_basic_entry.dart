@@ -37,7 +37,7 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
         mod.findFirstEnabledOrHighestVersion ?? mod.modVariants.first;
     final highestModVariant = mod.findHighestVersion ?? modVariant;
 
-    final gameVersion = ref.watch(AppState.starsectorVersion).value!;
+    final gameVersion = ref.watch(AppState.starsectorVersion).value;
     final modInfo = modVariant.modInfo;
     final localVersionCheck = highestModVariant.versionCheckerInfo;
     final remoteVersionCheck = versionCheck?[highestModVariant.smolId];

@@ -231,3 +231,4 @@ update-test/
 *.log
 
 .idea/csv-editor.xml
+/cache/TriOS-VersionCheckerCache.json

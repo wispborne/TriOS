@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'dart:ui';
 
 import 'package:collection/collection.dart';
@@ -37,22 +36,21 @@ class Smol3 extends ConsumerStatefulWidget {
   ConsumerState createState() => _Smol3State();
 }
 
+typedef GridStateManagerCallback = Function(PlutoGridStateManager);
+
+final _stateManagerProvider =
+    StateProvider.autoDispose<PlutoGridStateManager?>((ref) => null);
+
 class _Smol3State extends ConsumerState<Smol3> {
-  bool _sortAscending = true;
-  int? _sortColumnIndex;
   Mod? selectedMod;
   late List<Mod> modsToDisplay;
-  PlutoGridStateManager? stateManager;
-  final List<PlutoColumn> gridColumns = [];
-  final List<PlutoRow> gridRows = [];
-  final lightTextOpacity = 0.8;
 
-  List<Mod> _sortModsBy<T extends Comparable<T>>(
-      List<Mod> mods, T Function(Mod) comparableGetter) {
-    return _sortAscending
-        ? mods.sortedBy<T>((mod) => comparableGetter(mod))
-        : mods.sortedByDescending<T>((mod) => comparableGetter(mod));
-  }
+  // Map<String, VersionCheckResult>? versionCheckResults;
+  PlutoGridStateManager? stateManager;
+  List<PlutoColumn> gridColumns = [];
+  List<PlutoRow> gridRows = [];
+  final lightTextOpacity = 0.8;
+  GridStateManagerCallback? didSetStateManager;
 
   tooltippy(Widget child, ModVariant modVariant) {
     final compatWithGame = ref
@@ -83,59 +81,48 @@ class _Smol3State extends ConsumerState<Smol3> {
   void initState() {
     super.initState();
     modsToDisplay = ref.read(AppState.mods);
-    final versionCheck = ref.read(AppState.versionCheckResults).valueOrNull;
+    final versionCheckResults =
+        ref.read(AppState.versionCheckResults).valueOrNull;
     const double versionSelectorWidth = 130;
-    gridColumns.addAll(createColumns(
-        versionSelectorWidth, modsToDisplay, versionCheck, lightTextOpacity));
+    gridColumns.addAll(createColumns(versionSelectorWidth, modsToDisplay,
+        lightTextOpacity, versionCheckResults));
     gridRows.addAll(createGridRows());
+    // ref.listenManual(AppState.versionCheckResults, (prev, newResults) {
+    //   // setState(() {
+    //   versionCheckResults = newResults.valueOrNull;
+    //   gridColumns.clear();
+    //   gridRows.clear();
+    //   const double versionSelectorWidth = 130;
+    //   gridColumns.addAll(
+    //       createColumns(versionSelectorWidth, modsToDisplay, lightTextOpacity));
+    //   gridRows.addAll(createGridRows());
+    //   stateManager?.notifyListeners(true, Random().nextInt(1000));
+    //   // });
+    // });
   }
 
   @override
   Widget build(BuildContext context) {
-    const alternateRowColor = true;
-    // final modsToDisplay = ref.watch(AppState.mods);
-    // final enabledMods =
-    //     ref.watch(AppState.enabledModsFile).value?.enabledMods ?? {};
     final theme = Theme.of(context);
+    final stateManager = ref.watch(_stateManagerProvider);
 
-    // final gameVersion =
-    //     ref.watch(appSettings.select((value) => value.lastStarsectorVersion));
-    // var modCompatibility = ref.watch(AppState.modCompatibility);
+    ref.watch(appSettings.select((value) => value.lastStarsectorVersion));
+    var modCompatibility = ref.watch(AppState.modCompatibility);
 
-    ref.listen(AppState.mods, (prevMods, newMods) {
-      setState(() {
-        modsToDisplay = newMods;
-        gridColumns.clear();
-        gridRows.clear();
-        final versionCheck = ref.read(AppState.versionCheckResults).valueOrNull;
-        const double versionSelectorWidth = 130;
-        gridColumns.addAll(createColumns(versionSelectorWidth, modsToDisplay,
-            versionCheck, lightTextOpacity));
-        gridRows.addAll(createGridRows());
-        // stateManager?.notifyListeners(true, Random().nextInt(100000));
-      });
-    });
-    ref.listen(AppState.versionCheckResults, (prev, newResults) {
-      setState(() {
-        final versionCheck = newResults.valueOrNull;
-        gridColumns.clear();
-        gridRows.clear();
-        const double versionSelectorWidth = 130;
-        gridColumns.addAll(createColumns(versionSelectorWidth, modsToDisplay,
-            versionCheck, lightTextOpacity));
-        gridRows.addAll(createGridRows());
-        // stateManager?.notifyListeners(true, Random().nextInt(100000));
-      });
-    });
-
-    // Widget affixToTop({required Widget child}) => Align(
-    //       alignment: Alignment.topCenter,
-    //       child: SizedBox(
-    //         height: rowHeight,
-    //         child: Center(child: child),
-    //       ),
-    //     );
-    // stateManager?.notifyListeners(true, 1);
+    final mods = ref.watch(AppState.mods);
+    final versionCheckResults =
+        ref.watch(AppState.versionCheckResults).valueOrNull;
+    modsToDisplay = mods;
+    const double versionSelectorWidth = 130;
+    if (stateManager != null) {
+      stateManager.refRows.clearFromOriginal();
+      stateManager.refRows.addAll(createGridRows());
+      stateManager.refColumns.clearFromOriginal();
+      stateManager.refColumns.addAll(createColumns(versionSelectorWidth,
+          modsToDisplay, lightTextOpacity, versionCheckResults));
+      PlutoGridStateManager.initializeRows(
+          stateManager.refColumns, stateManager.refRows);
+    }
 
     return Padding(
       padding: const EdgeInsets.all(0),
@@ -146,17 +133,11 @@ class _Smol3State extends ConsumerState<Smol3> {
         ),
         child: Stack(
           children: [
-            // Opacity(
-            //   opacity: 0.6,
-            //   child: Text("Under construction: search, mod info, and more.",
-            //       style: theme.textTheme.labelLarge
-            //           ?.copyWith(color: vanillaWarningColor)),
-            // ),
             Builder(builder: (context) {
               final theme = Theme.of(context);
               return PlutoGrid(
                 // key: UniqueKey(),
-                mode: PlutoGridMode.selectWithOneTap,
+                mode: PlutoGridMode.normal,
                 configuration: PlutoGridConfiguration(
                     scrollbar: const PlutoGridScrollbarConfig(dragDevices: {
                       PointerDeviceKind.stylus,
@@ -187,8 +168,15 @@ class _Smol3State extends ConsumerState<Smol3> {
                         defaultColumnTitlePadding: EdgeInsets.zero,
                         rowHeight: 40)),
                 onLoaded: (PlutoGridOnLoadedEvent event) {
-                  stateManager = event.stateManager;
+                  // stateManager = event.stateManager;
+                  ref.read(_stateManagerProvider.notifier).state =
+                      event.stateManager;
+                  didSetStateManager?.call(event.stateManager);
                 },
+                columns: gridColumns,
+                // columns: gridColumns,
+                rows: gridRows,
+                // rows: gridRows,
                 onSelected: (event) {
                   if (event.row != null) {
                     final mod = modsToDisplay[event.row!.sortIdx];
@@ -220,8 +208,6 @@ class _Smol3State extends ConsumerState<Smol3> {
                 //           : const Icon(Icons.arrow_downward, size: 14),
                 // ),
                 // onSelectAll: (selected) {},
-                columns: gridColumns,
-                rows: gridRows,
                 noRowsWidget: Center(
                     child: Container(
                         padding: const EdgeInsets.all(20),
@@ -498,8 +484,8 @@ class _Smol3State extends ConsumerState<Smol3> {
   List<PlutoColumn> createColumns(
       double versionSelectorWidth,
       List<Mod> modsToDisplay,
-      Map<String, VersionCheckResult>? versionCheck,
-      double lightTextOpacity) {
+      double lightTextOpacity,
+      Map<String, VersionCheckResult>? versionCheckResults) {
     return [
       PlutoColumn(
           title: '',
@@ -509,6 +495,7 @@ class _Smol3State extends ConsumerState<Smol3> {
           type: PlutoColumnType.text(),
           enableSorting: false,
           renderer: (rendererContext) => Builder(builder: (context) {
+                if (modsToDisplay.isEmpty) return const SizedBox();
                 Mod mod = rendererContext.cell.value;
                 final bestVersion = mod.findFirstEnabledOrHighestVersion;
                 if (bestVersion == null) return Container();
@@ -541,9 +528,12 @@ class _Smol3State extends ConsumerState<Smol3> {
           width: 40,
           field: _Fields.utilityIcon.toString(),
           type: PlutoColumnType.number(),
-          renderer: (rendererContext) => ModTypeIcon(
-              modVariant: modsToDisplay[rendererContext.row.sortIdx]
-                  .findFirstEnabledOrHighestVersion!)),
+          renderer: (rendererContext) {
+            if (modsToDisplay.isEmpty) return const SizedBox();
+            return ModTypeIcon(
+                modVariant: modsToDisplay[rendererContext.row.sortIdx]
+                    .findFirstEnabledOrHighestVersion!);
+          }),
       PlutoColumn(
         title: '',
         // Mod icon
@@ -552,6 +542,7 @@ class _Smol3State extends ConsumerState<Smol3> {
         type: PlutoColumnType.text(),
         enableSorting: false,
         renderer: (rendererContext) => Builder(builder: (context) {
+          if (modsToDisplay.isEmpty) return const SizedBox();
           String? iconPath = rendererContext.cell.value;
           return iconPath != null
               ? Image.file(
@@ -567,6 +558,7 @@ class _Smol3State extends ConsumerState<Smol3> {
         field: _Fields.name.toString(),
         type: PlutoColumnType.text(),
         renderer: (rendererContext) => Builder(builder: (context) {
+          if (modsToDisplay.isEmpty) return const SizedBox();
           Mod mod = modsToDisplay[rendererContext.row.sortIdx];
           final bestVersion = mod.findFirstEnabledOrHighestVersion;
           final theme = Theme.of(context);
@@ -607,6 +599,7 @@ class _Smol3State extends ConsumerState<Smol3> {
         //             .author ??
         //         ""),
         renderer: (rendererContext) => Builder(builder: (context) {
+          if (modsToDisplay.isEmpty) return const SizedBox();
           Mod mod = modsToDisplay[rendererContext.row.sortIdx];
           final theme = Theme.of(context);
           final lightTextColor =
@@ -623,6 +616,7 @@ class _Smol3State extends ConsumerState<Smol3> {
         field: _Fields.versions.toString(),
         type: PlutoColumnType.text(),
         renderer: (rendererContext) => Builder(builder: (context) {
+          if (modsToDisplay.isEmpty) return const SizedBox();
           Mod mod = modsToDisplay[rendererContext.row.sortIdx];
           final bestVersion = mod.findFirstEnabledOrHighestVersion;
           final theme = Theme.of(context);
@@ -630,9 +624,12 @@ class _Smol3State extends ConsumerState<Smol3> {
               theme.colorScheme.onSurface.withOpacity(lightTextOpacity);
           if (bestVersion == null) return const SizedBox();
           final enabledVersion = mod.findFirstEnabled;
+          final versionCheckResultsNew =
+              ref.watch(AppState.versionCheckResults).valueOrNull;
 
           final localVersionCheck = mod.findHighestVersion?.versionCheckerInfo;
-          final remoteVersionCheck = versionCheck?[bestVersion.smolId];
+          final remoteVersionCheck =
+              versionCheckResultsNew?[bestVersion.smolId];
           final versionCheckComparison = compareLocalAndRemoteVersions(
               localVersionCheck, remoteVersionCheck);
 
@@ -746,6 +743,7 @@ class _Smol3State extends ConsumerState<Smol3> {
         width: PlutoGridSettings.minColumnWidth,
         type: PlutoColumnType.number(),
         renderer: (rendererContext) => Builder(builder: (context) {
+          if (modsToDisplay.isEmpty) return const SizedBox();
           Mod mod = modsToDisplay[rendererContext.row.sortIdx];
           final theme = Theme.of(context);
           final lightTextColor =
@@ -770,6 +768,7 @@ class _Smol3State extends ConsumerState<Smol3> {
         //             .gameVersion ??
         //         ""),
         renderer: (rendererContext) => Builder(builder: (context) {
+          if (modsToDisplay.isEmpty) return const SizedBox();
           Mod mod = modsToDisplay[rendererContext.row.sortIdx];
           final bestVersion = mod.findFirstEnabledOrHighestVersion;
           final theme = Theme.of(context);

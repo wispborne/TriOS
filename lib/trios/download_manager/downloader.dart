@@ -4,10 +4,10 @@ import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:dio/dio.dart';
-import 'package:fimber/fimber.dart';
 import 'package:flutter/foundation.dart';
 import 'package:trios/utils/extensions.dart';
 
+import '../../utils/logging.dart';
 import 'download_request.dart';
 import 'download_status.dart';
 import 'download_task.dart';
@@ -15,7 +15,7 @@ import 'download_task.dart';
 class DownloadManager {
   final Map<String, DownloadTask> _cache = <String, DownloadTask>{};
   final Queue<DownloadRequest> _queue = Queue();
-  var dio = Dio();
+  final dio = Dio();
   static const partialExtension = ".partial";
   static const tempExtension = ".temp";
 
@@ -57,9 +57,13 @@ class DownloadManager {
       }
       setStatus(task, DownloadStatus.downloading);
 
-      if (kDebugMode) {
-        print(url);
+      Fimber.d(url);
+
+      // Ensure there's a file to download
+      if (await isDownloadableFile(url) == false) {
+        throw Exception("No file to download found at '$url'.\nPlease contact the mod author.");
       }
+
       var file = File(savePath.toString());
       partialFilePath = savePath + partialExtension;
       partialFile = File(partialFilePath);
@@ -68,18 +72,15 @@ class DownloadManager {
       var partialFileExist = await partialFile.exists();
 
       if (fileExist) {
-        if (kDebugMode) {
-          print("File Exists");
-        }
+        Fimber.d("File Exists: $savePath");
         setStatus(task, DownloadStatus.completed);
       } else if (partialFileExist) {
-        if (kDebugMode) {
-          print("Partial File Exists");
-        }
+        Fimber.d("Partial File Exists: $partialFilePath");
 
-        var partialFileLength = await partialFile.length();
+        final partialFileLength = await partialFile.length();
 
-        var response = await dio.download(url, partialFilePath + tempExtension,
+        final response = await dio.download(
+            url, partialFilePath + tempExtension,
             onReceiveProgress: createCallback(url, partialFileLength),
             options: Options(
               headers: {HttpHeaders.rangeHeader: 'bytes=$partialFileLength-'},
@@ -98,7 +99,7 @@ class DownloadManager {
           setStatus(task, DownloadStatus.completed);
         }
       } else {
-        var response = await dio.download(url, partialFilePath,
+        final response = await dio.download(url, partialFilePath,
             onReceiveProgress: createCallback(url, 0),
             cancelToken: cancelToken,
             deleteOnError: false);
@@ -109,7 +110,7 @@ class DownloadManager {
         }
       }
     } catch (e) {
-      var task = getDownload(url)!;
+      final task = getDownload(url)!;
       if (task.status.value != DownloadStatus.canceled &&
           task.status.value != DownloadStatus.paused) {
         task.error = e;
@@ -194,9 +195,7 @@ class DownloadManager {
   }
 
   Future<void> pauseDownload(String url) async {
-    if (kDebugMode) {
-      print("Pause Download");
-    }
+    Fimber.d("Pause Download: $url");
     var task = getDownload(url)!;
     setStatus(task, DownloadStatus.paused);
     task.request.cancelToken.cancel();
@@ -205,9 +204,7 @@ class DownloadManager {
   }
 
   Future<void> cancelDownload(String url) async {
-    if (kDebugMode) {
-      print("Cancel Download");
-    }
+    Fimber.d("Cancel Download: $url");
     var task = getDownload(url)!;
     setStatus(task, DownloadStatus.canceled);
     _queue.remove(task.request);
@@ -215,9 +212,7 @@ class DownloadManager {
   }
 
   Future<void> resumeDownload(String url) async {
-    if (kDebugMode) {
-      print("Resume Download");
-    }
+    Fimber.d("Resume Download: $url");
     var task = getDownload(url)!;
     setStatus(task, DownloadStatus.downloading);
     task.request.cancelToken = CancelToken();
@@ -387,9 +382,7 @@ class DownloadManager {
 
     while (_queue.isNotEmpty && runningTasks < maxConcurrentTasks) {
       runningTasks++;
-      if (kDebugMode) {
-        print('Concurrent workers: $runningTasks');
-      }
+      Fimber.d('Concurrent workers: $runningTasks');
       var currentRequest = _queue.removeFirst();
 
       download(
@@ -418,6 +411,84 @@ class DownloadManager {
     } catch (e) {
       Fimber.w("Error getting filename from url: $e");
       return Uri.parse(url).pathSegments.last.fixFilenameForFileSystem();
+    }
+  }
+
+  static Future<bool> isDownloadableFile(String url) async {
+    try {
+      var dio = Dio();
+      // Send a HEAD request to the URL
+      final response = await dio.headUri(Uri.parse(url));
+
+      // Check if the status code is 200 (OK)
+      if (response.statusCode == 200) {
+        // Check for common headers that indicate a downloadable file
+        final headers = response.headers.map;
+        final contentType =
+            headers['content-type']?.map((it) => it.toLowerCase()).toList() ??
+                [];
+        final contentDisposition = headers['content-disposition']
+                ?.map((it) => it.toLowerCase())
+                .toList() ??
+            [];
+
+        // Check if the Content-Type is a common file type or if Content-Disposition is attachment
+        if (contentType.any((it) => it.startsWith('application/')) ||
+            contentDisposition.any((it) => it.contains('attachment'))) {
+          return true;
+        }
+
+        // Special handling for Google Drive and MEGA
+        if (url.contains('drive.google.com')) {
+          return await checkGoogleDriveLink(url);
+        } else if (url.contains('mega.nz')) {
+          return await checkMegaLink(url);
+        }
+
+        return false;
+      } else {
+        return false;
+      }
+    } catch (e) {
+      // Handle any request exceptions
+      Fimber.w('Error: $e');
+      return false;
+    }
+  }
+
+  static Future<bool> checkGoogleDriveLink(String url) async {
+    try {
+      var dio = Dio();
+      // Google Drive files usually require confirmation to download
+      final response = await dio.get(url);
+
+      // Check for specific identifiers in the HTML content
+      if (response.data.toString().contains('download')) {
+        return true;
+      } else {
+        return false;
+      }
+    } catch (e) {
+      Fimber.w('Error checking Google Drive link: $e');
+      return false;
+    }
+  }
+
+  static Future<bool> checkMegaLink(String url) async {
+    try {
+      var dio = Dio();
+      // MEGA links should be direct or use a confirmation link
+      final response = await dio.get(url);
+
+      // Check for specific identifiers in the HTML content
+      if (response.data.toString().contains('MEGA')) {
+        return true;
+      } else {
+        return false;
+      }
+    } catch (e) {
+      Fimber.w('Error checking MEGA link: $e');
+      return false;
     }
   }
 }

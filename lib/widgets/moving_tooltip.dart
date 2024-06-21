@@ -28,6 +28,7 @@ class _MovingTooltipWidgetState extends State<MovingTooltipWidget> {
   }
 
   Future<void> _getWindowSize() async {
+    if (!mounted) return;
     final windowInfo = await getWindowInfo();
     setState(() {
       _windowSize = windowInfo.frame.size;
@@ -89,6 +90,12 @@ class _MovingTooltipWidgetState extends State<MovingTooltipWidget> {
     });
 
     Overlay.of(context).insert(_overlayEntry!);
+  }
+
+  @override
+  void dispose() {
+    _hideTooltip(); // Ensure the tooltip is hidden when the widget is disposed
+    super.dispose();
   }
 
   SizedBox testTooltipContainer(Offset position) {

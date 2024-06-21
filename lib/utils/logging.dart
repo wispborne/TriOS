@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:fimber/fimber.dart' as f;
+// import 'package:fimber/fimber.dart' as f;
 import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
 import 'package:path/path.dart' as p;
@@ -76,8 +76,8 @@ configureLogging({bool printPlatformInfo = false}) {
   } else {
     // const logLevels = kDebugMode ? ["V", "D", "I", "W", "E"] : ["I", "W", "E"];
     const logLevels = kDebugMode ? ["D", "I", "W", "E"] : ["I", "W", "E"];
-    f.Fimber.plantTree(
-        f.DebugTree.elapsed(logLevels: logLevels, useColors: true));
+    // f.Fimber.plantTree(
+    //     f.DebugTree.elapsed(logLevels: logLevels, useColors: true));
     // f.Fimber.plantTree(f.SizeRollingFileTree(DataSize.mega(10),
     //     filenamePrefix: logFileName, filenamePostfix: ".log"));
   }
@@ -92,7 +92,7 @@ configureLogging({bool printPlatformInfo = false}) {
 class Fimber {
   static void v(String message, {Object? ex, StackTrace? stacktrace}) {
     if (useFimber) {
-      f.Fimber.v(message, ex: ex, stacktrace: stacktrace);
+      // f.Fimber.v(message, ex: ex, stacktrace: stacktrace);
     } else {
       _consoleLogger.t(message, error: ex, stackTrace: stacktrace);
       _fileLogger.t(message, error: ex, stackTrace: stacktrace);
@@ -101,7 +101,7 @@ class Fimber {
 
   static void i(String message, {Object? ex, StackTrace? stacktrace}) {
     if (useFimber) {
-      f.Fimber.i(message, ex: ex, stacktrace: stacktrace);
+      // f.Fimber.i(message, ex: ex, stacktrace: stacktrace);
     } else {
       _consoleLogger.i(message, error: ex, stackTrace: stacktrace);
       _fileLogger.i(message, error: ex, stackTrace: stacktrace);
@@ -110,7 +110,7 @@ class Fimber {
 
   static void d(String message, {Object? ex, StackTrace? stacktrace}) {
     if (useFimber) {
-      f.Fimber.d(message, ex: ex, stacktrace: stacktrace);
+      // f.Fimber.d(message, ex: ex, stacktrace: stacktrace);
     } else {
       _consoleLogger.d(message, error: ex, stackTrace: stacktrace);
       _fileLogger.d(message, error: ex, stackTrace: stacktrace);
@@ -119,7 +119,7 @@ class Fimber {
 
   static void w(String message, {Object? ex, StackTrace? stacktrace}) {
     if (useFimber) {
-      f.Fimber.w(message, ex: ex, stacktrace: stacktrace);
+      // f.Fimber.w(message, ex: ex, stacktrace: stacktrace);
     } else {
       _consoleLogger.w(message, error: ex, stackTrace: stacktrace);
       _fileLogger.w(message, error: ex, stackTrace: stacktrace);
@@ -128,7 +128,7 @@ class Fimber {
 
   static void e(String message, {Object? ex, StackTrace? stacktrace}) {
     if (useFimber) {
-      f.Fimber.e(message, ex: ex, stacktrace: stacktrace);
+      // f.Fimber.e(message, ex: ex, stacktrace: stacktrace);
     } else {
       _consoleLogger.e(message, error: ex, stackTrace: stacktrace);
       _fileLogger.e(message, error: ex, stackTrace: stacktrace);

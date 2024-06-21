@@ -1,12 +1,17 @@
+import 'dart:io';
+
 import 'package:collection/collection.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
+import 'package:mutex/mutex.dart';
+import 'package:path/path.dart' as p;
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 
 import '../models/mod_variant.dart';
 import '../models/version_checker_info.dart';
 import '../trios/app_state.dart';
+import '../trios/settings/config_manager.dart';
 
 class VersionCheckerNotifier
     extends AsyncNotifier<Map<String, VersionCheckResult>> {
@@ -21,14 +26,29 @@ class VersionCheckerNotifier
 
   /// Actual source of truth for the state, persists between rebuilds.
   final Map<String, VersionCheckResult> _versionCheckResultsCache = {};
+  final cacheLock = Mutex();
 
   // Executes async, updates state every time a Version Check http request is completed.
-  void refresh({required bool skipCache}) {
-    if (AppState.skipCacheOnNextVersionCheck || skipCache) {
-      _versionCheckResultsCache.clear();
-      state = AsyncValue.data(_versionCheckResultsCache); // clears state
-      AppState.skipCacheOnNextVersionCheck = false;
+  Future<void> refresh({required bool skipCache}) async {
+    final skippingCache = AppState.skipCacheOnNextVersionCheck || skipCache;
+
+    if (skippingCache) {
+      await cacheLock.protect(() async {
+        _versionCheckResultsCache.clear();
+        state = AsyncValue.data(_versionCheckResultsCache); // clears state
+        AppState.skipCacheOnNextVersionCheck = false;
+      });
+    } else if (_versionCheckResultsCache.isEmpty) {
+      // Load from file cache if not already loaded and not skipping the cache.
+      final cache = await readFromCacheFile();
+      if (cache != null) {
+        await cacheLock.protect(() async {
+          _versionCheckResultsCache.addAll(cache);
+          state = AsyncValue.data(_versionCheckResultsCache);
+        });
+      }
     }
+
     var currentTime = DateTime.now();
 
     // IMPORTANT: Automatically refreshes whenever the modVariants change.
@@ -65,16 +85,61 @@ class VersionCheckerNotifier
         continue; // No need to do anything if the data was already there.
       }
 
-      future.then((result) {
+      future.then((result) async {
         Fimber.d("Caching remote version info for ${mod.modInfo.id}: $result");
-        _versionCheckResultsCache[mod.smolId] = result;
-        state = AsyncValue.data(_versionCheckResultsCache);
-      }).catchError((e, st) {
+        await cacheLock.protect(() async {
+          _versionCheckResultsCache[mod.smolId] = result;
+          state = AsyncValue.data(_versionCheckResultsCache);
+        });
+      }).catchError((e, st) async {
         Fimber.e("Error fetching remote version info. Storing error. $e\n$st");
         final errResult = VersionCheckResult(mod.smolId, null, e, null);
-        _versionCheckResultsCache[mod.smolId] = errResult;
-        state = AsyncValue.data(_versionCheckResultsCache);
+        await cacheLock.protect(() async {
+          _versionCheckResultsCache[mod.smolId] = errResult;
+          state = AsyncValue.data(_versionCheckResultsCache);
+        });
+      }).whenComplete(() async {
+        // Save the cache to disk after every check.
+        await cacheLock.protect(() async {
+          writeToCacheFile(_versionCheckResultsCache);
+        });
       });
+    }
+  }
+
+  final versionCheckerCacheFile =
+      File(p.join("cache", "TriOS-VersionCheckerCache.json")).normalize;
+
+  Future<void> writeToCacheFile(
+      Map<String, VersionCheckResult> versionCheckResultsBySmolId) async {
+    try {
+      versionCheckerCacheFile.createSync(recursive: true);
+      final config = ConfigManager(versionCheckerCacheFile.path);
+      // await config.readConfig();
+      // TODO this is kinda cursed because it's double-encoding json (once here, once in ConfigManager), but it works for now.
+      // Ideally we'd use @Transient to avoid writing the error field to the cache.
+      await config.setConfig(versionCheckResultsBySmolId.map((key, value) {
+        return MapEntry(key, value.toJson());
+      }));
+      Fimber.i("Saved config to ${config.file}: ${versionCheckResultsBySmolId.length} entries.");
+    } catch (e, st) {
+      Fimber.w("Error saving version checker cache.", ex: e, stacktrace: st);
+    }
+  }
+
+  Future<Map<String, VersionCheckResult>?> readFromCacheFile() async {
+    try {
+      final config = ConfigManager(versionCheckerCacheFile.path);
+      await config.readConfig();
+      final cache = config.config;
+      Fimber.i("Read config from ${config.file}: ${cache.length} entries.");
+      return cache.map((key, value) {
+        return MapEntry(key, VersionCheckResult.fromJson(key, value));
+      });
+    } catch (e, st) {
+      Fimber.w("Error reading version checker cache.", ex: e, stacktrace: st);
+      writeToCacheFile({}); // Clear the cache if it's corrupted.
+      return null;
     }
   }
 }
@@ -93,6 +158,28 @@ class VersionCheckResult {
   @override
   String toString() {
     return 'VersionCheckResult{smolId: $smolId, remoteVersion: $remoteVersion, error: $error, uri: $uri, timestamp: $timestamp}';
+  }
+
+  String toJson() {
+    return '''{
+      "remoteVersion": ${remoteVersion?.toJson() ?? "null"},
+      "uri": "$uri",
+      "timestamp": "$timestamp"
+    }''';
+  }
+
+  factory VersionCheckResult.fromJson(
+      String smolId, Map<String, dynamic> json) {
+    return VersionCheckResult(
+      smolId,
+      json['remoteVersion'] == null
+          ? null
+          : VersionCheckerInfo.fromJson(json['remoteVersion']),
+      // Not saved, so it will probably be null.
+      json['error'],
+      json['uri'] as String?,
+      timestamp: DateTime.parse(json['timestamp'] as String),
+    );
   }
 }
 

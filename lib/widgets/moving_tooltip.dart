@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/measureable_widget.dart';
 
+import '../utils/logging.dart';
+
 class MovingTooltipWidget extends StatefulWidget {
   final Widget child;
   final Widget tooltipWidget;
@@ -37,7 +39,7 @@ class _MovingTooltipWidgetState extends State<MovingTooltipWidget> {
     );
   }
 
-  void _showTooltip(Offset position) {
+  void _showTooltip(Offset mousePosition) {
     _hideTooltip(); // Ensure no previous tooltip lingers
 
     _overlayEntry = OverlayEntry(builder: (context) {
@@ -73,11 +75,11 @@ class _MovingTooltipWidgetState extends State<MovingTooltipWidget> {
               Positioned(
                 top: _tooltipWidgetSize == null
                     ? -1000
-                    : (position.dy + widget.offset.height).clamp(
+                    : (mousePosition.dy + widget.offset.height).clamp(
                         widget.windowEdgePadding
                             .coerceAtMost(upperLimitFromTop),
                         upperLimitFromTop),
-                left: (position.dx + widget.offset.width).clamp(
+                left: (mousePosition.dx + widget.offset.width).clamp(
                     widget.windowEdgePadding.coerceAtMost(upperLimitFromLeft),
                     upperLimitFromLeft),
                 child: Builder(
@@ -86,6 +88,10 @@ class _MovingTooltipWidgetState extends State<MovingTooltipWidget> {
                       child: IgnorePointer(child: widget.tooltipWidget),
                       onSized: (size) {
                         _tooltipWidgetSize = size;
+                      },
+                      onResized: (size) {
+                        _tooltipWidgetSize = size;
+                        _updateTooltipPosition(mousePosition);
                       },
                     );
                   },
@@ -108,9 +114,9 @@ class _MovingTooltipWidgetState extends State<MovingTooltipWidget> {
     super.dispose();
   }
 
-  void _updateTooltipPosition(Offset position) {
+  void _updateTooltipPosition(Offset mousePosition) {
     _overlayEntry?.markNeedsBuild();
-    _showTooltip(position);
+    _showTooltip(mousePosition);
   }
 
   void _hideTooltip() {

@@ -7,6 +7,7 @@
   - Changing game path via filepicker changes text field.
   - Tooltips going off-screen.
   - Unable to install (certain?) mods due to "Invalid value: Not in inclusive range" error.
+  - Update All Mods confirmation prompt always said you have 0 mods.
 - Changed
   - Mod grid now shows more info at once and has a bunch of Excel-like features (move columns, filter, hide, etc).
     - Settings are not yet saved between restarts.

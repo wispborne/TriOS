@@ -372,7 +372,7 @@ class _ModListMiniState extends ConsumerState<ModListMini>
             return AlertDialog(
               title: const Text("Are you sure?"),
               content: Text(
-                  "Download updates for ${modsWithUpdates.whereType<ModVariant>().length} mods?"),
+                  "Download updates for ${modsWithUpdates.whereType<Mod>().length} mods?"),
               actions: [
                 TextButton(
                     onPressed: () {

@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:trios/utils/extensions.dart';
-import 'package:trios/utils/logging.dart';
 import 'package:trios/widgets/measureable_widget.dart';
 import 'package:window_size/window_size.dart';
 
@@ -21,7 +20,6 @@ class _MovingTooltipWidgetState extends State<MovingTooltipWidget> {
   OverlayEntry? _overlayEntry;
   Size? _windowSize;
   Size? _tooltipWidgetSize;
-  final GlobalKey _tooltipKey = GlobalKey();
 
   @override
   void initState() {
@@ -67,7 +65,12 @@ class _MovingTooltipWidgetState extends State<MovingTooltipWidget> {
           // If we don't have the tooltip size yet, schedule an immediate rebuild.
           // The first build will capture the size, and the second will position the tooltip correctly.
           if (_tooltipWidgetSize == null) {
-            scheduleMicrotask(() => setState(() => {}));
+            // schedule next frame
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                setState(() {});
+              }
+            });
           }
 
           return Stack(
@@ -82,28 +85,10 @@ class _MovingTooltipWidgetState extends State<MovingTooltipWidget> {
                     edgePadding.coerceAtMost(upperLimitFromLeft),
                     upperLimitFromLeft),
                 child: Builder(builder: (context) {
-                  // final currentContext = _tooltipKey.currentContext;
-                  //
-                  // if (_tooltipWidgetSize == null) {
-                  //   try {
-                  //     final RenderBox? renderBox =
-                  //         currentContext?.findRenderObject() as RenderBox?;
-                  //     if (renderBox != null && renderBox.hasSize) {
-                  //       _tooltipWidgetSize = renderBox.size;
-                  //     }
-                  //   } catch (e) {
-                  //     // Fimber.e("Error getting tooltip size: $e");
-                  //   }
-                  // }
-
-                  // Fimber.i("Tooltip size: $_tooltipWidgetSize");
-
                   return MeasurableWidget(
-                    // key: _tooltipKey,
-                    child: widget.tooltipWidget,
+                    child: IgnorePointer(child: widget.tooltipWidget),
                     onSized: (size) {
                       _tooltipWidgetSize = size;
-                      Fimber.i("Tooltip size: $_tooltipWidgetSize");
                     },
                   );
                   // testTooltipContainer(position);
@@ -120,7 +105,9 @@ class _MovingTooltipWidgetState extends State<MovingTooltipWidget> {
 
   @override
   void dispose() {
-    _hideTooltip(); // Ensure the tooltip is hidden when the widget is disposed
+    // Ensure the tooltip is hidden when the widget is disposed
+    // This prevents the tooltip from becoming "stuck" on screen.
+    _hideTooltip();
     super.dispose();
   }
 

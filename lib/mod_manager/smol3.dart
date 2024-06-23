@@ -51,6 +51,7 @@ class _Smol3State extends ConsumerState<Smol3> {
   List<PlutoRow> gridRows = [];
   final lightTextOpacity = 0.8;
   GridStateManagerCallback? didSetStateManager;
+  bool _hasSorted = false;
 
   tooltippy(Widget child, ModVariant modVariant) {
     final compatWithGame = ref
@@ -172,6 +173,10 @@ class _Smol3State extends ConsumerState<Smol3> {
                   ref.read(_stateManagerProvider.notifier).state =
                       event.stateManager;
                   didSetStateManager?.call(event.stateManager);
+                },
+                onSorted: (PlutoGridOnSortedEvent event) {
+                  // _sortColumnIndex = event.sortColumnIdx;
+                  // _sortAscending = event.sortAscending;
                 },
                 columns: gridColumns,
                 // columns: gridColumns,
@@ -478,6 +483,9 @@ class _Smol3State extends ConsumerState<Smol3> {
           );
         })
         .whereNotNull()
+        .sortedBy<String>(
+            // Default sort by name
+            (e) => e.cells[_Fields.name.toString()]?.value.toString() ?? "")
         .toList();
   }
 

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/models/version_checker_info.dart';
-import 'package:trios/trios/constants.dart';
 import 'package:trios/themes/theme_manager.dart';
 
 import '../mod_manager/version_checker.dart';
@@ -46,11 +45,17 @@ class _VersionCheckTextReadoutState
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text("Click to download",
+                      Text(
+                          hasDirectDownload
+                              ? "Click to download"
+                              : "Click to open in browser",
                           style: theme.textTheme.bodyMedium
                               ?.copyWith(fontWeight: FontWeight.bold)),
-                      Text("Right-click to open in dialog.",
-                          style: theme.textTheme.labelLarge),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Text("Right-click to popup this tooltip.",
+                            style: theme.textTheme.labelLarge),
+                      ),
                     ],
                   ),
                 ),
@@ -66,6 +71,12 @@ class _VersionCheckTextReadoutState
                       "File: ${remoteVersionCheck?.remoteVersion?.directDownloadURL}",
                       style: theme.textTheme.labelLarge),
                 ),
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: Text("Version Checker url:\n${remoteVersionCheck?.uri}",
+                    style: theme.textTheme.labelLarge?.copyWith(
+                        fontFeatures: [const FontFeature.tabularFigures()])),
+              ),
               Text(
                   "\nUpdate information is provided by the mod author, not TriOS, and cannot be guaranteed.",
                   style: theme.textTheme.labelLarge
@@ -91,8 +102,24 @@ class _VersionCheckTextReadoutState
                   children: [
                     Text("You are up to date.",
                         style: theme.textTheme.labelLarge),
-                    Text("Current version: ${localVersionCheck.modVersion}",
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Text(
+                          "Current version: ${localVersionCheck.modVersion}",
+                          style: theme.textTheme.labelLarge),
+                    ),
+                    Text(
+                        "Remote version: ${remoteVersionCheck.remoteVersion?.modVersion}",
                         style: theme.textTheme.labelLarge),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Text(
+                          "Version Checker url:\n${remoteVersionCheck?.uri}",
+                          style: theme.textTheme.labelMedium?.copyWith(
+                              fontFeatures: [
+                                const FontFeature.tabularFigures()
+                              ])),
+                    ),
                   ],
                 ),
               // Remote error.
@@ -101,16 +128,25 @@ class _VersionCheckTextReadoutState
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                        "Error checking for updates. This is not caused by ${Constants.appName}.",
+                    Text("Error checking for updates.",
                         style: theme.textTheme.labelLarge?.copyWith(
                             color: vanillaErrorColor,
                             fontWeight: FontWeight.bold)),
                     Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Text(
+                          "This is usually caused by the mod author. Please visit the mod page to manually find updates.",
+                          style: theme.textTheme.labelLarge
+                              ?.copyWith(color: vanillaErrorColor)),
+                    ),
+                    Text(
+                        "If the in-game Version Checker is working for this specific mod, please report a TriOS bug.",
+                        style: theme.textTheme.labelLarge),
+                    Padding(
                       padding: const EdgeInsets.only(top: 8.0),
                       child: Text(
                           "Version Checker url:\n${remoteVersionCheck?.uri}",
-                          style: theme.textTheme.labelMedium?.copyWith(
+                          style: theme.textTheme.labelLarge?.copyWith(
                               fontFeatures: [
                                 const FontFeature.tabularFigures()
                               ])),

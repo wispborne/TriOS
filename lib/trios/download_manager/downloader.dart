@@ -61,7 +61,8 @@ class DownloadManager {
 
       // Ensure there's a file to download
       if (await isDownloadableFile(url) == false) {
-        throw Exception("No file to download found at '$url'.\nPlease contact the mod author.");
+        throw Exception(
+            "No file to download found at '$url'.\nPlease contact the mod author.");
       }
 
       var file = File(savePath.toString());
@@ -417,6 +418,7 @@ class DownloadManager {
   static Future<bool> isDownloadableFile(String url) async {
     try {
       var dio = Dio();
+
       // Send a HEAD request to the URL
       final response = await dio.headUri(Uri.parse(url));
 
@@ -452,7 +454,10 @@ class DownloadManager {
     } catch (e) {
       // Handle any request exceptions
       Fimber.w('Error: $e');
-      return false;
+      // Error checking headers, but might as well try.
+      // https://bitbucket.org/modmafia/ship-weapon-pack/downloads/Ship_and_Weapon_Pack_1.15.1.7z
+      // fails with a 403, but the file is still downloadable.
+      return true;
     }
   }
 

@@ -18,7 +18,6 @@ import 'package:vs_scrollbar/vs_scrollbar.dart';
 
 import '../mod_manager/version_checker.dart';
 import '../models/mod.dart';
-import '../models/mod_variant.dart';
 import '../trios/app_state.dart';
 import '../trios/download_manager/download_manager.dart';
 import '../widgets/debug_info.dart';
@@ -199,23 +198,26 @@ class _ModListMiniState extends ConsumerState<ModListMini>
               data: (_) {
                 final isUpdatesFieldShown =
                     ref.watch(appSettings.select((s) => s.isUpdatesFieldShown));
-                var modsWithUpdates = modList
-                    .map((e) => e as Mod?)
-                    .filter((mod) {
-                      final variant = mod?.findHighestVersion;
-                      if (variant?.versionCheckerInfo == null) return false;
+                var modsWithUpdates = <Mod?>[null] +
+                    modList
+                        .map((e) => e as Mod?)
+                        .filter((mod) {
+                          final variant = mod?.findHighestVersion;
+                          if (variant?.versionCheckerInfo == null) return false;
 
-                      final localVersionCheck = variant!.versionCheckerInfo;
-                      final remoteVersionCheck = versionCheck?[variant.smolId];
-                      return compareLocalAndRemoteVersions(
-                                  localVersionCheck, remoteVersionCheck) ==
-                              -1 &&
-                          remoteVersionCheck?.error == null;
-                    })
-                    .sortedBy((info) =>
-                        info?.findFirstEnabledOrHighestVersion?.modInfo.name ??
-                        "")
-                    .toList();
+                          final localVersionCheck = variant!.versionCheckerInfo;
+                          final remoteVersionCheck =
+                              versionCheck?[variant.smolId];
+                          return compareLocalAndRemoteVersions(
+                                      localVersionCheck, remoteVersionCheck) ==
+                                  -1 &&
+                              remoteVersionCheck?.error == null;
+                        })
+                        .sortedBy((info) =>
+                            info?.findFirstEnabledOrHighestVersion?.modInfo
+                                .name ??
+                            "")
+                        .toList();
                 final updatesToDisplay =
                     (isUpdatesFieldShown ? modsWithUpdates : <Mod?>[null]);
                 final listItems = updatesToDisplay +

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/mod_manager/version_checker.dart';
@@ -124,12 +125,14 @@ downloadUpdateViaBrowser(
                 final variants =
                     ref.read(AppState.modVariants).valueOrNull ?? [];
                 final mods = ref.read(AppState.mods);
-                for (var installed in installedVariants) {
-                  final actualVariant = variants.firstWhere(
+                for (final installed in installedVariants) {
+                  // Find the variant post-install so we can activate it.
+                  final actualVariant = variants.firstWhereOrNull(
                       (variant) => variant.smolId == installed.modInfo.smolId);
                   try {
-                    // If the mod was enabled, switch to the newly downloaded version.
-                    if (actualVariant.mod(mods)?.isEnabledInGame == true) {
+                    // If the mod existed and was enabled, switch to the newly downloaded version.
+                    if (actualVariant != null &&
+                        actualVariant.mod(mods)?.isEnabledInGame == true) {
                       changeActiveModVariant(
                           actualVariant.mod(mods)!, actualVariant, ref);
                     }

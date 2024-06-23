@@ -7,7 +7,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:toastification/toastification.dart';
 import 'package:trios/chipper/chipper_home.dart';
 import 'package:trios/dashboard/dashboard.dart';
-import 'package:trios/mod_manager/smol2.dart';
 import 'package:trios/rules_autofresh/rules_hotreload.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/constants.dart';
@@ -317,10 +316,13 @@ class _AppShellState extends ConsumerState<AppShell>
       const Padding(padding: EdgeInsets.all(8), child: VramEstimatorPage()),
       const Padding(padding: EdgeInsets.all(8), child: ChipperApp()),
       Platform.isWindows
-          ? const Padding(padding: EdgeInsets.all(8), child: JreManager())
+          ? const Padding(padding: EdgeInsets.all(0), child: JreManager())
           : const Center(
               child: Text("Only supported on Windows for now, sorry.")),
-      const SettingsPage(),
+      const Padding(
+        padding: EdgeInsets.all(4),
+        child: SettingsPage(),
+      ),
     ];
 
     var isRulesHotReloadEnabled =

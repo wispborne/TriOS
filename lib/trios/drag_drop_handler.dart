@@ -39,7 +39,12 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
           _lastDropTimestamp = DateTime.now().millisecondsSinceEpoch;
         }
 
-        Fimber.i('onDragDone:');
+        Fimber.i("Dropped ${detail.files.length} files at $_offset");
+
+        if (detail.files.isEmpty) {
+          return;
+        }
+
         if (ref.read(AppState.canWriteToModsFolder).value == false) {
           showDialog(
               context: context,

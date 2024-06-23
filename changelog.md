@@ -3,7 +3,7 @@
 - Added
     - On first run, uses your most recent Starsector install instead of the default install location.
     - Mod grid: resize, reorder, freeze, hide, and filter columns.
-        - The UI is still a little janky and doesn't yet persist between restarts.
+        - **The grid column controls are still a little janky and don't yet persist between restarts.**
 - Fixed
     - Tooltips going off-screen.
     - Letters in mod versions are no longer ignored by Version Checker.

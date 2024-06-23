@@ -137,7 +137,7 @@ class _Smol3State extends ConsumerState<Smol3> {
               final theme = Theme.of(context);
               return PlutoGrid(
                 // key: UniqueKey(),
-                mode: PlutoGridMode.normal,
+                mode: PlutoGridMode.selectWithOneTap,
                 configuration: PlutoGridConfiguration(
                     scrollbar: const PlutoGridScrollbarConfig(dragDevices: {
                       PointerDeviceKind.stylus,

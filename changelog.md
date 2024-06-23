@@ -1,8 +1,11 @@
 # 0.0.53
 - Added
   - On first run, uses your most recent Starsector install instead of the default install location.
+  - Mod grid: resize, reorder, freeze, hide, and filter columns.
+    - The UI is still a little janky and doesn't yet persist between restarts.
 - Fixed
   - Changing game path via filepicker changes text field.
+  - Tooltips going off-screen.
   - Unable to install (certain?) mods due to "Invalid value: Not in inclusive range" error.
 - Changed
   - Mod grid now shows more info at once and has a bunch of Excel-like features (move columns, filter, hide, etc).

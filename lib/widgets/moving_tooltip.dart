@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/logging.dart';
+import 'package:trios/widgets/measureable_widget.dart';
 import 'package:window_size/window_size.dart';
 
 class MovingTooltipWidget extends StatefulWidget {
@@ -51,37 +53,61 @@ class _MovingTooltipWidgetState extends State<MovingTooltipWidget> {
     _overlayEntry = OverlayEntry(builder: (context) {
       return LayoutBuilder(
         builder: (context, constraints) {
-          final bool isLeft =
-              position.dx < (_windowSize?.width ?? double.infinity) / 2;
-          final bool isTop =
-              position.dy < (_windowSize?.height ?? double.infinity) / 2;
           const offset = Size(10, 10);
-          const edgePadding = 10.0;
+          const edgePadding = 20.0;
+
+          final upperLimitFromTop =
+              ((_windowSize?.height.minus(edgePadding) ?? double.infinity)) -
+                  (_tooltipWidgetSize?.height ?? 0);
+
+          final upperLimitFromLeft =
+              ((((_windowSize?.width.minus(edgePadding) ?? 0)) -
+                  ((_tooltipWidgetSize?.width ?? 0))));
+
+          // If we don't have the tooltip size yet, schedule an immediate rebuild.
+          // The first build will capture the size, and the second will position the tooltip correctly.
+          if (_tooltipWidgetSize == null) {
+            scheduleMicrotask(() => setState(() => {}));
+          }
 
           return Stack(
             children: [
               Positioned(
-                top: (position.dy + offset.height).clamp(
-                    edgePadding,
-                    ((_windowSize?.height.minus(edgePadding) ??
-                            double.infinity)) -
-                        (_tooltipWidgetSize?.height ?? 0)),
+                top: _tooltipWidgetSize == null
+                    ? -1000
+                    : (position.dy + offset.height).clamp(
+                        edgePadding.coerceAtMost(upperLimitFromTop),
+                        upperLimitFromTop),
                 left: (position.dx + offset.width).clamp(
-                    edgePadding,
-                    ((((_windowSize?.width.minus(edgePadding) ?? 0)) -
-                            ((_tooltipWidgetSize?.width ?? 0))) ??
-                        double.infinity)),
-                child: Material(
-                  key: _tooltipKey,
-                  child: Builder(builder: (context) {
-                    _tooltipWidgetSize ??= (_tooltipKey.currentContext
-                            ?.findRenderObject() as RenderBox?)
-                        ?.size;
+                    edgePadding.coerceAtMost(upperLimitFromLeft),
+                    upperLimitFromLeft),
+                child: Builder(builder: (context) {
+                  // final currentContext = _tooltipKey.currentContext;
+                  //
+                  // if (_tooltipWidgetSize == null) {
+                  //   try {
+                  //     final RenderBox? renderBox =
+                  //         currentContext?.findRenderObject() as RenderBox?;
+                  //     if (renderBox != null && renderBox.hasSize) {
+                  //       _tooltipWidgetSize = renderBox.size;
+                  //     }
+                  //   } catch (e) {
+                  //     // Fimber.e("Error getting tooltip size: $e");
+                  //   }
+                  // }
 
-                    return widget.tooltipWidget;
-                    // testTooltipContainer(position);
-                  }),
-                ),
+                  // Fimber.i("Tooltip size: $_tooltipWidgetSize");
+
+                  return MeasurableWidget(
+                    // key: _tooltipKey,
+                    child: widget.tooltipWidget,
+                    onSized: (size) {
+                      _tooltipWidgetSize = size;
+                      Fimber.i("Tooltip size: $_tooltipWidgetSize");
+                    },
+                  );
+                  // testTooltipContainer(position);
+                }),
               )
             ],
           );
@@ -96,19 +122,6 @@ class _MovingTooltipWidgetState extends State<MovingTooltipWidget> {
   void dispose() {
     _hideTooltip(); // Ensure the tooltip is hidden when the widget is disposed
     super.dispose();
-  }
-
-  SizedBox testTooltipContainer(Offset position) {
-    return SizedBox(
-        width: 200,
-        height: 100,
-        child: Container(
-            color: Colors.black,
-            child: Text(
-              "Tooltip: ${_tooltipWidgetSize?.width}, ${_tooltipWidgetSize?.height}"
-              "\nCoords: ${position.dx}, ${position.dy}"
-              "\nWindow: ${_windowSize?.width}, ${_windowSize?.height}",
-            )));
   }
 
   void _updateTooltipPosition(Offset position) {

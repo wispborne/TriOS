@@ -1,16 +1,23 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/measureable_widget.dart';
-import 'package:window_size/window_size.dart';
 
 class MovingTooltipWidget extends StatefulWidget {
   final Widget child;
   final Widget tooltipWidget;
 
+  /// The minimum padding from the edge of the window to the tooltip.
+  final double windowEdgePadding;
+
+  /// The offset from the mouse position to the tooltip.
+  final Size offset;
+
   const MovingTooltipWidget(
-      {super.key, required this.child, required this.tooltipWidget});
+      {super.key,
+      required this.child,
+      required this.tooltipWidget,
+      this.windowEdgePadding = 10.0,
+      this.offset = const Size(10, 10)});
 
   @override
   State<MovingTooltipWidget> createState() => _MovingTooltipWidgetState();
@@ -18,22 +25,7 @@ class MovingTooltipWidget extends StatefulWidget {
 
 class _MovingTooltipWidgetState extends State<MovingTooltipWidget> {
   OverlayEntry? _overlayEntry;
-  Size? _windowSize;
   Size? _tooltipWidgetSize;
-
-  @override
-  void initState() {
-    super.initState();
-    _getWindowSize();
-  }
-
-  Future<void> _getWindowSize() async {
-    if (!mounted) return;
-    final windowInfo = await getWindowInfo();
-    setState(() {
-      _windowSize = windowInfo.frame.size;
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,21 +43,24 @@ class _MovingTooltipWidgetState extends State<MovingTooltipWidget> {
     _overlayEntry = OverlayEntry(builder: (context) {
       return LayoutBuilder(
         builder: (context, constraints) {
-          const offset = Size(10, 10);
-          const edgePadding = 20.0;
+          final mediaQuery = MediaQuery.of(context);
+          final availableHeight = mediaQuery.size.height -
+              mediaQuery.padding.top -
+              mediaQuery.padding.bottom;
+          final availableWidth = mediaQuery.size.width -
+              mediaQuery.padding.left -
+              mediaQuery.padding.right;
 
           final upperLimitFromTop =
-              ((_windowSize?.height.minus(edgePadding) ?? double.infinity)) -
+              (availableHeight - widget.windowEdgePadding) -
                   (_tooltipWidgetSize?.height ?? 0);
-
           final upperLimitFromLeft =
-              ((((_windowSize?.width.minus(edgePadding) ?? 0)) -
-                  ((_tooltipWidgetSize?.width ?? 0))));
+              (availableWidth - widget.windowEdgePadding) -
+                  (_tooltipWidgetSize?.width ?? 0);
 
           // If we don't have the tooltip size yet, schedule an immediate rebuild.
           // The first build will capture the size, and the second will position the tooltip correctly.
           if (_tooltipWidgetSize == null) {
-            // schedule next frame
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (mounted) {
                 setState(() {});
@@ -78,21 +73,23 @@ class _MovingTooltipWidgetState extends State<MovingTooltipWidget> {
               Positioned(
                 top: _tooltipWidgetSize == null
                     ? -1000
-                    : (position.dy + offset.height).clamp(
-                        edgePadding.coerceAtMost(upperLimitFromTop),
+                    : (position.dy + widget.offset.height).clamp(
+                        widget.windowEdgePadding
+                            .coerceAtMost(upperLimitFromTop),
                         upperLimitFromTop),
-                left: (position.dx + offset.width).clamp(
-                    edgePadding.coerceAtMost(upperLimitFromLeft),
+                left: (position.dx + widget.offset.width).clamp(
+                    widget.windowEdgePadding.coerceAtMost(upperLimitFromLeft),
                     upperLimitFromLeft),
-                child: Builder(builder: (context) {
-                  return MeasurableWidget(
-                    child: IgnorePointer(child: widget.tooltipWidget),
-                    onSized: (size) {
-                      _tooltipWidgetSize = size;
-                    },
-                  );
-                  // testTooltipContainer(position);
-                }),
+                child: Builder(
+                  builder: (context) {
+                    return MeasurableWidget(
+                      child: IgnorePointer(child: widget.tooltipWidget),
+                      onSized: (size) {
+                        _tooltipWidgetSize = size;
+                      },
+                    );
+                  },
+                ),
               )
             ],
           );

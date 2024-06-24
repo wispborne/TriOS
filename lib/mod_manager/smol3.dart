@@ -85,8 +85,8 @@ class _Smol3State extends ConsumerState<Smol3> {
     final versionCheckResults =
         ref.read(AppState.versionCheckResults).valueOrNull;
     const double versionSelectorWidth = 130;
-    gridColumns.addAll(createColumns(versionSelectorWidth, modsToDisplay,
-        lightTextOpacity, versionCheckResults));
+    gridColumns.addAll(createColumns(
+        versionSelectorWidth, lightTextOpacity, versionCheckResults));
     gridRows.addAll(createGridRows());
     // ref.listenManual(AppState.versionCheckResults, (prev, newResults) {
     //   // setState(() {
@@ -119,8 +119,8 @@ class _Smol3State extends ConsumerState<Smol3> {
       stateManager.refRows.clearFromOriginal();
       stateManager.refRows.addAll(createGridRows());
       stateManager.refColumns.clearFromOriginal();
-      stateManager.refColumns.addAll(createColumns(versionSelectorWidth,
-          modsToDisplay, lightTextOpacity, versionCheckResults));
+      stateManager.refColumns.addAll(createColumns(
+          versionSelectorWidth, lightTextOpacity, versionCheckResults));
       PlutoGridStateManager.initializeRows(
           stateManager.refColumns, stateManager.refRows);
     }
@@ -173,6 +173,13 @@ class _Smol3State extends ConsumerState<Smol3> {
                   ref.read(_stateManagerProvider.notifier).state =
                       event.stateManager;
                   didSetStateManager?.call(event.stateManager);
+
+                  // event.stateManager.setRowGroup(PlutoRowGroupTreeDelegate(
+                  //   resolveColumnDepth: (column) =>
+                  //       event.stateManager.columnIndex(column),
+                  //   showText: (cell) => true,
+                  //   showFirstExpandableIcon: true,
+                  // ));
                 },
                 onSorted: (PlutoGridOnSortedEvent event) {
                   // _sortColumnIndex = event.sortColumnIdx;
@@ -184,7 +191,7 @@ class _Smol3State extends ConsumerState<Smol3> {
                 // rows: gridRows,
                 onSelected: (event) {
                   if (event.row != null) {
-                    final mod = modsToDisplay[event.row!.sortIdx];
+                    final mod = _getModFromKey(event.row?.key);
 
                     setState(() {
                       if (selectedMod == mod) {
@@ -418,70 +425,44 @@ class _Smol3State extends ConsumerState<Smol3> {
     );
   }
 
-  List<PlutoRow> createGridRows() {
-    return modsToDisplay
-        .mapIndexed((index, mod) {
-          final bestVersion = mod.findFirstEnabledOrHighestVersion;
-          if (bestVersion == null) return null;
+  Mod _getModFromKey(Key? key) {
+    return (key as ValueKey<Mod>).value;
+  }
 
-          return PlutoRow(
-            // onSelectChanged: (selected) {
-            //   if (selected != null) {}
-            // },
-            // specificRowHeight: rowHeight + extraRowHeight,
-            // color: (alternateRowColor && index.isEven
-            //     ? WidgetStateProperty.all(
-            //         theme.colorScheme.surface.withOpacity(0.4))
-            //     : null),
-            // onTap: () {
-            //   setState(() {
-            //     if (selectedMod == mod) {
-            //       selectedMod = null;
-            //     } else {
-            //       selectedMod = mod;
-            //     }
-            //   });
-            // },
-            cells: {
-              // Enable/Disable
-              _Fields.versionSelector.toString(): PlutoCell(value: mod),
-              // Utility/Total Conversion icon
-              _Fields.utilityIcon.toString(): PlutoCell(
-                value: bestVersion.modInfo.isUtility
-                    ? 1
-                    : bestVersion.modInfo.isTotalConversion
-                        ? 2
-                        : 0,
-              ),
-              // Icon
-              _Fields.modIcon.toString(): PlutoCell(
-                value: bestVersion.iconFilePath,
-              ),
-              // Name
-              _Fields.name.toString(): PlutoCell(
-                value: bestVersion.modInfo.name,
-              ),
-              _Fields.author.toString(): PlutoCell(
-                value: mod.findFirstEnabledOrHighestVersion?.modInfo.author,
-              ),
-              _Fields.versions.toString(): PlutoCell(
-                value: bestVersion.modInfo.version?.raw,
-              ),
-              _Fields.vramEstimate.toString(): PlutoCell(
-                  // Text("todo",
-                  //     style: theme.textTheme.labelLarge
-                  //         ?.copyWith(color: lightTextColor)),
-                  // builder: (context, child) => ContextMenuRegion(
-                  //     contextMenu: ModListMini.buildContextMenu(
-                  //         mod, ref, context),
-                  //     child: affixToTop(child: child)),
-                  ),
-              _Fields.gameVersion.toString(): PlutoCell(
-                value: bestVersion.modInfo.gameVersion,
-              ),
-            },
-          );
-        })
+  List<PlutoRow> createGridRows() {
+    // final enabledMods =
+    //     modsToDisplay.where((mod) => mod.isEnabledInGame).toList();
+    // final disabledMods =
+    //     modsToDisplay.where((mod) => !mod.isEnabledInGame).toList();
+    //
+    // return [
+    //   PlutoRow(
+    //       cells: {_Fields.name.toString(): PlutoCell(value: modsToDisplay[0].findFirstEnabledOrHighestVersion!.modInfo.name),},
+    //       type: PlutoRowType.group(
+    //           children: FilteredList(
+    //               initialList: enabledMods
+    //                   .mapIndexed((index, mod) {
+    //                     return createRow(mod);
+    //                   })
+    //                   .whereNotNull()
+    //                   .sortedBy<String>(
+    //                       // Default sort by name
+    //                       (e) =>
+    //                           e.cells[_Fields.name.toString()]?.value
+    //                               .toString() ??
+    //                           "")
+    //                   .toList()))),
+    //   ...disabledMods
+    //       .mapIndexed((index, mod) {
+    //         return createRow(mod);
+    //       })
+    //       .whereNotNull()
+    //       .sortedBy<String>(
+    //           // Default sort by name
+    //           (e) => e.cells[_Fields.name.toString()]?.value.toString() ?? "")
+    // ]..toList();
+    return modsToDisplay
+        .mapIndexed((index, mod) => createRow(mod))
         .whereNotNull()
         .sortedBy<String>(
             // Default sort by name
@@ -489,9 +470,55 @@ class _Smol3State extends ConsumerState<Smol3> {
         .toList();
   }
 
+  PlutoRow? createRow(Mod mod) {
+    final bestVersion = mod.findFirstEnabledOrHighestVersion;
+    if (bestVersion == null) return null;
+
+    return PlutoRow(
+      key: ValueKey(mod),
+      cells: {
+        // Enable/Disable
+        _Fields.versionSelector.toString(): PlutoCell(value: mod),
+        // Utility/Total Conversion icon
+        _Fields.utilityIcon.toString(): PlutoCell(
+          value: bestVersion.modInfo.isUtility
+              ? 1
+              : bestVersion.modInfo.isTotalConversion
+                  ? 2
+                  : 0,
+        ),
+        // Icon
+        _Fields.modIcon.toString(): PlutoCell(
+          value: bestVersion.iconFilePath,
+        ),
+        // Name
+        _Fields.name.toString(): PlutoCell(
+          value: bestVersion.modInfo.name,
+        ),
+        _Fields.author.toString(): PlutoCell(
+          value: mod.findFirstEnabledOrHighestVersion?.modInfo.author,
+        ),
+        _Fields.versions.toString(): PlutoCell(
+          value: bestVersion.modInfo.version?.raw,
+        ),
+        _Fields.vramEstimate.toString(): PlutoCell(
+            // Text("todo",
+            //     style: theme.textTheme.labelLarge
+            //         ?.copyWith(color: lightTextColor)),
+            // builder: (context, child) => ContextMenuRegion(
+            //     contextMenu: ModListMini.buildContextMenu(
+            //         mod, ref, context),
+            //     child: affixToTop(child: child)),
+            ),
+        _Fields.gameVersion.toString(): PlutoCell(
+          value: bestVersion.modInfo.gameVersion,
+        ),
+      },
+    );
+  }
+
   List<PlutoColumn> createColumns(
       double versionSelectorWidth,
-      List<Mod> modsToDisplay,
       double lightTextOpacity,
       Map<String, VersionCheckResult>? versionCheckResults) {
     return [
@@ -539,7 +566,7 @@ class _Smol3State extends ConsumerState<Smol3> {
           renderer: (rendererContext) {
             if (modsToDisplay.isEmpty) return const SizedBox();
             return ModTypeIcon(
-                modVariant: modsToDisplay[rendererContext.row.sortIdx]
+                modVariant: _getModFromKey(rendererContext.row.key)
                     .findFirstEnabledOrHighestVersion!);
           }),
       PlutoColumn(
@@ -567,7 +594,7 @@ class _Smol3State extends ConsumerState<Smol3> {
         type: PlutoColumnType.text(),
         renderer: (rendererContext) => Builder(builder: (context) {
           if (modsToDisplay.isEmpty) return const SizedBox();
-          Mod mod = modsToDisplay[rendererContext.row.sortIdx];
+          Mod mod = _getModFromKey(rendererContext.row.key);
           final bestVersion = mod.findFirstEnabledOrHighestVersion;
           final theme = Theme.of(context);
           return ContextMenuRegion(
@@ -608,7 +635,7 @@ class _Smol3State extends ConsumerState<Smol3> {
         //         ""),
         renderer: (rendererContext) => Builder(builder: (context) {
           if (modsToDisplay.isEmpty) return const SizedBox();
-          Mod mod = modsToDisplay[rendererContext.row.sortIdx];
+          Mod mod = _getModFromKey(rendererContext.row.key);
           final theme = Theme.of(context);
           final lightTextColor =
               theme.colorScheme.onSurface.withOpacity(lightTextOpacity);
@@ -625,7 +652,7 @@ class _Smol3State extends ConsumerState<Smol3> {
         type: PlutoColumnType.text(),
         renderer: (rendererContext) => Builder(builder: (context) {
           if (modsToDisplay.isEmpty) return const SizedBox();
-          Mod mod = modsToDisplay[rendererContext.row.sortIdx];
+          Mod mod = _getModFromKey(rendererContext.row.key);
           final bestVersion = mod.findFirstEnabledOrHighestVersion;
           final theme = Theme.of(context);
           final lightTextColor =
@@ -752,7 +779,7 @@ class _Smol3State extends ConsumerState<Smol3> {
         type: PlutoColumnType.number(),
         renderer: (rendererContext) => Builder(builder: (context) {
           if (modsToDisplay.isEmpty) return const SizedBox();
-          Mod mod = modsToDisplay[rendererContext.row.sortIdx];
+          Mod mod = _getModFromKey(rendererContext.row.key);
           final theme = Theme.of(context);
           final lightTextColor =
               theme.colorScheme.onSurface.withOpacity(lightTextOpacity);
@@ -777,7 +804,7 @@ class _Smol3State extends ConsumerState<Smol3> {
         //         ""),
         renderer: (rendererContext) => Builder(builder: (context) {
           if (modsToDisplay.isEmpty) return const SizedBox();
-          Mod mod = modsToDisplay[rendererContext.row.sortIdx];
+          Mod mod = _getModFromKey(rendererContext.row.key);
           final bestVersion = mod.findFirstEnabledOrHighestVersion;
           final theme = Theme.of(context);
 

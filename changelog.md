@@ -1,3 +1,8 @@
+# 0.0.54
+
+- Fixed
+  - Fixed mod grid showing wrong mod info for many columns.
+
 # 0.0.53
 
 - Added

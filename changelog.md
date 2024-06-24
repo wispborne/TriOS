@@ -1,28 +1,26 @@
 # 0.0.54
 
 - Fixed
-  - Fixed mod grid showing wrong mod info for many columns.
+  - Mod grid showing wrong mod info for many columns.
 
 # 0.0.53
 
 - Added
-    - On first run, uses your most recent Starsector install instead of the default install location.
-    - Mod grid: resize, reorder, freeze, hide, and filter columns.
-        - **The grid column controls are still a little janky and don't yet persist between restarts.**
+  - On first run, uses your most recent Starsector install instead of the default install location.
+  -  Mod grid now shows more info at once and has more column features (move columns, filter, hide, etc).
+    - **The grid column controls are still a little janky and don't yet persist between restarts.**
 - Fixed
-    - Tooltips going off-screen.
-    - Letters in mod versions are no longer ignored by Version Checker.
-    - Dashboard: First mod in "Updates" wasn't shown.
-    - Changing game path via filepicker changes text field.
-    - Unable to install (certain?) mods due to "Invalid value: Not in inclusive range" error.
-    - Unable to update mods on Bitbucket due to it 403ing when asked if a file exists to download.
-    - Update All Mods confirmation prompt always said you have 0 mods.
+  - Tooltips going off-screen.
+  - Letters in mod versions are no longer ignored by Version Checker.
+  - Dashboard: First mod in "Updates" wasn't shown.
+  - Changing game path via filepicker changes text field.
+  - Unable to install (certain?) mods due to "Invalid value: Not in inclusive range" error.
+  - Unable to update mods on Bitbucket due to it 403ing when asked if a file exists to download.
+  - Update All Mods confirmation prompt always said you have 0 mods.
 - Changed
-    - Mod grid now shows more info at once and has a bunch of Excel-like features (move columns, filter, hide, etc).
-        - Settings are not yet saved between restarts.
-    - Can select text in the mod details panel.
-    - Clearer errors when Version Checker fails.
-    - Always show the Version Checker remote (online) url in tooltips.
+  - Can select text in the mod details panel.
+  - Clearer errors when Version Checker fails.
+  - Always show the Version Checker remote (online) url in tooltips.
 
 # 0.0.52
 

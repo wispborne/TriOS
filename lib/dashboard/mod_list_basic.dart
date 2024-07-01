@@ -8,6 +8,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
+import 'package:trios/models/version.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
@@ -60,7 +61,10 @@ class ModListMini extends ConsumerStatefulWidget {
                 "${Constants.forumModPageUrl}${modVariant.versionCheckerInfo?.modThreadId}"));
           },
         ),
-        if (currentStarsectorVersion != null)
+        if (currentStarsectorVersion != null &&
+            Version.parse(modVariant.modInfo.gameVersion ?? "0.0.0",
+                    sanitizeInput: true) !=
+                Version.parse(currentStarsectorVersion, sanitizeInput: true))
           MenuItem(
               label: 'Force to $currentStarsectorVersion',
               icon: Icons.electric_bolt,

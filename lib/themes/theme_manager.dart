@@ -14,6 +14,17 @@ import '../utils/logging.dart';
 const Color vanillaErrorColor = Color.fromARGB(255, 252, 99, 0);
 const Color vanillaWarningColor = Color.fromARGB(255, 253, 212, 24);
 
+Color? getStateColorForDependencyText(ModDependencySatisfiedState dependencyState) {
+  return switch (dependencyState) {
+    Satisfied _ => null,
+    Missing _ => vanillaErrorColor,
+    Disabled _ =>
+    vanillaWarningColor, // Disabled means it's present, so we can just enable it.
+    VersionInvalid _ => vanillaErrorColor,
+    VersionWarning _ => vanillaWarningColor,
+  };
+}
+
 class ThemeManager with ChangeNotifier {
   static double cornerRadius = 8;
 

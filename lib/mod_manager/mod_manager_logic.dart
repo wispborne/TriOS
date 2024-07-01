@@ -689,8 +689,8 @@ ModDependencySatisfiedState getTopDependencySeverity(
 
     if (possibilities.isNotEmpty) {
       // Find the highest version.
-      return possibilities.maxByOrNull((state) =>
-              state.modVariant?.bestVersion ?? Version.zero()) ??
+      return possibilities.maxByOrNull(
+              (state) => state.modVariant?.bestVersion ?? Version.zero()) ??
           possibilities.first;
     }
   }
@@ -1091,4 +1091,16 @@ class VersionWarning extends ModDependencySatisfiedState {
 
 class Satisfied extends ModDependencySatisfiedState {
   Satisfied(ModVariant modVariant) : super(modVariant: modVariant);
+}
+
+extension ModDependencySatisfiedStateExt on ModDependencySatisfiedState {
+  String getDependencyStateText() {
+    return switch (this) {
+      Satisfied _ => "(found ${modVariant?.modInfo.version})",
+      Missing _ => "(missing)",
+      Disabled _ => "(disabled: ${modVariant?.modInfo.version})",
+      VersionInvalid _ => "(wrong version: ${modVariant?.modInfo.version})",
+      VersionWarning _ => "(found: ${modVariant?.modInfo.version})",
+    };
+  }
 }

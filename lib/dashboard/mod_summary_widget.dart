@@ -168,26 +168,9 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
             return Padding(
               padding: const EdgeInsets.only(left: 8),
               child: Text(
-                  "${dep.name ?? dep.id} ${dep.version?.toString().append(" ") ?? ""}${switch (dependencyState) {
-                    Satisfied _ =>
-                      "(found ${dependencyState.modVariant?.modInfo.version})",
-                    Missing _ => "(missing)",
-                    Disabled _ =>
-                      "(not enabled: ${dependencyState.modVariant?.modInfo.version})",
-                    VersionInvalid _ =>
-                      "(wrong version: ${dependencyState.modVariant?.modInfo.version})",
-                    VersionWarning _ =>
-                      "(found: ${dependencyState.modVariant?.modInfo.version})",
-                  }}",
+                  "${dep.name ?? dep.id} ${dep.version?.toString().append(" ") ?? ""}${dependencyState.getDependencyStateText()}",
                   style: theme.textTheme.labelMedium?.copyWith(
-                      color: switch (dependencyState) {
-                    Satisfied _ => null,
-                    Missing _ => vanillaErrorColor,
-                    Disabled _ =>
-                      vanillaWarningColor, // Disabled means it's present, so we can just enable it.
-                    VersionInvalid _ => vanillaErrorColor,
-                    VersionWarning _ => vanillaWarningColor,
-                  })),
+                      color: getStateColorForDependencyText(dependencyState))),
             );
           }),
         const SizedBox(height: spacing),

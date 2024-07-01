@@ -37,6 +37,10 @@ _$SettingsImpl _$$SettingsImplFromJson(Map<String, dynamic> json) =>
       secondsBetweenModFolderChecks:
           (json['secondsBetweenModFolderChecks'] as num?)?.toInt() ?? 5,
       isUpdatesFieldShown: json['isUpdatesFieldShown'] as bool? ?? true,
+      modsGridState: json['modsGridState'] == null
+          ? null
+          : ModsGridState.fromJson(
+              json['modsGridState'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$$SettingsImplToJson(_$SettingsImpl instance) =>
@@ -61,6 +65,7 @@ Map<String, dynamic> _$$SettingsImplToJson(_$SettingsImpl instance) =>
       'lastStarsectorVersion': instance.lastStarsectorVersion,
       'secondsBetweenModFolderChecks': instance.secondsBetweenModFolderChecks,
       'isUpdatesFieldShown': instance.isUpdatesFieldShown,
+      'modsGridState': instance.modsGridState,
     };
 
 const _$TriOSToolsEnumMap = {

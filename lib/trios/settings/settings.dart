@@ -1,17 +1,18 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:trios/jre_manager/jre_23.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
+import 'package:trios/mod_manager/smol3.dart';
 import 'package:trios/models/enabled_mods.dart';
 import 'package:trios/trios/navigation.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/util.dart';
 
+import '../../mod_manager/mods_grid_state.dart';
 import '../../models/launch_settings.dart';
 import '../app_state.dart';
 
@@ -57,6 +58,7 @@ class Settings with _$Settings {
     final String? lastStarsectorVersion,
     @Default(5) final int secondsBetweenModFolderChecks,
     @Default(true) final bool isUpdatesFieldShown,
+    final ModsGridState? modsGridState,
   }) = _Settings;
 
   factory Settings.fromJson(Map<String, Object?> json) =>

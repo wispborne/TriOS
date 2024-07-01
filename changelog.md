@@ -1,3 +1,10 @@
+# 0.0.55
+
+- Added
+- Fixed
+- Changed
+  - Mods tab is quicker to load after the first time.
+
 # 0.0.54
 
 - Fixed

@@ -102,7 +102,7 @@ class _ModDependenciesWidgetState extends ConsumerState<ModDependenciesWidget> {
                     Satisfied _ => "(found ${dependencyState.modVariant?.modInfo.version})",
                     Missing _ => "(missing)",
                     Disabled _ =>
-                      "(disabled and will be enabled: ${dependencyState.modVariant?.modInfo.version})",
+                      "(disabled: ${dependencyState.modVariant?.modInfo.version})",
                     VersionInvalid _ =>
                       "(wrong version: ${dependencyState.modVariant?.modInfo.version})",
                     VersionWarning _ =>

@@ -3,7 +3,7 @@
 - Added
   - JRE 23: May now hide the console window.
   - Enabled and Disabled mod categories on the Mods tab.
-  - Dashboard shows mods folder and current JRE below Launch button.
+  - Dashboard shows mods folder and current JRE below the Launch button.
 - Fixed
   - Various tiny UI fixes.
 - Changed

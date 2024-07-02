@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -26,7 +27,6 @@ import '../widgets/mod_type_icon.dart';
 import '../widgets/moving_tooltip.dart';
 import '../widgets/tooltip_frame.dart';
 import 'mod_summary_panel.dart';
-import 'mods_grid_state.dart';
 
 class Smol3 extends ConsumerStatefulWidget {
   const Smol3({super.key});
@@ -181,6 +181,7 @@ class _Smol3State extends ConsumerState<Smol3>
                           theme.colorScheme.surfaceContainerHighest,
                       rowColor: Colors.transparent,
                       borderColor: Colors.transparent,
+                      cellColorInEditState: Colors.transparent,
                       cellColorInReadOnlyState: Colors.transparent,
                       gridBorderColor: Colors.transparent,
                       checkedColor: Colors.transparent,
@@ -202,6 +203,13 @@ class _Smol3State extends ConsumerState<Smol3>
                 },
                 columns: gridColumns,
                 rows: gridRows,
+                rowColorCallback: (row) {
+                  if (row.row == _getEnabledGroupRow(row.stateManager) ||
+                      row.row == _getDisabledGroupRow(row.stateManager)) {
+                    return theme.colorScheme.onSurface.withOpacity(0.1);
+                  }
+                  return Colors.transparent;
+                },
                 onSelected: (event) {
                   var row = event.row;
 
@@ -278,12 +286,12 @@ class _Smol3State extends ConsumerState<Smol3>
     ref.read(appSettings.notifier).update((s) {
       if (isEnabledRow) {
         return s.copyWith(
-            modsGridState: ModsGridState(
+            modsGridState: s.modsGridState?.copyWith(
                 isGroupEnabledExpanded:
                     !stateManager.isExpandedGroupedRow(row)));
       } else if (isDisabledRow) {
         return s.copyWith(
-            modsGridState: ModsGridState(
+            modsGridState: s.modsGridState?.copyWith(
                 isGroupDisabledExpanded:
                     !stateManager.isExpandedGroupedRow(row)));
       }
@@ -362,27 +370,27 @@ class _Smol3State extends ConsumerState<Smol3>
               _getEnabledGroupRow(rendererContext.stateManager).key ==
                   rendererContext.row.key;
           return OverflowBox(
-              maxWidth: double.infinity,
-              child: Card(
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 100),
-                  child: Text(
-                      (rendererContext.cell.value ?? "") +
-                          " (${isEnabled ? enabledMods.length : disabledMods.length})",
-                      overflow: TextOverflow.visible,
-                      maxLines: 1,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontFamily: 'Orbitron',
-                            fontWeight: FontWeight.bold,
-                          )),
-                ),
-              ));
+            maxWidth: double.infinity,
+            alignment: Alignment.centerLeft,
+            fit: OverflowBoxFit.deferToChild,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 3),
+              child: Text(
+                  (rendererContext.cell.value ?? "") +
+                      " (${isEnabled ? enabledMods.length : disabledMods.length})",
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontFamily: 'Orbitron',
+                        fontWeight: FontWeight.bold,
+                      )),
+            ),
+          );
         }),
       ),
       PlutoColumn(
           title: '',
           // Version selector
           width: versionSelectorWidth + 20,
+          minWidth: versionSelectorWidth + 20,
           field: _Fields.versionSelector.toString(),
           type: PlutoColumnType.text(),
           enableSorting: false,
@@ -419,6 +427,7 @@ class _Smol3State extends ConsumerState<Smol3>
           title: '',
           // Utility/Total Conversion icon
           width: 40,
+          minWidth: 40,
           field: _Fields.utilityIcon.toString(),
           type: PlutoColumnType.number(),
           renderer: (rendererContext) {
@@ -432,6 +441,7 @@ class _Smol3State extends ConsumerState<Smol3>
         title: '',
         // Mod icon
         width: 43,
+        minWidth: 43,
         field: _Fields.modIcon.toString(),
         type: PlutoColumnType.text(),
         enableSorting: false,
@@ -510,6 +520,7 @@ class _Smol3State extends ConsumerState<Smol3>
       PlutoColumn(
         title: 'Version(s)',
         field: _Fields.versions.toString(),
+        minWidth: 100,
         type: PlutoColumnType.text(),
         renderer: (rendererContext) => Builder(builder: (context) {
           if (modsToDisplay.isEmpty) return const SizedBox();
@@ -632,7 +643,8 @@ class _Smol3State extends ConsumerState<Smol3>
       PlutoColumn(
         title: 'VRAM Est.',
         field: _Fields.vramEstimate.toString(),
-        width: PlutoGridSettings.minColumnWidth,
+        width: 100,
+        minWidth: 100,
         type: PlutoColumnType.number(),
         renderer: (rendererContext) => Builder(builder: (context) {
           if (modsToDisplay.isEmpty) return const SizedBox();
@@ -651,8 +663,9 @@ class _Smol3State extends ConsumerState<Smol3>
         }),
       ),
       PlutoColumn(
-        title: 'Req. Game Version',
+        title: 'Game Version',
         field: _Fields.gameVersion.toString(),
+        minWidth: 120,
         type: PlutoColumnType.text(),
         // onSort: (columnIndex, ascending) => _onSort(
         //     columnIndex,

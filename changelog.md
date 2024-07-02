@@ -1,9 +1,14 @@
 # 0.0.55
 
 - Added
+  - JRE 23: May now hide the console window.
+  - Enabled and Disabled mod categories on the Mods tab.
+  - Dashboard shows mods folder and current JRE below Launch button.
 - Fixed
+  - Various tiny UI fixes.
 - Changed
   - Mods tab is quicker to load after the first time.
+  - Hid unusable launch settings on Dashboard if using JRE 23.
 
 # 0.0.54
 

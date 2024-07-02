@@ -363,13 +363,18 @@ class _Smol3State extends ConsumerState<Smol3>
                   rendererContext.row.key;
           return OverflowBox(
               maxWidth: double.infinity,
-              child: Padding(
-                padding: const EdgeInsets.only(left: 100),
-                child: Text(
-                  (rendererContext.cell.value ?? "") +
-                      " (${isEnabled ? enabledMods.length : disabledMods.length})",
-                  overflow: TextOverflow.visible,
-                  maxLines: 1,
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 100),
+                  child: Text(
+                      (rendererContext.cell.value ?? "") +
+                          " (${isEnabled ? enabledMods.length : disabledMods.length})",
+                      overflow: TextOverflow.visible,
+                      maxLines: 1,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            fontFamily: 'Orbitron',
+                            fontWeight: FontWeight.bold,
+                          )),
                 ),
               ));
         }),

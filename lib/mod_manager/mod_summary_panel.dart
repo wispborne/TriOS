@@ -82,11 +82,13 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel> {
                             )
                           else
                             const SizedBox(width: 0, height: 48),
-                          Text(variant.modInfo.name ?? "(no name)",
-                              style: theme.textTheme.headlineSmall?.copyWith(
-                                  fontFamily: "Orbitron",
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 20)),
+                          Expanded(
+                            child: Text(variant.modInfo.name ?? "(no name)",
+                                style: theme.textTheme.headlineSmall?.copyWith(
+                                    fontFamily: "Orbitron",
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 20)),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 4),
@@ -119,6 +121,24 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel> {
                                 ],
                               ),
                             )),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 16),
+                          const Text("Version(s)",
+                              style: TextStyle(fontWeight: FontWeight.bold)),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(selectedMod.modVariants.joinToString(
+                                  separator: ",  ",
+                                  transform: (variant) =>
+                                      variant.modInfo.version?.toString() ??
+                                      "")),
+                            ],
+                          ),
+                        ],
+                      ),
                       if (variant.modInfo.author.isNotNullOrEmpty())
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,

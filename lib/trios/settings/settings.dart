@@ -54,6 +54,7 @@ class Settings with _$Settings {
     final TriOSTools? defaultTool,
     final String? jre23VmparamsFilename,
     final bool? useJre23,
+    @Default(true) final bool showJre23ConsoleWindow,
     @Default(LaunchSettings()) final LaunchSettings launchSettings,
     final String? lastStarsectorVersion,
     @Default(5) final int secondsBetweenModFolderChecks,

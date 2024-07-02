@@ -29,6 +29,7 @@ _$SettingsImpl _$$SettingsImplFromJson(Map<String, dynamic> json) =>
           $enumDecodeNullable(_$TriOSToolsEnumMap, json['defaultTool']),
       jre23VmparamsFilename: json['jre23VmparamsFilename'] as String?,
       useJre23: json['useJre23'] as bool?,
+      showJre23ConsoleWindow: json['showJre23ConsoleWindow'] as bool? ?? true,
       launchSettings: json['launchSettings'] == null
           ? const LaunchSettings()
           : LaunchSettings.fromJson(
@@ -61,6 +62,7 @@ Map<String, dynamic> _$$SettingsImplToJson(_$SettingsImpl instance) =>
       'defaultTool': _$TriOSToolsEnumMap[instance.defaultTool],
       'jre23VmparamsFilename': instance.jre23VmparamsFilename,
       'useJre23': instance.useJre23,
+      'showJre23ConsoleWindow': instance.showJre23ConsoleWindow,
       'launchSettings': instance.launchSettings,
       'lastStarsectorVersion': instance.lastStarsectorVersion,
       'secondsBetweenModFolderChecks': instance.secondsBetweenModFolderChecks,

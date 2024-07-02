@@ -311,7 +311,10 @@ class _AppShellState extends ConsumerState<AppShell>
   @override
   Widget build(BuildContext context) {
     final tabChildren = [
-      const Dashboard(),
+      const Padding(
+        padding: EdgeInsets.all(4),
+        child: Dashboard(),
+      ),
       const Smol3(),
       const Padding(padding: EdgeInsets.all(8), child: VramEstimatorPage()),
       const Padding(padding: EdgeInsets.all(8), child: ChipperApp()),

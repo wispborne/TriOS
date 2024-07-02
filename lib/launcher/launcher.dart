@@ -139,7 +139,8 @@ class Launcher extends ConsumerWidget {
                   'Dependency ${dependency.name ?? dependency.id} is disabled',
               fixActionName: "Enable",
               doFix: () async {
-                final mod = mods.firstWhereOrNull((mod) => mod.id == dependency.id);
+                final mod =
+                    mods.firstWhereOrNull((mod) => mod.id == dependency.id);
                 if (mod != null) {
                   changeActiveModVariant(mod, disabled.modVariant, ref);
                 }
@@ -160,7 +161,8 @@ class Launcher extends ConsumerWidget {
                   'Dependency ${dependency.name ?? dependency.id} has a different version, but may work.',
               fixActionName: "Enable",
               doFix: () async {
-                final mod = mods.firstWhereOrNull((mod) => mod.id == dependency.id);
+                final mod =
+                    mods.firstWhereOrNull((mod) => mod.id == dependency.id);
                 if (mod != null) {
                   changeActiveModVariant(mod, versionWarning.modVariant, ref);
                 }
@@ -255,10 +257,14 @@ class Launcher extends ConsumerWidget {
         ref.read(appSettings.select((value) => value.gameDir))?.toDirectory();
     final gameDir =
         ref.read(appSettings.select((value) => value.gameDir))?.toDirectory();
+    final command =
+        ref.read(appSettings.select((value) => value.showJre23ConsoleWindow))
+            ? "start Miko_Rouge.bat"
+            : "Miko_Silent.bat";
+
     Fimber.d("gameDir: $gameDir");
     final process = await Process.start(
-      "start "
-      " Miko_Rouge.bat",
+      command,
       // Remove the `start ""` part to log all console output, including all Starsector logs.
       [],
       workingDirectory: gameDir?.path,

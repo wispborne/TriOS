@@ -89,7 +89,7 @@ Future<void> changeRamAmount(WidgetRef ref, double ramInMb,
 final versionRegex = RegExp(r'"(\.*?\d+.*?)"');
 
 /// Async find all JREs in the game directory
-Future<List<JreEntry>> findJREs(String? gameDir) async {
+Future<List<JreEntryInstalled>> findJREs(String? gameDir) async {
   var gamePath = gameDir?.toDirectory();
   if (gamePath == null || !gamePath.existsSync()) {
     return [];
@@ -123,9 +123,9 @@ Future<List<JreEntry>> findJREs(String? gameDir) async {
       return null;
     }
 
-    return JreEntry(JreVersion(versionString), path);
+    return JreEntryInstalled(JreVersion(versionString), path);
   })))
-      .whereType<JreEntry>()
+      .whereType<JreEntryInstalled>()
       .toList();
 }
 
@@ -147,9 +147,9 @@ Future<String?> readVanillaVmparams(String gameDir) async {
   return await vmparamsFile.readAsString();
 }
 
-extension JreEntryWrapperExt on JreEntryWrapper {
-  bool isActive(WidgetRef ref, List<JreEntryWrapper> otherJres) {
-    if (this is JreEntry) {
+extension JreEntryWrapperExt on JreEntry {
+  bool isActive(WidgetRef ref, List<JreEntry> otherJres) {
+    if (this is JreEntryInstalled) {
       var useJre23 =
           ref.watch(appSettings.select((value) => value.useJre23)) ?? false;
 
@@ -160,7 +160,7 @@ extension JreEntryWrapperExt on JreEntryWrapper {
       // If JRE23 is enabled and exists, do not allow other JREs to be active.
       // Otherwise, the active JRE will be named "jre".
       return (!useJre23 || otherJres.none((jre) => jre.versionInt == 23)) &&
-          (this as JreEntry).path.name == gameJreFolderName;
+          (this as JreEntryInstalled).path.name == gameJreFolderName;
     } else {
       return false;
     }

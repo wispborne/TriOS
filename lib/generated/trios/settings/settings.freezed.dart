@@ -38,6 +38,7 @@ mixin _$Settings {
   TriOSTools? get defaultTool => throw _privateConstructorUsedError;
   String? get jre23VmparamsFilename => throw _privateConstructorUsedError;
   bool? get useJre23 => throw _privateConstructorUsedError;
+  bool get showJre23ConsoleWindow => throw _privateConstructorUsedError;
   LaunchSettings get launchSettings => throw _privateConstructorUsedError;
   String? get lastStarsectorVersion => throw _privateConstructorUsedError;
   int get secondsBetweenModFolderChecks => throw _privateConstructorUsedError;
@@ -71,6 +72,7 @@ abstract class $SettingsCopyWith<$Res> {
       TriOSTools? defaultTool,
       String? jre23VmparamsFilename,
       bool? useJre23,
+      bool showJre23ConsoleWindow,
       LaunchSettings launchSettings,
       String? lastStarsectorVersion,
       int secondsBetweenModFolderChecks,
@@ -109,6 +111,7 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
     Object? defaultTool = freezed,
     Object? jre23VmparamsFilename = freezed,
     Object? useJre23 = freezed,
+    Object? showJre23ConsoleWindow = null,
     Object? launchSettings = null,
     Object? lastStarsectorVersion = freezed,
     Object? secondsBetweenModFolderChecks = null,
@@ -176,6 +179,10 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
           ? _value.useJre23
           : useJre23 // ignore: cast_nullable_to_non_nullable
               as bool?,
+      showJre23ConsoleWindow: null == showJre23ConsoleWindow
+          ? _value.showJre23ConsoleWindow
+          : showJre23ConsoleWindow // ignore: cast_nullable_to_non_nullable
+              as bool,
       launchSettings: null == launchSettings
           ? _value.launchSettings
           : launchSettings // ignore: cast_nullable_to_non_nullable
@@ -244,6 +251,7 @@ abstract class _$$SettingsImplCopyWith<$Res>
       TriOSTools? defaultTool,
       String? jre23VmparamsFilename,
       bool? useJre23,
+      bool showJre23ConsoleWindow,
       LaunchSettings launchSettings,
       String? lastStarsectorVersion,
       int secondsBetweenModFolderChecks,
@@ -282,6 +290,7 @@ class __$$SettingsImplCopyWithImpl<$Res>
     Object? defaultTool = freezed,
     Object? jre23VmparamsFilename = freezed,
     Object? useJre23 = freezed,
+    Object? showJre23ConsoleWindow = null,
     Object? launchSettings = null,
     Object? lastStarsectorVersion = freezed,
     Object? secondsBetweenModFolderChecks = null,
@@ -349,6 +358,10 @@ class __$$SettingsImplCopyWithImpl<$Res>
           ? _value.useJre23
           : useJre23 // ignore: cast_nullable_to_non_nullable
               as bool?,
+      showJre23ConsoleWindow: null == showJre23ConsoleWindow
+          ? _value.showJre23ConsoleWindow
+          : showJre23ConsoleWindow // ignore: cast_nullable_to_non_nullable
+              as bool,
       launchSettings: null == launchSettings
           ? _value.launchSettings
           : launchSettings // ignore: cast_nullable_to_non_nullable
@@ -392,6 +405,7 @@ class _$SettingsImpl implements _Settings {
       this.defaultTool,
       this.jre23VmparamsFilename,
       this.useJre23,
+      this.showJre23ConsoleWindow = true,
       this.launchSettings = const LaunchSettings(),
       this.lastStarsectorVersion,
       this.secondsBetweenModFolderChecks = 5,
@@ -439,6 +453,9 @@ class _$SettingsImpl implements _Settings {
   final bool? useJre23;
   @override
   @JsonKey()
+  final bool showJre23ConsoleWindow;
+  @override
+  @JsonKey()
   final LaunchSettings launchSettings;
   @override
   final String? lastStarsectorVersion;
@@ -453,7 +470,7 @@ class _$SettingsImpl implements _Settings {
 
   @override
   String toString() {
-    return 'Settings(gameDir: $gameDir, gameCoreDir: $gameCoreDir, modsDir: $modsDir, hasCustomModsDir: $hasCustomModsDir, shouldAutoUpdateOnLaunch: $shouldAutoUpdateOnLaunch, isRulesHotReloadEnabled: $isRulesHotReloadEnabled, windowXPos: $windowXPos, windowYPos: $windowYPos, windowWidth: $windowWidth, windowHeight: $windowHeight, isMaximized: $isMaximized, isMinimized: $isMinimized, defaultTool: $defaultTool, jre23VmparamsFilename: $jre23VmparamsFilename, useJre23: $useJre23, launchSettings: $launchSettings, lastStarsectorVersion: $lastStarsectorVersion, secondsBetweenModFolderChecks: $secondsBetweenModFolderChecks, isUpdatesFieldShown: $isUpdatesFieldShown, modsGridState: $modsGridState)';
+    return 'Settings(gameDir: $gameDir, gameCoreDir: $gameCoreDir, modsDir: $modsDir, hasCustomModsDir: $hasCustomModsDir, shouldAutoUpdateOnLaunch: $shouldAutoUpdateOnLaunch, isRulesHotReloadEnabled: $isRulesHotReloadEnabled, windowXPos: $windowXPos, windowYPos: $windowYPos, windowWidth: $windowWidth, windowHeight: $windowHeight, isMaximized: $isMaximized, isMinimized: $isMinimized, defaultTool: $defaultTool, jre23VmparamsFilename: $jre23VmparamsFilename, useJre23: $useJre23, showJre23ConsoleWindow: $showJre23ConsoleWindow, launchSettings: $launchSettings, lastStarsectorVersion: $lastStarsectorVersion, secondsBetweenModFolderChecks: $secondsBetweenModFolderChecks, isUpdatesFieldShown: $isUpdatesFieldShown, modsGridState: $modsGridState)';
   }
 
   @override
@@ -491,6 +508,8 @@ class _$SettingsImpl implements _Settings {
                 other.jre23VmparamsFilename == jre23VmparamsFilename) &&
             (identical(other.useJre23, useJre23) ||
                 other.useJre23 == useJre23) &&
+            (identical(other.showJre23ConsoleWindow, showJre23ConsoleWindow) ||
+                other.showJre23ConsoleWindow == showJre23ConsoleWindow) &&
             (identical(other.launchSettings, launchSettings) ||
                 other.launchSettings == launchSettings) &&
             (identical(other.lastStarsectorVersion, lastStarsectorVersion) ||
@@ -524,6 +543,7 @@ class _$SettingsImpl implements _Settings {
         defaultTool,
         jre23VmparamsFilename,
         useJre23,
+        showJre23ConsoleWindow,
         launchSettings,
         lastStarsectorVersion,
         secondsBetweenModFolderChecks,
@@ -562,6 +582,7 @@ abstract class _Settings implements Settings {
       final TriOSTools? defaultTool,
       final String? jre23VmparamsFilename,
       final bool? useJre23,
+      final bool showJre23ConsoleWindow,
       final LaunchSettings launchSettings,
       final String? lastStarsectorVersion,
       final int secondsBetweenModFolderChecks,
@@ -604,6 +625,8 @@ abstract class _Settings implements Settings {
   String? get jre23VmparamsFilename;
   @override
   bool? get useJre23;
+  @override
+  bool get showJre23ConsoleWindow;
   @override
   LaunchSettings get launchSettings;
   @override

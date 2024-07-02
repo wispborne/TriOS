@@ -19,7 +19,7 @@ import 'package:trios/utils/extensions.dart';
 
 import '../models/download_progress.dart';
 
-abstract class JreEntryWrapper {
+abstract class JreEntry {
   JreVersion get version;
 
   int get versionInt => version.version;
@@ -27,12 +27,12 @@ abstract class JreEntryWrapper {
   String get versionString => version.versionString;
 }
 
-class JreEntry implements JreEntryWrapper {
+class JreEntryInstalled implements JreEntry {
   @override
   final JreVersion version;
   final Directory path;
 
-  JreEntry(this.version, this.path);
+  JreEntryInstalled(this.version, this.path);
 
   @override
   int get versionInt => version.version;
@@ -41,7 +41,7 @@ class JreEntry implements JreEntryWrapper {
   String get versionString => version.versionString;
 }
 
-class JreToDownload implements JreEntryWrapper {
+class JreToDownload implements JreEntry {
   @override
   final JreVersion version;
   final Function(WidgetRef ref) installRunner;

@@ -29,7 +29,7 @@ class JreManager extends ConsumerStatefulWidget {
 
 class _JreManagerState extends ConsumerState<JreManager>
     with AutomaticKeepAliveClientMixin {
-  List<JreEntryWrapper> jres = [];
+  List<JreEntry> jres = [];
   StreamSubscription? jreWatcherSubscription;
   bool isModifyingFiles = false;
 
@@ -45,9 +45,9 @@ class _JreManagerState extends ConsumerState<JreManager>
     if (isModifyingFiles) return;
     findJREs(ref.read(appSettings.select((value) => value.gameDir))?.path)
         .then((value) {
-      jres = value.map((e) => e as JreEntryWrapper).toList();
+      jres = value.map((e) => e as JreEntry).toList();
 
-      if (!jres.any((jre) => jre is JreEntry && jre.versionInt == 23)) {
+      if (!jres.any((jre) => jre is JreEntryInstalled && jre.versionInt == 23)) {
         // Cheating a little by only passing in the progress provider for the JDK download, but it is a much larger download so it should always be the bottleneck.
         jres += [
           JreToDownload(JreVersion("23-Himemi"), Jre23.installJre23,
@@ -157,7 +157,7 @@ class _JreManagerState extends ConsumerState<JreManager>
                                             ],
                                           );
                                         });
-                                  } else if (jre is JreEntry) {
+                                  } else if (jre is JreEntryInstalled) {
                                     if (!jreVersionSupportCheck(
                                         jre.versionInt)) {
                                       showDialog(
@@ -209,7 +209,7 @@ class _JreManagerState extends ConsumerState<JreManager>
                                                       .colorScheme
                                                       .primary),
                                               child: Icon(
-                                                  jre is JreEntry
+                                                  jre is JreEntryInstalled
                                                       ? Icons.coffee
                                                       : Icons.download,
                                                   color: Theme.of(context)
@@ -218,7 +218,7 @@ class _JreManagerState extends ConsumerState<JreManager>
                                           : SizedBox(
                                               width: iconSize,
                                               height: iconSize,
-                                              child: Icon(jre is JreEntry
+                                              child: Icon(jre is JreEntryInstalled
                                                   ? Icons.coffee
                                                   : Icons.download)),
                                       Expanded(
@@ -260,7 +260,7 @@ class _JreManagerState extends ConsumerState<JreManager>
                                                                 FontWeight
                                                                     .normal)),
                                               ])),
-                                              if (jre is JreEntry)
+                                              if (jre is JreEntryInstalled)
                                                 Opacity(
                                                     opacity: 0.8,
                                                     child: Text(
@@ -334,7 +334,7 @@ class _JreManagerState extends ConsumerState<JreManager>
     );
   }
 
-  Future<void> _changeJre(JreEntry newJre) async {
+  Future<void> _changeJre(JreEntryInstalled newJre) async {
     var gamePath =
         ref.read(appSettings.select((value) => value.gameDir))?.toDirectory();
     if (gamePath == null || !gamePath.existsSync()) {
@@ -343,7 +343,7 @@ class _JreManagerState extends ConsumerState<JreManager>
 
     var currentJreSource =
         jres.firstWhereOrNull((element) => element.isActive(ref, jres))
-            as JreEntry?;
+            as JreEntryInstalled?;
 
     Directory? currentJreDest;
     var gameJrePath =

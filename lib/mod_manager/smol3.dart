@@ -9,6 +9,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:pluto_grid/pluto_grid.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/mod_manager/mod_version_selection_dropdown.dart';
+import 'package:trios/mod_manager/mods_grid_state.dart';
+import 'package:trios/mod_manager/mods_grid_state.dart';
 import 'package:trios/mod_manager/version_checker.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/themes/theme_manager.dart';
@@ -286,12 +288,12 @@ class _Smol3State extends ConsumerState<Smol3>
     ref.read(appSettings.notifier).update((s) {
       if (isEnabledRow) {
         return s.copyWith(
-            modsGridState: s.modsGridState?.copyWith(
+            modsGridState: (s.modsGridState ?? ModsGridState()).copyWith(
                 isGroupEnabledExpanded:
                     !stateManager.isExpandedGroupedRow(row)));
       } else if (isDisabledRow) {
         return s.copyWith(
-            modsGridState: s.modsGridState?.copyWith(
+            modsGridState: (s.modsGridState ?? ModsGridState()).copyWith(
                 isGroupDisabledExpanded:
                     !stateManager.isExpandedGroupedRow(row)));
       }

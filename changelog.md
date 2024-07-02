@@ -1,3 +1,8 @@
+# 0.0.56
+
+- Fixed
+  - Mods tab: Enabled/Disabled groups not expanding/collapsing on click.
+
 # 0.0.55
 
 - Added

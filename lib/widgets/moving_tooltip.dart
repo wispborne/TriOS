@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/measureable_widget.dart';
 
-import '../utils/logging.dart';
+enum TooltipPosition { topLeft, topRight, bottomLeft, bottomRight }
 
 class MovingTooltipWidget extends StatefulWidget {
   final Widget child;
@@ -14,12 +14,17 @@ class MovingTooltipWidget extends StatefulWidget {
   /// The offset from the mouse position to the tooltip.
   final Size offset;
 
-  const MovingTooltipWidget(
-      {super.key,
-      required this.child,
-      required this.tooltipWidget,
-      this.windowEdgePadding = 10.0,
-      this.offset = const Size(10, 10)});
+  /// The position of the tooltip relative to the mouse cursor.
+  final TooltipPosition position;
+
+  const MovingTooltipWidget({
+    super.key,
+    required this.child,
+    required this.tooltipWidget,
+    this.windowEdgePadding = 10.0,
+    this.offset = const Size(5, 5),
+    this.position = TooltipPosition.bottomRight,
+  });
 
   @override
   State<MovingTooltipWidget> createState() => _MovingTooltipWidgetState();
@@ -70,18 +75,41 @@ class _MovingTooltipWidgetState extends State<MovingTooltipWidget> {
             });
           }
 
+          double top = 0;
+          double left = 0;
+
+          switch (widget.position) {
+            case TooltipPosition.topLeft:
+              top = (mousePosition.dy - (widget.offset.height + (_tooltipWidgetSize?.height ?? 0))).clamp(
+                  widget.windowEdgePadding.coerceAtMost(upperLimitFromTop), upperLimitFromTop);
+              left = (mousePosition.dx - (widget.offset.width + (_tooltipWidgetSize?.width ?? 0))).clamp(
+                  widget.windowEdgePadding.coerceAtMost(upperLimitFromLeft), upperLimitFromLeft);
+              break;
+            case TooltipPosition.topRight:
+              top = (mousePosition.dy - (widget.offset.height + (_tooltipWidgetSize?.height ?? 0))).clamp(
+                  widget.windowEdgePadding.coerceAtMost(upperLimitFromTop), upperLimitFromTop);
+              left = (mousePosition.dx + widget.offset.width).clamp(
+                  widget.windowEdgePadding.coerceAtMost(upperLimitFromLeft), upperLimitFromLeft);
+              break;
+            case TooltipPosition.bottomLeft:
+              top = (mousePosition.dy + widget.offset.height).clamp(
+                  widget.windowEdgePadding.coerceAtMost(upperLimitFromTop), upperLimitFromTop);
+              left = (mousePosition.dx - (widget.offset.width + (_tooltipWidgetSize?.width ?? 0))).clamp(
+                  widget.windowEdgePadding.coerceAtMost(upperLimitFromLeft), upperLimitFromLeft);
+              break;
+            case TooltipPosition.bottomRight:
+              top = (mousePosition.dy + widget.offset.height).clamp(
+                  widget.windowEdgePadding.coerceAtMost(upperLimitFromTop), upperLimitFromTop);
+              left = (mousePosition.dx + widget.offset.width).clamp(
+                  widget.windowEdgePadding.coerceAtMost(upperLimitFromLeft), upperLimitFromLeft);
+              break;
+          }
+
           return Stack(
             children: [
               Positioned(
-                top: _tooltipWidgetSize == null
-                    ? -1000
-                    : (mousePosition.dy + widget.offset.height).clamp(
-                        widget.windowEdgePadding
-                            .coerceAtMost(upperLimitFromTop),
-                        upperLimitFromTop),
-                left: (mousePosition.dx + widget.offset.width).clamp(
-                    widget.windowEdgePadding.coerceAtMost(upperLimitFromLeft),
-                    upperLimitFromLeft),
+                top: _tooltipWidgetSize == null ? -1000 : top,
+                left: left,
                 child: Builder(
                   builder: (context) {
                     return MeasurableWidget(

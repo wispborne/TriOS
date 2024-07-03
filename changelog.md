@@ -1,3 +1,9 @@
+# 0.0.58
+- Fixed
+  - Unable to install mods with tabs in the mod_info.json file (e.g. VIC).
+- Changed
+  - Dashboard: tooltip moved to top-left of cursor to avoid it hiding the mod list so much.
+
 # 0.0.57
 - Fixed
   - Broken Mods tab (grey screen).

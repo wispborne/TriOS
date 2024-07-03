@@ -16,6 +16,7 @@ import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/widgets/add_new_mods_button.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 
 import '../dashboard/mod_dependencies_widget.dart';
@@ -151,131 +152,152 @@ class _Smol3State extends ConsumerState<Smol3>
       }
     }
 
-    return Padding(
-      padding: const EdgeInsets.all(0),
-      child: Theme(
-        data: theme.copyWith(
-          //disable ripple
-          splashFactory: NoSplash.splashFactory,
-        ),
-        child: Stack(
+    return Column(
+      children: [
+        Row(
           children: [
-            Builder(builder: (context) {
-              final theme = Theme.of(context);
-              return PlutoGrid(
-                mode: PlutoGridMode.selectWithOneTap,
-                configuration: PlutoGridConfiguration(
-                    scrollbar: const PlutoGridScrollbarConfig(dragDevices: {
-                      PointerDeviceKind.stylus,
-                      PointerDeviceKind.touch,
-                      PointerDeviceKind.trackpad,
-                      PointerDeviceKind.invertedStylus
-                    }),
-                    style: PlutoGridStyleConfig.dark(
-                      iconSize: 16,
-                      enableCellBorderHorizontal: false,
-                      enableCellBorderVertical: false,
-                      activatedBorderColor: Colors.transparent,
-                      inactivatedBorderColor: Colors.transparent,
-                      menuBackgroundColor: theme.colorScheme.surface,
-                      gridBackgroundColor:
-                          theme.colorScheme.surfaceContainerHighest,
-                      rowColor: Colors.transparent,
-                      borderColor: Colors.transparent,
-                      cellColorInEditState: Colors.transparent,
-                      cellColorInReadOnlyState: Colors.transparent,
-                      gridBorderColor: Colors.transparent,
-                      checkedColor: Colors.transparent,
-                      activatedColor:
-                          theme.colorScheme.onSurface.withOpacity(0.1),
-                      evenRowColor: theme.colorScheme.surface.withOpacity(0.4),
-                      defaultCellPadding: EdgeInsets.zero,
-                      defaultColumnFilterPadding: EdgeInsets.zero,
-                      defaultColumnTitlePadding: EdgeInsets.zero,
-                      rowHeight: 40,
-                    )),
-                onLoaded: (PlutoGridOnLoadedEvent event) {
-                  hasEverLoaded = true;
-                  // stateManager = event.stateManager;
-                  ref.read(_stateManagerProvider.notifier).state =
-                      event.stateManager;
-                  didSetStateManager?.call(event.stateManager);
-                  // Most onLoad logic is done in beginning of `build` because that's called on rows/columns change
-                },
-                columns: gridColumns,
-                rows: gridRows,
-                rowColorCallback: (row) {
-                  if (row.row == _getEnabledGroupRow(row.stateManager) ||
-                      row.row == _getDisabledGroupRow(row.stateManager)) {
-                    return theme.colorScheme.onSurface.withOpacity(0.1);
-                  }
-                  return Colors.transparent;
-                },
-                onSelected: (event) {
-                  var row = event.row;
-
-                  if (row != null) {
-                    final mod = _getModFromKey(row.key);
-
-                    if (mod == null) {
-                      // Clicked on a group row
-                      final stateManager = ref.read(_stateManagerProvider);
-                      if (stateManager == null) return;
-                      _toggleRowGroup(stateManager, row);
-                    } else if (selectedMod == mod) {
-                      setState(() {
-                        selectedMod = null;
-                        selectedRowIdx = null;
-                      });
-                    } else {
-                      setState(() {
-                        selectedMod = mod;
-                        selectedRowIdx = event.rowIdx;
-                      });
-                    }
-                  }
-                },
-                noRowsWidget: Center(
-                    child: Container(
-                        padding: const EdgeInsets.all(20),
-                        child: hasEverLoaded
-                            ? Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Transform.rotate(
-                                    angle: .50,
-                                    child: SvgImageIcon(
-                                        "assets/images/icon-ice-cream.svg",
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurface,
-                                        width: 150),
-                                  ),
-                                  const Text("mmm, vanilla")
-                                ],
-                              )
-                            : const Text("Loading mods..."))),
-              );
-            }),
-            if (selectedMod != null)
-              Align(
-                alignment: Alignment.topRight,
-                child: SizedBox(
-                  width: 400,
-                  child: ModSummaryPanel(
-                    selectedMod,
-                    () {
-                      setState(() {
-                        selectedMod = null;
-                        selectedRowIdx = null;
-                      });
-                    },
-                  ),
-                ),
+            Expanded(
+              child: SizedBox(
+                height: 50,
+                child: Card(
+                    child: Row(
+                  children: [
+                    const AddNewModsButton(),
+                    Text("Add Mod(s)"),
+                    SizedBox(height: 30, child: SearchBar()),
+                  ],
+                )),
               ),
+            )
           ],
         ),
-      ),
+        Expanded(
+          child: Theme(
+            data: theme.copyWith(
+              //disable ripple
+              splashFactory: NoSplash.splashFactory,
+            ),
+            child: Stack(
+              children: [
+                Builder(builder: (context) {
+                  final theme = Theme.of(context);
+                  return PlutoGrid(
+                    mode: PlutoGridMode.selectWithOneTap,
+                    configuration: PlutoGridConfiguration(
+                        scrollbar: const PlutoGridScrollbarConfig(dragDevices: {
+                          PointerDeviceKind.stylus,
+                          PointerDeviceKind.touch,
+                          PointerDeviceKind.trackpad,
+                          PointerDeviceKind.invertedStylus
+                        }),
+                        style: PlutoGridStyleConfig.dark(
+                          iconSize: 16,
+                          enableCellBorderHorizontal: false,
+                          enableCellBorderVertical: false,
+                          activatedBorderColor: Colors.transparent,
+                          inactivatedBorderColor: Colors.transparent,
+                          menuBackgroundColor: theme.colorScheme.surface,
+                          gridBackgroundColor:
+                              theme.colorScheme.surfaceContainerHighest,
+                          rowColor: Colors.transparent,
+                          borderColor: Colors.transparent,
+                          cellColorInEditState: Colors.transparent,
+                          cellColorInReadOnlyState: Colors.transparent,
+                          gridBorderColor: Colors.transparent,
+                          checkedColor: Colors.transparent,
+                          activatedColor:
+                              theme.colorScheme.onSurface.withOpacity(0.1),
+                          evenRowColor:
+                              theme.colorScheme.surface.withOpacity(0.4),
+                          defaultCellPadding: EdgeInsets.zero,
+                          defaultColumnFilterPadding: EdgeInsets.zero,
+                          defaultColumnTitlePadding: EdgeInsets.zero,
+                          rowHeight: 40,
+                        )),
+                    onLoaded: (PlutoGridOnLoadedEvent event) {
+                      hasEverLoaded = true;
+                      // stateManager = event.stateManager;
+                      ref.read(_stateManagerProvider.notifier).state =
+                          event.stateManager;
+                      didSetStateManager?.call(event.stateManager);
+                      // Most onLoad logic is done in beginning of `build` because that's called on rows/columns change
+                    },
+                    columns: gridColumns,
+                    rows: gridRows,
+                    rowColorCallback: (row) {
+                      if (row.row == _getEnabledGroupRow(row.stateManager) ||
+                          row.row == _getDisabledGroupRow(row.stateManager)) {
+                        return theme.colorScheme.onSurface.withOpacity(0.1);
+                      }
+                      return Colors.transparent;
+                    },
+                    onSelected: (event) {
+                      var row = event.row;
+
+                      if (row != null) {
+                        final mod = _getModFromKey(row.key);
+
+                        if (mod == null) {
+                          // Clicked on a group row
+                          final stateManager = ref.read(_stateManagerProvider);
+                          if (stateManager == null) return;
+                          _toggleRowGroup(stateManager, row);
+                        } else if (selectedMod == mod) {
+                          setState(() {
+                            selectedMod = null;
+                            selectedRowIdx = null;
+                          });
+                        } else {
+                          setState(() {
+                            selectedMod = mod;
+                            selectedRowIdx = event.rowIdx;
+                          });
+                        }
+                      }
+                    },
+                    noRowsWidget: Center(
+                        child: Container(
+                            padding: const EdgeInsets.all(20),
+                            child: hasEverLoaded
+                                ? Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Transform.rotate(
+                                        angle: .50,
+                                        child: SvgImageIcon(
+                                            "assets/images/icon-ice-cream.svg",
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .onSurface,
+                                            width: 150),
+                                      ),
+                                      const Text("mmm, vanilla")
+                                    ],
+                                  )
+                                : const Text("Loading mods..."))),
+                  );
+                }),
+                if (selectedMod != null)
+                  Align(
+                    alignment: Alignment.topRight,
+                    child: SizedBox(
+                      width: 400,
+                      child: ModSummaryPanel(
+                        selectedMod,
+                        () {
+                          setState(() {
+                            selectedMod = null;
+                            selectedRowIdx = null;
+                          });
+                        },
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 

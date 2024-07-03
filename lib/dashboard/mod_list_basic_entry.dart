@@ -49,6 +49,7 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
     final compatTextColor = compatWithGame.getGameCompatibilityColor();
 
     infoTooltip({required Widget child}) => MovingTooltipWidget(
+        position: TooltipPosition.topLeft,
         tooltipWidget: SizedBox(
           width: 400,
           child: TooltipFrame(
@@ -76,6 +77,7 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                     Padding(
                       padding: const EdgeInsets.only(right: 6),
                       child: MovingTooltipWidget(
+                        position: TooltipPosition.topLeft,
                         tooltipWidget: SizedBox(
                           width: 400,
                           child: TooltipFrame(
@@ -127,6 +129,7 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                                   ?.copyWith(color: compatTextColor))),
                     ),
                     MovingTooltipWidget(
+                      position: TooltipPosition.topLeft,
                       tooltipWidget: SizedBox(
                         width: 500,
                         child: TooltipFrame(

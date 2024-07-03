@@ -1,7 +1,4 @@
-import 'dart:io';
-
 import 'package:collection/collection.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -21,6 +18,7 @@ import '../mod_manager/version_checker.dart';
 import '../models/mod.dart';
 import '../trios/app_state.dart';
 import '../trios/download_manager/download_manager.dart';
+import '../widgets/add_new_mods_button.dart';
 import '../widgets/debug_info.dart';
 import 'mod_list_basic_entry.dart';
 
@@ -166,28 +164,7 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                 },
                               ),
                             ),
-                            Tooltip(
-                              message: "Add new mod",
-                              child: DisableIfCannotWriteMods(
-                                child: IconButton(
-                                    icon: const Icon(Icons.add),
-                                    padding: const EdgeInsets.only(left: 8),
-                                    iconSize: 20,
-                                    constraints: const BoxConstraints(),
-                                    onPressed: () {
-                                      FilePicker.platform
-                                          .pickFiles(allowMultiple: true)
-                                          .then((value) {
-                                        if (value == null) return;
-
-                                        final file =
-                                            File(value.files.single.path!);
-                                        installModFromArchiveWithDefaultUI(
-                                            file, ref, context);
-                                      });
-                                    }),
-                              ),
-                            )
+                            const AddNewModsButton()
                           ],
                         ),
                       ),

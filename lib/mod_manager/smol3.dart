@@ -10,7 +10,6 @@ import 'package:pluto_grid/pluto_grid.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/mod_manager/mod_version_selection_dropdown.dart';
 import 'package:trios/mod_manager/mods_grid_state.dart';
-import 'package:trios/mod_manager/mods_grid_state.dart';
 import 'package:trios/mod_manager/version_checker.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/themes/theme_manager.dart';
@@ -136,17 +135,17 @@ class _Smol3State extends ConsumerState<Smol3>
         ),
       );
       if (stateManager.rows.isNotEmpty) {
-        if (gridState?.isGroupEnabledExpanded !=
-            stateManager
-                .isExpandedGroupedRow(_getEnabledGroupRow(stateManager))) {
-          stateManager.toggleExpandedRowGroup(
-              rowGroup: _getEnabledGroupRow(stateManager));
+        var enabledGroupRow = _getEnabledGroupRow(stateManager);
+        if (enabledGroupRow != null &&
+            gridState?.isGroupEnabledExpanded !=
+                stateManager.isExpandedGroupedRow(enabledGroupRow)) {
+          stateManager.toggleExpandedRowGroup(rowGroup: enabledGroupRow);
         }
-        if (gridState?.isGroupDisabledExpanded !=
-            stateManager
-                .isExpandedGroupedRow(_getDisabledGroupRow(stateManager))) {
-          stateManager.toggleExpandedRowGroup(
-              rowGroup: _getDisabledGroupRow(stateManager));
+        var disabledGroupRow = _getDisabledGroupRow(stateManager);
+        if (disabledGroupRow != null &&
+            gridState?.isGroupDisabledExpanded !=
+                stateManager.isExpandedGroupedRow(disabledGroupRow)) {
+          stateManager.toggleExpandedRowGroup(rowGroup: disabledGroupRow);
         }
         stateManager.setCurrentCell(stateManager.firstCell, selectedRowIdx);
       }
@@ -301,16 +300,16 @@ class _Smol3State extends ConsumerState<Smol3>
     });
   }
 
-  PlutoRow _getEnabledGroupRow(PlutoGridStateManager stateManager) {
+  PlutoRow? _getEnabledGroupRow(PlutoGridStateManager stateManager) {
     return stateManager.rows.firstWhereOrNull((row) {
       return row.cells[_Fields.enableDisable.toString()]?.value == 'Enabled';
-    })!;
+    });
   }
 
-  PlutoRow _getDisabledGroupRow(PlutoGridStateManager stateManager) {
+  PlutoRow? _getDisabledGroupRow(PlutoGridStateManager stateManager) {
     return stateManager.rows.firstWhereOrNull((row) {
       return row.cells[_Fields.enableDisable.toString()]?.value == 'Disabled';
-    })!;
+    });
   }
 
   Mod? _getModFromKey(Key? key) {
@@ -369,7 +368,7 @@ class _Smol3State extends ConsumerState<Smol3>
           if (modsToDisplay.isEmpty) return const SizedBox();
           if (rendererContext.row.depth > 0) return const SizedBox();
           final isEnabled =
-              _getEnabledGroupRow(rendererContext.stateManager).key ==
+              _getEnabledGroupRow(rendererContext.stateManager)?.key ==
                   rendererContext.row.key;
           return OverflowBox(
             maxWidth: double.infinity,

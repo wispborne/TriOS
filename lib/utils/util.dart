@@ -37,9 +37,10 @@ MaterialColor createMaterialColor(Color color) {
   return MaterialColor(color.value, swatch);
 }
 
+/// Windows: Reads the registry for the game path.
+/// Mac: /Applications/Starsector.app
 Directory defaultGamePath() {
   if (Platform.isWindows) {
-    // todo read from registry
     try {
       const registryPath = r'Software\Fractal Softworks\Starsector';
       final key =

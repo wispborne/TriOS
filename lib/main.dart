@@ -426,7 +426,10 @@ class _AppShellState extends ConsumerState<AppShell>
                       const Tab(
                           text: "Settings",
                           icon: Tooltip(
-                              message: "Settings", child: Icon(Icons.settings)),
+                              message: "Settings", child: Padding(
+                                padding: EdgeInsets.only(bottom: 2),
+                                child: Icon(Icons.settings),
+                              )),
                           iconMargin: EdgeInsets.zero),
                     ],
                     controller: tabController,

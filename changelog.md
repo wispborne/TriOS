@@ -1,3 +1,13 @@
+# 0.0.57
+- Fixed
+  - Broken Mods tab (grey screen).
+  - YOU WERE SEEING THE WRONG THEME THIS WHOLE TIME?!
+    - Toolbar icons are now aligned properly and other little UI things now look the way I've been seeing them this whole time.
+  - First install now sets the mods folder correctly.
+- Changed
+  - Checks for mod folder changes every 15 seconds instead of every 5.
+    - Always checks whenever TriOS is re-focused (i.e. you switch back to it).
+
 # 0.0.56
 
 - Fixed

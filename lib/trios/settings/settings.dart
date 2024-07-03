@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:trios/jre_manager/jre_23.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
-import 'package:trios/mod_manager/smol3.dart';
 import 'package:trios/models/enabled_mods.dart';
 import 'package:trios/trios/navigation.dart';
 import 'package:trios/utils/extensions.dart';
@@ -57,7 +56,7 @@ class Settings with _$Settings {
     @Default(true) final bool showJre23ConsoleWindow,
     @Default(LaunchSettings()) final LaunchSettings launchSettings,
     final String? lastStarsectorVersion,
-    @Default(5) final int secondsBetweenModFolderChecks,
+    @Default(15) final int secondsBetweenModFolderChecks,
     @Default(true) final bool isUpdatesFieldShown,
     final ModsGridState? modsGridState,
   }) = _Settings;
@@ -69,23 +68,27 @@ class Settings with _$Settings {
 /// When settings change, save them to shared prefs
 class SettingSaver extends Notifier<Settings> {
   Settings _setDefaults(Settings settings) {
-    if (settings.gameDir == null || settings.gameDir.toString().isEmpty) {
-      settings = settings.copyWith(gameDir: defaultGamePath());
+    var newSettings = settings;
+
+    if (settings.gameDir == null || newSettings.gameDir.toString().isEmpty) {
+      newSettings = newSettings.copyWith(gameDir: defaultGamePath());
     }
 
     final jre23existInGameFolder =
-        doesJre23ExistInGameFolder(settings.gameDir!);
-    if (settings.useJre23 == null) {
-      settings = settings.copyWith(useJre23: (jre23existInGameFolder));
+        doesJre23ExistInGameFolder(newSettings.gameDir!);
+    if (newSettings.useJre23 == null) {
+      newSettings = newSettings.copyWith(useJre23: (jre23existInGameFolder));
     } else {
       // If useJRe23 is set to true, but it doesn't exist, set it to false.
       // Otherwise they might be unable to launch the game or turn off 23.
-      if (settings.useJre23 == true && !jre23existInGameFolder) {
-        settings = settings.copyWith(useJre23: false);
+      if (newSettings.useJre23 == true && !jre23existInGameFolder) {
+        newSettings = newSettings.copyWith(useJre23: false);
       }
     }
 
-    return settings;
+    // Calculates the default mods folder on first run.
+    newSettings = _recalculatePathsAndSaveToDisk(settings, newSettings);
+    return newSettings;
   }
 
   @override
@@ -114,6 +117,14 @@ class SettingSaver extends Notifier<Settings> {
       return;
     }
 
+    // Recalculate mod folder if the game path changes
+    newState = _recalculatePathsAndSaveToDisk(prevState, newState);
+    // Update state, triggering rebuilds
+    state = newState;
+  }
+
+  Settings _recalculatePathsAndSaveToDisk(
+      Settings prevState, Settings newState) {
     // Recalculate mod folder if the game path changes
     if (newState.gameDir != null && newState.gameDir != prevState.gameDir) {
       if (!newState.hasCustomModsDir) {
@@ -144,8 +155,7 @@ class SettingSaver extends Notifier<Settings> {
     // Save to shared prefs
     sharedPrefs.setString(
         sharedPrefsSettingsKey, jsonEncode(newState.toJson()));
-    // Update state, triggering rebuilds
-    state = newState;
+    return newState;
   }
 }
 

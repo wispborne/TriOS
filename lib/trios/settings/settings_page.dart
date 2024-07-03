@@ -294,6 +294,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                     child: ElevatedButton(
                         onPressed: () {
                           sharedPrefs.clear();
+                          ref
+                              .read(appSettings.notifier)
+                              .update((state) => Settings());
                         },
                         child: const Text('Wipe Settings'))),
                 SizedBox(

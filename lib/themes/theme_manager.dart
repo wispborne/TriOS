@@ -29,7 +29,7 @@ class ThemeManager with ChangeNotifier {
   static double cornerRadius = 8;
 
   static TriOSTheme _theme = StarsectorTriOSTheme();
-  static bool _isMaterial3 = false;
+  static bool _isMaterial3 = true;
   static const String _key = "currentThemeId";
   static const String _keyMaterial = "isMaterial";
   static final allThemes = {

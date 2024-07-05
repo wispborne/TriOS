@@ -25,11 +25,15 @@ class AddNewModsButton extends ConsumerWidget {
             iconSize: iconSize,
             constraints: const BoxConstraints(),
             onPressed: () {
-              FilePicker.platform.pickFiles(allowMultiple: true).then((value) {
+              FilePicker.platform
+                  .pickFiles(allowMultiple: true)
+                  .then((value) async {
                 if (value == null) return;
 
-                final file = File(value.files.single.path!);
-                installModFromArchiveWithDefaultUI(file, ref, context);
+                for (final file in value.files) {
+                  await installModFromArchiveWithDefaultUI(
+                      File(file.path!), ref, context);
+                }
               });
             }),
       ),

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:open_filex/open_filex.dart';
+import 'package:screen_retriever/screen_retriever.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:toastification/toastification.dart';
 import 'package:trios/chipper/chipper_home.dart';
@@ -89,9 +90,32 @@ void main() async {
       await windowManager.show();
       await windowManager.focus();
     });
+
+    // If the window is off screen, move it to the first display.
+    final bounds = await windowManager.getBounds();
+    final displays = await ScreenRetriever.instance.getAllDisplays();
+    final isOnScreen = displays.any((display) =>
+        display.size.contains(bounds.topLeft) ||
+        display.size.contains(bounds.bottomRight) ||
+        display.size.contains(bounds.bottomLeft) ||
+        display.size.contains(bounds.topRight));
+
+    if (!isOnScreen && displays.isNotEmpty) {
+      final primaryDisplay = displays.firstOrNull!;
+      final newBounds = Rect.fromLTWH(
+          primaryDisplay.visiblePosition?.dx ?? 0,
+          primaryDisplay.visiblePosition?.dy ?? 0,
+          windowFrame.width,
+          windowFrame.height);
+      Fimber.i("Window is off screen, moving to first display."
+          "\nOld bounds: $bounds"
+          "\nNew bounds: $newBounds");
+      await windowManager.setBounds(newBounds);
+    }
   } catch (e) {
     Fimber.e("Error restoring window position and size.", ex: e);
   }
+
 // Clean up old files.
   final filePatternsToClean = [
     logFileName,
@@ -426,7 +450,8 @@ class _AppShellState extends ConsumerState<AppShell>
                       const Tab(
                           text: "Settings",
                           icon: Tooltip(
-                              message: "Settings", child: Padding(
+                              message: "Settings",
+                              child: Padding(
                                 padding: EdgeInsets.only(bottom: 2),
                                 child: Icon(Icons.settings),
                               )),

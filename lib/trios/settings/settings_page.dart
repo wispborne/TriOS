@@ -5,7 +5,6 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:toastification/toastification.dart';
-import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/download_progress.dart';
 import 'package:trios/trios/self_updater/self_updater.dart';
 import 'package:trios/trios/settings/settings.dart';
@@ -21,6 +20,7 @@ import '../../themes/theme_manager.dart';
 import '../../widgets/self_update_toast.dart';
 import '../app_state.dart';
 import '../constants.dart';
+import '../download_manager/download_manager.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
@@ -218,60 +218,44 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Padding(
-                  padding: const EdgeInsets.only(top: 16),
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      var release = await SelfUpdater.getLatestRelease();
-                      if (release == null) {
-                        Fimber.e("No release found");
-                        return;
-                      }
-
-                      Fimber.i(
-                          "Current version: ${Constants.version}. Latest version: ${release.tagName}. Newer? ${SelfUpdater.hasNewVersion(release)}");
-                    },
-                    child: const Text('Has new release?'),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 16),
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      final scriptPath = File(
-                          "F:\\Code\\Starsector\\TriOS\\update-test\\TriOS_self_updater.bat");
-                      Fimber.v("${scriptPath.path} ${scriptPath.existsSync()}");
-
-                      Process.start("start", ["", scriptPath.path],
-                          runInShell: true,
-                          includeParentEnvironment: true,
-                          mode: ProcessStartMode.detached);
-                    },
-                    child: const Text('Run self-update script'),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 16),
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      var release = await SelfUpdater.getLatestRelease();
-                      if (release == null) {
-                        Fimber.e("No release found");
-                        return;
-                      }
-
-                      if (SelfUpdater.hasNewVersion(release)) {
-                        Fimber.i("New version found: ${release.tagName}");
-                      } else {
-                        Fimber.i(
-                            "No new version found. Force updating anyway.");
-                      }
-
-                      SelfUpdater.update(release);
-                    },
-                    child: const Text('Force Self-Update'),
-                  ),
-                ),
+                // Padding(
+                //   padding: const EdgeInsets.only(top: 16),
+                //   child: ElevatedButton(
+                //     onPressed: () async {
+                //       final scriptPath = File(
+                //           "F:\\Code\\Starsector\\TriOS\\update-test\\TriOS_self_updater.bat");
+                //       Fimber.v("${scriptPath.path} ${scriptPath.existsSync()}");
+                //
+                //       Process.start("start", ["", scriptPath.path],
+                //           runInShell: true,
+                //           includeParentEnvironment: true,
+                //           mode: ProcessStartMode.detached);
+                //     },
+                //     child: const Text('Run self-update script'),
+                //   ),
+                // ),
+                // Padding(
+                //   padding: const EdgeInsets.only(top: 16),
+                //   child: ElevatedButton(
+                //     onPressed: () async {
+                //       var release = await SelfUpdater.getLatestRelease();
+                //       if (release == null) {
+                //         Fimber.e("No release found");
+                //         return;
+                //       }
+                //
+                //       if (SelfUpdater.hasNewVersion(release)) {
+                //         Fimber.i("New version found: ${release.tagName}");
+                //       } else {
+                //         Fimber.i(
+                //             "No new version found. Force updating anyway.");
+                //       }
+                //
+                //       SelfUpdater.update(release);
+                //     },
+                //     child: const Text('Force Self-Update'),
+                //   ),
+                // ),
                 Padding(
                     padding: const EdgeInsets.only(top: 16),
                     child: ElevatedButton(
@@ -288,15 +272,54 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                     SelfUpdateToast(release, item));
                           });
                         },
-                        child: const Text('Show toast'))),
+                        child: const Text('Show self-update toast'))),
                 Padding(
                     padding: const EdgeInsets.only(top: 16),
                     child: ElevatedButton(
                         onPressed: () {
-                          sharedPrefs.clear();
-                          ref
-                              .read(appSettings.notifier)
-                              .update((state) => Settings());
+                          final testMod = ref
+                              .read(AppState.modVariants)
+                              .valueOrNull
+                              .orEmpty()
+                              .firstWhere((variant) => variant.modInfo.id
+                                  .equalsIgnoreCase("magiclib"));
+                          ref.read(downloadManager.notifier).addDownload(
+                                "${testMod.modInfo.nameOrId} ${testMod.bestVersion}",
+                                testMod.versionCheckerInfo!.directDownloadURL!,
+                                Directory.systemTemp,
+                                modInfo: testMod.modInfo,
+                              );
+                        },
+                        child: const Text('Redownload MagicLib'))),
+                Padding(
+                    padding: const EdgeInsets.only(top: 16),
+                    child: ElevatedButton(
+                        onPressed: () {
+                          // confirmation prompt
+                          showDialog(
+                              context: context,
+                              builder: (context) {
+                                return AlertDialog(
+                                  title: const Text("Are you sure?"),
+                                  content: const Text(
+                                      "This will wipe TriOS's settings."),
+                                  actions: [
+                                    TextButton(
+                                        onPressed: () {
+                                          Navigator.of(context).pop();
+                                        },
+                                        child: const Text('Cancel')),
+                                    TextButton(
+                                        onPressed: () {
+                                          sharedPrefs.clear();
+                                          ref
+                                              .read(appSettings.notifier)
+                                              .update((state) => Settings());
+                                        },
+                                        child: const Text('Wipe Settings')),
+                                  ],
+                                );
+                              });
                         },
                         child: const Text('Wipe Settings'))),
                 SizedBox(
@@ -331,22 +354,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                     ],
                   ),
                 ),
-                Padding(
-                    padding: const EdgeInsets.only(top: 16),
-                    child: ElevatedButton(
-                        onPressed: () {
-                          FilePicker.platform
-                              .pickFiles(allowMultiple: true)
-                              .then((value) {
-                            if (value == null) return;
-
-                            final file = File(value.files.single.path!);
-                            Fimber.i("Installing mod: ${file.path}");
-                            installModFromArchiveWithDefaultUI(
-                                file, ref, context);
-                          });
-                        },
-                        child: const Text('Install mod'))),
               ],
             ),
           ],

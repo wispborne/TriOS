@@ -27,6 +27,10 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
   static final _downloadManager = DownloadManager();
   final _downloads = List<Download>.empty(growable: true);
 
+  /// Adds a download to the download manager.
+  /// Displays a toast with the download progress.
+  /// If [modInfo] is provided, the download will be a [ModDownload] instead of a [Download],
+  /// the toast will display the mod name and version, and the download will be associated with the mod.
   Future<Download?> addDownload(
     String displayName,
     String uri,
@@ -105,7 +109,7 @@ downloadUpdateViaBrowser(
     ref
         .read(downloadManager.notifier)
         .addDownload(
-          "${remoteVersion.modName ?? "(no name"} ${remoteVersion.modVersion}",
+          "(${remoteVersion.modName ?? "(no name"}) ${remoteVersion.modVersion}",
           remoteVersion.directDownloadURL!.fixModDownloadUrl(),
           tempFolder,
           modInfo: modInfo,

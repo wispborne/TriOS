@@ -30,13 +30,14 @@ _$SettingsImpl _$$SettingsImplFromJson(Map<String, dynamic> json) =>
       jre23VmparamsFilename: json['jre23VmparamsFilename'] as String?,
       useJre23: json['useJre23'] as bool?,
       showJre23ConsoleWindow: json['showJre23ConsoleWindow'] as bool? ?? true,
+      enableDirectLaunch: json['enableDirectLaunch'] as bool? ?? true,
       launchSettings: json['launchSettings'] == null
           ? const LaunchSettings()
           : LaunchSettings.fromJson(
               json['launchSettings'] as Map<String, dynamic>),
       lastStarsectorVersion: json['lastStarsectorVersion'] as String?,
       secondsBetweenModFolderChecks:
-          (json['secondsBetweenModFolderChecks'] as num?)?.toInt() ?? 5,
+          (json['secondsBetweenModFolderChecks'] as num?)?.toInt() ?? 15,
       isUpdatesFieldShown: json['isUpdatesFieldShown'] as bool? ?? true,
       modsGridState: json['modsGridState'] == null
           ? null
@@ -63,6 +64,7 @@ Map<String, dynamic> _$$SettingsImplToJson(_$SettingsImpl instance) =>
       'jre23VmparamsFilename': instance.jre23VmparamsFilename,
       'useJre23': instance.useJre23,
       'showJre23ConsoleWindow': instance.showJre23ConsoleWindow,
+      'enableDirectLaunch': instance.enableDirectLaunch,
       'launchSettings': instance.launchSettings,
       'lastStarsectorVersion': instance.lastStarsectorVersion,
       'secondsBetweenModFolderChecks': instance.secondsBetweenModFolderChecks,

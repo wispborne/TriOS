@@ -54,6 +54,9 @@ class Settings with _$Settings {
     final String? jre23VmparamsFilename,
     final bool? useJre23,
     @Default(true) final bool showJre23ConsoleWindow,
+
+    /// If true, TriOS acts as the launcher. If false, basically just clicks game exe.
+    @Default(true) final bool enableDirectLaunch,
     @Default(LaunchSettings()) final LaunchSettings launchSettings,
     final String? lastStarsectorVersion,
     @Default(15) final int secondsBetweenModFolderChecks,

@@ -251,6 +251,7 @@ class Launcher extends ConsumerWidget {
   }
 
   // TODO: mac and linux
+  /// Launches game with JRE 23.
   static launchGameJre23(WidgetRef ref) async {
     // Starsector folder
     var gamePath =
@@ -280,6 +281,7 @@ class Launcher extends ConsumerWidget {
   }
 
   // TODO: mac and linux
+  /// Launches game without JRE 23.
   static launchGameVanilla(WidgetRef ref) async {
     // Starsector folder
     var gamePath =
@@ -287,6 +289,20 @@ class Launcher extends ConsumerWidget {
     final gameCorePath = ref
         .read(appSettings.select((value) => value.gameCoreDir))
         ?.toDirectory();
+
+    if (gamePath == null || gameCorePath == null) {
+      Fimber.e('Game path or game core path not set');
+      return;
+    }
+
+    final useDirectLaunch =
+        ref.read(appSettings.select((value) => value.enableDirectLaunch));
+
+    if (!useDirectLaunch) {
+      launchGameUsingLauncher(gamePath);
+      return;
+    }
+
     var javaExe = getJavaExecutable(getJreDir(gamePath!));
     var vmParams = getVmparamsFile(gamePath);
 
@@ -328,7 +344,7 @@ class Launcher extends ConsumerWidget {
                   .none((entry) => vanillaParam.startsWith(entry.key)))
               .toList();
 
-      Fimber.d('processArgs: $finalVmparams');
+      Fimber.d('Final vmparams: $finalVmparams');
       Process.start(javaExe.absolute.path, finalVmparams,
           workingDirectory: gameCorePath?.path,
           mode: ProcessStartMode.detached,
@@ -358,7 +374,7 @@ class Launcher extends ConsumerWidget {
           .filter((it) => it.isNotNullOrEmpty())
           .toList();
 
-      Fimber.d('launchScript: $launchScript');
+      Fimber.i('Launching game using command: $launchScript');
       final process = await Process.start(javaExe.path, launchScript,
           workingDirectory: gameCorePath?.absolute.path,
           mode: ProcessStartMode.detachedWithStdio,
@@ -371,25 +387,40 @@ class Launcher extends ConsumerWidget {
     } else {
       Fimber.w(
           'Platform not yet supported for direct launch, using normal launch');
-      final gameExe = getGameExecutable(gamePath);
-      // Use this was of checking if it exists because the MacOs one is actually a folder, not a file.
-      if (FileSystemEntity.typeSync(gameExe.path) !=
-          FileSystemEntityType.notFound) {
-        if (Platform.isMacOS) {
-          Process.start("open", [gameExe.absolute.path],
-              workingDirectory: gamePath.path,
-              mode: ProcessStartMode.detached,
-              includeParentEnvironment: true);
-        } else if (Platform.isLinux) {
-          Process.start("xdg-open", [gameExe.absolute.path],
-              workingDirectory: gamePath.path,
-              mode: ProcessStartMode.detached,
-              includeParentEnvironment: true);
-        }
+      launchGameUsingLauncher(gamePath);
+      return;
+    }
+  }
+
+  static void launchGameUsingLauncher(Directory gamePath) {
+    final gameExe = getGameExecutable(gamePath);
+    if (Platform.isWindows) {
+      if (gameExe.existsSync()) {
+        Process.start(gameExe.absolute.path, [],
+            workingDirectory: gamePath.path,
+            mode: ProcessStartMode.detached,
+            includeParentEnvironment: true);
       } else {
         Fimber.e('Game executable not found at $gameExe');
       }
-      return;
+    } else if (Platform.isMacOS) {
+      // Use this way of checking if it exists because the MacOS one is actually a folder, not a file.
+      if (FileSystemEntity.typeSync(gameExe.path) !=
+          FileSystemEntityType.notFound) {
+        Process.start("open", [gameExe.absolute.path],
+            workingDirectory: gamePath.path,
+            mode: ProcessStartMode.detached,
+            includeParentEnvironment: true);
+      } else {
+        Fimber.e('Game executable not found at $gameExe');
+      }
+    } else if (Platform.isLinux) {
+      Process.start("xdg-open", [gameExe.absolute.path],
+          workingDirectory: gamePath.path,
+          mode: ProcessStartMode.detached,
+          includeParentEnvironment: true);
+    } else {
+      Fimber.e('Platform not supported for launching game');
     }
   }
 

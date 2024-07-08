@@ -39,6 +39,9 @@ mixin _$Settings {
   String? get jre23VmparamsFilename => throw _privateConstructorUsedError;
   bool? get useJre23 => throw _privateConstructorUsedError;
   bool get showJre23ConsoleWindow => throw _privateConstructorUsedError;
+
+  /// If true, TriOS acts as the launcher. If false, basically just clicks game exe.
+  bool get enableDirectLaunch => throw _privateConstructorUsedError;
   LaunchSettings get launchSettings => throw _privateConstructorUsedError;
   String? get lastStarsectorVersion => throw _privateConstructorUsedError;
   int get secondsBetweenModFolderChecks => throw _privateConstructorUsedError;
@@ -73,6 +76,7 @@ abstract class $SettingsCopyWith<$Res> {
       String? jre23VmparamsFilename,
       bool? useJre23,
       bool showJre23ConsoleWindow,
+      bool enableDirectLaunch,
       LaunchSettings launchSettings,
       String? lastStarsectorVersion,
       int secondsBetweenModFolderChecks,
@@ -112,6 +116,7 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
     Object? jre23VmparamsFilename = freezed,
     Object? useJre23 = freezed,
     Object? showJre23ConsoleWindow = null,
+    Object? enableDirectLaunch = null,
     Object? launchSettings = null,
     Object? lastStarsectorVersion = freezed,
     Object? secondsBetweenModFolderChecks = null,
@@ -183,6 +188,10 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
           ? _value.showJre23ConsoleWindow
           : showJre23ConsoleWindow // ignore: cast_nullable_to_non_nullable
               as bool,
+      enableDirectLaunch: null == enableDirectLaunch
+          ? _value.enableDirectLaunch
+          : enableDirectLaunch // ignore: cast_nullable_to_non_nullable
+              as bool,
       launchSettings: null == launchSettings
           ? _value.launchSettings
           : launchSettings // ignore: cast_nullable_to_non_nullable
@@ -252,6 +261,7 @@ abstract class _$$SettingsImplCopyWith<$Res>
       String? jre23VmparamsFilename,
       bool? useJre23,
       bool showJre23ConsoleWindow,
+      bool enableDirectLaunch,
       LaunchSettings launchSettings,
       String? lastStarsectorVersion,
       int secondsBetweenModFolderChecks,
@@ -291,6 +301,7 @@ class __$$SettingsImplCopyWithImpl<$Res>
     Object? jre23VmparamsFilename = freezed,
     Object? useJre23 = freezed,
     Object? showJre23ConsoleWindow = null,
+    Object? enableDirectLaunch = null,
     Object? launchSettings = null,
     Object? lastStarsectorVersion = freezed,
     Object? secondsBetweenModFolderChecks = null,
@@ -362,6 +373,10 @@ class __$$SettingsImplCopyWithImpl<$Res>
           ? _value.showJre23ConsoleWindow
           : showJre23ConsoleWindow // ignore: cast_nullable_to_non_nullable
               as bool,
+      enableDirectLaunch: null == enableDirectLaunch
+          ? _value.enableDirectLaunch
+          : enableDirectLaunch // ignore: cast_nullable_to_non_nullable
+              as bool,
       launchSettings: null == launchSettings
           ? _value.launchSettings
           : launchSettings // ignore: cast_nullable_to_non_nullable
@@ -406,9 +421,10 @@ class _$SettingsImpl implements _Settings {
       this.jre23VmparamsFilename,
       this.useJre23,
       this.showJre23ConsoleWindow = true,
+      this.enableDirectLaunch = true,
       this.launchSettings = const LaunchSettings(),
       this.lastStarsectorVersion,
-      this.secondsBetweenModFolderChecks = 5,
+      this.secondsBetweenModFolderChecks = 15,
       this.isUpdatesFieldShown = true,
       this.modsGridState});
 
@@ -454,6 +470,11 @@ class _$SettingsImpl implements _Settings {
   @override
   @JsonKey()
   final bool showJre23ConsoleWindow;
+
+  /// If true, TriOS acts as the launcher. If false, basically just clicks game exe.
+  @override
+  @JsonKey()
+  final bool enableDirectLaunch;
   @override
   @JsonKey()
   final LaunchSettings launchSettings;
@@ -470,7 +491,7 @@ class _$SettingsImpl implements _Settings {
 
   @override
   String toString() {
-    return 'Settings(gameDir: $gameDir, gameCoreDir: $gameCoreDir, modsDir: $modsDir, hasCustomModsDir: $hasCustomModsDir, shouldAutoUpdateOnLaunch: $shouldAutoUpdateOnLaunch, isRulesHotReloadEnabled: $isRulesHotReloadEnabled, windowXPos: $windowXPos, windowYPos: $windowYPos, windowWidth: $windowWidth, windowHeight: $windowHeight, isMaximized: $isMaximized, isMinimized: $isMinimized, defaultTool: $defaultTool, jre23VmparamsFilename: $jre23VmparamsFilename, useJre23: $useJre23, showJre23ConsoleWindow: $showJre23ConsoleWindow, launchSettings: $launchSettings, lastStarsectorVersion: $lastStarsectorVersion, secondsBetweenModFolderChecks: $secondsBetweenModFolderChecks, isUpdatesFieldShown: $isUpdatesFieldShown, modsGridState: $modsGridState)';
+    return 'Settings(gameDir: $gameDir, gameCoreDir: $gameCoreDir, modsDir: $modsDir, hasCustomModsDir: $hasCustomModsDir, shouldAutoUpdateOnLaunch: $shouldAutoUpdateOnLaunch, isRulesHotReloadEnabled: $isRulesHotReloadEnabled, windowXPos: $windowXPos, windowYPos: $windowYPos, windowWidth: $windowWidth, windowHeight: $windowHeight, isMaximized: $isMaximized, isMinimized: $isMinimized, defaultTool: $defaultTool, jre23VmparamsFilename: $jre23VmparamsFilename, useJre23: $useJre23, showJre23ConsoleWindow: $showJre23ConsoleWindow, enableDirectLaunch: $enableDirectLaunch, launchSettings: $launchSettings, lastStarsectorVersion: $lastStarsectorVersion, secondsBetweenModFolderChecks: $secondsBetweenModFolderChecks, isUpdatesFieldShown: $isUpdatesFieldShown, modsGridState: $modsGridState)';
   }
 
   @override
@@ -487,8 +508,7 @@ class _$SettingsImpl implements _Settings {
             (identical(
                     other.shouldAutoUpdateOnLaunch, shouldAutoUpdateOnLaunch) ||
                 other.shouldAutoUpdateOnLaunch == shouldAutoUpdateOnLaunch) &&
-            (identical(
-                    other.isRulesHotReloadEnabled, isRulesHotReloadEnabled) ||
+            (identical(other.isRulesHotReloadEnabled, isRulesHotReloadEnabled) ||
                 other.isRulesHotReloadEnabled == isRulesHotReloadEnabled) &&
             (identical(other.windowXPos, windowXPos) ||
                 other.windowXPos == windowXPos) &&
@@ -510,6 +530,8 @@ class _$SettingsImpl implements _Settings {
                 other.useJre23 == useJre23) &&
             (identical(other.showJre23ConsoleWindow, showJre23ConsoleWindow) ||
                 other.showJre23ConsoleWindow == showJre23ConsoleWindow) &&
+            (identical(other.enableDirectLaunch, enableDirectLaunch) ||
+                other.enableDirectLaunch == enableDirectLaunch) &&
             (identical(other.launchSettings, launchSettings) ||
                 other.launchSettings == launchSettings) &&
             (identical(other.lastStarsectorVersion, lastStarsectorVersion) ||
@@ -544,6 +566,7 @@ class _$SettingsImpl implements _Settings {
         jre23VmparamsFilename,
         useJre23,
         showJre23ConsoleWindow,
+        enableDirectLaunch,
         launchSettings,
         lastStarsectorVersion,
         secondsBetweenModFolderChecks,
@@ -583,6 +606,7 @@ abstract class _Settings implements Settings {
       final String? jre23VmparamsFilename,
       final bool? useJre23,
       final bool showJre23ConsoleWindow,
+      final bool enableDirectLaunch,
       final LaunchSettings launchSettings,
       final String? lastStarsectorVersion,
       final int secondsBetweenModFolderChecks,
@@ -627,6 +651,10 @@ abstract class _Settings implements Settings {
   bool? get useJre23;
   @override
   bool get showJre23ConsoleWindow;
+  @override
+
+  /// If true, TriOS acts as the launcher. If false, basically just clicks game exe.
+  bool get enableDirectLaunch;
   @override
   LaunchSettings get launchSettings;
   @override

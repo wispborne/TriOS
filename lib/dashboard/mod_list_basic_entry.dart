@@ -187,7 +187,7 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                   ],
                 ),
                 checkWrapper: (child) => infoTooltip(child: child),
-                padding: 0,
+                textPadding: const EdgeInsets.only(left: 0, bottom: 2),
                 value: widget.isEnabled,
                 expand: true,
                 onChanged: (_) async {

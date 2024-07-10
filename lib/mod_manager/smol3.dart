@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -16,6 +17,7 @@ import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/search.dart';
 import 'package:trios/widgets/add_new_mods_button.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 
@@ -51,6 +53,8 @@ class _Smol3State extends ConsumerState<Smol3>
   Mod? selectedMod;
   int? selectedRowIdx;
   late List<Mod> modsToDisplay;
+  late List<Mod> filteredMods;
+  String searchQuery = "";
 
   // Map<String, VersionCheckResult>? versionCheckResults;
   PlutoGridStateManager? stateManager;
@@ -88,6 +92,7 @@ class _Smol3State extends ConsumerState<Smol3>
   void initState() {
     super.initState();
     modsToDisplay = ref.read(AppState.mods);
+    filteredMods = modsToDisplay;
     final versionCheckResults =
         ref.read(AppState.versionCheckResults).valueOrNull;
     const double versionSelectorWidth = 130;
@@ -111,15 +116,17 @@ class _Smol3State extends ConsumerState<Smol3>
     final versionCheckResults =
         ref.watch(AppState.versionCheckResults).valueOrNull;
     modsToDisplay = mods;
+    filteredMods = filterMods(searchQuery);
     final enabledMods =
-        modsToDisplay.where((mod) => mod.isEnabledInGame).toList();
+        filteredMods.where((mod) => mod.isEnabledInGame).toList();
     final disabledMods =
-        modsToDisplay.where((mod) => !mod.isEnabledInGame).toList();
+        filteredMods.where((mod) => !mod.isEnabledInGame).toList();
 
     const double versionSelectorWidth = 130;
     if (stateManager != null) {
       stateManager.refRows.clearFromOriginal();
-      stateManager.refRows.addAll(createGridRows(enabledMods, disabledMods));
+      stateManager.refRows.addAll(createGridRows(enabledMods, disabledMods,
+          shouldSort: searchQuery.isEmpty));
       stateManager.refColumns.clearFromOriginal();
       stateManager.refColumns.addAll(createColumns(versionSelectorWidth,
           lightTextOpacity, versionCheckResults, enabledMods, disabledMods));
@@ -160,12 +167,66 @@ class _Smol3State extends ConsumerState<Smol3>
               child: SizedBox(
                 height: 50,
                 child: Card(
-                    child: Row(
-                  children: [
-                    const AddNewModsButton(),
-                    Text("Add Mod(s)"),
-                    SizedBox(height: 30, child: SearchBar()),
-                  ],
+                    child: Padding(
+                  padding: const EdgeInsets.only(left: 2, right: 8),
+                  child: Stack(
+                    children: [
+                      const AddNewModsButton(
+                        labelWidget: Padding(
+                          padding: EdgeInsets.only(left: 4),
+                          child: Text("Add Mod(s)"),
+                        ),
+                      ),
+                      Center(
+                        child: SizedBox(
+                          height: 30,
+                          width: 300,
+                          child: SearchAnchor(
+                            builder: (BuildContext context,
+                                SearchController controller) {
+                              return SearchBar(
+                                  controller: controller,
+                                  leading: const Icon(Icons.search),
+                                  hintText: "Filter mods...",
+                                  trailing: [
+                                    searchQuery.isEmpty
+                                        ? Container()
+                                        : IconButton(
+                                            icon: const Icon(Icons.clear),
+                                            constraints: const BoxConstraints(),
+                                            padding: EdgeInsets.zero,
+                                            onPressed: () {
+                                              controller.clear();
+                                              setState(() {
+                                                searchQuery = "";
+                                                filteredMods =
+                                                    filterMods(searchQuery);
+                                              });
+                                            },
+                                          )
+                                  ],
+                                  backgroundColor: WidgetStateProperty.all(
+                                      Theme.of(context).colorScheme.surface),
+                                  surfaceTintColor: WidgetStateProperty.all(
+                                      Theme.of(context)
+                                          .colorScheme
+                                          .surfaceContainerLowest),
+                                  onChanged: (value) {
+                                    setState(() {
+                                      searchQuery = value;
+                                      filteredMods = filterMods(value);
+                                    });
+                                  });
+                            },
+                            suggestionsBuilder: (BuildContext context,
+                                SearchController controller) {
+                              return [];
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 )),
               ),
             )
@@ -191,9 +252,9 @@ class _Smol3State extends ConsumerState<Smol3>
                           PointerDeviceKind.invertedStylus
                         }),
                         style: PlutoGridStyleConfig.dark(
-                          iconSize: 16,
                           enableCellBorderHorizontal: false,
                           enableCellBorderVertical: false,
+                          rowHeight: 40,
                           activatedBorderColor: Colors.transparent,
                           inactivatedBorderColor: Colors.transparent,
                           menuBackgroundColor: theme.colorScheme.surface,
@@ -212,7 +273,16 @@ class _Smol3State extends ConsumerState<Smol3>
                           defaultCellPadding: EdgeInsets.zero,
                           defaultColumnFilterPadding: EdgeInsets.zero,
                           defaultColumnTitlePadding: EdgeInsets.zero,
-                          rowHeight: 40,
+                          enableRowColorAnimation: true,
+                          iconSize: 12,
+                          columnTextStyle: theme.textTheme.headlineSmall!
+                              .copyWith(
+                                  fontSize: 14, fontWeight: FontWeight.bold),
+                          dragTargetColumnColor:
+                              theme.colorScheme.surface.darker(20),
+                          iconColor: theme.colorScheme.onSurface.withAlpha(150),
+                          cellTextStyle: theme.textTheme.labelLarge!
+                              .copyWith(fontSize: 14),
                         )),
                     onLoaded: (PlutoGridOnLoadedEvent event) {
                       hasEverLoaded = true;
@@ -258,7 +328,7 @@ class _Smol3State extends ConsumerState<Smol3>
                     noRowsWidget: Center(
                         child: Container(
                             padding: const EdgeInsets.all(20),
-                            child: hasEverLoaded
+                            child: (hasEverLoaded && modsToDisplay.isEmpty)
                                 ? Column(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
@@ -274,7 +344,9 @@ class _Smol3State extends ConsumerState<Smol3>
                                       const Text("mmm, vanilla")
                                     ],
                                   )
-                                : const Text("Loading mods..."))),
+                                : hasEverLoaded && filteredMods.isEmpty
+                                    ? const Text("No mods found")
+                                    : const Text("Loading mods..."))),
                   );
                 }),
                 if (selectedMod != null)
@@ -299,6 +371,10 @@ class _Smol3State extends ConsumerState<Smol3>
         ),
       ],
     );
+  }
+
+  List<Mod> filterMods(String query) {
+    return searchMods(modsToDisplay, query) ?? [];
   }
 
   void _toggleRowGroup(PlutoGridStateManager stateManager, PlutoRow row) {
@@ -338,32 +414,30 @@ class _Smol3State extends ConsumerState<Smol3>
     return key is ValueKey<Mod> ? key.value : null;
   }
 
-  List<PlutoRow> createGridRows(List<Mod> enabledMods, List<Mod> disabledMods) {
-    // expanded: ref.read(appSettings.select((value) =>
-    // value.modsGridState?.isGroupEnabledExpanded)) ??
-    //     true
+  List<PlutoRow> createGridRows(List<Mod> enabledMods, List<Mod> disabledMods,
+      {bool shouldSort = true}) {
+    List<PlutoRow> sortIfNeeded(List<PlutoRow> rows) {
+      if (shouldSort) {
+        return rows.sortedBy<String>(
+            (e) => e.cells[_Fields.name.toString()]?.value.toString() ?? "");
+      }
+      return rows;
+    }
 
     return [
-      ...enabledMods
-          .mapIndexed((index, mod) => createRow(mod))
-          .whereNotNull()
-          .sortedBy<String>(
-              // Default sort by name
-              (e) => e.cells[_Fields.name.toString()]?.value.toString() ?? ""),
-      ...disabledMods
-          .mapIndexed((index, mod) => createRow(mod))
-          .whereNotNull()
-          .sortedBy<String>(
-              // Default sort by name
-              (e) => e.cells[_Fields.name.toString()]?.value.toString() ?? "")
-    ]..toList();
-    // return modsToDisplay
-    //     .mapIndexed((index, mod) => createRow(mod))
-    //     .whereNotNull()
-    //     .sortedBy<String>(
-    //         // Default sort by name
-    //         (e) => e.cells[_Fields.name.toString()]?.value.toString() ?? "")
-    //     .toList();
+      ...sortIfNeeded(
+        enabledMods
+            .mapIndexed((index, mod) => createRow(mod))
+            .whereNotNull()
+            .toList(),
+      ),
+      ...sortIfNeeded(
+        disabledMods
+            .mapIndexed((index, mod) => createRow(mod))
+            .whereNotNull()
+            .toList(),
+      ),
+    ];
   }
 
   List<PlutoColumn> createColumns(
@@ -387,7 +461,7 @@ class _Smol3State extends ConsumerState<Smol3>
         backgroundColor: Colors.transparent,
         enableDropToResize: false,
         renderer: (rendererContext) => Builder(builder: (context) {
-          if (modsToDisplay.isEmpty) return const SizedBox();
+          if (filteredMods.isEmpty) return const SizedBox();
           if (rendererContext.row.depth > 0) return const SizedBox();
           final isEnabled =
               _getEnabledGroupRow(rendererContext.stateManager)?.key ==
@@ -418,7 +492,7 @@ class _Smol3State extends ConsumerState<Smol3>
           type: PlutoColumnType.text(),
           enableSorting: false,
           renderer: (rendererContext) => Builder(builder: (context) {
-                if (modsToDisplay.isEmpty) return const SizedBox();
+                if (filteredMods.isEmpty) return const SizedBox();
                 final mod = _getModFromKey(rendererContext.row.key);
                 if (mod == null) return const SizedBox();
                 final bestVersion = mod.findFirstEnabledOrHighestVersion;
@@ -454,7 +528,7 @@ class _Smol3State extends ConsumerState<Smol3>
           field: _Fields.utilityIcon.toString(),
           type: PlutoColumnType.number(),
           renderer: (rendererContext) {
-            if (modsToDisplay.isEmpty) return const SizedBox();
+            if (filteredMods.isEmpty) return const SizedBox();
             final mod = _getModFromKey(rendererContext.row.key);
             if (mod == null) return const SizedBox();
             return ModTypeIcon(
@@ -469,7 +543,7 @@ class _Smol3State extends ConsumerState<Smol3>
         type: PlutoColumnType.text(),
         enableSorting: false,
         renderer: (rendererContext) => Builder(builder: (context) {
-          if (modsToDisplay.isEmpty) return const SizedBox();
+          if (filteredMods.isEmpty) return const SizedBox();
           String? iconPath = rendererContext.cell.value;
           return iconPath != null
               ? Image.file(
@@ -485,7 +559,7 @@ class _Smol3State extends ConsumerState<Smol3>
         field: _Fields.name.toString(),
         type: PlutoColumnType.text(),
         renderer: (rendererContext) => Builder(builder: (context) {
-          if (modsToDisplay.isEmpty) return const SizedBox();
+          if (filteredMods.isEmpty) return const SizedBox();
           final mod = _getModFromKey(rendererContext.row.key);
           if (mod == null) return const SizedBox();
           final bestVersion = mod.findFirstEnabledOrHighestVersion;
@@ -527,7 +601,7 @@ class _Smol3State extends ConsumerState<Smol3>
         //             .author ??
         //         ""),
         renderer: (rendererContext) => Builder(builder: (context) {
-          if (modsToDisplay.isEmpty) return const SizedBox();
+          if (filteredMods.isEmpty) return const SizedBox();
           final mod = _getModFromKey(rendererContext.row.key);
           if (mod == null) return const SizedBox();
           final theme = Theme.of(context);
@@ -546,7 +620,7 @@ class _Smol3State extends ConsumerState<Smol3>
         minWidth: 100,
         type: PlutoColumnType.text(),
         renderer: (rendererContext) => Builder(builder: (context) {
-          if (modsToDisplay.isEmpty) return const SizedBox();
+          if (filteredMods.isEmpty) return const SizedBox();
           final mod = _getModFromKey(rendererContext.row.key);
           if (mod == null) return const SizedBox();
           final bestVersion = mod.findFirstEnabledOrHighestVersion;
@@ -670,7 +744,7 @@ class _Smol3State extends ConsumerState<Smol3>
         minWidth: 100,
         type: PlutoColumnType.number(),
         renderer: (rendererContext) => Builder(builder: (context) {
-          if (modsToDisplay.isEmpty) return const SizedBox();
+          if (filteredMods.isEmpty) return const SizedBox();
           final mod = _getModFromKey(rendererContext.row.key);
           if (mod == null) return const SizedBox();
           final theme = Theme.of(context);
@@ -697,7 +771,7 @@ class _Smol3State extends ConsumerState<Smol3>
         //             .gameVersion ??
         //         ""),
         renderer: (rendererContext) => Builder(builder: (context) {
-          if (modsToDisplay.isEmpty) return const SizedBox();
+          if (filteredMods.isEmpty) return const SizedBox();
           final mod = _getModFromKey(rendererContext.row.key);
           if (mod == null) return const SizedBox();
           final bestVersion = mod.findFirstEnabledOrHighestVersion;

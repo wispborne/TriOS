@@ -1,6 +1,6 @@
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/search.dart';
 import 'package:trios/widgets/simple_data_row.dart';
 
 import '../models/mod.dart';
@@ -16,10 +16,11 @@ class DebugInfo extends StatelessWidget {
     return SelectionArea(
       child: Column(
         children: mod.modVariants
-        .sortedByDescending<Version>((variant) => variant.bestVersion ?? Version.zero())
+            .sortedByDescending<Version>(
+                (variant) => variant.bestVersion ?? Version.zero())
             .map(
               (variant) => Card(
-                margin: EdgeInsets.symmetric(vertical: 4),
+                margin: const EdgeInsets.symmetric(vertical: 4),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -78,6 +79,24 @@ class DebugInfo extends StatelessWidget {
                                   .bodyLarge
                                   ?.copyWith(fontWeight: FontWeight.bold)),
                           Text(variant.versionCheckerInfo.toString(),
+                              style: Theme.of(context).textTheme.labelLarge),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text("Search Tags",
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyLarge
+                                  ?.copyWith(fontWeight: FontWeight.bold)),
+                          Text(
+                              getModVariantSearchTags(variant).joinToString(
+                                  transform: (it) =>
+                                      "${it.term} (-${it.scorePenalty.toStringAsFixed(0)})"),
                               style: Theme.of(context).textTheme.labelLarge),
                         ],
                       ),

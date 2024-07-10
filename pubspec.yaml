@@ -92,6 +92,9 @@ dependencies:
   pluto_grid: ^8.0.0
   path_provider: ^2.0.11
   screen_retriever: ^0.1.9
+  text_search: ^1.0.2
+  stringr: ^1.0.0
+  palette_generator: ^0.3.3+3
 #  flutter_hooks: ^0.20.5
 #  hooks_riverpod: ^2.5.1
 #  data_table_2: ^2.5.12

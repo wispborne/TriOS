@@ -14,12 +14,13 @@ import '../utils/logging.dart';
 const Color vanillaErrorColor = Color.fromARGB(255, 252, 99, 0);
 const Color vanillaWarningColor = Color.fromARGB(255, 253, 212, 24);
 
-Color? getStateColorForDependencyText(ModDependencySatisfiedState dependencyState) {
+Color? getStateColorForDependencyText(
+    ModDependencySatisfiedState dependencyState) {
   return switch (dependencyState) {
     Satisfied _ => null,
     Missing _ => vanillaErrorColor,
     Disabled _ =>
-    vanillaWarningColor, // Disabled means it's present, so we can just enable it.
+      vanillaWarningColor, // Disabled means it's present, so we can just enable it.
     VersionInvalid _ => vanillaErrorColor,
     VersionWarning _ => vanillaWarningColor,
   };
@@ -29,7 +30,7 @@ class ThemeManager with ChangeNotifier {
   static double cornerRadius = 8;
 
   static TriOSTheme _theme = StarsectorTriOSTheme();
-  static bool _isMaterial3 = true;
+  static const bool _isMaterial3 = true;
   static const String _key = "currentThemeId";
   static const String _keyMaterial = "isMaterial";
   static final allThemes = {
@@ -42,8 +43,7 @@ class ThemeManager with ChangeNotifier {
     color: Colors.black.withOpacity(0.5),
     spreadRadius: 4,
     blurRadius: 7,
-    offset:
-    const Offset(0, 3), // changes position of shadow
+    offset: const Offset(0, 3), // changes position of shadow
   );
 
   // static final backgroundShader = FutureProvider<FragmentProgram>((ref) async {
@@ -62,7 +62,7 @@ class ThemeManager with ChangeNotifier {
               ex: e, stacktrace: st);
           _theme = allThemes.values.first;
         }
-        _isMaterial3 = sharedPrefs.getBool(_keyMaterial) ?? false;
+        // _isMaterial3 = sharedPrefs.getBool(_keyMaterial) ?? false;
       } else {
         _theme = allThemes.values.first;
       }
@@ -94,12 +94,12 @@ class ThemeManager with ChangeNotifier {
     sharedPrefs.setString(_key, themeKey);
   }
 
-  void switchMaterial() {
-    _isMaterial3 = !_isMaterial3;
-    sharedPrefs.setBool(_keyMaterial, _isMaterial3);
-    Fimber.i("Changed material. Material: $_isMaterial3");
-    notifyListeners();
-  }
+  // void switchMaterial() {
+  //   _isMaterial3 = !_isMaterial3;
+  //   sharedPrefs.setBool(_keyMaterial, _isMaterial3);
+  //   Fimber.i("Changed material. Material: $_isMaterial3");
+  //   notifyListeners();
+  // }
 
   Future<void> loadThemes() async {
     final themesJsonString =
@@ -120,7 +120,7 @@ class ThemeManager with ChangeNotifier {
           error: theme.value["error"],
           onPrimary: theme.value["onPrimary"],
           onSecondary: theme.value["onSecondary"],
-          onBackground: theme.value["onBackground"],
+          // onBackground: theme.value["onBackground"],
           onSurface: theme.value["onSurface"],
           onError: theme.value["onError"],
           hyperlink: theme.value["hyperlink"],
@@ -143,11 +143,20 @@ class ThemeManager with ChangeNotifier {
     final seedColor = swatch.primary;
 
     var darkThemeBase = ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-            seedColor: seedColor, brightness: Brightness.dark),
-        useMaterial3: material3);
+      colorScheme: ColorScheme.fromSeed(
+          seedColor: seedColor, brightness: Brightness.dark),
+      useMaterial3: material3,
+    );
 
-    return customizeTheme(darkThemeBase, swatch).copyWith();
+    final customTheme = customizeTheme(darkThemeBase, swatch);
+    return customTheme.copyWith(
+        colorScheme: customTheme.colorScheme.copyWith(
+      surfaceContainerLowest: swatch.surfaceContainer?.darker(15),
+      surfaceContainerLow: swatch.surfaceContainer?.darker(5),
+      surfaceContainer: swatch.surfaceContainer?.lighter(5),
+      surfaceContainerHigh: swatch.surfaceContainer?.lighter(10),
+      surfaceContainerHighest: swatch.surface,
+    ));
   }
 
   static ThemeData getLightTheme(TriOSTheme swatch, bool material3) {
@@ -159,27 +168,30 @@ class ThemeManager with ChangeNotifier {
       useMaterial3: material3,
     );
 
-    return customizeTheme(
+    var customTheme = customizeTheme(
       lightThemeBase,
-      swatch.copyWith(
-          background: lightThemeBase.colorScheme.onInverseSurface,
-          onSurface: lightThemeBase
-              .colorScheme.onInverseSurface), // originally `..card = `
-    ).copyWith(
-        colorScheme: lightThemeBase.colorScheme.copyWith(
+      swatch.copyWith(),
+    );
+    return customTheme.copyWith(
+        colorScheme: customTheme.colorScheme.copyWith(
           primary: swatch.primary,
           secondary: swatch.secondary,
           // tertiary: swatch.tertiary,
+          surfaceContainerLowest: swatch.surfaceContainer?.darker(15),
+          surfaceContainerLow: swatch.surfaceContainer?.darker(5),
+          surfaceContainer: swatch.surfaceContainer?.lighter(5),
+          surfaceContainerHigh: swatch.surfaceContainer?.lighter(10),
+          surfaceContainerHighest: swatch.surface,
         ),
-        textTheme: lightThemeBase.textTheme.copyWith(
-            bodyMedium:
-                lightThemeBase.textTheme.bodyMedium?.copyWith(fontSize: 16)),
-        iconTheme: lightThemeBase.iconTheme.copyWith(
-          color: lightThemeBase.colorScheme.onSurface,
+        textTheme: customTheme.textTheme.copyWith(
+          bodyMedium: customTheme.textTheme.bodyMedium?.copyWith(fontSize: 16),
         ),
-        tabBarTheme: lightThemeBase.tabBarTheme.copyWith(
-          labelColor: lightThemeBase.colorScheme.onSurface,
-          unselectedLabelColor: lightThemeBase.colorScheme.onSurface,
+        iconTheme: customTheme.iconTheme.copyWith(
+          color: customTheme.colorScheme.onSurfaceVariant,
+        ),
+        tabBarTheme: customTheme.tabBarTheme.copyWith(
+          labelColor: customTheme.colorScheme.onSurface,
+          unselectedLabelColor: customTheme.colorScheme.onSurfaceVariant,
         ),
         snackBarTheme: const SnackBarThemeData());
   }
@@ -188,30 +200,44 @@ class ThemeManager with ChangeNotifier {
     // Choose font here
     final textTheme = GoogleFonts.ibmPlexSansTextTheme(themeBase.textTheme);
 
+    final onSurfaceVariant = swatch.surface == null
+        ? swatch.onSurface
+        : swatch.onSurface?.mix(swatch.surface!, 0.5)!;
+    final primaryVariant = swatch.primary.mix(swatch.surfaceContainer!, 0.7)!;
+
     return themeBase.copyWith(
       colorScheme: themeBase.colorScheme.copyWith(
         primary: swatch.primary,
         secondary: swatch.secondary,
-        onSurface: swatch.onBackground,
-        onSurfaceVariant: swatch.onSurface,
+        onSurface: swatch.onSurface,
+        onSurfaceVariant: onSurfaceVariant,
         onPrimary: swatch.onPrimary,
         surface: swatch.surface,
-        surfaceContainerHighest: swatch.background,
+        error: vanillaErrorColor,
+        errorContainer: vanillaErrorColor.lighter(5),
         // tertiary: swatch.tertiary,
       ),
-      scaffoldBackgroundColor: swatch.background,
-      dialogBackgroundColor: swatch.background,
-      cardColor: swatch.surface,
+      scaffoldBackgroundColor: swatch.surfaceContainer,
+      dialogBackgroundColor: swatch.surfaceContainer,
+      cardColor: swatch.surfaceContainer,
       // cardColor: swatch.card,
       cardTheme: themeBase.cardTheme.copyWith(
-        color: swatch.surface,
+        color: swatch.surfaceContainer,
         // color: swatch.card,
         elevation: 4,
         surfaceTintColor: Colors.transparent,
       ),
       appBarTheme: themeBase.appBarTheme.copyWith(
-        backgroundColor: swatch.surface,
-        // backgroundColor: swatch.card,
+        backgroundColor: swatch.surfaceContainer,
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+          style: OutlinedButton.styleFrom(
+        side: BorderSide(color: primaryVariant),
+      )),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+            // Default is a bit too dark imo.
+            backgroundColor: themeBase.colorScheme.surfaceContainer),
       ),
       floatingActionButtonTheme: themeBase.floatingActionButtonTheme.copyWith(
         backgroundColor: swatch.primary,
@@ -332,8 +358,8 @@ class StarsectorTriOSTheme extends TriOSTheme {
           primary: const Color.fromRGBO(73, 252, 255, 1),
           secondary: const Color.fromRGBO(59, 203, 232, 1),
           // tertiary: const Color.fromRGBO(0, 255, 255, 1),
-          background: const Color.fromRGBO(14, 22, 43, 1),
-          surface: const Color.fromRGBO(32, 41, 65, 1.0),
+          surface: const Color.fromRGBO(14, 22, 43, 1),
+          surfaceContainer: const Color.fromRGBO(32, 41, 65, 1.0),
         );
 }
 
@@ -344,8 +370,8 @@ class HalloweenTriOSTheme extends TriOSTheme {
           primary: HexColor("#FF0000"),
           secondary: HexColor("#FF4D00").lighter(10),
           // tertiary: HexColor("#FF4D00").lighter(20),
-          background: HexColor("#272121"),
-          surface: HexColor("#272121").lighter(3),
+          surface: HexColor("#272121"),
+          surfaceContainer: HexColor("#272121").lighter(3),
         );
 }
 
@@ -356,8 +382,8 @@ class XmasTriOSTheme extends TriOSTheme {
           primary: HexColor("#f23942").darker(10),
           secondary: HexColor("#70BA7F").lighter(10),
           // tertiary:  HexColor("#b47c4b").lighter(30),
-          background: const Color.fromRGBO(26, 46, 31, 1.0).darker(5),
-          surface: HexColor("#171e13").lighter(8),
+          surface: const Color.fromRGBO(26, 46, 31, 1.0).darker(5),
+          surfaceContainer: HexColor("#171e13").lighter(8),
         );
 }
 

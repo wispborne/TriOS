@@ -45,7 +45,8 @@ class Constants {
   static const forumModdingSubforumUrl = "$forumUrl?board=3.0";
   static const forumHostname = "fractalsoftworks.com";
   static const tipsFileRelativePath = "data/strings/tips.json";
-  static const changelogUrl = "https://raw.githubusercontent.com/wispborne/TriOS/main/changelog.md";
+  static const changelogUrl =
+      "https://raw.githubusercontent.com/wispborne/TriOS/main/changelog.md";
   static const supportedArchiveExtensions = [
     ".zip",
     ".7z",
@@ -53,5 +54,41 @@ class Constants {
     ".tar",
     ".gz",
     ".bz2",
+  ];
+
+  static const modAuthorAliases = [
+    ["RustyCabbage", "rubi", "ceruleanpancake"],
+    ["Wisp", "Wispborne", "Tartiflette and Wispborne"],
+    ["DesperatePeter", "Jannes"],
+    ["shoi", "gettag"],
+    ["Dark.Revenant", "DR"],
+    ["LazyWizard", "Lazy"],
+    ["Techpriest", "Timid"],
+    ["Nick XR", "Nick", "nick7884"],
+    ["PMMeCuteBugPhotos", "MrFluffster"],
+    ["Dazs", "Spiritfox", "spiritfox_"],
+    ["Histidine, Zaphide", "Histidine", "histidine_my"],
+    ["Snrasha", "Snrasha, the tinkerer"],
+    ["Hotpics", "jackwolfskin"],
+    ["cptdash", "SpeedRacer"],
+    ["Elseud", "Elseudo"],
+    ["TobiaF", "Toby"],
+    ["Mephyr", "Liral"],
+    ["Tranquility", "tranquil_light"],
+    ["FasterThanSleepyfish", "Sleepyfish"],
+    ["Nerzhull_AI", "nerzhulai"],
+    ["theDrag", "theDragn", "iryx"],
+    ["Audax", "Audaxl"],
+    ["Pogre", "noof"],
+    ["lord_dalton", "Epta Consortium"],
+    ["hakureireimu", "LngA7Gw"],
+    ["Nes", "nescom"],
+    ["float", "this_is_a_username"],
+    ["AERO", "aero.assault"],
+    ["Fellout", "felloutwastaken"],
+    ["Mr. THG", "thog"],
+    ["Derelict_Surveyor", "jdt15"],
+    ["astarat.", "Astarat", "Astarat and PureTilt"],
+    ["Soren", "Søren", "Harmful Mechanic"],
   ];
 }

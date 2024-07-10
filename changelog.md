@@ -1,9 +1,13 @@
 # 0.0.58
+- Added
+  - Search box to filter mods.
+  - "Add Mod(s)" button on Mods tab.
 - Fixed
   - Unable to install mods with tabs in the mod_info.json file (e.g. VIC).
-  - Add Mods button didn't work if you selected more than one mod.
+  - "Add Mods" button didn't work if you selected more than one mod.
   - If you unplug a monitor and TriOS was on that monitor, it'll now switch to another plugged-in monitor.
   - Mod folder names had the last character removed (e.g.`LunaLi-1.0.0`).
+  - Some light theme fixes.
 - Changed
   - Dashboard: tooltip moved to top-left of cursor to avoid it hiding the mod list so much.
 

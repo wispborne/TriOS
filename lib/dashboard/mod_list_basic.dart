@@ -115,58 +115,58 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                             ?.copyWith(fontSize: 20)),
                     Align(
                       alignment: Alignment.topRight,
-                      child: Padding(
-                        padding: const EdgeInsets.all(4.0),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Tooltip(
-                                message: "Refresh mods and recheck versions",
-                                child: IconButton(
-                                  icon: ConditionalWrap(
-                                      condition: isRefreshing,
-                                      wrapper: (child) => Animate(
-                                          onComplete: (c) => c.repeat(),
-                                          effects: [
-                                            RotateEffect(duration: 2000.ms)
-                                          ],
-                                          child: child),
-                                      child: const Icon(Icons.refresh)),
-                                  padding: const EdgeInsets.only(right: 8.0),
-                                  constraints: const BoxConstraints(),
-                                  onPressed: () {
-                                    AppState.skipCacheOnNextVersionCheck = true;
-                                    ref.invalidate(AppState.modVariants);
-                                  },
-                                )),
-                            Tooltip(
-                              message: "Copy mod info",
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Tooltip(
+                              message: "Refresh mods and recheck versions",
                               child: IconButton(
-                                icon: const Icon(Icons.copy),
-                                padding: EdgeInsets.zero,
-                                iconSize: 20,
-                                constraints: const BoxConstraints(),
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 4),
+                                icon: ConditionalWrap(
+                                    condition: isRefreshing,
+                                    wrapper: (child) => Animate(
+                                        onComplete: (c) => c.repeat(),
+                                        effects: [
+                                          RotateEffect(duration: 2000.ms)
+                                        ],
+                                        child: child),
+                                    child: const Icon(Icons.refresh)),
                                 onPressed: () {
-                                  Clipboard.setData(ClipboardData(
-                                      text:
-                                          "Mods (${modList.length})\n${modList.map((mod) {
-                                    final variant =
-                                        mod.findFirstEnabledOrHighestVersion;
-                                    return false
-                                        ? "${mod.id} ${variant?.modInfo.version}"
-                                        : "${variant?.modInfo.name}  v${variant?.modInfo.version}  [${mod.id}]";
-                                  }).join('\n')}"));
-                                  ScaffoldMessenger.of(context)
-                                      .showSnackBar(const SnackBar(
-                                    content:
-                                        Text("Copied mod info to clipboard."),
-                                  ));
+                                  AppState.skipCacheOnNextVersionCheck = true;
+                                  ref.invalidate(AppState.modVariants);
                                 },
-                              ),
+                                constraints: const BoxConstraints(),
+                              )),
+                          Tooltip(
+                            message: "Copy mod info",
+                            child: IconButton(
+                              icon: const Icon(Icons.copy),
+                              iconSize: 20,
+                              constraints: const BoxConstraints(),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 4),
+                              onPressed: () {
+                                Clipboard.setData(ClipboardData(
+                                    text:
+                                        "Mods (${modList.length})\n${modList.map((mod) {
+                                  final variant =
+                                      mod.findFirstEnabledOrHighestVersion;
+                                  return false
+                                      ? "${mod.id} ${variant?.modInfo.version}"
+                                      : "${variant?.modInfo.name}  v${variant?.modInfo.version}  [${mod.id}]";
+                                }).join('\n')}"));
+                                ScaffoldMessenger.of(context)
+                                    .showSnackBar(const SnackBar(
+                                  content:
+                                      Text("Copied mod info to clipboard."),
+                                ));
+                              },
                             ),
-                            const AddNewModsButton()
-                          ],
-                        ),
+                          ),
+                          const AddNewModsButton(
+                              padding: EdgeInsets.symmetric(horizontal: 4)),
+                        ],
                       ),
                     ),
                   ],

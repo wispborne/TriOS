@@ -2,6 +2,7 @@ import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:palette_generator/palette_generator.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/utils/extensions.dart';
@@ -23,6 +24,8 @@ class ModSummaryPanel extends ConsumerStatefulWidget {
 }
 
 class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel> {
+  PaletteGenerator? paletteGenerator;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -63,8 +66,31 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel> {
             .watch(AppState.versionCheckResults)
             .valueOrNull?[variant?.smolId];
         if (variant == null) return const SizedBox();
+        final iconFilePath = variant.iconFilePath;
+
+        if (iconFilePath != null) {
+          // PaletteGenerator.fromImageProvider(
+          //         Image.file(iconFilePath.toFile(), width: 48, height: 48)
+          //             .image)
+          //     .then((generator) => {
+          //           setState(() {
+          //             paletteGenerator = generator;
+          //           })
+          //         });
+        } else {
+          paletteGenerator = null;
+        }
+
         return Stack(
           children: [
+            // if (paletteGenerator != null)
+            //   Container(
+            //     height: 70,
+            //     decoration: BoxDecoration(
+            //       color: paletteGenerator!.dominantColor?.color ??
+            //           theme.colorScheme.surface,
+            //     ),
+            //   ),
             Padding(
               padding: const EdgeInsets.all(16),
               child: SingleChildScrollView(
@@ -74,20 +100,28 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel> {
                     children: [
                       Row(
                         children: [
-                          if (variant.iconFilePath != null)
+                          if (iconFilePath != null)
                             Padding(
                               padding: const EdgeInsets.only(right: 16),
-                              child: Image.file(variant.iconFilePath!.toFile(),
-                                  width: 48, height: 48),
+                              child: Stack(
+                                children: [
+                                  Image.file(
+                                    iconFilePath.toFile(),
+                                    width: 48,
+                                    height: 48,
+                                  )
+                                ],
+                              ),
                             )
                           else
                             const SizedBox(width: 0, height: 48),
                           Expanded(
                             child: Text(variant.modInfo.name ?? "(no name)",
                                 style: theme.textTheme.headlineSmall?.copyWith(
-                                    fontFamily: "Orbitron",
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 20)),
+                                  fontFamily: "Orbitron",
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 20,
+                                )),
                           ),
                         ],
                       ),

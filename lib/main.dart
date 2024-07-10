@@ -503,23 +503,26 @@ class _AppShellState extends ConsumerState<AppShell>
           ),
         ),
         body: DragDropHandler(
-          child: Column(
-            children: [
-              if (loggingError != null)
-                Text(loggingError.toString(),
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: vanillaErrorColor,
-                        )),
-              Expanded(
-                child: Padding(
-                    padding: const EdgeInsets.all(0),
-                    child: TabBarView(
-                      controller: tabController,
-                      physics: const NeverScrollableScrollPhysics(),
-                      children: tabChildren,
-                    )),
-              ),
-            ],
+          child: Container(
+            color: Theme.of(context).colorScheme.surface,
+            child: Column(
+              children: [
+                if (loggingError != null)
+                  Text(loggingError.toString(),
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            color: vanillaErrorColor,
+                          )),
+                Expanded(
+                  child: Padding(
+                      padding: const EdgeInsets.all(0),
+                      child: TabBarView(
+                        controller: tabController,
+                        physics: const NeverScrollableScrollPhysics(),
+                        children: tabChildren,
+                      )),
+                ),
+              ],
+            ),
           ),
           onDroppedLog: (_) =>
               tabController.animateTo(TriOSTools.chipper.index),

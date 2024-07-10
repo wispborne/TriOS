@@ -61,7 +61,7 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
             padding: const EdgeInsets.only(left: 16, top: 12),
             child: CheckboxWithLabel(
                 label: "Skip Game Launcher",
-                textPadding: const EdgeInsets.only(left: 4, bottom: 0),
+                textPadding: const EdgeInsets.only(left: 12, bottom: 0),
                 labelStyle: Theme.of(context).textTheme.labelMedium,
                 flipCheckboxAndLabel: true,
                 value: enableDirectLaunch,

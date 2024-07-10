@@ -42,7 +42,7 @@ class _RamChangerState extends ConsumerState<RamChanger> {
                 borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
                 border: Border.all(
                   width: 2,
-                  color: Theme.of(context).colorScheme.primary,
+                  color: Theme.of(context).colorScheme.primaryFixedDim,
                 ),
               ),
               child: child,

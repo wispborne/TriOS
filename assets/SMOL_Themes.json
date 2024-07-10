@@ -1,24 +1,24 @@
 {
   "themes": {
     "AlexAtheos, Creator of Starsector": {
-      "background": "#9C0000",
+      "surface": "#9C0000",
       "hyperlink": "#00FFFF",
       "isDark": true,
       "primary": "#00FF00",
       "primaryVariant": "#00DA00",
       "secondary": "#0000FF",
       "secondaryVariant": "#0000C0",
-      "surface": "#C60000"
+      "surfaceContainer": "#C60000"
     },
     "Aurica (light)": {
-      "background": "#FFFFFF",
+      "surface": "#FFFFFF",
       "hyperlink": "#00B5B5",
       "isDark": false,
       "primary": "#FFC900",
       "primaryVariant": "#FFD539",
       "secondary": "#FFDE00",
       "secondaryVariant": "#FFE739",
-      "surface": "#F0F0F0"
+      "surfaceContainer": "#F0F0F0"
     },
     "Trans (pink)": {
       "isDark": false,
@@ -26,8 +26,8 @@
       "primaryVariant": "#0078A7",
       "secondary": "#1189B8",
       "secondaryVariant": "#0078A7",
-      "background": "#D56474",
-      "surface": "#E67585",
+      "surface": "#D56474",
+      "surfaceContainer": "#E67585",
       "error": null,
       "onPrimary": "#EEEEEE",
       "onSecondary": "#EEEEEE",
@@ -42,8 +42,8 @@
       "primaryVariant": "#C45363",
       "secondary": "#F78696",
       "secondaryVariant": "#C45363",
-      "background": "#0078A7",
-      "surface": "#1189B8",
+      "surface": "#0078A7",
+      "surfaceContainer": "#1189B8",
       "error": null,
       "onPrimary": "#EEEEEE",
       "onSecondary": "#EEEEEE",
@@ -53,17 +53,17 @@
       "hyperlink": "#F78696"
     },
     "Comes": {
-      "background": "#383049",
+      "surface": "#383049",
       "hyperlink": "#EECD7F",
       "isDark": true,
       "primary": "#C6A14B",
       "primaryVariant": "#A5812A",
       "secondary": "#B79782",
       "secondaryVariant": "#97745D",
-      "surface": "#544A6A"
+      "surfaceContainer": "#544A6A"
     },
     "Iron Shell": {
-      "background": "#210506",
+      "surface": "#210506",
       "hyperlink": "#FCAD3C",
       "isDark": true,
       "onPrimary": "#FFCF8A",
@@ -71,20 +71,20 @@
       "primaryVariant": "#61001A",
       "secondary": "#FFD586",
       "secondaryVariant": "#DBAC55",
-      "surface": "#3F0011"
+      "surfaceContainer": "#3F0011"
     },
     "Kemet - Frog": {
-      "background": "#136E64",
+      "surface": "#136E64",
       "hyperlink": "#FF6060",
       "isDark": true,
       "primary": "#66C954",
       "primaryVariant": "#45B034",
       "secondary": "#BEE45F",
       "secondaryVariant": "#9EC83B",
-      "surface": "#27847A"
+      "surfaceContainer": "#27847A"
     },
     "Kemet - Phase": {
-      "background": "#121316",
+      "surface": "#121316",
       "hyperlink": "#2FE861",
       "isDark": true,
       "onPrimary": "#131418",
@@ -92,10 +92,10 @@
       "primaryVariant": "#C56A1C",
       "secondary": "#A52208",
       "secondaryVariant": "#D2BE18",
-      "surface": "#121316"
+      "surfaceContainer": "#121316"
     },
     "Launcher": {
-      "background": "#0E162B",
+      "surface": "#0E162B",
       "hyperlink": "#00FFFF",
       "isDark": true,
       "onPrimary": "#A8DBFC",
@@ -103,20 +103,20 @@
       "primaryVariant": "#1F4CDF",
       "secondary": "#49FCFF",
       "secondaryVariant": "#3BCBE8",
-      "surface": "#010F3F"
+      "surfaceContainer": "#010F3F"
     },
     "Nia": {
-      "background": "#282C34",
+      "surface": "#282C34",
       "hyperlink": "#D6D281",
       "isDark": true,
       "primary": "#BE00FF",
       "primaryVariant": "#9900CD",
       "secondary": "#CE3867",
       "secondaryVariant": "#A22C51",
-      "surface": "#21242B"
+      "surfaceContainer": "#21242B"
     },
     "One Dark": {
-      "background": "#282C34",
+      "surface": "#282C34",
       "hyperlink": "#C26C6A",
       "isDark": true,
       "onPrimary": "#dadbe0",
@@ -124,10 +124,10 @@
       "primaryVariant": "#4257A0",
       "secondary": "#98C379",
       "secondaryVariant": "#434957",
-      "surface": "#21242B"
+      "surfaceContainer": "#21242B"
     },
     "Red Pain": {
-      "background": "#21000C",
+      "surface": "#21000C",
       "hyperlink": "#AEB3DA",
       "isDark": true,
       "onPrimary": "#FDFDFD",
@@ -135,17 +135,17 @@
       "primaryVariant": "#F6123A",
       "secondary": "#C24369",
       "secondaryVariant": "#65061F",
-      "surface": "#21000C"
+      "surfaceContainer": "#21000C"
     },
     "Royalty": {
-      "background": "#291E3F",
+      "surface": "#291E3F",
       "hyperlink": "#EECD7F",
       "isDark": true,
       "primary": "#C6A14B",
       "primaryVariant": "#A5812A",
       "secondary": "#B79782",
       "secondaryVariant": "#97745D",
-      "surface": "#383049"
+      "surfaceContainer": "#383049"
     },
     "Ruby Mine": {
       "isDark": true,
@@ -153,53 +153,53 @@
       "primaryVariant": "#771026",
       "secondary": "#F22A51",
       "secondaryVariant": "#FFFFFF",
-      "background": "#202020",
       "surface": "#202020",
+      "surfaceContainer": "#202020",
       "onPrimary": "#FDFDFD",
       "hyperlink": "#EA71C5"
     },
     "Sigma": {
-      "background": "#282C34",
+      "surface": "#282C34",
       "hyperlink": "#6FA9E2",
       "isDark": true,
       "primary": "#40D7A3",
       "primaryVariant": "#39BE91",
       "secondary": "#18FFFF",
       "secondaryVariant": "#18D1D1",
-      "surface": "#21242B"
+      "surfaceContainer": "#21242B"
     },
     "Society": {
-      "background": "#3c2154",
+      "surface": "#3c2154",
       "hyperlink": "#6FA9E2",
       "isDark": true,
       "primary": "#1cdd32",
       "primaryVariant": "#20ff48",
       "secondary": "#1cdd32",
       "secondaryVariant": "#20ff48",
-      "surface": "#743fa1"
+      "surfaceContainer": "#743fa1"
     },
     "Starfarer": {
-      "background": "#011E26",
+      "surface": "#011E26",
       "hyperlink": "#00FFFF",
       "isDark": true,
       "onPrimary": "#A8DBFC",
       "primary": "#184957",
       "primaryVariant": "#00212e",
       "secondary": "#FCCF00",
-      "surface": "#0A1D22"
+      "surfaceContainer": "#0A1D22"
     },
     "Tiandong": {
-      "background": "#020101",
+      "surface": "#020101",
       "hyperlink": "#C3B9A4",
       "isDark": true,
       "primary": "#73875F",
       "primaryVariant": "#4F5F3E",
       "secondary": "#886A38",
       "secondaryVariant": "#6F511F",
-      "surface": "#0C1009"
+      "surfaceContainer": "#0C1009"
     },
     "Tidal": {
-      "background": "#17171A",
+      "surface": "#17171A",
       "hyperlink": "#21FEEC",
       "isDark": true,
       "onPrimary": "#FDFDFD",
@@ -207,20 +207,20 @@
       "primaryVariant": "#A2004A",
       "secondary": "#00FFFF",
       "secondaryVariant": "#00B6B6",
-      "surface": "#17171A"
+      "surfaceContainer": "#17171A"
     },
     "VIC": {
-      "background": "#1B1B1B",
+      "surface": "#1B1B1B",
       "hyperlink": "#4DEFD2",
       "isDark": true,
       "primary": "#EE9E00",
       "primaryVariant": "#BD7E00",
       "secondary": "#4DEFD2",
       "secondaryVariant": "#27E6C6",
-      "surface": "#112B29"
+      "surfaceContainer": "#112B29"
     },
     "Wisp": {
-      "background": "#282C34",
+      "surface": "#282C34",
       "hyperlink": "#6FA9E2",
       "isDark": true,
       "onPrimary": "#FDFDFD",
@@ -228,10 +228,10 @@
       "primaryVariant": "#066BB8",
       "secondary": "#2BE394",
       "secondaryVariant": "#03DB7E",
-      "surface": "#042138"
+      "surfaceContainer": "#042138"
     },
     "Wunder": {
-      "background": "#112633",
+      "surface": "#112633",
       "hyperlink": "#DD5D6F",
       "isDark": true,
       "onPrimary": "#FDFDFD",
@@ -239,7 +239,7 @@
       "primaryVariant": "#DD5D6F",
       "secondary": "#DD5D6F",
       "secondaryVariant": "#BF394B",
-      "surface": "#32444F"
+      "surfaceContainer": "#32444F"
     }
   }
 }

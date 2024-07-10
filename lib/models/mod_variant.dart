@@ -30,41 +30,46 @@ class ModVariant with _$ModVariant {
 
   String get smolId => createSmolId(modInfo.id, modInfo.version);
 
-  // TODO this sucks, it does a file read (or 3) every time it's called, but Freezed doesn't support lazy properties
-  String? get iconFilePath {
-    var path = modIconFilePaths
-        .map((path) => modsFolder.resolve(path))
-        .firstWhereOrNull((file) => file.existsSync())
-        ?.path;
+  /// In-memory cache, won't be updated if the mod's icon changes until restart.
+  /// Better than re-reading the files every time, though.
+  static Map<String, String?> iconCache = {};
 
-    if (path == null) {
-      final lunaSettings =
-          modsFolder.resolve("data/config/LunaSettingsConfig.json").toFile();
-      if (lunaSettings.existsSync()) {
-        try {
-          final lunaSettingsIconPath = (lunaSettings
-                  .readAsStringSyncAllowingMalformed()
-                  .fixJsonToMap()
-                  .entries
-                  .first
-                  .value as Map<String, dynamic>)
-              .entries
-              .firstWhereOrNull((entry) =>
-                  entry.key.toLowerCase().containsIgnoreCase("iconPath"))
-              ?.value;
-          if (lunaSettingsIconPath is String) {
-            final icon = modsFolder.resolve(lunaSettingsIconPath).toFile();
-            if (icon.existsSync()) {
-              path = icon.path;
+  String? get iconFilePath {
+    return iconCache.putIfAbsent(modInfo.id, () {
+      var path = modIconFilePaths
+          .map((path) => modsFolder.resolve(path))
+          .firstWhereOrNull((file) => file.existsSync())
+          ?.path;
+
+      if (path == null) {
+        final lunaSettings =
+            modsFolder.resolve("data/config/LunaSettingsConfig.json").toFile();
+        if (lunaSettings.existsSync()) {
+          try {
+            final lunaSettingsIconPath = (lunaSettings
+                    .readAsStringSyncAllowingMalformed()
+                    .fixJsonToMap()
+                    .entries
+                    .first
+                    .value as Map<String, dynamic>)
+                .entries
+                .firstWhereOrNull((entry) =>
+                    entry.key.toLowerCase().containsIgnoreCase("iconPath"))
+                ?.value;
+            if (lunaSettingsIconPath is String) {
+              final icon = modsFolder.resolve(lunaSettingsIconPath).toFile();
+              if (icon.existsSync()) {
+                path = icon.path;
+              }
             }
+          } catch (e) {
+            Fimber.d("Error reading LunaSettingsConfig.json: $e");
           }
-        } catch (e) {
-          Fimber.d("Error reading LunaSettingsConfig.json: $e");
         }
       }
-    }
 
-    return path;
+      return path;
+    });
   }
 
   String get generatedVariantFolderName => generateVariantFolderName(modInfo);

@@ -8,10 +8,14 @@ import 'package:trios/widgets/disable_if_cannot_write_mods.dart';
 
 class AddNewModsButton extends ConsumerWidget {
   final double iconSize;
+  final Widget? labelWidget;
+  final EdgeInsetsGeometry padding;
 
   const AddNewModsButton({
     super.key,
     this.iconSize = 20,
+    this.padding = const EdgeInsets.all(4),
+    this.labelWidget,
   });
 
   @override
@@ -20,23 +24,40 @@ class AddNewModsButton extends ConsumerWidget {
       message: "Add new mod(s)\nTip: drag'n'drop to install mods!",
       textAlign: TextAlign.center,
       child: DisableIfCannotWriteMods(
-        child: IconButton(
-            icon: const Icon(Icons.add),
-            iconSize: iconSize,
-            constraints: const BoxConstraints(),
-            onPressed: () {
-              FilePicker.platform
-                  .pickFiles(allowMultiple: true)
-                  .then((value) async {
-                if (value == null) return;
-
-                for (final file in value.files) {
-                  await installModFromArchiveWithDefaultUI(
-                      File(file.path!), ref, context);
-                }
-              });
-            }),
+        child: labelWidget != null
+            ? Padding(
+                padding: padding,
+                child: OutlinedButton.icon(
+                  onPressed: () => _pickAndInstallMods(ref, context),
+                  label: labelWidget!,
+                  icon: Icon(
+                    Icons.add,
+                    size: iconSize,
+                  ),
+                ),
+              )
+            : IconButton(
+                onPressed: () => _pickAndInstallMods(ref, context),
+                constraints: const BoxConstraints(),
+                iconSize: iconSize,
+                padding: padding,
+                icon: Icon(
+                  Icons.add,
+                  size: iconSize,
+                ),
+              ),
       ),
     );
+  }
+
+  void _pickAndInstallMods(WidgetRef ref, BuildContext context) {
+    FilePicker.platform.pickFiles(allowMultiple: true).then((value) async {
+      if (value == null) return;
+
+      for (final file in value.files) {
+        await installModFromArchiveWithDefaultUI(
+            File(file.path!), ref, context);
+      }
+    });
   }
 }

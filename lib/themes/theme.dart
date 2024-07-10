@@ -20,30 +20,29 @@ import 'dart:ui';
 /// - Links and headlines
 /// @property secondaryVariant The secondary variant color is used to distinguish two elements of the
 /// app using the secondary color.
-/// @property background The background color appears behind scrollable content.
-/// @property surface The surface color is used on surfaces of components, such as cards, sheets and
+/// @property surface The surface color appears behind scrollable content.
+/// @property surfaceContainer The surface container color is used for backgrounds of components, such as cards, sheets and
 /// menus.
 /// @property error The error color is used to indicate error within components, such as text fields.
 /// @property onPrimary Color used for text and icons displayed on top of the primary color.
 /// @property onSecondary Color used for text and icons displayed on top of the secondary color.
-/// @property onBackground Color used for text and icons displayed on top of the background color.
 /// @property onSurface Color used for text and icons displayed on top of the surface color.
 /// @property onError Color used for text and icons displayed on top of the error color.
 /// @property isDark Whether this Colors is considered as a 'light' or 'dark' set of colors. This
 /// affects default behavior for some components: for example, in a light theme a [TopAppBar] will
-/// use [primary] by default for its background color, when in a dark theme it will use [surface].
+/// use [primary] by default for its background color, when in a dark theme it will use [surfaceContainer].
 class TriOSTheme {
   final bool isDark;
   final Color primary;
   final Color? primaryVariant;
   final Color? secondary;
   final Color? secondaryVariant;
-  final Color? background;
   final Color? surface;
+  final Color? surfaceContainer;
   final Color? error;
   final Color? onPrimary;
   final Color? onSecondary;
-  final Color? onBackground;
+  // final Color? onBackground;
   final Color? onSurface;
   final Color? onError;
   final Color? hyperlink;
@@ -54,12 +53,12 @@ class TriOSTheme {
     this.primaryVariant,
     this.secondary,
     this.secondaryVariant,
-    this.background,
     this.surface,
+    this.surfaceContainer,
     this.error,
     this.onPrimary,
     this.onSecondary,
-    this.onBackground,
+    // this.onBackground,
     this.onSurface,
     this.onError,
     this.hyperlink,
@@ -77,7 +76,7 @@ class TriOSTheme {
     String? error,
     String? onPrimary,
     String? onSecondary,
-    String? onBackground,
+    // String? onBackground,
     String? onSurface,
     String? onError,
     String? hyperlink,
@@ -85,12 +84,12 @@ class TriOSTheme {
         primaryVariant = _parseColor(primaryVariant),
         secondary = _parseColor(secondary),
         secondaryVariant = _parseColor(secondaryVariant),
-        background = _parseColor(background),
-        surface = _parseColor(surface),
+        surface = _parseColor(background),
+        surfaceContainer = _parseColor(surface),
         error = _parseColor(error),
         onPrimary = _parseColor(onPrimary),
         onSecondary = _parseColor(onSecondary),
-        onBackground = _parseColor(onBackground),
+        // onBackground = _parseColor(onBackground),
         onSurface = _parseColor(onSurface),
         onError = _parseColor(onError),
         hyperlink = _parseColor(hyperlink);
@@ -103,7 +102,7 @@ class TriOSTheme {
 
   @override
   String toString() {
-    return 'TriOSTheme{isDark: $isDark, primary: $primary, primaryVariant: $primaryVariant, secondary: $secondary, secondaryVariant: $secondaryVariant, background: $background, surface: $surface, error: $error, onPrimary: $onPrimary, onSecondary: $onSecondary, onBackground: $onBackground, onSurface: $onSurface, onError: $onError, hyperlink: $hyperlink}';
+    return 'TriOSTheme{isDark: $isDark, primary: $primary, primaryVariant: $primaryVariant, secondary: $secondary, secondaryVariant: $secondaryVariant, surface: $surface, surfaceContainer: $surfaceContainer, error: $error, onPrimary: $onPrimary, onSecondary: $onSecondary, onSurface: $onSurface, onError: $onError, hyperlink: $hyperlink}';
   }
 
   TriOSTheme copyWith({
@@ -112,12 +111,12 @@ class TriOSTheme {
     Color? primaryVariant,
     Color? secondary,
     Color? secondaryVariant,
-    Color? background,
     Color? surface,
+    Color? surfaceContainer,
     Color? error,
     Color? onPrimary,
     Color? onSecondary,
-    Color? onBackground,
+    // Color? onBackground,
     Color? onSurface,
     Color? onError,
     Color? hyperlink,
@@ -128,12 +127,12 @@ class TriOSTheme {
       primaryVariant: primaryVariant ?? this.primaryVariant,
       secondary: secondary ?? this.secondary,
       secondaryVariant: secondaryVariant ?? this.secondaryVariant,
-      background: background ?? this.background,
       surface: surface ?? this.surface,
+      surfaceContainer: surfaceContainer ?? this.surfaceContainer,
       error: error ?? this.error,
       onPrimary: onPrimary ?? this.onPrimary,
       onSecondary: onSecondary ?? this.onSecondary,
-      onBackground: onBackground ?? this.onBackground,
+      // onBackground: onBackground ?? this.onBackground,
       onSurface: onSurface ?? this.onSurface,
       onError: onError ?? this.onError,
       hyperlink: hyperlink ?? this.hyperlink,

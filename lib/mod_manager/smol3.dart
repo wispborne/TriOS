@@ -41,6 +41,8 @@ class Smol3 extends ConsumerStatefulWidget {
 
 typedef GridStateManagerCallback = Function(PlutoGridStateManager);
 
+final searchQuery = StateProvider.autoDispose<String>((ref) => "");
+
 final _stateManagerProvider =
     StateProvider.autoDispose<PlutoGridStateManager?>((ref) => null);
 
@@ -54,7 +56,7 @@ class _Smol3State extends ConsumerState<Smol3>
   int? selectedRowIdx;
   late List<Mod> modsToDisplay;
   late List<Mod> filteredMods;
-  String searchQuery = "";
+  final searchController = SearchController();
 
   // Map<String, VersionCheckResult>? versionCheckResults;
   PlutoGridStateManager? stateManager;
@@ -111,12 +113,14 @@ class _Smol3State extends ConsumerState<Smol3>
 
     ref.watch(appSettings.select((value) => value.lastStarsectorVersion));
     var modCompatibility = ref.watch(AppState.modCompatibility);
+    final query = ref.watch(searchQuery);
+    searchController.value = TextEditingValue(text: query);
 
     final mods = ref.watch(AppState.mods);
     final versionCheckResults =
         ref.watch(AppState.versionCheckResults).valueOrNull;
     modsToDisplay = mods;
-    filteredMods = filterMods(searchQuery);
+    filteredMods = filterMods(query);
     final enabledMods =
         filteredMods.where((mod) => mod.isEnabledInGame).toList();
     final disabledMods =
@@ -125,8 +129,8 @@ class _Smol3State extends ConsumerState<Smol3>
     const double versionSelectorWidth = 130;
     if (stateManager != null) {
       stateManager.refRows.clearFromOriginal();
-      stateManager.refRows.addAll(createGridRows(enabledMods, disabledMods,
-          shouldSort: searchQuery.isEmpty));
+      stateManager.refRows.addAll(
+          createGridRows(enabledMods, disabledMods, shouldSort: query.isEmpty));
       stateManager.refColumns.clearFromOriginal();
       stateManager.refColumns.addAll(createColumns(versionSelectorWidth,
           lightTextOpacity, versionCheckResults, enabledMods, disabledMods));
@@ -182,6 +186,7 @@ class _Smol3State extends ConsumerState<Smol3>
                           height: 30,
                           width: 300,
                           child: SearchAnchor(
+                            searchController: searchController,
                             builder: (BuildContext context,
                                 SearchController controller) {
                               return SearchBar(
@@ -189,7 +194,7 @@ class _Smol3State extends ConsumerState<Smol3>
                                   leading: const Icon(Icons.search),
                                   hintText: "Filter mods...",
                                   trailing: [
-                                    searchQuery.isEmpty
+                                    query.isEmpty
                                         ? Container()
                                         : IconButton(
                                             icon: const Icon(Icons.clear),
@@ -197,25 +202,23 @@ class _Smol3State extends ConsumerState<Smol3>
                                             padding: EdgeInsets.zero,
                                             onPressed: () {
                                               controller.clear();
-                                              setState(() {
-                                                searchQuery = "";
-                                                filteredMods =
-                                                    filterMods(searchQuery);
-                                              });
+                                              ref
+                                                  .read(searchQuery.notifier)
+                                                  .state = "";
+                                              // filteredMods =
+                                              //     filterMods(query);
                                             },
                                           )
                                   ],
                                   backgroundColor: WidgetStateProperty.all(
-                                      Theme.of(context).colorScheme.surface),
-                                  surfaceTintColor: WidgetStateProperty.all(
-                                      Theme.of(context)
-                                          .colorScheme
-                                          .surfaceContainerLowest),
+                                      Theme.of(context).colorScheme.surfaceContainer),
                                   onChanged: (value) {
-                                    setState(() {
-                                      searchQuery = value;
-                                      filteredMods = filterMods(value);
-                                    });
+                                    ref.read(searchQuery.notifier).state =
+                                        value;
+                                    // setState(() {
+                                    //   query = value;
+                                    //   filteredMods = filterMods(value);
+                                    // });
                                   });
                             },
                             suggestionsBuilder: (BuildContext context,

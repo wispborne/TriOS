@@ -1,6 +1,8 @@
 # 0.0.58
 - Added
   - Search box to filter mods.
+  - "Skip Game Launcher" option in the Dashboard.
+    - Enabled by default, disable it to act like double-clicking Starsector.exe.
   - "Add Mod(s)" button on Mods tab.
 - Fixed
   - Unable to install mods with tabs in the mod_info.json file (e.g. VIC).
@@ -10,6 +12,7 @@
   - Some light theme fixes.
 - Changed
   - Dashboard: tooltip moved to top-left of cursor to avoid it hiding the mod list so much.
+  - Now caches icon paths, should be a little faster when scrolling mods.
 
 # 0.0.57
 - Fixed

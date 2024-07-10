@@ -14,10 +14,12 @@ import 'package:trios/widgets/disable_if_cannot_write_mods.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vs_scrollbar/vs_scrollbar.dart';
 
+import '../mod_manager/smol3.dart';
 import '../mod_manager/version_checker.dart';
 import '../models/mod.dart';
 import '../trios/app_state.dart';
 import '../trios/download_manager/download_manager.dart';
+import '../utils/search.dart';
 import '../widgets/add_new_mods_button.dart';
 import '../widgets/debug_info.dart';
 import 'mod_list_basic_entry.dart';
@@ -85,16 +87,20 @@ class ModListMini extends ConsumerStatefulWidget {
 class _ModListMiniState extends ConsumerState<ModListMini>
     with SingleTickerProviderStateMixin {
   final ScrollController _scrollController = ScrollController();
+  final searchController = SearchController();
 
   @override
   Widget build(BuildContext context) {
     final enabledModIds = ref.watch(AppState.enabledModIds).valueOrNull;
     final modListAsync = ref.watch(AppState.mods);
     final modVariants = ref.watch(AppState.modVariants);
-    final modList = modListAsync;
+    final query = ref.watch(searchQuery);
+    final modList =
+        query.isEmpty ? modListAsync : searchMods(modListAsync, query) ?? [];
     final versionCheck = ref.watch(AppState.versionCheckResults).valueOrNull;
     final isRefreshing = (modVariants.isLoading ||
         ref.watch(AppState.versionCheckResults).isLoading);
+    searchController.value = TextEditingValue(text: query);
     final theme = Theme.of(context);
 
     return Padding(
@@ -106,67 +112,101 @@ class _ModListMiniState extends ConsumerState<ModListMini>
           Row(
             children: [
               Expanded(
-                child: Stack(
+                child: Column(
                   children: [
-                    Text("Mods",
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleLarge
-                            ?.copyWith(fontSize: 20)),
-                    Align(
-                      alignment: Alignment.topRight,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Tooltip(
-                              message: "Refresh mods and recheck versions",
-                              child: IconButton(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 4),
-                                icon: ConditionalWrap(
-                                    condition: isRefreshing,
-                                    wrapper: (child) => Animate(
-                                        onComplete: (c) => c.repeat(),
-                                        effects: [
-                                          RotateEffect(duration: 2000.ms)
-                                        ],
-                                        child: child),
-                                    child: const Icon(Icons.refresh)),
-                                onPressed: () {
-                                  AppState.skipCacheOnNextVersionCheck = true;
-                                  ref.invalidate(AppState.modVariants);
-                                },
-                                constraints: const BoxConstraints(),
-                              )),
-                          Tooltip(
-                            message: "Copy mod info",
-                            child: IconButton(
-                              icon: const Icon(Icons.copy),
-                              iconSize: 20,
-                              constraints: const BoxConstraints(),
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 4),
-                              onPressed: () {
-                                Clipboard.setData(ClipboardData(
-                                    text:
-                                        "Mods (${modList.length})\n${modList.map((mod) {
-                                  final variant =
-                                      mod.findFirstEnabledOrHighestVersion;
-                                  return false
-                                      ? "${mod.id} ${variant?.modInfo.version}"
-                                      : "${variant?.modInfo.name}  v${variant?.modInfo.version}  [${mod.id}]";
-                                }).join('\n')}"));
-                                ScaffoldMessenger.of(context)
-                                    .showSnackBar(const SnackBar(
-                                  content:
-                                      Text("Copied mod info to clipboard."),
-                                ));
-                              },
+                    Stack(
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("Mods",
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.copyWith(fontSize: 20)),
+                            Padding(
+                              padding: const EdgeInsets.only(left: 0),
+                              child: Text(
+                                  "${enabledModIds?.length ?? 0} of ${modListAsync.length} enabled",
+                                  style:
+                                      Theme.of(context).textTheme.labelMedium),
                             ),
+                          ],
+                        ),
+                        Align(
+                          alignment: Alignment.topRight,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Tooltip(
+                                      message:
+                                          "Refresh mods and recheck versions",
+                                      child: IconButton(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 4),
+                                        icon: ConditionalWrap(
+                                            condition: isRefreshing,
+                                            wrapper: (child) => Animate(
+                                                onComplete: (c) => c.repeat(),
+                                                effects: [
+                                                  RotateEffect(
+                                                      duration: 2000.ms)
+                                                ],
+                                                child: child),
+                                            child: const Icon(Icons.refresh)),
+                                        onPressed: () {
+                                          AppState.skipCacheOnNextVersionCheck =
+                                              true;
+                                          ref.invalidate(AppState.modVariants);
+                                        },
+                                        constraints: const BoxConstraints(),
+                                      )),
+                                  Tooltip(
+                                    message: "Copy mod info",
+                                    child: IconButton(
+                                      icon: const Icon(Icons.copy),
+                                      iconSize: 20,
+                                      constraints: const BoxConstraints(),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 4),
+                                      onPressed: () {
+                                        Clipboard.setData(ClipboardData(
+                                            text:
+                                                "Mods (${modList.length})\n${modList.map((mod) {
+                                          final variant = mod
+                                              .findFirstEnabledOrHighestVersion;
+                                          return false
+                                              ? "${mod.id} ${variant?.modInfo.version}"
+                                              : "${variant?.modInfo.name}  v${variant?.modInfo.version}  [${mod.id}]";
+                                        }).join('\n')}"));
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(const SnackBar(
+                                          content: Text(
+                                              "Copied mod info to clipboard."),
+                                        ));
+                                      },
+                                    ),
+                                  ),
+                                  const AddNewModsButton(
+                                      padding:
+                                          EdgeInsets.symmetric(horizontal: 4)),
+                                ],
+                              ),
+                            ],
                           ),
-                          const AddNewModsButton(
-                              padding: EdgeInsets.symmetric(horizontal: 4)),
-                        ],
+                        ),
+                      ],
+                    ),
+                    Padding(
+                      padding:
+                          const EdgeInsets.only(top: 8, bottom: 4, right: 4),
+                      child: SizedBox(
+                        height: 30,
+                        child: ModListBasicSearch(query),
                       ),
                     ),
                   ],
@@ -214,9 +254,6 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                        "${enabledModIds?.length ?? 0} of ${modList.length} enabled",
-                        style: Theme.of(context).textTheme.labelMedium),
                     Expanded(
                       child: VsScrollbar(
                         controller: _scrollController,
@@ -235,8 +272,8 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                       children: [
                                         const Divider(),
                                         Padding(
-                                          padding: const EdgeInsets.only(
-                                              bottom: 0, right: 8),
+                                          padding:
+                                              const EdgeInsets.only(right: 8),
                                           child: Row(
                                             children: [
                                               Text(
@@ -250,6 +287,8 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                                     .update((s) => s.copyWith(
                                                         isUpdatesFieldShown: !s
                                                             .isUpdatesFieldShown)),
+                                                constraints:
+                                                    const BoxConstraints(),
                                                 icon: Icon(
                                                     isUpdatesFieldShown
                                                         ? Icons.visibility
@@ -262,18 +301,23 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                               Tooltip(
                                                   message:
                                                       "Download all ${modsWithUpdates.whereNotNull().length} updates",
-                                                  child: IconButton(
-                                                      onPressed: () {
-                                                        _onClickedDownloadModUpdatesDialog(
-                                                            modsWithUpdates,
-                                                            versionCheck,
-                                                            context);
-                                                      },
-                                                      icon: Icon(Icons.update,
-                                                          color:
-                                                              Theme.of(context)
-                                                                  .colorScheme
-                                                                  .primary))),
+                                                  child: SizedBox(
+                                                    child: TextButton.icon(
+                                                        label: const Text(
+                                                            "Update All"),
+                                                        onPressed: () {
+                                                          _onClickedDownloadModUpdatesDialog(
+                                                              modsWithUpdates,
+                                                              versionCheck,
+                                                              context);
+                                                        },
+                                                        icon: Icon(Icons.update,
+                                                            size: 24,
+                                                            color: Theme.of(
+                                                                    context)
+                                                                .colorScheme
+                                                                .primary)),
+                                                  )),
                                             ],
                                           ),
                                         ),
@@ -323,6 +367,39 @@ class _ModListMiniState extends ConsumerState<ModListMini>
           ),
         ].animate(interval: 400.ms).fade(duration: 300.ms),
       ),
+    );
+  }
+
+  SearchAnchor ModListBasicSearch(String query) {
+    return SearchAnchor(
+      searchController: searchController,
+      builder: (BuildContext context, SearchController controller) {
+        return SearchBar(
+            controller: controller,
+            leading: const Icon(Icons.search),
+            hintText: "Filter...",
+            trailing: [
+              query.isEmpty
+                  ? Container()
+                  : IconButton(
+                      icon: const Icon(Icons.clear),
+                      constraints: const BoxConstraints(),
+                      padding: EdgeInsets.zero,
+                      onPressed: () {
+                        controller.clear();
+                        ref.read(searchQuery.notifier).state = "";
+                      },
+                    )
+            ],
+            backgroundColor: WidgetStateProperty.all(
+                Theme.of(context).colorScheme.surfaceContainer),
+            onChanged: (value) {
+              ref.read(searchQuery.notifier).state = value;
+            });
+      },
+      suggestionsBuilder: (BuildContext context, SearchController controller) {
+        return [];
+      },
     );
   }
 

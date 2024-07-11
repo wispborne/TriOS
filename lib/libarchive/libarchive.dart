@@ -66,6 +66,7 @@ class LibArchive {
             TargetPlatform.windows => "data/flutter_assets/assets",
             TargetPlatform.macOS =>
               "TriOS.app/Contents/Frameworks/App.framework/Resources/flutter_assets/assets",
+              // "${getApplicationDocumentsDirectory()}/Contents/Frameworks/App.framework/Resources/flutter_assets/assets",
             _ => "data/flutter_assets/assets",
           };
     final currentLibarchivePath =

@@ -4,10 +4,14 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
 import 'package:path/path.dart' as p;
-import 'package:platform_info/platform_info.dart';
+
+// import 'package:platform_info/platform_info.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/pretty_printer_custom.dart';
+
+import '../trios/constants.dart';
+import '../trios/settings/settings.dart';
 
 const logFileName = "latest.log";
 const logFolderName = "logs";
@@ -96,8 +100,7 @@ configureLogging(
 
   if (printPlatformInfo) {
     Fimber.i("Logging started.");
-    Fimber.i(
-        "Platform: ${Platform.I.operatingSystem.name} ${Platform.I.version}.");
+    Fimber.i("Platform: ${Platform.operatingSystemVersion}");
   }
 }
 
@@ -155,4 +158,110 @@ class Fimber {
       Sentry.captureException(ex, stackTrace: stacktrace);
     }
   }
+}
+
+SentryFlutterOptions configureSentry(
+    SentryFlutterOptions options, Settings? settings) {
+  options.dsn =
+      'https://490328260deec1632d3833a7b5439dd5@o4507579573600256.ingest.us.sentry.io/4507579574648832';
+  // Set tracesSampleRate to 1.0 to capture 100% of transactions for performance monitoring.
+  // We recommend adjusting this value in production.
+  // options.tracesSampleRate = 1.0;
+
+  // The sampling rate for profiling is relative to tracesSampleRate
+  // Setting to 1.0 will profile 100% of sampled transactions:
+  // options.profilesSampleRate = 1.0;
+  options
+    ..debug = kDebugMode
+    ..sendDefaultPii = false
+    ..enableUserInteractionBreadcrumbs = false
+    ..enableAppLifecycleBreadcrumbs = false
+    ..enableAutoNativeBreadcrumbs = false
+    ..enableAutoPerformanceTracing = false
+    ..enableUserInteractionTracing = false
+    ..enableWindowMetricBreadcrumbs = false;
+
+  options.beforeSend = (event, hint) {
+    return event
+        .copyWith(
+          serverName: "",
+          release: Constants.version,
+          dist: Constants.version,
+          platform: Platform.operatingSystemVersion,
+          user: event.user?.copyWith(
+              id: settings?.userId.toString(), ipAddress: "127.0.0.1"),
+          contexts: event.contexts.copyWith(
+            device: event.contexts.device?.copyWith(
+              name: "redacted",
+            ),
+            culture: event.contexts.culture?.copyWith(
+              timezone: "redacted",
+              locale: "redacted",
+            ),
+          ),
+        )
+        .let((it) => scrubSensitiveData(it, hint: hint));
+  };
+
+  return options;
+}
+
+SentryEvent scrubSensitiveData(SentryEvent event, {Hint? hint}) {
+  // Function to scrub usernames from the path
+  String scrubPath(String path) {
+    // Scrub Windows usernames
+    path =
+        path.replaceAll(RegExp(r'C:\\Users\\[^\\]+'), 'C:\\Users\\<REDACTED>');
+
+    // Scrub macOS and Linux usernames
+    path = path.replaceAll(RegExp(r'/Users/[^/]+'), '/Users/<REDACTED>');
+    path = path.replaceAll(RegExp(r'/home/[^/]+'), '/home/<REDACTED>');
+
+    return path;
+  }
+
+  // Scrub sensitive data from the exception values
+  final exceptions = event.exceptions?.map((exception) {
+    if (exception.stackTrace != null) {
+      final frames = exception.stackTrace!.frames.map((frame) {
+        if (frame.fileName != null) {
+          frame = frame.copyWith(fileName: scrubPath(frame.fileName!));
+        }
+        return frame;
+      }).toList();
+      exception =
+          exception.copyWith(stackTrace: SentryStackTrace(frames: frames));
+    }
+    if (exception.value != null) {
+      exception = exception.copyWith(value: scrubPath(exception.value!));
+    }
+    return exception;
+  }).toList();
+
+  // Scrub sensitive data from breadcrumbs
+  final breadcrumbs = event.breadcrumbs?.map((breadcrumb) {
+    if (breadcrumb.message != null) {
+      breadcrumb = breadcrumb.copyWith(message: scrubPath(breadcrumb.message!));
+    }
+    return breadcrumb;
+  }).toList();
+
+  // Scrub sensitive data from contexts
+  final contexts = event.contexts.map((key, value) {
+    if (value is Map<String, dynamic>) {
+      value = value.map((k, v) {
+        if (v is String) {
+          v = scrubPath(v);
+        }
+        return MapEntry(k, v);
+      });
+    }
+    return MapEntry(key, value);
+  });
+
+  return event.copyWith(
+    exceptions: exceptions,
+    breadcrumbs: breadcrumbs,
+    contexts: contexts as Contexts?,
+  );
 }

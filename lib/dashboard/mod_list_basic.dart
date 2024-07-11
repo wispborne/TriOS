@@ -265,7 +265,7 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                               controller: _scrollController,
                               itemCount: listItems.length, // UPDATES title
                               itemBuilder: (context, index) {
-                                if (index == 0 && modsWithUpdates.isNotEmpty) {
+                                if (index == 0 && modsWithUpdates.whereNotNull().isNotEmpty) {
                                   return Column(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,

@@ -242,9 +242,8 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                 final updatesToDisplay =
                     (isUpdatesFieldShown ? modsWithUpdates : <Mod?>[null]);
                 final listItems = updatesToDisplay +
-                    (modsWithUpdates.isEmpty ? [] : [null]) + // Divider
+                    (modsWithUpdates.isEmpty ? [] : [null]) +
                     (modList
-                        // .filter((mod) => mod.versionCheckerInfo == null)
                         .sortedBy((info) =>
                             info.findFirstEnabledOrHighestVersion?.modInfo
                                 .name ??
@@ -265,7 +264,8 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                               controller: _scrollController,
                               itemCount: listItems.length, // UPDATES title
                               itemBuilder: (context, index) {
-                                if (index == 0 && modsWithUpdates.whereNotNull().isNotEmpty) {
+                                if (index == 0 &&
+                                    modsWithUpdates.whereNotNull().isNotEmpty) {
                                   return Column(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
@@ -324,6 +324,16 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                       ]);
                                 }
                                 final mod = listItems[index];
+
+                                // Hide the second "ALL MODS" title if there are no updates.
+                                // Definitely a hack. Proper fix would be to change `listItems`
+                                // to a container/viewmodel instead of mods.
+                                if (updatesToDisplay.whereNotNull().isEmpty &&
+                                    mod == null &&
+                                    index == 1) {
+                                  return Container();
+                                }
+
                                 if (mod == null) {
                                   return Column(
                                       crossAxisAlignment:

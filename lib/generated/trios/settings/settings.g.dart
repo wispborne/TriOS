@@ -43,6 +43,8 @@ _$SettingsImpl _$$SettingsImplFromJson(Map<String, dynamic> json) =>
           ? null
           : ModsGridState.fromJson(
               json['modsGridState'] as Map<String, dynamic>),
+      allowCrashReporting: json['allowCrashReporting'] as bool?,
+      userId: json['userId'] as String? ?? "",
     );
 
 Map<String, dynamic> _$$SettingsImplToJson(_$SettingsImpl instance) =>
@@ -70,6 +72,8 @@ Map<String, dynamic> _$$SettingsImplToJson(_$SettingsImpl instance) =>
       'secondsBetweenModFolderChecks': instance.secondsBetweenModFolderChecks,
       'isUpdatesFieldShown': instance.isUpdatesFieldShown,
       'modsGridState': instance.modsGridState,
+      'allowCrashReporting': instance.allowCrashReporting,
+      'userId': instance.userId,
     };
 
 const _$TriOSToolsEnumMap = {

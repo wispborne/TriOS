@@ -47,6 +47,8 @@ mixin _$Settings {
   int get secondsBetweenModFolderChecks => throw _privateConstructorUsedError;
   bool get isUpdatesFieldShown => throw _privateConstructorUsedError;
   ModsGridState? get modsGridState => throw _privateConstructorUsedError;
+  bool? get allowCrashReporting => throw _privateConstructorUsedError;
+  String get userId => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -81,7 +83,9 @@ abstract class $SettingsCopyWith<$Res> {
       String? lastStarsectorVersion,
       int secondsBetweenModFolderChecks,
       bool isUpdatesFieldShown,
-      ModsGridState? modsGridState});
+      ModsGridState? modsGridState,
+      bool? allowCrashReporting,
+      String userId});
 
   $LaunchSettingsCopyWith<$Res> get launchSettings;
   $ModsGridStateCopyWith<$Res>? get modsGridState;
@@ -122,6 +126,8 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
     Object? secondsBetweenModFolderChecks = null,
     Object? isUpdatesFieldShown = null,
     Object? modsGridState = freezed,
+    Object? allowCrashReporting = freezed,
+    Object? userId = null,
   }) {
     return _then(_value.copyWith(
       gameDir: freezed == gameDir
@@ -212,6 +218,14 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
           ? _value.modsGridState
           : modsGridState // ignore: cast_nullable_to_non_nullable
               as ModsGridState?,
+      allowCrashReporting: freezed == allowCrashReporting
+          ? _value.allowCrashReporting
+          : allowCrashReporting // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      userId: null == userId
+          ? _value.userId
+          : userId // ignore: cast_nullable_to_non_nullable
+              as String,
     ) as $Val);
   }
 
@@ -266,7 +280,9 @@ abstract class _$$SettingsImplCopyWith<$Res>
       String? lastStarsectorVersion,
       int secondsBetweenModFolderChecks,
       bool isUpdatesFieldShown,
-      ModsGridState? modsGridState});
+      ModsGridState? modsGridState,
+      bool? allowCrashReporting,
+      String userId});
 
   @override
   $LaunchSettingsCopyWith<$Res> get launchSettings;
@@ -307,6 +323,8 @@ class __$$SettingsImplCopyWithImpl<$Res>
     Object? secondsBetweenModFolderChecks = null,
     Object? isUpdatesFieldShown = null,
     Object? modsGridState = freezed,
+    Object? allowCrashReporting = freezed,
+    Object? userId = null,
   }) {
     return _then(_$SettingsImpl(
       gameDir: freezed == gameDir
@@ -397,6 +415,14 @@ class __$$SettingsImplCopyWithImpl<$Res>
           ? _value.modsGridState
           : modsGridState // ignore: cast_nullable_to_non_nullable
               as ModsGridState?,
+      allowCrashReporting: freezed == allowCrashReporting
+          ? _value.allowCrashReporting
+          : allowCrashReporting // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      userId: null == userId
+          ? _value.userId
+          : userId // ignore: cast_nullable_to_non_nullable
+              as String,
     ));
   }
 }
@@ -426,7 +452,9 @@ class _$SettingsImpl implements _Settings {
       this.lastStarsectorVersion,
       this.secondsBetweenModFolderChecks = 15,
       this.isUpdatesFieldShown = true,
-      this.modsGridState});
+      this.modsGridState,
+      this.allowCrashReporting,
+      this.userId = ""});
 
   factory _$SettingsImpl.fromJson(Map<String, dynamic> json) =>
       _$$SettingsImplFromJson(json);
@@ -488,10 +516,15 @@ class _$SettingsImpl implements _Settings {
   final bool isUpdatesFieldShown;
   @override
   final ModsGridState? modsGridState;
+  @override
+  final bool? allowCrashReporting;
+  @override
+  @JsonKey()
+  final String userId;
 
   @override
   String toString() {
-    return 'Settings(gameDir: $gameDir, gameCoreDir: $gameCoreDir, modsDir: $modsDir, hasCustomModsDir: $hasCustomModsDir, shouldAutoUpdateOnLaunch: $shouldAutoUpdateOnLaunch, isRulesHotReloadEnabled: $isRulesHotReloadEnabled, windowXPos: $windowXPos, windowYPos: $windowYPos, windowWidth: $windowWidth, windowHeight: $windowHeight, isMaximized: $isMaximized, isMinimized: $isMinimized, defaultTool: $defaultTool, jre23VmparamsFilename: $jre23VmparamsFilename, useJre23: $useJre23, showJre23ConsoleWindow: $showJre23ConsoleWindow, enableDirectLaunch: $enableDirectLaunch, launchSettings: $launchSettings, lastStarsectorVersion: $lastStarsectorVersion, secondsBetweenModFolderChecks: $secondsBetweenModFolderChecks, isUpdatesFieldShown: $isUpdatesFieldShown, modsGridState: $modsGridState)';
+    return 'Settings(gameDir: $gameDir, gameCoreDir: $gameCoreDir, modsDir: $modsDir, hasCustomModsDir: $hasCustomModsDir, shouldAutoUpdateOnLaunch: $shouldAutoUpdateOnLaunch, isRulesHotReloadEnabled: $isRulesHotReloadEnabled, windowXPos: $windowXPos, windowYPos: $windowYPos, windowWidth: $windowWidth, windowHeight: $windowHeight, isMaximized: $isMaximized, isMinimized: $isMinimized, defaultTool: $defaultTool, jre23VmparamsFilename: $jre23VmparamsFilename, useJre23: $useJre23, showJre23ConsoleWindow: $showJre23ConsoleWindow, enableDirectLaunch: $enableDirectLaunch, launchSettings: $launchSettings, lastStarsectorVersion: $lastStarsectorVersion, secondsBetweenModFolderChecks: $secondsBetweenModFolderChecks, isUpdatesFieldShown: $isUpdatesFieldShown, modsGridState: $modsGridState, allowCrashReporting: $allowCrashReporting, userId: $userId)';
   }
 
   @override
@@ -543,7 +576,10 @@ class _$SettingsImpl implements _Settings {
             (identical(other.isUpdatesFieldShown, isUpdatesFieldShown) ||
                 other.isUpdatesFieldShown == isUpdatesFieldShown) &&
             (identical(other.modsGridState, modsGridState) ||
-                other.modsGridState == modsGridState));
+                other.modsGridState == modsGridState) &&
+            (identical(other.allowCrashReporting, allowCrashReporting) ||
+                other.allowCrashReporting == allowCrashReporting) &&
+            (identical(other.userId, userId) || other.userId == userId));
   }
 
   @JsonKey(ignore: true)
@@ -571,7 +607,9 @@ class _$SettingsImpl implements _Settings {
         lastStarsectorVersion,
         secondsBetweenModFolderChecks,
         isUpdatesFieldShown,
-        modsGridState
+        modsGridState,
+        allowCrashReporting,
+        userId
       ]);
 
   @JsonKey(ignore: true)
@@ -611,7 +649,9 @@ abstract class _Settings implements Settings {
       final String? lastStarsectorVersion,
       final int secondsBetweenModFolderChecks,
       final bool isUpdatesFieldShown,
-      final ModsGridState? modsGridState}) = _$SettingsImpl;
+      final ModsGridState? modsGridState,
+      final bool? allowCrashReporting,
+      final String userId}) = _$SettingsImpl;
 
   factory _Settings.fromJson(Map<String, dynamic> json) =
       _$SettingsImpl.fromJson;
@@ -665,6 +705,10 @@ abstract class _Settings implements Settings {
   bool get isUpdatesFieldShown;
   @override
   ModsGridState? get modsGridState;
+  @override
+  bool? get allowCrashReporting;
+  @override
+  String get userId;
   @override
   @JsonKey(ignore: true)
   _$$SettingsImplCopyWith<_$SettingsImpl> get copyWith =>

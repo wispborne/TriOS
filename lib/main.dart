@@ -1,9 +1,13 @@
 import 'dart:io';
 
+import 'package:collection/collection.dart';
+import 'package:dart_extensions_methods/dart_extension_methods.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:screen_retriever/screen_retriever.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:toastification/toastification.dart';
 import 'package:trios/chipper/chipper_home.dart';
@@ -17,15 +21,18 @@ import 'package:trios/trios/self_updater/self_updater.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/trios/settings/settings_page.dart';
 import 'package:trios/trios/toasts/download_toast_manager.dart';
+import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/vram_estimator/vram_estimator.dart';
 import 'package:trios/widgets/blur.dart';
 import 'package:trios/widgets/changelog_viewer.dart';
 import 'package:trios/widgets/conditional_wrap.dart';
 import 'package:trios/widgets/disable.dart';
+import 'package:trios/widgets/restartable_app.dart';
 import 'package:trios/widgets/self_update_toast.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:trios/widgets/trios_app_icon.dart';
+import 'package:uuid/uuid.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:window_size/window_size.dart';
 
@@ -45,10 +52,6 @@ void main() async {
     Fimber.i("${Constants.appTitle} logging started.");
     Fimber.i(
         "Platform: ${Platform.operatingSystem} ${Platform.operatingSystemVersion}.");
-    FlutterError.onError = (details) {
-      Fimber.e("${details.exceptionAsString()}\n${details.stack}",
-          ex: details.exception, stacktrace: details.stack);
-    };
   } catch (ex) {
     print("Error initializing logging. $ex");
     loggingError = ex;
@@ -68,7 +71,72 @@ void main() async {
         ex: e);
   }
 
-  runApp(const ProviderScope(observers: [], child: TriOSApp()));
+  bool allowCrashReporting = false;
+  Settings? settings;
+
+  try {
+    settings = readAppSettings();
+    if (settings != null && settings.userId.isNullOrEmpty()) {
+      final userId = const Uuid().v8();
+      writeAppSettings(settings.copyWith(userId: userId));
+    }
+    allowCrashReporting = settings?.allowCrashReporting ?? false;
+    configureLogging(allowSentryReporting: allowCrashReporting);
+  } catch (e) {
+    Fimber.w("Error reading crash reporting setting.", ex: e);
+  }
+
+  if (allowCrashReporting) {
+    await SentryFlutter.init(
+      (options) {
+        options.dsn =
+            'https://490328260deec1632d3833a7b5439dd5@o4507579573600256.ingest.us.sentry.io/4507579574648832';
+        // Set tracesSampleRate to 1.0 to capture 100% of transactions for performance monitoring.
+        // We recommend adjusting this value in production.
+        // options.tracesSampleRate = 1.0;
+
+        // The sampling rate for profiling is relative to tracesSampleRate
+        // Setting to 1.0 will profile 100% of sampled transactions:
+        // options.profilesSampleRate = 1.0;
+        options
+          ..debug = kDebugMode
+          ..sendDefaultPii = false
+          ..enableUserInteractionBreadcrumbs = false
+          ..enableAppLifecycleBreadcrumbs = false
+          ..enableAutoNativeBreadcrumbs = false
+          ..enableAutoPerformanceTracing = false
+          ..enableUserInteractionTracing = false
+          ..enableWindowMetricBreadcrumbs = false;
+
+        options.beforeSend = (event, hint) {
+          return event.copyWith(
+            serverName: "",
+            release: Constants.version,
+            dist: Constants.version,
+            platform: Platform.operatingSystemVersion,
+            user: event.user?.copyWith(
+                id: settings?.userId.toString(), ipAddress: "127.0.0.1"),
+            contexts: event.contexts.copyWith(
+              device: event.contexts.device?.copyWith(
+                name: "redacted",
+              ),
+              culture: event.contexts.culture?.copyWith(
+                timezone: "redacted",
+                locale: "redacted",
+              ),
+            ),
+          );
+        };
+      },
+      appRunner: () {
+        Fimber.i("Sentry initialized.");
+        _runTriOS();
+      },
+    );
+  } else {
+    _runTriOS();
+  }
+
   setWindowTitle(Constants.appTitle);
   const minSize = Size(900, 600);
 
@@ -140,6 +208,9 @@ void main() async {
   }
 }
 
+void _runTriOS() => runApp(const ProviderScope(
+    observers: [], child: RestartableApp(child: TriOSApp())));
+
 class TriOSApp extends ConsumerStatefulWidget {
   const TriOSApp({super.key});
 
@@ -153,6 +224,26 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
     super.initState();
     AppState.theme.addListener(() {
       setState(() {});
+    });
+
+    ref.listenManual(AppState.mods, (_, variants) {
+      if (ref.read(
+          appSettings.select((value) => value.allowCrashReporting ?? false))) {
+        try {
+          final mods = variants.orEmpty().toList();
+          final variantInfo = mods
+              .flatMap((mod) => mod.modVariants)
+              .map((v) =>
+                  "${v.isEnabled(mods) ? "E" : "X"} ${v.modInfo.id} ${v.modInfo.version}")
+              .sorted();
+
+          Sentry.configureScope((scope) {
+            scope.setContexts("mods", variantInfo);
+          });
+        } catch (e) {
+          Fimber.e("Error setting Sentry scope.", ex: e);
+        }
+      }
     });
 
     windowManager.addListener(this);
@@ -264,7 +355,7 @@ class _AppShellState extends ConsumerState<AppShell>
     2: TriOSTools.vramEstimator,
     3: TriOSTools.chipper,
     4: TriOSTools.jreManager,
-    5: null,
+    5: TriOSTools.settings,
   };
 
   @override
@@ -330,6 +421,47 @@ class _AppShellState extends ConsumerState<AppShell>
     } catch (e, st) {
       Fimber.e("Error checking for updates: $e", ex: e, stacktrace: st);
     }
+
+    WidgetsBinding.instance?.addPostFrameCallback((_) {
+      if (ref.read(appSettings.select((s) => s.allowCrashReporting)) == null) {
+        // show dialog asking for crash reporting permission
+        showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: const Text("Crash Reporting"),
+              content: const Text(
+                  "${Constants.appName} can send crash/error reports to help me find and fix issues."
+                  "\n\nNothing identifiable or personal is ever sent."
+                  "\n\nInfo includes: app version, mod list, basic PC info (resolution, OS), randomly generated user id, and the crash details."
+                  "\nNot sent: IP address, language/region/zip, PC name, any file paths, etc."
+                  "\n\nWould you like to enable crash reporting?"),
+              actions: [
+                TextButton.icon(
+                  onPressed: () {
+                    ref.read(appSettings.notifier).update(
+                        (state) => state.copyWith(allowCrashReporting: true));
+                    RestartableApp.restartApp(context);
+                  },
+                  icon: const Icon(Icons.track_changes),
+                  label: const Text("Allow Reporting"),
+                ),
+                TextButton.icon(
+                  onPressed: () {
+                    ref.read(appSettings.notifier).update(
+                        (state) => state.copyWith(allowCrashReporting: false));
+                    RestartableApp.restartApp(context);
+                  },
+                  icon: const SvgImageIcon(
+                      "assets/images/icon-incognito-circle.svg"),
+                  label: const Text("Keep Reporting Disabled"),
+                ),
+              ],
+            );
+          },
+        );
+      }
+    });
   }
 
   @override

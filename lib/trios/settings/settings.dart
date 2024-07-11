@@ -34,6 +34,12 @@ Settings? readAppSettings() {
   }
 }
 
+/// Use `appSettings` instead, which updates relevant data. Only use this while app is starting up.
+void writeAppSettings(Settings newSettings) {
+  sharedPrefs.setString(
+      sharedPrefsSettingsKey, jsonEncode(newSettings.toJson()));
+}
+
 /// Settings object model
 @freezed
 class Settings with _$Settings {
@@ -62,6 +68,8 @@ class Settings with _$Settings {
     @Default(15) final int secondsBetweenModFolderChecks,
     @Default(true) final bool isUpdatesFieldShown,
     final ModsGridState? modsGridState,
+    final bool? allowCrashReporting,
+    @Default("") final String userId,
   }) = _Settings;
 
   factory Settings.fromJson(Map<String, Object?> json) =>
@@ -96,7 +104,11 @@ class SettingSaver extends Notifier<Settings> {
 
   @override
   Settings build() {
-    var settings = readAppSettings();
+    final settings = readAppSettings();
+
+    configureLogging(
+        allowSentryReporting: settings?.allowCrashReporting ?? false);
+
     if (settings != null) {
       return _setDefaults(settings);
     } else {
@@ -118,6 +130,16 @@ class SettingSaver extends Notifier<Settings> {
     if (prevState == newState) {
       Fimber.v("No settings change: $newState");
       return;
+    }
+
+    if (prevState.allowCrashReporting != newState.allowCrashReporting) {
+      if (newState.allowCrashReporting ?? false) {
+        Fimber.i("Crash reporting enabled.");
+        configureLogging(allowSentryReporting: true);
+      } else {
+        Fimber.i("Crash reporting disabled.");
+        configureLogging(allowSentryReporting: false);
+      }
     }
 
     // Recalculate mod folder if the game path changes
@@ -156,8 +178,7 @@ class SettingSaver extends Notifier<Settings> {
     Fimber.d("Updated settings: $newState");
 
     // Save to shared prefs
-    sharedPrefs.setString(
-        sharedPrefsSettingsKey, jsonEncode(newState.toJson()));
+    writeAppSettings(newState);
     return newState;
   }
 }

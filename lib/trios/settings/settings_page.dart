@@ -17,6 +17,7 @@ import 'package:trios/widgets/svg_image_icon.dart';
 
 import '../../themes/theme.dart';
 import '../../themes/theme_manager.dart';
+import '../../widgets/restartable_app.dart';
 import '../../widgets/self_update_toast.dart';
 import '../app_state.dart';
 import '../constants.dart';
@@ -205,6 +206,24 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   inactiveColor: theme.colorScheme.onSurface.withOpacity(0.5),
                 ),
               ],
+            ),
+          ),
+        ),
+        // Checkbox for enabling crash reporting
+        Padding(
+          padding: const EdgeInsets.only(top: 16),
+          child: Tooltip(
+            message:
+                "This allows ${Constants.appName} to send crash/error reports to get fixed.\nNo personal/identifiable data is sent.\nWill soft-restart ${Constants.appName}.",
+            child: CheckboxWithLabel(
+              value: ref.watch(appSettings
+                  .select((value) => value.allowCrashReporting ?? false)),
+              onChanged: (value) {
+                ref.read(appSettings.notifier).update((state) =>
+                    state.copyWith(allowCrashReporting: value ?? false));
+                RestartableApp.restartApp(context);
+              },
+              label: "Allow crash reporting",
             ),
           ),
         ),

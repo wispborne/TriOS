@@ -3,5 +3,6 @@ enum TriOSTools {
   modManager,
   vramEstimator,
   chipper,
-  jreManager
+  jreManager,
+  settings,
 }

@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
 import 'package:path/path.dart' as p;
 import 'package:platform_info/platform_info.dart';
-import 'package:stack_trace/stack_trace.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/pretty_printer_custom.dart';
 
@@ -15,9 +15,16 @@ final logFilePath = p.join(logFolderName, logFileName);
 
 var _consoleLogger = Logger();
 var _fileLogger = Logger();
+bool _allowSentryReporting = false;
 const useFimber = false;
 
-configureLogging({bool printPlatformInfo = false}) {
+/// Fine to call multiple times.
+configureLogging(
+    {bool printPlatformInfo = false, bool allowSentryReporting = false}) {
+  _allowSentryReporting = allowSentryReporting;
+  Fimber.i(
+      "Crash reporting is ${allowSentryReporting ? "enabled" : "disabled"}.");
+
   if (!useFimber) {
     const stackTraceBeginIndex = 4;
     const methodCount = 7;
@@ -33,9 +40,14 @@ configureLogging({bool printPlatformInfo = false}) {
       // noBoxingByDefault: true,
       stackTraceMaxLines: 20,
     );
+
+    // Handle errors in Flutter.
     FlutterError.onError = (FlutterErrorDetails details) {
-      Fimber.e("Error :  ${details.exception}");
-      Fimber.e(Trace.from(details.stack!).terse.toString());
+      Fimber.e("Error :  ${details.exception}",
+          ex: details.exception, stacktrace: details.stack);
+      // if (details.stack != null) {
+      //   Fimber.e();
+      // }
     };
 
     _consoleLogger = Logger(
@@ -132,6 +144,15 @@ class Fimber {
     } else {
       _consoleLogger.e(message, error: ex, stackTrace: stacktrace);
       _fileLogger.e(message, error: ex, stackTrace: stacktrace);
+    }
+
+    if (_allowSentryReporting) {
+      if (message.contains(" overflowed by ")) {
+        // Don't report overflow errors.
+        return;
+      }
+
+      Sentry.captureException(ex, stackTrace: stacktrace);
     }
   }
 }

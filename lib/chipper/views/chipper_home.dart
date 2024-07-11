@@ -2,15 +2,15 @@ import 'dart:convert';
 
 import 'package:collection/collection.dart';
 import 'package:cross_file/cross_file.dart';
-import 'package:trios/utils/logging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
+import 'package:trios/utils/logging.dart';
 
+import '../../trios/drag_drop_handler.dart';
 import '../chipper_state.dart';
 import '../logparser.dart';
 import '../utils.dart';
-import '../../trios/drag_drop_handler.dart';
 import 'readout.dart';
 
 class DesktopDrop extends ConsumerStatefulWidget {
@@ -24,7 +24,8 @@ class DesktopDrop extends ConsumerStatefulWidget {
 
 class DesktopDropState extends ConsumerState<DesktopDrop> {
   final String _macPath = "/Applications/Starsector.app/logs/starsector.log";
-  final String _winPath = "C:/Program Files (x86)/Fractal Softworks/Starsector/starsector-core/starsector.log";
+  final String _winPath =
+      "C:/Program Files (x86)/Fractal Softworks/Starsector/starsector-core/starsector.log";
   final String _linuxPath = "<game folder>/starsector.log";
 
   // parseLogListener(LogFile? next) {
@@ -62,111 +63,155 @@ class DesktopDropState extends ConsumerState<DesktopDrop> {
                 child: Center(
                     widthFactor: 1.5,
                     child: parsing
-                        ? Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                            const CircularProgressIndicator(),
-                            Container(height: 10),
-                            Text(
-                              [
-                                "thinking...",
-                                "processing...",
-                                "parsing...",
-                                "pondering the log",
-                                "chipping...",
-                                "breaking logs down...",
-                                "analyzing...",
-                                "analysing...",
-                                "spinning...",
-                                "please wait...",
-                                "please hold...",
-                              ].random(),
-                              style: theme.textTheme.headlineMedium,
-                            )
-                          ])
+                        ? Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                                const CircularProgressIndicator(),
+                                Container(height: 10),
+                                Text(
+                                  [
+                                    "thinking...",
+                                    "processing...",
+                                    "parsing...",
+                                    "pondering the log",
+                                    "chipping...",
+                                    "breaking logs down...",
+                                    "analyzing...",
+                                    "analysing...",
+                                    "spinning...",
+                                    "please wait...",
+                                    "please hold...",
+                                  ].random(),
+                                  style: theme.textTheme.headlineMedium,
+                                )
+                              ])
                         : Column(children: [
                             Expanded(
-                                child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                              Text(
-                                "Drop starsector.log here",
-                                style: theme.textTheme.headlineMedium?.copyWith(fontSize: 34),
-                              ),
-                              Padding(
-                                  padding: const EdgeInsets.only(top: 10),
-                                  child: Text(
-                                    "or control-v to paste",
-                                    style: theme.textTheme.bodyMedium?.copyWith(
-                                        fontSize: 18, color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6)),
+                                child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                  Text(
+                                    "Drop starsector.log here",
+                                    style: theme.textTheme.headlineMedium
+                                        ?.copyWith(fontSize: 34),
+                                  ),
+                                  Padding(
+                                      padding: const EdgeInsets.only(top: 10),
+                                      child: Text(
+                                        "or control-v to paste",
+                                        style: theme.textTheme.bodyMedium
+                                            ?.copyWith(
+                                                fontSize: 18,
+                                                color: theme
+                                                    .textTheme.bodyMedium?.color
+                                                    ?.withOpacity(0.6)),
+                                      )),
+                                  Text("\n—",
+                                      style: theme.textTheme.bodyMedium
+                                          ?.copyWith(
+                                              fontSize: 16,
+                                              color: theme
+                                                  .textTheme.bodyMedium?.color
+                                                  ?.withOpacity(0.6))),
+                                  SelectionArea(
+                                      child: Text.rich(
+                                    TextSpan(children: [
+                                      TextSpan(
+                                        text: "\nWindows: ",
+                                        style: theme.textTheme.headlineSmall
+                                            ?.copyWith(
+                                                fontSize: 20,
+                                                color: theme.textTheme
+                                                    .headlineSmall?.color
+                                                    ?.withOpacity(0.6)),
+                                      ),
+                                      TextSpan(
+                                        text: _winPath,
+                                        style: theme.textTheme.headlineSmall
+                                            ?.copyWith(
+                                                fontWeight: FontWeight.w500,
+                                                fontSize: 18,
+                                                color: theme.textTheme
+                                                    .headlineSmall?.color
+                                                    ?.withOpacity(0.7)),
+                                      ),
+                                      TextSpan(
+                                        text: "\n\nMacOS: ",
+                                        style: theme.textTheme.headlineSmall
+                                            ?.copyWith(
+                                                fontSize: 20,
+                                                color: theme.textTheme
+                                                    .headlineSmall?.color
+                                                    ?.withOpacity(0.6)),
+                                      ),
+                                      TextSpan(
+                                        text: _macPath,
+                                        style: theme.textTheme.headlineSmall
+                                            ?.copyWith(
+                                                fontWeight: FontWeight.w500,
+                                                fontSize: 18,
+                                                color: theme.textTheme
+                                                    .headlineSmall?.color
+                                                    ?.withOpacity(0.7)),
+                                      ),
+                                      TextSpan(
+                                        text: "\n\nLinux: ",
+                                        style: theme.textTheme.headlineSmall
+                                            ?.copyWith(
+                                                fontSize: 20,
+                                                color: theme.textTheme
+                                                    .headlineSmall?.color
+                                                    ?.withOpacity(0.6)),
+                                      ),
+                                      TextSpan(
+                                        text: _linuxPath,
+                                        style: theme.textTheme.headlineSmall
+                                            ?.copyWith(
+                                                fontWeight: FontWeight.w500,
+                                                fontSize: 18,
+                                                color: theme.textTheme
+                                                    .headlineSmall?.color
+                                                    ?.withOpacity(0.7)),
+                                      ),
+                                    ]),
+                                    textAlign: TextAlign.left,
                                   )),
-                              Text("\n—",
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                      fontSize: 16, color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6))),
-                              SelectionArea(
-                                  child: Text.rich(
-                                TextSpan(children: [
-                                  TextSpan(
-                                    text: "\nWindows: ",
-                                    style: theme.textTheme.headlineSmall?.copyWith(
-                                        fontSize: 20, color: theme.textTheme.headlineSmall?.color?.withOpacity(0.6)),
-                                  ),
-                                  TextSpan(
-                                    text: _winPath,
-                                    style: theme.textTheme.headlineSmall?.copyWith(
-                                        fontWeight: FontWeight.w500,
-                                        fontSize: 18,
-                                        color: theme.textTheme.headlineSmall?.color?.withOpacity(0.7)),
-                                  ),
-                                  TextSpan(
-                                    text: "\n\nMacOS: ",
-                                    style: theme.textTheme.headlineSmall?.copyWith(
-                                        fontSize: 20, color: theme.textTheme.headlineSmall?.color?.withOpacity(0.6)),
-                                  ),
-                                  TextSpan(
-                                    text: _macPath,
-                                    style: theme.textTheme.headlineSmall?.copyWith(
-                                        fontWeight: FontWeight.w500,
-                                        fontSize: 18,
-                                        color: theme.textTheme.headlineSmall?.color?.withOpacity(0.7)),
-                                  ),
-                                  TextSpan(
-                                    text: "\n\nLinux: ",
-                                    style: theme.textTheme.headlineSmall?.copyWith(
-                                        fontSize: 20, color: theme.textTheme.headlineSmall?.color?.withOpacity(0.6)),
-                                  ),
-                                  TextSpan(
-                                    text: _linuxPath,
-                                    style: theme.textTheme.headlineSmall?.copyWith(
-                                        fontWeight: FontWeight.w500,
-                                        fontSize: 18,
-                                        color: theme.textTheme.headlineSmall?.color?.withOpacity(0.7)),
-                                  ),
-                                ]),
-                                textAlign: TextAlign.left,
-                              )),
-                            ])),
+                                ])),
                             Padding(
                                 padding: const EdgeInsets.only(top: 30),
                                 child: Text(
                                   "Nothing is ever uploaded. All processing is done on your computer.",
                                   style: theme.textTheme.bodyMedium?.copyWith(
-                                      fontSize: 14, color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6)),
+                                      fontSize: 14,
+                                      color: theme.textTheme.bodyMedium?.color
+                                          ?.withOpacity(0.6)),
                                 ))
                           ])))
             : LayoutBuilder(builder: (context, constraints) {
-                  return SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: SizedBox(width: constraints.maxWidth, child: Readout(widget.chips!)));
-                }));
+                return SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: SizedBox(
+                        width: constraints.maxWidth,
+                        child: Readout(widget.chips!)));
+              }));
   }
 }
 
 Future<String?> handleDroppedLogFile(String droppedFilePaths) async {
-  final files = [droppedFilePaths].map((e) => XFile(e));
-  for (final file in files) {
-    Fimber.i('  Path:${file.path}'
-        '\n  Name:${file.name}'
-        '\n  Modified:${await file.lastModified()}'
-        '\n  Length: ${await file.length()}'
-        '\n  Type: ${file.runtimeType}'
-        '\n  MIME:${file.mimeType}');
+  final files = [droppedFilePaths].map((e) => XFile(e)).toList();
+  // the `.toList` avoids concurrent modification errors by creating a shallow copy.
+  for (final file in files.toList()) {
+    try {
+      Fimber.i('  Path:${file.path}'
+          '\n  Name:${file.name}'
+          '\n  Modified:${await file.lastModified()}'
+          '\n  Length: ${await file.length()}'
+          '\n  Type: ${file.runtimeType}'
+          '\n  MIME:${file.mimeType}');
+    } catch (e) {
+      Fimber.w("Couldn't read file info. Might be a folder.", ex: e);
+      files.remove(file);
+    }
   }
 
   final droppedFile = files.firstOrNull;
@@ -178,7 +223,9 @@ Future<String?> handleDroppedLogFile(String droppedFilePaths) async {
 
   // Check if file is a url or an actual file
   if (droppedFile.name.endsWith(".url")) {
-    final url = RegExp(".*(http.*)").firstMatch(await droppedFile.readAsString())?.group(1);
+    final url = RegExp(".*(http.*)")
+        .firstMatch(await droppedFile.readAsString())
+        ?.group(1);
     if (url != null) {
       final uri = Uri.parse(url);
       try {
@@ -194,7 +241,8 @@ Future<String?> handleDroppedLogFile(String droppedFilePaths) async {
   } else {
     try {
       logStream = utf8.decode((await droppedFile.readAsBytes()),
-          allowMalformed: true); //.openRead().map((chunk) => utf8.decode(chunk, allowMalformed: true));
+          allowMalformed:
+              true); //.openRead().map((chunk) => utf8.decode(chunk, allowMalformed: true));
     } catch (e) {
       Fimber.w("Couldn't parse text file.", ex: e);
     }

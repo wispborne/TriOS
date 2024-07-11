@@ -96,7 +96,7 @@ extension StringExt on String {
     try {
       return json.encode(loadYaml(fixed));
     } catch (e) {
-      Fimber.d("Unable to fix json: $fixed");
+      Fimber.d("Unable to fix json: ${fixed.take(2000)}", ex: e);
       rethrow;
     }
   }

@@ -361,6 +361,10 @@ ThemeData createPaletteTheme(BuildContext context, PaletteGenerator? palette) {
       backgroundColor: primaryColor,
       foregroundColor: onSurfaceColor,
     ),
+    progressIndicatorTheme: ProgressIndicatorThemeData(
+      color: onSurfaceColor,
+      linearTrackColor: backgroundColor
+    ),
   );
 }
 

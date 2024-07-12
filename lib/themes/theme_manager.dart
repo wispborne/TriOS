@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_color/flutter_color.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:palette_generator/palette_generator.dart';
 import 'package:trios/themes/theme.dart';
 
 import '../mod_manager/mod_manager_logic.dart';
@@ -250,6 +251,138 @@ class ThemeManager with ChangeNotifier {
       ),
     );
   }
+}
+
+/// Usage:
+/// ```dart
+/// Theme(
+///   data: createPaletteTheme(context, palette),
+///   child: yourChild,
+/// )
+/// ```
+ThemeData createPaletteTheme(BuildContext context, PaletteGenerator? palette) {
+  if (palette == null || palette.colors.isEmpty) {
+    return Theme.of(context);
+  }
+
+  Color primaryColor =
+      palette.dominantColor?.color ?? Theme.of(context).colorScheme.primary;
+  Color surfaceColor = palette.darkVibrantColor?.color ??
+      palette.darkMutedColor?.color ??
+      Theme.of(context).colorScheme.surface;
+  Color onSurfaceColor = palette.lightVibrantColor?.color ??
+      palette.lightMutedColor?.color ??
+      Theme.of(context).colorScheme.onSurface;
+  Color backgroundColor = palette.darkMutedColor?.color ??
+      palette.darkVibrantColor?.color ??
+      Theme.of(context).colorScheme.background;
+  Color buttonBackgroundColor = palette.darkVibrantColor?.color ?? Colors.white;
+  Color buttonTextColor =
+      palette.darkVibrantColor?.bodyTextColor ?? Colors.white;
+
+  return ThemeData(
+    useMaterial3: true,
+    colorScheme: ColorScheme(
+      brightness: Brightness.dark,
+      primary: primaryColor,
+      onPrimary: palette.darkVibrantColor?.bodyTextColor ??
+          palette.darkMutedColor?.bodyTextColor ??
+          Colors.white,
+      secondary: Colors.blue,
+      onSecondary: palette.darkVibrantColor?.bodyTextColor ??
+          palette.darkMutedColor?.bodyTextColor ??
+          Colors.white,
+      error: Colors.red,
+      onError: Colors.white,
+      surface: surfaceColor,
+      onSurface: onSurfaceColor,
+      background: backgroundColor,
+    ),
+    textTheme: TextTheme(
+      displayLarge: TextStyle(color: onSurfaceColor),
+      displayMedium: TextStyle(color: onSurfaceColor),
+      displaySmall: TextStyle(color: onSurfaceColor),
+      headlineLarge: TextStyle(color: onSurfaceColor),
+      headlineMedium: TextStyle(color: onSurfaceColor),
+      headlineSmall: TextStyle(color: onSurfaceColor),
+      titleLarge: TextStyle(color: onSurfaceColor),
+      titleMedium: TextStyle(color: onSurfaceColor),
+      titleSmall: TextStyle(color: onSurfaceColor),
+      bodyLarge: TextStyle(color: onSurfaceColor),
+      bodyMedium: TextStyle(color: onSurfaceColor),
+      bodySmall: TextStyle(color: onSurfaceColor),
+      labelLarge: TextStyle(color: onSurfaceColor),
+      labelMedium: TextStyle(color: onSurfaceColor),
+      labelSmall: TextStyle(color: onSurfaceColor),
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        foregroundColor: onSurfaceColor.lighter(20), // Button text color
+        side: BorderSide(color: onSurfaceColor), // Button outline
+      ),
+    ),
+    iconTheme: IconThemeData(
+      color: onSurfaceColor,
+    ),
+    appBarTheme: AppBarTheme(
+      backgroundColor: primaryColor,
+      iconTheme: IconThemeData(
+        color: onSurfaceColor,
+      ),
+      titleTextStyle: Theme.of(context)
+          .textTheme
+          .titleLarge
+          ?.copyWith(color: onSurfaceColor),
+    ),
+    cardTheme: CardTheme(
+      color: surfaceColor,
+      shadowColor: Colors.black45,
+    ),
+    tooltipTheme: TooltipThemeData(
+      decoration: BoxDecoration(
+        color: primaryColor,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      textStyle: TextStyle(color: onSurfaceColor),
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: backgroundColor,
+      border: OutlineInputBorder(
+        borderSide: BorderSide(color: primaryColor),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderSide: BorderSide(color: primaryColor, width: 2.0),
+        borderRadius: BorderRadius.circular(8),
+      ),
+    ),
+    floatingActionButtonTheme: FloatingActionButtonThemeData(
+      backgroundColor: primaryColor,
+      foregroundColor: onSurfaceColor,
+    ),
+  );
+}
+
+// Utility function to create a MaterialColor from a given color
+MaterialColor createMaterialColor(Color color) {
+  List<double> strengths = <double>[.05];
+  final Map<int, Color> swatch = {};
+  final int r = color.red, g = color.green, b = color.blue;
+
+  for (int i = 1; i < 10; i++) {
+    strengths.add(0.1 * i);
+  }
+  strengths.forEach((strength) {
+    final double ds = 0.5 - strength;
+    swatch[(strength * 1000).round()] = Color.fromRGBO(
+      r + ((ds < 0 ? r : (255 - r)) * ds).round(),
+      g + ((ds < 0 ? g : (255 - g)) * ds).round(),
+      b + ((ds < 0 ? b : (255 - b)) * ds).round(),
+      1,
+    );
+  });
+  return MaterialColor(color.value, swatch);
 }
 
 extension GameCompatibilityExt on GameCompatibility {

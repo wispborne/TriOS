@@ -206,7 +206,7 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
           config: ToastificationConfig(
             alignment: Alignment.bottomRight,
             animationDuration: Duration(milliseconds: 200),
-            itemWidth: 500,
+            itemWidth: 400,
           ),
           child: AppShell(child: VramEstimatorPage())),
     );

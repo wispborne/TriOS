@@ -63,6 +63,7 @@ class ModDownloadToast extends ConsumerWidget {
                     child: Tooltip(
                       message: download.id,
                       child: Icon(
+                        size: 40,
                         switch (status) {
                           DownloadStatus.queued => Icons.schedule,
                           DownloadStatus.downloading => Icons.downloading,

@@ -9,6 +9,7 @@ part '../generated/models/version_checker_info.g.dart';
 class VersionCheckerInfo with _$VersionCheckerInfo {
   const VersionCheckerInfo._();
 
+  // TODO Warning: case sensitive because that's how json_serializable works.
   const factory VersionCheckerInfo({
     String? modName,
     String? masterVersionFile,
@@ -16,7 +17,7 @@ class VersionCheckerInfo with _$VersionCheckerInfo {
     @JsonConverterToString() String? modThreadId,
     VersionObject? modVersion,
     String? directDownloadURL,
-    String? changelogUrl,
+    String? changelogURL,
   }) = _VersionCheckerInfo;
 
   factory VersionCheckerInfo.fromJson(Map<String, dynamic> json) => _$VersionCheckerInfoFromJson(json);

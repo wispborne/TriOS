@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/models/version_checker_info.dart';
 import 'package:trios/themes/theme_manager.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../mod_manager/version_checker.dart';
 
@@ -169,6 +171,28 @@ class _VersionCheckTextReadoutState
                 Text(
                     "This mod does not support Version Checker.\nPlease visit the mod page to manually find updates.",
                     style: theme.textTheme.labelLarge),
+              ////////////////////////// Changelogs
+              Builder(builder: (context) {
+                //  val changelogUrl = onlineVersionInfo?.changelogUrl?.nullIfBlank()  ?: mod.findHighestVersion?.versionCheckerInfo?.changelogUrl?.nullIfBlank()
+                final changelogUrl =
+                    remoteVersionCheck?.remoteVersion?.changelogURL ??
+                        localVersionCheck?.changelogURL;
+                if (changelogUrl == null || changelogUrl.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+
+                return Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: TextButton(
+                    onPressed: () {
+                      launchUrl(Uri.parse(changelogUrl));
+                    },
+                    child: MarkdownBody(
+                      data: "Changelog",
+                      styleSheet: MarkdownStyleSheet.fromTheme(theme),
+                  ),
+                );
+              }),
             ],
           )
       },

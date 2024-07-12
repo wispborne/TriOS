@@ -17,7 +17,7 @@ _$VersionCheckerInfoImpl _$$VersionCheckerInfoImplFromJson(
           ? null
           : VersionObject.fromJson(json['modVersion'] as Map<String, dynamic>),
       directDownloadURL: json['directDownloadURL'] as String?,
-      changelogUrl: json['changelogUrl'] as String?,
+      changelogURL: json['changelogURL'] as String?,
     );
 
 Map<String, dynamic> _$$VersionCheckerInfoImplToJson(
@@ -31,7 +31,7 @@ Map<String, dynamic> _$$VersionCheckerInfoImplToJson(
           instance.modThreadId, const JsonConverterToString().toJson),
       'modVersion': instance.modVersion,
       'directDownloadURL': instance.directDownloadURL,
-      'changelogUrl': instance.changelogUrl,
+      'changelogURL': instance.changelogURL,
     };
 
 Json? _$JsonConverterToJson<Json, Value>(

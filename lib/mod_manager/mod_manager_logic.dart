@@ -584,7 +584,6 @@ extension DependencyExt on Dependency {
       return Missing();
     }
 
-    //  && mod.version.compareTo(version!) < 0
     if (version != null) {
       if (variant.modInfo.version?.major != version!.major) {
         return VersionInvalid(variant);

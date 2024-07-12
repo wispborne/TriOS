@@ -192,7 +192,7 @@ class _AppShellState extends ConsumerState<AppShell>
         appBar: AppBar(
           title: Row(
             children: [
-              const DownloadToastDisplayer(),
+              const ToastDisplayer(),
               Padding(
                 padding: const EdgeInsets.only(right: 16.0),
                 child: Tooltip(

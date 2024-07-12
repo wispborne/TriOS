@@ -53,118 +53,129 @@ class _ModAddedToastState extends ConsumerState<ModAddedToast> {
 
     return Padding(
       padding: const EdgeInsets.only(top: 4, right: 32),
-      child: Theme(
-        data: createPaletteTheme(context, palette),
-        child: Builder(builder: (context) {
-          final theme =
-              Theme.of(context); // Ensure the theme is within the Builder
-          return Card(
-            child: Container(
-              padding: const EdgeInsets.all(8.0),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surface,
-                borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 4.0,
-                    offset: Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(right: 16),
-                    child: Tooltip(
-                      message: widget.modVariant.modInfo.nameOrId,
-                      child: SizedBox(
-                          width: 40,
-                          height: 40,
-                          child: icon ?? const TriOSAppIcon()),
+      child: Container(
+        decoration: const BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black26,
+              blurRadius: 4.0,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Theme(
+          data: createPaletteTheme(context, palette),
+          child: Builder(builder: (context) {
+            final theme =
+                Theme.of(context); // Ensure the theme is within the Builder
+            return Card(
+              child: Container(
+                padding: const EdgeInsets.all(8.0),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surface,
+                  borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 4.0,
+                      offset: Offset(0, 2),
                     ),
-                  ),
-                  Expanded(
-                    child: SelectionArea(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            modString ?? "",
-                            style: theme.textTheme.bodyMedium,
-                          ),
-                          Opacity(
-                            opacity: 0.9,
-                            child: Text(
-                              widget.modVariant.modInfo.version.toString(),
-                              style: theme.textTheme.labelMedium,
-                            ),
-                          ),
-                          if (currentVariant != null)
-                            Text(
-                              "Currently enabled: ${currentVariant.modInfo.version}",
-                              style: theme.textTheme.labelMedium,
-                            ),
-                          Padding(
-                            padding: const EdgeInsets.only(top: 8),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                ElevatedButton.icon(
-                                  onPressed: () {
-                                    // open folder in file explorer
-                                    launchUrlString(
-                                        widget.modVariant.modsFolder.path);
-                                  },
-                                  icon: Icon(Icons.folder_open,
-                                      color: theme.colorScheme.onSurface),
-                                  label: Text("Open",
-                                      style: theme.textTheme.bodyMedium
-                                          ?.copyWith(
-                                              color:
-                                                  theme.colorScheme.onSurface)),
-                                ),
-                                if (widget.modVariant.bestVersion !=
-                                    currentVariant?.bestVersion)
-                                  Row(
-                                    children: [
-                                      const SizedBox(width: 8),
-                                      ElevatedButton.icon(
-                                        onPressed: () async {
-                                          if (mod == null) {
-                                            Fimber.w(
-                                                "Cannot enable, mod not found for variant ${widget.modVariant.smolId}");
-                                            return;
-                                          }
-                                          await changeActiveModVariant(
-                                              mod, widget.modVariant, ref);
-                                          toastification.dismiss(widget.item);
-                                        },
-                                        icon: const SizedBox(
-                                          width: 24,
-                                          height: 24,
-                                          child: Icon(Icons.power_settings_new),
-                                        ),
-                                        label: const Text("Enable"),
-                                      ),
-                                    ],
-                                  ),
-                              ],
-                            ),
-                          ),
-                        ],
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(right: 16),
+                      child: Tooltip(
+                        message: widget.modVariant.modInfo.nameOrId,
+                        child: SizedBox(
+                            width: 40,
+                            height: 40,
+                            child: icon ?? const TriOSAppIcon()),
                       ),
                     ),
-                  ),
-                  IconButton(
-                    onPressed: () => toastification.dismiss(widget.item),
-                    icon: const Icon(Icons.close),
-                  ),
-                ],
+                    Expanded(
+                      child: SelectionArea(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              modString ?? "",
+                              style: theme.textTheme.bodyMedium,
+                            ),
+                            Opacity(
+                              opacity: 0.9,
+                              child: Text(
+                                widget.modVariant.modInfo.version.toString(),
+                                style: theme.textTheme.labelMedium,
+                              ),
+                            ),
+                            if (currentVariant != null)
+                              Text(
+                                "Currently enabled: ${currentVariant.modInfo.version}",
+                                style: theme.textTheme.labelMedium,
+                              ),
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  ElevatedButton.icon(
+                                    onPressed: () {
+                                      // open folder in file explorer
+                                      launchUrlString(
+                                          widget.modVariant.modsFolder.path);
+                                    },
+                                    icon: Icon(Icons.folder_open,
+                                        color: theme.colorScheme.onSurface),
+                                    label: Text("Open",
+                                        style: theme.textTheme.bodyMedium
+                                            ?.copyWith(
+                                                color:
+                                                    theme.colorScheme.onSurface)),
+                                  ),
+                                  if (widget.modVariant.bestVersion !=
+                                      currentVariant?.bestVersion)
+                                    Row(
+                                      children: [
+                                        const SizedBox(width: 8),
+                                        ElevatedButton.icon(
+                                          onPressed: () async {
+                                            if (mod == null) {
+                                              Fimber.w(
+                                                  "Cannot enable, mod not found for variant ${widget.modVariant.smolId}");
+                                              return;
+                                            }
+                                            await changeActiveModVariant(
+                                                mod, widget.modVariant, ref);
+                                            toastification.dismiss(widget.item);
+                                          },
+                                          icon: const SizedBox(
+                                            width: 24,
+                                            height: 24,
+                                            child: Icon(Icons.power_settings_new),
+                                          ),
+                                          label: const Text("Enable"),
+                                        ),
+                                      ],
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => toastification.dismiss(widget.item),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          );
-        }),
+            );
+          }),
+        ),
       ),
     );
   }

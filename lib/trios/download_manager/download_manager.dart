@@ -133,17 +133,19 @@ downloadUpdateViaBrowser(
                   // Find the variant post-install so we can activate it.
                   final actualVariant = variants.firstWhereOrNull(
                       (variant) => variant.smolId == installed.modInfo.smolId);
-                  try {
+                  // try {
                     // If the mod existed and was enabled, switch to the newly downloaded version.
-                    if (actualVariant != null &&
-                        actualVariant.mod(mods)?.isEnabledInGame == true) {
-                      changeActiveModVariant(
-                          actualVariant.mod(mods)!, actualVariant, ref);
-                    }
-                  } catch (ex) {
-                    Fimber.w(
-                        "Failed to activate mod ${installed.modInfo.smolId} after updating: $ex");
-                  }
+                    // Edit: changed my mind, see https://github.com/wispborne/TriOS/issues/28
+
+                    // if (actualVariant != null &&
+                    //     actualVariant.mod(mods)?.isEnabledInGame == true) {
+                    //   changeActiveModVariant(
+                    //       actualVariant.mod(mods)!, actualVariant, ref);
+                    // }
+                  // } catch (ex) {
+                  //   Fimber.w(
+                  //       "Failed to activate mod ${installed.modInfo.smolId} after updating: $ex");
+                  // }
                 }
               }
             });

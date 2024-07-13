@@ -5,6 +5,7 @@ import 'package:toastification/toastification.dart';
 import 'package:trios/trios/toasts/mod_added_toast.dart';
 import 'package:trios/utils/extensions.dart';
 
+import '../../utils/logging.dart';
 import '../app_state.dart';
 import '../download_manager/download_manager.dart';
 import 'mod_download_toast.dart';
@@ -32,12 +33,19 @@ class _ToastDisplayerState extends ConsumerState<ToastDisplayer> {
           .where(
               (element) => prevModsList.none((e) => e.smolId == element.smolId))
           .toList();
-      final removedVariants = prevModsList
-          .where(
-              (element) => currModsList.none((e) => e.smolId == element.smolId))
-          .toList();
+      // final removedVariants = prevModsList
+      //     .where(
+      //         (element) => currModsList.none((e) => e.smolId == element.smolId))
+      //     .toList();
+      final downloads = ref.watch(downloadManager).value.orEmpty().toList();
 
       for (final newlyAddedVariant in addedVariants) {
+        // If a download toast is already showing for this mod, don't show the mod added toast
+        if (downloads.whereType<ModDownload>().any(
+            (element) => element.modInfo.smolId == newlyAddedVariant.smolId)) {
+          continue;
+        }
+
         WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
           toastification.showCustom(
               context: context,

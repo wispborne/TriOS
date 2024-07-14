@@ -16,6 +16,15 @@ class TooltipFrame extends StatelessWidget {
           color: theme.cardColor,
           borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
           border: Border.all(color: theme.colorScheme.onSurface),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.4),
+              // Adjust shadow color and opacity as needed
+              blurRadius: 10,
+              // Adjust blur radius for the shadow effect
+              offset: const Offset(0, 4), // Adjust offset for the shadow position
+            ),
+          ],
         ),
         child: Padding(
           padding: const EdgeInsets.all(16.0),

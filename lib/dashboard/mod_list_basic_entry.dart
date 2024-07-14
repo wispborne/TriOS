@@ -1,8 +1,10 @@
+import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/dashboard/mod_summary_widget.dart';
 import 'package:trios/dashboard/version_check_icon.dart';
 import 'package:trios/dashboard/version_check_text_readout.dart';
+import 'package:trios/models/version_checker_info.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
@@ -15,6 +17,7 @@ import '../models/mod.dart';
 import '../trios/app_state.dart';
 import '../trios/download_manager/download_manager.dart';
 import '../trios/settings/settings.dart';
+import 'changelogs.dart';
 
 /// Displays just the mods specified.
 class ModListBasicEntry extends ConsumerStatefulWidget {
@@ -26,6 +29,73 @@ class ModListBasicEntry extends ConsumerStatefulWidget {
 
   @override
   ConsumerState createState() => _ModListBasicEntryState();
+
+  static Widget buildVersionCheckTextReadout(
+      String? changelogUrl,
+      int? versionCheckComparison,
+      VersionCheckerInfo? localVersionCheck,
+      VersionCheckResult? remoteVersionCheck) {
+    return SizedBox(
+        width: changelogUrl.isNotNullOrEmpty() ? 800 : 400,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            if (changelogUrl.isNotNullOrEmpty())
+              SizedBox(
+                width: 400,
+                height: 400,
+                child: TooltipFrame(
+                  child: Changelogs(
+                    localVersionCheck,
+                    remoteVersionCheck,
+                  ),
+                ),
+              ),
+            Expanded(
+              child: TooltipFrame(
+                child: VersionCheckTextReadout(versionCheckComparison,
+                    localVersionCheck, remoteVersionCheck, true),
+              ),
+            ),
+          ],
+        ));
+  }
+
+  static IntrinsicHeight changeAndVersionCheckAlertDialogContent(
+      String? changelogUrl,
+      VersionCheckerInfo? localVersionCheck,
+      VersionCheckResult? remoteVersionCheck,
+      int? versionCheckComparison) {
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (changelogUrl.isNotNullOrEmpty())
+            SingleChildScrollView(
+              child: SizedBox(
+                width: 500,
+                height: 500,
+                child: Changelogs(
+                  localVersionCheck,
+                  remoteVersionCheck,
+                ),
+              ),
+            ),
+          if (changelogUrl.isNotNullOrEmpty())
+            const Padding(
+              padding: EdgeInsets.all(8),
+              child: VerticalDivider(),
+            ),
+          Expanded(
+            child: SelectionArea(
+              child: VersionCheckTextReadout(versionCheckComparison,
+                  localVersionCheck, remoteVersionCheck, true),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
@@ -47,6 +117,8 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
         compareGameVersions(modInfo.gameVersion, gameVersion);
     final theme = Theme.of(context);
     final compatTextColor = compatWithGame.getGameCompatibilityColor();
+    final changelogUrl =
+        Changelogs.getChangelogUrl(localVersionCheck, remoteVersionCheck);
 
     infoTooltip({required Widget child}) => MovingTooltipWidget(
         position: TooltipPosition.topLeft,
@@ -130,15 +202,12 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                     ),
                     MovingTooltipWidget(
                       position: TooltipPosition.topLeft,
-                      tooltipWidget: SizedBox(
-                        width: 500,
-                        child: TooltipFrame(
-                            child: VersionCheckTextReadout(
-                                versionCheckComparison,
-                                localVersionCheck,
-                                remoteVersionCheck,
-                                true)),
-                      ),
+                      tooltipWidget:
+                          ModListBasicEntry.buildVersionCheckTextReadout(
+                              changelogUrl,
+                              versionCheckComparison,
+                              localVersionCheck,
+                              remoteVersionCheck),
                       child: InkWell(
                         onTap: () {
                           if (remoteVersionCheck?.remoteVersion != null &&
@@ -155,25 +224,23 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                             showDialog(
                                 context: context,
                                 builder: (context) => AlertDialog(
-                                        content: SelectionArea(
-                                      child: VersionCheckTextReadout(
-                                          versionCheckComparison,
-                                          localVersionCheck,
-                                          remoteVersionCheck,
-                                          true),
-                                    )));
+                                    content: ModListBasicEntry
+                                        .changeAndVersionCheckAlertDialogContent(
+                                            changelogUrl,
+                                            localVersionCheck,
+                                            remoteVersionCheck,
+                                            versionCheckComparison)));
                           }
                         },
                         onSecondaryTap: () => showDialog(
                             context: context,
                             builder: (context) => AlertDialog(
-                                    content: SelectionArea(
-                                  child: VersionCheckTextReadout(
-                                      versionCheckComparison,
-                                      localVersionCheck,
-                                      remoteVersionCheck,
-                                      true),
-                                ))),
+                                content: ModListBasicEntry
+                                    .changeAndVersionCheckAlertDialogContent(
+                                        changelogUrl,
+                                        localVersionCheck,
+                                        remoteVersionCheck,
+                                        versionCheckComparison))),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 5.0),
                           child: VersionCheckIcon(

@@ -1,8 +1,7 @@
+import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:trios/models/mod_variant.dart';
 
 import '../mod_manager/version_checker.dart';
 import '../models/version_checker_info.dart';
@@ -10,12 +9,19 @@ import '../models/version_checker_info.dart';
 class Changelogs extends ConsumerStatefulWidget {
   final VersionCheckerInfo? localVersionCheck;
   final VersionCheckResult? remoteVersionCheck;
+  final bool withTitle;
 
   const Changelogs(this.localVersionCheck, this.remoteVersionCheck,
-      {super.key});
+      {super.key, this.withTitle = true});
 
   @override
   ConsumerState createState() => _ChangelogsState();
+
+  static String? getChangelogUrl(VersionCheckerInfo? localVersionCheck,
+      VersionCheckResult? remoteVersionCheck) {
+    return remoteVersionCheck?.remoteVersion?.changelogURL ??
+        localVersionCheck?.changelogURL;
+  }
 }
 
 class _ChangelogsState extends ConsumerState<Changelogs> {
@@ -29,8 +35,8 @@ class _ChangelogsState extends ConsumerState<Changelogs> {
     super.initState();
 
     //  val changelogUrl = onlineVersionInfo?.changelogUrl?.nullIfBlank()  ?: mod.findHighestVersion?.versionCheckerInfo?.changelogUrl?.nullIfBlank()
-    changelogUrl = widget.remoteVersionCheck?.remoteVersion?.changelogURL ??
-        widget.localVersionCheck?.changelogURL ??
+    changelogUrl = Changelogs.getChangelogUrl(
+            widget.localVersionCheck, widget.remoteVersionCheck) ??
         "";
     if (changelogUrl.isNotEmpty) {
       if (_changelogCache.containsKey(changelogUrl)) {
@@ -40,7 +46,28 @@ class _ChangelogsState extends ConsumerState<Changelogs> {
 
       isLoading = true;
       Dio().get(changelogUrl).then((value) {
-        changelog = value.data.toString();
+        changelog = value.data.toString().trim();
+        var lines = changelog.split("\n");
+
+        // Remove the first line if it contains "Changelog"
+        if (lines.firstOrNull?.containsIgnoreCase("Changelog") == true) {
+          lines = lines.skip(1).toList();
+        }
+
+        // If there's a blank line after a version line, remove it
+        List<String> cleanedLines = [];
+
+        for (int i = 0; i < lines.length; i++) {
+          cleanedLines.add(lines[i]);
+          if (i < lines.length - 1 &&
+              lines[i].trim().toLowerCase().startsWith('version') &&
+              lines[i + 1].trim().isEmpty) {
+            i++;
+          }
+        }
+
+        changelog = cleanedLines.join("\n");
+
         _changelogCache[changelogUrl] = changelog;
         isLoading = false;
         setState(() {});
@@ -54,13 +81,51 @@ class _ChangelogsState extends ConsumerState<Changelogs> {
       return Container();
     }
 
-    return !isLoading
-        ? MarkdownBody(data: changelog)
-        : const Row(
-            children: [
-              Text("Loading..."),
-              CircularProgressIndicator(),
-            ],
-          );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (widget.withTitle)
+          Text("Changelog",
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                    decoration: TextDecoration.underline,
+                  )),
+        Expanded(
+            child: !isLoading
+                ? Builder(builder: (context) {
+                    final lines = changelog.split('\n');
+                    List<TextSpan> textSpans = lines.map((line) {
+                      if (line.trimLeft().toLowerCase().startsWith('version')) {
+                        return TextSpan(
+                          text: '$line\n',
+                          style: Theme.of(context)
+                              .textTheme
+                              .labelLarge
+                              ?.copyWith(
+                                color: Theme.of(context).colorScheme.secondary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                        );
+                      } else {
+                        return TextSpan(
+                          text: '$line\n',
+                          style: Theme.of(context).textTheme.labelLarge,
+                        );
+                      }
+                    }).toList();
+
+                    return SelectableText.rich(
+                      TextSpan(children: textSpans),
+                    );
+                  })
+                : const Row(
+                    children: [
+                      Text("Loading..."),
+                      CircularProgressIndicator(),
+                    ],
+                  )),
+      ],
+    );
   }
 }

@@ -109,7 +109,7 @@ downloadUpdateViaBrowser(
     ref
         .read(downloadManager.notifier)
         .addDownload(
-          "(${remoteVersion.modName ?? "(no name"}) ${remoteVersion.modVersion}",
+          "${remoteVersion.modName ?? "(no name"} ${remoteVersion.modVersion}",
           remoteVersion.directDownloadURL!.fixModDownloadUrl(),
           tempFolder,
           modInfo: modInfo,

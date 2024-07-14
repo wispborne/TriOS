@@ -6,6 +6,7 @@
         - No personal data is sent. No IP address, no language/timezone, no PC name, nothing.
         - Generates a random id for you, so I can tell if 10 of the same error is from 10 people or 1 person.
         - This will help me find bugs that may otherwise not get reported.
+    - Changelog viewer, for mods that include a link to a changelog in their .version files.
 - Fixed
   - Dashboard: Hide the Updates section if there aren't any updates.
   - Chipper: Handled error if a folder is dropped instead of a file.

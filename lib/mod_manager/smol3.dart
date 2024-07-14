@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:collection/collection.dart';
+import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_color/flutter_color.dart';
@@ -8,6 +9,8 @@ import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pluto_grid/pluto_grid.dart';
+import 'package:trios/dashboard/changelogs.dart';
+import 'package:trios/dashboard/mod_list_basic_entry.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/mod_manager/mod_version_selection_dropdown.dart';
 import 'package:trios/mod_manager/mods_grid_state.dart';
@@ -24,7 +27,6 @@ import 'package:trios/widgets/svg_image_icon.dart';
 import '../dashboard/mod_dependencies_widget.dart';
 import '../dashboard/mod_list_basic.dart';
 import '../dashboard/version_check_icon.dart';
-import '../dashboard/version_check_text_readout.dart';
 import '../models/mod.dart';
 import '../trios/download_manager/download_manager.dart';
 import '../widgets/mod_type_icon.dart';
@@ -211,7 +213,9 @@ class _Smol3State extends ConsumerState<Smol3>
                                           )
                                   ],
                                   backgroundColor: WidgetStateProperty.all(
-                                      Theme.of(context).colorScheme.surfaceContainer),
+                                      Theme.of(context)
+                                          .colorScheme
+                                          .surfaceContainer),
                                   onChanged: (value) {
                                     ref.read(searchQuery.notifier).state =
                                         value;
@@ -640,6 +644,8 @@ class _Smol3State extends ConsumerState<Smol3>
               versionCheckResultsNew?[bestVersion.smolId];
           final versionCheckComparison = compareLocalAndRemoteVersions(
               localVersionCheck, remoteVersionCheck);
+          final changelogUrl =
+              Changelogs.getChangelogUrl(localVersionCheck, remoteVersionCheck);
 
           return
               // affixToTop(                      child:
@@ -647,16 +653,80 @@ class _Smol3State extends ConsumerState<Smol3>
                   ? const Text("")
                   : Row(
                       children: [
-                        MovingTooltipWidget(
-                          tooltipWidget: SizedBox(
-                            width: 500,
-                            child: TooltipFrame(
-                                child: VersionCheckTextReadout(
-                                    versionCheckComparison,
-                                    localVersionCheck,
-                                    remoteVersionCheck,
-                                    true)),
+                        if (changelogUrl.isNotNullOrEmpty())
+                          MovingTooltipWidget(
+                            tooltipWidget: SizedBox(
+                              width: 400,
+                              height: 400,
+                              child: TooltipFrame(
+                                child: Stack(
+                                  children: [
+                                    Align(
+                                        alignment: Alignment.topRight,
+                                        child: Padding(
+                                          padding:
+                                              const EdgeInsets.only(bottom: 4, top: 0),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.end,
+                                            children: [
+                                              Padding(
+                                                padding: const EdgeInsets.only(
+                                                    right: 4),
+                                                child: SvgImageIcon(
+                                                  "assets/images/icon-bullhorn-variant.svg",
+                                                  color:
+                                                      theme.colorScheme.primary,
+                                                  width: 20,
+                                                  height: 20,
+                                                ),
+                                              ),
+                                              Text(
+                                                  "Click horn to see full changelog",
+                                                  style: theme
+                                                      .textTheme.bodySmall
+                                                      ?.copyWith(
+                                                    fontWeight: FontWeight.bold,
+                                                    color: theme
+                                                        .colorScheme.primary,
+                                                  )),
+                                            ],
+                                          ),
+                                        )),
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 12),
+                                      child: Changelogs(
+                                        localVersionCheck,
+                                        remoteVersionCheck,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            child: InkWell(
+                              onTap: () {
+                                showDialog(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                        content: Changelogs(localVersionCheck,
+                                            remoteVersionCheck)));
+                              },
+                              child: SvgImageIcon(
+                                "assets/images/icon-bullhorn-variant.svg",
+                                color: theme.iconTheme.color?.withOpacity(0.7),
+                                width: 20,
+                                height: 20,
+                              ),
+                            ),
                           ),
+                        MovingTooltipWidget(
+                          tooltipWidget:
+                              ModListBasicEntry.buildVersionCheckTextReadout(
+                                  null,
+                                  versionCheckComparison,
+                                  localVersionCheck,
+                                  remoteVersionCheck),
                           child: InkWell(
                             onTap: () {
                               if (remoteVersionCheck?.remoteVersion != null &&
@@ -674,25 +744,23 @@ class _Smol3State extends ConsumerState<Smol3>
                                 showDialog(
                                     context: context,
                                     builder: (context) => AlertDialog(
-                                            content: SelectionArea(
-                                          child: VersionCheckTextReadout(
-                                              versionCheckComparison,
-                                              localVersionCheck,
-                                              remoteVersionCheck,
-                                              true),
-                                        )));
+                                        content: ModListBasicEntry
+                                            .changeAndVersionCheckAlertDialogContent(
+                                                changelogUrl,
+                                                localVersionCheck,
+                                                remoteVersionCheck,
+                                                versionCheckComparison)));
                               }
                             },
                             onSecondaryTap: () => showDialog(
                                 context: context,
                                 builder: (context) => AlertDialog(
-                                        content: SelectionArea(
-                                      child: VersionCheckTextReadout(
-                                          versionCheckComparison,
-                                          localVersionCheck,
-                                          remoteVersionCheck,
-                                          true),
-                                    ))),
+                                    content: ModListBasicEntry
+                                        .changeAndVersionCheckAlertDialogContent(
+                                            changelogUrl,
+                                            localVersionCheck,
+                                            remoteVersionCheck,
+                                            versionCheckComparison))),
                             child: Padding(
                               padding:
                                   const EdgeInsets.symmetric(horizontal: 5.0),

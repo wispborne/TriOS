@@ -55,24 +55,25 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
         ref.watch(appSettings.select((s) => s.enableDirectLaunch));
     return Stack(
       children: [
-        Positioned(
-          right: 0,
-          child: Padding(
-            padding: const EdgeInsets.only(left: 16, top: 12),
-            child: CheckboxWithLabel(
-                label: "Skip Game Launcher",
-                textPadding: const EdgeInsets.only(left: 12, bottom: 0),
-                labelStyle: Theme.of(context).textTheme.labelMedium,
-                flipCheckboxAndLabel: true,
-                value: enableDirectLaunch,
-                onChanged: (bool? value) {
-                  if (value == null) return;
-                  ref
-                      .read(appSettings.notifier)
-                      .update((s) => s.copyWith(enableDirectLaunch: value));
-                }),
+        if (isUsingJre23 != true)
+          Positioned(
+            right: 0,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 16, top: 12),
+              child: CheckboxWithLabel(
+                  label: "Skip Game Launcher",
+                  textPadding: const EdgeInsets.only(left: 12, bottom: 0),
+                  labelStyle: Theme.of(context).textTheme.labelMedium,
+                  flipCheckboxAndLabel: true,
+                  value: enableDirectLaunch,
+                  onChanged: (bool? value) {
+                    if (value == null) return;
+                    ref
+                        .read(appSettings.notifier)
+                        .update((s) => s.copyWith(enableDirectLaunch: value));
+                  }),
+            ),
           ),
-        ),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

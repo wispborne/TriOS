@@ -7,9 +7,15 @@
         - Generates a random id for you, so I can tell if 10 of the same error is from 10 people or 1 person.
         - This will help me find bugs that may otherwise not get reported.
     - Changelog viewer, for mods that include a link to a changelog in their .version files.
+    - When a mod is added, shows a notification allowing you to enable it.
+        - Bonus: if the mod has an icon, the notification is themed (lol).
 - Fixed
-  - Dashboard: Hide the Updates section if there aren't any updates.
-  - Chipper: Handled error if a folder is dropped instead of a file.
+    - Dashboard: Hide the Updates section if there aren't any updates.
+    - Chipper: Handled error if a folder is dropped instead of a file.
+    - When updating a mod, the new version is no longer automatically enabled.
+        - Click "Enable" in the notification that appears.
+        - This is to allow you to update a mod but still decide whether to use the update (it may be save-breaking).
+    - Hide the "Skip Game Launcher" option if using JRE 23 (thanks Zon).
 
 # 0.0.58
 

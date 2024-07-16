@@ -71,7 +71,7 @@ Future<void> changeRamAmount(WidgetRef ref, double ramInMb,
 
   if (alsoChangeCustomVmparams) {
     // Change JRE23 vmparams
-    final jre23Vmparams = gamePath.resolve("Miko_R3.txt").toFile();
+    final jre23Vmparams = getJre23VmparamsFile(gamePath);
     if (!jre23Vmparams.existsSync()) {
       Fimber.d(
           "JRE 23 vmparams file does not exist, not modifying (this is expected if JRE23 is not set up): ${jre23Vmparams.path}");

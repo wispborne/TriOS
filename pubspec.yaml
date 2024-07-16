@@ -47,7 +47,7 @@ dependencies:
   yaml: ^3.1.2
   # fimber: ^0.7.0
   #  fimber_io: ^0.7.0
-  logger: ^2.2.0
+  logger: ^2.4.0
   image_size_getter: ^2.1.3
   squadron: ^5.1.6
   squadron_builder: ^2.4.5

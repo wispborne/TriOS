@@ -19,7 +19,10 @@ class ModVersionSelectionDropdown extends ConsumerStatefulWidget {
   final showTooltip;
 
   const ModVersionSelectionDropdown(
-      {super.key, required this.mod, required this.width, required this.showTooltip});
+      {super.key,
+      required this.mod,
+      required this.width,
+      required this.showTooltip});
 
   @override
   ConsumerState createState() => _ModVersionSelectionDropdownState();
@@ -81,7 +84,9 @@ class _ModVersionSelectionDropdownState
 
     if (isSingleVariant) {
       return Tooltip(
-        message: widget.showTooltip ? (!isSupportedByGameVersion ? gameVersionMessage : "") : "",
+        message: widget.showTooltip
+            ? (!isSupportedByGameVersion ? gameVersionMessage : "")
+            : "",
         child: Disable(
           isEnabled: isButtonEnabled,
           child: SizedBox(
@@ -89,6 +94,7 @@ class _ModVersionSelectionDropdownState
             height: buttonHeight,
             child: ElevatedButton(
               onPressed: () async {
+                if (!mounted) return;
                 // Enable if disabled, disable if enabled
                 try {
                   if (widget.mod.hasEnabledVariant) {
@@ -131,7 +137,9 @@ class _ModVersionSelectionDropdownState
 
     var dropdownWidth = buttonWidth - 6;
     return Tooltip(
-      message: widget.showTooltip ? (!isSupportedByGameVersion ? gameVersionMessage : "") : "",
+      message: widget.showTooltip
+          ? (!isSupportedByGameVersion ? gameVersionMessage : "")
+          : "",
       child: Disable(
         isEnabled: isButtonEnabled,
         child: DropdownButton2(

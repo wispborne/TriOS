@@ -66,7 +66,7 @@ class LibArchive {
             TargetPlatform.windows => "data/flutter_assets/assets",
             TargetPlatform.macOS =>
               "TriOS.app/Contents/Frameworks/App.framework/Resources/flutter_assets/assets",
-              // "${getApplicationDocumentsDirectory()}/Contents/Frameworks/App.framework/Resources/flutter_assets/assets",
+            // "${getApplicationDocumentsDirectory()}/Contents/Frameworks/App.framework/Resources/flutter_assets/assets",
             _ => "data/flutter_assets/assets",
           };
     final currentLibarchivePath =
@@ -238,7 +238,8 @@ class LibArchive {
                 errCode, writePtr, archivePtr, entry,
                 pathTransform: pathTransform);
           } catch (e, st) {
-            if (_ignorableErrors.contains(e.toString())) {
+            if (_ignorableErrors.contains(e.toString()) ||
+                _ignorableErrors.any((error) => e.toString().contains(error))) {
               return null;
             }
 

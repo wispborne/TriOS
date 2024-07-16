@@ -17,6 +17,7 @@
         - Click "Enable" in the notification that appears.
         - This is to allow you to update a mod but still decide whether to use the update (it may be save-breaking).
     - Hide the "Skip Game Launcher" option if using JRE 23 (thanks Zon).
+    - Added write permission check for vmparams.
 - Changed
   - Notifications disappear after a configurable amount of time.
 

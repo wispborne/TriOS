@@ -16,6 +16,8 @@ File getVmparamsFile(Directory gamePath, {TargetPlatform? platform}) {
       .normalize;
 }
 
+File getJre23VmparamsFile(Directory gamePath) => gamePath.resolve("Miko_R3.txt").toFile();
+
 Directory getJreDir(Directory gamePath, {TargetPlatform? platform}) {
   return switch (platform ?? currentPlatform) {
     TargetPlatform.windows => gamePath.resolve("jre"),

@@ -70,7 +70,7 @@ class _ChangelogsState extends ConsumerState<Changelogs> {
 
         _changelogCache[changelogUrl] = changelog;
         isLoading = false;
-        setState(() {});
+        if (mounted) setState(() {});
       });
     }
   }

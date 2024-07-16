@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:toastification/toastification.dart';
@@ -133,12 +134,18 @@ class _AppShellState extends ConsumerState<AppShell>
       builder: (context) {
         return AlertDialog(
           title: const Text("Crash Reporting"),
-          content: const Text(
-              "${Constants.appName} can send crash/error reports to help me find and fix issues."
-              "\n\nNothing identifiable or personal is ever sent."
-              "\n\nInfo includes: app version, mod list, basic PC info (resolution, OS), randomly generated user id, and the crash details."
-              "\nNot sent: IP address, language/region/zip, PC name, any file paths, etc."
-              "\n\nWould you like to enable crash reporting?"),
+          content: Linkify(
+            text:
+                "${Constants.appName} can send crash/error reports to help me find and fix issues."
+                "\n\nNothing identifiable or personal is ever sent."
+                "\n\nInfo includes: app version, mod list, basic PC info (resolution, OS), randomly generated user id, and the crash details."
+                "\nNot sent: IP address, language/region/zip, PC name, any file paths, etc."
+                "\nExample of a report: https://i.imgur.com/k9E6zxO.png."
+                "\n\nWould you like to enable crash reporting?",
+            onOpen: (link) {
+              OpenFilex.open(link.url);
+            },
+          ),
           actions: [
             TextButton.icon(
               onPressed: () {
@@ -192,7 +199,6 @@ class _AppShellState extends ConsumerState<AppShell>
         appBar: AppBar(
           title: Row(
             children: [
-              const ToastDisplayer(),
               Padding(
                 padding: const EdgeInsets.only(right: 16.0),
                 child: Tooltip(
@@ -348,10 +354,21 @@ class _AppShellState extends ConsumerState<AppShell>
                 Expanded(
                   child: Padding(
                       padding: const EdgeInsets.all(0),
-                      child: TabBarView(
-                        controller: tabController,
-                        physics: const NeverScrollableScrollPhysics(),
-                        children: tabChildren,
+                      child: Stack(
+                        children: [
+                          TabBarView(
+                              controller: tabController,
+                              physics: const NeverScrollableScrollPhysics(),
+                              children: tabChildren),
+                          Positioned(
+                            right: 0,
+                            bottom: 0,
+                            child: Padding(
+                              padding: const EdgeInsets.all(8),
+                              child: const ToastDisplayer(),
+                            ),
+                          )
+                        ],
                       )),
                 ),
               ],

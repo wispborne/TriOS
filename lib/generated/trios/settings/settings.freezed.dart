@@ -45,6 +45,7 @@ mixin _$Settings {
   LaunchSettings get launchSettings => throw _privateConstructorUsedError;
   String? get lastStarsectorVersion => throw _privateConstructorUsedError;
   int get secondsBetweenModFolderChecks => throw _privateConstructorUsedError;
+  int get toastDurationSeconds => throw _privateConstructorUsedError;
   bool get isUpdatesFieldShown => throw _privateConstructorUsedError;
   ModsGridState? get modsGridState => throw _privateConstructorUsedError;
   bool? get allowCrashReporting => throw _privateConstructorUsedError;
@@ -82,6 +83,7 @@ abstract class $SettingsCopyWith<$Res> {
       LaunchSettings launchSettings,
       String? lastStarsectorVersion,
       int secondsBetweenModFolderChecks,
+      int toastDurationSeconds,
       bool isUpdatesFieldShown,
       ModsGridState? modsGridState,
       bool? allowCrashReporting,
@@ -124,6 +126,7 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
     Object? launchSettings = null,
     Object? lastStarsectorVersion = freezed,
     Object? secondsBetweenModFolderChecks = null,
+    Object? toastDurationSeconds = null,
     Object? isUpdatesFieldShown = null,
     Object? modsGridState = freezed,
     Object? allowCrashReporting = freezed,
@@ -210,6 +213,10 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
           ? _value.secondsBetweenModFolderChecks
           : secondsBetweenModFolderChecks // ignore: cast_nullable_to_non_nullable
               as int,
+      toastDurationSeconds: null == toastDurationSeconds
+          ? _value.toastDurationSeconds
+          : toastDurationSeconds // ignore: cast_nullable_to_non_nullable
+              as int,
       isUpdatesFieldShown: null == isUpdatesFieldShown
           ? _value.isUpdatesFieldShown
           : isUpdatesFieldShown // ignore: cast_nullable_to_non_nullable
@@ -279,6 +286,7 @@ abstract class _$$SettingsImplCopyWith<$Res>
       LaunchSettings launchSettings,
       String? lastStarsectorVersion,
       int secondsBetweenModFolderChecks,
+      int toastDurationSeconds,
       bool isUpdatesFieldShown,
       ModsGridState? modsGridState,
       bool? allowCrashReporting,
@@ -321,6 +329,7 @@ class __$$SettingsImplCopyWithImpl<$Res>
     Object? launchSettings = null,
     Object? lastStarsectorVersion = freezed,
     Object? secondsBetweenModFolderChecks = null,
+    Object? toastDurationSeconds = null,
     Object? isUpdatesFieldShown = null,
     Object? modsGridState = freezed,
     Object? allowCrashReporting = freezed,
@@ -407,6 +416,10 @@ class __$$SettingsImplCopyWithImpl<$Res>
           ? _value.secondsBetweenModFolderChecks
           : secondsBetweenModFolderChecks // ignore: cast_nullable_to_non_nullable
               as int,
+      toastDurationSeconds: null == toastDurationSeconds
+          ? _value.toastDurationSeconds
+          : toastDurationSeconds // ignore: cast_nullable_to_non_nullable
+              as int,
       isUpdatesFieldShown: null == isUpdatesFieldShown
           ? _value.isUpdatesFieldShown
           : isUpdatesFieldShown // ignore: cast_nullable_to_non_nullable
@@ -451,6 +464,7 @@ class _$SettingsImpl implements _Settings {
       this.launchSettings = const LaunchSettings(),
       this.lastStarsectorVersion,
       this.secondsBetweenModFolderChecks = 15,
+      this.toastDurationSeconds = 7000,
       this.isUpdatesFieldShown = true,
       this.modsGridState,
       this.allowCrashReporting,
@@ -513,6 +527,9 @@ class _$SettingsImpl implements _Settings {
   final int secondsBetweenModFolderChecks;
   @override
   @JsonKey()
+  final int toastDurationSeconds;
+  @override
+  @JsonKey()
   final bool isUpdatesFieldShown;
   @override
   final ModsGridState? modsGridState;
@@ -524,7 +541,7 @@ class _$SettingsImpl implements _Settings {
 
   @override
   String toString() {
-    return 'Settings(gameDir: $gameDir, gameCoreDir: $gameCoreDir, modsDir: $modsDir, hasCustomModsDir: $hasCustomModsDir, shouldAutoUpdateOnLaunch: $shouldAutoUpdateOnLaunch, isRulesHotReloadEnabled: $isRulesHotReloadEnabled, windowXPos: $windowXPos, windowYPos: $windowYPos, windowWidth: $windowWidth, windowHeight: $windowHeight, isMaximized: $isMaximized, isMinimized: $isMinimized, defaultTool: $defaultTool, jre23VmparamsFilename: $jre23VmparamsFilename, useJre23: $useJre23, showJre23ConsoleWindow: $showJre23ConsoleWindow, enableDirectLaunch: $enableDirectLaunch, launchSettings: $launchSettings, lastStarsectorVersion: $lastStarsectorVersion, secondsBetweenModFolderChecks: $secondsBetweenModFolderChecks, isUpdatesFieldShown: $isUpdatesFieldShown, modsGridState: $modsGridState, allowCrashReporting: $allowCrashReporting, userId: $userId)';
+    return 'Settings(gameDir: $gameDir, gameCoreDir: $gameCoreDir, modsDir: $modsDir, hasCustomModsDir: $hasCustomModsDir, shouldAutoUpdateOnLaunch: $shouldAutoUpdateOnLaunch, isRulesHotReloadEnabled: $isRulesHotReloadEnabled, windowXPos: $windowXPos, windowYPos: $windowYPos, windowWidth: $windowWidth, windowHeight: $windowHeight, isMaximized: $isMaximized, isMinimized: $isMinimized, defaultTool: $defaultTool, jre23VmparamsFilename: $jre23VmparamsFilename, useJre23: $useJre23, showJre23ConsoleWindow: $showJre23ConsoleWindow, enableDirectLaunch: $enableDirectLaunch, launchSettings: $launchSettings, lastStarsectorVersion: $lastStarsectorVersion, secondsBetweenModFolderChecks: $secondsBetweenModFolderChecks, toastDurationSeconds: $toastDurationSeconds, isUpdatesFieldShown: $isUpdatesFieldShown, modsGridState: $modsGridState, allowCrashReporting: $allowCrashReporting, userId: $userId)';
   }
 
   @override
@@ -538,8 +555,7 @@ class _$SettingsImpl implements _Settings {
             (identical(other.modsDir, modsDir) || other.modsDir == modsDir) &&
             (identical(other.hasCustomModsDir, hasCustomModsDir) ||
                 other.hasCustomModsDir == hasCustomModsDir) &&
-            (identical(
-                    other.shouldAutoUpdateOnLaunch, shouldAutoUpdateOnLaunch) ||
+            (identical(other.shouldAutoUpdateOnLaunch, shouldAutoUpdateOnLaunch) ||
                 other.shouldAutoUpdateOnLaunch == shouldAutoUpdateOnLaunch) &&
             (identical(other.isRulesHotReloadEnabled, isRulesHotReloadEnabled) ||
                 other.isRulesHotReloadEnabled == isRulesHotReloadEnabled) &&
@@ -573,6 +589,8 @@ class _$SettingsImpl implements _Settings {
                     secondsBetweenModFolderChecks) ||
                 other.secondsBetweenModFolderChecks ==
                     secondsBetweenModFolderChecks) &&
+            (identical(other.toastDurationSeconds, toastDurationSeconds) ||
+                other.toastDurationSeconds == toastDurationSeconds) &&
             (identical(other.isUpdatesFieldShown, isUpdatesFieldShown) ||
                 other.isUpdatesFieldShown == isUpdatesFieldShown) &&
             (identical(other.modsGridState, modsGridState) ||
@@ -606,6 +624,7 @@ class _$SettingsImpl implements _Settings {
         launchSettings,
         lastStarsectorVersion,
         secondsBetweenModFolderChecks,
+        toastDurationSeconds,
         isUpdatesFieldShown,
         modsGridState,
         allowCrashReporting,
@@ -648,6 +667,7 @@ abstract class _Settings implements Settings {
       final LaunchSettings launchSettings,
       final String? lastStarsectorVersion,
       final int secondsBetweenModFolderChecks,
+      final int toastDurationSeconds,
       final bool isUpdatesFieldShown,
       final ModsGridState? modsGridState,
       final bool? allowCrashReporting,
@@ -701,6 +721,8 @@ abstract class _Settings implements Settings {
   String? get lastStarsectorVersion;
   @override
   int get secondsBetweenModFolderChecks;
+  @override
+  int get toastDurationSeconds;
   @override
   bool get isUpdatesFieldShown;
   @override

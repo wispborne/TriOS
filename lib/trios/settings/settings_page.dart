@@ -22,6 +22,7 @@ import '../../widgets/self_update_toast.dart';
 import '../app_state.dart';
 import '../constants.dart';
 import '../download_manager/download_manager.dart';
+import '../toasts/mod_added_toast.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
@@ -209,6 +210,36 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             ),
           ),
         ),
+        Padding(
+          padding: const EdgeInsets.only(top: 16),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                    "Toast duration: ${ref.watch(appSettings.select((value) => value.toastDurationSeconds))} seconds",
+                    style: theme.textTheme.bodyLarge),
+                Slider(
+                  value: ref
+                      .watch(appSettings
+                          .select((value) => value.toastDurationSeconds))
+                      .toDouble(),
+                  min: 1,
+                  max: 45,
+                  divisions: 45,
+                  label:
+                      "${ref.watch(appSettings.select((value) => value.toastDurationSeconds))}",
+                  onChanged: (value) {
+                    ref.read(appSettings.notifier).update((state) =>
+                        state.copyWith(toastDurationSeconds: value.toInt()));
+                  },
+                  inactiveColor: theme.colorScheme.onSurface.withOpacity(0.5),
+                ),
+              ],
+            ),
+          ),
+        ),
         // Checkbox for enabling crash reporting
         Padding(
           padding: const EdgeInsets.only(top: 16),
@@ -309,7 +340,30 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                 modInfo: testMod.modInfo,
                               );
                         },
-                        child: const Text('Redownload MagicLib'))),
+                        child:
+                            const Text('Redownload MagicLib (shows toast)'))),
+                // Show mod added toast
+                Padding(
+                  padding: const EdgeInsets.only(top: 16),
+                  child: ElevatedButton(
+                      onPressed: () {
+                        final testMod = ref
+                            .read(AppState.modVariants)
+                            .valueOrNull
+                            .orEmpty()
+                            .firstWhere((variant) => variant.modInfo.id
+                                .equalsIgnoreCase("magiclib"));
+                        toastification.showCustom(
+                            context: context,
+                            builder: (context, item) => ModAddedToast(
+                                testMod,
+                                item,
+                                ref.watch(appSettings.select((value) =>
+                                        value.secondsBetweenModFolderChecks)) *
+                                    1000));
+                      },
+                      child: const Text('Show Mod Added Toast for MagicLib')),
+                ),
                 Padding(
                     padding: const EdgeInsets.only(top: 16),
                     child: ElevatedButton(

@@ -66,6 +66,7 @@ class Settings with _$Settings {
     @Default(LaunchSettings()) final LaunchSettings launchSettings,
     final String? lastStarsectorVersion,
     @Default(15) final int secondsBetweenModFolderChecks,
+    @Default(7000) final int toastDurationSeconds,
     @Default(true) final bool isUpdatesFieldShown,
     final ModsGridState? modsGridState,
     final bool? allowCrashReporting,

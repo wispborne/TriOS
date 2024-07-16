@@ -5,9 +5,9 @@ import 'package:toastification/toastification.dart';
 import 'package:trios/trios/toasts/mod_added_toast.dart';
 import 'package:trios/utils/extensions.dart';
 
-import '../../utils/logging.dart';
 import '../app_state.dart';
 import '../download_manager/download_manager.dart';
+import '../settings/settings.dart';
 import 'mod_download_toast.dart';
 
 class ToastDisplayer extends ConsumerStatefulWidget {
@@ -19,6 +19,8 @@ class ToastDisplayer extends ConsumerStatefulWidget {
 
 class _ToastDisplayerState extends ConsumerState<ToastDisplayer> {
   final _downloadIdToToastIdMap = <String, String>{};
+  final _smolIdToModAddedToastIdMap = <String, String>{};
+  String? clearAllId;
 
   @override
   Widget build(BuildContext context) {
@@ -47,10 +49,15 @@ class _ToastDisplayerState extends ConsumerState<ToastDisplayer> {
         }
 
         WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+          final toastDurationMillis = ref.watch(appSettings
+              .select((value) => value.toastDurationSeconds)) *
+              1000;
           toastification.showCustom(
               context: context,
               builder: (context, item) {
-                return ModAddedToast(newlyAddedVariant, item);
+                _smolIdToModAddedToastIdMap[newlyAddedVariant.smolId] = item.id;
+                return ModAddedToast(
+                    newlyAddedVariant, item, toastDurationMillis);
               });
         });
       }
@@ -72,15 +79,40 @@ class _ToastDisplayerState extends ConsumerState<ToastDisplayer> {
       // do on next frame
       if (toast == null && !_downloadIdToToastIdMap.containsKey(download.id)) {
         WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+          final toastDurationMillis = ref.watch(appSettings
+              .select((value) => value.toastDurationSeconds)) *
+              1000;
           toastification.showCustom(
               context: context,
               builder: (context, item) {
                 _downloadIdToToastIdMap[download.id] = item.id;
-                return ModDownloadToast(download, item);
+                return ModDownloadToast(download, item, toastDurationMillis);
               });
         });
       }
     });
+
+    // Fimber.i("Clear all id: $clearAllId");
+    //
+    // if (clearAllId == null &&
+    //     (_downloadIdToToastIdMap.isNotEmpty ||
+    //         _smolIdToModAddedToastIdMap.isNotEmpty)) {
+    //   WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+    //     clearAllId = toastification
+    //         .showCustom(
+    //             context: context,
+    //             builder: (context, item) => FloatingActionButton(
+    //                   onPressed: () {
+    //                     clearAllId = null;
+    //                     _downloadIdToToastIdMap.clear();
+    //                     _smolIdToModAddedToastIdMap.clear();
+    //                     toastification.dismissAll(delayForAnimation: true);
+    //                   },
+    //                   child: const Icon(Icons.clear_all),
+    //                 ))
+    //         .id;
+    //   });
+    // }
 
     return Container();
   }

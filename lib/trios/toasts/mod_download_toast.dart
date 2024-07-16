@@ -18,10 +18,12 @@ import '../download_manager/download_manager.dart';
 import '../download_manager/download_status.dart';
 
 class ModDownloadToast extends ConsumerStatefulWidget {
-  const ModDownloadToast(this.download, this.item, {super.key});
+  const ModDownloadToast(this.download, this.item, this.durationMillis,
+      {super.key});
 
   final ToastificationItem item;
   final Download download;
+  final int durationMillis;
 
   @override
   ConsumerState<ModDownloadToast> createState() => _ModDownloadToastState();
@@ -29,6 +31,7 @@ class ModDownloadToast extends ConsumerStatefulWidget {
 
 class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
   PaletteGenerator? palette;
+  int timeRemaining = 1;
 
   Future<void> _generatePalette(ModVariant variant) async {
     if (variant.iconFilePath.isNotNullOrEmpty()) {
@@ -36,6 +39,22 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
       palette = await PaletteGenerator.fromImageProvider(icon.image);
       setState(() {});
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    timeRemaining = widget.durationMillis;
+    // loop to update the time remaining every 5ms
+    Future.doWhile(() async {
+      await Future.delayed(const Duration(milliseconds: 5));
+      if (mounted) {
+        setState(() {
+          timeRemaining -= 5;
+        });
+      }
+      return timeRemaining > 0;
+    });
   }
 
   @override
@@ -50,6 +69,12 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
         : null;
     if (palette == null && installedMod != null) {
       _generatePalette(installedMod);
+    }
+
+    if (timeRemaining <= 0) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+        toastification.dismiss(widget.item);
+      });
     }
 
     return Padding(
@@ -103,13 +128,14 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                                 _ => Icons.downloading
                               },
                               color: switch (status) {
-                                DownloadStatus.queued => null,
-                                DownloadStatus.downloading => null,
+                                DownloadStatus.queued => theme.iconTheme.color,
+                                DownloadStatus.downloading =>
+                                  theme.iconTheme.color,
                                 DownloadStatus.completed =>
-                                  theme.colorScheme.primary,
+                                  theme.colorScheme.secondary,
                                 DownloadStatus.failed => vanillaErrorColor,
                                 DownloadStatus.canceled => vanillaErrorColor,
-                                _ => null
+                                _ => theme.iconTheme.color,
                               },
                             ),
                           ),
@@ -231,9 +257,29 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                             ),
                           ),
                         ),
-                        IconButton(
-                            onPressed: () => toastification.dismiss(item),
-                            icon: const Icon(Icons.close))
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8),
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              SizedBox(
+                                width: 32,
+                                height: 32,
+                                child: CircularProgressIndicator(
+                                  value: timeRemaining / widget.durationMillis,
+                                  strokeWidth: 3,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      theme.colorScheme.onSurface),
+                                ),
+                              ),
+                              IconButton(
+                                onPressed: () =>
+                                    toastification.dismiss(widget.item),
+                                icon: const Icon(Icons.close),
+                              ),
+                            ],
+                          ),
+                        ),
                       ],
                     );
                   },

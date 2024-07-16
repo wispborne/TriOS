@@ -14,22 +14,36 @@ import 'package:url_launcher/url_launcher_string.dart';
 import '../../utils/logging.dart';
 
 class ModAddedToast extends ConsumerStatefulWidget {
-  const ModAddedToast(this.modVariant, this.item, {super.key});
+  const ModAddedToast(this.modVariant, this.item, this.durationMillis,
+      {super.key});
 
   final ToastificationItem item;
   final ModVariant modVariant;
+  final int durationMillis;
 
   @override
-  _ModAddedToastState createState() => _ModAddedToastState();
+  ConsumerState createState() => _ModAddedToastState();
 }
 
 class _ModAddedToastState extends ConsumerState<ModAddedToast> {
   PaletteGenerator? palette;
+  int timeRemaining = 1;
 
   @override
   void initState() {
     super.initState();
     _generatePalette();
+    timeRemaining = widget.durationMillis;
+    // loop to update the time remaining every 5ms
+    Future.doWhile(() async {
+      await Future.delayed(const Duration(milliseconds: 5));
+      if (mounted) {
+        setState(() {
+          timeRemaining -= 5;
+        });
+      }
+      return timeRemaining > 0;
+    });
   }
 
   Future<void> _generatePalette() async {
@@ -50,6 +64,12 @@ class _ModAddedToastState extends ConsumerState<ModAddedToast> {
     final icon = widget.modVariant.iconFilePath.isNotNullOrEmpty()
         ? Image.file((widget.modVariant.iconFilePath ?? "").toFile())
         : null;
+
+    if (timeRemaining <= 0) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+        toastification.dismiss(widget.item);
+      });
+    }
 
     return Padding(
       padding: const EdgeInsets.only(top: 4, right: 32),
@@ -73,7 +93,8 @@ class _ModAddedToastState extends ConsumerState<ModAddedToast> {
                 padding: const EdgeInsets.all(8.0),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.surface,
-                  borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+                  borderRadius:
+                      BorderRadius.circular(ThemeManager.cornerRadius),
                   boxShadow: const [
                     BoxShadow(
                       color: Colors.black26,
@@ -131,8 +152,8 @@ class _ModAddedToastState extends ConsumerState<ModAddedToast> {
                                     label: Text("Open",
                                         style: theme.textTheme.bodyMedium
                                             ?.copyWith(
-                                                color:
-                                                    theme.colorScheme.onSurface)),
+                                                color: theme
+                                                    .colorScheme.onSurface)),
                                   ),
                                   if (widget.modVariant.bestVersion !=
                                       currentVariant?.bestVersion)
@@ -153,7 +174,8 @@ class _ModAddedToastState extends ConsumerState<ModAddedToast> {
                                           icon: const SizedBox(
                                             width: 24,
                                             height: 24,
-                                            child: Icon(Icons.power_settings_new),
+                                            child:
+                                                Icon(Icons.power_settings_new),
                                           ),
                                           label: const Text("Enable"),
                                         ),
@@ -166,9 +188,24 @@ class _ModAddedToastState extends ConsumerState<ModAddedToast> {
                         ),
                       ),
                     ),
-                    IconButton(
-                      onPressed: () => toastification.dismiss(widget.item),
-                      icon: const Icon(Icons.close),
+                    Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        SizedBox(
+                          width: 32,
+                          height: 32,
+                          child: CircularProgressIndicator(
+                            value: timeRemaining / widget.durationMillis,
+                            strokeWidth: 3,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                                theme.colorScheme.onSurface),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => toastification.dismiss(widget.item),
+                          icon: const Icon(Icons.close),
+                        ),
+                      ],
                     ),
                   ],
                 ),

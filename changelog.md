@@ -4,6 +4,7 @@
     - Opt-in crash & error reporting.
         - Not enabled by default.
         - No personal data is sent. No IP address, no language/timezone, no PC name, nothing.
+        - Example of the report I see: https://i.imgur.com/k9E6zxO.png.
         - Generates a random id for you, so I can tell if 10 of the same error is from 10 people or 1 person.
         - This will help me find bugs that may otherwise not get reported.
     - Changelog viewer, for mods that include a link to a changelog in their .version files.
@@ -16,6 +17,8 @@
         - Click "Enable" in the notification that appears.
         - This is to allow you to update a mod but still decide whether to use the update (it may be save-breaking).
     - Hide the "Skip Game Launcher" option if using JRE 23 (thanks Zon).
+- Changed
+  - Notifications disappear after a configurable amount of time.
 
 # 0.0.58
 

@@ -38,6 +38,8 @@ _$SettingsImpl _$$SettingsImplFromJson(Map<String, dynamic> json) =>
       lastStarsectorVersion: json['lastStarsectorVersion'] as String?,
       secondsBetweenModFolderChecks:
           (json['secondsBetweenModFolderChecks'] as num?)?.toInt() ?? 15,
+      toastDurationSeconds:
+          (json['toastDurationSeconds'] as num?)?.toInt() ?? 7000,
       isUpdatesFieldShown: json['isUpdatesFieldShown'] as bool? ?? true,
       modsGridState: json['modsGridState'] == null
           ? null
@@ -70,6 +72,7 @@ Map<String, dynamic> _$$SettingsImplToJson(_$SettingsImpl instance) =>
       'launchSettings': instance.launchSettings,
       'lastStarsectorVersion': instance.lastStarsectorVersion,
       'secondsBetweenModFolderChecks': instance.secondsBetweenModFolderChecks,
+      'toastDurationSeconds': instance.toastDurationSeconds,
       'isUpdatesFieldShown': instance.isUpdatesFieldShown,
       'modsGridState': instance.modsGridState,
       'allowCrashReporting': instance.allowCrashReporting,

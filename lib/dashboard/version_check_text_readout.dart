@@ -130,14 +130,14 @@ class _VersionCheckTextReadoutState
                   children: [
                     Text("Error checking for updates.",
                         style: theme.textTheme.labelLarge?.copyWith(
-                            color: vanillaErrorColor,
+                            color: ThemeManager.vanillaErrorColor,
                             fontWeight: FontWeight.bold)),
                     Padding(
                       padding: const EdgeInsets.only(top: 2),
                       child: Text(
                           "This is usually caused by the mod author. Please visit the mod page to manually find updates.",
                           style: theme.textTheme.labelLarge
-                              ?.copyWith(color: vanillaErrorColor)),
+                              ?.copyWith(color: ThemeManager.vanillaErrorColor)),
                     ),
                     Text(
                         "If the in-game Version Checker is working for this specific mod, please report a TriOS bug.",
@@ -155,7 +155,7 @@ class _VersionCheckTextReadoutState
                       padding: const EdgeInsets.only(top: 8),
                       child: Text("Message",
                           style: theme.textTheme.labelLarge?.copyWith(
-                              color: vanillaErrorColor,
+                              color: ThemeManager.vanillaErrorColor,
                               fontWeight: FontWeight.bold)),
                     ),
                     Text("${remoteVersionCheck?.error}",

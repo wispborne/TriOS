@@ -9,6 +9,7 @@ import 'package:trios/trios/settings/settings.dart';
 
 import '../../mod_manager/mod_manager_logic.dart';
 import '../../models/enabled_mods.dart';
+import '../../models/mod.dart';
 import '../../utils/logging.dart';
 import '../../utils/util.dart';
 
@@ -64,6 +65,9 @@ class EnabledModsNotifier extends AsyncNotifier<EnabledMods> {
     await enableMod(modId, enabled: false);
   }
 
+  /// Refreshes the list of enabled mods by reading the enabled_mods.json file.
+  /// If the file doesn't exist, it'll create a new one.
+  /// `allMods` is an optional parameter that filters out mods that don't exist.
   Future<void> refreshEnabledMods() async {
     final modsFolder = ref.watch(appSettings.select((value) => value.modsDir));
 

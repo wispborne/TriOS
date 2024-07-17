@@ -1,6 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
+import 'package:trios/utils/logging.dart';
 
 typedef SelectionTransform = String Function(Iterable<String>);
 
@@ -56,10 +57,11 @@ class SelectionTransformer extends StatefulWidget {
   }) : transform = _tabularSelectionTransform(columns, separator);
 
   static SelectionTransform _separatedSelectionTransform(String separator) =>
-          (selections) => selections.join(separator).trim();
+      (selections) => selections.join(separator).trim();
 
-  static SelectionTransform _tabularSelectionTransform(int columns, String? separator) =>
-          (selections) {
+  static SelectionTransform _tabularSelectionTransform(
+          int columns, String? separator) =>
+      (selections) {
         var maxColumnWidths = List.filled(columns - 1, 0);
         for (var (i, s) in selections.indexed) {
           for (var j = 0; j < columns - 1; j++) {
@@ -72,7 +74,8 @@ class SelectionTransformer extends StatefulWidget {
         for (var (i, s) in selections.indexed) {
           var j = i % columns;
           if (j < columns - 1) {
-            buffer.write('${s.padRight(maxColumnWidths[j])}${separator ?? "\t"}');
+            buffer
+                .write('${s.padRight(maxColumnWidths[j])}${separator ?? "\t"}');
           } else {
             buffer.write(s);
             if (i < selections.length - 1) {
@@ -141,7 +144,7 @@ class SeparatedSelectionContainerDelegate
       SelectionContainer s = (selectable as State<SelectionContainer>).widget;
       if (s.delegate is MultiSelectableSelectionContainerDelegate) {
         MultiSelectableSelectionContainerDelegate d =
-        s.delegate as MultiSelectableSelectionContainerDelegate;
+            s.delegate as MultiSelectableSelectionContainerDelegate;
         for (final Selectable nestedSelectable in d.selectables) {
           selections.addAll(getAllSelectables(nestedSelectable));
         }
@@ -234,7 +237,12 @@ class SeparatedSelectionContainerDelegate
     } else {
       _lastStartEdgeUpdateGlobalPosition = event.globalPosition;
     }
-    return super.handleSelectionEdgeUpdate(event);
+    try {
+      return super.handleSelectionEdgeUpdate(event);
+    } catch (e) {
+      Fimber.w('Error handling selection edge update: $e');
+      return SelectionResult.none;
+    }
   }
 
   @override
@@ -274,7 +282,7 @@ class SeparatedSelectionContainerDelegate
     if (_lastEndEdgeUpdateGlobalPosition != null &&
         _hasReceivedEndEvent.add(selectable)) {
       final SelectionEdgeUpdateEvent synthesizedEvent =
-      SelectionEdgeUpdateEvent.forEnd(
+          SelectionEdgeUpdateEvent.forEnd(
         globalPosition: _lastEndEdgeUpdateGlobalPosition!,
       );
       if (currentSelectionEndIndex == -1) {
@@ -285,7 +293,7 @@ class SeparatedSelectionContainerDelegate
     if (_lastStartEdgeUpdateGlobalPosition != null &&
         _hasReceivedStartEvent.add(selectable)) {
       final SelectionEdgeUpdateEvent synthesizedEvent =
-      SelectionEdgeUpdateEvent.forStart(
+          SelectionEdgeUpdateEvent.forStart(
         globalPosition: _lastStartEdgeUpdateGlobalPosition!,
       );
       if (currentSelectionStartIndex == -1) {
@@ -313,9 +321,9 @@ class SeparatedSelectionContainerDelegate
     }
     final Set<Selectable> selectableSet = selectables.toSet();
     _hasReceivedEndEvent.removeWhere(
-            (Selectable selectable) => !selectableSet.contains(selectable));
+        (Selectable selectable) => !selectableSet.contains(selectable));
     _hasReceivedStartEvent.removeWhere(
-            (Selectable selectable) => !selectableSet.contains(selectable));
+        (Selectable selectable) => !selectableSet.contains(selectable));
     super.didChangeSelectables();
   }
 

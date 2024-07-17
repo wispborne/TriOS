@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
+import 'package:trios/models/enabled_mods.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/settings.dart';
@@ -91,8 +92,12 @@ class _ModListMiniState extends ConsumerState<ModListMini>
 
   @override
   Widget build(BuildContext context) {
-    final enabledModIds = ref.watch(AppState.enabledModIds).valueOrNull;
     final modListAsync = ref.watch(AppState.mods);
+    final enabledModIds = ref
+        .watch(AppState.enabledModsFile)
+        .valueOrNull
+        ?.filterOutMissingMods(modListAsync)
+        .enabledMods;
     final modVariants = ref.watch(AppState.modVariants);
     final query = ref.watch(searchQuery);
     final modList =

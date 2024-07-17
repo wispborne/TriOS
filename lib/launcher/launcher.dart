@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plist_parser/plist_parser.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
+import 'package:trios/models/enabled_mods.dart';
 import 'package:trios/models/launch_settings.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/settings.dart';
@@ -104,7 +105,7 @@ class Launcher extends ConsumerWidget {
     final launchPrecheckFailures = <LaunchPrecheckError>[];
     final mods = ref.read(AppState.mods);
     final modsFolder = ref.read(appSettings.select((it) => it.modsDir));
-    final enabledMods = ref.read(AppState.enabledModsFile).valueOrNull;
+    final enabledMods = ref.read(AppState.enabledModsFile).valueOrNull?.filterOutMissingMods(mods);
     final allVariants = ref.read(AppState.modVariants).valueOrNull ?? [];
     final gameVersion = ref.read(AppState.starsectorVersion).valueOrNull;
     final enabledVariants =

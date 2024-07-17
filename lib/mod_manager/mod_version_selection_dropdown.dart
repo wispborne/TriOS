@@ -72,7 +72,7 @@ class _ModVersionSelectionDropdownState
         side: BorderSide(
           color: isButtonEnabled
               ? theme.colorScheme.secondary.darker(20)
-              : vanillaErrorColor.withOpacity(0.4),
+              : ThemeManager.vanillaErrorColor.withOpacity(0.4),
           // Slightly darker buttonColor
           width: 2.0,
         ),

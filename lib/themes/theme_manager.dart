@@ -12,23 +12,22 @@ import '../mod_manager/mod_manager_logic.dart';
 import '../trios/app_state.dart';
 import '../utils/logging.dart';
 
-const Color vanillaErrorColor = Color.fromARGB(255, 252, 99, 0);
-const Color vanillaWarningColor = Color.fromARGB(255, 253, 212, 24);
-
 Color? getStateColorForDependencyText(
     ModDependencySatisfiedState dependencyState) {
   return switch (dependencyState) {
     Satisfied _ => null,
-    Missing _ => vanillaErrorColor,
-    Disabled _ =>
-      vanillaWarningColor, // Disabled means it's present, so we can just enable it.
-    VersionInvalid _ => vanillaErrorColor,
-    VersionWarning _ => vanillaWarningColor,
+    Missing _ => ThemeManager.vanillaErrorColor,
+    Disabled _ => ThemeManager
+        .vanillaWarningColor, // Disabled means it's present, so we can just enable it.
+    VersionInvalid _ => ThemeManager.vanillaErrorColor,
+    VersionWarning _ => ThemeManager.vanillaWarningColor,
   };
 }
 
 class ThemeManager with ChangeNotifier {
   static double cornerRadius = 8;
+  static Color vanillaErrorColor = const Color.fromARGB(255, 252, 99, 0);
+  static Color vanillaWarningColor = const Color.fromARGB(255, 253, 212, 24);
 
   static TriOSTheme _theme = StarsectorTriOSTheme();
   static const bool _isMaterial3 = true;
@@ -214,8 +213,8 @@ class ThemeManager with ChangeNotifier {
         onSurfaceVariant: onSurfaceVariant,
         onPrimary: swatch.onPrimary,
         surface: swatch.surface,
-        error: vanillaErrorColor,
-        errorContainer: vanillaErrorColor.lighter(5),
+        error: ThemeManager.vanillaErrorColor,
+        errorContainer: ThemeManager.vanillaErrorColor.lighter(5),
         // tertiary: swatch.tertiary,
       ),
       scaffoldBackgroundColor: swatch.surfaceContainer,
@@ -362,9 +361,7 @@ ThemeData createPaletteTheme(BuildContext context, PaletteGenerator? palette) {
       foregroundColor: onSurfaceColor,
     ),
     progressIndicatorTheme: ProgressIndicatorThemeData(
-      color: onSurfaceColor,
-      linearTrackColor: backgroundColor
-    ),
+        color: onSurfaceColor, linearTrackColor: backgroundColor),
   );
 }
 
@@ -393,9 +390,9 @@ extension GameCompatibilityExt on GameCompatibility {
   Color? getGameCompatibilityColor() {
     switch (this) {
       case GameCompatibility.incompatible:
-        return vanillaErrorColor;
+        return ThemeManager.vanillaErrorColor;
       case GameCompatibility.warning:
-        return vanillaWarningColor;
+        return ThemeManager.vanillaWarningColor;
       case _:
         return null;
     }
@@ -406,9 +403,9 @@ extension ModDependencySatisfiedStateExt on ModDependencySatisfiedState {
   Color? getDependencySatisfiedColor() {
     return switch (this) {
       Satisfied _ => Colors.green,
-      Disabled _ => vanillaWarningColor.withAlpha(200),
-      VersionWarning _ => vanillaWarningColor.withAlpha(200),
-      _ => vanillaErrorColor,
+      Disabled _ => ThemeManager.vanillaWarningColor.withAlpha(200),
+      VersionWarning _ => ThemeManager.vanillaWarningColor.withAlpha(200),
+      _ => ThemeManager.vanillaErrorColor,
     };
   }
 }
@@ -455,8 +452,8 @@ showSnackBar({
         : content,
     backgroundColor: switch (type) {
       SnackBarType.info => Colors.blue,
-      SnackBarType.warn => vanillaWarningColor,
-      SnackBarType.error => vanillaErrorColor,
+      SnackBarType.warn => ThemeManager.vanillaWarningColor,
+      SnackBarType.error => ThemeManager.vanillaErrorColor,
       null => Theme.of(context).snackBarTheme.backgroundColor
     },
     elevation: elevation,

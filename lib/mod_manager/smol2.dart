@@ -112,7 +112,7 @@ class _Smol2State extends ConsumerState<Smol2> {
             //   opacity: 0.6,
             //   child: Text("Under construction: search, mod info, and more.",
             //       style: theme.textTheme.labelLarge
-            //           ?.copyWith(color: vanillaWarningColor)),
+            //           ?.copyWith(color: ThemeManager.vanillaWarningColor)),
             // ),
             DataTable3(
               columnSpacing: 12,
@@ -283,7 +283,7 @@ class _Smol2State extends ConsumerState<Smol2> {
                                           color: dependencies
                                                       ?.gameCompatibility ==
                                                   GameCompatibility.incompatible
-                                              ? vanillaErrorColor
+                                              ? ThemeManager.vanillaErrorColor
                                               : getTopDependencySeverity(
                                                       dependencies
                                                               ?.dependencyStates ??
@@ -487,7 +487,7 @@ class _Smol2State extends ConsumerState<Smol2> {
                                         GameCompatibility.perfectMatch
                                     ? theme.textTheme.labelLarge
                                     : theme.textTheme.labelLarge
-                                        ?.copyWith(color: vanillaErrorColor)),
+                                        ?.copyWith(color: ThemeManager.vanillaErrorColor)),
                           ),
                           builder: (context, child) => ContextMenuRegion(
                               contextMenu: ModListMini.buildContextMenu(

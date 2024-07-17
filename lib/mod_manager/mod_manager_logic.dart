@@ -139,7 +139,8 @@ File getEnabledModsFile(Directory modsFolder) {
   return File(p.join(modsFolder.path, "enabled_mods.json"));
 }
 
-Future<EnabledMods> getEnabledMods(Directory modsFolder) async {
+/// `allMods` will filter out mods that have been removed from the mods folder since the last time the enabled mods file was written.
+Future<EnabledMods> getEnabledMods(Directory modsFolder, {List<Mod>? allMods}) async {
   return EnabledMods.fromJson(
       (await getEnabledModsFile(modsFolder).readAsString()).fixJsonToMap());
 }
@@ -924,8 +925,9 @@ Future<List<InstallModResult>> installModFromArchiveWithDefaultUI(
                                               isSelected
                                                   ? "(existing mod will be replaced)"
                                                   : "(already exists)",
-                                              style: const TextStyle(
-                                                  color: vanillaWarningColor,
+                                              style: TextStyle(
+                                                  color: ThemeManager
+                                                      .vanillaWarningColor,
                                                   fontSize: 12),
                                             )
                                           : const SizedBox(),

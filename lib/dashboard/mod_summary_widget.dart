@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/chipper/utils.dart';
 import 'package:trios/mod_manager/version_checker.dart';
+import 'package:trios/models/enabled_mods.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/utils/extensions.dart';
 
@@ -27,9 +28,10 @@ class ModSummaryWidget extends ConsumerStatefulWidget {
 class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
   @override
   Widget build(BuildContext context) {
-    final enabledMods = ref.watch(AppState.enabledModsFile).valueOrNull;
     final modVariants = ref.watch(AppState.modVariants).valueOrNull;
+    final mods = ref.watch(AppState.mods);
     final gameVersion = ref.watch(AppState.starsectorVersion).valueOrNull;
+    final enabledMods = ref.watch(AppState.enabledModsFile).valueOrNull?.filterOutMissingMods(mods);
     if (modVariants == null || enabledMods == null) return const SizedBox();
 
     final modVariant = widget.modVariant;
@@ -135,12 +137,12 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
             children: [
               Text("Original game version",
                   style: theme.textTheme.labelMedium
-                      ?.copyWith(color: vanillaWarningColor.withOpacity(0.8))),
+                      ?.copyWith(color: ThemeManager.vanillaWarningColor.withOpacity(0.8))),
               Padding(
                 padding: const EdgeInsets.only(left: 8.0),
                 child: Text(modInfo.originalGameVersion ?? "",
                     style: theme.textTheme.labelMedium
-                        ?.copyWith(color: vanillaWarningColor)),
+                        ?.copyWith(color: ThemeManager.vanillaWarningColor)),
               ),
             ],
           ),
@@ -179,7 +181,7 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
           Text(
               "Warning: this mod requires a different version of a mod that you have installed, but might run with this one.",
               style: theme.textTheme.labelMedium
-                  ?.copyWith(color: vanillaErrorColor)),
+                  ?.copyWith(color: ThemeManager.vanillaErrorColor)),
       ],
     );
   }

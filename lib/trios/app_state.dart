@@ -46,7 +46,6 @@ class AppState {
     final modVariants = ref.watch(AppState.modVariants).value ?? [];
     final enabledMods =
         ref.watch(AppState.enabledModIds).value.orEmpty().toList();
-
     return modVariants
         .groupBy((ModVariant variant) => variant.modInfo.id)
         .entries
@@ -63,54 +62,35 @@ class AppState {
     final modVariants = ref.watch(AppState.modVariants).valueOrNull ?? [];
     final gameVersion = ref.watch(AppState.starsectorVersion).valueOrNull;
     final enabledMods = ref.watch(AppState.enabledModsFile).valueOrNull;
-    if (enabledMods == null) {
-      return {};
-    }
-
+    if (enabledMods == null) return {};
     return modVariants.map((variant) {
       final compatibility =
           compareGameVersions(variant.modInfo.gameVersion, gameVersion);
-
       final dependencyCheckResult =
           variant.checkDependencies(modVariants, enabledMods, gameVersion);
-
-      return MapEntry(
-          variant.smolId,
-          DependencyCheck(
-            compatibility,
-            dependencyCheckResult,
-          ));
+      return MapEntry(variant.smolId,
+          DependencyCheck(compatibility, dependencyCheckResult));
     }).toMap();
   });
 
   static final enabledModsFile =
       AsyncNotifierProvider<EnabledModsNotifier, EnabledMods>(
           EnabledModsNotifier.new);
-
-  static final enabledModIds = FutureProvider<List<String>>((ref) async {
-    return ref.watch(enabledModsFile).value?.enabledMods.toList() ?? [];
-  });
-
-  static final modsState = Provider<Map<String, ModState>>((ref) {
-    return {};
-  });
-
+  static final enabledModIds = FutureProvider<List<String>>((ref) async =>
+      ref.watch(enabledModsFile).value?.enabledMods.toList() ?? []);
+  static final modsState = Provider<Map<String, ModState>>((ref) => {});
   static final starsectorVersion = FutureProvider<String?>((ref) async {
     final gamePath =
         ref.watch(appSettings.select((value) => value.gameDir))?.toDirectory();
-    if (gamePath == null) {
-      return null;
-    }
+    if (gamePath == null) return null;
     try {
       final versionInLog = await readStarsectorVersionFromLog(gamePath);
       if (versionInLog != null) {
-        // If found in log, update the last saved version
         ref
             .read(appSettings.notifier)
             .update((s) => s.copyWith(lastStarsectorVersion: versionInLog));
         return versionInLog;
       } else {
-        // Fallback to last saved version
         return ref
             .read(appSettings.select((value) => value.lastStarsectorVersion));
       }
@@ -125,40 +105,62 @@ class AppState {
   static final canWriteToModsFolder = FutureProvider<bool>((ref) async {
     final gamePath =
         ref.watch(appSettings.select((value) => value.gameDir))?.toDirectory();
-    if (gamePath == null) {
-      return false;
-    }
-
+    if (gamePath == null) return false;
     var modsFolder = generateModFolderPath(gamePath)?.toDirectory();
     final filesAndFolders = [getEnabledModsFile(modsFolder!)].whereNotNull();
-
     for (var file in filesAndFolders) {
       if (!file.existsSync() || await file.toFile().isNotWritable()) {
         Fimber.d("Cannot find or write to: $file");
         return false;
       }
     }
-
     return true;
   });
 
   static final canWriteToStarsectorFolder = FutureProvider<bool>((ref) async {
     final gamePath =
         ref.watch(appSettings.select((value) => value.gameDir))?.toDirectory();
-    if (gamePath == null) {
-      return false;
-    }
-
+    if (gamePath == null) return false;
     final filesAndFolders = [getVmparamsFile(gamePath)].whereNotNull();
-
     for (var file in filesAndFolders) {
       if (!file.existsSync() || await file.isNotWritable()) {
         Fimber.d("Cannot find or write to: $file");
         return false;
       }
     }
-
     return true;
+  });
+
+  static final vmParamsFile = FutureProvider<File?>((ref) async {
+    final gamePath =
+        ref.watch(appSettings.select((value) => value.gameDir))?.toDirectory();
+    if (gamePath == null) return null;
+    return getVmparamsFile(gamePath);
+  });
+
+  static final gameFolder = FutureProvider<Directory?>((ref) async =>
+      ref.watch(appSettings.select((value) => value.gameDir))?.toDirectory());
+  static final modsFolder = FutureProvider<Directory?>((ref) async {
+    final gamePath = ref.watch(gameFolder).valueOrNull;
+    if (gamePath == null) return null;
+    return generateModFolderPath(gamePath)?.toDirectory();
+  });
+
+  static final isVmParamsFileWritable = FutureProvider<bool>(
+      (ref) async => ref.watch(vmParamsFile).value?.isWritable() ?? false);
+  static final jre23VmparamsFile = FutureProvider<File?>((ref) async {
+    final gamePath = ref.watch(gameFolder).valueOrNull;
+    if (gamePath == null) return null;
+    return getJre23VmparamsFile(gamePath);
+  });
+
+  static final isJre23VmparamsFileWritable = FutureProvider<bool>(
+      (ref) async => ref.watch(jre23VmparamsFile).value?.isWritable() ?? false);
+  static final isEnabledModsFileWritable = FutureProvider<bool>((ref) async {
+    final modsPath = ref.watch(modsFolder).valueOrNull;
+    if (modsPath == null) return false;
+    final enabledModsFile = getEnabledModsFile(modsPath);
+    return enabledModsFile.isWritable();
   });
 }
 
@@ -171,17 +173,13 @@ Future<String?> readStarsectorVersionFromLog(Directory gamePath) async {
     if (line.contains(versionContains)) {
       try {
         final version = versionRegex.firstMatch(line)!.group(1);
-        if (version == null) {
-          continue;
-        }
-
+        if (version == null) continue;
         return version;
       } catch (_) {
         continue;
       }
     }
   }
-
   return null;
 }
 

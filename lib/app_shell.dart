@@ -301,7 +301,7 @@ class _AppShellState extends ConsumerState<AppShell>
                 ),
               ),
               // Spacer(),
-              // const Text("|"),
+              FilePermissionShield(ref: ref),
               const Spacer(),
               Tooltip(
                 message: "View Changelog",
@@ -349,7 +349,7 @@ class _AppShellState extends ConsumerState<AppShell>
                 if (loggingError != null)
                   Text(loggingError.toString(),
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            color: vanillaErrorColor,
+                            color: ThemeManager.vanillaErrorColor,
                           )),
                 Expanded(
                   child: Padding(
@@ -360,12 +360,12 @@ class _AppShellState extends ConsumerState<AppShell>
                               controller: tabController,
                               physics: const NeverScrollableScrollPhysics(),
                               children: tabChildren),
-                          Positioned(
+                          const Positioned(
                             right: 0,
                             bottom: 0,
                             child: Padding(
-                              padding: const EdgeInsets.all(8),
-                              child: const ToastDisplayer(),
+                              padding: EdgeInsets.all(8),
+                              child: ToastDisplayer(),
                             ),
                           )
                         ],
@@ -377,5 +377,45 @@ class _AppShellState extends ConsumerState<AppShell>
           onDroppedLog: (_) =>
               tabController.animateTo(TriOSTools.chipper.index),
         ));
+  }
+}
+
+class FilePermissionShield extends StatelessWidget {
+  const FilePermissionShield({
+    super.key,
+    required this.ref,
+  });
+
+  final WidgetRef ref;
+
+  @override
+  Widget build(BuildContext context) {
+    final isVmParamsFileWritable =
+        ref.watch(AppState.isVmParamsFileWritable).valueOrNull;
+    final isJre23VmparamsFileWritable =
+        (ref.watch(appSettings.select((s) => s.useJre23)) ?? false) &&
+            (ref.watch(AppState.isJre23VmparamsFileWritable).valueOrNull ??
+                false);
+
+    if (isVmParamsFileWritable == true && isJre23VmparamsFileWritable == true) {
+      return const SizedBox();
+    }
+
+    return Column(
+      children: [
+        SvgImageIcon(
+          "assets/images/icon-admin-shield.svg",
+          color: ThemeManager.vanillaWarningColor,
+        ),
+        Tooltip(
+          message: "Admin permissions needed",
+          child: Text("Check Permissions",
+              style: TextStyle(
+                  color: ThemeManager.vanillaWarningColor,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold)),
+        ),
+      ],
+    );
   }
 }

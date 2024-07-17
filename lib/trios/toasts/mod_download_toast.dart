@@ -133,8 +133,8 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                                   theme.iconTheme.color,
                                 DownloadStatus.completed =>
                                   theme.colorScheme.secondary,
-                                DownloadStatus.failed => vanillaErrorColor,
-                                DownloadStatus.canceled => vanillaErrorColor,
+                                DownloadStatus.failed => ThemeManager.vanillaErrorColor,
+                                DownloadStatus.canceled => ThemeManager.vanillaErrorColor,
                                 _ => theme.iconTheme.color,
                               },
                             ),
@@ -176,7 +176,7 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                                     child: Text(
                                       downloadTask.error.toString(),
                                       style: theme.textTheme.labelMedium
-                                          ?.copyWith(color: vanillaErrorColor),
+                                          ?.copyWith(color: ThemeManager.vanillaErrorColor),
                                     ),
                                   ),
                                 Padding(
@@ -186,7 +186,7 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                                     builder: (context, downloaded, child) =>
                                         DownloadProgressIndicator(
                                       color: status == DownloadStatus.failed
-                                          ? vanillaErrorColor
+                                          ? ThemeManager.vanillaErrorColor
                                           : null,
                                       value: DownloadProgress(
                                           downloaded.bytesReceived,

@@ -858,7 +858,7 @@ class _Smol3State extends ConsumerState<Smol3>
                             GameCompatibility.perfectMatch
                         ? theme.textTheme.labelLarge
                         : theme.textTheme.labelLarge
-                            ?.copyWith(color: vanillaErrorColor)),
+                            ?.copyWith(color: ThemeManager.vanillaErrorColor)),
               ));
         }),
       ),
@@ -940,7 +940,7 @@ class _Smol3State extends ConsumerState<Smol3>
           style: theme.textTheme.labelMedium?.copyWith(
               color: dependencies?.gameCompatibility ==
                       GameCompatibility.incompatible
-                  ? vanillaErrorColor
+                  ? ThemeManager.vanillaErrorColor
                   : getTopDependencySeverity(
                           dependencies?.dependencyStates ?? [], gameVersion,
                           sortLeastSevere: false)

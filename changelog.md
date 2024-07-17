@@ -10,6 +10,7 @@
     - Changelog viewer, for mods that include a link to a changelog in their .version files.
     - When a mod is added, shows a notification allowing you to enable it.
         - Bonus: if the mod has an icon, the notification is themed (lol).
+  - Added write permission check for vmparams.
 - Fixed
     - Dashboard: Hide the Updates section if there aren't any updates.
     - Chipper: Handled error if a folder is dropped instead of a file.
@@ -17,7 +18,7 @@
         - Click "Enable" in the notification that appears.
         - This is to allow you to update a mod but still decide whether to use the update (it may be save-breaking).
     - Hide the "Skip Game Launcher" option if using JRE 23 (thanks Zon).
-    - Added write permission check for vmparams.
+    - Checks for when a mod is "enabled" in `enabled_mods.json` but the mod doesn't actually exist anymore.
 - Changed
   - Notifications disappear after a configurable amount of time.
 

@@ -993,6 +993,7 @@ Future<List<InstallModResult>> installModFromArchiveWithDefaultUI(
     return installModsResult;
   } catch (e, st) {
     Fimber.w("Error installing mod from archive: $e", ex: e, stacktrace: st);
+    if (!context.mounted) return [];
     showAlertDialog(
       context,
       title: "Error installing mod",

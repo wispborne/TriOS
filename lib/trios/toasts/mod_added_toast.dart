@@ -50,6 +50,7 @@ class _ModAddedToastState extends ConsumerState<ModAddedToast> {
     if (widget.modVariant.iconFilePath.isNotNullOrEmpty()) {
       final icon = Image.file((widget.modVariant.iconFilePath ?? "").toFile());
       palette = await PaletteGenerator.fromImageProvider(icon.image);
+      if (!mounted) return;
       setState(() {});
     }
   }

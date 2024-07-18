@@ -172,13 +172,17 @@ extension StringExt on String {
   }
 
   String fixFilenameForFileSystem() {
-    // ChatGPT:
     // This pattern matches any character that is not allowed in filenames on Windows, macOS, and Linux.
     // < > : " / \ | ? * are disallowed characters.
     // \x00-\x1F matches non-printable control characters.
-    return replaceAll(RegExp(r'[<>:"/\\|?*\x00-\x1F]'), '_')
-        .trim()
-        .substring(0, length > 255 ? 254 : length);
+    String fixed = replaceAll(RegExp(r'[<>:"/\\|?*\x00-\x1F]'), '_').trim();
+
+    // Ensure the length is within valid range before calling substring
+    if (fixed.length > 255) {
+      return fixed.substring(0, 255);
+    }
+
+    return fixed;
   }
 }
 

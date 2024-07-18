@@ -39,6 +39,7 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel> {
     if (iconPath.isNotNullOrEmpty()) {
       final icon = Image.file((iconPath ?? "").toFile());
       paletteGenerator = await PaletteGenerator.fromImageProvider(icon.image);
+      if (!mounted) return;
       Fimber.i("Generated palette for ${widget.mod?.id}");
     } else {
       paletteGenerator = null;

@@ -37,6 +37,7 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
     if (variant.iconFilePath.isNotNullOrEmpty()) {
       final icon = Image.file((variant.iconFilePath ?? "").toFile());
       palette = await PaletteGenerator.fromImageProvider(icon.image);
+      if (!mounted) return;
       setState(() {});
     }
   }

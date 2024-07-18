@@ -2,6 +2,7 @@ import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/utils/logging.dart';
 
 import '../mod_manager/version_checker.dart';
 import '../models/version_checker_info.dart';
@@ -70,6 +71,13 @@ class _ChangelogsState extends ConsumerState<Changelogs> {
 
         _changelogCache[changelogUrl] = changelog;
         isLoading = false;
+        if (mounted) setState(() {});
+      }).onError((error, stackTrace) {
+        changelog = "Failed to load changelog: $error";
+        isLoading = false;
+        Fimber.e(
+            "Failed to load changelog from $changelogUrl for mod ${widget.localVersionCheck?.modName} v${widget.localVersionCheck?.modVersion}",
+            ex: error);
         if (mounted) setState(() {});
       });
     }

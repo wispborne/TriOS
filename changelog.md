@@ -10,7 +10,9 @@
     - Changelog viewer, for mods that include a link to a changelog in their .version files.
     - When a mod is added, shows a notification allowing you to enable it.
         - Bonus: if the mod has an icon, the notification is themed (lol).
-  - Added write permission check for vmparams.
+    - Portrait Viewer. 
+      - Can't yet change portraits; decided to work on Mod Profiles next instead of finishing this.
+    - Added write permission check for vmparams.
 - Fixed
     - Dashboard: Hide the Updates section if there aren't any updates.
     - Chipper: Handled error if a folder is dropped instead of a file.

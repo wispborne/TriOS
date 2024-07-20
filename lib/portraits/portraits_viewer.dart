@@ -82,6 +82,7 @@ class _ImageGridScreenState extends ConsumerState<ImageGridScreen>
 
     final sortedImages =
         sortModsAndImages(modsAndImages, r'graphics\\.*portraits\\');
+    final theme = Theme.of(context);
 
     return isLoading
         ? const Center(
@@ -98,13 +99,40 @@ class _ImageGridScreenState extends ConsumerState<ImageGridScreen>
         : Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ElevatedButton(
-                  onPressed: () {
-                    ref.read(imageListProvider.notifier).setImageList({});
-                    _loadImages(
-                        ref.read(AppState.modVariants).valueOrNull ?? []);
-                  },
-                  child: const Text('Reload Images')),
+              Card(
+                margin: const EdgeInsets.all(0),
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: Row(
+                    children: [
+                      TextButton.icon(
+                          onPressed: () {
+                            ref
+                                .read(imageListProvider.notifier)
+                                .setImageList({});
+                            _loadImages(
+                                ref.read(AppState.modVariants).valueOrNull ??
+                                    []);
+                          },
+                          style: ButtonStyle(
+                              foregroundColor: WidgetStateProperty.all(
+                                  theme.colorScheme.onSurface)),
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Reload')),
+                      Padding(
+                          padding: const EdgeInsets.only(left: 8),
+                          child: Text('Showing ${sortedImages.length} images',
+                              style: theme.textTheme.labelLarge)),
+                      const Spacer(),
+                      Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: Text(
+                              'Currently just a portrait viewer. Will allow portrait replacement in the future.',
+                              style: theme.textTheme.labelLarge)),
+                    ],
+                  ),
+                ),
+              ),
               Expanded(child: ResponsiveImageGrid(modsAndImages: sortedImages)),
             ],
           );

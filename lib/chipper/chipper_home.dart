@@ -109,14 +109,6 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
               padding: const EdgeInsets.all(4),
               child: Row(children: [
                 Row(mainAxisSize: MainAxisSize.min, children: [
-                  // Padding(
-                  //   padding: const EdgeInsets.only(right: 16.0),
-                  //   child: Image(
-                  //       image: const AssetImage("assets/images/chipper/icon.png"),
-                  //       width: 36,
-                  //       height: 36,
-                  //       color: theme.colorScheme.onBackground),
-                  // ),
                   TextButton.icon(
                       onPressed: () {
                         loadDefaultLog(ref);

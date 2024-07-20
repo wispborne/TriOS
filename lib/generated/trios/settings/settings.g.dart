@@ -39,7 +39,7 @@ _$SettingsImpl _$$SettingsImplFromJson(Map<String, dynamic> json) =>
       secondsBetweenModFolderChecks:
           (json['secondsBetweenModFolderChecks'] as num?)?.toInt() ?? 15,
       toastDurationSeconds:
-          (json['toastDurationSeconds'] as num?)?.toInt() ?? 7000,
+          (json['toastDurationSeconds'] as num?)?.toInt() ?? 7,
       isUpdatesFieldShown: json['isUpdatesFieldShown'] as bool? ?? true,
       modsGridState: json['modsGridState'] == null
           ? null

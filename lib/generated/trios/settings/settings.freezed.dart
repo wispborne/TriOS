@@ -464,7 +464,7 @@ class _$SettingsImpl implements _Settings {
       this.launchSettings = const LaunchSettings(),
       this.lastStarsectorVersion,
       this.secondsBetweenModFolderChecks = 15,
-      this.toastDurationSeconds = 7000,
+      this.toastDurationSeconds = 7,
       this.isUpdatesFieldShown = true,
       this.modsGridState,
       this.allowCrashReporting,

@@ -253,7 +253,7 @@ class _AppShellState extends ConsumerState<AppShell>
                       scrollDirection: Axis.horizontal,
                       controller: scrollController,
                       child: SizedBox(
-                        width: 530,
+                        width: 540,
                         child: TabBar(
                           controller: tabController,
                           isScrollable: true,

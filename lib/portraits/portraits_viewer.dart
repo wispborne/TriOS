@@ -52,10 +52,18 @@ class _ImageGridScreenState extends ConsumerState<ImageGridScreen>
     with AutomaticKeepAliveClientMixin<ImageGridScreen> {
   @override
   bool get wantKeepAlive => true;
+  bool isLoading = false;
 
   void _loadImages(List<ModVariant> modVariants) async {
+    if (isLoading) return;
+    setState(() {
+      isLoading = true;
+    });
     final images = (await scanModFoldersForSquareImages(modVariants));
     ref.read(imageListProvider.notifier).addImages(images);
+    setState(() {
+      isLoading = false;
+    });
   }
 
   @override
@@ -75,14 +83,14 @@ class _ImageGridScreenState extends ConsumerState<ImageGridScreen>
     final sortedImages =
         sortModsAndImages(modsAndImages, r'graphics\\.*portraits\\');
 
-    return sortedImages.isEmpty
+    return isLoading
         ? const Center(
             child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               CircularProgressIndicator(),
               Padding(
-                padding: EdgeInsets.all(8.0),
+                padding: EdgeInsets.all(16),
                 child: Text('Loading images...'),
               ),
             ],
@@ -140,6 +148,8 @@ class ResponsiveImageGrid extends ConsumerWidget {
         return GridView.builder(
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: crossAxisCount,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
           ),
           itemCount: modsAndImages.length,
           itemBuilder: (context, index) {
@@ -172,7 +182,10 @@ class ResponsiveImageGrid extends ConsumerWidget {
                           launchUrlString(portrait.imageFile.parent.path);
                         }),
                   ]),
-                  child: Image.file(portrait.imageFile)),
+                  child: SizedBox(
+                      width: 128,
+                      height: 128,
+                      child: Image.file(portrait.imageFile))),
             );
           },
         );

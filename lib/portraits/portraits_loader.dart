@@ -16,6 +16,7 @@ Future<Map<ModVariant, List<Portrait>>> scanModFoldersForSquareImages(
     List<ModVariant> modVariants) async {
   Map<ModVariant, List<Portrait>> modImagesMap = {};
   final timer = Stopwatch()..start();
+  Fimber.i('Scanning mod folders for square images in ${modVariants.length} mods');
 
   await Future.wait(modVariants.map((modVariant) async {
     List<Portrait> squareImages = [];

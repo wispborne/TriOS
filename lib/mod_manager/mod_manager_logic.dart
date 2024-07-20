@@ -275,8 +275,12 @@ Future<void> validateModDependencies(
             variant.smolId != mod.findHighestEnabledVersion?.smolId)) {
           Fimber.i(
               "Found multiple enabled versions for mod ${mod.id}. Disabling ${value.smolId}");
+          try {
           _disableModVariant(value, ref,
               changeFileExtension: true, disableModInVanillaLauncher: false);
+          } catch (e, st) {
+            Fimber.e("Error disabling mod variant: $e", ex: e, stacktrace: st);
+          }
         }
       }
 

@@ -509,6 +509,7 @@ extension IntExt on int {
   }
 
   String bytesAsReadableMB() => "${(this / 1000000).toStringAsFixed(2)} MB";
+  String bytesAsReadableKB() => "${(this / 1000).toStringAsFixed(2)} KB";
 
   /// From Java
   int numberOfLeadingZeros() {

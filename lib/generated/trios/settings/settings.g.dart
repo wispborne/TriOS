@@ -85,5 +85,6 @@ const _$TriOSToolsEnumMap = {
   TriOSTools.vramEstimator: 'vramEstimator',
   TriOSTools.chipper: 'chipper',
   TriOSTools.jreManager: 'jreManager',
+  TriOSTools.portraits: 'portraits',
   TriOSTools.settings: 'settings',
 };

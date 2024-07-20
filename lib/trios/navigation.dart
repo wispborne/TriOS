@@ -4,5 +4,6 @@ enum TriOSTools {
   vramEstimator,
   chipper,
   jreManager,
+  portraits,
   settings,
 }

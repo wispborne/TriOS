@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/jre_manager/jre_entry.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/logging.dart';
 
 import '../jre_manager/jre_manager_logic.dart';
 import '../launcher/launcher.dart';
@@ -25,7 +26,11 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
 
   @override
   void initState() {
-    starsectorLaunchPrefs = Launcher.getStarsectorLaunchPrefs();
+    try {
+      starsectorLaunchPrefs = Launcher.getStarsectorLaunchPrefs();
+    } catch (e) {
+      Fimber.e("Failed to get default Starsector launch prefs", ex: e);
+    }
     super.initState();
   }
 

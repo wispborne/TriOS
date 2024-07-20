@@ -19,8 +19,10 @@
         - This is to allow you to update a mod but still decide whether to use the update (it may be save-breaking).
     - Hide the "Skip Game Launcher" option if using JRE 23 (thanks Zon).
     - Checks for when a mod is "enabled" in `enabled_mods.json` but the mod doesn't actually exist anymore.
+    - Checks to ensure sliders on Settings page can't break the page if value is invalid.
 - Changed
   - Notifications disappear after a configurable amount of time.
+  - Dashboard: "Copy mod info" now only copies enabled mods, and they are sorted by name.
 
 # 0.0.58
 

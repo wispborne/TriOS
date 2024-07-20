@@ -179,9 +179,20 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 4),
                                       onPressed: () {
+                                        final enabledModsList = enabledModIds
+                                            .orEmpty()
+                                            .map((id) =>
+                                                modList.firstWhereOrNull(
+                                                    (mod) => mod.id == id))
+                                            .whereNotNull()
+                                            .sortedByButBetter((mod) => mod
+                                                .findFirstEnabledOrHighestVersion
+                                                ?.modInfo
+                                                .nameOrId)
+                                            .toList();
                                         Clipboard.setData(ClipboardData(
                                             text:
-                                                "Mods (${modList.length})\n${modList.map((mod) {
+                                                "Mods (${enabledModsList.length})\n${enabledModsList.map((mod) {
                                           final variant = mod
                                               .findFirstEnabledOrHighestVersion;
                                           return false

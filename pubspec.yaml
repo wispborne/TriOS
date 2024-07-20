@@ -96,6 +96,7 @@ dependencies:
   stringr: ^1.0.0
   palette_generator: ^0.3.3+3
   sentry_flutter: ^8.3.0 # Analytics
+  crypto: ^3.0.3
 #  flutter_hooks: ^0.20.5
 #  hooks_riverpod: ^2.5.1
 #  data_table_2: ^2.5.12

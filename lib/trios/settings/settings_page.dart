@@ -101,16 +101,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             label: "Auto-update ${Constants.appName} on launch",
           ),
         ),
-        // Tooltip(
-        //     message:
-        //         "Switches between versions 2 and 3 of Google's 'Material Design' UI style.",
-        //     child: Padding(
-        //       padding: const EdgeInsets.only(top: 8.0),
-        //       child: CheckboxWithLabel(
-        //           label: "Use Material Design 3",
-        //           onChanged: (_) => AppState.theme.switchMaterial(),
-        //           value: AppState.theme.isMaterial3()),
-        //     )),
         SizedBox.fromSize(size: const Size.fromHeight(20)),
         Text("Theme", style: theme.textTheme.bodyLarge),
         Row(
@@ -193,7 +183,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   value: ref
                       .watch(appSettings.select(
                           (value) => value.secondsBetweenModFolderChecks))
-                      .toDouble(),
+                      .toDouble()
+                      .clamp(1, 30),
                   min: 1,
                   max: 30,
                   divisions: 29,
@@ -224,7 +215,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   value: ref
                       .watch(appSettings
                           .select((value) => value.toastDurationSeconds))
-                      .toDouble(),
+                      .toDouble()
+                      .clamp(1, 45),
                   min: 1,
                   max: 45,
                   divisions: 45,

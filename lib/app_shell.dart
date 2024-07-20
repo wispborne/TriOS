@@ -7,6 +7,7 @@ import 'package:open_filex/open_filex.dart';
 import 'package:toastification/toastification.dart';
 import 'package:trios/chipper/chipper_home.dart';
 import 'package:trios/dashboard/dashboard.dart';
+import 'package:trios/portraits/portraits_viewer.dart';
 import 'package:trios/rules_autofresh/rules_hotreload.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/constants.dart';
@@ -53,7 +54,8 @@ class _AppShellState extends ConsumerState<AppShell>
     2: TriOSTools.vramEstimator,
     3: TriOSTools.chipper,
     4: TriOSTools.jreManager,
-    5: TriOSTools.settings,
+    5: TriOSTools.portraits,
+    6: TriOSTools.settings,
   };
 
   @override
@@ -186,11 +188,13 @@ class _AppShellState extends ConsumerState<AppShell>
           ? const Padding(padding: EdgeInsets.all(0), child: JreManager())
           : const Center(
               child: Text("Only supported on Windows for now, sorry.")),
+      const Padding(padding: EdgeInsets.all(8), child: ImageGridScreen()),
       const Padding(
         padding: EdgeInsets.all(4),
         child: SettingsPage(),
       ),
     ];
+    final scrollController = ScrollController();
 
     var isRulesHotReloadEnabled =
         ref.watch(appSettings.select((value) => value.isRulesHotReloadEnabled));
@@ -237,72 +241,93 @@ class _AppShellState extends ConsumerState<AppShell>
                                 ?.copyWith(fontSize: 12))
                       ])),
               const Launcher(),
-              SizedBox(
-                width: 500,
+              Expanded(
                 child: Padding(
                   padding: const EdgeInsets.only(left: 16, right: 16),
-                  child: TabBar(
-                    isScrollable: true,
-                    // Makes tabs fit to content width instead of all same.
-                    tabAlignment: TabAlignment.start,
-                    tabs: [
-                      // TODO IF YOU CHANGE THESE, UPDATE tabToolMap!
-                      const Tab(
-                          text: "Dashboard",
-                          icon: Tooltip(
-                              message: "Dashboard",
-                              child: Icon(Icons.dashboard))),
-                      Tab(
-                          text: "Mods",
-                          icon: Tooltip(
-                            message: "Mods",
-                            child: Transform.rotate(
-                                angle: 0.7,
-                                child: const SvgImageIcon(
-                                  "assets/images/icon-onslaught.svg",
-                                  height: 23,
+                  child: Scrollbar(
+                    controller: scrollController,
+                    thumbVisibility: true,
+                    thickness: 10,
+                    scrollbarOrientation: ScrollbarOrientation.bottom,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      controller: scrollController,
+                      child: SizedBox(
+                        width: 530,
+                        child: TabBar(
+                          controller: tabController,
+                          isScrollable: true,
+
+                          // Makes tabs fit to content width instead of all same.
+                          tabAlignment: TabAlignment.start,
+                          tabs: [
+                            // TODO IF YOU CHANGE THESE, UPDATE tabToolMap!
+                            const Tab(
+                                text: "Dashboard",
+                                icon: Tooltip(
+                                    message: "Dashboard",
+                                    child: Icon(Icons.dashboard))),
+                            Tab(
+                                text: "Mods",
+                                icon: Tooltip(
+                                  message: "Mods",
+                                  child: Transform.rotate(
+                                      angle: 0.7,
+                                      child: const SvgImageIcon(
+                                        "assets/images/icon-onslaught.svg",
+                                        height: 23,
+                                      )),
                                 )),
-                          )),
-                      const Tab(
-                          text: "VRAM",
-                          icon: Tooltip(
-                              message: "VRAM Estimator",
-                              child: SvgImageIcon(
-                                  "assets/images/icon-weight.svg"))),
-                      const Tab(
-                          text: chipperTitle,
-                          icon: Tooltip(
-                            message: "$chipperTitle Log Viewer",
-                            child: ImageIcon(
-                                AssetImage("assets/images/chipper/icon.png")),
-                          ),
-                          iconMargin: EdgeInsets.zero),
-                      ConditionalWrap(
-                          condition: !Platform.isWindows,
-                          wrapper: (child) => Disable(
-                              isEnabled: Platform.isWindows, child: child),
-                          child: const Tab(
-                              text: "JREs",
+                            const Tab(
+                                text: "VRAM",
+                                icon: Tooltip(
+                                    message: "VRAM Estimator",
+                                    child: SvgImageIcon(
+                                        "assets/images/icon-weight.svg"))),
+                            const Tab(
+                                text: "Logs",
+                                icon: Tooltip(
+                                  message: "$chipperTitle Log Viewer",
+                                  child: ImageIcon(AssetImage(
+                                      "assets/images/chipper/icon.png")),
+                                ),
+                                iconMargin: EdgeInsets.zero),
+                            ConditionalWrap(
+                                condition: !Platform.isWindows,
+                                wrapper: (child) => Disable(
+                                    isEnabled: Platform.isWindows,
+                                    child: child),
+                                child: const Tab(
+                                    text: "JREs",
+                                    icon: Tooltip(
+                                        message: "JRE Manager",
+                                        child: Icon(Icons.coffee)))),
+                            const Tab(
+                              text: "Portraits",
                               icon: Tooltip(
-                                  message: "JRE Manager",
-                                  child: Icon(Icons.coffee)))),
-                      const Tab(
-                          text: "Settings",
-                          icon: Tooltip(
-                              message: "Settings",
-                              child: Padding(
-                                padding: EdgeInsets.only(bottom: 2),
-                                child: Icon(Icons.settings),
-                              )),
-                          iconMargin: EdgeInsets.zero),
-                    ],
-                    controller: tabController,
+                                  message: "Replace Portraits",
+                                  child: SvgImageIcon(
+                                      "assets/images/icon-account-box-outline.svg")),
+                            ),
+                            const Tab(
+                                text: "Settings",
+                                icon: Tooltip(
+                                    message: "Settings",
+                                    child: Padding(
+                                      padding: EdgeInsets.only(bottom: 2),
+                                      child: Icon(Icons.settings),
+                                    )),
+                                iconMargin: EdgeInsets.zero),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),
               // Spacer(),
               FilePermissionShield(ref: ref),
-              const Spacer(),
+              // const Spacer(),
               Tooltip(
                 message: "View Changelog",
                 child: IconButton(

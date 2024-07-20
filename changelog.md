@@ -1,6 +1,6 @@
 # 0.1.1
 - Fixed
-  - Toasts defaulting to 7000 seconds instead of 7 seconds.
+  - Notifications defaulting to 7000 seconds instead of 7 seconds.
 
 # 0.1.0
 

@@ -11,6 +11,8 @@ import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/tooltip_frame.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
+import '../utils/logging.dart';
+
 // Define the state for the list of images
 class ImageListState extends StateNotifier<Map<ModVariant, List<Portrait>>> {
   ImageListState() : super({});
@@ -183,13 +185,20 @@ class ResponsiveImageGrid extends ConsumerWidget {
           itemBuilder: (context, index) {
             final mod = modsAndImages[index].variant;
             final portrait = modsAndImages[index].image;
+            String bytesAsReadableKB = "unknown";
+            try {
+              bytesAsReadableKB =
+                  portrait.imageFile.lengthSync().bytesAsReadableKB();
+            } catch (error) {
+              Fimber.w('Error reading file size: $error');
+            }
             return MovingTooltipWidget(
               tooltipWidget: TooltipFrame(
                 child: Column(
                   children: [
                     Text(mod.modInfo.nameOrId),
                     Text(portrait.imageFile.path.toFile().relativeTo(modsPath)),
-                    Text(portrait.imageFile.lengthSync().bytesAsReadableKB()),
+                    Text(bytesAsReadableKB),
                     Text('${portrait.width} x ${portrait.height}'),
                   ],
                 ),

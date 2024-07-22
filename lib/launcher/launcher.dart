@@ -105,7 +105,10 @@ class Launcher extends ConsumerWidget {
     final launchPrecheckFailures = <LaunchPrecheckError>[];
     final mods = ref.read(AppState.mods);
     final modsFolder = ref.read(appSettings.select((it) => it.modsDir));
-    final enabledMods = ref.read(AppState.enabledModsFile).valueOrNull?.filterOutMissingMods(mods);
+    final enabledMods = ref
+        .read(AppState.enabledModsFile)
+        .valueOrNull
+        ?.filterOutMissingMods(mods);
     final allVariants = ref.read(AppState.modVariants).valueOrNull ?? [];
     final gameVersion = ref.read(AppState.starsectorVersion).valueOrNull;
     final enabledVariants =
@@ -143,7 +146,9 @@ class Launcher extends ConsumerWidget {
                 final mod =
                     mods.firstWhereOrNull((mod) => mod.id == dependency.id);
                 if (mod != null) {
-                  changeActiveModVariant(mod, disabled.modVariant, ref);
+                  ref
+                      .read(AppState.modVariants.notifier)
+                      .changeActiveModVariant(mod, disabled.modVariant);
                 }
               },
             ));
@@ -165,7 +170,9 @@ class Launcher extends ConsumerWidget {
                 final mod =
                     mods.firstWhereOrNull((mod) => mod.id == dependency.id);
                 if (mod != null) {
-                  changeActiveModVariant(mod, versionWarning.modVariant, ref);
+                  ref
+                      .read(AppState.modVariants.notifier)
+                      .changeActiveModVariant(mod, versionWarning.modVariant);
                 }
               },
             ));

@@ -98,17 +98,14 @@ class _ModVersionSelectionDropdownState
                 // Enable if disabled, disable if enabled
                 try {
                   if (widget.mod.hasEnabledVariant) {
-                    await changeActiveModVariant(widget.mod, null, ref);
+                    await ref.read(AppState.modVariants.notifier).changeActiveModVariant(widget.mod, null);
                   } else {
-                    await changeActiveModVariant(
-                        widget.mod, widget.mod.findHighestVersion, ref);
+                    await ref.read(AppState.modVariants.notifier).changeActiveModVariant(
+                        widget.mod, widget.mod.findHighestVersion);
                   }
                 } catch (e, st) {
                   Fimber.e("Error changing active mod variant: $e\n$st");
                 }
-
-                // TODO update ONLY the mod that changed and any dependents/dependencies.
-                ref.invalidate(AppState.modVariants);
               },
               style: buttonStyle,
               child: Text(
@@ -184,9 +181,7 @@ class _ModVersionSelectionDropdownState
             }).toList();
           },
           onChanged: (ModVariant? variant) async {
-            await changeActiveModVariant(widget.mod, variant, ref);
-            // TODO update ONLY the mod that changed and any dependents/dependencies.
-            ref.invalidate(AppState.modVariants);
+            await ref.read(AppState.modVariants.notifier).changeActiveModVariant(widget.mod, variant);
           },
         ),
       ),

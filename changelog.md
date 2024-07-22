@@ -1,3 +1,7 @@
+# 0.1.2
+- Fixed
+  - Bugs where sometimes UI wouldn't update after changing out a mod.
+
 # 0.1.1
 - Fixed
   - Notifications defaulting to 7000 seconds instead of 7 seconds.

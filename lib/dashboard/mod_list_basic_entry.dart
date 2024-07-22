@@ -303,10 +303,14 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                   try {
                     if (isCurrentlyEnabled) {
                       // Disable
-                      changeActiveModVariant(mod, null, ref);
+                      ref
+                          .read(AppState.modVariants.notifier)
+                          .changeActiveModVariant(mod, null);
                     } else {
                       // Enable highest version
-                      changeActiveModVariant(mod, mod.findHighestVersion, ref);
+                      ref
+                          .read(AppState.modVariants.notifier)
+                          .changeActiveModVariant(mod, mod.findHighestVersion);
                     }
                   } catch (e) {
                     showSnackBar(

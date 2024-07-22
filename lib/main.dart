@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:screen_retriever/screen_retriever.dart';
@@ -65,7 +66,9 @@ void main() async {
     Fimber.w("Error reading crash reporting setting.", ex: e);
   }
 
-  if (allowCrashReporting) {
+  // Don't use Sentry in debug mode, ever.
+  // There's a max error limit and UI rendering errors send a million errors.
+  if (allowCrashReporting && kDebugMode == false) {
     await SentryFlutter.init(
       (options) {
         options = configureSentry(options, settings);

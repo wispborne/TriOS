@@ -40,12 +40,7 @@ class AppState {
 
   static var skipCacheOnNextVersionCheck = false;
 
-  /// Projection of [modVariants], grouping them by mod id.
-  static final mods = Provider<List<Mod>>((ref) {
-    Fimber.d("Recalculating mods from variants.");
-    final modVariants = ref.watch(AppState.modVariants).value ?? [];
-    final enabledMods =
-        ref.watch(AppState.enabledModIds).value.orEmpty().toList();
+  static List<Mod> getModsFromVariants(List<ModVariant> modVariants, List<String> enabledMods) {
     return modVariants
         .groupBy((ModVariant variant) => variant.modInfo.id)
         .entries
@@ -56,6 +51,15 @@ class AppState {
         modVariants: entry.value.toList(),
       );
     }).toList();
+  }
+
+  /// Projection of [modVariants], grouping them by mod id.
+  static final mods = Provider<List<Mod>>((ref) {
+    Fimber.d("Recalculating mods from variants.");
+    final modVariants = ref.watch(AppState.modVariants).value ?? [];
+    final enabledMods =
+        ref.watch(AppState.enabledModIds).value.orEmpty().toList();
+    return getModsFromVariants(modVariants, enabledMods);
   });
 
   static final modCompatibility = Provider<Map<SmolId, DependencyCheck>>((ref) {

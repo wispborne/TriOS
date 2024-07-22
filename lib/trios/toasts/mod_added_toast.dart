@@ -168,8 +168,8 @@ class _ModAddedToastState extends ConsumerState<ModAddedToast> {
                                                   "Cannot enable, mod not found for variant ${widget.modVariant.smolId}");
                                               return;
                                             }
-                                            await changeActiveModVariant(
-                                                mod, widget.modVariant, ref);
+                                            await ref.read(AppState.modVariants.notifier).changeActiveModVariant(
+                                                mod, widget.modVariant);
                                             toastification.dismiss(widget.item);
                                           },
                                           icon: const SizedBox(

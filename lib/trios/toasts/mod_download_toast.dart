@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:palette_generator/palette_generator.dart';
 import 'package:toastification/toastification.dart';
-import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/download_progress.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/themes/theme_manager.dart';
@@ -134,8 +133,10 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                                   theme.iconTheme.color,
                                 DownloadStatus.completed =>
                                   theme.colorScheme.secondary,
-                                DownloadStatus.failed => ThemeManager.vanillaErrorColor,
-                                DownloadStatus.canceled => ThemeManager.vanillaErrorColor,
+                                DownloadStatus.failed =>
+                                  ThemeManager.vanillaErrorColor,
+                                DownloadStatus.canceled =>
+                                  ThemeManager.vanillaErrorColor,
                                 _ => theme.iconTheme.color,
                               },
                             ),
@@ -177,7 +178,9 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                                     child: Text(
                                       downloadTask.error.toString(),
                                       style: theme.textTheme.labelMedium
-                                          ?.copyWith(color: ThemeManager.vanillaErrorColor),
+                                          ?.copyWith(
+                                              color: ThemeManager
+                                                  .vanillaErrorColor),
                                     ),
                                   ),
                                 Padding(
@@ -238,8 +241,11 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                                                     "Cannot enable, mod not found for variant ${installedMod.smolId}");
                                                 return;
                                               }
-                                              await changeActiveModVariant(
-                                                  mod, installedMod, ref);
+                                              await ref
+                                                  .read(AppState
+                                                      .modVariants.notifier)
+                                                  .changeActiveModVariant(
+                                                      mod, installedMod);
                                               toastification.dismiss(item);
                                             },
                                             icon: const SizedBox(

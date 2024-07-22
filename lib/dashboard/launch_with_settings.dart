@@ -22,7 +22,7 @@ class LaunchWithSettings extends ConsumerStatefulWidget {
 }
 
 class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
-  late StarsectorVanillaLaunchPreferences? starsectorLaunchPrefs;
+  StarsectorVanillaLaunchPreferences? starsectorLaunchPrefs;
 
   @override
   void initState() {

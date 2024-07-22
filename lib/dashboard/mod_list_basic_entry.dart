@@ -31,10 +31,11 @@ class ModListBasicEntry extends ConsumerStatefulWidget {
   ConsumerState createState() => _ModListBasicEntryState();
 
   static Widget buildVersionCheckTextReadout(
-      String? changelogUrl,
-      int? versionCheckComparison,
-      VersionCheckerInfo? localVersionCheck,
-      VersionCheckResult? remoteVersionCheck) {
+    String? changelogUrl,
+    int? versionCheckComparison,
+    VersionCheckerInfo? localVersionCheck,
+    VersionCheckResult? remoteVersionCheck,
+  ) {
     return SizedBox(
         width: changelogUrl.isNotNullOrEmpty() ? 800 : 400,
         child: Row(
@@ -45,10 +46,28 @@ class ModListBasicEntry extends ConsumerStatefulWidget {
                 width: 400,
                 height: 400,
                 child: TooltipFrame(
-                  child: Changelogs(
-                    localVersionCheck,
-                    remoteVersionCheck,
-                  ),
+                  child: Builder(builder: (context) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Changelogs(
+                            localVersionCheck,
+                            remoteVersionCheck,
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Text("Right-click for more.",
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Theme.of(context).colorScheme.secondary,
+                                fontWeight: FontWeight.bold,
+                              )),
+                        ),
+                      ],
+                    );
+                  }),
                 ),
               ),
             Expanded(

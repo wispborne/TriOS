@@ -1,7 +1,7 @@
 # 0.1.2
 - Fixed
   - Bugs where sometimes UI wouldn't update after changing out a mod  (found using error reporting).
-  - Instance of launcher breaking if unable to read default game settings from registry (found using error reporting). 
+  - Instance of launcher breaking if unable to read default game settings from registry (found using error reporting).
   - Portrait Viewer: Error if unable to get image size (found using error reporting).
 
 # 0.1.1

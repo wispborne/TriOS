@@ -398,22 +398,14 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                             onPressed: () async {
                               final latestRelease =
                                   await SelfUpdater.getLatestRelease();
-                              SelfUpdater.update(latestRelease!,
-                                  downloadProgress:
-                                      (bytesReceived, contentLength) {
-                                Fimber.i(
-                                    "Downloaded: ${bytesReceived.bytesAsReadableMB()} / ${contentLength.bytesAsReadableMB()}");
-                                ref
-                                    .read(AppState
-                                        .selfUpdateDownloadProgress.notifier)
-                                    .update((_) => DownloadProgress(
-                                        bytesReceived, contentLength));
-                              });
+                              ref
+                                  .read(AppState.selfUpdate.notifier)
+                                  .updateSelf(latestRelease!);
                             },
                             child: const Text("Force Update")),
                       ),
                       DownloadProgressIndicator(
-                        value: ref.watch(AppState.selfUpdateDownloadProgress) ??
+                        value: ref.watch(AppState.selfUpdate).valueOrNull ??
                             const DownloadProgress(0, 0, isIndeterminate: true),
                       ),
                     ],

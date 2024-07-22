@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:pub_semver/pub_semver.dart';
 import 'package:trios/libarchive/libarchive.dart';
@@ -11,6 +12,7 @@ import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/network_util.dart';
 import 'package:trios/utils/util.dart';
 
+import '../../models/download_progress.dart';
 import '../constants.dart';
 
 class SelfUpdateInfo {
@@ -35,10 +37,15 @@ class SelfUpdateInfo {
   }
 }
 
-class SelfUpdater {
+class SelfUpdater extends AsyncNotifier<DownloadProgress?> {
   static const String githubBase = "https://api.github.com";
   static const String githubLatestRelease =
       "$githubBase/repos/wispborne/trios/releases/latest";
+
+  @override
+  Future<DownloadProgress?> build() async {
+    return null;
+  }
 
   static bool hasNewVersion(Release latestRelease,
       {String currentVersion = Constants.version}) {
@@ -52,19 +59,15 @@ class SelfUpdater {
     return false;
   }
 
-  static Future<void> update(Release release,
-      {bool exitSelfAfter = true,
-      void Function(int, int)? downloadProgress}) async {
+  Future<void> updateSelf(Release release, {bool exitSelfAfter = true}) async {
     final updateWorkingDir =
         Directory.systemTemp.createTempSync('trios_update').absolute.normalize;
 
     // Download the release asset.
-    final downloadFile = await downloadRelease(release, updateWorkingDir,
-        onProgress: (bytesReceived, contentLength) {
-      Fimber.v(
-          'Downloaded: ${bytesReceived.bytesAsReadableMB()} / ${contentLength.bytesAsReadableMB()}');
-      downloadProgress?.call(bytesReceived, contentLength);
-    });
+    final downloadFile = await downloadRelease(
+      release,
+      updateWorkingDir,
+    );
 
     Fimber.i('Downloaded update file: ${downloadFile.path}');
     final extractedDir = updateWorkingDir;
@@ -118,8 +121,8 @@ class SelfUpdater {
   /// Downloads the release asset for the given platform.
   /// If [platform] is not provided, it will use the current platform.
   /// Returns the path of the downloaded file.
-  static Future<File> downloadRelease(Release release, Directory destDir,
-      {String? platform, ProgressCallback? onProgress}) async {
+  Future<File> downloadRelease(Release release, Directory destDir,
+      {String? platform}) async {
     final platformToUse = platform ?? Platform.operatingSystem;
 
     // Uses the file with the platform name somewhere in it.
@@ -142,8 +145,14 @@ class SelfUpdater {
 
     Fimber.i("Download link: $downloadLink");
 
-    final downloadResult =
-        await downloadFile(downloadLink, destDir, null, onProgress: onProgress);
+    final downloadResult = await downloadFile(downloadLink, destDir, null,
+        onProgress: (bytesReceived, contentLength) {
+      Fimber.i(
+          "Downloaded: ${bytesReceived.bytesAsReadableMB()} / ${contentLength.bytesAsReadableMB()}");
+      state = AsyncData(DownloadProgress(bytesReceived, contentLength,
+          isIndeterminate: false));
+    });
+
     return downloadResult;
   }
 }

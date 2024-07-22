@@ -10,6 +10,7 @@ import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/download_progress.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/themes/theme_manager.dart';
+import 'package:trios/trios/self_updater/self_updater.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
@@ -25,8 +26,8 @@ import 'mod_variants.dart';
 class AppState {
   static ThemeManager theme = ThemeManager();
   static final isWindowFocused = StateProvider<bool>((ref) => true);
-  static final selfUpdateDownloadProgress =
-      StateProvider<DownloadProgress?>((ref) => null);
+  static final selfUpdate =
+      AsyncNotifierProvider<SelfUpdater, DownloadProgress?>(SelfUpdater.new);
 
   /// Master list of all mod variants found in the mods folder.
   static final modVariants =
@@ -40,7 +41,8 @@ class AppState {
 
   static var skipCacheOnNextVersionCheck = false;
 
-  static List<Mod> getModsFromVariants(List<ModVariant> modVariants, List<String> enabledMods) {
+  static List<Mod> getModsFromVariants(
+      List<ModVariant> modVariants, List<String> enabledMods) {
     return modVariants
         .groupBy((ModVariant variant) => variant.modInfo.id)
         .entries

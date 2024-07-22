@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:toastification/toastification.dart';
 import 'package:trios/models/download_progress.dart';
 import 'package:trios/themes/theme_manager.dart';
-import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/download_progress_indicator.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
@@ -11,8 +10,6 @@ import 'package:trios/widgets/trios_app_icon.dart';
 
 import '../trios/app_state.dart';
 import '../trios/constants.dart';
-import '../trios/self_updater/self_updater.dart';
-import '../utils/logging.dart';
 import '../utils/network_util.dart';
 import 'changelog_viewer.dart';
 
@@ -60,8 +57,9 @@ class SelfUpdateToast extends ConsumerWidget {
                             Padding(
                               padding: const EdgeInsets.all(8.0),
                               child: ElevatedButton.icon(
-                                  onPressed: () =>
-                                      showTriOSChangelogDialog(context, showUnreleasedVersions: true),
+                                  onPressed: () => showTriOSChangelogDialog(
+                                      context,
+                                      showUnreleasedVersions: true),
                                   icon: const SvgImageIcon(
                                     "assets/images/icon-log.svg",
                                   ),
@@ -70,24 +68,13 @@ class SelfUpdateToast extends ConsumerWidget {
                             Padding(
                               padding: const EdgeInsets.all(8.0),
                               child: Disable(
-                                isEnabled: ref.watch(
-                                        AppState.selfUpdateDownloadProgress) ==
-                                    null,
+                                isEnabled:
+                                    ref.watch(AppState.selfUpdate).valueOrNull == null,
                                 child: ElevatedButton.icon(
                                     onPressed: () {
-                                      SelfUpdater.update(latestRelease,
-                                          downloadProgress:
-                                              (bytesReceived, contentLength) {
-                                        ref
-                                            .read(AppState
-                                                .selfUpdateDownloadProgress
-                                                .notifier)
-                                            .update((_) => DownloadProgress(
-                                                bytesReceived, contentLength,
-                                                isIndeterminate: false));
-                                        Fimber.i(
-                                            "Downloaded: ${bytesReceived.bytesAsReadableMB()} / ${contentLength.bytesAsReadableMB()}");
-                                      });
+                                      ref
+                                          .read(AppState.selfUpdate.notifier)
+                                          .updateSelf(latestRelease);
                                     },
                                     icon: const Icon(Icons.download),
                                     label: const Text("Update")),
@@ -96,10 +83,9 @@ class SelfUpdateToast extends ConsumerWidget {
                           ],
                         ),
                         DownloadProgressIndicator(
-                          value:
-                              ref.watch(AppState.selfUpdateDownloadProgress) ??
-                                  const DownloadProgress(0, 0,
-                                      isIndeterminate: true),
+                          value: ref.watch(AppState.selfUpdate).valueOrNull ??
+                              const DownloadProgress(0, 0,
+                                  isIndeterminate: true),
                         ),
                       ],
                     ),

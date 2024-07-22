@@ -31,7 +31,6 @@ import 'jre_manager/jre_manager.dart';
 import 'launcher/launcher.dart';
 import 'main.dart';
 import 'mod_manager/smol3.dart';
-import 'models/download_progress.dart';
 import 'trios/app_state.dart';
 import 'trios/drag_drop_handler.dart';
 
@@ -105,12 +104,9 @@ class _AppShellState extends ConsumerState<AppShell>
 
               if (ref.read(appSettings
                   .select((value) => value.shouldAutoUpdateOnLaunch))) {
-                SelfUpdater.update(latestRelease,
-                    downloadProgress: (bytesReceived, contentLength) {
-                  ref.read(AppState.selfUpdateDownloadProgress.notifier).update(
-                      (_) => DownloadProgress(bytesReceived, contentLength,
-                          isIndeterminate: false));
-                });
+                ref
+                    .read(AppState.selfUpdate.notifier)
+                    .updateSelf(latestRelease);
               }
             }
           }

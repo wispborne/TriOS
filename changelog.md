@@ -1,3 +1,12 @@
+# 0.1.3
+- Fixed
+  - Internal error when switching from JRE 23 to any other.
+  - "Admin permission required" warning if not using JRE 23.
+    - And added more info about what the issue is if the warning does appear.
+- Changed
+  - Settings page is now scrollable.
+  - Polished "Debugging" section in Settings a little.
+
 # 0.1.2
 - Fixed
   - Bugs where sometimes UI wouldn't update after changing out a mod  (found using error reporting).

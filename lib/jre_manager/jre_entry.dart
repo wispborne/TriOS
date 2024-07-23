@@ -13,9 +13,9 @@
 
 import 'dart:io';
 
-import 'package:trios/utils/logging.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/logging.dart';
 
 import '../models/download_progress.dart';
 
@@ -63,11 +63,24 @@ class JreVersion {
 
   int get version {
     try {
-      if (versionString.startsWith("1.")) return int.parse(versionString.substring(2, 3));
-      return int.parse(versionString.takeWhile((char) => char != '.' && char != '-' && char != '+'));
+      if (versionString.startsWith("1."))
+        return int.parse(versionString.substring(2, 3));
+      return int.parse(versionString
+          .takeWhile((char) => char != '.' && char != '-' && char != '+'));
     } catch (e, st) {
       Fimber.d(e.toString(), ex: e, stacktrace: st);
       return 0;
     }
   }
+
+  @override
+  bool operator ==(Object other) {
+    if (other is JreVersion) {
+      return versionString == other.versionString;
+    }
+    return false;
+  }
+
+  @override
+  int get hashCode => versionString.hashCode;
 }

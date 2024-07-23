@@ -310,7 +310,8 @@ extension DirectoryExt on Directory {
   /// Copied from FileUtils.java::doCopyDirectory in Apache Commons IO.
   Future<void> copyDirectory(Directory destDir,
       {bool overwrite = false}) async {
-    final srcFiles = listSync(recursive: false).map((e) => e.path.toFile());
+    final source = normalize;
+    final srcFiles = source.listSync(recursive: false).map((e) => e.path.toFile());
     destDir.createSync(recursive: true); // mkdirs
 
     for (var srcFile in srcFiles) {

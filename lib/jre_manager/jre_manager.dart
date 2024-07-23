@@ -345,6 +345,11 @@ class _JreManagerState extends ConsumerState<JreManager>
         jres.firstWhereOrNull((element) => element.isActive(ref, jres))
             as JreEntryInstalled?;
 
+    if (currentJreSource != null && newJre.version == currentJreSource.version) {
+      Fimber.i("JRE ${newJre.versionString} is already active.");
+      return;
+    }
+
     Directory? currentJreDest;
     var gameJrePath =
         Directory(gamePath.resolve(gameJreFolderName).absolute.path);

@@ -21,6 +21,7 @@ var _consoleLogger = Logger();
 var _fileLogger = Logger();
 bool _allowSentryReporting = false;
 const useFimber = false;
+bool didLoggingInitializeSuccessfully = false;
 
 /// Fine to call multiple times.
 configureLogging(
@@ -102,10 +103,17 @@ configureLogging(
     Fimber.i("Logging started.");
     Fimber.i("Platform: ${Platform.operatingSystemVersion}");
   }
+
+  didLoggingInitializeSuccessfully = true;
 }
 
 class Fimber {
   static void v(String message, {Object? ex, StackTrace? stacktrace}) {
+    if (!didLoggingInitializeSuccessfully) {
+      print(message);
+      return;
+    }
+
     if (useFimber) {
       // f.Fimber.v(message, ex: ex, stacktrace: stacktrace);
     } else {
@@ -115,6 +123,11 @@ class Fimber {
   }
 
   static void i(String message, {Object? ex, StackTrace? stacktrace}) {
+    if (!didLoggingInitializeSuccessfully) {
+      print(message);
+      return;
+    }
+
     if (useFimber) {
       // f.Fimber.i(message, ex: ex, stacktrace: stacktrace);
     } else {
@@ -124,6 +137,11 @@ class Fimber {
   }
 
   static void d(String message, {Object? ex, StackTrace? stacktrace}) {
+    if (!didLoggingInitializeSuccessfully) {
+      print(message);
+      return;
+    }
+
     if (useFimber) {
       // f.Fimber.d(message, ex: ex, stacktrace: stacktrace);
     } else {
@@ -133,6 +151,11 @@ class Fimber {
   }
 
   static void w(String message, {Object? ex, StackTrace? stacktrace}) {
+    if (!didLoggingInitializeSuccessfully) {
+      print(message);
+      return;
+    }
+
     if (useFimber) {
       // f.Fimber.w(message, ex: ex, stacktrace: stacktrace);
     } else {
@@ -142,6 +165,11 @@ class Fimber {
   }
 
   static void e(String message, {Object? ex, StackTrace? stacktrace}) {
+    if (!didLoggingInitializeSuccessfully) {
+      print(message);
+      return;
+    }
+
     if (useFimber) {
       // f.Fimber.e(message, ex: ex, stacktrace: stacktrace);
     } else {

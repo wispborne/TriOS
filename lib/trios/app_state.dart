@@ -162,6 +162,7 @@ class AppState {
 
   static final isJre23VmparamsFileWritable = FutureProvider<bool>(
       (ref) async => ref.watch(jre23VmparamsFile).value?.isWritable() ?? false);
+
   static final isEnabledModsFileWritable = FutureProvider<bool>((ref) async {
     final modsPath = ref.watch(modsFolder).valueOrNull;
     if (modsPath == null) return false;

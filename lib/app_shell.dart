@@ -186,7 +186,7 @@ class _AppShellState extends ConsumerState<AppShell>
               child: Text("Only supported on Windows for now, sorry.")),
       const Padding(padding: EdgeInsets.all(8), child: ImageGridScreen()),
       const Padding(
-        padding: EdgeInsets.all(4),
+        padding: EdgeInsets.all(8),
         child: SettingsPage(),
       ),
     ];
@@ -414,29 +414,43 @@ class FilePermissionShield extends StatelessWidget {
     final isVmParamsFileWritable =
         ref.watch(AppState.isVmParamsFileWritable).valueOrNull;
     final isJre23VmparamsFileWritable =
-        (ref.watch(appSettings.select((s) => s.useJre23)) ?? false) &&
-            (ref.watch(AppState.isJre23VmparamsFileWritable).valueOrNull ??
-                false);
+        (ref.watch(appSettings.select((s) => s.useJre23)) ?? false)
+            ? (ref.watch(AppState.isJre23VmparamsFileWritable).valueOrNull ??
+                false)
+            : null;
 
-    if (isVmParamsFileWritable == true && isJre23VmparamsFileWritable == true) {
+    if (isVmParamsFileWritable != false &&
+        isJre23VmparamsFileWritable != false) {
       return const SizedBox();
     }
 
-    return Column(
-      children: [
-        SvgImageIcon(
-          "assets/images/icon-admin-shield.svg",
-          color: ThemeManager.vanillaWarningColor,
-        ),
-        Tooltip(
-          message: "Admin permissions needed",
-          child: Text("Check Permissions",
+    final warnings = <String>[];
+    if (isVmParamsFileWritable == false) {
+      warnings.add(
+          "vmparams file is not writable (${ref.watch(AppState.vmParamsFile).valueOrNull?.path}).");
+    }
+    if (isJre23VmparamsFileWritable == false) {
+      warnings.add(
+          "JRE 23 vmparams file is not writable (${ref.watch(AppState.jre23VmparamsFile).valueOrNull?.path}).");
+    }
+
+    return Tooltip(
+      message:
+          "Admin permissions needed.${warnings.isNotEmpty ? "\n${warnings.join(", ")}" : ""}",
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SvgImageIcon(
+            "assets/images/icon-admin-shield.svg",
+            color: ThemeManager.vanillaWarningColor,
+          ),
+          Text("Check Permissions",
               style: TextStyle(
                   color: ThemeManager.vanillaWarningColor,
                   fontSize: 12,
                   fontWeight: FontWeight.bold)),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

@@ -135,7 +135,7 @@ void main() async {
     ScriptGenerator.SELF_UPDATE_FILE_NAME
   ];
   try {
-    Directory.current.list().listen((file) {
+    currentDirectory.list().listen((file) {
       if (file is File) {
         for (var pattern in filePatternsToClean) {
           if (file.path.toLowerCase().contains(pattern.toLowerCase())) {

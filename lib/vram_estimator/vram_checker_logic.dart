@@ -5,6 +5,7 @@ import 'package:collection/collection.dart';
 import 'package:csv/csv.dart';
 import 'package:path/path.dart' as p;
 import 'package:squadron/squadron.dart';
+import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/extensions.dart';
 
 import '../../models/mod_info_json.dart';
@@ -306,7 +307,7 @@ class VramChecker {
     summaryText.writeln(
         "** Unused images in mods are counted unless they contain one of ${UNUSED_INDICATOR.joinToString(transform: (it) => "\"$it\"")} in the file name.");
 
-    var currentFolder = Directory.current.path;
+    var currentFolder = currentDirectory.path;
     var outputFile = File("$currentFolder/VRAM_usage_of_mods.txt");
     if (outputFile.existsSync()) outputFile.delete();
     outputFile.create();

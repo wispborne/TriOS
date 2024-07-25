@@ -1,7 +1,9 @@
+import 'dart:io';
+
 import 'package:trios/utils/extensions.dart';
 
 class Constants {
-  static const version = "0.1.3";
+  static const version = "0.1.4";
 
   static const appName = "TriOS";
   static const appTitle = "$appName v$version";
@@ -92,3 +94,5 @@ class Constants {
     ["Soren", "Søren", "Harmful Mechanic"],
   ];
 }
+
+final currentDirectory = Platform.resolvedExecutable.toFile().parent;

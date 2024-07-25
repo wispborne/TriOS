@@ -198,7 +198,10 @@ class DebugSection extends ConsumerWidget {
                                       fontSize: 13)),
                         ),
                         Text(
-                          "Current directory: ${Directory.current.path}",
+                          "Current directory (env variable): ${Directory.current.path}",
+                        ),
+                        Text(
+                          "Current directory based on executable: ${Platform.resolvedExecutable}",
                         ),
                         Text(
                           "Current executable: ${Platform.resolvedExecutable}",

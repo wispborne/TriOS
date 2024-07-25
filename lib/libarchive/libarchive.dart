@@ -10,6 +10,8 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/util.dart';
 
+import '../trios/constants.dart';
+
 class LibArchiveEntry {
   final String pathName;
   final int unpackedSize;
@@ -60,17 +62,16 @@ class LibArchive {
 
   static LibArchiveBinding _getArchive() {
     // TODO there's gotta be a better way to get the asset path.
-    final assetsPath = kDebugMode
-        ? "assets"
-        : switch (currentPlatform) {
-            TargetPlatform.windows => "data/flutter_assets/assets",
-            TargetPlatform.macOS =>
-              "TriOS.app/Contents/Frameworks/App.framework/Resources/flutter_assets/assets",
-            // "${getApplicationDocumentsDirectory()}/Contents/Frameworks/App.framework/Resources/flutter_assets/assets",
-            _ => "data/flutter_assets/assets",
-          };
+    // edit: Switching from Directory.current to Platform.resolvedExecutable.toFile().parent removed the need for a "is debug mode" check.
+    final assetsPath = switch (currentPlatform) {
+      TargetPlatform.windows => "data/flutter_assets/assets",
+      TargetPlatform.macOS =>
+        "TriOS.app/Contents/Frameworks/App.framework/Resources/flutter_assets/assets",
+      // "${getApplicationDocumentsDirectory()}/Contents/Frameworks/App.framework/Resources/flutter_assets/assets",
+      _ => "data/flutter_assets/assets",
+    };
     final currentLibarchivePath =
-        p.join(Directory.current.absolute.path, assetsPath, "libarchive");
+        p.join(currentDirectory.absolute.path, assetsPath, "libarchive");
 
     final libArchivePathForPlatform = switch (Platform.operatingSystem) {
       "windows" => File("$currentLibarchivePath/windows/bin/archive.dll"),

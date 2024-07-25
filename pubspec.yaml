@@ -99,6 +99,7 @@ dependencies:
   sentry_flutter: ^8.3.0 # Analytics
   crypto: ^3.0.3
   path_drawing: ^1.0.1
+  dartx: ^1.2.0
 #  flutter_hooks: ^0.20.5
 #  hooks_riverpod: ^2.5.1
 #  data_table_2: ^2.5.12
@@ -123,7 +124,7 @@ dev_dependencies:
   #  riverpod_lint: ^2.3.9 # <https://github.com/google/reflectable.dart/pull/326>
   #analyzer: ^6.4.1
   flutter_launcher_icons: "^0.13.1"
-  ffigen: ^12.0.0
+  ffigen: ^13.0.0
   msix: ^3.16.7
 
 flutter_launcher_icons:

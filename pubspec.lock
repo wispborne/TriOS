@@ -249,6 +249,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.3.6"
+  dartx:
+    dependency: "direct main"
+    description:
+      name: dartx
+      sha256: "8b25435617027257d43e6508b5fe061012880ddfdaa75a71d607c3de2a13d244"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.2.0"
   desktop_drop:
     dependency: "direct main"
     description:
@@ -333,10 +341,10 @@ packages:
     dependency: "direct dev"
     description:
       name: ffigen
-      sha256: "3e12e80ccb6539bb3917217bb6f32709220efb737de0d0fa8736da0b7cb507da"
+      sha256: "10cb41647d73e0204f8d35138a3f20eb52418cce96599ad49167b1111e59a557"
       url: "https://pub.dev"
     source: hosted
-    version: "12.0.0"
+    version: "13.0.0"
   file:
     dependency: transitive
     description:
@@ -1020,18 +1028,18 @@ packages:
     dependency: transitive
     description:
       name: sentry
-      sha256: cbc29cbdd8a047aab3df42f826daf07e58dfb2e1d550895d1021a6d4e618b00d
+      sha256: "60756499f09c3ed944640d7993ac527a89f7c3033f13ec12ae145706b269b5c8"
       url: "https://pub.dev"
     source: hosted
-    version: "8.4.0"
+    version: "8.5.0"
   sentry_flutter:
     dependency: "direct main"
     description:
       name: sentry_flutter
-      sha256: "96ce085e1be6c9963d93d42d6ba5c67484c076c59d25c94a7ba906549dc6c635"
+      sha256: "26cfe89cb08a60d9bc0c4e748a0508e223ae378265aec8ed2a2b48f0d2c936b9"
       url: "https://pub.dev"
     source: hosted
-    version: "8.4.0"
+    version: "8.5.0"
   shared_preferences:
     dependency: "direct main"
     description:
@@ -1217,26 +1225,26 @@ packages:
     dependency: transitive
     description:
       name: super_clipboard
-      sha256: cdab725bac26655ebd189f4d202d694a8cbc1c21e0f0478ccd7829c71716f09b
+      sha256: c72d2ae8c3a66b20a104523add86b7c2813b1d4cced893a9764b84fb97ac8e2a
       url: "https://pub.dev"
     source: hosted
-    version: "0.8.17"
+    version: "0.8.18"
   super_drag_and_drop:
     dependency: "direct main"
     description:
       name: super_drag_and_drop
-      sha256: "8e00c6082646076f80b972b39d9c27b5311082ea1e8add5fa370ce11c410f7de"
+      sha256: "69ff42851493fae763c796012daa416ce1b6c93ff73cdb240d411cbdc378ece7"
       url: "https://pub.dev"
     source: hosted
-    version: "0.8.17"
+    version: "0.8.18"
   super_native_extensions:
     dependency: transitive
     description:
       name: super_native_extensions
-      sha256: fa55d452d34b7112453afbb9fa4d13c0527ff201630d10d86546497179030544
+      sha256: b03f19e54744b65940a7c2cb4f93abd4819b5355aa3464d7b3c9a013b6b76db1
       url: "https://pub.dev"
     source: hosted
-    version: "0.8.17"
+    version: "0.8.18"
   term_glyph:
     dependency: transitive
     description:
@@ -1261,6 +1269,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.2"
+  time:
+    dependency: transitive
+    description:
+      name: time
+      sha256: ad8e018a6c9db36cb917a031853a1aae49467a93e0d464683e029537d848c221
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.1.4"
   timing:
     dependency: transitive
     description:

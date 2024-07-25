@@ -19,7 +19,7 @@ class Constants {
     "Gargoyle-resistant",
     "Unavailable on Asher",
     "Artemisia's Choice",
-    "Persean Chronicles Died For This",
+    "Persean Chronicles Died For This?",
     "where is omega?",
     "at com.fs.starfarer.oOOOOOOO",
   ].random();

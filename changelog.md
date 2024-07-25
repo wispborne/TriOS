@@ -1,6 +1,11 @@
 # 0.1.4
 - Added
   - Drag'n'drop now supports urls. Drag a url from your browser and it'll download and install the mod.
+- Fixed
+  - (Hopefully fixed) Self-update and installing mods not working for some users 
+    - Error mentioned system32, I swear that's some null fallback path, I don't touch that.
+  - Notification timers resetting.
+  - Notifications could time out when still downloading a mod.
 
 # 0.1.3
 - Fixed

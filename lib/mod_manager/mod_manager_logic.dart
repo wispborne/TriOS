@@ -134,11 +134,12 @@ class ModManagerNotifier extends AsyncNotifier<void> {
         return [];
       }
       ref.invalidate(AppState.modVariants);
-      showSnackBar(
-          context: context,
-          content: Text(installModsResult.length == 1
-              ? "Installed: ${installModsResult.first.modInfo.name} ${installModsResult.first.modInfo.version}"
-              : "Installed ${installModsResult.length} mods (${installModsResult.map((it) => "${it.modInfo.name} ${it.modInfo.version}").join(", ")})"));
+      // We have toasts now.
+      // showSnackBar(
+      //     context: context,
+      //     content: Text(installModsResult.length == 1
+      //         ? "Installed: ${installModsResult.first.modInfo.name} ${installModsResult.first.modInfo.version}"
+      //         : "Installed ${installModsResult.length} mods (${installModsResult.map((it) => "${it.modInfo.name} ${it.modInfo.version}").join(", ")})"));
 
       final errors = installModsResult.where((it) => it.err != null).toList();
       if (errors.isNotEmpty) {

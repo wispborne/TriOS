@@ -17,12 +17,14 @@ import '../download_manager/download_manager.dart';
 import '../download_manager/download_status.dart';
 
 class ModDownloadToast extends ConsumerStatefulWidget {
-  const ModDownloadToast(this.download, this.item, this.durationMillis,
+  /// toastDurationMillis Starts ticking after download is completed or failed.
+  const ModDownloadToast(this.download, this.item, this.toastDurationMillis,
       {super.key});
 
   final ToastificationItem item;
   final Download download;
-  final int durationMillis;
+
+  final int toastDurationMillis;
 
   @override
   ConsumerState<ModDownloadToast> createState() => _ModDownloadToastState();
@@ -30,7 +32,6 @@ class ModDownloadToast extends ConsumerStatefulWidget {
 
 class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
   PaletteGenerator? palette;
-  int timeRemaining = 1;
 
   Future<void> _generatePalette(ModVariant variant) async {
     if (variant.iconFilePath.isNotNullOrEmpty()) {
@@ -44,16 +45,14 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
   @override
   void initState() {
     super.initState();
-    timeRemaining = widget.durationMillis;
+    widget.item.pause();
     // loop to update the time remaining every 5ms
     Future.doWhile(() async {
       await Future.delayed(const Duration(milliseconds: 5));
       if (mounted) {
-        setState(() {
-          timeRemaining -= 5;
-        });
+        setState(() {});
       }
-      return timeRemaining > 0;
+      return mounted;
     });
   }
 
@@ -70,12 +69,8 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
     if (palette == null && installedMod != null) {
       _generatePalette(installedMod);
     }
-
-    if (timeRemaining <= 0) {
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        toastification.dismiss(widget.item);
-      });
-    }
+    final timeElapsed = (widget.item.elapsedDuration?.inMilliseconds ?? 0);
+    final timeTotal = (widget.item.originalDuration?.inMilliseconds ?? 1000);
 
     return Padding(
       padding: const EdgeInsets.only(top: 4, right: 32),
@@ -111,6 +106,17 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                 child: ValueListenableBuilder(
                   valueListenable: downloadTask.status,
                   builder: (context, status, child) {
+                    // Fimber.i(item.isRunning.toString());
+                    final isStopped = (!item.isRunning || !item.isStarted);
+                    final isFinished = (status != DownloadStatus.queued &&
+                        status != DownloadStatus.downloading &&
+                        status != DownloadStatus.paused);
+                    if (isStopped && isFinished) {
+                      Fimber.i(
+                          "Debug: isStopped: $isStopped, isFinished: $isFinished");
+                      item.start();
+                    }
+
                     return Row(
                       children: [
                         Padding(
@@ -263,7 +269,7 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                                 width: 32,
                                 height: 32,
                                 child: CircularProgressIndicator(
-                                  value: timeRemaining / widget.durationMillis,
+                                  value: (timeTotal - timeElapsed) / timeTotal,
                                   strokeWidth: 3,
                                   valueColor: AlwaysStoppedAnimation<Color>(
                                       theme.colorScheme.onSurface),

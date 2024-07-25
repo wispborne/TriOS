@@ -15,7 +15,7 @@ import 'package:trios/trios/navigation.dart';
 import 'package:trios/trios/self_updater/self_updater.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/trios/settings/settings_page.dart';
-import 'package:trios/trios/toasts/download_toast_manager.dart';
+import 'package:trios/trios/toasts/toast_manager.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/vram_estimator/vram_estimator.dart';
 import 'package:trios/widgets/blur.dart';

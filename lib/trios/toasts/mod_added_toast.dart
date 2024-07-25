@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:palette_generator/palette_generator.dart';
 import 'package:toastification/toastification.dart';
-import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/app_state.dart';
@@ -14,12 +13,10 @@ import 'package:url_launcher/url_launcher_string.dart';
 import '../../utils/logging.dart';
 
 class ModAddedToast extends ConsumerStatefulWidget {
-  const ModAddedToast(this.modVariant, this.item, this.durationMillis,
-      {super.key});
+  const ModAddedToast(this.modVariant, this.item, {super.key});
 
   final ToastificationItem item;
   final ModVariant modVariant;
-  final int durationMillis;
 
   @override
   ConsumerState createState() => _ModAddedToastState();
@@ -27,23 +24,19 @@ class ModAddedToast extends ConsumerStatefulWidget {
 
 class _ModAddedToastState extends ConsumerState<ModAddedToast> {
   PaletteGenerator? palette;
-  int timeRemaining = 1;
 
   @override
   void initState() {
     super.initState();
-    _generatePalette();
-    timeRemaining = widget.durationMillis;
     // loop to update the time remaining every 5ms
     Future.doWhile(() async {
       await Future.delayed(const Duration(milliseconds: 5));
       if (mounted) {
-        setState(() {
-          timeRemaining -= 5;
-        });
+        setState(() {});
       }
-      return timeRemaining > 0;
+      return mounted;
     });
+    _generatePalette();
   }
 
   Future<void> _generatePalette() async {
@@ -65,12 +58,8 @@ class _ModAddedToastState extends ConsumerState<ModAddedToast> {
     final icon = widget.modVariant.iconFilePath.isNotNullOrEmpty()
         ? Image.file((widget.modVariant.iconFilePath ?? "").toFile())
         : null;
-
-    if (timeRemaining <= 0) {
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        toastification.dismiss(widget.item);
-      });
-    }
+    final timeElapsed = (widget.item.elapsedDuration?.inMilliseconds ?? 0);
+    final timeTotal = (widget.item.originalDuration?.inMilliseconds ?? 1);
 
     return Padding(
       padding: const EdgeInsets.only(top: 4, right: 32),
@@ -168,8 +157,11 @@ class _ModAddedToastState extends ConsumerState<ModAddedToast> {
                                                   "Cannot enable, mod not found for variant ${widget.modVariant.smolId}");
                                               return;
                                             }
-                                            await ref.read(AppState.modVariants.notifier).changeActiveModVariant(
-                                                mod, widget.modVariant);
+                                            await ref
+                                                .read(AppState
+                                                    .modVariants.notifier)
+                                                .changeActiveModVariant(
+                                                    mod, widget.modVariant);
                                             toastification.dismiss(widget.item);
                                           },
                                           icon: const SizedBox(
@@ -196,7 +188,7 @@ class _ModAddedToastState extends ConsumerState<ModAddedToast> {
                           width: 32,
                           height: 32,
                           child: CircularProgressIndicator(
-                            value: timeRemaining / widget.durationMillis,
+                            value: (timeTotal - timeElapsed) / timeTotal,
                             strokeWidth: 3,
                             valueColor: AlwaysStoppedAnimation<Color>(
                                 theme.colorScheme.onSurface),

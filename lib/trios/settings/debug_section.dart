@@ -114,12 +114,7 @@ class DebugSection extends ConsumerWidget {
                         variant.modInfo.id.equalsIgnoreCase("magiclib"));
                 toastification.showCustom(
                     context: context,
-                    builder: (context, item) => ModAddedToast(
-                        testMod,
-                        item,
-                        ref.watch(appSettings.select((value) =>
-                                value.secondsBetweenModFolderChecks)) *
-                            1000));
+                    builder: (context, item) => ModAddedToast(testMod, item));
               },
               child: const Text('Show Mod Added Toast for MagicLib')),
         ),

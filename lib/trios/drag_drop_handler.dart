@@ -92,7 +92,7 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
             if (uri == null) return null;
 
             ref.read(downloadManager.notifier).downloadAndInstallMod(
-                  "Downloading...",
+                  "Web link download",
                   uri.uri.toString(),
                   context,
                   activateVariantOnComplete: false,

@@ -380,10 +380,9 @@ class _Smol2State extends ConsumerState<Smol2> {
                                                       localVersionCheck,
                                                       remoteVersionCheck) ==
                                                   -1) {
-                                            downloadUpdateViaBrowser(
+                                            ref.read(downloadManager.notifier).downloadUpdateViaBrowser(
                                                 remoteVersionCheck!
                                                     .remoteVersion!,
-                                                ref,
                                                 context,
                                                 activateVariantOnComplete: true,
                                                 modInfo: bestVersion.modInfo);

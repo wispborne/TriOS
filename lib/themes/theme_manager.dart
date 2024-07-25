@@ -25,9 +25,10 @@ Color? getStateColorForDependencyText(
 }
 
 class ThemeManager with ChangeNotifier {
-  static double cornerRadius = 8;
+  static const double cornerRadius = 8;
   static Color vanillaErrorColor = const Color.fromARGB(255, 252, 99, 0);
   static Color vanillaWarningColor = const Color.fromARGB(255, 253, 212, 24);
+  static const String orbitron = "Orbitron";
 
   static TriOSTheme _theme = StarsectorTriOSTheme();
   static const bool _isMaterial3 = true;

@@ -437,13 +437,12 @@ class _ModListMiniState extends ConsumerState<ModListMini>
         final variant = mod.findHighestVersion!;
         final remoteVersionCheck = versionCheck?[variant.smolId];
         if (remoteVersionCheck?.remoteVersion != null) {
-          downloadUpdateViaBrowser(
-            remoteVersionCheck!.remoteVersion!,
-            ref,
-            context,
-            activateVariantOnComplete: true,
-            modInfo: variant.modInfo,
-          );
+          ref.read(downloadManager.notifier).downloadUpdateViaBrowser(
+                remoteVersionCheck!.remoteVersion!,
+                context,
+                activateVariantOnComplete: false,
+                modInfo: variant.modInfo,
+              );
         }
       }
     }

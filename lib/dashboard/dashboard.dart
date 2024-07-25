@@ -45,7 +45,7 @@ class _DashboardState extends ConsumerState<Dashboard>
               Expanded(
                 child: Card(
                   child: Padding(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: Column(
                       children: [
                         Padding(

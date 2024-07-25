@@ -55,8 +55,9 @@ class AddNewModsButton extends ConsumerWidget {
       if (value == null) return;
 
       for (final file in value.files) {
-        await installModFromArchiveWithDefaultUI(
-            File(file.path!), ref, context);
+        await ref
+            .read(modManager.notifier)
+            .installModFromArchiveWithDefaultUI(File(file.path!), context);
       }
     });
   }

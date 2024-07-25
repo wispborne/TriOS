@@ -664,8 +664,8 @@ class _Smol3State extends ConsumerState<Smol3>
                                     Align(
                                         alignment: Alignment.topRight,
                                         child: Padding(
-                                          padding:
-                                              const EdgeInsets.only(bottom: 4, top: 0),
+                                          padding: const EdgeInsets.only(
+                                              bottom: 4, top: 0),
                                           child: Row(
                                             mainAxisAlignment:
                                                 MainAxisAlignment.end,
@@ -734,12 +734,13 @@ class _Smol3State extends ConsumerState<Smol3>
                                           localVersionCheck,
                                           remoteVersionCheck) ==
                                       -1) {
-                                downloadUpdateViaBrowser(
-                                    remoteVersionCheck!.remoteVersion!,
-                                    ref,
-                                    context,
-                                    activateVariantOnComplete: true,
-                                    modInfo: bestVersion.modInfo);
+                                ref
+                                    .read(downloadManager.notifier)
+                                    .downloadUpdateViaBrowser(
+                                        remoteVersionCheck!.remoteVersion!,
+                                        context,
+                                        activateVariantOnComplete: false,
+                                        modInfo: bestVersion.modInfo);
                               } else {
                                 showDialog(
                                     context: context,

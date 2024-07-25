@@ -223,22 +223,23 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                       position: TooltipPosition.topLeft,
                       tooltipWidget:
                           ModListBasicEntry.buildVersionCheckTextReadout(
-                              changelogUrl,
-                              versionCheckComparison,
-                              localVersionCheck,
-                              remoteVersionCheck),
+                        changelogUrl,
+                        versionCheckComparison,
+                        localVersionCheck,
+                        remoteVersionCheck,
+                      ),
                       child: InkWell(
                         onTap: () {
                           if (remoteVersionCheck?.remoteVersion != null &&
                               compareLocalAndRemoteVersions(
                                       localVersionCheck, remoteVersionCheck) ==
                                   -1) {
-                            downloadUpdateViaBrowser(
-                                remoteVersionCheck!.remoteVersion!,
-                                ref,
-                                context,
-                                activateVariantOnComplete: true,
-                                modInfo: modInfo);
+                            ref
+                                .read(downloadManager.notifier)
+                                .downloadUpdateViaBrowser(
+                                    remoteVersionCheck!.remoteVersion!, context,
+                                    activateVariantOnComplete: false,
+                                    modInfo: modInfo);
                           } else {
                             showDialog(
                                 context: context,

@@ -81,50 +81,52 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
   FutureOr<List<Download>> build() {
     return _downloads;
   }
-}
 
-class Download {
-  final String id;
-  final String displayName;
-  final DownloadTask task;
-
-  Download(this.id, this.displayName, this.task);
-}
-
-class ModDownload extends Download {
-  final ModInfo modInfo;
-
-  ModDownload(super.id, super.displayName, super.task, this.modInfo);
-}
-
-downloadUpdateViaBrowser(
-    VersionCheckerInfo remoteVersion, WidgetRef ref, BuildContext context,
-    {required bool activateVariantOnComplete, ModInfo? modInfo}) {
-  if (remoteVersion.directDownloadURL != null) {
-    // ref
-    //     .read(downloadManager.notifier)
-    //     .addDownload(remoteVersion!.directDownloadURL!, Directory.systemTemp);
-    // launchUrl(Uri.parse(remoteVersion.directDownloadURL!));
-    var tempFolder = Directory.systemTemp.createTempSync();
-    ref
-        .read(downloadManager.notifier)
-        .addDownload(
+  downloadUpdateViaBrowser(
+      VersionCheckerInfo remoteVersion, BuildContext context,
+      {required bool activateVariantOnComplete, ModInfo? modInfo}) {
+    if (remoteVersion.directDownloadURL != null) {
+      downloadAndInstallMod(
           "${remoteVersion.modName ?? "(no name"} ${remoteVersion.modVersion}",
           remoteVersion.directDownloadURL!.fixModDownloadUrl(),
-          tempFolder,
-          modInfo: modInfo,
-        )
-        .then((value) {
+          context,
+          activateVariantOnComplete: activateVariantOnComplete);
+    } else if (remoteVersion.modThreadId != null) {
+      launchUrl(Uri.parse(
+          "${Constants.forumModPageUrl}${remoteVersion.modThreadId}"));
+    } else if (remoteVersion.modNexusId != null) {
+      launchUrl(Uri.parse(
+          "${Constants.nexusModsPageUrl}${remoteVersion.modNexusId}"));
+    }
+  }
+
+  void downloadAndInstallMod(
+    String displayName,
+    String uri,
+    BuildContext context, {
+    required bool activateVariantOnComplete,
+    ModInfo? modInfo,
+  }) {
+    var tempFolder = Directory.systemTemp.createTempSync();
+
+    addDownload(
+      displayName,
+      uri,
+      tempFolder,
+      modInfo: modInfo,
+    ).then((value) {
       value?.task.whenDownloadComplete().then((status) {
         if (status == DownloadStatus.completed) {
           Fimber.d(
               "Downloaded ${value.task.request.url} to ${tempFolder.path}. Installing...");
           try {
-            installModFromArchiveWithDefaultUI(
-              tempFolder.listSync().first.toFile(),
-              ref,
-              context,
-            ).then((installedVariants) {
+            ref
+                .read(modManager.notifier)
+                .installModFromArchiveWithDefaultUI(
+                  tempFolder.listSync().first.toFile(),
+                  context,
+                )
+                .then((installedVariants) {
               if (activateVariantOnComplete) {
                 final variants =
                     ref.read(AppState.modVariants).valueOrNull ?? [];
@@ -134,14 +136,14 @@ downloadUpdateViaBrowser(
                   final actualVariant = variants.firstWhereOrNull(
                       (variant) => variant.smolId == installed.modInfo.smolId);
                   // try {
-                    // If the mod existed and was enabled, switch to the newly downloaded version.
-                    // Edit: changed my mind, see https://github.com/wispborne/TriOS/issues/28
+                  // If the mod existed and was enabled, switch to the newly downloaded version.
+                  // Edit: changed my mind, see https://github.com/wispborne/TriOS/issues/28
 
-                    // if (actualVariant != null &&
-                    //     actualVariant.mod(mods)?.isEnabledInGame == true) {
-                    //   changeActiveModVariant(
-                    //       actualVariant.mod(mods)!, actualVariant, ref);
-                    // }
+                  // if (actualVariant != null &&
+                  //     actualVariant.mod(mods)?.isEnabledInGame == true) {
+                  //   changeActiveModVariant(
+                  //       actualVariant.mod(mods)!, actualVariant, ref);
+                  // }
                   // } catch (ex) {
                   //   Fimber.w(
                   //       "Failed to activate mod ${installed.modInfo.smolId} after updating: $ex");
@@ -157,11 +159,19 @@ downloadUpdateViaBrowser(
         }
       });
     });
-  } else if (remoteVersion.modThreadId != null) {
-    launchUrl(
-        Uri.parse("${Constants.forumModPageUrl}${remoteVersion.modThreadId}"));
-  } else if (remoteVersion.modNexusId != null) {
-    launchUrl(
-        Uri.parse("${Constants.nexusModsPageUrl}${remoteVersion.modNexusId}"));
   }
+}
+
+class Download {
+  final String id;
+  final String displayName;
+  final DownloadTask task;
+
+  Download(this.id, this.displayName, this.task);
+}
+
+class ModDownload extends Download {
+  final ModInfo modInfo;
+
+  ModDownload(super.id, super.displayName, super.task, this.modInfo);
 }

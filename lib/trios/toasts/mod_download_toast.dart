@@ -147,16 +147,6 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // Text(
-                                //   switch (status) {
-                                //     DownloadStatus.queued => "Queued",
-                                //     DownloadStatus.downloading => "Downloading",
-                                //     DownloadStatus.completed => "Downloaded",
-                                //     DownloadStatus.failed => "Download failed",
-                                //     _ => "Download\n${status.name}"
-                                //   },
-                                //   style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 18),
-                                // ),
                                 Text(
                                   modString ?? "",
                                   style: theme.textTheme.bodyMedium,

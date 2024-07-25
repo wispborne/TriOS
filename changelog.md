@@ -1,3 +1,7 @@
+# 0.1.4
+- Added
+  - Drag'n'drop now supports urls. Drag a url from your browser and it'll download and install the mod.
+
 # 0.1.3
 - Fixed
   - Internal error when switching from JRE 23 to any other.

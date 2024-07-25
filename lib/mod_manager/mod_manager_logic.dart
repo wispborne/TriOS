@@ -28,6 +28,142 @@ import '../trios/settings/settings.dart';
 
 // TODO move all this into a class lol
 
+final modManager =
+    AsyncNotifierProvider<ModManagerNotifier, void>(ModManagerNotifier.new);
+
+class ModManagerNotifier extends AsyncNotifier<void> {
+  @override
+  FutureOr<void> build() {
+    return null;
+  }
+
+  Future<List<InstallModResult>> installModFromArchiveWithDefaultUI(
+    File archiveFile,
+    BuildContext context,
+  ) async {
+    try {
+      final installModsResult = await installModFromArchive(
+          archiveFile,
+          generateModFolderPath(ref.read(appSettings).gameDir!)!,
+          ref.read(AppState.mods),
+          (modsBeingInstalled) => showDialog<List<String>>(
+              context: context,
+              builder: (context) {
+                // Start by selecting to install variants that are not already installed.
+                final smolIdsToInstall = modsBeingInstalled
+                    .where((it) => it.alreadyExistingVariant == null)
+                    .map((it) => it.modInfo.modInfo.smolId)
+                    .toList();
+                return StatefulBuilder(builder: (context, setState) {
+                  return AlertDialog(
+                    title: const Text("Install mods"),
+                    content: ConstrainedBox(
+                      constraints: const BoxConstraints(minWidth: 400),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: modsBeingInstalled
+                            .map((it) => Builder(builder: (context) {
+                                  final isSelected = smolIdsToInstall
+                                      .contains(it.modInfo.modInfo.smolId);
+                                  return CheckboxListTile(
+                                    title: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                            "${it.modInfo.modInfo.name} ${it.modInfo.modInfo.version}"),
+                                        Text(
+                                            it.modInfo.modInfo.description
+                                                    ?.takeWhile(
+                                                        (it) => it != "\n")
+                                                    .take(50) ??
+                                                "",
+                                            style:
+                                                const TextStyle(fontSize: 12)),
+                                        it.alreadyExistingVariant != null
+                                            ? Text(
+                                                isSelected
+                                                    ? "(existing mod will be replaced)"
+                                                    : "(already exists)",
+                                                style: TextStyle(
+                                                    color: ThemeManager
+                                                        .vanillaWarningColor,
+                                                    fontSize: 12),
+                                              )
+                                            : const SizedBox(),
+                                      ],
+                                    ),
+                                    value: isSelected,
+                                    onChanged: (value) {
+                                      if (value == false) {
+                                        setState(() {
+                                          smolIdsToInstall.remove(
+                                              it.modInfo.modInfo.smolId);
+                                        });
+                                      } else {
+                                        setState(() {
+                                          smolIdsToInstall
+                                              .add(it.modInfo.modInfo.smolId);
+                                        });
+                                      }
+                                    },
+                                  );
+                                }))
+                            .toList(),
+                      ),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pop(<String>[]);
+                        },
+                        child: const Text("Cancel"),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pop(smolIdsToInstall);
+                        },
+                        child: const Text("Install"),
+                      ),
+                    ],
+                  );
+                });
+              }));
+
+      if (installModsResult.isEmpty) {
+        return [];
+      }
+      ref.invalidate(AppState.modVariants);
+      showSnackBar(
+          context: context,
+          content: Text(installModsResult.length == 1
+              ? "Installed: ${installModsResult.first.modInfo.name} ${installModsResult.first.modInfo.version}"
+              : "Installed ${installModsResult.length} mods (${installModsResult.map((it) => "${it.modInfo.name} ${it.modInfo.version}").join(", ")})"));
+
+      final errors = installModsResult.where((it) => it.err != null).toList();
+      if (errors.isNotEmpty) {
+        showAlertDialog(
+          context,
+          title: "Error",
+          content:
+              "One or more mods could not be extracted. Check the logs for more information.\n${errors.map((it) => "${it.modInfo.name} ${it.modInfo.version}\n${it.err}").toList()}",
+        );
+      }
+
+      return installModsResult;
+    } catch (e, st) {
+      Fimber.w("Error installing mod from archive: $e", ex: e, stacktrace: st);
+      if (!context.mounted) return [];
+      showAlertDialog(
+        context,
+        title: "Error installing mod",
+        content: "$e",
+      );
+      return [];
+    }
+  }
+}
+
 Future<List<ModVariant>> getModsVariantsInFolder(Directory modsFolder) async {
   var mods = <ModVariant?>[];
 
@@ -622,132 +758,6 @@ ModVariant? getModVariantForModInfo(
     ModInfo modInfo, List<ModVariant> modVariants) {
   return modVariants
       .firstWhereOrNull((it) => it.modInfo.smolId == modInfo.smolId);
-}
-
-Future<List<InstallModResult>> installModFromArchiveWithDefaultUI(
-  File archiveFile,
-  WidgetRef ref,
-  BuildContext context,
-) async {
-  try {
-    final installModsResult = await installModFromArchive(
-        archiveFile,
-        generateModFolderPath(ref.read(appSettings).gameDir!)!,
-        ref.read(AppState.mods),
-        (modsBeingInstalled) => showDialog<List<String>>(
-            context: context,
-            builder: (context) {
-              // Start by selecting to install variants that are not already installed.
-              final smolIdsToInstall = modsBeingInstalled
-                  .where((it) => it.alreadyExistingVariant == null)
-                  .map((it) => it.modInfo.modInfo.smolId)
-                  .toList();
-              return StatefulBuilder(builder: (context, setState) {
-                return AlertDialog(
-                  title: const Text("Install mods"),
-                  content: ConstrainedBox(
-                    constraints: const BoxConstraints(minWidth: 400),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: modsBeingInstalled
-                          .map((it) => Builder(builder: (context) {
-                                final isSelected = smolIdsToInstall
-                                    .contains(it.modInfo.modInfo.smolId);
-                                return CheckboxListTile(
-                                  title: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                          "${it.modInfo.modInfo.name} ${it.modInfo.modInfo.version}"),
-                                      Text(
-                                          it.modInfo.modInfo.description
-                                                  ?.takeWhile(
-                                                      (it) => it != "\n")
-                                                  .take(50) ??
-                                              "",
-                                          style: const TextStyle(fontSize: 12)),
-                                      it.alreadyExistingVariant != null
-                                          ? Text(
-                                              isSelected
-                                                  ? "(existing mod will be replaced)"
-                                                  : "(already exists)",
-                                              style: TextStyle(
-                                                  color: ThemeManager
-                                                      .vanillaWarningColor,
-                                                  fontSize: 12),
-                                            )
-                                          : const SizedBox(),
-                                    ],
-                                  ),
-                                  value: isSelected,
-                                  onChanged: (value) {
-                                    if (value == false) {
-                                      setState(() {
-                                        smolIdsToInstall
-                                            .remove(it.modInfo.modInfo.smolId);
-                                      });
-                                    } else {
-                                      setState(() {
-                                        smolIdsToInstall
-                                            .add(it.modInfo.modInfo.smolId);
-                                      });
-                                    }
-                                  },
-                                );
-                              }))
-                          .toList(),
-                    ),
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pop(<String>[]);
-                      },
-                      child: const Text("Cancel"),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pop(smolIdsToInstall);
-                      },
-                      child: const Text("Install"),
-                    ),
-                  ],
-                );
-              });
-            }));
-
-    if (installModsResult.isEmpty) {
-      return [];
-    }
-    ref.invalidate(AppState.modVariants);
-    showSnackBar(
-        context: context,
-        content: Text(installModsResult.length == 1
-            ? "Installed: ${installModsResult.first.modInfo.name} ${installModsResult.first.modInfo.version}"
-            : "Installed ${installModsResult.length} mods (${installModsResult.map((it) => "${it.modInfo.name} ${it.modInfo.version}").join(", ")})"));
-
-    final errors = installModsResult.where((it) => it.err != null).toList();
-    if (errors.isNotEmpty) {
-      showAlertDialog(
-        context,
-        title: "Error",
-        content:
-            "One or more mods could not be extracted. Check the logs for more information.\n${errors.map((it) => "${it.modInfo.name} ${it.modInfo.version}\n${it.err}").toList()}",
-      );
-    }
-
-    return installModsResult;
-  } catch (e, st) {
-    Fimber.w("Error installing mod from archive: $e", ex: e, stacktrace: st);
-    if (!context.mounted) return [];
-    showAlertDialog(
-      context,
-      title: "Error installing mod",
-      content: "$e",
-    );
-    return [];
-  }
 }
 
 extension ModInfoExt on ModInfo {

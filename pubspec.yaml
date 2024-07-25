@@ -68,6 +68,7 @@ dependencies:
   toastification: ^2.0.0
   flutter_color: ^2.1.0
   desktop_drop: ^0.4.4
+  super_drag_and_drop: ^0.8.17
   platform_info: ^4.0.2
   cross_file: ^0.3.4+1
   file_picker: ^8.0.2
@@ -97,6 +98,7 @@ dependencies:
   palette_generator: ^0.3.3+3
   sentry_flutter: ^8.3.0 # Analytics
   crypto: ^3.0.3
+  path_drawing: ^1.0.1
 #  flutter_hooks: ^0.20.5
 #  hooks_riverpod: ^2.5.1
 #  data_table_2: ^2.5.12

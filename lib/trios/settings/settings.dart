@@ -12,7 +12,6 @@ import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/util.dart';
 
 import '../../mod_manager/mods_grid_state.dart';
-import '../../mod_profiles/models/mod_profile.dart';
 import '../../models/launch_settings.dart';
 import '../app_state.dart';
 
@@ -73,8 +72,8 @@ class Settings with _$Settings {
     final bool? allowCrashReporting,
     @Default("") final String userId,
 
-    // Mod profiles
-    @Default([]) final List<ModProfile> modProfiles,
+    // Mod profiles are stored in [ModProfilesSettings] and [ModProfileManagerNotifier],
+    // in a different shared_prefs key.
     final String? activeModProfileId,
   }) = _Settings;
 

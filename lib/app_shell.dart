@@ -31,6 +31,7 @@ import 'jre_manager/jre_manager.dart';
 import 'launcher/launcher.dart';
 import 'main.dart';
 import 'mod_manager/smol3.dart';
+import 'mod_profiles/mod_profiles_page.dart';
 import 'trios/app_state.dart';
 import 'trios/drag_drop_handler.dart';
 
@@ -50,11 +51,12 @@ class _AppShellState extends ConsumerState<AppShell>
   final tabToolMap = {
     0: TriOSTools.dashboard,
     1: TriOSTools.modManager,
-    2: TriOSTools.vramEstimator,
-    3: TriOSTools.chipper,
-    4: TriOSTools.jreManager,
-    5: TriOSTools.portraits,
-    6: TriOSTools.settings,
+    2: TriOSTools.modProfiles,
+    3: TriOSTools.vramEstimator,
+    4: TriOSTools.chipper,
+    5: TriOSTools.jreManager,
+    6: TriOSTools.portraits,
+    7: TriOSTools.settings,
   };
 
   @override
@@ -178,6 +180,7 @@ class _AppShellState extends ConsumerState<AppShell>
         child: Dashboard(),
       ),
       const Smol3(),
+      const Padding(padding: EdgeInsets.all(8), child: ModProfilePage()),
       const Padding(padding: EdgeInsets.all(8), child: VramEstimatorPage()),
       const Padding(padding: EdgeInsets.all(8), child: ChipperApp()),
       Platform.isWindows
@@ -269,6 +272,17 @@ class _AppShellState extends ConsumerState<AppShell>
                                   message: "Mods",
                                   child: Transform.rotate(
                                       angle: 0.7,
+                                      child: const SvgImageIcon(
+                                        "assets/images/icon-onslaught.svg",
+                                        height: 23,
+                                      )),
+                                )),
+                            Tab(
+                                text: "Profiles",
+                                icon: Tooltip(
+                                  message: "Mod Profiles",
+                                  child: Transform.rotate(
+                                      angle: -0.7,
                                       child: const SvgImageIcon(
                                         "assets/images/icon-onslaught.svg",
                                         height: 23,

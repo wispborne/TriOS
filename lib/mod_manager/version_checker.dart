@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:collection/collection.dart';
@@ -27,6 +28,24 @@ class VersionCheckerNotifier
   /// Actual source of truth for the state, persists between rebuilds.
   final Map<String, VersionCheckResult> _versionCheckResultsCache = {};
   final cacheLock = Mutex();
+
+  Timer? _writeDebounceTimer;
+  final Duration _writeCooldown = Duration(seconds: 5);
+  Completer<void>? _pendingWriteCompleter;
+
+  Future<void> _debounceWriteToCacheFile() async {
+    if (_writeDebounceTimer?.isActive ?? false) {
+      _writeDebounceTimer?.cancel();
+    }
+    _writeDebounceTimer = Timer(_writeCooldown, () async {
+      if (_pendingWriteCompleter != null) {
+        await _pendingWriteCompleter!.future;
+      }
+      await cacheLock.protect(() async {
+        await writeToCacheFile(_versionCheckResultsCache);
+      });
+    });
+  }
 
   // Executes async, updates state every time a Version Check http request is completed.
   Future<void> refresh({required bool skipCache}) async {
@@ -86,7 +105,7 @@ class VersionCheckerNotifier
       }
 
       future.then((result) async {
-        Fimber.d("Caching remote version info for ${mod.modInfo.id}: $result");
+        Fimber.v("Caching remote version info for ${mod.modInfo.id}: $result");
         await cacheLock.protect(() async {
           _versionCheckResultsCache[mod.smolId] = result;
           state = AsyncValue.data(_versionCheckResultsCache);
@@ -99,10 +118,7 @@ class VersionCheckerNotifier
           state = AsyncValue.data(_versionCheckResultsCache);
         });
       }).whenComplete(() async {
-        // Save the cache to disk after every check.
-        await cacheLock.protect(() async {
-          writeToCacheFile(_versionCheckResultsCache);
-        });
+        await _debounceWriteToCacheFile();
       });
     }
   }
@@ -121,7 +137,8 @@ class VersionCheckerNotifier
       await config.setConfig(versionCheckResultsBySmolId.map((key, value) {
         return MapEntry(key, value.toJson());
       }));
-      Fimber.i("Saved config to ${config.file}: ${versionCheckResultsBySmolId.length} entries.");
+      Fimber.i(
+          "Saved config to ${config.file}: ${versionCheckResultsBySmolId.length} entries.");
     } catch (e, st) {
       Fimber.w("Error saving version checker cache.", ex: e, stacktrace: st);
     }
@@ -231,28 +248,6 @@ final _githubFilePageRegex = RegExp(
 final _dropboxDlPageRegex = RegExp(
     """https://www.dropbox.com/s/.+/.+.version?dl=0""",
     caseSensitive: false);
-
-//     private fun fixUrl(urlString: String): String {
-//         return when {
-//             urlString.matches(githubFilePageRegex) -> {
-//                 urlString
-//                     .replace("github.com", "raw.githubusercontent.com", ignoreCase = true)
-//                     .replace("blob/", "", ignoreCase = true)
-//             }
-//
-//             urlString.matches(dropboxDlPageRegex) -> {
-//                 urlString
-//                     .replace("dl=0", "dl=1", ignoreCase = true)
-//             }
-//
-//             else -> urlString
-//         }
-//             .also {
-//                 if (urlString != it) {
-//                     Timber.i { "Fixed Version Checker url from '$urlString' to '$it'." }
-//                 }
-//             }
-//     }
 
 String fixUrl(String urlString) {
   if (_githubFilePageRegex.hasMatch(urlString)) {

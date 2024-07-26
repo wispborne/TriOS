@@ -14,6 +14,151 @@ T _$identity<T>(T value) => value;
 final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
+ModProfiles _$ModProfilesFromJson(Map<String, dynamic> json) {
+  return _ModProfiles.fromJson(json);
+}
+
+/// @nodoc
+mixin _$ModProfiles {
+  List<ModProfile> get modProfiles => throw _privateConstructorUsedError;
+
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+  @JsonKey(ignore: true)
+  $ModProfilesCopyWith<ModProfiles> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $ModProfilesCopyWith<$Res> {
+  factory $ModProfilesCopyWith(
+          ModProfiles value, $Res Function(ModProfiles) then) =
+      _$ModProfilesCopyWithImpl<$Res, ModProfiles>;
+  @useResult
+  $Res call({List<ModProfile> modProfiles});
+}
+
+/// @nodoc
+class _$ModProfilesCopyWithImpl<$Res, $Val extends ModProfiles>
+    implements $ModProfilesCopyWith<$Res> {
+  _$ModProfilesCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? modProfiles = null,
+  }) {
+    return _then(_value.copyWith(
+      modProfiles: null == modProfiles
+          ? _value.modProfiles
+          : modProfiles // ignore: cast_nullable_to_non_nullable
+              as List<ModProfile>,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$ModProfilesImplCopyWith<$Res>
+    implements $ModProfilesCopyWith<$Res> {
+  factory _$$ModProfilesImplCopyWith(
+          _$ModProfilesImpl value, $Res Function(_$ModProfilesImpl) then) =
+      __$$ModProfilesImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({List<ModProfile> modProfiles});
+}
+
+/// @nodoc
+class __$$ModProfilesImplCopyWithImpl<$Res>
+    extends _$ModProfilesCopyWithImpl<$Res, _$ModProfilesImpl>
+    implements _$$ModProfilesImplCopyWith<$Res> {
+  __$$ModProfilesImplCopyWithImpl(
+      _$ModProfilesImpl _value, $Res Function(_$ModProfilesImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? modProfiles = null,
+  }) {
+    return _then(_$ModProfilesImpl(
+      modProfiles: null == modProfiles
+          ? _value._modProfiles
+          : modProfiles // ignore: cast_nullable_to_non_nullable
+              as List<ModProfile>,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$ModProfilesImpl implements _ModProfiles {
+  const _$ModProfilesImpl({required final List<ModProfile> modProfiles})
+      : _modProfiles = modProfiles;
+
+  factory _$ModProfilesImpl.fromJson(Map<String, dynamic> json) =>
+      _$$ModProfilesImplFromJson(json);
+
+  final List<ModProfile> _modProfiles;
+  @override
+  List<ModProfile> get modProfiles {
+    if (_modProfiles is EqualUnmodifiableListView) return _modProfiles;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_modProfiles);
+  }
+
+  @override
+  String toString() {
+    return 'ModProfiles(modProfiles: $modProfiles)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$ModProfilesImpl &&
+            const DeepCollectionEquality()
+                .equals(other._modProfiles, _modProfiles));
+  }
+
+  @JsonKey(ignore: true)
+  @override
+  int get hashCode => Object.hash(
+      runtimeType, const DeepCollectionEquality().hash(_modProfiles));
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$ModProfilesImplCopyWith<_$ModProfilesImpl> get copyWith =>
+      __$$ModProfilesImplCopyWithImpl<_$ModProfilesImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$ModProfilesImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _ModProfiles implements ModProfiles {
+  const factory _ModProfiles({required final List<ModProfile> modProfiles}) =
+      _$ModProfilesImpl;
+
+  factory _ModProfiles.fromJson(Map<String, dynamic> json) =
+      _$ModProfilesImpl.fromJson;
+
+  @override
+  List<ModProfile> get modProfiles;
+  @override
+  @JsonKey(ignore: true)
+  _$$ModProfilesImplCopyWith<_$ModProfilesImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
 ShallowModVariant _$ShallowModVariantFromJson(Map<String, dynamic> json) {
   return _ShallowModVariant.fromJson(json);
 }

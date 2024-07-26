@@ -49,8 +49,9 @@ mixin _$Settings {
   bool get isUpdatesFieldShown => throw _privateConstructorUsedError;
   ModsGridState? get modsGridState => throw _privateConstructorUsedError;
   bool? get allowCrashReporting => throw _privateConstructorUsedError;
-  String get userId => throw _privateConstructorUsedError; // Mod profiles
-  List<ModProfile> get modProfiles => throw _privateConstructorUsedError;
+  String get userId =>
+      throw _privateConstructorUsedError; // Mod profiles are stored in [ModProfilesSettings] and [ModProfileManagerNotifier],
+// in a different shared_prefs key.
   String? get activeModProfileId => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -90,7 +91,6 @@ abstract class $SettingsCopyWith<$Res> {
       ModsGridState? modsGridState,
       bool? allowCrashReporting,
       String userId,
-      List<ModProfile> modProfiles,
       String? activeModProfileId});
 
   $LaunchSettingsCopyWith<$Res> get launchSettings;
@@ -135,7 +135,6 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
     Object? modsGridState = freezed,
     Object? allowCrashReporting = freezed,
     Object? userId = null,
-    Object? modProfiles = null,
     Object? activeModProfileId = freezed,
   }) {
     return _then(_value.copyWith(
@@ -239,10 +238,6 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
           ? _value.userId
           : userId // ignore: cast_nullable_to_non_nullable
               as String,
-      modProfiles: null == modProfiles
-          ? _value.modProfiles
-          : modProfiles // ignore: cast_nullable_to_non_nullable
-              as List<ModProfile>,
       activeModProfileId: freezed == activeModProfileId
           ? _value.activeModProfileId
           : activeModProfileId // ignore: cast_nullable_to_non_nullable
@@ -305,7 +300,6 @@ abstract class _$$SettingsImplCopyWith<$Res>
       ModsGridState? modsGridState,
       bool? allowCrashReporting,
       String userId,
-      List<ModProfile> modProfiles,
       String? activeModProfileId});
 
   @override
@@ -350,7 +344,6 @@ class __$$SettingsImplCopyWithImpl<$Res>
     Object? modsGridState = freezed,
     Object? allowCrashReporting = freezed,
     Object? userId = null,
-    Object? modProfiles = null,
     Object? activeModProfileId = freezed,
   }) {
     return _then(_$SettingsImpl(
@@ -454,10 +447,6 @@ class __$$SettingsImplCopyWithImpl<$Res>
           ? _value.userId
           : userId // ignore: cast_nullable_to_non_nullable
               as String,
-      modProfiles: null == modProfiles
-          ? _value._modProfiles
-          : modProfiles // ignore: cast_nullable_to_non_nullable
-              as List<ModProfile>,
       activeModProfileId: freezed == activeModProfileId
           ? _value.activeModProfileId
           : activeModProfileId // ignore: cast_nullable_to_non_nullable
@@ -495,9 +484,7 @@ class _$SettingsImpl implements _Settings {
       this.modsGridState,
       this.allowCrashReporting,
       this.userId = "",
-      final List<ModProfile> modProfiles = const [],
-      this.activeModProfileId})
-      : _modProfiles = modProfiles;
+      this.activeModProfileId});
 
   factory _$SettingsImpl.fromJson(Map<String, dynamic> json) =>
       _$$SettingsImplFromJson(json);
@@ -567,23 +554,14 @@ class _$SettingsImpl implements _Settings {
   @override
   @JsonKey()
   final String userId;
-// Mod profiles
-  final List<ModProfile> _modProfiles;
-// Mod profiles
-  @override
-  @JsonKey()
-  List<ModProfile> get modProfiles {
-    if (_modProfiles is EqualUnmodifiableListView) return _modProfiles;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_modProfiles);
-  }
-
+// Mod profiles are stored in [ModProfilesSettings] and [ModProfileManagerNotifier],
+// in a different shared_prefs key.
   @override
   final String? activeModProfileId;
 
   @override
   String toString() {
-    return 'Settings(gameDir: $gameDir, gameCoreDir: $gameCoreDir, modsDir: $modsDir, hasCustomModsDir: $hasCustomModsDir, shouldAutoUpdateOnLaunch: $shouldAutoUpdateOnLaunch, isRulesHotReloadEnabled: $isRulesHotReloadEnabled, windowXPos: $windowXPos, windowYPos: $windowYPos, windowWidth: $windowWidth, windowHeight: $windowHeight, isMaximized: $isMaximized, isMinimized: $isMinimized, defaultTool: $defaultTool, jre23VmparamsFilename: $jre23VmparamsFilename, useJre23: $useJre23, showJre23ConsoleWindow: $showJre23ConsoleWindow, enableDirectLaunch: $enableDirectLaunch, launchSettings: $launchSettings, lastStarsectorVersion: $lastStarsectorVersion, secondsBetweenModFolderChecks: $secondsBetweenModFolderChecks, toastDurationSeconds: $toastDurationSeconds, isUpdatesFieldShown: $isUpdatesFieldShown, modsGridState: $modsGridState, allowCrashReporting: $allowCrashReporting, userId: $userId, modProfiles: $modProfiles, activeModProfileId: $activeModProfileId)';
+    return 'Settings(gameDir: $gameDir, gameCoreDir: $gameCoreDir, modsDir: $modsDir, hasCustomModsDir: $hasCustomModsDir, shouldAutoUpdateOnLaunch: $shouldAutoUpdateOnLaunch, isRulesHotReloadEnabled: $isRulesHotReloadEnabled, windowXPos: $windowXPos, windowYPos: $windowYPos, windowWidth: $windowWidth, windowHeight: $windowHeight, isMaximized: $isMaximized, isMinimized: $isMinimized, defaultTool: $defaultTool, jre23VmparamsFilename: $jre23VmparamsFilename, useJre23: $useJre23, showJre23ConsoleWindow: $showJre23ConsoleWindow, enableDirectLaunch: $enableDirectLaunch, launchSettings: $launchSettings, lastStarsectorVersion: $lastStarsectorVersion, secondsBetweenModFolderChecks: $secondsBetweenModFolderChecks, toastDurationSeconds: $toastDurationSeconds, isUpdatesFieldShown: $isUpdatesFieldShown, modsGridState: $modsGridState, allowCrashReporting: $allowCrashReporting, userId: $userId, activeModProfileId: $activeModProfileId)';
   }
 
   @override
@@ -597,7 +575,8 @@ class _$SettingsImpl implements _Settings {
             (identical(other.modsDir, modsDir) || other.modsDir == modsDir) &&
             (identical(other.hasCustomModsDir, hasCustomModsDir) ||
                 other.hasCustomModsDir == hasCustomModsDir) &&
-            (identical(other.shouldAutoUpdateOnLaunch, shouldAutoUpdateOnLaunch) ||
+            (identical(
+                    other.shouldAutoUpdateOnLaunch, shouldAutoUpdateOnLaunch) ||
                 other.shouldAutoUpdateOnLaunch == shouldAutoUpdateOnLaunch) &&
             (identical(other.isRulesHotReloadEnabled, isRulesHotReloadEnabled) ||
                 other.isRulesHotReloadEnabled == isRulesHotReloadEnabled) &&
@@ -639,8 +618,6 @@ class _$SettingsImpl implements _Settings {
             (identical(other.allowCrashReporting, allowCrashReporting) ||
                 other.allowCrashReporting == allowCrashReporting) &&
             (identical(other.userId, userId) || other.userId == userId) &&
-            const DeepCollectionEquality()
-                .equals(other._modProfiles, _modProfiles) &&
             (identical(other.activeModProfileId, activeModProfileId) ||
                 other.activeModProfileId == activeModProfileId));
   }
@@ -674,7 +651,6 @@ class _$SettingsImpl implements _Settings {
         modsGridState,
         allowCrashReporting,
         userId,
-        const DeepCollectionEquality().hash(_modProfiles),
         activeModProfileId
       ]);
 
@@ -719,7 +695,6 @@ abstract class _Settings implements Settings {
       final ModsGridState? modsGridState,
       final bool? allowCrashReporting,
       final String userId,
-      final List<ModProfile> modProfiles,
       final String? activeModProfileId}) = _$SettingsImpl;
 
   factory _Settings.fromJson(Map<String, dynamic> json) =
@@ -780,9 +755,8 @@ abstract class _Settings implements Settings {
   bool? get allowCrashReporting;
   @override
   String get userId;
-  @override // Mod profiles
-  List<ModProfile> get modProfiles;
-  @override
+  @override // Mod profiles are stored in [ModProfilesSettings] and [ModProfileManagerNotifier],
+// in a different shared_prefs key.
   String? get activeModProfileId;
   @override
   @JsonKey(ignore: true)

@@ -47,10 +47,6 @@ _$SettingsImpl _$$SettingsImplFromJson(Map<String, dynamic> json) =>
               json['modsGridState'] as Map<String, dynamic>),
       allowCrashReporting: json['allowCrashReporting'] as bool?,
       userId: json['userId'] as String? ?? "",
-      modProfiles: (json['modProfiles'] as List<dynamic>?)
-              ?.map((e) => ModProfile.fromJson(e as Map<String, dynamic>))
-              .toList() ??
-          const [],
       activeModProfileId: json['activeModProfileId'] as String?,
     );
 
@@ -82,13 +78,13 @@ Map<String, dynamic> _$$SettingsImplToJson(_$SettingsImpl instance) =>
       'modsGridState': instance.modsGridState,
       'allowCrashReporting': instance.allowCrashReporting,
       'userId': instance.userId,
-      'modProfiles': instance.modProfiles,
       'activeModProfileId': instance.activeModProfileId,
     };
 
 const _$TriOSToolsEnumMap = {
   TriOSTools.dashboard: 'dashboard',
   TriOSTools.modManager: 'modManager',
+  TriOSTools.modProfiles: 'modProfiles',
   TriOSTools.vramEstimator: 'vramEstimator',
   TriOSTools.chipper: 'chipper',
   TriOSTools.jreManager: 'jreManager',

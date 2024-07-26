@@ -57,7 +57,7 @@ class AppState {
 
   /// Projection of [modVariants], grouping them by mod id.
   static final mods = Provider<List<Mod>>((ref) {
-    Fimber.d("Recalculating mods from variants.");
+    // Fimber.d("Recalculating mods from variants.");
     final modVariants = ref.watch(AppState.modVariants).value ?? [];
     final enabledMods =
         ref.watch(AppState.enabledModIds).value.orEmpty().toList();

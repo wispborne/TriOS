@@ -6,6 +6,18 @@ part of '../../../mod_profiles/models/mod_profile.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
+_$ModProfilesImpl _$$ModProfilesImplFromJson(Map<String, dynamic> json) =>
+    _$ModProfilesImpl(
+      modProfiles: (json['modProfiles'] as List<dynamic>)
+          .map((e) => ModProfile.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+
+Map<String, dynamic> _$$ModProfilesImplToJson(_$ModProfilesImpl instance) =>
+    <String, dynamic>{
+      'modProfiles': instance.modProfiles,
+    };
+
 _$ShallowModVariantImpl _$$ShallowModVariantImplFromJson(
         Map<String, dynamic> json) =>
     _$ShallowModVariantImpl(

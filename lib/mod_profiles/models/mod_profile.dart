@@ -8,6 +8,16 @@ part '../../generated/mod_profiles/models/mod_profile.freezed.dart';
 part '../../generated/mod_profiles/models/mod_profile.g.dart';
 
 @freezed
+class ModProfiles with _$ModProfiles {
+  const factory ModProfiles({
+    required List<ModProfile> modProfiles,
+  }) = _ModProfiles;
+
+  factory ModProfiles.fromJson(Map<String, dynamic> json) =>
+      _$ModProfilesFromJson(json);
+}
+
+@freezed
 class ShallowModVariant with _$ShallowModVariant {
   const factory ShallowModVariant({
     required String modId,

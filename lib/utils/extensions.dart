@@ -476,6 +476,7 @@ extension IterableExt<T> on Iterable<T> {
   }
 
   Iterable<T>? nullIfEmpty() => isEmpty ? null : this;
+  Iterable<T> ifEmpty(Iterable<T> Function() block) => isEmpty ? block() : this;
 
   /// Filters the iterable based on the given predicate.
   /// If the filtered result is empty, returns the original iterable.

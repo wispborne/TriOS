@@ -70,15 +70,15 @@ class ModProfileManagerNotifier extends AsyncNotifier<ModProfiles> {
 
   void updateFromModList() {
     final mods = ref.watch(AppState.mods);
-    // final enabledModIds = ref.watch(AppState.enabledModIds).valueOrNull;
     final enabledModVariants = mods
         .map((mod) => mod.findFirstEnabled)
         .whereNotNull()
+        .sortedByButBetter((a) => a.modInfo.nameOrId)
         .map((variant) => ShallowModVariant.fromModVariant(variant))
         .toList();
     Fimber.d("Updating mod profile with ${enabledModVariants.length} mods");
-    updateModProfile(getCurrentModProfile()
-        .copyWith(enabledModVariants: enabledModVariants ?? []));
+    updateModProfile(getCurrentModProfile().copyWith(
+        enabledModVariants: enabledModVariants, dateModified: DateTime.now()));
   }
 
   void createModProfile(
@@ -137,5 +137,14 @@ class ModProfileManagerNotifier extends AsyncNotifier<ModProfiles> {
         .toList();
     state = AsyncData(state.value!.copyWith(modProfiles: newModProfiles));
     ModProfilesSettings._saveToDisk(newModProfiles);
+  }
+
+  void setActiveModProfile(String modProfileId) {
+    // todo: check if profile exists
+    // todo: check if profile is already active
+    // todo: generate diff and deactivate/activate mods
+    ref.read(appSettings.notifier).update((s) => s.copyWith(
+          activeModProfileId: modProfileId,
+        ));
   }
 }

@@ -213,7 +213,6 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                                 children: [
                                   SizedBox(
                                     width: 50,
-                                    height: 50,
                                     child: TextField(
                                       controller: resControllerHeight,
                                       inputFormatters: <TextInputFormatter>[
@@ -234,7 +233,6 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                                   ),
                                   SizedBox(
                                     width: 50,
-                                    height: 50,
                                     child: TextField(
                                       controller: resControllerWidth,
                                       keyboardType: TextInputType.number,

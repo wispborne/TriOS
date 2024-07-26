@@ -1,3 +1,7 @@
+# 0.1.5
+- Fixed
+  - Chipper log viewer not correctly condensing consecutive lines.
+
 # 0.1.4
 - Added
   - Drag'n'drop now supports urls. Drag a url from your browser and it'll download and install the mod.

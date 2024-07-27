@@ -50,8 +50,9 @@ class Mod with _$Mod {
   }
 
   ModVariant? get findHighestEnabledVersion {
-    return modVariants.where((v) => v.isModInfoEnabled).maxByOrNull(
-        (variant) => variant.bestVersion ?? Version.zero());
+    return modVariants
+        .where((v) => v.isModInfoEnabled)
+        .maxByOrNull((variant) => variant.bestVersion ?? Version.zero());
   }
 
   bool get hasEnabledVariant {
@@ -66,6 +67,32 @@ class Mod with _$Mod {
 extension ModListExtensions on List<Mod> {
   List<ModVariant> get variants {
     return expand((mod) => mod.modVariants).toList();
+  }
+
+  List<Mod> get sortedMods {
+    return sortedBy((mod) =>
+        mod.findFirstEnabledOrHighestVersion?.modInfo.nameOrId ??
+        "(no variant)");
+  }
+}
+
+extension ModListExtensionsNullable on List<Mod?> {
+  List<Mod?> get sortedMods {
+    return sortedBy((mod) =>
+        mod?.findFirstEnabledOrHighestVersion?.modInfo.nameOrId ??
+        "(no variant)");
+  }
+}
+
+extension ModVariantListExtensionsNullable on List<ModVariant?> {
+  List<ModVariant?> get sortedMods {
+    return sortedBy((variant) => variant?.modInfo.nameOrId ?? "");
+  }
+}
+
+extension ModVariantListExtensions on List<ModVariant> {
+  List<ModVariant> get sortedModVariants {
+    return sortedBy((variant) => variant.modInfo.nameOrId);
   }
 }
 
@@ -95,7 +122,6 @@ extension ModVariantsExt on List<ModVariant> {
   }
 
   ModVariant? get findHighestVersion {
-    return maxByOrNull(
-        (variant) => variant.bestVersion ?? Version.zero());
+    return maxByOrNull((variant) => variant.bestVersion ?? Version.zero());
   }
 }

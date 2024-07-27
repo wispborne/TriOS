@@ -185,11 +185,8 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                                 modList.firstWhereOrNull(
                                                     (mod) => mod.id == id))
                                             .whereNotNull()
-                                            .sortedByButBetter((mod) => mod
-                                                .findFirstEnabledOrHighestVersion
-                                                ?.modInfo
-                                                .nameOrId)
-                                            .toList();
+                                            .toList()
+                                            .sortedMods;
                                         Clipboard.setData(ClipboardData(
                                             text:
                                                 "Mods (${enabledModsList.length})\n${enabledModsList.map((mod) {
@@ -250,21 +247,13 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                   -1 &&
                               remoteVersionCheck?.error == null;
                         })
-                        .sortedBy((info) =>
-                            info?.findFirstEnabledOrHighestVersion?.modInfo
-                                .name ??
-                            "")
-                        .toList();
+                        .toList()
+                        .sortedMods;
                 final updatesToDisplay =
                     (isUpdatesFieldShown ? modsWithUpdates : <Mod?>[null]);
                 final listItems = updatesToDisplay +
                     (modsWithUpdates.isEmpty ? [] : [null]) +
-                    (modList
-                        .sortedBy((info) =>
-                            info.findFirstEnabledOrHighestVersion?.modInfo
-                                .name ??
-                            "")
-                        .toList());
+                    (modList.sortedMods.toList());
 
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

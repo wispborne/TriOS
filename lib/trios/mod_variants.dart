@@ -60,6 +60,7 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
 
     state = AsyncValue.data(variants);
   }
+  // TODO should move all this into modManager at some point.
 
   Future<void> changeActiveModVariant(Mod mod, ModVariant? modVariant,
       {bool validateDependencies = true}) async {

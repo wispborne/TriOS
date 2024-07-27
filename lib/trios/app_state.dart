@@ -64,6 +64,11 @@ class AppState {
     return getModsFromVariants(modVariants, enabledMods);
   });
 
+  static final enabledModVariants = Provider<List<ModVariant>>((ref) {
+    final mods = ref.watch(AppState.mods);
+    return mods.map((mod) => mod.findFirstEnabled).whereNotNull().toList();
+  });
+
   static final modCompatibility = Provider<Map<SmolId, DependencyCheck>>((ref) {
     final modVariants = ref.watch(AppState.modVariants).valueOrNull ?? [];
     final gameVersion = ref.watch(AppState.starsectorVersion).valueOrNull;
@@ -215,4 +220,18 @@ enum ModState {
   deletingVariants,
   enablingVariant,
   backingUpVariant,
+}
+
+extension ModDependencies on List<DependencyCheck?> {
+  bool get isCompatibleWithGameVersion =>
+      any((d) => d?.gameCompatibility != GameCompatibility.incompatible) ??
+      false;
+
+  GameCompatibility get leastSevereCompatibility =>
+      reduce((a, b) {
+        if (a == null) return b!;
+        if (b == null) return a;
+        return a.gameCompatibility.index < b.gameCompatibility.index ? a : b;
+      })?.gameCompatibility ??
+      GameCompatibility.incompatible;
 }

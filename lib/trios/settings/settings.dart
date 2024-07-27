@@ -109,7 +109,18 @@ class SettingSaver extends Notifier<Settings> {
 
   @override
   Settings build() {
-    final settings = readAppSettings();
+    Settings? settings;
+    try {
+      settings = readAppSettings();
+    } catch (e) {
+      Fimber.e(
+          "Error reading settings from shared prefs. Making a backup and resetting to default",
+          ex: e);
+      final backup = sharedPrefs.getString(sharedPrefsSettingsKey);
+      if (backup != null) {
+        sharedPrefs.setString("${sharedPrefsSettingsKey}_backup", backup);
+      }
+    }
 
     configureLogging(
         allowSentryReporting: settings?.allowCrashReporting ?? false);

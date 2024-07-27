@@ -18,11 +18,12 @@ class ModVersionSelectionDropdown extends ConsumerStatefulWidget {
   final double width;
   final showTooltip;
 
-  const ModVersionSelectionDropdown(
-      {super.key,
-      required this.mod,
-      required this.width,
-      required this.showTooltip});
+  const ModVersionSelectionDropdown({
+    super.key,
+    required this.mod,
+    required this.width,
+    required this.showTooltip,
+  });
 
   @override
   ConsumerState createState() => _ModVersionSelectionDropdownState();
@@ -39,9 +40,10 @@ class _ModVersionSelectionDropdownState
     final buttonWidth = widget.width;
     final mainVariant = widget.mod.findFirstEnabledOrHighestVersion;
     final dependencyChecks = widget.mod.modVariants
-        .map((v) => ref.read(AppState.modCompatibility)[v.smolId]);
-    final isSupportedByGameVersion = dependencyChecks
-        .any((d) => d?.gameCompatibility != GameCompatibility.incompatible);
+        .map((v) => ref.read(AppState.modCompatibility)[v.smolId])
+        .toList();
+    final isSupportedByGameVersion =
+        dependencyChecks.isCompatibleWithGameVersion;
     final mainDependencyCheck =
         ref.read(AppState.modCompatibility)[mainVariant?.smolId];
     final modDependenciesSatisfied = mainDependencyCheck?.dependencyChecks;
@@ -98,10 +100,14 @@ class _ModVersionSelectionDropdownState
                 // Enable if disabled, disable if enabled
                 try {
                   if (widget.mod.hasEnabledVariant) {
-                    await ref.read(AppState.modVariants.notifier).changeActiveModVariant(widget.mod, null);
+                    await ref
+                        .read(AppState.modVariants.notifier)
+                        .changeActiveModVariant(widget.mod, null);
                   } else {
-                    await ref.read(AppState.modVariants.notifier).changeActiveModVariant(
-                        widget.mod, widget.mod.findHighestVersion);
+                    await ref
+                        .read(AppState.modVariants.notifier)
+                        .changeActiveModVariant(
+                            widget.mod, widget.mod.findHighestVersion);
                   }
                 } catch (e, st) {
                   Fimber.e("Error changing active mod variant: $e\n$st");
@@ -126,8 +132,7 @@ class _ModVersionSelectionDropdownState
                 overflow: TextOverflow.ellipsis),
           ),
         )
-        .toList()
-        .sortedByDescending<Version>((item) => item.value?.modInfo.version)
+        .sortedByDescending<Version>((item) => item.value?.bestVersion)
       ..add(const DropdownMenuItem(
           value: null,
           child: Text("Disable", overflow: TextOverflow.ellipsis))));
@@ -181,7 +186,9 @@ class _ModVersionSelectionDropdownState
             }).toList();
           },
           onChanged: (ModVariant? variant) async {
-            await ref.read(AppState.modVariants.notifier).changeActiveModVariant(widget.mod, variant);
+            await ref
+                .read(AppState.modVariants.notifier)
+                .changeActiveModVariant(widget.mod, variant);
           },
         ),
       ),

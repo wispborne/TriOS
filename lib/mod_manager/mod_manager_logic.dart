@@ -26,7 +26,6 @@ import '../models/version.dart';
 import '../themes/theme_manager.dart';
 import '../trios/settings/settings.dart';
 
-// TODO move all this into a class lol
 
 final modManager =
     AsyncNotifierProvider<ModManagerNotifier, void>(ModManagerNotifier.new);

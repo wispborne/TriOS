@@ -87,7 +87,7 @@ void main() async {
 
   try {
 // Restore window position and size
-    final settings = readAppSettings();
+//     final settings = readAppSettings();
     Rect windowFrame = Rect.fromLTWH(
         settings?.windowXPos ?? 0,
         settings?.windowYPos ?? 0,

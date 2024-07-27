@@ -4,6 +4,7 @@ import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:toastification/toastification.dart';
+import 'package:trios/mod_profiles/mod_profiles_manager.dart';
 import 'package:trios/models/download_progress.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/self_updater/self_updater.dart';
@@ -192,42 +193,64 @@ class DebugSection extends ConsumerWidget {
                                       fontWeight: FontWeight.bold,
                                       fontSize: 13)),
                         ),
+                        const SizedBox(height: 8),
                         Text(
                           "Current directory (env variable): ${Directory.current.path}",
                         ),
+                        const SizedBox(height: 8),
                         Text(
                           "Current directory based on executable: ${Platform.resolvedExecutable}",
                         ),
+                        const SizedBox(height: 8),
                         Text(
                           "Current executable: ${Platform.resolvedExecutable}",
                         ),
+                        const SizedBox(height: 8),
                         Text("Temp folder: ${Directory.systemTemp.path}"),
+                        const SizedBox(height: 8),
                         Text("Locale: ${Platform.localeName}"),
+                        const SizedBox(height: 8),
                         Text(
                             "RAM usage: ${ProcessInfo.currentRss.bytesAsReadableMB()}"),
+                        const SizedBox(height: 8),
                         Text(
                             "Max RAM usage: ${ProcessInfo.maxRss.bytesAsReadableMB()}"),
-                        SizedBox(
-                          height: 150,
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(
-                                ThemeManager.cornerRadius),
-                            child: Container(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .surfaceContainerLow,
-                              padding: const EdgeInsets.all(4),
-                              child: SingleChildScrollView(
-                                child: Text(
-                                  "Environment variables\n${Platform.environment}",
-                                ),
-                              ),
-                            ),
+                        const SizedBox(height: 8),
+                        SettingsGroup(
+                          child: Text(
+                              "Settings\n${sharedPrefs.getString(sharedPrefsSettingsKey)}"),
+                        ),
+                        const SizedBox(height: 8),
+                        SettingsGroup(
+                          child: Text(
+                              "Mod Profiles\n${sharedPrefs.getString(ModProfilesSettings.modProfilesKey)}"),
+                        ),
+                        const SizedBox(height: 8),
+                        SettingsGroup(
+                          child: Text(
+                            "Environment variables\n${Platform.environment}",
                           ),
                         ),
                       ]),
                 )))
       ],
+    );
+  }
+}
+
+class SettingsGroup extends StatelessWidget {
+  final Widget child;
+
+  const SettingsGroup({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+      child: Container(
+          color: Theme.of(context).colorScheme.surfaceContainerLow,
+          padding: const EdgeInsets.all(8),
+          child: child),
     );
   }
 }

@@ -126,6 +126,9 @@ class _ModAddedToastState extends ConsumerState<ModAddedToast> {
                                 "Currently enabled: ${currentVariant.modInfo.version}",
                                 style: theme.textTheme.labelMedium,
                               ),
+                            if (currentVariant != null)
+                              Text("New version: ${widget.modVariant.bestVersion}",
+                                  style: theme.textTheme.labelMedium),
                             Padding(
                               padding: const EdgeInsets.only(top: 8),
                               child: Row(

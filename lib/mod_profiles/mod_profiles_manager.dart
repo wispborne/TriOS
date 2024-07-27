@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:collection/collection.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/models/mod.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
@@ -39,6 +40,8 @@ final modProfilesProvider =
         ModProfileManagerNotifier.new);
 
 class ModProfileManagerNotifier extends AsyncNotifier<ModProfiles> {
+  bool pauseProfileUpdates = false;
+
   static ModProfile defaultModProfile = ModProfile(
     id: const Uuid().v4(),
     name: 'default',
@@ -53,11 +56,12 @@ class ModProfileManagerNotifier extends AsyncNotifier<ModProfiles> {
 
   @override
   Future<ModProfiles> build() async {
-    updateFromModList();
-    return state.valueOrNull ??
+    state = AsyncData(state.valueOrNull ??
         ModProfiles(
             modProfiles:
-                ModProfilesSettings._loadFromDisk() ?? [defaultModProfile]);
+                ModProfilesSettings._loadFromDisk() ?? [defaultModProfile]));
+    updateFromModList();
+    return state.value!;
   }
 
   ModProfile getCurrentModProfile() {
@@ -69,13 +73,11 @@ class ModProfileManagerNotifier extends AsyncNotifier<ModProfiles> {
   }
 
   void updateFromModList() {
-    final mods = ref.watch(AppState.mods);
-    final enabledModVariants = mods
-        .map((mod) => mod.findFirstEnabled)
-        .whereNotNull()
-        .sortedByButBetter((a) => a.modInfo.nameOrId)
+    final mods = ref.watch(AppState.enabledModVariants);
+    final enabledModVariants = mods.sortedModVariants
         .map((variant) => ShallowModVariant.fromModVariant(variant))
         .toList();
+    if (pauseProfileUpdates) return;
     Fimber.d("Updating mod profile with ${enabledModVariants.length} mods");
     updateModProfile(getCurrentModProfile().copyWith(
         enabledModVariants: enabledModVariants, dateModified: DateTime.now()));
@@ -139,12 +141,85 @@ class ModProfileManagerNotifier extends AsyncNotifier<ModProfiles> {
     ModProfilesSettings._saveToDisk(newModProfiles);
   }
 
-  void setActiveModProfile(String modProfileId) {
-    // todo: check if profile exists
-    // todo: check if profile is already active
-    // todo: generate diff and deactivate/activate mods
-    ref.read(appSettings.notifier).update((s) => s.copyWith(
-          activeModProfileId: modProfileId,
-        ));
+  void activateModProfile(String modProfileId) async {
+    try {
+      // Bail if the profile doesn't exist or is already active
+      final profile = state.valueOrNull?.modProfiles
+          .firstWhereOrNull((profile) => profile.id == modProfileId);
+      if (profile == null) return;
+      final activeProfileId =
+          ref.read(appSettings.select((s) => s.activeModProfileId));
+      if (activeProfileId == modProfileId) return;
+
+      final allMods = ref.read(AppState.mods);
+      final modVariants = ref.read(AppState.modVariants).valueOrNull ?? [];
+      final currentlyEnabledModVariants = ref.read(AppState.enabledModVariants);
+      final currentlyEnabledShallows = currentlyEnabledModVariants
+          .sortedModVariants
+          .map((variant) => ShallowModVariant.fromModVariant(variant))
+          .toList();
+      final profileShallows = profile.enabledModVariants;
+
+      final toSwapToDifferentVersion = currentlyEnabledShallows
+          .where((current) => profileShallows.any((profile) =>
+              current.modId == profile.modId &&
+              current.smolVariantId != profile.smolVariantId))
+          .map((shallow) => (
+                mod: allMods.firstWhereOrNull((mod) => mod.id == shallow.modId),
+                variant: modVariants
+                    .firstWhereOrNull((v) => v.smolId == shallow.smolVariantId),
+              ))
+          .toList();
+      final toEnable = profileShallows
+          .where((profile) => currentlyEnabledShallows.every(
+              (current) => current.smolVariantId != profile.smolVariantId))
+          .map((shallow) => (
+                mod: allMods.firstWhereOrNull((mod) => mod.id == shallow.modId),
+                variant: modVariants
+                    .firstWhereOrNull((v) => v.smolId == shallow.smolVariantId),
+              ))
+          .toList();
+      final toDisable = currentlyEnabledShallows
+          .where((current) => profileShallows.every(
+              (profile) => current.smolVariantId != profile.smolVariantId))
+          .map((shallow) => (
+                mod: allMods.firstWhereOrNull((mod) => mod.id == shallow.modId),
+                variant: null,
+              ))
+          .toList();
+
+      final mergedList = [
+        ...toSwapToDifferentVersion,
+        ...toEnable,
+        ...toDisable
+      ];
+
+      // No active profile while swapping, otherwise it'll try to update while swapping.
+      // ref.read(appSettings.notifier).update((s) => s.copyWith(
+      //       activeModProfileId: null,
+      //     ));
+      pauseProfileUpdates = true;
+
+      for (final pair in mergedList) {
+        final mod = pair.mod;
+        final variant = pair.variant;
+        if (mod == null) {
+          Fimber.w("Mod not found for variant ${pair.variant?.smolId}");
+          continue;
+        }
+
+        Fimber.d(
+            "Changing active mod variant for ${mod.id} to ${variant?.smolId}");
+        await ref
+            .read(AppState.modVariants.notifier)
+            .changeActiveModVariant(mod, variant);
+      }
+
+      ref.read(appSettings.notifier).update((s) => s.copyWith(
+            activeModProfileId: modProfileId,
+          ));
+    } finally {
+      pauseProfileUpdates = false;
+    }
   }
 }

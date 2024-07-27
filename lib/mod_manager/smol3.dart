@@ -67,10 +67,12 @@ class _Smol3State extends ConsumerState<Smol3>
   final lightTextOpacity = 0.8;
   GridStateManagerCallback? didSetStateManager;
 
-  tooltippy(Widget child, ModVariant modVariant) {
-    final compatWithGame = ref
-        .read(AppState.modCompatibility)[modVariant.smolId]
-        ?.gameCompatibility;
+  tooltippy(Widget child, List<ModVariant> modVariants) {
+    final modCompat = ref.read(AppState.modCompatibility);
+    final compatWithGame = modVariants
+        .map((e) => modCompat[e.smolId])
+        .toList()
+        .leastSevereCompatibility;
 
     return MovingTooltipWidget(
       tooltipWidget: SizedBox(
@@ -124,9 +126,9 @@ class _Smol3State extends ConsumerState<Smol3>
     modsToDisplay = mods;
     filteredMods = filterMods(query);
     final enabledMods =
-        filteredMods.where((mod) => mod.isEnabledInGame).toList();
+        filteredMods.where((mod) => mod.hasEnabledVariant).toList();
     final disabledMods =
-        filteredMods.where((mod) => !mod.isEnabledInGame).toList();
+        filteredMods.where((mod) => !mod.hasEnabledVariant).toList();
 
     const double versionSelectorWidth = 130;
     if (stateManager != null) {
@@ -874,7 +876,7 @@ class _Smol3State extends ConsumerState<Smol3>
       key: ValueKey(mod),
       cells: {
         _Fields.enableDisable.toString(): PlutoCell(
-          value: mod.isEnabledInGame ? 'Enabled' : 'Disabled',
+          value: mod.hasEnabledVariant ? 'Enabled' : 'Disabled',
         ),
         // Enable/Disable
         _Fields.versionSelector.toString(): PlutoCell(value: mod),

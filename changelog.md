@@ -1,6 +1,14 @@
 # 0.1.5
+- Added
+  - Mod Profiles
+    - Quickly swap between mod lists.
+    - Different mod versions can be assigned to different profiles.
 - Fixed
   - Chipper log viewer not correctly condensing consecutive lines.
+  - Grey screen if using an old TriOS version after using a newer one that added a new setting.
+    - Will reset settings to default if this happens, after making a backup.
+  - Mod grid showed mods as Enabled incorrectly sometimes.
+    - The "enabled" checked `enabled_mods.json`, but didn't check whether TriOS disabled the `mod_info.json` file.  
 
 # 0.1.4
 - Added

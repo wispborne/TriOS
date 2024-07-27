@@ -4,6 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:intl/intl.dart';
 import 'package:trios/themes/theme_manager.dart';
+import 'package:trios/trios/settings/settings.dart';
+import 'package:trios/widgets/blur.dart';
+import 'package:trios/widgets/disable.dart';
 
 import 'mod_profiles_manager.dart';
 import 'models/mod_profile.dart';
@@ -15,13 +18,19 @@ class ModProfilePage extends ConsumerStatefulWidget {
   ConsumerState<ModProfilePage> createState() => _ModProfilePageState();
 }
 
-class _ModProfilePageState extends ConsumerState<ModProfilePage> {
+class _ModProfilePageState extends ConsumerState<ModProfilePage>
+    with AutomaticKeepAliveClientMixin<ModProfilePage> {
+  @override
+  bool get wantKeepAlive => true;
+
   final TextEditingController _nameController = TextEditingController();
   String? _editingProfileId;
 
   @override
   Widget build(BuildContext context) {
     final modProfilesAsync = ref.watch(modProfilesProvider);
+    final activeProfileId =
+        ref.watch(appSettings.select((s) => s.activeModProfileId));
     final theme = Theme.of(context);
     final dateFormat = DateFormat.yMMMMd(Intl.getCurrentLocale()).add_jm();
     const minHeight = 120.0;
@@ -44,180 +53,205 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage> {
               } else {
                 final profile = modProfiles.modProfiles[index - 1];
                 final isEditing = profile.id == _editingProfileId;
-                // final tileController = ExpansionTileController.of(context);
+                final isActiveProfile = profile.id == activeProfileId;
+
                 return ConstrainedBox(
                   constraints: const BoxConstraints(minHeight: minHeight),
                   child: Card(
-                    child: Stack(
-                      children: [
-                        Positioned(
-                          right: 0,
-                          top: 0,
-                          child: isEditing
-                              ? IconButton(
-                                  icon: const Icon(Icons.check),
-                                  onPressed: () {
-                                    ref
-                                        .read(modProfilesProvider.notifier)
-                                        .updateModProfile(
-                                          profile.copyWith(
-                                              name: _nameController.text),
-                                        );
-                                    setState(() {
-                                      _editingProfileId = null;
-                                    });
-                                  },
-                                )
-                              : IconButton(
-                                  icon: const Icon(Icons.edit),
-                                  onPressed: () {
-                                    setState(() {
-                                      _editingProfileId = profile.id;
-                                      _nameController.text = profile.name;
-                                    });
-                                  },
-                                ),
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Padding(
-                                padding: const EdgeInsets.all(cardPadding),
-                                child: isEditing
-                                    ? TextField(
-                                        controller: _nameController,
-                                        decoration: const InputDecoration(
-                                            labelText: 'Name'),
-                                      )
-                                    : Text(profile.name,
-                                        style: theme.textTheme.bodyLarge
-                                            ?.copyWith(
-                                                fontSize: 20,
-                                                fontFamily:
-                                                    ThemeManager.orbitron))),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: cardPadding),
-                              child: Row(
-                                children: [
-                                  Text(
-                                    '${profile.enabledModVariants.length} mods',
-                                    style: theme.textTheme.labelSmall,
-                                  ),
-                                  // bullet
-                                  Text(" • ",
-                                      style: theme.textTheme.labelSmall),
-                                  Tooltip(
-                                    message:
-                                        'Created: ${dateFormat.format(profile.dateCreated?.toLocal() ?? DateTime.now())}\n'
-                                        'Last modified: ${dateFormat.format(profile.dateModified?.toLocal() ?? DateTime.now())}',
-                                    child: Text(
-                                      dateFormat.format(
-                                          profile.dateCreated?.toLocal() ??
-                                              DateTime.now()),
-                                      style: theme.textTheme.labelSmall,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                            ExpansionTile(
-                              title: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Spacer(),
-                                  IconButton(
-                                      onPressed: () {
-                                        ref
-                                            .read(modProfilesProvider.notifier)
-                                            .setActiveModProfile(profile.id);
-                                      },
-                                      icon: Icon(Icons.power_settings_new)),
-                                  IconButton(
-                                    icon: const Icon(Icons.content_copy),
-                                    tooltip: 'Copy mod list to clipboard',
+                    child: Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                            color: isActiveProfile
+                                ? theme.colorScheme.primary
+                                : Colors.transparent,
+                            width: 2),
+                        borderRadius:
+                            BorderRadius.circular(ThemeManager.cornerRadius),
+                      ),
+                      child: Stack(
+                        children: [
+                          Positioned(
+                            right: 0,
+                            top: 0,
+                            child: isEditing
+                                ? IconButton(
+                                    icon: const Icon(Icons.check),
                                     onPressed: () {
-                                      _copyModListToClipboard(profile);
+                                      ref
+                                          .read(modProfilesProvider.notifier)
+                                          .updateModProfile(
+                                            profile.copyWith(
+                                                name: _nameController.text),
+                                          );
+                                      setState(() {
+                                        _editingProfileId = null;
+                                      });
+                                    },
+                                  )
+                                : IconButton(
+                                    icon: const Icon(Icons.edit),
+                                    onPressed: () {
+                                      setState(() {
+                                        _editingProfileId = profile.id;
+                                        _nameController.text = profile.name;
+                                      });
                                     },
                                   ),
-                                  if (modProfiles.modProfiles.length > 1)
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Padding(
+                                  padding: const EdgeInsets.all(cardPadding),
+                                  child: isEditing
+                                      ? TextField(
+                                          controller: _nameController,
+                                          decoration: const InputDecoration(
+                                              labelText: 'Name'),
+                                        )
+                                      : Text(profile.name,
+                                          style: theme.textTheme.bodyLarge
+                                              ?.copyWith(
+                                                  fontSize: 20,
+                                                  fontFamily:
+                                                      ThemeManager.orbitron))),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: cardPadding),
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      '${profile.enabledModVariants.length} mods',
+                                      style: theme.textTheme.labelSmall,
+                                    ),
+                                    // bullet
+                                    Text(" • ",
+                                        style: theme.textTheme.labelSmall),
+                                    Tooltip(
+                                      message:
+                                          'Created: ${dateFormat.format(profile.dateCreated?.toLocal() ?? DateTime.now())}\n'
+                                          'Last modified: ${dateFormat.format(profile.dateModified?.toLocal() ?? DateTime.now())}',
+                                      child: Text(
+                                        dateFormat.format(
+                                            profile.dateCreated?.toLocal() ??
+                                                DateTime.now()),
+                                        style: theme.textTheme.labelSmall,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                              ExpansionTile(
+                                title: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Spacer(),
+                                    Blur(
+                                      blur: isActiveProfile ? 5 : 0,
+                                      child: IconButton(
+                                          onPressed: () {
+                                            ref
+                                                .read(modProfilesProvider
+                                                    .notifier)
+                                                .activateModProfile(profile.id);
+                                          },
+                                          icon: Icon(Icons.power_settings_new,
+                                              color: profile.id ==
+                                                      activeProfileId
+                                                  ? theme.colorScheme.primary
+                                                  : null)),
+                                    ),
                                     IconButton(
-                                      icon: const Icon(Icons.delete),
-                                      tooltip: 'Delete profile',
+                                      icon: const Icon(Icons.content_copy),
+                                      tooltip: 'Copy mod list to clipboard',
                                       onPressed: () {
-                                        showDialog(
-                                            context: context,
-                                            builder: (context) => AlertDialog(
-                                                  title: const Text(
-                                                      'Delete profile?'),
-                                                  content: Text(
-                                                      "Are you sure you want to delete profile '${profile.name}'?"),
-                                                  actions: [
-                                                    TextButton(
-                                                      onPressed: () {
-                                                        Navigator.of(context)
-                                                            .pop();
-                                                      },
-                                                      child:
-                                                          const Text('Cancel'),
-                                                    ),
-                                                    TextButton(
-                                                      onPressed: () {
-                                                        Navigator.of(context)
-                                                            .pop();
-                                                        ref
-                                                            .read(
-                                                                modProfilesProvider
-                                                                    .notifier)
-                                                            .removeModProfile(
-                                                                profile.id);
-                                                      },
-                                                      child:
-                                                          const Text('Delete'),
-                                                    ),
-                                                  ],
-                                                ));
+                                        _copyModListToClipboard(profile);
                                       },
                                     ),
-                                ],
-                              ),
-                              expansionAnimationStyle:
-                                  AnimationStyle.noAnimation,
-                              controlAffinity: ListTileControlAffinity.leading,
-                              backgroundColor:
-                                  theme.colorScheme.surfaceContainerLow,
-                              collapsedShape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(
-                                      ThemeManager.cornerRadius)),
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(
-                                      ThemeManager.cornerRadius)),
-                              dense: true,
-                              onExpansionChanged: (isExpanded) {
-                                //on next frame, set state to rebuild the card
-                                WidgetsBinding.instance.addPostFrameCallback(
-                                    (_) => setState(() {}));
-                              },
-                              childrenPadding: const EdgeInsets.all(8),
-                              children: profile.enabledModVariants.map((mod) {
-                                return Row(
-                                  children: [
-                                    Expanded(
-                                      child: Text(mod.modName ?? mod.modId,
-                                          overflow: TextOverflow.fade,
-                                          maxLines: 1,
-                                          style: theme.textTheme.labelLarge),
+                                    Disable(
+                                      isEnabled:
+                                          modProfiles.modProfiles.length > 1 &&
+                                              activeProfileId != profile.id,
+                                      child: IconButton(
+                                        icon: const Icon(Icons.delete),
+                                        tooltip: 'Delete profile',
+                                        onPressed: () {
+                                          showDialog(
+                                              context: context,
+                                              builder: (context) => AlertDialog(
+                                                    title: const Text(
+                                                        'Delete profile?'),
+                                                    content: Text(
+                                                        "Are you sure you want to delete profile '${profile.name}'?"),
+                                                    actions: [
+                                                      TextButton(
+                                                        onPressed: () {
+                                                          Navigator.of(context)
+                                                              .pop();
+                                                        },
+                                                        child: const Text(
+                                                            'Cancel'),
+                                                      ),
+                                                      TextButton(
+                                                        onPressed: () {
+                                                          Navigator.of(context)
+                                                              .pop();
+                                                          ref
+                                                              .read(
+                                                                  modProfilesProvider
+                                                                      .notifier)
+                                                              .removeModProfile(
+                                                                  profile.id);
+                                                        },
+                                                        child: const Text(
+                                                            'Delete'),
+                                                      ),
+                                                    ],
+                                                  ));
+                                        },
+                                      ),
                                     ),
-                                    Text(mod.version?.toString() ?? 'Unknown',
-                                        style: theme.textTheme.labelLarge),
                                   ],
-                                );
-                              }).toList(),
-                            )
-                          ],
-                        ),
-                      ],
+                                ),
+                                expansionAnimationStyle:
+                                    AnimationStyle.noAnimation,
+                                controlAffinity:
+                                    ListTileControlAffinity.leading,
+                                backgroundColor:
+                                    theme.colorScheme.surfaceContainerLow,
+                                collapsedShape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(
+                                        ThemeManager.cornerRadius)),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(
+                                        ThemeManager.cornerRadius)),
+                                dense: true,
+                                onExpansionChanged: (isExpanded) {
+                                  //on next frame, set state to rebuild the card
+                                  WidgetsBinding.instance.addPostFrameCallback(
+                                      (_) => setState(() {}));
+                                },
+                                childrenPadding: const EdgeInsets.all(8),
+                                children: profile.enabledModVariants.map((mod) {
+                                  return Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(mod.modName ?? mod.modId,
+                                            overflow: TextOverflow.fade,
+                                            maxLines: 1,
+                                            style: theme.textTheme.labelLarge),
+                                      ),
+                                      Text(mod.version?.toString() ?? 'Unknown',
+                                          style: theme.textTheme.labelLarge),
+                                    ],
+                                  );
+                                }).toList(),
+                              )
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 );

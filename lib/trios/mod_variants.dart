@@ -246,7 +246,7 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
 
     // Look for any disabled mod_info files in the folder.
     final disabledModInfoFiles = (await Constants.modInfoFileDisabledNames
-            .map((it) => modVariant.modsFolder.resolve(it).toFile())
+            .map((it) => modVariant.modFolder.resolve(it).toFile())
             .whereAsync((it) async => await it.isWritable()))
         .toList();
 
@@ -254,7 +254,7 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
     if (!modVariant.isModInfoEnabled) {
       disabledModInfoFiles.firstOrNull?.let((disabledModInfoFile) async {
         disabledModInfoFile.renameSync(
-            modVariant.modsFolder.resolve(Constants.modInfoFileName).path);
+            modVariant.modFolder.resolve(Constants.modInfoFileName).path);
         Fimber.i(
             "Re-enabled ${modVariant.smolId}: renamed ${disabledModInfoFile.nameWithExtension} to ${Constants.modInfoFileName}.");
       });
@@ -275,11 +275,11 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
         state.valueOrNull ?? [], enabledMods.orEmpty().toList());
     Fimber.i("Disabling variant ${modVariant.smolId}");
     final modInfoFile =
-        modVariant.modsFolder.resolve(Constants.unbrickedModInfoFileName);
+        modVariant.modFolder.resolve(Constants.unbrickedModInfoFileName);
 
     if (!modInfoFile.existsSync()) {
       throw Exception(
-          "mod_info.json not found in ${modVariant.modsFolder.absolute}");
+          "mod_info.json not found in ${modVariant.modFolder.absolute}");
     }
 
     if (changeFileExtension) {

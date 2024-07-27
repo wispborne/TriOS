@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/models/version_checker_info.dart';
@@ -17,13 +18,13 @@ part '../generated/models/mod_variant.freezed.dart';
 typedef SmolId = String;
 
 @freezed
-class ModVariant with _$ModVariant {
+class ModVariant with _$ModVariant implements Comparable<ModVariant> {
   const ModVariant._();
 
   const factory ModVariant({
     required ModInfo modInfo,
     required VersionCheckerInfo? versionCheckerInfo,
-    required Directory modsFolder,
+    required Directory modFolder,
     required bool hasNonBrickedModInfo,
     // required File? backupFile,
   }) = _ModVariant;
@@ -37,13 +38,13 @@ class ModVariant with _$ModVariant {
   String? get iconFilePath {
     return iconCache.putIfAbsent(modInfo.id, () {
       var path = modIconFilePaths
-          .map((path) => modsFolder.resolve(path))
+          .map((path) => modFolder.resolve(path))
           .firstWhereOrNull((file) => file.existsSync())
           ?.path;
 
       if (path == null) {
         final lunaSettings =
-            modsFolder.resolve("data/config/LunaSettingsConfig.json").toFile();
+            modFolder.resolve("data/config/LunaSettingsConfig.json").toFile();
         if (lunaSettings.existsSync()) {
           try {
             final lunaSettingsIconPath = (lunaSettings
@@ -57,7 +58,7 @@ class ModVariant with _$ModVariant {
                     entry.key.toLowerCase().containsIgnoreCase("iconPath"))
                 ?.value;
             if (lunaSettingsIconPath is String) {
-              final icon = modsFolder.resolve(lunaSettingsIconPath).toFile();
+              final icon = modFolder.resolve(lunaSettingsIconPath).toFile();
               if (icon.existsSync()) {
                 path = icon.path;
               }
@@ -77,14 +78,17 @@ class ModVariant with _$ModVariant {
   static String generateVariantFolderName(ModInfo modInfo) =>
       "${modInfo.name?.fixFilenameForFileSystem().take(100)}-${modInfo.version}";
 
+  /// Don't use this for sorting! Use ModVariant directly, as it has multiple fallbacks.
+  ///
   /// Returns the version in Version Checker if possible (authors sometimes will do `0.35` in ModInfo but `0.3.5` in Version Checker)
   /// and falls back to the `mod_info.json` version.
   Version? get bestVersion {
-    return versionCheckerInfo?.modVersion
-            ?.toString()
-            .let((it) => Version.parse(it, sanitizeInput: false)) ??
-        modInfo.version;
+    return versionCheckerVersion ?? modInfo.version;
   }
+
+  Version? get versionCheckerVersion => versionCheckerInfo?.modVersion
+      ?.toString()
+      .let((it) => Version.parse(it, sanitizeInput: false));
 
   bool get isModInfoEnabled => hasNonBrickedModInfo;
 
@@ -92,6 +96,32 @@ class ModVariant with _$ModVariant {
 
   Mod? mod(List<Mod> mods) {
     return mods.firstWhereOrNull((mod) => mod.id == modInfo.id);
+  }
+
+  File? get modInfoFile => getModInfoFile(modFolder);
+
+  /// Compares using the Version Checker version if available.
+  /// If not available OR both are the same version in that file, falls back to the `mod_info.json` version (which has all non-numeric chars stripped out).
+  /// If that is also the same, it will compare the `mod_info.json` as a string.
+  @override
+  int compareTo(ModVariant? other) {
+    if (other == null) return -1;
+    int result = 0;
+
+    if (versionCheckerVersion != null && other.versionCheckerVersion != null) {
+      result = versionCheckerVersion!.compareTo(other.versionCheckerVersion!);
+    }
+    if (result != 0) {
+      return result;
+    }
+    result = modInfo.version?.compareTo(other.modInfo.version) ?? 0;
+    if (result != 0) {
+      return result;
+    }
+
+    return modInfo.version
+        .toString()
+        .compareTo(other.modInfo.version.toString());
   }
 }
 

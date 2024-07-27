@@ -212,7 +212,7 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                                             onPressed: () {
                                               // open folder in file explorer
                                               launchUrlString(
-                                                  installedMod.modsFolder.path);
+                                                  installedMod.modFolder.path);
                                             },
                                             icon: Icon(Icons.folder_open,
                                                 color: theme

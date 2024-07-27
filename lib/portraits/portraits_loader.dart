@@ -22,8 +22,8 @@ Future<Map<ModVariant, List<Portrait>>> scanModFoldersForSquareImages(
     List<Portrait> squareImages = [];
     Set<String> uniqueImageHashes = {};
 
-    if (await modVariant.modsFolder.exists()) {
-      await for (var entity in modVariant.modsFolder.list(recursive: true)) {
+    if (await modVariant.modFolder.exists()) {
+      await for (var entity in modVariant.modFolder.list(recursive: true)) {
         if (entity is File && await _isImageFile(entity)) {
           try {
             Uint8List imageBytes = await entity.readAsBytes();

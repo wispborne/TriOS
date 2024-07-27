@@ -8,7 +8,14 @@
   - Grey screen if using an old TriOS version after using a newer one that added a new setting.
     - Will reset settings to default if this happens, after making a backup.
   - Mod grid showed mods as Enabled incorrectly sometimes.
-    - The "enabled" checked `enabled_mods.json`, but didn't check whether TriOS disabled the `mod_info.json` file.  
+    - The "enabled" checked `enabled_mods.json`, but didn't check whether TriOS disabled the `mod_info.json` file.
+  - Force Game Version didn't work for mods that were disabled and had multiple versions (i.e. had `mod_info.json.disabled-by-TriOS`).
+  - Incorrect sorting in same cases (e.g. LazyLib `2.0` and `2.0b`).
+    - Now sorts using `.version` file first, then by `mod_info.json`'s version with everything but numbers and periods removed, and finally by `mod_info.json`'s version without anything removed. 
+- Changed
+  - Mods tab: in the version selector, versions are a different color if they are for a different version of the game.
+  - Disabled mods with multiple versions will now use `mod_info.json.disabled` instead of `mod_info.json.disabled-by-TriOS`.
+    - It's less obvious, but it's compatible with SMOL this way.
 
 # 0.1.4
 - Added

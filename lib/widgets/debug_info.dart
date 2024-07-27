@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:trios/models/mod_variant.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/search.dart';
 import 'package:trios/widgets/simple_data_row.dart';
@@ -16,8 +17,8 @@ class DebugInfo extends StatelessWidget {
     return SelectionArea(
       child: Column(
         children: mod.modVariants
-            .sortedByDescending<Version>(
-                (variant) => variant.bestVersion ?? Version.zero())
+            .sortedByDescending<ModVariant>(
+                (variant) => variant)
             .map(
               (variant) => Card(
                 margin: const EdgeInsets.symmetric(vertical: 4),
@@ -46,7 +47,7 @@ class DebugInfo extends StatelessWidget {
                               label: "Internal id: ", value: variant.smolId),
                           SimpleDataRow(
                               label: "Mod Folder: ",
-                              value: variant.modsFolder.path),
+                              value: variant.modFolder.path),
                           SimpleDataRow(
                               label: "Icon: ",
                               value: variant.iconFilePath ?? ""),

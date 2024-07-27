@@ -10,7 +10,6 @@ import 'package:trios/widgets/disable.dart';
 
 import '../models/mod.dart';
 import '../models/mod_variant.dart';
-import '../models/version.dart';
 import '../utils/logging.dart';
 
 class ModVersionSelectionDropdown extends ConsumerStatefulWidget {
@@ -39,13 +38,13 @@ class _ModVersionSelectionDropdownState
     const buttonHeight = 32.00;
     final buttonWidth = widget.width;
     final mainVariant = widget.mod.findFirstEnabledOrHighestVersion;
-    final dependencyChecks = widget.mod.modVariants
-        .map((v) => ref.read(AppState.modCompatibility)[v.smolId])
-        .toList();
+    final modCompatibilityMap = ref.watch(AppState.modCompatibility);
+    final dependencyChecks = widget.mod.modVariants.map((v) {
+      return modCompatibilityMap[v.smolId];
+    }).toList();
     final isSupportedByGameVersion =
         dependencyChecks.isCompatibleWithGameVersion;
-    final mainDependencyCheck =
-        ref.read(AppState.modCompatibility)[mainVariant?.smolId];
+    final mainDependencyCheck = modCompatibilityMap[mainVariant?.smolId];
     final modDependenciesSatisfied = mainDependencyCheck?.dependencyChecks;
 
     // TODO consolidate this logic with the logic in smol2.
@@ -129,10 +128,14 @@ class _ModVersionSelectionDropdownState
           (variant) => DropdownMenuItem(
             value: variant,
             child: Text(variant.modInfo.version.toString(),
+                style: TextStyle(
+                    color: modCompatibilityMap[variant.smolId]
+                        ?.gameCompatibility
+                        .getGameCompatibilityColor()),
                 overflow: TextOverflow.ellipsis),
           ),
         )
-        .sortedByDescending<Version>((item) => item.value?.bestVersion)
+        .sortedByDescending<ModVariant>((item) => item.value)
       ..add(const DropdownMenuItem(
           value: null,
           child: Text("Disable", overflow: TextOverflow.ellipsis))));

@@ -26,7 +26,6 @@ import '../models/version.dart';
 import '../themes/theme_manager.dart';
 import '../trios/settings/settings.dart';
 
-
 final modManager =
     AsyncNotifierProvider<ModManagerNotifier, void>(ModManagerNotifier.new);
 
@@ -177,7 +176,7 @@ Future<List<ModVariant>> getModsVariantsInFolder(Directory modsFolder) async {
 
       final modVariant = ModVariant(
         modInfo: modInfo,
-        modsFolder: modFolder,
+        modFolder: modFolder,
         versionCheckerInfo:
             getVersionFile(modFolder)?.let((it) => getVersionCheckerInfo(it)),
         hasNonBrickedModInfo: await modFolder
@@ -427,8 +426,12 @@ File? getModInfoFile(Directory modFolder) {
 
 Future<void> forceChangeModGameVersion(
     ModVariant modVariant, String newGameVersion) async {
-  final modInfoFile =
-      modVariant.modsFolder.resolve(Constants.modInfoFileName).toFile();
+  final modInfoFile = modVariant.modInfoFile;
+  if (modInfoFile == null || !modInfoFile.existsSync()) {
+    Fimber.e("Mod info file not found for ${modVariant.smolId}");
+    return;
+  }
+
   // Replace the game version in the mod_info.json file.
   // Don't use the code model, we want to keep any extra fields that might not be in the model.
   final modInfoJson = modInfoFile.readAsStringSync().fixJsonToMap();
@@ -566,14 +569,16 @@ ModDependencySatisfiedState getTopDependencySeverity(
             (it) => it is Satisfied || it is Disabled || it is VersionWarning)
         .prefer((it) =>
             gameVersion != null &&
-            it.modVariant?.isCompatibleWithGameVersionString(gameVersion) !=
+            it.modVariant
+                    ?.isCompatibleWithGameVersion(gameVersion.toString()) !=
                 GameCompatibility.incompatible)
         .toList();
 
     if (possibilities.isNotEmpty) {
       // Find the highest version.
-      return possibilities.maxByOrNull(
-              (state) => state.modVariant?.bestVersion ?? Version.zero()) ??
+      return possibilities
+              .where((it) => it.modVariant != null)
+              .maxByOrNull<ModVariant>((state) => state.modVariant!) ??
           possibilities.first;
     }
   }
@@ -685,11 +690,11 @@ Future<List<InstallModResult>> installModFromArchive(
     // Delete the existing mod folders first.
     for (var modToDelete in modsToDeleteFirst) {
       try {
-        modToDelete.modsFolder.deleteSync(recursive: true);
+        modToDelete.modFolder.deleteSync(recursive: true);
         Fimber.i(
-            "Deleted mod folder before reinstalling same variant: ${modToDelete.modsFolder}");
+            "Deleted mod folder before reinstalling same variant: ${modToDelete.modFolder}");
       } catch (e, st) {
-        Fimber.e("Error deleting mod folder: ${modToDelete.modsFolder}",
+        Fimber.e("Error deleting mod folder: ${modToDelete.modFolder}",
             ex: e, stacktrace: st);
         results.add((
           modInfo: modToDelete.modInfo,
@@ -782,6 +787,83 @@ extension ModInfoExt on ModInfo {
   }
 }
 
+extension ModDependencySatisfiedStateExt on ModDependencySatisfiedState {
+  String getDependencyStateText() {
+    return switch (this) {
+      Satisfied _ => "(found ${modVariant?.modInfo.version})",
+      Missing _ => "(missing)",
+      Disabled _ => "(disabled: ${modVariant?.modInfo.version})",
+      VersionInvalid _ => "(wrong version: ${modVariant?.modInfo.version})",
+      VersionWarning _ => "(found: ${modVariant?.modInfo.version})",
+    };
+  }
+}
+
+extension ModListExtensions on List<Mod> {
+  List<ModVariant> get variants {
+    return expand((mod) => mod.modVariants).toList();
+  }
+
+  List<Mod> get sortedMods {
+    return sortedBy((mod) =>
+        mod.findFirstEnabledOrHighestVersion?.modInfo.nameOrId ??
+        "(no variant)");
+  }
+}
+
+extension ModListExtensionsNullable on List<Mod?> {
+  List<Mod?> get sortedMods {
+    return sortedBy((mod) =>
+        mod?.findFirstEnabledOrHighestVersion?.modInfo.nameOrId ??
+        "(no variant)");
+  }
+}
+
+extension ModVariantListExtensionsNullable on List<ModVariant?> {
+  List<ModVariant?> get sortedMods {
+    return sortedBy((variant) => variant?.modInfo.nameOrId ?? "");
+  }
+}
+
+extension ModVariantListExtensions on List<ModVariant> {
+  List<ModVariant> get sortedModVariants {
+    return sortedBy((variant) => variant.modInfo.nameOrId);
+  }
+}
+
+extension ModVariantExt on ModVariant {
+  /// Searches [modVariants] for the best possible match for this dependency.
+  List<ModDependencyCheckResult> checkDependencies(
+    List<ModVariant> modVariants,
+    EnabledMods enabledMods,
+    String? gameVersion,
+  ) =>
+      modInfo.checkDependencies(modVariants, enabledMods, gameVersion);
+
+  GameCompatibility isCompatibleWithGameVersion(String gameVersion) {
+    return modInfo.isCompatibleWithGame(gameVersion);
+  }
+}
+
+extension ModVariantsExt on List<ModVariant> {
+  ModVariant? highestVersionForGameVersion(String gameVersion) {
+    return where((it) =>
+        it.isCompatibleWithGameVersion(gameVersion) !=
+        GameCompatibility.incompatible).toList().findHighestVersion;
+  }
+
+  ModVariant? preferHighestVersionForGameVersion(String? gameVersion) {
+    if (gameVersion == null) {
+      return findHighestVersion;
+    }
+    return highestVersionForGameVersion(gameVersion) ?? findHighestVersion;
+  }
+
+  ModVariant? get findHighestVersion {
+    return maxByOrNull((variant) => variant);
+  }
+}
+
 class DependencyCheck {
   final GameCompatibility gameCompatibility;
   final List<ModDependencyCheckResult> dependencyChecks;
@@ -850,16 +932,4 @@ class VersionWarning extends ModDependencySatisfiedState {
 
 class Satisfied extends ModDependencySatisfiedState {
   Satisfied(ModVariant modVariant) : super(modVariant: modVariant);
-}
-
-extension ModDependencySatisfiedStateExt on ModDependencySatisfiedState {
-  String getDependencyStateText() {
-    return switch (this) {
-      Satisfied _ => "(found ${modVariant?.modInfo.version})",
-      Missing _ => "(missing)",
-      Disabled _ => "(disabled: ${modVariant?.modInfo.version})",
-      VersionInvalid _ => "(wrong version: ${modVariant?.modInfo.version})",
-      VersionWarning _ => "(found: ${modVariant?.modInfo.version})",
-    };
-  }
 }

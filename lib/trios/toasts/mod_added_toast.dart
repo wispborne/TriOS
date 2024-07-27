@@ -138,7 +138,7 @@ class _ModAddedToastState extends ConsumerState<ModAddedToast> {
                                     onPressed: () {
                                       // open folder in file explorer
                                       launchUrlString(
-                                          widget.modVariant.modsFolder.path);
+                                          widget.modVariant.modFolder.path);
                                     },
                                     icon: Icon(Icons.folder_open,
                                         color: theme.colorScheme.onSurface),

@@ -69,10 +69,14 @@ class _Smol3State extends ConsumerState<Smol3>
 
   tooltippy(Widget child, List<ModVariant> modVariants) {
     final modCompat = ref.read(AppState.modCompatibility);
+    final gameVersion =
+        ref.read(appSettings.select((value) => value.lastStarsectorVersion));
     final compatWithGame = modVariants
         .map((e) => modCompat[e.smolId])
         .toList()
         .leastSevereCompatibility;
+    final highestCompatibleGameVersion =
+        modVariants.preferHighestVersionForGameVersion(gameVersion)!;
 
     return MovingTooltipWidget(
       tooltipWidget: SizedBox(
@@ -82,9 +86,9 @@ class _Smol3State extends ConsumerState<Smol3>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               ModDependenciesWidget(
-                modVariant: modVariant,
+                modVariant: highestCompatibleGameVersion,
                 compatWithGame: compatWithGame,
-                compatTextColor: compatWithGame?.getGameCompatibilityColor(),
+                compatTextColor: compatWithGame.getGameCompatibilityColor(),
               ),
             ],
           ),
@@ -254,12 +258,17 @@ class _Smol3State extends ConsumerState<Smol3>
                   return PlutoGrid(
                     mode: PlutoGridMode.selectWithOneTap,
                     configuration: PlutoGridConfiguration(
-                        scrollbar: const PlutoGridScrollbarConfig(dragDevices: {
-                          PointerDeviceKind.stylus,
-                          PointerDeviceKind.touch,
-                          PointerDeviceKind.trackpad,
-                          PointerDeviceKind.invertedStylus
-                        }),
+                        scrollbar: const PlutoGridScrollbarConfig(
+                            isAlwaysShown: true,
+                            hoverWidth: 10,
+                            scrollbarThickness: 8,
+                            scrollbarRadius: Radius.circular(5),
+                            dragDevices: {
+                              PointerDeviceKind.stylus,
+                              PointerDeviceKind.touch,
+                              PointerDeviceKind.trackpad,
+                              PointerDeviceKind.invertedStylus
+                            }),
                         style: PlutoGridStyleConfig.dark(
                           enableCellBorderHorizontal: false,
                           enableCellBorderVertical: false,
@@ -523,11 +532,12 @@ class _Smol3State extends ConsumerState<Smol3>
                     contextMenu:
                         ModListMini.buildContextMenu(mod, ref, context),
                     child: tooltippy(
-                        ModVersionSelectionDropdown(
-                            mod: mod,
-                            width: versionSelectorWidth,
-                            showTooltip: false),
-                        bestVersion));
+                      ModVersionSelectionDropdown(
+                          mod: mod,
+                          width: versionSelectorWidth,
+                          showTooltip: false),
+                      mod.modVariants,
+                    ));
               })),
       PlutoColumn(
           title: '',
@@ -576,21 +586,22 @@ class _Smol3State extends ConsumerState<Smol3>
           return ContextMenuRegion(
               contextMenu: ModListMini.buildContextMenu(mod, ref, context),
               child: tooltippy(
-                  // affixToTop( child:
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(
-                      minWidth: 600,
-                    ),
-                    child: Text(
-                      rendererContext.cell.value ?? "(no name)",
-                      style: GoogleFonts.roboto(
-                        textStyle: theme.textTheme.labelLarge
-                            ?.copyWith(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    // )
+                // affixToTop( child:
+                ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    minWidth: 600,
                   ),
-                  bestVersion!));
+                  child: Text(
+                    rendererContext.cell.value ?? "(no name)",
+                    style: GoogleFonts.roboto(
+                      textStyle: theme.textTheme.labelLarge
+                          ?.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  // )
+                ),
+                mod.modVariants,
+              ));
         }),
         // onSort: (columnIndex, ascending) => _onSort(
         //     columnIndex,

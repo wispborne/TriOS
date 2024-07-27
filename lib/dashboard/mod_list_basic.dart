@@ -44,7 +44,7 @@ class ModListMini extends ConsumerStatefulWidget {
             icon: Icons.folder,
             onSelected: () {
               launchUrl(
-                  Uri.parse("file:${modVariant.modsFolder.absolute.path}"));
+                  Uri.parse("file:${modVariant.modFolder.absolute.path}"));
             }),
         MenuItem(
           label:

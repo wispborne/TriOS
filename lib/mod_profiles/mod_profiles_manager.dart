@@ -4,7 +4,6 @@ import 'dart:convert';
 import 'package:collection/collection.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
-import 'package:trios/models/mod.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
@@ -143,14 +142,21 @@ class ModProfileManagerNotifier extends AsyncNotifier<ModProfiles> {
   }
 
   void activateModProfile(String modProfileId) async {
+    Fimber.i("Activating mod profile $modProfileId.");
     try {
       // Bail if the profile doesn't exist or is already active
       final profile = state.valueOrNull?.modProfiles
           .firstWhereOrNull((profile) => profile.id == modProfileId);
-      if (profile == null) return;
+      if (profile == null) {
+        Fimber.w("Profile $modProfileId not found.");
+        return;
+      }
       final activeProfileId =
           ref.read(appSettings.select((s) => s.activeModProfileId));
-      if (activeProfileId == modProfileId) return;
+      if (activeProfileId == modProfileId) {
+        Fimber.i("Profile $modProfileId is already active.");
+        return;
+      }
 
       final allMods = ref.read(AppState.mods);
       final modVariants = ref.read(AppState.modVariants).valueOrNull ?? [];
@@ -199,28 +205,37 @@ class ModProfileManagerNotifier extends AsyncNotifier<ModProfiles> {
       // ref.read(appSettings.notifier).update((s) => s.copyWith(
       //       activeModProfileId: null,
       //     ));
+      Fimber.i("Pausing profile updates while swapping.");
       pauseProfileUpdates = true;
 
       for (final pair in mergedList) {
         final mod = pair.mod;
         final variant = pair.variant;
         if (mod == null) {
-          Fimber.w("Mod not found for variant ${pair.variant?.smolId}");
+          Fimber.w("Mod not found for variant ${pair.variant?.smolId}.");
           continue;
         }
 
         Fimber.d(
-            "Changing active mod variant for ${mod.id} to ${variant?.smolId}");
+            "Changing active mod variant for ${mod.id} to ${variant?.smolId}.");
         await ref
             .read(AppState.modVariants.notifier)
-            .changeActiveModVariant(mod, variant);
+            .changeActiveModVariant(mod, variant, validateDependencies: false);
       }
 
+      await ref
+          .read(AppState.modVariants.notifier)
+          .validateModDependencies();
       ref.read(appSettings.notifier).update((s) => s.copyWith(
             activeModProfileId: modProfileId,
           ));
     } finally {
       pauseProfileUpdates = false;
+      // Reload all just in case.
+      // TODO make it so this isn't needed.
+      await ref.read(AppState.modVariants.notifier).reloadModVariants();
+      Fimber.i("Resuming profile updates.");
+      Fimber.i("Finished activating mod profile $modProfileId.");
     }
   }
 }

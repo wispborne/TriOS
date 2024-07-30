@@ -164,9 +164,11 @@ class ModManagerNotifier extends AsyncNotifier<void> {
 }
 
 Future<List<ModVariant>> getModsVariantsInFolder(Directory modsFolder) async {
-  var mods = <ModVariant?>[];
+  final mods = <ModVariant?>[];
+  final folders =
+      [modsFolder] + [...modsFolder.listSync().whereType<Directory>()];
 
-  for (var modFolder in modsFolder.listSync().whereType<Directory>()) {
+  for (final modFolder in folders) {
     try {
       var progressText = StringBuffer();
       var modInfo = await getModInfo(modFolder, progressText);
@@ -238,11 +240,13 @@ File? getVersionFile(Directory modFolder) {
 Future<ModInfo?> getModInfo(
     Directory modFolder, StringBuffer progressText) async {
   try {
-    return modFolder
-        .listSync()
-        .whereType<File>()
-        .firstWhereOrNull((file) => file.nameWithExtension.equalsAnyIgnoreCase(
-            [Constants.modInfoFileName, ...Constants.modInfoFileDisabledNames]))
+    final possibleModInfos = [
+      Constants.modInfoFileName,
+      ...Constants.modInfoFileDisabledNames
+    ].map((it) => modFolder.resolve(it).toFile()).toList();
+
+    return possibleModInfos
+        .firstWhereOrNull((file) => file.existsSync())
         ?.let((modInfoFile) async {
       var rawString =
           await withFileHandleLimit(() => modInfoFile.readAsString());

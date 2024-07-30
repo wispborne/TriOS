@@ -1,8 +1,10 @@
-# 0.1.5
+# 0.2.0
 - Added
   - Mod Profiles
     - Quickly swap between mod lists.
     - Different mod versions can be assigned to different profiles.
+  - "Delete Mod" context menu item.
+  - "Open Folder" menu item now shows all versions installed.
 - Fixed
   - Chipper log viewer not correctly condensing consecutive lines.
   - Grey screen if using an old TriOS version after using a newer one that added a new setting.
@@ -13,7 +15,7 @@
   - Incorrect sorting in same cases (e.g. LazyLib `2.0` and `2.0b`).
     - Now sorts using `.version` file first, then by `mod_info.json`'s version with everything but numbers and periods removed, and finally by `mod_info.json`'s version without anything removed. 
 - Changed
-  - Mods tab: in the version selector, versions are a different color if they are for a different version of the game.
+  - Mods tab: in the version selector, `versions are a different color if they are for a different version of the game.`
   - Disabled mods with multiple versions will now use `mod_info.json.disabled` instead of `mod_info.json.disabled-by-TriOS`.
     - It's less obvious, but it's compatible with SMOL this way.
 

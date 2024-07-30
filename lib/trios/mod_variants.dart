@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mutex/mutex.dart';
@@ -30,7 +31,7 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
     });
   }
 
-  Future<void> reloadModVariants() async {
+  Future<void> reloadModVariants({List<ModVariant>? onlyVariants}) async {
     Fimber.i(
         "Loading mod variant data from disk (reading mod_info.json files).");
     final gamePath = ref.watch(appSettings.select((value) => value.gameDir));
@@ -39,7 +40,20 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
       return;
     }
 
-    final variants = await getModsVariantsInFolder(modsPath.toDirectory());
+    final variants = onlyVariants == null
+        ? await getModsVariantsInFolder(modsPath.toDirectory())
+        : (await Future.wait(onlyVariants.map((variant) {
+            try {
+              return getModsVariantsInFolder(variant.modFolder);
+            } catch (e, st) {
+              Fimber.w("Error getting mod variants for ${variant.smolId}",
+                  ex: e, stacktrace: st);
+              return Future.value(null);
+            }
+          })))
+            .whereNotNull()
+            .flattened
+            .toList();
     // for (var variant in variants) {
     //   watchSingleModFolder(
     //       variant,
@@ -58,8 +72,20 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
       _cancelController,
     );
 
-    state = AsyncValue.data(variants);
+    if (onlyVariants == null) {
+      // Replace the entire state with the new data.
+      state = AsyncValue.data(variants);
+    } else {
+      // Update only the variants that were changed, keep the rest of the state.
+      final newVariants = state.valueOrNull ?? [];
+      for (var variant in onlyVariants) {
+        newVariants.removeWhere((it) => it.smolId == variant.smolId);
+      }
+      newVariants.addAll(variants);
+      state = AsyncValue.data(newVariants);
+    }
   }
+
   // TODO should move all this into modManager at some point.
 
   Future<void> changeActiveModVariant(Mod mod, ModVariant? modVariant,
@@ -119,7 +145,8 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
     }
 
     // TODO update ONLY the mod that changed and any dependents/dependencies.
-    await reloadModVariants();
+    await reloadModVariants(
+        onlyVariants: [...activeVariants, modVariant].whereNotNull().toList());
 
     if (validateDependencies) {
       validateModDependencies(modsToFreeze: [mod.id]);

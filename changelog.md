@@ -6,6 +6,7 @@
   - "Delete Mod" context menu item.
   - "Edit mod_info.json" context menu item.
   - "Open Folder" menu item now shows all versions installed.
+  - "Dependents" info in the mod details panel, showing which mods depend on the selected mod.
 - Fixed
   - Chipper log viewer not correctly condensing consecutive lines.
   - Grey screen if using an old TriOS version after using a newer one that added a new setting.

@@ -848,6 +848,12 @@ extension ModVariantListExtensions on List<ModVariant> {
   List<ModVariant> get sortedModVariants {
     return sortedBy((variant) => variant.modInfo.nameOrId);
   }
+
+  List<Mod> getAsMods(List<Mod> allMods) {
+    return allMods
+        .filter((mod) => any((variant) => variant.modInfo.id == mod.id))
+        .toList();
+  }
 }
 
 extension ModVariantExt on ModVariant {

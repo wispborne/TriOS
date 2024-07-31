@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,6 +10,7 @@ import 'package:trios/utils/extensions.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../models/mod.dart';
+import '../models/mod_variant.dart';
 import '../trios/app_state.dart';
 import '../trios/constants.dart';
 import '../utils/logging.dart';
@@ -58,7 +60,15 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel> {
     final selectedMod = widget.mod;
     final modVariants = ref.watch(AppState.modVariants).valueOrNull;
     final enabledMods = ref.watch(AppState.enabledModsFile).valueOrNull;
+    final allMods = ref.watch(AppState.mods);
     final gameVersion = ref.watch(AppState.starsectorVersion).valueOrNull;
+    final dependents = selectedMod != null
+        ? calculateDependents(selectedMod.findFirstEnabledOrHighestVersion!)
+            .getAsMods(allMods)
+            .sortedBy((mod) => mod.hasEnabledVariant
+                ? "        "
+                : mod.findFirstEnabledOrHighestVersion?.modInfo.name ?? "")
+        : <Mod>[];
 
     return Theme(
       data: createPaletteTheme(context, paletteGenerator),
@@ -265,6 +275,28 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel> {
                                 ],
                               );
                             }),
+                          if (dependents.isNotEmpty)
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const SizedBox(height: 16),
+                                const Text("Dependents",
+                                    style:
+                                        TextStyle(fontWeight: FontWeight.bold)),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: dependents.map((dep) {
+                                    final variant =
+                                        dep.findFirstEnabledOrHighestVersion;
+                                    final enabled =
+                                        variant?.isEnabled(allMods) == true;
+                                    return Text(
+                                      "- ${variant?.modInfo.name} ${enabled ? "(enabled)" : ""}",
+                                    );
+                                  }).toList(),
+                                ),
+                              ],
+                            ),
                           if (versionCheck?.remoteVersion?.modThreadId
                                   .isNotNullOrEmpty() ??
                               false)
@@ -307,5 +339,17 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel> {
         );
       }),
     );
+  }
+
+  List<ModVariant> calculateDependents(ModVariant variant) {
+    final modVariants = ref.watch(AppState.modVariants).valueOrNull;
+    final enabledMods = ref.watch(AppState.enabledModsFile).valueOrNull;
+    if (modVariants == null || enabledMods == null) return [];
+    return modVariants
+        .where((v) => v.modInfo.dependencies.any((dep) {
+              var satisfiedBy = dep.isSatisfiedBy(variant, enabledMods);
+              return satisfiedBy is VersionWarning || satisfiedBy is Satisfied || satisfiedBy is Disabled;
+            }))
+        .toList();
   }
 }

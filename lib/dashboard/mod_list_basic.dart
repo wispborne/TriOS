@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -8,15 +6,13 @@ import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/enabled_mods.dart';
-import 'package:trios/models/version.dart';
-import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/conditional_wrap.dart';
 import 'package:trios/widgets/disable_if_cannot_write_mods.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:vs_scrollbar/vs_scrollbar.dart';
 
+import '../mod_manager/mod_context_menu.dart';
 import '../mod_manager/smol3.dart';
 import '../mod_manager/version_checker.dart';
 import '../models/mod.dart';
@@ -24,7 +20,6 @@ import '../trios/app_state.dart';
 import '../trios/download_manager/download_manager.dart';
 import '../utils/search.dart';
 import '../widgets/add_new_mods_button.dart';
-import '../widgets/debug_info.dart';
 import 'mod_list_basic_entry.dart';
 
 class ModListMini extends ConsumerStatefulWidget {
@@ -32,152 +27,6 @@ class ModListMini extends ConsumerStatefulWidget {
 
   @override
   ConsumerState createState() => _ModListMiniState();
-
-  static ContextMenu buildContextMenu(
-      Mod mod, WidgetRef ref, BuildContext context) {
-    final currentStarsectorVersion =
-        ref.read(appSettings.select((s) => s.lastStarsectorVersion));
-    final modVariant = mod.findFirstEnabledOrHighestVersion!;
-
-    return ContextMenu(
-      entries: <ContextMenuEntry>[
-        menuItemOpenFolder(mod),
-        MenuItem(
-          label:
-              'Open Forum Page${modVariant.versionCheckerInfo?.modThreadId == null ? ' (not set)' : ''}',
-          icon: Icons.open_in_browser,
-          onSelected: () {
-            if (modVariant.versionCheckerInfo?.modThreadId == null) {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                content: Text(
-                    "Mod has not set up Version Checker, or it does not contain a forum thread id."),
-              ));
-              return;
-            }
-            launchUrl(Uri.parse(
-                "${Constants.forumModPageUrl}${modVariant.versionCheckerInfo?.modThreadId}"));
-          },
-        ),
-        menuItemDeleteFolder(mod, context, ref),
-        if (currentStarsectorVersion != null &&
-            Version.parse(modVariant.modInfo.gameVersion ?? "0.0.0",
-                    sanitizeInput: true) !=
-                Version.parse(currentStarsectorVersion, sanitizeInput: true))
-          MenuItem(
-              label: 'Force to $currentStarsectorVersion',
-              icon: Icons.electric_bolt,
-              onSelected: () {
-                forceChangeModGameVersion(modVariant, currentStarsectorVersion);
-                ref.invalidate(AppState.modVariants);
-              }),
-        MenuItem(
-            label: "Show Raw Info",
-            icon: Icons.info,
-            onSelected: () {
-              showDebugViewDialog(context, mod);
-            }),
-      ],
-      padding: const EdgeInsets.all(8.0),
-    );
-  }
-
-  static MenuItem menuItemOpenFolder(Mod mod) {
-    if (mod.modVariants.length == 1) {
-      return MenuItem(
-          label: 'Open Folder',
-          icon: Icons.folder,
-          onSelected: () {
-            launchUrl(Uri.parse(
-                "file:${mod.modVariants.first.modFolder.absolute.path}"));
-          });
-    } else {
-      return MenuItem.submenu(
-          label: "Open Folder...",
-          icon: Icons.folder,
-          onSelected: () {
-            launchUrl(Uri.parse(
-                "file:${mod.findFirstEnabledOrHighestVersion?.modFolder.absolute.path}"));
-          },
-          items: [
-            for (var variant in mod.modVariants.sortedModVariants)
-              MenuItem(
-                  label: variant.modInfo.version.toString(),
-                  onSelected: () {
-                    launchUrl(
-                        Uri.parse("file:${variant.modFolder.absolute.path}"));
-                  }),
-          ]);
-    }
-  }
-
-  static MenuItem menuItemDeleteFolder(
-      Mod mod, BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    Future<void> deleteFolder(String folderPath) async {
-      final directory = Directory(folderPath);
-      if (await directory.exists()) {
-        await directory.delete(recursive: true);
-      }
-      ref.read(AppState.modVariants.notifier).reloadModVariants();
-    }
-
-    Future<void> showDeleteConfirmationDialog(String folderPath) async {
-      final shouldDelete = await showDialog<bool>(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: const Text('Delete Mod'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                    "Are you sure you want to delete '${folderPath.toDirectory().name}'?\nThis action cannot be undone."),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(true),
-                child: const Text('Delete'),
-              ),
-            ],
-          );
-        },
-      );
-
-      if (shouldDelete == true) {
-        await deleteFolder(folderPath);
-      }
-    }
-
-    if (mod.modVariants.length == 1) {
-      return MenuItem(
-        label: 'Delete Folder',
-        icon: Icons.delete,
-        onSelected: () {
-          showDeleteConfirmationDialog(
-              mod.modVariants.first.modFolder.absolute.path);
-        },
-      );
-    } else {
-      return MenuItem.submenu(
-        label: "Delete Folder...",
-        icon: Icons.delete,
-        items: [
-          for (var variant in mod.modVariants.sortedModVariants)
-            MenuItem(
-              label: variant.modInfo.version.toString(),
-              onSelected: () {
-                showDeleteConfirmationDialog(variant.modFolder.absolute.path);
-              },
-            ),
-        ],
-      );
-    }
-  }
 }
 
 class _ModListMiniState extends ConsumerState<ModListMini>
@@ -452,8 +301,8 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                 }
 
                                 return ContextMenuRegion(
-                                  contextMenu: ModListMini.buildContextMenu(
-                                      mod, ref, context),
+                                  contextMenu:
+                                      buildModContextMenu(mod, ref, context),
                                   child: ModListBasicEntry(
                                       mod: mod,
                                       isEnabled:

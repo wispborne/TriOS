@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
@@ -18,10 +19,21 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
   /// Master list of all mod variants found in the mods folder.
   static var _cancelController = StreamController<void>();
   final lock = Mutex();
+  bool _isWatching = false;
 
   @override
   Future<List<ModVariant>> build() async {
     await reloadModVariants();
+    if (!_isWatching) {
+      _isWatching = true;
+      final modsPath = ref.watch(appSettings.select((value) => value.modsDir));
+      if (modsPath != null) {
+        addModsFolderFileWatcher(modsPath, (List<File> files) {
+          Fimber.i("Mods folder changed, invalidating mod variants.");
+          ref.invalidateSelf();
+        });
+      }
+    }
     return state.valueOrNull ?? [];
   }
 
@@ -62,15 +74,15 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
     // }
     _cancelController.close();
     _cancelController = StreamController<void>();
-    watchModsFolder(
-      modsPath,
-      ref,
-      (event) {
-        Fimber.i("Mods folder changed, invalidating mod variants.");
-        ref.invalidateSelf();
-      },
-      _cancelController,
-    );
+    // watchModsFolder(
+    //   modsPath,
+    //   ref,
+    //   (event) {
+    //     Fimber.i("Mods folder changed, invalidating mod variants.");
+    //     ref.invalidateSelf();
+    //   },
+    //   _cancelController,
+    // );
 
     if (onlyVariants == null) {
       // Replace the entire state with the new data.

@@ -25,13 +25,13 @@ import 'package:trios/widgets/add_new_mods_button.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 
 import '../dashboard/mod_dependencies_widget.dart';
-import '../dashboard/mod_list_basic.dart';
 import '../dashboard/version_check_icon.dart';
 import '../models/mod.dart';
 import '../trios/download_manager/download_manager.dart';
 import '../widgets/mod_type_icon.dart';
 import '../widgets/moving_tooltip.dart';
 import '../widgets/tooltip_frame.dart';
+import 'mod_context_menu.dart';
 import 'mod_summary_panel.dart';
 
 class Smol3 extends ConsumerStatefulWidget {
@@ -529,8 +529,7 @@ class _Smol3State extends ConsumerState<Smol3>
                         GameCompatibility.incompatible;
 
                 return ContextMenuRegion(
-                    contextMenu:
-                        ModListMini.buildContextMenu(mod, ref, context),
+                    contextMenu: buildModContextMenu(mod, ref, context),
                     child: tooltippy(
                       ModVersionSelectionDropdown(
                           mod: mod,
@@ -584,7 +583,7 @@ class _Smol3State extends ConsumerState<Smol3>
           final bestVersion = mod.findFirstEnabledOrHighestVersion;
           final theme = Theme.of(context);
           return ContextMenuRegion(
-              contextMenu: ModListMini.buildContextMenu(mod, ref, context),
+              contextMenu: buildModContextMenu(mod, ref, context),
               child: tooltippy(
                 // affixToTop( child:
                 ConstrainedBox(
@@ -628,7 +627,7 @@ class _Smol3State extends ConsumerState<Smol3>
           final lightTextColor =
               theme.colorScheme.onSurface.withOpacity(lightTextOpacity);
           return ContextMenuRegion(
-              contextMenu: ModListMini.buildContextMenu(mod, ref, context),
+              contextMenu: buildModContextMenu(mod, ref, context),
               child: Text(rendererContext.cell.value ?? "(no author)",
                   style: theme.textTheme.labelLarge
                       ?.copyWith(color: lightTextColor)));
@@ -838,7 +837,7 @@ class _Smol3State extends ConsumerState<Smol3>
           final bestVersion = mod.findFirstEnabledOrHighestVersion;
           if (bestVersion == null) return const SizedBox();
           return ContextMenuRegion(
-              contextMenu: ModListMini.buildContextMenu(mod, ref, context),
+              contextMenu: buildModContextMenu(mod, ref, context),
               child: Text("todo",
                   style: theme.textTheme.labelLarge
                       ?.copyWith(color: lightTextColor)));
@@ -863,7 +862,7 @@ class _Smol3State extends ConsumerState<Smol3>
           final theme = Theme.of(context);
 
           return ContextMenuRegion(
-              contextMenu: ModListMini.buildContextMenu(mod, ref, context),
+              contextMenu: buildModContextMenu(mod, ref, context),
               child: Opacity(
                 opacity: lightTextOpacity,
                 child: Text(rendererContext.cell.value ?? "(no game version)",
@@ -918,7 +917,7 @@ class _Smol3State extends ConsumerState<Smol3>
             //     style: theme.textTheme.labelLarge
             //         ?.copyWith(color: lightTextColor)),
             // builder: (context, child) => ContextMenuRegion(
-            //     contextMenu: ModListMini.buildContextMenu(
+            //     contextMenu: buildModContextMenu(
             //         mod, ref, context),
             //     child: affixToTop(child: child)),
             ),

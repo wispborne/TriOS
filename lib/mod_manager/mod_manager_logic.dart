@@ -16,7 +16,6 @@ import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
-import 'package:trios/utils/map_diff.dart';
 import 'package:trios/utils/util.dart';
 
 import '../chipper/utils.dart';
@@ -341,42 +340,58 @@ watchModsFolder(
             appSettings.select((value) => value.secondsBetweenModFolderChecks))
         : 1;
     await Future.delayed(Duration(seconds: delaySeconds));
-    if (ref.read(AppState.isWindowFocused)) {
-      checkModsFolderForUpdates(modsFolder, onUpdated);
-    }
+    // TODO: re-add full manual scan, minus time-based diffing.
+    // if (ref.read(AppState.isWindowFocused)) {
+    //   checkModsFolderForUpdates(modsFolder, onUpdated);
+    // }
   }
 }
 
-final _lastPathsAndLastModified = <String, DateTime>{};
+addModsFolderFileWatcher(
+  Directory modsFolder,
+  Function(List<File> modInfoFilesFound) onUpdated,
+) {
+  final watcher = modsFolder.watch();
+  watcher.listen((event) {
+    if (event.type == FileSystemEvent.create ||
+        event.type == FileSystemEvent.delete ||
+        event.type == FileSystemEvent.modify) {
+      // checkModsFolderForUpdates(modsFolder, (_) {});
+      onUpdated([event.path.toFile()]);
+    }
+  });
+}
+
+// final _lastPathsAndLastModified = <String, DateTime>{};
 
 /// NOT THREAD SAFE.
 /// Watches the mods folder for changes and calls [onUpdated] when a mod_info.json file is added, removed, or modified.
 /// [cancelController] is used to cancel the stream.
 /// [onUpdated] is called with a list of all mod_info.json files found in the mods folder.
 /// Uses a static variable to keep track of the last paths and last modified times of the mod_info.json files.
-void checkModsFolderForUpdates(
-    Directory modsFolder, Function(List<File> modInfoFilesFound) onUpdated) {
-  Fimber.d("Checking mod_info.json files in ${modsFolder.absolute}.");
-  final modInfoFiles = modsFolder
-      .listSync()
-      .whereType<Directory>()
-      .map((it) => getModInfoFile(it))
-      .whereNotNull()
-      .toList();
-
-  final newPathsAndLastModified = modInfoFiles
-      .map((it) => MapEntry(it.path, it.lastModifiedSync()))
-      .toMap();
-
-  // if (lastPathsAndLastModified.isNotEmpty) {
-  final diff = _lastPathsAndLastModified.compareWith(newPathsAndLastModified);
-  if (diff.hasChanged) {
-    // TODO use diff for more efficient UI updates
-    _lastPathsAndLastModified.clear();
-    _lastPathsAndLastModified.addAll(newPathsAndLastModified);
-    onUpdated(modInfoFiles);
-  }
-}
+// void checkModsFolderForUpdates(
+//     Directory modsFolder, Function(List<File> modInfoFilesFound) onUpdated) {
+//   Fimber.d("Checking mod_info.json files in ${modsFolder.absolute}.");
+//   final modInfoFiles = modsFolder
+//       .listSync()
+//       .whereType<Directory>()
+//       .map((it) => getModInfoFile(it))
+//       .whereNotNull()
+//       .toList();
+//
+//   final newPathsAndLastModified = modInfoFiles
+//       .map((it) => MapEntry(it.path, it.lastModifiedSync()))
+//       .toMap();
+//
+//   // if (lastPathsAndLastModified.isNotEmpty) {
+//   final diff = _lastPathsAndLastModified.compareWith(newPathsAndLastModified);
+//   if (diff.hasChanged) {
+//     // TODO use diff for more efficient UI updates
+//     _lastPathsAndLastModified.clear();
+//     _lastPathsAndLastModified.addAll(newPathsAndLastModified);
+//     onUpdated(modInfoFiles);
+//   }
+// }
 
 /// Looks for a mod_info.json file in the mod folder. Returns a disabled one if no enabled one is found.
 File? getModInfoFile(Directory modFolder) {

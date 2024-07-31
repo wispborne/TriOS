@@ -16,7 +16,6 @@ import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../dashboard/mod_dependencies_widget.dart';
-import '../dashboard/mod_list_basic.dart';
 import '../dashboard/version_check_icon.dart';
 import '../dashboard/version_check_text_readout.dart';
 import '../datatable3/data_table_3.dart';
@@ -26,6 +25,7 @@ import '../trios/download_manager/download_manager.dart';
 import '../widgets/mod_type_icon.dart';
 import '../widgets/moving_tooltip.dart';
 import '../widgets/tooltip_frame.dart';
+import 'mod_context_menu.dart';
 
 class Smol2 extends ConsumerStatefulWidget {
   const Smol2({super.key});
@@ -307,8 +307,8 @@ class _Smol2State extends ConsumerState<Smol2> {
                           affixToTop(
                               child: ModTypeIcon(modVariant: bestVersion)),
                           builder: (context, child) => ContextMenuRegion(
-                              contextMenu: ModListMini.buildContextMenu(
-                                  mod, ref, context),
+                              contextMenu:
+                                  buildModContextMenu(mod, ref, context),
                               child: child),
                         ),
                         // Icon
@@ -323,8 +323,8 @@ class _Smol2State extends ConsumerState<Smol2> {
                             ),
                           ),
                           builder: (context, child) => ContextMenuRegion(
-                              contextMenu: ModListMini.buildContextMenu(
-                                  mod, ref, context),
+                              contextMenu:
+                                  buildModContextMenu(mod, ref, context),
                               child: child),
                         ),
                         // Name
@@ -342,8 +342,8 @@ class _Smol2State extends ConsumerState<Smol2> {
                             ),
                           ),
                           builder: (context, child) => ContextMenuRegion(
-                              contextMenu: ModListMini.buildContextMenu(
-                                  mod, ref, context),
+                              contextMenu:
+                                  buildModContextMenu(mod, ref, context),
                               child: tooltippy(
                                   affixToTop(child: child), bestVersion)),
                         ),
@@ -352,8 +352,8 @@ class _Smol2State extends ConsumerState<Smol2> {
                               style: theme.textTheme.labelLarge
                                   ?.copyWith(color: lightTextColor)),
                           builder: (context, child) => ContextMenuRegion(
-                              contextMenu: ModListMini.buildContextMenu(
-                                  mod, ref, context),
+                              contextMenu:
+                                  buildModContextMenu(mod, ref, context),
                               child: affixToTop(child: child)),
                         ),
                         DataCell3(affixToTop(
@@ -380,12 +380,16 @@ class _Smol2State extends ConsumerState<Smol2> {
                                                       localVersionCheck,
                                                       remoteVersionCheck) ==
                                                   -1) {
-                                            ref.read(downloadManager.notifier).downloadUpdateViaBrowser(
-                                                remoteVersionCheck!
-                                                    .remoteVersion!,
-                                                context,
-                                                activateVariantOnComplete: true,
-                                                modInfo: bestVersion.modInfo);
+                                            ref
+                                                .read(downloadManager.notifier)
+                                                .downloadUpdateViaBrowser(
+                                                    remoteVersionCheck!
+                                                        .remoteVersion!,
+                                                    context,
+                                                    activateVariantOnComplete:
+                                                        true,
+                                                    modInfo:
+                                                        bestVersion.modInfo);
                                           } else {
                                             showDialog(
                                                 context: context,
@@ -468,8 +472,8 @@ class _Smol2State extends ConsumerState<Smol2> {
                               style: theme.textTheme.labelLarge
                                   ?.copyWith(color: lightTextColor)),
                           builder: (context, child) => ContextMenuRegion(
-                              contextMenu: ModListMini.buildContextMenu(
-                                  mod, ref, context),
+                              contextMenu:
+                                  buildModContextMenu(mod, ref, context),
                               child: affixToTop(child: child)),
                         ),
                         DataCell3(
@@ -485,12 +489,12 @@ class _Smol2State extends ConsumerState<Smol2> {
                                                 .lastStarsectorVersion) ==
                                         GameCompatibility.perfectMatch
                                     ? theme.textTheme.labelLarge
-                                    : theme.textTheme.labelLarge
-                                        ?.copyWith(color: ThemeManager.vanillaErrorColor)),
+                                    : theme.textTheme.labelLarge?.copyWith(
+                                        color: ThemeManager.vanillaErrorColor)),
                           ),
                           builder: (context, child) => ContextMenuRegion(
-                              contextMenu: ModListMini.buildContextMenu(
-                                  mod, ref, context),
+                              contextMenu:
+                                  buildModContextMenu(mod, ref, context),
                               child: affixToTop(child: child)),
                         ),
                       ],

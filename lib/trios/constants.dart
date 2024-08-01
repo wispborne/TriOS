@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:intl/intl.dart';
 import 'package:trios/utils/extensions.dart';
 
 class Constants {
@@ -57,6 +58,7 @@ class Constants {
     ".gz",
     ".bz2",
   ];
+  static DateFormat dateTimeFormat = DateFormat.yMMMMd(Intl.getCurrentLocale()).add_jm();
 
   static const modAuthorAliases = [
     ["RustyCabbage", "rubi", "ceruleanpancake"],

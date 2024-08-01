@@ -1,9 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
-import 'package:intl/intl.dart';
 import 'package:trios/themes/theme_manager.dart';
+import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/widgets/blur.dart';
 import 'package:trios/widgets/disable.dart';
@@ -29,13 +30,14 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final modProfilesAsync = ref.watch(modProfilesProvider);
     final activeProfileId =
         ref.watch(appSettings.select((s) => s.activeModProfileId));
     final theme = Theme.of(context);
-    final dateFormat = DateFormat.yMMMMd(Intl.getCurrentLocale()).add_jm();
     const minHeight = 120.0;
     const cardPadding = 8.0;
+    final dateTimeFormat = Constants.dateTimeFormat;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -130,10 +132,10 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                                         style: theme.textTheme.labelSmall),
                                     Tooltip(
                                       message:
-                                          'Created: ${dateFormat.format(profile.dateCreated?.toLocal() ?? DateTime.now())}\n'
-                                          'Last modified: ${dateFormat.format(profile.dateModified?.toLocal() ?? DateTime.now())}',
+                                          'Created: ${dateTimeFormat.format(profile.dateCreated?.toLocal() ?? DateTime.now())}\n'
+                                          'Last modified: ${dateTimeFormat.format(profile.dateModified?.toLocal() ?? DateTime.now())}',
                                       child: Text(
-                                        dateFormat.format(
+                                        dateTimeFormat.format(
                                             profile.dateCreated?.toLocal() ??
                                                 DateTime.now()),
                                         style: theme.textTheme.labelSmall,
@@ -163,6 +165,18 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                                                   ? theme.colorScheme.primary
                                                   : null)),
                                     ),
+                                    IconButton(
+                                        icon: const Icon(Icons.copy_all),
+                                        tooltip: 'Duplicate profile',
+                                        onPressed: () {
+                                          ref
+                                              .read(
+                                                  modProfilesProvider.notifier)
+                                              .createModProfile(
+                                                  '${profile.name} (Copy) ${Constants.dateTimeFormat.format(DateTime.now())}',
+                                                  enabledModVariants: profile
+                                                      .enabledModVariants);
+                                        }),
                                     IconButton(
                                       icon: const Icon(Icons.content_copy),
                                       tooltip: 'Copy mod list to clipboard',
@@ -213,6 +227,10 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                                         },
                                       ),
                                     ),
+                                    if (kDebugMode)
+                                      Tooltip(
+                                          message: 'Id: ${profile.id}',
+                                          child: const Icon(Icons.bug_report))
                                   ],
                                 ),
                                 expansionAnimationStyle:

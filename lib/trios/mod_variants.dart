@@ -19,18 +19,24 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
   /// Master list of all mod variants found in the mods folder.
   static var _cancelController = StreamController<void>();
   final lock = Mutex();
-  bool _isWatching = false;
+  bool _initializedFileWatcher = false;
+  bool shouldAutomaticallyReloadOnFilesChanged = true;
 
   @override
   Future<List<ModVariant>> build() async {
     await reloadModVariants();
-    if (!_isWatching) {
-      _isWatching = true;
+    if (!_initializedFileWatcher) {
+      _initializedFileWatcher = true;
       final modsPath = ref.watch(appSettings.select((value) => value.modsDir));
       if (modsPath != null) {
         addModsFolderFileWatcher(modsPath, (List<File> files) {
-          Fimber.i("Mods folder changed, invalidating mod variants.");
-          ref.invalidateSelf();
+          if (shouldAutomaticallyReloadOnFilesChanged) {
+            Fimber.i("Mods folder changed, invalidating mod variants.");
+            ref.invalidateSelf();
+          } else {
+            Fimber.i(
+                "Mods folder changed, but not reloading mod variants because shouldAutomaticallyReloadOnFilesChanged is false.");
+          }
         });
       }
     }
@@ -172,7 +178,7 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
   Future<void> validateModDependencies({
     List<String>? modsToFreeze,
   }) async {
-    final modifiedModIds = modsToFreeze.toSet();
+    final modifiedModIds = modsToFreeze?.toSet() ?? {};
     var numModsChangedLastLoop = 0;
     final gameVersion = ref.read(AppState.starsectorVersion).valueOrNull;
 
@@ -312,7 +318,7 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
     final enabledMods = ref.read(AppState.enabledModIds).valueOrNull;
     final mods = AppState.getModsFromVariants(
         state.valueOrNull ?? [], enabledMods.orEmpty().toList());
-    Fimber.i("Disabling variant ${modVariant.smolId}");
+    Fimber.i("Disabling variant '${modVariant.smolId}'");
     final modInfoFile =
         modVariant.modFolder.resolve(Constants.unbrickedModInfoFileName);
 
@@ -326,18 +332,18 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
           .resolve(Constants.modInfoFileDisabledNames.first)
           .path);
       Fimber.i(
-          "Disabled ${modVariant.smolId}: renamed to ${Constants.modInfoFileDisabledNames.first}.");
+          "Disabled '${modVariant.smolId}': renamed to '${Constants.modInfoFileDisabledNames.first}'.");
     }
 
     if (disableModInVanillaLauncher) {
       final mod = modVariant.mod(mods)!;
       if (mod.isEnabledInGame) {
         Fimber.i(
-            "Disabling mod ${modVariant.modInfo.id} as part of disabling variant ${modVariant.smolId}.");
+            "Disabling mod '${modVariant.modInfo.id}' as part of disabling variant '${modVariant.smolId}'.");
         _disableModInEnabledMods(modVariant.modInfo.id);
       } else {
         Fimber.i(
-            "Mod ${modVariant.modInfo.id} was already disabled in enabled_mods.json and won't be disabled as part of disabling variant ${modVariant.smolId}.");
+            "Mod '${modVariant.modInfo.id}' was already disabled in enabled_mods.json and won't be disabled as part of disabling variant ${modVariant.smolId}.");
       }
     }
 
@@ -351,7 +357,7 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
     //   }
     // }
 
-    Fimber.i("Disabling ${modVariant.smolId}: success.");
+    Fimber.i("Disabling '${modVariant.smolId}': success.");
   }
 
   Future<void> _disableModInEnabledMods(String modId) async {

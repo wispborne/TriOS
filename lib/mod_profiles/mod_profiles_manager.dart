@@ -40,7 +40,7 @@ final modProfilesProvider =
         ModProfileManagerNotifier.new);
 
 class ModProfileManagerNotifier extends AsyncNotifier<ModProfiles> {
-  bool pauseProfileUpdates = false;
+  bool pauseAutomaticProfileUpdates = false;
 
   static ModProfile defaultModProfile = ModProfile(
     id: const Uuid().v4(),
@@ -77,7 +77,7 @@ class ModProfileManagerNotifier extends AsyncNotifier<ModProfiles> {
     final enabledModVariants = mods.sortedModVariants
         .map((variant) => ShallowModVariant.fromModVariant(variant))
         .toList();
-    if (pauseProfileUpdates) return;
+    if (pauseAutomaticProfileUpdates) return;
     Fimber.d("Updating mod profile with ${enabledModVariants.length} mods");
     updateModProfile(getCurrentModProfile().copyWith(
         enabledModVariants: enabledModVariants, dateModified: DateTime.now()));
@@ -143,6 +143,8 @@ class ModProfileManagerNotifier extends AsyncNotifier<ModProfiles> {
 
   void activateModProfile(String modProfileId) async {
     Fimber.i("Activating mod profile $modProfileId.");
+    var modVariantsNotifier = ref.read(AppState.modVariants.notifier);
+
     try {
       // Bail if the profile doesn't exist or is already active
       final profile = state.valueOrNull?.modProfiles
@@ -206,7 +208,8 @@ class ModProfileManagerNotifier extends AsyncNotifier<ModProfiles> {
       //       activeModProfileId: null,
       //     ));
       Fimber.i("Pausing profile updates while swapping.");
-      pauseProfileUpdates = true;
+      pauseAutomaticProfileUpdates = true;
+      modVariantsNotifier.shouldAutomaticallyReloadOnFilesChanged = false;
 
       for (final pair in mergedList) {
         final mod = pair.mod;
@@ -218,24 +221,25 @@ class ModProfileManagerNotifier extends AsyncNotifier<ModProfiles> {
 
         Fimber.d(
             "Changing active mod variant for ${mod.id} to ${variant?.smolId}.");
-        await ref
-            .read(AppState.modVariants.notifier)
-            .changeActiveModVariant(mod, variant, validateDependencies: false);
+        await modVariantsNotifier.changeActiveModVariant(mod, variant,
+            validateDependencies: false);
       }
 
-      await ref
-          .read(AppState.modVariants.notifier)
-          .validateModDependencies();
+      await modVariantsNotifier.validateModDependencies();
       ref.read(appSettings.notifier).update((s) => s.copyWith(
             activeModProfileId: modProfileId,
           ));
+      Fimber.i("Finished activating mod profile $modProfileId.");
+    } catch (e, stack) {
+      Fimber.e("Failed to activate mod profile $modProfileId.",
+          ex: e, stacktrace: stack);
     } finally {
-      pauseProfileUpdates = false;
+      pauseAutomaticProfileUpdates = false;
+      modVariantsNotifier.shouldAutomaticallyReloadOnFilesChanged = true;
       // Reload all just in case.
       // TODO make it so this isn't needed.
-      await ref.read(AppState.modVariants.notifier).reloadModVariants();
+      await modVariantsNotifier.reloadModVariants();
       Fimber.i("Resuming profile updates.");
-      Fimber.i("Finished activating mod profile $modProfileId.");
     }
   }
 }

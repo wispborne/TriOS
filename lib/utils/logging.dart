@@ -34,7 +34,7 @@ configureLogging(
     const stackTraceBeginIndex = 4;
     const methodCount = 7;
     var consolePrinter = PrettyPrinterCustom(
-      stackTraceBeginIndex: 4,
+      stackTraceBeginIndex: 0,
       methodCount: 7,
       // Anything other than 0 halves the speed of logging.
       // errorMethodCount: 5,
@@ -56,7 +56,7 @@ configureLogging(
     };
 
     _consoleLogger = Logger(
-      level: kDebugMode ? Level.debug : Level.warning,
+      level: kDebugMode ? Level.debug : Level.error,
       // filter: DevelopmentFilter(), // No console logs in release mode.
       printer: consolePrinter,
       output: ConsoleOutput(),
@@ -68,7 +68,7 @@ configureLogging(
     }
 
     _fileLogger = Logger(
-      level: kDebugMode ? Level.debug : Level.debug,
+      level: kDebugMode ? Level.info : Level.debug,
       filter: ProductionFilter(),
       printer: PrettyPrinterCustom(
         stackTraceBeginIndex: stackTraceBeginIndex,

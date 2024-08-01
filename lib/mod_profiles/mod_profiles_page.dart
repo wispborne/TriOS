@@ -8,6 +8,7 @@ import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/widgets/blur.dart';
 import 'package:trios/widgets/disable.dart';
 
+import '../widgets/trios_expansion_tile.dart';
 import 'mod_profiles_manager.dart';
 import 'models/mod_profile.dart';
 
@@ -142,7 +143,7 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                                 ),
                               ),
                               const SizedBox(height: 24),
-                              ExpansionTile(
+                              TriOSExpansionTile(
                                 title: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [

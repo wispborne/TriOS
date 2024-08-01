@@ -17,9 +17,10 @@
   - Incorrect sorting in same cases (e.g. LazyLib `2.0` and `2.0b`).
     - Now sorts using `.version` file first, then by `mod_info.json`'s version with everything but numbers and periods removed, and finally by `mod_info.json`'s version without anything removed. 
 - Changed
+  - Moved the JRE tab into the Dashboard.
   - Mods tab: in the version selector, `versions are a different color if they are for a different version of the game.`
   - Disabled mods with multiple versions will now use `mod_info.json.disabled` instead of `mod_info.json.disabled-by-TriOS`.
-    - It's less obvious, but it's compatible with SMOL this way.
+    - It's less obvious now why it's called `.disabled`, but it makes it cross-compatible with SMOL.
 
 # 0.1.4
 - Added

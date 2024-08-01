@@ -47,7 +47,8 @@ class _JreManagerState extends ConsumerState<JreManager>
         .then((value) {
       jres = value.map((e) => e as JreEntry).toList();
 
-      if (!jres.any((jre) => jre is JreEntryInstalled && jre.versionInt == 23)) {
+      if (!jres
+          .any((jre) => jre is JreEntryInstalled && jre.versionInt == 23)) {
         // Cheating a little by only passing in the progress provider for the JDK download, but it is a much larger download so it should always be the bottleneck.
         jres += [
           JreToDownload(JreVersion("23-Himemi"), Jre23.installJre23,
@@ -218,9 +219,10 @@ class _JreManagerState extends ConsumerState<JreManager>
                                           : SizedBox(
                                               width: iconSize,
                                               height: iconSize,
-                                              child: Icon(jre is JreEntryInstalled
-                                                  ? Icons.coffee
-                                                  : Icons.download)),
+                                              child: Icon(
+                                                  jre is JreEntryInstalled
+                                                      ? Icons.coffee
+                                                      : Icons.download)),
                                       Expanded(
                                         child: Padding(
                                           padding: const EdgeInsets.only(
@@ -321,6 +323,14 @@ class _JreManagerState extends ConsumerState<JreManager>
                                 top: 8, left: 4.0, right: 4.0, bottom: 8),
                             child: RamChanger(),
                           )),
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Text(
+                              "More RAM is not always better.\n6 or 8 GB is enough for almost any game.\n\nUse the Console Commands mod to view RAM use in the top-left of the console.",
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.labelLarge,
+                            ),
+                          )
                         ],
                       ),
                     ),
@@ -345,7 +355,8 @@ class _JreManagerState extends ConsumerState<JreManager>
         jres.firstWhereOrNull((element) => element.isActive(ref, jres))
             as JreEntryInstalled?;
 
-    if (currentJreSource != null && newJre.version == currentJreSource.version) {
+    if (currentJreSource != null &&
+        newJre.version == currentJreSource.version) {
       Fimber.i("JRE ${newJre.versionString} is already active.");
       return;
     }

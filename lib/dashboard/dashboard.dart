@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/chipper/chipper_home.dart';
@@ -5,6 +7,8 @@ import 'package:trios/utils/extensions.dart';
 
 import '../chipper/chipper_state.dart';
 import '../chipper/views/chipper_log.dart';
+import '../jre_manager/jre_manager.dart';
+import '../widgets/trios_expansion_tile.dart';
 import 'launch_with_settings.dart';
 import 'mod_list_basic.dart';
 
@@ -37,10 +41,29 @@ class _DashboardState extends ConsumerState<Dashboard>
         Expanded(
           child: Column(
             children: [
-              const Card(
+              Card(
                   child: Padding(
-                padding: EdgeInsets.all(8),
-                child: LaunchWithSettings(),
+                padding: const EdgeInsets.all(8),
+                child: Column(
+                  children: [
+                    const LaunchWithSettings(),
+                    if (Platform.isWindows)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: TriOSExpansionTile(
+                          title: const Text("JRE & RAM Settings"),
+                          leading: const Icon(Icons.speed),
+                          collapsedBackgroundColor: Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerLow
+                              .withOpacity(0.5),
+                          children: const [
+                            JreManager(),
+                          ],
+                        ),
+                      )
+                  ],
+                ),
               )),
               Expanded(
                 child: Card(
@@ -123,9 +146,7 @@ class _DashboardState extends ConsumerState<Dashboard>
             ],
           ),
         ),
-        const SizedBox(
-            width: 350,
-            child: Card(child: ModListMini()))
+        const SizedBox(width: 350, child: Card(child: ModListMini()))
       ],
     );
   }

@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -20,14 +18,11 @@ import 'package:trios/utils/logging.dart';
 import 'package:trios/vram_estimator/vram_estimator.dart';
 import 'package:trios/widgets/blur.dart';
 import 'package:trios/widgets/changelog_viewer.dart';
-import 'package:trios/widgets/conditional_wrap.dart';
-import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/restartable_app.dart';
 import 'package:trios/widgets/self_update_toast.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:trios/widgets/trios_app_icon.dart';
 
-import 'jre_manager/jre_manager.dart';
 import 'launcher/launcher.dart';
 import 'main.dart';
 import 'mod_manager/smol3.dart';
@@ -54,9 +49,9 @@ class _AppShellState extends ConsumerState<AppShell>
     2: TriOSTools.modProfiles,
     3: TriOSTools.vramEstimator,
     4: TriOSTools.chipper,
-    5: TriOSTools.jreManager,
-    6: TriOSTools.portraits,
-    7: TriOSTools.settings,
+    // 5: TriOSTools.jreManager,
+    5: TriOSTools.portraits,
+    6: TriOSTools.settings,
   };
 
   @override
@@ -82,8 +77,12 @@ class _AppShellState extends ConsumerState<AppShell>
       Fimber.i("No default tool found in settings: $e");
     }
 // Set the current tab to the index of the previously selected tool.
-    tabController.index = tabToolMap.keys
-        .firstWhere((k) => tabToolMap[k] == defaultTool, orElse: () => 0);
+    try {
+      tabController.index = tabToolMap.keys
+          .firstWhere((k) => tabToolMap[k] == defaultTool, orElse: () => 0);
+    } catch (e) {
+      Fimber.e("Error setting default tool: $e");
+    }
 
     try {
 // Check for updates on launch and show toast if available.
@@ -183,10 +182,10 @@ class _AppShellState extends ConsumerState<AppShell>
       const Padding(padding: EdgeInsets.all(8), child: ModProfilePage()),
       const Padding(padding: EdgeInsets.all(8), child: VramEstimatorPage()),
       const Padding(padding: EdgeInsets.all(8), child: ChipperApp()),
-      Platform.isWindows
-          ? const Padding(padding: EdgeInsets.all(0), child: JreManager())
-          : const Center(
-              child: Text("Only supported on Windows for now, sorry.")),
+      // Platform.isWindows
+      //     ? const Padding(padding: EdgeInsets.all(0), child: JreManager())
+      //     : const Center(
+      //         child: Text("Only supported on Windows for now, sorry.")),
       const Padding(padding: EdgeInsets.all(8), child: ImageGridScreen()),
       const Padding(
         padding: EdgeInsets.all(8),
@@ -252,7 +251,7 @@ class _AppShellState extends ConsumerState<AppShell>
                       scrollDirection: Axis.horizontal,
                       controller: scrollController,
                       child: SizedBox(
-                        width: 540,
+                        // width: 540,
                         child: TabBar(
                           controller: tabController,
                           isScrollable: true,
@@ -302,16 +301,16 @@ class _AppShellState extends ConsumerState<AppShell>
                                       "assets/images/chipper/icon.png")),
                                 ),
                                 iconMargin: EdgeInsets.zero),
-                            ConditionalWrap(
-                                condition: !Platform.isWindows,
-                                wrapper: (child) => Disable(
-                                    isEnabled: Platform.isWindows,
-                                    child: child),
-                                child: const Tab(
-                                    text: "JREs",
-                                    icon: Tooltip(
-                                        message: "JRE Manager",
-                                        child: Icon(Icons.coffee)))),
+                            // ConditionalWrap(
+                            //     condition: !Platform.isWindows,
+                            //     wrapper: (child) => Disable(
+                            //         isEnabled: Platform.isWindows,
+                            //         child: child),
+                            //     child: const Tab(
+                            //         text: "JREs",
+                            //         icon: Tooltip(
+                            //             message: "JRE Manager",
+                            //             child: Icon(Icons.coffee)))),
                             const Tab(
                               text: "Portraits",
                               icon: Tooltip(
@@ -392,9 +391,10 @@ class _AppShellState extends ConsumerState<AppShell>
                       child: Stack(
                         children: [
                           TabBarView(
-                              controller: tabController,
-                              physics: const NeverScrollableScrollPhysics(),
-                              children: tabChildren),
+                            controller: tabController,
+                            physics: const NeverScrollableScrollPhysics(),
+                            children: tabChildren,
+                          ),
                           const Positioned(
                             right: 0,
                             bottom: 0,

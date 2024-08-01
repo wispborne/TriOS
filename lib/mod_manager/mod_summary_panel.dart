@@ -7,6 +7,7 @@ import 'package:palette_generator/palette_generator.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../models/mod.dart';
@@ -197,6 +198,33 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel> {
                                     ],
                                   ),
                                 )),
+                          if (versionCheck?.remoteVersion?.modThreadId
+                                  .isNotNullOrEmpty() ??
+                              false)
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const SizedBox(height: 16),
+                                Builder(
+                                  builder: (context) {
+                                    final uri = Uri.parse(
+                                        "${Constants.forumModPageUrl}${versionCheck?.remoteVersion?.modThreadId}");
+                                    return Tooltip(
+                                      message: uri.toString(),
+                                      child: TextButton.icon(
+                                          icon:
+                                              const SvgImageIcon("assets/images/icon-web.svg"),
+                                          label: const Text(
+                                            "Forum Thread",
+                                          ),
+                                          onPressed: () {
+                                            launchUrl(uri);
+                                          }),
+                                    );
+                                  }
+                                ),
+                              ],
+                            ),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -297,25 +325,6 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel> {
                                 ),
                               ],
                             ),
-                          if (versionCheck?.remoteVersion?.modThreadId
-                                  .isNotNullOrEmpty() ??
-                              false)
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const SizedBox(height: 16),
-                                OutlinedButton.icon(
-                                    icon:
-                                        const Icon(Icons.open_in_new, size: 16),
-                                    label: const Text(
-                                      "Forum Thread",
-                                    ),
-                                    onPressed: () {
-                                      launchUrl(Uri.parse(
-                                          "${Constants.forumModPageUrl}${versionCheck?.remoteVersion?.modThreadId}"));
-                                    }),
-                              ],
-                            ),
                         ],
                       ),
                     ),
@@ -348,7 +357,9 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel> {
     return modVariants
         .where((v) => v.modInfo.dependencies.any((dep) {
               var satisfiedBy = dep.isSatisfiedBy(variant, enabledMods);
-              return satisfiedBy is VersionWarning || satisfiedBy is Satisfied || satisfiedBy is Disabled;
+              return satisfiedBy is VersionWarning ||
+                  satisfiedBy is Satisfied ||
+                  satisfiedBy is Disabled;
             }))
         .toList();
   }

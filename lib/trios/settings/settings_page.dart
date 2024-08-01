@@ -14,6 +14,7 @@ import 'package:trios/widgets/svg_image_icon.dart';
 import '../../themes/theme.dart';
 import '../../themes/theme_manager.dart';
 import '../../widgets/restartable_app.dart';
+import '../../widgets/trios_expansion_tile.dart';
 import '../app_state.dart';
 import '../constants.dart';
 import 'debug_section.dart';
@@ -267,7 +268,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   SizedBox.fromSize(size: const Size.fromHeight(20)),
                   Theme(
                     data: theme.copyWith(dividerColor: Colors.transparent),
-                    child: ExpansionTile(
+                    child: TriOSExpansionTile(
                       title: const Text("Debugging Stuff"),
                       leading: Icon(Icons.bug_report,
                           color: Theme.of(context)
@@ -275,16 +276,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                               .color
                               ?.withOpacity(0.7)),
                       expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
-                      collapsedBackgroundColor:
-                          theme.colorScheme.surfaceContainerLow,
-                      backgroundColor: theme.colorScheme.surfaceContainerLow,
-                      collapsedShape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(ThemeManager.cornerRadius)),
-                      shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(ThemeManager.cornerRadius)),
-                      dense: true,
                       children: const [
                         Padding(
                           padding: EdgeInsets.symmetric(horizontal: 8),

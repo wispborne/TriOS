@@ -90,7 +90,7 @@ dependencies:
   dropdown_button2: ^2.3.9
   mutex: ^3.1.0
   flutter_markdown: ^0.7.1
-  pluto_grid: ^8.0.0
+  pluto_grid_plus: ^8.4.2
   path_provider: ^2.0.11
   screen_retriever: ^0.1.9
   text_search: ^1.0.2
@@ -119,7 +119,7 @@ dev_dependencies:
   flutter_lints: ^4.0.0
   riverpod_generator: ^2.4.0
   build_runner: ^2.4.9
-  custom_lint: ^0.6.4
+#  custom_lint: ^0.6.4
   freezed: ^2.5.2
   json_serializable: ^6.8.0
   #  riverpod_lint: ^2.3.9 # <https://github.com/google/reflectable.dart/pull/326>

@@ -7,6 +7,7 @@
   - "Edit mod_info.json" context menu item.
   - "Open Folder" menu item now shows all versions installed.
   - "Dependents" info in the mod details panel, showing which mods depend on the selected mod.
+  - About page.
 - Fixed
   - Chipper log viewer not correctly condensing consecutive lines.
   - Grey screen if using an old TriOS version after using a newer one that added a new setting.
@@ -15,7 +16,8 @@
     - The "enabled" checked `enabled_mods.json`, but didn't check whether TriOS disabled the `mod_info.json` file.
   - Force Game Version didn't work for mods that were disabled and had multiple versions (i.e. had `mod_info.json.disabled-by-TriOS`).
   - Incorrect sorting in same cases (e.g. LazyLib `2.0` and `2.0b`).
-    - Now sorts using `.version` file first, then by `mod_info.json`'s version with everything but numbers and periods removed, and finally by `mod_info.json`'s version without anything removed. 
+    - Now sorts using `.version` file first, then by `mod_info.json`'s version with everything but numbers and periods removed, and finally by `mod_info.json`'s version without anything removed.
+  - Toolbar icons needing to be scrolled to unnecessarily.
 - Changed
   - Moved the JRE tab into the Dashboard.
   - Mods tab: in the version selector, `versions are a different color if they are for a different version of the game.`

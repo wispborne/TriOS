@@ -23,6 +23,7 @@ import 'package:trios/widgets/self_update_toast.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:trios/widgets/trios_app_icon.dart';
 
+import 'about/about_page.dart';
 import 'launcher/launcher.dart';
 import 'main.dart';
 import 'mod_manager/smol3.dart';
@@ -351,6 +352,21 @@ class _AppShellState extends ConsumerState<AppShell>
                   icon: const SvgImageIcon("assets/images/icon-debug.svg"),
                   onPressed: () {
                     OpenFilex.open(logFilePath);
+                  },
+                ),
+              ),
+              Tooltip(
+                message: "About",
+                child: IconButton(
+                  icon: const SvgImageIcon("assets/images/icon-info.svg"),
+                  onPressed: () {
+                    showAboutDialog(
+                      context: context,
+                      applicationIcon: const TriOSAppIcon(),
+                      applicationName: Constants.appTitle,
+                      applicationVersion: "A Starsector toolkit\nby Wisp",
+                      children: [const AboutPage()],
+                    );
                   },
                 ),
               ),

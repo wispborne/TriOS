@@ -78,7 +78,7 @@ class AppState {
       final compatibility =
           compareGameVersions(variant.modInfo.gameVersion, gameVersion);
       final dependencyCheckResult =
-          variant.checkDependencies(modVariants, enabledMods, gameVersion);
+          variant.checkDependencies(modVariants, enabledMods.enabledMods.toList(), gameVersion);
       return MapEntry(variant.smolId,
           DependencyCheck(compatibility, dependencyCheckResult));
     }).toMap();

@@ -31,7 +31,12 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
     final modVariants = ref.watch(AppState.modVariants).valueOrNull;
     final mods = ref.watch(AppState.mods);
     final gameVersion = ref.watch(AppState.starsectorVersion).valueOrNull;
-    final enabledMods = ref.watch(AppState.enabledModsFile).valueOrNull?.filterOutMissingMods(mods);
+    final enabledMods = ref
+        .watch(AppState.enabledModsFile)
+        .valueOrNull
+        ?.filterOutMissingMods(mods)
+        .enabledMods
+        .toList();
     if (modVariants == null || enabledMods == null) return const SizedBox();
 
     final modVariant = widget.modVariant;
@@ -136,8 +141,9 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text("Original game version",
-                  style: theme.textTheme.labelMedium
-                      ?.copyWith(color: ThemeManager.vanillaWarningColor.withOpacity(0.8))),
+                  style: theme.textTheme.labelMedium?.copyWith(
+                      color:
+                          ThemeManager.vanillaWarningColor.withOpacity(0.8))),
               Padding(
                 padding: const EdgeInsets.only(left: 8.0),
                 child: Text(modInfo.originalGameVersion ?? "",

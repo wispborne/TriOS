@@ -184,11 +184,12 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
 
     do {
       numModsChangedLastLoop = 0;
-      final enabledMods = ref.read(AppState.enabledModsFile).valueOrNull;
+      final enabledMods = ref.read(AppState.enabledModsFile).valueOrNull?.enabledMods
+          .toList();
       if (enabledMods == null) return;
 
       final allMods = AppState.getModsFromVariants(
-              state.valueOrNull ?? [], enabledMods.enabledMods.toList())
+              state.valueOrNull ?? [], enabledMods)
           .toList();
       final allVariants = state.valueOrNull ?? [];
       // final dependencyCheck = ref.read(AppState.modCompatibility);

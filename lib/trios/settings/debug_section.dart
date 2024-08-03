@@ -18,138 +18,115 @@ import '../app_state.dart';
 import '../download_manager/download_manager.dart';
 import '../toasts/mod_added_toast.dart';
 
-class DebugSection extends ConsumerWidget {
-  const DebugSection({
-    super.key,
-  });
+class SettingsDebugSection extends ConsumerStatefulWidget {
+  const SettingsDebugSection({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SettingsDebugSection> createState() =>
+      _SettingsDebugSectionState();
+}
+
+class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
+  final searchController = SearchController();
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Padding(
-        //   padding: const EdgeInsets.only(top: 16),
-        //   child: ElevatedButton(
-        //     onPressed: () async {
-        //       final scriptPath = File(
-        //           "F:\\Code\\Starsector\\TriOS\\update-test\\TriOS_self_updater.bat");
-        //       Fimber.v("${scriptPath.path} ${scriptPath.existsSync()}");
-        //
-        //       Process.start("start", ["", scriptPath.path],
-        //           runInShell: true,
-        //           includeParentEnvironment: true,
-        //           mode: ProcessStartMode.detached);
-        //     },
-        //     child: const Text('Run self-update script'),
-        //   ),
-        // ),
-        // Padding(
-        //   padding: const EdgeInsets.only(top: 16),
-        //   child: ElevatedButton(
-        //     onPressed: () async {
-        //       var release = await SelfUpdater.getLatestRelease();
-        //       if (release == null) {
-        //         Fimber.e("No release found");
-        //         return;
-        //       }
-        //
-        //       if (SelfUpdater.hasNewVersion(release)) {
-        //         Fimber.i("New version found: ${release.tagName}");
-        //       } else {
-        //         Fimber.i(
-        //             "No new version found. Force updating anyway.");
-        //       }
-        //
-        //       SelfUpdater.update(release);
-        //     },
-        //     child: const Text('Force Self-Update'),
-        //   ),
-        // ),
-        Padding(
-            padding: const EdgeInsets.only(top: 16),
-            child: ElevatedButton(
-                onPressed: () async {
-                  SelfUpdater.getLatestRelease().then((release) {
-                    if (release == null) {
-                      Fimber.d("No release found");
-                      return;
-                    }
-
-                    toastification.showCustom(
-                        context: context,
-                        builder: (context, item) =>
-                            SelfUpdateToast(release, item));
-                  });
-                },
-                child: const Text('Show self-update toast'))),
-        Padding(
-            padding: const EdgeInsets.only(top: 16),
-            child: ElevatedButton(
-                onPressed: () {
-                  final testMod = ref
-                      .read(AppState.modVariants)
-                      .valueOrNull
-                      .orEmpty()
-                      .firstWhere((variant) =>
-                          variant.modInfo.id.equalsIgnoreCase("magiclib"));
-                  ref.read(downloadManager.notifier).addDownload(
-                        "${testMod.modInfo.nameOrId} ${testMod.bestVersion}",
-                        testMod.versionCheckerInfo!.directDownloadURL!,
-                        Directory.systemTemp,
-                        modInfo: testMod.modInfo,
-                      );
-                },
-                child: const Text('Redownload MagicLib (shows toast)'))),
-        // Show mod added toast
         Padding(
           padding: const EdgeInsets.only(top: 16),
           child: ElevatedButton(
-              onPressed: () {
-                final testMod = ref
-                    .read(AppState.modVariants)
-                    .valueOrNull
-                    .orEmpty()
-                    .firstWhere((variant) =>
-                        variant.modInfo.id.equalsIgnoreCase("magiclib"));
+            onPressed: () async {
+              SelfUpdater.getLatestRelease().then((release) {
+                if (release == null) {
+                  Fimber.d("No release found");
+                  return;
+                }
+
                 toastification.showCustom(
-                    context: context,
-                    builder: (context, item) => ModAddedToast(testMod, item));
-              },
-              child: const Text('Show Mod Added Toast for MagicLib')),
+                  context: context,
+                  builder: (context, item) => SelfUpdateToast(release, item),
+                );
+              });
+            },
+            child: const Text('Show self-update toast'),
+          ),
         ),
         Padding(
-            padding: const EdgeInsets.only(top: 16),
-            child: ElevatedButton(
-                onPressed: () {
-                  // confirmation prompt
-                  showDialog(
-                      context: context,
-                      builder: (context) {
-                        return AlertDialog(
-                          title: const Text("Are you sure?"),
-                          content:
-                              const Text("This will wipe TriOS's settings."),
-                          actions: [
-                            TextButton(
-                                onPressed: () {
-                                  Navigator.of(context).pop();
-                                },
-                                child: const Text('Cancel')),
-                            TextButton(
-                                onPressed: () {
-                                  sharedPrefs.clear();
-                                  ref
-                                      .read(appSettings.notifier)
-                                      .update((state) => Settings());
-                                },
-                                child: const Text('Wipe Settings')),
-                          ],
-                        );
-                      });
+          padding: const EdgeInsets.only(top: 16),
+          child: ElevatedButton(
+            onPressed: () {
+              final testMod = ref
+                  .read(AppState.modVariants)
+                  .valueOrNull
+                  .orEmpty()
+                  .firstWhere((variant) =>
+                      variant.modInfo.id.equalsIgnoreCase("magiclib"));
+              ref.read(downloadManager.notifier).addDownload(
+                    "${testMod.modInfo.nameOrId} ${testMod.bestVersion}",
+                    testMod.versionCheckerInfo!.directDownloadURL!,
+                    Directory.systemTemp,
+                    modInfo: testMod.modInfo,
+                  );
+            },
+            child: const Text('Redownload MagicLib (shows toast)'),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(top: 16),
+          child: ElevatedButton(
+            onPressed: () {
+              final testMod = ref
+                  .read(AppState.modVariants)
+                  .valueOrNull
+                  .orEmpty()
+                  .firstWhere((variant) =>
+                      variant.modInfo.id.equalsIgnoreCase("magiclib"));
+              toastification.showCustom(
+                context: context,
+                builder: (context, item) => ModAddedToast(testMod, item),
+              );
+            },
+            child: const Text('Show Mod Added Toast for MagicLib'),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(top: 16),
+          child: ElevatedButton(
+            onPressed: () {
+              // confirmation prompt
+              showDialog(
+                context: context,
+                builder: (context) {
+                  return AlertDialog(
+                    title: const Text("Are you sure?"),
+                    content: const Text("This will wipe TriOS's settings."),
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          sharedPrefs.clear();
+                          ref
+                              .read(appSettings.notifier)
+                              .update((state) => Settings());
+                        },
+                        child: const Text('Wipe Settings'),
+                      ),
+                    ],
+                  );
                 },
-                child: const Text('Wipe Settings'))),
+              );
+            },
+            child: const Text('Wipe Settings'),
+          ),
+        ),
         SizedBox(
           width: 200,
           child: Column(
@@ -158,14 +135,14 @@ class DebugSection extends ConsumerWidget {
               Padding(
                 padding: const EdgeInsets.only(top: 16.0),
                 child: ElevatedButton(
-                    onPressed: () async {
-                      final latestRelease =
-                          await SelfUpdater.getLatestRelease();
-                      ref
-                          .read(AppState.selfUpdate.notifier)
-                          .updateSelf(latestRelease!);
-                    },
-                    child: const Text("Force Update")),
+                  onPressed: () async {
+                    final latestRelease = await SelfUpdater.getLatestRelease();
+                    ref
+                        .read(AppState.selfUpdate.notifier)
+                        .updateSelf(latestRelease!);
+                  },
+                  child: const Text("Force Update"),
+                ),
               ),
               const SizedBox(height: 4),
               DownloadProgressIndicator(
@@ -176,63 +153,122 @@ class DebugSection extends ConsumerWidget {
           ),
         ),
         Card(
-            child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: SelectionArea(
-                  child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.all(4),
-                          child: Text(
-                              "Note: the below information is not collected by TriOS.\nThis is here in case TriOS is misbehaving, to hopefully see if anything looks wrong.",
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
-                                  ?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 13)),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          "Current directory (env variable): ${Directory.current.path}",
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          "Current directory based on executable: ${Platform.resolvedExecutable}",
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          "Current executable: ${Platform.resolvedExecutable}",
-                        ),
-                        const SizedBox(height: 8),
-                        Text("Temp folder: ${Directory.systemTemp.path}"),
-                        const SizedBox(height: 8),
-                        Text("Locale: ${Platform.localeName}"),
-                        const SizedBox(height: 8),
-                        Text(
-                            "RAM usage: ${ProcessInfo.currentRss.bytesAsReadableMB()}"),
-                        const SizedBox(height: 8),
-                        Text(
-                            "Max RAM usage: ${ProcessInfo.maxRss.bytesAsReadableMB()}"),
-                        const SizedBox(height: 8),
-                        SettingsGroup(
-                          child: Text(
-                              "Settings\n${sharedPrefs.getString(sharedPrefsSettingsKey)}"),
-                        ),
-                        const SizedBox(height: 8),
-                        SettingsGroup(
-                          child: Text(
-                              "Mod Profiles\n${sharedPrefs.getString(ModProfilesSettings.modProfilesKey)}"),
-                        ),
-                        const SizedBox(height: 8),
-                        SettingsGroup(
-                          child: Text(
-                            "Environment variables\n${Platform.environment}",
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: SelectionArea(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: Text(
+                      "Note: the below information is not collected by TriOS.\nThis is here in case TriOS is misbehaving, to hopefully see if anything looks wrong.",
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
                           ),
-                        ),
-                      ]),
-                )))
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                      "Current directory (env variable): ${Directory.current.path}"),
+                  const SizedBox(height: 8),
+                  Text(
+                      "Current directory based on executable: ${Platform.resolvedExecutable}"),
+                  const SizedBox(height: 8),
+                  Text("Current executable: ${Platform.resolvedExecutable}"),
+                  const SizedBox(height: 8),
+                  Text("Temp folder: ${Directory.systemTemp.path}"),
+                  const SizedBox(height: 8),
+                  Text("Locale: ${Platform.localeName}"),
+                  const SizedBox(height: 8),
+                  Text(
+                      "RAM usage: ${ProcessInfo.currentRss.bytesAsReadableMB()}"),
+                  const SizedBox(height: 8),
+                  Text(
+                      "Max RAM usage: ${ProcessInfo.maxRss.bytesAsReadableMB()}"),
+                  const SizedBox(height: 8),
+                  SettingsGroup(
+                    child: Text(
+                        "Settings\n${sharedPrefs.getString(sharedPrefsSettingsKey)}"),
+                  ),
+                  const SizedBox(height: 8),
+                  SettingsGroup(
+                    child: Text(
+                      "Mod Profiles\n${sharedPrefs.getString(ModProfilesSettings.modProfilesKey)}",
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SettingsGroup(
+                    child: Text(
+                      "Environment variables\n${Platform.environment}",
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SettingsGroup(
+                    child: Builder(builder: (context) {
+                      final allSmolIds = ref
+                              .watch(AppState.modVariants)
+                              .valueOrNull
+                              ?.map((variant) => variant.smolId)
+                              .toList() ??
+                          [];
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text("Mod Compatibility"),
+                          SearchAnchor(
+                            searchController: searchController,
+                            builder: (BuildContext context,
+                                SearchController controller) {
+                              return SearchBar(
+                                controller: controller,
+                                leading: const Icon(Icons.search),
+                                hintText: "Filter by variant id",
+                                backgroundColor: WidgetStateProperty.all(
+                                  Theme.of(context)
+                                      .colorScheme
+                                      .surfaceContainer,
+                                ),
+                                onChanged: (value) {
+                                  controller.openView();
+                                },
+                                onTap: () {
+                                  controller.openView();
+                                },
+                              );
+                            },
+                            suggestionsBuilder: (BuildContext context,
+                                SearchController controller) {
+                              return allSmolIds
+                                  .where((id) => id.contains(controller.text))
+                                  .map((id) => ListTile(
+                                        title: Text(id),
+                                        onTap: () {
+                                          setState(() {
+                                            controller.closeView(id);
+                                          });
+                                        },
+                                      ))
+                                  .toList();
+                            },
+                          ),
+                          Text(
+                            "${searchController.text}:\n${ref.watch(AppState.modCompatibility)[searchController.text]?.toString() ?? "(id not found)"}",
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            "ALL\n${ref.watch(AppState.modCompatibility)}",
+                          ),
+                        ],
+                      );
+                    }),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -248,9 +284,10 @@ class SettingsGroup extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
       child: Container(
-          color: Theme.of(context).colorScheme.surfaceContainerLow,
-          padding: const EdgeInsets.all(8),
-          child: child),
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
+        padding: const EdgeInsets.all(8),
+        child: child,
+      ),
     );
   }
 }

@@ -485,7 +485,7 @@ GameCompatibility compareGameVersions(
 
 extension DependencyExt on Dependency {
   ModDependencySatisfiedState isSatisfiedBy(
-      ModVariant variant, EnabledMods enabledMods) {
+      ModVariant variant, List<String> enabledModIds) {
     if (id != variant.modInfo.id) {
       return Missing();
     }
@@ -498,7 +498,7 @@ extension DependencyExt on Dependency {
       }
     }
 
-    if (!variant.modInfo.isEnabled(enabledMods)) {
+    if (!variant.modInfo.isEnabled(enabledModIds)) {
       return Disabled(variant);
     }
 
@@ -508,7 +508,7 @@ extension DependencyExt on Dependency {
   /// Searches [allMods] for the best possible match for this dependency.
   ModDependencySatisfiedState isSatisfiedByAny(
     List<ModVariant> allMods,
-    EnabledMods enabledMods,
+    List<String> enabledModIds,
     String? gameVersion,
   ) {
     var foundDependencies = allMods.filter((mod) => mod.modInfo.id == id);
@@ -517,7 +517,7 @@ extension DependencyExt on Dependency {
     }
 
     final satisfyResults = foundDependencies
-        .map((variant) => isSatisfiedBy(variant, enabledMods))
+        .map((variant) => isSatisfiedBy(variant, enabledModIds))
         .toList();
 
     // Return the least severe state.
@@ -789,19 +789,19 @@ extension ModInfoExt on ModInfo {
     return compareGameVersions(gameVersion, this.gameVersion);
   }
 
-  bool isEnabled(EnabledMods enabledMods) {
-    return enabledMods.enabledMods.contains(id);
+  bool isEnabled(List<String> enabledModIds) {
+    return enabledModIds.contains(id);
   }
 
   /// Searches [modVariants] for the best possible match for this dependency.
   List<ModDependencyCheckResult> checkDependencies(
     List<ModVariant> modVariants,
-    EnabledMods enabledMods,
+    List<String> enabledModIds,
     String? gameVersion,
   ) {
     return dependencies.map((dep) {
       return ModDependencyCheckResult(
-          dep, dep.isSatisfiedByAny(modVariants, enabledMods, gameVersion));
+          dep, dep.isSatisfiedByAny(modVariants, enabledModIds, gameVersion));
     }).toList();
   }
 }
@@ -860,10 +860,10 @@ extension ModVariantExt on ModVariant {
   /// Searches [modVariants] for the best possible match for this dependency.
   List<ModDependencyCheckResult> checkDependencies(
     List<ModVariant> modVariants,
-    EnabledMods enabledMods,
+    List<String> enabledModIds,
     String? gameVersion,
   ) =>
-      modInfo.checkDependencies(modVariants, enabledMods, gameVersion);
+      modInfo.checkDependencies(modVariants, enabledModIds, gameVersion);
 
   GameCompatibility isCompatibleWithGameVersion(String gameVersion) {
     return modInfo.isCompatibleWithGame(gameVersion);
@@ -906,6 +906,10 @@ class DependencyCheck {
               sortLeastSevere: false)
           .let((it) => dependencyChecks
               .firstWhereOrNull((dep) => dep.satisfiedAmount == it));
+
+  @override
+  String toString() =>
+      "{gameCompatibility: $gameCompatibility, dependencyChecks: $dependencyChecks}";
 }
 
 /// How much a given mod variant's dependency is satisfied.
@@ -915,9 +919,12 @@ class ModDependencyCheckResult {
 
   ModDependencyCheckResult(this.dependency, this.satisfiedAmount);
 
+  bool get isCurrentlySatisfied => satisfiedAmount is Satisfied;
+  bool get canBeSatisfiedWithInstalledMods => satisfiedAmount is Satisfied || satisfiedAmount is Disabled || satisfiedAmount is VersionWarning;
+
   @override
   String toString() =>
-      "DependencyCheckResult{dependency: $dependency, satisfiedAmount: $satisfiedAmount}";
+      "{dependency: $dependency, satisfiedAmount: $satisfiedAmount}";
 }
 
 enum GameCompatibility { perfectMatch, warning, incompatible }

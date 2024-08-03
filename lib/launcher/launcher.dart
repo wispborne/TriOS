@@ -108,16 +108,16 @@ class Launcher extends ConsumerWidget {
     final enabledMods = ref
         .read(AppState.enabledModsFile)
         .valueOrNull
-        ?.filterOutMissingMods(mods);
+        ?.filterOutMissingMods(mods)
+        .enabledMods
+        .toList();
     final allVariants = ref.read(AppState.modVariants).valueOrNull ?? [];
     final gameVersion = ref.read(AppState.starsectorVersion).valueOrNull;
     final enabledVariants =
         (mods.map((mod) => mod.findFirstEnabled)).whereNotNull();
     final result = <LaunchPrecheckError>[];
 
-    if (enabledMods == null ||
-        enabledMods.enabledMods.isEmpty ||
-        modsFolder == null) {
+    if (enabledMods == null || enabledMods.isEmpty || modsFolder == null) {
       return [];
     }
 

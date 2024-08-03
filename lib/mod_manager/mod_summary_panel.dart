@@ -60,7 +60,8 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel> {
   Widget build(BuildContext context) {
     final selectedMod = widget.mod;
     final modVariants = ref.watch(AppState.modVariants).valueOrNull;
-    final enabledMods = ref.watch(AppState.enabledModsFile).valueOrNull;
+    final enabledMods =
+        ref.watch(AppState.enabledModsFile).valueOrNull?.enabledMods.toList();
     final allMods = ref.watch(AppState.mods);
     final gameVersion = ref.watch(AppState.starsectorVersion).valueOrNull;
     final dependents = selectedMod != null
@@ -205,24 +206,22 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 const SizedBox(height: 16),
-                                Builder(
-                                  builder: (context) {
-                                    final uri = Uri.parse(
-                                        "${Constants.forumModPageUrl}${versionCheck?.remoteVersion?.modThreadId}");
-                                    return Tooltip(
-                                      message: uri.toString(),
-                                      child: TextButton.icon(
-                                          icon:
-                                              const SvgImageIcon("assets/images/icon-web.svg"),
-                                          label: const Text(
-                                            "Forum Thread",
-                                          ),
-                                          onPressed: () {
-                                            launchUrl(uri);
-                                          }),
-                                    );
-                                  }
-                                ),
+                                Builder(builder: (context) {
+                                  final uri = Uri.parse(
+                                      "${Constants.forumModPageUrl}${versionCheck?.remoteVersion?.modThreadId}");
+                                  return Tooltip(
+                                    message: uri.toString(),
+                                    child: TextButton.icon(
+                                        icon: const SvgImageIcon(
+                                            "assets/images/icon-web.svg"),
+                                        label: const Text(
+                                          "Forum Thread",
+                                        ),
+                                        onPressed: () {
+                                          launchUrl(uri);
+                                        }),
+                                  );
+                                }),
                               ],
                             ),
                           Column(
@@ -352,7 +351,8 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel> {
 
   List<ModVariant> calculateDependents(ModVariant variant) {
     final modVariants = ref.watch(AppState.modVariants).valueOrNull;
-    final enabledMods = ref.watch(AppState.enabledModsFile).valueOrNull;
+    final enabledMods =
+        ref.watch(AppState.enabledModsFile).valueOrNull?.enabledMods.toList();
     if (modVariants == null || enabledMods == null) return [];
     return modVariants
         .where((v) => v.modInfo.dependencies.any((dep) {

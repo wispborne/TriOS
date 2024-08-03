@@ -297,7 +297,7 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
 
                     final allMods = ref.read(AppState.modVariants).value ?? [];
                     final enabledMods =
-                        ref.read(AppState.enabledModsFile).value!;
+                        ref.read(AppState.enabledModIds).value!;
                     // Check dependencies
                     final dependencyCheck = modInfo.checkDependencies(
                         allMods, enabledMods, gameVersion);

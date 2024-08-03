@@ -23,8 +23,8 @@ class Mod with _$Mod {
     return isEnabledInGame && variant.isModInfoEnabled;
   }
 
-  bool isEnabledInGameSync(EnabledMods enabledMods) =>
-      enabledMods.enabledMods.contains(id);
+  bool isEnabledInGameSync(List<String> enabledModIds) =>
+      enabledModIds.contains(id);
 
   List<ModVariant> get enabledVariants {
     return modVariants.where((variant) => isEnabled(variant)).toList();

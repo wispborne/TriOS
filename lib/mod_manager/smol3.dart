@@ -563,7 +563,6 @@ class _Smol3State extends ConsumerState<Smol3>
         renderer: (rendererContext) => Builder(builder: (context) {
           if (filteredMods.isEmpty) return const SizedBox();
           String? iconPath = rendererContext.cell.value;
-          return SizedBox(height: 100,);
           return iconPath != null
               ? Image.file(
                   iconPath.toFile(),
@@ -882,9 +881,18 @@ class _Smol3State extends ConsumerState<Smol3>
   PlutoRow? createRow(Mod mod) {
     final bestVersion = mod.findFirstEnabledOrHighestVersion;
     if (bestVersion == null) return null;
+    final dependencies = ref.watch(AppState.modCompatibility)[bestVersion.smolId];
+    final gameVersion =
+        ref.watch(appSettings.select((value) => value.lastStarsectorVersion));
 
     return PlutoRow(
       key: ValueKey(mod),
+      height: dependencies
+                  ?.mostSevereDependency(gameVersion)
+                  ?.isCurrentlySatisfied ==
+              true
+          ? null
+          : 100,
       cells: {
         _Fields.enableDisable.toString(): PlutoCell(
           value: mod.hasEnabledVariant ? 'Enabled' : 'Disabled',

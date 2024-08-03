@@ -279,7 +279,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       children: const [
                         Padding(
                           padding: EdgeInsets.symmetric(horizontal: 8),
-                          child: DebugSection(),
+                          child: SettingsDebugSection(),
                         ),
                       ],
                     ),

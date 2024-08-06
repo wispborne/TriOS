@@ -8,6 +8,7 @@ import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/enabled_mods.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/widgets/checkbox_with_label.dart';
 import 'package:trios/widgets/conditional_wrap.dart';
 import 'package:trios/widgets/disable_if_cannot_write_mods.dart';
 import 'package:vs_scrollbar/vs_scrollbar.dart';
@@ -33,19 +34,27 @@ class _ModListMiniState extends ConsumerState<ModListMini>
     with SingleTickerProviderStateMixin {
   final ScrollController _scrollController = ScrollController();
   final searchController = SearchController();
+  bool hideDisabled = false;
 
   @override
   Widget build(BuildContext context) {
-    final modListAsync = ref.watch(AppState.mods);
+    final fullModList = ref.watch(AppState.mods);
     final enabledModIds = ref
         .watch(AppState.enabledModsFile)
         .valueOrNull
-        ?.filterOutMissingMods(modListAsync)
+        ?.filterOutMissingMods(fullModList)
         .enabledMods;
     final modVariants = ref.watch(AppState.modVariants);
     final query = ref.watch(searchQuery);
-    final modList =
-        query.isEmpty ? modListAsync : searchMods(modListAsync, query) ?? [];
+
+    List<Mod> filteredModList = fullModList
+        .let((mods) => hideDisabled
+            ? mods
+                .where((mod) => !hideDisabled || mod.hasEnabledVariant)
+                .toList()
+            : mods)
+        .let((mods) => query.isEmpty ? mods : searchMods(mods, query) ?? []);
+
     final versionCheck = ref.watch(AppState.versionCheckResults).valueOrNull;
     final isRefreshing = (modVariants.isLoading ||
         ref.watch(AppState.versionCheckResults).isLoading);
@@ -76,7 +85,7 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                             Padding(
                               padding: const EdgeInsets.only(left: 0),
                               child: Text(
-                                  "${enabledModIds?.length ?? 0} of ${modListAsync.length} enabled",
+                                  "${enabledModIds?.length ?? 0} of ${fullModList.length} enabled",
                                   style:
                                       Theme.of(context).textTheme.labelMedium),
                             ),
@@ -125,8 +134,8 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                       onPressed: () {
                                         final enabledModsList = enabledModIds
                                             .orEmpty()
-                                            .map((id) =>
-                                                modList.firstWhereOrNull(
+                                            .map((id) => filteredModList
+                                                .firstWhereOrNull(
                                                     (mod) => mod.id == id))
                                             .whereNotNull()
                                             .toList()
@@ -166,6 +175,29 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                         child: ModListBasicSearch(query),
                       ),
                     ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4, left: 8, right: 8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            height: 20,
+                            child: CheckboxWithLabel(
+                              value: hideDisabled,
+                              onChanged: (newValue) {
+                                setState(() {
+                                  hideDisabled = newValue ?? false;
+                                });
+                              },
+                              checkboxScale: 0.8,
+                              textPadding: const EdgeInsets.all(0),
+                              labelWidget: Text("Hide Disabled",
+                                  style: theme.textTheme.labelMedium),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -177,7 +209,7 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                 final isUpdatesFieldShown =
                     ref.watch(appSettings.select((s) => s.isUpdatesFieldShown));
                 var modsWithUpdates = <Mod?>[null] +
-                    modList
+                    filteredModList
                         .map((e) => e as Mod?)
                         .filter((mod) {
                           final variant = mod?.findHighestVersion;
@@ -197,7 +229,7 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                     (isUpdatesFieldShown ? modsWithUpdates : <Mod?>[null]);
                 final listItems = updatesToDisplay +
                     (modsWithUpdates.isEmpty ? [] : [null]) +
-                    (modList.sortedMods.toList());
+                    (filteredModList.sortedMods.toList());
 
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

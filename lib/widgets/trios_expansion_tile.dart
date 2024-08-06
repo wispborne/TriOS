@@ -59,7 +59,7 @@ class TriOSExpansionTile extends StatelessWidget {
     this.controlAffinity,
     this.controller,
     this.dense,
-    this.visualDensity,
+    this.visualDensity = VisualDensity.compact,
     this.minTileHeight,
     this.enableFeedback = true,
     this.enabled = true,

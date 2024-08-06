@@ -13,6 +13,7 @@ class CheckboxWithLabel extends StatelessWidget {
   final bool expand;
   final Widget Function(Widget)? checkWrapper;
   final bool flipCheckboxAndLabel;
+  final double checkboxScale;
 
   const CheckboxWithLabel({
     super.key,
@@ -26,6 +27,7 @@ class CheckboxWithLabel extends StatelessWidget {
     this.textPadding = const EdgeInsets.only(left: 8, bottom: 2),
     this.expand = false,
     this.flipCheckboxAndLabel = false,
+    this.checkboxScale = 1.0,
   }) : assert(label != null || labelWidget != null);
 
   @override
@@ -36,16 +38,20 @@ class CheckboxWithLabel extends StatelessWidget {
         condition: checkWrapper != null,
         wrapper: (child) => checkWrapper!(child),
         child: IgnorePointer(
-          child: Checkbox(
+          child: Transform.scale(
+            scale: checkboxScale,
+            child: Checkbox(
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               value: value,
-              onChanged: onChanged),
+              onChanged: onChanged,
+            ),
+          ),
         ),
       ),
       Flexible(
         child: Padding(
           padding: textPadding,
-          child: label != null ? Text(label!, style: labelStyle) : labelWidget,
+          child: label != null ? Text(label!, style: labelStyle, textAlign: TextAlign.center) : labelWidget,
         ),
       ),
     ];

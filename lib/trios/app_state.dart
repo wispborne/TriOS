@@ -6,6 +6,7 @@ import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:trios/jre_manager/jre_entry.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/download_progress.dart';
 import 'package:trios/models/mod_variant.dart';
@@ -17,6 +18,7 @@ import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/platform_paths.dart';
 import 'package:trios/utils/util.dart';
 
+import '../jre_manager/jre_manager_logic.dart';
 import '../mod_manager/version_checker.dart';
 import '../models/enabled_mods.dart';
 import '../models/mod.dart';
@@ -77,8 +79,8 @@ class AppState {
     return modVariants.map((variant) {
       final compatibility =
           compareGameVersions(variant.modInfo.gameVersion, gameVersion);
-      final dependencyCheckResult =
-          variant.checkDependencies(modVariants, enabledMods.enabledMods.toList(), gameVersion);
+      final dependencyCheckResult = variant.checkDependencies(
+          modVariants, enabledMods.enabledMods.toList(), gameVersion);
       return MapEntry(variant.smolId,
           DependencyCheck(compatibility, dependencyCheckResult));
     }).toMap();
@@ -173,6 +175,16 @@ class AppState {
     if (modsPath == null) return false;
     final enabledModsFile = getEnabledModsFile(modsPath);
     return enabledModsFile.isWritable();
+  });
+
+  static final activeJre = FutureProvider<JreEntryInstalled?>((ref) async {
+    final jres = await findJREs(ref.watch(gameFolder).valueOrNull?.path);
+    final isUsingJre23 =
+        ref.watch(appSettings.select((value) => value.useJre23));
+    var activeJre = jres
+        .orEmpty()
+        .firstWhereOrNull((jre) => jre.isActive(isUsingJre23, jres));
+    return activeJre;
   });
 }
 

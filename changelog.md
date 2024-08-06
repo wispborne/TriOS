@@ -7,7 +7,8 @@
   - "Edit mod_info.json" context menu item.
   - "Open Folder" menu item now shows all versions installed.
   - "Dependents" info in the mod details panel, showing which mods depend on the selected mod.
-  - About page.
+  - About page on toolbar.
+  - Shortcut to open Starsector folder on toolbar, which is getting a little crowded (but moved JRE tab off the toolbar, see below).
 - Fixed
   - Chipper log viewer not correctly condensing consecutive lines.
   - Grey screen if using an old TriOS version after using a newer one that added a new setting.
@@ -23,6 +24,8 @@
   - Mods tab: in the version selector, `versions are a different color if they are for a different version of the game.`
   - Disabled mods with multiple versions will now use `mod_info.json.disabled` instead of `mod_info.json.disabled-by-TriOS`.
     - It's less obvious now why it's called `.disabled`, but it makes it cross-compatible with SMOL.
+  - "Skip Game Launcher" is now disabled by default, since it can cause very weird issues.
+    - e.g. zoomed-in combat, no Windows title bar, invisible ships.
 
 # 0.1.4
 - Added

@@ -1,12 +1,8 @@
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:trios/jre_manager/jre_entry.dart';
-import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 
-import '../jre_manager/jre_manager_logic.dart';
 import '../launcher/launcher.dart';
 import '../models/launch_settings.dart';
 import '../themes/theme_manager.dart';
@@ -65,18 +61,34 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
             right: 0,
             child: Padding(
               padding: const EdgeInsets.only(left: 16, top: 12),
-              child: CheckboxWithLabel(
-                  label: "Skip Game Launcher",
-                  textPadding: const EdgeInsets.only(left: 12, bottom: 0),
-                  labelStyle: Theme.of(context).textTheme.labelMedium,
-                  flipCheckboxAndLabel: true,
-                  value: enableDirectLaunch,
-                  onChanged: (bool? value) {
-                    if (value == null) return;
-                    ref
-                        .read(appSettings.notifier)
-                        .update((s) => s.copyWith(enableDirectLaunch: value));
-                  }),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Tooltip(
+                    message: "EXPERIMENTAL\nIf you encounter strange issues in-game, disable this.\nPossible issues include: zoomed-in combat, no Windows title bar, invisible ships, probably more.",
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.error,
+                      borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+                    ),
+                    child: CheckboxWithLabel(
+                        label: "Skip Launcher",
+                        textPadding: const EdgeInsets.only(left: 12, bottom: 0),
+                        labelStyle: Theme.of(context).textTheme.labelMedium,
+                        flipCheckboxAndLabel: true,
+                        value: enableDirectLaunch,
+                        onChanged: (bool? value) {
+                          if (value == null) return;
+                          ref
+                              .read(appSettings.notifier)
+                              .update((s) => s.copyWith(enableDirectLaunch: value));
+                        }),
+                  ),
+                  // Padding(
+                  //   padding: const EdgeInsets.only(right: 42),
+                  //   child: Text("(experimental)", style: Theme.of(context).textTheme.labelSmall),
+                  // ),
+                ],
+              ),
             ),
           ),
         Row(
@@ -126,20 +138,16 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                                       .valueOrNull ??
                                   "Starsector version unknown",
                               style: Theme.of(context).textTheme.labelMedium)),
-                      FutureBuilder<List<JreEntry>>(
-                          future: findJREs(gameDir?.path),
-                          builder: (BuildContext context,
-                              AsyncSnapshot<List<JreEntry>> jres) {
-                            var activeJre = jres.data
-                                .orEmpty()
-                                .firstWhereOrNull((jre) =>
-                                    jre.isActive(ref, jres.data ?? []));
-                            return Text(
-                                activeJre != null
-                                    ? "Java ${activeJre.versionString}"
-                                    : "Java version unknown",
-                                style: Theme.of(context).textTheme.labelMedium);
-                          }),
+                      // Removed because it's shown on the JRE & RAM Settings tile now.
+                      // Builder(builder: (context) {
+                      //   final activeJre =
+                      //       ref.watch(AppState.activeJre).valueOrNull?.version;
+                      //   return Text(
+                      //       activeJre != null
+                      //           ? "Java ${activeJre.versionString}"
+                      //           : "Java version unknown",
+                      //       style: Theme.of(context).textTheme.labelMedium);
+                      // }),
                       Text(
                           ref
                                   .watch(appSettings.select((s) => s.modsDir))

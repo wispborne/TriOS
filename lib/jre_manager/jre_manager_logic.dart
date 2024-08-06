@@ -148,10 +148,9 @@ Future<String?> readVanillaVmparams(String gameDir) async {
 }
 
 extension JreEntryWrapperExt on JreEntry {
-  bool isActive(WidgetRef ref, List<JreEntry> otherJres) {
+  bool isActive(bool? isUsingJre23, List<JreEntry> otherJres) {
     if (this is JreEntryInstalled) {
-      var useJre23 =
-          ref.watch(appSettings.select((value) => value.useJre23)) ?? false;
+      var useJre23 = isUsingJre23 ?? false;
 
       if (versionInt == 23) {
         return useJre23;

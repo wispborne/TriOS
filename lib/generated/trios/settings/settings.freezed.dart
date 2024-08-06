@@ -475,7 +475,7 @@ class _$SettingsImpl implements _Settings {
       this.jre23VmparamsFilename,
       this.useJre23,
       this.showJre23ConsoleWindow = true,
-      this.enableDirectLaunch = true,
+      this.enableDirectLaunch = false,
       this.launchSettings = const LaunchSettings(),
       this.lastStarsectorVersion,
       this.secondsBetweenModFolderChecks = 15,

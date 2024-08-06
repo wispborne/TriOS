@@ -151,13 +151,17 @@ class ThemeManager with ChangeNotifier {
 
     final customTheme = customizeTheme(darkThemeBase, swatch);
     return customTheme.copyWith(
-        colorScheme: customTheme.colorScheme.copyWith(
-      surfaceContainerLowest: swatch.surfaceContainer?.darker(15),
-      surfaceContainerLow: swatch.surfaceContainer?.darker(5),
-      surfaceContainer: swatch.surfaceContainer?.lighter(5),
-      surfaceContainerHigh: swatch.surfaceContainer?.lighter(10),
-      surfaceContainerHighest: swatch.surface,
-    ));
+      colorScheme: customTheme.colorScheme.copyWith(
+        surfaceContainerLowest: swatch.surfaceContainer?.darker(15),
+        surfaceContainerLow: swatch.surfaceContainer?.darker(5),
+        surfaceContainer: swatch.surfaceContainer?.lighter(5),
+        surfaceContainerHigh: swatch.surfaceContainer?.lighter(10),
+        surfaceContainerHighest: swatch.surface,
+      ),
+      iconTheme: customTheme.iconTheme.copyWith(
+        color: customTheme.colorScheme.onSurfaceVariant,
+      ),
+    );
   }
 
   static ThemeData getLightTheme(TriOSTheme swatch, bool material3) {
@@ -188,7 +192,7 @@ class ThemeManager with ChangeNotifier {
           bodyMedium: customTheme.textTheme.bodyMedium?.copyWith(fontSize: 16),
         ),
         iconTheme: customTheme.iconTheme.copyWith(
-          color: customTheme.colorScheme.onSurfaceVariant,
+          color: customTheme.colorScheme.onSurfaceVariant.withOpacity(0.3),
         ),
         tabBarTheme: customTheme.tabBarTheme.copyWith(
           labelColor: customTheme.colorScheme.onSurface,

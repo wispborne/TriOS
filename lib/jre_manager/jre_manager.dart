@@ -14,6 +14,7 @@ import 'package:trios/widgets/conditional_wrap.dart';
 import 'package:trios/widgets/download_progress_indicator.dart';
 
 import '../models/download_progress.dart';
+import '../trios/app_state.dart';
 import '../widgets/disable_if_cannot_write_game_folder.dart';
 import 'jre_entry.dart';
 import 'jre_manager_logic.dart';
@@ -86,6 +87,8 @@ class _JreManagerState extends ConsumerState<JreManager>
     }
 
     final vmparams = ref.watch(vmparamsVanillaContent).value;
+    final isUsingJre23 =
+        ref.watch(appSettings.select((value) => value.useJre23));
 
     var iconSize = 40.0;
     bool jreVersionSupportCheck(int version) => version <= 8 || version == 23;
@@ -128,7 +131,7 @@ class _JreManagerState extends ConsumerState<JreManager>
                             ..sort((a, b) =>
                                 a.versionString.compareTo(b.versionString)))
                             ConditionalWrap(
-                              condition: !jre.isActive(ref, jres),
+                              condition: !jre.isActive(isUsingJre23, jres),
                               wrapper: (child) => InkWell(
                                 onTap: () async {
                                   if (jre is JreToDownload) {
@@ -200,7 +203,7 @@ class _JreManagerState extends ConsumerState<JreManager>
                                   padding: const EdgeInsets.only(left: 16.0),
                                   child: Row(
                                     children: [
-                                      jre.isActive(ref, jres)
+                                      jre.isActive(isUsingJre23, jres)
                                           ? Container(
                                               width: iconSize,
                                               height: iconSize,
@@ -242,10 +245,9 @@ class _JreManagerState extends ConsumerState<JreManager>
                                                             .textTheme
                                                             .titleLarge
                                                             ?.copyWith(
-                                                                color: jre
-                                                                        .isActive(
-                                                                            ref,
-                                                                            jres)
+                                                                color: jre.isActive(
+                                                                        isUsingJre23,
+                                                                        jres)
                                                                     ? Theme.of(
                                                                             context)
                                                                         .colorScheme
@@ -328,7 +330,10 @@ class _JreManagerState extends ConsumerState<JreManager>
                             child: Text(
                               "More RAM is not always better.\n6 or 8 GB is enough for almost any game.\n\nUse the Console Commands mod to view RAM use in the top-left of the console.",
                               textAlign: TextAlign.center,
-                              style: Theme.of(context).textTheme.labelLarge,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelLarge
+                                  ?.copyWith(fontStyle: FontStyle.italic),
                             ),
                           )
                         ],
@@ -350,9 +355,11 @@ class _JreManagerState extends ConsumerState<JreManager>
     if (gamePath == null || !gamePath.existsSync()) {
       return;
     }
+    final isUsingJre23 =
+        ref.watch(appSettings.select((value) => value.useJre23));
 
     var currentJreSource =
-        jres.firstWhereOrNull((element) => element.isActive(ref, jres))
+        jres.firstWhereOrNull((element) => element.isActive(isUsingJre23, jres))
             as JreEntryInstalled?;
 
     if (currentJreSource != null &&
@@ -393,6 +400,8 @@ class _JreManagerState extends ConsumerState<JreManager>
     // Rename target JRE to "jre".
     try {
       await newJre.path.moveDirectory(gameJrePath);
+      Fimber.i("Moved JRE ${newJre.versionString} to '$gameJrePath'.");
+      ref.invalidate(AppState.activeJre);
     } catch (e, st) {
       Fimber.w(
           "Unable to move new JRE ${newJre.versionString} to '$gameJrePath'. Maybe you need to run as Admin?",

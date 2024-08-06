@@ -30,7 +30,7 @@ _$SettingsImpl _$$SettingsImplFromJson(Map<String, dynamic> json) =>
       jre23VmparamsFilename: json['jre23VmparamsFilename'] as String?,
       useJre23: json['useJre23'] as bool?,
       showJre23ConsoleWindow: json['showJre23ConsoleWindow'] as bool? ?? true,
-      enableDirectLaunch: json['enableDirectLaunch'] as bool? ?? true,
+      enableDirectLaunch: json['enableDirectLaunch'] as bool? ?? false,
       launchSettings: json['launchSettings'] == null
           ? const LaunchSettings()
           : LaunchSettings.fromJson(

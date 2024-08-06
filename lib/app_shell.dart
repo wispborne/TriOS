@@ -338,10 +338,27 @@ class _AppShellState extends ConsumerState<AppShell>
               // Spacer(),
               FilePermissionShield(ref: ref),
               // const Spacer(),
+              Builder(builder: (context) {
+                var gameFolderPath =
+                    ref.watch(AppState.gameFolder).valueOrNull?.path;
+                return gameFolderPath == null
+                    ? Container()
+                    : Tooltip(
+                        message: "Open Starsector folder",
+                        child: IconButton(
+                          icon: const Icon(Icons.folder_open),
+                          color: Theme.of(context).iconTheme.color,
+                          onPressed: () {
+                            OpenFilex.open(gameFolderPath);
+                          },
+                        ),
+                      );
+              }),
               Tooltip(
                 message: "View Changelog",
                 child: IconButton(
                   icon: const SvgImageIcon("assets/images/icon-log.svg"),
+                  color: Theme.of(context).iconTheme.color,
                   onPressed: () => showTriOSChangelogDialog(context,
                       showUnreleasedVersions: false),
                 ),
@@ -350,6 +367,7 @@ class _AppShellState extends ConsumerState<AppShell>
                 message: "Open log file",
                 child: IconButton(
                   icon: const SvgImageIcon("assets/images/icon-debug.svg"),
+                  color: Theme.of(context).iconTheme.color,
                   onPressed: () {
                     OpenFilex.open(logFilePath);
                   },
@@ -359,6 +377,7 @@ class _AppShellState extends ConsumerState<AppShell>
                 message: "About",
                 child: IconButton(
                   icon: const SvgImageIcon("assets/images/icon-info.svg"),
+                  color: Theme.of(context).iconTheme.color,
                   onPressed: () {
                     showAboutDialog(
                       context: context,

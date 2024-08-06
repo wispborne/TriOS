@@ -62,7 +62,7 @@ class Settings with _$Settings {
     @Default(true) final bool showJre23ConsoleWindow,
 
     /// If true, TriOS acts as the launcher. If false, basically just clicks game exe.
-    @Default(true) final bool enableDirectLaunch,
+    @Default(false) final bool enableDirectLaunch,
     @Default(LaunchSettings()) final LaunchSettings launchSettings,
     final String? lastStarsectorVersion,
     @Default(15) final int secondsBetweenModFolderChecks,

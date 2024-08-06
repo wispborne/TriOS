@@ -1,13 +1,16 @@
 import 'dart:io';
 
+import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/chipper/chipper_home.dart';
+import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/extensions.dart';
 
 import '../chipper/chipper_state.dart';
 import '../chipper/views/chipper_log.dart';
 import '../jre_manager/jre_manager.dart';
+import '../jre_manager/jre_manager_logic.dart';
 import '../widgets/trios_expansion_tile.dart';
 import 'launch_with_settings.dart';
 import 'mod_list_basic.dart';
@@ -52,7 +55,9 @@ class _DashboardState extends ConsumerState<Dashboard>
                         padding: const EdgeInsets.only(top: 4),
                         child: TriOSExpansionTile(
                           title: const Text("JRE & RAM Settings"),
-                          leading: const Icon(Icons.speed),
+                          leading: const Icon(Icons.speed, size: 32),
+                          subtitle: Text(
+                              "Java ${ref.watch(AppState.activeJre).valueOrNull?.version.versionString ?? "(unknown JRE)"} • ${ref.watch(currentRamAmountInMb).valueOrNull ?? "(unknown RAM)"} MB"),
                           collapsedBackgroundColor: Theme.of(context)
                               .colorScheme
                               .surfaceContainerLow

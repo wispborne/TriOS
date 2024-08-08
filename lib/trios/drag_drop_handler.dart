@@ -123,7 +123,8 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
               // Log any errors and continue with the next archive.
               for (var filePath in files) {
                 try {
-                  await ref
+                  // TODO: this works fine in _pickAndInstallMods with `await`, see what the difference is.
+                  ref
                       .read(modManager.notifier)
                       .installModFromArchiveWithDefaultUI(
                           filePath.toFile(), context);

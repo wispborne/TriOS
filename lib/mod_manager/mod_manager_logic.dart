@@ -920,7 +920,11 @@ class ModDependencyCheckResult {
   ModDependencyCheckResult(this.dependency, this.satisfiedAmount);
 
   bool get isCurrentlySatisfied => satisfiedAmount is Satisfied;
-  bool get canBeSatisfiedWithInstalledMods => satisfiedAmount is Satisfied || satisfiedAmount is Disabled || satisfiedAmount is VersionWarning;
+
+  bool get canBeSatisfiedWithInstalledMods =>
+      satisfiedAmount is Satisfied ||
+      satisfiedAmount is Disabled ||
+      satisfiedAmount is VersionWarning;
 
   @override
   String toString() =>

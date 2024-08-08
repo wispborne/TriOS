@@ -11,6 +11,7 @@
   - Shortcut to open Starsector folder on toolbar, which is getting a little crowded (but moved JRE tab off the toolbar, see below).
 - Fixed
   - Chipper log viewer not correctly condensing consecutive lines.
+  - Freeze+crash when installing mods and the dialog came up (either multiple mods at once or reinstalling a mod).
   - Grey screen if using an old TriOS version after using a newer one that added a new setting.
     - Will reset settings to default if this happens, after making a backup.
   - Mod grid showed mods as Enabled incorrectly sometimes.

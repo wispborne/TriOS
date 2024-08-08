@@ -9,6 +9,7 @@ import 'package:trios/models/mod_variant.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 
+import '../mod_manager/audit_page.dart';
 import '../mod_manager/mod_manager_logic.dart';
 import '../models/mod.dart';
 import '../utils/logging.dart';
@@ -184,13 +185,13 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
 
     do {
       numModsChangedLastLoop = 0;
-      final enabledMods = ref.read(AppState.enabledModsFile).valueOrNull?.enabledMods
-          .toList();
+      final enabledMods =
+          ref.read(AppState.enabledModsFile).valueOrNull?.enabledMods.toList();
       if (enabledMods == null) return;
 
-      final allMods = AppState.getModsFromVariants(
-              state.valueOrNull ?? [], enabledMods)
-          .toList();
+      final allMods =
+          AppState.getModsFromVariants(state.valueOrNull ?? [], enabledMods)
+              .toList();
       final allVariants = state.valueOrNull ?? [];
       // final dependencyCheck = ref.read(AppState.modCompatibility);
       for (final mod in allMods) {
@@ -309,6 +310,11 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
     if (enableInVanillaLauncher && !mod.isEnabledInGame) {
       await _enableModInEnabledMods(modVariant.modInfo.id);
     }
+
+    ref
+        .read(AppState.modAudit.notifier)
+        .addAuditEntry(modVariant.smolId, ModAction.enable);
+    Fimber.i("Enabling ${modVariant.smolId}: success.");
   }
 
   Future<void> _disableModVariant(
@@ -358,6 +364,9 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
     //   }
     // }
 
+    ref
+        .read(AppState.modAudit.notifier)
+        .addAuditEntry(modVariant.smolId, ModAction.disable);
     Fimber.i("Disabling '${modVariant.smolId}': success.");
   }
 

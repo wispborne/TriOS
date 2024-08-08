@@ -19,6 +19,7 @@ import 'package:trios/utils/platform_paths.dart';
 import 'package:trios/utils/util.dart';
 
 import '../jre_manager/jre_manager_logic.dart';
+import '../mod_manager/audit_page.dart';
 import '../mod_manager/version_checker.dart';
 import '../models/enabled_mods.dart';
 import '../models/mod.dart';
@@ -70,6 +71,10 @@ class AppState {
     final mods = ref.watch(AppState.mods);
     return mods.map((mod) => mod.findFirstEnabled).whereNotNull().toList();
   });
+
+  static final modAudit =
+      StateNotifierProvider<ModAuditNotifier, List<AuditEntry>>(
+          (ref) => ModAuditNotifier());
 
   static final modCompatibility = Provider<Map<SmolId, DependencyCheck>>((ref) {
     final modVariants = ref.watch(AppState.modVariants).valueOrNull ?? [];

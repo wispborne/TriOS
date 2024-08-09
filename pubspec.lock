@@ -274,10 +274,10 @@ packages:
     dependency: transitive
     description:
       name: device_info_plus
-      sha256: "93429694c9253d2871b3af80cf11b3cbb5c65660d402ed7bf69854ce4a089f82"
+      sha256: a7fd703482b391a87d60b6061d04dfdeab07826b96f9abd8f5ed98068acc0074
       url: "https://pub.dev"
     source: hosted
-    version: "10.1.1"
+    version: "10.1.2"
   device_info_plus_platform_interface:
     dependency: transitive
     description:
@@ -439,10 +439,10 @@ packages:
     dependency: "direct main"
     description:
       name: flutter_markdown
-      sha256: "2e8a801b1ded5ea001a4529c97b1f213dcb11c6b20668e081cafb23468593514"
+      sha256: a23c41ee57573e62fc2190a1f36a0480c4d90bde3a8a8d7126e5d5992fb53fb7
       url: "https://pub.dev"
     source: hosted
-    version: "0.7.3"
+    version: "0.7.3+1"
   flutter_plugin_android_lifecycle:
     dependency: transitive
     description:
@@ -793,10 +793,10 @@ packages:
     dependency: transitive
     description:
       name: package_info_plus
-      sha256: "4de6c36df77ffbcef0a5aefe04669d33f2d18397fea228277b852a2d4e58e860"
+      sha256: a75164ade98cb7d24cfd0a13c6408927c6b217fa60dee5a7ff5c116a58f28918
       url: "https://pub.dev"
     source: hosted
-    version: "8.0.1"
+    version: "8.0.2"
   package_info_plus_platform_interface:
     dependency: transitive
     description:
@@ -897,10 +897,10 @@ packages:
     dependency: "direct main"
     description:
       name: pdf
-      sha256: "81d5522bddc1ef5c28e8f0ee40b71708761753c163e0c93a40df56fd515ea0f0"
+      sha256: "05df53f8791587402493ac97b9869d3824eccbc77d97855f4545cf72df3cae07"
       url: "https://pub.dev"
     source: hosted
-    version: "3.11.0"
+    version: "3.11.1"
   petitparser:
     dependency: transitive
     description:
@@ -952,9 +952,10 @@ packages:
   pluto_grid_plus:
     dependency: "direct main"
     description:
-      path: "lib/thirdparty/pluto_grid_plus"
-      relative: true
-    source: path
+      name: pluto_grid_plus
+      sha256: d5cfcbd7c3c10ff21eaedd4c88348f97608c1a62df2aef87c99080e3b87b2fbd
+      url: "https://pub.dev"
+    source: hosted
     version: "8.4.2"
   pool:
     dependency: transitive
@@ -1048,18 +1049,18 @@ packages:
     dependency: transitive
     description:
       name: sentry
-      sha256: "76ad4fab90ff82427c26939bd79dc4df345a081e2b1cd5954b947e340b9af9a5"
+      sha256: "0f787e27ff617e4f88f7074977240406a9c5509444bac64a4dfa5b3200fb5632"
       url: "https://pub.dev"
     source: hosted
-    version: "8.6.0"
+    version: "8.7.0"
   sentry_flutter:
     dependency: "direct main"
     description:
       name: sentry_flutter
-      sha256: a7c92014701093a7c0a373e1a47c54ec428d8468d8bf2b793fee7ea1b085c21b
+      sha256: fbbb47d72ccca48be25bf3c2ced6ab6e872991af3a0ba78e54be8d138f2e053f
       url: "https://pub.dev"
     source: hosted
-    version: "8.6.0"
+    version: "8.7.0"
   shared_preferences:
     dependency: "direct main"
     description:
@@ -1245,26 +1246,26 @@ packages:
     dependency: transitive
     description:
       name: super_clipboard
-      sha256: c72d2ae8c3a66b20a104523add86b7c2813b1d4cced893a9764b84fb97ac8e2a
+      sha256: "74098001413e075cc53dee72b68c32eaffc10709df41806800393abaa6dac9d5"
       url: "https://pub.dev"
     source: hosted
-    version: "0.8.18"
+    version: "0.8.19"
   super_drag_and_drop:
     dependency: "direct main"
     description:
       name: super_drag_and_drop
-      sha256: "69ff42851493fae763c796012daa416ce1b6c93ff73cdb240d411cbdc378ece7"
+      sha256: "20f4318a6c9e81a76cc090a0f2d845157ff4f3619ed784e3235324a45ce34507"
       url: "https://pub.dev"
     source: hosted
-    version: "0.8.18"
+    version: "0.8.19"
   super_native_extensions:
     dependency: transitive
     description:
       name: super_native_extensions
-      sha256: b03f19e54744b65940a7c2cb4f93abd4819b5355aa3464d7b3c9a013b6b76db1
+      sha256: c24676825c9f3ae844676a843d45ad186f2270539ffe72be4277753e46d14e29
       url: "https://pub.dev"
     source: hosted
-    version: "0.8.18"
+    version: "0.8.19"
   term_glyph:
     dependency: transitive
     description:
@@ -1357,10 +1358,10 @@ packages:
     dependency: transitive
     description:
       name: url_launcher_linux
-      sha256: ab360eb661f8879369acac07b6bb3ff09d9471155357da8443fd5d3cf7363811
+      sha256: e2b9622b4007f97f504cd64c0128309dfb978ae66adbe944125ed9e1750f06af
       url: "https://pub.dev"
     source: hosted
-    version: "3.1.1"
+    version: "3.2.0"
   url_launcher_macos:
     dependency: transitive
     description:

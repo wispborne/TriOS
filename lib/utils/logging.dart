@@ -5,6 +5,8 @@ import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
 import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
+
 // import 'package:platform_info/platform_info.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:trios/utils/extensions.dart';
@@ -14,21 +16,26 @@ import '../trios/constants.dart';
 import '../trios/settings/settings.dart';
 
 const logFileName = "latest.log";
-const logFolderName = "logs";
-final logFilePath = p.join(logFolderName, logFileName);
+String? logFolderName;
+String? logFilePath;
 
-var _consoleLogger = Logger();
-var _fileLogger = Logger();
+Logger _consoleLogger = Logger();
+Logger? _fileLogger;
 bool _allowSentryReporting = false;
 const useFimber = false;
 bool didLoggingInitializeSuccessfully = false;
 
 /// Fine to call multiple times.
-configureLogging(
-    {bool printPlatformInfo = false, bool allowSentryReporting = false}) {
+configureLogging({
+  bool printPlatformInfo = false,
+  bool allowSentryReporting = false,
+  bool consoleOnly = false,
+}) async {
   _allowSentryReporting = allowSentryReporting;
   Fimber.i(
       "Crash reporting is ${allowSentryReporting ? "enabled" : "disabled"}.");
+  logFolderName = (await getApplicationSupportDirectory()).absolute.path;
+  logFilePath = p.join(logFolderName!, logFileName);
 
   if (!useFimber) {
     const stackTraceBeginIndex = 4;
@@ -62,34 +69,52 @@ configureLogging(
       output: ConsoleOutput(),
     );
 
-    if (!logFolderName.toDirectory().existsSync()) {
-      // TODO check for MacOS permissions here.
-      logFolderName.toDirectory().createSync(recursive: true);
+    if (consoleOnly) {
+      _fileLogger = null;
+    } else {
+      try {
+        if (logFolderName?.toDirectory().existsSync() != true) {
+          // TODO check for MacOS permissions here.
+          logFolderName?.toDirectory().createSync(recursive: true);
+        }
+
+        _fileLogger = Logger(
+          level: kDebugMode ? Level.info : Level.debug,
+          filter: ProductionFilter(),
+          printer: PrettyPrinterCustom(
+            stackTraceBeginIndex: stackTraceBeginIndex,
+            methodCount: methodCount,
+            colors: false,
+            printEmojis: true,
+            printTime: true,
+            stackTraceMaxLines: 20,
+          ),
+          output: AdvancedFileOutput(path: logFolderName!, maxFileSizeKB: 25000),
+        );
+
+        // Clean up old log files.
+        try {
+          logFolderName
+              ?.toDirectory()
+              .listSync()
+              .where((file) =>
+                  file is File &&
+                  file.extension == ".log" &&
+                  file.nameWithExtension != logFileName)
+              .forEach((FileSystemEntity file) => file.deleteSync());
+        } catch (e) {
+          Fimber.e("Error cleaning up old log files.", ex: e);
+        }
+      } catch (e) {
+        Fimber.e("Error setting up file logging. Falling back to console only.",
+            ex: e);
+        configureLogging(
+            printPlatformInfo: printPlatformInfo,
+            allowSentryReporting: allowSentryReporting,
+            consoleOnly: true);
+        return;
+      }
     }
-
-    _fileLogger = Logger(
-      level: kDebugMode ? Level.info : Level.debug,
-      filter: ProductionFilter(),
-      printer: PrettyPrinterCustom(
-        stackTraceBeginIndex: stackTraceBeginIndex,
-        methodCount: methodCount,
-        colors: false,
-        printEmojis: true,
-        printTime: true,
-        stackTraceMaxLines: 20,
-      ),
-      output: AdvancedFileOutput(path: logFolderName, maxFileSizeKB: 25000),
-    );
-
-    // Clean up old log files.
-    logFolderName
-        .toDirectory()
-        .listSync()
-        .where((file) =>
-            file is File &&
-            file.extension == ".log" &&
-            file.nameWithExtension != logFileName)
-        .forEach((FileSystemEntity file) => file.deleteSync());
   } else {
     // const logLevels = kDebugMode ? ["V", "D", "I", "W", "E"] : ["I", "W", "E"];
     const logLevels = kDebugMode ? ["D", "I", "W", "E"] : ["I", "W", "E"];
@@ -118,7 +143,7 @@ class Fimber {
       // f.Fimber.v(message, ex: ex, stacktrace: stacktrace);
     } else {
       _consoleLogger.t(message, error: ex, stackTrace: stacktrace);
-      _fileLogger.t(message, error: ex, stackTrace: stacktrace);
+      _fileLogger?.t(message, error: ex, stackTrace: stacktrace);
     }
   }
 
@@ -132,7 +157,7 @@ class Fimber {
       // f.Fimber.i(message, ex: ex, stacktrace: stacktrace);
     } else {
       _consoleLogger.i(message, error: ex, stackTrace: stacktrace);
-      _fileLogger.i(message, error: ex, stackTrace: stacktrace);
+      _fileLogger?.i(message, error: ex, stackTrace: stacktrace);
     }
   }
 
@@ -146,7 +171,7 @@ class Fimber {
       // f.Fimber.d(message, ex: ex, stacktrace: stacktrace);
     } else {
       _consoleLogger.d(message, error: ex, stackTrace: stacktrace);
-      _fileLogger.d(message, error: ex, stackTrace: stacktrace);
+      _fileLogger?.d(message, error: ex, stackTrace: stacktrace);
     }
   }
 
@@ -160,7 +185,7 @@ class Fimber {
       // f.Fimber.w(message, ex: ex, stacktrace: stacktrace);
     } else {
       _consoleLogger.w(message, error: ex, stackTrace: stacktrace);
-      _fileLogger.w(message, error: ex, stackTrace: stacktrace);
+      _fileLogger?.w(message, error: ex, stackTrace: stacktrace);
     }
   }
 
@@ -174,7 +199,7 @@ class Fimber {
       // f.Fimber.e(message, ex: ex, stacktrace: stacktrace);
     } else {
       _consoleLogger.e(message, error: ex, stackTrace: stacktrace);
-      _fileLogger.e(message, error: ex, stackTrace: stacktrace);
+      _fileLogger?.e(message, error: ex, stackTrace: stacktrace);
     }
 
     if (_allowSentryReporting) {

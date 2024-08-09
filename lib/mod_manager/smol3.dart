@@ -887,12 +887,12 @@ class _Smol3State extends ConsumerState<Smol3>
 
     return PlutoRow(
       key: ValueKey(mod),
-      height: dependencies
-                  ?.mostSevereDependency(gameVersion)
-                  ?.isCurrentlySatisfied ==
-              true
-          ? null
-          : 100,
+      // height: dependencies
+      //             ?.mostSevereDependency(gameVersion)
+      //             ?.isCurrentlySatisfied ==
+      //         true
+      //     ? null
+      //     : 100,
       cells: {
         _Fields.enableDisable.toString(): PlutoCell(
           value: mod.hasEnabledVariant ? 'Enabled' : 'Disabled',

@@ -346,7 +346,7 @@ class _AppShellState extends ConsumerState<AppShell>
                     : Tooltip(
                         message: "Open Starsector folder",
                         child: IconButton(
-                          icon: const Icon(Icons.folder_open),
+                          icon: const SvgImageIcon("assets/images/icon-folder-game.svg"),
                           color: Theme.of(context).iconTheme.color,
                           onPressed: () {
                             OpenFilex.open(gameFolderPath);
@@ -357,7 +357,7 @@ class _AppShellState extends ConsumerState<AppShell>
               Tooltip(
                 message: "View Changelog",
                 child: IconButton(
-                  icon: const SvgImageIcon("assets/images/icon-log.svg"),
+                  icon: const SvgImageIcon("assets/images/icon-bullhorn-variant.svg"),
                   color: Theme.of(context).iconTheme.color,
                   onPressed: () => showTriOSChangelogDialog(context,
                       showUnreleasedVersions: false),
@@ -366,7 +366,7 @@ class _AppShellState extends ConsumerState<AppShell>
               Tooltip(
                 message: "Open log file",
                 child: IconButton(
-                  icon: const SvgImageIcon("assets/images/icon-debug.svg"),
+                  icon: const SvgImageIcon("assets/images/icon-file-debug.svg"),
                   color: Theme.of(context).iconTheme.color,
                   onPressed: () {
                     OpenFilex.open(logFilePath);

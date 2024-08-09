@@ -36,16 +36,17 @@ class _AuditPageState extends ConsumerState<AuditPage> {
         .map((key, value) => MapEntry(key, value.first))
         .cast<String, ModVariant>()
         .toMap();
-    var auditLog = ref.watch(AppState.modAudit).reversed.toList();
+    final auditLog =
+        groupByTime(ref.watch(AppState.modAudit).reversed.toList());
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Mod Audit Log'),
       ),
-      body: ListView.builder(
-        itemCount: auditLog.length,
+      body: ListView.separated(
+        itemCount: auditLog.flatten().length,
         itemBuilder: (context, index) {
-          final entry = auditLog[index];
+          final entry = auditLog.flatten()[index];
           final variant = modVariantsBySmolId[entry.smolId];
           final actionWord =
               "${entry.action.name.replaceFirstMapped(RegExp(r'^.'), (match) => match.group(0)!.toUpperCase())}d";
@@ -82,8 +83,45 @@ class _AuditPageState extends ConsumerState<AuditPage> {
                 ),
           );
         },
+        separatorBuilder: (BuildContext context, int index) {
+          if (auditLog
+              .map((group) => group.length - 1)
+              .toList()
+              .contains(index)) {
+            return SizedBox(
+              height: 2,
+              child: Container(
+                color: Colors.black,
+              ),
+            );
+          } else {
+            return Container();
+          }
+        },
       ),
     );
+  }
+
+  List<List<AuditEntry>> groupByTime(List<AuditEntry> entries) {
+    List<List<AuditEntry>> ret = [];
+    AuditEntry? prev;
+
+    for (final entry in entries) {
+      if (prev == null) {
+        ret.add([entry]);
+      } else {
+        var pauseBetweenGroupsInSeconds = 3;
+        if (entry.timestamp.difference(prev.timestamp).abs().inSeconds <= pauseBetweenGroupsInSeconds) {
+          ret.last.add(entry);
+        } else {
+          ret.add([entry]);
+        }
+      }
+
+      prev = entry;
+    }
+
+    return ret;
   }
 }
 

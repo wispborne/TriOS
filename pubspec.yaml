@@ -70,8 +70,8 @@ dependencies:
   flutter_svg: ^2.0.10+1
   google_fonts: ^6.2.1
   palette_generator: ^0.3.3+3
-  pluto_grid_plus:
-    path: 'lib/thirdparty/pluto_grid_plus'
+  pluto_grid_plus: ^8.4.2
+#    path: 'lib/thirdparty/pluto_grid_plus'
   styled_text: ^8.1.0
   super_drag_and_drop: ^0.8.17
   text_search: ^1.0.2

@@ -69,20 +69,28 @@ void main() async {
   // Don't use Sentry in debug mode, ever.
   // There's a max error limit and UI rendering errors send a million errors.
   if (allowCrashReporting && kDebugMode == false) {
-    await SentryFlutter.init(
-      (options) {
-        options = configureSentry(options, settings);
-      },
-      appRunner: () {
-        Fimber.i("Sentry initialized.");
-        _runTriOS();
-      },
-    );
+    try {
+      await SentryFlutter.init(
+        (options) {
+          options = configureSentry(options, settings);
+        },
+        appRunner: () {
+          Fimber.i("Sentry initialized.");
+          _runTriOS();
+        },
+      );
+    } catch (e) {
+      Fimber.e("Error initializing Sentry.", ex: e);
+      _runTriOS();
+    }
   } else {
     _runTriOS();
   }
-
-  setWindowTitle(Constants.appTitle);
+  try {
+    setWindowTitle(Constants.appTitle);
+  } catch (e) {
+    Fimber.e("Error setting window title.", ex: e);
+  }
   const minSize = Size(900, 600);
 
   try {

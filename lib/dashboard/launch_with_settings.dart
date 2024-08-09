@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/widgets/text_link_button.dart';
 
 import '../launcher/launcher.dart';
 import '../models/launch_settings.dart';
@@ -65,10 +66,12 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Tooltip(
-                    message: "EXPERIMENTAL\nIf you encounter strange issues in-game, disable this.\nPossible issues include: zoomed-in combat, no Windows title bar, invisible ships, probably more.",
+                    message:
+                        "EXPERIMENTAL\nIf you encounter strange issues in-game, disable this.\nPossible issues include: zoomed-in combat, no Windows title bar, invisible ships, probably more.",
                     decoration: BoxDecoration(
                       color: Theme.of(context).colorScheme.error,
-                      borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+                      borderRadius:
+                          BorderRadius.circular(ThemeManager.cornerRadius),
                     ),
                     child: CheckboxWithLabel(
                         label: "Skip Launcher",
@@ -78,9 +81,8 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                         value: enableDirectLaunch,
                         onChanged: (bool? value) {
                           if (value == null) return;
-                          ref
-                              .read(appSettings.notifier)
-                              .update((s) => s.copyWith(enableDirectLaunch: value));
+                          ref.read(appSettings.notifier).update(
+                              (s) => s.copyWith(enableDirectLaunch: value));
                         }),
                   ),
                   // Padding(
@@ -256,11 +258,13 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                                 ],
                               ),
                               Padding(
-                                padding: const EdgeInsets.only(top: 32),
+                                padding: const EdgeInsets.only(top: 8),
                                 child: Tooltip(
                                   message:
                                       "Use your non-TriOS launcher settings instead",
-                                  child: OutlinedButton(
+                                  child: Opacity(
+                                    opacity: 0.8,
+                                    child: TextLinkButton(
                                       onPressed: () {
                                         ref.read(appSettings.notifier).update(
                                             (s) => s.copyWith(
@@ -269,12 +273,11 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                                         setState(
                                             () {}); // Force refresh widget to update text fields to default.
                                       },
-                                      child: Text(
-                                        "Clear Custom Launch Settings",
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodySmall,
-                                      )),
+                                      text: "Clear Custom Launch Settings",
+                                      style:
+                                          Theme.of(context).textTheme.bodySmall,
+                                    ),
+                                  ),
                                 ),
                               )
                             ]),

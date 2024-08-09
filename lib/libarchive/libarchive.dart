@@ -66,7 +66,9 @@ class LibArchive {
     final assetsPath = switch (currentPlatform) {
       TargetPlatform.windows => "data/flutter_assets/assets",
       TargetPlatform.macOS =>
-        "TriOS.app/Contents/Frameworks/App.framework/Resources/flutter_assets/assets",
+        // "TriOS.app/Contents/Frameworks/App.framework/Resources/flutter_assets/assets",
+        // "assets",
+        "../../Contents/Frameworks/App.framework/Resources/flutter_assets/assets/",
       // "${getApplicationDocumentsDirectory()}/Contents/Frameworks/App.framework/Resources/flutter_assets/assets",
       _ => "data/flutter_assets/assets",
     };
@@ -174,6 +176,7 @@ class LibArchive {
           final pathName = binding
               .archive_entry_pathname_utf8(entryPtrPtr.value)
               .toDartStringSafe();
+          // Fails here if folder inside archive has CN characters.
           if (pathName == null) {
             Fimber.d("Path name is null");
             continue;

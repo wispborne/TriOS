@@ -11,6 +11,11 @@
   - Shortcut to open Starsector folder on toolbar, which is getting a little crowded (but moved JRE tab off the toolbar, see below).
 - Fixed
   - Chipper log viewer not correctly condensing consecutive lines.
+  - MacOS LibArchive path (i.e. MacOS should work now).
+  - MacOS grey screen if unable to create log file.
+    - Now falls back to only console output if cannot create log file.
+    - Also, now uses AppData on Windows and Library/Application Support on MacOS for the log file.
+      - This avoids permissions issues to create the log file.
   - Freeze+crash when installing mods and the dialog came up (either multiple mods at once or reinstalling a mod).
   - Grey screen if using an old TriOS version after using a newer one that added a new setting.
     - Will reset settings to default if this happens, after making a backup.
@@ -27,6 +32,7 @@
     - It's less obvious now why it's called `.disabled`, but it makes it cross-compatible with SMOL.
   - "Skip Game Launcher" is now disabled by default, since it can cause very weird issues.
     - e.g. zoomed-in combat, no Windows title bar, invisible ships.
+  - Improved toolbar icons for game folder, changelog, and log file.
 
 # 0.1.4
 - Added

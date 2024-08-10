@@ -73,7 +73,7 @@ dependencies:
   pluto_grid_plus: ^8.4.2
 #    path: 'lib/thirdparty/pluto_grid_plus'
   styled_text: ^8.1.0
-  super_drag_and_drop: ^0.8.17
+  super_drag_and_drop: ^0.8.19
   text_search: ^1.0.2
   toastification: ^2.0.0
   url_launcher: ^6.2.6
@@ -83,7 +83,7 @@ dependencies:
   # Platform-Specific
   ffi: ^2.1.2
   windows_system_info: ^0.0.4
-  window_manager: ^0.3.8
+  window_manager: ^0.4.0
   window_size:
     git:
       url: https://github.com/google/flutter-desktop-embedding.git

@@ -3,6 +3,7 @@ import 'dart:io';
 // import 'package:fimber/fimber.dart' as f;
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -34,8 +35,13 @@ configureLogging({
   _allowSentryReporting = allowSentryReporting;
   Fimber.i(
       "Crash reporting is ${allowSentryReporting ? "enabled" : "disabled"}.");
-  logFolderName = (await getApplicationSupportDirectory()).absolute.path;
-  logFilePath = p.join(logFolderName!, logFileName);
+  try {
+    WidgetsFlutterBinding.ensureInitialized();
+    logFolderName = (await getApplicationSupportDirectory()).absolute.path;
+    logFilePath = p.join(logFolderName!, logFileName);
+  } catch (e) {
+    Fimber.e("Error getting log folder name.", ex: e);
+  }
 
   if (!useFimber) {
     const stackTraceBeginIndex = 4;

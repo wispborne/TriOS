@@ -27,6 +27,11 @@ Object? loggingError;
 
 void main() async {
   try {
+    WidgetsFlutterBinding.ensureInitialized();
+  } catch (e) {
+    print("Error initializing Flutter widgets.");
+  }
+  try {
     print("Initializing TriOS logging framework...");
     configureLogging();
     Fimber.i("${Constants.appTitle} logging started.");
@@ -37,7 +42,6 @@ void main() async {
     loggingError = ex;
   }
   try {
-    WidgetsFlutterBinding.ensureInitialized();
     await windowManager.ensureInitialized();
   } catch (ex) {
     Fimber.e("Error initializing!", ex: ex);

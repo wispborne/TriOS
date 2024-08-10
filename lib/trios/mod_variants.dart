@@ -103,6 +103,8 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
       newVariants.addAll(variants);
       state = AsyncValue.data(newVariants);
     }
+
+    ModVariant.iconCache.clear();
   }
 
   // TODO should move all this into modManager at some point.

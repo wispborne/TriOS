@@ -10,7 +10,7 @@ class TextLinkButton extends StatefulWidget {
   final Color? hoverColor;
 
   const TextLinkButton({
-    Key? key,
+    super.key,
     required this.onPressed,
     required this.text,
     this.style,
@@ -18,7 +18,7 @@ class TextLinkButton extends StatefulWidget {
     this.focusNode,
     this.clipBehavior = Clip.none,
     this.hoverColor,
-  }) : super(key: key);
+  });
 
   @override
   State<TextLinkButton> createState() => _TextLinkButtonState();

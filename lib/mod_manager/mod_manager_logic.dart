@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:collection/collection.dart';
@@ -8,7 +9,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:trios/libarchive/libarchive.dart';
-import 'package:trios/models/enabled_mods.dart';
 import 'package:trios/models/mod_info_json.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/models/version_checker_info.dart';
@@ -17,6 +17,8 @@ import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/util.dart';
+import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:trios/widgets/tooltip_frame.dart';
 
 import '../chipper/utils.dart';
 import '../models/mod.dart';
@@ -62,48 +64,86 @@ class ModManagerNotifier extends AsyncNotifier<void> {
                             .map((it) => Builder(builder: (context) {
                                   final isSelected = smolIdsToInstall
                                       .contains(it.modInfo.modInfo.smolId);
-                                  return CheckboxListTile(
-                                    title: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                            "${it.modInfo.modInfo.name} ${it.modInfo.modInfo.version}"),
-                                        Text(
-                                            it.modInfo.modInfo.description
-                                                    ?.takeWhile(
-                                                        (it) => it != "\n")
-                                                    .take(50) ??
-                                                "",
-                                            style:
-                                                const TextStyle(fontSize: 12)),
-                                        it.alreadyExistingVariant != null
-                                            ? Text(
-                                                isSelected
-                                                    ? "(existing mod will be replaced)"
-                                                    : "(already exists)",
-                                                style: TextStyle(
-                                                    color: ThemeManager
-                                                        .vanillaWarningColor,
-                                                    fontSize: 12),
-                                              )
-                                            : const SizedBox(),
-                                      ],
+                                  var gameVersion = ref.watch(appSettings
+                                      .select((s) => s.lastStarsectorVersion));
+                                  return MovingTooltipWidget(
+                                    tooltipWidget: ConstrainedBox(
+                                      constraints:
+                                          const BoxConstraints(maxWidth: 500),
+                                      child: TooltipFrame(
+                                          child: Column(
+                                        children: [
+                                          Text(
+                                              const JsonEncoder.withIndent("  ").convert(it.modInfo.modInfo),
+                                              style: const TextStyle(
+                                                  fontSize: 12)),
+                                        ],
+                                      )),
                                     ),
-                                    value: isSelected,
-                                    onChanged: (value) {
-                                      if (value == false) {
-                                        setState(() {
-                                          smolIdsToInstall.remove(
-                                              it.modInfo.modInfo.smolId);
-                                        });
-                                      } else {
-                                        setState(() {
-                                          smolIdsToInstall
-                                              .add(it.modInfo.modInfo.smolId);
-                                        });
-                                      }
-                                    },
+                                    child: CheckboxListTile(
+                                      title: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text("${it.modInfo.modInfo.name}"),
+                                          Text.rich(TextSpan(children: [
+                                            TextSpan(
+                                                text:
+                                                    "v${it.modInfo.modInfo.version}",
+                                                style: const TextStyle(
+                                                    fontSize: 13)),
+                                            // bullet separator
+                                            const TextSpan(
+                                                text: " • ",
+                                                style: TextStyle(fontSize: 13)),
+                                            TextSpan(
+                                                text: it.modInfo.modInfo
+                                                    .gameVersion,
+                                                style: TextStyle(
+                                                    fontSize: 13,
+                                                    color: it.modInfo.modInfo
+                                                        .isCompatibleWithGame(
+                                                            gameVersion)
+                                                        .getGameCompatibilityColor())),
+                                          ])),
+                                          Text(
+                                              it.modInfo.modInfo.description
+                                                      ?.takeWhile((it) =>
+                                                          it != "\n" &&
+                                                          it != ".") ??
+                                                  "",
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                  fontSize: 12)),
+                                          it.alreadyExistingVariant != null
+                                              ? Text(
+                                                  isSelected
+                                                      ? "(existing mod will be replaced)"
+                                                      : "(already exists)",
+                                                  style: TextStyle(
+                                                      color: ThemeManager
+                                                          .vanillaWarningColor,
+                                                      fontSize: 12),
+                                                )
+                                              : const SizedBox(),
+                                        ],
+                                      ),
+                                      value: isSelected,
+                                      onChanged: (value) {
+                                        if (value == false) {
+                                          setState(() {
+                                            smolIdsToInstall.remove(
+                                                it.modInfo.modInfo.smolId);
+                                          });
+                                        } else {
+                                          setState(() {
+                                            smolIdsToInstall
+                                                .add(it.modInfo.modInfo.smolId);
+                                          });
+                                        }
+                                      },
+                                    ),
                                   );
                                 }))
                             .toList(),

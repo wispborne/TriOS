@@ -1,3 +1,7 @@
+# 0.1.6
+- Added
+  - More info to the install dialog, showing all mod_info.json info.
+
 # 0.1.5
 - Added
   - "Delete Mod" context menu item.

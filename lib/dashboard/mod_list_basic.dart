@@ -9,7 +9,6 @@ import 'package:trios/models/enabled_mods.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
-import 'package:trios/widgets/conditional_wrap.dart';
 import 'package:trios/widgets/disable_if_cannot_write_mods.dart';
 import 'package:vs_scrollbar/vs_scrollbar.dart';
 
@@ -21,6 +20,7 @@ import '../trios/app_state.dart';
 import '../trios/download_manager/download_manager.dart';
 import '../utils/search.dart';
 import '../widgets/add_new_mods_button.dart';
+import '../widgets/refresh_mods_button.dart';
 import 'mod_list_basic_entry.dart';
 
 class ModListMini extends ConsumerStatefulWidget {
@@ -56,8 +56,6 @@ class _ModListMiniState extends ConsumerState<ModListMini>
         .let((mods) => query.isEmpty ? mods : searchMods(mods, query) ?? []);
 
     final versionCheck = ref.watch(AppState.versionCheckResults).valueOrNull;
-    final isRefreshing = (modVariants.isLoading ||
-        ref.watch(AppState.versionCheckResults).isLoading);
     searchController.value = TextEditingValue(text: query);
     final theme = Theme.of(context);
 
@@ -100,29 +98,11 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                               Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Tooltip(
-                                      message:
-                                          "Refresh mods and recheck versions",
-                                      child: IconButton(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 4),
-                                        icon: ConditionalWrap(
-                                            condition: isRefreshing,
-                                            wrapper: (child) => Animate(
-                                                onComplete: (c) => c.repeat(),
-                                                effects: [
-                                                  RotateEffect(
-                                                      duration: 2000.ms)
-                                                ],
-                                                child: child),
-                                            child: const Icon(Icons.refresh)),
-                                        onPressed: () {
-                                          AppState.skipCacheOnNextVersionCheck =
-                                              true;
-                                          ref.invalidate(AppState.modVariants);
-                                        },
-                                        constraints: const BoxConstraints(),
-                                      )),
+                                  const RefreshModsButton(
+                                    iconOnly: true,
+                                    padding:
+                                        EdgeInsets.symmetric(horizontal: 4),
+                                  ),
                                   Tooltip(
                                     message: "Copy mod info",
                                     child: IconButton(

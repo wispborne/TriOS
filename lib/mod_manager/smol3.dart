@@ -30,6 +30,7 @@ import '../models/mod.dart';
 import '../trios/download_manager/download_manager.dart';
 import '../widgets/mod_type_icon.dart';
 import '../widgets/moving_tooltip.dart';
+import '../widgets/refresh_mods_button.dart';
 import '../widgets/tooltip_frame.dart';
 import 'mod_context_menu.dart';
 import 'mod_summary_panel.dart';
@@ -183,11 +184,19 @@ class _Smol3State extends ConsumerState<Smol3>
                   padding: const EdgeInsets.only(left: 2, right: 8),
                   child: Stack(
                     children: [
-                      const AddNewModsButton(
-                        labelWidget: Padding(
-                          padding: EdgeInsets.only(left: 4),
-                          child: Text("Add Mod(s)"),
-                        ),
+                      const Row(
+                        children: [
+                          AddNewModsButton(
+                            labelWidget: Padding(
+                              padding: EdgeInsets.only(left: 4),
+                              child: Text("Add Mod(s)"),
+                            ),
+                          ),
+                          RefreshModsButton(
+                            iconOnly: false,
+                            padding: EdgeInsets.symmetric(horizontal: 4),
+                          ),
+                        ],
                       ),
                       Center(
                         child: SizedBox(
@@ -881,7 +890,8 @@ class _Smol3State extends ConsumerState<Smol3>
   PlutoRow? createRow(Mod mod) {
     final bestVersion = mod.findFirstEnabledOrHighestVersion;
     if (bestVersion == null) return null;
-    final dependencies = ref.watch(AppState.modCompatibility)[bestVersion.smolId];
+    final dependencies =
+        ref.watch(AppState.modCompatibility)[bestVersion.smolId];
     final gameVersion =
         ref.watch(appSettings.select((value) => value.lastStarsectorVersion));
 

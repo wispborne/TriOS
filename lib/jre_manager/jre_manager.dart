@@ -243,7 +243,7 @@ class _JreManagerState extends ConsumerState<JreManager>
                                                         "Java ${jre.versionInt}",
                                                         style: Theme.of(context)
                                                             .textTheme
-                                                            .titleLarge
+                                                            .titleMedium
                                                             ?.copyWith(
                                                                 color: jre.isActive(
                                                                         isUsingJre23,

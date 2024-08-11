@@ -14,7 +14,7 @@ class ChangelogViewer extends StatefulWidget {
       {super.key, required this.url, required this.showUnreleasedVersions});
 
   @override
-  _ChangelogViewerState createState() => _ChangelogViewerState();
+  State<ChangelogViewer> createState() => _ChangelogViewerState();
 }
 
 class _ChangelogViewerState extends State<ChangelogViewer> {
@@ -93,7 +93,7 @@ showTriOSChangelogDialog(BuildContext context,
       return AlertDialog(
         content: SizedBox(
           width: 600,
-          height: 400,
+          height: 1200,
           child: ChangelogViewer(
               url: Constants.changelogUrl,
               showUnreleasedVersions: showUnreleasedVersions),

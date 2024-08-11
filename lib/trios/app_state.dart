@@ -125,9 +125,9 @@ class AppState {
         ref.watch(appSettings.select((value) => value.gameDir))?.toDirectory();
     if (gamePath == null) return false;
     var modsFolder = generateModFolderPath(gamePath)?.toDirectory();
-    final filesAndFolders = [getEnabledModsFile(modsFolder!)].whereNotNull();
-    for (var file in filesAndFolders) {
-      if (!file.existsSync() || await file.toFile().isNotWritable()) {
+    final filesAndFolders = [ref.read(enabledModsFile).valueOrNull?.enabledMods.toList()].whereNotNull();
+    for (final file in filesAndFolders) {
+      if (filesAndFolders.isEmpty) {
         Fimber.d("Cannot find or write to: $file");
         return false;
       }
@@ -178,8 +178,7 @@ class AppState {
   static final isEnabledModsFileWritable = FutureProvider<bool>((ref) async {
     final modsPath = ref.watch(modsFolder).valueOrNull;
     if (modsPath == null) return false;
-    final enabledModsFile = getEnabledModsFile(modsPath);
-    return enabledModsFile.isWritable();
+    return ref.read(AppState.enabledModsFile.notifier).isWritable();
   });
 
   static final activeJre = FutureProvider<JreEntryInstalled?>((ref) async {

@@ -175,20 +175,6 @@ class SettingSaver extends Notifier<Settings> {
 
       newState = newState.copyWith(
           gameCoreDir: generateGameCorePath(newState.gameDir!));
-
-      final enabledModsFile = getEnabledModsFile(newState.modsDir!);
-      if (enabledModsFile.existsSync() == false) {
-        try {
-          enabledModsFile.createSync(recursive: true);
-          enabledModsFile
-              .writeAsStringSync(const EnabledMods({}).toJson().toJsonString());
-        } catch (e, stack) {
-          Fimber.e(
-              "Failed to create enabled mods file at ${enabledModsFile.path}",
-              ex: e,
-              stacktrace: stack);
-        }
-      }
     }
 
     Fimber.d("Updated settings: $newState");

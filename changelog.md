@@ -1,8 +1,5 @@
-# 0.2.0
+# 0.1.5
 - Added
-  - Mod Profiles
-    - Quickly swap between mod lists.
-    - Different mod versions can be assigned to different profiles.
   - "Delete Mod" context menu item.
   - "Edit mod_info.json" context menu item.
   - "Open Folder" menu item now shows all versions installed.

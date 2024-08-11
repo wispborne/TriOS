@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:dartx/dartx.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
@@ -38,6 +39,7 @@ class _AuditPageState extends ConsumerState<AuditPage> {
         .toMap();
     final auditLog =
         groupByTime(ref.watch(AppState.modAudit).reversed.toList());
+    final dateFormat = DateFormat.yMMMMd(Intl.getCurrentLocale()).add_jms();
 
     return Scaffold(
       appBar: AppBar(
@@ -50,37 +52,39 @@ class _AuditPageState extends ConsumerState<AuditPage> {
           final variant = modVariantsBySmolId[entry.smolId];
           final actionWord =
               "${entry.action.name.replaceFirstMapped(RegExp(r'^.'), (match) => match.group(0)!.toUpperCase())}d";
-          return ListTile(
-            dense: true,
-            leading: Icon(
-              switch (entry.action) {
-                ModAction.enable => Icons.check,
-                ModAction.disable => Icons.close,
-                ModAction.delete => Icons.delete,
-              },
-            ),
-            title: Row(
-              children: [
-                if (variant?.iconFilePath != null)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 4),
-                    child: Image.file(
-                      File(variant!.iconFilePath!),
-                      width: 24,
-                      height: 24,
+          return SelectionArea(
+            child: ListTile(
+              dense: true,
+              leading: Icon(
+                switch (entry.action) {
+                  ModAction.enable => Icons.check,
+                  ModAction.disable => Icons.close,
+                  ModAction.delete => Icons.delete,
+                },
+              ),
+              title: Row(
+                children: [
+                  if (variant?.iconFilePath != null)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 4),
+                      child: Image.file(
+                        File(variant!.iconFilePath!),
+                        width: 24,
+                        height: 24,
+                      ),
                     ),
+                  Text(variant != null
+                      ? "${variant.modInfo.nameOrId} ${variant.modInfo.version}"
+                      : entry.smolId),
+                ],
+              ),
+              subtitle: Text(
+                  "$actionWord ${dateFormat.format(entry.timestamp)}"),
+              subtitleTextStyle: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color:
+                        Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                   ),
-                Text(variant != null
-                    ? "${variant.modInfo.nameOrId} ${variant.modInfo.version}"
-                    : entry.smolId),
-              ],
             ),
-            subtitle: Text(
-                "$actionWord ${Constants.dateTimeFormat.format(entry.timestamp)}"),
-            subtitleTextStyle: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color:
-                      Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                ),
           );
         },
         separatorBuilder: (BuildContext context, int index) {

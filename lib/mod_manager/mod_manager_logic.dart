@@ -273,17 +273,6 @@ Future<ModInfo?> getModInfo(
   }
 }
 
-File getEnabledModsFile(Directory modsFolder) {
-  return File(p.join(modsFolder.path, "enabled_mods.json"));
-}
-
-/// `allMods` will filter out mods that have been removed from the mods folder since the last time the enabled mods file was written.
-Future<EnabledMods> getEnabledMods(Directory modsFolder,
-    {List<Mod>? allMods}) async {
-  return EnabledMods.fromJson(
-      (await getEnabledModsFile(modsFolder).readAsString()).fixJsonToMap());
-}
-
 // Future<void> disableMod(
 //     String modInfoId, Directory modsFolder, WidgetRef ref) async {
 //   var enabledMods = await getEnabledMods(modsFolder);

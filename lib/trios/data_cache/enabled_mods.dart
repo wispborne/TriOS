@@ -6,9 +6,11 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mutex/mutex.dart';
 import 'package:trios/trios/settings/settings.dart';
+import 'package:trios/utils/extensions.dart';
 
 import '../../mod_manager/mod_manager_logic.dart';
 import '../../models/enabled_mods.dart';
+import 'package:path/path.dart' as p;
 import '../../models/mod.dart';
 import '../../utils/logging.dart';
 import '../../utils/util.dart';
@@ -21,8 +23,22 @@ class EnabledModsNotifier extends AsyncNotifier<EnabledMods> {
 
   @override
   Future<EnabledMods> build() async {
-    await refreshEnabledMods();
-    return state.valueOrNull ?? const EnabledMods({});
+    return fileLock.protect(() async {
+      await refreshEnabledMods();
+      return state.valueOrNull ?? const EnabledMods({});
+    });
+  }
+
+  File _getEnabledModsFile(Directory modsFolder) {
+    return File(p.join(modsFolder.path, "enabled_mods.json"));
+  }
+
+  Future<bool> isWritable() {
+    final modsFolder = ref.read(appSettings.select((value) => value.modsDir));
+    if (modsFolder == null) {
+      return Future.value(false);
+    }
+    return _getEnabledModsFile(modsFolder).isWritable();
   }
 
   Future<void> enableMod(String modId, {bool enabled = true}) async {
@@ -34,7 +50,7 @@ class EnabledModsNotifier extends AsyncNotifier<EnabledMods> {
         return;
       }
 
-      final enabledModsFile = getEnabledModsFile(modsFolder);
+      final enabledModsFile = _getEnabledModsFile(modsFolder);
       var enabledMods = state.valueOrNull ?? const EnabledMods({});
 
       if (enabled) {
@@ -55,8 +71,8 @@ class EnabledModsNotifier extends AsyncNotifier<EnabledMods> {
       state = AsyncValue.data(enabledMods);
       Fimber.i(
         enabled
-            ? "Enabled mod $modId in enabled_mods.json"
-            : "Disabled mod $modId in enabled_mods.json",
+            ? "Enabled mod $modId in enabled_mods.json. ${enabledMods.enabledMods.length} now enabled."
+            : "Disabled mod $modId in enabled_mods.json. ${enabledMods.enabledMods.length} now enabled.",
       );
     });
   }
@@ -69,34 +85,58 @@ class EnabledModsNotifier extends AsyncNotifier<EnabledMods> {
   /// If the file doesn't exist, it'll create a new one.
   /// `allMods` is an optional parameter that filters out mods that don't exist.
   Future<void> refreshEnabledMods() async {
-    final modsFolder = ref.watch(appSettings.select((value) => value.modsDir));
+    fileLock.protect(() async {
+      final modsFolder =
+          ref.watch(appSettings.select((value) => value.modsDir));
 
-    if (modsFolder == null || !modsFolder.existsSync()) {
-      state = const AsyncValue.data(EnabledMods({}));
-    } else {
-      final enabledModsFile = getEnabledModsFile(modsFolder);
-      if (!enabledModsFile.existsSync()) {
+      if (modsFolder == null || !modsFolder.existsSync()) {
         state = const AsyncValue.data(EnabledMods({}));
+      } else {
+        File enabledModsFile = _getEnabledModsFile(modsFolder);
+        if (enabledModsFile.existsSync() == false) {
+          try {
+            enabledModsFile.createSync(recursive: true);
+            enabledModsFile.writeAsStringSync(
+                const EnabledMods({}).toJson().toJsonString());
+          } catch (e, stack) {
+            Fimber.e(
+                "Failed to create enabled mods file at ${enabledModsFile.path}",
+                ex: e,
+                stacktrace: stack);
+          }
+        }
+
+        enabledModsFile = _getEnabledModsFile(modsFolder);
+        if (!enabledModsFile.existsSync()) {
+          state = const AsyncValue.data(EnabledMods({}));
+        }
+
+        // If the watcher is closed somehow, we need to recreate it.
+        if (_enabledModsWatcher != null && _enabledModsWatcher!.isClosed) {
+          _enabledModsWatcher = null;
+        }
+
+        // Watch the enabled_mods.json file for changes
+        if (_enabledModsWatcher == null) {
+          _enabledModsWatcher = StreamController<File>();
+          _enabledModsWatcher?.stream.listen((event) {
+            refreshEnabledMods();
+          });
+
+          pollFileForModification(enabledModsFile, _enabledModsWatcher!,
+              intervalMillis: 1500);
+        }
+
+        var enabledMods = await _getEnabledMods(modsFolder);
+        state = AsyncValue.data(enabledMods);
       }
+    });
+  }
 
-      // If the watcher is closed somehow, we need to recreate it.
-      if (_enabledModsWatcher != null && _enabledModsWatcher!.isClosed) {
-        _enabledModsWatcher = null;
-      }
-
-      // Watch the enabled_mods.json file for changes
-      if (_enabledModsWatcher == null) {
-        _enabledModsWatcher = StreamController<File>();
-        _enabledModsWatcher?.stream.listen((event) {
-          refreshEnabledMods();
-        });
-
-        pollFileForModification(enabledModsFile, _enabledModsWatcher!,
-            intervalMillis: 1500);
-      }
-
-      var enabledMods = await getEnabledMods(modsFolder);
-      state = AsyncValue.data(enabledMods);
-    }
+  /// `allMods` will filter out mods that have been removed from the mods folder since the last time the enabled mods file was written.
+  Future<EnabledMods> _getEnabledMods(Directory modsFolder,
+      {List<Mod>? allMods}) async {
+    return EnabledMods.fromJson(
+        (await _getEnabledModsFile(modsFolder).readAsString()).fixJsonToMap());
   }
 }

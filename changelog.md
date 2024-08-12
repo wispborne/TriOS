@@ -1,6 +1,8 @@
 # 0.1.6
 - Added
-  - More info to the install dialog, showing all mod_info.json info.
+  - More info shown in the the install dialog, now shows all mod_info.json info.
+- Fixed
+  - Some logspam that's blowing up my error reporting data quota.
 
 # 0.1.5
 - Added

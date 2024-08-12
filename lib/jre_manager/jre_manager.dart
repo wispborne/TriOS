@@ -43,7 +43,8 @@ class _JreManagerState extends ConsumerState<JreManager>
   }
 
   _reloadJres() {
-    if (isModifyingFiles) return;
+    // TODO probably probably a nicer solution than a mounted check.
+    if (isModifyingFiles || !mounted) return;
     findJREs(ref.read(appSettings.select((value) => value.gameDir))?.path)
         .then((value) {
       jres = value.map((e) => e as JreEntry).toList();

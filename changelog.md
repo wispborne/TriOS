@@ -1,3 +1,14 @@
+# 0.1.7
+- Added
+  - New prerelease update channel.
+    - Updates will go to the prerelease channel first, then to the stable channel after.
+    - You can switch between channels in the Settings page.
+    - This lets me test bug fixes and hopefully catch catastrophic bugs early.
+- Fixed
+  - 
+- Changed
+  - Condensed toolbar, which was getting bloated.
+
 # 0.1.6
 - Added
   - More info shown in the the install dialog, now shows all mod_info.json info.

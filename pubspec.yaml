@@ -106,6 +106,7 @@ dependencies:
   uuid: ^4.4.0
   # For pluto_grid_plus
   pdf: ^3.11.0
+  hooks_riverpod: ^2.5.1
 
 # Uncommented & Copied
 #  adaptive_theme: ^3.6.0

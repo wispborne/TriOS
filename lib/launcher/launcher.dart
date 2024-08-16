@@ -5,7 +5,8 @@ import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_color/flutter_color.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:plist_parser/plist_parser.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/enabled_mods.dart';
@@ -26,45 +27,49 @@ typedef LaunchPrecheckError = ({
   Function? doFix
 });
 
-class Launcher extends ConsumerWidget {
+class Launcher extends HookConsumerWidget {
   const Launcher({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     var theme = Theme.of(context);
     final buttonBackgroundColor = theme.colorScheme.surfaceContainer;
-    return Container(
-      decoration: BoxDecoration(
-        color: buttonBackgroundColor,
-        borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
-        border: Border.all(
-          color: theme.colorScheme.primary.darker(15),
-          strokeAlign: BorderSide.strokeAlignOutside,
-          width: 2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            blurRadius: 15,
-            blurStyle: BlurStyle.normal,
-            color: buttonBackgroundColor
-                .darker(15)
-                .mix(theme.colorScheme.primary, 0.25)!,
-            offset: Offset.zero,
-            spreadRadius: 2,
-          ),
-          const BoxShadow(
-            blurRadius: 4,
-            blurStyle: BlurStyle.normal,
-            color: Colors.black,
-            offset: Offset.zero,
-            spreadRadius: 1,
-          ),
-        ],
-      ),
-      child: SizedBox(
-        height: 38,
-        width: 42,
-        child: InkWell(
+
+    // Animation controllers for hover and tap effects
+    final hoverController = useAnimationController(
+      duration: const Duration(milliseconds: 100),
+    );
+    final tapController = useAnimationController(
+      duration: const Duration(milliseconds: 100),
+    );
+
+    final scaleAnimation = Tween<double>(begin: 1.0, end: 1.00).animate(
+      CurvedAnimation(parent: hoverController, curve: Curves.easeInOut),
+    );
+
+    final tapScaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
+      CurvedAnimation(parent: tapController, curve: Curves.easeOut),
+    );
+
+    final colorAnimation = ColorTween(
+      begin: buttonBackgroundColor,
+      end: buttonBackgroundColor.mix(theme.colorScheme.primary, 0.1),
+    ).animate(hoverController);
+
+    final boxShadowAnimation = Tween<double>(begin: 2, end: 10).animate(
+      CurvedAnimation(parent: hoverController, curve: Curves.easeInOut),
+    );
+
+    return Tooltip(
+      message: 'Launch Starsector',
+      waitDuration: const Duration(milliseconds: 750),
+      child: MouseRegion(
+        onEnter: (_) => hoverController.forward(),
+        onExit: (_) => hoverController.reverse(),
+        child: GestureDetector(
+          onTapDown: (_) => tapController.forward(),
+          onTapUp: (_) => tapController.reverse(),
+          onTapCancel: () => tapController.reverse(),
           onTap: () {
             try {
               launchGame(ref, context);
@@ -72,29 +77,62 @@ class Launcher extends ConsumerWidget {
               Fimber.e('Error launching game: $e');
             }
           },
-          // style: ElevatedButton.styleFrom(
-          //   padding: const EdgeInsets.all(0),
-          //   backgroundColor: buttonBackgroundColor,
-          //   shape: RoundedRectangleBorder(
-          //     borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
-          //   ),
-          // ),
-          child: Transform.translate(
-            offset: const Offset(0, -1),
-            child: Center(
-              child: StrokeText(
-                'S',
-                strokeWidth: 3,
-                borderOnTop: true,
-                strokeColor: theme.colorScheme.surfaceTint.darker(70),
-                style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontFamily: "Orbitron",
-                  fontSize: 30,
-                  color: theme.colorScheme.primary.darker(5),
+          child: AnimatedBuilder(
+            animation: Listenable.merge([hoverController, tapController]),
+            builder: (context, child) {
+              return Transform.scale(
+                scale: scaleAnimation.value * tapScaleAnimation.value,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: colorAnimation.value,
+                    borderRadius:
+                        BorderRadius.circular(ThemeManager.cornerRadius),
+                    border: Border.all(
+                      color: theme.colorScheme.primary.darker(15),
+                      strokeAlign: BorderSide.strokeAlignOutside,
+                      width: 2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        blurRadius: boxShadowAnimation.value,
+                        blurStyle: BlurStyle.normal,
+                        color: theme.colorScheme.primary.withOpacity(0.25),
+                        offset: Offset.zero,
+                        spreadRadius: 2,
+                      ),
+                      const BoxShadow(
+                        blurRadius: 4,
+                        blurStyle: BlurStyle.normal,
+                        color: Colors.black,
+                        offset: Offset.zero,
+                        spreadRadius: 1,
+                      ),
+                    ],
+                  ),
+                  child: SizedBox(
+                    height: 38,
+                    width: 42,
+                    child: Transform.translate(
+                      offset: const Offset(0, -1),
+                      child: Center(
+                        child: StrokeText(
+                          'S',
+                          strokeWidth: 3,
+                          borderOnTop: true,
+                          strokeColor: theme.colorScheme.surfaceTint.darker(70),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontFamily: "Orbitron",
+                            fontSize: 30,
+                            color: theme.colorScheme.primary.darker(5),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-            ),
+              );
+            },
           ),
         ),
       ),

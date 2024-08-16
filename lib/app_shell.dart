@@ -242,7 +242,10 @@ class _AppShellState extends ConsumerState<AppShell>
                                 .bodyMedium
                                 ?.copyWith(fontSize: 12))
                       ])),
-              const Launcher(),
+              const Padding(
+                padding: EdgeInsets.only(left: 8),
+                child: Launcher(),
+              ),
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.only(left: 16, right: 16),

@@ -21,7 +21,9 @@ mixin _$DownloadProgress {
   bool get isIndeterminate => throw _privateConstructorUsedError;
   String? get customStatus => throw _privateConstructorUsedError;
 
-  @JsonKey(ignore: true)
+  /// Create a copy of DownloadProgress
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   $DownloadProgressCopyWith<DownloadProgress> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -49,6 +51,8 @@ class _$DownloadProgressCopyWithImpl<$Res, $Val extends DownloadProgress>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
+  /// Create a copy of DownloadProgress
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -101,6 +105,8 @@ class __$$DownloadProgressImplCopyWithImpl<$Res>
       $Res Function(_$DownloadProgressImpl) _then)
       : super(_value, _then);
 
+  /// Create a copy of DownloadProgress
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -171,7 +177,9 @@ class _$DownloadProgressImpl extends _DownloadProgress {
   int get hashCode => Object.hash(
       runtimeType, bytesReceived, bytesTotal, isIndeterminate, customStatus);
 
-  @JsonKey(ignore: true)
+  /// Create a copy of DownloadProgress
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
   _$$DownloadProgressImplCopyWith<_$DownloadProgressImpl> get copyWith =>
@@ -193,8 +201,11 @@ abstract class _DownloadProgress extends DownloadProgress {
   bool get isIndeterminate;
   @override
   String? get customStatus;
+
+  /// Create a copy of DownloadProgress
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   _$$DownloadProgressImplCopyWith<_$DownloadProgressImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

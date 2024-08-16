@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plist_parser/plist_parser.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
@@ -14,6 +15,7 @@ import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/platform_paths.dart';
+import 'package:trios/widgets/stroke_text.dart';
 import 'package:win32_registry/win32_registry.dart';
 
 import '../themes/theme_manager.dart';
@@ -29,38 +31,73 @@ class Launcher extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    var theme = Theme.of(context);
+    final buttonBackgroundColor = theme.colorScheme.surfaceContainer;
     return Container(
       decoration: BoxDecoration(
+        color: buttonBackgroundColor,
         borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
         border: Border.all(
-          color: Theme.of(context).colorScheme.secondary,
+          color: theme.colorScheme.primary.darker(15),
           strokeAlign: BorderSide.strokeAlignOutside,
           width: 2,
         ),
+        boxShadow: [
+          BoxShadow(
+            blurRadius: 15,
+            blurStyle: BlurStyle.normal,
+            color: buttonBackgroundColor
+                .darker(15)
+                .mix(theme.colorScheme.primary, 0.25)!,
+            offset: Offset.zero,
+            spreadRadius: 2,
+          ),
+          const BoxShadow(
+            blurRadius: 4,
+            blurStyle: BlurStyle.normal,
+            color: Colors.black,
+            offset: Offset.zero,
+            spreadRadius: 1,
+          ),
+        ],
       ),
-      child: ElevatedButton(
-          onPressed: () {
+      child: SizedBox(
+        height: 38,
+        width: 42,
+        child: InkWell(
+          onTap: () {
             try {
               launchGame(ref, context);
             } catch (e) {
               Fimber.e('Error launching game: $e');
             }
           },
-          style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 12.0),
-            backgroundColor: Theme.of(context).colorScheme.secondary,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+          // style: ElevatedButton.styleFrom(
+          //   padding: const EdgeInsets.all(0),
+          //   backgroundColor: buttonBackgroundColor,
+          //   shape: RoundedRectangleBorder(
+          //     borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+          //   ),
+          // ),
+          child: Transform.translate(
+            offset: const Offset(0, -1),
+            child: Center(
+              child: StrokeText(
+                'S',
+                strokeWidth: 3,
+                borderOnTop: true,
+                strokeColor: theme.colorScheme.surfaceTint.darker(70),
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontFamily: "Orbitron",
+                  fontSize: 30,
+                  color: theme.colorScheme.primary.darker(5),
+                ),
+              ),
             ),
           ),
-          child: Text(
-            'LAUNCH',
-            style: TextStyle(
-                fontWeight: FontWeight.w900,
-                fontFamily: "Orbitron",
-                fontSize: 20,
-                color: Theme.of(context).colorScheme.onSecondary),
-          )),
+        ),
+      ),
     );
   }
 

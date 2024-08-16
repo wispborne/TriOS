@@ -22,8 +22,12 @@ EnabledMods _$EnabledModsFromJson(Map<String, dynamic> json) {
 mixin _$EnabledMods {
   Set<String> get enabledMods => throw _privateConstructorUsedError;
 
+  /// Serializes this EnabledMods to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-  @JsonKey(ignore: true)
+
+  /// Create a copy of EnabledMods
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   $EnabledModsCopyWith<EnabledMods> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -47,6 +51,8 @@ class _$EnabledModsCopyWithImpl<$Res, $Val extends EnabledMods>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
+  /// Create a copy of EnabledMods
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -80,6 +86,8 @@ class __$$EnabledModsImplCopyWithImpl<$Res>
       _$EnabledModsImpl _value, $Res Function(_$EnabledModsImpl) _then)
       : super(_value, _then);
 
+  /// Create a copy of EnabledMods
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -125,12 +133,14 @@ class _$EnabledModsImpl implements _EnabledMods {
                 .equals(other._enabledMods, _enabledMods));
   }
 
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
       runtimeType, const DeepCollectionEquality().hash(_enabledMods));
 
-  @JsonKey(ignore: true)
+  /// Create a copy of EnabledMods
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
   _$$EnabledModsImplCopyWith<_$EnabledModsImpl> get copyWith =>
@@ -152,8 +162,11 @@ abstract class _EnabledMods implements EnabledMods {
 
   @override
   Set<String> get enabledMods;
+
+  /// Create a copy of EnabledMods
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   _$$EnabledModsImplCopyWith<_$EnabledModsImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

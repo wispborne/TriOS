@@ -184,15 +184,15 @@ class _Smol3State extends ConsumerState<Smol3>
                   padding: const EdgeInsets.only(left: 2, right: 8),
                   child: Stack(
                     children: [
-                      const Row(
+                      Row(
                         children: [
-                          AddNewModsButton(
+                          const AddNewModsButton(
                             labelWidget: Padding(
                               padding: EdgeInsets.only(left: 4),
                               child: Text("Add Mod(s)"),
                             ),
                           ),
-                          RefreshModsButton(
+                          const RefreshModsButton(
                             iconOnly: false,
                             padding: EdgeInsets.symmetric(horizontal: 4),
                           ),
@@ -247,6 +247,35 @@ class _Smol3State extends ConsumerState<Smol3>
                           ),
                         ),
                       ),
+                      Row(
+                        children: [
+                          const Spacer(),
+                          Tooltip(
+                              message: "Refresh mods and recheck versions",
+                              child: Padding(
+                                padding: const EdgeInsets.all(4),
+                                child: OutlinedButton.icon(
+                                  onPressed: () =>
+                                      copyModListToClipboardFromMods(
+                                          enabledMods, context),
+                                  label: const Text("Copy"),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: Theme.of(context)
+                                        .colorScheme
+                                        .onSurface
+                                        .withOpacity(0.8),
+                                    side: BorderSide(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface
+                                          .withOpacity(0.8),
+                                    ),
+                                  ),
+                                  icon: const Icon(Icons.copy, size: 20,),
+                                ),
+                              ))
+                        ],
+                      )
                     ],
                   ),
                 )),

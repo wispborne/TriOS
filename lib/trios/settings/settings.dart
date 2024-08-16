@@ -4,8 +4,6 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:trios/jre_manager/jre_23.dart';
-import 'package:trios/mod_manager/mod_manager_logic.dart';
-import 'package:trios/models/enabled_mods.dart';
 import 'package:trios/trios/navigation.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
@@ -70,6 +68,7 @@ class Settings with _$Settings {
     @Default(true) final bool isUpdatesFieldShown,
     final ModsGridState? modsGridState,
     final bool? allowCrashReporting,
+    @Default(false) final bool updateToPrereleases,
     @Default("") final String userId,
 
     // Mod profiles are stored in [ModProfilesSettings] and [ModProfileManagerNotifier],

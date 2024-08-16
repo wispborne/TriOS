@@ -30,8 +30,12 @@ mixin _$VersionCheckerInfo {
   String? get directDownloadURL => throw _privateConstructorUsedError;
   String? get changelogURL => throw _privateConstructorUsedError;
 
+  /// Serializes this VersionCheckerInfo to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-  @JsonKey(ignore: true)
+
+  /// Create a copy of VersionCheckerInfo
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   $VersionCheckerInfoCopyWith<VersionCheckerInfo> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -64,6 +68,8 @@ class _$VersionCheckerInfoCopyWithImpl<$Res, $Val extends VersionCheckerInfo>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
+  /// Create a copy of VersionCheckerInfo
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -107,6 +113,8 @@ class _$VersionCheckerInfoCopyWithImpl<$Res, $Val extends VersionCheckerInfo>
     ) as $Val);
   }
 
+  /// Create a copy of VersionCheckerInfo
+  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $VersionObjectCopyWith<$Res>? get modVersion {
@@ -149,6 +157,8 @@ class __$$VersionCheckerInfoImplCopyWithImpl<$Res>
       $Res Function(_$VersionCheckerInfoImpl) _then)
       : super(_value, _then);
 
+  /// Create a copy of VersionCheckerInfo
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -251,12 +261,14 @@ class _$VersionCheckerInfoImpl extends _VersionCheckerInfo {
                 other.changelogURL == changelogURL));
   }
 
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(runtimeType, modName, masterVersionFile,
       modNexusId, modThreadId, modVersion, directDownloadURL, changelogURL);
 
-  @JsonKey(ignore: true)
+  /// Create a copy of VersionCheckerInfo
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
   _$$VersionCheckerInfoImplCopyWith<_$VersionCheckerInfoImpl> get copyWith =>
@@ -301,8 +313,11 @@ abstract class _VersionCheckerInfo extends VersionCheckerInfo {
   String? get directDownloadURL;
   @override
   String? get changelogURL;
+
+  /// Create a copy of VersionCheckerInfo
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   _$$VersionCheckerInfoImplCopyWith<_$VersionCheckerInfoImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

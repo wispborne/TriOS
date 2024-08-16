@@ -27,8 +27,12 @@ mixin _$LaunchSettings {
   int? get numAASamples => throw _privateConstructorUsedError;
   double? get screenScaling => throw _privateConstructorUsedError;
 
+  /// Serializes this LaunchSettings to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-  @JsonKey(ignore: true)
+
+  /// Create a copy of LaunchSettings
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   $LaunchSettingsCopyWith<LaunchSettings> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -58,6 +62,8 @@ class _$LaunchSettingsCopyWithImpl<$Res, $Val extends LaunchSettings>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
+  /// Create a copy of LaunchSettings
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -122,6 +128,8 @@ class __$$LaunchSettingsImplCopyWithImpl<$Res>
       _$LaunchSettingsImpl _value, $Res Function(_$LaunchSettingsImpl) _then)
       : super(_value, _then);
 
+  /// Create a copy of LaunchSettings
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -213,12 +221,14 @@ class _$LaunchSettingsImpl extends _LaunchSettings {
                 other.screenScaling == screenScaling));
   }
 
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(runtimeType, isFullscreen, hasSound,
       resolutionWidth, resolutionHeight, numAASamples, screenScaling);
 
-  @JsonKey(ignore: true)
+  /// Create a copy of LaunchSettings
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
   _$$LaunchSettingsImplCopyWith<_$LaunchSettingsImpl> get copyWith =>
@@ -258,8 +268,11 @@ abstract class _LaunchSettings extends LaunchSettings {
   int? get numAASamples;
   @override
   double? get screenScaling;
+
+  /// Create a copy of LaunchSettings
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   _$$LaunchSettingsImplCopyWith<_$LaunchSettingsImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

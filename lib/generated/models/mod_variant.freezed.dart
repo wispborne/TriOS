@@ -22,7 +22,9 @@ mixin _$ModVariant {
   Directory get modFolder => throw _privateConstructorUsedError;
   bool get hasNonBrickedModInfo => throw _privateConstructorUsedError;
 
-  @JsonKey(ignore: true)
+  /// Create a copy of ModVariant
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   $ModVariantCopyWith<ModVariant> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -53,6 +55,8 @@ class _$ModVariantCopyWithImpl<$Res, $Val extends ModVariant>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
+  /// Create a copy of ModVariant
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -81,6 +85,8 @@ class _$ModVariantCopyWithImpl<$Res, $Val extends ModVariant>
     ) as $Val);
   }
 
+  /// Create a copy of ModVariant
+  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $ModInfoCopyWith<$Res> get modInfo {
@@ -89,6 +95,8 @@ class _$ModVariantCopyWithImpl<$Res, $Val extends ModVariant>
     });
   }
 
+  /// Create a copy of ModVariant
+  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $VersionCheckerInfoCopyWith<$Res>? get versionCheckerInfo {
@@ -131,6 +139,8 @@ class __$$ModVariantImplCopyWithImpl<$Res>
       _$ModVariantImpl _value, $Res Function(_$ModVariantImpl) _then)
       : super(_value, _then);
 
+  /// Create a copy of ModVariant
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -202,7 +212,9 @@ class _$ModVariantImpl extends _ModVariant {
   int get hashCode => Object.hash(runtimeType, modInfo, versionCheckerInfo,
       modFolder, hasNonBrickedModInfo);
 
-  @JsonKey(ignore: true)
+  /// Create a copy of ModVariant
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
   _$$ModVariantImplCopyWith<_$ModVariantImpl> get copyWith =>
@@ -225,8 +237,11 @@ abstract class _ModVariant extends ModVariant {
   Directory get modFolder;
   @override
   bool get hasNonBrickedModInfo;
+
+  /// Create a copy of ModVariant
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   _$$ModVariantImplCopyWith<_$ModVariantImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

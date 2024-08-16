@@ -1,19 +1,23 @@
 import 'dart:io';
 
-import 'package:dart_extensions_methods/dart_extension_methods.dart';
+import 'package:dartx/dartx.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:toastification/toastification.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/util.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
+import 'package:trios/widgets/text_with_icon.dart';
 
+import '../../models/version.dart';
 import '../../themes/theme.dart';
 import '../../themes/theme_manager.dart';
 import '../../widgets/restartable_app.dart';
+import '../../widgets/self_update_toast.dart';
 import '../../widgets/trios_expansion_tile.dart';
 import '../app_state.dart';
 import '../constants.dart';
@@ -95,6 +99,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   ),
                   SizedBox.fromSize(size: const Size.fromHeight(8)),
                   Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: CheckForUpdatesButton(ref: ref),
+                  ),
+                  Padding(
                     padding: const EdgeInsets.only(top: 8.0),
                     child: CheckboxWithLabel(
                       value: ref.watch(appSettings
@@ -105,6 +113,23 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                 shouldAutoUpdateOnLaunch: value ?? false));
                       },
                       label: "Auto-update ${Constants.appName} on launch",
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Tooltip(
+                      message: "Play with fire.",
+                      child: CheckboxWithLabel(
+                        value: ref.watch(appSettings
+                            .select((value) => value.updateToPrereleases)),
+                        onChanged: (value) {
+                          ref.read(appSettings.notifier).update((state) => state
+                              .copyWith(updateToPrereleases: value ?? false));
+                        },
+                        labelWidget: const TextWithIcon(
+                            text: "Update to ${Constants.appName} pre-releases",
+                            trailing: Icon(Icons.warning_rounded)),
+                      ),
                     ),
                   ),
                   SizedBox.fromSize(size: const Size.fromHeight(20)),
@@ -300,8 +325,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   }
 
   void tryUpdateGamePath(String newGameDir, Settings settings) {
-    newGameDir =
-        newGameDir.isNullOrEmpty() ? defaultGamePath().path : newGameDir;
+    newGameDir = newGameDir.isNullOrEmpty ? defaultGamePath().path : newGameDir;
 
     var dirExists = validateGameFolderPath(newGameDir);
 
@@ -329,5 +353,45 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       Fimber.w("Error validating game folder path", ex: e);
       return false;
     }
+  }
+}
+
+class CheckForUpdatesButton extends StatelessWidget {
+  const CheckForUpdatesButton({
+    super.key,
+    required this.ref,
+  });
+
+  final WidgetRef ref;
+
+  @override
+  Widget build(BuildContext context) {
+    return ElevatedButton(
+      onPressed: () async {
+        ref
+            .watch(AppState.selfUpdate.notifier)
+            .getLatestRelease()
+            .then((release) {
+          if (release == null) {
+            showSnackBar(
+                context: context, content: const Text("No new release found"));
+            return;
+          } else if (Version.parse(release.tagName, sanitizeInput: true) <=
+              Version.parse(Constants.version, sanitizeInput: true)) {
+            showSnackBar(
+                context: context,
+                content: Text(
+                    "You are already on the latest version (current: ${Constants.version}, found: ${release.tagName}${release.prerelease ? " (prerelease)" : ""})"));
+            return;
+          } else {
+            toastification.showCustom(
+              context: context,
+              builder: (context, item) => SelfUpdateToast(release, item),
+            );
+          }
+        });
+      },
+      child: const Text('Check for update'),
+    );
   }
 }

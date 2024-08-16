@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 import 'package:pub_semver/pub_semver.dart';
 import 'package:trios/libarchive/libarchive.dart';
 import 'package:trios/trios/self_updater/script_generator.dart';
+import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/network_util.dart';
@@ -40,7 +41,7 @@ class SelfUpdateInfo {
 class SelfUpdater extends AsyncNotifier<DownloadProgress?> {
   static const String githubBase = "https://api.github.com";
   static const String githubLatestRelease =
-      "$githubBase/repos/wispborne/trios/releases/latest";
+      "$githubBase/repos/wispborne/trios/releases";
 
   @override
   Future<DownloadProgress?> build() async {
@@ -114,8 +115,14 @@ class SelfUpdater extends AsyncNotifier<DownloadProgress?> {
     }
   }
 
-  static Future<Release?> getLatestRelease() async {
-    return await NetworkUtils.getLatestRelease(Uri.parse(githubLatestRelease));
+  /// Fetches the latest release from the GitHub API.
+  /// If [includePrereleases] is true, it will include prereleases. If null, uses the user's setting.
+  Future<Release?> getLatestRelease({bool? includePrereleases}) async {
+    final includePrereleasesToUse = includePrereleases ??
+        ref.read(appSettings.select((s) => s.updateToPrereleases)) ??
+        false;
+    return await NetworkUtils.getRelease(Uri.parse(githubLatestRelease),
+        includePrereleases: includePrereleasesToUse);
   }
 
   /// Downloads the release asset for the given platform.

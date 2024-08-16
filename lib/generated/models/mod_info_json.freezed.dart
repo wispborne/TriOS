@@ -22,8 +22,12 @@ EnabledModsJsonMode _$EnabledModsJsonModeFromJson(Map<String, dynamic> json) {
 mixin _$EnabledModsJsonMode {
   List<String> get enabledMods => throw _privateConstructorUsedError;
 
+  /// Serializes this EnabledModsJsonMode to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-  @JsonKey(ignore: true)
+
+  /// Create a copy of EnabledModsJsonMode
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   $EnabledModsJsonModeCopyWith<EnabledModsJsonMode> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -47,6 +51,8 @@ class _$EnabledModsJsonModeCopyWithImpl<$Res, $Val extends EnabledModsJsonMode>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
+  /// Create a copy of EnabledModsJsonMode
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -80,6 +86,8 @@ class __$$EnabledModsJsonModeImplCopyWithImpl<$Res>
       $Res Function(_$EnabledModsJsonModeImpl) _then)
       : super(_value, _then);
 
+  /// Create a copy of EnabledModsJsonMode
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -125,12 +133,14 @@ class _$EnabledModsJsonModeImpl implements _EnabledModsJsonMode {
                 .equals(other._enabledMods, _enabledMods));
   }
 
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
       runtimeType, const DeepCollectionEquality().hash(_enabledMods));
 
-  @JsonKey(ignore: true)
+  /// Create a copy of EnabledModsJsonMode
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
   _$$EnabledModsJsonModeImplCopyWith<_$EnabledModsJsonModeImpl> get copyWith =>
@@ -154,8 +164,11 @@ abstract class _EnabledModsJsonMode implements EnabledModsJsonMode {
 
   @override
   List<String> get enabledMods;
+
+  /// Create a copy of EnabledModsJsonMode
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   _$$EnabledModsJsonModeImplCopyWith<_$EnabledModsJsonModeImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -180,8 +193,12 @@ mixin _$ModInfoJson {
   @JsonConverterBool()
   bool get totalConversion => throw _privateConstructorUsedError;
 
+  /// Serializes this ModInfoJson to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-  @JsonKey(ignore: true)
+
+  /// Create a copy of ModInfoJson
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   $ModInfoJsonCopyWith<ModInfoJson> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -215,6 +232,8 @@ class _$ModInfoJsonCopyWithImpl<$Res, $Val extends ModInfoJson>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
+  /// Create a copy of ModInfoJson
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -303,6 +322,8 @@ class __$$ModInfoJsonImplCopyWithImpl<$Res>
       _$ModInfoJsonImpl _value, $Res Function(_$ModInfoJsonImpl) _then)
       : super(_value, _then);
 
+  /// Create a copy of ModInfoJson
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -441,7 +462,7 @@ class _$ModInfoJsonImpl extends _ModInfoJson {
                 other.totalConversion == totalConversion));
   }
 
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
       runtimeType,
@@ -456,7 +477,9 @@ class _$ModInfoJsonImpl extends _ModInfoJson {
       utility,
       totalConversion);
 
-  @JsonKey(ignore: true)
+  /// Create a copy of ModInfoJson
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
   _$$ModInfoJsonImplCopyWith<_$ModInfoJsonImpl> get copyWith =>
@@ -509,8 +532,11 @@ abstract class _ModInfoJson extends ModInfoJson {
   @override
   @JsonConverterBool()
   bool get totalConversion;
+
+  /// Create a copy of ModInfoJson
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   _$$ModInfoJsonImplCopyWith<_$ModInfoJsonImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -526,8 +552,12 @@ mixin _$Dependency {
   @JsonConverterVersionNullable()
   Version? get version => throw _privateConstructorUsedError;
 
+  /// Serializes this Dependency to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-  @JsonKey(ignore: true)
+
+  /// Create a copy of Dependency
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   $DependencyCopyWith<Dependency> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -554,6 +584,8 @@ class _$DependencyCopyWithImpl<$Res, $Val extends Dependency>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
+  /// Create a copy of Dependency
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -600,6 +632,8 @@ class __$$DependencyImplCopyWithImpl<$Res>
       _$DependencyImpl _value, $Res Function(_$DependencyImpl) _then)
       : super(_value, _then);
 
+  /// Create a copy of Dependency
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -657,11 +691,13 @@ class _$DependencyImpl extends _Dependency {
             (identical(other.version, version) || other.version == version));
   }
 
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(runtimeType, id, name, version);
 
-  @JsonKey(ignore: true)
+  /// Create a copy of Dependency
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
   _$$DependencyImplCopyWith<_$DependencyImpl> get copyWith =>
@@ -693,8 +729,11 @@ abstract class _Dependency extends Dependency {
   @override
   @JsonConverterVersionNullable()
   Version? get version;
+
+  /// Create a copy of Dependency
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   _$$DependencyImplCopyWith<_$DependencyImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -709,8 +748,12 @@ mixin _$VersionObject {
   dynamic get minor => throw _privateConstructorUsedError;
   dynamic get patch => throw _privateConstructorUsedError;
 
+  /// Serializes this VersionObject to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-  @JsonKey(ignore: true)
+
+  /// Create a copy of VersionObject
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   $VersionObjectCopyWith<VersionObject> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -734,6 +777,8 @@ class _$VersionObjectCopyWithImpl<$Res, $Val extends VersionObject>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
+  /// Create a copy of VersionObject
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -777,6 +822,8 @@ class __$$VersionObjectImplCopyWithImpl<$Res>
       _$VersionObjectImpl _value, $Res Function(_$VersionObjectImpl) _then)
       : super(_value, _then);
 
+  /// Create a copy of VersionObject
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -826,7 +873,7 @@ class _$VersionObjectImpl extends _VersionObject {
             const DeepCollectionEquality().equals(other.patch, patch));
   }
 
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
       runtimeType,
@@ -834,7 +881,9 @@ class _$VersionObjectImpl extends _VersionObject {
       const DeepCollectionEquality().hash(minor),
       const DeepCollectionEquality().hash(patch));
 
-  @JsonKey(ignore: true)
+  /// Create a copy of VersionObject
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
   _$$VersionObjectImplCopyWith<_$VersionObjectImpl> get copyWith =>
@@ -863,8 +912,11 @@ abstract class _VersionObject extends VersionObject {
   dynamic get minor;
   @override
   dynamic get patch;
+
+  /// Create a copy of VersionObject
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   _$$VersionObjectImplCopyWith<_$VersionObjectImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

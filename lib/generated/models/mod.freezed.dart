@@ -20,7 +20,9 @@ mixin _$Mod {
   bool get isEnabledInGame => throw _privateConstructorUsedError;
   List<ModVariant> get modVariants => throw _privateConstructorUsedError;
 
-  @JsonKey(ignore: true)
+  /// Create a copy of Mod
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   $ModCopyWith<Mod> get copyWith => throw _privateConstructorUsedError;
 }
 
@@ -41,6 +43,8 @@ class _$ModCopyWithImpl<$Res, $Val extends Mod> implements $ModCopyWith<$Res> {
   // ignore: unused_field
   final $Res Function($Val) _then;
 
+  /// Create a copy of Mod
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -80,6 +84,8 @@ class __$$ModImplCopyWithImpl<$Res> extends _$ModCopyWithImpl<$Res, _$ModImpl>
   __$$ModImplCopyWithImpl(_$ModImpl _value, $Res Function(_$ModImpl) _then)
       : super(_value, _then);
 
+  /// Create a copy of Mod
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -147,7 +153,9 @@ class _$ModImpl extends _Mod {
   int get hashCode => Object.hash(runtimeType, id, isEnabledInGame,
       const DeepCollectionEquality().hash(_modVariants));
 
-  @JsonKey(ignore: true)
+  /// Create a copy of Mod
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
   _$$ModImplCopyWith<_$ModImpl> get copyWith =>
@@ -167,8 +175,11 @@ abstract class _Mod extends Mod {
   bool get isEnabledInGame;
   @override
   List<ModVariant> get modVariants;
+
+  /// Create a copy of Mod
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   _$$ModImplCopyWith<_$ModImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

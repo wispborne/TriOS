@@ -22,8 +22,12 @@ ModProfiles _$ModProfilesFromJson(Map<String, dynamic> json) {
 mixin _$ModProfiles {
   List<ModProfile> get modProfiles => throw _privateConstructorUsedError;
 
+  /// Serializes this ModProfiles to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-  @JsonKey(ignore: true)
+
+  /// Create a copy of ModProfiles
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   $ModProfilesCopyWith<ModProfiles> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -47,6 +51,8 @@ class _$ModProfilesCopyWithImpl<$Res, $Val extends ModProfiles>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
+  /// Create a copy of ModProfiles
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -80,6 +86,8 @@ class __$$ModProfilesImplCopyWithImpl<$Res>
       _$ModProfilesImpl _value, $Res Function(_$ModProfilesImpl) _then)
       : super(_value, _then);
 
+  /// Create a copy of ModProfiles
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -125,12 +133,14 @@ class _$ModProfilesImpl implements _ModProfiles {
                 .equals(other._modProfiles, _modProfiles));
   }
 
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
       runtimeType, const DeepCollectionEquality().hash(_modProfiles));
 
-  @JsonKey(ignore: true)
+  /// Create a copy of ModProfiles
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
   _$$ModProfilesImplCopyWith<_$ModProfilesImpl> get copyWith =>
@@ -153,8 +163,11 @@ abstract class _ModProfiles implements ModProfiles {
 
   @override
   List<ModProfile> get modProfiles;
+
+  /// Create a copy of ModProfiles
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   _$$ModProfilesImplCopyWith<_$ModProfilesImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -171,8 +184,12 @@ mixin _$ShallowModVariant {
   @JsonConverterVersionNullable()
   Version? get version => throw _privateConstructorUsedError;
 
+  /// Serializes this ShallowModVariant to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-  @JsonKey(ignore: true)
+
+  /// Create a copy of ShallowModVariant
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   $ShallowModVariantCopyWith<ShallowModVariant> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -200,6 +217,8 @@ class _$ShallowModVariantCopyWithImpl<$Res, $Val extends ShallowModVariant>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
+  /// Create a copy of ShallowModVariant
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -252,6 +271,8 @@ class __$$ShallowModVariantImplCopyWithImpl<$Res>
       $Res Function(_$ShallowModVariantImpl) _then)
       : super(_value, _then);
 
+  /// Create a copy of ShallowModVariant
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -320,12 +341,14 @@ class _$ShallowModVariantImpl implements _ShallowModVariant {
             (identical(other.version, version) || other.version == version));
   }
 
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode =>
       Object.hash(runtimeType, modId, modName, smolVariantId, version);
 
-  @JsonKey(ignore: true)
+  /// Create a copy of ShallowModVariant
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
   _$$ShallowModVariantImplCopyWith<_$ShallowModVariantImpl> get copyWith =>
@@ -360,8 +383,11 @@ abstract class _ShallowModVariant implements ShallowModVariant {
   @override
   @JsonConverterVersionNullable()
   Version? get version;
+
+  /// Create a copy of ShallowModVariant
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   _$$ShallowModVariantImplCopyWith<_$ShallowModVariantImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -381,8 +407,12 @@ mixin _$ModProfile {
   DateTime? get dateCreated => throw _privateConstructorUsedError;
   DateTime? get dateModified => throw _privateConstructorUsedError;
 
+  /// Serializes this ModProfile to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-  @JsonKey(ignore: true)
+
+  /// Create a copy of ModProfile
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   $ModProfileCopyWith<ModProfile> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -413,6 +443,8 @@ class _$ModProfileCopyWithImpl<$Res, $Val extends ModProfile>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
+  /// Create a copy of ModProfile
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -483,6 +515,8 @@ class __$$ModProfileImplCopyWithImpl<$Res>
       _$ModProfileImpl _value, $Res Function(_$ModProfileImpl) _then)
       : super(_value, _then);
 
+  /// Create a copy of ModProfile
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -589,7 +623,7 @@ class _$ModProfileImpl implements _ModProfile {
                 other.dateModified == dateModified));
   }
 
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
       runtimeType,
@@ -601,7 +635,9 @@ class _$ModProfileImpl implements _ModProfile {
       dateCreated,
       dateModified);
 
-  @JsonKey(ignore: true)
+  /// Create a copy of ModProfile
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
   _$$ModProfileImplCopyWith<_$ModProfileImpl> get copyWith =>
@@ -642,8 +678,11 @@ abstract class _ModProfile implements ModProfile {
   DateTime? get dateCreated;
   @override
   DateTime? get dateModified;
+
+  /// Create a copy of ModProfile
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   _$$ModProfileImplCopyWith<_$ModProfileImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

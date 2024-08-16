@@ -87,7 +87,10 @@ class _AppShellState extends ConsumerState<AppShell>
 
     try {
 // Check for updates on launch and show toast if available.
-      SelfUpdater.getLatestRelease().then((latestRelease) {
+      ref
+          .watch(AppState.selfUpdate.notifier)
+          .getLatestRelease()
+          .then((latestRelease) {
         try {
           if (latestRelease != null) {
             final hasNewVersion = SelfUpdater.hasNewVersion(latestRelease);
@@ -251,85 +254,78 @@ class _AppShellState extends ConsumerState<AppShell>
                     child: SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       controller: scrollController,
-                      child: SizedBox(
-                        // width: 540,
-                        child: TabBar(
-                          controller: tabController,
-                          isScrollable: true,
+                      child: TabBar(
+                        controller: tabController,
+                        isScrollable: true,
 
-                          // Makes tabs fit to content width instead of all same.
-                          tabAlignment: TabAlignment.start,
-                          tabs: [
-                            // TODO IF YOU CHANGE THESE, UPDATE tabToolMap!
-                            const Tab(
-                                text: "Dashboard",
-                                icon: Tooltip(
-                                    message: "Dashboard",
-                                    child: Icon(Icons.dashboard))),
-                            Tab(
-                                text: "Mods",
-                                icon: Tooltip(
-                                  message: "Mods",
-                                  child: Transform.rotate(
-                                      angle: 0.7,
-                                      child: const SvgImageIcon(
-                                        "assets/images/icon-onslaught.svg",
-                                        height: 23,
-                                      )),
-                                )),
-                            Tab(
-                                text: "Profiles",
-                                icon: Tooltip(
-                                  message: "Mod Profiles",
-                                  child: Transform.rotate(
-                                      angle: -0.7,
-                                      child: const SvgImageIcon(
-                                        "assets/images/icon-onslaught.svg",
-                                        height: 23,
-                                      )),
-                                )),
-                            const Tab(
-                                text: "VRAM",
-                                icon: Tooltip(
-                                    message: "VRAM Estimator",
-                                    child: SvgImageIcon(
-                                        "assets/images/icon-weight.svg"))),
-                            const Tab(
-                                text: "Logs",
-                                icon: Tooltip(
-                                  message: "$chipperTitle Log Viewer",
-                                  child: ImageIcon(AssetImage(
-                                      "assets/images/chipper/icon.png")),
-                                ),
-                                iconMargin: EdgeInsets.zero),
-                            // ConditionalWrap(
-                            //     condition: !Platform.isWindows,
-                            //     wrapper: (child) => Disable(
-                            //         isEnabled: Platform.isWindows,
-                            //         child: child),
-                            //     child: const Tab(
-                            //         text: "JREs",
-                            //         icon: Tooltip(
-                            //             message: "JRE Manager",
-                            //             child: Icon(Icons.coffee)))),
-                            const Tab(
-                              text: "Portraits",
+                        // Makes tabs fit to content width instead of all same.
+                        tabAlignment: TabAlignment.start,
+                        tabs: [
+                          // TODO IF YOU CHANGE THESE, UPDATE tabToolMap!
+                          const Tooltip(
+                              message: "Dashboard",
+                              child: Tab(
+                                  text: "Dash", icon: Icon(Icons.dashboard))),
+                          Tab(
+                              text: "Mods",
+                              icon: Transform.rotate(
+                                  angle: 0.7,
+                                  child: const SvgImageIcon(
+                                    "assets/images/icon-onslaught.svg",
+                                    height: 23,
+                                  ))),
+                          Tab(
+                              text: "Profiles",
                               icon: Tooltip(
-                                  message: "Replace Portraits",
-                                  child: SvgImageIcon(
-                                      "assets/images/icon-account-box-outline.svg")),
-                            ),
-                            const Tab(
-                                text: "Settings",
-                                icon: Tooltip(
-                                    message: "Settings",
-                                    child: Padding(
-                                      padding: EdgeInsets.only(bottom: 2),
-                                      child: Icon(Icons.settings),
+                                message: "Mod Profiles (unfinished)",
+                                child: Transform.rotate(
+                                    angle: -0.7,
+                                    child: const SvgImageIcon(
+                                      "assets/images/icon-onslaught.svg",
+                                      height: 23,
                                     )),
-                                iconMargin: EdgeInsets.zero),
-                          ],
-                        ),
+                              )),
+                          const Tab(
+                              text: "VRAM",
+                              icon: Tooltip(
+                                  message: "VRAM Estimator (unfinished)",
+                                  child: SvgImageIcon(
+                                      "assets/images/icon-weight.svg"))),
+                          const Tab(
+                              text: "Logs",
+                              icon: Tooltip(
+                                message: "$chipperTitle Log Viewer",
+                                child: ImageIcon(AssetImage(
+                                    "assets/images/chipper/icon.png")),
+                              ),
+                              iconMargin: EdgeInsets.zero),
+                          // ConditionalWrap(
+                          //     condition: !Platform.isWindows,
+                          //     wrapper: (child) => Disable(
+                          //         isEnabled: Platform.isWindows,
+                          //         child: child),
+                          //     child: const Tab(
+                          //         text: "JREs",
+                          //         icon: Tooltip(
+                          //             message: "JRE Manager",
+                          //             child: Icon(Icons.coffee)))),
+                          const Tab(
+                            text: "Portraits",
+                            icon: Tooltip(
+                                message: "Portrait Viewer (unfinished)",
+                                child: SvgImageIcon(
+                                    "assets/images/icon-account-box-outline.svg")),
+                          ),
+                          const Tab(
+                              text: null,
+                              icon: Tooltip(
+                                  message: "Settings",
+                                  child: Padding(
+                                    padding: EdgeInsets.only(bottom: 2),
+                                    child: Icon(Icons.settings),
+                                  )),
+                              iconMargin: EdgeInsets.zero),
+                        ],
                       ),
                     ),
                   ),
@@ -346,7 +342,8 @@ class _AppShellState extends ConsumerState<AppShell>
                     : Tooltip(
                         message: "Open Starsector folder",
                         child: IconButton(
-                          icon: const SvgImageIcon("assets/images/icon-folder-game.svg"),
+                          icon: const SvgImageIcon(
+                              "assets/images/icon-folder-game.svg"),
                           color: Theme.of(context).iconTheme.color,
                           onPressed: () {
                             OpenFilex.open(gameFolderPath);
@@ -357,7 +354,8 @@ class _AppShellState extends ConsumerState<AppShell>
               Tooltip(
                 message: "View Changelog",
                 child: IconButton(
-                  icon: const SvgImageIcon("assets/images/icon-bullhorn-variant.svg"),
+                  icon: const SvgImageIcon(
+                      "assets/images/icon-bullhorn-variant.svg"),
                   color: Theme.of(context).iconTheme.color,
                   onPressed: () => showTriOSChangelogDialog(context,
                       showUnreleasedVersions: false),

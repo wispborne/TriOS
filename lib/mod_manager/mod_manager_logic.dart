@@ -6,6 +6,7 @@ import 'package:collection/collection.dart';
 import 'package:csv/csv.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:trios/libarchive/libarchive.dart';
@@ -74,7 +75,8 @@ class ModManagerNotifier extends AsyncNotifier<void> {
                                           child: Column(
                                         children: [
                                           Text(
-                                              const JsonEncoder.withIndent("  ").convert(it.modInfo.modInfo),
+                                              const JsonEncoder.withIndent("  ")
+                                                  .convert(it.modInfo.modInfo),
                                               style: const TextStyle(
                                                   fontSize: 12)),
                                         ],
@@ -471,6 +473,31 @@ File? getModInfoFile(Directory modFolder) {
 //     onUpdated(variant, event);
 //   });
 // }
+
+void copyModListToClipboardFromIds(
+    Set<String>? enabledModIds, List<Mod> allMods, BuildContext context) {
+  final enabledModsList = enabledModIds
+      .orEmpty()
+      .map((id) => allMods.firstWhereOrNull((mod) => mod.id == id))
+      .whereNotNull()
+      .toList()
+      .sortedMods;
+  copyModListToClipboardFromMods(enabledModsList, context);
+}
+
+void copyModListToClipboardFromMods(
+    List<Mod> enabledMods, BuildContext context) {
+  Clipboard.setData(ClipboardData(
+      text: "Mods (${enabledMods.length})\n${enabledMods.map((mod) {
+    final variant = mod.findFirstEnabledOrHighestVersion;
+    return false
+        ? "${mod.id} ${variant?.modInfo.version}"
+        : "${variant?.modInfo.name}  v${variant?.modInfo.version}  [${mod.id}]";
+  }).join('\n')}"));
+  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+    content: Text("Copied mod info to clipboard."),
+  ));
+}
 
 Future<void> forceChangeModGameVersion(
     ModVariant modVariant, String newGameVersion) async {

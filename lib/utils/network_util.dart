@@ -1,13 +1,14 @@
 import 'dart:convert';
 
-import 'package:trios/utils/logging.dart';
 import 'package:http/http.dart' as http;
+import 'package:trios/utils/logging.dart';
 
 class NetworkUtils {
-  static Future<Release?> getLatestRelease(Uri githubLatestReleaseUrl) async {
+  static Future<Release?> getRelease(Uri githubReleaseUrl,
+      {required bool includePrereleases}) async {
     try {
       final response = await http.get(
-        githubLatestReleaseUrl,
+        githubReleaseUrl,
         headers: {
           'Accept': 'application/vnd.github+json',
         },
@@ -18,7 +19,7 @@ class NetworkUtils {
 
       if (response.statusCode == 200) {
         // Fimber.v(message);
-        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
+        final jsonData = jsonDecode(response.body);
         /*
         * "url" -> "https://api.github.com/repos/wispborne/TriOS/releases/142440421"
         * "assets_url" -> "https://api.github.com/repos/wispborne/TriOS/releases/142440421/assets"
@@ -40,15 +41,23 @@ class NetworkUtils {
         * "body" -> "setting as a non-prerelease to test self-update"
          */
         if (jsonData.isNotEmpty) {
-          final release = Release.fromJson(jsonData);
+          List<Release> releases = [];
+          // Somehow this works but using .map doesn't.
+          for (var releaseJson in jsonData) {
+            var release = Release.fromJson(releaseJson);
+            if (includePrereleases || !release.prerelease) {
+              releases.add(release);
+            }
+          }
 
-          return release;
+          return releases.firstOrNull;
         }
       } else {
         Fimber.w(message);
       }
     } catch (error, st) {
-      Fimber.w('Error fetching release data: $error', ex: error, stacktrace: st);
+      Fimber.w('Error fetching release data: $error',
+          ex: error, stacktrace: st);
     }
 
     return null;
@@ -65,6 +74,7 @@ class Release {
   // final Author author;
   // final String nodeId;
   final String tagName;
+
   // final String targetCommitish;
   final String name;
   final bool draft;
@@ -72,6 +82,7 @@ class Release {
   final DateTime createdAt;
   final DateTime publishedAt;
   final List<Asset> assets;
+
   // final String tarballUrl;
   // final String zipballUrl;
   final String body;
@@ -123,12 +134,16 @@ class Release {
 class Asset {
   final String url;
   final int id;
+
   // final String nodeId;
   final String name;
+
   // final String label;
   final String contentType;
+
   // final String state;
   final int size;
+
   // final int downloadCount;
   // final DateTime createdAt;
   // final DateTime updatedAt;

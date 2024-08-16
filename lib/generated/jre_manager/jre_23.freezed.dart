@@ -31,8 +31,12 @@ mixin _$Jre23VersionChecker {
   String? get linuxJDKDownload => throw _privateConstructorUsedError;
   String? get linuxConfigDownload => throw _privateConstructorUsedError;
 
+  /// Serializes this Jre23VersionChecker to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-  @JsonKey(ignore: true)
+
+  /// Create a copy of Jre23VersionChecker
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   $Jre23VersionCheckerCopyWith<Jre23VersionChecker> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -65,6 +69,8 @@ class _$Jre23VersionCheckerCopyWithImpl<$Res, $Val extends Jre23VersionChecker>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
+  /// Create a copy of Jre23VersionChecker
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -147,6 +153,8 @@ class __$$Jre23VersionCheckerImplCopyWithImpl<$Res>
       $Res Function(_$Jre23VersionCheckerImpl) _then)
       : super(_value, _then);
 
+  /// Create a copy of Jre23VersionChecker
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -267,7 +275,7 @@ class _$Jre23VersionCheckerImpl implements _Jre23VersionChecker {
                 other.linuxConfigDownload == linuxConfigDownload));
   }
 
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
       runtimeType,
@@ -281,7 +289,9 @@ class _$Jre23VersionCheckerImpl implements _Jre23VersionChecker {
       linuxJDKDownload,
       linuxConfigDownload);
 
-  @JsonKey(ignore: true)
+  /// Create a copy of Jre23VersionChecker
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
   _$$Jre23VersionCheckerImplCopyWith<_$Jre23VersionCheckerImpl> get copyWith =>
@@ -330,8 +340,11 @@ abstract class _Jre23VersionChecker implements Jre23VersionChecker {
   String? get linuxJDKDownload;
   @override
   String? get linuxConfigDownload;
+
+  /// Create a copy of Jre23VersionChecker
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   _$$Jre23VersionCheckerImplCopyWith<_$Jre23VersionCheckerImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

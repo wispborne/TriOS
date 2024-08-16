@@ -34,8 +34,12 @@ mixin _$ModInfo {
   @JsonConverterBool()
   bool get isTotalConversion => throw _privateConstructorUsedError;
 
+  /// Serializes this ModInfo to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-  @JsonKey(ignore: true)
+
+  /// Create a copy of ModInfo
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   $ModInfoCopyWith<ModInfo> get copyWith => throw _privateConstructorUsedError;
 }
 
@@ -67,6 +71,8 @@ class _$ModInfoCopyWithImpl<$Res, $Val extends ModInfo>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
+  /// Create a copy of ModInfo
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -154,6 +160,8 @@ class __$$ModInfoImplCopyWithImpl<$Res>
       _$ModInfoImpl _value, $Res Function(_$ModInfoImpl) _then)
       : super(_value, _then);
 
+  /// Create a copy of ModInfo
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -294,7 +302,7 @@ class _$ModInfoImpl extends _ModInfo {
                 other.isTotalConversion == isTotalConversion));
   }
 
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
       runtimeType,
@@ -309,7 +317,9 @@ class _$ModInfoImpl extends _ModInfo {
       isUtility,
       isTotalConversion);
 
-  @JsonKey(ignore: true)
+  /// Create a copy of ModInfo
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
   _$$ModInfoImplCopyWith<_$ModInfoImpl> get copyWith =>
@@ -362,8 +372,11 @@ abstract class _ModInfo extends ModInfo {
   @override
   @JsonConverterBool()
   bool get isTotalConversion;
+
+  /// Create a copy of ModInfo
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   _$$ModInfoImplCopyWith<_$ModInfoImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

@@ -1,6 +1,5 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -112,28 +111,8 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 4),
                                       onPressed: () {
-                                        final enabledModsList = enabledModIds
-                                            .orEmpty()
-                                            .map((id) => filteredModList
-                                                .firstWhereOrNull(
-                                                    (mod) => mod.id == id))
-                                            .whereNotNull()
-                                            .toList()
-                                            .sortedMods;
-                                        Clipboard.setData(ClipboardData(
-                                            text:
-                                                "Mods (${enabledModsList.length})\n${enabledModsList.map((mod) {
-                                          final variant = mod
-                                              .findFirstEnabledOrHighestVersion;
-                                          return false
-                                              ? "${mod.id} ${variant?.modInfo.version}"
-                                              : "${variant?.modInfo.name}  v${variant?.modInfo.version}  [${mod.id}]";
-                                        }).join('\n')}"));
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(const SnackBar(
-                                          content: Text(
-                                              "Copied mod info to clipboard."),
-                                        ));
+                                        copyModListToClipboardFromIds(enabledModIds,
+                                            filteredModList, context);
                                       },
                                     ),
                                   ),

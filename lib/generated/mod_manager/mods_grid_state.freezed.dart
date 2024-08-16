@@ -23,8 +23,12 @@ mixin _$ModsGridState {
   bool get isGroupEnabledExpanded => throw _privateConstructorUsedError;
   bool get isGroupDisabledExpanded => throw _privateConstructorUsedError;
 
+  /// Serializes this ModsGridState to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-  @JsonKey(ignore: true)
+
+  /// Create a copy of ModsGridState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   $ModsGridStateCopyWith<ModsGridState> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -48,6 +52,8 @@ class _$ModsGridStateCopyWithImpl<$Res, $Val extends ModsGridState>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
+  /// Create a copy of ModsGridState
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -86,6 +92,8 @@ class __$$ModsGridStateImplCopyWithImpl<$Res>
       _$ModsGridStateImpl _value, $Res Function(_$ModsGridStateImpl) _then)
       : super(_value, _then);
 
+  /// Create a copy of ModsGridState
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -139,12 +147,14 @@ class _$ModsGridStateImpl implements _ModsGridState {
                 other.isGroupDisabledExpanded == isGroupDisabledExpanded));
   }
 
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode =>
       Object.hash(runtimeType, isGroupEnabledExpanded, isGroupDisabledExpanded);
 
-  @JsonKey(ignore: true)
+  /// Create a copy of ModsGridState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
   _$$ModsGridStateImplCopyWith<_$ModsGridStateImpl> get copyWith =>
@@ -170,8 +180,11 @@ abstract class _ModsGridState implements ModsGridState {
   bool get isGroupEnabledExpanded;
   @override
   bool get isGroupDisabledExpanded;
+
+  /// Create a copy of ModsGridState
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   _$$ModsGridStateImplCopyWith<_$ModsGridStateImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

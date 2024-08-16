@@ -46,6 +46,7 @@ _$SettingsImpl _$$SettingsImplFromJson(Map<String, dynamic> json) =>
           : ModsGridState.fromJson(
               json['modsGridState'] as Map<String, dynamic>),
       allowCrashReporting: json['allowCrashReporting'] as bool?,
+      updateToPrereleases: json['updateToPrereleases'] as bool? ?? false,
       userId: json['userId'] as String? ?? "",
       activeModProfileId: json['activeModProfileId'] as String?,
     );
@@ -77,6 +78,7 @@ Map<String, dynamic> _$$SettingsImplToJson(_$SettingsImpl instance) =>
       'isUpdatesFieldShown': instance.isUpdatesFieldShown,
       'modsGridState': instance.modsGridState,
       'allowCrashReporting': instance.allowCrashReporting,
+      'updateToPrereleases': instance.updateToPrereleases,
       'userId': instance.userId,
       'activeModProfileId': instance.activeModProfileId,
     };

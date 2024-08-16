@@ -49,13 +49,18 @@ mixin _$Settings {
   bool get isUpdatesFieldShown => throw _privateConstructorUsedError;
   ModsGridState? get modsGridState => throw _privateConstructorUsedError;
   bool? get allowCrashReporting => throw _privateConstructorUsedError;
+  bool get updateToPrereleases => throw _privateConstructorUsedError;
   String get userId =>
       throw _privateConstructorUsedError; // Mod profiles are stored in [ModProfilesSettings] and [ModProfileManagerNotifier],
 // in a different shared_prefs key.
   String? get activeModProfileId => throw _privateConstructorUsedError;
 
+  /// Serializes this Settings to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-  @JsonKey(ignore: true)
+
+  /// Create a copy of Settings
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   $SettingsCopyWith<Settings> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -90,6 +95,7 @@ abstract class $SettingsCopyWith<$Res> {
       bool isUpdatesFieldShown,
       ModsGridState? modsGridState,
       bool? allowCrashReporting,
+      bool updateToPrereleases,
       String userId,
       String? activeModProfileId});
 
@@ -107,6 +113,8 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
+  /// Create a copy of Settings
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -134,6 +142,7 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
     Object? isUpdatesFieldShown = null,
     Object? modsGridState = freezed,
     Object? allowCrashReporting = freezed,
+    Object? updateToPrereleases = null,
     Object? userId = null,
     Object? activeModProfileId = freezed,
   }) {
@@ -234,6 +243,10 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
           ? _value.allowCrashReporting
           : allowCrashReporting // ignore: cast_nullable_to_non_nullable
               as bool?,
+      updateToPrereleases: null == updateToPrereleases
+          ? _value.updateToPrereleases
+          : updateToPrereleases // ignore: cast_nullable_to_non_nullable
+              as bool,
       userId: null == userId
           ? _value.userId
           : userId // ignore: cast_nullable_to_non_nullable
@@ -245,6 +258,8 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
     ) as $Val);
   }
 
+  /// Create a copy of Settings
+  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $LaunchSettingsCopyWith<$Res> get launchSettings {
@@ -253,6 +268,8 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
     });
   }
 
+  /// Create a copy of Settings
+  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $ModsGridStateCopyWith<$Res>? get modsGridState {
@@ -299,6 +316,7 @@ abstract class _$$SettingsImplCopyWith<$Res>
       bool isUpdatesFieldShown,
       ModsGridState? modsGridState,
       bool? allowCrashReporting,
+      bool updateToPrereleases,
       String userId,
       String? activeModProfileId});
 
@@ -316,6 +334,8 @@ class __$$SettingsImplCopyWithImpl<$Res>
       _$SettingsImpl _value, $Res Function(_$SettingsImpl) _then)
       : super(_value, _then);
 
+  /// Create a copy of Settings
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -343,6 +363,7 @@ class __$$SettingsImplCopyWithImpl<$Res>
     Object? isUpdatesFieldShown = null,
     Object? modsGridState = freezed,
     Object? allowCrashReporting = freezed,
+    Object? updateToPrereleases = null,
     Object? userId = null,
     Object? activeModProfileId = freezed,
   }) {
@@ -443,6 +464,10 @@ class __$$SettingsImplCopyWithImpl<$Res>
           ? _value.allowCrashReporting
           : allowCrashReporting // ignore: cast_nullable_to_non_nullable
               as bool?,
+      updateToPrereleases: null == updateToPrereleases
+          ? _value.updateToPrereleases
+          : updateToPrereleases // ignore: cast_nullable_to_non_nullable
+              as bool,
       userId: null == userId
           ? _value.userId
           : userId // ignore: cast_nullable_to_non_nullable
@@ -483,6 +508,7 @@ class _$SettingsImpl implements _Settings {
       this.isUpdatesFieldShown = true,
       this.modsGridState,
       this.allowCrashReporting,
+      this.updateToPrereleases = false,
       this.userId = "",
       this.activeModProfileId});
 
@@ -553,6 +579,9 @@ class _$SettingsImpl implements _Settings {
   final bool? allowCrashReporting;
   @override
   @JsonKey()
+  final bool updateToPrereleases;
+  @override
+  @JsonKey()
   final String userId;
 // Mod profiles are stored in [ModProfilesSettings] and [ModProfileManagerNotifier],
 // in a different shared_prefs key.
@@ -561,7 +590,7 @@ class _$SettingsImpl implements _Settings {
 
   @override
   String toString() {
-    return 'Settings(gameDir: $gameDir, gameCoreDir: $gameCoreDir, modsDir: $modsDir, hasCustomModsDir: $hasCustomModsDir, shouldAutoUpdateOnLaunch: $shouldAutoUpdateOnLaunch, isRulesHotReloadEnabled: $isRulesHotReloadEnabled, windowXPos: $windowXPos, windowYPos: $windowYPos, windowWidth: $windowWidth, windowHeight: $windowHeight, isMaximized: $isMaximized, isMinimized: $isMinimized, defaultTool: $defaultTool, jre23VmparamsFilename: $jre23VmparamsFilename, useJre23: $useJre23, showJre23ConsoleWindow: $showJre23ConsoleWindow, enableDirectLaunch: $enableDirectLaunch, launchSettings: $launchSettings, lastStarsectorVersion: $lastStarsectorVersion, secondsBetweenModFolderChecks: $secondsBetweenModFolderChecks, toastDurationSeconds: $toastDurationSeconds, isUpdatesFieldShown: $isUpdatesFieldShown, modsGridState: $modsGridState, allowCrashReporting: $allowCrashReporting, userId: $userId, activeModProfileId: $activeModProfileId)';
+    return 'Settings(gameDir: $gameDir, gameCoreDir: $gameCoreDir, modsDir: $modsDir, hasCustomModsDir: $hasCustomModsDir, shouldAutoUpdateOnLaunch: $shouldAutoUpdateOnLaunch, isRulesHotReloadEnabled: $isRulesHotReloadEnabled, windowXPos: $windowXPos, windowYPos: $windowYPos, windowWidth: $windowWidth, windowHeight: $windowHeight, isMaximized: $isMaximized, isMinimized: $isMinimized, defaultTool: $defaultTool, jre23VmparamsFilename: $jre23VmparamsFilename, useJre23: $useJre23, showJre23ConsoleWindow: $showJre23ConsoleWindow, enableDirectLaunch: $enableDirectLaunch, launchSettings: $launchSettings, lastStarsectorVersion: $lastStarsectorVersion, secondsBetweenModFolderChecks: $secondsBetweenModFolderChecks, toastDurationSeconds: $toastDurationSeconds, isUpdatesFieldShown: $isUpdatesFieldShown, modsGridState: $modsGridState, allowCrashReporting: $allowCrashReporting, updateToPrereleases: $updateToPrereleases, userId: $userId, activeModProfileId: $activeModProfileId)';
   }
 
   @override
@@ -575,8 +604,7 @@ class _$SettingsImpl implements _Settings {
             (identical(other.modsDir, modsDir) || other.modsDir == modsDir) &&
             (identical(other.hasCustomModsDir, hasCustomModsDir) ||
                 other.hasCustomModsDir == hasCustomModsDir) &&
-            (identical(
-                    other.shouldAutoUpdateOnLaunch, shouldAutoUpdateOnLaunch) ||
+            (identical(other.shouldAutoUpdateOnLaunch, shouldAutoUpdateOnLaunch) ||
                 other.shouldAutoUpdateOnLaunch == shouldAutoUpdateOnLaunch) &&
             (identical(other.isRulesHotReloadEnabled, isRulesHotReloadEnabled) ||
                 other.isRulesHotReloadEnabled == isRulesHotReloadEnabled) &&
@@ -617,12 +645,14 @@ class _$SettingsImpl implements _Settings {
                 other.modsGridState == modsGridState) &&
             (identical(other.allowCrashReporting, allowCrashReporting) ||
                 other.allowCrashReporting == allowCrashReporting) &&
+            (identical(other.updateToPrereleases, updateToPrereleases) ||
+                other.updateToPrereleases == updateToPrereleases) &&
             (identical(other.userId, userId) || other.userId == userId) &&
             (identical(other.activeModProfileId, activeModProfileId) ||
                 other.activeModProfileId == activeModProfileId));
   }
 
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hashAll([
         runtimeType,
@@ -650,11 +680,14 @@ class _$SettingsImpl implements _Settings {
         isUpdatesFieldShown,
         modsGridState,
         allowCrashReporting,
+        updateToPrereleases,
         userId,
         activeModProfileId
       ]);
 
-  @JsonKey(ignore: true)
+  /// Create a copy of Settings
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
   _$$SettingsImplCopyWith<_$SettingsImpl> get copyWith =>
@@ -694,6 +727,7 @@ abstract class _Settings implements Settings {
       final bool isUpdatesFieldShown,
       final ModsGridState? modsGridState,
       final bool? allowCrashReporting,
+      final bool updateToPrereleases,
       final String userId,
       final String? activeModProfileId}) = _$SettingsImpl;
 
@@ -735,9 +769,9 @@ abstract class _Settings implements Settings {
   bool? get useJre23;
   @override
   bool get showJre23ConsoleWindow;
-  @override
 
   /// If true, TriOS acts as the launcher. If false, basically just clicks game exe.
+  @override
   bool get enableDirectLaunch;
   @override
   LaunchSettings get launchSettings;
@@ -754,12 +788,18 @@ abstract class _Settings implements Settings {
   @override
   bool? get allowCrashReporting;
   @override
-  String get userId;
-  @override // Mod profiles are stored in [ModProfilesSettings] and [ModProfileManagerNotifier],
-// in a different shared_prefs key.
-  String? get activeModProfileId;
+  bool get updateToPrereleases;
   @override
-  @JsonKey(ignore: true)
+  String
+      get userId; // Mod profiles are stored in [ModProfilesSettings] and [ModProfileManagerNotifier],
+// in a different shared_prefs key.
+  @override
+  String? get activeModProfileId;
+
+  /// Create a copy of Settings
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
   _$$SettingsImplCopyWith<_$SettingsImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

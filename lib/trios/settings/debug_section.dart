@@ -39,7 +39,7 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
           padding: const EdgeInsets.only(top: 16),
           child: ElevatedButton(
             onPressed: () async {
-              SelfUpdater.getLatestRelease().then((release) {
+              ref.watch(AppState.selfUpdate.notifier).getLatestRelease().then((release) {
                 if (release == null) {
                   Fimber.d("No release found");
                   return;
@@ -136,7 +136,7 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                 padding: const EdgeInsets.only(top: 16.0),
                 child: ElevatedButton(
                   onPressed: () async {
-                    final latestRelease = await SelfUpdater.getLatestRelease();
+                    final latestRelease = await ref.watch(AppState.selfUpdate.notifier).getLatestRelease();
                     ref
                         .read(AppState.selfUpdate.notifier)
                         .updateSelf(latestRelease!);

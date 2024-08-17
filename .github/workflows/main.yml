@@ -88,7 +88,7 @@ jobs:
       - name: Zip macOS Artifact
         run: |
           cd $(dirname ${{ env.macos_build_output_path }})
-          zip -yr9 ../../../TriOS-MacOS.zip $(basename ${{ env.macos_build_output_path }})
+          zip -yr9 TriOS-MacOS.zip $(basename ${{ env.macos_build_output_path }})
       - name: Upload macOS Artifact
         uses: actions/upload-artifact@v1
         with:

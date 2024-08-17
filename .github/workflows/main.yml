@@ -14,7 +14,7 @@ env:
 jobs:
   upload-release:
     runs-on: ubuntu-latest
-    needs: [ build-macos, build-windows ]
+    needs: [build-macos, build-windows]
     permissions:
       contents: write
     steps:
@@ -52,7 +52,6 @@ jobs:
           prerelease: '${{ env.IS_PRERELEASE }}'
 
       - name: Download Artifacts
-        run: echo "Downloading previously built artifacts..."
         uses: actions/download-artifact@v1
         with:
           name: uploads
@@ -64,7 +63,6 @@ jobs:
 
       - name: Upload macOS Artifact
         id: upload-macos
-        run: echo "Uploading macOS artifact..."
         uses: shogo82148/actions-upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -81,7 +79,6 @@ jobs:
 
       - name: Upload Windows Artifact
         id: upload-windows
-        run: echo "Uploading Windows artifact..."
         uses: shogo82148/actions-upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -103,6 +100,7 @@ jobs:
           channel: ${{ env.flutter_channel }}
           architecture: x64
           cache: true
+
       - run: flutter --version
       - run: flutter upgrade
       - run: flutter config --enable-macos-desktop
@@ -142,6 +140,7 @@ jobs:
           channel: ${{ env.flutter_channel }}
           architecture: x64
           cache: true
+
       - run: flutter --version
       - run: flutter upgrade
       - run: flutter config --enable-windows-desktop

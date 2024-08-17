@@ -4,6 +4,7 @@
     - Updates will go to the prerelease channel first, then to the stable channel after.
     - You can switch between channels in the Settings page.
     - This lets me test bug fixes and hopefully catch catastrophic bugs early.
+  - More info shown in the the install dialog, now shows all mod_info.json info.
 - Fixed
   - Maybe fixed a crash due to Chipper's parsing thread and the UI thread fighting over the same file.
   - Mod ending up disabled after updating and enabling them.

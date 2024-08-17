@@ -51,7 +51,7 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                 );
               });
             },
-            child: const Text('Show self-update toast'),
+            child: const Text('Check for update (allow older versions)'),
           ),
         ),
         Padding(

@@ -8,7 +8,7 @@ import '../mod_manager/version_checker.dart';
 class VersionCheckTextReadout extends ConsumerStatefulWidget {
   final int? versionCheckComparison;
   final VersionCheckerInfo? localVersionCheck;
-  final VersionCheckResult? remoteVersionCheck;
+  final RemoteVersionCheckResult? remoteVersionCheck;
   final bool showClickToDownloadIfPossible;
 
   const VersionCheckTextReadout(

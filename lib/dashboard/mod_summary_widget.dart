@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/chipper/utils.dart';
-import 'package:trios/mod_manager/version_checker.dart';
+import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/models/enabled_mods.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/utils/extensions.dart';
@@ -41,12 +41,14 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
 
     final modVariant = widget.modVariant;
     final modInfo = modVariant.modInfo;
-    var remoteVersionCheck =
-        ref.watch(AppState.versionCheckResults).valueOrNull?[modVariant.smolId];
-    final localVersionCheck = modVariant.versionCheckerInfo;
-    // final remoteVersionCheck = versionCheck?[modVariant.smolId];
-    final versionCheckComparison =
-        compareLocalAndRemoteVersions(localVersionCheck, remoteVersionCheck);
+    var cachedVersionChecks =
+        ref.watch(AppState.versionCheckResults).valueOrNull;
+    final versionCheckComparisonResult =
+        modVariant.updateCheck(cachedVersionChecks ?? {});
+    final versionCheckComparison = versionCheckComparisonResult?.comparisonInt;
+    final localVersionCheck =
+        versionCheckComparisonResult?.variant.versionCheckerInfo;
+    final remoteVersionCheck = versionCheckComparisonResult?.remoteVersionCheck;
     final theme = Theme.of(context);
 
     var versionTextStyle = theme.textTheme.labelLarge?.copyWith(

@@ -11,6 +11,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:pluto_grid_plus/pluto_grid_plus.dart';
 import 'package:trios/dashboard/changelogs.dart';
 import 'package:trios/dashboard/mod_list_basic_entry.dart';
+import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/mod_manager/mod_version_selection_dropdown.dart';
 import 'package:trios/mod_manager/mods_grid_state.dart';
@@ -271,7 +272,10 @@ class _Smol3State extends ConsumerState<Smol3>
                                           .withOpacity(0.8),
                                     ),
                                   ),
-                                  icon: const Icon(Icons.copy, size: 20,),
+                                  icon: const Icon(
+                                    Icons.copy,
+                                    size: 20,
+                                  ),
                                 ),
                               ))
                         ],
@@ -499,7 +503,7 @@ class _Smol3State extends ConsumerState<Smol3>
   List<PlutoColumn> createColumns(
     double versionSelectorWidth,
     double lightTextOpacity,
-    Map<String, VersionCheckResult>? versionCheckResults,
+    Map<String, RemoteVersionCheckResult>? versionCheckResults,
     List<Mod> enabledMods,
     List<Mod> disabledMods,
   ) {
@@ -688,14 +692,15 @@ class _Smol3State extends ConsumerState<Smol3>
           final enabledVersion = mod.findFirstEnabled;
           final versionCheckResultsNew =
               ref.watch(AppState.versionCheckResults).valueOrNull;
-
-          final localVersionCheck = mod.findHighestVersion?.versionCheckerInfo;
-          final remoteVersionCheck =
-              versionCheckResultsNew?[bestVersion.smolId];
-          final versionCheckComparison = compareLocalAndRemoteVersions(
-              localVersionCheck, remoteVersionCheck);
-          final changelogUrl =
-              Changelogs.getChangelogUrl(localVersionCheck, remoteVersionCheck);
+          //
+          final versionCheckComparison =
+              mod.updateCheck(versionCheckResultsNew ?? {});
+          final localVersionCheck =
+              versionCheckComparison?.variant.versionCheckerInfo;
+          final remoteVersionCheck = versionCheckComparison?.remoteVersionCheck;
+          final changelogUrl = Changelogs.getChangelogUrl(
+              versionCheckComparison?.variant.versionCheckerInfo,
+              versionCheckComparison?.remoteVersionCheck);
 
           return
               // affixToTop(                      child:
@@ -774,16 +779,13 @@ class _Smol3State extends ConsumerState<Smol3>
                           tooltipWidget:
                               ModListBasicEntry.buildVersionCheckTextReadout(
                                   null,
-                                  versionCheckComparison,
+                                  versionCheckComparison?.comparisonInt,
                                   localVersionCheck,
                                   remoteVersionCheck),
                           child: InkWell(
                             onTap: () {
                               if (remoteVersionCheck?.remoteVersion != null &&
-                                  compareLocalAndRemoteVersions(
-                                          localVersionCheck,
-                                          remoteVersionCheck) ==
-                                      -1) {
+                                  versionCheckComparison?.comparisonInt == -1) {
                                 ref
                                     .read(downloadManager.notifier)
                                     .downloadUpdateViaBrowser(
@@ -800,7 +802,8 @@ class _Smol3State extends ConsumerState<Smol3>
                                                 changelogUrl,
                                                 localVersionCheck,
                                                 remoteVersionCheck,
-                                                versionCheckComparison)));
+                                                versionCheckComparison
+                                                    ?.comparisonInt)));
                               }
                             },
                             onSecondaryTap: () => showDialog(
@@ -811,15 +814,13 @@ class _Smol3State extends ConsumerState<Smol3>
                                             changelogUrl,
                                             localVersionCheck,
                                             remoteVersionCheck,
-                                            versionCheckComparison))),
+                                            versionCheckComparison
+                                                ?.comparisonInt))),
                             child: Padding(
                               padding:
                                   const EdgeInsets.symmetric(horizontal: 5.0),
-                              child: VersionCheckIcon(
-                                  localVersionCheck: localVersionCheck,
-                                  remoteVersionCheck: remoteVersionCheck,
-                                  versionCheckComparison:
-                                      versionCheckComparison,
+                              child: VersionCheckIcon.fromComparison(
+                                  comparison: versionCheckComparison,
                                   theme: theme),
                             ),
                           ),

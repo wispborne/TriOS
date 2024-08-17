@@ -8,6 +8,7 @@ import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:plist_parser/plist_parser.dart';
+import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/enabled_mods.dart';
 import 'package:trios/models/launch_settings.dart';
@@ -100,10 +101,11 @@ class Launcher extends HookConsumerWidget {
                         offset: Offset.zero,
                         spreadRadius: 2,
                       ),
-                      const BoxShadow(
+                      BoxShadow(
                         blurRadius: 4,
                         blurStyle: BlurStyle.normal,
-                        color: Colors.black,
+                        color:
+                            Colors.black.mix(theme.colorScheme.primary, 0.5)!,
                         offset: Offset.zero,
                         spreadRadius: 1,
                       ),

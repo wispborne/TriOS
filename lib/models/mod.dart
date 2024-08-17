@@ -1,5 +1,6 @@
 import 'package:collection/collection.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/utils/extensions.dart';
@@ -10,7 +11,7 @@ import 'mod_variant.dart';
 part '../generated/models/mod.freezed.dart';
 
 @freezed
-class Mod with _$Mod {
+class Mod with _$Mod implements Comparable<Mod> {
   const Mod._();
 
   const factory Mod({
@@ -62,4 +63,10 @@ class Mod with _$Mod {
   bool get hasDisabledVariant {
     return (findFirstDisabled) != null;
   }
+
+  @override
+  int compareTo(Mod other) =>
+      findFirstEnabledOrHighestVersion?.modInfo.nameOrId.compareTo(
+          other.findFirstEnabledOrHighestVersion?.modInfo.nameOrId ?? "") ??
+      0;
 }

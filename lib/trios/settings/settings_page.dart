@@ -1,10 +1,12 @@
 import 'dart:io';
 
-import 'package:dartx/dartx.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:toastification/toastification.dart';
+import 'package:trios/thirdparty/dartx/comparable.dart';
+import 'package:trios/thirdparty/dartx/iterable.dart';
+import 'package:trios/thirdparty/dartx/string.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';

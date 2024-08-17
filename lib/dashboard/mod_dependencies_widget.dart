@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/chipper/utils.dart';
-import 'package:trios/mod_manager/version_checker.dart';
+import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/models/enabled_mods.dart';
 import 'package:trios/models/mod_variant.dart';
 
@@ -44,8 +44,8 @@ class _ModDependenciesWidgetState extends ConsumerState<ModDependenciesWidget> {
         ref.watch(AppState.versionCheckResults).valueOrNull?[modVariant.smolId];
     final localVersionCheck = modVariant.versionCheckerInfo;
     // final remoteVersionCheck = versionCheck?[modVariant.smolId];
-    final versionCheckComparison =
-        compareLocalAndRemoteVersions(localVersionCheck, remoteVersionCheck);
+    // final versionCheckComparison =
+    //     compareLocalAndRemoteVersions(localVersionCheck, remoteVersionCheck);
 
     final theme = Theme.of(context);
 

@@ -3,8 +3,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/version.dart';
+import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
@@ -80,7 +82,7 @@ MenuItem menuItemOpenFolder(Mod mod) {
               "file:${mod.findFirstEnabledOrHighestVersion?.modFolder.absolute.path}"));
         },
         items: [
-          for (var variant in mod.modVariants.sortedModVariants)
+          for (var variant in mod.modVariants.sortedDescending())
             MenuItem(
                 label: variant.modInfo.version.toString(),
                 onSelected: () {
@@ -159,7 +161,7 @@ MenuItem menuItemDeleteFolder(Mod mod, BuildContext context, WidgetRef ref) {
       label: "Delete Folder...",
       icon: Icons.delete,
       items: [
-        for (var variant in mod.modVariants.sortedModVariants)
+        for (var variant in mod.modVariants.sortedDescending())
           MenuItem(
             label: variant.modInfo.version.toString(),
             onSelected: () {

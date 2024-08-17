@@ -39,7 +39,6 @@ dependencies:
   # Collections & Utilities
   collection: ^1.18.0
   dart_extensions_methods: ^2.0.0
-  dartx: ^1.2.0
   stringr: ^1.0.0
   yaml: ^3.1.2
   # Data & File Handling

@@ -3,7 +3,7 @@ import 'dart:convert';
 
 import 'package:collection/collection.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:trios/mod_manager/mod_manager_logic.dart';
+import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
@@ -74,7 +74,7 @@ class ModProfileManagerNotifier extends AsyncNotifier<ModProfiles> {
 
   void updateFromModList() {
     final mods = ref.watch(AppState.enabledModVariants);
-    final enabledModVariants = mods.sortedModVariants
+    final enabledModVariants = mods.sortedByName
         .map((variant) => ShallowModVariant.fromModVariant(variant))
         .toList();
     if (pauseAutomaticProfileUpdates) return;
@@ -164,7 +164,7 @@ class ModProfileManagerNotifier extends AsyncNotifier<ModProfiles> {
       final modVariants = ref.read(AppState.modVariants).valueOrNull ?? [];
       final currentlyEnabledModVariants = ref.read(AppState.enabledModVariants);
       final currentlyEnabledShallows = currentlyEnabledModVariants
-          .sortedModVariants
+          .sortedByName
           .map((variant) => ShallowModVariant.fromModVariant(variant))
           .toList();
       final profileShallows = profile.enabledModVariants;

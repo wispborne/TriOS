@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/dashboard/mod_summary_widget.dart';
 import 'package:trios/dashboard/version_check_icon.dart';
 import 'package:trios/dashboard/version_check_text_readout.dart';
+import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/models/version_checker_info.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/utils/extensions.dart';
@@ -22,10 +23,8 @@ import 'changelogs.dart';
 /// Displays just the mods specified.
 class ModListBasicEntry extends ConsumerStatefulWidget {
   final Mod mod;
-  final bool isEnabled;
 
-  const ModListBasicEntry(
-      {super.key, required this.mod, required this.isEnabled});
+  const ModListBasicEntry({super.key, required this.mod});
 
   @override
   ConsumerState createState() => _ModListBasicEntryState();
@@ -34,7 +33,7 @@ class ModListBasicEntry extends ConsumerStatefulWidget {
     String? changelogUrl,
     int? versionCheckComparison,
     VersionCheckerInfo? localVersionCheck,
-    VersionCheckResult? remoteVersionCheck,
+    RemoteVersionCheckResult? remoteVersionCheck,
   ) {
     return SizedBox(
         width: changelogUrl.isNotNullOrEmpty() ? 800 : 400,
@@ -83,7 +82,7 @@ class ModListBasicEntry extends ConsumerStatefulWidget {
   static IntrinsicHeight changeAndVersionCheckAlertDialogContent(
       String? changelogUrl,
       VersionCheckerInfo? localVersionCheck,
-      VersionCheckResult? remoteVersionCheck,
+      RemoteVersionCheckResult? remoteVersionCheck,
       int? versionCheckComparison) {
     return IntrinsicHeight(
       child: Row(
@@ -120,24 +119,27 @@ class ModListBasicEntry extends ConsumerStatefulWidget {
 class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
   @override
   Widget build(BuildContext context) {
-    var versionCheck = ref.watch(AppState.versionCheckResults).valueOrNull;
+    var cachedVersionChecks =
+        ref.watch(AppState.versionCheckResults).valueOrNull;
     final mod = widget.mod;
     final modVariant =
         mod.findFirstEnabledOrHighestVersion ?? mod.modVariants.first;
-    final highestModVariant = mod.findHighestVersion ?? modVariant;
 
     final gameVersion = ref.watch(AppState.starsectorVersion).value;
     final modInfo = modVariant.modInfo;
-    final localVersionCheck = highestModVariant.versionCheckerInfo;
-    final remoteVersionCheck = versionCheck?[highestModVariant.smolId];
-    final versionCheckComparison =
-        compareLocalAndRemoteVersions(localVersionCheck, remoteVersionCheck);
+    final versionCheckComparisonResult =
+        mod.updateCheck(cachedVersionChecks ?? {});
+    final versionCheckComparison = versionCheckComparisonResult?.comparisonInt;
+    final localVersionCheck =
+        versionCheckComparisonResult?.variant.versionCheckerInfo;
+    final remoteVersionCheck = versionCheckComparisonResult?.remoteVersionCheck;
     final compatWithGame =
         compareGameVersions(modInfo.gameVersion, gameVersion);
     final theme = Theme.of(context);
     final compatTextColor = compatWithGame.getGameCompatibilityColor();
     final changelogUrl =
         Changelogs.getChangelogUrl(localVersionCheck, remoteVersionCheck);
+    final isEnabled = modVariant.isEnabled(ref.read(AppState.mods));
 
     infoTooltip({required Widget child}) => MovingTooltipWidget(
         position: TooltipPosition.topLeft,
@@ -231,9 +233,7 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                       child: InkWell(
                         onTap: () {
                           if (remoteVersionCheck?.remoteVersion != null &&
-                              compareLocalAndRemoteVersions(
-                                      localVersionCheck, remoteVersionCheck) ==
-                                  -1) {
+                              versionCheckComparison == -1) {
                             ref
                                 .read(downloadManager.notifier)
                                 .downloadUpdateViaBrowser(
@@ -263,10 +263,8 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                                         versionCheckComparison))),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 5.0),
-                          child: VersionCheckIcon(
-                              localVersionCheck: localVersionCheck,
-                              remoteVersionCheck: remoteVersionCheck,
-                              versionCheckComparison: versionCheckComparison,
+                          child: VersionCheckIcon.fromComparison(
+                              comparison: versionCheckComparisonResult,
                               theme: theme),
                         ),
                       ),
@@ -275,11 +273,11 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                 ),
                 checkWrapper: (child) => infoTooltip(child: child),
                 textPadding: const EdgeInsets.only(left: 0, bottom: 2),
-                value: widget.isEnabled,
+                value: isEnabled,
                 expand: true,
                 onChanged: (_) async {
                   // if (enabledModIds == null) return;
-                  var isCurrentlyEnabled = widget.isEnabled;
+                  var isCurrentlyEnabled = isEnabled;
 
                   // We can disable mods without checking compatibility, but we can't enable them without checking.
                   if (!isCurrentlyEnabled) {
@@ -296,8 +294,7 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                     }
 
                     final allMods = ref.read(AppState.modVariants).value ?? [];
-                    final enabledMods =
-                        ref.read(AppState.enabledModIds).value!;
+                    final enabledMods = ref.read(AppState.enabledModIds).value!;
                     // Check dependencies
                     final dependencyCheck = modInfo.checkDependencies(
                         allMods, enabledMods, gameVersion);

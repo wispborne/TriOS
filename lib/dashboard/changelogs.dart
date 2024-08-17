@@ -9,7 +9,7 @@ import '../models/version_checker_info.dart';
 
 class Changelogs extends ConsumerStatefulWidget {
   final VersionCheckerInfo? localVersionCheck;
-  final VersionCheckResult? remoteVersionCheck;
+  final RemoteVersionCheckResult? remoteVersionCheck;
   final bool withTitle;
 
   const Changelogs(this.localVersionCheck, this.remoteVersionCheck,
@@ -18,10 +18,10 @@ class Changelogs extends ConsumerStatefulWidget {
   @override
   ConsumerState createState() => _ChangelogsState();
 
-  static String? getChangelogUrl(VersionCheckerInfo? localVersionCheck,
-      VersionCheckResult? remoteVersionCheck) {
+  static String? getChangelogUrl(VersionCheckerInfo? localVersionCheckerInfo,
+      RemoteVersionCheckResult? remoteVersionCheck) {
     return remoteVersionCheck?.remoteVersion?.changelogURL ??
-        localVersionCheck?.changelogURL;
+        localVersionCheckerInfo?.changelogURL;
   }
 }
 

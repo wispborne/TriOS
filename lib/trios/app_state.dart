@@ -7,6 +7,7 @@ import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trios/jre_manager/jre_entry.dart';
+import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/download_progress.dart';
 import 'package:trios/models/mod_variant.dart';
@@ -40,7 +41,7 @@ class AppState {
   /// String is the smolId
   static final versionCheckResults = AsyncNotifierProvider<
       VersionCheckerNotifier,
-      Map<String, VersionCheckResult>>(VersionCheckerNotifier.new);
+      Map<String, RemoteVersionCheckResult>>(VersionCheckerNotifier.new);
 
   static var skipCacheOnNextVersionCheck = false;
 

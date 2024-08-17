@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/enabled_mods.dart';
 import 'package:trios/trios/settings/settings.dart';
@@ -111,8 +112,10 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 4),
                                       onPressed: () {
-                                        copyModListToClipboardFromIds(enabledModIds,
-                                            filteredModList, context);
+                                        copyModListToClipboardFromIds(
+                                            enabledModIds,
+                                            filteredModList,
+                                            context);
                                       },
                                     ),
                                   ),
@@ -171,24 +174,28 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                     filteredModList
                         .map((e) => e as Mod?)
                         .filter((mod) {
-                          final variant = mod?.findHighestVersion;
-                          if (variant?.versionCheckerInfo == null) return false;
-
-                          final localVersionCheck = variant!.versionCheckerInfo;
-                          final remoteVersionCheck =
-                              versionCheck?[variant.smolId];
-                          return compareLocalAndRemoteVersions(
-                                      localVersionCheck, remoteVersionCheck) ==
-                                  -1 &&
-                              remoteVersionCheck?.error == null;
+                          return mod
+                                  ?.updateCheck(versionCheck ?? {})
+                                  ?.hasUpdate ==
+                              true;
+                          // final variant = mod?.findHighestVersion;
+                          // if (variant?.versionCheckerInfo == null) return false;
+                          //
+                          // final localVersionCheck = variant!.versionCheckerInfo;
+                          // final remoteVersionCheck =
+                          //     versionCheck?[variant.smolId];
+                          // return compareLocalAndRemoteVersions(
+                          //             localVersionCheck, remoteVersionCheck) ==
+                          //         -1 &&
+                          //     remoteVersionCheck?.error == null;
                         })
                         .toList()
-                        .sortedMods;
+                        .sortedByName;
                 final updatesToDisplay =
                     (isUpdatesFieldShown ? modsWithUpdates : <Mod?>[null]);
                 final listItems = updatesToDisplay +
                     (modsWithUpdates.isEmpty ? [] : [null]) +
-                    (filteredModList.sortedMods.toList());
+                    (filteredModList.sortedByName.toList());
 
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -295,10 +302,7 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                   contextMenu:
                                       buildModContextMenu(mod, ref, context),
                                   child: ModListBasicEntry(
-                                      mod: mod,
-                                      isEnabled:
-                                          enabledModIds?.contains(mod.id) ??
-                                              false),
+                                      mod: mod),
                                 );
                               }),
                         ),
@@ -353,8 +357,10 @@ class _ModListMiniState extends ConsumerState<ModListMini>
     );
   }
 
-  void _onClickedDownloadModUpdatesDialog(List<Mod?> modsWithUpdates,
-      Map<String, VersionCheckResult>? versionCheck, BuildContext context) {
+  void _onClickedDownloadModUpdatesDialog(
+      List<Mod?> modsWithUpdates,
+      Map<String, RemoteVersionCheckResult>? versionCheck,
+      BuildContext context) {
     downloadUpdates() {
       for (var mod in modsWithUpdates) {
         if (mod == null) continue;

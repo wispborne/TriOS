@@ -3,6 +3,7 @@ import 'package:trios/models/mod_info_json.dart';
 import 'package:trios/utils/util.dart';
 
 part '../generated/models/version_checker_info.freezed.dart';
+
 part '../generated/models/version_checker_info.g.dart';
 
 @freezed
@@ -20,7 +21,21 @@ class VersionCheckerInfo with _$VersionCheckerInfo {
     String? changelogURL,
   }) = _VersionCheckerInfo;
 
-  factory VersionCheckerInfo.fromJson(Map<String, dynamic> json) => _$VersionCheckerInfoFromJson(json);
+  factory VersionCheckerInfo.fromJson(Map<String, dynamic> json) =>
+      _$VersionCheckerInfoFromJson(json);
+
+  /// Whether there's a valid direct download url.
+  bool get hasDirectDownload =>
+      directDownloadURL != null &&
+      directDownloadURL!.isNotEmpty &&
+      Uri.tryParse(directDownloadURL!) != null;
+
+  /// Whether the basic fields are present and ostensibly valid.
+  bool get seemsLegit =>
+      masterVersionFile != null &&
+      masterVersionFile!.isNotEmpty &&
+      Uri.tryParse(masterVersionFile!) != null &&
+      modVersion != null;
 }
 
 // data class VersionCheckerInfo(

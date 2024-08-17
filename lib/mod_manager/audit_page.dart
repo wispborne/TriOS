@@ -1,10 +1,12 @@
 import 'dart:io';
 
-import 'package:dartx/dartx.dart';
+import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:trios/models/mod_variant.dart';
+import 'package:trios/thirdparty/dartx/list.dart';
+import 'package:trios/thirdparty/dartx/map.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
 

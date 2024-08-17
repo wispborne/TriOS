@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:mutex/mutex.dart';
 import 'package:path/path.dart' as p;
+import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 
@@ -13,11 +14,12 @@ import '../models/mod_variant.dart';
 import '../models/version_checker_info.dart';
 import '../trios/app_state.dart';
 import '../trios/settings/config_manager.dart';
+import 'mod_manager_logic.dart';
 
 class VersionCheckerNotifier
-    extends AsyncNotifier<Map<String, VersionCheckResult>> {
+    extends AsyncNotifier<Map<String, RemoteVersionCheckResult>> {
   @override
-  Map<String, VersionCheckResult> build() {
+  Map<String, RemoteVersionCheckResult> build() {
     refresh(skipCache: false);
     return _versionCheckResultsCache;
   }
@@ -26,11 +28,11 @@ class VersionCheckerNotifier
   static const versionCheckCooldown = Duration(minutes: 5);
 
   /// Actual source of truth for the state, persists between rebuilds.
-  final Map<String, VersionCheckResult> _versionCheckResultsCache = {};
+  final Map<String, RemoteVersionCheckResult> _versionCheckResultsCache = {};
   final cacheLock = Mutex();
 
   Timer? _writeDebounceTimer;
-  final Duration _writeCooldown = Duration(seconds: 5);
+  final Duration _writeCooldown = const Duration(seconds: 5);
   Completer<void>? _pendingWriteCompleter;
 
   Future<void> _debounceWriteToCacheFile() async {
@@ -72,9 +74,12 @@ class VersionCheckerNotifier
 
     // IMPORTANT: Automatically refreshes whenever the modVariants change.
     final modsRef = ref.watch(AppState.mods);
-    // Only need to check the highest version of each mod for a new version, not every single variant lol.
-    final variantsToCheck =
-        modsRef.map((mod) => mod.findHighestVersion).whereNotNull().toList();
+    // Doesn't check every variant. Only looks up the highest version that has a .version file.
+    final variantsToCheck = modsRef
+        .map((mod) => mod.modVariants.sortedDescending().firstWhereOrNull(
+            (variant) => variant.versionCheckerInfo?.seemsLegit == true))
+        .whereNotNull()
+        .toList();
 
     final versionCheckFutures = variantsToCheck.map((mod) {
       // Always check if never checked before.
@@ -112,7 +117,7 @@ class VersionCheckerNotifier
         });
       }).catchError((e, st) async {
         Fimber.e("Error fetching remote version info. Storing error. $e\n$st");
-        final errResult = VersionCheckResult(mod.smolId, null, e, null);
+        final errResult = RemoteVersionCheckResult(mod.smolId, null, e, null);
         await cacheLock.protect(() async {
           _versionCheckResultsCache[mod.smolId] = errResult;
           state = AsyncValue.data(_versionCheckResultsCache);
@@ -127,7 +132,7 @@ class VersionCheckerNotifier
       File(p.join("cache", "TriOS-VersionCheckerCache.json")).normalize;
 
   Future<void> writeToCacheFile(
-      Map<String, VersionCheckResult> versionCheckResultsBySmolId) async {
+      Map<String, RemoteVersionCheckResult> versionCheckResultsBySmolId) async {
     try {
       versionCheckerCacheFile.createSync(recursive: true);
       final config = ConfigManager(versionCheckerCacheFile.path);
@@ -144,14 +149,14 @@ class VersionCheckerNotifier
     }
   }
 
-  Future<Map<String, VersionCheckResult>?> readFromCacheFile() async {
+  Future<Map<String, RemoteVersionCheckResult>?> readFromCacheFile() async {
     try {
       final config = ConfigManager(versionCheckerCacheFile.path);
       await config.readConfig();
       final cache = config.config;
       Fimber.i("Read config from ${config.file}: ${cache.length} entries.");
       return cache.map((key, value) {
-        return MapEntry(key, VersionCheckResult.fromJson(key, value));
+        return MapEntry(key, RemoteVersionCheckResult.fromJson(key, value));
       });
     } catch (e, st) {
       Fimber.w("Error reading version checker cache.", ex: e, stacktrace: st);
@@ -161,14 +166,17 @@ class VersionCheckerNotifier
   }
 }
 
-class VersionCheckResult {
+/// Result of looking up a remote version checker file.
+/// Cached in TriOS, rather than doing a network request every time.
+class RemoteVersionCheckResult {
   final String smolId;
   final VersionCheckerInfo? remoteVersion;
   final Object? error;
   final String? uri;
   final DateTime timestamp;
 
-  VersionCheckResult(this.smolId, this.remoteVersion, this.error, this.uri,
+  RemoteVersionCheckResult(
+      this.smolId, this.remoteVersion, this.error, this.uri,
       {DateTime? timestamp})
       : timestamp = timestamp ?? DateTime.now();
 
@@ -185,9 +193,9 @@ class VersionCheckResult {
     }''';
   }
 
-  factory VersionCheckResult.fromJson(
+  factory RemoteVersionCheckResult.fromJson(
       String smolId, Map<String, dynamic> json) {
-    return VersionCheckResult(
+    return RemoteVersionCheckResult(
       smolId,
       json['remoteVersion'] == null
           ? null
@@ -198,18 +206,17 @@ class VersionCheckResult {
       timestamp: DateTime.parse(json['timestamp'] as String),
     );
   }
+
+  VersionCheckComparison? compareToLocal(ModVariant modVariant) {
+    return VersionCheckComparison.specific(modVariant, this);
+  }
 }
 
-int? compareLocalAndRemoteVersions(
-    VersionCheckerInfo? local, VersionCheckResult? remote) {
-  if (local == null || remote == null) return 0;
-  return local.modVersion?.compareTo(remote.remoteVersion?.modVersion);
-}
-
-Future<VersionCheckResult> checkRemoteVersion(ModVariant modVariant) async {
+Future<RemoteVersionCheckResult> checkRemoteVersion(
+    ModVariant modVariant) async {
   var remoteVersionUrl = modVariant.versionCheckerInfo?.masterVersionFile;
   if (remoteVersionUrl == null) {
-    return VersionCheckResult(modVariant.smolId, null,
+    return RemoteVersionCheckResult(modVariant.smolId, null,
         Exception("No remote version url for ${modVariant.modInfo.id}"), null);
   }
   final fixedUrl = fixUrl(remoteVersionUrl);
@@ -223,7 +230,7 @@ Future<VersionCheckResult> checkRemoteVersion(ModVariant modVariant) async {
     ).timeout(const Duration(seconds: 5));
     final body = response.body;
     if (response.statusCode == 200) {
-      return VersionCheckResult(
+      return RemoteVersionCheckResult(
           modVariant.smolId,
           VersionCheckerInfo.fromJson(body.fixJsonToMap()),
           null,
@@ -235,7 +242,8 @@ Future<VersionCheckResult> checkRemoteVersion(ModVariant modVariant) async {
   } catch (e, st) {
     Fimber.d(
         "Error fetching remote version info for ${modVariant.modInfo.id}: $e\n$st");
-    return VersionCheckResult(modVariant.smolId, null, e, remoteVersionUrl);
+    return RemoteVersionCheckResult(
+        modVariant.smolId, null, e, remoteVersionUrl);
   }
 }
 

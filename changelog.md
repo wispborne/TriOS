@@ -6,6 +6,9 @@
     - This lets me test bug fixes and hopefully catch catastrophic bugs early.
 - Fixed
   - Maybe fixed a crash due to Chipper's parsing thread and the UI thread fighting over the same file.
+  - Version checker wasn't ignoring mods without a .version file, so if it misidentified the highest version of a mod, which didn't have a .version file, it wouldn't look for a different version with one.
+    - tldr: version checking is more reliable for certain weird cases.
+  - Mods showing enabled in the Dashboard modlist even when disabled (happened when enabled in `enabled_mods.json` but the mod info file was `mod_info.json.disabled`).
 - Changed
   - Condensed toolbar, which was getting bloated.
   - Renamed log file to `TriOS-log.log` instead of `latest.log`.

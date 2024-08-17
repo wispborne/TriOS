@@ -161,14 +161,14 @@ jobs:
           echo "Moving build output to TriOS directory..."
           Get-ChildItem ${{ env.windows_build_output_path }} | Move-Item -Destination TriOS/
           echo "Move complete. Listing contents of the TriOS directory:"
-          ls -l TriOS
+          dir
 
       - name: Zip TriOS Directory
         run: |
           echo "Zipping Windows artifact..."
           Compress-Archive -Path TriOS -DestinationPath TriOS-Windows.zip
           echo "Zipping complete. Listing contents of the workspace:"
-          ls -l
+          dir
 
       - name: Upload Windows Artifact
         uses: actions/upload-artifact@v1

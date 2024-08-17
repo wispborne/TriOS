@@ -25,13 +25,19 @@ jobs:
 
       - name: Set Variables
         run: |
+          echo "Setting version based on git tags..."
           echo "VERSION=$(git describe --tags)" >> $GITHUB_ENV
+          echo "VERSION: $VERSION"
           git log --format=%B -n 1 $(git log -1 --pretty=format:"%h") | cat - > changes.txt
+          echo "Generated changes.txt:"
+          cat changes.txt
           prerelease_regex=".*dev|qa|rc|prerelease|unstable.*"
           if [[ "$(git describe --tags)" =~ $prerelease_regex ]]; then
             echo "IS_PRERELEASE=true" >> $GITHUB_ENV;
+            echo "This is a pre-release."
           else
             echo "IS_PRERELEASE=false" >> $GITHUB_ENV;
+            echo "This is a stable release."
           fi
 
       - name: 'Create GitHub release from a tag'
@@ -46,12 +52,19 @@ jobs:
           prerelease: '${{ env.IS_PRERELEASE }}'
 
       - name: Download Artifacts
+        run: echo "Downloading previously built artifacts..."
         uses: actions/download-artifact@v1
         with:
           name: uploads
 
+      - name: List Files Before Uploading macOS Artifact
+        run: |
+          echo "Listing files in the current directory:"
+          ls -l
+
       - name: Upload macOS Artifact
         id: upload-macos
+        run: echo "Uploading macOS artifact..."
         uses: shogo82148/actions-upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -61,8 +74,14 @@ jobs:
           asset_name: TriOS-MacOS.zip
           asset_content_type: application/zip
 
+      - name: List Files Before Uploading Windows Artifact
+        run: |
+          echo "Listing files in the current directory:"
+          ls -l
+
       - name: Upload Windows Artifact
         id: upload-windows
+        run: echo "Uploading Windows artifact..."
         uses: shogo82148/actions-upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -76,6 +95,9 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v3
+
+      - name: Flutter Setup
+        run: echo "Setting up Flutter..."
       - uses: subosito/flutter-action@v2
         with:
           channel: ${{ env.flutter_channel }}
@@ -84,11 +106,24 @@ jobs:
       - run: flutter --version
       - run: flutter upgrade
       - run: flutter config --enable-macos-desktop
-      - run: flutter build macos
+
+      - name: Build macOS
+        run: |
+          echo "Building macOS app..."
+          flutter build macos
+          echo "Build complete. Listing contents of the output directory:"
+          ls -l ${{ env.macos_build_output_path }}
+
       - name: Zip macOS Artifact
         run: |
+          echo "Zipping macOS artifact..."
           cd $(dirname ${{ env.macos_build_output_path }})
-          zip -yr9 TriOS-MacOS.zip $(basename ${{ env.macos_build_output_path }})
+          pwd
+          ls -l
+          zip -yr9 $GITHUB_WORKSPACE/TriOS-MacOS.zip $(basename ${{ env.macos_build_output_path }})
+          echo "Zipping complete. Listing contents of the workspace:"
+          ls -l $GITHUB_WORKSPACE
+
       - name: Upload macOS Artifact
         uses: actions/upload-artifact@v1
         with:
@@ -99,6 +134,9 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v3
+
+      - name: Flutter Setup
+        run: echo "Setting up Flutter..."
       - uses: subosito/flutter-action@v2
         with:
           channel: ${{ env.flutter_channel }}
@@ -107,15 +145,33 @@ jobs:
       - run: flutter --version
       - run: flutter upgrade
       - run: flutter config --enable-windows-desktop
-      - run: flutter build windows
+
+      - name: Build Windows
+        run: |
+          echo "Building Windows app..."
+          flutter build windows
+          echo "Build complete. Listing contents of the output directory:"
+          ls -l ${{ env.windows_build_output_path }}
+
       - name: Prepare TriOS Directory
-        run: mkdir TriOS
+        run: |
+          echo "Preparing directory for Windows artifact..."
+          mkdir TriOS
+
       - name: Move Build Output to TriOS Directory
         run: |
+          echo "Moving build output to TriOS directory..."
           Get-ChildItem ${{ env.windows_build_output_path }} | Move-Item -Destination TriOS/
+          echo "Move complete. Listing contents of the TriOS directory:"
+          ls -l TriOS
+
       - name: Zip TriOS Directory
         run: |
+          echo "Zipping Windows artifact..."
           Compress-Archive -Path TriOS -DestinationPath TriOS-Windows.zip
+          echo "Zipping complete. Listing contents of the workspace:"
+          ls -l
+
       - name: Upload Windows Artifact
         uses: actions/upload-artifact@v1
         with:

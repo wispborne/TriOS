@@ -1,24 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/models/mod_variant.dart';
+import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/search.dart';
 import 'package:trios/widgets/simple_data_row.dart';
 
 import '../models/mod.dart';
-import '../models/version.dart';
 
-class DebugInfo extends StatelessWidget {
+class DebugInfo extends ConsumerWidget {
   final Mod mod;
 
   const DebugInfo({super.key, required this.mod});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final vcResultsCache =
+        ref.watch(AppState.versionCheckResults).valueOrNull ?? {};
+
     return SelectionArea(
       child: Column(
         children: mod.modVariants
-            .sortedByDescending<ModVariant>(
-                (variant) => variant)
+            .sortedByDescending<ModVariant>((variant) => variant)
             .map(
               (variant) => Card(
                 margin: const EdgeInsets.symmetric(vertical: 4),
@@ -74,12 +77,27 @@ class DebugInfo extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text("Version Checker",
+                          Text("Version Checker - Local",
                               style: Theme.of(context)
                                   .textTheme
                                   .bodyLarge
                                   ?.copyWith(fontWeight: FontWeight.bold)),
-                          Text(variant.versionCheckerInfo.toString(),
+                          Text(variant.versionCheckerInfo?.toString() ?? "(none)",
+                              style: Theme.of(context).textTheme.labelLarge),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text("Version Checker - Remote (cached lookup)",
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyLarge
+                                  ?.copyWith(fontWeight: FontWeight.bold)),
+                          Text(vcResultsCache[variant.smolId]?.toString() ?? "(none)",
                               style: Theme.of(context).textTheme.labelLarge),
                         ],
                       ),

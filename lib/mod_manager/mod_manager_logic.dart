@@ -812,7 +812,7 @@ class VersionCheckComparison {
   /// Usually, you should use [VersionCheckComparison] instead.
   static int? compareLocalAndRemoteVersions(
       VersionCheckerInfo? local, RemoteVersionCheckResult? remote) {
-    if (local == null || remote == null) return 0;
+    if (local == null || remote == null) return null;
     return local.modVersion?.compareTo(remote.remoteVersion?.modVersion);
   }
 }

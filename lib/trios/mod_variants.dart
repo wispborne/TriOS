@@ -147,7 +147,7 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
     // (except for the variant we want to actually enable, if that's already active).
     // There should only ever be one active but might as well be careful.
     for (var variant in activeVariants) {
-      if (variant != modVariant) {
+      if (variant.smolId != modVariant?.smolId) {
         try {
           await _disableModVariant(
             variant,

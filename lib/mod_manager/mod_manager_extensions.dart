@@ -204,7 +204,8 @@ extension ModVariantsExt on List<ModVariant> {
   /// Returns `null` if no valid comparison result is found.
   VersionCheckComparison? updateCheck(
       Map<String, RemoteVersionCheckResult> versionCheckCache) {
-    final highestVersion = findHighestVersion;
+    final highestVersionWithVersionChecker = firstWhereOrNull(
+        (variant) => variant.versionCheckerInfo?.seemsLegit == true);
 
     for (var variant in sortedDescending()) {
       final RemoteVersionCheckResult? versionCheck =
@@ -217,7 +218,7 @@ extension ModVariantsExt on List<ModVariant> {
       final List<VersionCheckComparison> versionChecks =
           map((v) => versionCheck.compareToLocal(v)).whereNotNull().toList();
       if (versionChecks.isEmpty) continue;
-      // If the remote version is newer than all local versions, we have an update.
+      // If the remote version is newer than all local versions with a VC file, we have an update.
       final isRemoteNewerThanAllLocal = versionChecks.all((comparison) =>
           comparison.hasUpdate || comparison.comparisonInt == null);
 
@@ -226,8 +227,11 @@ extension ModVariantsExt on List<ModVariant> {
         // That way, code that shows/downloads the update knows which variant has the urls it needs.
         return versionCheck.compareToLocal(variant);
       } else {
-        // Otherwise, just return the highest version comparison file like usual.
-        return versionCheck.compareToLocal(highestVersion!);
+        return versionCheck.compareToLocal(findHighestVersion!);
+        // // Otherwise, just return the highest version comparison file like usual.
+        // return highestVersionWithVersionChecker == null
+        //     ? null
+        //     : versionCheck.compareToLocal(highestVersionWithVersionChecker);
       }
     }
 

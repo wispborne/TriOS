@@ -252,7 +252,7 @@ class _Smol3State extends ConsumerState<Smol3>
                         children: [
                           const Spacer(),
                           Tooltip(
-                              message: "Refresh mods and recheck versions",
+                              message: "Copy active mod list to clipboard",
                               child: Padding(
                                 padding: const EdgeInsets.all(4),
                                 child: OutlinedButton.icon(

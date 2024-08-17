@@ -5,9 +5,11 @@
     - You can switch between channels in the Settings page.
     - This lets me test bug fixes and hopefully catch catastrophic bugs early.
 - Fixed
-  - 
+  - Maybe fixed a crash due to Chipper's parsing thread and the UI thread fighting over the same file.
 - Changed
   - Condensed toolbar, which was getting bloated.
+  - Renamed log file to `TriOS-log.log` instead of `latest.log`.
+    - (will show up as only `TriOS-log` if you have file extensions hidden, which is the Windows default)
 
 # 0.1.6
 - Added

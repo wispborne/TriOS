@@ -16,7 +16,7 @@ import 'package:trios/utils/pretty_printer_custom.dart';
 import '../trios/constants.dart';
 import '../trios/settings/settings.dart';
 
-const logFileName = "latest.log";
+const logFileName = "TriOS-log.log";
 String? logFolderName;
 String? logFilePath;
 
@@ -95,7 +95,7 @@ configureLogging({
             printTime: true,
             stackTraceMaxLines: 20,
           ),
-          output: AdvancedFileOutput(path: logFolderName!, maxFileSizeKB: 25000),
+          output: AdvancedFileOutput(path: logFolderName!, maxFileSizeKB: 25000, writeImmediately: [Level.error, Level.fatal], latestFileName: logFileName),
         );
 
         // Clean up old log files.

@@ -28,7 +28,7 @@ class LogParser {
   final poorMansModList = List<ModEntry>.empty(growable: true);
 
   Future<LogChips?> parse(String stream) async {
-    configureLogging(); // Needed because isolate has its own memory.
+    configureLogging(consoleOnly: true); // Needed because isolate has its own memory.
     String? gameVersion;
     String? os;
     String? javaVersion;

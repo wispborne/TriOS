@@ -123,8 +123,7 @@ jobs:
       - name: Prepare TriOS Directory
         run: |
           mkdir TriOS
-          for /d %I in (*) do @if /I not "%I"=="TriOS" move "%I" TriOS\
-            move *.* TriOS\
+          Get-ChildItem -Exclude TriOS | Move-Item -Destination TriOS 
 
       - name: Zip TriOS Directory
         run: |

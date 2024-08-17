@@ -149,8 +149,7 @@ jobs:
         run: |
           echo "Building Windows app..."
           flutter build windows
-          echo "Build complete. Listing contents of the output directory:"
-          ls -l ${{ env.windows_build_output_path }}
+          echo "Build complete."
 
       - name: Prepare TriOS Directory
         run: |

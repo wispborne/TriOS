@@ -7,16 +7,14 @@ on:
 
 env:
   flutter_channel: "stable"
-  macos_path: "build/macos/Build/Products/Release/TriOS.app"
-  windows_path: "build/windows/x64/runner/Release/*"
+  macos_build_output_path: "build/macos/Build/Products/Release/TriOS.app"
+  windows_build_output_path: "build/windows/x64/runner/Release/*"
 #  linux_path: "build/linux/runner/Release/*"
 
 jobs:
   upload-release:
     runs-on: ubuntu-latest
-    needs: [ build-macos,
-      #            build-linux,
-             build-windows ]
+    needs: [ build-macos, build-windows ]
     permissions:
       contents: write
     steps:
@@ -25,7 +23,6 @@ jobs:
       - name: Fetch Tags
         run: git fetch --prune --unshallow --tags
 
-      #         Tags starting with 0 or with unstable, dev, qa, prerelease, or rc in them will be marked as prerelease.
       - name: Set Variables
         run: |
           echo "VERSION=$(git describe --tags)" >> $GITHUB_ENV
@@ -75,17 +72,6 @@ jobs:
           asset_name: TriOS-Windows.zip
           asset_content_type: application/zip
 
-  #      - name: upload linux
-  #        id: upload-linux
-  #        uses: actions/upload-release-asset@v1.0.1
-  #        env:
-  #          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #        with:
-  #          upload_url: ${{ steps.create_release.outputs.upload_url }}
-  #          asset_path: ./uploads/linux.zip
-  #          asset_name: linux.zip
-  #          asset_content_type: application/zip
-
   build-macos:
     runs-on: macos-latest
     steps:
@@ -100,7 +86,7 @@ jobs:
       - run: flutter config --enable-macos-desktop
       - run: flutter build macos
       - name: Zip macOS Artifact
-        run: zip -yr9 TriOS-MacOS.zip ${{ env.macos_path }}
+        run: zip -yr9 TriOS-MacOS.zip ${{ env.macos_build_output_path }}
       - name: Upload macOS Artifact
         uses: actions/upload-artifact@v1
         with:
@@ -121,51 +107,15 @@ jobs:
       - run: flutter config --enable-windows-desktop
       - run: flutter build windows
       - name: Prepare TriOS Directory
+        run: mkdir TriOS
+      - name: Move Build Output to TriOS Directory
         run: |
-          mkdir TriOS
-          Get-ChildItem -Exclude TriOS | Move-Item -Destination TriOS 
-
+          Get-ChildItem ${{ env.windows_build_output_path }} | Move-Item -Destination TriOS/
       - name: Zip TriOS Directory
         run: |
-          if (Test-Path TriOS) {
-            powershell Compress-Archive -Path TriOS -DestinationPath TriOS-Windows.zip
-          } else {
-            Write-Error "Error: TriOS directory not found"
-            exit 1
-          }
+          Compress-Archive -Path TriOS -DestinationPath TriOS-Windows.zip
       - name: Upload Windows Artifact
         uses: actions/upload-artifact@v1
         with:
           name: uploads
           path: TriOS-Windows.zip
-
-
-          #  build-linux:
-          #
-          #    runs-on: ubuntu-18.04
-          #
-          #    strategy:
-          #      matrix:
-          #        node-version: [12.x]
-          #
-          #    steps:
-          #      - uses: actions/checkout@v1
-          #      - name: Use Node.js ${{ matrix.node-version }}
-          #        uses: actions/setup-node@v1
-          #        with:
-          #          node-version: ${{ matrix.node-version }}
-          #      - name: npm install, build, and test
-          #        run: |
-          #          npm ci
-          #          npm test
-          #      - name: npm run build
-          #        run: |
-          #          npm run build
-          #      - name: zip linux artifact
-          #        run: |
-          #          zip -r linux $linux_path
-          #      - name: upload linux artifact
-          #        uses: actions/upload-artifact@v1
-          #        with:
-          #          name: uploads
-          #          path: $linux_path

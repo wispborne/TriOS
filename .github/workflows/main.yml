@@ -99,23 +99,8 @@ jobs:
       - run: flutter upgrade
       - run: flutter config --enable-macos-desktop
       - run: flutter build macos
-      - name: Prepare TriOS Directory
-        run: |
-          if [ -d "${{ env.macos_path }}" ]; then
-            mkdir -p TriOS
-            mv ${{ env.macos_path }} TriOS/
-          else
-            echo "Error: macOS build path not found"
-            exit 1
-          fi
       - name: Zip macOS Artifact
-        run: |
-          if [ -d "TriOS" ]; then
-            zip -yr9 TriOS-MacOS.zip TriOS
-          else
-            echo "Error: TriOS directory not found"
-            exit 1
-          fi
+        run: zip -yr9 TriOS-MacOS.zip ${{ env.macos_path }}
       - name: Upload macOS Artifact
         uses: actions/upload-artifact@v1
         with:
@@ -138,7 +123,9 @@ jobs:
       - name: Prepare TriOS Directory
         run: |
           mkdir TriOS
-          move build\windows\runner\Release\* TriOS\
+          for /d %I in (*) do @if /I not "%I"=="TriOS" move "%I" TriOS\
+            move *.* TriOS\
+
       - name: Zip TriOS Directory
         run: |
           if (Test-Path TriOS) {

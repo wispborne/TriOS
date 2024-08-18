@@ -3,6 +3,9 @@
   - Version Checker updates failing if there was a certificate error (specifically sc2mafia.com).
   - If a file failed to extract, the mod install wouldn't fail and you'd have to check the log to know some file was missed.
     - Now, a dialog will appear with the error message as well as buttons to open the folders for manual install.
+- Changed
+  - Shiny new version comparison algorithm that takes into account dev/alpha/beta/rc, plus a ton of weird edge cases modders love putting in.
+    - Nes and Timid, wtf.
 
 # 0.1.7
 - Added

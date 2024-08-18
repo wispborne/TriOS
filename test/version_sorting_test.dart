@@ -5,26 +5,53 @@
 // gestures. You can also use WidgetTester to find child widgets in the widget
 // tree, read text, and verify that the values of widget properties are correct.
 
+// ignore_for_file: avoid_print
+
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trios/utils/extensions.dart';
 
 void main() {
+  test('problem comparisons', () {
+    final correctPairs = [
+      ['1.9.0', '1.9.g'],
+      ['1.9.g', '1.9.1'],
+      ['0.5.1', '0.5.3rc1'],
+      ['1.0', '1.00'],
+      ['1.6.1-0.96a', '1.6.1c'],
+      ['2.5 Gramada', '2.5.2'],
+      ['1.1.0', '1.1.b'],
+      ['1.12.SSS', '1.12.1'],
+    ];
+
+    for (final pair in correctPairs) {
+      final a = pair[0];
+      final b = pair[1];
+      final result = compareVersions(a, b);
+      expect(result, -1);
+    }
+  });
+
   test('sort versions', () {
-    final sorted = _expectedList.toList()
-      ..shuffle()
-      ..sort((a, b) => compareVersions(a, b));
-    expect(sorted, _expectedList);
+    const iterations = 50;
+
+    for (int i = 0; i < iterations; i++) {
+      final sorted = _expectedList.toList()
+        ..shuffle()
+        ..sort((a, b) => compareVersions(a, b));
+      expect(sorted, _expectedList);
+    }
   });
 }
 
-(String, String) normalizePair(String a, String b, RegExp groupingRegex) {
+(List<String>, List<String>) normalizePair(
+    String a, String b, RegExp groupingRegex) {
   final aParts = groupingRegex.allMatches(a).map((m) => m.group(0)!).toList();
   final bParts = groupingRegex.allMatches(b).map((m) => m.group(0)!).toList();
 
-  String aResult = '';
-  String bResult = '';
+  List<String> aResult = [];
+  List<String> bResult = [];
 
   for (int i = 0; i < max(aParts.length, bParts.length); i++) {
     var aPart = aParts.getOrNull(i) ?? '';
@@ -35,12 +62,21 @@ void main() {
     final aIsLetter = aPart.contains(RegExp(r'[a-zA-Z]'));
     final bIsLetter = bPart.contains(RegExp(r'[a-zA-Z]'));
 
+    // If one side is [0] and the other is [g], return [0] and [0,g].
+    // This is to handle cases like [1.9.0] and [1.9.g] where [0] should be considered less than [g].
+    if (aIsLetter && bIsNumber) {
+      aResult.add('0');
+    } else if (bIsLetter && aIsNumber) {
+      bResult.add('0');
+    }
+
     // If one side is a number and the other is blank, add a zero to the blank side
-    if (aPart.isEmpty && bIsNumber) {
+    else if (aPart.isEmpty && bIsNumber) {
       aPart = '0';
     } else if (bPart.isEmpty && aIsNumber) {
       bPart = '0';
     }
+
     // If one side is a period and the other is blank, add a period to the blank side
     else if (aPart.isEmpty && bPart == '.') {
       aPart = '.';
@@ -51,6 +87,7 @@ void main() {
     } else if (bPart.isEmpty && aIsLetter) {
       // noop if one side is a letter and other is empty string, skip the rest of the else cases
     }
+
     // Anything not a period, number, or letter is considered a separator (e.g. hyphen, emdash, etc.)
     else if (aPart.isEmpty && bPart.isNotEmpty) {
       aPart = bPart;
@@ -58,14 +95,19 @@ void main() {
       bPart = aPart;
     }
 
-    aResult += aPart;
-    bResult += bPart;
+    aResult.add(aPart);
+    bResult.add(bPart);
   }
 
   return (aResult, bResult);
 }
 
 int compareVersions(String a, String b) {
+  if (a == b) {
+    print('$a is the same as $b');
+    return 0;
+  }
+
   final regex = RegExp(r'(\d+|[a-zA-Z]+|[-\.]+)');
 
   final aOriginal = a;
@@ -73,15 +115,14 @@ int compareVersions(String a, String b) {
   final aPartsOriginal = regex.allMatches(a).map((m) => m.group(0)!).toList();
   final bPartsOriginal = regex.allMatches(b).map((m) => m.group(0)!).toList();
 
-  // remove all whitespace, hyphens, emdashes, and underscores
-  a = a.replaceAll(RegExp(r'[\s\-–_]+'), '');
-  b = b.replaceAll(RegExp(r'[\s\-–_]+'), '');
-  // include hyphens, emdash, dots, underscores, and whitespace
-  // final whitespaceChars = [' ', '\t', '\n', '\r', '-', '–', '', '_'];
+  // Remove all whitespace, hyphens, emdashes, and underscores
+  a = a.replaceAll(RegExp(r'[\s\-–_]+'), '.');
+  b = b.replaceAll(RegExp(r'[\s\-–_]+'), '.');
 
-  (a, b) = normalizePair(a, b, regex);
-  final aParts = regex.allMatches(a).map((m) => m.group(0)!).toList();
-  final bParts = regex.allMatches(b).map((m) => m.group(0)!).toList();
+  // Normalize the versions
+  final (aParts, bParts) = normalizePair(a, b, regex);
+  // final aParts = regex.allMatches(a).map((m) => m.group(0)!).toList();
+  // final bParts = regex.allMatches(b).map((m) => m.group(0)!).toList();
 
   final suffixOrder = ['alpha', 'beta', 'rc']; // Define the order of suffixes
 
@@ -91,6 +132,8 @@ int compareVersions(String a, String b) {
 
     final aIsNumber = int.tryParse(aPart) != null;
     final bIsNumber = int.tryParse(bPart) != null;
+    final aIsLetter = aPart.contains(RegExp(r'[a-zA-Z]'));
+    final bIsLetter = bPart.contains(RegExp(r'[a-zA-Z]'));
 
     if (aIsNumber && bIsNumber) {
       final aNum = int.parse(aPart);
@@ -98,23 +141,24 @@ int compareVersions(String a, String b) {
 
       if (aNum != bNum) {
         if (aNum > bNum) {
-          print('$a is newer than $b because $aNum > $bNum');
+          print(
+              '$aOriginal ($a) is newer than $bOriginal ($b) because $aNum > $bNum');
           return 1;
         } else {
-          print('$b is newer than $a because $bNum > $aNum');
+          print(
+              '$bOriginal ($b) is newer than $aOriginal ($a) because $bNum > $aNum');
           return -1;
         }
       }
     } else if (aIsNumber && !bIsNumber) {
       print(
-          '$a is lower than $b because numbers come before letters or other characters');
-      return -1; // Numbers come before letters or other characters
+          '$aOriginal ($a) is lower than $bOriginal ($b) because numbers come before letters or other characters');
+      return 1; // Numbers come before letters or other characters
     } else if (!aIsNumber && bIsNumber) {
       print(
-          '$a is newer than $b because letters or other characters come after numbers');
-      return 1; // Letters or other characters come after numbers
+          '$aOriginal ($a) is newer than $bOriginal ($b) because letters or other characters come after numbers');
+      return -1; // Letters or other characters come after numbers
     } else {
-      // Handle suffixes like -RC1, Beta, etc.
       final aLower = aPart.toLowerCase();
       final bLower = bPart.toLowerCase();
 
@@ -128,40 +172,43 @@ int compareVersions(String a, String b) {
         if (aIndex != bIndex) {
           if (aIndex > bIndex) {
             print(
-                '$b is newer than $a because $bPart has a higher suffix precedence than $aPart');
+                '$bOriginal ($b) is newer than $aOriginal ($a) because $bPart has a higher suffix precedence than $aPart');
             return 1;
           } else {
             print(
-                '$a is newer than $b because $aPart has a higher suffix precedence than $bPart');
+                '$aOriginal ($a) is newer than $bOriginal ($b) because $aPart has a higher suffix precedence than $bPart');
             return -1;
           }
         }
       } else if (aContainsSuffix) {
         print(
-            '$a is lower than $b because $aPart should come before the non-suffix part');
+            '$aOriginal ($a) is lower than $bOriginal ($b) because $aPart should come before the non-suffix part');
         return -1; // Suffix should come before non-suffix part
       } else if (bContainsSuffix) {
         print(
-            '$a is newer than $b because $bPart should come before the non-suffix part');
+            '$aOriginal ($a) is newer than $bOriginal ($b) because $bPart should come before the non-suffix part');
         return 1; // Suffix should come before non-suffix part
       } else {
-        // If comparing something like `-RC1` with an empty string (final version)
         if (aPart.isEmpty && bPart.isNotEmpty) {
-          print('$b is newer than $a because $a is empty and $b is not');
+          print(
+              '$bOriginal ($b) is newer than $aOriginal ($a) because $a is empty and $b is not');
           return -1;
         }
         if (aPart.isNotEmpty && bPart.isEmpty) {
-          print('$a is newer than $b because $b is empty and $a is not');
+          print(
+              '$aOriginal ($a) is newer than $bOriginal ($b) because $b is empty and $a is not');
           return 1;
         }
 
         final cmp = aPart.compareTo(bPart);
         if (cmp != 0) {
           if (cmp > 0) {
-            print('$a is newer than $b because $aPart > $bPart lexically');
+            print(
+                '$aOriginal ($a) is newer than $bOriginal ($b) because $aPart > $bPart lexically');
             return 1;
           } else {
-            print('$b is newer than $a because $bPart > $aPart lexically');
+            print(
+                '$bOriginal ($b) is newer than $aOriginal ($a) because $bPart > $aPart lexically');
             return -1;
           }
         }
@@ -169,14 +216,31 @@ int compareVersions(String a, String b) {
     }
   }
 
-  final lengthComparison =
+  final partsLengthComparison =
       aPartsOriginal.length.compareTo(bPartsOriginal.length);
-  if (lengthComparison > 0) {
-    print('$a is newer than $b because $a has more parts');
-  } else if (lengthComparison < 0) {
-    print('$b is newer than $a because $b has more parts');
+  if (partsLengthComparison > 0) {
+    print(
+        '$aOriginal ($a) is newer than $bOriginal ($b) because $a has more parts');
+    return 1;
+  } else if (partsLengthComparison < 0) {
+    print(
+        '$bOriginal ($b) is newer than $aOriginal ($a) because $b has more parts');
+    return -1;
   }
-  return lengthComparison;
+
+  final rawStringComparison = aOriginal.compareTo(bOriginal);
+  if (rawStringComparison > 0) {
+    print(
+        '$aOriginal ($a) is newer than $bOriginal ($b) because $a is longer than $b');
+    return 1;
+  } else if (rawStringComparison < 0) {
+    print(
+        '$bOriginal ($b) is newer than $aOriginal ($a) because $b is longer than $a');
+    return -1;
+  }
+
+  print('$aOriginal ($a) is the same as $bOriginal ($b)');
+  return 0;
 }
 
 final _expectedList = [
@@ -251,6 +315,7 @@ final _expectedList = [
   "0.96a",
   "0.99-RC5",
   "0.99F",
+  "versions are for suckers",
   "1.0.0Beta6",
   "1.0.0rc2",
   "1.0",
@@ -264,11 +329,11 @@ final _expectedList = [
   "1.0.7",
   "1.01",
   "1.1.0",
+  "1.1.b",
   "1.1.1",
   "1.1.1h",
   "1.1.2",
   "1.1.3",
-  "1.1.b",
   "1.2.0",
   "1.2.1",
   "1.2.2",
@@ -321,22 +386,22 @@ final _expectedList = [
   "1.09",
   "1.9",
   "1.9.0",
-  "1.9.2",
-  "1.9.3",
-  "1.9.5",
   "1.9.gg",
   "1.9.ggg",
   "1.9.gggg",
   "1.9.ggggggg",
+  "1.9.2",
+  "1.9.3",
+  "1.9.5",
   "1.10.2",
   "1.11",
   "1.12.0",
+  "1.12.SSS",
   "1.12.1",
   "1.12.4",
-  "1.12.SSS",
   "1.13.0",
-  "1.13.2",
   "1.13.SSS",
+  "1.13.2",
   "1.14.0",
   "1.14.1",
   "1.15.1",
@@ -347,12 +412,12 @@ final _expectedList = [
   "1.41rc2",
   "002",
   "2.0.0",
+  "2.0.c",
+  "2.0.e",
   "2.0.3",
   "2.0.4",
   "2.0.8-Part1",
   "2.0.9",
-  "2.0.c",
-  "2.0.e",
   "2.1.0",
   "2.1.8",
   "2.2",
@@ -378,12 +443,12 @@ final _expectedList = [
   "3.0.6.1",
   "3.0.9",
   "3.1.3",
-  "3.2.1",
   "3.2.c UNOFFICIAL",
+  "3.2.1",
+  "3.3.c-wisp001",
   "3.3.5",
   "3.3.6",
   "3.3.7",
-  "3.3.c-wisp001",
   "4.0.0",
   "4.0.2",
   "4.1.0",
@@ -401,5 +466,4 @@ final _expectedList = [
   "8.4.5",
   "2021.4.10",
   "2023.5.05",
-  "versions are for suckers",
 ];

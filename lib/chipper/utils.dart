@@ -1,9 +1,12 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_linkify/flutter_linkify.dart';
+import 'package:open_filex/open_filex.dart';
 
 extension Append on String {
   String prepend(String text) => text + this;
+
   String append(String text) => this + text;
 }
 
@@ -13,7 +16,8 @@ extension ListExt<T> on List<T> {
   }
 }
 
-Future<void> showMyDialog(BuildContext context, {Widget? title, List<Widget>? body}) async {
+Future<void> showMyDialog(BuildContext context,
+    {Widget? title, List<Widget>? body}) async {
   return showDialog<void>(
     context: context,
     builder: (BuildContext context) {
@@ -22,8 +26,8 @@ Future<void> showMyDialog(BuildContext context, {Widget? title, List<Widget>? bo
         content: SingleChildScrollView(
           child: SelectionArea(
               child: ListBody(
-                children: body ?? [],
-              )),
+            children: body ?? [],
+          )),
         ),
         actions: <Widget>[
           TextButton(
@@ -38,7 +42,9 @@ Future<void> showMyDialog(BuildContext context, {Widget? title, List<Widget>? bo
   );
 }
 
-Future<void> showAlertDialog(BuildContext context, {String? title, String? content}) async {
+Future<void> showAlertDialog(BuildContext context,
+    {String? title, String? content, Widget? widget}) async {
+  assert(content != null || widget != null);
   return showDialog<void>(
     context: context,
     builder: (BuildContext context) {
@@ -47,8 +53,15 @@ Future<void> showAlertDialog(BuildContext context, {String? title, String? conte
         content: SingleChildScrollView(
           child: SelectionArea(
               child: ListBody(
-                children: [Text(content ?? "")],
-              )),
+            children: [
+              widget ?? Linkify(
+                text: content ?? "",
+                onOpen: (link) {
+                  OpenFilex.open(link.url);
+                },
+              )
+            ],
+          )),
         ),
         actions: <Widget>[
           TextButton(

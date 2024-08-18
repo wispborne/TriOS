@@ -21,8 +21,7 @@ class AddNewModsButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Tooltip(
-      message: "Add new mod(s)\nTip: drag'n'drop to install mods!",
-      textAlign: TextAlign.center,
+      message: "Add new mod(s)\n\nTip: drag'n'drop to install mods!",
       child: DisableIfCannotWriteMods(
         child: labelWidget != null
             ? Padding(

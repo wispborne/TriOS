@@ -252,29 +252,36 @@ class _Smol3State extends ConsumerState<Smol3>
                         children: [
                           const Spacer(),
                           Tooltip(
-                              message: "Copy active mod list to clipboard",
+                              message:
+                                  "Copy mod list to clipboard\n\nRight-click for ALL mods",
                               child: Padding(
                                 padding: const EdgeInsets.all(4),
-                                child: OutlinedButton.icon(
-                                  onPressed: () =>
-                                      copyModListToClipboardFromMods(
-                                          enabledMods, context),
-                                  label: const Text("Copy"),
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: Theme.of(context)
-                                        .colorScheme
-                                        .onSurface
-                                        .withOpacity(0.8),
-                                    side: BorderSide(
-                                      color: Theme.of(context)
+                                child: GestureDetector(
+                                  onSecondaryTap: () {
+                                    copyModListToClipboardFromMods(
+                                        mods, context);
+                                  },
+                                  child: OutlinedButton.icon(
+                                    onPressed: () =>
+                                        copyModListToClipboardFromMods(
+                                            enabledMods, context),
+                                    label: const Text("Copy"),
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: Theme.of(context)
                                           .colorScheme
                                           .onSurface
                                           .withOpacity(0.8),
+                                      side: BorderSide(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface
+                                            .withOpacity(0.8),
+                                      ),
                                     ),
-                                  ),
-                                  icon: const Icon(
-                                    Icons.copy,
-                                    size: 20,
+                                    icon: const Icon(
+                                      Icons.copy,
+                                      size: 20,
+                                    ),
                                   ),
                                 ),
                               ))

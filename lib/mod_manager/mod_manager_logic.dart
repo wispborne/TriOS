@@ -8,6 +8,7 @@ import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:open_filex/open_filex.dart';
 import 'package:path/path.dart' as p;
 import 'package:trios/libarchive/libarchive.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
@@ -182,14 +183,80 @@ class ModManagerNotifier extends AsyncNotifier<void> {
       //         ? "Installed: ${installModsResult.first.modInfo.name} ${installModsResult.first.modInfo.version}"
       //         : "Installed ${installModsResult.length} mods (${installModsResult.map((it) => "${it.modInfo.name} ${it.modInfo.version}").join(", ")})"));
 
-      final errors = installModsResult.where((it) => it.err != null).toList();
+      final List<InstallModResult> errors =
+          installModsResult.where((it) => it.err != null).toList();
       if (errors.isNotEmpty) {
-        showAlertDialog(
-          context,
-          title: "Error",
-          content:
-              "One or more mods could not be extracted. Check the logs for more information.\n${errors.map((it) => "${it.modInfo.name} ${it.modInfo.version}\n${it.err}").toList()}",
-        );
+        showAlertDialog(context, title: "Error",
+            widget: Builder(builder: (context) {
+          final theme = Theme.of(context);
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              RichText(
+                text: const TextSpan(
+                  children: [
+                    TextSpan(
+                      text:
+                          "One or more mods could not be extracted. Please install them manually.\n",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    TextSpan(
+                      text: "Check the logs for more information.\n\n",
+                    ),
+                  ],
+                ),
+              ),
+              ...errors.map((failedMod) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.error_outline,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          "${failedMod.modInfo.name} ${failedMod.modInfo.version}",
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                      ],
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Row(
+                        children: [
+                          OutlinedButton(
+                            onPressed: () {
+                              OpenFilex.open(failedMod.archiveFile.parent.path);
+                            },
+                            child: const Text("Open folder"),
+                          ),
+                          const SizedBox(width: 8),
+                          OutlinedButton(
+                            onPressed: () {
+                              OpenFilex.open(failedMod.destinationFolder.path);
+                            },
+                            child: const Text("Open mods folder"),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SelectableText(
+                      "${failedMod.err}\n",
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ],
+                );
+              }),
+            ],
+          );
+        }));
       }
 
       return installModsResult;
@@ -477,8 +544,8 @@ File? getModInfoFile(Directory modFolder) {
 // }
 
 void copyModListToClipboardFromIds(
-    Set<String>? enabledModIds, List<Mod> allMods, BuildContext context) {
-  final enabledModsList = enabledModIds
+    Set<String>? modIds, List<Mod> allMods, BuildContext context) {
+  final enabledModsList = modIds
       .orEmpty()
       .map((id) => allMods.firstWhereOrNull((mod) => mod.id == id))
       .whereNotNull()
@@ -488,16 +555,16 @@ void copyModListToClipboardFromIds(
 }
 
 void copyModListToClipboardFromMods(
-    List<Mod> enabledMods, BuildContext context) {
+    List<Mod> mods, BuildContext context) {
   Clipboard.setData(ClipboardData(
-      text: "Mods (${enabledMods.length})\n${enabledMods.map((mod) {
+      text: "Mods (${mods.length})\n${mods.map((mod) {
     final variant = mod.findFirstEnabledOrHighestVersion;
     return false
         ? "${mod.id} ${variant?.modInfo.version}"
         : "${variant?.modInfo.name}  v${variant?.modInfo.version}  [${mod.id}]";
   }).join('\n')}"));
   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-    content: Text("Copied mod info to clipboard."),
+    content: Text("Copied mod list to clipboard."),
   ));
 }
 
@@ -614,7 +681,13 @@ typedef ExtractedModInfo = ({
   ModInfo modInfo
 });
 
-typedef InstallModResult = ({ModInfo modInfo, Object? err, StackTrace? st});
+typedef InstallModResult = ({
+  File archiveFile,
+  Directory destinationFolder,
+  ModInfo modInfo,
+  Object? err,
+  StackTrace? st
+});
 
 // Things to handle:
 // - One or more mods already installed.
@@ -720,6 +793,8 @@ Future<List<InstallModResult>> installModFromArchive(
         Fimber.e("Error deleting mod folder: ${modToDelete.modFolder}",
             ex: e, stacktrace: st);
         results.add((
+          archiveFile: archiveFile,
+          destinationFolder: destinationFolder,
           modInfo: modToDelete.modInfo,
           err: e,
           st: st,
@@ -759,12 +834,14 @@ Future<List<InstallModResult>> installModFromArchive(
         onError: (e, st) {
           errors.add((e, st));
           Fimber.e("Error extracting file: $e", ex: e, stacktrace: st);
-          return true;
+          return false;
         },
       );
       Fimber.i(
           "Extracted ${extractedMod.length} files in mod ${modInfo.id} ${modInfo.version} to '${destinationFolder.resolve(generatedDestFolderName)}'");
       results.add((
+        archiveFile: archiveFile,
+        destinationFolder: destinationFolder,
         modInfo: modInfo,
         err: null,
         st: null,
@@ -772,6 +849,8 @@ Future<List<InstallModResult>> installModFromArchive(
     } catch (e, st) {
       Fimber.e("Error installing mod: $e", ex: e, stacktrace: st);
       results.add((
+        archiveFile: archiveFile,
+        destinationFolder: destinationFolder,
         modInfo: modInfo,
         err: e,
         st: st,

@@ -104,19 +104,26 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                         EdgeInsets.symmetric(horizontal: 4),
                                   ),
                                   Tooltip(
-                                    message: "Copy mod info",
-                                    child: IconButton(
-                                      icon: const Icon(Icons.copy),
-                                      iconSize: 20,
-                                      constraints: const BoxConstraints(),
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 4),
-                                      onPressed: () {
-                                        copyModListToClipboardFromIds(
-                                            enabledModIds,
-                                            filteredModList,
-                                            context);
+                                    message:
+                                        "Copy mod list to clipboard\n\nRight-click for ALL mods",
+                                    child: GestureDetector(
+                                      onSecondaryTap: () {
+                                        copyModListToClipboardFromMods(
+                                            fullModList, context);
                                       },
+                                      child: IconButton(
+                                        icon: const Icon(Icons.copy),
+                                        iconSize: 20,
+                                        constraints: const BoxConstraints(),
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 4),
+                                        onPressed: () {
+                                          copyModListToClipboardFromIds(
+                                              enabledModIds,
+                                              filteredModList,
+                                              context);
+                                        },
+                                      ),
                                     ),
                                   ),
                                   const AddNewModsButton(
@@ -301,8 +308,7 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                 return ContextMenuRegion(
                                   contextMenu:
                                       buildModContextMenu(mod, ref, context),
-                                  child: ModListBasicEntry(
-                                      mod: mod),
+                                  child: ModListBasicEntry(mod: mod),
                                 );
                               }),
                         ),

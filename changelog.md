@@ -1,4 +1,6 @@
 # 0.1.8
+- Added
+  - "I don't believe you" option for if the TriOS self-updater says there's no update but you know there is.
 - Fixed
   - Version Checker updates failing if there was a certificate error (specifically sc2mafia.com).
   - If a file failed to extract, the mod install wouldn't fail and you'd have to check the log to know some file was missed.

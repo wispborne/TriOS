@@ -2,8 +2,9 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:collection/collection.dart';
+import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:http/http.dart' as http;
 import 'package:mutex/mutex.dart';
 import 'package:path/path.dart' as p;
 import 'package:trios/thirdparty/dartx/iterable.dart';
@@ -18,6 +19,20 @@ import 'mod_manager_logic.dart';
 
 class VersionCheckerNotifier
     extends AsyncNotifier<Map<String, RemoteVersionCheckResult>> {
+  Dio dioHttpClient = Dio(BaseOptions(
+    receiveTimeout: const Duration(seconds: 5),
+    sendTimeout: const Duration(seconds: 5),
+  )).let((dio) {
+    // allow self-signed certificate
+    (dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
+      final client = HttpClient();
+      client.badCertificateCallback =
+          (X509Certificate cert, String host, int port) => true;
+      return client;
+    };
+    return dio;
+  });
+
   @override
   Map<String, RemoteVersionCheckResult> build() {
     refresh(skipCache: false);
@@ -88,7 +103,11 @@ class VersionCheckerNotifier
         if (skipCache ||
             currentTime.difference(lastCheck) > versionCheckCooldown) {
           // If enough time has passed since the last check (or we're ignoring the cache), check again.
-          return (mod, checkRemoteVersion(mod), wasCached: false);
+          return (
+            mod,
+            checkRemoteVersion(mod, dioHttpClient),
+            wasCached: false
+          );
         } else {
           // Otherwise, return the cached result.
           return (
@@ -98,7 +117,7 @@ class VersionCheckerNotifier
           );
         }
       } else {
-        return (mod, checkRemoteVersion(mod), wasCached: false);
+        return (mod, checkRemoteVersion(mod, dioHttpClient), wasCached: false);
       }
     }).toList();
 
@@ -213,7 +232,9 @@ class RemoteVersionCheckResult {
 }
 
 Future<RemoteVersionCheckResult> checkRemoteVersion(
-    ModVariant modVariant) async {
+  ModVariant modVariant,
+  Dio dioHttpClient,
+) async {
   var remoteVersionUrl = modVariant.versionCheckerInfo?.masterVersionFile;
   if (remoteVersionUrl == null) {
     return RemoteVersionCheckResult(modVariant.smolId, null,
@@ -222,13 +243,15 @@ Future<RemoteVersionCheckResult> checkRemoteVersion(
   final fixedUrl = fixUrl(remoteVersionUrl);
 
   try {
-    final response = await http.get(
-      Uri.parse(fixedUrl),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    ).timeout(const Duration(seconds: 5));
-    final body = response.body;
+    final response = await dioHttpClient
+        .get(
+          fixedUrl,
+          options: Options(headers: {
+            'Content-Type': 'application/json',
+          }),
+        )
+        .timeout(const Duration(seconds: 5));
+    final String body = response.data;
     if (response.statusCode == 200) {
       return RemoteVersionCheckResult(
           modVariant.smolId,

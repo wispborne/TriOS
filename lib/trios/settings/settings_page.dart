@@ -381,9 +381,27 @@ class CheckForUpdatesButton extends StatelessWidget {
           } else if (Version.parse(release.tagName, sanitizeInput: true) <=
               Version.parse(Constants.version, sanitizeInput: true)) {
             showSnackBar(
-                context: context,
-                content: Text(
-                    "You are already on the latest version (current: ${Constants.version}, found: ${release.tagName}${release.prerelease ? " (prerelease)" : ""})"));
+              context: context,
+              content: Text(
+                  "You are already on the latest version (current: ${Constants.version}, found: ${release.tagName}${release.prerelease ? " (prerelease)" : ""})"),
+              action: SnackBarAction(
+                label: "I don't believe you",
+                backgroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
+                onPressed: () {
+                  ref.watch(AppState.selfUpdate.notifier).getLatestRelease().then((release) {
+                    if (release == null) {
+                      Fimber.d("No release found");
+                      return;
+                    }
+
+                    toastification.showCustom(
+                      context: context,
+                      builder: (context, item) => SelfUpdateToast(release, item),
+                    );
+                  });
+                },
+              ),
+            );
             return;
           } else {
             toastification.showCustom(

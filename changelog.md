@@ -1,3 +1,7 @@
+# 0.1.8
+- Fixed
+  - Version Checker updates failing if there was a certificate error (specifically sc2mafia.com).
+
 # 0.1.7
 - Added
   - New prerelease update channel.

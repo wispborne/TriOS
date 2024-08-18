@@ -129,7 +129,7 @@ class VersionCheckerNotifier
       }
 
       future.then((result) async {
-        Fimber.v("Caching remote version info for ${mod.modInfo.id}: $result");
+        Fimber.v(() =>"Caching remote version info for ${mod.modInfo.id}: $result");
         await cacheLock.protect(() async {
           _versionCheckResultsCache[mod.smolId] = result;
           state = AsyncValue.data(_versionCheckResultsCache);

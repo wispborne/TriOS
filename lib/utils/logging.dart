@@ -95,7 +95,11 @@ configureLogging({
             printTime: true,
             stackTraceMaxLines: 20,
           ),
-          output: AdvancedFileOutput(path: logFolderName!, maxFileSizeKB: 25000, writeImmediately: [Level.error, Level.fatal], latestFileName: logFileName),
+          output: AdvancedFileOutput(
+              path: logFolderName!,
+              maxFileSizeKB: 25000,
+              writeImmediately: [Level.error, Level.fatal],
+              latestFileName: logFileName),
         );
 
         // Clean up old log files.
@@ -139,17 +143,22 @@ configureLogging({
 }
 
 class Fimber {
-  static void v(String message, {Object? ex, StackTrace? stacktrace}) {
+  /// Logs a verbose message.
+  /// [message] is a function that returns the message to log.
+  /// Verbose logging is expected to be super spammy, so don't build the message unless we're actually going to log it.
+  static void v(String Function() message,
+      {Object? ex, StackTrace? stacktrace}) {
     if (!didLoggingInitializeSuccessfully) {
-      print(message);
+      print(message());
       return;
     }
 
     if (useFimber) {
-      // f.Fimber.v(message, ex: ex, stacktrace: stacktrace);
+      // f.Fimber.v(() =>message, ex: ex, stacktrace: stacktrace);
     } else {
-      _consoleLogger.t(message, error: ex, stackTrace: stacktrace);
-      _fileLogger?.t(message, error: ex, stackTrace: stacktrace);
+      final msg = message();
+      _consoleLogger.t(msg, error: ex, stackTrace: stacktrace);
+      _fileLogger?.t(msg, error: ex, stackTrace: stacktrace);
     }
   }
 

@@ -143,7 +143,7 @@ class SettingSaver extends Notifier<Settings> {
     var newState = update(state);
 
     if (prevState == newState) {
-      Fimber.v("No settings change: $newState");
+      Fimber.v(() =>"No settings change: $newState");
       return;
     }
 

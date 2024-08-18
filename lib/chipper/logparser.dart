@@ -43,7 +43,7 @@ class LogParser {
       logLines
           // .transform(splitter)
           .forEachIndexed((index, line) {
-        Fimber.v("Parsing line $index: $line");
+        Fimber.v(() =>"Parsing line $index: $line");
 
         // Do `.contains` checks as a rough filter before doing a full regex match because contains is much faster.
         // Parsing a long filter without a game version, OS, or java version took 37s without this optimization and 5s with it.
@@ -86,7 +86,7 @@ class LogParser {
           final thread = threadPattern.firstMatch(line)?.group(1);
 
           if (thread != null) {
-            Fimber.v("Looking for previous log entry for line '$line'.");
+            Fimber.v(() =>"Looking for previous log entry for line '$line'.");
             // Only look max 10 lines up for perf (edit: removed).  `&& i > (index - 10)`
             // Edit: It didn't affect perf much, but it did cause some INFO lines to be missed.
             for (var i = (index - 1); i >= 0; i--) {
@@ -108,7 +108,7 @@ class LogParser {
               }
             }
 
-            Fimber.v("Found it.");
+            Fimber.v(() =>"Found it.");
           }
 
           isReadingError = true;
@@ -153,7 +153,7 @@ class LogParser {
       var chips = LogChips(null, gameVersion, os, javaVersion, userMods,
           UnmodifiableListView(errorBlock), elapsedMilliseconds);
       Fimber.i("Parsing took $elapsedMilliseconds ms");
-      Fimber.v(chips.errorBlock
+      Fimber.v(() =>chips.errorBlock
           .map((element) => "\n${element.lineNumber}-${element.fullError}")
           .toList()
           .toString());

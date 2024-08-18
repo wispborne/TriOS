@@ -278,7 +278,7 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
     final completer = Completer<String?>();
     reader.getValue(Formats.fileUri, (fileUri) {
       final filePath = fileUri?.toFilePath(windows: Platform.isWindows);
-      Fimber.v("Got dropped file uri: $filePath");
+      Fimber.v(() =>"Got dropped file uri: $filePath");
       completer.complete(filePath);
     });
     return (await completer.future)?.let((path) => File(path));
@@ -287,7 +287,7 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
   Future<NamedUri?> getUriFromReader(DataReader reader) async {
     final completer = Completer<NamedUri?>();
     reader.getValue(Formats.uri, (uri) {
-      Fimber.v("Got dropped uri: ${uri?.uri}");
+      Fimber.v(() =>"Got dropped uri: ${uri?.uri}");
       completer.complete(uri);
     });
     return await completer.future;

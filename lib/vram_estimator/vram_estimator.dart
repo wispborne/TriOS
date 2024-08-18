@@ -80,7 +80,7 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
           });
         },
         debugOut: Fimber.d,
-        verboseOut: Fimber.v,
+        verboseOut: null,
       ).check();
 
       setState(() {

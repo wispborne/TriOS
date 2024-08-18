@@ -220,7 +220,7 @@ var maxFileHandles = 2000;
 
 Future<T> withFileHandleLimit<T>(Future<T> Function() function) async {
   while (currentFileHandles + 1 > maxFileHandles) {
-    Fimber.v(
+    Fimber.v(() =>
         "Waiting for file handles to free up. Current file handles: $currentFileHandles");
     await Future.delayed(const Duration(milliseconds: 100));
   }

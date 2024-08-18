@@ -366,19 +366,19 @@ Future<ModInfo?> getModInfo(
       final model = ModInfo.fromJsonModel(
           ModInfoJson.fromJson(jsonEncodedYaml), modFolder);
 
-      // Fimber.v("Using 0.9.5a mod_info.json format for ${modInfoFile.absolute}");
+      // Fimber.v(() =>"Using 0.9.5a mod_info.json format for ${modInfoFile.absolute}");
 
       return model;
       // } catch (e) {
       //   final model = ModInfoModel_091a.fromJson(jsonEncodedYaml);
       //
-      //   Fimber.v("Using 0.9.1a mod_info.json format for ${modInfoFile.absolute}");
+      //   Fimber.v(() =>"Using 0.9.1a mod_info.json format for ${modInfoFile.absolute}");
       //
       //   return ModInfo(model.id, modFolder, model.name, model.version.toString(), model.gameVersion);
       // }
     });
   } catch (e, st) {
-    Fimber.v(
+    Fimber.v(() =>
         "Unable to find or read 'mod_info.json' in ${modFolder.absolute}. ($e)\n$st");
     return null;
   }

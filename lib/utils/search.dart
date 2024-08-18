@@ -38,7 +38,7 @@ List<TextSearchItemTerm> createSearchTags(ModInfo modInfo) {
       .distinctBy((it) => it)
       .map((it) => TextSearchItemTerm(it!.term, it.penalty))
       .toList(growable: false);
-  // Fimber.v(tags.join("\n"));
+  // Fimber.v(() =>tags.join("\n"));
   return tags;
 }
 

@@ -132,6 +132,15 @@ class Version implements Comparable<Version> {
   }
 
   int compareVersions(String a, String b) {
+    final suffixOrder = [
+      'dev',
+      'prerelease',
+      'pre',
+      'alpha',
+      'beta',
+      'rc'
+    ]; // Define the order of suffixes
+
     if (a == b) {
       Fimber.v(() => '$a is the same as $b');
       return 0;
@@ -149,8 +158,6 @@ class Version implements Comparable<Version> {
 
     // Normalize and split the strings for comparison
     final (aParts, bParts) = _normalizeAndSplitStringsToCompare(a, b, regex);
-
-    final suffixOrder = ['alpha', 'beta', 'rc']; // Define the order of suffixes
 
     for (int i = 0; i < max(aParts.length, bParts.length); i++) {
       var aPart = aParts.getOrNull(i) ?? '';

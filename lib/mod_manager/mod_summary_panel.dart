@@ -34,7 +34,7 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel> {
   @override
   void initState() {
     super.initState();
-    // _generatePalette();
+    _generatePalette();
   }
 
   Future<void> _generatePalette() async {
@@ -54,7 +54,7 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel> {
   @override
   void didUpdateWidget(covariant ModSummaryPanel oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // _generatePalette();
+    _generatePalette();
   }
 
   @override
@@ -72,266 +72,335 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel> {
                 ? "        "
                 : mod.findFirstEnabledOrHighestVersion?.modInfo.name ?? "")
         : <Mod>[];
+    const buttonsOpacity = 0.8;
 
-    return Theme(
-      data: createPaletteTheme(context, paletteGenerator),
-      child: Builder(builder: (context) {
-        final theme = Theme.of(context);
-        return Container(
-          margin: const EdgeInsets.symmetric(vertical: 4),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(8),
-              bottomLeft: Radius.circular(8),
+    final paletteTheme = createPaletteTheme(context, paletteGenerator);
+
+    return Builder(builder: (context) {
+      final theme = Theme.of(context);
+      return Container(
+        margin: const EdgeInsets.only(top: 4, bottom: 8),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(8),
+            bottomLeft: Radius.circular(8),
+          ),
+          boxShadow: [
+            ThemeManager.boxShadow,
+          ],
+          border: Border(
+            top: BorderSide(
+              color: theme.colorScheme.onSurface.withOpacity(0.15),
+              width: 1,
             ),
-            boxShadow: [
-              ThemeManager.boxShadow,
-            ],
-            border: Border(
-              top: BorderSide(
-                color: theme.colorScheme.onSurface.withOpacity(0.15),
-                width: 1,
-              ),
-              left: BorderSide(
-                color: theme.colorScheme.onSurface.withOpacity(0.15),
-                width: 1,
-              ),
-              bottom: BorderSide(
-                color: theme.colorScheme.onSurface.withOpacity(0.15),
-                width: 1,
-              ),
+            left: BorderSide(
+              color: theme.colorScheme.onSurface.withOpacity(0.15),
+              width: 1,
+            ),
+            bottom: BorderSide(
+              color: theme.colorScheme.onSurface.withOpacity(0.15),
+              width: 1,
             ),
           ),
-          child: Builder(builder: (context) {
-            final variant = selectedMod!.findHighestVersion;
-            final versionCheck = ref
-                .watch(AppState.versionCheckResults)
-                .valueOrNull?[variant?.smolId];
-            if (variant == null) return const SizedBox();
-            final iconFilePath = variant.iconFilePath;
+        ),
+        child: Builder(builder: (context) {
+          final variant = selectedMod!.findHighestVersion;
+          final versionCheck = ref
+              .watch(AppState.versionCheckResults)
+              .valueOrNull?[variant?.smolId];
+          if (variant == null) return const SizedBox();
+          final iconFilePath = variant.iconFilePath;
 
-            if (iconFilePath != null) {
-              // PaletteGenerator.fromImageProvider(
-              //         Image.file(iconFilePath.toFile(), width: 48, height: 48)
-              //             .image)
-              //     .then((generator) => {
-              //           setState(() {
-              //             paletteGenerator = generator;
-              //           })
-              //         });
-            } else {
-              paletteGenerator = null;
-            }
-
-            return Stack(
-              children: [
-                // if (paletteGenerator != null)
-                //   Container(
-                //     height: 70,
-                //     decoration: BoxDecoration(
-                //       color: paletteGenerator!.dominantColor?.color ??
-                //           theme.colorScheme.surface,
-                //     ),
-                //   ),
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: SingleChildScrollView(
-                    child: SelectionArea(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              if (iconFilePath != null)
-                                Padding(
-                                  padding: const EdgeInsets.only(right: 16),
-                                  child: Stack(
-                                    children: [
-                                      Image.file(
-                                        iconFilePath.toFile(),
-                                        width: 48,
-                                        height: 48,
-                                      )
-                                    ],
-                                  ),
-                                )
-                              else
-                                const SizedBox(width: 0, height: 48),
-                              Expanded(
-                                child: Text(variant.modInfo.name ?? "(no name)",
-                                    style:
-                                        theme.textTheme.headlineSmall?.copyWith(
-                                      fontFamily: "Orbitron",
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 20,
-                                    )),
+          // if (iconFilePath != null) {
+          //   PaletteGenerator.fromImageProvider(
+          //           Image.file(iconFilePath.toFile(), width: 48, height: 48)
+          //               .image)
+          //       .then((generator) => {
+          //             setState(() {
+          //               paletteGenerator = generator;
+          //             })
+          //           });
+          // } else {
+          //   paletteGenerator = null;
+          // }
+          return Stack(
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: SingleChildScrollView(
+                  child: SelectionArea(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Theme(
+                          data: paletteTheme,
+                          child: Card(
+                              margin: const EdgeInsets.all(0),
+                              shape: const RoundedRectangleBorder(
+                                borderRadius: BorderRadius.only(
+                                  topLeft: Radius.circular(
+                                      ThemeManager.cornerRadius),
+                                  topRight: Radius.zero,
+                                  bottomLeft: Radius.zero,
+                                  bottomRight: Radius.zero,
+                                ),
                               ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                              "${variant.modInfo.id} ${variant.modInfo.version}",
-                              style: theme.textTheme.labelLarge?.copyWith(
-                                  fontFamily:
-                                      GoogleFonts.sourceCodePro().fontFamily)),
-                          const SizedBox(height: 4),
-                          Text("Starsector ${variant.modInfo.gameVersion}",
-                              style: theme.textTheme.labelLarge?.copyWith(
-                                  fontFamily:
-                                      GoogleFonts.sourceCodePro().fontFamily)),
-                          if (variant.modInfo.isUtility ||
-                              variant.modInfo.isTotalConversion)
-                            Padding(
-                                padding: const EdgeInsets.only(top: 8),
-                                child: Tooltip(
-                                  message: ModTypeIcon.getTooltipText(variant),
-                                  child: Row(
-                                    children: [
-                                      ModTypeIcon(modVariant: variant),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        variant.modInfo.isTotalConversion
-                                            ? "Total Conversion"
-                                            : variant.modInfo.isUtility
-                                                ? "Utility Mod"
-                                                : "",
-                                      ),
-                                    ],
-                                  ),
-                                )),
-                          if (versionCheck?.remoteVersion?.modThreadId
-                                  .isNotNullOrEmpty() ??
-                              false)
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const SizedBox(height: 16),
-                                Builder(builder: (context) {
-                                  final uri = Uri.parse(
-                                      "${Constants.forumModPageUrl}${versionCheck?.remoteVersion?.modThreadId}");
-                                  return Tooltip(
-                                    message: uri.toString(),
-                                    child: TextButton.icon(
-                                        icon: const SvgImageIcon(
-                                            "assets/images/icon-web.svg"),
-                                        label: const Text(
-                                          "Forum Thread",
+                              child: Padding(
+                                padding: const EdgeInsets.only(
+                                    left: 16, right: 32, top: 16, bottom: 16),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        if (iconFilePath != null)
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                                right: 16),
+                                            child: Stack(
+                                              children: [
+                                                Image.file(
+                                                  iconFilePath.toFile(),
+                                                  width: 48,
+                                                  height: 48,
+                                                )
+                                              ],
+                                            ),
+                                          )
+                                        else
+                                          const SizedBox(width: 0, height: 48),
+                                        Expanded(
+                                          child: Text(
+                                              variant.modInfo.name ??
+                                                  "(no name)",
+                                              style: theme
+                                                  .textTheme.headlineSmall
+                                                  ?.copyWith(
+                                                fontFamily: "Orbitron",
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 20,
+                                              )),
                                         ),
-                                        onPressed: () {
-                                          launchUrl(uri);
-                                        }),
-                                  );
-                                }),
-                              ],
-                            ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const SizedBox(height: 16),
-                              const Text("Version(s)",
-                                  style:
-                                      TextStyle(fontWeight: FontWeight.bold)),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(selectedMod.modVariants.joinToString(
-                                      separator: ",  ",
-                                      transform: (variant) =>
-                                          variant.modInfo.version?.toString() ??
-                                          "")),
-                                ],
-                              ),
-                            ],
-                          ),
-                          if (variant.modInfo.author.isNotNullOrEmpty())
-                            Column(
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              )),
+                        ),
+                        // Don't show line if no palette, otherwise it encloses the details part too much
+                        Divider(
+                            height: 1,
+                            color: paletteGenerator != null
+                                ? paletteTheme.colorScheme.outline
+                                    .withOpacity(0.4)
+                                : Theme.of(context).colorScheme.surface),
+                        // Container(
+                        //   height: 12, // Adjust height for gradient fade
+                        //   decoration: BoxDecoration(
+                        //     gradient: LinearGradient(
+                        //       stops: const [0.4, 0.85],
+                        //       begin: Alignment.topCenter,
+                        //       end: Alignment.bottomCenter,
+                        //       colors: [
+                        //         paletteTheme.cardColor, // Transparent
+                        //         Theme.of(context).colorScheme.surface, // Opaque
+                        //       ],
+                        //     ),
+                        //   ),
+                        // ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const SizedBox(height: 16),
-                                const Text("Author",
-                                    style:
-                                        TextStyle(fontWeight: FontWeight.bold)),
-                                Text(variant.modInfo.author ?? "(no author)"),
-                              ],
-                            ),
-                          if (variant.modInfo.description.isNotNullOrEmpty())
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const SizedBox(height: 16),
-                                const Text("Description",
-                                    style:
-                                        TextStyle(fontWeight: FontWeight.bold)),
-                                Text(variant.modInfo.description ??
-                                    "(no description)"),
-                              ],
-                            ),
-                          if (variant.modInfo.dependencies.isNotEmpty)
-                            Builder(builder: (context) {
-                              final versionCheckResults = ref
-                                  .watch(AppState.versionCheckResults)
-                                  .valueOrNull?[variant.smolId];
-                              if (modVariants == null ||
-                                  enabledMods == null ||
-                                  selectedMod == null) {
-                                return const SizedBox();
-                              }
-                              return Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const SizedBox(height: 16),
-                                  const Text("Dependencies",
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold)),
+                                const SizedBox(height: 4),
+                                Text(
+                                    "${variant.modInfo.id} ${variant.modInfo.version}",
+                                    style: theme.textTheme.labelLarge?.copyWith(
+                                        fontFamily: GoogleFonts.sourceCodePro()
+                                            .fontFamily)),
+                                const SizedBox(height: 4),
+                                Text(
+                                  "Starsector ${variant.modInfo.gameVersion}",
+                                  style: theme.textTheme.labelLarge?.copyWith(
+                                      fontFamily: GoogleFonts.sourceCodePro()
+                                          .fontFamily),
+                                ),
+                                if (variant.modInfo.isUtility ||
+                                    variant.modInfo.isTotalConversion)
+                                  Padding(
+                                      padding: const EdgeInsets.only(top: 8),
+                                      child: Tooltip(
+                                        message:
+                                            ModTypeIcon.getTooltipText(variant),
+                                        child: Row(
+                                          children: [
+                                            ModTypeIcon(modVariant: variant),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              variant.modInfo.isTotalConversion
+                                                  ? "Total Conversion"
+                                                  : variant.modInfo.isUtility
+                                                      ? "Utility Mod"
+                                                      : "",
+                                            ),
+                                          ],
+                                        ),
+                                      )),
+                                if (versionCheck?.remoteVersion?.modThreadId
+                                        .isNotNullOrEmpty() ??
+                                    false)
                                   Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
-                                    children:
-                                        variant.modInfo.dependencies.map((dep) {
-                                      var dependencyState =
-                                          dep.isSatisfiedByAny(modVariants,
-                                              enabledMods, gameVersion);
-                                      return Text(
-                                          "- ${dep.formattedNameVersion} ${dependencyState.getDependencyStateText()}",
-                                          style: TextStyle(
-                                              color:
-                                                  getStateColorForDependencyText(
-                                                      dependencyState)));
-                                    }).toList(),
+                                    children: [
+                                      const SizedBox(height: 16),
+                                      Builder(builder: (context) {
+                                        final uri = Uri.parse(
+                                            "${Constants.forumModPageUrl}${versionCheck?.remoteVersion?.modThreadId}");
+                                        return Tooltip(
+                                          message: uri.toString(),
+                                          child: Opacity(
+                                            opacity: buttonsOpacity,
+                                            child: OutlinedButton.icon(
+                                                icon: const SvgImageIcon(
+                                                    "assets/images/icon-web.svg"),
+                                                label: const Text(
+                                                  "Forum Thread",
+                                                ),
+                                                onPressed: () {
+                                                  launchUrl(uri);
+                                                }),
+                                          ),
+                                        );
+                                      }),
+                                    ],
                                   ),
-                                ],
-                              );
-                            }),
-                          if (dependents.isNotEmpty)
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const SizedBox(height: 16),
-                                const Text("Dependents",
-                                    style:
-                                        TextStyle(fontWeight: FontWeight.bold)),
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: dependents.map((dep) {
-                                    final variant =
-                                        dep.findFirstEnabledOrHighestVersion;
-                                    final enabled =
-                                        variant?.isEnabled(allMods) == true;
-                                    return Text(
-                                      "- ${variant?.modInfo.name} ${enabled ? "(enabled)" : ""}",
-                                    );
-                                  }).toList(),
+                                  children: [
+                                    const SizedBox(height: 16),
+                                    const Text("Version(s)",
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold)),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(selectedMod.modVariants
+                                            .joinToString(
+                                                separator: ",  ",
+                                                transform: (variant) =>
+                                                    variant.modInfo.version
+                                                        ?.toString() ??
+                                                    "")),
+                                      ],
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                        ],
-                      ),
+                                if (variant.modInfo.author.isNotNullOrEmpty())
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const SizedBox(height: 16),
+                                      const Text("Author",
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.bold)),
+                                      Text(variant.modInfo.author ??
+                                          "(no author)"),
+                                    ],
+                                  ),
+                                if (variant.modInfo.description
+                                    .isNotNullOrEmpty())
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const SizedBox(height: 16),
+                                      const Text("Description",
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.bold)),
+                                      Text(variant.modInfo.description ??
+                                          "(no description)"),
+                                    ],
+                                  ),
+                                if (variant.modInfo.dependencies.isNotEmpty)
+                                  Builder(builder: (context) {
+                                    final versionCheckResults = ref
+                                        .watch(AppState.versionCheckResults)
+                                        .valueOrNull?[variant.smolId];
+                                    if (modVariants == null ||
+                                        enabledMods == null ||
+                                        selectedMod == null) {
+                                      return const SizedBox();
+                                    }
+                                    return Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const SizedBox(height: 16),
+                                        const Text("Dependencies",
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.bold)),
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: variant.modInfo.dependencies
+                                              .map((dep) {
+                                            var dependencyState =
+                                                dep.isSatisfiedByAny(
+                                                    modVariants,
+                                                    enabledMods,
+                                                    gameVersion);
+                                            return Text(
+                                                "- ${dep.formattedNameVersion} ${dependencyState.getDependencyStateText()}",
+                                                style: TextStyle(
+                                                    color:
+                                                        getStateColorForDependencyText(
+                                                            dependencyState)));
+                                          }).toList(),
+                                        ),
+                                      ],
+                                    );
+                                  }),
+                                if (dependents.isNotEmpty)
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const SizedBox(height: 16),
+                                      const Text("Dependents",
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.bold)),
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: dependents.map((dep) {
+                                          final variant = dep
+                                              .findFirstEnabledOrHighestVersion;
+                                          final enabled =
+                                              variant?.isEnabled(allMods) ==
+                                                  true;
+                                          return Text(
+                                            "- ${variant?.modInfo.name} ${enabled ? "(enabled)" : ""}",
+                                          );
+                                        }).toList(),
+                                      ),
+                                    ],
+                                  ),
+                              ]),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(8),
+              ),
+              Theme(
+                data: paletteTheme,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 20, right: 8),
                   child: Align(
                     alignment: Alignment.topRight,
                     child: IconButton(
@@ -342,12 +411,12 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel> {
                     ),
                   ),
                 ),
-              ],
-            );
-          }),
-        );
-      }),
-    );
+              ),
+            ],
+          );
+        }),
+      );
+    });
   }
 
   List<ModVariant> calculateDependents(ModVariant variant) {

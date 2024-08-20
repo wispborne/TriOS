@@ -15,6 +15,7 @@
   - When a mod is disabled, now sets all mod info files to `mod_info.json` instead of `mod_info.json.disabled`.
     - This improves compatibility with MOSS and manual mod management.
     - The only time `mod_info.json.disabled` is needed is when you want to enable one version and you have others installed.
+  - Mod details panel is now cooler looking for mods with icons.
 
 # 0.1.7
 - Added

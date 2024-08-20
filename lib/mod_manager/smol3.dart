@@ -50,6 +50,11 @@ final searchQuery = StateProvider.autoDispose<String>((ref) => "");
 final _stateManagerProvider =
     StateProvider.autoDispose<PlutoGridStateManager?>((ref) => null);
 
+class SmolGridUiState {
+  int? sortedColumnIdx;
+  bool? sortAscending;
+}
+
 class _Smol3State extends ConsumerState<Smol3>
     with AutomaticKeepAliveClientMixin {
   @override
@@ -185,15 +190,15 @@ class _Smol3State extends ConsumerState<Smol3>
                   padding: const EdgeInsets.only(left: 2, right: 8),
                   child: Stack(
                     children: [
-                      Row(
+                      const Row(
                         children: [
-                          const AddNewModsButton(
+                          AddNewModsButton(
                             labelWidget: Padding(
                               padding: EdgeInsets.only(left: 4),
                               child: Text("Add Mod(s)"),
                             ),
                           ),
-                          const RefreshModsButton(
+                          RefreshModsButton(
                             iconOnly: false,
                             padding: EdgeInsets.symmetric(horizontal: 4),
                           ),
@@ -203,88 +208,17 @@ class _Smol3State extends ConsumerState<Smol3>
                         child: SizedBox(
                           height: 30,
                           width: 300,
-                          child: SearchAnchor(
-                            searchController: searchController,
-                            builder: (BuildContext context,
-                                SearchController controller) {
-                              return SearchBar(
-                                  controller: controller,
-                                  leading: const Icon(Icons.search),
-                                  hintText: "Filter mods...",
-                                  trailing: [
-                                    query.isEmpty
-                                        ? Container()
-                                        : IconButton(
-                                            icon: const Icon(Icons.clear),
-                                            constraints: const BoxConstraints(),
-                                            padding: EdgeInsets.zero,
-                                            onPressed: () {
-                                              controller.clear();
-                                              ref
-                                                  .read(searchQuery.notifier)
-                                                  .state = "";
-                                              // filteredMods =
-                                              //     filterMods(query);
-                                            },
-                                          )
-                                  ],
-                                  backgroundColor: WidgetStateProperty.all(
-                                      Theme.of(context)
-                                          .colorScheme
-                                          .surfaceContainer),
-                                  onChanged: (value) {
-                                    ref.read(searchQuery.notifier).state =
-                                        value;
-                                    // setState(() {
-                                    //   query = value;
-                                    //   filteredMods = filterMods(value);
-                                    // });
-                                  });
-                            },
-                            suggestionsBuilder: (BuildContext context,
-                                SearchController controller) {
-                              return [];
-                            },
-                          ),
+                          child: FilterModsSearchBar(
+                              searchController: searchController,
+                              query: query,
+                              ref: ref),
                         ),
                       ),
                       Row(
                         children: [
                           const Spacer(),
-                          Tooltip(
-                              message:
-                                  "Copy mod list to clipboard\n\nRight-click for ALL mods",
-                              child: Padding(
-                                padding: const EdgeInsets.all(4),
-                                child: GestureDetector(
-                                  onSecondaryTap: () {
-                                    copyModListToClipboardFromMods(
-                                        mods, context);
-                                  },
-                                  child: OutlinedButton.icon(
-                                    onPressed: () =>
-                                        copyModListToClipboardFromMods(
-                                            enabledMods, context),
-                                    label: const Text("Copy"),
-                                    style: OutlinedButton.styleFrom(
-                                      foregroundColor: Theme.of(context)
-                                          .colorScheme
-                                          .onSurface
-                                          .withOpacity(0.8),
-                                      side: BorderSide(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurface
-                                            .withOpacity(0.8),
-                                      ),
-                                    ),
-                                    icon: const Icon(
-                                      Icons.copy,
-                                      size: 20,
-                                    ),
-                                  ),
-                                ),
-                              ))
+                          CopyModListButtonLarge(
+                              mods: mods, enabledMods: enabledMods)
                         ],
                       )
                     ],
@@ -558,27 +492,19 @@ class _Smol3State extends ConsumerState<Smol3>
           field: _Fields.versionSelector.toString(),
           type: PlutoColumnType.text(),
           enableSorting: false,
+          enableAutoEditing: false,
+          enableEditingMode: false,
+          enableSetColumnsMenuItem: false,
+          enableDropToResize: false,
+          enableFilterMenuItem: false,
           renderer: (rendererContext) => Builder(builder: (context) {
                 if (filteredMods.isEmpty) return const SizedBox();
                 final mod = _getModFromKey(rendererContext.row.key);
                 if (mod == null) return const SizedBox();
                 final bestVersion = mod.findFirstEnabledOrHighestVersion;
                 if (bestVersion == null) return Container();
-                final gameVersion = ref.watch(
-                    appSettings.select((value) => value.lastStarsectorVersion));
-                final dependencies =
-                    ref.watch(AppState.modCompatibility)[bestVersion.smolId];
-                final areDependenciesMet = dependencies?.dependencyChecks.every(
-                            (e) =>
-                                e.satisfiedAmount is Satisfied ||
-                                e.satisfiedAmount is VersionWarning ||
-                                e.satisfiedAmount is Disabled) !=
-                        false &&
-                    dependencies?.gameCompatibility !=
-                        GameCompatibility.incompatible;
-
                 return ContextMenuRegion(
-                    contextMenu: buildModContextMenu(mod, ref, context),
+                    contextMenu: buildModContextMenu(mod, ref, context, showSwapToVersion: false),
                     child: tooltippy(
                       ModVersionSelectionDropdown(
                           mod: mod,
@@ -632,7 +558,7 @@ class _Smol3State extends ConsumerState<Smol3>
           final bestVersion = mod.findFirstEnabledOrHighestVersion;
           final theme = Theme.of(context);
           return ContextMenuRegion(
-              contextMenu: buildModContextMenu(mod, ref, context),
+              contextMenu: buildModContextMenu(mod, ref, context, showSwapToVersion: false),
               child: tooltippy(
                 // affixToTop( child:
                 ConstrainedBox(
@@ -676,7 +602,7 @@ class _Smol3State extends ConsumerState<Smol3>
           final lightTextColor =
               theme.colorScheme.onSurface.withOpacity(lightTextOpacity);
           return ContextMenuRegion(
-              contextMenu: buildModContextMenu(mod, ref, context),
+              contextMenu: buildModContextMenu(mod, ref, context, showSwapToVersion: false),
               child: Text(rendererContext.cell.value ?? "(no author)",
                   style: theme.textTheme.labelLarge
                       ?.copyWith(color: lightTextColor)));
@@ -883,7 +809,7 @@ class _Smol3State extends ConsumerState<Smol3>
           final bestVersion = mod.findFirstEnabledOrHighestVersion;
           if (bestVersion == null) return const SizedBox();
           return ContextMenuRegion(
-              contextMenu: buildModContextMenu(mod, ref, context),
+              contextMenu: buildModContextMenu(mod, ref, context, showSwapToVersion: false),
               child: Text("todo",
                   style: theme.textTheme.labelLarge
                       ?.copyWith(color: lightTextColor)));
@@ -908,7 +834,7 @@ class _Smol3State extends ConsumerState<Smol3>
           final theme = Theme.of(context);
 
           return ContextMenuRegion(
-              contextMenu: buildModContextMenu(mod, ref, context),
+              contextMenu: buildModContextMenu(mod, ref, context, showSwapToVersion: false),
               child: Opacity(
                 opacity: lightTextOpacity,
                 child: Text(rendererContext.cell.value ?? "(no game version)",
@@ -1020,6 +946,101 @@ class _Smol3State extends ConsumerState<Smol3>
         );
       }),
     );
+  }
+}
+
+class FilterModsSearchBar extends StatelessWidget {
+  const FilterModsSearchBar({
+    super.key,
+    required this.searchController,
+    required this.query,
+    required this.ref,
+  });
+
+  final SearchController searchController;
+  final String query;
+  final WidgetRef ref;
+
+  @override
+  Widget build(BuildContext context) {
+    return SearchAnchor(
+      searchController: searchController,
+      builder: (BuildContext context, SearchController controller) {
+        return SearchBar(
+            controller: controller,
+            leading: const Icon(Icons.search),
+            hintText: "Filter mods...",
+            trailing: [
+              query.isEmpty
+                  ? Container()
+                  : IconButton(
+                      icon: const Icon(Icons.clear),
+                      constraints: const BoxConstraints(),
+                      padding: EdgeInsets.zero,
+                      onPressed: () {
+                        controller.clear();
+                        ref.read(searchQuery.notifier).state = "";
+                        // filteredMods =
+                        //     filterMods(query);
+                      },
+                    )
+            ],
+            backgroundColor: WidgetStateProperty.all(
+                Theme.of(context).colorScheme.surfaceContainer),
+            onChanged: (value) {
+              ref.read(searchQuery.notifier).state = value;
+              // setState(() {
+              //   query = value;
+              //   filteredMods = filterMods(value);
+              // });
+            });
+      },
+      suggestionsBuilder: (BuildContext context, SearchController controller) {
+        return [];
+      },
+    );
+  }
+}
+
+class CopyModListButtonLarge extends StatelessWidget {
+  const CopyModListButtonLarge({
+    super.key,
+    required this.mods,
+    required this.enabledMods,
+  });
+
+  final List<Mod> mods;
+  final List<Mod> enabledMods;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+        message: "Copy mod list to clipboard\n\nRight-click for ALL mods",
+        child: Padding(
+          padding: const EdgeInsets.all(4),
+          child: GestureDetector(
+            onSecondaryTap: () {
+              copyModListToClipboardFromMods(mods, context);
+            },
+            child: OutlinedButton.icon(
+              onPressed: () =>
+                  copyModListToClipboardFromMods(enabledMods, context),
+              label: const Text("Copy"),
+              style: OutlinedButton.styleFrom(
+                foregroundColor:
+                    Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                side: BorderSide(
+                  color:
+                      Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                ),
+              ),
+              icon: const Icon(
+                Icons.copy,
+                size: 20,
+              ),
+            ),
+          ),
+        ));
   }
 }
 

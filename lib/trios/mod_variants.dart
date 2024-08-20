@@ -112,8 +112,10 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
 
   Future<void> changeActiveModVariant(Mod mod, ModVariant? modVariant,
       {bool validateDependencies = true}) async {
-    Fimber.i(
-        "Changing active variant of ${mod.id} to ${modVariant?.smolId}. (current: ${mod.findFirstEnabled?.smolId}).");
+    final isDisablingMod = modVariant == null;
+    Fimber.i(isDisablingMod
+        ? "Disabling ${mod.id}."
+        : "Changing active variant of ${mod.id} to ${modVariant.smolId}. (current: ${mod.findFirstEnabled?.smolId}).");
 
     final modVariantParentModId = modVariant?.modInfo;
     if (modVariantParentModId != null && mod.id != modVariantParentModId.id) {
@@ -134,27 +136,30 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
       }
     }
 
-    final activeVariants =
-        mod.modVariants.where((it) => mod.isEnabled(it)).toList();
-    if (modVariant == null && activeVariants.isEmpty) {
+    final enabledVariants =
+        mod.modVariants.where((it) => it.isModInfoEnabled).toList();
+    if (modVariant == null && enabledVariants.isEmpty) {
       Fimber.i(
           "Went to disable the mod but no variants were active, nothing to do! $mod");
       return;
     }
 
-    // Disable all active mod variants
-    // or variants in the mod folder while the mod itself is disabled
+    // If enabling a variant, disable all other non-bricked mod variants
     // (except for the variant we want to actually enable, if that's already active).
-    // There should only ever be one active but might as well be careful.
-    for (var variant in activeVariants) {
+    for (var variant in enabledVariants) {
       if (variant.smolId != modVariant?.smolId) {
         try {
           await _disableModVariant(
             variant,
             // If disabling mod, disable in vanilla launcher.
-            disableModInVanillaLauncher: modVariant == null,
-            // If there's just one variant, disable via enabled_mods.json only, don't rename mod_info.json.
-            changeFileExtension: mod.modVariants.length > 1,
+            disableModInVanillaLauncher: isDisablingMod,
+            // Only need to brick `mod_info.json` files if enabling one variant among many.
+            // If disabling the mod, all `mod_info.json` files should be unbricked (happens later in this method).
+            // If there's only one variant, it's fine to leave the `mod_info.json` file unbricked.
+            brickModInfo: !isDisablingMod && mod.modVariants.length > 1,
+            reason: isDisablingMod
+                ? "Disabled ${mod.id}."
+                : "Changed ${mod.id} to ${modVariant.modInfo.version}, so ${variant.bestVersion} has to be disabled.",
           );
         } catch (e, st) {
           Fimber.e("Error disabling mod variant: $e", ex: e, stacktrace: st);
@@ -162,13 +167,29 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
       }
     }
 
-    if (modVariant != null) {
-      await _enableModVariant(modVariant, mod, enableInVanillaLauncher: true);
+    if (!isDisablingMod) {
+      await _enableModVariant(modVariant, mod,
+          enableInVanillaLauncher: true,
+          reason:
+              "Changed ${mod.id} to version ${modVariant.bestVersion} from ${mod.findFirstEnabled == null ? "disabled" : mod.findFirstEnabled?.bestVersion}.");
+    } else {
+      // If mod is disabled in `enabled_mods.json`, set all the `mod_info.json` files to non-bricked.
+      // That makes things easier on the user & MOSS by mimicking vanilla behavior whenever possible.
+      final disabledModVariants =
+          mod.modVariants.where((v) => !v.isModInfoEnabled).toList();
+      for (final disabledVariant in disabledModVariants) {
+        try {
+          await _enableModInfoFile(disabledVariant);
+        } catch (e, st) {
+          Fimber.e("Error enabling mod_info.json file: $e",
+              ex: e, stacktrace: st);
+        }
+      }
     }
 
     // TODO update ONLY the mod that changed and any dependents/dependencies.
     await reloadModVariants(
-        onlyVariants: [...activeVariants, modVariant].whereNotNull().toList());
+        onlyVariants: [...enabledVariants, modVariant].whereNotNull().toList());
 
     if (validateDependencies) {
       validateModDependencies(modsToFreeze: [mod.id]);
@@ -202,14 +223,20 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
 
         // Check for multiple enabled variants for the same mod.
         if (mod.enabledVariants.length > 1) {
-          for (var value in mod.enabledVariants.where((variant) =>
-              variant.smolId != mod.findHighestEnabledVersion?.smolId)) {
+          final highestEnabledVersion = mod.findHighestEnabledVersion;
+          for (var value in mod.enabledVariants.where((variant) {
+            return variant.smolId != highestEnabledVersion?.smolId;
+          })) {
             Fimber.i(
                 "Found multiple enabled versions for mod ${mod.id}. Disabling ${value.smolId}");
             try {
-              _disableModVariant(value,
-                  changeFileExtension: true,
-                  disableModInVanillaLauncher: false);
+              _disableModVariant(
+                value,
+                brickModInfo: true,
+                disableModInVanillaLauncher: false,
+                reason:
+                    "When validating ${mod.id}, found multiple enabled versions. Only keeping ${highestEnabledVersion?.modInfo.version} enabled.",
+              );
             } catch (e, st) {
               Fimber.e("Error disabling mod variant: $e",
                   ex: e, stacktrace: st);
@@ -269,6 +296,7 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
     ModVariant modVariant,
     Mod mod, {
     bool enableInVanillaLauncher = true,
+    required String reason,
   }) async {
     // final mods = ref.read(AppState.mods);
     // final mod = mods.firstWhereOrNull((mod) => mod.id == modVariant.modInfo.id);
@@ -295,6 +323,20 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
     }
 
     // Look for any disabled mod_info files in the folder.
+    await _enableModInfoFile(modVariant);
+
+    if (enableInVanillaLauncher && !mod.isEnabledInGame) {
+      await _enableModInEnabledMods(modVariant.modInfo.id);
+    }
+
+    ref
+        .read(AppState.modAudit.notifier)
+        .addAuditEntry(modVariant.smolId, ModAction.enable, reason: reason);
+    Fimber.i("Enabling ${modVariant.smolId}: success.");
+  }
+
+  Future<void> _enableModInfoFile(ModVariant modVariant) async {
+    // Look for any disabled mod_info files in the folder.
     final disabledModInfoFiles = (await Constants.modInfoFileDisabledNames
             .map((it) => modVariant.modFolder.resolve(it).toFile())
             .whereAsync((it) async => await it.isWritable()))
@@ -309,40 +351,22 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
             "Re-enabled ${modVariant.smolId}: renamed ${disabledModInfoFile.nameWithExtension} to ${Constants.modInfoFileName}.");
       });
     }
-
-    if (enableInVanillaLauncher && !mod.isEnabledInGame) {
-      await _enableModInEnabledMods(modVariant.modInfo.id);
-    }
-
-    ref
-        .read(AppState.modAudit.notifier)
-        .addAuditEntry(modVariant.smolId, ModAction.enable);
-    Fimber.i("Enabling ${modVariant.smolId}: success.");
   }
 
+  /// Use with caution. Prefer to use [changeActiveModVariant] instead.
   Future<void> _disableModVariant(
     ModVariant modVariant, {
-    bool changeFileExtension = false,
+    bool brickModInfo = false,
     bool disableModInVanillaLauncher = true,
+    required String reason,
   }) async {
     final enabledMods = ref.read(AppState.enabledModIds).valueOrNull;
     final mods = AppState.getModsFromVariants(
         state.valueOrNull ?? [], enabledMods.orEmpty().toList());
     Fimber.i("Disabling variant '${modVariant.smolId}'");
-    final modInfoFile =
-        modVariant.modFolder.resolve(Constants.unbrickedModInfoFileName);
 
-    if (!modInfoFile.existsSync()) {
-      throw Exception(
-          "mod_info.json not found in ${modVariant.modFolder.absolute}");
-    }
-
-    if (changeFileExtension) {
-      modInfoFile.renameSync(modInfoFile.parent
-          .resolve(Constants.modInfoFileDisabledNames.first)
-          .path);
-      Fimber.i(
-          "Disabled '${modVariant.smolId}': renamed to '${Constants.modInfoFileDisabledNames.first}'.");
+    if (brickModInfo) {
+      disableModInfoFile(modVariant.modFolder, modVariant.smolId);
     }
 
     if (disableModInVanillaLauncher) {
@@ -369,8 +393,22 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
 
     ref
         .read(AppState.modAudit.notifier)
-        .addAuditEntry(modVariant.smolId, ModAction.disable);
+        .addAuditEntry(modVariant.smolId, ModAction.disable, reason: reason);
     Fimber.i("Disabling '${modVariant.smolId}': success.");
+  }
+
+  void disableModInfoFile(Directory modFolder, String smolId) {
+    final modInfoFile = modFolder.resolve(Constants.unbrickedModInfoFileName);
+
+    if (!modInfoFile.existsSync()) {
+      throw Exception("mod_info.json not found in ${modFolder.absolute}");
+    }
+
+    modInfoFile.renameSync(modInfoFile.parent
+        .resolve(Constants.modInfoFileDisabledNames.first)
+        .path);
+    Fimber.i(
+        "Disabled '$smolId': renamed to '${Constants.modInfoFileDisabledNames.first}'.");
   }
 
   Future<void> _disableModInEnabledMods(String modId) async {

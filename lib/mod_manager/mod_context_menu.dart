@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/thirdparty/dartx/iterable.dart';
@@ -16,13 +15,16 @@ import '../models/mod.dart';
 import '../trios/app_state.dart';
 import '../widgets/debug_info.dart';
 
-ContextMenu buildModContextMenu(Mod mod, WidgetRef ref, BuildContext context) {
+ContextMenu buildModContextMenu(Mod mod, WidgetRef ref, BuildContext context,
+    {bool showSwapToVersion = true}) {
   final currentStarsectorVersion =
       ref.read(appSettings.select((s) => s.lastStarsectorVersion));
   final modVariant = mod.findFirstEnabledOrHighestVersion!;
 
   return ContextMenu(
     entries: <ContextMenuEntry>[
+      if (showSwapToVersion && mod.modVariants.length > 1)
+        menuItemChangeVersion(mod, ref),
       menuItemOpenFolder(mod),
       menuItemOpenModInfoFile(mod),
       MenuItem(
@@ -93,6 +95,42 @@ MenuItem menuItemOpenFolder(Mod mod) {
   }
 }
 
+MenuItem menuItemChangeVersion(Mod mod, WidgetRef ref) {
+  final enabledSmolId = mod.findFirstEnabled?.smolId;
+
+  return MenuItem.submenu(
+      label: "Enable Mod...",
+      icon: Icons.power_settings_new,
+      onSelected: () {
+        ref
+            .watch(AppState.modVariants.notifier)
+            .changeActiveModVariant(mod, mod.findHighestVersion);
+      },
+      items: [
+        for (var variant in mod.modVariants.sortedDescending())
+          MenuItem(
+            icon: variant.smolId == enabledSmolId ? Icons.power_settings_new : null,
+            label: variant.modInfo.version.toString() +
+                (variant.smolId == enabledSmolId ? " (enabled)" : ""),
+            onSelected: () {
+              ref
+                  .watch(AppState.modVariants.notifier)
+                  .changeActiveModVariant(mod, variant);
+            },
+          ),
+        if (enabledSmolId != null)
+          MenuItem(
+            label: "Disable",
+            icon: Icons.close,
+            onSelected: () {
+              ref
+                  .watch(AppState.modVariants.notifier)
+                  .changeActiveModVariant(mod, null);
+            },
+          ),
+      ]);
+}
+
 MenuItem menuItemOpenModInfoFile(Mod mod) {
   final modVariant = mod.findFirstEnabledOrHighestVersion!;
   return MenuItem(
@@ -106,7 +144,6 @@ MenuItem menuItemOpenModInfoFile(Mod mod) {
 }
 
 MenuItem menuItemDeleteFolder(Mod mod, BuildContext context, WidgetRef ref) {
-  final theme = Theme.of(context);
   Future<void> deleteFolder(String folderPath) async {
     final directory = Directory(folderPath);
     if (await directory.exists()) {

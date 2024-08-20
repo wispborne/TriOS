@@ -1,13 +1,20 @@
 # 0.1.8
 - Added
   - "I don't believe you" option for if the TriOS self-updater says there's no update but you know there is.
+  - Mod Audit Log in the Profiles tab shows when mods are enabled/disabled and why.
+  - Context menu option to change mod version on the Dashboard tab.
 - Fixed
   - Version Checker updates failing if there was a certificate error (specifically sc2mafia.com).
+  - When installing a new version of a mod while another version was enabled, both would end up enabled.
+    - Now, the newly installed one will be disabled (unless you select Enable on the notification that appears).
   - If a file failed to extract, the mod install wouldn't fail and you'd have to check the log to know some file was missed.
     - Now, a dialog will appear with the error message as well as buttons to open the folders for manual install.
 - Changed
   - Shiny new version comparison algorithm that takes into account dev/alpha/beta/rc, plus a ton of weird edge cases modders love putting in.
     - Nes and Timid, wtf.
+  - When a mod is disabled, now sets all mod info files to `mod_info.json` instead of `mod_info.json.disabled`.
+    - This improves compatibility with MOSS and manual mod management.
+    - The only time `mod_info.json.disabled` is needed is when you want to enable one version and you have others installed.
 
 # 0.1.7
 - Added

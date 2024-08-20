@@ -136,7 +136,7 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel> {
                         Theme(
                           data: paletteTheme,
                           child: Card(
-                              margin: const EdgeInsets.all(0),
+                              margin: const EdgeInsets.only(),
                               shape: const RoundedRectangleBorder(
                                 borderRadius: BorderRadius.only(
                                   topLeft: Radius.circular(

@@ -194,6 +194,7 @@ class AppState {
 }
 
 Future<String?> readStarsectorVersionFromLog(Directory gamePath) async {
+  Fimber.i("Looking through log file for game version.");
   const versionContains = r"Starting Starsector";
   final versionRegex = RegExp(r"Starting Starsector (.*) launcher");
   final logfile = utf8.decode(getLogPath(gamePath).readAsBytesSync().toList(),

@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,6 +8,7 @@ import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/trios/constants.dart';
+import 'package:trios/trios/download_manager/download_manager.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -55,12 +57,7 @@ ContextMenu buildModContextMenu(Mod mod, WidgetRef ref, BuildContext context,
               forceChangeModGameVersion(modVariant, currentStarsectorVersion);
               ref.invalidate(AppState.modVariants);
             }),
-      MenuItem(
-          label: "Show Raw Info",
-          icon: Icons.info,
-          onSelected: () {
-            showDebugViewDialog(context, mod);
-          }),
+      menuItemDebugging(context, mod, ref),
     ],
     padding: const EdgeInsets.all(8.0),
   );
@@ -109,7 +106,9 @@ MenuItem menuItemChangeVersion(Mod mod, WidgetRef ref) {
       items: [
         for (var variant in mod.modVariants.sortedDescending())
           MenuItem(
-            icon: variant.smolId == enabledSmolId ? Icons.power_settings_new : null,
+            icon: variant.smolId == enabledSmolId
+                ? Icons.power_settings_new
+                : null,
             label: variant.modInfo.version.toString() +
                 (variant.smolId == enabledSmolId ? " (enabled)" : ""),
             onSelected: () {
@@ -208,4 +207,43 @@ MenuItem menuItemDeleteFolder(Mod mod, BuildContext context, WidgetRef ref) {
       ],
     );
   }
+}
+
+MenuItem menuItemDebugging(BuildContext context, Mod mod, WidgetRef ref) {
+  final latestVersionWithDirectDownload = mod.modVariants.sortedDescending()
+      .firstWhereOrNull((v) => v.versionCheckerInfo?.hasDirectDownload == true);
+
+  var redownloadEnabled = latestVersionWithDirectDownload != null;
+  return MenuItem.submenu(
+      label: "Troubleshoot...",
+      icon: Icons.bug_report,
+      items: [
+        MenuItem(
+            label: (redownloadEnabled)
+                ? "Redownload & Reinstall"
+                : "Redownload unavailable",
+            icon: redownloadEnabled ? Icons.downloading : null,
+            onSelected: () {
+              if (redownloadEnabled) {
+                ref.read(downloadManager.notifier).downloadAndInstallMod(
+                    latestVersionWithDirectDownload.modInfo.nameOrId,
+                    latestVersionWithDirectDownload
+                        .versionCheckerInfo!.directDownloadURL!,
+                    context,
+                    activateVariantOnComplete: false,
+                    modInfo: latestVersionWithDirectDownload.modInfo);
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                  content:
+                      Text("This mod does not support direct download. Please manually redownload/reinstall."),
+                ));
+              }
+            }),
+        MenuItem(
+            label: "Show Raw Info",
+            icon: Icons.info_outline,
+            onSelected: () {
+              showDebugViewDialog(context, mod);
+            }),
+      ]);
 }

@@ -209,6 +209,7 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel> {
                         //     ),
                         //   ),
                         // ),
+                        const SizedBox(height: 4),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           child: Column(

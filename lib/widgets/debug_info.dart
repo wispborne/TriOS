@@ -34,11 +34,13 @@ class DebugInfo extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                              "${variant.modInfo.id} ${variant.modInfo.version}",
+                              "${variant.modInfo.nameOrId} ${variant.modInfo.version}",
                               style: Theme.of(context)
                                   .textTheme
                                   .bodyLarge
-                                  ?.copyWith(fontWeight: FontWeight.bold)),
+                                  ?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 20)),
                           SimpleDataRow(
                               label: "id: ", value: variant.modInfo.id),
                           SimpleDataRow(
@@ -82,7 +84,9 @@ class DebugInfo extends ConsumerWidget {
                                   .textTheme
                                   .bodyLarge
                                   ?.copyWith(fontWeight: FontWeight.bold)),
-                          Text(variant.versionCheckerInfo?.toString() ?? "(none)",
+                          Text(
+                              variant.versionCheckerInfo?.toString() ??
+                                  "(none)",
                               style: Theme.of(context).textTheme.labelLarge),
                         ],
                       ),
@@ -97,7 +101,9 @@ class DebugInfo extends ConsumerWidget {
                                   .textTheme
                                   .bodyLarge
                                   ?.copyWith(fontWeight: FontWeight.bold)),
-                          Text(vcResultsCache[variant.smolId]?.toString() ?? "(none)",
+                          Text(
+                              vcResultsCache[variant.smolId]?.toString() ??
+                                  "(none)",
                               style: Theme.of(context).textTheme.labelLarge),
                         ],
                       ),
@@ -137,6 +143,7 @@ showDebugViewDialog(BuildContext context, Mod mod) {
         return AlertDialog(
           title: Text("${mod.findHighestVersion?.modInfo.name}"),
           content: SingleChildScrollView(child: DebugInfo(mod: mod)),
+          backgroundColor: Theme.of(context).colorScheme.surface,
           actions: [
             TextButton(
                 onPressed: () {

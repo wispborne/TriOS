@@ -504,7 +504,7 @@ class _Smol3State extends ConsumerState<Smol3>
                 final bestVersion = mod.findFirstEnabledOrHighestVersion;
                 if (bestVersion == null) return Container();
                 return ContextMenuRegion(
-                    contextMenu: buildModContextMenu(mod, ref, context, showSwapToVersion: false),
+                    contextMenu: buildModContextMenu(mod, ref, context, showSwapToVersion: true),
                     child: tooltippy(
                       ModVersionSelectionDropdown(
                           mod: mod,
@@ -558,7 +558,7 @@ class _Smol3State extends ConsumerState<Smol3>
           final bestVersion = mod.findFirstEnabledOrHighestVersion;
           final theme = Theme.of(context);
           return ContextMenuRegion(
-              contextMenu: buildModContextMenu(mod, ref, context, showSwapToVersion: false),
+              contextMenu: buildModContextMenu(mod, ref, context, showSwapToVersion: true),
               child: tooltippy(
                 // affixToTop( child:
                 ConstrainedBox(
@@ -602,7 +602,7 @@ class _Smol3State extends ConsumerState<Smol3>
           final lightTextColor =
               theme.colorScheme.onSurface.withOpacity(lightTextOpacity);
           return ContextMenuRegion(
-              contextMenu: buildModContextMenu(mod, ref, context, showSwapToVersion: false),
+              contextMenu: buildModContextMenu(mod, ref, context, showSwapToVersion: true),
               child: Text(rendererContext.cell.value ?? "(no author)",
                   style: theme.textTheme.labelLarge
                       ?.copyWith(color: lightTextColor)));
@@ -809,7 +809,7 @@ class _Smol3State extends ConsumerState<Smol3>
           final bestVersion = mod.findFirstEnabledOrHighestVersion;
           if (bestVersion == null) return const SizedBox();
           return ContextMenuRegion(
-              contextMenu: buildModContextMenu(mod, ref, context, showSwapToVersion: false),
+              contextMenu: buildModContextMenu(mod, ref, context, showSwapToVersion: true),
               child: Text("todo",
                   style: theme.textTheme.labelLarge
                       ?.copyWith(color: lightTextColor)));
@@ -834,7 +834,7 @@ class _Smol3State extends ConsumerState<Smol3>
           final theme = Theme.of(context);
 
           return ContextMenuRegion(
-              contextMenu: buildModContextMenu(mod, ref, context, showSwapToVersion: false),
+              contextMenu: buildModContextMenu(mod, ref, context, showSwapToVersion: true),
               child: Opacity(
                 opacity: lightTextOpacity,
                 child: Text(rendererContext.cell.value ?? "(no game version)",

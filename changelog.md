@@ -1,7 +1,11 @@
+# 0.1.9
+- Added
+  - Troubleshooting option to redownload and reinstall a mod, if direct download is supported.
+
 # 0.1.8
 - Added
-  - "I don't believe you" option for if the TriOS self-updater says there's no update but you know there is.
   - Mod Audit Log in the Profiles tab shows when mods are enabled/disabled and why.
+  - "I don't believe you" option for if the TriOS self-updater says there's no update but you know there is.
   - Context menu option to change mod version on the Dashboard tab.
 - Fixed
   - Version Checker updates failing if there was a certificate error (specifically sc2mafia.com).

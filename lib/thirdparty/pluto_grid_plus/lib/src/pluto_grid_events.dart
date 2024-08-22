@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:pluto_grid_plus/pluto_grid_plus.dart';
+import 'package:trios/thirdparty/pluto_grid_plus/lib/pluto_grid_plus.dart';
 
 /// [PlutoGrid.onLoaded] Argument received by registering callback.
 class PlutoGridOnLoadedEvent {

@@ -1,4 +1,4 @@
-import 'package:pluto_grid_plus/pluto_grid_plus.dart';
+import 'package:trios/thirdparty/pluto_grid_plus/lib/pluto_grid_plus.dart';
 
 /// Event called when the value of the TextField
 /// that handles the filter under the column changes.

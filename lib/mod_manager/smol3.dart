@@ -8,7 +8,7 @@ import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:pluto_grid_plus/pluto_grid_plus.dart';
+import 'package:trios/thirdparty/pluto_grid_plus/lib/pluto_grid_plus.dart';
 import 'package:trios/dashboard/changelogs.dart';
 import 'package:trios/dashboard/mod_list_basic_entry.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';

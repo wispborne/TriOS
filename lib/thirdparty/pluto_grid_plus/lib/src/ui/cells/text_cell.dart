@@ -1,8 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:pluto_grid_plus/pluto_grid_plus.dart';
-import 'package:pluto_grid_plus/src/helper/platform_helper.dart';
+import 'package:trios/thirdparty/pluto_grid_plus/lib/pluto_grid_plus.dart';
+
+import '../../helper/platform_helper.dart';
 
 abstract class TextCell extends StatefulWidget {
   final PlutoGridStateManager stateManager;

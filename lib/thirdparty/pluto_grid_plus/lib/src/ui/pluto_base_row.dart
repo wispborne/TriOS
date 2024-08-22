@@ -1,8 +1,8 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
-import 'package:pluto_grid_plus/pluto_grid_plus.dart';
-import 'package:pluto_grid_plus/src/manager/event/pluto_grid_row_hover_event.dart';
+import 'package:trios/thirdparty/pluto_grid_plus/lib/pluto_grid_plus.dart';
 
+import '../manager/event/pluto_grid_row_hover_event.dart';
 import 'ui.dart';
 
 class PlutoBaseRow extends StatelessWidget {

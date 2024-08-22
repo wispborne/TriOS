@@ -1,4 +1,4 @@
-import 'package:pluto_grid_plus/pluto_grid_plus.dart';
+import 'package:trios/thirdparty/pluto_grid_plus/lib/pluto_grid_plus.dart';
 
 /// [PlutoRow] This event handles the hover status of the widget.
 class PlutoGridRowHoverEvent extends PlutoGridEvent {

@@ -48,6 +48,8 @@ mixin _$Settings {
   int get toastDurationSeconds => throw _privateConstructorUsedError;
   bool get isUpdatesFieldShown => throw _privateConstructorUsedError;
   ModsGridState? get modsGridState => throw _privateConstructorUsedError;
+  FolderNamingSetting get folderNamingSetting =>
+      throw _privateConstructorUsedError;
   bool? get allowCrashReporting => throw _privateConstructorUsedError;
   bool get updateToPrereleases => throw _privateConstructorUsedError;
   String get userId =>
@@ -94,6 +96,7 @@ abstract class $SettingsCopyWith<$Res> {
       int toastDurationSeconds,
       bool isUpdatesFieldShown,
       ModsGridState? modsGridState,
+      FolderNamingSetting folderNamingSetting,
       bool? allowCrashReporting,
       bool updateToPrereleases,
       String userId,
@@ -141,6 +144,7 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
     Object? toastDurationSeconds = null,
     Object? isUpdatesFieldShown = null,
     Object? modsGridState = freezed,
+    Object? folderNamingSetting = null,
     Object? allowCrashReporting = freezed,
     Object? updateToPrereleases = null,
     Object? userId = null,
@@ -239,6 +243,10 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
           ? _value.modsGridState
           : modsGridState // ignore: cast_nullable_to_non_nullable
               as ModsGridState?,
+      folderNamingSetting: null == folderNamingSetting
+          ? _value.folderNamingSetting
+          : folderNamingSetting // ignore: cast_nullable_to_non_nullable
+              as FolderNamingSetting,
       allowCrashReporting: freezed == allowCrashReporting
           ? _value.allowCrashReporting
           : allowCrashReporting // ignore: cast_nullable_to_non_nullable
@@ -315,6 +323,7 @@ abstract class _$$SettingsImplCopyWith<$Res>
       int toastDurationSeconds,
       bool isUpdatesFieldShown,
       ModsGridState? modsGridState,
+      FolderNamingSetting folderNamingSetting,
       bool? allowCrashReporting,
       bool updateToPrereleases,
       String userId,
@@ -362,6 +371,7 @@ class __$$SettingsImplCopyWithImpl<$Res>
     Object? toastDurationSeconds = null,
     Object? isUpdatesFieldShown = null,
     Object? modsGridState = freezed,
+    Object? folderNamingSetting = null,
     Object? allowCrashReporting = freezed,
     Object? updateToPrereleases = null,
     Object? userId = null,
@@ -460,6 +470,10 @@ class __$$SettingsImplCopyWithImpl<$Res>
           ? _value.modsGridState
           : modsGridState // ignore: cast_nullable_to_non_nullable
               as ModsGridState?,
+      folderNamingSetting: null == folderNamingSetting
+          ? _value.folderNamingSetting
+          : folderNamingSetting // ignore: cast_nullable_to_non_nullable
+              as FolderNamingSetting,
       allowCrashReporting: freezed == allowCrashReporting
           ? _value.allowCrashReporting
           : allowCrashReporting // ignore: cast_nullable_to_non_nullable
@@ -507,6 +521,8 @@ class _$SettingsImpl implements _Settings {
       this.toastDurationSeconds = 7,
       this.isUpdatesFieldShown = true,
       this.modsGridState,
+      this.folderNamingSetting =
+          FolderNamingSetting.doNotChangeNameForHighestVersion,
       this.allowCrashReporting,
       this.updateToPrereleases = false,
       this.userId = "",
@@ -576,6 +592,9 @@ class _$SettingsImpl implements _Settings {
   @override
   final ModsGridState? modsGridState;
   @override
+  @JsonKey()
+  final FolderNamingSetting folderNamingSetting;
+  @override
   final bool? allowCrashReporting;
   @override
   @JsonKey()
@@ -590,7 +609,7 @@ class _$SettingsImpl implements _Settings {
 
   @override
   String toString() {
-    return 'Settings(gameDir: $gameDir, gameCoreDir: $gameCoreDir, modsDir: $modsDir, hasCustomModsDir: $hasCustomModsDir, shouldAutoUpdateOnLaunch: $shouldAutoUpdateOnLaunch, isRulesHotReloadEnabled: $isRulesHotReloadEnabled, windowXPos: $windowXPos, windowYPos: $windowYPos, windowWidth: $windowWidth, windowHeight: $windowHeight, isMaximized: $isMaximized, isMinimized: $isMinimized, defaultTool: $defaultTool, jre23VmparamsFilename: $jre23VmparamsFilename, useJre23: $useJre23, showJre23ConsoleWindow: $showJre23ConsoleWindow, enableDirectLaunch: $enableDirectLaunch, launchSettings: $launchSettings, lastStarsectorVersion: $lastStarsectorVersion, secondsBetweenModFolderChecks: $secondsBetweenModFolderChecks, toastDurationSeconds: $toastDurationSeconds, isUpdatesFieldShown: $isUpdatesFieldShown, modsGridState: $modsGridState, allowCrashReporting: $allowCrashReporting, updateToPrereleases: $updateToPrereleases, userId: $userId, activeModProfileId: $activeModProfileId)';
+    return 'Settings(gameDir: $gameDir, gameCoreDir: $gameCoreDir, modsDir: $modsDir, hasCustomModsDir: $hasCustomModsDir, shouldAutoUpdateOnLaunch: $shouldAutoUpdateOnLaunch, isRulesHotReloadEnabled: $isRulesHotReloadEnabled, windowXPos: $windowXPos, windowYPos: $windowYPos, windowWidth: $windowWidth, windowHeight: $windowHeight, isMaximized: $isMaximized, isMinimized: $isMinimized, defaultTool: $defaultTool, jre23VmparamsFilename: $jre23VmparamsFilename, useJre23: $useJre23, showJre23ConsoleWindow: $showJre23ConsoleWindow, enableDirectLaunch: $enableDirectLaunch, launchSettings: $launchSettings, lastStarsectorVersion: $lastStarsectorVersion, secondsBetweenModFolderChecks: $secondsBetweenModFolderChecks, toastDurationSeconds: $toastDurationSeconds, isUpdatesFieldShown: $isUpdatesFieldShown, modsGridState: $modsGridState, folderNamingSetting: $folderNamingSetting, allowCrashReporting: $allowCrashReporting, updateToPrereleases: $updateToPrereleases, userId: $userId, activeModProfileId: $activeModProfileId)';
   }
 
   @override
@@ -643,6 +662,8 @@ class _$SettingsImpl implements _Settings {
                 other.isUpdatesFieldShown == isUpdatesFieldShown) &&
             (identical(other.modsGridState, modsGridState) ||
                 other.modsGridState == modsGridState) &&
+            (identical(other.folderNamingSetting, folderNamingSetting) ||
+                other.folderNamingSetting == folderNamingSetting) &&
             (identical(other.allowCrashReporting, allowCrashReporting) ||
                 other.allowCrashReporting == allowCrashReporting) &&
             (identical(other.updateToPrereleases, updateToPrereleases) ||
@@ -679,6 +700,7 @@ class _$SettingsImpl implements _Settings {
         toastDurationSeconds,
         isUpdatesFieldShown,
         modsGridState,
+        folderNamingSetting,
         allowCrashReporting,
         updateToPrereleases,
         userId,
@@ -726,6 +748,7 @@ abstract class _Settings implements Settings {
       final int toastDurationSeconds,
       final bool isUpdatesFieldShown,
       final ModsGridState? modsGridState,
+      final FolderNamingSetting folderNamingSetting,
       final bool? allowCrashReporting,
       final bool updateToPrereleases,
       final String userId,
@@ -785,6 +808,8 @@ abstract class _Settings implements Settings {
   bool get isUpdatesFieldShown;
   @override
   ModsGridState? get modsGridState;
+  @override
+  FolderNamingSetting get folderNamingSetting;
   @override
   bool? get allowCrashReporting;
   @override

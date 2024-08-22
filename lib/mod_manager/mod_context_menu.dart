@@ -151,18 +151,24 @@ MenuItem menuItemDeleteFolder(Mod mod, BuildContext context, WidgetRef ref) {
     ref.read(AppState.modVariants.notifier).reloadModVariants();
   }
 
-  Future<void> showDeleteConfirmationDialog(String folderPath) async {
+  Future<void> showDeleteConfirmationDialog(List<String> folderPaths) async {
     final shouldDelete = await showDialog<bool>(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Delete Mod'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                  "Are you sure you want to delete '${folderPath.toDirectory().name}'?\nThis action cannot be undone."),
-            ],
+          title: Text('Delete Mod${folderPaths.length > 1 ? "s" : ""}'),
+          content: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Are you sure you want to delete:\n'),
+                for (var folderPath in folderPaths)
+                  Text("• ${folderPath.toDirectory().name}"),
+                const Text("\nThis action cannot be undone."),
+              ],
+            ),
           ),
           actions: [
             TextButton(
@@ -179,7 +185,9 @@ MenuItem menuItemDeleteFolder(Mod mod, BuildContext context, WidgetRef ref) {
     );
 
     if (shouldDelete == true) {
-      await deleteFolder(folderPath);
+      for (var folderPath in folderPaths) {
+        await deleteFolder(folderPath);
+      }
     }
   }
 
@@ -189,28 +197,38 @@ MenuItem menuItemDeleteFolder(Mod mod, BuildContext context, WidgetRef ref) {
       icon: Icons.delete,
       onSelected: () {
         showDeleteConfirmationDialog(
-            mod.modVariants.first.modFolder.absolute.path);
+            [mod.modVariants.first.modFolder.absolute.path]);
       },
     );
   } else {
+    final modVariantsSorted = mod.modVariants.sortedDescending();
     return MenuItem.submenu(
       label: "Delete Folder...",
       icon: Icons.delete,
       items: [
-        for (var variant in mod.modVariants.sortedDescending())
+        for (var variant in modVariantsSorted)
           MenuItem(
             label: variant.modInfo.version.toString(),
             onSelected: () {
-              showDeleteConfirmationDialog(variant.modFolder.absolute.path);
+              showDeleteConfirmationDialog([variant.modFolder.absolute.path]);
             },
           ),
+        MenuItem(
+            label: "All but ${modVariantsSorted.firstOrNull?.modInfo.version}",
+            onSelected: () {
+              showDeleteConfirmationDialog(modVariantsSorted
+                  .skip(1)
+                  .map((v) => v.modFolder.absolute.path)
+                  .toList());
+            }),
       ],
     );
   }
 }
 
 MenuItem menuItemDebugging(BuildContext context, Mod mod, WidgetRef ref) {
-  final latestVersionWithDirectDownload = mod.modVariants.sortedDescending()
+  final latestVersionWithDirectDownload = mod.modVariants
+      .sortedDescending()
       .firstWhereOrNull((v) => v.versionCheckerInfo?.hasDirectDownload == true);
 
   var redownloadEnabled = latestVersionWithDirectDownload != null;
@@ -234,8 +252,8 @@ MenuItem menuItemDebugging(BuildContext context, Mod mod, WidgetRef ref) {
                     modInfo: latestVersionWithDirectDownload.modInfo);
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                  content:
-                      Text("This mod does not support direct download. Please manually redownload/reinstall."),
+                  content: Text(
+                      "This mod does not support direct download. Please manually redownload/reinstall."),
                 ));
               }
             }),

@@ -257,117 +257,122 @@ class ThemeManager with ChangeNotifier {
   }
 }
 
-/// Usage:
-/// ```dart
-/// Theme(
-///   data: createPaletteTheme(context, palette),
-///   child: yourChild,
-/// )
-/// ```
-ThemeData createPaletteTheme(BuildContext context, PaletteGenerator? palette) {
-  if (palette == null || palette.colors.isEmpty) {
-    return Theme.of(context);
-  }
+extension PaletteGeneratorExt on PaletteGenerator? {
+  /// Usage:
+  /// ```dart
+  /// Theme(
+  ///   data: palette.createPaletteTheme(context),
+  ///   child: yourChild,
+  /// )
+  /// ```
+  ThemeData createPaletteTheme(BuildContext context) {
+    PaletteGenerator? palette = this;
 
-  Color primaryColor =
-      palette.dominantColor?.color ?? Theme.of(context).colorScheme.primary;
-  Color surfaceColor = palette.darkVibrantColor?.color ??
-      palette.darkMutedColor?.color ??
-      Theme.of(context).colorScheme.surface;
-  Color onSurfaceColor = palette.lightVibrantColor?.color ??
-      palette.lightMutedColor?.color ??
-      Theme.of(context).colorScheme.onSurface;
-  Color backgroundColor = palette.darkMutedColor?.color ??
-      palette.darkVibrantColor?.color ??
-      Theme.of(context).colorScheme.background;
-  Color buttonBackgroundColor = palette.darkVibrantColor?.color ?? Colors.white;
-  Color buttonTextColor =
-      palette.darkVibrantColor?.bodyTextColor ?? Colors.white;
+    if (palette == null || palette.colors.isEmpty) {
+      return Theme.of(context);
+    }
 
-  return ThemeData(
-    useMaterial3: true,
-    colorScheme: ColorScheme(
-      brightness: Brightness.dark,
-      primary: primaryColor,
-      onPrimary: palette.darkVibrantColor?.bodyTextColor ??
-          palette.darkMutedColor?.bodyTextColor ??
-          Colors.white,
-      secondary: Colors.blue,
-      onSecondary: palette.darkVibrantColor?.bodyTextColor ??
-          palette.darkMutedColor?.bodyTextColor ??
-          Colors.white,
-      error: Colors.red,
-      onError: Colors.white,
-      surface: surfaceColor,
-      onSurface: onSurfaceColor,
-      background: backgroundColor,
-    ),
-    textTheme: TextTheme(
-      displayLarge: TextStyle(color: onSurfaceColor),
-      displayMedium: TextStyle(color: onSurfaceColor),
-      displaySmall: TextStyle(color: onSurfaceColor),
-      headlineLarge: TextStyle(color: onSurfaceColor),
-      headlineMedium: TextStyle(color: onSurfaceColor),
-      headlineSmall: TextStyle(color: onSurfaceColor),
-      titleLarge: TextStyle(color: onSurfaceColor),
-      titleMedium: TextStyle(color: onSurfaceColor),
-      titleSmall: TextStyle(color: onSurfaceColor),
-      bodyLarge: TextStyle(color: onSurfaceColor),
-      bodyMedium: TextStyle(color: onSurfaceColor),
-      bodySmall: TextStyle(color: onSurfaceColor),
-      labelLarge: TextStyle(color: onSurfaceColor),
-      labelMedium: TextStyle(color: onSurfaceColor),
-      labelSmall: TextStyle(color: onSurfaceColor),
-    ),
-    elevatedButtonTheme: ElevatedButtonThemeData(
-      style: ElevatedButton.styleFrom(
-        foregroundColor: onSurfaceColor.lighter(20), // Button text color
-        side: BorderSide(color: onSurfaceColor), // Button outline
+    Color primaryColor =
+        palette.dominantColor?.color ?? Theme.of(context).colorScheme.primary;
+    Color surfaceColor = palette.darkVibrantColor?.color ??
+        palette.darkMutedColor?.color ??
+        Theme.of(context).colorScheme.surface;
+    Color onSurfaceColor = palette.lightVibrantColor?.color ??
+        palette.lightMutedColor?.color ??
+        Theme.of(context).colorScheme.onSurface;
+    Color backgroundColor = palette.darkMutedColor?.color ??
+        palette.darkVibrantColor?.color ??
+        Theme.of(context).colorScheme.background;
+    Color buttonBackgroundColor =
+        palette.darkVibrantColor?.color ?? Colors.white;
+    Color buttonTextColor =
+        palette.darkVibrantColor?.bodyTextColor ?? Colors.white;
+
+    return ThemeData(
+      useMaterial3: true,
+      colorScheme: ColorScheme(
+        brightness: Brightness.dark,
+        primary: primaryColor,
+        onPrimary: palette.darkVibrantColor?.bodyTextColor ??
+            palette.darkMutedColor?.bodyTextColor ??
+            Colors.white,
+        secondary: Colors.blue,
+        onSecondary: palette.darkVibrantColor?.bodyTextColor ??
+            palette.darkMutedColor?.bodyTextColor ??
+            Colors.white,
+        error: Colors.red,
+        onError: Colors.white,
+        surface: surfaceColor,
+        onSurface: onSurfaceColor,
+        background: backgroundColor,
       ),
-    ),
-    iconTheme: IconThemeData(
-      color: onSurfaceColor,
-    ),
-    appBarTheme: AppBarTheme(
-      backgroundColor: primaryColor,
+      textTheme: TextTheme(
+        displayLarge: TextStyle(color: onSurfaceColor),
+        displayMedium: TextStyle(color: onSurfaceColor),
+        displaySmall: TextStyle(color: onSurfaceColor),
+        headlineLarge: TextStyle(color: onSurfaceColor),
+        headlineMedium: TextStyle(color: onSurfaceColor),
+        headlineSmall: TextStyle(color: onSurfaceColor),
+        titleLarge: TextStyle(color: onSurfaceColor),
+        titleMedium: TextStyle(color: onSurfaceColor),
+        titleSmall: TextStyle(color: onSurfaceColor),
+        bodyLarge: TextStyle(color: onSurfaceColor),
+        bodyMedium: TextStyle(color: onSurfaceColor),
+        bodySmall: TextStyle(color: onSurfaceColor),
+        labelLarge: TextStyle(color: onSurfaceColor),
+        labelMedium: TextStyle(color: onSurfaceColor),
+        labelSmall: TextStyle(color: onSurfaceColor),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          foregroundColor: onSurfaceColor.lighter(20), // Button text color
+          side: BorderSide(color: onSurfaceColor), // Button outline
+        ),
+      ),
       iconTheme: IconThemeData(
         color: onSurfaceColor,
       ),
-      titleTextStyle: Theme.of(context)
-          .textTheme
-          .titleLarge
-          ?.copyWith(color: onSurfaceColor),
-    ),
-    cardTheme: CardTheme(
-      color: surfaceColor,
-      shadowColor: Colors.black45,
-    ),
-    tooltipTheme: TooltipThemeData(
-      decoration: BoxDecoration(
-        color: primaryColor,
-        borderRadius: BorderRadius.circular(4),
+      appBarTheme: AppBarTheme(
+        backgroundColor: primaryColor,
+        iconTheme: IconThemeData(
+          color: onSurfaceColor,
+        ),
+        titleTextStyle: Theme.of(context)
+            .textTheme
+            .titleLarge
+            ?.copyWith(color: onSurfaceColor),
       ),
-      textStyle: TextStyle(color: onSurfaceColor),
-    ),
-    inputDecorationTheme: InputDecorationTheme(
-      filled: true,
-      fillColor: backgroundColor,
-      border: OutlineInputBorder(
-        borderSide: BorderSide(color: primaryColor),
-        borderRadius: BorderRadius.circular(8),
+      cardTheme: CardTheme(
+        color: surfaceColor,
+        shadowColor: Colors.black45,
       ),
-      focusedBorder: OutlineInputBorder(
-        borderSide: BorderSide(color: primaryColor, width: 2.0),
-        borderRadius: BorderRadius.circular(8),
+      tooltipTheme: TooltipThemeData(
+        decoration: BoxDecoration(
+          color: primaryColor,
+          borderRadius: BorderRadius.circular(4),
+        ),
+        textStyle: TextStyle(color: onSurfaceColor),
       ),
-    ),
-    floatingActionButtonTheme: FloatingActionButtonThemeData(
-      backgroundColor: primaryColor,
-      foregroundColor: onSurfaceColor,
-    ),
-    progressIndicatorTheme: ProgressIndicatorThemeData(
-        color: onSurfaceColor, linearTrackColor: backgroundColor),
-  );
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: backgroundColor,
+        border: OutlineInputBorder(
+          borderSide: BorderSide(color: primaryColor),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: primaryColor, width: 2.0),
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: primaryColor,
+        foregroundColor: onSurfaceColor,
+      ),
+      progressIndicatorTheme: ProgressIndicatorThemeData(
+          color: onSurfaceColor, linearTrackColor: backgroundColor),
+    );
+  }
 }
 
 // Utility function to create a MaterialColor from a given color

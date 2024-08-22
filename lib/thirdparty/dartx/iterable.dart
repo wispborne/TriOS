@@ -84,16 +84,6 @@ extension IterableElementAtOrElse<E> on Iterable<E> {
   }
 }
 
-extension IterableFirstOrNull<E> on Iterable<E> {
-  /// First element or `null` if the collection is empty.
-  ///
-  /// ```dart
-  /// final first = [1, 2, 3, 4].firstOrNull; // 1
-  /// final emptyFirst = [].firstOrNull; // null
-  /// ```
-  E? get firstOrNull => isNotEmpty ? first : null;
-}
-
 extension IterableFirstOrDefault<E> on Iterable<E> {
   /// First element or `defaultValue` if the collection is empty.
   ///

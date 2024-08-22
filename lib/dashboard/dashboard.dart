@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/chipper/chipper_home.dart';
@@ -39,6 +38,8 @@ class _DashboardState extends ConsumerState<Dashboard>
   Widget build(BuildContext context) {
     super.build(context);
 
+    final logfile =
+        ref.watch(ChipperState.logRawContents).valueOrNull?.filepath?.toFile();
     return Row(
       children: [
         Expanded(
@@ -82,7 +83,7 @@ class _DashboardState extends ConsumerState<Dashboard>
                             mainAxisAlignment: MainAxisAlignment.start,
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              Text("Chipper Log Viewer",
+                              Text("Starsector Log",
                                   style: Theme.of(context)
                                       .textTheme
                                       .titleLarge
@@ -103,15 +104,12 @@ class _DashboardState extends ConsumerState<Dashboard>
                                     label: const Text("Reload")),
                               ),
                               const Spacer(),
-                              Text(
-                                  ref
-                                          .watch(ChipperState.logRawContents)
-                                          .valueOrNull
-                                          ?.filepath
-                                          ?.toFile()
-                                          .nameWithExtension ??
-                                      "",
-                                  style: Theme.of(context).textTheme.labelSmall)
+                              Tooltip(
+                                message: logfile?.path ?? "",
+                                child: Text(logfile?.nameWithExtension ?? "",
+                                    style:
+                                        Theme.of(context).textTheme.labelSmall),
+                              )
                             ],
                           ),
                         ),

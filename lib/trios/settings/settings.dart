@@ -67,6 +67,8 @@ class Settings with _$Settings {
     @Default(7) final int toastDurationSeconds,
     @Default(true) final bool isUpdatesFieldShown,
     final ModsGridState? modsGridState,
+    @Default(FolderNamingSetting.doNotChangeNameForHighestVersion)
+        final FolderNamingSetting folderNamingSetting,
     final bool? allowCrashReporting,
     @Default(false) final bool updateToPrereleases,
     @Default("") final String userId,
@@ -78,6 +80,18 @@ class Settings with _$Settings {
 
   factory Settings.fromJson(Map<String, Object?> json) =>
       _$SettingsFromJson(json);
+}
+
+enum FolderNamingSetting {
+  /// Always keeps one folder the same name, always containing the highest installed version.
+  doNotChangeNameForHighestVersion(0),
+
+  /// Every folder has the version appended to it.
+  allFoldersVersioned(1);
+
+  const FolderNamingSetting(this.value);
+
+  final num value;
 }
 
 /// When settings change, save them to shared prefs
@@ -143,7 +157,7 @@ class SettingSaver extends Notifier<Settings> {
     var newState = update(state);
 
     if (prevState == newState) {
-      Fimber.v(() =>"No settings change: $newState");
+      Fimber.v(() => "No settings change: $newState");
       return;
     }
 

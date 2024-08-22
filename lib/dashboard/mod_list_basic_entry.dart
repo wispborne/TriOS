@@ -146,10 +146,12 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
         tooltipWidget: SizedBox(
           width: 400,
           child: TooltipFrame(
+            padding: const EdgeInsets.all(0),
             child: ModSummaryWidget(
               modVariant: modVariant,
               compatWithGame: compatWithGame,
               compatTextColor: compatTextColor,
+              showIconTip: false,
             ),
           ),
         ),
@@ -174,27 +176,12 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                         tooltipWidget: SizedBox(
                           width: 400,
                           child: TooltipFrame(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 16.0),
-                                  child: Text(
-                                      "Tip: Add a LunaSettings icon or add an icon.png file to the mod folder to get an icon like this!",
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .labelLarge
-                                          ?.copyWith(
-                                              fontStyle: FontStyle.italic)),
-                                ),
-                                const Divider(),
-                                ModSummaryWidget(
-                                  modVariant: modVariant,
-                                  compatWithGame: compatWithGame,
-                                  compatTextColor: compatTextColor,
-                                ),
-                              ],
-                            ),
+                            padding: const EdgeInsets.all(0),
+                            child: ModSummaryWidget(
+                                modVariant: modVariant,
+                                compatWithGame: compatWithGame,
+                                compatTextColor: compatTextColor,
+                                showIconTip: true),
                           ),
                         ),
                         child: SizedBox(

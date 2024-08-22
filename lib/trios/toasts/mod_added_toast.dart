@@ -74,7 +74,7 @@ class _ModAddedToastState extends ConsumerState<ModAddedToast> {
           ],
         ),
         child: Theme(
-          data: createPaletteTheme(context, palette),
+          data: palette.createPaletteTheme(context),
           child: Builder(builder: (context) {
             final theme =
                 Theme.of(context); // Ensure the theme is within the Builder

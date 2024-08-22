@@ -3,7 +3,6 @@ import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:palette_generator/palette_generator.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/themes/theme_manager.dart';
@@ -15,8 +14,8 @@ import '../models/mod.dart';
 import '../models/mod_variant.dart';
 import '../trios/app_state.dart';
 import '../trios/constants.dart';
-import '../utils/logging.dart';
 import '../widgets/mod_type_icon.dart';
+import '../widgets/palette_generator_mixin.dart';
 
 class ModSummaryPanel extends ConsumerStatefulWidget {
   final Mod? mod;
@@ -28,34 +27,11 @@ class ModSummaryPanel extends ConsumerStatefulWidget {
   ConsumerState createState() => _ModSummaryPanelState();
 }
 
-class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel> {
-  PaletteGenerator? paletteGenerator;
-
+class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
+    with PaletteGeneratorMixin {
   @override
-  void initState() {
-    super.initState();
-    _generatePalette();
-  }
-
-  Future<void> _generatePalette() async {
-    var iconPath = widget.mod?.findFirstEnabledOrHighestVersion?.iconFilePath;
-
-    if (iconPath.isNotNullOrEmpty()) {
-      final icon = Image.file((iconPath ?? "").toFile());
-      paletteGenerator = await PaletteGenerator.fromImageProvider(icon.image);
-      if (!mounted) return;
-      Fimber.i("Generated palette for ${widget.mod?.id}");
-    } else {
-      paletteGenerator = null;
-    }
-    setState(() {});
-  }
-
-  @override
-  void didUpdateWidget(covariant ModSummaryPanel oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    _generatePalette();
-  }
+  String? getIconPath() =>
+      widget.mod?.findFirstEnabledOrHighestVersion?.iconFilePath;
 
   @override
   Widget build(BuildContext context) {
@@ -74,7 +50,7 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel> {
         : <Mod>[];
     const buttonsOpacity = 0.8;
 
-    final paletteTheme = createPaletteTheme(context, paletteGenerator);
+    final paletteTheme = paletteGenerator.createPaletteTheme(context);
 
     return Builder(builder: (context) {
       final theme = Theme.of(context);

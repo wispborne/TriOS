@@ -54,7 +54,10 @@ class MapComparer<K, V> {
 }
 
 extension MapComparison<K, V> on Map<K, V> {
-  MapDiff<K, V> compareWith(Map<K, V> other) {
+
+  MapDiff<K, V> diff(Map<K, V> other) => this.compareWith(other);
+
+    MapDiff<K, V> compareWith(Map<K, V> other) {
     final added = <K, V>{};
     final removed = <K, V>{};
     final modified = <K, MapEntry<V, V>>{};

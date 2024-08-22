@@ -45,6 +45,9 @@ _$SettingsImpl _$$SettingsImplFromJson(Map<String, dynamic> json) =>
           ? null
           : ModsGridState.fromJson(
               json['modsGridState'] as Map<String, dynamic>),
+      folderNamingSetting: $enumDecodeNullable(
+              _$FolderNamingSettingEnumMap, json['folderNamingSetting']) ??
+          FolderNamingSetting.doNotChangeNameForHighestVersion,
       allowCrashReporting: json['allowCrashReporting'] as bool?,
       updateToPrereleases: json['updateToPrereleases'] as bool? ?? false,
       userId: json['userId'] as String? ?? "",
@@ -77,6 +80,8 @@ Map<String, dynamic> _$$SettingsImplToJson(_$SettingsImpl instance) =>
       'toastDurationSeconds': instance.toastDurationSeconds,
       'isUpdatesFieldShown': instance.isUpdatesFieldShown,
       'modsGridState': instance.modsGridState,
+      'folderNamingSetting':
+          _$FolderNamingSettingEnumMap[instance.folderNamingSetting]!,
       'allowCrashReporting': instance.allowCrashReporting,
       'updateToPrereleases': instance.updateToPrereleases,
       'userId': instance.userId,
@@ -92,4 +97,10 @@ const _$TriOSToolsEnumMap = {
   TriOSTools.jreManager: 'jreManager',
   TriOSTools.portraits: 'portraits',
   TriOSTools.settings: 'settings',
+};
+
+const _$FolderNamingSettingEnumMap = {
+  FolderNamingSetting.doNotChangeNameForHighestVersion:
+      'doNotChangeNameForHighestVersion',
+  FolderNamingSetting.allFoldersVersioned: 'allFoldersVersioned',
 };

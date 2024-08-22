@@ -127,7 +127,6 @@ class _Smol3State extends ConsumerState<Smol3>
         ref.watch(appSettings.select((value) => value.modsGridState));
 
     ref.watch(appSettings.select((value) => value.lastStarsectorVersion));
-    var modCompatibility = ref.watch(AppState.modCompatibility);
     final query = ref.watch(searchQuery);
     searchController.value = TextEditingValue(text: query);
 
@@ -183,47 +182,50 @@ class _Smol3State extends ConsumerState<Smol3>
         Row(
           children: [
             Expanded(
-              child: SizedBox(
-                height: 50,
-                child: Card(
-                    child: Padding(
-                  padding: const EdgeInsets.only(left: 2, right: 8),
-                  child: Stack(
-                    children: [
-                      const Row(
-                        children: [
-                          AddNewModsButton(
-                            labelWidget: Padding(
-                              padding: EdgeInsets.only(left: 4),
-                              child: Text("Add Mod(s)"),
+              child: Padding(
+                padding: const EdgeInsets.only(left: 4, top: 4, right: 4),
+                child: SizedBox(
+                  height: 50,
+                  child: Card(
+                      child: Padding(
+                    padding: const EdgeInsets.only(left: 2, right: 8),
+                    child: Stack(
+                      children: [
+                        const Row(
+                          children: [
+                            AddNewModsButton(
+                              labelWidget: Padding(
+                                padding: EdgeInsets.only(left: 4),
+                                child: Text("Add Mod(s)"),
+                              ),
                             ),
-                          ),
-                          RefreshModsButton(
-                            iconOnly: false,
-                            padding: EdgeInsets.symmetric(horizontal: 4),
-                          ),
-                        ],
-                      ),
-                      Center(
-                        child: SizedBox(
-                          height: 30,
-                          width: 300,
-                          child: FilterModsSearchBar(
-                              searchController: searchController,
-                              query: query,
-                              ref: ref),
+                            RefreshModsButton(
+                              iconOnly: false,
+                              padding: EdgeInsets.symmetric(horizontal: 4),
+                            ),
+                          ],
                         ),
-                      ),
-                      Row(
-                        children: [
-                          const Spacer(),
-                          CopyModListButtonLarge(
-                              mods: mods, enabledMods: enabledMods)
-                        ],
-                      )
-                    ],
-                  ),
-                )),
+                        Center(
+                          child: SizedBox(
+                            height: 30,
+                            width: 300,
+                            child: FilterModsSearchBar(
+                                searchController: searchController,
+                                query: query,
+                                ref: ref),
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            const Spacer(),
+                            CopyModListButtonLarge(
+                                mods: mods, enabledMods: enabledMods)
+                          ],
+                        )
+                      ],
+                    ),
+                  )),
+                ),
               ),
             )
           ],
@@ -504,7 +506,8 @@ class _Smol3State extends ConsumerState<Smol3>
                 final bestVersion = mod.findFirstEnabledOrHighestVersion;
                 if (bestVersion == null) return Container();
                 return ContextMenuRegion(
-                    contextMenu: buildModContextMenu(mod, ref, context, showSwapToVersion: true),
+                    contextMenu: buildModContextMenu(mod, ref, context,
+                        showSwapToVersion: true),
                     child: tooltippy(
                       ModVersionSelectionDropdown(
                           mod: mod,
@@ -558,7 +561,8 @@ class _Smol3State extends ConsumerState<Smol3>
           final bestVersion = mod.findFirstEnabledOrHighestVersion;
           final theme = Theme.of(context);
           return ContextMenuRegion(
-              contextMenu: buildModContextMenu(mod, ref, context, showSwapToVersion: true),
+              contextMenu: buildModContextMenu(mod, ref, context,
+                  showSwapToVersion: true),
               child: tooltippy(
                 // affixToTop( child:
                 ConstrainedBox(
@@ -602,7 +606,8 @@ class _Smol3State extends ConsumerState<Smol3>
           final lightTextColor =
               theme.colorScheme.onSurface.withOpacity(lightTextOpacity);
           return ContextMenuRegion(
-              contextMenu: buildModContextMenu(mod, ref, context, showSwapToVersion: true),
+              contextMenu: buildModContextMenu(mod, ref, context,
+                  showSwapToVersion: true),
               child: Text(rendererContext.cell.value ?? "(no author)",
                   style: theme.textTheme.labelLarge
                       ?.copyWith(color: lightTextColor)));
@@ -809,7 +814,8 @@ class _Smol3State extends ConsumerState<Smol3>
           final bestVersion = mod.findFirstEnabledOrHighestVersion;
           if (bestVersion == null) return const SizedBox();
           return ContextMenuRegion(
-              contextMenu: buildModContextMenu(mod, ref, context, showSwapToVersion: true),
+              contextMenu: buildModContextMenu(mod, ref, context,
+                  showSwapToVersion: true),
               child: Text("todo",
                   style: theme.textTheme.labelLarge
                       ?.copyWith(color: lightTextColor)));
@@ -834,7 +840,8 @@ class _Smol3State extends ConsumerState<Smol3>
           final theme = Theme.of(context);
 
           return ContextMenuRegion(
-              contextMenu: buildModContextMenu(mod, ref, context, showSwapToVersion: true),
+              contextMenu: buildModContextMenu(mod, ref, context,
+                  showSwapToVersion: true),
               child: Opacity(
                 opacity: lightTextOpacity,
                 child: Text(rendererContext.cell.value ?? "(no game version)",

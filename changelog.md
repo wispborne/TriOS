@@ -1,6 +1,9 @@
 # 0.1.9
 - Added
   - Troubleshooting option to redownload and reinstall a mod, if direct download is supported.
+  - Prettified tooltips if mod has an icon.
+- Changed
+  - Dashboard mod listing now shows versions on the right, making the mod name easier to read.
 
 # 0.1.8
 - Added

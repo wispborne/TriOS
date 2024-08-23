@@ -182,7 +182,7 @@ class SettingSaver extends Notifier<Settings> {
     // Recalculate mod folder if the game path changes
     if (newState.gameDir != null && newState.gameDir != prevState.gameDir) {
       if (!newState.hasCustomModsDir) {
-        var newModsDir = generateModFolderPath(newState.gameDir!)?.path;
+        var newModsDir = generateModsFolderPath(newState.gameDir!)?.path;
         newState = newState.copyWith(modsDir: newModsDir?.toDirectory());
       }
 

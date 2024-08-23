@@ -70,31 +70,36 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.only(left: 8, top: 10, right: 8, bottom: 8),
                   child: SizedBox(
                     width: modVariant.iconFilePath != null ? 40 : 0,
-                    child: Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
-                        child: modVariant.iconFilePath != null
-                            ? Image.file(
-                                (modVariant.iconFilePath ?? "").toFile(),
-                                isAntiAlias: true,
-                              )
-                            : Container(),
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: modVariant.iconFilePath != null
+                              ? Image.file(
+                                  (modVariant.iconFilePath ?? "").toFile(),
+                                  isAntiAlias: true,
+                                )
+                              : Container(),
+                        ),
                       ),
                     ),
                   ),
                 ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(modInfo.name ?? "(no name)",
-                        style: theme.textTheme.titleMedium),
-                    Text("${modInfo.id} • ${modInfo.version ?? ""}",
-                        style: theme.textTheme.labelSmall),
-                  ],
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(modInfo.name ?? "(no name)",
+                          style: theme.textTheme.titleMedium),
+                      Text("${modInfo.id} • ${modInfo.version ?? ""}",
+                          style: theme.textTheme.labelSmall),
+                    ],
+                  ),
                 ),
               ],
             ),

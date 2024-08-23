@@ -47,7 +47,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
     try {
       final installModsResult = await installModFromArchive(
           archiveFile,
-          generateModFolderPath(ref.read(appSettings).gameDir!)!,
+          generateModsFolderPath(ref.read(appSettings).gameDir!)!,
           ref.read(AppState.mods),
           (modsBeingInstalled) => showDialog<List<String>>(
               context: context,
@@ -402,7 +402,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
       try {
         // We need to handle both when mod_info.json is at / and when at /mod/mod/mod/mod_info.json.
         final generatedDestFolderName =
-            ModVariant.generateVariantFolderName(modInfo);
+            ModVariant.generateUniqueVariantFolderName(modInfo);
         final modInfoParentFolder =
             modInfoToInstall.extractedFile.archiveFile.file.parent;
         final modInfoSiblings = archiveFileList

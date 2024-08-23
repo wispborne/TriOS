@@ -125,7 +125,7 @@ class AppState {
     final gamePath =
         ref.watch(appSettings.select((value) => value.gameDir))?.toDirectory();
     if (gamePath == null) return false;
-    var modsFolder = generateModFolderPath(gamePath)?.toDirectory();
+    var modsFolder = generateModsFolderPath(gamePath)?.toDirectory();
     final filesAndFolders = [ref.read(enabledModsFile).valueOrNull?.enabledMods.toList()].whereNotNull();
     for (final file in filesAndFolders) {
       if (filesAndFolders.isEmpty) {
@@ -162,7 +162,7 @@ class AppState {
   static final modsFolder = FutureProvider<Directory?>((ref) async {
     final gamePath = ref.watch(gameFolder).valueOrNull;
     if (gamePath == null) return null;
-    return generateModFolderPath(gamePath)?.toDirectory();
+    return generateModsFolderPath(gamePath)?.toDirectory();
   });
 
   static final isVmParamsFileWritable = FutureProvider<bool>(

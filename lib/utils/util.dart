@@ -81,7 +81,7 @@ Directory? defaultGameCorePath() {
       : generateGameCorePath(defaultGamePath()!)?.normalize;
 }
 
-Directory? generateModFolderPath(Directory gamePath) {
+Directory? generateModsFolderPath(Directory gamePath) {
   if (Platform.isWindows || Platform.isMacOS) {
     return Directory(p.join(gamePath.path, "mods")).normalize;
   } else if (kIsWeb) {

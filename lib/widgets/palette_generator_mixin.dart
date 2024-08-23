@@ -30,7 +30,7 @@ mixin PaletteGeneratorMixin<T extends StatefulWidget> on State<T> {
     } else if (iconPath?.isNotEmpty == true) {
       final icon = Image.file(iconPath!.toFile());
       paletteGenerator = await PaletteGenerator.fromImageProvider(icon.image);
-      Fimber.d("Generated palette for $iconPath");
+      Fimber.v(() => "Generated palette for $iconPath");
       _cachedThemes[iconPath] = paletteGenerator;
     } else {
       paletteGenerator = null;

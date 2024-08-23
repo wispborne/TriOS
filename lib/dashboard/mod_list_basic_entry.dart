@@ -200,13 +200,39 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                     ),
                     Expanded(
                       child: infoTooltip(
-                          child: Text(
-                              "${modInfo.name} ${modInfo.version ?? ""}",
-                              overflow: TextOverflow.fade,
-                              softWrap: false,
-                              maxLines: 1,
-                              style: theme.textTheme.labelLarge
-                                  ?.copyWith(color: compatTextColor))),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                modInfo.nameOrId,
+                                style: theme.textTheme.labelLarge?.copyWith(
+                                  color: compatTextColor,
+                                ),
+                                overflow: TextOverflow.fade,
+                                softWrap: false,
+                                maxLines: 1,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            ConstrainedBox(
+                              constraints: const BoxConstraints(
+                                maxWidth: 75,
+                              ),
+                              child: Text(
+                                modInfo.version.toString() ?? "",
+                                style: theme.textTheme.labelLarge?.copyWith(
+                                  color: (compatTextColor ??
+                                          theme.colorScheme.onSurface)
+                                      .withOpacity(0.5),
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                                softWrap: false,
+                                maxLines: 1,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                     MovingTooltipWidget(
                       position: TooltipPosition.topLeft,

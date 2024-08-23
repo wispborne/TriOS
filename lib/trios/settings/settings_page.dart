@@ -335,7 +335,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       ref.read(appSettings.notifier).update((state) {
         var newModDirPath = settings.hasCustomModsDir
             ? settings.modsDir?.toDirectory()
-            : generateModFolderPath(newGameDir.toDirectory());
+            : generateModsFolderPath(newGameDir.toDirectory());
 
         return state.copyWith(
             gameDir: Directory(newGameDir).normalize, modsDir: newModDirPath);

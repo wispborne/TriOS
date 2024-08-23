@@ -30,29 +30,32 @@ class _ModTooltipFancyTitleHeaderState extends State<ModTooltipFancyTitleHeader>
     return Theme(
       data: paletteTheme,
       child: Container(
-          padding: const EdgeInsets.only(top: 4, bottom: 4),
-          decoration: BoxDecoration(
-            color: paletteTheme.colorScheme.surface,
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(ThemeManager.cornerRadius),
-              topRight: Radius.circular(ThemeManager.cornerRadius),
+        padding: const EdgeInsets.only(top: 4, bottom: 4),
+        decoration: BoxDecoration(
+          color: paletteGenerator != null
+              ? paletteTheme.colorScheme.surface
+              : paletteTheme.colorScheme.surfaceContainerLow,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(ThemeManager.cornerRadius),
+            topRight: Radius.circular(ThemeManager.cornerRadius),
+          ),
+          border: Border(
+            top: BorderSide(
+              color: paletteTheme.colorScheme.onSurface.withOpacity(0.15),
+              width: 1,
             ),
-            border: Border(
-              top: BorderSide(
-                color: paletteTheme.colorScheme.onSurface.withOpacity(0.15),
-                width: 1,
-              ),
-              left: BorderSide(
-                color: paletteTheme.colorScheme.onSurface.withOpacity(0.15),
-                width: 1,
-              ),
-              bottom: BorderSide(
-                color: paletteTheme.colorScheme.onSurface.withOpacity(0.15),
-                width: 1,
-              ),
+            left: BorderSide(
+              color: paletteTheme.colorScheme.onSurface.withOpacity(0.15),
+              width: 1,
+            ),
+            bottom: BorderSide(
+              color: paletteTheme.colorScheme.onSurface.withOpacity(0.15),
+              width: 1,
             ),
           ),
-          child: widget.child),
+        ),
+        child: widget.child,
+      ),
     );
   }
 }

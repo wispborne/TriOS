@@ -2,6 +2,8 @@
 - Added
   - Troubleshooting option to redownload and reinstall a mod, if direct download is supported.
   - Prettified tooltips if mod has an icon.
+- Fixed
+  - Non-ASCII characters in file paths causing mod installation to fail.
 - Changed
   - Dashboard mod listing now shows versions on the right, making the mod name easier to read.
 

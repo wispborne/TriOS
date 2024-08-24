@@ -19,7 +19,7 @@ class LibArchiveEntry {
   final int birthTime;
   final int cTime;
   final int accessedTime;
-  final int type;
+  final int fileType;
   final String? fflags;
   final String? gname;
   final String? sourcePath;
@@ -33,7 +33,7 @@ class LibArchiveEntry {
       this.birthTime,
       this.cTime,
       this.accessedTime,
-      this.type,
+      this.fileType,
       this.fflags,
       this.gname,
       this.sourcePath,
@@ -42,14 +42,14 @@ class LibArchiveEntry {
 
   @override
   String toString() {
-    return "LibArchiveEntry{pathName: $pathName, unpackedSize: $unpackedSize, mTime: $modifiedTime, birthTime: $birthTime, cTime: $cTime, aTime: $accessedTime, type: $type, fflags: $fflags, gname: $gname, sourcePath: $sourcePath, sizeIsSet: $sizeIsSet, isEncrypted: $isEncrypted}";
+    return "LibArchiveEntry{pathName: $pathName, unpackedSize: $unpackedSize, mTime: $modifiedTime, birthTime: $birthTime, cTime: $cTime, aTime: $accessedTime, type: $fileType, fflags: $fflags, gname: $gname, sourcePath: $sourcePath, sizeIsSet: $sizeIsSet, isEncrypted: $isEncrypted}";
   }
 
   late FileSystemEntity file = FileSystemEntity.isDirectorySync(pathName)
       ? Directory(pathName)
       : File(pathName);
 
-  late bool isDirectory = file is Directory;
+  late bool isDirectory = fileType == AE_IFDIR;
 }
 
 typedef LibArchiveExtractedFile = ({
@@ -141,10 +141,13 @@ class LibArchive {
             "Message: ${binding.archive_error_string(archivePtr).toDartStringSafe()}. ");
       }
 
-      var pathPtr = archivePath.toNativeChar();
-      var readPointer =
-          binding.archive_read_open_filename(archivePtr, pathPtr, 10240);
-      calloc.free(pathPtr);
+      final fileBytes = File(archivePath).readAsBytesSync();
+      final Pointer<Uint8> buffer = malloc.allocate<Uint8>(fileBytes.length);
+      buffer.asTypedList(fileBytes.length).setAll(0, fileBytes);
+
+      var readPointer = binding.archive_read_open_memory(
+          archivePtr, buffer as Pointer<Void>, fileBytes.length);
+
       if (readPointer != ARCHIVE_OK) {
         throw Exception(
             "Failed to open archive. Error code: ${_errorCodeToString(readPointer)}. "

@@ -221,8 +221,7 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                               child: Text(
                                 modInfo.version.toString() ?? "",
                                 style: theme.textTheme.labelLarge?.copyWith(
-                                  color: (compatTextColor ??
-                                          theme.colorScheme.onSurface)
+                                  color: theme.colorScheme.onSurface
                                       .withOpacity(0.5),
                                 ),
                                 overflow: TextOverflow.ellipsis,

@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:trios/utils/extensions.dart';
 
 class Constants {
-  static const version = "0.1.9-dev01";
+  static const version = "0.1.9-dev02";
 
   static const appName = "TriOS";
   static const appTitle = "$appName v$version";
@@ -58,6 +58,7 @@ class Constants {
     ".gz",
     ".bz2",
   ];
+  static const num maxPathLength = 260;
 
   /// Warning: DON'T ADD ANYTHING TO THIS DIRECTLY. It will mutate the shared instance.
   /// Creating a new one each time is expensive, and hardcoding the pattern will hardcode the locale.

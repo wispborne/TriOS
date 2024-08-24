@@ -237,6 +237,12 @@ MenuItem menuItemDebugging(BuildContext context, Mod mod, WidgetRef ref) {
       icon: Icons.bug_report,
       items: [
         MenuItem(
+            label: "Show Raw Info",
+            icon: Icons.info_outline,
+            onSelected: () {
+              showDebugViewDialog(context, mod);
+            }),
+        MenuItem(
             label: (redownloadEnabled)
                 ? "Redownload & Reinstall"
                 : "Redownload unavailable",
@@ -256,12 +262,6 @@ MenuItem menuItemDebugging(BuildContext context, Mod mod, WidgetRef ref) {
                       "This mod does not support direct download. Please manually redownload/reinstall."),
                 ));
               }
-            }),
-        MenuItem(
-            label: "Show Raw Info",
-            icon: Icons.info_outline,
-            onSelected: () {
-              showDebugViewDialog(context, mod);
             }),
       ]);
 }

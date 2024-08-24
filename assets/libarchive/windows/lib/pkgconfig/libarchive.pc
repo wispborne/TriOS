@@ -5,9 +5,9 @@ includedir=${prefix}/include
 
 Name: libarchive
 Description: library that can create and read several streaming archive formats
-Version: 3.7.2
+Version: 3.7.5
 Cflags: -I${includedir}
 Cflags.private: -DLIBARCHIVE_STATIC
 Libs: -L${libdir} -larchive
-Libs.private:  -lzlibstatic -lbz2_static -llzma -lzstd_static -lbcrypt -loptimized -lcrypto64MD -ldebug -lcrypto64MDd -lssl64MD -lssl64MDd -LC:/Strawberry/c/lib/pkgconfig/../../lib -lxml2 -lz -llzma -lws2_32
+Libs.private:  -loptimized -lzlib -ldebug -lzlibd -lbz2 -lbz2d -llzma -llzma -llz4 -lzstd -lbcrypt -lcrypto -lcrypto -liconv -lcharset -lxml2 -lxml2 -lssl -lssl
 Requires.private: 

@@ -176,9 +176,7 @@ class LibArchive {
               "Message: ${binding.archive_error_string(archivePtr).toDartStringSafe()}. ");
         } else {
           // Combat-Activators-v1.1.3/src/activators/examples/ToggledDriveActivator.java
-          final pathName = binding
-              .archive_entry_pathname(entryPtrPtr.value)
-              .toDartStringSafe();
+          final pathName = getEntryPathnamePlatformAware(entryPtrPtr);
           if (pathName == null) {
             Fimber.d("Path name is null");
             continue;
@@ -308,9 +306,7 @@ class LibArchive {
 
   LibArchiveEntry _getEntryInArchive(
       Pointer<Pointer<archive_entry>> entryPtrPtr) {
-    final pathName = binding
-        .archive_entry_pathname(entryPtrPtr.value)
-        .toDartStringSafe()!;
+    final pathName = getEntryPathnamePlatformAware(entryPtrPtr)!;
     final unpackedSize = binding.archive_entry_size(entryPtrPtr.value);
     final mTime = binding.archive_entry_mtime(entryPtrPtr.value);
     final birthTime = binding.archive_entry_birthtime(entryPtrPtr.value);
@@ -329,6 +325,19 @@ class LibArchive {
     return LibArchiveEntry(pathName, unpackedSize, mTime, birthTime, cTime,
         aTime, type, fflags, gname, sourcePath, sizeIsSet, isEncrypted);
   }
+
+  /// [archive_entry_pathname_utf8] is needed on Windows to extract non-ASCII filenames, otherwise the file is skipped.
+  /// However, [archive_entry_pathname_utf8] causes filenames to be empty on MacOS.
+  /// MacOS works correctly using [archive_entry_pathname].
+  String? getEntryPathnamePlatformAware(
+          Pointer<Pointer<archive_entry>> entryPtrPtr) =>
+      Platform.isWindows
+          ? binding
+              .archive_entry_pathname_utf8(entryPtrPtr.value)
+              .toDartStringSafe()
+          : binding
+              .archive_entry_pathname(entryPtrPtr.value)
+              .toDartStringSafe();
 
   int _copyData(Pointer<archive> ar, Pointer<archive> aw) {
     final buffer = malloc<Uint8>(10240); // Allocate a temporary buffer

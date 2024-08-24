@@ -69,3 +69,4 @@ dart run build_runner watch --delete-conflicting-outputs
    make
    make install
    ```
+   The output will be in `$HOME/libarchive-output`.

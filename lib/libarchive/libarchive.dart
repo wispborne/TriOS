@@ -177,9 +177,8 @@ class LibArchive {
         } else {
           // Combat-Activators-v1.1.3/src/activators/examples/ToggledDriveActivator.java
           final pathName = binding
-              .archive_entry_pathname_utf8(entryPtrPtr.value)
+              .archive_entry_pathname(entryPtrPtr.value)
               .toDartStringSafe();
-          // Fails here if folder inside archive has CN characters.
           if (pathName == null) {
             Fimber.d("Path name is null");
             continue;
@@ -310,7 +309,7 @@ class LibArchive {
   LibArchiveEntry _getEntryInArchive(
       Pointer<Pointer<archive_entry>> entryPtrPtr) {
     final pathName = binding
-        .archive_entry_pathname_utf8(entryPtrPtr.value)
+        .archive_entry_pathname(entryPtrPtr.value)
         .toDartStringSafe()!;
     final unpackedSize = binding.archive_entry_size(entryPtrPtr.value);
     final mTime = binding.archive_entry_mtime(entryPtrPtr.value);

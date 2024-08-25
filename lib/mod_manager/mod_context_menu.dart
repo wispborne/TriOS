@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:collection/collection.dart';
@@ -15,6 +16,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../models/mod.dart';
 import '../trios/app_state.dart';
+import '../utils/logging.dart';
 import '../widgets/debug_info.dart';
 
 ContextMenu buildModContextMenu(Mod mod, WidgetRef ref, BuildContext context,
@@ -152,43 +154,50 @@ MenuItem menuItemDeleteFolder(Mod mod, BuildContext context, WidgetRef ref) {
   }
 
   Future<void> showDeleteConfirmationDialog(List<String> folderPaths) async {
-    final shouldDelete = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Delete Mod${folderPaths.length > 1 ? "s" : ""}'),
-          content: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Are you sure you want to delete:\n'),
-                for (var folderPath in folderPaths)
-                  Text("• ${folderPath.toDirectory().name}"),
-                const Text("\nThis action cannot be undone."),
-              ],
+    runZonedGuarded(() async {
+      final shouldDelete = await showDialog<bool>(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text('Delete Mod${folderPaths.length > 1 ? "s" : ""}'),
+            content: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Are you sure you want to delete:\n'),
+                  for (var folderPath in folderPaths)
+                    Text("• ${folderPath.toDirectory().name}"),
+                  const Text("\nThis action cannot be undone."),
+                ],
+              ),
             ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Delete'),
-            ),
-          ],
-        );
-      },
-    );
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Delete'),
+              ),
+            ],
+          );
+        },
+      );
 
-    if (shouldDelete == true) {
-      for (var folderPath in folderPaths) {
-        await deleteFolder(folderPath);
+      if (shouldDelete == true) {
+        for (var folderPath in folderPaths) {
+          deleteFolder(folderPath);
+        }
       }
-    }
+    }, (e, s) {
+      Fimber.w("Error deleting mod folder", ex: e, stacktrace: s);
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text("An error occurred while deleting the mod folder(s)."),
+      ));
+    });
   }
 
   if (mod.modVariants.length == 1) {
@@ -235,13 +244,13 @@ MenuItem menuItemDebugging(BuildContext context, Mod mod, WidgetRef ref) {
   return MenuItem.submenu(
       label: "Troubleshoot...",
       icon: Icons.bug_report,
+      onSelected: () => showDebugViewDialog(context, mod),
       items: [
         MenuItem(
-            label: "Show Raw Info",
-            icon: Icons.info_outline,
-            onSelected: () {
-              showDebugViewDialog(context, mod);
-            }),
+          label: "Show Raw Info",
+          icon: Icons.info_outline,
+          onSelected: () => showDebugViewDialog(context, mod),
+        ),
         MenuItem(
             label: (redownloadEnabled)
                 ? "Redownload & Reinstall"

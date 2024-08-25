@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
@@ -55,10 +56,10 @@ class Jre23 {
     final savePath =
         Directory.systemTemp.createTempSync('trios_jre23-').absolute.normalize;
 
-    final jdkZip = downloadJre23JdkForPlatform(ref, versionChecker, savePath);
-    final configZip = downloadJre23Config(ref, versionChecker, savePath);
-
     try {
+      // TODO turn this all into a notifier so that ref doesn't need to be passed around!
+      final jdkZip = downloadJre23JdkForPlatform(ref, versionChecker, savePath);
+      final configZip = downloadJre23Config(ref, versionChecker, savePath);
       await installJRE23Config(
           ref, libArchive, gamePath, savePath, await configZip);
       await installJRE23Jdk(ref, libArchive, gamePath, await jdkZip);
@@ -86,6 +87,7 @@ class Jre23 {
     }
     final jdkZip = downloadFile(jdkUrl, savePath, null,
         onProgress: (bytesReceived, contentLength) {
+      if (!ref.context.mounted) return;
       ref.read(jre23jdkDownloadProgress.notifier).state =
           DownloadProgress(bytesReceived, contentLength);
     });
@@ -148,6 +150,7 @@ class Jre23 {
     // Download config zip
     final configZip = downloadFile(himiUrl, savePath, null,
         onProgress: (bytesReceived, contentLength) {
+      if (!ref.context.mounted) return;
       ref.read(jdk23ConfigDownloadProgress.notifier).state =
           DownloadProgress(bytesReceived, contentLength);
     });

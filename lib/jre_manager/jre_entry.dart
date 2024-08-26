@@ -44,10 +44,10 @@ class JreEntryInstalled implements JreEntry {
 class JreToDownload implements JreEntry {
   @override
   final JreVersion version;
-  final Function(WidgetRef ref) installRunner;
-  final StateProvider<DownloadProgress?> progressProvider;
+  final Function() installRunner;
+  // final StateProvider<DownloadProgress?> progressProvider;
 
-  JreToDownload(this.version, this.installRunner, this.progressProvider);
+  JreToDownload(this.version, this.installRunner);
 
   @override
   int get versionInt => version.version;

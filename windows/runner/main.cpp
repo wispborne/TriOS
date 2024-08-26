@@ -30,6 +30,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   if (!window.Create(L"TriOS", origin, size)) {
     return EXIT_FAILURE;
   }
+
+  // ChatGPT code until window.SetQuitOnClose(true);
+  // Change background color here (RGB format)
+  SetWindowLongPtr(window.GetHandle(), GWL_STYLE, GetWindowLongPtr(window.GetHandle(), GWL_STYLE) | WS_BORDER);
+  HBRUSH backgroundBrush = CreateSolidBrush(RGB(0, 0, 0)); // Black background
+  SetClassLongPtr(window.GetHandle(), GCLP_HBRBACKGROUND, (LONG_PTR)backgroundBrush);
+
+
   window.SetQuitOnClose(true);
 
   ::MSG msg;

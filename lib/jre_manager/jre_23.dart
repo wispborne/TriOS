@@ -35,44 +35,86 @@ bool doesJre23ExistInGameFolder(Directory gameDir) {
       gameDir.resolve("Miko_Rouge.bat").toFile().existsSync();
 }
 
-final jre23jdkDownloadProgress =
-    StateProvider<DownloadProgress?>((ref) => null);
-final jdk23ConfigDownloadProgress =
-    StateProvider<DownloadProgress?>((ref) => null);
+// final jre23jdkDownloadProgress =
+//     StateProvider<DownloadProgress?>((ref) => null);
+// final jdk23ConfigDownloadProgress =
+//     StateProvider<DownloadProgress?>((ref) => null);
 
-class Jre23 {
+// Define the state class
+class Jre23State {
+  final DownloadProgress? jre23jdkDownloadProgress;
+  final DownloadProgress? jdk23ConfigDownloadProgress;
+  final String? errorMessage;
+  final bool isInstalling;
+
+  Jre23State({
+    this.jre23jdkDownloadProgress,
+    this.jdk23ConfigDownloadProgress,
+    this.errorMessage,
+    this.isInstalling = false,
+  });
+
+  Jre23State copyWith({
+    DownloadProgress? jre23jdkDownloadProgress,
+    DownloadProgress? jdk23ConfigDownloadProgress,
+    String? errorMessage,
+    bool? isInstalling,
+  }) {
+    return Jre23State(
+      jre23jdkDownloadProgress:
+          jre23jdkDownloadProgress ?? this.jre23jdkDownloadProgress,
+      jdk23ConfigDownloadProgress:
+          jdk23ConfigDownloadProgress ?? this.jdk23ConfigDownloadProgress,
+      errorMessage: errorMessage ?? this.errorMessage,
+      isInstalling: isInstalling ?? this.isInstalling,
+    );
+  }
+}
+
+class Jre23Notifier extends AsyncNotifier<Jre23State> {
   static const _gameFolderFilesFolderNamePart = "Files to put into starsector";
   static const _vmParamsFolderNamePart = "Pick VMParam";
 
-  static Future<void> installJre23(WidgetRef ref) async {
+  @override
+  Future<Jre23State> build() async {
+    // Initialize the state
+    return Jre23State();
+  }
+
+  Future<void> installJre23() async {
     final gamePath =
         ref.read(appSettings.select((value) => value.gameDir))?.toDirectory();
     if (gamePath == null) {
       Fimber.e("Game path not set");
+      state = AsyncValue.error("Game path not set", StackTrace.current);
       return;
     }
+
     var libArchive = LibArchive();
     var versionChecker = (await getVersionCheckerInfo())!;
     final savePath =
         Directory.systemTemp.createTempSync('trios_jre23-').absolute.normalize;
 
+    state = AsyncValue.loading();
+
     try {
-      // TODO turn this all into a notifier so that ref doesn't need to be passed around!
-      final jdkZip = downloadJre23JdkForPlatform(ref, versionChecker, savePath);
-      final configZip = downloadJre23Config(ref, versionChecker, savePath);
-      await installJRE23Config(
-          ref, libArchive, gamePath, savePath, await configZip);
-      await installJRE23Jdk(ref, libArchive, gamePath, await jdkZip);
+      final jdkZip =
+          await downloadJre23JdkForPlatform(versionChecker, savePath);
+      final configZip = await downloadJre23Config(versionChecker, savePath);
+      await installJRE23Config(libArchive, gamePath, savePath, await configZip);
+      await installJRE23Jdk(libArchive, gamePath, await jdkZip);
+
+      state = AsyncValue.data(state.value!.copyWith(isInstalling: false));
     } catch (e, stackTrace) {
       Fimber.e("Error installing JRE 23", ex: e, stacktrace: stackTrace);
+      state = AsyncValue.error(e, stackTrace);
     } finally {
-      // clean up temp folder
       Fimber.i("Deleting temp folder $savePath");
       savePath.deleteSync(recursive: true);
     }
   }
 
-  static Future<File> downloadJre23JdkForPlatform(WidgetRef ref,
+  Future<File> downloadJre23JdkForPlatform(
       Jre23VersionChecker versionChecker, Directory savePath) async {
     final jdkUrl = switch (currentPlatform) {
       TargetPlatform.linux => versionChecker.linuxJDKDownload,
@@ -85,18 +127,45 @@ class Jre23 {
       throw UnsupportedError(
           "No JRE 23 JDK download link for $currentPlatform");
     }
+
     final jdkZip = downloadFile(jdkUrl, savePath, null,
         onProgress: (bytesReceived, contentLength) {
-      if (!ref.context.mounted) return;
-      ref.read(jre23jdkDownloadProgress.notifier).state =
-          DownloadProgress(bytesReceived, contentLength);
+      state = AsyncValue.data(state.value!.copyWith(
+        jre23jdkDownloadProgress:
+            DownloadProgress(bytesReceived, contentLength),
+      ));
     });
 
     return jdkZip;
   }
 
-  static Future<void> installJRE23Jdk(WidgetRef ref, LibArchive libArchive,
-      Directory gamePath, File jdkZip) async {
+  Future<File> downloadJre23Config(
+      Jre23VersionChecker versionChecker, Directory savePath) async {
+    final himiUrl = switch (currentPlatform) {
+      TargetPlatform.linux => versionChecker.linuxConfigDownload,
+      TargetPlatform.windows => versionChecker.windowsConfigDownload,
+      _ => throw UnsupportedError("$currentPlatform not supported for JRE 23"),
+    };
+
+    if (himiUrl == null) {
+      Fimber.e("No JRE 23 Himi/config download link for $currentPlatform");
+      throw UnsupportedError(
+          "No JRE 23 Hime/config download link for $currentPlatform");
+    }
+
+    final configZip = downloadFile(himiUrl, savePath, null,
+        onProgress: (bytesReceived, contentLength) {
+      state = AsyncValue.data(state.value!.copyWith(
+        jdk23ConfigDownloadProgress:
+            DownloadProgress(bytesReceived, contentLength),
+      ));
+    });
+
+    return configZip;
+  }
+
+  Future<void> installJRE23Jdk(
+      LibArchive libArchive, Directory gamePath, File jdkZip) async {
     final filesInJdkZip = libArchive.listEntriesInArchive(jdkZip);
 
     if (filesInJdkZip.isEmpty) {
@@ -118,7 +187,64 @@ class Jre23 {
         "Extracted JRE 23 JDK files: ${extractedJdkFiles.joinToString(separator: ', ', transform: (it) => it?.extractedFile.path ?? "")}");
   }
 
-  static Future<Jre23VersionChecker?> getVersionCheckerInfo() async {
+  Future<void> installJRE23Config(LibArchive libArchive, Directory gamePath,
+      Directory savePath, File configZip) async {
+    final filesInConfigZip = (await libArchive.extractEntriesInArchive(
+            configZip, savePath.absolute.path))
+        .map((e) => e?.extractedFile.normalize)
+        .whereType<File>()
+        .toList();
+    Fimber.i(
+        "Extracted JRE 23 Himemi files: ${filesInConfigZip.joinToString(separator: ', ', transform: (it) => it.path)}");
+
+    final gameFolderFilesFolder = filesInConfigZip
+        .filter((file) =>
+            file.path.containsIgnoreCase(_gameFolderFilesFolderNamePart))
+        .rootFolder()!
+        .path
+        .toDirectory();
+
+    Fimber.i('Moving "$gameFolderFilesFolder" to "$gamePath"');
+    await gameFolderFilesFolder.moveDirectory(gamePath, overwrite: true);
+    Fimber.i('Moved "$gameFolderFilesFolder" to "$gamePath"');
+
+    Fimber.i("Looking for VMParams file");
+    final vmParamsFile = filesInConfigZip
+        .filter((file) => file.path.containsIgnoreCase(_vmParamsFolderNamePart))
+        .rootFolder()!
+        .listSync()
+        .first
+        .toDirectory()
+        .listSync()
+        .first
+        .toFile();
+
+    if (!vmParamsFile.existsSync()) {
+      Fimber.e("VMParams file not found in '$savePath'");
+      return;
+    } else {
+      Fimber.i("Found VMParams file: $vmParamsFile");
+    }
+
+    final vmParams = vmParamsFile.readAsStringSync();
+    Fimber.d("VMParams: $vmParams");
+
+    ref.read(appSettings.notifier).update((it) =>
+        it.copyWith(jre23VmparamsFilename: vmParamsFile.nameWithExtension));
+
+    final vanillaRam = ref.read(currentRamAmountInMb).value;
+    final newVmparams = vmParams
+        .replaceAll(maxRamInVmparamsRegex, "${vanillaRam}m")
+        .replaceAll(minRamInVmparamsRegex, "${vanillaRam}m");
+
+    Fimber.i('Writing "$vmParamsFile" to "$gamePath"');
+    gamePath
+        .resolve(vmParamsFile.nameWithExtension)
+        .toFile()
+        .writeAsStringSync(newVmparams);
+  }
+
+  Future<Jre23VersionChecker?> getVersionCheckerInfo() async {
     const versionCheckerUrl =
         "https://raw.githubusercontent.com/Yumeris/Mikohime_Repo/main/Java23.version";
 
@@ -133,94 +259,11 @@ class Jre23 {
 
     return null;
   }
-
-  static Future<File> downloadJre23Config(WidgetRef ref,
-      Jre23VersionChecker versionChecker, Directory savePath) async {
-    final himiUrl = switch (currentPlatform) {
-      TargetPlatform.linux => versionChecker.linuxConfigDownload,
-      TargetPlatform.windows => versionChecker.windowsConfigDownload,
-      _ => throw UnsupportedError("$currentPlatform not supported for JRE 23"),
-    };
-
-    if (himiUrl == null) {
-      Fimber.e("No JRE 23 Himi/config download link for $currentPlatform");
-      throw UnsupportedError(
-          "No JRE 23 Hime/config download link for $currentPlatform");
-    }
-    // Download config zip
-    final configZip = downloadFile(himiUrl, savePath, null,
-        onProgress: (bytesReceived, contentLength) {
-      if (!ref.context.mounted) return;
-      ref.read(jdk23ConfigDownloadProgress.notifier).state =
-          DownloadProgress(bytesReceived, contentLength);
-    });
-
-    return configZip;
-  }
-
-  static Future<void> installJRE23Config(WidgetRef ref, LibArchive libArchive,
-      Directory gamePath, Directory savePath, File configZip) async {
-    // Extract config zip
-    final filesInConfigZip = (await libArchive.extractEntriesInArchive(
-            configZip, savePath.absolute.path))
-        .map((e) => e?.extractedFile.normalize)
-        .whereType<File>()
-        .toList();
-    Fimber.i(
-        "Extracted JRE 23 Himemi files: ${filesInConfigZip.joinToString(separator: ', ', transform: (it) => it.path)}");
-
-    // 0. Files to put into starsector
-    final gameFolderFilesFolder = filesInConfigZip
-        .filter((file) =>
-            file.path.containsIgnoreCase(_gameFolderFilesFolderNamePart))
-        .rootFolder()!
-        .path
-        .toDirectory();
-
-    // Move to game folder
-    Fimber.i('Moving "$gameFolderFilesFolder" to "$gamePath"');
-    await gameFolderFilesFolder.moveDirectory(gamePath, overwrite: true);
-    Fimber.i('Moved "$gameFolderFilesFolder" to "$gamePath"');
-
-    // Find VMParams
-    Fimber.i("Looking for VMParams file");
-    final vmParamsFile = filesInConfigZip
-        .filter((file) => file.path.containsIgnoreCase(_vmParamsFolderNamePart))
-        .rootFolder()! // \1. Pick VMParam Size Here\
-        .listSync()
-        .first // \1. Pick VMParam Size Here\10GB\
-        .toDirectory()
-        .listSync()
-        .first
-        .toFile(); // \1. Pick VMParam Size Here\10GB\Miko_R3.txt
-
-    if (!vmParamsFile.existsSync()) {
-      Fimber.e("VMParams file not found in '$savePath'");
-      return;
-    } else {
-      Fimber.i("Found VMParams file: $vmParamsFile");
-    }
-
-    final vmParams = vmParamsFile.readAsStringSync();
-    Fimber.d("VMParams: $vmParams");
-    // Save the filename of the VMParams file, in case it changes later from "Miko_R3.txt".
-    ref.read(appSettings.notifier).update((it) =>
-        it.copyWith(jre23VmparamsFilename: vmParamsFile.nameWithExtension));
-
-    // Set ram to player's vanilla amount
-    final vanillaRam = ref.read(currentRamAmountInMb).value;
-    final newVmparams = vmParams
-        .replaceAll(maxRamInVmparamsRegex, "${vanillaRam}m")
-        .replaceAll(minRamInVmparamsRegex, "${vanillaRam}m");
-
-    // Move VMParams to game folder
-    Fimber.i('Writing "$vmParamsFile" to "$gamePath"');
-    gamePath
-        .resolve(vmParamsFile.nameWithExtension)
-        .toFile()
-        .writeAsStringSync(newVmparams);
-  }
 }
+
+// Create a provider for the Jre23Notifier
+final jre23NotifierProvider =
+    AsyncNotifierProvider<Jre23Notifier, Jre23State>(() => Jre23Notifier());
 
 @freezed
 class Jre23VersionChecker with _$Jre23VersionChecker {
@@ -269,7 +312,9 @@ class _InstallJre23CardState extends ConsumerState<InstallJre23Card> {
                     setState(() {
                       installingJre23State = true;
                     });
-                    await Jre23.installJre23(ref);
+                    await ref
+                        .watch(jre23NotifierProvider.notifier)
+                        .installJre23();
                     setState(() {
                       installingJre23State = false;
                     });
@@ -284,7 +329,10 @@ class _InstallJre23CardState extends ConsumerState<InstallJre23Card> {
                     children: [
                       const Text("Starsector Himemi Config"),
                       DownloadProgressIndicator(
-                          value: ref.watch(jdk23ConfigDownloadProgress) ??
+                          value: ref
+                                  .watch(jre23NotifierProvider)
+                                  .value
+                                  ?.jdk23ConfigDownloadProgress ??
                               const DownloadProgress(0, 0,
                                   isIndeterminate: true)),
                     ],
@@ -298,7 +346,10 @@ class _InstallJre23CardState extends ConsumerState<InstallJre23Card> {
                     children: [
                       const Text("JDK 23"),
                       DownloadProgressIndicator(
-                          value: ref.watch(jre23jdkDownloadProgress) ??
+                          value: ref
+                                  .watch(jre23NotifierProvider)
+                                  .value
+                                  ?.jre23jdkDownloadProgress ??
                               const DownloadProgress(0, 0,
                                   isIndeterminate: true)),
                     ],

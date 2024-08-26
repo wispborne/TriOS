@@ -8,7 +8,7 @@ import 'package:trios/utils/extensions.dart';
 
 import '../chipper/chipper_state.dart';
 import '../chipper/views/chipper_log.dart';
-import '../jre_manager/jre_manager.dart';
+import '../jre_manager/game_performance_widget.dart';
 import '../jre_manager/jre_manager_logic.dart';
 import '../widgets/trios_expansion_tile.dart';
 import 'launch_with_settings.dart';
@@ -64,7 +64,7 @@ class _DashboardState extends ConsumerState<Dashboard>
                               .surfaceContainerLow
                               .withOpacity(0.5),
                           children: const [
-                            JreManager(),
+                            GamePerformanceWidget(),
                           ],
                         ),
                       )

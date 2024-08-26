@@ -53,7 +53,9 @@ class _RamChangerState extends ConsumerState<RamChanger> {
               return ConditionalWrap(
                 condition: currentRamInMb.value != null &&
                     ramChoices.findClosest(
-                            double.parse(currentRamInMb.value!) / mbPerGb) ==
+                            double.tryParse(currentRamInMb.value!)
+                                    ?.div(mbPerGb.toDouble()) ??
+                                0) ==
                         ram,
                 wrapper: (child) => Container(
                   decoration: BoxDecoration(

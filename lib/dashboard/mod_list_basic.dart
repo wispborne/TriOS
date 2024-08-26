@@ -231,7 +231,8 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                           child: Row(
                                             children: [
                                               Text(
-                                                  "UPDATES (${modsWithUpdates.whereNotNull().length}${isUpdatesFieldShown ? "" : " hidden"})",
+                                                  isUpdatesFieldShown ? "UPDATES (${modsWithUpdates.whereNotNull().length})"
+                                                  : "${modsWithUpdates.whereNotNull().length} hidden updates",
                                                   style: Theme.of(context)
                                                       .textTheme
                                                       .labelMedium),

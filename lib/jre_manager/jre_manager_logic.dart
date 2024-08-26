@@ -9,7 +9,7 @@ import 'package:trios/utils/logging.dart';
 
 import '../utils/platform_paths.dart';
 import 'jre_entry.dart';
-import 'jre_manager.dart';
+import 'game_performance_widget.dart';
 
 final vmparamsVanillaContent = FutureProvider<String?>((ref) async {
   final gameDir =
@@ -24,7 +24,7 @@ final currentRamAmountInMb = FutureProvider<String?>((ref) async {
   if (gameDir == null) return null;
   final vmparams = await ref.watch(vmparamsVanillaContent.future);
   if (vmparams == null) return null;
-  return getRamAmountFromVmparamsInMb(vmparams) ?? "";
+  return getRamAmountFromVmparamsInMb(vmparams) ?? "(???)";
 });
 
 final minRamInVmparamsRegex =
@@ -43,13 +43,14 @@ String? getRamAmountFromVmparamsInMb(String vmparams) {
   var amountWithLowercaseChar = ramMatch.toLowerCase();
   // remove all non-numeric characters
   final replace = RegExp(r"[^\d]");
+  final valueAsDouble =
+      double.tryParse(amountWithLowercaseChar.replaceAll(replace, ""));
+  if (valueAsDouble == null) return null;
+
   final amountInMb = amountWithLowercaseChar.endsWith("g")
       // Convert from GB to MB
-      ? (double.parse(amountWithLowercaseChar.replaceAll(replace, "")) *
-              mbPerGb)
-          .toStringAsFixed(0)
-      : double.parse(amountWithLowercaseChar.replaceAll(replace, ""))
-          .toStringAsFixed(0);
+      ? (valueAsDouble * mbPerGb).toStringAsFixed(0)
+      : valueAsDouble.toStringAsFixed(0);
   return amountInMb;
 }
 

@@ -1,3 +1,9 @@
+# 0.1.10
+- Fixed
+  - RAM changer error if current RAM is set to an invalid number.
+- Changed
+  - White flashbang on startup is now black.
+
 # 0.1.9
 - Added
   - Troubleshooting option to redownload and reinstall a mod, if direct download is supported.

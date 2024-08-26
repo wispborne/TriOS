@@ -188,24 +188,24 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                   Text(
                       "Max RAM usage: ${ProcessInfo.maxRss.bytesAsReadableMB()}"),
                   const SizedBox(height: 8),
-                  SettingsGroup(
+                  DebugSettingsGroup(
                     child: Text(
                         "Settings\n${sharedPrefs.getString(sharedPrefsSettingsKey)}"),
                   ),
                   const SizedBox(height: 8),
-                  SettingsGroup(
+                  DebugSettingsGroup(
                     child: Text(
                       "Mod Profiles\n${sharedPrefs.getString(ModProfilesSettings.modProfilesKey)}",
                     ),
                   ),
                   const SizedBox(height: 8),
-                  SettingsGroup(
+                  DebugSettingsGroup(
                     child: Text(
                       "Environment variables\n${Platform.environment}",
                     ),
                   ),
                   const SizedBox(height: 8),
-                  SettingsGroup(
+                  DebugSettingsGroup(
                     child: Builder(builder: (context) {
                       final allSmolIds = ref
                               .watch(AppState.modVariants)
@@ -274,10 +274,10 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
   }
 }
 
-class SettingsGroup extends StatelessWidget {
+class DebugSettingsGroup extends StatelessWidget {
   final Widget child;
 
-  const SettingsGroup({super.key, required this.child});
+  const DebugSettingsGroup({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {

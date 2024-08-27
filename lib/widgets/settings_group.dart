@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'OnePixelDivider.dart';
 
 class SettingsGroup extends StatelessWidget {
   final String name;
@@ -25,7 +24,11 @@ class SettingsGroup extends StatelessWidget {
             children: [
               Text(
                 name,
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(),
+                style: Theme
+                    .of(context)
+                    .textTheme
+                    .labelLarge
+                    ?.copyWith(),
               ),
               Expanded(
                 child: Divider(

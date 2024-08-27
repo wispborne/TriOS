@@ -56,7 +56,7 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
             Fimber.d("Download complete: $uri");
             break;
           case DownloadStatus.failed:
-            Fimber.e("Download failed: $uri");
+            Fimber.w("Download failed: $uri");
             break;
           case DownloadStatus.paused:
             Fimber.d("Download paused: $uri");
@@ -155,7 +155,7 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
             Fimber.e("Error installing mod from archive", ex: e);
           }
         } else {
-          Fimber.e("Download failed: $status");
+          Fimber.w("Download failed: $status");
         }
       });
     });

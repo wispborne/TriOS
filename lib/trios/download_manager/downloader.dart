@@ -100,17 +100,26 @@ class DownloadManager {
           setStatus(task, DownloadStatus.completed);
         }
       } else {
-        final response = await dio.download(url, partialFilePath,
-            onReceiveProgress: createCallback(url, 0),
-            cancelToken: cancelToken,
-            deleteOnError: false);
+        final response = await dio.download(
+          url,
+          partialFilePath,
+          onReceiveProgress: createCallback(url, 0),
+          cancelToken: cancelToken,
+          deleteOnError: false,
+          options: Options(
+            validateStatus: (status) => true,
+          ),
+        );
 
-        if (response.statusCode == HttpStatus.ok) {
+        if ((response.statusCode ?? 500) <= 299) {
           await partialFile.rename(savePath);
           setStatus(task, DownloadStatus.completed);
+        } else {
+          throw Exception(
+              "Failed to download file: ${response.statusCode} ${response.statusMessage}");
         }
       }
-    } catch (e) {
+    } catch (e, st) {
       final task = getDownload(url)!;
       if (task.status.value != DownloadStatus.canceled &&
           task.status.value != DownloadStatus.paused) {
@@ -386,8 +395,12 @@ class DownloadManager {
       Fimber.d('Concurrent workers: $runningTasks');
       var currentRequest = _queue.removeFirst();
 
-      download(
-          currentRequest.url, currentRequest.path, currentRequest.cancelToken);
+      runZonedGuarded(() {
+        download(currentRequest.url, currentRequest.path,
+            currentRequest.cancelToken);
+      }, (e, s) {
+        Fimber.w('Error downloading: $e', ex: e, stacktrace: s);
+      });
 
       await Future.delayed(const Duration(milliseconds: 500), null);
     }

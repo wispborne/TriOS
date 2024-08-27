@@ -1,8 +1,10 @@
 # 0.1.10
 - Fixed
   - RAM changer error if current RAM is set to an invalid number.
+  - More rare/internal error fixes.
 - Changed
   - White flashbang on startup is now black.
+  - Cleaner error messages when a download fails.
 
 # 0.1.9
 - Added

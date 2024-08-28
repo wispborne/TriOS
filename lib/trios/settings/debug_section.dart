@@ -174,7 +174,7 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                       "Current directory (env variable): ${Directory.current.path}"),
                   const SizedBox(height: 8),
                   Text(
-                      "Current directory based on executable: ${Platform.resolvedExecutable}"),
+                      "Current directory based on executable: ${Platform.resolvedExecutable.toFile().parent}"),
                   const SizedBox(height: 8),
                   Text("Current executable: ${Platform.resolvedExecutable}"),
                   const SizedBox(height: 8),

@@ -9,7 +9,7 @@ env:
   flutter_channel: "stable"
   macos_build_output_path: "build/macos/Build/Products/Release/TriOS.app"
   windows_build_output_path: "build/windows/x64/runner/Release/*"
-  linux_build_output_path: "build/linux/x64/release/bundle/*"
+  linux_build_output_path: "build/linux/x64/release/bundle"
 
 jobs:
   upload-release:
@@ -149,6 +149,11 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Install Visual Studio Components
+        run: |
+          echo "Installing required Visual Studio components..."
+          choco install visualstudio2019buildtools visualstudio2019-workload-vctools --no-progress --yes
+
       - name: Flutter Setup
         run: echo "Setting up Flutter..."
       - uses: subosito/flutter-action@v2
@@ -225,9 +230,11 @@ jobs:
         run: |
           echo "Zipping Linux artifact..."
           cd $(dirname ${{ env.linux_build_output_path }})
+          mkdir TriOS
+          cp -r $(basename ${{ env.linux_build_output_path }})/* TriOS/
           pwd
           ls -l
-          zip -yr9 $GITHUB_WORKSPACE/TriOS-Linux.zip $(basename ${{ env.linux_build_output_path }})
+          zip -yr9 $GITHUB_WORKSPACE/TriOS-Linux.zip TriOS
           echo "Zipping complete. Listing contents of the workspace:"
           ls -l $GITHUB_WORKSPACE
 

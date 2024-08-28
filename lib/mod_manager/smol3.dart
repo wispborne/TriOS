@@ -8,7 +8,6 @@ import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:trios/thirdparty/pluto_grid_plus/lib/pluto_grid_plus.dart';
 import 'package:trios/dashboard/changelogs.dart';
 import 'package:trios/dashboard/mod_list_basic_entry.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
@@ -18,6 +17,7 @@ import 'package:trios/mod_manager/mods_grid_state.dart';
 import 'package:trios/mod_manager/version_checker.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/themes/theme_manager.dart';
+import 'package:trios/thirdparty/pluto_grid_plus/lib/pluto_grid_plus.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
@@ -542,10 +542,15 @@ class _Smol3State extends ConsumerState<Smol3>
           if (filteredMods.isEmpty) return const SizedBox();
           String? iconPath = rendererContext.cell.value;
           return iconPath != null
-              ? Image.file(
-                  iconPath.toFile(),
-                  width: 32,
-                  height: 32,
+              ? Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Image.file(
+                      iconPath.toFile(),
+                      width: 32,
+                      height: 32,
+                    ),
+                  ],
                 )
               : const SizedBox(width: 32, height: 32);
         }),

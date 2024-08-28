@@ -9,12 +9,12 @@ env:
   flutter_channel: "stable"
   macos_build_output_path: "build/macos/Build/Products/Release/TriOS.app"
   windows_build_output_path: "build/windows/x64/runner/Release/*"
-#  linux_path: "build/linux/runner/Release/*"
+  linux_build_output_path: "build/linux/x64/release/bundle/*"
 
 jobs:
   upload-release:
     runs-on: ubuntu-latest
-    needs: [build-macos, build-windows]
+    needs: [build-macos, build-windows, build-linux]
     permissions:
       contents: write
     steps:
@@ -86,6 +86,22 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./uploads/TriOS-Windows.zip
           asset_name: TriOS-Windows.zip
+          asset_content_type: application/zip
+
+      - name: List Files Before Uploading Linux Artifact
+        run: |
+          echo "Listing files in the current directory:"
+          ls -l
+
+      - name: Upload Linux Artifact
+        id: upload-linux
+        uses: shogo82148/actions-upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./uploads/TriOS-Linux.zip
+          asset_name: TriOS-Linux.zip
           asset_content_type: application/zip
 
   build-macos:
@@ -175,3 +191,43 @@ jobs:
         with:
           name: uploads
           path: TriOS-Windows.zip
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Flutter Setup
+        run: echo "Setting up Flutter..."
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: ${{ env.flutter_channel }}
+          architecture: x64
+          cache: true
+
+      - run: flutter --version
+      - run: flutter upgrade
+      - run: flutter config --enable-linux-desktop
+
+      - name: Build Linux
+        run: |
+          echo "Building Linux app..."
+          flutter build linux
+          echo "Build complete. Listing contents of the output directory:"
+          ls -l ${{ env.linux_build_output_path }}
+
+      - name: Zip Linux Artifact
+        run: |
+          echo "Zipping Linux artifact..."
+          cd $(dirname ${{ env.linux_build_output_path }})
+          pwd
+          ls -l
+          zip -yr9 $GITHUB_WORKSPACE/TriOS-Linux.zip $(basename ${{ env.linux_build_output_path }})
+          echo "Zipping complete. Listing contents of the workspace:"
+          ls -l $GITHUB_WORKSPACE
+
+      - name: Upload Linux Artifact
+        uses: actions/upload-artifact@v1
+        with:
+          name: uploads
+          path: TriOS-Linux.zip

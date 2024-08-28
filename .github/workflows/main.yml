@@ -163,6 +163,7 @@ jobs:
           cache: true
 
       - run: flutter --version
+      - run: flutter clean
       - run: flutter upgrade
       - run: flutter config --enable-windows-desktop
 

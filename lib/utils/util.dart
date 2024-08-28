@@ -64,14 +64,15 @@ Directory defaultGamePath() {
 }
 
 Directory? generateGameCorePath(Directory gamePath) {
-  if (Platform.isWindows) {
-    return Directory(p.join(gamePath.path, "starsector-core"));
-  } else if (Platform.isMacOS) {
-    return Directory(p.join(gamePath.path, "Contents/Resources/Java"));
-  } else if (kIsWeb) {
-    return null; // huh
-  } else {
-    return null;
+  switch (currentPlatform) {
+    case TargetPlatform.windows:
+      return Directory(p.join(gamePath.path, "starsector-core"));
+    case TargetPlatform.macOS:
+      return Directory(p.join(gamePath.path, "Contents/Resources/Java"));
+    case TargetPlatform.linux:
+      return gamePath;
+    case _:
+      return null;
   }
 }
 
@@ -82,10 +83,8 @@ Directory? defaultGameCorePath() {
 }
 
 Directory? generateModsFolderPath(Directory gamePath) {
-  if (Platform.isWindows || Platform.isMacOS) {
+  if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
     return Directory(p.join(gamePath.path, "mods")).normalize;
-  } else if (kIsWeb) {
-    return null; // huh
   } else {
     return null;
   }
@@ -282,7 +281,8 @@ class JsonConverterVersion implements JsonConverter<Version, dynamic> {
     try {
       if (json is Map<String, dynamic>) {
         // Shouldn't have to sanitize the input if they used the major/minor/patch json format.
-        return Version.parse(VersionObject.fromJson(json).toString(), sanitizeInput: false);
+        return Version.parse(VersionObject.fromJson(json).toString(),
+            sanitizeInput: false);
       }
       return Version.parse(json, sanitizeInput: true);
     } catch (e) {

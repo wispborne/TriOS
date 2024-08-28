@@ -276,21 +276,6 @@ extension IterableSortedBy<E> on Iterable<E> {
   // }
 }
 
-extension IterableSortedByDescending<E> on Iterable<E> {
-  /// Returns a new list with all elements sorted according to descending
-  /// natural sort order of the values returned by specified [selector]
-  /// function.
-  ///
-  /// To sort by more than one property, `thenBy()` or `thenByDescending` can
-  /// be called afterwards.
-  ///
-  /// **Note:** The actual sorting is performed when an element is accessed for
-  /// the first time.
-  SortedList<E> sortedByDescending(Comparable Function(E element) selector) {
-    return SortedList<E>.withSelector(this, selector, -1, null);
-  }
-}
-
 extension IterableSortedWith<E> on Iterable<E> {
   /// Returns a new list with all elements sorted according to specified
   /// [comparator].

@@ -268,8 +268,10 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
 
   @override
   void onWindowEvent(String eventName) {
-// Could avoid saving on every event but it's probably fine.
-    if (eventName != "blur" &&
+    if (Platform.isLinux && eventName == "focus") {
+      // Linux doesn't have a "moved" event like Windows and MacOS.
+      _saveWindowPosition();
+    } else if (eventName != "blur" &&
         eventName != "focus" &&
         eventName != "move" &&
         eventName != "resize") {

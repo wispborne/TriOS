@@ -65,8 +65,27 @@ dart run build_runner watch --delete-conflicting-outputs
 1. Build:
    ```
    ./build/autogen.sh
-   ./configure --prefix=$HOME/libarchve-output --with-bz2lib --with-lzma --with-lz4 --with-zlib --with-zstd
+   ./configure --prefix=$HOME/libarchive-output --with-bz2lib --with-lzma --with-lz4 --with-zlib --with-zstd
    make
    make install
    ```
    The output will be in `$HOME/libarchive-output`.
+
+#### Linux
+1. Install deps:
+   ```
+   TODO copy/paste here
+   ```
+1. Check out source:
+   ```
+   git clone https://github.com/libarchive/libarchive.git
+   cd libarchive
+   ```
+1. Build for x86-64 (assuming you're on this):
+   ```
+   ./build/autogen.sh
+   ./configure --prefix=$HOME/libarchive-output-x86-64 --with-bz2lib --with-lzma --with-lz4 --with-zlib --with-zstd
+   make
+   make install
+   ```
+   The output will be in `$HOME/libarchive-output-x86-64`. x84-64 covers just about all desktop PCs and laptops. And the Steam Deck.

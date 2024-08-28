@@ -4,6 +4,7 @@ import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/themes/theme_manager.dart';
+import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/disable.dart';
@@ -135,6 +136,7 @@ class _ModVersionSelectionDropdownState
                 overflow: TextOverflow.ellipsis),
           ),
         )
+        .distinct()
         .sortedByDescending<ModVariant>((item) => item.value)
       ..add(const DropdownMenuItem(
           value: null,

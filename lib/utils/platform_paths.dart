@@ -21,7 +21,7 @@ File getJre23VmparamsFile(Directory gamePath) => gamePath.resolve("Miko_R3.txt")
 Directory getJreDir(Directory gamePath, {TargetPlatform? platform}) {
   return switch (platform ?? currentPlatform) {
     TargetPlatform.windows => gamePath.resolve("jre"),
-    TargetPlatform.linux => gamePath.resolve("jre"),
+    TargetPlatform.linux => gamePath.resolve("jre_linux"),
     TargetPlatform.macOS => gamePath.resolve("Contents/Home"),
     _ => throw UnsupportedError("Platform not supported: $currentPlatform"),
   }
@@ -56,7 +56,7 @@ File getLogPath(Directory gamePath, {TargetPlatform? platform}) {
 FileSystemEntity getGameExecutable(Directory gamePath, {TargetPlatform? platform}) {
   return switch (platform ?? currentPlatform) {
     TargetPlatform.windows => gamePath.resolve("starsector.exe"),
-    TargetPlatform.linux => gamePath.resolve("starsector"), // todo
+    TargetPlatform.linux => gamePath.resolve("starsector.sh"),
     TargetPlatform.macOS => gamePath, // game path IS the .app
     _ => throw UnsupportedError("Platform not supported: $currentPlatform"),
   }

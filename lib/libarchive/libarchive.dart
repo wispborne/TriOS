@@ -66,10 +66,8 @@ class LibArchive {
     final assetsPath = switch (currentPlatform) {
       TargetPlatform.windows => "data/flutter_assets/assets",
       TargetPlatform.macOS =>
-        // "TriOS.app/Contents/Frameworks/App.framework/Resources/flutter_assets/assets",
-        // "assets",
         "../../Contents/Frameworks/App.framework/Resources/flutter_assets/assets/",
-      // "${getApplicationDocumentsDirectory()}/Contents/Frameworks/App.framework/Resources/flutter_assets/assets",
+      TargetPlatform.linux => "data/flutter_assets/assets",
       _ => "data/flutter_assets/assets",
     };
     final currentLibarchivePath =
@@ -77,8 +75,8 @@ class LibArchive {
 
     final libArchivePathForPlatform = switch (Platform.operatingSystem) {
       "windows" => File("$currentLibarchivePath/windows/bin/archive.dll"),
-      "linux" => File("$currentLibarchivePath/linux/archive.so"),
       "macos" => File("$currentLibarchivePath/macos/lib/libarchive.dylib"),
+      "linux" => File("$currentLibarchivePath/linux/lib/libarchive.so"),
       _ =>
         throw UnimplementedError('Libarchive not supported for this platform')
     }

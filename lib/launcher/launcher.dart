@@ -12,6 +12,7 @@ import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/enabled_mods.dart';
 import 'package:trios/models/launch_settings.dart';
+import 'package:trios/thirdparty/dartx/io/file_system_entity.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
@@ -269,7 +270,7 @@ class Launcher extends HookConsumerWidget {
     } else if (Platform.isMacOS) {
       return _getStarsectorLaunchPrefsMacOS();
     } else {
-      Fimber.w('Platform not yet supported');
+      Fimber.w('Platform not yet supported for Direct Launch');
       return null;
     }
   }
@@ -500,10 +501,15 @@ class Launcher extends HookConsumerWidget {
         Fimber.e('Game executable not found at $gameExe');
       }
     } else if (Platform.isLinux) {
-      Process.start("xdg-open", [gameExe.absolute.path],
-          workingDirectory: gamePath.path,
-          mode: ProcessStartMode.detached,
-          includeParentEnvironment: true);
+      Process.start("chmod", ["+x ${gameExe.absolute.path}"]);
+      Process.start(
+        "./${gameExe.name}",
+        [],
+        workingDirectory: gamePath.path,
+        mode: ProcessStartMode.detached,
+        includeParentEnvironment: true,
+      );
+      // OpenFilex.open(gameExe.absolute.path);
     } else {
       Fimber.e('Platform not supported for launching game');
     }

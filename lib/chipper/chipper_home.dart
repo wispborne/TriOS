@@ -2,11 +2,11 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:open_filex/open_filex.dart';
-import 'package:platform_info/platform_info.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/platform_paths.dart';
@@ -197,7 +197,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                     if (result?.files.single != null) {
                       var file = result!.files.single;
 
-                      if (Platform.I.isWeb) {
+                      if (kIsWeb) {
                         final content = utf8.decode(file.bytes!.toList(),
                             allowMalformed: true);
                         ref

@@ -361,13 +361,14 @@ class _AppShellState extends ConsumerState<AppShell>
                       showUnreleasedVersions: false),
                 ),
               ),
+              if (logFilePath != null)
               Tooltip(
                 message: "Open log file",
                 child: IconButton(
                   icon: const SvgImageIcon("assets/images/icon-file-debug.svg"),
                   color: Theme.of(context).iconTheme.color,
                   onPressed: () {
-                    OpenFilex.open(logFilePath);
+                    OpenFilex.open(logFilePath!);
                   },
                 ),
               ),

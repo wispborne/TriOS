@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
@@ -7,7 +8,6 @@ import 'package:toastification/toastification.dart';
 import 'package:trios/mod_profiles/mod_profiles_manager.dart';
 import 'package:trios/models/download_progress.dart';
 import 'package:trios/themes/theme_manager.dart';
-import 'package:trios/trios/self_updater/self_updater.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
@@ -16,6 +16,7 @@ import 'package:trios/widgets/download_progress_indicator.dart';
 import '../../widgets/self_update_toast.dart';
 import '../app_state.dart';
 import '../download_manager/download_manager.dart';
+import '../self_updater/script_generator.dart';
 import '../toasts/mod_added_toast.dart';
 
 class SettingsDebugSection extends ConsumerStatefulWidget {
@@ -39,7 +40,10 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
           padding: const EdgeInsets.only(top: 16),
           child: ElevatedButton(
             onPressed: () async {
-              ref.watch(AppState.selfUpdate.notifier).getLatestRelease().then((release) {
+              ref
+                  .watch(AppState.selfUpdate.notifier)
+                  .getLatestRelease()
+                  .then((release) {
                 if (release == null) {
                   Fimber.d("No release found");
                   return;
@@ -52,6 +56,26 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
               });
             },
             child: const Text('Check for update (allow older versions)'),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(top: 16),
+          child: ElevatedButton(
+            onPressed: () async {
+              // hardcoded name
+              runZonedGuarded(() {
+                ref.read(AppState.selfUpdate.notifier).runSelfUpdateScript(File(
+                    "${Platform.resolvedExecutable.toFile().parent.path}/update-trios/${ScriptGenerator.scriptName()}"));
+              }, (error, stackTrace) {
+                showSnackBar(
+                  context: context,
+                  content: Text(
+                    "Error running self-update script: $error",
+                  ),
+                );
+              });
+            },
+            child: const Text('Run existing self-update script if exists'),
           ),
         ),
         Padding(
@@ -136,7 +160,9 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                 padding: const EdgeInsets.only(top: 16.0),
                 child: ElevatedButton(
                   onPressed: () async {
-                    final latestRelease = await ref.watch(AppState.selfUpdate.notifier).getLatestRelease();
+                    final latestRelease = await ref
+                        .watch(AppState.selfUpdate.notifier)
+                        .getLatestRelease();
                     ref
                         .read(AppState.selfUpdate.notifier)
                         .updateSelf(latestRelease!);

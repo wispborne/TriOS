@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:collection/collection.dart';
@@ -95,24 +96,41 @@ class SelfUpdater extends AsyncNotifier<DownloadProgress?> {
               filesToUpdateFromPath, scriptDest);
       Fimber.i("Wrote update script to: ${updateScriptFile.path}");
 
-      Fimber.i('Running update script: ${updateScriptFile.path}');
-
-      // Run the update script.
-      // Do NOT wait for it. We want to exit immediately after starting the update script.
-      if (Platform.isWindows) {
-        await Process.start(
-            "start", ["", updateScriptFile.absolute.normalize.path],
-            runInShell: true, mode: ProcessStartMode.detached);
-      } else {
-        await Process.start('', [updateScriptFile.absolute.normalize.path, "&"],
-            runInShell: true, mode: ProcessStartMode.detached);
-      }
+      await runSelfUpdateScript(updateScriptFile);
 
       if (exitSelfAfter) {
         Fimber.i('Exiting self while update runs to avoid locking files.');
         exit(0);
       }
     }
+  }
+
+  Future<void> runSelfUpdateScript(File updateScriptFile) async {
+    Fimber.i('Running update script: ${updateScriptFile.absolute.path} (exists? ${updateScriptFile.existsSync()})');
+
+    // Run the update script.
+    // Do NOT wait for it. We want to exit immediately after starting the update script.
+    runZonedGuarded(() async {
+      if (Platform.isWindows) {
+        await Process.start(
+          'powershell',
+          [
+            'Get-Content',
+            "'${updateScriptFile.absolute.normalize.path}'",
+            '-Encoding UTF8',
+            '| Invoke-Expression',
+          ],
+          runInShell: true,
+          mode: ProcessStartMode.detached,
+        );
+      } else {
+        await Process.start('', [updateScriptFile.absolute.normalize.path, "&"],
+            runInShell: true, mode: ProcessStartMode.detached);
+      }
+    }, (error, stackTrace) {
+      Fimber.w('Error running update script.',
+          ex: error, stacktrace: stackTrace);
+    });
   }
 
   /// Fetches the latest release from the GitHub API.
@@ -154,7 +172,7 @@ class SelfUpdater extends AsyncNotifier<DownloadProgress?> {
 
     final downloadResult = await downloadFile(downloadLink, destDir, null,
         onProgress: (bytesReceived, contentLength) {
-      Fimber.i(
+      Fimber.v(() =>
           "Downloaded: ${bytesReceived.bytesAsReadableMB()} / ${contentLength.bytesAsReadableMB()}");
       state = AsyncData(DownloadProgress(bytesReceived, contentLength,
           isIndeterminate: false));

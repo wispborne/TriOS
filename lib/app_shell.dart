@@ -85,43 +85,45 @@ class _AppShellState extends ConsumerState<AppShell>
       Fimber.e("Error setting default tool: $e");
     }
 
-    try {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      try {
 // Check for updates on launch and show toast if available.
-      ref
-          .watch(AppState.selfUpdate.notifier)
-          .getLatestRelease()
-          .then((latestRelease) {
-        try {
-          if (latestRelease != null) {
-            final hasNewVersion = SelfUpdater.hasNewVersion(latestRelease);
-            if (hasNewVersion) {
-              Fimber.i("New version available: ${latestRelease.tagName}");
-              final updateInfo = SelfUpdateInfo(
-                  version: latestRelease.tagName,
-                  url: latestRelease.assets.first.browserDownloadUrl,
-                  releaseNote: latestRelease.body);
-              Fimber.i("Update info: $updateInfo");
+        ref
+            .watch(AppState.selfUpdate.notifier)
+            .getLatestRelease()
+            .then((latestRelease) {
+          try {
+            if (latestRelease != null) {
+              final hasNewVersion = SelfUpdater.hasNewVersion(latestRelease);
+              if (hasNewVersion) {
+                Fimber.i("New version available: ${latestRelease.tagName}");
+                final updateInfo = SelfUpdateInfo(
+                    version: latestRelease.tagName,
+                    url: latestRelease.assets.first.browserDownloadUrl,
+                    releaseNote: latestRelease.body);
+                Fimber.i("Update info: $updateInfo");
 
-              toastification.showCustom(
-                  context: context,
-                  builder: (context, item) =>
-                      SelfUpdateToast(latestRelease, item));
+                toastification.showCustom(
+                    context: context,
+                    builder: (context, item) =>
+                        SelfUpdateToast(latestRelease, item));
 
-              if (ref.read(appSettings
-                  .select((value) => value.shouldAutoUpdateOnLaunch))) {
-                ref
-                    .read(AppState.selfUpdate.notifier)
-                    .updateSelf(latestRelease);
+                if (ref.read(appSettings
+                    .select((value) => value.shouldAutoUpdateOnLaunch))) {
+                  ref
+                      .read(AppState.selfUpdate.notifier)
+                      .updateSelf(latestRelease);
+                }
               }
             }
+          } catch (e, s) {
+            Fimber.e("Error checking for updates: $e", ex: e, stacktrace: s);
           }
-        } catch (e, s) {
-          Fimber.e("Error checking for updates: $e", ex: e, stacktrace: s);
-        }
-      });
-    } catch (e, st) {
-      Fimber.e("Error checking for updates: $e", ex: e, stacktrace: st);
-    }
+        });
+      } catch (e, st) {
+        Fimber.e("Error checking for updates: $e", ex: e, stacktrace: st);
+      }
+    });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (ref.read(appSettings.select((s) => s.allowCrashReporting)) == null) {
@@ -362,16 +364,17 @@ class _AppShellState extends ConsumerState<AppShell>
                 ),
               ),
               if (logFilePath != null)
-              Tooltip(
-                message: "Open log file",
-                child: IconButton(
-                  icon: const SvgImageIcon("assets/images/icon-file-debug.svg"),
-                  color: Theme.of(context).iconTheme.color,
-                  onPressed: () {
-                    OpenFilex.open(logFilePath!);
-                  },
+                Tooltip(
+                  message: "Open log file",
+                  child: IconButton(
+                    icon:
+                        const SvgImageIcon("assets/images/icon-file-debug.svg"),
+                    color: Theme.of(context).iconTheme.color,
+                    onPressed: () {
+                      OpenFilex.open(logFilePath!);
+                    },
+                  ),
                 ),
-              ),
               Tooltip(
                 message: "About",
                 child: IconButton(

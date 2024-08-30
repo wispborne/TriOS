@@ -1,3 +1,9 @@
+# 0.1.11
+- Fixed
+  - Self-update failed if there were any non-ASCII characters in the TriOS or temp folder paths.
+    - The Windows self-updater now works completely differently, doing an in-place update with no .bat script.
+    - Windows, you so crazy.
+
 # 0.1.10
 - Fixed
   - RAM changer error if current RAM is set to an invalid number.

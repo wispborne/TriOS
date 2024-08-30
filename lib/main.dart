@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:collection/collection.dart';
@@ -11,6 +12,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:toastification/toastification.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/self_updater/script_generator.dart';
+import 'package:trios/trios/self_updater/self_updater.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
@@ -163,6 +165,12 @@ void main() async {
   } catch (e) {
     Fimber.e("Error cleaning up old files.", ex: e);
   }
+
+  runZonedGuarded(() {
+    SelfUpdater.cleanUpOldUpdateFiles();
+  }, (error, stackTrace) {
+    Fimber.w("Error cleaning up old self-update files.", ex: error);
+  });
 }
 
 void _runTriOS() => runApp(const ProviderScope(

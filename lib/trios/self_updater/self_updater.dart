@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:pub_semver/pub_semver.dart';
 import 'package:trios/libarchive/libarchive.dart';
+import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/self_updater/script_generator.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
@@ -15,7 +16,6 @@ import 'package:trios/utils/network_util.dart';
 import 'package:trios/utils/util.dart';
 
 import '../../models/download_progress.dart';
-import '../constants.dart';
 
 class SelfUpdateInfo {
   final String version;
@@ -43,6 +43,7 @@ class SelfUpdater extends AsyncNotifier<DownloadProgress?> {
   static const String githubBase = "https://api.github.com";
   static const String githubLatestRelease =
       "$githubBase/repos/wispborne/trios/releases";
+  static const String oldFileSuffix = ".delete-me";
 
   @override
   Future<DownloadProgress?> build() async {
@@ -82,31 +83,148 @@ class SelfUpdater extends AsyncNotifier<DownloadProgress?> {
           .deleteSync(); // Clean up the .zip file, we don't want to end up moving it in as part of the update.
       Fimber.i(
           'Extracted ${extractedFiles.length} files in the ${release.tagName} release to ${extractedDir.path}');
-
-      // Generate the update script and write it to a file.
-      final scriptDest = kDebugMode
-          ? Directory(p.join(currentDirectory.path, "update-trios"))
-          : currentDirectory;
       // If there's a subfolder, use the contents of the subfolder as the files to update (added in 0.0.48).
-      final filesToUpdateFromPath = updateWorkingDir.listSync().length == 1
-          ? updateWorkingDir.listSync()[0].toDirectory()
-          : updateWorkingDir;
-      final updateScriptFile =
-          await ScriptGenerator.writeUpdateScriptToFileSimple(
-              filesToUpdateFromPath, scriptDest);
-      Fimber.i("Wrote update script to: ${updateScriptFile.path}");
+      final directoryWithNewVersionFiles =
+          updateWorkingDir.listSync().length == 1
+              ? updateWorkingDir.listSync()[0].toDirectory()
+              : updateWorkingDir;
 
-      await runSelfUpdateScript(updateScriptFile);
+      // Windows has a special in-place update in order to avoid UTF8 issues with running a batch script.
+      if (currentPlatform == TargetPlatform.windows) {
+        try {
+          await replaceSelfOnWindows(directoryWithNewVersionFiles);
+        } catch (error) {
+          Fimber.w('Error self-updating something on Windows. YOLOing.',
+              ex: error);
+        }
+        Process.start(
+          'cmd',
+          ['/c', "start", "", Platform.resolvedExecutable],
+          runInShell: true,
+          mode: ProcessStartMode.detached,
+        );
+        if (exitSelfAfter) {
+          await Future.delayed(const Duration(seconds: 1));
+          Fimber.i(
+              'Exiting old version of self, new should have already started.');
+          exit(0);
+        }
+      } else {
+        // Generate the update script and write it to a file.
+        final scriptDest = kDebugMode
+            ? Directory(p.join(currentDirectory.path, "update-trios"))
+            : currentDirectory;
+        final updateScriptFile =
+            await ScriptGenerator.writeUpdateScriptToFileSimple(
+                directoryWithNewVersionFiles, scriptDest);
+        Fimber.i("Wrote update script to: ${updateScriptFile.path}");
 
-      if (exitSelfAfter) {
-        Fimber.i('Exiting self while update runs to avoid locking files.');
-        exit(0);
+        await runSelfUpdateScript(updateScriptFile);
+
+        if (exitSelfAfter) {
+          Fimber.i('Exiting self while update runs to avoid locking files.');
+          exit(0);
+        }
       }
     }
   }
 
+  /// Replaces all files in the current working directory with files that have the same relative path
+  /// in the given source directory.
+  /// Only tested on Windows!
+  Future<void> replaceSelfOnWindows(Directory sourceDirectory) async {
+    final allNewFiles = sourceDirectory.listSync(recursive: true);
+    final currentDir = currentDirectory;
+    final jobs = <Future<void>>[];
+
+    for (final newFile in allNewFiles) {
+      if (newFile.isFile()) {
+        final newFileRelative =
+            newFile.toFile().relativeTo(sourceDirectory).toFile();
+        final fileToReplace =
+            File(p.join(currentDir.path, newFileRelative.path));
+        jobs.add(updateLockedWindowsFileInPlace(
+            newFile.toFile(), fileToReplace, oldFileSuffix));
+      }
+    }
+
+    await Future.wait(jobs);
+  }
+
+  static Future<void> cleanUpOldUpdateFiles() async {
+    final filesInCurrentDir = currentDirectory
+        .listSync(recursive: true)
+        .where((element) => element.path.endsWith(oldFileSuffix))
+        .toList();
+    for (final file in filesInCurrentDir) {
+      if (file is File) {
+        try {
+          await file.delete();
+        } catch (error) {
+          Fimber.w('Error deleting old file: ${file.path}', ex: error);
+        }
+      }
+    }
+
+    Fimber.i('Cleaned up ${filesInCurrentDir.length} old update files.');
+  }
+
+  /// Updates or replaces a locked Windows file in place.
+  ///
+  /// Depending on the destination file's existence and type:
+  /// - If the file doesn't exist, it copies the source file to the destination.
+  /// - If it's a `.so` file, it replaces the destination's contents with the source's contents.
+  /// - Otherwise, it renames the destination file by appending the given suffix and then copies the source file to the destination.
+  ///
+  /// Parameters:
+  /// - [sourceFile]: The file to copy or use for content replacement.
+  /// - [destFile]: The target file to update or replace.
+  /// - [oldFileSuffix]: Suffix for renaming the existing file.
+  ///
+  /// Returns:
+  /// - A [Future] that completes when the operation is done.
+  Future<void> updateLockedWindowsFileInPlace(
+    File sourceFile,
+    File destFile,
+    String oldFileSuffix,
+  ) async {
+    final sourceExt = sourceFile.extension;
+    final doesDestExist = destFile.existsSync();
+
+    // Create parent directories if they don't exist.
+    if (!doesDestExist && !destFile.parent.existsSync()) {
+      destFile.parent.createSync(recursive: true);
+    }
+
+    if (!doesDestExist) {
+      // Nothing to replace, just copy the file.
+      Fimber.d("Copying new file: ${sourceFile.path} to ${destFile.path}");
+      await sourceFile.copy(destFile.path);
+    } else if (sourceExt == ".so") {
+      // Can't rename .so files on Windows, but we can replace their content.
+      Fimber.d(
+          "Replacing contents of .so file: ${destFile.path} with that of ${sourceFile.path}");
+      await destFile.writeAsBytes(await sourceFile.readAsBytes());
+    } else {
+      // Can't replace content of other locked files, but can rename them.
+      var oldFile = File(destFile.path + oldFileSuffix);
+      Fimber.d("Renaming locked file: ${destFile.path} to ${oldFile.path}, "
+          "and copying new file: ${sourceFile.path} to ${destFile.path}");
+      if (oldFile.existsSync()) {
+        if (await oldFile.isWritable()) {
+          Fimber.d("Old file already exists, deleting: ${oldFile.path}");
+          oldFile.deleteSync();
+        }
+      }
+
+      await destFile.rename(oldFile.path);
+      await sourceFile.copy(destFile.path);
+    }
+  }
+
   Future<void> runSelfUpdateScript(File updateScriptFile) async {
-    Fimber.i('Running update script: ${updateScriptFile.absolute.path} (exists? ${updateScriptFile.existsSync()})');
+    Fimber.i(
+        'Running update script: ${updateScriptFile.absolute.path} (exists? ${updateScriptFile.existsSync()})');
 
     // Run the update script.
     // Do NOT wait for it. We want to exit immediately after starting the update script.

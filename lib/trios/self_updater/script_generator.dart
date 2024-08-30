@@ -65,7 +65,8 @@ class ScriptGenerator {
       File triOSFile, String platform, int delaySeconds) {
     switch (platform) {
       case "windows":
-        return _generateBatchScript(filePairs, triOSFile, delaySeconds);
+        throw UnimplementedError(
+            'Script generation not supported for this platform');
       case "linux":
       case "macos":
         return _generateBashScript(filePairs, triOSFile, delaySeconds);
@@ -73,34 +74,6 @@ class ScriptGenerator {
         throw UnimplementedError(
             'Script generation not supported for this platform');
     }
-  }
-
-  /// IMPORTANT: All lines must be a single line because they are run one line at a time because of the French.
-  static String _generateBatchScript(
-      List<Tuple2<File?, File?>> filePairs, File triOSFile, int delaySeconds,
-      {bool dryRun = false}) {
-    final commands = <String>[];
-    commands.add('@echo off');
-    commands.add('timeout /t $delaySeconds'); // Windows wait command
-
-    for (final pair in filePairs) {
-      final sourceFile = pair.item1;
-      final targetFile = pair.item2;
-      if (sourceFile != null && sourceFile.existsSync() && targetFile == null) {
-        commands.add('del "${sourceFile.path}"');
-      } else if (sourceFile != null && sourceFile.existsSync() && targetFile != null) {
-        commands.add('md "${p.dirname(targetFile.path)}" 2>nul');
-        commands.add('move /Y "${sourceFile.path}" "${targetFile.path}"');
-      }
-    }
-
-    // windows batch command to run Platform.executable in a new thread
-    commands.add('echo Update complete. Running ${triOSFile.absolute.path}...');
-    commands.add('start "" "${triOSFile.absolute.path}"');
-    // commands.add('pause'); // Pausing somehow ties the terminal window to TriOS so closing the window will close TriOS
-    commands.add('exit');
-
-    return commands.join('\r\n');
   }
 
   static String _generateBashScript(

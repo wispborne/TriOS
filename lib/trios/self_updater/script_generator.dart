@@ -10,7 +10,7 @@ class ScriptGenerator {
 
   static String scriptName() {
     final tempFileNameExt = switch (currentPlatform) {
-      TargetPlatform.windows => "ps1",
+      TargetPlatform.windows => "bat",
       TargetPlatform.macOS => "sh",
       TargetPlatform.linux => "sh",
       _ => throw UnsupportedError(
@@ -65,7 +65,7 @@ class ScriptGenerator {
       File triOSFile, String platform, int delaySeconds) {
     switch (platform) {
       case "windows":
-        return _generatePowerShellScript(filePairs, triOSFile, delaySeconds);
+        return _generateBatchScript(filePairs, triOSFile, delaySeconds);
       case "linux":
       case "macos":
         return _generateBashScript(filePairs, triOSFile, delaySeconds);
@@ -76,62 +76,29 @@ class ScriptGenerator {
   }
 
   /// IMPORTANT: All lines must be a single line because they are run one line at a time because of the French.
-  static String _generatePowerShellScript(
+  static String _generateBatchScript(
       List<Tuple2<File?, File?>> filePairs, File triOSFile, int delaySeconds,
       {bool dryRun = false}) {
     final commands = <String>[];
+    commands.add('@echo off');
+    commands.add('timeout /t $delaySeconds'); // Windows wait command
 
-    commands.add(
-        '\$OutputEncoding = [Console]::InputEncoding = [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding');
-    // Set verbose output preference
-    commands.add('\$VerbosePreference = "Continue"');
-
-    // Add sleep delay
-    commands.add('Start-Sleep -Seconds $delaySeconds');
-
-    // Iterate over file pairs to generate move or delete commands
     for (final pair in filePairs) {
       final sourceFile = pair.item1;
       final targetFile = pair.item2;
-
       if (sourceFile != null && sourceFile.existsSync() && targetFile == null) {
-        // Delete the source file if no target file is specified
-        if (dryRun) {
-          commands.add('Write-Host "Would remove: ${sourceFile.path}"');
-        } else {
-          commands.add('Remove-Item -Path "${sourceFile.path}" -Force');
-        }
-      } else if (sourceFile != null &&
-          sourceFile.existsSync() &&
-          targetFile != null) {
-        // Ensure paths are properly quoted
-        final sourcePath = sourceFile.path.replaceAll(r'\', r'\\');
-        final targetPath = targetFile.path.replaceAll(r'\', r'\\');
-        final targetDir = targetFile.parent.path.replaceAll(r'\', r'\\');
-
-        // Create the target directory if it doesn't exist
-        if (dryRun) {
-          commands.add('Write-Host "Would create directory: $targetDir"');
-          commands.add('Write-Host "Would move: $sourcePath to $targetPath"');
-        } else {
-          commands.add(
-              'if (-not (Test-Path -Path "$targetDir")) { New-Item -ItemType Directory -Force -Path "$targetDir" }');
-          // Move the file from source to target
-          commands.add(
-              'Move-Item -Path "$sourcePath" -Destination "$targetPath" -Force');
-        }
+        commands.add('del "${sourceFile.path}"');
+      } else if (sourceFile != null && sourceFile.existsSync() && targetFile != null) {
+        commands.add('md "${p.dirname(targetFile.path)}" 2>nul');
+        commands.add('move /Y "${sourceFile.path}" "${targetFile.path}"');
       }
     }
 
-    // Print a message indicating the update is complete and run the executable
-    final triOSFilePath = triOSFile.absolute.path.replaceAll(r'\', r'\\');
-    if (dryRun) {
-      commands.add('Write-Host "Would run: $triOSFilePath"');
-    } else {
-      commands.add('Write-Host "Update complete. Running $triOSFilePath..."');
-      commands.add('Start-Process -FilePath "$triOSFilePath"');
-    }
-    commands.add('pause');
+    // windows batch command to run Platform.executable in a new thread
+    commands.add('echo Update complete. Running ${triOSFile.absolute.path}...');
+    commands.add('start "" "${triOSFile.absolute.path}"');
+    // commands.add('pause'); // Pausing somehow ties the terminal window to TriOS so closing the window will close TriOS
+    commands.add('exit');
 
     return commands.join('\r\n');
   }

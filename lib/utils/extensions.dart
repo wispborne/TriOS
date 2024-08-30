@@ -238,10 +238,10 @@ extension FileSystemEntityExt on FileSystemEntity {
 }
 
 extension FileExt on File {
-  String relativePath(Directory modFolder) =>
-      p.normalize(p.relative(absolute.path, from: modFolder.absolute.path));
+  String relativePath(Directory baseFolder) =>
+      p.normalize(p.relative(absolute.path, from: baseFolder.absolute.path));
 
-  String relativeTo(Directory modFolder) => relativePath(modFolder);
+  String relativeTo(Directory baseFolder) => relativePath(baseFolder);
 
   String get nameWithoutExtension => p.basenameWithoutExtension(path);
 

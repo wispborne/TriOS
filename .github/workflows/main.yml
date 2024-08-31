@@ -109,6 +109,13 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Remove Non-macOS Files
+        run: |
+          echo "Deleting files in non-macOS asset directories..."
+          find assets/windows/ -type f -exec rm -f {} \;
+          find assets/linux/ -type f -exec rm -f {} \;
+          echo "Non-macOS asset files deleted."
+
       - name: Flutter Setup
         run: echo "Setting up Flutter..."
       - uses: subosito/flutter-action@v2
@@ -148,6 +155,13 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v3
+
+      - name: Remove Non-Windows Files
+        run: |
+          echo "Deleting files in non-Windows asset directories..."
+          Remove-Item -Path assets/macos/* -Recurse -Force
+          Remove-Item -Path assets/linux/* -Recurse -Force
+          echo "Non-Windows asset files deleted."
 
       - name: Install Visual Studio Components
         run: |
@@ -202,6 +216,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
+      - name: Remove Non-Linux Files
+        run: |
+          echo "Deleting files in non-Linux asset directories..."
+          find assets/windows/ -type f -exec rm -f {} \;
+          find assets/macos/ -type f -exec rm -f {} \;
+          echo "Non-Linux asset files deleted."
 
       - name: Install Dependencies
         run: |

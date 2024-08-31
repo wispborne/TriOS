@@ -172,13 +172,11 @@ flutter:
   assets:
     - assets/images/
     - assets/images/chipper/
-    - assets/libarchive/windows/bin/
-    - assets/libarchive/macos/bin/
-    - assets/libarchive/macos/lib/
-#    - assets/libarchive/linux/lib/
+    - assets/windows/libarchive/bin/
+    - assets/macos/libarchive/bin/
+    - assets/macos/libarchive/lib/
+    - assets/linux/libarchive/lib/
     - assets/SMOL_Themes.json
-  #  shaders:
-  #    - assets/shaders/grain.frag
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

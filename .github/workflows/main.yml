@@ -112,8 +112,8 @@ jobs:
       - name: Remove Non-macOS Files
         run: |
           echo "Deleting files in non-macOS asset directories..."
-          find assets/windows/ -type f -exec rm -f {} \;
-          find assets/linux/ -type f -exec rm -f {} \;
+          find assets/windows/ -type f -exec echo "Deleting: {}" \; -exec rm -f {} \;
+          find assets/linux/ -type f -exec echo "Deleting: {}" \; -exec rm -f {} \;
           echo "Non-macOS asset files deleted."
 
       - name: Flutter Setup
@@ -159,8 +159,8 @@ jobs:
       - name: Remove Non-Windows Files
         run: |
           echo "Deleting files in non-Windows asset directories..."
-          Remove-Item -Path assets/macos/* -Recurse -Force
-          Remove-Item -Path assets/linux/* -Recurse -Force
+          Get-ChildItem assets/macos/* -Recurse | ForEach-Object { Write-Host "Deleting: $_.FullName"; Remove-Item $_.FullName -Force }
+          Get-ChildItem assets/linux/* -Recurse | ForEach-Object { Write-Host "Deleting: $_.FullName"; Remove-Item $_.FullName -Force }
           echo "Non-Windows asset files deleted."
 
       - name: Install Visual Studio Components
@@ -220,8 +220,8 @@ jobs:
       - name: Remove Non-Linux Files
         run: |
           echo "Deleting files in non-Linux asset directories..."
-          find assets/windows/ -type f -exec rm -f {} \;
-          find assets/macos/ -type f -exec rm -f {} \;
+          find assets/windows/ -type f -exec echo "Deleting: {}" \; -exec rm -f {} \;
+          find assets/macos/ -type f -exec echo "Deleting: {}" \; -exec rm -f {} \;
           echo "Non-Linux asset files deleted."
 
       - name: Install Dependencies

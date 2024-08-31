@@ -4,8 +4,11 @@ import 'dart:io';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:open_filex/open_filex.dart';
 import 'package:path/path.dart' as p;
 import 'package:pub_semver/pub_semver.dart';
+import 'package:stringr/stringr.dart';
+import 'package:trios/chipper/utils.dart';
 import 'package:trios/libarchive/libarchive.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/self_updater/script_generator.dart';
@@ -13,6 +16,7 @@ import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/network_util.dart';
+import 'package:trios/utils/search.dart';
 import 'package:trios/utils/util.dart';
 
 import '../../models/download_progress.dart';
@@ -223,13 +227,12 @@ class SelfUpdater extends AsyncNotifier<DownloadProgress?> {
   }
 
   Future<void> runSelfUpdateScript(File updateScriptFile) async {
-    Fimber.i(
-        'Running update script: ${updateScriptFile.absolute.path} (exists? ${updateScriptFile.existsSync()})');
-
     // Run the update script.
     // Do NOT wait for it. We want to exit immediately after starting the update script.
     runZonedGuarded(() async {
       if (Platform.isWindows) {
+        Fimber.i(
+            'Running update script: ${updateScriptFile.absolute.path} (exists? ${updateScriptFile.existsSync()})');
         await Process.start(
           'powershell',
           [
@@ -241,7 +244,19 @@ class SelfUpdater extends AsyncNotifier<DownloadProgress?> {
           runInShell: true,
           mode: ProcessStartMode.detached,
         );
+      } else if (currentPlatform == TargetPlatform.linux) {
+        Fimber.i("Making ${updateScriptFile.path} executable first.");
+        Process.runSync(
+            'chmod', ['+x', updateScriptFile.absolute.normalize.path],
+            runInShell: true);
+        Fimber.i(
+            'Running update script: ${updateScriptFile.absolute.path} (exists? ${updateScriptFile.existsSync()})');
+        await OpenFilex.open(updateScriptFile.parent.path, linuxDesktopName: getLinuxDesktopEnvironment().lowerCase());
+        await Process.start(updateScriptFile.absolute.normalize.path, ["&"],
+            runInShell: true, mode: ProcessStartMode.detached);
       } else {
+        Fimber.i(
+            'Running update script: ${updateScriptFile.absolute.path} (exists? ${updateScriptFile.existsSync()})');
         await Process.start('', [updateScriptFile.absolute.normalize.path, "&"],
             runInShell: true, mode: ProcessStartMode.detached);
       }
@@ -249,6 +264,21 @@ class SelfUpdater extends AsyncNotifier<DownloadProgress?> {
       Fimber.w('Error running update script.',
           ex: error, stacktrace: stackTrace);
     });
+  }
+
+  String getLinuxDesktopEnvironment() {
+    final env = Platform.environment;
+    if (env.containsKey("XDG_CURRENT_DESKTOP")) {
+      return env["XDG_CURRENT_DESKTOP"] ?? "Unknown";
+    } else if (env.containsKey("DESKTOP_SESSION")) {
+      return env["DESKTOP_SESSION"] ?? "Unknown";
+    } else if (env.containsKey("GENOME_DESKTOP_SESSION_ID")) {
+      return "GNOME";
+    } else if (env.containsKey("KDE_FULL_SESSION")) {
+      return "KDE";
+    } else {
+      return "UNKNOWN";
+    }
   }
 
   /// Fetches the latest release from the GitHub API.

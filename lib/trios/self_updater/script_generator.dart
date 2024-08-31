@@ -71,7 +71,7 @@ class ScriptGenerator {
             'Script generation not supported for this platform');
       case "linux":
       case "macos":
-        return _generateBashScript(filePairs, triOSFile, delaySeconds);
+        return _generateBashScript(filePairs, triOSFile, delaySeconds, currentPlatform);
       default:
         throw UnimplementedError(
             'Script generation not supported for this platform');
@@ -99,7 +99,7 @@ class ScriptGenerator {
   ///
   /// Returns the generated script as a string.
   static String _generateBashScript(List<Tuple2<File?, File?>> filePairs,
-      File triOSFile, int delaySeconds, TargetPlatform platform) {
+      File triOSFile, int delaySeconds, TargetPlatform? platform) {
     final commands = <String>[];
     commands.add('#!/bin/bash');
     commands.add('sleep $delaySeconds'); // Unix wait command
@@ -121,7 +121,9 @@ class ScriptGenerator {
     // bash command to run Platform.executable in a new thread
     if (platform == TargetPlatform.macOS) {
       commands.add("${triOSFile.absolute.path} &");
-    } else if (platform == TargetPlatform.linux) {
+    } else {
+      // Linux
+      commands.add("chmod +x ${Platform.resolvedExecutable.toFile().absolute.path}");
       commands.add("${Platform.resolvedExecutable.toFile().absolute.path} &");
     }
 

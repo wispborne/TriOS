@@ -8,6 +8,8 @@ import 'package:trios/utils/util.dart';
 class ScriptGenerator {
   static const SELF_UPDATE_FILE_NAME = "TriOS_self_updater";
 
+
+
   static String scriptName() {
     final tempFileNameExt = switch (currentPlatform) {
       TargetPlatform.windows => "bat",
@@ -76,8 +78,28 @@ class ScriptGenerator {
     }
   }
 
-  static String _generateBashScript(
-      List<Tuple2<File?, File?>> filePairs, File triOSFile, int delaySeconds) {
+  /// Generates a bash script that:
+  ///
+  /// 1. Waits for [delaySeconds] seconds.
+  /// 2. Deletes or moves the files in [filePairs] to their respective target paths.
+  /// 3. Runs the current executable in a new thread.
+  ///
+  /// The generated script will be a series of bash commands concatenated together.
+  ///
+  /// [filePairs] is a list of tuples, where the first element is the source file
+  /// and the second element is the target file. If the target file is null, the
+  /// source file will be deleted. If the source file does not exist, it will be
+  /// ignored.
+  ///
+  /// [triOSFile] is the file that will be run in a new thread.
+  ///
+  /// [platform] is the current platform.
+  ///
+  /// Throws an [UnimplementedError] if the platform is not supported.
+  ///
+  /// Returns the generated script as a string.
+  static String _generateBashScript(List<Tuple2<File?, File?>> filePairs,
+      File triOSFile, int delaySeconds, TargetPlatform platform) {
     final commands = <String>[];
     commands.add('#!/bin/bash');
     commands.add('sleep $delaySeconds'); // Unix wait command
@@ -97,7 +119,11 @@ class ScriptGenerator {
       }
     }
     // bash command to run Platform.executable in a new thread
-    commands.add("${triOSFile.absolute.path} &");
+    if (platform == TargetPlatform.macOS) {
+      commands.add("${triOSFile.absolute.path} &");
+    } else if (platform == TargetPlatform.linux) {
+      commands.add("${Platform.resolvedExecutable.toFile().absolute.path} &");
+    }
 
     return commands.join('\n');
   }

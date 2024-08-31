@@ -234,3 +234,5 @@ update-test/
 /cache/TriOS-VersionCheckerCache.json
 
 .idea/other.xml
+
+.idea/caches/deviceStreaming.xml

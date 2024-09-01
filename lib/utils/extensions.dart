@@ -311,7 +311,8 @@ extension DirectoryExt on Directory {
   Future<void> copyDirectory(Directory destDir,
       {bool overwrite = false}) async {
     final source = normalize;
-    final srcFiles = source.listSync(recursive: false).map((e) => e.path.toFile());
+    final srcFiles =
+        source.listSync(recursive: false).map((e) => e.path.toFile());
     destDir.createSync(recursive: true); // mkdirs
 
     for (var srcFile in srcFiles) {
@@ -366,6 +367,13 @@ extension IterableExt<T> on Iterable<T> {
     return maxElement;
   }
 
+  /// Sorts the list by the given [selector] function, which is passed to each element in the list.
+  ///
+  /// If the [selector] function returns null for an element, that element is considered to be smaller than any element for which the [selector] function does not return null.
+  ///
+  /// If [nullsLast] is true, all elements for which the [selector] function returns null are placed at the end of the list. Otherwise, they are placed at the beginning.
+  ///
+  /// This is like [List.sort] but with a more intuitive way of handling nulls.
   List<T> sortedByButBetter<R extends Comparable<R>>(
       R? Function(T item) selector,
       {bool nullsLast = false}) {
@@ -476,6 +484,7 @@ extension IterableExt<T> on Iterable<T> {
   }
 
   Iterable<T>? nullIfEmpty() => isEmpty ? null : this;
+
   Iterable<T> ifEmpty(Iterable<T> Function() block) => isEmpty ? block() : this;
 
   /// Filters the iterable based on the given predicate.
@@ -511,6 +520,7 @@ extension IntExt on int {
   }
 
   String bytesAsReadableMB() => "${(this / 1000000).toStringAsFixed(2)} MB";
+
   String bytesAsReadableKB() => "${(this / 1000).toStringAsFixed(2)} KB";
 
   /// From Java

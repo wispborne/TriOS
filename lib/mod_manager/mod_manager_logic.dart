@@ -10,7 +10,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:path/path.dart' as p;
-import 'package:trios/libarchive/libarchive.dart';
+import 'package:trios/mod_manager/mod_install_source.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_manager/version_checker.dart';
 import 'package:trios/models/mod_info_json.dart';
@@ -46,7 +46,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
   ) async {
     try {
       final installModsResult = await installModFromArchive(
-          archiveFile,
+          ArchiveModInstallSource(archiveFile),
           generateModsFolderPath(ref.read(appSettings).gameDir!)!,
           ref.read(AppState.mods),
           (modsBeingInstalled) => showDialog<List<String>>(
@@ -233,7 +233,8 @@ class ModManagerNotifier extends AsyncNotifier<void> {
                         children: [
                           OutlinedButton(
                             onPressed: () {
-                              OpenFilex.open(failedMod.archiveFile.parent.path);
+                              OpenFilex.open(
+                                  failedMod.sourceFileEntity.parent.path);
                             },
                             child: const Text("Open folder"),
                           ),
@@ -272,16 +273,12 @@ class ModManagerNotifier extends AsyncNotifier<void> {
     }
   }
 
-// Things to handle:
-// - One or more mods already installed.
-// - One or more mods in the archive.
-// - Ask user which they want to install and optionally delete previous.
   /// Given an archive file, attempts to install the mod(s) contained within it.
   /// If there are multiple mods in the archive, or one or more mods are already installed, the user will be asked which mods to install/delete.
   /// Returns a list of ModInfos and any errors that occurred when installing each.
   /// userInputNeededHandler should return the list of SmolIds to install.
   Future<List<InstallModResult>> installModFromArchive(
-    File archiveFile,
+    ModInstallSource modInstallSource,
     Directory destinationFolder,
     List<Mod> currentMods,
     Future<List<String>?> Function(
@@ -293,31 +290,26 @@ class ModManagerNotifier extends AsyncNotifier<void> {
                 modInfosFound)
         userInputNeededHandler,
   ) async {
-    if (!archiveFile.existsSync()) {
-      throw Exception("File does not exist: ${archiveFile.path}");
+    if (!modInstallSource.entity.existsSync()) {
+      throw Exception("File does not exist: ${modInstallSource.entity.path}");
     }
     final results = <InstallModResult>[];
 
-    final libArchive = LibArchive();
-    final archiveFileList = libArchive.listEntriesInArchive(archiveFile);
-    var modInfoFiles = archiveFileList.filter(
-        (it) => it.pathName.containsIgnoreCase(Constants.modInfoFileName));
+    final archiveFileList = modInstallSource.listFilePaths();
+    final modInfoFiles = archiveFileList
+        .filter((it) => it.containsIgnoreCase(Constants.modInfoFileName))
+        .toList();
 
     if (modInfoFiles.isEmpty) {
       throw Exception(
-          "No mod_info.json file found in archive:\n${archiveFile.path}");
+          "No mod_info.json file found in archive:\n${modInstallSource.entity.path}");
     }
 
     Fimber.i(
-        "Found mod_info.json(s) file in archive: ${modInfoFiles.map((it) => it.pathName).toList()}");
+        "Found mod_info.json(s) file in archive: ${modInfoFiles.map((it) => it).toList()}");
 
-    // Extract just mod_info.json files to a temp folder.
-    var modInfosTempFolder = Directory.systemTemp.createTempSync();
-    final extractedModInfos = await libArchive.extractEntriesInArchive(
-      archiveFile,
-      modInfosTempFolder.path,
-      fileFilter: (entry) =>
-          entry.file.toFile().nameWithExtension == Constants.modInfoFileName,
+    final extractedModInfos = await modInstallSource.getActualFiles(
+      modInfoFiles,
     );
     final modInfos = await Future.wait(
         extractedModInfos.whereNotNull().map((modInfoFile) async {
@@ -369,7 +361,9 @@ class ModManagerNotifier extends AsyncNotifier<void> {
       // Find any mods that are already installed.
       final modsToDeleteFirst = modInfosToInstall
           .map((it) => getModVariantForModInfo(it.modInfo, allModVariants))
-          .whereNotNull();
+          .whereNotNull()
+          .toList();
+
       // If user has selected to, delete the existing mod folders
       for (var modToDelete in modsToDeleteFirst) {
         try {
@@ -380,7 +374,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
           Fimber.e("Error deleting mod folder: ${modToDelete.modFolder}",
               ex: e, stacktrace: st);
           results.add((
-            archiveFile: archiveFile,
+            sourceFileEntity: modInstallSource.entity.toFile(),
             destinationFolder: destinationFolder,
             modInfo: modToDelete.modInfo,
             err: e,
@@ -404,19 +398,18 @@ class ModManagerNotifier extends AsyncNotifier<void> {
         final generatedDestFolderName =
             ModVariant.generateUniqueVariantFolderName(modInfo);
         final modInfoParentFolder =
-            modInfoToInstall.extractedFile.archiveFile.file.parent;
+            modInfoToInstall.extractedFile.originalFile.parent;
         final modInfoSiblings = archiveFileList
-            .filter((it) => it.file.parent.path == modInfoParentFolder.path)
+            .filter((it) => it.toFile().parent.path == modInfoParentFolder.path)
             .toList();
         Fimber.d(
-            "Mod info (${modInfoToInstall.extractedFile.archiveFile.file.path}) siblings: ${modInfoSiblings.map((it) => it.pathName).toList()}");
+            "Mod info (${modInfoToInstall.extractedFile.originalFile.path}) siblings: ${modInfoSiblings.map((it) => it).toList()}");
         final errors = <(Object err, StackTrace st)>[];
 
-        final extractedMod = await libArchive.extractEntriesInArchive(
-          archiveFile,
+        final extractedMod = await modInstallSource.createFilesAtDestination(
           destinationFolder.path,
           fileFilter: (entry) => entry.file.isFile()
-              ? modInfoSiblings.contains(entry)
+              ? modInfoSiblings.contains(entry.file.path)
               : p.isWithin(modInfoParentFolder.path, entry.file.path),
           pathTransform: (entry) => p.join(
             generatedDestFolderName,
@@ -443,7 +436,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
         }
 
         results.add((
-          archiveFile: archiveFile,
+          sourceFileEntity: modInstallSource.entity.toFile(),
           destinationFolder: destinationFolder,
           modInfo: modInfo,
           err: null,
@@ -452,7 +445,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
       } catch (e, st) {
         Fimber.e("Error installing mod: $e", ex: e, stacktrace: st);
         results.add((
-          archiveFile: archiveFile,
+          sourceFileEntity: modInstallSource.entity.toFile(),
           destinationFolder: destinationFolder,
           modInfo: modInfo,
           err: e,
@@ -465,13 +458,10 @@ class ModManagerNotifier extends AsyncNotifier<void> {
   }
 }
 
-typedef ExtractedModInfo = ({
-  LibArchiveExtractedFile extractedFile,
-  ModInfo modInfo
-});
+typedef ExtractedModInfo = ({SourcedFile extractedFile, ModInfo modInfo});
 
 typedef InstallModResult = ({
-  File archiveFile,
+  File sourceFileEntity,
   Directory destinationFolder,
   ModInfo modInfo,
   Object? err,

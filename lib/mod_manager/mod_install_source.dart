@@ -5,6 +5,7 @@ import 'package:collection/collection.dart';
 import 'package:trios/libarchive/libarchive.dart';
 import 'package:trios/utils/extensions.dart';
 
+/// Archive or folder that user installs mods from.
 abstract class ModInstallSource {
   FileSystemEntity get entity;
 
@@ -21,6 +22,7 @@ abstract class ModInstallSource {
       bool Function(Object ex, StackTrace st)? onError});
 }
 
+/// Archive that user installs mods from.
 class ArchiveModInstallSource extends ModInstallSource {
   final File _archive;
   final _libArchive = LibArchive();
@@ -44,10 +46,8 @@ class ArchiveModInstallSource extends ModInstallSource {
     var modInfosTempFolder = Directory.systemTemp.createTempSync();
 
     final extractedModInfos = await _libArchive.extractEntriesInArchive(
-      _archive,
-      modInfosTempFolder.path,
-      fileFilter: (entry) => filePaths.contains(entry.file.path)
-    );
+        _archive, modInfosTempFolder.path,
+        fileFilter: (entry) => filePaths.contains(entry.file.path));
 
     return extractedModInfos.whereNotNull().map((it) {
       return SourcedFile(it.archiveFile.file.toFile(), it.extractedFile);

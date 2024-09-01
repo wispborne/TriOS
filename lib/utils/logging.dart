@@ -85,7 +85,7 @@ configureLogging({
         }
 
         _fileLogger = Logger(
-          level: kDebugMode ? Level.info : Level.debug,
+          level: kDebugMode ? Level.debug : Level.info,
           filter: ProductionFilter(),
           printer: PrettyPrinterCustom(
             stackTraceBeginIndex: stackTraceBeginIndex,

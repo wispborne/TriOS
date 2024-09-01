@@ -203,6 +203,28 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       ],
                     ),
                   ]),
+                  SettingsGroup(name: "Mod Organization", children: [
+                    Tooltip(
+                      message:
+                          "Appends the version to the folder of the LATEST version of each mod."
+                          "\n\nIf disabled, the latest mod won't change folder name, even when you update the mod."
+                          "\nOlder versions of a mod will always have their version number appended in order to tell them apart.",
+                      child: CheckboxWithLabel(
+                          value: ref.watch(appSettings
+                                  .select((s) => s.folderNamingSetting)) ==
+                              FolderNamingSetting.allFoldersVersioned,
+                          onChanged: (value) {
+                            ref.read(appSettings.notifier).update((state) =>
+                                state.copyWith(
+                                    folderNamingSetting: value == true
+                                        ? FolderNamingSetting
+                                            .allFoldersVersioned
+                                        : FolderNamingSetting
+                                            .doNotChangeNameForHighestVersion));
+                          },
+                          label: "Rename mod folders"),
+                    ),
+                  ]),
                   SettingsGroup(name: "Misc", children: [
                     // Slider for number of seconds between mod info update checks (secondsBetweenModFolderChecks in mod_manager_logic.dart).
                     ConstrainedBox(

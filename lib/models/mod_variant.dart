@@ -73,7 +73,7 @@ class ModVariant with _$ModVariant implements Comparable<ModVariant> {
     });
   }
 
-  String get generatedVariantFolderName => generateUniqueVariantFolderName(modInfo);
+  // String get generatedVariantFolderName => generateUniqueVariantFolderName(modInfo);
 
   static String generateUniqueVariantFolderName(ModInfo modInfo) =>
       "${modInfo.name?.fixFilenameForFileSystem().take(100)}-${modInfo.version}";

@@ -47,7 +47,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
     try {
       final installModsResult = await installModFromArchive(
           ArchiveModInstallSource(archiveFile),
-          generateModsFolderPath(ref.read(appSettings).gameDir!)!,
+          ref.read(appSettings.select((s) => s.modsDir))!,
           ref.read(AppState.mods),
           (modsBeingInstalled) => showDialog<List<String>>(
               context: context,
@@ -277,19 +277,25 @@ class ModManagerNotifier extends AsyncNotifier<void> {
   /// If there are multiple mods in the archive, or one or more mods are already installed, the user will be asked which mods to install/delete.
   /// Returns a list of ModInfos and any errors that occurred when installing each.
   /// userInputNeededHandler should return the list of SmolIds to install.
+  /// [modInstallSource] should be an archive file or a folder.
+  /// [destinationFolder] is the game's mods folder.
+  /// [currentMods] is a list of all installed mods.
   Future<List<InstallModResult>> installModFromArchive(
-    ModInstallSource modInstallSource,
-    Directory destinationFolder,
-    List<Mod> currentMods,
-    Future<List<String>?> Function(
-            List<
-                    ({
-                      ExtractedModInfo modInfo,
-                      ModVariant? alreadyExistingVariant
-                    })>
-                modInfosFound)
-        userInputNeededHandler,
-  ) async {
+      ModInstallSource modInstallSource,
+      Directory destinationFolder,
+      List<Mod> currentMods,
+      Future<List<String>?> Function(
+              List<
+                      ({
+                        ExtractedModInfo modInfo,
+                        ModVariant? alreadyExistingVariant
+                      })>
+                  modInfosFound)
+          userInputNeededHandler,
+      {bool dryRun = false}) async {
+    Fimber.i(
+        "Installing mod from archive: ${modInstallSource.entity.path} to ${destinationFolder.path}");
+
     if (!modInstallSource.entity.existsSync()) {
       throw Exception("File does not exist: ${modInstallSource.entity.path}");
     }
@@ -359,13 +365,18 @@ class ModManagerNotifier extends AsyncNotifier<void> {
           .toList();
 
       // Find any mods that are already installed.
-      final modsToDeleteFirst = modInfosToInstall
+      final existingVariantsMatchingOneBeingInstalled = modInfosToInstall
           .map((it) => getModVariantForModInfo(it.modInfo, allModVariants))
           .whereNotNull()
           .toList();
 
-      // If user has selected to, delete the existing mod folders
-      for (var modToDelete in modsToDeleteFirst) {
+      // If the same mod variant is already installed, delete it first.
+      for (var modToDelete in existingVariantsMatchingOneBeingInstalled) {
+        if (dryRun) {
+          Fimber.i(
+              "Dry run: Would delete mod folder ${modToDelete.modFolder} before reinstalling same variant.");
+          continue;
+        }
         try {
           modToDelete.modFolder.deleteSync(recursive: true);
           Fimber.i(
@@ -387,74 +398,212 @@ class ModManagerNotifier extends AsyncNotifier<void> {
       }
     }
 
+    final shouldPersistHighestVersionFolderName =
+        ref.read(appSettings.select((s) => s.folderNamingSetting)) ==
+            FolderNamingSetting.doNotChangeNameForHighestVersion;
+
     // Start installing the mods one by one.
     for (final modInfoToInstall in modInfosToInstall) {
-      final modInfo = modInfoToInstall.modInfo;
-      var existingMod =
-          currentMods.firstWhereOrNull((it) => it.id == modInfo.id);
-
       try {
-        // We need to handle both when mod_info.json is at / and when at /mod/mod/mod/mod_info.json.
-        final generatedDestFolderName =
-            ModVariant.generateUniqueVariantFolderName(modInfo);
-        final modInfoParentFolder =
-            modInfoToInstall.extractedFile.originalFile.parent;
-        final modInfoSiblings = archiveFileList
-            .filter((it) => it.toFile().parent.path == modInfoParentFolder.path)
-            .toList();
-        Fimber.d(
-            "Mod info (${modInfoToInstall.extractedFile.originalFile.path}) siblings: ${modInfoSiblings.map((it) => it).toList()}");
-        final errors = <(Object err, StackTrace st)>[];
+        String targetModFolderName = await setUpNewHighestModVersionFolder(
+            modInfoToInstall.modInfo,
+            modInfoToInstall.extractedFile.originalFile.parent.name,
+            shouldPersistHighestVersionFolderName,
+            currentMods,
+            destinationFolder,
+            dryRun: dryRun);
+        results.add(await installMod(
+          modInfoToInstall,
+          currentMods,
+          archiveFileList,
+          modInstallSource,
+          destinationFolder,
+          targetModFolderName,
+          dryRun: dryRun,
+        ));
+      } catch (e, st) {
+        Fimber.w("Error installing mod: $e", ex: e, stacktrace: st);
+        continue;
+      }
+    }
 
-        final extractedMod = await modInstallSource.createFilesAtDestination(
-          destinationFolder.path,
-          fileFilter: (entry) => entry.file.isFile()
-              ? modInfoSiblings.contains(entry.file.path)
-              : p.isWithin(modInfoParentFolder.path, entry.file.path),
-          pathTransform: (entry) => p.join(
-            generatedDestFolderName,
-            p.relative(entry.file.path, from: modInfoParentFolder.path),
-          ),
-          onError: (e, st) {
-            errors.add((e, st));
-            Fimber.e("Error extracting file: $e", ex: e, stacktrace: st);
-            return false;
-          },
-        );
-        final newModFolder =
-            destinationFolder.resolve(generatedDestFolderName).toDirectory();
+    return results;
+  }
+
+  /// Sets up the folder for the highest version of a mod.
+  ///
+  /// This function determines the appropriate folder name for the highest version of a mod.
+  /// If the `shouldPersistHighestVersionFolderName` flag is true, it ensures that the highest version folder name is persisted.
+  /// It also moves the contents of the highest version folder to a new versioned folder if necessary.
+  ///
+  /// @param modInfo The `ModInfo` object containing information about the mod.
+  /// @param fallbackFolderName The fallback folder name to use if there wasn't a previously existing highest version.
+  /// @param shouldPersistHighestVersionFolderName A boolean flag indicating whether to persist the highest version folder name.
+  /// @param currentMods A list of currently installed mods.
+  /// @param destinationFolder The destination folder where the mod should be installed.
+  /// @param dryRun A boolean flag indicating whether this is a dry run (no actual file operations).
+  /// @returns The name of the target mod folder.
+  Future<String> setUpNewHighestModVersionFolder(
+    ModInfo modInfo,
+    String fallbackFolderName,
+    bool shouldPersistHighestVersionFolderName,
+    List<Mod> currentMods,
+    Directory destinationFolder, {
+    bool dryRun = false,
+  }) async {
+    var targetModFolderName =
+        ModVariant.generateUniqueVariantFolderName(modInfo);
+
+    // If we persist the highest version folder name, do some extra logic.
+    if (shouldPersistHighestVersionFolderName) {
+      final otherVariants = currentMods
+          .where((mod) => mod.id == modInfo.id)
+          .flatMap((mod) => mod.modVariants)
+          .toList();
+      if (otherVariants.isNotEmpty) {
         Fimber.i(
-            "Extracted ${extractedMod.length} files in mod ${modInfo.id} ${modInfo.version} to '$newModFolder'");
+            "Found other versions of ${modInfo.id}: ${otherVariants.map((it) => it.modInfo.version).toList()}");
+        // Check if the new version is higher than any other installed version.
+        var isHigherVersionThanAllExisting = !otherVariants.any(
+            (existingVersion) =>
+                (existingVersion.modInfo.version?.compareTo(modInfo.version) ??
+                    0) >=
+                0);
+        if (isHigherVersionThanAllExisting) {
+          Fimber.i("New version is higher than all existing versions.");
+          final highestVersion = otherVariants
+              .maxByOrNull((it) => it.modInfo.version ?? Version.zero())!;
+          final highestVersionFolder = highestVersion.modFolder;
+          final versionedNameForHighestVersion =
+              ModVariant.generateUniqueVariantFolderName(
+                  highestVersion.modInfo);
 
-        // Ensure we don't end up with two enabled variants.
-        if (existingMod != null && existingMod.hasEnabledVariant) {
-          Fimber.i(
-              "There is already an enabled variant for ${modInfo.id}. Disabling newly installed variant ${modInfo.smolId} so both aren't enabled.");
-          ref
-              .read(AppState.modVariants.notifier)
-              .disableModInfoFile(newModFolder, modInfo.smolId);
+          // Move the contents of the highest version folder to the new, versioned folder.
+          try {
+            Fimber.i(
+                "Moving files from highest version folder ($highestVersionFolder) to new versioned folder ($versionedNameForHighestVersion).");
+            for (final file in highestVersionFolder.listSync(recursive: true)) {
+              if (file.isDirectory()) {
+                continue; // Directories will be created as needed.
+              }
+
+              final relativePath =
+                  file.toFile().relativeTo(highestVersionFolder);
+              final newFilePath = destinationFolder
+                  .resolve(versionedNameForHighestVersion)
+                  .resolve(relativePath)
+                  .toFile();
+
+              Fimber.d("Moving file: ${file.path} to $newFilePath");
+              if (!dryRun) {
+                newFilePath.toFile().parent.createSync(recursive: true);
+                await file.rename(newFilePath.path);
+              }
+            }
+          } catch (e, st) {
+            final msg =
+                "Error moving files from highest version folder ($highestVersionFolder) to new versioned folder ($versionedNameForHighestVersion). Skipping mod ${modInfo.smolId}\n$e";
+            Fimber.w(msg, ex: e, stacktrace: st);
+            rethrow;
+          }
+
+          // Put the new mod into the folder of the previous highest version,
+          // now that it's empty (we moved it into its own versioned folder).
+          targetModFolderName = highestVersionFolder.name;
         }
+      } else {
+        final originalFolderInSource = fallbackFolderName;
+        Fimber.i(
+            "No other versions of ${modInfo.id} found. Using original folder name: $originalFolderInSource.");
+        targetModFolderName = originalFolderInSource;
+      }
+    }
 
-        results.add((
+    return targetModFolderName;
+  }
+
+  Future<InstallModResult> installMod(
+      ExtractedModInfo modInfoToInstall,
+      List<Mod> currentMods,
+      List<String> archiveFileList,
+      ModInstallSource modInstallSource,
+      Directory destinationFolder,
+      String targetModFolderName,
+      {bool dryRun = false}) async {
+    final modInfo = modInfoToInstall.modInfo;
+    var existingMod = currentMods.firstWhereOrNull((it) => it.id == modInfo.id);
+
+    try {
+      // We need to handle both when mod_info.json is at / and when at /mod/mod/mod/mod_info.json.
+      final modInfoParentFolder =
+          modInfoToInstall.extractedFile.originalFile.parent;
+      final modInfoSiblings = archiveFileList
+          .filter((it) => it.toFile().parent.path == modInfoParentFolder.path)
+          .toList();
+      Fimber.d(
+          "Mod info (${modInfoToInstall.extractedFile.originalFile.path}) siblings: ${modInfoSiblings.map((it) => it).toList()}");
+
+      if (dryRun) {
+        Fimber.i(
+            "Dry run: Would extract mod ${modInfo.id} ${modInfo.version} to '$targetModFolderName'");
+        return (
           sourceFileEntity: modInstallSource.entity.toFile(),
           destinationFolder: destinationFolder,
           modInfo: modInfo,
           err: null,
           st: null,
-        ));
-      } catch (e, st) {
-        Fimber.e("Error installing mod: $e", ex: e, stacktrace: st);
-        results.add((
-          sourceFileEntity: modInstallSource.entity.toFile(),
-          destinationFolder: destinationFolder,
-          modInfo: modInfo,
-          err: e,
-          st: st,
-        ));
+        );
       }
-    }
 
-    return results;
+      final errors = <(Object err, StackTrace st)>[];
+
+      final extractedMod = await modInstallSource.createFilesAtDestination(
+        destinationFolder.path,
+        fileFilter: (entry) => entry.file.isFile()
+            ? modInfoSiblings.contains(entry.file.path)
+            : p.isWithin(modInfoParentFolder.path, entry.file.path),
+        pathTransform: (entry) => p.join(
+          targetModFolderName,
+          p.relative(entry.file.path, from: modInfoParentFolder.path),
+        ),
+        onError: (e, st) {
+          errors.add((e, st));
+          Fimber.e("Error extracting file: $e", ex: e, stacktrace: st);
+          return false;
+        },
+      );
+
+      final newModFolder =
+          destinationFolder.resolve(targetModFolderName).toDirectory();
+      Fimber.i(
+          "Extracted ${extractedMod.length} files in mod ${modInfo.id} ${modInfo.version} to '$newModFolder'");
+
+      // Ensure we don't end up with two enabled variants.
+      if (existingMod != null && existingMod.hasEnabledVariant) {
+        Fimber.i(
+            "There is already an enabled variant for ${modInfo.id}. Disabling newly installed variant ${modInfo.smolId} so both aren't enabled.");
+        ref
+            .read(AppState.modVariants.notifier)
+            .disableModInfoFile(newModFolder, modInfo.smolId);
+      }
+
+      return (
+        sourceFileEntity: modInstallSource.entity.toFile(),
+        destinationFolder: destinationFolder,
+        modInfo: modInfo,
+        err: null,
+        st: null,
+      );
+    } catch (e, st) {
+      Fimber.e("Error installing mod: $e", ex: e, stacktrace: st);
+      return (
+        sourceFileEntity: modInstallSource.entity.toFile(),
+        destinationFolder: destinationFolder,
+        modInfo: modInfo,
+        err: e,
+        st: st,
+      );
+    }
   }
 }
 

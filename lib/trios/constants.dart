@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:trios/utils/extensions.dart';
 
 class Constants {
-  static const version = "0.1.11-dev13";
+  static const version = "0.2.0-dev01";
 
   static const appName = "TriOS";
   static const appTitle = "$appName v$version";
@@ -62,7 +62,8 @@ class Constants {
 
   /// Warning: DON'T ADD ANYTHING TO THIS DIRECTLY. It will mutate the shared instance.
   /// Creating a new one each time is expensive, and hardcoding the pattern will hardcode the locale.
-  static DateFormat dateTimeFormat = DateFormat.yMMMMd(Intl.getCurrentLocale()).add_jm();
+  static DateFormat dateTimeFormat =
+      DateFormat.yMMMMd(Intl.getCurrentLocale()).add_jm();
 
   static const modAuthorAliases = [
     ["RustyCabbage", "rubi", "ceruleanpancake"],

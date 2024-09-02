@@ -408,6 +408,14 @@ extension IterableExt<T> on Iterable<T> {
       });
   }
 
+  /// Returns a new list with all elements sorted according to descending
+  /// natural sort order.
+  List<T> sortedDescending() {
+    final list = toList();
+    list.sort((a, b) => -(a as Comparable).compareTo(b));
+    return list;
+  }
+
   bool containsAll(Iterable<T> elements) {
     return elements.every(contains);
   }

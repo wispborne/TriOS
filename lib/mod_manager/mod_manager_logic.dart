@@ -538,7 +538,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
       final modInfoParentFolder =
           modInfoToInstall.extractedFile.originalFile.parent;
       final modInfoSiblings = archiveFileList
-          .filter((it) => it.toFile().parent.path == modInfoParentFolder.path)
+          .where((it) => it.toFile().parent.path == modInfoParentFolder.path)
           .toList();
       Fimber.d(
           "Mod info (${modInfoToInstall.extractedFile.originalFile.path}) siblings: ${modInfoSiblings.map((it) => it).toList()}");
@@ -587,6 +587,12 @@ class ModManagerNotifier extends AsyncNotifier<void> {
             .disableModInfoFile(newModFolder, modInfo.smolId);
       }
 
+      await cleanUpModVariantsBasedOnRetainSetting(
+        modInfo.id,
+        [modInfo.smolId],
+        dryRun: dryRun,
+      );
+
       return (
         sourceFileEntity: modInstallSource.entity.toFile(),
         destinationFolder: destinationFolder,
@@ -604,6 +610,72 @@ class ModManagerNotifier extends AsyncNotifier<void> {
         st: st,
       );
     }
+  }
+
+  Future<List<ModInfo>> cleanUpAllModVariantsBasedOnRetainSetting(
+      {bool dryRun = false}) {
+    final mods = ref.read(AppState.mods);
+    return Future.wait(mods.map((mod) =>
+            cleanUpModVariantsBasedOnRetainSetting(mod.id, [], dryRun: dryRun)))
+        .then((it) => it.flattened.toList());
+  }
+
+  Future<List<ModInfo>> cleanUpModVariantsBasedOnRetainSetting(
+    String modId,
+    List<String> smolIdsToKeep, {
+    bool dryRun = false,
+  }) async {
+    final lastNVersionsSetting =
+        ref.read(appSettings.select((s) => s.keepLastNVersions));
+    if (lastNVersionsSetting == null) {
+      Fimber.i(
+          "keepLastNVersions setting is null (infinite). Not removing old mod variants.");
+      return [];
+    }
+
+    final mod =
+        ref.read(AppState.mods).firstWhereOrNull((it) => it.id == modId);
+    if (mod == null) {
+      Fimber.e("Mod not found: $modId");
+      return [];
+    }
+
+    final variantsSpecificallyKept = mod.modVariants
+        .where((it) => smolIdsToKeep.contains(it.modInfo.smolId))
+        .toList();
+    final theOtherVariants = mod.modVariants
+        .where((it) => !smolIdsToKeep.contains(it.modInfo.smolId))
+        .toList();
+
+    final variantsToKeep = variantsSpecificallyKept
+      ..addAll(theOtherVariants
+          .sortedDescending()
+          .take(lastNVersionsSetting - variantsSpecificallyKept.length));
+    final variantsToDelete =
+        mod.modVariants.where((it) => !variantsToKeep.contains(it)).toList();
+
+    if (variantsToDelete.isEmpty) {
+      Fimber.i("All variants of $modId are being retained.");
+      return [];
+    }
+
+    Fimber.i(
+        "Removing ${variantsToDelete.length} old mod variants for $modId. Keeping ${variantsToKeep.length} variants.");
+    for (final variant in variantsToDelete) {
+      if (dryRun) {
+        Fimber.i("Dry run: Would delete mod folder ${variant.modFolder}");
+        continue;
+      }
+      try {
+        variant.modFolder.deleteSync(recursive: true);
+        Fimber.i("Deleted mod folder: ${variant.modFolder}");
+      } catch (e, st) {
+        Fimber.e("Error deleting mod folder: ${variant.modFolder}",
+            ex: e, stacktrace: st);
+      }
+    }
+
+    return variantsToDelete.map((it) => it.modInfo).toList();
   }
 }
 

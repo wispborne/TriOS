@@ -140,6 +140,8 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
     final changelogUrl =
         Changelogs.getChangelogUrl(localVersionCheck, remoteVersionCheck);
     final isEnabled = modVariant.isEnabled(ref.read(AppState.mods));
+    final modTextOpacity =
+        compatWithGame == GameCompatibility.incompatible ? 0.55 : 1.0;
 
     infoTooltip({required Widget child}) => MovingTooltipWidget(
         position: TooltipPosition.topLeft,
@@ -206,7 +208,8 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                               child: Text(
                                 modInfo.nameOrId,
                                 style: theme.textTheme.labelLarge?.copyWith(
-                                  color: compatTextColor,
+                                  color: compatTextColor
+                                      ?.withOpacity(modTextOpacity),
                                 ),
                                 overflow: TextOverflow.fade,
                                 softWrap: false,

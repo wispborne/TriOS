@@ -252,16 +252,6 @@ extension IterableSorted<E> on Iterable<E> {
   }
 }
 
-extension IterableSortedDescending<E> on Iterable<E> {
-  /// Returns a new list with all elements sorted according to descending
-  /// natural sort order.
-  List<E> sortedDescending() {
-    final list = toList();
-    list.sort((a, b) => -(a as Comparable).compareTo(b));
-    return list;
-  }
-}
-
 extension IterableSortedBy<E> on Iterable<E> {
   /// Returns a new list with all elements sorted according to natural sort
   /// order of the values returned by specified [selector] function.

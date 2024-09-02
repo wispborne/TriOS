@@ -69,6 +69,7 @@ class Settings with _$Settings {
     final ModsGridState? modsGridState,
     @Default(FolderNamingSetting.doNotChangeNameForHighestVersion)
         final FolderNamingSetting folderNamingSetting,
+    final int? keepLastNVersions,
     final bool? allowCrashReporting,
     @Default(false) final bool updateToPrereleases,
     @Default("") final String userId,

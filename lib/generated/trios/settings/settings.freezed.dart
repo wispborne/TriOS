@@ -50,6 +50,7 @@ mixin _$Settings {
   ModsGridState? get modsGridState => throw _privateConstructorUsedError;
   FolderNamingSetting get folderNamingSetting =>
       throw _privateConstructorUsedError;
+  int? get keepLastNVersions => throw _privateConstructorUsedError;
   bool? get allowCrashReporting => throw _privateConstructorUsedError;
   bool get updateToPrereleases => throw _privateConstructorUsedError;
   String get userId =>
@@ -97,6 +98,7 @@ abstract class $SettingsCopyWith<$Res> {
       bool isUpdatesFieldShown,
       ModsGridState? modsGridState,
       FolderNamingSetting folderNamingSetting,
+      int? keepLastNVersions,
       bool? allowCrashReporting,
       bool updateToPrereleases,
       String userId,
@@ -145,6 +147,7 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
     Object? isUpdatesFieldShown = null,
     Object? modsGridState = freezed,
     Object? folderNamingSetting = null,
+    Object? keepLastNVersions = freezed,
     Object? allowCrashReporting = freezed,
     Object? updateToPrereleases = null,
     Object? userId = null,
@@ -247,6 +250,10 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
           ? _value.folderNamingSetting
           : folderNamingSetting // ignore: cast_nullable_to_non_nullable
               as FolderNamingSetting,
+      keepLastNVersions: freezed == keepLastNVersions
+          ? _value.keepLastNVersions
+          : keepLastNVersions // ignore: cast_nullable_to_non_nullable
+              as int?,
       allowCrashReporting: freezed == allowCrashReporting
           ? _value.allowCrashReporting
           : allowCrashReporting // ignore: cast_nullable_to_non_nullable
@@ -324,6 +331,7 @@ abstract class _$$SettingsImplCopyWith<$Res>
       bool isUpdatesFieldShown,
       ModsGridState? modsGridState,
       FolderNamingSetting folderNamingSetting,
+      int? keepLastNVersions,
       bool? allowCrashReporting,
       bool updateToPrereleases,
       String userId,
@@ -372,6 +380,7 @@ class __$$SettingsImplCopyWithImpl<$Res>
     Object? isUpdatesFieldShown = null,
     Object? modsGridState = freezed,
     Object? folderNamingSetting = null,
+    Object? keepLastNVersions = freezed,
     Object? allowCrashReporting = freezed,
     Object? updateToPrereleases = null,
     Object? userId = null,
@@ -474,6 +483,10 @@ class __$$SettingsImplCopyWithImpl<$Res>
           ? _value.folderNamingSetting
           : folderNamingSetting // ignore: cast_nullable_to_non_nullable
               as FolderNamingSetting,
+      keepLastNVersions: freezed == keepLastNVersions
+          ? _value.keepLastNVersions
+          : keepLastNVersions // ignore: cast_nullable_to_non_nullable
+              as int?,
       allowCrashReporting: freezed == allowCrashReporting
           ? _value.allowCrashReporting
           : allowCrashReporting // ignore: cast_nullable_to_non_nullable
@@ -523,6 +536,7 @@ class _$SettingsImpl implements _Settings {
       this.modsGridState,
       this.folderNamingSetting =
           FolderNamingSetting.doNotChangeNameForHighestVersion,
+      this.keepLastNVersions,
       this.allowCrashReporting,
       this.updateToPrereleases = false,
       this.userId = "",
@@ -595,6 +609,8 @@ class _$SettingsImpl implements _Settings {
   @JsonKey()
   final FolderNamingSetting folderNamingSetting;
   @override
+  final int? keepLastNVersions;
+  @override
   final bool? allowCrashReporting;
   @override
   @JsonKey()
@@ -609,7 +625,7 @@ class _$SettingsImpl implements _Settings {
 
   @override
   String toString() {
-    return 'Settings(gameDir: $gameDir, gameCoreDir: $gameCoreDir, modsDir: $modsDir, hasCustomModsDir: $hasCustomModsDir, shouldAutoUpdateOnLaunch: $shouldAutoUpdateOnLaunch, isRulesHotReloadEnabled: $isRulesHotReloadEnabled, windowXPos: $windowXPos, windowYPos: $windowYPos, windowWidth: $windowWidth, windowHeight: $windowHeight, isMaximized: $isMaximized, isMinimized: $isMinimized, defaultTool: $defaultTool, jre23VmparamsFilename: $jre23VmparamsFilename, useJre23: $useJre23, showJre23ConsoleWindow: $showJre23ConsoleWindow, enableDirectLaunch: $enableDirectLaunch, launchSettings: $launchSettings, lastStarsectorVersion: $lastStarsectorVersion, secondsBetweenModFolderChecks: $secondsBetweenModFolderChecks, toastDurationSeconds: $toastDurationSeconds, isUpdatesFieldShown: $isUpdatesFieldShown, modsGridState: $modsGridState, folderNamingSetting: $folderNamingSetting, allowCrashReporting: $allowCrashReporting, updateToPrereleases: $updateToPrereleases, userId: $userId, activeModProfileId: $activeModProfileId)';
+    return 'Settings(gameDir: $gameDir, gameCoreDir: $gameCoreDir, modsDir: $modsDir, hasCustomModsDir: $hasCustomModsDir, shouldAutoUpdateOnLaunch: $shouldAutoUpdateOnLaunch, isRulesHotReloadEnabled: $isRulesHotReloadEnabled, windowXPos: $windowXPos, windowYPos: $windowYPos, windowWidth: $windowWidth, windowHeight: $windowHeight, isMaximized: $isMaximized, isMinimized: $isMinimized, defaultTool: $defaultTool, jre23VmparamsFilename: $jre23VmparamsFilename, useJre23: $useJre23, showJre23ConsoleWindow: $showJre23ConsoleWindow, enableDirectLaunch: $enableDirectLaunch, launchSettings: $launchSettings, lastStarsectorVersion: $lastStarsectorVersion, secondsBetweenModFolderChecks: $secondsBetweenModFolderChecks, toastDurationSeconds: $toastDurationSeconds, isUpdatesFieldShown: $isUpdatesFieldShown, modsGridState: $modsGridState, folderNamingSetting: $folderNamingSetting, keepLastNVersions: $keepLastNVersions, allowCrashReporting: $allowCrashReporting, updateToPrereleases: $updateToPrereleases, userId: $userId, activeModProfileId: $activeModProfileId)';
   }
 
   @override
@@ -664,13 +680,14 @@ class _$SettingsImpl implements _Settings {
                 other.modsGridState == modsGridState) &&
             (identical(other.folderNamingSetting, folderNamingSetting) ||
                 other.folderNamingSetting == folderNamingSetting) &&
+            (identical(other.keepLastNVersions, keepLastNVersions) ||
+                other.keepLastNVersions == keepLastNVersions) &&
             (identical(other.allowCrashReporting, allowCrashReporting) ||
                 other.allowCrashReporting == allowCrashReporting) &&
             (identical(other.updateToPrereleases, updateToPrereleases) ||
                 other.updateToPrereleases == updateToPrereleases) &&
             (identical(other.userId, userId) || other.userId == userId) &&
-            (identical(other.activeModProfileId, activeModProfileId) ||
-                other.activeModProfileId == activeModProfileId));
+            (identical(other.activeModProfileId, activeModProfileId) || other.activeModProfileId == activeModProfileId));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -701,6 +718,7 @@ class _$SettingsImpl implements _Settings {
         isUpdatesFieldShown,
         modsGridState,
         folderNamingSetting,
+        keepLastNVersions,
         allowCrashReporting,
         updateToPrereleases,
         userId,
@@ -749,6 +767,7 @@ abstract class _Settings implements Settings {
       final bool isUpdatesFieldShown,
       final ModsGridState? modsGridState,
       final FolderNamingSetting folderNamingSetting,
+      final int? keepLastNVersions,
       final bool? allowCrashReporting,
       final bool updateToPrereleases,
       final String userId,
@@ -810,6 +829,8 @@ abstract class _Settings implements Settings {
   ModsGridState? get modsGridState;
   @override
   FolderNamingSetting get folderNamingSetting;
+  @override
+  int? get keepLastNVersions;
   @override
   bool? get allowCrashReporting;
   @override

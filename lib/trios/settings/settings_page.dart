@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:toastification/toastification.dart';
+import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/thirdparty/dartx/comparable.dart';
 import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/thirdparty/dartx/string.dart';
@@ -12,6 +13,7 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/util.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
+import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/settings_group.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:trios/widgets/text_with_icon.dart';
@@ -49,6 +51,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     final settings = ref.watch(appSettings);
 
     final theme = Theme.of(context);
+    const leftTextOptionPadding = 4.0;
+
     return Column(
       children: [
         Expanded(
@@ -91,7 +95,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       ),
                     ),
                     Padding(
-                      padding: const EdgeInsets.only(left: 4, top: 8.0),
+                      padding: const EdgeInsets.only(
+                          left: leftTextOptionPadding, top: 8.0),
                       child: Text(
                           "Mods Folder: ${ref.read(appSettings).modsDir?.path}",
                           style: theme.textTheme.bodyMedium?.copyWith(
@@ -203,28 +208,153 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       ],
                     ),
                   ]),
-                  SettingsGroup(name: "Mod Organization", children: [
-                    Tooltip(
-                      message:
-                          "Appends the version to the folder of the LATEST version of each mod."
-                          "\n\nIf disabled, the latest mod won't change folder name, even when you update the mod."
-                          "\nOlder versions of a mod will always have their version number appended in order to tell them apart.",
-                      child: CheckboxWithLabel(
-                          value: ref.watch(appSettings
-                                  .select((s) => s.folderNamingSetting)) ==
-                              FolderNamingSetting.allFoldersVersioned,
-                          onChanged: (value) {
-                            ref.read(appSettings.notifier).update((state) =>
-                                state.copyWith(
-                                    folderNamingSetting: value == true
-                                        ? FolderNamingSetting
-                                            .allFoldersVersioned
-                                        : FolderNamingSetting
-                                            .doNotChangeNameForHighestVersion));
-                          },
-                          label: "Rename mod folders"),
-                    ),
-                  ]),
+                  Builder(builder: (context) {
+                    final lastNVersionsSetting = ref
+                        .watch(appSettings.select((s) => s.keepLastNVersions));
+                    return SettingsGroup(name: "Mod Organization", children: [
+                      Tooltip(
+                        message:
+                            "Appends the version to the folder of the LATEST version of each mod."
+                            "\n\nIf disabled, the latest mod won't change folder name, even when you update the mod."
+                            "\nOlder versions of a mod will always have their version number appended in order to tell them apart.",
+                        child: CheckboxWithLabel(
+                            value: ref.watch(appSettings
+                                    .select((s) => s.folderNamingSetting)) ==
+                                FolderNamingSetting.allFoldersVersioned,
+                            onChanged: (value) {
+                              ref.read(appSettings.notifier).update((state) =>
+                                  state.copyWith(
+                                      folderNamingSetting: value == true
+                                          ? FolderNamingSetting
+                                              .allFoldersVersioned
+                                          : FolderNamingSetting
+                                              .doNotChangeNameForHighestVersion));
+                            },
+                            label: "Rename mod folders"),
+                      ),
+                      const SizedBox(
+                        height: 8,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(
+                            left: leftTextOptionPadding, top: 8),
+                        child: Row(
+                          children: [
+                            Tooltip(
+                              message:
+                                  "If you have multiple versions of a mod, this will keep the last N versions of each mod."
+                                  "\n\nOlder versions will be automatically deleted when a new one is installed.",
+                              child: Row(
+                                children: [
+                                  const Text("Keep last "),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8),
+                                    child: DropdownButton<int>(
+                                      value: lastNVersionsSetting,
+                                      items: [
+                                        const DropdownMenuItem(
+                                            value: null, child: Text(" ∞")),
+                                        for (int i = 1; i <= 10; i++)
+                                          DropdownMenuItem(
+                                              value: i, child: Text(" $i")),
+                                      ],
+                                      onChanged: (value) {
+                                        ref.read(appSettings.notifier).update(
+                                              (state) => state.copyWith(
+                                                  keepLastNVersions: value == -1
+                                                      ? null
+                                                      : value),
+                                            );
+                                      },
+                                      isDense: true,
+                                      // decoration: const InputDecoration(
+                                      //   border: OutlineInputBorder(),
+                                      // ),
+                                    ),
+                                  ),
+                                  Text(
+                                      " version${lastNVersionsSetting == 1 ? "" : "s"} of each mod"),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Disable(
+                        isEnabled: lastNVersionsSetting != null,
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 16),
+                          child: Tooltip(
+                            message: switch (lastNVersionsSetting) {
+                              null => "",
+                              1 =>
+                                "Remove all but the newest version of each mod.",
+                              _ =>
+                                "Remove all but the newest $lastNVersionsSetting versions of each mod."
+                            },
+                            child: ElevatedButton.icon(
+                                icon: const SvgImageIcon(
+                                  "assets/images/icon-shredder.svg",
+                                ),
+                                onPressed: () async {
+                                  final modsThatWouldBeRemoved = await ref
+                                      .read(modManager.notifier)
+                                      .cleanUpAllModVariantsBasedOnRetainSetting(
+                                        dryRun: true,
+                                      );
+
+                                  if (!mounted) return;
+                                  showDialog(
+                                      context: context,
+                                      builder: (context) {
+                                        return AlertDialog(
+                                          title: const Text("Delete mods"),
+                                          content: Column(
+                                            children: [
+                                              Text(
+                                                  "Are you sure you want to delete ${modsThatWouldBeRemoved.length} mods?"),
+                                              const SizedBox(height: 8),
+                                              if (modsThatWouldBeRemoved
+                                                  .isNotEmpty)
+                                                Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: modsThatWouldBeRemoved
+                                                      .map((mod) => Text(
+                                                          "- ${mod.nameOrId} ${mod.version}"))
+                                                      .toList(),
+                                                ),
+                                            ],
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                                onPressed: () {
+                                                  Navigator.of(context).pop();
+                                                },
+                                                child: const Text("Cancel")),
+                                            TextButton(
+                                                onPressed: () async {
+                                                  Navigator.of(context).pop();
+                                                  await ref
+                                                      .read(modManager.notifier)
+                                                      .cleanUpAllModVariantsBasedOnRetainSetting(
+                                                        dryRun: false,
+                                                      );
+                                                  ref.invalidate(
+                                                      AppState.modVariants);
+                                                },
+                                                child: const Text("Delete")),
+                                          ],
+                                        );
+                                      });
+                                },
+                                label: const Text("Clean up...")),
+                          ),
+                        ),
+                      ),
+                    ]);
+                  }),
                   SettingsGroup(name: "Misc", children: [
                     // Slider for number of seconds between mod info update checks (secondsBetweenModFolderChecks in mod_manager_logic.dart).
                     ConstrainedBox(
@@ -235,9 +365,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                           Tooltip(
                             message:
                                 "This sets how often we check if there are new or changed mods in your folder.\nA shorter time means more frequent checks.\nDoes not scan when ${Constants.appName} is in the background.",
-                            child: Text(
-                                "Rescan mod folder every: ${ref.watch(appSettings.select((value) => value.secondsBetweenModFolderChecks))} seconds",
-                                style: theme.textTheme.bodyLarge),
+                            child: Padding(
+                              padding: const EdgeInsets.only(
+                                  left: leftTextOptionPadding),
+                              child: Text(
+                                  "Rescan mod folder every: ${ref.watch(appSettings.select((value) => value.secondsBetweenModFolderChecks))} seconds",
+                                  style: theme.textTheme.bodyLarge),
+                            ),
                           ),
                           Slider(
                             value: ref
@@ -263,7 +397,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       ),
                     ),
                     Padding(
-                      padding: const EdgeInsets.only(top: 16),
+                      padding: const EdgeInsets.only(
+                          left: leftTextOptionPadding, top: 16),
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 400),
                         child: Column(

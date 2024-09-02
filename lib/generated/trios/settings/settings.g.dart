@@ -48,6 +48,7 @@ _$SettingsImpl _$$SettingsImplFromJson(Map<String, dynamic> json) =>
       folderNamingSetting: $enumDecodeNullable(
               _$FolderNamingSettingEnumMap, json['folderNamingSetting']) ??
           FolderNamingSetting.doNotChangeNameForHighestVersion,
+      keepLastNVersions: (json['keepLastNVersions'] as num?)?.toInt(),
       allowCrashReporting: json['allowCrashReporting'] as bool?,
       updateToPrereleases: json['updateToPrereleases'] as bool? ?? false,
       userId: json['userId'] as String? ?? "",
@@ -82,6 +83,7 @@ Map<String, dynamic> _$$SettingsImplToJson(_$SettingsImpl instance) =>
       'modsGridState': instance.modsGridState,
       'folderNamingSetting':
           _$FolderNamingSettingEnumMap[instance.folderNamingSetting]!,
+      'keepLastNVersions': instance.keepLastNVersions,
       'allowCrashReporting': instance.allowCrashReporting,
       'updateToPrereleases': instance.updateToPrereleases,
       'userId': instance.userId,

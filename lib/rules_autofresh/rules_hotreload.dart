@@ -99,7 +99,7 @@ class _RulesHotReloadState extends ConsumerState<RulesHotReload> {
                     : theme.colorScheme.onSurface),
           ],
         ),
-        Text('rules reloader',
+        Text('rules.csv',
             style: theme.textTheme.labelMedium?.copyWith(
                 color: widget.isEnabled
                     ? theme.colorScheme.primary

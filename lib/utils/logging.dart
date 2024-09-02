@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
-
 // import 'package:platform_info/platform_info.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:trios/utils/extensions.dart';
@@ -218,18 +217,16 @@ class Fimber {
     }
 
     if (_allowSentryReporting) {
-      if (message.contains(" overflowed by ")) {
-        // Don't report overflow errors.
-        return;
-      }
-
       Sentry.captureException(ex, stackTrace: stacktrace);
     }
   }
 }
 
+final lastErrorMessagesAndTimestamps = <String, DateTime>{};
+
 SentryFlutterOptions configureSentry(
     SentryFlutterOptions options, Settings? settings) {
+  // I'm lazy, please don't steal.
   options.dsn =
       'https://490328260deec1632d3833a7b5439dd5@o4507579573600256.ingest.us.sentry.io/4507579574648832';
 
@@ -244,6 +241,34 @@ SentryFlutterOptions configureSentry(
     ..enableWindowMetricBreadcrumbs = false;
 
   options.beforeSend = (event, hint) {
+    final message =
+        event.message?.formatted ?? event.exceptions?.firstOrNull?.value;
+    const debounceMins = 10;
+
+    if (message != null) {
+      // Don't report overflow errors.
+      if (message.contains(" overflowed by ")) {
+        return null;
+      }
+
+      // Don't report the same error message more than once every debounceMins minutes.
+      if (lastErrorMessagesAndTimestamps.containsKey(message)) {
+        final lastTime = lastErrorMessagesAndTimestamps[message];
+        if (lastTime != null &&
+            DateTime.now().difference(lastTime).inMinutes < debounceMins) {
+          Fimber.d(
+              "Suppressing error message already sent in the last $debounceMins mins: $message");
+          return null;
+        }
+      }
+
+      lastErrorMessagesAndTimestamps[message] = DateTime.now();
+      // Remove old error messages.
+      lastErrorMessagesAndTimestamps.removeWhere((key, value) =>
+          DateTime.now().difference(value).inMinutes > (debounceMins + 1));
+    }
+
+    // Strip out PII as much as possible.
     return event
         .copyWith(
       serverName: "",

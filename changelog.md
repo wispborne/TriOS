@@ -1,8 +1,8 @@
 # 0.2.0
 - Added
-  - Retain last N versions of a mod.
+  - **Retain last N versions** of a mod.
     - Keep only the latest version of a mod by setting this to 1.
-  - Option to keep the same folder name when updating a mod.
+  - Option to keep the **same folder name when updating** a mod.
     - This is the new default. It is useful for modders who create a dependency on a folder path and don't want that path to change. 
 - Fixed
   - Self-update failed if there were any non-ASCII characters in the TriOS or temp folder paths.
@@ -10,6 +10,9 @@
     - Windows, you so crazy.
 - Changed
   - Incompatible mods are now dimmed on the Dashboard.
+  - Tab bar cleanup. More compact, **icons won't be cut off** if narrow, Settings moved again.
+  - Settings page always shows the scrollbar to make it more obvious that there are more settings.
+  - Added timer to error logging so duplicate errors don't eat my quota.
 
 # 0.1.10
 - Fixed

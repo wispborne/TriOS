@@ -18,9 +18,11 @@ import 'package:trios/utils/logging.dart';
 import 'package:trios/vram_estimator/vram_estimator.dart';
 import 'package:trios/widgets/blur.dart';
 import 'package:trios/widgets/changelog_viewer.dart';
+import 'package:trios/widgets/lazy_indexed_stack.dart';
 import 'package:trios/widgets/restartable_app.dart';
 import 'package:trios/widgets/self_update_toast.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
+import 'package:trios/widgets/tab_button.dart';
 import 'package:trios/widgets/trios_app_icon.dart';
 
 import 'about/about_page.dart';
@@ -42,7 +44,7 @@ class AppShell extends ConsumerStatefulWidget {
 
 class _AppShellState extends ConsumerState<AppShell>
     with SingleTickerProviderStateMixin {
-  late TabController tabController;
+  late TriOSTools _currentPage;
 
   final tabToolMap = {
     0: TriOSTools.dashboard,
@@ -55,20 +57,19 @@ class _AppShellState extends ConsumerState<AppShell>
     6: TriOSTools.settings,
   };
 
+  void _changeTab(TriOSTools tab) {
+    setState(() {
+      _currentPage = tab;
+    });
+
+    ref
+        .read(appSettings.notifier)
+        .update((state) => state.copyWith(defaultTool: _currentPage));
+  }
+
   @override
   void initState() {
     super.initState();
-    tabController = TabController(
-      length: tabToolMap.length,
-      vsync: this,
-      animationDuration: const Duration(milliseconds: 0),
-    );
-    tabController.addListener(() {
-      if (tabToolMap[tabController.index] != null) {
-        ref.read(appSettings.notifier).update((state) =>
-            state.copyWith(defaultTool: tabToolMap[tabController.index]!));
-      }
-    });
 
     var defaultTool = TriOSTools.dashboard;
     try {
@@ -79,8 +80,7 @@ class _AppShellState extends ConsumerState<AppShell>
     }
 // Set the current tab to the index of the previously selected tool.
     try {
-      tabController.index = tabToolMap.keys
-          .firstWhere((k) => tabToolMap[k] == defaultTool, orElse: () => 0);
+      _changeTab(defaultTool);
     } catch (e) {
       Fimber.e("Error setting default tool: $e");
     }
@@ -221,12 +221,6 @@ class _AppShellState extends ConsumerState<AppShell>
                         child: TriOSAppIcon(),
                       ),
                     ),
-// .animate(onComplete: (c) => c.repeat(reverse: true))
-// .fadeIn(duration: const Duration(seconds: 5))
-// .then()
-// .fadeOut(
-//   duration: const Duration(seconds: 5),
-// ),
                     TriOSAppIcon(),
                   ]),
                 ),
@@ -245,97 +239,104 @@ class _AppShellState extends ConsumerState<AppShell>
                                 ?.copyWith(fontSize: 12))
                       ])),
               const Launcher(),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 16, right: 16),
-                  child: Scrollbar(
-                    controller: scrollController,
-                    thumbVisibility: true,
-                    thickness: 10,
-                    scrollbarOrientation: ScrollbarOrientation.bottom,
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      controller: scrollController,
-                      child: TabBar(
-                        controller: tabController,
-                        isScrollable: true,
-
-                        // Makes tabs fit to content width instead of all same.
-                        tabAlignment: TabAlignment.start,
-                        tabs: [
-                          // TODO IF YOU CHANGE THESE, UPDATE tabToolMap!
-                          const Tooltip(
-                              message: "Dashboard",
-                              child: Tab(
-                                  text: "Dash", icon: Icon(Icons.dashboard))),
-                          Tab(
-                              text: "Mods",
-                              icon: Transform.rotate(
-                                  angle: 0.7,
-                                  child: const SvgImageIcon(
-                                    "assets/images/icon-onslaught.svg",
-                                    height: 23,
-                                  ))),
-                          Tab(
-                              text: "Profiles",
-                              icon: Tooltip(
-                                message: "Mod Profiles (unfinished)",
-                                child: Transform.rotate(
-                                    angle: -0.7,
-                                    child: const SvgImageIcon(
-                                      "assets/images/icon-onslaught.svg",
-                                      height: 23,
-                                    )),
-                              )),
-                          const Tab(
-                              text: "VRAM",
-                              icon: Tooltip(
-                                  message: "VRAM Estimator (unfinished)",
-                                  child: SvgImageIcon(
-                                      "assets/images/icon-weight.svg"))),
-                          const Tab(
-                              text: "Logs",
-                              icon: Tooltip(
-                                message: "$chipperTitle Log Viewer",
-                                child: ImageIcon(AssetImage(
-                                    "assets/images/chipper/icon.png")),
-                              ),
-                              iconMargin: EdgeInsets.zero),
-                          // ConditionalWrap(
-                          //     condition: !Platform.isWindows,
-                          //     wrapper: (child) => Disable(
-                          //         isEnabled: Platform.isWindows,
-                          //         child: child),
-                          //     child: const Tab(
-                          //         text: "JREs",
-                          //         icon: Tooltip(
-                          //             message: "JRE Manager",
-                          //             child: Icon(Icons.coffee)))),
-                          const Tab(
-                            text: "Portraits",
-                            icon: Tooltip(
-                                message: "Portrait Viewer (unfinished)",
-                                child: SvgImageIcon(
-                                    "assets/images/icon-account-box-outline.svg")),
-                          ),
-                          const Tab(
-                              text: null,
-                              icon: Tooltip(
-                                  message: "Settings",
-                                  child: Padding(
-                                    padding: EdgeInsets.only(bottom: 2),
-                                    child: Icon(Icons.settings),
-                                  )),
-                              iconMargin: EdgeInsets.zero),
-                        ],
-                      ),
+              Padding(
+                padding: const EdgeInsets.only(left: 16, right: 0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Column(
+                      children: [
+                        Tooltip(
+                            message: "Dashboard",
+                            child: TabButton(
+                              text: "Dash",
+                              icon: const Icon(Icons.dashboard),
+                              isSelected: _currentPage == TriOSTools.dashboard,
+                              onPressed: () => _changeTab(TriOSTools.dashboard),
+                            )),
+                      ],
                     ),
-                  ),
+                    TabButton(
+                      text: "Mods",
+                      icon: Transform.rotate(
+                          angle: 0.7,
+                          child: const SvgImageIcon(
+                            "assets/images/icon-onslaught.svg",
+                            height: 23,
+                          )),
+                      isSelected: _currentPage == TriOSTools.modManager,
+                      onPressed: () => _changeTab(TriOSTools.modManager),
+                    ),
+                    TabButton(
+                      text: "Profiles",
+                      icon: Tooltip(
+                        message: "Mod Profiles (unfinished)",
+                        child: Transform.rotate(
+                            angle: -0.7,
+                            child: const SvgImageIcon(
+                              "assets/images/icon-onslaught.svg",
+                              height: 23,
+                            )),
+                      ),
+                      isSelected: _currentPage == TriOSTools.modProfiles,
+                      onPressed: () => _changeTab(TriOSTools.modProfiles),
+                    ),
+                    TabButton(
+                      text: "VRAM",
+                      icon: const Tooltip(
+                          message: "VRAM Estimator (unfinished)",
+                          child: SvgImageIcon("assets/images/icon-weight.svg")),
+                      isSelected: _currentPage == TriOSTools.vramEstimator,
+                      onPressed: () => _changeTab(TriOSTools.vramEstimator),
+                    ),
+                    TabButton(
+                      text: "Logs",
+                      icon: const Tooltip(
+                        message: "$chipperTitle Log Viewer",
+                        child: ImageIcon(
+                            AssetImage("assets/images/chipper/icon.png")),
+                      ),
+                      isSelected: _currentPage == TriOSTools.chipper,
+                      onPressed: () => _changeTab(TriOSTools.chipper),
+                    ),
+                    // ConditionalWrap(
+                    //     condition: !Platform.isWindows,
+                    //     wrapper: (child) => Disable(
+                    //         isEnabled: Platform.isWindows,
+                    //         child: child),
+                    //     child: const Tab(
+                    //         text: "JREs",
+                    //         icon: Tooltip(
+                    //             message: "JRE Manager",
+                    //             child: Icon(Icons.coffee)))),
+                    TabButton(
+                      text: "Portraits",
+                      icon: const Tooltip(
+                        message: "Portrait Viewer (unfinished)",
+                        child: SvgImageIcon(
+                            "assets/images/icon-account-box-outline.svg"),
+                      ),
+                      isSelected: _currentPage == TriOSTools.portraits,
+                      onPressed: () => _changeTab(TriOSTools.portraits),
+                    ),
+                    // const Tab(
+                    //     text: null,
+                    //     icon: SizedBox(
+                    //       width: 1,
+                    //     ),
+                    //     iconMargin: EdgeInsets.zero),
+                  ],
                 ),
               ),
-              // Spacer(),
-              FilePermissionShield(ref: ref),
-              // const Spacer(),
+              SizedBox(
+                width: 1,
+                height: 24,
+                child: Container(
+                  color:
+                      Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                ),
+              ),
+              const SizedBox(width: 8),
               Builder(builder: (context) {
                 var gameFolderPath =
                     ref.watch(AppState.gameFolder).valueOrNull?.path;
@@ -353,19 +354,9 @@ class _AppShellState extends ConsumerState<AppShell>
                         ),
                       );
               }),
-              Tooltip(
-                message: "View Changelog",
-                child: IconButton(
-                  icon: const SvgImageIcon(
-                      "assets/images/icon-bullhorn-variant.svg"),
-                  color: Theme.of(context).iconTheme.color,
-                  onPressed: () => showTriOSChangelogDialog(context,
-                      showUnreleasedVersions: false),
-                ),
-              ),
               if (logFilePath != null)
                 Tooltip(
-                  message: "Open log file",
+                  message: "${Constants.appName} log file",
                   child: IconButton(
                     icon:
                         const SvgImageIcon("assets/images/icon-file-debug.svg"),
@@ -375,6 +366,41 @@ class _AppShellState extends ConsumerState<AppShell>
                     },
                   ),
                 ),
+              Tooltip(
+                  message: "Settings",
+                  child: IconButton(
+                      // text: "Settings",
+                      onPressed: () {
+                        _changeTab(TriOSTools.settings);
+                      },
+                      color: _currentPage == TriOSTools.settings
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(context).iconTheme.color,
+                      isSelected: _currentPage == TriOSTools.settings,
+                      icon: const Icon(Icons.settings))),
+              const SizedBox(
+                width: 4,
+              ),
+              SizedBox(
+                width: 1,
+                height: 36,
+                child: Container(
+                  color:
+                      Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                ),
+              ),
+              const Spacer(),
+              FilePermissionShield(ref: ref),
+              Tooltip(
+                message: "${Constants.appName} Changelog",
+                child: IconButton(
+                  icon: const SvgImageIcon(
+                      "assets/images/icon-bullhorn-variant.svg"),
+                  color: Theme.of(context).iconTheme.color,
+                  onPressed: () => showTriOSChangelogDialog(context,
+                      showUnreleasedVersions: false),
+                ),
+              ),
               Tooltip(
                 message: "About",
                 child: IconButton(
@@ -427,9 +453,10 @@ class _AppShellState extends ConsumerState<AppShell>
                       padding: const EdgeInsets.all(0),
                       child: Stack(
                         children: [
-                          TabBarView(
-                            controller: tabController,
-                            physics: const NeverScrollableScrollPhysics(),
+                          LazyIndexedStack(
+                            index: tabToolMap.values
+                                .toList()
+                                .indexOf(_currentPage),
                             children: tabChildren,
                           ),
                           const Positioned(
@@ -446,8 +473,7 @@ class _AppShellState extends ConsumerState<AppShell>
               ],
             ),
           ),
-          onDroppedLog: (_) =>
-              tabController.animateTo(TriOSTools.chipper.index),
+          onDroppedLog: (_) => _changeTab(TriOSTools.chipper),
         ));
   }
 }

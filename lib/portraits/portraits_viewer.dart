@@ -72,10 +72,10 @@ class _ImageGridScreenState extends ConsumerState<ImageGridScreen>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    ref.listen(AppState.modVariants, (prev, after) {
-      final modsAdded = (after.valueOrNull ?? []) - (prev?.valueOrNull ?? []);
-      _loadImages(modsAdded);
-    });
+    // ref.listen(AppState.modVariants, (prev, after) {
+    //   final modsAdded = (after.valueOrNull ?? []) - (prev?.valueOrNull ?? []);
+    //   _loadImages(modsAdded);
+    // });
 
     final images = ref.watch(imageListProvider);
     final List<({Portrait image, ModVariant variant})> modsAndImages = images

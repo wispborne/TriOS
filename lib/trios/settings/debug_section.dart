@@ -151,6 +151,15 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
             child: const Text('Wipe Settings'),
           ),
         ),
+        Padding(
+          padding: const EdgeInsets.only(top: 16),
+          child: ElevatedButton(
+            onPressed: () {
+              throw Exception("This is a test error");
+            },
+            child: const Text('Throw error'),
+          ),
+        ),
         SizedBox(
           width: 200,
           child: Column(

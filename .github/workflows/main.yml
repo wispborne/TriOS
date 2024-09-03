@@ -52,7 +52,7 @@ jobs:
           prerelease: '${{ env.IS_PRERELEASE }}'
 
       - name: Download Artifacts
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v4.1.7
         with:
           name: uploads
 

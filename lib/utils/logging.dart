@@ -10,6 +10,7 @@ import 'package:path_provider/path_provider.dart';
 // import 'package:platform_info/platform_info.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/platform_specific.dart';
 import 'package:trios/utils/pretty_printer_custom.dart';
 
 import '../trios/constants.dart';
@@ -110,7 +111,7 @@ configureLogging({
                   file is File &&
                   file.extension == ".log" &&
                   file.nameWithExtension != logFileName)
-              .forEach((FileSystemEntity file) => file.deleteSync());
+              .forEach((FileSystemEntity file) => file.moveToTrash());
         } catch (e) {
           Fimber.e("Error cleaning up old log files.", ex: e);
         }

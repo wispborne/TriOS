@@ -90,6 +90,7 @@ dependencies:
       path: plugins/window_size
       ref: 5c51870ced62a00e809ba4b81a846a052d241c9f
   win32_registry: ^1.1.3
+  win32: ^5.5.4
   # Security
   crypto: ^3.0.3
   # State Management

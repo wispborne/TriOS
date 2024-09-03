@@ -20,6 +20,7 @@ import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/utils/platform_specific.dart';
 import 'package:trios/utils/util.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/tooltip_frame.dart';
@@ -378,7 +379,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
           continue;
         }
         try {
-          modToDelete.modFolder.deleteSync(recursive: true);
+          modToDelete.modFolder.moveToTrash();
           Fimber.i(
               "Deleted mod folder before reinstalling same variant: ${modToDelete.modFolder}");
         } catch (e, st) {
@@ -667,7 +668,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
         continue;
       }
       try {
-        variant.modFolder.deleteSync(recursive: true);
+        variant.modFolder.moveToTrash();
         Fimber.i("Deleted mod folder: ${variant.modFolder}");
       } catch (e, st) {
         Fimber.e("Error deleting mod folder: ${variant.modFolder}",

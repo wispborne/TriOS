@@ -12,6 +12,7 @@
   - Incompatible mods are now dimmed on the Dashboard.
   - Tab bar cleanup. More compact, **icons won't be cut off** if narrow, Settings moved again.
   - Settings page always shows the scrollbar to make it more obvious that there are more settings.
+  - Deleting a mod now sends it to the recycling bin/trash, rather than permanently deleting it.
   - Added timer to error logging so duplicate errors don't eat my quota.
 
 # 0.1.10

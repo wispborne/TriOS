@@ -12,6 +12,7 @@ import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/download_manager/download_manager.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/platform_specific.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../models/mod.dart';
@@ -148,7 +149,7 @@ MenuItem menuItemDeleteFolder(Mod mod, BuildContext context, WidgetRef ref) {
   Future<void> deleteFolder(String folderPath) async {
     final directory = Directory(folderPath);
     if (await directory.exists()) {
-      await directory.delete(recursive: true);
+      directory.moveToTrash();
     }
     ref.read(AppState.modVariants.notifier).reloadModVariants();
   }

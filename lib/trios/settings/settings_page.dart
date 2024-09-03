@@ -225,9 +225,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       return SettingsGroup(name: "Mod Organization", children: [
                         Tooltip(
                           message:
-                              "Appends the version to the folder of the LATEST version of each mod."
+                              "If enabled, TriOS will always add the version number to the folder name when installing a mod."
+                              "\nFor example; LazyLib-1.8b, LazyLib-1.8, LazyLib-1.7."
                               "\n\nIf disabled, the latest mod won't change folder name, even when you update the mod."
-                              "\nOlder versions of a mod will always have their version number appended in order to tell them apart.",
+                              "\nOlder versions of a mod will still include the version number in order to tell them apart."
+                              "\nFor example; LazyLib, LazyLib-1.8, LazyLib-1.7.",
                           child: CheckboxWithLabel(
                               value: ref.watch(appSettings
                                       .select((s) => s.folderNamingSetting)) ==
@@ -241,7 +243,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                             : FolderNamingSetting
                                                 .doNotChangeNameForHighestVersion));
                               },
-                              label: "Rename mod folders"),
+                              label: "Rename all mod folders"),
                         ),
                         const SizedBox(
                           height: 8,

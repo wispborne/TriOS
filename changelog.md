@@ -1,3 +1,7 @@
+# 0.2.1
+- Added
+  - Self-update for Linux and MacOS.
+
 # 0.2.0
 - Added
   - **Retain last N versions** of a mod.

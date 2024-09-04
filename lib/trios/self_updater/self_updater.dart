@@ -94,19 +94,29 @@ class SelfUpdater extends AsyncNotifier<DownloadProgress?> {
               : updateWorkingDir;
 
       // Windows has a special in-place update in order to avoid UTF8 issues with running a batch script.
-      if (currentPlatform == TargetPlatform.windows) {
+      // Wait, I can just use this on Linux, too, and avoid the stupid non-working bash script.
+      if (true) {
         try {
-          await replaceSelfOnWindows(directoryWithNewVersionFiles);
+          await replaceSelf(directoryWithNewVersionFiles);
         } catch (error) {
           Fimber.w('Error self-updating something on Windows. YOLOing.',
               ex: error);
         }
-        Process.start(
-          'cmd',
-          ['/c', "start", "", Platform.resolvedExecutable],
-          runInShell: true,
-          mode: ProcessStartMode.detached,
-        );
+        if (currentPlatform == TargetPlatform.windows) {
+          Process.start(
+            'cmd',
+            ['/c', "start", "", Platform.resolvedExecutable],
+            runInShell: true,
+            mode: ProcessStartMode.detached,
+          );
+        } else {
+          Process.start(
+            'nohup',
+            [Platform.resolvedExecutable],
+            runInShell: true,
+            mode: ProcessStartMode.detached,
+          );
+        }
         if (exitSelfAfter) {
           await Future.delayed(const Duration(seconds: 1));
           Fimber.i(
@@ -135,8 +145,7 @@ class SelfUpdater extends AsyncNotifier<DownloadProgress?> {
 
   /// Replaces all files in the current working directory with files that have the same relative path
   /// in the given source directory.
-  /// Only tested on Windows!
-  Future<void> replaceSelfOnWindows(Directory sourceDirectory) async {
+  Future<void> replaceSelf(Directory sourceDirectory) async {
     final allNewFiles = sourceDirectory.listSync(recursive: true);
     final currentDir = currentDirectory;
     final jobs = <Future<void>>[];
@@ -147,7 +156,7 @@ class SelfUpdater extends AsyncNotifier<DownloadProgress?> {
             newFile.toFile().relativeTo(sourceDirectory).toFile();
         final fileToReplace =
             File(p.join(currentDir.path, newFileRelative.path));
-        jobs.add(updateLockedWindowsFileInPlace(
+        jobs.add(updateLockedFileInPlace(
             newFile.toFile(), fileToReplace, oldFileSuffix));
       }
     }
@@ -187,7 +196,7 @@ class SelfUpdater extends AsyncNotifier<DownloadProgress?> {
   ///
   /// Returns:
   /// - A [Future] that completes when the operation is done.
-  Future<void> updateLockedWindowsFileInPlace(
+  Future<void> updateLockedFileInPlace(
     File sourceFile,
     File destFile,
     String oldFileSuffix,
@@ -204,13 +213,14 @@ class SelfUpdater extends AsyncNotifier<DownloadProgress?> {
       // Nothing to replace, just copy the file.
       Fimber.d("Copying new file: ${sourceFile.path} to ${destFile.path}");
       await sourceFile.copy(destFile.path);
-    } else if (sourceExt == ".so") {
+    } else if (currentPlatform == TargetPlatform.windows && sourceExt == ".so") {
       // Can't rename .so files on Windows, but we can replace their content.
       Fimber.d(
           "Replacing contents of .so file: ${destFile.path} with that of ${sourceFile.path}");
       await destFile.writeAsBytes(await sourceFile.readAsBytes());
     } else {
       // Can't replace content of other locked files, but can rename them.
+      // Can always rename on Linux.
       var oldFile = File(destFile.path + oldFileSuffix);
       Fimber.d("Renaming locked file: ${destFile.path} to ${oldFile.path}, "
           "and copying new file: ${sourceFile.path} to ${destFile.path}");
@@ -230,28 +240,15 @@ class SelfUpdater extends AsyncNotifier<DownloadProgress?> {
     // Run the update script.
     // Do NOT wait for it. We want to exit immediately after starting the update script.
     runZonedGuarded(() async {
-      if (Platform.isWindows) {
-        Fimber.i(
-            'Running update script: ${updateScriptFile.absolute.path} (exists? ${updateScriptFile.existsSync()})');
-        await Process.start(
-          'powershell',
-          [
-            'Get-Content',
-            "'${updateScriptFile.absolute.normalize.path}'",
-            '-Encoding UTF8',
-            '| Invoke-Expression',
-          ],
-          runInShell: true,
-          mode: ProcessStartMode.detached,
-        );
-      } else if (currentPlatform == TargetPlatform.linux) {
+      if (currentPlatform == TargetPlatform.linux) {
         Fimber.i("Making ${updateScriptFile.path} executable first.");
         Process.runSync(
             'chmod', ['+x', updateScriptFile.absolute.normalize.path],
             runInShell: true);
         Fimber.i(
             'Running update script: ${updateScriptFile.absolute.path} (exists? ${updateScriptFile.existsSync()})');
-        await OpenFilex.open(updateScriptFile.parent.path, linuxDesktopName: getLinuxDesktopEnvironment().lowerCase());
+        await OpenFilex.open(updateScriptFile.parent.path,
+            linuxDesktopName: getLinuxDesktopEnvironment().lowerCase());
         await Process.start(updateScriptFile.absolute.normalize.path, ["&"],
             runInShell: true, mode: ProcessStartMode.detached);
       } else {

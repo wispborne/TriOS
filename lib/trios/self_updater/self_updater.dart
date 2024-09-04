@@ -99,7 +99,7 @@ class SelfUpdater extends AsyncNotifier<DownloadProgress?> {
         try {
           await replaceSelf(directoryWithNewVersionFiles);
         } catch (error) {
-          Fimber.w('Error self-updating something on Windows. YOLOing.',
+          Fimber.w('Error self-updating something. YOLOing.',
               ex: error);
         }
         if (currentPlatform == TargetPlatform.windows) {
@@ -109,10 +109,17 @@ class SelfUpdater extends AsyncNotifier<DownloadProgress?> {
             runInShell: true,
             mode: ProcessStartMode.detached,
           );
-        } else {
+        } else if (currentPlatform == TargetPlatform.linux) {
           await Process.start(
             'nohup',
             [Platform.resolvedExecutable],
+            runInShell: true,
+            mode: ProcessStartMode.detached,
+          );
+        } else if (currentPlatform == TargetPlatform.macOS) {
+          await Process.start(
+            'open',
+            ['-n', Platform.resolvedExecutable.toFile().parent.parent.path],
             runInShell: true,
             mode: ProcessStartMode.detached,
           );
@@ -146,8 +153,8 @@ class SelfUpdater extends AsyncNotifier<DownloadProgress?> {
   /// Replaces all files in the current working directory with files that have the same relative path
   /// in the given source directory.
   Future<void> replaceSelf(Directory sourceDirectory) async {
-    final allNewFiles = sourceDirectory.listSync(recursive: true);
-    final currentDir = currentDirectory;
+    final allNewFiles = sourceDirectory.listSync(recursive: true, followLinks: true);
+    final currentDir = currentPlatform != TargetPlatform.macOS ? currentDirectory : currentDirectory.parent.parent;
     final jobs = <Future<void>>[];
 
     for (final newFile in allNewFiles) {
@@ -182,7 +189,7 @@ class SelfUpdater extends AsyncNotifier<DownloadProgress?> {
     Fimber.i('Cleaned up ${filesInCurrentDir.length} old update files.');
   }
 
-  /// Updates or replaces a locked Windows file in place.
+  /// Updates or replaces a locked file in place.
   ///
   /// Depending on the destination file's existence and type:
   /// - If the file doesn't exist, it copies the source file to the destination.

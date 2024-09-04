@@ -103,14 +103,14 @@ class SelfUpdater extends AsyncNotifier<DownloadProgress?> {
               ex: error);
         }
         if (currentPlatform == TargetPlatform.windows) {
-          Process.start(
+          await Process.start(
             'cmd',
             ['/c', "start", "", Platform.resolvedExecutable],
             runInShell: true,
             mode: ProcessStartMode.detached,
           );
         } else {
-          Process.start(
+          await Process.start(
             'nohup',
             [Platform.resolvedExecutable],
             runInShell: true,
@@ -118,7 +118,7 @@ class SelfUpdater extends AsyncNotifier<DownloadProgress?> {
           );
         }
         if (exitSelfAfter) {
-          await Future.delayed(const Duration(seconds: 1));
+          await Future.delayed(const Duration(milliseconds: 500));
           Fimber.i(
               'Exiting old version of self, new should have already started.');
           exit(0);

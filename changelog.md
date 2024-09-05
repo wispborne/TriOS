@@ -1,6 +1,8 @@
 # 0.2.1
 - Added
-  - Self-update for Linux and MacOS.
+  - **Self-update for Linux and MacOS**.
+    - MacOS doesn't automatically restart after updating.
+  - When running as Admin, shows a shield icon in the toolbar notifying you that drag'n'drop won't work.
 
 # 0.2.0
 - Added

@@ -103,12 +103,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       Padding(
                         padding: const EdgeInsets.only(
                             left: leftTextOptionPadding, top: 8.0),
-                        child: Text(
-                            "Mods Folder: ${ref.read(appSettings).modsDir?.path}",
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                                fontFeatures: [
-                                  const FontFeature.tabularFigures()
-                                ])),
+                        child: SelectableText(
+                          "Mods Folder: ${ref.read(appSettings).modsDir?.path}",
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                              fontFeatures: [
+                                const FontFeature.tabularFigures()
+                              ]),
+                        ),
                       ),
                     ]),
                     SettingsGroup(

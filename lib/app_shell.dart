@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,6 +17,7 @@ import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/trios/settings/settings_page.dart';
 import 'package:trios/trios/toasts/toast_manager.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/utils/platform_specific.dart';
 import 'package:trios/vram_estimator/vram_estimator.dart';
 import 'package:trios/widgets/blur.dart';
 import 'package:trios/widgets/changelog_viewer.dart';
@@ -389,8 +392,13 @@ class _AppShellState extends ConsumerState<AppShell>
                       Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
                 ),
               ),
+              const SizedBox(
+                width: 8,
+              ),
               const Spacer(),
               FilePermissionShield(ref: ref),
+              const AdminPermissionShield(),
+              const Spacer(),
               Tooltip(
                 message: "${Constants.appName} Changelog",
                 child: IconButton(
@@ -523,10 +531,35 @@ class FilePermissionShield extends StatelessWidget {
           ),
           Text("Check Permissions",
               style: TextStyle(
-                  color: ThemeManager.vanillaWarningColor,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold)),
+                color: ThemeManager.vanillaWarningColor,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              )),
         ],
+      ),
+    );
+  }
+}
+
+class AdminPermissionShield extends StatelessWidget {
+  const AdminPermissionShield({
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    bool test = false;
+    // Check if the app is running on Windows and as administrator
+    if ((!Platform.isWindows || !windowsIsAdmin()) && !test) {
+      return const SizedBox(); // Don't show anything if not on Windows or not Admin
+    }
+
+    return Tooltip(
+      message:
+          "Running as Administrator.\nDrag'n'drop will not work due to Windows limitations.",
+      child: SvgImageIcon(
+        "assets/images/icon-admin-shield-half.svg",
+        color: Theme.of(context).iconTheme.color,
       ),
     );
   }

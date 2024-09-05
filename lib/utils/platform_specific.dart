@@ -21,6 +21,45 @@ extension PlatformFileEntityExt on FileSystemEntity {
   }
 }
 
+base class TOKEN_ELEVATION extends Struct {
+  @Uint32()
+  external int elevation;
+}
+
+/// Check if the current process has admin privileges (Windows-specific)
+bool windowsIsAdmin() {
+  const int TokenElevation = 20; // TokenElevation value
+  final tokenHandle = calloc<HANDLE>();
+  final elevation =
+      calloc<TOKEN_ELEVATION>(); // Allocate memory for TOKEN_ELEVATION struct
+  final returnLength = calloc<DWORD>();
+
+  try {
+    final processHandle = GetCurrentProcess();
+
+    // Open the process token with TOKEN_QUERY access
+    if (OpenProcessToken(processHandle, TOKEN_QUERY, tokenHandle) == 0) {
+      return false; // Failed to open token
+    }
+
+    // Get token elevation information
+    if (GetTokenInformation(tokenHandle.value, TokenElevation, elevation,
+            sizeOf<TOKEN_ELEVATION>(), returnLength) ==
+        0) {
+      return false; // Failed to get token information
+    }
+
+    // Check if the token is elevated
+    return elevation.ref.elevation !=
+        0; // Returns true if the token has admin privileges
+  } finally {
+    // Free allocated memory
+    free(tokenHandle);
+    free(elevation);
+    free(returnLength);
+  }
+}
+
 void _moveToRecycleBinWindows(String path) {
   final filePath = TEXT(path);
 

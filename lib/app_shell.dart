@@ -21,6 +21,7 @@ import 'package:trios/utils/platform_specific.dart';
 import 'package:trios/vram_estimator/vram_estimator.dart';
 import 'package:trios/widgets/blur.dart';
 import 'package:trios/widgets/changelog_viewer.dart';
+import 'package:trios/widgets/dropdown_with_icon.dart';
 import 'package:trios/widgets/lazy_indexed_stack.dart';
 import 'package:trios/widgets/restartable_app.dart';
 import 'package:trios/widgets/self_update_toast.dart';
@@ -201,7 +202,7 @@ class _AppShellState extends ConsumerState<AppShell>
         child: SettingsPage(),
       ),
     ];
-    final scrollController = ScrollController();
+    final theme = Theme.of(context);
 
     var isRulesHotReloadEnabled =
         ref.watch(appSettings.select((value) => value.isRulesHotReloadEnabled));
@@ -285,14 +286,6 @@ class _AppShellState extends ConsumerState<AppShell>
                       onPressed: () => _changeTab(TriOSTools.modProfiles),
                     ),
                     TabButton(
-                      text: "VRAM",
-                      icon: const Tooltip(
-                          message: "VRAM Estimator (unfinished)",
-                          child: SvgImageIcon("assets/images/icon-weight.svg")),
-                      isSelected: _currentPage == TriOSTools.vramEstimator,
-                      onPressed: () => _changeTab(TriOSTools.vramEstimator),
-                    ),
-                    TabButton(
                       text: "Logs",
                       icon: const Tooltip(
                         message: "$chipperTitle Log Viewer",
@@ -302,32 +295,39 @@ class _AppShellState extends ConsumerState<AppShell>
                       isSelected: _currentPage == TriOSTools.chipper,
                       onPressed: () => _changeTab(TriOSTools.chipper),
                     ),
-                    // ConditionalWrap(
-                    //     condition: !Platform.isWindows,
-                    //     wrapper: (child) => Disable(
-                    //         isEnabled: Platform.isWindows,
-                    //         child: child),
-                    //     child: const Tab(
-                    //         text: "JREs",
-                    //         icon: Tooltip(
-                    //             message: "JRE Manager",
-                    //             child: Icon(Icons.coffee)))),
-                    TabButton(
-                      text: "Portraits",
-                      icon: const Tooltip(
-                        message: "Portrait Viewer (unfinished)",
-                        child: SvgImageIcon(
-                            "assets/images/icon-account-box-outline.svg"),
-                      ),
-                      isSelected: _currentPage == TriOSTools.portraits,
-                      onPressed: () => _changeTab(TriOSTools.portraits),
-                    ),
-                    // const Tab(
-                    //     text: null,
-                    //     icon: SizedBox(
-                    //       width: 1,
-                    //     ),
-                    //     iconMargin: EdgeInsets.zero),
+                    AnimatedPopupMenuButton<TriOSTools>(
+                      icon: SvgImageIcon("assets/images/icon-toolbox.svg",
+                          color: theme.iconTheme.color),
+                      onSelected: (TriOSTools value) => _changeTab(value),
+                      menuItems: const [
+                        PopupMenuItem(
+                            value: TriOSTools.vramEstimator,
+                            child: Row(
+                              children: [
+                                SvgImageIcon("assets/images/icon-weight.svg"),
+                                SizedBox(width: 8),
+                                // Space between icon and text
+                                Text("VRAM"),
+                              ],
+                            )),
+                        PopupMenuItem(
+                            value: TriOSTools.portraits,
+                            child: Row(
+                              children: [
+                                SvgImageIcon(
+                                    "assets/images/icon-account-box-outline.svg"),
+                                SizedBox(width: 8),
+                                // Space between icon and text
+                                Text("Portraits"),
+                              ],
+                            )),
+                        // PopupMenuItem(
+                        //     text: "Portraits",
+                        //     icon: const SvgImageIcon(
+                        //         "assets/images/icon-account-box-outline.svg"),
+                        //     page: TriOSTools.portraits),
+                      ],
+                    )
                   ],
                 ),
               ),
@@ -484,6 +484,14 @@ class _AppShellState extends ConsumerState<AppShell>
           onDroppedLog: (_) => _changeTab(TriOSTools.chipper),
         ));
   }
+}
+
+class MenuOption {
+  final String text;
+  final Widget icon;
+  final TriOSTools page;
+
+  MenuOption({required this.text, required this.icon, required this.page});
 }
 
 class FilePermissionShield extends StatelessWidget {

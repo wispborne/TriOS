@@ -37,7 +37,7 @@ class TabButton extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             icon,
-            const SizedBox(height: 4.0),
+            const SizedBox(height: 4),
             Text(
               text,
               style: const TextStyle(

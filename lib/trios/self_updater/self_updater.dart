@@ -8,7 +8,6 @@ import 'package:open_filex/open_filex.dart';
 import 'package:path/path.dart' as p;
 import 'package:pub_semver/pub_semver.dart';
 import 'package:stringr/stringr.dart';
-import 'package:trios/chipper/utils.dart';
 import 'package:trios/libarchive/libarchive.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/self_updater/script_generator.dart';
@@ -16,7 +15,6 @@ import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/network_util.dart';
-import 'package:trios/utils/search.dart';
 import 'package:trios/utils/util.dart';
 
 import '../../models/download_progress.dart';
@@ -99,8 +97,7 @@ class SelfUpdater extends AsyncNotifier<DownloadProgress?> {
         try {
           await replaceSelf(directoryWithNewVersionFiles);
         } catch (error) {
-          Fimber.w('Error self-updating something. YOLOing.',
-              ex: error);
+          Fimber.w('Error self-updating something. YOLOing.', ex: error);
         }
         if (currentPlatform == TargetPlatform.windows) {
           await Process.start(
@@ -119,7 +116,7 @@ class SelfUpdater extends AsyncNotifier<DownloadProgress?> {
         } else if (currentPlatform == TargetPlatform.macOS) {
           await Process.start(
             'open',
-            ['-n', Platform.resolvedExecutable.toFile().parent.parent.path],
+            ['-n', currentMacOSAppPath.path],
             runInShell: true,
             mode: ProcessStartMode.detached,
           );
@@ -153,8 +150,11 @@ class SelfUpdater extends AsyncNotifier<DownloadProgress?> {
   /// Replaces all files in the current working directory with files that have the same relative path
   /// in the given source directory.
   Future<void> replaceSelf(Directory sourceDirectory) async {
-    final allNewFiles = sourceDirectory.listSync(recursive: true, followLinks: true);
-    final currentDir = currentPlatform != TargetPlatform.macOS ? currentDirectory : currentDirectory.parent.parent;
+    final allNewFiles =
+        sourceDirectory.listSync(recursive: true, followLinks: true);
+    final currentDir = currentPlatform != TargetPlatform.macOS
+        ? currentDirectory
+        : currentMacOSAppPath;
     final jobs = <Future<void>>[];
 
     for (final newFile in allNewFiles) {
@@ -220,7 +220,8 @@ class SelfUpdater extends AsyncNotifier<DownloadProgress?> {
       // Nothing to replace, just copy the file.
       Fimber.d("Copying new file: ${sourceFile.path} to ${destFile.path}");
       await sourceFile.copy(destFile.path);
-    } else if (currentPlatform == TargetPlatform.windows && sourceExt == ".so") {
+    } else if (currentPlatform == TargetPlatform.windows &&
+        sourceExt == ".so") {
       // Can't rename .so files on Windows, but we can replace their content.
       Fimber.d(
           "Replacing contents of .so file: ${destFile.path} with that of ${sourceFile.path}");

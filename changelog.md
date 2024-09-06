@@ -1,3 +1,7 @@
+# 0.2.2
+- Fixed
+  - Crash introduced in 0.2.0 that could happen if an invalid tab was selected.
+  
 # 0.2.1
 - Added
   - **Self-update for Linux and MacOS**.

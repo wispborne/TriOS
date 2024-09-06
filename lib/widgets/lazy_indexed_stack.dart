@@ -1,4 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/logging.dart';
 
 /// A widget that lazily builds its children as they are needed.
 ///
@@ -34,15 +38,19 @@ class _LazyIndexedStackState extends State<LazyIndexedStack> {
   late PageController _pageController;
 
   /// A list of booleans indicating whether each child has been built.
-  late List<bool> _isBuilt;
+  List<bool> _isBuilt = [];
 
   @override
   void initState() {
     super.initState();
     _pageController =
         widget.controller ?? PageController(initialPage: widget.index);
-    _isBuilt = List<bool>.filled(widget.children.length, false);
-    _isBuilt[widget.index] = true;
+    runZonedGuarded(() {
+      _isBuilt = List<bool>.filled(widget.children.length, false);
+      _isBuilt[widget.index] = true;
+    }, (error, stackTrace) {
+      Fimber.e("Error initializing LazyIndexedStack.", ex: error);
+    });
   }
 
   @override
@@ -50,7 +58,7 @@ class _LazyIndexedStackState extends State<LazyIndexedStack> {
     super.didUpdateWidget(oldWidget);
     if (widget.index != oldWidget.index) {
       _pageController.jumpToPage(widget.index);
-      if (!_isBuilt[widget.index]) {
+      if (!(_isBuilt.getOrNull(widget.index) ?? false)) {
         setState(() {
           _isBuilt[widget.index] = true;
         });
@@ -74,7 +82,7 @@ class _LazyIndexedStackState extends State<LazyIndexedStack> {
       // Prevent swipe gesture navigation
       itemCount: widget.children.length,
       itemBuilder: (context, index) {
-        if (_isBuilt[index]) {
+        if (_isBuilt.getOrNull(index) ?? false) {
           return widget.children[index];
         } else {
           return const SizedBox.shrink();

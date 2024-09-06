@@ -244,7 +244,7 @@ class _AppShellState extends ConsumerState<AppShell>
                       ])),
               const Launcher(),
               Padding(
-                padding: const EdgeInsets.only(left: 16, right: 0),
+                padding: const EdgeInsets.only(left: 16, right: 0, top: 2),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
@@ -290,7 +290,9 @@ class _AppShellState extends ConsumerState<AppShell>
                       icon: const Tooltip(
                         message: "$chipperTitle Log Viewer",
                         child: ImageIcon(
-                            AssetImage("assets/images/chipper/icon.png")),
+                          AssetImage("assets/images/chipper/icon.png"),
+                          size: 22,
+                        ),
                       ),
                       isSelected: _currentPage == TriOSTools.chipper,
                       onPressed: () => _changeTab(TriOSTools.chipper),

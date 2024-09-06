@@ -43,7 +43,7 @@ class _RulesHotReloadState extends ConsumerState<RulesHotReload> {
     });
   }
 
-  var fileChanges = StreamController<File>();
+  var fileChanges = StreamController<File?>();
 
   @override
   void initState() {
@@ -61,7 +61,7 @@ class _RulesHotReloadState extends ConsumerState<RulesHotReload> {
         [];
 
     if (widget.isEnabled) {
-      fileChanges = StreamController();
+      fileChanges = StreamController<File?>();
 
       fileChanges.stream.listen((event) {
         _saveVanillaRulesDotCsv(ref);

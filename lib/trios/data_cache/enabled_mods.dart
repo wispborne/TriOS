@@ -16,7 +16,7 @@ import '../../utils/logging.dart';
 import '../../utils/util.dart';
 
 class EnabledModsNotifier extends AsyncNotifier<EnabledMods> {
-  StreamController<File>? _enabledModsWatcher;
+  StreamController<File?>? _enabledModsWatcher;
 
   // static StreamController<File>? _enabledModsWatcher;
   final fileLock = Mutex();
@@ -118,7 +118,7 @@ class EnabledModsNotifier extends AsyncNotifier<EnabledMods> {
 
         // Watch the enabled_mods.json file for changes
         if (_enabledModsWatcher == null) {
-          _enabledModsWatcher = StreamController<File>();
+          _enabledModsWatcher = StreamController<File?>();
           _enabledModsWatcher?.stream.listen((event) {
             refreshEnabledMods();
           });

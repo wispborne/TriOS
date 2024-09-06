@@ -5,6 +5,8 @@ class TabButton extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onPressed;
   final Widget icon;
+  final double iconSize;
+  final double iconSpacing;
 
   const TabButton({
     super.key,
@@ -12,6 +14,8 @@ class TabButton extends StatelessWidget {
     required this.isSelected,
     required this.onPressed,
     required this.icon,
+    this.iconSize = 24,
+    this.iconSpacing = 2,
   });
 
   @override
@@ -36,8 +40,8 @@ class TabButton extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            icon,
-            const SizedBox(height: 4),
+            SizedBox(height: iconSize, child: icon),
+            SizedBox(height: iconSpacing),
             Text(
               text,
               style: const TextStyle(

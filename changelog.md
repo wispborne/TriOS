@@ -3,6 +3,10 @@
   - **Self-update for Linux and MacOS**.
     - MacOS doesn't automatically restart after updating.
   - When running as Admin, shows a shield icon in the toolbar notifying you that drag'n'drop won't work.
+- Fixed
+  - Scanner for mod changes on disk broke sometimes when a file was deleted.
+- Changed
+  - Moved VRAM and Portraits tools into a new dropdown menu to save space on the toolbar.
 
 # 0.2.0
 - Added

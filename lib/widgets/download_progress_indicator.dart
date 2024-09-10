@@ -24,7 +24,7 @@ class _DownloadProgressIndicatorState
           child: LinearProgressIndicator(
             value: widget.value.isIndeterminate
                 ? 0
-                : widget.value.progressPercent ?? 0,
+                : widget.value.progressPercent,
             minHeight: 10,
             color: widget.color,
           ),
@@ -34,7 +34,7 @@ class _DownloadProgressIndicatorState
               ? ""
               : widget.value.bytesReceived == widget.value.bytesTotal
                   ? widget.value.bytesTotal.bytesAsReadableMB()
-                  : "${widget.value.bytesReceived.bytesAsReadableMB() ?? "-"} / ${widget.value.bytesTotal.bytesAsReadableMB() ?? "-"}",
+                  : "${widget.value.bytesReceived.bytesAsReadableMB()} / ${widget.value.bytesTotal.bytesAsReadableMB()}",
           style: Theme.of(context).textTheme.labelSmall,
         ),
       ],

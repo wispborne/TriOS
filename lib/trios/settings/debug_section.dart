@@ -230,7 +230,7 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                   const SizedBox(height: 8),
                   DebugSettingsGroup(
                     child: Text(
-                      "Mod Profiles\n${sharedPrefs.getString(ModProfilesSettings.modProfilesKey)}",
+                      "Mod Profiles\n${ref.watch(modProfilesProvider).valueOrNull}",
                     ),
                   ),
                   const SizedBox(height: 8),

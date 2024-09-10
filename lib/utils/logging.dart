@@ -127,7 +127,7 @@ configureLogging({
     }
   } else {
     // const logLevels = kDebugMode ? ["V", "D", "I", "W", "E"] : ["I", "W", "E"];
-    const logLevels = kDebugMode ? ["D", "I", "W", "E"] : ["I", "W", "E"];
+    // const logLevels = kDebugMode ? ["D", "I", "W", "E"] : ["I", "W", "E"];
     // f.Fimber.plantTree(
     //     f.DebugTree.elapsed(logLevels: logLevels, useColors: true));
     // f.Fimber.plantTree(f.SizeRollingFileTree(DataSize.mega(10),

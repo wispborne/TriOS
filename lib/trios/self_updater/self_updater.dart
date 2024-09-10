@@ -10,7 +10,6 @@ import 'package:pub_semver/pub_semver.dart';
 import 'package:stringr/stringr.dart';
 import 'package:trios/libarchive/libarchive.dart';
 import 'package:trios/trios/constants.dart';
-import 'package:trios/trios/self_updater/script_generator.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
@@ -91,58 +90,39 @@ class SelfUpdater extends AsyncNotifier<DownloadProgress?> {
               ? updateWorkingDir.listSync()[0].toDirectory()
               : updateWorkingDir;
 
-      // Windows has a special in-place update in order to avoid UTF8 issues with running a batch script.
-      // Wait, I can just use this on Linux, too, and avoid the stupid non-working bash script.
-      if (true) {
-        try {
-          await replaceSelf(directoryWithNewVersionFiles);
-        } catch (error) {
-          Fimber.w('Error self-updating something. YOLOing.', ex: error);
-        }
-        if (currentPlatform == TargetPlatform.windows) {
-          await Process.start(
-            'cmd',
-            ['/c', "start", "", Platform.resolvedExecutable],
-            runInShell: true,
-            mode: ProcessStartMode.detached,
-          );
-        } else if (currentPlatform == TargetPlatform.linux) {
-          await Process.start(
-            'nohup',
-            [Platform.resolvedExecutable],
-            runInShell: true,
-            mode: ProcessStartMode.detached,
-          );
-        } else if (currentPlatform == TargetPlatform.macOS) {
-          await Process.start(
-            'open',
-            ['-n', currentMacOSAppPath.path],
-            runInShell: true,
-            mode: ProcessStartMode.detached,
-          );
-        }
-        if (exitSelfAfter) {
-          await Future.delayed(const Duration(milliseconds: 500));
-          Fimber.i(
-              'Exiting old version of self, new should have already started.');
-          exit(0);
-        }
-      } else {
-        // Generate the update script and write it to a file.
-        final scriptDest = kDebugMode
-            ? Directory(p.join(currentDirectory.path, "update-trios"))
-            : currentDirectory;
-        final updateScriptFile =
-            await ScriptGenerator.writeUpdateScriptToFileSimple(
-                directoryWithNewVersionFiles, scriptDest);
-        Fimber.i("Wrote update script to: ${updateScriptFile.path}");
-
-        await runSelfUpdateScript(updateScriptFile);
-
-        if (exitSelfAfter) {
-          Fimber.i('Exiting self while update runs to avoid locking files.');
-          exit(0);
-        }
+      try {
+        await replaceSelf(directoryWithNewVersionFiles);
+      } catch (error) {
+        Fimber.w('Error self-updating something. YOLOing.', ex: error);
+      }
+      if (currentPlatform == TargetPlatform.windows) {
+        await Process.start(
+          'cmd',
+          ['/c', "start", "", Platform.resolvedExecutable],
+          runInShell: true,
+          mode: ProcessStartMode.detached,
+        );
+      } else if (currentPlatform == TargetPlatform.linux) {
+        await Process.start(
+          'nohup',
+          [Platform.resolvedExecutable],
+          runInShell: true,
+          mode: ProcessStartMode.detached,
+        );
+      } else if (currentPlatform == TargetPlatform.macOS) {
+        // Doesn't work!
+        await Process.start(
+          'open',
+          ['-n', currentMacOSAppPath.path],
+          runInShell: true,
+          mode: ProcessStartMode.detached,
+        );
+      }
+      if (exitSelfAfter) {
+        await Future.delayed(const Duration(milliseconds: 500));
+        Fimber.i(
+            'Exiting old version of self, new should have already started.');
+        exit(0);
       }
     }
   }
@@ -169,24 +149,6 @@ class SelfUpdater extends AsyncNotifier<DownloadProgress?> {
     }
 
     await Future.wait(jobs);
-  }
-
-  static Future<void> cleanUpOldUpdateFiles() async {
-    final filesInCurrentDir = currentDirectory
-        .listSync(recursive: true)
-        .where((element) => element.path.endsWith(oldFileSuffix))
-        .toList();
-    for (final file in filesInCurrentDir) {
-      if (file is File) {
-        try {
-          await file.delete();
-        } catch (error) {
-          Fimber.w('Error deleting old file: ${file.path}', ex: error);
-        }
-      }
-    }
-
-    Fimber.i('Cleaned up ${filesInCurrentDir.length} old update files.');
   }
 
   /// Updates or replaces a locked file in place.
@@ -242,6 +204,24 @@ class SelfUpdater extends AsyncNotifier<DownloadProgress?> {
       await destFile.rename(oldFile.path);
       await sourceFile.copy(destFile.path);
     }
+  }
+
+  static Future<void> cleanUpOldUpdateFiles() async {
+    final filesInCurrentDir = currentDirectory
+        .listSync(recursive: true)
+        .where((element) => element.path.endsWith(oldFileSuffix))
+        .toList();
+    for (final file in filesInCurrentDir) {
+      if (file is File) {
+        try {
+          await file.delete();
+        } catch (error) {
+          Fimber.w('Error deleting old file: ${file.path}', ex: error);
+        }
+      }
+    }
+
+    Fimber.i('Cleaned up ${filesInCurrentDir.length} old update files.');
   }
 
   Future<void> runSelfUpdateScript(File updateScriptFile) async {

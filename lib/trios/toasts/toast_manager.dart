@@ -26,8 +26,8 @@ class _ToastDisplayerState extends ConsumerState<ToastDisplayer> {
         ref.watch(appSettings.select((value) => value.toastDurationSeconds)) *
             1000;
 
-    final modVariants = ref.listen(AppState.modVariants, (prevMods, currMods) {
-      if (prevMods == null || currMods == null) return;
+    ref.listen(AppState.modVariants, (prevMods, currMods) {
+      if (prevMods == null) return;
       if (prevMods.valueOrNull == null || currMods.valueOrNull == null) return;
       if (prevMods.valueOrNull?.length == currMods.valueOrNull?.length) return;
 

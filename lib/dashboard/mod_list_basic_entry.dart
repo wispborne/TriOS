@@ -222,7 +222,7 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                                 maxWidth: 75,
                               ),
                               child: Text(
-                                modInfo.version.toString() ?? "",
+                                modInfo.version.toString(),
                                 style: theme.textTheme.labelLarge?.copyWith(
                                   color: theme.colorScheme.onSurface
                                       .withOpacity(0.5),

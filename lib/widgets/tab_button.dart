@@ -21,7 +21,6 @@ class TabButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final iconTheme = Theme.of(context).iconButtonTheme;
 
     return Padding(
       padding: const EdgeInsets.all(0),

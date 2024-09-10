@@ -193,7 +193,6 @@ class Launcher extends HookConsumerWidget {
     final gameVersion = ref.read(AppState.starsectorVersion).valueOrNull;
     final enabledVariants =
         (mods.map((mod) => mod.findFirstEnabled)).whereNotNull();
-    final result = <LaunchPrecheckError>[];
 
     if (enabledMods == null || enabledMods.isEmpty || modsFolder == null) {
       return [];
@@ -340,8 +339,6 @@ class Launcher extends HookConsumerWidget {
   /// Launches game with JRE 23.
   static launchGameJre23(WidgetRef ref) async {
     // Starsector folder
-    var gamePath =
-        ref.read(appSettings.select((value) => value.gameDir))?.toDirectory();
     final gameDir =
         ref.read(appSettings.select((value) => value.gameDir))?.toDirectory();
     final command =
@@ -389,7 +386,7 @@ class Launcher extends HookConsumerWidget {
       return;
     }
 
-    var javaExe = getJavaExecutable(getJreDir(gamePath!));
+    var javaExe = getJavaExecutable(getJreDir(gamePath));
     var vmParams = getVmparamsFile(gamePath);
 
     if (javaExe.existsSync() != true) {
@@ -432,7 +429,7 @@ class Launcher extends HookConsumerWidget {
 
       Fimber.d('Final vmparams: $finalVmparams');
       Process.start(javaExe.absolute.path, finalVmparams,
-          workingDirectory: gameCorePath?.path,
+          workingDirectory: gameCorePath.path,
           mode: ProcessStartMode.detached,
           includeParentEnvironment: true);
     } else if (Platform.isMacOS) {
@@ -462,7 +459,7 @@ class Launcher extends HookConsumerWidget {
 
       Fimber.i('Launching game using command: $launchScript');
       final process = await Process.start(javaExe.path, launchScript,
-          workingDirectory: gameCorePath?.absolute.path,
+          workingDirectory: gameCorePath.absolute.path,
           mode: ProcessStartMode.detachedWithStdio,
           includeParentEnvironment: true,
           runInShell: true);

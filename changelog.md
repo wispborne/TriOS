@@ -1,3 +1,7 @@
+# 0.2.3
+- Changed
+  - "Admin required" warning now shows a bit more info about what the issue is.
+
 # 0.2.2
 - Fixed
   - Crash introduced in 0.2.0 that could happen if an invalid tab was selected.

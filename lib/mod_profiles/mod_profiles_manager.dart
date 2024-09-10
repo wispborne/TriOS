@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:convert';
 
 import 'package:collection/collection.dart';
@@ -8,68 +7,59 @@ import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
-import 'package:uuid/uuid.dart';
 
+import '../utils/generic_settings_notifier.dart';
 import 'models/mod_profile.dart';
 
 /// Uses shared preferences to store mod profiles
-class ModProfilesSettings {
-  static const modProfilesKey = 'modProfiles';
-
-  static List<ModProfile>? _loadFromDisk() {
-    try {
-      final json = sharedPrefs.getString(modProfilesKey);
-      return json == null
-          ? null
-          : (jsonDecode(json) as List)
-              .map((e) => ModProfile.fromJson(e))
-              .toList();
-    } catch (e) {
-      Fimber.e('Failed to load mod profiles from shared prefs', ex: e);
-      return null;
-    }
-  }
-
-  static Future<void> _saveToDisk(List<ModProfile> profiles) async {
-    await sharedPrefs.setString(modProfilesKey, jsonEncode(profiles));
-  }
-}
+// class ModProfilesSettings {
+//   static const modProfilesKey = 'modProfiles';
+//
+//   static List<ModProfile>? _loadFromDisk() {
+//     try {
+//       final json = sharedPrefs.getString(modProfilesKey);
+//       return json == null
+//           ? null
+//           : (jsonDecode(json) as List)
+//               .map((e) => ModProfileMapper.fromJson(e))
+//               .toList();
+//     } catch (e) {
+//       Fimber.e('Failed to load mod profiles from shared prefs', ex: e);
+//       return null;
+//     }
+//   }
+//
+//   static Future<void> _saveToDisk(List<ModProfile> profiles) async {
+//     await sharedPrefs.setString(modProfilesKey, jsonEncode(profiles));
+//   }
+// }
 
 final modProfilesProvider =
     AsyncNotifierProvider<ModProfileManagerNotifier, ModProfiles>(
         ModProfileManagerNotifier.new);
 
-class ModProfileManagerNotifier extends AsyncNotifier<ModProfiles> {
+class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
   bool pauseAutomaticProfileUpdates = false;
 
-  static ModProfile defaultModProfile = ModProfile(
-    id: const Uuid().v4(),
-    name: 'default',
-    description: 'Default profile',
-    sortOrder: 0,
-    enabledModVariants: [],
-    dateCreated: DateTime.timestamp(),
-    dateModified: DateTime.timestamp(),
-  );
-  static ModProfiles defaultModProfiles =
-      ModProfiles(modProfiles: [defaultModProfile]);
+  @override
+  ModProfiles Function() get defaultStateFactory =>
+      () => const ModProfiles(modProfiles: []);
 
   @override
-  Future<ModProfiles> build() async {
-    state = AsyncData(state.valueOrNull ??
-        ModProfiles(
-            modProfiles:
-                ModProfilesSettings._loadFromDisk() ?? [defaultModProfile]));
-    updateFromModList();
-    return state.value!;
-  }
+  String get fileName => "trios_mod_profiles.json";
 
-  ModProfile getCurrentModProfile() {
+  @override
+  ModProfiles Function(dynamic p1) get fromJson =>
+      (json) => ModProfilesMapper.fromJson(json);
+
+  @override
+  Function(ModProfiles p1) get toJson => (state) => jsonEncode(state);
+
+  ModProfile? getCurrentModProfile() {
     final currentProfileId =
         ref.watch(appSettings.select((s) => s.activeModProfileId));
     return state.valueOrNull?.modProfiles
-            .firstWhereOrNull((profile) => profile.id == currentProfileId) ??
-        defaultModProfile;
+        .firstWhereOrNull((profile) => profile.id == currentProfileId);
   }
 
   void updateFromModList() {
@@ -79,8 +69,8 @@ class ModProfileManagerNotifier extends AsyncNotifier<ModProfiles> {
         .toList();
     if (pauseAutomaticProfileUpdates) return;
     Fimber.d("Updating mod profile with ${enabledModVariants.length} mods");
-    updateModProfile(getCurrentModProfile().copyWith(
-        enabledModVariants: enabledModVariants, dateModified: DateTime.now()));
+    // updateModProfile(getCurrentModProfile()?.copyWith(
+    //     enabledModVariants: enabledModVariants, dateModified: DateTime.now()));
   }
 
   void createModProfile(
@@ -89,29 +79,30 @@ class ModProfileManagerNotifier extends AsyncNotifier<ModProfiles> {
     int? sortOrder,
     List<ShallowModVariant> enabledModVariants = const [],
   }) {
-    final newModProfile = ModProfile(
-      id: const Uuid().v4(),
-      name: name,
+    final newModProfile = ModProfile.newProfile(
+      name,
+      enabledModVariants,
       description: description,
       sortOrder: sortOrder ??
           (state.valueOrNull?.modProfiles.map((e) => e.sortOrder).maxOrNull ??
                   0) +
               1,
-      enabledModVariants: enabledModVariants,
-      dateCreated: DateTime.now(),
-      dateModified: DateTime.now(),
     );
-    state = AsyncData(state.valueOrNull?.copyWith(
-            modProfiles: [...?state.valueOrNull?.modProfiles, newModProfile]) ??
-        ModProfiles(modProfiles: [newModProfile]));
-    if (state.valueOrNull != null &&
-        state.valueOrNull!.modProfiles.isNotEmpty) {
-      ModProfilesSettings._saveToDisk(state.value!.modProfiles);
-    }
+
+    update((prevState) => prevState.copyWith(
+            modProfiles: [...?state.valueOrNull?.modProfiles, newModProfile]));
+    // if (state.valueOrNull != null &&
+    //     state.valueOrNull!.modProfiles.isNotEmpty) {
+    //   ModProfilesSettings._saveToDisk(state.value!.modProfiles);
+    // }
   }
 
-  void updateModProfile(ModProfile updatedProfile) {
-    final startingState = state.valueOrNull ?? defaultModProfiles;
+  void updateModProfile(ModProfile? updatedProfile) {
+    if (updatedProfile == null) {
+      return;
+    }
+    final startingState =
+        state.valueOrNull ?? const ModProfiles(modProfiles: []);
 
     // if (startingState.modProfiles.none((profile) => profile.id == updatedProfile.id)) {
     //   createModProfile();
@@ -124,8 +115,8 @@ class ModProfileManagerNotifier extends AsyncNotifier<ModProfiles> {
             profile.id == updatedProfile.id ? updatedProfile : profile)
         .toList();
 
-    state = AsyncData(startingState.copyWith(modProfiles: newModProfiles));
-    ModProfilesSettings._saveToDisk(newModProfiles);
+    update((oldState) => oldState.copyWith(modProfiles: newModProfiles));
+    // ModProfilesSettings._saveToDisk(newModProfiles);
   }
 
   void removeModProfile(String modProfileId) {
@@ -137,8 +128,8 @@ class ModProfileManagerNotifier extends AsyncNotifier<ModProfiles> {
         .orEmpty()
         .where((profile) => profile.id != modProfileId)
         .toList();
-    state = AsyncData(state.value!.copyWith(modProfiles: newModProfiles));
-    ModProfilesSettings._saveToDisk(newModProfiles);
+    update((oldState) => oldState.copyWith(modProfiles: newModProfiles));
+    // ModProfilesSettings._saveToDisk(newModProfiles);
   }
 
   void activateModProfile(String modProfileId) async {
@@ -163,8 +154,7 @@ class ModProfileManagerNotifier extends AsyncNotifier<ModProfiles> {
       final allMods = ref.read(AppState.mods);
       final modVariants = ref.read(AppState.modVariants).valueOrNull ?? [];
       final currentlyEnabledModVariants = ref.read(AppState.enabledModVariants);
-      final currentlyEnabledShallows = currentlyEnabledModVariants
-          .sortedByName
+      final currentlyEnabledShallows = currentlyEnabledModVariants.sortedByName
           .map((variant) => ShallowModVariant.fromModVariant(variant))
           .toList();
       final profileShallows = profile.enabledModVariants;

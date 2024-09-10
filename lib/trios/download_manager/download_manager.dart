@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/mod_manager/version_checker.dart';
@@ -13,7 +12,6 @@ import 'package:uuid/uuid.dart';
 
 import '../../mod_manager/mod_manager_logic.dart';
 import '../../models/mod_info.dart';
-import '../app_state.dart';
 import '../constants.dart';
 import 'download_status.dart';
 import 'download_task.dart';
@@ -128,13 +126,13 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
                 )
                 .then((installedVariants) {
               if (activateVariantOnComplete) {
-                final variants =
-                    ref.read(AppState.modVariants).valueOrNull ?? [];
+                // final variants =
+                //     ref.read(AppState.modVariants).valueOrNull ?? [];
 
-                for (final installed in installedVariants) {
+                // for (final installed in installedVariants) {
                   // Find the variant post-install so we can activate it.
-                  final actualVariant = variants.firstWhereOrNull(
-                      (variant) => variant.smolId == installed.modInfo.smolId);
+                  // final actualVariant = variants.firstWhereOrNull(
+                  //     (variant) => variant.smolId == installed.modInfo.smolId);
                   // try {
                   // If the mod existed and was enabled, switch to the newly downloaded version.
                   // Edit: changed my mind, see https://github.com/wispborne/TriOS/issues/28
@@ -148,7 +146,7 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
                   //   Fimber.w(
                   //       "Failed to activate mod ${installed.modInfo.smolId} after updating: $ex");
                   // }
-                }
+                // }
               }
             });
           } catch (e) {

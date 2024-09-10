@@ -64,9 +64,9 @@ class _ModVersionSelectionDropdownState
         : theme.colorScheme.onSurface;
     final buttonStyle = ElevatedButton.styleFrom(
       foregroundColor: textColor,
-      disabledForegroundColor: true ? textColor : null,
+      disabledForegroundColor: textColor,
       backgroundColor: buttonColor,
-      disabledBackgroundColor: true ? buttonColor : null,
+      disabledBackgroundColor: buttonColor,
       textStyle:
           const TextStyle(fontWeight: FontWeight.w900, fontFamily: "Orbitron"),
       shape: RoundedRectangleBorder(

@@ -39,8 +39,8 @@ class PngFullDecoder extends BaseDecoder with SimpleTypeValidator {
   Future<Size> getSizeAsync(AsyncImageInput input) async {
     final widthList = await input.getRange(0x10, 0x14);
     final heightList = await input.getRange(0x14, 0x18);
-    final bitDepthList = await input.getRange(0x19, 0x20);
-    final colorTypeList = await input.getRange(0x21, 0x22);
+    // final bitDepthList = await input.getRange(0x19, 0x20);
+    // final colorTypeList = await input.getRange(0x21, 0x22);
     final width = convertRadix16ToInt(widthList);
     final height = convertRadix16ToInt(heightList);
     return Size(width, height);

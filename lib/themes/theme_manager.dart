@@ -33,7 +33,6 @@ class ThemeManager with ChangeNotifier {
   static TriOSTheme _theme = StarsectorTriOSTheme();
   static const bool _isMaterial3 = true;
   static const String _key = "currentThemeId";
-  static const String _keyMaterial = "isMaterial";
   static final allThemes = {
     "StarsectorTriOSTheme": StarsectorTriOSTheme(),
     "HalloweenTriOSTheme": HalloweenTriOSTheme(),
@@ -282,11 +281,11 @@ extension PaletteGeneratorExt on PaletteGenerator? {
         Theme.of(context).colorScheme.onSurface;
     Color backgroundColor = palette.darkMutedColor?.color ??
         palette.darkVibrantColor?.color ??
-        Theme.of(context).colorScheme.background;
-    Color buttonBackgroundColor =
-        palette.darkVibrantColor?.color ?? Colors.white;
-    Color buttonTextColor =
-        palette.darkVibrantColor?.bodyTextColor ?? Colors.white;
+        Theme.of(context).colorScheme.surface;
+    // Color buttonBackgroundColor =
+    //     palette.darkVibrantColor?.color ?? Colors.white;
+    // Color buttonTextColor =
+    //     palette.darkVibrantColor?.bodyTextColor ?? Colors.white;
 
     return ThemeData(
       useMaterial3: true,

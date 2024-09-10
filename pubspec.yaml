@@ -109,6 +109,7 @@ dependencies:
   pdf: ^3.11.0
   hooks_riverpod: ^2.5.1
   rxdart: ^0.28.0
+  dart_mappable: ^4.2.2
 
 # Uncommented & Copied
 #  adaptive_theme: ^3.6.0
@@ -135,7 +136,7 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^4.0.0
   riverpod_generator: ^2.4.0
-  build_runner: ^2.4.9
+  build_runner: ^2.4.12
   #  custom_lint: ^0.6.4
   freezed: ^2.5.2
   json_serializable: ^6.8.0
@@ -144,6 +145,7 @@ dev_dependencies:
   flutter_launcher_icons: "^0.13.1"
   ffigen: ^13.0.0
   msix: ^3.16.7
+  dart_mappable_builder: ^4.2.3
 
 flutter_launcher_icons:
   image_path: "assets/images/telos_faction_crest.png"

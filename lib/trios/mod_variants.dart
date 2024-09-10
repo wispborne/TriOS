@@ -313,10 +313,6 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
           "Enabled mods is null, can't enable mod ${modVariant.smolId}.");
     }
 
-    if (mod == null) {
-      throw Exception("Mod ${modVariant.modInfo.id} not found in mods.");
-    }
-
     if (mod.isEnabled(modVariant)) {
       Fimber.i("Variant ${modVariant.smolId} is already enabled.");
       return;

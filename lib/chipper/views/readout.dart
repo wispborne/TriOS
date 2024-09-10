@@ -23,12 +23,12 @@ class Readout extends StatelessWidget {
     _isPerfectList = _chips.modList.isPerfectList;
   }
 
-  late LogChips _chips;
-  String? _gameVersion;
-  String? _os;
-  String? _javaVersion;
-  UnmodifiableListView<ModEntry>? _mods;
-  bool _isPerfectList = false;
+  late final LogChips _chips;
+  late final String? _gameVersion;
+  late final String? _os;
+  late final String? _javaVersion;
+  late final UnmodifiableListView<ModEntry>? _mods;
+  late final bool _isPerfectList;
 
   @override
   Widget build(BuildContext context) {
@@ -49,37 +49,70 @@ class Readout extends StatelessWidget {
                   IconButton(
                     tooltip: "Copy",
                     onPressed: () {
-                      Clipboard.setData(ClipboardData(text: createSystemCopyString(_chips)));
+                      Clipboard.setData(
+                          ClipboardData(text: createSystemCopyString(_chips)));
                     },
-                    icon: Icon(Icons.copy, color: theme.iconTheme.color?.withAlpha(iconOpacity)),
+                    icon: Icon(Icons.copy,
+                        color: theme.iconTheme.color?.withAlpha(iconOpacity)),
                     iconSize: 20,
                   ),
                   Expanded(
                       child: Text.rich(
                           TextSpan(
-                              style: theme.textTheme.labelSmall
-                                  ?.copyWith(color: theme.textTheme.labelSmall?.color?.withAlpha(120)),
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                  color: theme.textTheme.labelSmall?.color
+                                      ?.withAlpha(120)),
                               children: [
                                 _chips.filepath == null
                                     ? const TextSpan(text: "log")
                                     : TextSpan(
                                         text: basename(_chips.filepath!),
                                         style: TextStyle(
-                                            color: theme.textTheme.labelSmall?.color?.withAlpha(200),
+                                            color: theme
+                                                .textTheme.labelSmall?.color
+                                                ?.withAlpha(200),
                                             fontWeight: FontWeight.w500)),
                                 TextSpan(
-                                    text: " chipped in ${NumberFormat.decimalPattern().format(_chips.timeTaken)}ms"),
+                                    text:
+                                        " chipped in ${NumberFormat.decimalPattern().format(_chips.timeTaken)}ms"),
                               ]),
                           textAlign: TextAlign.right))
                 ]),
-                Text.rich(TextSpan(style: TextStyle(color: theme.colorScheme.onSurface.withAlpha(240)), children: [
-                  TextSpan(text: "Starsector: ", style: TextStyle(color: theme.colorScheme.onSurface.withAlpha(190))),
-                  TextSpan(text: _gameVersion, style: TextStyle(color: theme.colorScheme.onSurface.withAlpha(240))),
-                  TextSpan(text: "\nJRE: ", style: TextStyle(color: theme.colorScheme.onSurface.withAlpha(190))),
-                  TextSpan(text: _javaVersion, style: TextStyle(color: theme.colorScheme.onSurface.withAlpha(240))),
-                  TextSpan(text: "\nOS: ", style: TextStyle(color: theme.colorScheme.onSurface.withAlpha(190))),
-                  TextSpan(text: _os, style: TextStyle(color: theme.colorScheme.onSurface.withAlpha(240))),
-                ]))
+                Text.rich(TextSpan(
+                    style: TextStyle(
+                        color: theme.colorScheme.onSurface.withAlpha(240)),
+                    children: [
+                      TextSpan(
+                          text: "Starsector: ",
+                          style: TextStyle(
+                              color:
+                                  theme.colorScheme.onSurface.withAlpha(190))),
+                      TextSpan(
+                          text: _gameVersion,
+                          style: TextStyle(
+                              color:
+                                  theme.colorScheme.onSurface.withAlpha(240))),
+                      TextSpan(
+                          text: "\nJRE: ",
+                          style: TextStyle(
+                              color:
+                                  theme.colorScheme.onSurface.withAlpha(190))),
+                      TextSpan(
+                          text: _javaVersion,
+                          style: TextStyle(
+                              color:
+                                  theme.colorScheme.onSurface.withAlpha(240))),
+                      TextSpan(
+                          text: "\nOS: ",
+                          style: TextStyle(
+                              color:
+                                  theme.colorScheme.onSurface.withAlpha(190))),
+                      TextSpan(
+                          text: _os,
+                          style: TextStyle(
+                              color:
+                                  theme.colorScheme.onSurface.withAlpha(240))),
+                    ]))
               ],
             ))),
       if (_mods != null)
@@ -88,88 +121,110 @@ class Readout extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(crossAxisAlignment: CrossAxisAlignment.center, mainAxisSize: MainAxisSize.min, children: [
-                  if (!_isPerfectList && _mods?.isNotEmpty == true)
-                    Tooltip(
-                        message:
-                            "This list may be incomplete.\n\"Running with the following mods\" block not found in log.",
-                        child: Padding(
-                          padding: const EdgeInsets.only(right: 8.0),
-                          child: Icon(
-                            Icons.warning_rounded,
-                            color: theme.colorScheme.primary,
-                            size: 20,
-                            shadows: [
-                              Shadow(blurRadius: 12.0, color: theme.colorScheme.secondary),
-                            ],
-                          ),
-                        )),
-                  SelectionArea(child: Text("Mods (${_mods?.length})", style: theme.textTheme.titleLarge)),
-                  IconButton(
-                    tooltip: "Copy",
-                    onPressed: () {
-                      Clipboard.setData(ClipboardData(text: createModsCopyString(_chips, minify: false)));
-                    },
-                    icon: Icon(
-                      Icons.copy,
-                      color: theme.iconTheme.color?.withAlpha(iconOpacity),
-                    ),
-                    iconSize: 20,
-                  ),
-                  IconButton(
-                    tooltip: "Copy (less info)",
-                    onPressed: () {
-                      Clipboard.setData(ClipboardData(text: createModsCopyString(_chips, minify: true)));
-                    },
-                    icon: Icon(Icons.copy, color: theme.iconTheme.color?.withAlpha(iconOpacity)),
-                    iconSize: 14,
-                  ),
-                  // IconButton(
-                  //   tooltip: "Download",
-                  //   onPressed: () {
-                  //     FileSaver.instance.saveAs("mods", Uint8List.fromList(utf8.encode(createModsCopyString(_chips))),
-                  //         "txt", MimeType.TEXT);
-                  //     // Clipboard.setData(ClipboardData(text: createModsCopyString(_chips, minify: true)));
-                  //   },
-                  //   icon: Icon(Icons.file_download, color: theme.iconTheme.color?.withAlpha(iconOpacity)),
-                  //   iconSize: 14,
-                  // ),
-                  IconButton(
-                    tooltip: "Popup",
-                    onPressed: () {
-                      showMyDialog(context, body: [ModsList(mods: _mods)]);
-                    },
-                    icon: Icon(Icons.open_in_full, color: theme.iconTheme.color?.withAlpha(iconOpacity)),
-                    iconSize: 20,
-                  ),
-                ]),
+                Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (!_isPerfectList && _mods.isNotEmpty == true)
+                        Tooltip(
+                            message:
+                                "This list may be incomplete.\n\"Running with the following mods\" block not found in log.",
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 8.0),
+                              child: Icon(
+                                Icons.warning_rounded,
+                                color: theme.colorScheme.primary,
+                                size: 20,
+                                shadows: [
+                                  Shadow(
+                                      blurRadius: 12.0,
+                                      color: theme.colorScheme.secondary),
+                                ],
+                              ),
+                            )),
+                      SelectionArea(
+                          child: Text("Mods (${_mods.length})",
+                              style: theme.textTheme.titleLarge)),
+                      IconButton(
+                        tooltip: "Copy",
+                        onPressed: () {
+                          Clipboard.setData(ClipboardData(
+                              text:
+                                  createModsCopyString(_chips, minify: false)));
+                        },
+                        icon: Icon(
+                          Icons.copy,
+                          color: theme.iconTheme.color?.withAlpha(iconOpacity),
+                        ),
+                        iconSize: 20,
+                      ),
+                      IconButton(
+                        tooltip: "Copy (less info)",
+                        onPressed: () {
+                          Clipboard.setData(ClipboardData(
+                              text:
+                                  createModsCopyString(_chips, minify: true)));
+                        },
+                        icon: Icon(Icons.copy,
+                            color:
+                                theme.iconTheme.color?.withAlpha(iconOpacity)),
+                        iconSize: 14,
+                      ),
+                      // IconButton(
+                      //   tooltip: "Download",
+                      //   onPressed: () {
+                      //     FileSaver.instance.saveAs("mods", Uint8List.fromList(utf8.encode(createModsCopyString(_chips))),
+                      //         "txt", MimeType.TEXT);
+                      //     // Clipboard.setData(ClipboardData(text: createModsCopyString(_chips, minify: true)));
+                      //   },
+                      //   icon: Icon(Icons.file_download, color: theme.iconTheme.color?.withAlpha(iconOpacity)),
+                      //   iconSize: 14,
+                      // ),
+                      IconButton(
+                        tooltip: "Popup",
+                        onPressed: () {
+                          showMyDialog(context, body: [ModsList(mods: _mods)]);
+                        },
+                        icon: Icon(Icons.open_in_full,
+                            color:
+                                theme.iconTheme.color?.withAlpha(iconOpacity)),
+                        iconSize: 20,
+                      ),
+                    ]),
                 ConstrainedBox(
                   constraints: const BoxConstraints(maxHeight: 150),
                   child: InkWell(
-                      onTap: () => showMyDialog(context, body: [ModsList(mods: _mods)]),
+                      onTap: () =>
+                          showMyDialog(context, body: [ModsList(mods: _mods)]),
                       mouseCursor: SystemMouseCursors.click,
                       child: ListView.builder(
-                          itemCount: _mods!.length,
+                          itemCount: _mods.length,
                           scrollDirection: Axis.vertical,
-                          itemBuilder: (context, index) => _mods![index].createWidget(context))),
+                          itemBuilder: (context, index) =>
+                              _mods[index].createWidget(context))),
                 )
               ],
             )),
       if (_chips.errorBlock.isNotEmpty)
         Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
             Text("Errors", style: theme.textTheme.titleLarge),
             IconButton(
               tooltip: "Copy",
               onPressed: () {
-                Clipboard.setData(ClipboardData(text: createErrorsCopyString(_chips)));
+                Clipboard.setData(
+                    ClipboardData(text: createErrorsCopyString(_chips)));
               },
-              icon: Icon(Icons.copy, color: theme.iconTheme.color?.withAlpha(iconOpacity)),
+              icon: Icon(Icons.copy,
+                  color: theme.iconTheme.color?.withAlpha(iconOpacity)),
               iconSize: 20,
             )
           ]),
-          Expanded(child: ChipperLog(errors: _chips.errorBlock, showInfoLogs: showInfoLogs))
+          Expanded(
+              child: ChipperLog(
+                  errors: _chips.errorBlock, showInfoLogs: showInfoLogs))
         ])),
     ]);
   }
@@ -190,10 +245,14 @@ class ViewPreviousEntryButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Take a list of all lines before this one, then find the last one in the list that is specifically a "previous line" entry..
-    var thisError = _errors[index] is GeneralErrorLogLine ? (_errors[index] as GeneralErrorLogLine) : null;
+    var thisError = _errors[index] is GeneralErrorLogLine
+        ? (_errors[index] as GeneralErrorLogLine)
+        : null;
     var prevThreadMessage = _errors
         .sublist(index + 1, _errors.length)
-        .firstWhereOrNull((element) => element is GeneralErrorLogLine ? element.thread == thisError?.thread : true);
+        .firstWhereOrNull((element) => element is GeneralErrorLogLine
+            ? element.thread == thisError?.thread
+            : true);
     if (prevThreadMessage == null) return const SizedBox(height: 15, width: 20);
 
     return Tooltip(
@@ -213,13 +272,15 @@ class ViewPreviousEntryButton extends StatelessWidget {
                                     "Previous line on ${thisError?.thread?.replaceFirst('[', '').replaceFirst(']', '') ?? "thread"}",
                                     style: theme.textTheme.titleMedium),
                                 Row(children: [
-                                  lineNumber(prevThreadMessage.lineNumber, theme),
+                                  lineNumber(
+                                      prevThreadMessage.lineNumber, theme),
                                   prevThreadMessage.createLogWidget(context)
                                 ]),
                                 Opacity(
                                     opacity: 0.4,
                                     child: Row(children: [
-                                      lineNumber(_errors[index].lineNumber, theme),
+                                      lineNumber(
+                                          _errors[index].lineNumber, theme),
                                       _errors[index].createLogWidget(context)
                                     ]))
                               ]))),
@@ -247,20 +308,23 @@ class ViewPreviousEntryButton extends StatelessWidget {
 Text lineNumber(int lineNumber, ThemeData theme) {
   return Text(
     " $lineNumber  ",
-    style: TextStyle(color: theme.hintColor.withAlpha(40), fontFeatures: const [FontFeature.tabularFigures()]),
+    style: TextStyle(
+        color: theme.hintColor.withAlpha(40),
+        fontFeatures: const [FontFeature.tabularFigures()]),
   );
 }
 
 class ModsList extends StatelessWidget {
-  ModsList({super.key, this.mods});
+  const ModsList({super.key, this.mods});
 
-  UnmodifiableListView<ModEntry>? mods;
+  final UnmodifiableListView<ModEntry>? mods;
 
   @override
   Widget build(BuildContext context) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("Mods (${mods?.length})", style: Theme.of(context).textTheme.titleLarge),
+          Text("Mods (${mods?.length})",
+              style: Theme.of(context).textTheme.titleLarge),
           ...mods!.map((e) => e.createWidget(context))
         ],
       );

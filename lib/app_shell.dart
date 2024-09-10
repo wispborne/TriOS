@@ -16,6 +16,7 @@ import 'package:trios/trios/self_updater/self_updater.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/trios/settings/settings_page.dart';
 import 'package:trios/trios/toasts/toast_manager.dart';
+import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/platform_specific.dart';
 import 'package:trios/vram_estimator/vram_estimator.dart';
@@ -297,6 +298,7 @@ class _AppShellState extends ConsumerState<AppShell>
                       isSelected: _currentPage == TriOSTools.chipper,
                       onPressed: () => _changeTab(TriOSTools.chipper),
                     ),
+                    const SizedBox(width: 4),
                     AnimatedPopupMenuButton<TriOSTools>(
                       icon: SvgImageIcon("assets/images/icon-toolbox.svg",
                           color: theme.iconTheme.color),
@@ -506,32 +508,39 @@ class FilePermissionShield extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isVmParamsFileWritable =
-        ref.watch(AppState.isVmParamsFileWritable).valueOrNull;
-    final isJre23VmparamsFileWritable =
-        (ref.watch(appSettings.select((s) => s.useJre23)) ?? false)
-            ? (ref.watch(AppState.isJre23VmparamsFileWritable).valueOrNull ??
-                false)
-            : null;
+    final paths = [
+      (
+        description: 'vmparams file',
+        isWritable:
+            ref.watch(AppState.isVmParamsFileWritable).valueOrNull ?? false,
+        path: ref.watch(AppState.vmParamsFile).valueOrNull?.path,
+      ),
+      if ((ref.watch(appSettings.select((s) => s.useJre23)) ?? false))
+        (
+          description: 'JRE 23 vmparams file',
+          isWritable:
+              ref.watch(AppState.isJre23VmparamsFileWritable).valueOrNull ??
+                  false,
+          path: ref.watch(AppState.jre23VmparamsFile).valueOrNull?.path,
+        ),
+    ];
 
-    if (isVmParamsFileWritable != false &&
-        isJre23VmparamsFileWritable != false) {
+    // Check if any paths are non-writable
+    final hasNonWritablePaths = paths.any((path) => path.isWritable == false);
+
+    // If all paths are writable, return an empty widget
+    if (!hasNonWritablePaths) {
       return const SizedBox();
     }
 
-    final warnings = <String>[];
-    if (isVmParamsFileWritable == false) {
-      warnings.add(
-          "vmparams file is not writable (${ref.watch(AppState.vmParamsFile).valueOrNull?.path}).");
-    }
-    if (isJre23VmparamsFileWritable == false) {
-      warnings.add(
-          "JRE 23 vmparams file is not writable (${ref.watch(AppState.jre23VmparamsFile).valueOrNull?.path}).");
-    }
-
     return Tooltip(
-      message:
-          "Admin permissions needed.${warnings.isNotEmpty ? "\n${warnings.join(", ")}" : ""}",
+      message: "Admin permissions needed for some files."
+          "\n${paths.joinToString(
+        separator: "\n",
+        transform: (path) =>
+            "${path.isWritable ? "✅" : "❌"} ${path.description} is ${path.isWritable ? 'writable' : 'not writable'}."
+            "\n    (${path.path ?? 'unknown path'}).",
+      )}",
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -539,12 +548,14 @@ class FilePermissionShield extends StatelessWidget {
             "assets/images/icon-admin-shield.svg",
             color: ThemeManager.vanillaWarningColor,
           ),
-          Text("Check Permissions",
-              style: TextStyle(
-                color: ThemeManager.vanillaWarningColor,
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-              )),
+          Text(
+            "Check Permissions",
+            style: TextStyle(
+              color: ThemeManager.vanillaWarningColor,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ],
       ),
     );

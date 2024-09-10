@@ -40,18 +40,18 @@ class _ModDependenciesWidgetState extends ConsumerState<ModDependenciesWidget> {
 
     final modVariant = widget.modVariant;
     final modInfo = modVariant.modInfo;
-    var remoteVersionCheck =
-        ref.watch(AppState.versionCheckResults).valueOrNull?[modVariant.smolId];
-    final localVersionCheck = modVariant.versionCheckerInfo;
+    // var remoteVersionCheck =
+    //     ref.watch(AppState.versionCheckResults).valueOrNull?[modVariant.smolId];
+    // final localVersionCheck = modVariant.versionCheckerInfo;
     // final remoteVersionCheck = versionCheck?[modVariant.smolId];
     // final versionCheckComparison =
     //     compareLocalAndRemoteVersions(localVersionCheck, remoteVersionCheck);
 
     final theme = Theme.of(context);
 
-    var versionTextStyle = theme.textTheme.labelLarge?.copyWith(
-        fontFeatures: [const FontFeature.tabularFigures()],
-        color: theme.colorScheme.primary);
+    // var versionTextStyle = theme.textTheme.labelLarge?.copyWith(
+    //     fontFeatures: [const FontFeature.tabularFigures()],
+    //     color: theme.colorScheme.primary);
     const spacing = 4.0;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

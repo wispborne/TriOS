@@ -30,7 +30,7 @@ class _RulesHotReloadState extends ConsumerState<RulesHotReload> {
 
   _saveVanillaRulesDotCsv(WidgetRef ref) {
     Fimber.i(
-        "Detected rules.csv change, touching vanilla rules.csv last modified date");
+        "Detected rules.csv change, touching vanilla rules.csv last modified date. Count: $_counter");
     final gameCoreDir = ref.read(appSettings.select((s) => s.gameCoreDir));
     if (gameCoreDir == null) {
       return;
@@ -73,8 +73,8 @@ class _RulesHotReloadState extends ConsumerState<RulesHotReload> {
       }
     }
 
-    final modsBeingWatchedCount =
-        fileChanges.isClosed ? 0 : modRulesDotCsvFiles.length ?? 0;
+    // final modsBeingWatchedCount =
+    //     fileChanges.isClosed ? 0 : modRulesDotCsvFiles.length ?? 0;
 
     var theme = Theme.of(context);
     return Opacity(

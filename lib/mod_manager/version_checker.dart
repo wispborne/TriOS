@@ -7,7 +7,6 @@ import 'package:dio/io.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mutex/mutex.dart';
 import 'package:path/path.dart' as p;
-import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 
@@ -129,7 +128,8 @@ class VersionCheckerNotifier
       }
 
       future.then((result) async {
-        Fimber.v(() =>"Caching remote version info for ${mod.modInfo.id}: $result");
+        Fimber.v(
+            () => "Caching remote version info for ${mod.modInfo.id}: $result");
         await cacheLock.protect(() async {
           _versionCheckResultsCache[mod.smolId] = result;
           state = AsyncValue.data(_versionCheckResultsCache);

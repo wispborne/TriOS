@@ -24,7 +24,15 @@ targets:
         options:
           # Tells Freezed not to format .freezed.dart files.
           # This can significantly speed up code-generation.
-#          format: false
+          #          format: false
 
           build_extensions:
             '^lib/{{}}.dart': 'lib/generated/{{}}.freezed.dart'
+
+# bugged: https://github.com/schultek/dart_mappable/issues/192
+#      dart_mappable_builder:
+#        options:
+#          build_extensions:
+#            '^lib/{{}}.dart':
+#              - 'lib/generated/{{}}.mapper.dart'
+#              - 'lib/generated/{{}}.init.dart'

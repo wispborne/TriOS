@@ -111,7 +111,7 @@ class _ModAddedToastState extends ConsumerState<ModAddedToast> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              modString ?? "",
+                              modString,
                               style: theme.textTheme.bodyMedium,
                             ),
                             Opacity(

@@ -119,7 +119,7 @@ class DownloadManager {
               "Failed to download file: ${response.statusCode} ${response.statusMessage}");
         }
       }
-    } catch (e, st) {
+    } catch (e) {
       final task = getDownload(url)!;
       if (task.status.value != DownloadStatus.canceled &&
           task.status.value != DownloadStatus.paused) {

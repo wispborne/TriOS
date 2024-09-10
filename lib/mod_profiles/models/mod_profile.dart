@@ -1,30 +1,30 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:dart_mappable/dart_mappable.dart';
+import 'package:trios/models/mod_variant.dart';
+import 'package:trios/models/version.dart';
+import 'package:uuid/uuid.dart';
 
-import '../../models/mod_variant.dart';
-import '../../models/version.dart';
-import '../../utils/util.dart';
+import '../../utils/dart_mappable_utils.dart';
 
-part '../../generated/mod_profiles/models/mod_profile.freezed.dart';
-part '../../generated/mod_profiles/models/mod_profile.g.dart';
+part 'mod_profile.mapper.dart';
 
-@freezed
-class ModProfiles with _$ModProfiles {
-  const factory ModProfiles({
-    required List<ModProfile> modProfiles,
-  }) = _ModProfiles;
+@MappableClass()
+class ModProfiles with ModProfilesMappable {
+  const ModProfiles({
+    required this.modProfiles,
+  });
 
-  factory ModProfiles.fromJson(Map<String, dynamic> json) =>
-      _$ModProfilesFromJson(json);
+  final List<ModProfile> modProfiles;
 }
 
-@freezed
-class ShallowModVariant with _$ShallowModVariant {
-  const factory ShallowModVariant({
-    required String modId,
-    String? modName,
-    required String smolVariantId,
-    @JsonConverterVersionNullable() Version? version,
-  }) = _ShallowModVariant;
+@MappableClass()
+class ShallowModVariant with ShallowModVariantMappable {
+  const ShallowModVariant({
+    required this.modId,
+    this.modName,
+    required this.smolVariantId,
+    @MappableField(key: 'version', hook: NullableVersionMappingHook())
+    this.version,
+  });
 
   factory ShallowModVariant.fromModVariant(ModVariant variant) {
     return ShallowModVariant(
@@ -35,22 +35,43 @@ class ShallowModVariant with _$ShallowModVariant {
     );
   }
 
-  factory ShallowModVariant.fromJson(Map<String, dynamic> json) =>
-      _$ShallowModVariantFromJson(json);
+  final String modId;
+  final String? modName;
+  final String smolVariantId;
+  final Version? version;
 }
 
-@freezed
-class ModProfile with _$ModProfile {
-  const factory ModProfile({
-    required String id,
-    required String name,
-    required String description,
-    required int sortOrder,
-    required List<ShallowModVariant> enabledModVariants,
-    DateTime? dateCreated,
-    DateTime? dateModified,
-  }) = _ModProfile;
+@MappableClass()
+class ModProfile with ModProfileMappable {
+  const ModProfile({
+    required this.id,
+    required this.name,
+    required this.description,
+    required this.sortOrder,
+    required this.enabledModVariants,
+    this.dateCreated,
+    this.dateModified,
+  });
 
-  factory ModProfile.fromJson(Map<String, dynamic> json) =>
-      _$ModProfileFromJson(json);
+  final String id;
+  final String name;
+  final String description;
+  final int sortOrder;
+  final List<ShallowModVariant> enabledModVariants;
+  final DateTime? dateCreated;
+  final DateTime? dateModified;
+
+  static ModProfile newProfile(
+      String name, List<ShallowModVariant> enabledModVariants,
+      {String description = '', sortOrder = 0}) {
+    return ModProfile(
+      id: const Uuid().v4(),
+      name: name,
+      description: description,
+      sortOrder: sortOrder,
+      enabledModVariants: enabledModVariants,
+      dateCreated: DateTime.now(),
+      dateModified: DateTime.now(),
+    );
+  }
 }

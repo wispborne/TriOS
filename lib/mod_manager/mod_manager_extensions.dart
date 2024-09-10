@@ -204,9 +204,6 @@ extension ModVariantsExt on List<ModVariant> {
   /// Returns `null` if no valid comparison result is found.
   VersionCheckComparison? updateCheck(
       Map<String, RemoteVersionCheckResult> versionCheckCache) {
-    final highestVersionWithVersionChecker = firstWhereOrNull(
-        (variant) => variant.versionCheckerInfo?.seemsLegit == true);
-
     for (var variant in sortedDescending()) {
       final RemoteVersionCheckResult? versionCheck =
           versionCheckCache[variant.smolId];

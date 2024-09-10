@@ -563,7 +563,6 @@ class _Smol3State extends ConsumerState<Smol3>
           if (filteredMods.isEmpty) return const SizedBox();
           final mod = _getModFromKey(rendererContext.row.key);
           if (mod == null) return const SizedBox();
-          final bestVersion = mod.findFirstEnabledOrHighestVersion;
           final theme = Theme.of(context);
           return ContextMenuRegion(
               contextMenu: buildModContextMenu(mod, ref, context,
@@ -865,10 +864,6 @@ class _Smol3State extends ConsumerState<Smol3>
   PlutoRow? createRow(Mod mod) {
     final bestVersion = mod.findFirstEnabledOrHighestVersion;
     if (bestVersion == null) return null;
-    final dependencies =
-        ref.watch(AppState.modCompatibility)[bestVersion.smolId];
-    final gameVersion =
-        ref.watch(appSettings.select((value) => value.lastStarsectorVersion));
 
     return PlutoRow(
       key: ValueKey(mod),

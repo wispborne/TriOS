@@ -357,7 +357,7 @@ class _ChangeJreWidgetState extends ConsumerState<ChangeJreWidget> {
                                       if (jre is JreEntryInstalled)
                                         Opacity(
                                             opacity: 0.8,
-                                            child: Text(jre.path.name ?? "",
+                                            child: Text(jre.path.name,
                                                 style: Theme.of(context)
                                                     .textTheme
                                                     .bodySmall)),

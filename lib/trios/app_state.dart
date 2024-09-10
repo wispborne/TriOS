@@ -125,7 +125,7 @@ class AppState {
     final gamePath =
         ref.watch(appSettings.select((value) => value.gameDir))?.toDirectory();
     if (gamePath == null) return false;
-    var modsFolder = generateModsFolderPath(gamePath)?.toDirectory();
+
     final filesAndFolders = [ref.read(enabledModsFile).valueOrNull?.enabledMods.toList()].whereNotNull();
     for (final file in filesAndFolders) {
       if (filesAndFolders.isEmpty) {
@@ -242,8 +242,7 @@ enum ModState {
 
 extension ModDependencies on List<DependencyCheck?> {
   bool get isCompatibleWithGameVersion =>
-      any((d) => d?.gameCompatibility != GameCompatibility.incompatible) ??
-      false;
+      any((d) => d?.gameCompatibility != GameCompatibility.incompatible);
 
   GameCompatibility get leastSevereCompatibility =>
       reduce((a, b) {

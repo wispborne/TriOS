@@ -975,9 +975,7 @@ void copyModListToClipboardFromMods(List<Mod> mods, BuildContext context) {
   Clipboard.setData(ClipboardData(
       text: "Mods (${mods.length})\n${mods.map((mod) {
     final variant = mod.findFirstEnabledOrHighestVersion;
-    return false
-        ? "${mod.id} ${variant?.modInfo.version}"
-        : "${variant?.modInfo.name}  v${variant?.modInfo.version}  [${mod.id}]";
+    return "${variant?.modInfo.name}  v${variant?.modInfo.version}  [${mod.id}]";
   }).join('\n')}"));
   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
     content: Text("Copied mod list to clipboard."),

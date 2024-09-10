@@ -26,7 +26,6 @@ class _AnimatedPopupMenuButtonState<T> extends State<AnimatedPopupMenuButton<T>>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _arrowAnimation;
-  bool _isMenuOpen = false;
 
   @override
   void initState() {
@@ -46,7 +45,6 @@ class _AnimatedPopupMenuButtonState<T> extends State<AnimatedPopupMenuButton<T>>
 
   void _onMenuOpened(bool isOpened) {
     setState(() {
-      _isMenuOpen = isOpened;
       if (isOpened) {
         _controller.forward(); // Rotate the arrow when the menu opens
       } else {
@@ -67,7 +65,8 @@ class _AnimatedPopupMenuButtonState<T> extends State<AnimatedPopupMenuButton<T>>
             turns: _arrowAnimation, // Apply rotation animation to arrow
             child: Icon(
               Icons.arrow_drop_down, // The arrow icon
-              color: widget.arrowColor ?? Theme.of(context).iconTheme.color, // Arrow color
+              color: widget.arrowColor ??
+                  Theme.of(context).iconTheme.color, // Arrow color
             ),
           ),
         ],

@@ -114,7 +114,7 @@ class _VersionCheckTextReadoutState
                     Padding(
                       padding: const EdgeInsets.only(top: 8.0),
                       child: Text(
-                          "Version Checker url:\n${remoteVersionCheck?.uri}",
+                          "Version Checker url:\n${remoteVersionCheck.uri}",
                           style: theme.textTheme.labelMedium?.copyWith(
                               fontFeatures: [
                                 const FontFeature.tabularFigures()

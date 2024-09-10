@@ -76,11 +76,8 @@ Directory? generateGameCorePath(Directory gamePath) {
   }
 }
 
-Directory? defaultGameCorePath() {
-  return defaultGamePath() == null
-      ? null
-      : generateGameCorePath(defaultGamePath()!)?.normalize;
-}
+Directory? defaultGameCorePath() =>
+    generateGameCorePath(defaultGamePath())?.normalize;
 
 Directory? generateModsFolderPath(Directory gamePath) {
   if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {

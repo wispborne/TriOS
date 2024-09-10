@@ -305,12 +305,8 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
                                   ),
                                 if (variant.modInfo.dependencies.isNotEmpty)
                                   Builder(builder: (context) {
-                                    final versionCheckResults = ref
-                                        .watch(AppState.versionCheckResults)
-                                        .valueOrNull?[variant.smolId];
                                     if (modVariants == null ||
-                                        enabledMods == null ||
-                                        selectedMod == null) {
+                                        enabledMods == null) {
                                       return const SizedBox();
                                     }
                                     return Column(

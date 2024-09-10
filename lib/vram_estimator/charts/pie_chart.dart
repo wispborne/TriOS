@@ -2,8 +2,8 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:trios/utils/extensions.dart';
 
-import '../models/mod_result.dart';
 import '../../../utils/util.dart';
+import '../models/mod_result.dart';
 
 class VramPieChart extends StatefulWidget {
   final List<Mod> modVramInfo;
@@ -23,16 +23,16 @@ class VramPieChartState extends State<VramPieChart> {
     return widget.modVramInfo
         .where((element) => element.totalBytesForMod > 0)
         .map((mod) {
-      const isTouched = false; //i == touchedIndex;
-      const fontSize = isTouched ? 25.0 : 12.0;
-      const radius = isTouched ? 60.0 : 50.0;
+      const fontSize = 12.0;
+      const radius = 50.0;
       const shadows = [Shadow(color: Colors.black, blurRadius: 2)];
       return PieChartSectionData(
         color: ColorGenerator.generateFromColor(mod.info.id, baseColor)
             .createMaterialColor()
             .shade700,
         value: mod.totalBytesForMod.toDouble(),
-        title: "${mod.info.name} ${mod.info.version}\n${mod.totalBytesForMod.bytesAsReadableMB()}",
+        title:
+            "${mod.info.name} ${mod.info.version}\n${mod.totalBytesForMod.bytesAsReadableMB()}",
         radius: radius,
         titlePositionPercentageOffset: 2,
         titleStyle: const TextStyle(

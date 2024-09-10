@@ -938,7 +938,7 @@ class PlutoGridColumnFilterConfig {
 
   final int _debounceMilliseconds;
 
-  bool get hasUserFilter => _userFilters != null && _userFilters!.isNotEmpty;
+  bool get hasUserFilter => _userFilters != null && _userFilters.isNotEmpty;
 
   List<PlutoFilterType> get filters =>
       hasUserFilter ? _userFilters! : FilterHelper.defaultFilters;
@@ -957,7 +957,7 @@ class PlutoGridColumnFilterConfig {
       return filters.first;
     }
 
-    var resolvedFilter = _userResolveDefaultColumnFilter!(column, resolver);
+    var resolvedFilter = _userResolveDefaultColumnFilter(column, resolver);
 
     assert(filters.contains(resolvedFilter));
 

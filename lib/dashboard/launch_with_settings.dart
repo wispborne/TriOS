@@ -46,7 +46,7 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                 ?.toString() ??
             starsectorLaunchPrefs?.resolution.split("x")[0]);
 
-    final gameDir = ref.read(appSettings.select((value) => value.gameDir));
+    // final gameDir = ref.read(appSettings.select((value) => value.gameDir));
     final isUsingJre23 =
         ref.watch(appSettings.select((value) => value.useJre23));
     // var currentScreenScaling = ref.watch(appSettings.select((value) => value.launchSettings)).screenScaling ??

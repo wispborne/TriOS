@@ -5,12 +5,11 @@ import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mutex/mutex.dart';
+import 'package:path/path.dart' as p;
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 
-import '../../mod_manager/mod_manager_logic.dart';
 import '../../models/enabled_mods.dart';
-import 'package:path/path.dart' as p;
 import '../../models/mod.dart';
 import '../../utils/logging.dart';
 import '../../utils/util.dart';

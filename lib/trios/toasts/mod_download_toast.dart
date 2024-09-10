@@ -154,7 +154,7 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  modString ?? "",
+                                  modString,
                                   style: theme.textTheme.bodyMedium,
                                 ),
                                 Opacity(
@@ -227,8 +227,6 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                                         Builder(builder: (context) {
                                           final mods = ref.read(AppState.mods);
                                           final mod = installedMod.mod(mods);
-                                          final currentVariant =
-                                              mod?.findFirstEnabled;
 
                                           return ElevatedButton.icon(
                                             onPressed: () async {

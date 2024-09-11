@@ -15,8 +15,6 @@ _$SettingsImpl _$$SettingsImplFromJson(Map<String, dynamic> json) =>
       modsDir:
           const JsonDirectoryConverter().fromJson(json['modsDir'] as String?),
       hasCustomModsDir: json['hasCustomModsDir'] as bool? ?? false,
-      shouldAutoUpdateOnLaunch:
-          json['shouldAutoUpdateOnLaunch'] as bool? ?? false,
       isRulesHotReloadEnabled:
           json['isRulesHotReloadEnabled'] as bool? ?? false,
       windowXPos: (json['windowXPos'] as num?)?.toDouble(),
@@ -36,21 +34,25 @@ _$SettingsImpl _$$SettingsImplFromJson(Map<String, dynamic> json) =>
           : LaunchSettings.fromJson(
               json['launchSettings'] as Map<String, dynamic>),
       lastStarsectorVersion: json['lastStarsectorVersion'] as String?,
-      secondsBetweenModFolderChecks:
-          (json['secondsBetweenModFolderChecks'] as num?)?.toInt() ?? 15,
-      toastDurationSeconds:
-          (json['toastDurationSeconds'] as num?)?.toInt() ?? 7,
       isUpdatesFieldShown: json['isUpdatesFieldShown'] as bool? ?? true,
       modsGridState: json['modsGridState'] == null
           ? null
           : ModsGridState.fromJson(
               json['modsGridState'] as Map<String, dynamic>),
+      shouldAutoUpdateOnLaunch:
+          json['shouldAutoUpdateOnLaunch'] as bool? ?? false,
+      secondsBetweenModFolderChecks:
+          (json['secondsBetweenModFolderChecks'] as num?)?.toInt() ?? 15,
+      toastDurationSeconds:
+          (json['toastDurationSeconds'] as num?)?.toInt() ?? 7,
       folderNamingSetting: $enumDecodeNullable(
               _$FolderNamingSettingEnumMap, json['folderNamingSetting']) ??
           FolderNamingSetting.doNotChangeNameForHighestVersion,
       keepLastNVersions: (json['keepLastNVersions'] as num?)?.toInt(),
       allowCrashReporting: json['allowCrashReporting'] as bool?,
       updateToPrereleases: json['updateToPrereleases'] as bool? ?? false,
+      autoEnableAndDisableDependencies:
+          json['autoEnableAndDisableDependencies'] as bool? ?? false,
       userId: json['userId'] as String? ?? "",
       activeModProfileId: json['activeModProfileId'] as String?,
     );
@@ -62,7 +64,6 @@ Map<String, dynamic> _$$SettingsImplToJson(_$SettingsImpl instance) =>
           const JsonDirectoryConverter().toJson(instance.gameCoreDir),
       'modsDir': const JsonDirectoryConverter().toJson(instance.modsDir),
       'hasCustomModsDir': instance.hasCustomModsDir,
-      'shouldAutoUpdateOnLaunch': instance.shouldAutoUpdateOnLaunch,
       'isRulesHotReloadEnabled': instance.isRulesHotReloadEnabled,
       'windowXPos': instance.windowXPos,
       'windowYPos': instance.windowYPos,
@@ -77,15 +78,18 @@ Map<String, dynamic> _$$SettingsImplToJson(_$SettingsImpl instance) =>
       'enableDirectLaunch': instance.enableDirectLaunch,
       'launchSettings': instance.launchSettings,
       'lastStarsectorVersion': instance.lastStarsectorVersion,
-      'secondsBetweenModFolderChecks': instance.secondsBetweenModFolderChecks,
-      'toastDurationSeconds': instance.toastDurationSeconds,
       'isUpdatesFieldShown': instance.isUpdatesFieldShown,
       'modsGridState': instance.modsGridState,
+      'shouldAutoUpdateOnLaunch': instance.shouldAutoUpdateOnLaunch,
+      'secondsBetweenModFolderChecks': instance.secondsBetweenModFolderChecks,
+      'toastDurationSeconds': instance.toastDurationSeconds,
       'folderNamingSetting':
           _$FolderNamingSettingEnumMap[instance.folderNamingSetting]!,
       'keepLastNVersions': instance.keepLastNVersions,
       'allowCrashReporting': instance.allowCrashReporting,
       'updateToPrereleases': instance.updateToPrereleases,
+      'autoEnableAndDisableDependencies':
+          instance.autoEnableAndDisableDependencies,
       'userId': instance.userId,
       'activeModProfileId': instance.activeModProfileId,
     };

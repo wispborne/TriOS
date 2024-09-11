@@ -55,6 +55,9 @@ class SmolGridUiState {
   bool? sortAscending;
 }
 
+const _standardRowHeight = 40.0;
+const _dependencyAddedRowHeight = 28.0;
+
 class _Smol3State extends ConsumerState<Smol3>
     with AutomaticKeepAliveClientMixin {
   @override
@@ -257,7 +260,7 @@ class _Smol3State extends ConsumerState<Smol3>
                         style: PlutoGridStyleConfig.dark(
                           enableCellBorderHorizontal: false,
                           enableCellBorderVertical: false,
-                          // rowHeight: 40,
+                          rowHeight: _standardRowHeight,
                           activatedBorderColor: Colors.transparent,
                           inactivatedBorderColor: Colors.transparent,
                           menuBackgroundColor: theme.colorScheme.surface,
@@ -509,10 +512,12 @@ class _Smol3State extends ConsumerState<Smol3>
                     contextMenu: buildModContextMenu(mod, ref, context,
                         showSwapToVersion: true),
                     child: tooltippy(
-                      ModVersionSelectionDropdown(
-                          mod: mod,
-                          width: versionSelectorWidth,
-                          showTooltip: false),
+                      RowItemContainer(
+                        child: ModVersionSelectionDropdown(
+                            mod: mod,
+                            width: versionSelectorWidth,
+                            showTooltip: false),
+                      ),
                       mod.modVariants,
                     ));
               })),
@@ -527,8 +532,10 @@ class _Smol3State extends ConsumerState<Smol3>
             if (filteredMods.isEmpty) return const SizedBox();
             final mod = _getModFromKey(rendererContext.row.key);
             if (mod == null) return const SizedBox();
-            return ModTypeIcon(
-                modVariant: mod.findFirstEnabledOrHighestVersion!);
+            return RowItemContainer(
+              child: ModTypeIcon(
+                  modVariant: mod.findFirstEnabledOrHighestVersion!),
+            );
           }),
       PlutoColumn(
         title: '',
@@ -542,15 +549,17 @@ class _Smol3State extends ConsumerState<Smol3>
           if (filteredMods.isEmpty) return const SizedBox();
           String? iconPath = rendererContext.cell.value;
           return iconPath != null
-              ? Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    Image.file(
-                      iconPath.toFile(),
-                      width: 32,
-                      height: 32,
-                    ),
-                  ],
+              ? RowItemContainer(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Image.file(
+                        iconPath.toFile(),
+                        width: 32,
+                        height: 32,
+                      ),
+                    ],
+                  ),
                 )
               : const SizedBox(width: 32, height: 32);
         }),
@@ -564,26 +573,111 @@ class _Smol3State extends ConsumerState<Smol3>
           final mod = _getModFromKey(rendererContext.row.key);
           if (mod == null) return const SizedBox();
           final theme = Theme.of(context);
-          return ContextMenuRegion(
-              contextMenu: buildModContextMenu(mod, ref, context,
-                  showSwapToVersion: true),
-              child: tooltippy(
-                // affixToTop( child:
-                ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    minWidth: 600,
-                  ),
-                  child: Text(
-                    rendererContext.cell.value ?? "(no name)",
-                    style: GoogleFonts.roboto(
-                      textStyle: theme.textTheme.labelLarge
-                          ?.copyWith(fontWeight: FontWeight.bold),
+          final enabledVersion = mod.findFirstEnabled;
+          final modCompatibility =
+              ref.watch(AppState.modCompatibility)[enabledVersion?.smolId];
+          final gameVersion = ref.watch(
+              appSettings.select((value) => value.lastStarsectorVersion));
+          final solvableDependencies = modCompatibility?.dependencyChecks
+                  .where((e) => e.canBeSatisfiedWithInstalledMods)
+                  .toList() ??
+              [];
+
+          return OverflowBox(
+            maxWidth: double.infinity,
+            alignment: Alignment.centerLeft,
+            fit: OverflowBoxFit.deferToChild,
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              SizedBox(
+                height: _standardRowHeight,
+                child: ContextMenuRegion(
+                    contextMenu: buildModContextMenu(
+                      mod,
+                      ref,
+                      context,
+                      showSwapToVersion: true,
                     ),
+                    child: tooltippy(
+                      // affixToTop( child:
+                      RowItemContainer(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(
+                            minWidth: 600,
+                          ),
+                          child: Text(
+                            rendererContext.cell.value ?? "(no name)",
+                            style: GoogleFonts.roboto(
+                              textStyle: theme.textTheme.labelLarge
+                                  ?.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          // )
+                        ),
+                      ),
+                      mod.modVariants,
+                    )),
+              ),
+              if (solvableDependencies.isNotEmpty)
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ...solvableDependencies.map((checkResult) {
+                        final modVariantThatIsRequired =
+                            checkResult.satisfiedAmount is Disabled
+                                ? (checkResult.satisfiedAmount as Disabled)
+                                    .modVariant
+                                : null;
+
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 4),
+                          child: Tooltip(
+                            message: checkResult.dependency.name,
+                            child: Row(
+                              children: [
+                                if (checkResult.satisfiedAmount is Disabled)
+                                  Padding(
+                                    padding: const EdgeInsets.only(right: 8),
+                                    child: OutlinedButton(
+                                        onPressed: () {
+                                          ref
+                                              .read(
+                                                  AppState.modVariants.notifier)
+                                              .changeActiveModVariant(
+                                                  modVariantThatIsRequired!
+                                                      .mod(modsToDisplay)!,
+                                                  modVariantThatIsRequired);
+                                        },
+                                        style: OutlinedButton.styleFrom(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 8, vertical: 4),
+                                          minimumSize: const Size(60, 30),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                                ThemeManager
+                                                    .cornerRadius), // Rounded corners
+                                          ),
+                                        ),
+                                        child: Text(
+                                            "Enable ${modVariantThatIsRequired?.modInfo.formattedNameVersionId}")),
+                                  ),
+                                Text(
+                                  "Requires ${checkResult.dependency.formattedNameVersionId} ",
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                      color: theme.colorScheme.error),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ],
                   ),
-                  // )
                 ),
-                mod.modVariants,
-              ));
+            ]),
+          );
         }),
         // onSort: (columnIndex, ascending) => _onSort(
         //     columnIndex,
@@ -612,9 +706,11 @@ class _Smol3State extends ConsumerState<Smol3>
           return ContextMenuRegion(
               contextMenu: buildModContextMenu(mod, ref, context,
                   showSwapToVersion: true),
-              child: Text(rendererContext.cell.value ?? "(no author)",
-                  style: theme.textTheme.labelLarge
-                      ?.copyWith(color: lightTextColor)));
+              child: RowItemContainer(
+                child: Text(rendererContext.cell.value ?? "(no author)",
+                    style: theme.textTheme.labelLarge
+                        ?.copyWith(color: lightTextColor)),
+              ));
         }),
       ),
       PlutoColumn(
@@ -648,157 +744,163 @@ class _Smol3State extends ConsumerState<Smol3>
               // affixToTop(                      child:
               mod.modVariants.isEmpty
                   ? const Text("")
-                  : Row(
-                      children: [
-                        if (changelogUrl.isNotNullOrEmpty())
-                          MovingTooltipWidget(
-                            tooltipWidget: SizedBox(
-                              width: 400,
-                              height: 400,
-                              child: TooltipFrame(
-                                child: Stack(
-                                  children: [
-                                    Align(
-                                        alignment: Alignment.topRight,
-                                        child: Padding(
-                                          padding: const EdgeInsets.only(
-                                              bottom: 4, top: 0),
-                                          child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.end,
-                                            children: [
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    right: 4),
-                                                child: SvgImageIcon(
-                                                  "assets/images/icon-bullhorn-variant.svg",
-                                                  color:
-                                                      theme.colorScheme.primary,
-                                                  width: 20,
-                                                  height: 20,
-                                                ),
-                                              ),
-                                              Text(
-                                                  "Click horn to see full changelog",
-                                                  style: theme
-                                                      .textTheme.bodySmall
-                                                      ?.copyWith(
-                                                    fontWeight: FontWeight.bold,
+                  : RowItemContainer(
+                      child: Row(
+                        children: [
+                          if (changelogUrl.isNotNullOrEmpty())
+                            MovingTooltipWidget(
+                              tooltipWidget: SizedBox(
+                                width: 400,
+                                height: 400,
+                                child: TooltipFrame(
+                                  child: Stack(
+                                    children: [
+                                      Align(
+                                          alignment: Alignment.topRight,
+                                          child: Padding(
+                                            padding: const EdgeInsets.only(
+                                                bottom: 4, top: 0),
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.end,
+                                              children: [
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          right: 4),
+                                                  child: SvgImageIcon(
+                                                    "assets/images/icon-bullhorn-variant.svg",
                                                     color: theme
                                                         .colorScheme.primary,
-                                                  )),
-                                            ],
-                                          ),
-                                        )),
-                                    Padding(
-                                      padding: const EdgeInsets.only(top: 12),
-                                      child: Changelogs(
-                                        localVersionCheck,
-                                        remoteVersionCheck,
+                                                    width: 20,
+                                                    height: 20,
+                                                  ),
+                                                ),
+                                                Text(
+                                                    "Click horn to see full changelog",
+                                                    style: theme
+                                                        .textTheme.bodySmall
+                                                        ?.copyWith(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color: theme
+                                                          .colorScheme.primary,
+                                                    )),
+                                              ],
+                                            ),
+                                          )),
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 12),
+                                        child: Changelogs(
+                                          localVersionCheck,
+                                          remoteVersionCheck,
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              child: InkWell(
+                                onTap: () {
+                                  showDialog(
+                                      context: context,
+                                      builder: (context) => AlertDialog(
+                                          content: Changelogs(localVersionCheck,
+                                              remoteVersionCheck)));
+                                },
+                                child: SvgImageIcon(
+                                  "assets/images/icon-bullhorn-variant.svg",
+                                  color:
+                                      theme.iconTheme.color?.withOpacity(0.7),
+                                  width: 20,
+                                  height: 20,
                                 ),
                               ),
                             ),
+                          MovingTooltipWidget(
+                            tooltipWidget:
+                                ModListBasicEntry.buildVersionCheckTextReadout(
+                                    null,
+                                    versionCheckComparison?.comparisonInt,
+                                    localVersionCheck,
+                                    remoteVersionCheck),
                             child: InkWell(
                               onTap: () {
-                                showDialog(
-                                    context: context,
-                                    builder: (context) => AlertDialog(
-                                        content: Changelogs(localVersionCheck,
-                                            remoteVersionCheck)));
+                                if (remoteVersionCheck?.remoteVersion != null &&
+                                    versionCheckComparison?.comparisonInt ==
+                                        -1) {
+                                  ref
+                                      .read(downloadManager.notifier)
+                                      .downloadUpdateViaBrowser(
+                                          remoteVersionCheck!.remoteVersion!,
+                                          context,
+                                          activateVariantOnComplete: false,
+                                          modInfo: bestVersion.modInfo);
+                                } else {
+                                  showDialog(
+                                      context: context,
+                                      builder: (context) => AlertDialog(
+                                          content: ModListBasicEntry
+                                              .changeAndVersionCheckAlertDialogContent(
+                                                  changelogUrl,
+                                                  localVersionCheck,
+                                                  remoteVersionCheck,
+                                                  versionCheckComparison
+                                                      ?.comparisonInt)));
+                                }
                               },
-                              child: SvgImageIcon(
-                                "assets/images/icon-bullhorn-variant.svg",
-                                color: theme.iconTheme.color?.withOpacity(0.7),
-                                width: 20,
-                                height: 20,
+                              onSecondaryTap: () => showDialog(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                      content: ModListBasicEntry
+                                          .changeAndVersionCheckAlertDialogContent(
+                                              changelogUrl,
+                                              localVersionCheck,
+                                              remoteVersionCheck,
+                                              versionCheckComparison
+                                                  ?.comparisonInt))),
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 5.0),
+                                child: VersionCheckIcon.fromComparison(
+                                    comparison: versionCheckComparison,
+                                    theme: theme),
                               ),
                             ),
                           ),
-                        MovingTooltipWidget(
-                          tooltipWidget:
-                              ModListBasicEntry.buildVersionCheckTextReadout(
-                                  null,
-                                  versionCheckComparison?.comparisonInt,
-                                  localVersionCheck,
-                                  remoteVersionCheck),
-                          child: InkWell(
-                            onTap: () {
-                              if (remoteVersionCheck?.remoteVersion != null &&
-                                  versionCheckComparison?.comparisonInt == -1) {
-                                ref
-                                    .read(downloadManager.notifier)
-                                    .downloadUpdateViaBrowser(
-                                        remoteVersionCheck!.remoteVersion!,
-                                        context,
-                                        activateVariantOnComplete: false,
-                                        modInfo: bestVersion.modInfo);
-                              } else {
-                                showDialog(
-                                    context: context,
-                                    builder: (context) => AlertDialog(
-                                        content: ModListBasicEntry
-                                            .changeAndVersionCheckAlertDialogContent(
-                                                changelogUrl,
-                                                localVersionCheck,
-                                                remoteVersionCheck,
-                                                versionCheckComparison
-                                                    ?.comparisonInt)));
-                              }
-                            },
-                            onSecondaryTap: () => showDialog(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                    content: ModListBasicEntry
-                                        .changeAndVersionCheckAlertDialogContent(
-                                            changelogUrl,
-                                            localVersionCheck,
-                                            remoteVersionCheck,
-                                            versionCheckComparison
-                                                ?.comparisonInt))),
-                            child: Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 5.0),
-                              child: VersionCheckIcon.fromComparison(
-                                  comparison: versionCheckComparison,
-                                  theme: theme),
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          child: RichText(
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            text: TextSpan(
-                              children: [
-                                for (var i = 0;
-                                    i < mod.modVariants.length;
-                                    i++) ...[
-                                  if (i > 0)
+                          Expanded(
+                            child: RichText(
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              text: TextSpan(
+                                children: [
+                                  for (var i = 0;
+                                      i < mod.modVariants.length;
+                                      i++) ...[
+                                    if (i > 0)
+                                      TextSpan(
+                                        text: ', ',
+                                        style: theme.textTheme.labelLarge?.copyWith(
+                                            color:
+                                                lightTextColor), // Style for the comma
+                                      ),
                                     TextSpan(
-                                      text: ', ',
+                                      text: mod.modVariants[i].modInfo.version
+                                          .toString(),
                                       style: theme.textTheme.labelLarge?.copyWith(
-                                          color:
-                                              lightTextColor), // Style for the comma
+                                          color: enabledVersion ==
+                                                  mod.modVariants[i]
+                                              ? null
+                                              : lightTextColor), // Style for the remaining items
                                     ),
-                                  TextSpan(
-                                    text: mod.modVariants[i].modInfo.version
-                                        .toString(),
-                                    style: theme.textTheme.labelLarge?.copyWith(
-                                        color: enabledVersion ==
-                                                mod.modVariants[i]
-                                            ? null
-                                            : lightTextColor), // Style for the remaining items
-                                  ),
+                                  ],
                                 ],
-                              ],
+                              ),
                             ),
                           ),
-                        ),
-                      ],
-                      // ),
+                        ],
+                        // ),
+                      ),
                     );
         }),
       ),
@@ -820,9 +922,11 @@ class _Smol3State extends ConsumerState<Smol3>
           return ContextMenuRegion(
               contextMenu: buildModContextMenu(mod, ref, context,
                   showSwapToVersion: true),
-              child: Text("todo",
-                  style: theme.textTheme.labelLarge
-                      ?.copyWith(color: lightTextColor)));
+              child: RowItemContainer(
+                child: Text("todo",
+                    style: theme.textTheme.labelLarge
+                        ?.copyWith(color: lightTextColor)),
+              ));
         }),
       ),
       PlutoColumn(
@@ -846,15 +950,20 @@ class _Smol3State extends ConsumerState<Smol3>
           return ContextMenuRegion(
               contextMenu: buildModContextMenu(mod, ref, context,
                   showSwapToVersion: true),
-              child: Opacity(
-                opacity: lightTextOpacity,
-                child: Text(rendererContext.cell.value ?? "(no game version)",
-                    style: compareGameVersions(bestVersion?.modInfo.gameVersion,
-                                ref.watch(appSettings).lastStarsectorVersion) ==
-                            GameCompatibility.perfectMatch
-                        ? theme.textTheme.labelLarge
-                        : theme.textTheme.labelLarge
-                            ?.copyWith(color: ThemeManager.vanillaErrorColor)),
+              child: RowItemContainer(
+                child: Opacity(
+                  opacity: lightTextOpacity,
+                  child: Text(rendererContext.cell.value ?? "(no game version)",
+                      style: compareGameVersions(
+                                  bestVersion?.modInfo.gameVersion,
+                                  ref
+                                      .watch(appSettings)
+                                      .lastStarsectorVersion) ==
+                              GameCompatibility.perfectMatch
+                          ? theme.textTheme.labelLarge
+                          : theme.textTheme.labelLarge?.copyWith(
+                              color: ThemeManager.vanillaErrorColor)),
+                ),
               ));
         }),
       ),
@@ -864,21 +973,30 @@ class _Smol3State extends ConsumerState<Smol3>
   PlutoRow? createRow(Mod mod) {
     final bestVersion = mod.findFirstEnabledOrHighestVersion;
     if (bestVersion == null) return null;
+    final enabledVersion = mod.findFirstEnabled;
+    final modCompatibility =
+        ref.watch(AppState.modCompatibility)[enabledVersion?.smolId];
+    final gameVersion =
+        ref.watch(appSettings.select((value) => value.lastStarsectorVersion));
 
     return PlutoRow(
       key: ValueKey(mod),
-      // height: dependencies
-      //             ?.mostSevereDependency(gameVersion)
-      //             ?.isCurrentlySatisfied ==
-      //         true
-      //     ? null
-      //     : 100,
+      height: modCompatibility
+                  ?.mostSevereDependency(gameVersion)
+                  ?.isCurrentlySatisfied ==
+              false
+          ? _standardRowHeight +
+              (_dependencyAddedRowHeight *
+                  modCompatibility!.dependencyChecks
+                      .countWhere((e) => e.isCurrentlySatisfied == false))
+          : null,
       cells: {
         _Fields.enableDisable.toString(): PlutoCell(
           value: mod.hasEnabledVariant ? 'Enabled' : 'Disabled',
         ),
         // Enable/Disable
         _Fields.versionSelector.toString(): PlutoCell(value: mod),
+
         // Utility/Total Conversion icon
         _Fields.utilityIcon.toString(): PlutoCell(
           value: bestVersion.modInfo.isUtility
@@ -1048,6 +1166,32 @@ class CopyModListButtonLarge extends StatelessWidget {
             ),
           ),
         ));
+  }
+}
+
+class RowItemContainer extends StatelessWidget {
+  final Widget child;
+
+  const RowItemContainer({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          height: _standardRowHeight,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [child],
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
 

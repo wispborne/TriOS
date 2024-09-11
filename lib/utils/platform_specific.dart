@@ -7,13 +7,13 @@ import 'package:win32/win32.dart';
 import 'logging.dart'; // Assuming you're using Fimber for logging
 
 extension PlatformFileEntityExt on FileSystemEntity {
-  void moveToTrash() {
+  void moveToTrash({bool deleteIfFailed = false}) {
     if (Platform.isWindows) {
-      _moveToRecycleBinWindows(path);
+      _moveToRecycleBinWindows(path, deleteIfFailed);
     } else if (Platform.isMacOS) {
-      _moveToTrashMacOS(path);
+      _moveToTrashMacOS(path, deleteIfFailed);
     } else if (Platform.isLinux) {
-      _moveToTrashLinux(path);
+      _moveToTrashLinux(path, deleteIfFailed);
     } else {
       throw UnsupportedError(
           'This platform is not supported for trash operation.');
@@ -60,7 +60,7 @@ bool windowsIsAdmin() {
   }
 }
 
-void _moveToRecycleBinWindows(String path) {
+void _moveToRecycleBinWindows(String path, bool deleteIfFailed) {
   final filePath = TEXT(path);
 
   final fileOpStruct = calloc<SHFILEOPSTRUCT>()
@@ -73,7 +73,12 @@ void _moveToRecycleBinWindows(String path) {
   final result = SHFileOperation(fileOpStruct);
 
   if (result != 0) {
-    Fimber.w("Failed to move file to Recycle Bin.");
+    Fimber.w("Failed to move file to Recycle Bin. Reason: $result");
+
+    if (deleteIfFailed) {
+      File(path).deleteSync();
+      Fimber.i("Deleted file: $path");
+    }
   }
 
   calloc.free(filePath);
@@ -86,7 +91,7 @@ typedef MoveToTrashNative = Int32 Function(
 typedef MoveToTrashDart = int Function(
     Pointer<Utf8> path, Pointer<Pointer<Utf8>> errorMessage);
 
-void _moveToTrashMacOS(String path) {
+void _moveToTrashMacOS(String path, bool deleteIfFailed) {
   final library = DynamicLibrary.open(
       '/System/Library/Frameworks/CoreServices.framework/Versions/A/CoreServices');
   final MoveToTrashDart moveToTrash = library
@@ -99,7 +104,13 @@ void _moveToTrashMacOS(String path) {
   final result = moveToTrash(pathPtr, errorPtr);
 
   if (result != 0) {
-    Fimber.w("Failed to move file to Trash: ${errorPtr.value.toDartString()}");
+    Fimber.w(
+        "Failed to move file to Trash: ${errorPtr.value.toDartString()}. Reason: $result");
+
+    if (deleteIfFailed) {
+      File(path).deleteSync();
+      Fimber.i("Deleted file: $path");
+    }
   }
 
   calloc.free(pathPtr);
@@ -109,10 +120,15 @@ void _moveToTrashMacOS(String path) {
   calloc.free(errorPtr);
 }
 
-void _moveToTrashLinux(String path) {
+void _moveToTrashLinux(String path, bool deleteIfFailed) {
   final result = Process.runSync('gio', ['trash', path]);
 
   if (result.exitCode != 0) {
     Fimber.w('Failed to move file to Trash: ${result.stderr}');
+
+    if (deleteIfFailed) {
+      File(path).deleteSync();
+      Fimber.i("Deleted file: $path");
+    }
   }
 }

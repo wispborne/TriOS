@@ -46,7 +46,6 @@ class Settings with _$Settings {
     @JsonDirectoryConverter() final Directory? gameCoreDir,
     @JsonDirectoryConverter() final Directory? modsDir,
     @Default(false) final bool hasCustomModsDir,
-    @Default(false) final bool shouldAutoUpdateOnLaunch,
     @Default(false) final bool isRulesHotReloadEnabled,
     final double? windowXPos,
     final double? windowYPos,
@@ -63,16 +62,21 @@ class Settings with _$Settings {
     @Default(false) final bool enableDirectLaunch,
     @Default(LaunchSettings()) final LaunchSettings launchSettings,
     final String? lastStarsectorVersion,
-    @Default(15) final int secondsBetweenModFolderChecks,
-    @Default(7) final int toastDurationSeconds,
     @Default(true) final bool isUpdatesFieldShown,
     final ModsGridState? modsGridState,
+
+    // Settings Page
+    @Default(false) final bool shouldAutoUpdateOnLaunch,
+    @Default(15) final int secondsBetweenModFolderChecks,
+    @Default(7) final int toastDurationSeconds,
     @Default(FolderNamingSetting.doNotChangeNameForHighestVersion)
         final FolderNamingSetting folderNamingSetting,
     final int? keepLastNVersions,
     final bool? allowCrashReporting,
     @Default(false) final bool updateToPrereleases,
-    @Default("") final String userId,
+    @Default(false) final bool autoEnableAndDisableDependencies,
+
+    @Default("") final String userId, // For Sentry
 
     // Mod profiles are stored in [ModProfilesSettings] and [ModProfileManagerNotifier],
     // in a different shared_prefs key.

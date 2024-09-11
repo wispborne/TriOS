@@ -203,6 +203,11 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
   Future<void> validateModDependencies({
     List<String>? modsToFreeze,
   }) async {
+    if (ref.watch(appSettings.select((value) => value.autoEnableAndDisableDependencies)) ==
+        false) {
+      Fimber.d("Auto dependency validation is disabled.");
+      return;
+    }
     final modifiedModIds = modsToFreeze?.toSet() ?? {};
     var numModsChangedLastLoop = 0;
     final gameVersion = ref.read(AppState.starsectorVersion).valueOrNull;

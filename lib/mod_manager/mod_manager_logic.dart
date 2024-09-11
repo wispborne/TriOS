@@ -379,7 +379,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
           continue;
         }
         try {
-          modToDelete.modFolder.moveToTrash();
+          modToDelete.modFolder.moveToTrash(deleteIfFailed: true);
           Fimber.i(
               "Deleted mod folder before reinstalling same variant: ${modToDelete.modFolder}");
         } catch (e, st) {
@@ -668,7 +668,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
         continue;
       }
       try {
-        variant.modFolder.moveToTrash();
+        variant.modFolder.moveToTrash(deleteIfFailed: true);
         Fimber.i("Deleted mod folder: ${variant.modFolder}");
       } catch (e, st) {
         Fimber.e("Error deleting mod folder: ${variant.modFolder}",

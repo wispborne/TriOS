@@ -27,7 +27,6 @@ mixin _$Settings {
   @JsonDirectoryConverter()
   Directory? get modsDir => throw _privateConstructorUsedError;
   bool get hasCustomModsDir => throw _privateConstructorUsedError;
-  bool get shouldAutoUpdateOnLaunch => throw _privateConstructorUsedError;
   bool get isRulesHotReloadEnabled => throw _privateConstructorUsedError;
   double? get windowXPos => throw _privateConstructorUsedError;
   double? get windowYPos => throw _privateConstructorUsedError;
@@ -44,17 +43,21 @@ mixin _$Settings {
   bool get enableDirectLaunch => throw _privateConstructorUsedError;
   LaunchSettings get launchSettings => throw _privateConstructorUsedError;
   String? get lastStarsectorVersion => throw _privateConstructorUsedError;
+  bool get isUpdatesFieldShown => throw _privateConstructorUsedError;
+  ModsGridState? get modsGridState =>
+      throw _privateConstructorUsedError; // Settings Page
+  bool get shouldAutoUpdateOnLaunch => throw _privateConstructorUsedError;
   int get secondsBetweenModFolderChecks => throw _privateConstructorUsedError;
   int get toastDurationSeconds => throw _privateConstructorUsedError;
-  bool get isUpdatesFieldShown => throw _privateConstructorUsedError;
-  ModsGridState? get modsGridState => throw _privateConstructorUsedError;
   FolderNamingSetting get folderNamingSetting =>
       throw _privateConstructorUsedError;
   int? get keepLastNVersions => throw _privateConstructorUsedError;
   bool? get allowCrashReporting => throw _privateConstructorUsedError;
   bool get updateToPrereleases => throw _privateConstructorUsedError;
-  String get userId =>
-      throw _privateConstructorUsedError; // Mod profiles are stored in [ModProfilesSettings] and [ModProfileManagerNotifier],
+  bool get autoEnableAndDisableDependencies =>
+      throw _privateConstructorUsedError;
+  String get userId => throw _privateConstructorUsedError; // For Sentry
+// Mod profiles are stored in [ModProfilesSettings] and [ModProfileManagerNotifier],
 // in a different shared_prefs key.
   String? get activeModProfileId => throw _privateConstructorUsedError;
 
@@ -78,7 +81,6 @@ abstract class $SettingsCopyWith<$Res> {
       @JsonDirectoryConverter() Directory? gameCoreDir,
       @JsonDirectoryConverter() Directory? modsDir,
       bool hasCustomModsDir,
-      bool shouldAutoUpdateOnLaunch,
       bool isRulesHotReloadEnabled,
       double? windowXPos,
       double? windowYPos,
@@ -93,14 +95,16 @@ abstract class $SettingsCopyWith<$Res> {
       bool enableDirectLaunch,
       LaunchSettings launchSettings,
       String? lastStarsectorVersion,
-      int secondsBetweenModFolderChecks,
-      int toastDurationSeconds,
       bool isUpdatesFieldShown,
       ModsGridState? modsGridState,
+      bool shouldAutoUpdateOnLaunch,
+      int secondsBetweenModFolderChecks,
+      int toastDurationSeconds,
       FolderNamingSetting folderNamingSetting,
       int? keepLastNVersions,
       bool? allowCrashReporting,
       bool updateToPrereleases,
+      bool autoEnableAndDisableDependencies,
       String userId,
       String? activeModProfileId});
 
@@ -127,7 +131,6 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
     Object? gameCoreDir = freezed,
     Object? modsDir = freezed,
     Object? hasCustomModsDir = null,
-    Object? shouldAutoUpdateOnLaunch = null,
     Object? isRulesHotReloadEnabled = null,
     Object? windowXPos = freezed,
     Object? windowYPos = freezed,
@@ -142,14 +145,16 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
     Object? enableDirectLaunch = null,
     Object? launchSettings = null,
     Object? lastStarsectorVersion = freezed,
-    Object? secondsBetweenModFolderChecks = null,
-    Object? toastDurationSeconds = null,
     Object? isUpdatesFieldShown = null,
     Object? modsGridState = freezed,
+    Object? shouldAutoUpdateOnLaunch = null,
+    Object? secondsBetweenModFolderChecks = null,
+    Object? toastDurationSeconds = null,
     Object? folderNamingSetting = null,
     Object? keepLastNVersions = freezed,
     Object? allowCrashReporting = freezed,
     Object? updateToPrereleases = null,
+    Object? autoEnableAndDisableDependencies = null,
     Object? userId = null,
     Object? activeModProfileId = freezed,
   }) {
@@ -169,10 +174,6 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
       hasCustomModsDir: null == hasCustomModsDir
           ? _value.hasCustomModsDir
           : hasCustomModsDir // ignore: cast_nullable_to_non_nullable
-              as bool,
-      shouldAutoUpdateOnLaunch: null == shouldAutoUpdateOnLaunch
-          ? _value.shouldAutoUpdateOnLaunch
-          : shouldAutoUpdateOnLaunch // ignore: cast_nullable_to_non_nullable
               as bool,
       isRulesHotReloadEnabled: null == isRulesHotReloadEnabled
           ? _value.isRulesHotReloadEnabled
@@ -230,14 +231,6 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
           ? _value.lastStarsectorVersion
           : lastStarsectorVersion // ignore: cast_nullable_to_non_nullable
               as String?,
-      secondsBetweenModFolderChecks: null == secondsBetweenModFolderChecks
-          ? _value.secondsBetweenModFolderChecks
-          : secondsBetweenModFolderChecks // ignore: cast_nullable_to_non_nullable
-              as int,
-      toastDurationSeconds: null == toastDurationSeconds
-          ? _value.toastDurationSeconds
-          : toastDurationSeconds // ignore: cast_nullable_to_non_nullable
-              as int,
       isUpdatesFieldShown: null == isUpdatesFieldShown
           ? _value.isUpdatesFieldShown
           : isUpdatesFieldShown // ignore: cast_nullable_to_non_nullable
@@ -246,6 +239,18 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
           ? _value.modsGridState
           : modsGridState // ignore: cast_nullable_to_non_nullable
               as ModsGridState?,
+      shouldAutoUpdateOnLaunch: null == shouldAutoUpdateOnLaunch
+          ? _value.shouldAutoUpdateOnLaunch
+          : shouldAutoUpdateOnLaunch // ignore: cast_nullable_to_non_nullable
+              as bool,
+      secondsBetweenModFolderChecks: null == secondsBetweenModFolderChecks
+          ? _value.secondsBetweenModFolderChecks
+          : secondsBetweenModFolderChecks // ignore: cast_nullable_to_non_nullable
+              as int,
+      toastDurationSeconds: null == toastDurationSeconds
+          ? _value.toastDurationSeconds
+          : toastDurationSeconds // ignore: cast_nullable_to_non_nullable
+              as int,
       folderNamingSetting: null == folderNamingSetting
           ? _value.folderNamingSetting
           : folderNamingSetting // ignore: cast_nullable_to_non_nullable
@@ -261,6 +266,10 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
       updateToPrereleases: null == updateToPrereleases
           ? _value.updateToPrereleases
           : updateToPrereleases // ignore: cast_nullable_to_non_nullable
+              as bool,
+      autoEnableAndDisableDependencies: null == autoEnableAndDisableDependencies
+          ? _value.autoEnableAndDisableDependencies
+          : autoEnableAndDisableDependencies // ignore: cast_nullable_to_non_nullable
               as bool,
       userId: null == userId
           ? _value.userId
@@ -311,7 +320,6 @@ abstract class _$$SettingsImplCopyWith<$Res>
       @JsonDirectoryConverter() Directory? gameCoreDir,
       @JsonDirectoryConverter() Directory? modsDir,
       bool hasCustomModsDir,
-      bool shouldAutoUpdateOnLaunch,
       bool isRulesHotReloadEnabled,
       double? windowXPos,
       double? windowYPos,
@@ -326,14 +334,16 @@ abstract class _$$SettingsImplCopyWith<$Res>
       bool enableDirectLaunch,
       LaunchSettings launchSettings,
       String? lastStarsectorVersion,
-      int secondsBetweenModFolderChecks,
-      int toastDurationSeconds,
       bool isUpdatesFieldShown,
       ModsGridState? modsGridState,
+      bool shouldAutoUpdateOnLaunch,
+      int secondsBetweenModFolderChecks,
+      int toastDurationSeconds,
       FolderNamingSetting folderNamingSetting,
       int? keepLastNVersions,
       bool? allowCrashReporting,
       bool updateToPrereleases,
+      bool autoEnableAndDisableDependencies,
       String userId,
       String? activeModProfileId});
 
@@ -360,7 +370,6 @@ class __$$SettingsImplCopyWithImpl<$Res>
     Object? gameCoreDir = freezed,
     Object? modsDir = freezed,
     Object? hasCustomModsDir = null,
-    Object? shouldAutoUpdateOnLaunch = null,
     Object? isRulesHotReloadEnabled = null,
     Object? windowXPos = freezed,
     Object? windowYPos = freezed,
@@ -375,14 +384,16 @@ class __$$SettingsImplCopyWithImpl<$Res>
     Object? enableDirectLaunch = null,
     Object? launchSettings = null,
     Object? lastStarsectorVersion = freezed,
-    Object? secondsBetweenModFolderChecks = null,
-    Object? toastDurationSeconds = null,
     Object? isUpdatesFieldShown = null,
     Object? modsGridState = freezed,
+    Object? shouldAutoUpdateOnLaunch = null,
+    Object? secondsBetweenModFolderChecks = null,
+    Object? toastDurationSeconds = null,
     Object? folderNamingSetting = null,
     Object? keepLastNVersions = freezed,
     Object? allowCrashReporting = freezed,
     Object? updateToPrereleases = null,
+    Object? autoEnableAndDisableDependencies = null,
     Object? userId = null,
     Object? activeModProfileId = freezed,
   }) {
@@ -402,10 +413,6 @@ class __$$SettingsImplCopyWithImpl<$Res>
       hasCustomModsDir: null == hasCustomModsDir
           ? _value.hasCustomModsDir
           : hasCustomModsDir // ignore: cast_nullable_to_non_nullable
-              as bool,
-      shouldAutoUpdateOnLaunch: null == shouldAutoUpdateOnLaunch
-          ? _value.shouldAutoUpdateOnLaunch
-          : shouldAutoUpdateOnLaunch // ignore: cast_nullable_to_non_nullable
               as bool,
       isRulesHotReloadEnabled: null == isRulesHotReloadEnabled
           ? _value.isRulesHotReloadEnabled
@@ -463,14 +470,6 @@ class __$$SettingsImplCopyWithImpl<$Res>
           ? _value.lastStarsectorVersion
           : lastStarsectorVersion // ignore: cast_nullable_to_non_nullable
               as String?,
-      secondsBetweenModFolderChecks: null == secondsBetweenModFolderChecks
-          ? _value.secondsBetweenModFolderChecks
-          : secondsBetweenModFolderChecks // ignore: cast_nullable_to_non_nullable
-              as int,
-      toastDurationSeconds: null == toastDurationSeconds
-          ? _value.toastDurationSeconds
-          : toastDurationSeconds // ignore: cast_nullable_to_non_nullable
-              as int,
       isUpdatesFieldShown: null == isUpdatesFieldShown
           ? _value.isUpdatesFieldShown
           : isUpdatesFieldShown // ignore: cast_nullable_to_non_nullable
@@ -479,6 +478,18 @@ class __$$SettingsImplCopyWithImpl<$Res>
           ? _value.modsGridState
           : modsGridState // ignore: cast_nullable_to_non_nullable
               as ModsGridState?,
+      shouldAutoUpdateOnLaunch: null == shouldAutoUpdateOnLaunch
+          ? _value.shouldAutoUpdateOnLaunch
+          : shouldAutoUpdateOnLaunch // ignore: cast_nullable_to_non_nullable
+              as bool,
+      secondsBetweenModFolderChecks: null == secondsBetweenModFolderChecks
+          ? _value.secondsBetweenModFolderChecks
+          : secondsBetweenModFolderChecks // ignore: cast_nullable_to_non_nullable
+              as int,
+      toastDurationSeconds: null == toastDurationSeconds
+          ? _value.toastDurationSeconds
+          : toastDurationSeconds // ignore: cast_nullable_to_non_nullable
+              as int,
       folderNamingSetting: null == folderNamingSetting
           ? _value.folderNamingSetting
           : folderNamingSetting // ignore: cast_nullable_to_non_nullable
@@ -494,6 +505,10 @@ class __$$SettingsImplCopyWithImpl<$Res>
       updateToPrereleases: null == updateToPrereleases
           ? _value.updateToPrereleases
           : updateToPrereleases // ignore: cast_nullable_to_non_nullable
+              as bool,
+      autoEnableAndDisableDependencies: null == autoEnableAndDisableDependencies
+          ? _value.autoEnableAndDisableDependencies
+          : autoEnableAndDisableDependencies // ignore: cast_nullable_to_non_nullable
               as bool,
       userId: null == userId
           ? _value.userId
@@ -515,7 +530,6 @@ class _$SettingsImpl implements _Settings {
       @JsonDirectoryConverter() this.gameCoreDir,
       @JsonDirectoryConverter() this.modsDir,
       this.hasCustomModsDir = false,
-      this.shouldAutoUpdateOnLaunch = false,
       this.isRulesHotReloadEnabled = false,
       this.windowXPos,
       this.windowYPos,
@@ -530,15 +544,17 @@ class _$SettingsImpl implements _Settings {
       this.enableDirectLaunch = false,
       this.launchSettings = const LaunchSettings(),
       this.lastStarsectorVersion,
-      this.secondsBetweenModFolderChecks = 15,
-      this.toastDurationSeconds = 7,
       this.isUpdatesFieldShown = true,
       this.modsGridState,
+      this.shouldAutoUpdateOnLaunch = false,
+      this.secondsBetweenModFolderChecks = 15,
+      this.toastDurationSeconds = 7,
       this.folderNamingSetting =
           FolderNamingSetting.doNotChangeNameForHighestVersion,
       this.keepLastNVersions,
       this.allowCrashReporting,
       this.updateToPrereleases = false,
+      this.autoEnableAndDisableDependencies = false,
       this.userId = "",
       this.activeModProfileId});
 
@@ -557,9 +573,6 @@ class _$SettingsImpl implements _Settings {
   @override
   @JsonKey()
   final bool hasCustomModsDir;
-  @override
-  @JsonKey()
-  final bool shouldAutoUpdateOnLaunch;
   @override
   @JsonKey()
   final bool isRulesHotReloadEnabled;
@@ -596,15 +609,19 @@ class _$SettingsImpl implements _Settings {
   final String? lastStarsectorVersion;
   @override
   @JsonKey()
+  final bool isUpdatesFieldShown;
+  @override
+  final ModsGridState? modsGridState;
+// Settings Page
+  @override
+  @JsonKey()
+  final bool shouldAutoUpdateOnLaunch;
+  @override
+  @JsonKey()
   final int secondsBetweenModFolderChecks;
   @override
   @JsonKey()
   final int toastDurationSeconds;
-  @override
-  @JsonKey()
-  final bool isUpdatesFieldShown;
-  @override
-  final ModsGridState? modsGridState;
   @override
   @JsonKey()
   final FolderNamingSetting folderNamingSetting;
@@ -617,7 +634,11 @@ class _$SettingsImpl implements _Settings {
   final bool updateToPrereleases;
   @override
   @JsonKey()
+  final bool autoEnableAndDisableDependencies;
+  @override
+  @JsonKey()
   final String userId;
+// For Sentry
 // Mod profiles are stored in [ModProfilesSettings] and [ModProfileManagerNotifier],
 // in a different shared_prefs key.
   @override
@@ -625,7 +646,7 @@ class _$SettingsImpl implements _Settings {
 
   @override
   String toString() {
-    return 'Settings(gameDir: $gameDir, gameCoreDir: $gameCoreDir, modsDir: $modsDir, hasCustomModsDir: $hasCustomModsDir, shouldAutoUpdateOnLaunch: $shouldAutoUpdateOnLaunch, isRulesHotReloadEnabled: $isRulesHotReloadEnabled, windowXPos: $windowXPos, windowYPos: $windowYPos, windowWidth: $windowWidth, windowHeight: $windowHeight, isMaximized: $isMaximized, isMinimized: $isMinimized, defaultTool: $defaultTool, jre23VmparamsFilename: $jre23VmparamsFilename, useJre23: $useJre23, showJre23ConsoleWindow: $showJre23ConsoleWindow, enableDirectLaunch: $enableDirectLaunch, launchSettings: $launchSettings, lastStarsectorVersion: $lastStarsectorVersion, secondsBetweenModFolderChecks: $secondsBetweenModFolderChecks, toastDurationSeconds: $toastDurationSeconds, isUpdatesFieldShown: $isUpdatesFieldShown, modsGridState: $modsGridState, folderNamingSetting: $folderNamingSetting, keepLastNVersions: $keepLastNVersions, allowCrashReporting: $allowCrashReporting, updateToPrereleases: $updateToPrereleases, userId: $userId, activeModProfileId: $activeModProfileId)';
+    return 'Settings(gameDir: $gameDir, gameCoreDir: $gameCoreDir, modsDir: $modsDir, hasCustomModsDir: $hasCustomModsDir, isRulesHotReloadEnabled: $isRulesHotReloadEnabled, windowXPos: $windowXPos, windowYPos: $windowYPos, windowWidth: $windowWidth, windowHeight: $windowHeight, isMaximized: $isMaximized, isMinimized: $isMinimized, defaultTool: $defaultTool, jre23VmparamsFilename: $jre23VmparamsFilename, useJre23: $useJre23, showJre23ConsoleWindow: $showJre23ConsoleWindow, enableDirectLaunch: $enableDirectLaunch, launchSettings: $launchSettings, lastStarsectorVersion: $lastStarsectorVersion, isUpdatesFieldShown: $isUpdatesFieldShown, modsGridState: $modsGridState, shouldAutoUpdateOnLaunch: $shouldAutoUpdateOnLaunch, secondsBetweenModFolderChecks: $secondsBetweenModFolderChecks, toastDurationSeconds: $toastDurationSeconds, folderNamingSetting: $folderNamingSetting, keepLastNVersions: $keepLastNVersions, allowCrashReporting: $allowCrashReporting, updateToPrereleases: $updateToPrereleases, autoEnableAndDisableDependencies: $autoEnableAndDisableDependencies, userId: $userId, activeModProfileId: $activeModProfileId)';
   }
 
   @override
@@ -639,8 +660,6 @@ class _$SettingsImpl implements _Settings {
             (identical(other.modsDir, modsDir) || other.modsDir == modsDir) &&
             (identical(other.hasCustomModsDir, hasCustomModsDir) ||
                 other.hasCustomModsDir == hasCustomModsDir) &&
-            (identical(other.shouldAutoUpdateOnLaunch, shouldAutoUpdateOnLaunch) ||
-                other.shouldAutoUpdateOnLaunch == shouldAutoUpdateOnLaunch) &&
             (identical(other.isRulesHotReloadEnabled, isRulesHotReloadEnabled) ||
                 other.isRulesHotReloadEnabled == isRulesHotReloadEnabled) &&
             (identical(other.windowXPos, windowXPos) ||
@@ -669,15 +688,18 @@ class _$SettingsImpl implements _Settings {
                 other.launchSettings == launchSettings) &&
             (identical(other.lastStarsectorVersion, lastStarsectorVersion) ||
                 other.lastStarsectorVersion == lastStarsectorVersion) &&
+            (identical(other.isUpdatesFieldShown, isUpdatesFieldShown) ||
+                other.isUpdatesFieldShown == isUpdatesFieldShown) &&
+            (identical(other.modsGridState, modsGridState) ||
+                other.modsGridState == modsGridState) &&
+            (identical(
+                    other.shouldAutoUpdateOnLaunch, shouldAutoUpdateOnLaunch) ||
+                other.shouldAutoUpdateOnLaunch == shouldAutoUpdateOnLaunch) &&
             (identical(other.secondsBetweenModFolderChecks, secondsBetweenModFolderChecks) ||
                 other.secondsBetweenModFolderChecks ==
                     secondsBetweenModFolderChecks) &&
             (identical(other.toastDurationSeconds, toastDurationSeconds) ||
                 other.toastDurationSeconds == toastDurationSeconds) &&
-            (identical(other.isUpdatesFieldShown, isUpdatesFieldShown) ||
-                other.isUpdatesFieldShown == isUpdatesFieldShown) &&
-            (identical(other.modsGridState, modsGridState) ||
-                other.modsGridState == modsGridState) &&
             (identical(other.folderNamingSetting, folderNamingSetting) ||
                 other.folderNamingSetting == folderNamingSetting) &&
             (identical(other.keepLastNVersions, keepLastNVersions) ||
@@ -686,8 +708,12 @@ class _$SettingsImpl implements _Settings {
                 other.allowCrashReporting == allowCrashReporting) &&
             (identical(other.updateToPrereleases, updateToPrereleases) ||
                 other.updateToPrereleases == updateToPrereleases) &&
+            (identical(other.autoEnableAndDisableDependencies, autoEnableAndDisableDependencies) ||
+                other.autoEnableAndDisableDependencies ==
+                    autoEnableAndDisableDependencies) &&
             (identical(other.userId, userId) || other.userId == userId) &&
-            (identical(other.activeModProfileId, activeModProfileId) || other.activeModProfileId == activeModProfileId));
+            (identical(other.activeModProfileId, activeModProfileId) ||
+                other.activeModProfileId == activeModProfileId));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -698,7 +724,6 @@ class _$SettingsImpl implements _Settings {
         gameCoreDir,
         modsDir,
         hasCustomModsDir,
-        shouldAutoUpdateOnLaunch,
         isRulesHotReloadEnabled,
         windowXPos,
         windowYPos,
@@ -713,14 +738,16 @@ class _$SettingsImpl implements _Settings {
         enableDirectLaunch,
         launchSettings,
         lastStarsectorVersion,
-        secondsBetweenModFolderChecks,
-        toastDurationSeconds,
         isUpdatesFieldShown,
         modsGridState,
+        shouldAutoUpdateOnLaunch,
+        secondsBetweenModFolderChecks,
+        toastDurationSeconds,
         folderNamingSetting,
         keepLastNVersions,
         allowCrashReporting,
         updateToPrereleases,
+        autoEnableAndDisableDependencies,
         userId,
         activeModProfileId
       ]);
@@ -747,7 +774,6 @@ abstract class _Settings implements Settings {
       @JsonDirectoryConverter() final Directory? gameCoreDir,
       @JsonDirectoryConverter() final Directory? modsDir,
       final bool hasCustomModsDir,
-      final bool shouldAutoUpdateOnLaunch,
       final bool isRulesHotReloadEnabled,
       final double? windowXPos,
       final double? windowYPos,
@@ -762,14 +788,16 @@ abstract class _Settings implements Settings {
       final bool enableDirectLaunch,
       final LaunchSettings launchSettings,
       final String? lastStarsectorVersion,
-      final int secondsBetweenModFolderChecks,
-      final int toastDurationSeconds,
       final bool isUpdatesFieldShown,
       final ModsGridState? modsGridState,
+      final bool shouldAutoUpdateOnLaunch,
+      final int secondsBetweenModFolderChecks,
+      final int toastDurationSeconds,
       final FolderNamingSetting folderNamingSetting,
       final int? keepLastNVersions,
       final bool? allowCrashReporting,
       final bool updateToPrereleases,
+      final bool autoEnableAndDisableDependencies,
       final String userId,
       final String? activeModProfileId}) = _$SettingsImpl;
 
@@ -787,8 +815,6 @@ abstract class _Settings implements Settings {
   Directory? get modsDir;
   @override
   bool get hasCustomModsDir;
-  @override
-  bool get shouldAutoUpdateOnLaunch;
   @override
   bool get isRulesHotReloadEnabled;
   @override
@@ -820,13 +846,15 @@ abstract class _Settings implements Settings {
   @override
   String? get lastStarsectorVersion;
   @override
+  bool get isUpdatesFieldShown;
+  @override
+  ModsGridState? get modsGridState; // Settings Page
+  @override
+  bool get shouldAutoUpdateOnLaunch;
+  @override
   int get secondsBetweenModFolderChecks;
   @override
   int get toastDurationSeconds;
-  @override
-  bool get isUpdatesFieldShown;
-  @override
-  ModsGridState? get modsGridState;
   @override
   FolderNamingSetting get folderNamingSetting;
   @override
@@ -836,8 +864,10 @@ abstract class _Settings implements Settings {
   @override
   bool get updateToPrereleases;
   @override
-  String
-      get userId; // Mod profiles are stored in [ModProfilesSettings] and [ModProfileManagerNotifier],
+  bool get autoEnableAndDisableDependencies;
+  @override
+  String get userId; // For Sentry
+// Mod profiles are stored in [ModProfilesSettings] and [ModProfileManagerNotifier],
 // in a different shared_prefs key.
   @override
   String? get activeModProfileId;

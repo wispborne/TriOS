@@ -48,6 +48,8 @@ class ModInfo with _$ModInfo {
   // TODO swap this to id, change id to modId.
   String get smolId => createSmolId(id, version);
   String get nameOrId => name ?? id;
+  String get formattedNameVersionId => "$name${version != null ? " $version" : ""}${" ($id)"}";
+  String get formattedNameVersion => "$nameOrId${version != null ? " $version" : ""}";
 
 // late final formattedName = "$name $version ($id)";
 

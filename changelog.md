@@ -1,4 +1,6 @@
 # 0.2.3
+- Fixed
+  - Delete now tries to permanently delete if moving to Trash/Recycle Bin fails.
 - Changed
   - "Admin required" warning now shows a bit more info about what the issue is.
 

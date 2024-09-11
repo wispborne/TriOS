@@ -111,7 +111,7 @@ configureLogging({
                   file is File &&
                   file.extension == ".log" &&
                   file.nameWithExtension != logFileName)
-              .forEach((FileSystemEntity file) => file.moveToTrash());
+              .forEach((FileSystemEntity file) => file.moveToTrash(deleteIfFailed: true));
         } catch (e) {
           Fimber.e("Error cleaning up old log files.", ex: e);
         }

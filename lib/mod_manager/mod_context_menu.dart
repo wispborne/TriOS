@@ -148,7 +148,7 @@ MenuItem menuItemDeleteFolder(Mod mod, BuildContext context, WidgetRef ref) {
   Future<void> deleteFolder(String folderPath) async {
     final directory = Directory(folderPath);
     if (await directory.exists()) {
-      directory.moveToTrash();
+      directory.moveToTrash(deleteIfFailed: true);
     }
     ref.read(AppState.modVariants.notifier).reloadModVariants();
   }

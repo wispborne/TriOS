@@ -466,6 +466,24 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                           ),
                         ),
                       ),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 16),
+                        child: Tooltip(
+                          message:
+                              "Whether to check for mod dependencies and prevent launching if they aren't met."
+                              "\nDisable if TriOS is getting them wrong, or you'd just like to use vanilla dependency check behavior.",
+                          child: CheckboxWithLabel(
+                            value: ref.watch(appSettings.select((value) =>
+                                value.enableLauncherPrecheck ?? false)),
+                            onChanged: (value) {
+                              ref.read(appSettings.notifier).update((state) =>
+                                  state.copyWith(
+                                      enableLauncherPrecheck: value ?? false));
+                            },
+                            label: "Enable Launch Precheck",
+                          ),
+                        ),
+                      ),
                     ]),
                     // Debugging line here
                     SizedBox.fromSize(size: const Size.fromHeight(20)),

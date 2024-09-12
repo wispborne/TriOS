@@ -56,6 +56,7 @@ mixin _$Settings {
   bool get updateToPrereleases => throw _privateConstructorUsedError;
   bool get autoEnableAndDisableDependencies =>
       throw _privateConstructorUsedError;
+  bool get enableLauncherPrecheck => throw _privateConstructorUsedError;
   String get userId => throw _privateConstructorUsedError; // For Sentry
 // Mod profiles are stored in [ModProfilesSettings] and [ModProfileManagerNotifier],
 // in a different shared_prefs key.
@@ -105,6 +106,7 @@ abstract class $SettingsCopyWith<$Res> {
       bool? allowCrashReporting,
       bool updateToPrereleases,
       bool autoEnableAndDisableDependencies,
+      bool enableLauncherPrecheck,
       String userId,
       String? activeModProfileId});
 
@@ -155,6 +157,7 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
     Object? allowCrashReporting = freezed,
     Object? updateToPrereleases = null,
     Object? autoEnableAndDisableDependencies = null,
+    Object? enableLauncherPrecheck = null,
     Object? userId = null,
     Object? activeModProfileId = freezed,
   }) {
@@ -271,6 +274,10 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
           ? _value.autoEnableAndDisableDependencies
           : autoEnableAndDisableDependencies // ignore: cast_nullable_to_non_nullable
               as bool,
+      enableLauncherPrecheck: null == enableLauncherPrecheck
+          ? _value.enableLauncherPrecheck
+          : enableLauncherPrecheck // ignore: cast_nullable_to_non_nullable
+              as bool,
       userId: null == userId
           ? _value.userId
           : userId // ignore: cast_nullable_to_non_nullable
@@ -344,6 +351,7 @@ abstract class _$$SettingsImplCopyWith<$Res>
       bool? allowCrashReporting,
       bool updateToPrereleases,
       bool autoEnableAndDisableDependencies,
+      bool enableLauncherPrecheck,
       String userId,
       String? activeModProfileId});
 
@@ -394,6 +402,7 @@ class __$$SettingsImplCopyWithImpl<$Res>
     Object? allowCrashReporting = freezed,
     Object? updateToPrereleases = null,
     Object? autoEnableAndDisableDependencies = null,
+    Object? enableLauncherPrecheck = null,
     Object? userId = null,
     Object? activeModProfileId = freezed,
   }) {
@@ -510,6 +519,10 @@ class __$$SettingsImplCopyWithImpl<$Res>
           ? _value.autoEnableAndDisableDependencies
           : autoEnableAndDisableDependencies // ignore: cast_nullable_to_non_nullable
               as bool,
+      enableLauncherPrecheck: null == enableLauncherPrecheck
+          ? _value.enableLauncherPrecheck
+          : enableLauncherPrecheck // ignore: cast_nullable_to_non_nullable
+              as bool,
       userId: null == userId
           ? _value.userId
           : userId // ignore: cast_nullable_to_non_nullable
@@ -555,6 +568,7 @@ class _$SettingsImpl implements _Settings {
       this.allowCrashReporting,
       this.updateToPrereleases = false,
       this.autoEnableAndDisableDependencies = false,
+      this.enableLauncherPrecheck = true,
       this.userId = "",
       this.activeModProfileId});
 
@@ -637,6 +651,9 @@ class _$SettingsImpl implements _Settings {
   final bool autoEnableAndDisableDependencies;
   @override
   @JsonKey()
+  final bool enableLauncherPrecheck;
+  @override
+  @JsonKey()
   final String userId;
 // For Sentry
 // Mod profiles are stored in [ModProfilesSettings] and [ModProfileManagerNotifier],
@@ -646,7 +663,7 @@ class _$SettingsImpl implements _Settings {
 
   @override
   String toString() {
-    return 'Settings(gameDir: $gameDir, gameCoreDir: $gameCoreDir, modsDir: $modsDir, hasCustomModsDir: $hasCustomModsDir, isRulesHotReloadEnabled: $isRulesHotReloadEnabled, windowXPos: $windowXPos, windowYPos: $windowYPos, windowWidth: $windowWidth, windowHeight: $windowHeight, isMaximized: $isMaximized, isMinimized: $isMinimized, defaultTool: $defaultTool, jre23VmparamsFilename: $jre23VmparamsFilename, useJre23: $useJre23, showJre23ConsoleWindow: $showJre23ConsoleWindow, enableDirectLaunch: $enableDirectLaunch, launchSettings: $launchSettings, lastStarsectorVersion: $lastStarsectorVersion, isUpdatesFieldShown: $isUpdatesFieldShown, modsGridState: $modsGridState, shouldAutoUpdateOnLaunch: $shouldAutoUpdateOnLaunch, secondsBetweenModFolderChecks: $secondsBetweenModFolderChecks, toastDurationSeconds: $toastDurationSeconds, folderNamingSetting: $folderNamingSetting, keepLastNVersions: $keepLastNVersions, allowCrashReporting: $allowCrashReporting, updateToPrereleases: $updateToPrereleases, autoEnableAndDisableDependencies: $autoEnableAndDisableDependencies, userId: $userId, activeModProfileId: $activeModProfileId)';
+    return 'Settings(gameDir: $gameDir, gameCoreDir: $gameCoreDir, modsDir: $modsDir, hasCustomModsDir: $hasCustomModsDir, isRulesHotReloadEnabled: $isRulesHotReloadEnabled, windowXPos: $windowXPos, windowYPos: $windowYPos, windowWidth: $windowWidth, windowHeight: $windowHeight, isMaximized: $isMaximized, isMinimized: $isMinimized, defaultTool: $defaultTool, jre23VmparamsFilename: $jre23VmparamsFilename, useJre23: $useJre23, showJre23ConsoleWindow: $showJre23ConsoleWindow, enableDirectLaunch: $enableDirectLaunch, launchSettings: $launchSettings, lastStarsectorVersion: $lastStarsectorVersion, isUpdatesFieldShown: $isUpdatesFieldShown, modsGridState: $modsGridState, shouldAutoUpdateOnLaunch: $shouldAutoUpdateOnLaunch, secondsBetweenModFolderChecks: $secondsBetweenModFolderChecks, toastDurationSeconds: $toastDurationSeconds, folderNamingSetting: $folderNamingSetting, keepLastNVersions: $keepLastNVersions, allowCrashReporting: $allowCrashReporting, updateToPrereleases: $updateToPrereleases, autoEnableAndDisableDependencies: $autoEnableAndDisableDependencies, enableLauncherPrecheck: $enableLauncherPrecheck, userId: $userId, activeModProfileId: $activeModProfileId)';
   }
 
   @override
@@ -692,8 +709,7 @@ class _$SettingsImpl implements _Settings {
                 other.isUpdatesFieldShown == isUpdatesFieldShown) &&
             (identical(other.modsGridState, modsGridState) ||
                 other.modsGridState == modsGridState) &&
-            (identical(
-                    other.shouldAutoUpdateOnLaunch, shouldAutoUpdateOnLaunch) ||
+            (identical(other.shouldAutoUpdateOnLaunch, shouldAutoUpdateOnLaunch) ||
                 other.shouldAutoUpdateOnLaunch == shouldAutoUpdateOnLaunch) &&
             (identical(other.secondsBetweenModFolderChecks, secondsBetweenModFolderChecks) ||
                 other.secondsBetweenModFolderChecks ==
@@ -711,6 +727,8 @@ class _$SettingsImpl implements _Settings {
             (identical(other.autoEnableAndDisableDependencies, autoEnableAndDisableDependencies) ||
                 other.autoEnableAndDisableDependencies ==
                     autoEnableAndDisableDependencies) &&
+            (identical(other.enableLauncherPrecheck, enableLauncherPrecheck) ||
+                other.enableLauncherPrecheck == enableLauncherPrecheck) &&
             (identical(other.userId, userId) || other.userId == userId) &&
             (identical(other.activeModProfileId, activeModProfileId) ||
                 other.activeModProfileId == activeModProfileId));
@@ -748,6 +766,7 @@ class _$SettingsImpl implements _Settings {
         allowCrashReporting,
         updateToPrereleases,
         autoEnableAndDisableDependencies,
+        enableLauncherPrecheck,
         userId,
         activeModProfileId
       ]);
@@ -798,6 +817,7 @@ abstract class _Settings implements Settings {
       final bool? allowCrashReporting,
       final bool updateToPrereleases,
       final bool autoEnableAndDisableDependencies,
+      final bool enableLauncherPrecheck,
       final String userId,
       final String? activeModProfileId}) = _$SettingsImpl;
 
@@ -865,6 +885,8 @@ abstract class _Settings implements Settings {
   bool get updateToPrereleases;
   @override
   bool get autoEnableAndDisableDependencies;
+  @override
+  bool get enableLauncherPrecheck;
   @override
   String get userId; // For Sentry
 // Mod profiles are stored in [ModProfilesSettings] and [ModProfileManagerNotifier],

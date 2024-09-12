@@ -53,6 +53,7 @@ _$SettingsImpl _$$SettingsImplFromJson(Map<String, dynamic> json) =>
       updateToPrereleases: json['updateToPrereleases'] as bool? ?? false,
       autoEnableAndDisableDependencies:
           json['autoEnableAndDisableDependencies'] as bool? ?? false,
+      enableLauncherPrecheck: json['enableLauncherPrecheck'] as bool? ?? true,
       userId: json['userId'] as String? ?? "",
       activeModProfileId: json['activeModProfileId'] as String?,
     );
@@ -90,6 +91,7 @@ Map<String, dynamic> _$$SettingsImplToJson(_$SettingsImpl instance) =>
       'updateToPrereleases': instance.updateToPrereleases,
       'autoEnableAndDisableDependencies':
           instance.autoEnableAndDisableDependencies,
+      'enableLauncherPrecheck': instance.enableLauncherPrecheck,
       'userId': instance.userId,
       'activeModProfileId': instance.activeModProfileId,
     };

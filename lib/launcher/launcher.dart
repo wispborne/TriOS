@@ -154,15 +154,17 @@ class Launcher extends HookConsumerWidget {
   /// Can throw exception
   static launchGame(WidgetRef ref, BuildContext context) async {
     final launchPrecheckFailures = performLaunchPrecheck(ref);
+    final enableLauncherPrecheck =
+        ref.read(appSettings.select((value) => value.enableLauncherPrecheck));
 
-    if (launchPrecheckFailures.isNotEmpty) {
+    if (launchPrecheckFailures.isNotEmpty && enableLauncherPrecheck) {
       showDialog(
           context: context,
           builder: (context) {
             return AlertDialog(
               title: const Text('Launch precheck failed'),
-              content: Column(
-                children: launchPrecheckFailures
+              content: Column(children: [
+                ...launchPrecheckFailures
                     // .distinctBy((it) => it.message)
                     .map((failure) {
                   return ListTile(
@@ -181,12 +183,20 @@ class Launcher extends HookConsumerWidget {
                           )
                         : null,
                   );
-                }).toList(),
-              ),
+                }),
+                OutlinedButton(
+                    onPressed: () => _launchGameWithoutPrecheck(ref),
+                    child: const Text('Launch anyway')),
+              ]),
             );
           });
-    } else if (ref
-        .read(appSettings.select((value) => value.useJre23 ?? false))) {
+    } else {
+      _launchGameWithoutPrecheck(ref);
+    }
+  }
+
+  static void _launchGameWithoutPrecheck(WidgetRef ref) {
+    if (ref.read(appSettings.select((value) => value.useJre23 ?? false))) {
       launchGameJre23(ref);
     } else {
       launchGameVanilla(ref);

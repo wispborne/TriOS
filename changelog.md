@@ -1,3 +1,7 @@
+# 0.2.4
+- Changed
+  - May now bypass the launcher precheck, or turn it off in Settings.
+
 # 0.2.3
 - Added
   - If a dependency is missing, a button with a fix appears.

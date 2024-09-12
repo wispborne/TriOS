@@ -75,6 +75,7 @@ class Settings with _$Settings {
     final bool? allowCrashReporting,
     @Default(false) final bool updateToPrereleases,
     @Default(false) final bool autoEnableAndDisableDependencies,
+    @Default(true) final bool enableLauncherPrecheck,
 
     @Default("") final String userId, // For Sentry
 

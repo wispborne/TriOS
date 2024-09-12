@@ -3,6 +3,7 @@
   - If a dependency is missing, a button with a fix appears.
     - If dependency is disabled, button enables it.
     - If not found, searches Google for it.
+    - **No longer automatically enables dependencies nor disables mods with unmet dependencies.**
 - Fixed
   - Delete now tries to permanently delete if moving to Trash/Recycle Bin fails.
   - Game launch precheck didn't seem to be working.

@@ -136,7 +136,7 @@ class _ModVersionSelectionDropdownState
                 overflow: TextOverflow.ellipsis),
           ),
         )
-        .distinct()
+        .distinctBy((item) => item.value?.smolId)
         .sortedByDescending<ModVariant>((item) => item.value)
       ..add(const DropdownMenuItem(
           value: null,

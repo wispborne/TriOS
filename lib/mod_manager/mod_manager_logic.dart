@@ -1162,6 +1162,8 @@ class ModDependencyCheckResult {
       satisfiedAmount is Disabled ||
       satisfiedAmount is VersionWarning;
 
+  bool get canBeSatisfiedWithInstalledModsButIsnt => !isCurrentlySatisfied && canBeSatisfiedWithInstalledMods;
+
   @override
   String toString() =>
       "{dependency: $dependency, satisfiedAmount: $satisfiedAmount}";

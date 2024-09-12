@@ -8,10 +8,10 @@ import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:plist_parser/plist_parser.dart';
-import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/enabled_mods.dart';
 import 'package:trios/models/launch_settings.dart';
+import 'package:trios/models/mod_variant.dart';
 import 'package:trios/thirdparty/dartx/io/file_system_entity.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/settings.dart';
@@ -23,11 +23,20 @@ import 'package:win32_registry/win32_registry.dart';
 
 import '../themes/theme_manager.dart';
 
-typedef LaunchPrecheckError = ({
-  String message,
-  String? fixActionName,
-  Function? doFix
-});
+class LaunchPrecheckError {
+  final String message;
+  final ModVariant? requiringModVariant;
+  final String? fixActionName;
+  final Future<void> Function()?
+      doFix; // Assuming the fix action might be asynchronous
+
+  LaunchPrecheckError({
+    required this.message,
+    this.requiringModVariant,
+    this.fixActionName,
+    this.doFix,
+  });
+}
 
 class Launcher extends HookConsumerWidget {
   const Launcher({super.key});
@@ -153,9 +162,15 @@ class Launcher extends HookConsumerWidget {
             return AlertDialog(
               title: const Text('Launch precheck failed'),
               content: Column(
-                children: launchPrecheckFailures.map((failure) {
+                children: launchPrecheckFailures
+                    // .distinctBy((it) => it.message)
+                    .map((failure) {
                   return ListTile(
                     title: Text(failure.message),
+                    subtitle: failure.requiringModVariant != null
+                        ? Text(failure
+                            .requiringModVariant!.modInfo.formattedNameVersion)
+                        : null,
                     trailing: failure.fixActionName != null
                         ? ElevatedButton(
                             onPressed: () async {
@@ -180,7 +195,7 @@ class Launcher extends HookConsumerWidget {
   }
 
   static List<LaunchPrecheckError> performLaunchPrecheck(WidgetRef ref) {
-    final launchPrecheckFailures = <LaunchPrecheckError>[];
+    final launchPrecheckFailures = <LaunchPrecheckError?>[];
     final mods = ref.read(AppState.mods);
     final modsFolder = ref.read(appSettings.select((it) => it.modsDir));
     final enabledMods = ref
@@ -189,78 +204,74 @@ class Launcher extends HookConsumerWidget {
         ?.filterOutMissingMods(mods)
         .enabledMods
         .toList();
-    final allVariants = ref.read(AppState.modVariants).valueOrNull ?? [];
-    final gameVersion = ref.read(AppState.starsectorVersion).valueOrNull;
     final enabledVariants =
-        (mods.map((mod) => mod.findFirstEnabled)).whereNotNull();
+        (mods.map((mod) => mod.findFirstEnabled)).whereNotNull().toList();
+    final modCompatibility = ref.read(AppState.modCompatibility);
 
     if (enabledMods == null || enabledMods.isEmpty || modsFolder == null) {
       return [];
     }
 
     for (final variant in enabledVariants) {
-      final modInfo = variant.modInfo;
-      final dependencies = modInfo.dependencies;
-      for (final dependency in dependencies) {
-        var satisfication =
-            dependency.isSatisfiedByAny(allVariants, enabledMods, gameVersion);
+      final dependencies =
+          modCompatibility[variant.smolId]?.dependencyChecks ?? [];
 
-        switch (satisfication.runtimeType) {
-          case Missing _:
-            launchPrecheckFailures.add((
-              message:
-                  'Dependency ${dependency.name ?? dependency.id} is missing',
-              fixActionName: null,
-              doFix: null,
-            ));
-            break;
-          case Disabled disabled:
-            launchPrecheckFailures.add((
-              message:
-                  'Dependency ${dependency.name ?? dependency.id} is disabled',
-              fixActionName: "Enable",
-              doFix: () async {
-                final mod =
-                    mods.firstWhereOrNull((mod) => mod.id == dependency.id);
-                if (mod != null) {
-                  ref
-                      .read(AppState.modVariants.notifier)
-                      .changeActiveModVariant(mod, disabled.modVariant);
-                }
-              },
-            ));
-            break;
-          case VersionInvalid _:
-            launchPrecheckFailures.add((
-              message:
-                  'Dependency ${dependency.name ?? dependency.id} has wrong version',
-              fixActionName: null,
-              doFix: null,
-            ));
-            break;
-          case VersionWarning versionWarning:
-            launchPrecheckFailures.add((
-              message:
-                  'Dependency ${dependency.name ?? dependency.id} has a different version, but may work.',
-              fixActionName: "Enable",
-              doFix: () async {
-                final mod =
-                    mods.firstWhereOrNull((mod) => mod.id == dependency.id);
-                if (mod != null) {
-                  ref
-                      .read(AppState.modVariants.notifier)
-                      .changeActiveModVariant(mod, versionWarning.modVariant);
-                }
-              },
-            ));
-            break;
-          case Satisfied _:
-            break;
-        }
+      for (final dependency in dependencies) {
+        final satisfaction = dependency.satisfiedAmount;
+
+        launchPrecheckFailures.add(
+          switch (satisfaction) {
+            Missing _ => LaunchPrecheckError(
+                message:
+                    'Dependency ${dependency.dependency.name ?? dependency.dependency.id} is missing',
+                requiringModVariant: variant,
+                fixActionName: null,
+                doFix: null,
+              ),
+            Disabled disabled => LaunchPrecheckError(
+                message:
+                    'Dependency ${dependency.dependency.name ?? dependency.dependency.id} is disabled',
+                requiringModVariant: variant,
+                fixActionName: "Enable",
+                doFix: () async {
+                  final mod = mods.firstWhereOrNull(
+                      (mod) => mod.id == dependency.dependency.id);
+                  if (mod != null) {
+                    ref
+                        .read(AppState.modVariants.notifier)
+                        .changeActiveModVariant(mod, disabled.modVariant);
+                  }
+                },
+              ),
+            VersionInvalid _ => LaunchPrecheckError(
+                message:
+                    'Dependency ${dependency.dependency.name ?? dependency.dependency.id} has wrong version',
+                requiringModVariant: variant,
+                fixActionName: null,
+                doFix: null,
+              ),
+            VersionWarning versionWarning => LaunchPrecheckError(
+                message:
+                    'Dependency ${dependency.dependency.name ?? dependency.dependency.id} has a different version, but may work.',
+                requiringModVariant: variant,
+                fixActionName: "Enable",
+                doFix: () async {
+                  final mod = mods.firstWhereOrNull(
+                      (mod) => mod.id == dependency.dependency.id);
+                  if (mod != null) {
+                    ref
+                        .read(AppState.modVariants.notifier)
+                        .changeActiveModVariant(mod, versionWarning.modVariant);
+                  }
+                },
+              ),
+            Satisfied _ => null,
+          },
+        );
       }
     }
 
-    return launchPrecheckFailures;
+    return launchPrecheckFailures.whereNotNull().toList();
   }
 
   static StarsectorVanillaLaunchPreferences? getStarsectorLaunchPrefs() {

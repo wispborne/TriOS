@@ -24,6 +24,8 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/search.dart';
 import 'package:trios/widgets/add_new_mods_button.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
+import 'package:trios/widgets/text_with_icon.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../dashboard/mod_dependencies_widget.dart';
 import '../dashboard/version_check_icon.dart';
@@ -56,7 +58,7 @@ class SmolGridUiState {
 }
 
 const _standardRowHeight = 40.0;
-const _dependencyAddedRowHeight = 28.0;
+const _dependencyAddedRowHeight = 34.0;
 
 class _Smol3State extends ConsumerState<Smol3>
     with AutomaticKeepAliveClientMixin {
@@ -576,108 +578,161 @@ class _Smol3State extends ConsumerState<Smol3>
           final enabledVersion = mod.findFirstEnabled;
           final modCompatibility =
               ref.watch(AppState.modCompatibility)[enabledVersion?.smolId];
-          final gameVersion = ref.watch(
-              appSettings.select((value) => value.lastStarsectorVersion));
-          final solvableDependencies = modCompatibility?.dependencyChecks
-                  .where((e) => e.canBeSatisfiedWithInstalledMods)
+          final unmetDependencies = modCompatibility?.dependencyChecks
+                  .where((e) => !e.isCurrentlySatisfied)
                   .toList() ??
               [];
 
-          return OverflowBox(
-            maxWidth: double.infinity,
-            alignment: Alignment.centerLeft,
-            fit: OverflowBoxFit.deferToChild,
-            child:
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              SizedBox(
-                height: _standardRowHeight,
-                child: ContextMenuRegion(
-                    contextMenu: buildModContextMenu(
-                      mod,
-                      ref,
-                      context,
-                      showSwapToVersion: true,
-                    ),
-                    child: tooltippy(
-                      // affixToTop( child:
-                      RowItemContainer(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(
-                            minWidth: 600,
-                          ),
-                          child: Text(
-                            rendererContext.cell.value ?? "(no name)",
-                            style: GoogleFonts.roboto(
-                              textStyle: theme.textTheme.labelLarge
-                                  ?.copyWith(fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                          // )
-                        ),
+          return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  height: _standardRowHeight,
+                  child: ContextMenuRegion(
+                      contextMenu: buildModContextMenu(
+                        mod,
+                        ref,
+                        context,
+                        showSwapToVersion: true,
                       ),
-                      mod.modVariants,
-                    )),
-              ),
-              if (solvableDependencies.isNotEmpty)
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ...solvableDependencies.map((checkResult) {
-                        final modVariantThatIsRequired =
-                            checkResult.satisfiedAmount is Disabled
-                                ? (checkResult.satisfiedAmount as Disabled)
-                                    .modVariant
-                                : null;
-
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 4),
-                          child: Tooltip(
-                            message: checkResult.dependency.name,
-                            child: Row(
-                              children: [
-                                if (checkResult.satisfiedAmount is Disabled)
-                                  Padding(
-                                    padding: const EdgeInsets.only(right: 8),
-                                    child: OutlinedButton(
-                                        onPressed: () {
-                                          ref
-                                              .read(
-                                                  AppState.modVariants.notifier)
-                                              .changeActiveModVariant(
-                                                  modVariantThatIsRequired!
-                                                      .mod(modsToDisplay)!,
-                                                  modVariantThatIsRequired);
-                                        },
-                                        style: OutlinedButton.styleFrom(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 8, vertical: 4),
-                                          minimumSize: const Size(60, 30),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                                ThemeManager
-                                                    .cornerRadius), // Rounded corners
-                                          ),
-                                        ),
-                                        child: Text(
-                                            "Enable ${modVariantThatIsRequired?.modInfo.formattedNameVersionId}")),
-                                  ),
-                                Text(
-                                  "Requires ${checkResult.dependency.formattedNameVersionId} ",
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                      color: theme.colorScheme.error),
-                                ),
-                              ],
+                      child: tooltippy(
+                        // affixToTop( child:
+                        RowItemContainer(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(
+                              minWidth: 600,
                             ),
+                            child: Text(
+                              rendererContext.cell.value ?? "(no name)",
+                              style: GoogleFonts.roboto(
+                                textStyle: theme.textTheme.labelLarge
+                                    ?.copyWith(fontWeight: FontWeight.bold),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            // )
                           ),
-                        );
-                      }).toList(),
-                    ],
-                  ),
+                        ),
+                        mod.modVariants,
+                      )),
                 ),
-            ]),
-          );
+                if (unmetDependencies.isNotEmpty)
+                  OverflowBox(
+                    maxWidth: double.infinity,
+                    alignment: Alignment.centerLeft,
+                    fit: OverflowBoxFit.deferToChild,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 4),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ...unmetDependencies.map((checkResult) {
+                            final buttonStyle = OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              minimumSize: const Size(60, 34),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(ThemeManager
+                                    .cornerRadius), // Rounded corners
+                              ),
+                            );
+
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 4),
+                              child: Tooltip(
+                                message:
+                                    "Requires ${checkResult.dependency.formattedNameVersion}",
+                                child: Row(
+                                  children: [
+                                    // if (checkResult.satisfiedAmount is Disabled)
+                                    Padding(
+                                      padding: const EdgeInsets.only(right: 8),
+                                      child: Builder(builder: (context) {
+                                        if (checkResult.satisfiedAmount
+                                            is Disabled) {
+                                          final disabledVariant = (checkResult
+                                                  .satisfiedAmount as Disabled)
+                                              .modVariant;
+                                          return OutlinedButton(
+                                              onPressed: () {
+                                                ref
+                                                    .read(AppState
+                                                        .modVariants.notifier)
+                                                    .changeActiveModVariant(
+                                                        disabledVariant!.mod(
+                                                            modsToDisplay)!,
+                                                        disabledVariant);
+                                              },
+                                              style: buttonStyle,
+                                              child: TextWithIcon(
+                                                text:
+                                                    "Enable ${disabledVariant?.modInfo.formattedNameVersion}",
+                                                leading: disabledVariant
+                                                            ?.iconFilePath ==
+                                                        null
+                                                    ? null
+                                                    : Image.file(
+                                                        (disabledVariant
+                                                                    ?.iconFilePath ??
+                                                                "")
+                                                            .toFile(),
+                                                        height: 20,
+                                                        isAntiAlias: true,
+                                                      ),
+                                                leadingPadding:
+                                                    const EdgeInsets.only(
+                                                        right: 4),
+                                              ));
+                                        } else {
+                                          final missingDependency =
+                                              checkResult.dependency;
+
+                                          return OutlinedButton(
+                                              onPressed: () async {
+                                                final modName =
+                                                    missingDependency
+                                                        .formattedNameVersionId;
+                                                // Advanced search
+                                                final url = Uri.parse(
+                                                    'https://www.google.com/search?q=starsector+$modName+download');
+
+                                                if (await canLaunchUrl(url)) {
+                                                  await launchUrl(url);
+                                                } else {
+                                                  showSnackBar(
+                                                      context: context,
+                                                      content: const Text(
+                                                          "Couldn't open browser. Google recommends Chrome for a faster experience!"));
+                                                }
+                                              },
+                                              style: buttonStyle,
+                                              child: TextWithIcon(
+                                                text:
+                                                    "Search ${missingDependency.formattedNameVersionId}",
+                                                leading: const SvgImageIcon(
+                                                  "assets/images/icon-search.svg",
+                                                  width: 20,
+                                                  height: 20,
+                                                ),
+                                                leadingPadding:
+                                                    const EdgeInsets.only(
+                                                        right: 4),
+                                              ));
+                                        }
+                                      }),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ],
+                      ),
+                    ),
+                  ),
+              ]);
         }),
         // onSort: (columnIndex, ascending) => _onSort(
         //     columnIndex,
@@ -707,9 +762,16 @@ class _Smol3State extends ConsumerState<Smol3>
               contextMenu: buildModContextMenu(mod, ref, context,
                   showSwapToVersion: true),
               child: RowItemContainer(
-                child: Text(rendererContext.cell.value ?? "(no author)",
-                    style: theme.textTheme.labelLarge
-                        ?.copyWith(color: lightTextColor)),
+                child: Text(
+                  rendererContext.cell.value
+                          ?.toString()
+                          .replaceAll("\n", "   ") ??
+                      "(no author)",
+                  maxLines: 1,
+                  style: theme.textTheme.labelLarge
+                      ?.copyWith(color: lightTextColor),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ));
         }),
       ),
@@ -976,19 +1038,16 @@ class _Smol3State extends ConsumerState<Smol3>
     final enabledVersion = mod.findFirstEnabled;
     final modCompatibility =
         ref.watch(AppState.modCompatibility)[enabledVersion?.smolId];
-    final gameVersion =
-        ref.watch(appSettings.select((value) => value.lastStarsectorVersion));
 
+    final satisfiableDependencies = modCompatibility?.dependencyChecks
+            .orEmpty()
+            .countWhere((e) => e.isCurrentlySatisfied != true) ??
+        0;
     return PlutoRow(
       key: ValueKey(mod),
-      height: modCompatibility
-                  ?.mostSevereDependency(gameVersion)
-                  ?.isCurrentlySatisfied ==
-              false
+      height: satisfiableDependencies > 0
           ? _standardRowHeight +
-              (_dependencyAddedRowHeight *
-                  modCompatibility!.dependencyChecks
-                      .countWhere((e) => e.isCurrentlySatisfied == false))
+              (_dependencyAddedRowHeight * satisfiableDependencies)
           : null,
       cells: {
         _Fields.enableDisable.toString(): PlutoCell(

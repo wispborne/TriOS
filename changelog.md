@@ -1,6 +1,11 @@
 # 0.2.3
+- Added
+  - If a dependency is missing, a button with a fix appears.
+    - If dependency is disabled, button enables it.
+    - If not found, searches Google for it.
 - Fixed
   - Delete now tries to permanently delete if moving to Trash/Recycle Bin fails.
+  - Game launch precheck didn't seem to be working.
 - Changed
   - "Admin required" warning now shows a bit more info about what the issue is.
 

@@ -259,21 +259,22 @@ class Launcher extends HookConsumerWidget {
                 fixActionName: null,
                 doFix: null,
               ),
-            VersionWarning versionWarning => LaunchPrecheckError(
-                message:
-                    'Dependency ${dependency.dependency.name ?? dependency.dependency.id} has a different version, but may work.',
-                requiringModVariant: variant,
-                fixActionName: "Enable",
-                doFix: () async {
-                  final mod = mods.firstWhereOrNull(
-                      (mod) => mod.id == dependency.dependency.id);
-                  if (mod != null) {
-                    ref
-                        .read(AppState.modVariants.notifier)
-                        .changeActiveModVariant(mod, versionWarning.modVariant);
-                  }
-                },
-              ),
+            VersionWarning versionWarning => null,
+            // LaunchPrecheckError(
+            //       message:
+            //           'Dependency ${dependency.dependency.name ?? dependency.dependency.id} has a different version, but may work.',
+            //       requiringModVariant: variant,
+            //       fixActionName: "Enable",
+            //       doFix: () async {
+            //         final mod = mods.firstWhereOrNull(
+            //             (mod) => mod.id == dependency.dependency.id);
+            //         if (mod != null) {
+            //           ref
+            //               .read(AppState.modVariants.notifier)
+            //               .changeActiveModVariant(mod, versionWarning.modVariant);
+            //         }
+            //       },
+            //     ),
             Satisfied _ => null,
           },
         );

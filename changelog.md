@@ -1,3 +1,9 @@
+# 0.2.5
+- Fixed
+  - Launch precheck warned about dependencies because of different versions that were still probably compatible.
+    - Now only warns if there's a more serious version mismatch (and the dependency requires a specific version).
+    - For example, if a mod requires MagicLib 1.0.0 and you have 1.0.1, it won't warn you, but if you only have 0.9.9, it will.
+
 # 0.2.4
 - Changed
   - May now bypass the launcher precheck, or turn it off in Settings.

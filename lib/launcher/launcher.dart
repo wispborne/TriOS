@@ -185,9 +185,8 @@ class Launcher extends HookConsumerWidget {
               ),
             );
           });
-    }
-
-    if (ref.read(appSettings.select((value) => value.useJre23 ?? false))) {
+    } else if (ref
+        .read(appSettings.select((value) => value.useJre23 ?? false))) {
       launchGameJre23(ref);
     } else {
       launchGameVanilla(ref);

@@ -124,11 +124,7 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                                             blur: isActiveProfile ? 5 : 0,
                                             child: IconButton(
                                                 onPressed: () {
-                                                  ref
-                                                      .read(modProfilesProvider
-                                                          .notifier)
-                                                      .activateModProfile(
-                                                          profile.id);
+                                                  _showActivateDialog(profile);
                                                 },
                                                 icon: Icon(
                                                     Icons.power_settings_new,
@@ -194,6 +190,16 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         const Spacer(),
+                                        // IconButton(
+                                        //     icon: const Icon(Icons.save),
+                                        //     tooltip: 'Save modlist to profile',
+                                        //     onPressed: () {
+                                        //       ref
+                                        //           .read(modProfilesProvider
+                                        //               .notifier)
+                                        //           .saveCurrentModListToProfile(
+                                        //               profile.id);
+                                        //     }),
                                         IconButton(
                                             icon: const Icon(Icons.copy_all),
                                             tooltip: 'Duplicate profile',
@@ -389,21 +395,157 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
       const SnackBar(content: Text('Mod list copied to clipboard')),
     );
   }
+
+  void _showActivateDialog(ModProfile profile) {
+    final modProfileManager = ref.read(modProfilesProvider.notifier);
+    final changes = modProfileManager.computeModProfileChanges(profile.id);
+
+    // Group changes by type
+    final modsToEnable =
+        changes.where((c) => c.changeType == ModChangeType.enable).toList();
+    final modsToDisable =
+        changes.where((c) => c.changeType == ModChangeType.disable).toList();
+    final modsToSwap =
+        changes.where((c) => c.changeType == ModChangeType.swap).toList();
+    final missingMods =
+        changes.where((c) => c.changeType == ModChangeType.missingMod).toList();
+    final missingVariants = changes
+        .where((c) => c.changeType == ModChangeType.missingVariant)
+        .toList();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        final theme = Theme.of(context);
+        return AlertDialog(
+          title: Text('Activate profile "${profile.name}"?'),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                    'The following changes will be made to your active mods:'),
+                const SizedBox(height: 16),
+                if (modsToEnable.isNotEmpty)
+                  _buildChangeSection('Mods to Enable', modsToEnable,
+                      Icons.add_circle, Colors.green),
+                if (modsToDisable.isNotEmpty)
+                  _buildChangeSection('Mods to Disable', modsToDisable,
+                      Icons.remove_circle, Colors.red),
+                if (modsToSwap.isNotEmpty)
+                  _buildChangeSection('Mods to Swap', modsToSwap,
+                      Icons.swap_horiz, Colors.blue),
+                if (missingMods.isNotEmpty || missingVariants.isNotEmpty)
+                  _buildMissingModsSection(missingMods, missingVariants),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                ref
+                    .read(modProfilesProvider.notifier)
+                    .activateModProfile(profile.id);
+              },
+              child: const Text('Activate'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildChangeSection(
+      String title, List<ModChange> changes, IconData icon, Color iconColor) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: theme.textTheme.titleMedium
+              ?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        ...changes.map((change) {
+          final modName =
+              change.mod?.findFirstEnabledOrHighestVersion?.modInfo.nameOrId ??
+                  'Unknown Mod (${change.modId})';
+          String description;
+          switch (change.changeType) {
+            case ModChangeType.enable:
+              description =
+                  change.toVariant?.modInfo.formattedNameVersion ?? modName;
+              break;
+            case ModChangeType.disable:
+              description =
+                  change.fromVariant?.modInfo.formattedNameVersion ?? modName;
+              break;
+            case ModChangeType.swap:
+              final fromVersion =
+                  change.fromVariant?.modInfo.version?.toString() ?? 'Unknown';
+              final toVersion =
+                  change.toVariant?.modInfo.version?.toString() ?? 'Unknown';
+              description = '$modName from version $fromVersion to $toVersion';
+              break;
+            default:
+              description = modName;
+          }
+          return ListTile(
+            leading: Icon(icon, color: iconColor),
+            title: Text(description),
+            dense: true,
+          );
+        }),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
+  Widget _buildMissingModsSection(
+      List<ModChange> missingMods, List<ModChange> missingVariants) {
+    final theme = Theme.of(context);
+    final color = ThemeManager.vanillaWarningColor;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Missing Mods',
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+        const SizedBox(height: 8),
+        ...missingMods.map((change) {
+          final modId = change.modId;
+          return ListTile(
+            leading: Icon(Icons.warning, color: color),
+            title:
+                Text('Mod "$modId" is not installed and will not be enabled.'),
+            dense: true,
+          );
+        }),
+        ...missingVariants.map((change) {
+          final modName =
+              change.mod?.findFirstEnabledOrHighestVersion?.modInfo.nameOrId ??
+                  'Unknown Mod (${change.modId})';
+          return ListTile(
+            leading: Icon(Icons.warning, color: color),
+            title: Text(
+                'Variant for "$modName" is not available and cannot be swapped.'),
+            dense: true,
+          );
+        }),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
 }
-//
-// void main() {
-//   runApp(ProviderScope(child: MyApp()));
-// }
-//
-// class MyApp extends StatelessWidget {
-//   @override
-//   Widget build(BuildContext context) {
-//     return MaterialApp(
-//       title: 'Mod Profiles',
-//       theme: ThemeData(
-//         primarySwatch: Colors.blue,
-//       ),
-//       home: const ModProfilePage(),
-//     );
-//   }
-// }

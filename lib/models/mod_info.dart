@@ -50,9 +50,4 @@ class ModInfo with _$ModInfo {
   String get nameOrId => name ?? id;
   String get formattedNameVersionId => "$name${version != null ? " $version" : ""}${" ($id)"}";
   String get formattedNameVersion => "$nameOrId${version != null ? " $version" : ""}";
-
-// late final formattedName = "$name $version ($id)";
-
-// @override
-// String toString() => "ModInfo(id: $id, name: $name, version: $version, gameVersion: $gameVersion)";
 }

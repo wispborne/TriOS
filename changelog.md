@@ -1,4 +1,7 @@
 # 0.2.5
+- Added
+  - Launch precheck now warns about mods incompatible with the current game version.
+    - It also gives you a button to force-update their game version. 
 - Fixed
   - Launch precheck warned about dependencies because of different versions that were still probably compatible.
     - Now only warns if there's a more serious version mismatch (and the dependency requires a specific version).

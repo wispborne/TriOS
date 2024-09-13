@@ -19,6 +19,7 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/platform_paths.dart';
 import 'package:trios/widgets/stroke_text.dart';
+import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:win32_registry/win32_registry.dart';
 
 import '../themes/theme_manager.dart';
@@ -174,7 +175,7 @@ class Launcher extends HookConsumerWidget {
                             .requiringModVariant!.modInfo.formattedNameVersion)
                         : null,
                     trailing: failure.fixActionName != null
-                        ? ElevatedButton(
+                        ? OutlinedButton(
                             onPressed: () async {
                               await failure.doFix!();
                               Navigator.of(context).pop();
@@ -184,9 +185,11 @@ class Launcher extends HookConsumerWidget {
                         : null,
                   );
                 }),
-                OutlinedButton(
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
                     onPressed: () => _launchGameWithoutPrecheck(ref),
-                    child: const Text('Launch anyway')),
+                    icon: const SvgImageIcon("assets/images/icon-skip.svg"),
+                    label: const Text('Launch anyway')),
               ]),
             );
           });
@@ -216,14 +219,33 @@ class Launcher extends HookConsumerWidget {
     final enabledVariants =
         (mods.map((mod) => mod.findFirstEnabled)).whereNotNull().toList();
     final modCompatibility = ref.read(AppState.modCompatibility);
+    final currentGameVersion =
+        ref.read(appSettings.select((s) => s.lastStarsectorVersion));
 
     if (enabledMods == null || enabledMods.isEmpty || modsFolder == null) {
       return [];
     }
 
     for (final variant in enabledVariants) {
-      final dependencies =
-          modCompatibility[variant.smolId]?.dependencyChecks ?? [];
+      final compatibilityCheck = modCompatibility[variant.smolId];
+
+      if (compatibilityCheck?.isGameCompatible == false) {
+        launchPrecheckFailures.add(
+          LaunchPrecheckError(
+            message:
+                'Mod ${variant.modInfo.name} requires game version ${variant.modInfo.gameVersion} and is not compatible with $currentGameVersion.',
+            requiringModVariant: variant,
+            fixActionName: "Force compatibility (not recommended)",
+            doFix: () async {
+              await ref
+                  .read(modManager.notifier)
+                  .forceChangeModGameVersion(variant, currentGameVersion!);
+            },
+          ),
+        );
+      }
+
+      final dependencies = compatibilityCheck?.dependencyChecks ?? [];
 
       for (final dependency in dependencies) {
         final satisfaction = dependency.satisfiedAmount;

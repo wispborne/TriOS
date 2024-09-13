@@ -678,6 +678,29 @@ class ModManagerNotifier extends AsyncNotifier<void> {
 
     return variantsToDelete.map((it) => it.modInfo).toList();
   }
+
+  Future<void> forceChangeModGameVersion(
+      ModVariant modVariant, String newGameVersion,
+      {bool refreshModlistAfter = true}) async {
+    final modInfoFile = modVariant.modInfoFile;
+    if (modInfoFile == null || !modInfoFile.existsSync()) {
+      Fimber.e("Mod info file not found for ${modVariant.smolId}");
+      return;
+    }
+
+    // Replace the game version in the mod_info.json file.
+    // Don't use the code model, we want to keep any extra fields that might not be in the model.
+    final modInfoJson = modInfoFile.readAsStringSync().fixJsonToMap();
+    modInfoJson["gameVersion"] = newGameVersion;
+    modInfoJson["originalGameVersion"] = modVariant.modInfo.gameVersion;
+    await modInfoFile.writeAsString(jsonEncodePrettily(modInfoJson));
+
+    if (refreshModlistAfter) {
+      await ref
+          .read(AppState.modVariants.notifier)
+          .reloadModVariants(onlyVariants: [modVariant]);
+    }
+  }
 }
 
 typedef ExtractedModInfo = ({SourcedFile extractedFile, ModInfo modInfo});
@@ -982,22 +1005,6 @@ void copyModListToClipboardFromMods(List<Mod> mods, BuildContext context) {
   ));
 }
 
-Future<void> forceChangeModGameVersion(
-    ModVariant modVariant, String newGameVersion) async {
-  final modInfoFile = modVariant.modInfoFile;
-  if (modInfoFile == null || !modInfoFile.existsSync()) {
-    Fimber.e("Mod info file not found for ${modVariant.smolId}");
-    return;
-  }
-
-  // Replace the game version in the mod_info.json file.
-  // Don't use the code model, we want to keep any extra fields that might not be in the model.
-  final modInfoJson = modInfoFile.readAsStringSync().fixJsonToMap();
-  modInfoJson["gameVersion"] = newGameVersion;
-  modInfoJson["originalGameVersion"] = modVariant.modInfo.gameVersion;
-  await modInfoFile.writeAsString(jsonEncodePrettily(modInfoJson));
-}
-
 GameCompatibility compareGameVersions(
     String? modGameVersion, String? gameVersion) {
   // game is versioned like 0.95.1a-RC5 and 0.95.0a-RC5
@@ -1162,7 +1169,8 @@ class ModDependencyCheckResult {
       satisfiedAmount is Disabled ||
       satisfiedAmount is VersionWarning;
 
-  bool get canBeSatisfiedWithInstalledModsButIsnt => !isCurrentlySatisfied && canBeSatisfiedWithInstalledMods;
+  bool get canBeSatisfiedWithInstalledModsButIsnt =>
+      !isCurrentlySatisfied && canBeSatisfiedWithInstalledMods;
 
   @override
   String toString() =>

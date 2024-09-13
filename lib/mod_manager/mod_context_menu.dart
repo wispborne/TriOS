@@ -56,7 +56,8 @@ ContextMenu buildModContextMenu(Mod mod, WidgetRef ref, BuildContext context,
             label: 'Force to $currentStarsectorVersion',
             icon: Icons.electric_bolt,
             onSelected: () {
-              forceChangeModGameVersion(modVariant, currentStarsectorVersion);
+              ref.read(modManager.notifier).forceChangeModGameVersion(
+                  modVariant, currentStarsectorVersion);
               ref.invalidate(AppState.modVariants);
             }),
       menuItemDebugging(context, mod, ref),

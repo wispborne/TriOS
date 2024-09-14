@@ -1,3 +1,7 @@
+# 0.2.6
+- Fixed
+  - Mod Profiles tab being accidentally enabled. The feature isn't ready yet.
+
 # 0.2.5
 - Added
   - Launch precheck now warns about mods incompatible with the current game version.

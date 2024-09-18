@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:collection/collection.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/models/mod.dart';
@@ -9,6 +10,7 @@ import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/logging.dart';
 
 import '../models/mod_variant.dart';
+import '../themes/theme_manager.dart';
 import '../utils/generic_settings_notifier.dart';
 import 'models/mod_profile.dart';
 
@@ -252,7 +254,7 @@ class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
         return;
       }
       final activeProfileId =
-      ref.read(appSettings.select((s) => s.activeModProfileId));
+          ref.read(appSettings.select((s) => s.activeModProfileId));
       if (activeProfileId == modProfileId) {
         Fimber.i("Profile $modProfileId is already active.");
         return;
@@ -290,8 +292,8 @@ class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
 
       await modVariantsNotifier.validateModDependencies();
       ref.read(appSettings.notifier).update((s) => s.copyWith(
-        activeModProfileId: modProfileId,
-      ));
+            activeModProfileId: modProfileId,
+          ));
       Fimber.i("Finished activating mod profile $modProfileId.");
     } catch (e, stack) {
       Fimber.e("Failed to activate mod profile $modProfileId.",
@@ -320,6 +322,164 @@ class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
       dateModified: DateTime.now(),
     );
     updateModProfile(newProfile);
+  }
+
+  void showActivateDialog(ModProfile profile, BuildContext context) {
+    if (!context.mounted) {
+      return;
+    }
+
+    final modProfileManager = ref.read(modProfilesProvider.notifier);
+    final changes = modProfileManager.computeModProfileChanges(profile.id);
+
+    // Group changes by type
+    final modsToEnable =
+        changes.where((c) => c.changeType == ModChangeType.enable).toList();
+    final modsToDisable =
+        changes.where((c) => c.changeType == ModChangeType.disable).toList();
+    final modsToSwap =
+        changes.where((c) => c.changeType == ModChangeType.swap).toList();
+    final missingMods =
+        changes.where((c) => c.changeType == ModChangeType.missingMod).toList();
+    final missingVariants = changes
+        .where((c) => c.changeType == ModChangeType.missingVariant)
+        .toList();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        final theme = Theme.of(context);
+        return AlertDialog(
+          title: Text('Activate profile "${profile.name}"?'),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                    'The following changes will be made to your active mods:'),
+                const SizedBox(height: 16),
+                if (modsToEnable.isNotEmpty)
+                  _buildChangeSection('Mods to Enable', modsToEnable,
+                      Icons.add_circle, Colors.green, context),
+                if (modsToDisable.isNotEmpty)
+                  _buildChangeSection('Mods to Disable', modsToDisable,
+                      Icons.remove_circle, Colors.red, context),
+                if (modsToSwap.isNotEmpty)
+                  _buildChangeSection('Mods to Swap', modsToSwap,
+                      Icons.swap_horiz, Colors.blue, context),
+                if (missingMods.isNotEmpty || missingVariants.isNotEmpty)
+                  _buildMissingModsSection(
+                      missingMods, missingVariants, context),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                ref
+                    .read(modProfilesProvider.notifier)
+                    .activateModProfile(profile.id);
+              },
+              child: const Text('Activate'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildChangeSection(String title, List<ModChange> changes,
+      IconData icon, Color iconColor, BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: theme.textTheme.titleMedium
+              ?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        ...changes.map((change) {
+          final modName =
+              change.mod?.findFirstEnabledOrHighestVersion?.modInfo.nameOrId ??
+                  'Unknown Mod (${change.modId})';
+          String description;
+          switch (change.changeType) {
+            case ModChangeType.enable:
+              description =
+                  change.toVariant?.modInfo.formattedNameVersion ?? modName;
+              break;
+            case ModChangeType.disable:
+              description =
+                  change.fromVariant?.modInfo.formattedNameVersion ?? modName;
+              break;
+            case ModChangeType.swap:
+              final fromVersion =
+                  change.fromVariant?.modInfo.version?.toString() ?? 'Unknown';
+              final toVersion =
+                  change.toVariant?.modInfo.version?.toString() ?? 'Unknown';
+              description = '$modName from version $fromVersion to $toVersion';
+              break;
+            default:
+              description = modName;
+          }
+          return ListTile(
+            leading: Icon(icon, color: iconColor),
+            title: Text(description),
+            dense: true,
+          );
+        }),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
+  Widget _buildMissingModsSection(List<ModChange> missingMods,
+      List<ModChange> missingVariants, BuildContext context) {
+    final theme = Theme.of(context);
+    final color = ThemeManager.vanillaWarningColor;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Missing Mods',
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+        const SizedBox(height: 8),
+        ...missingMods.map((change) {
+          final modId = change.modId;
+          return ListTile(
+            leading: Icon(Icons.warning, color: color),
+            title:
+                Text('Mod "$modId" is not installed and will not be enabled.'),
+            dense: true,
+          );
+        }),
+        ...missingVariants.map((change) {
+          final modName =
+              change.mod?.findFirstEnabledOrHighestVersion?.modInfo.nameOrId ??
+                  'Unknown Mod (${change.modId})';
+          return ListTile(
+            leading: Icon(Icons.warning, color: color),
+            title: Text(
+                'Variant for "$modName" is not available and cannot be swapped.'),
+            dense: true,
+          );
+        }),
+        const SizedBox(height: 16),
+      ],
+    );
   }
 }
 

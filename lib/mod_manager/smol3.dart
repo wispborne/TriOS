@@ -15,6 +15,8 @@ import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/mod_manager/mod_version_selection_dropdown.dart';
 import 'package:trios/mod_manager/mods_grid_state.dart';
 import 'package:trios/mod_manager/version_checker.dart';
+import 'package:trios/mod_profiles/mod_profiles_manager.dart';
+import 'package:trios/mod_profiles/models/mod_profile.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/thirdparty/pluto_grid_plus/lib/pluto_grid_plus.dart';
@@ -223,6 +225,40 @@ class _Smol3State extends ConsumerState<Smol3>
                         Row(
                           children: [
                             const Spacer(),
+                            const Padding(
+                              padding: EdgeInsets.only(right: 8),
+                              child: Text("Profile:"),
+                            ),
+                            SizedBox(
+                              width: 175,
+                              child: Builder(builder: (context) {
+                                final profiles =
+                                    ref.watch(modProfilesProvider).valueOrNull;
+                                final activeProfileId = ref.watch(appSettings
+                                    .select((s) => s.activeModProfileId));
+                                return DropdownButton(
+                                    value: profiles?.modProfiles
+                                        .firstWhereOrNull(
+                                            (p) => p.id == activeProfileId),
+                                    isDense: true,
+                                    isExpanded: true,
+                                    focusColor: Colors.transparent,
+                                    items: profiles?.modProfiles
+                                            .map((p) => DropdownMenuItem(
+                                                  value: p,
+                                                  child: Text(p.name),
+                                                ))
+                                            .toList() ??
+                                        [],
+                                    onChanged: (value) {
+                                      if (value is ModProfile) {
+                                        ref
+                                            .read(modProfilesProvider.notifier)
+                                            .showActivateDialog(value, context);
+                                      }
+                                    });
+                              }),
+                            ),
                             CopyModListButtonLarge(
                                 mods: mods, enabledMods: enabledMods)
                           ],

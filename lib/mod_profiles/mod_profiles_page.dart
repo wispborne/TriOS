@@ -9,8 +9,8 @@ import 'package:trios/mod_manager/audit_page.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/settings.dart';
-import 'package:trios/widgets/blur.dart';
 import 'package:trios/widgets/disable.dart';
+import 'package:trios/widgets/svg_image_icon.dart';
 
 import '../widgets/trios_expansion_tile.dart';
 import 'mod_profiles_manager.dart';
@@ -130,48 +130,54 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                                               bottom: cardPadding),
                                           child: Row(
                                             children: [
-                                              Blur(
-                                                blur: isActiveProfile ? 5 : 0,
-                                                child: IconButton(
-                                                    onPressed: () {
-                                                      _showActivateDialog(
-                                                          profile);
-                                                    },
-                                                    icon: Icon(
-                                                        Icons
-                                                            .power_settings_new,
-                                                        color: profile.id ==
-                                                                activeProfileId
-                                                            ? theme.colorScheme
-                                                                .primary
-                                                            : null)),
+                                              // Blur(
+                                              //   blur: isActiveProfile ? 5 : 0,
+                                              //   child: IconButton(
+                                              //       onPressed: () {
+                                              //         _showActivateDialog(
+                                              //             profile);
+                                              //       },
+                                              //       icon: Icon(
+                                              //           Icons
+                                              //               .power_settings_new,
+                                              //           color: profile.id ==
+                                              //                   activeProfileId
+                                              //               ? theme.colorScheme
+                                              //                   .primary
+                                              //               : null)),
+                                              // ),
+                                              const SizedBox(
+                                                width: 8,
                                               ),
-                                              Builder(builder: (context) {
-                                                return isEditing
-                                                    ? TextField(
-                                                        controller:
-                                                            _nameController,
-                                                        decoration:
-                                                            const InputDecoration(
-                                                                labelText:
-                                                                    'Name'),
-                                                      )
-                                                    : Tooltip(
-                                                        message: profile.name,
-                                                        child: Text(
-                                                            profile.name,
-                                                            maxLines: 1,
-                                                            overflow:
-                                                                TextOverflow
-                                                                    .ellipsis,
-                                                            style: theme
-                                                                .textTheme
-                                                                .bodyLarge
-                                                                ?.copyWith(
-                                                              fontSize: 18,
-                                                            )),
-                                                      );
-                                              }),
+                                              Expanded(
+                                                child:
+                                                    Builder(builder: (context) {
+                                                  return isEditing
+                                                      ? TextField(
+                                                          controller:
+                                                              _nameController,
+                                                          decoration:
+                                                              const InputDecoration(
+                                                                  labelText:
+                                                                      'Name'),
+                                                        )
+                                                      : Tooltip(
+                                                          message: profile.name,
+                                                          child: Text(
+                                                              profile.name,
+                                                              maxLines: 1,
+                                                              overflow:
+                                                                  TextOverflow
+                                                                      .ellipsis,
+                                                              style: theme
+                                                                  .textTheme
+                                                                  .bodyLarge
+                                                                  ?.copyWith(
+                                                                fontSize: 18,
+                                                              )),
+                                                        );
+                                                }),
+                                              ),
                                             ],
                                           )),
                                       Padding(
@@ -205,23 +211,15 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                                       ),
                                       const SizedBox(height: 24),
                                       TriOSExpansionTile(
+                                        tilePadding: const EdgeInsets.symmetric(
+                                            horizontal: cardPadding),
                                         title: Row(
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
                                             const Spacer(),
-                                            // IconButton(
-                                            //     icon: const Icon(Icons.save),
-                                            //     tooltip: 'Save modlist to profile',
-                                            //     onPressed: () {
-                                            //       ref
-                                            //           .read(modProfilesProvider
-                                            //               .notifier)
-                                            //           .saveCurrentModListToProfile(
-                                            //               profile.id);
-                                            //     }),
                                             IconButton(
-                                                icon:
-                                                    const Icon(Icons.copy_all),
+                                                icon: const SvgImageIcon(
+                                                    "assets/images/icon-clone.svg"),
                                                 tooltip: 'Duplicate profile',
                                                 onPressed: () {
                                                   ref
@@ -294,7 +292,23 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                                               Tooltip(
                                                   message: 'Id: ${profile.id}',
                                                   child: const Icon(
-                                                      Icons.bug_report))
+                                                      Icons.bug_report)),
+                                            const SizedBox(width: 8),
+                                            OutlinedButton(
+                                                onPressed: isActiveProfile
+                                                    ? null
+                                                    : () {
+                                                        ref
+                                                            .read(
+                                                                modProfilesProvider
+                                                                    .notifier)
+                                                            .showActivateDialog(
+                                                                profile,
+                                                                context);
+                                                      },
+                                                child: Text(isActiveProfile
+                                                    ? 'Enabled'
+                                                    : 'Enable')),
                                           ],
                                         ),
                                         // expansionAnimationStyle:
@@ -421,159 +435,6 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
     Clipboard.setData(ClipboardData(text: modList));
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Mod list copied to clipboard')),
-    );
-  }
-
-  void _showActivateDialog(ModProfile profile) {
-    final modProfileManager = ref.read(modProfilesProvider.notifier);
-    final changes = modProfileManager.computeModProfileChanges(profile.id);
-
-    // Group changes by type
-    final modsToEnable =
-        changes.where((c) => c.changeType == ModChangeType.enable).toList();
-    final modsToDisable =
-        changes.where((c) => c.changeType == ModChangeType.disable).toList();
-    final modsToSwap =
-        changes.where((c) => c.changeType == ModChangeType.swap).toList();
-    final missingMods =
-        changes.where((c) => c.changeType == ModChangeType.missingMod).toList();
-    final missingVariants = changes
-        .where((c) => c.changeType == ModChangeType.missingVariant)
-        .toList();
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        final theme = Theme.of(context);
-        return AlertDialog(
-          title: Text('Activate profile "${profile.name}"?'),
-          content: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                    'The following changes will be made to your active mods:'),
-                const SizedBox(height: 16),
-                if (modsToEnable.isNotEmpty)
-                  _buildChangeSection('Mods to Enable', modsToEnable,
-                      Icons.add_circle, Colors.green),
-                if (modsToDisable.isNotEmpty)
-                  _buildChangeSection('Mods to Disable', modsToDisable,
-                      Icons.remove_circle, Colors.red),
-                if (modsToSwap.isNotEmpty)
-                  _buildChangeSection('Mods to Swap', modsToSwap,
-                      Icons.swap_horiz, Colors.blue),
-                if (missingMods.isNotEmpty || missingVariants.isNotEmpty)
-                  _buildMissingModsSection(missingMods, missingVariants),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                ref
-                    .read(modProfilesProvider.notifier)
-                    .activateModProfile(profile.id);
-              },
-              child: const Text('Activate'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildChangeSection(
-      String title, List<ModChange> changes, IconData icon, Color iconColor) {
-    final theme = Theme.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: theme.textTheme.titleMedium
-              ?.copyWith(fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 8),
-        ...changes.map((change) {
-          final modName =
-              change.mod?.findFirstEnabledOrHighestVersion?.modInfo.nameOrId ??
-                  'Unknown Mod (${change.modId})';
-          String description;
-          switch (change.changeType) {
-            case ModChangeType.enable:
-              description =
-                  change.toVariant?.modInfo.formattedNameVersion ?? modName;
-              break;
-            case ModChangeType.disable:
-              description =
-                  change.fromVariant?.modInfo.formattedNameVersion ?? modName;
-              break;
-            case ModChangeType.swap:
-              final fromVersion =
-                  change.fromVariant?.modInfo.version?.toString() ?? 'Unknown';
-              final toVersion =
-                  change.toVariant?.modInfo.version?.toString() ?? 'Unknown';
-              description = '$modName from version $fromVersion to $toVersion';
-              break;
-            default:
-              description = modName;
-          }
-          return ListTile(
-            leading: Icon(icon, color: iconColor),
-            title: Text(description),
-            dense: true,
-          );
-        }),
-        const SizedBox(height: 16),
-      ],
-    );
-  }
-
-  Widget _buildMissingModsSection(
-      List<ModChange> missingMods, List<ModChange> missingVariants) {
-    final theme = Theme.of(context);
-    final color = ThemeManager.vanillaWarningColor;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Missing Mods',
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
-        ),
-        const SizedBox(height: 8),
-        ...missingMods.map((change) {
-          final modId = change.modId;
-          return ListTile(
-            leading: Icon(Icons.warning, color: color),
-            title:
-                Text('Mod "$modId" is not installed and will not be enabled.'),
-            dense: true,
-          );
-        }),
-        ...missingVariants.map((change) {
-          final modName =
-              change.mod?.findFirstEnabledOrHighestVersion?.modInfo.nameOrId ??
-                  'Unknown Mod (${change.modId})';
-          return ListTile(
-            leading: Icon(Icons.warning, color: color),
-            title: Text(
-                'Variant for "$modName" is not available and cannot be swapped.'),
-            dense: true,
-          );
-        }),
-        const SizedBox(height: 16),
-      ],
     );
   }
 }

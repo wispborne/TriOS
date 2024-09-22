@@ -19,7 +19,11 @@ extension DependencyExt on Dependency {
     if (version != null) {
       if (variant.modInfo.version?.major != version!.major) {
         return VersionInvalid(variant);
-      } else if (variant.modInfo.version?.minor != version!.minor) {
+      } else if (variant.modInfo.version != null &&
+          variant.modInfo.version?.minor != version!.minor &&
+          variant.modInfo.version!.minor
+                  .compareRecognizingNumbers(version!.minor) <
+              0) {
         return VersionWarning(variant);
       }
     }

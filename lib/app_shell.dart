@@ -29,6 +29,7 @@ import 'package:trios/widgets/self_update_toast.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:trios/widgets/tab_button.dart';
 import 'package:trios/widgets/trios_app_icon.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 import 'about/about_page.dart';
 import 'launcher/launcher.dart';
@@ -369,7 +370,12 @@ class _AppShellState extends ConsumerState<AppShell>
                         const SvgImageIcon("assets/images/icon-file-debug.svg"),
                     color: Theme.of(context).iconTheme.color,
                     onPressed: () {
-                      OpenFilex.open(logFilePath!);
+                      try {
+                        launchUrlString(logFilePath!.toFile().normalize.path);
+                      } catch (e, st) {
+                        Fimber.e("Error opening log file: $e",
+                            ex: e, stacktrace: st);
+                      }
                     },
                   ),
                 ),

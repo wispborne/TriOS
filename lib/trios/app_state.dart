@@ -82,6 +82,7 @@ class AppState {
     final gameVersion = ref.watch(AppState.starsectorVersion).valueOrNull;
     final enabledMods = ref.watch(AppState.enabledModsFile).valueOrNull;
     if (enabledMods == null) return {};
+
     return modVariants.map((variant) {
       final compatibility =
           compareGameVersions(variant.modInfo.gameVersion, gameVersion);

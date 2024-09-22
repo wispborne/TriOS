@@ -1,3 +1,10 @@
+# 0.2.7
+- Fixed
+  - TriOS log button not working.
+  - Starsector log button not working.
+  - No longer warned if you have a newer dependency than a mod wants.
+    - e.g. If a mod requires MagicLib 1.0.0 and you have 1.1.0, it will no longer warn you.
+
 # 0.2.6
 - Fixed
   - Mod Profiles tab being accidentally enabled. The feature isn't ready yet.

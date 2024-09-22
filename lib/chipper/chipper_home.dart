@@ -6,10 +6,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:open_filex/open_filex.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/platform_paths.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 import '../trios/settings/settings.dart';
 import 'chipper_state.dart';
@@ -137,7 +137,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                         onPressed: () {
                           if (chips != null && chips!.filepath != null) {
                             final file = File(chips!.filepath!);
-                            OpenFilex.open(file.absolute.normalize.path);
+                            launchUrlString(file.absolute.normalize.path);
                           }
                         },
                         icon: const Icon(Icons.launch),

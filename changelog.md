@@ -1,4 +1,9 @@
 # 0.2.7
+- Added
+  - Option to never rename mod folders (requested by Nissa).
+    - CAUTION: You probably don't want to use this. If you install a new mod version and there's a folder name conflict, it'll overwrite data.
+    - The UI for is it pretty dirty, will change it to a dropdown menu later.
+    - Help I can't stop playing Satisfactory.
 - Fixed
   - TriOS logfile button not working.
   - Starsector logfile button not working.

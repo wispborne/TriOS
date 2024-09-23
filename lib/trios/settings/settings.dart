@@ -93,7 +93,10 @@ enum FolderNamingSetting {
   doNotChangeNameForHighestVersion(0),
 
   /// Every folder has the version appended to it.
-  allFoldersVersioned(1);
+  allFoldersVersioned(1),
+
+  // Manual folder naming, use at own risk.
+  doNotChangeNamesEver(2);
 
   const FolderNamingSetting(this.value);
 

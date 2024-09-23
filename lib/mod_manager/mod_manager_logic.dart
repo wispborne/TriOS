@@ -400,8 +400,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
     }
 
     final shouldPersistHighestVersionFolderName =
-        ref.read(appSettings.select((s) => s.folderNamingSetting)) ==
-            FolderNamingSetting.doNotChangeNameForHighestVersion;
+        ref.read(appSettings.select((s) => s.folderNamingSetting));
 
     // Start installing the mods one by one.
     for (final modInfoToInstall in modInfosToInstall) {
@@ -447,7 +446,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
   Future<String> setUpNewHighestModVersionFolder(
     ModInfo modInfo,
     String fallbackFolderName,
-    bool shouldPersistHighestVersionFolderName,
+    FolderNamingSetting folderSetting,
     List<Mod> currentMods,
     Directory destinationFolder, {
     bool dryRun = false,
@@ -456,7 +455,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
         ModVariant.generateUniqueVariantFolderName(modInfo);
 
     // If we persist the highest version folder name, do some extra logic.
-    if (shouldPersistHighestVersionFolderName) {
+    if (folderSetting == FolderNamingSetting.doNotChangeNameForHighestVersion) {
       final otherVariants = currentMods
           .where((mod) => mod.id == modInfo.id)
           .flatMap((mod) => mod.modVariants)
@@ -526,6 +525,10 @@ class ModManagerNotifier extends AsyncNotifier<void> {
             "No other versions of ${modInfo.id} found. Using original folder name: $originalFolderInSource.");
         targetModFolderName = originalFolderInSource;
       }
+    } else if (folderSetting == FolderNamingSetting.doNotChangeNamesEver) {
+      Fimber.i(
+          "Not changing folder names for highest version. Using original folder name: $fallbackFolderName.");
+      targetModFolderName = fallbackFolderName;
     }
 
     return targetModFolderName;

@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:trios/utils/extensions.dart';
 
 class Constants {
-  static const version = "0.2.6";
+  static const version = "0.2.7";
 
   static const appName = "TriOS";
   static const appTitle = "$appName v$version";
@@ -23,6 +23,9 @@ class Constants {
     "Persean Chronicles Died For This?",
     "where is omega?",
     "at com.fs.starfarer.oOOOOOOO",
+    "SMOL 2",
+    "Interesting mod choices...",
+    "Burn bright",
   ].random();
 
   static const enabledModsFilename = "enabled_mods.json";

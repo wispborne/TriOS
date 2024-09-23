@@ -246,6 +246,35 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                               },
                               label: "Rename all mod folders"),
                         ),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 16),
+                          child: Tooltip(
+                            message:
+                                "Manual mode. TriOS will not rename folders."
+                                "\nThis may result in TriOS overwriting mods when updating or installing new versions, if the folder already exists."
+                                "\nFor example, if you have folder `LazyLib` and install a new version where the folder name is also `LazyLib`, the older one will be overwritten."
+                                "\n\nTODO: clean up this UI and use a dropdown or something :)",
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.error,
+                              borderRadius: BorderRadius.circular(
+                                  ThemeManager.cornerRadius),
+                            ),
+                            child: CheckboxWithLabel(
+                                value: ref.watch(appSettings.select(
+                                        (s) => s.folderNamingSetting)) ==
+                                    FolderNamingSetting.doNotChangeNamesEver,
+                                onChanged: (value) {
+                                  ref.read(appSettings.notifier).update(
+                                      (state) => state.copyWith(
+                                          folderNamingSetting: value == true
+                                              ? FolderNamingSetting
+                                                  .doNotChangeNamesEver
+                                              : FolderNamingSetting
+                                                  .doNotChangeNameForHighestVersion));
+                                },
+                                label: "Manual folder naming"),
+                          ),
+                        ),
                         const SizedBox(
                           height: 8,
                         ),

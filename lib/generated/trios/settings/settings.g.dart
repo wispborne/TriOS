@@ -111,4 +111,5 @@ const _$FolderNamingSettingEnumMap = {
   FolderNamingSetting.doNotChangeNameForHighestVersion:
       'doNotChangeNameForHighestVersion',
   FolderNamingSetting.allFoldersVersioned: 'allFoldersVersioned',
+  FolderNamingSetting.doNotChangeNamesEver: 'doNotChangeNamesEver',
 };

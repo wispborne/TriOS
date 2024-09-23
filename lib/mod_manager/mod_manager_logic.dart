@@ -479,6 +479,14 @@ class ModManagerNotifier extends AsyncNotifier<void> {
               ModVariant.generateUniqueVariantFolderName(
                   highestVersion.modInfo);
 
+          if (versionedNameForHighestVersion == highestVersionFolder.name) {
+            Fimber.w(
+                "Wanted to avoid renaming highest version folder per user settings, but existing folder name contains mod version number, which is what we wanted to rename it to."
+                "\nExisting: ${highestVersionFolder.name}. Would rename to: $versionedNameForHighestVersion"
+                "\nUsing fallback name instead for new version ($fallbackFolderName) and leaving existing folder alone.");
+            return fallbackFolderName;
+          }
+
           // Move the contents of the highest version folder to the new, versioned folder.
           try {
             Fimber.i(

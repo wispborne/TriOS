@@ -1,9 +1,12 @@
 # 0.2.7
 - Fixed
-  - TriOS log button not working.
-  - Starsector log button not working.
+  - TriOS logfile button not working.
+  - Starsector logfile button not working.
   - No longer warned if you have a newer dependency than a mod wants.
     - e.g. If a mod requires MagicLib 1.0.0 and you have 1.1.0, it will no longer warn you.
+  - When installing a mod update, no longer overwrites previous version if "Rename all mod folders" is unchecked and previous version folder name has its name set by TriOS.
+    - e.g. If you have a folder `Tahlan Shipworks-1.2.3` and update to a new version of Tahlan, it would put the new version in `Tahlan Shipworks-1.2.3` and delete the actual 1.2.3.
+    - Now, if this is detected, it uses whatever the new version's folder is in the .zip file (e.g. `Tahlan Shipworks`) and doesn't change the older version.
 
 # 0.2.6
 - Fixed

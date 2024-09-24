@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_color/flutter_color.dart';
@@ -25,6 +26,7 @@ import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/search.dart';
 import 'package:trios/widgets/add_new_mods_button.dart';
+import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:trios/widgets/text_with_icon.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -222,46 +224,49 @@ class _Smol3State extends ConsumerState<Smol3>
                                 ref: ref),
                           ),
                         ),
-                        Row(
-                          children: [
-                            const Spacer(),
-                            const Padding(
-                              padding: EdgeInsets.only(right: 8),
-                              child: Text("Profile:"),
-                            ),
-                            SizedBox(
-                              width: 175,
-                              child: Builder(builder: (context) {
-                                final profiles =
-                                    ref.watch(modProfilesProvider).valueOrNull;
-                                final activeProfileId = ref.watch(appSettings
-                                    .select((s) => s.activeModProfileId));
-                                return DropdownButton(
-                                    value: profiles?.modProfiles
-                                        .firstWhereOrNull(
-                                            (p) => p.id == activeProfileId),
-                                    isDense: true,
-                                    isExpanded: true,
-                                    focusColor: Colors.transparent,
-                                    items: profiles?.modProfiles
-                                            .map((p) => DropdownMenuItem(
-                                                  value: p,
-                                                  child: Text(p.name),
-                                                ))
-                                            .toList() ??
-                                        [],
-                                    onChanged: (value) {
-                                      if (value is ModProfile) {
-                                        ref
-                                            .read(modProfilesProvider.notifier)
-                                            .showActivateDialog(value, context);
-                                      }
-                                    });
-                              }),
-                            ),
-                            CopyModListButtonLarge(
-                                mods: mods, enabledMods: enabledMods)
-                          ],
+                        Disable(
+                          isEnabled: kDebugMode,
+                          child: Row(
+                            children: [
+                              const Spacer(),
+                              const Padding(
+                                padding: EdgeInsets.only(right: 8),
+                                child: Text("Profile:"),
+                              ),
+                              SizedBox(
+                                width: 175,
+                                child: Builder(builder: (context) {
+                                  final profiles =
+                                      ref.watch(modProfilesProvider).valueOrNull;
+                                  final activeProfileId = ref.watch(appSettings
+                                      .select((s) => s.activeModProfileId));
+                                  return DropdownButton(
+                                      value: profiles?.modProfiles
+                                          .firstWhereOrNull(
+                                              (p) => p.id == activeProfileId),
+                                      isDense: true,
+                                      isExpanded: true,
+                                      focusColor: Colors.transparent,
+                                      items: profiles?.modProfiles
+                                              .map((p) => DropdownMenuItem(
+                                                    value: p,
+                                                    child: Text(p.name),
+                                                  ))
+                                              .toList() ??
+                                          [],
+                                      onChanged: (value) {
+                                        if (value is ModProfile) {
+                                          ref
+                                              .read(modProfilesProvider.notifier)
+                                              .showActivateDialog(value, context);
+                                        }
+                                      });
+                                }),
+                              ),
+                              CopyModListButtonLarge(
+                                  mods: mods, enabledMods: enabledMods)
+                            ],
+                          ),
                         )
                       ],
                     ),

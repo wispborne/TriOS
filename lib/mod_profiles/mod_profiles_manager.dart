@@ -2,9 +2,11 @@ import 'dart:convert';
 
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/models/mod.dart';
+import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/logging.dart';
@@ -77,6 +79,12 @@ class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
     }
   }
 
+  void cloneModProfile(ModProfile profile) {
+    createModProfile(
+        '${profile.name} (Copy) ${DateTime.now().microsecondsSinceEpoch}',
+        enabledModVariants: profile.enabledModVariants);
+  }
+
   void createModProfile(
     String name, {
     String description = '',
@@ -98,10 +106,6 @@ class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
   }
 
   void updateModProfile(ModProfile updatedProfile) {
-    if (updatedProfile == null) {
-      return;
-    }
-
     final startingState =
         state.valueOrNull ?? const ModProfiles(modProfiles: []);
 
@@ -142,17 +146,13 @@ class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
     final profileShallows = profile.enabledModVariants;
 
     // Map of modId to ShallowModVariant
-    final currentModIdToShallow = Map<String, ShallowModVariant>.fromIterable(
-      currentlyEnabledShallows,
-      key: (item) => item.modId,
-      value: (item) => item,
-    );
+    final currentModIdToShallow = {
+      for (var item in currentlyEnabledShallows) item.modId: item
+    };
 
-    final profileModIdToShallow = Map<String, ShallowModVariant>.fromIterable(
-      profileShallows,
-      key: (item) => item.modId,
-      value: (item) => item,
-    );
+    final profileModIdToShallow = {
+      for (var item in profileShallows) item.modId: item
+    };
 
     // Mods present in both current and profile
     final modIdsInBoth = currentModIdToShallow.keys.toSet().intersection(
@@ -168,25 +168,30 @@ class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
       final mod = allMods.firstWhereOrNull((mod) => mod.id == modId);
       final fromVariant = modVariants.firstWhereOrNull(
           (v) => v.smolId == currentModIdToShallow[modId]!.smolVariantId);
-      final toVariant = modVariants.firstWhereOrNull(
-          (v) => v.smolId == profileModIdToShallow[modId]!.smolVariantId);
+      final toShallow = profileModIdToShallow[modId];
+      final toVariant = modVariants.firstWhereOrNull((v) {
+        return v.smolId == toShallow!.smolVariantId;
+      });
 
-      // If the toVariant is null, it means the variant is missing
       if (toVariant == null) {
+        // Missing variant
         return ModChange(
           modId: modId,
           mod: mod,
           fromVariant: fromVariant,
           toVariant: null,
+          toShallow: toShallow,
           changeType: ModChangeType.missingVariant,
         );
       }
 
+      // Swap
       return ModChange(
         modId: modId,
         mod: mod,
         fromVariant: fromVariant,
         toVariant: toVariant,
+        toShallow: toShallow,
         changeType: ModChangeType.swap,
       );
     }).toList();
@@ -198,24 +203,29 @@ class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
 
     final toEnable = modIdsToEnable.map((modId) {
       final mod = allMods.firstWhereOrNull((mod) => mod.id == modId);
-      final toVariant = modVariants.firstWhereOrNull(
-          (v) => v.smolId == profileModIdToShallow[modId]!.smolVariantId);
+      final toShallow = profileModIdToShallow[modId];
+      final toVariant = modVariants
+          .firstWhereOrNull((v) => v.smolId == toShallow!.smolVariantId);
 
       if (mod == null || toVariant == null) {
+        // Missing mod
         return ModChange(
           modId: modId,
           mod: mod,
           fromVariant: null,
           toVariant: null,
+          toShallow: toShallow,
           changeType: ModChangeType.missingMod,
         );
       }
 
+      // Enable
       return ModChange(
         modId: modId,
         mod: mod,
         fromVariant: null,
         toVariant: toVariant,
+        toShallow: toShallow,
         changeType: ModChangeType.enable,
       );
     }).toList();
@@ -227,14 +237,16 @@ class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
 
     final toDisable = modIdsToDisable.map((modId) {
       final mod = allMods.firstWhereOrNull((mod) => mod.id == modId);
-      final fromVariant = modVariants.firstWhereOrNull(
-          (v) => v.smolId == currentModIdToShallow[modId]!.smolVariantId);
+      final toShallow = profileModIdToShallow[modId];
+      final fromVariant = modVariants
+          .firstWhereOrNull((v) => v.smolId == toShallow!.smolVariantId);
 
       return ModChange(
         modId: modId,
         mod: mod,
         fromVariant: fromVariant,
         toVariant: null,
+        toShallow: toShallow,
         changeType: ModChangeType.disable,
       );
     }).toList();
@@ -348,7 +360,8 @@ class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
     showDialog(
       context: context,
       builder: (context) {
-        final theme = Theme.of(context);
+        final hasMissingModsOrVariants =
+            missingMods.isNotEmpty || missingVariants.isNotEmpty;
         return AlertDialog(
           title: Text('Activate profile "${profile.name}"?'),
           content: SingleChildScrollView(
@@ -367,7 +380,7 @@ class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
                 if (modsToSwap.isNotEmpty)
                   _buildChangeSection('Mods to Swap', modsToSwap,
                       Icons.swap_horiz, Colors.blue, context),
-                if (missingMods.isNotEmpty || missingVariants.isNotEmpty)
+                if (hasMissingModsOrVariants)
                   _buildMissingModsSection(
                       missingMods, missingVariants, context),
               ],
@@ -387,8 +400,21 @@ class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
                     .read(modProfilesProvider.notifier)
                     .activateModProfile(profile.id);
               },
-              child: const Text('Activate'),
+              child: Text(hasMissingModsOrVariants
+                  ? 'Activate (lose data)'
+                  : 'Activate'),
             ),
+            if (hasMissingModsOrVariants)
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+
+                  ref.read(modProfilesProvider.notifier)
+                    ..cloneModProfile(profile)
+                    ..activateModProfile(profile.id);
+                },
+                child: const Text('Activate (clone profile first)'),
+              ),
           ],
         );
       },
@@ -442,8 +468,11 @@ class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
     );
   }
 
-  Widget _buildMissingModsSection(List<ModChange> missingMods,
-      List<ModChange> missingVariants, BuildContext context) {
+  Widget _buildMissingModsSection(
+    List<ModChange> missingMods,
+    List<ModChange> missingVariants,
+    BuildContext context,
+  ) {
     final theme = Theme.of(context);
     final color = ThemeManager.vanillaWarningColor;
     return Column(
@@ -461,8 +490,7 @@ class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
           final modId = change.modId;
           return ListTile(
             leading: Icon(Icons.warning, color: color),
-            title:
-                Text('Mod "$modId" is not installed and will not be enabled.'),
+            title: Text('Mod "$modId" is missing.'),
             dense: true,
           );
         }),
@@ -477,6 +505,23 @@ class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
             dense: true,
           );
         }),
+        const SizedBox(height: 8),
+        OutlinedButton(
+            onPressed: () {
+              Clipboard.setData(ClipboardData(
+                  text: (missingMods.map((e) => e.toShallow).toList() +
+                          missingVariants.map((e) => e.toShallow).toList())
+                      .whereNotNull()
+                      .joinToString(
+                          separator: '\n',
+                          transform: (ShallowModVariant e) =>
+                              "${e.modName ?? e.modId} - ${e.version}")));
+            },
+            child: const Text("Copy missing to clipboard")),
+        const SizedBox(height: 8),
+        const Text(
+            "You may clone the profile first to keep a copy of what mods are missing, "
+            "as any missing mods will be removed from your profile after activating it."),
         const SizedBox(height: 16),
       ],
     );
@@ -490,6 +535,7 @@ class ModChange {
   final Mod? mod;
   final ModVariant? fromVariant;
   final ModVariant? toVariant;
+  final ShallowModVariant? toShallow;
   final ModChangeType changeType;
 
   ModChange({
@@ -497,6 +543,12 @@ class ModChange {
     required this.mod,
     required this.fromVariant,
     required this.toVariant,
+    required this.toShallow,
     required this.changeType,
   });
+
+  @override
+  String toString() {
+    return 'ModChange{modId: $modId, mod: $mod, fromVariant: $fromVariant, toVariant: $toVariant, toShallow: $toShallow, changeType: $changeType}';
+  }
 }

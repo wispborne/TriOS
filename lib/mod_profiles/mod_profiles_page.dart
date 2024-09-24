@@ -225,11 +225,7 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                                                   ref
                                                       .read(modProfilesProvider
                                                           .notifier)
-                                                      .createModProfile(
-                                                          '${profile.name} (Copy) ${DateTime.now().microsecondsSinceEpoch}',
-                                                          enabledModVariants:
-                                                              profile
-                                                                  .enabledModVariants);
+                                                      .cloneModProfile(profile);
                                                 }),
                                             IconButton(
                                               icon: const Icon(

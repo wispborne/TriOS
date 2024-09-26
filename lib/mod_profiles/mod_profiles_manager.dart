@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/models/mod.dart';
+import 'package:trios/thirdparty/dartx/comparable.dart';
 import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/settings.dart';
@@ -14,6 +15,7 @@ import 'package:trios/utils/logging.dart';
 import '../models/mod_variant.dart';
 import '../themes/theme_manager.dart';
 import '../utils/generic_settings_notifier.dart';
+import '../widgets/svg_image_icon.dart';
 import 'models/mod_profile.dart';
 
 final modProfilesProvider =
@@ -168,19 +170,31 @@ class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
       final mod = allMods.firstWhereOrNull((mod) => mod.id == modId);
       final fromVariant = modVariants.firstWhereOrNull(
           (v) => v.smolId == currentModIdToShallow[modId]!.smolVariantId);
-      final toShallow = profileModIdToShallow[modId];
+      final modProfileVariant = profileModIdToShallow[modId];
       final toVariant = modVariants.firstWhereOrNull((v) {
-        return v.smolId == toShallow!.smolVariantId;
+        return v.smolId == modProfileVariant!.smolVariantId;
       });
 
       if (toVariant == null) {
+        final highestVersion = mod?.findHighestVersion;
+        final targetVersion = modProfileVariant?.version;
+
+        final toVariantAlternate = highestVersion?.bestVersion == null
+            ? null
+            : targetVersion == null
+                ? highestVersion
+                : highestVersion!.bestVersion! > targetVersion
+                    ? highestVersion
+                    : null;
+
         // Missing variant
         return ModChange(
           modId: modId,
           mod: mod,
           fromVariant: fromVariant,
           toVariant: null,
-          toShallow: toShallow,
+          modProfileVariant: modProfileVariant,
+          toVariantAlternate: toVariantAlternate,
           changeType: ModChangeType.missingVariant,
         );
       }
@@ -191,7 +205,8 @@ class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
         mod: mod,
         fromVariant: fromVariant,
         toVariant: toVariant,
-        toShallow: toShallow,
+        modProfileVariant: modProfileVariant,
+        toVariantAlternate: null,
         changeType: ModChangeType.swap,
       );
     }).toList();
@@ -203,9 +218,9 @@ class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
 
     final toEnable = modIdsToEnable.map((modId) {
       final mod = allMods.firstWhereOrNull((mod) => mod.id == modId);
-      final toShallow = profileModIdToShallow[modId];
-      final toVariant = modVariants
-          .firstWhereOrNull((v) => v.smolId == toShallow!.smolVariantId);
+      final modProfileVariant = profileModIdToShallow[modId];
+      final toVariant = modVariants.firstWhereOrNull(
+          (v) => v.smolId == modProfileVariant!.smolVariantId);
 
       if (mod == null || toVariant == null) {
         // Missing mod
@@ -214,7 +229,8 @@ class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
           mod: mod,
           fromVariant: null,
           toVariant: null,
-          toShallow: toShallow,
+          modProfileVariant: modProfileVariant,
+          toVariantAlternate: null,
           changeType: ModChangeType.missingMod,
         );
       }
@@ -225,7 +241,8 @@ class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
         mod: mod,
         fromVariant: null,
         toVariant: toVariant,
-        toShallow: toShallow,
+        modProfileVariant: modProfileVariant,
+        toVariantAlternate: null,
         changeType: ModChangeType.enable,
       );
     }).toList();
@@ -237,16 +254,18 @@ class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
 
     final toDisable = modIdsToDisable.map((modId) {
       final mod = allMods.firstWhereOrNull((mod) => mod.id == modId);
-      final toShallow = profileModIdToShallow[modId];
-      final fromVariant = modVariants
-          .firstWhereOrNull((v) => v.smolId == toShallow!.smolVariantId);
+      final modProfileVariant = profileModIdToShallow[modId];
+      final fromVariant = modVariants.firstWhereOrNull(
+          (v) => v.smolId == modProfileVariant?.smolVariantId);
 
+      // Disable
       return ModChange(
         modId: modId,
         mod: mod,
         fromVariant: fromVariant,
         toVariant: null,
-        toShallow: toShallow,
+        modProfileVariant: modProfileVariant,
+        toVariantAlternate: null,
         changeType: ModChangeType.disable,
       );
     }).toList();
@@ -372,13 +391,13 @@ class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
                     'The following changes will be made to your active mods:'),
                 const SizedBox(height: 16),
                 if (modsToEnable.isNotEmpty)
-                  _buildChangeSection('Mods to Enable', modsToEnable,
+                  _buildChangeSection('Will Be Enabled', modsToEnable,
                       Icons.add_circle, Colors.green, context),
                 if (modsToDisable.isNotEmpty)
-                  _buildChangeSection('Mods to Disable', modsToDisable,
+                  _buildChangeSection('Will Be Disabled', modsToDisable,
                       Icons.remove_circle, Colors.red, context),
                 if (modsToSwap.isNotEmpty)
-                  _buildChangeSection('Mods to Swap', modsToSwap,
+                  _buildChangeSection('Version Change', modsToSwap,
                       Icons.swap_horiz, Colors.blue, context),
                 if (hasMissingModsOrVariants)
                   _buildMissingModsSection(
@@ -393,19 +412,20 @@ class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
               },
               child: const Text('Cancel'),
             ),
-            TextButton(
+            TextButton.icon(
               onPressed: () {
                 Navigator.of(context).pop();
                 ref
                     .read(modProfilesProvider.notifier)
                     .activateModProfile(profile.id);
               },
-              child: Text(hasMissingModsOrVariants
-                  ? 'Activate (lose data)'
+              icon: hasMissingModsOrVariants ? const Icon(Icons.warning) : null,
+              label: Text(hasMissingModsOrVariants
+                  ? 'Activate (ignore missing)'
                   : 'Activate'),
             ),
             if (hasMissingModsOrVariants)
-              TextButton(
+              TextButton.icon(
                 onPressed: () {
                   Navigator.of(context).pop();
 
@@ -413,7 +433,8 @@ class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
                     ..cloneModProfile(profile)
                     ..activateModProfile(profile.id);
                 },
-                child: const Text('Activate (clone profile first)'),
+                icon: const SvgImageIcon("assets/images/icon-clone.svg"),
+                label: const Text('Back up Profile & Activate'),
               ),
           ],
         );
@@ -452,7 +473,7 @@ class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
                   change.fromVariant?.modInfo.version?.toString() ?? 'Unknown';
               final toVersion =
                   change.toVariant?.modInfo.version?.toString() ?? 'Unknown';
-              description = '$modName from version $fromVersion to $toVersion';
+              description = '$modName $fromVersion → $toVersion';
               break;
             default:
               description = modName;
@@ -478,39 +499,63 @@ class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Missing Mods',
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: color,
+        if (missingMods.isNotEmpty)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Missing Mods',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+              ),
+              const SizedBox(height: 8),
+              ...missingMods.map((change) {
+                final modId = change.modId;
+                return ListTile(
+                  leading: Icon(Icons.warning, color: color),
+                  title: Text('Mod "$modId" is missing.'),
+                  dense: true,
+                );
+              }),
+            ],
           ),
-        ),
-        const SizedBox(height: 8),
-        ...missingMods.map((change) {
-          final modId = change.modId;
-          return ListTile(
-            leading: Icon(Icons.warning, color: color),
-            title: Text('Mod "$modId" is missing.'),
-            dense: true,
-          );
-        }),
-        ...missingVariants.map((change) {
-          final modName =
-              change.mod?.findFirstEnabledOrHighestVersion?.modInfo.nameOrId ??
-                  'Unknown Mod (${change.modId})';
-          return ListTile(
-            leading: Icon(Icons.warning, color: color),
-            title: Text(
-                'Variant for "$modName" is not available and cannot be swapped.'),
-            dense: true,
-          );
-        }),
-        const SizedBox(height: 8),
+        if (missingVariants.isNotEmpty)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Missing Versions',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+              ),
+              ...missingVariants.map((change) {
+                final modName = change.mod?.findFirstEnabledOrHighestVersion
+                        ?.modInfo.nameOrId ??
+                    'Unknown Mod (${change.modId})';
+                final hasAlt = change.toVariantAlternate != null;
+                return ListTile(
+                  leading: Icon(hasAlt ? Icons.upgrade : Icons.warning,
+                      color: color),
+                  title: Text(hasAlt
+                      ? 'Version ${change.modProfileVariant?.version} of "$modName" is not available, so ${change.toVariantAlternate!.bestVersion} will be used instead.'
+                      : 'Version ${change.modProfileVariant?.version} of "$modName" is not available.'),
+                  dense: true,
+                );
+              }),
+            ],
+          ),
+        const SizedBox(height: 24),
         OutlinedButton(
             onPressed: () {
               Clipboard.setData(ClipboardData(
-                  text: (missingMods.map((e) => e.toShallow).toList() +
-                          missingVariants.map((e) => e.toShallow).toList())
+                  text: (missingMods.map((e) => e.modProfileVariant).toList() +
+                          missingVariants
+                              .map((e) => e.modProfileVariant)
+                              .toList())
                       .whereNotNull()
                       .joinToString(
                           separator: '\n',
@@ -518,11 +563,12 @@ class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
                               "${e.modName ?? e.modId} - ${e.version}")));
             },
             child: const Text("Copy missing to clipboard")),
-        const SizedBox(height: 8),
-        const Text(
-            "You may clone the profile first to keep a copy of what mods are missing, "
-            "as any missing mods will be removed from your profile after activating it."),
-        const SizedBox(height: 16),
+        const SizedBox(height: 24),
+        Text(
+            "Missing mods will be discarded from your profile after activating.",
+            style: theme.textTheme.bodyMedium
+                ?.copyWith(fontWeight: FontWeight.bold)),
+        // const SizedBox(height: 8),
       ],
     );
   }
@@ -535,7 +581,10 @@ class ModChange {
   final Mod? mod;
   final ModVariant? fromVariant;
   final ModVariant? toVariant;
-  final ShallowModVariant? toShallow;
+  final ShallowModVariant? modProfileVariant;
+
+  /// If desired variant is not available, this is an alternate that was found.
+  final ModVariant? toVariantAlternate;
   final ModChangeType changeType;
 
   ModChange({
@@ -543,12 +592,13 @@ class ModChange {
     required this.mod,
     required this.fromVariant,
     required this.toVariant,
-    required this.toShallow,
+    required this.modProfileVariant,
+    required this.toVariantAlternate,
     required this.changeType,
   });
 
   @override
   String toString() {
-    return 'ModChange{modId: $modId, mod: $mod, fromVariant: $fromVariant, toVariant: $toVariant, toShallow: $toShallow, changeType: $changeType}';
+    return 'ModChange{modId: $modId, mod: $mod, fromVariant: $fromVariant, toVariant: $toVariant, modProfileVariant: $modProfileVariant, toVariantAlternate: $toVariantAlternate, changeType: $changeType}';
   }
 }

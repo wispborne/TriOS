@@ -158,7 +158,7 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
             // If there's only one variant, it's fine to leave the `mod_info.json` file unbricked.
             brickModInfo: !isDisablingMod && mod.modVariants.length > 1,
             reason: isDisablingMod
-                ? "Disabled ${mod.id}."
+                ? "You disabled ${mod.id} (${variant.modInfo.version} was enabled before)."
                 : "Changed ${mod.id} to ${modVariant.modInfo.version}, so ${variant.bestVersion} has to be disabled.",
           );
         } catch (e, st) {
@@ -171,7 +171,7 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
       await _enableModVariant(modVariant, mod,
           enableInVanillaLauncher: true,
           reason:
-              "Changed ${mod.id} to version ${modVariant.bestVersion} from ${mod.findFirstEnabled == null ? "disabled" : mod.findFirstEnabled?.bestVersion}.");
+              "You changed ${mod.id} to version ${modVariant.bestVersion} from ${mod.findFirstEnabled == null ? "disabled" : mod.findFirstEnabled?.bestVersion}.");
     } else {
       // If mod is disabled in `enabled_mods.json`, set all the `mod_info.json` files to non-bricked.
       // That makes things easier on the user & MOSS by mimicking vanilla behavior whenever possible.

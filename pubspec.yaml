@@ -110,6 +110,7 @@ dependencies:
   hooks_riverpod: ^2.5.1
   rxdart: ^0.28.0
   dart_mappable: ^4.2.2
+  xml: ^6.5.0
 
 # Uncommented & Copied
 #  adaptive_theme: ^3.6.0

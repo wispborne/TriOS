@@ -37,7 +37,7 @@ configureLogging({
       "Crash reporting is ${allowSentryReporting ? "enabled" : "disabled"}.");
   try {
     WidgetsFlutterBinding.ensureInitialized();
-    logFolderName = (await getApplicationSupportDirectory()).absolute.path;
+    logFolderName = (await configDataFolderPath).absolute.path;
     logFilePath = p.join(logFolderName!, logFileName);
   } catch (e) {
     Fimber.e("Error getting log folder name.", ex: e);

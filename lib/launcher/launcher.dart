@@ -8,6 +8,7 @@ import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:plist_parser/plist_parser.dart';
+import 'package:trios/jre_manager/jre_manager_logic.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/enabled_mods.dart';
 import 'package:trios/models/launch_settings.dart';
@@ -18,8 +19,10 @@ import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/platform_paths.dart';
+import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/stroke_text.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
+import 'package:trios/widgets/tooltip_frame.dart';
 import 'package:win32_registry/win32_registry.dart';
 
 import '../themes/theme_manager.dart';
@@ -72,9 +75,47 @@ class Launcher extends HookConsumerWidget {
       CurvedAnimation(parent: hoverController, curve: Curves.easeInOut),
     );
 
-    return Tooltip(
-      message: 'Launch Starsector',
-      waitDuration: const Duration(milliseconds: 750),
+    return MovingTooltipWidget(
+      tooltipWidget: TooltipFrame(
+          child: DefaultTextStyle.merge(
+        style: theme.textTheme.labelLarge,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Launch ${ref.watch(AppState.starsectorVersion).valueOrNull}',
+              style: theme.textTheme.labelLarge
+                  ?.copyWith(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            Text.rich(
+              TextSpan(
+                children: [
+                  const TextSpan(
+                    text: "Java: ",
+                  ),
+                  TextSpan(
+                    text: ref
+                            .watch(AppState.activeJre)
+                            .valueOrNull
+                            ?.version
+                            .versionString ??
+                        "(unknown JRE)",
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const TextSpan(
+                    text: "\nRAM: ",
+                  ),
+                  TextSpan(
+                    text:
+                        "${ref.watch(currentRamAmountInMb).valueOrNull ?? "(unknown RAM)"} MB",
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      )),
       child: MouseRegion(
         onEnter: (_) => hoverController.forward(),
         onExit: (_) => hoverController.reverse(),

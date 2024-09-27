@@ -1,3 +1,7 @@
+# 0.2.8
+- Added
+  - Tooltip when launching game showing version, Java version, and RAM assigned.
+
 # 0.2.7
 - Added
   - Option to never rename mod folders (requested by Nissa).

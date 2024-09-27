@@ -1,10 +1,11 @@
 import 'dart:io';
 
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:trios/utils/extensions.dart';
 
 class Constants {
-  static const version = "0.2.7";
+  static const version = "0.2.8-dev01";
 
   static const appName = "TriOS";
   static const appTitle = "$appName v$version";
@@ -107,3 +108,4 @@ class Constants {
 
 final currentDirectory = Platform.resolvedExecutable.toFile().parent;
 final currentMacOSAppPath = Platform.resolvedExecutable.toFile().parent.parent;
+final configDataFolderPath = getApplicationSupportDirectory();

@@ -7,6 +7,7 @@ import 'package:mutex/mutex.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:trios/utils/extensions.dart';
 
+import '../trios/constants.dart';
 import 'logging.dart';
 
 abstract class GenericSettingsNotifier<T> extends AsyncNotifier<T> {
@@ -112,9 +113,8 @@ abstract class GenericSettingsNotifier<T> extends AsyncNotifier<T> {
     Fimber.i("Backup created at ${backupFile.path}");
   }
 
-  // Helper method to get the file in the SharedPreferences-like directory
   Future<File> _getFile() async {
-    final dir = await getApplicationDocumentsDirectory();
+    final dir = await configDataFolderPath;
     await dir.create(recursive: true); // Ensure directory exists
     final path = dir.resolve(_fileName).path;
     Fimber.i("File path resolved: $path");

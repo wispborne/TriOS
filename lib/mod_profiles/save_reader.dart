@@ -25,13 +25,14 @@ class SaveFileNotifier extends AsyncNotifier<List<SaveFile>> {
 
   @override
   Future<List<SaveFile>> build() async {
-    return await readAllSaves();
+    readAllSaves().then((saves) => state = AsyncData(saves));
+    return [];
   }
 
   Future<List<SaveFile>> readAllSaves({bool forceRefresh = false}) async {
-    final gameFolder = ref.read(AppState.gameFolder).valueOrNull;
+    final gameFolder = ref.watch(AppState.gameFolder).valueOrNull;
     if (gameFolder == null) {
-      Fimber.e("Game folder not set");
+      Fimber.w("Game folder not set");
       return [];
     }
 
@@ -50,7 +51,7 @@ class SaveFileNotifier extends AsyncNotifier<List<SaveFile>> {
     final saveFolders = saveDir
         .listSync()
         .whereType<Directory>()
-        .where((d) => d.path.startsWith("save"))
+        .where((d) => d.name.startsWith("save"))
         .toList();
 
     final newSaves = await Future.wait(saveFolders.map((folder) async {
@@ -65,35 +66,78 @@ class SaveFileNotifier extends AsyncNotifier<List<SaveFile>> {
     return newSaves.whereNotNull().toList();
   }
 
-  Future<SaveFile> readSave(Directory saveFolder) async {
-    final descriptorFile = File("${saveFolder.path}/$descriptorFileName");
-    if (!await descriptorFile.exists()) {
-      throw Exception("Descriptor file not found in ${saveFolder.path}");
-    } else {
-      Fimber.i("Reading save from ${saveFolder.path}");
+  Future<SaveFile> readSave(Directory folderOfSave) async {
+    final file = folderOfSave.resolve(descriptorFileName).toFile();
+    final contents = await file.readAsString();
+    final document = XmlDocument.parse(contents);
+    var rootElement = document.getElement('SaveGameData');
+
+    // Reading basic info
+
+    final portraitPath =
+        rootElement?.getElement('portraitName')?.innerText ?? "";
+    final characterName =
+        rootElement?.getElement('characterName')?.innerText ?? "";
+    final characterLevel = int.tryParse(
+            rootElement?.getElement('characterLevel')?.innerText ?? '0') ??
+        0;
+    final saveFileVersion =
+        rootElement?.getElement('saveFileVersion')?.innerText ?? "";
+    final saveDateString = rootElement?.getElement('saveDate')?.innerText ?? "";
+
+    DateTime saveDate = DateTime.now();
+    try {
+      saveDate = DateFormat("yyyy-MM-dd HH:mm:ss.SS")
+          .parse(saveDateString.replaceAll(' UTC', ''));
+    } catch (e) {
+      Fimber.e('Error parsing save date: $e');
     }
 
-    final document = XmlDocument.parse(await descriptorFile.readAsString());
-    final characterName = document.getElement('characterName')?.text ?? '';
-    final characterLevel =
-        int.tryParse(document.getElement('characterLevel')?.text ?? '0') ?? 0;
-    final portraitPath = document.getElement('portraitName')?.text;
-    final saveFileVersion = document.getElement('saveFileVersion')?.text;
-    final saveDateText = document.getElement('saveDate')?.text;
+    // Reading mods
+    final modsElement = rootElement?.getElement('allModsEverEnabled');
+    Map<int, SaveFileMod> modsMap = {};
 
-    final saveDate = _parseSaveDate(saveDateText);
+    if (modsElement != null) {
+      modsElement.findElements('EnabledModData').forEach((modData) {
+        final spec = modData.getElement('spec');
+        if (spec != null) {
+          final id = spec.getElement('id')?.innerText ?? "";
+          final name = spec.getElement('name')?.innerText ?? "";
+          final versionInfo = spec.getElement('versionInfo');
+          final version = Version(
+            raw: versionInfo?.getElement('string')?.innerText ?? "",
+            major: versionInfo?.getElement('major')?.innerText ?? "",
+            minor: versionInfo?.getElement('minor')?.innerText ?? "",
+            patch: versionInfo?.getElement('patch')?.innerText ?? "",
+          );
 
-    final modsElement = document.getElement('allModsEverEnabled');
-    final Map<int, SaveFileMod> allMods =
-        modsElement != null ? _parseMods(modsElement) : {};
+          final zAttribute = int.tryParse(spec.getAttribute('z') ?? '');
+          if (zAttribute != null) {
+            modsMap[zAttribute] =
+                SaveFileMod(id: id, name: name, version: version);
+          }
+        }
+      });
+    }
 
-    final enabledModsElement = document.getElement('enabledMods');
-    final enabledMods = enabledModsElement != null
-        ? _parseEnabledMods(enabledModsElement, allMods)
-        : <SaveFileMod>[];
+    // Reading enabled mods
+    final enabledModsElement = rootElement?.getElement('enabledMods');
+    List<SaveFileMod> enabledMods = [];
+
+    if (enabledModsElement != null) {
+      enabledModsElement.findElements('EnabledModData').forEach((modData) {
+        final specRef = modData.getElement('spec')?.getAttribute('ref');
+        if (specRef != null) {
+          final modRef = int.tryParse(specRef);
+          if (modRef != null && modsMap.containsKey(modRef)) {
+            enabledMods.add(modsMap[modRef]!);
+          }
+        }
+      });
+    }
 
     return SaveFile(
-      id: saveFolder.path.split('/').last,
+      id: folderOfSave.name,
       characterName: characterName,
       characterLevel: characterLevel,
       portraitPath: portraitPath,
@@ -101,49 +145,6 @@ class SaveFileNotifier extends AsyncNotifier<List<SaveFile>> {
       saveDate: saveDate,
       mods: enabledMods,
     );
-  }
-
-  Map<int, SaveFileMod> _parseMods(XmlElement modsElement) {
-    return modsElement.findElements('mod').map((modElement) {
-      final id = modElement.getElement('id')?.text ?? '';
-      final name = modElement.getElement('name')?.text ?? '';
-      final versionElement = modElement.getElement('version');
-      final version = Version(
-        raw: versionElement?.getElement('string')?.text ?? '',
-        major: versionElement?.getElement('major')?.text ?? '',
-        minor: versionElement?.getElement('minor')?.text ?? '',
-        patch: versionElement?.getElement('patch')?.text ?? '',
-      );
-      final ref = int.tryParse(modElement.getElement('z')?.text ?? '0') ?? 0;
-      return MapEntry(ref, SaveFileMod(id: id, name: name, version: version));
-    }).toMap();
-  }
-
-  List<SaveFileMod> _parseEnabledMods(
-    XmlElement enabledModsElement,
-    Map<int, SaveFileMod> allMods,
-  ) {
-    return enabledModsElement
-        .findElements('mod')
-        .map((modElement) {
-          final ref =
-              int.tryParse(modElement.getElement('ref')?.text ?? '0') ?? 0;
-          return allMods[ref];
-        })
-        .whereType<SaveFileMod>()
-        .toList();
-  }
-
-  DateTime _parseSaveDate(String? dateString) {
-    if (dateString == null || dateString.isEmpty) return DateTime.now();
-    for (var pattern in datePatterns) {
-      try {
-        return DateFormat(pattern).parse(dateString);
-      } catch (e) {
-        Fimber.w("Failed to parse date with pattern $pattern: $e");
-      }
-    }
-    return DateTime.now();
   }
 }
 
@@ -153,7 +154,7 @@ class SaveFile {
   final int characterLevel;
   final String? portraitPath;
   final String? saveFileVersion;
-  final DateTime saveDate;
+  final DateTime? saveDate;
   final List<SaveFileMod> mods;
 
   SaveFile({

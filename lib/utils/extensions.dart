@@ -655,3 +655,28 @@ extension ToMapExt<T, V> on Iterable<MapEntry<T, V>> {
     return Map.fromEntries(this);
   }
 }
+
+extension FutureListExt<T> on List<Future<T>> {
+  Future<List<T>> awaitAll() async {
+    return await Future.wait(this);
+  }
+
+  Future<List> awaitPooled(int poolSize) async {
+    final List<Future<T>> activeFutures = [];
+    final List<T> results = [];
+
+    for (var future in this) {
+      if (activeFutures.length >= poolSize) {
+        final completedFuture = await Future.any(activeFutures);
+        results.add(completedFuture);
+        activeFutures.removeWhere((f) => f == completedFuture);
+      }
+
+      activeFutures.add(future);
+    }
+
+    // Wait for the remaining futures to complete
+    results.addAll(await activeFutures.awaitAll());
+    return results;
+  }
+}

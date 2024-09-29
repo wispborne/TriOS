@@ -1,7 +1,7 @@
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/trios/providers.dart';
 import 'package:trios/utils/logging.dart';
 
 import '../mod_manager/version_checker.dart';
@@ -45,8 +45,9 @@ class _ChangelogsState extends ConsumerState<Changelogs> {
         return;
       }
 
+      final httpClient = ref.read(triOSHttpClient);
       isLoading = true;
-      Dio().get(changelogUrl).then((value) {
+      httpClient.get(changelogUrl).then((value) {
         changelog = value.data.toString().trim();
         var lines = changelog.split("\n");
 

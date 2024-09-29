@@ -22,8 +22,14 @@ final downloadManager =
         TriOSDownloadManager.new);
 
 class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
-  static final _downloadManager = DownloadManager();
+  static late DownloadManager _downloadManager;
   final _downloads = List<Download>.empty(growable: true);
+
+  @override
+  FutureOr<List<Download>> build() {
+    _downloadManager = DownloadManager(ref: ref);
+    return _downloads;
+  }
 
   /// Adds a download to the download manager.
   /// Displays a toast with the download progress.
@@ -73,11 +79,6 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
       });
       return download;
     });
-  }
-
-  @override
-  FutureOr<List<Download>> build() {
-    return _downloads;
   }
 
   downloadUpdateViaBrowser(
@@ -130,22 +131,22 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
                 //     ref.read(AppState.modVariants).valueOrNull ?? [];
 
                 // for (final installed in installedVariants) {
-                  // Find the variant post-install so we can activate it.
-                  // final actualVariant = variants.firstWhereOrNull(
-                  //     (variant) => variant.smolId == installed.modInfo.smolId);
-                  // try {
-                  // If the mod existed and was enabled, switch to the newly downloaded version.
-                  // Edit: changed my mind, see https://github.com/wispborne/TriOS/issues/28
+                // Find the variant post-install so we can activate it.
+                // final actualVariant = variants.firstWhereOrNull(
+                //     (variant) => variant.smolId == installed.modInfo.smolId);
+                // try {
+                // If the mod existed and was enabled, switch to the newly downloaded version.
+                // Edit: changed my mind, see https://github.com/wispborne/TriOS/issues/28
 
-                  // if (actualVariant != null &&
-                  //     actualVariant.mod(mods)?.isEnabledInGame == true) {
-                  //   changeActiveModVariant(
-                  //       actualVariant.mod(mods)!, actualVariant, ref);
-                  // }
-                  // } catch (ex) {
-                  //   Fimber.w(
-                  //       "Failed to activate mod ${installed.modInfo.smolId} after updating: $ex");
-                  // }
+                // if (actualVariant != null &&
+                //     actualVariant.mod(mods)?.isEnabledInGame == true) {
+                //   changeActiveModVariant(
+                //       actualVariant.mod(mods)!, actualVariant, ref);
+                // }
+                // } catch (ex) {
+                //   Fimber.w(
+                //       "Failed to activate mod ${installed.modInfo.smolId} after updating: $ex");
+                // }
                 // }
               }
             });

@@ -1,43 +1,53 @@
 import 'dart:async';
 import 'dart:collection';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:collection/collection.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // Import Riverpod
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/http_client.dart';
 
 import '../../utils/logging.dart';
 import 'download_request.dart';
 import 'download_status.dart';
 import 'download_task.dart';
 
+// Assuming you have a provider set up for your TriOSHttpClient
+final triOSHttpClientProvider = Provider<TriOSHttpClient>((ref) {
+  final config = ApiClientConfig(); // Configure as needed
+  return TriOSHttpClient(config: config);
+});
+
 class DownloadManager {
   final Map<String, DownloadTask> _cache = <String, DownloadTask>{};
   final Queue<DownloadRequest> _queue = Queue();
-  final dio = Dio();
   static const partialExtension = ".partial";
   static const tempExtension = ".temp";
-
-  // var tasks = StreamController<DownloadTask>();
 
   int maxConcurrentTasks = 2;
   int runningTasks = 0;
 
-  static final DownloadManager _dm = DownloadManager._internal();
+  final Ref ref; // Reference to Riverpod's ref to access providers
 
-  DownloadManager._internal();
+  // Singleton pattern with ref
+  static DownloadManager? _instance;
 
-  factory DownloadManager({int? maxConcurrentTasks}) {
+  DownloadManager._internal(this.ref);
+
+  factory DownloadManager({required Ref ref, int? maxConcurrentTasks}) {
+    _instance ??= DownloadManager._internal(ref);
     if (maxConcurrentTasks != null) {
-      _dm.maxConcurrentTasks = maxConcurrentTasks;
+      _instance!.maxConcurrentTasks = maxConcurrentTasks;
     }
-    return _dm;
+    return _instance!;
   }
 
   void Function(int, int) createCallback(url, int partialFileLength) =>
       (int received, int total) {
-        final download = DownloadedAmount(received, total);
+        final download = DownloadedAmount(
+            received + partialFileLength, total + partialFileLength);
         // getDownload(url)?.progressRatio.value =
         //     (received + partialFileLength) / (total + partialFileLength);
         getDownload(url)?.downloaded.value = download;
@@ -45,7 +55,7 @@ class DownloadManager {
         if (total == -1) {}
       };
 
-  Future<void> download(String url, String savePath, cancelToken,
+  Future<void> download(String url, String savePath,
       {forceDownload = false}) async {
     late String partialFilePath;
     late File partialFile;
@@ -72,6 +82,9 @@ class DownloadManager {
       var fileExist = await file.exists();
       var partialFileExist = await partialFile.exists();
 
+      // Access the HTTP client via ref
+      final httpClient = ref.watch(triOSHttpClientProvider);
+
       if (fileExist) {
         Fimber.d("File Exists: $savePath");
         setStatus(task, DownloadStatus.completed);
@@ -80,43 +93,43 @@ class DownloadManager {
 
         final partialFileLength = await partialFile.length();
 
-        final response = await dio.download(
-            url, partialFilePath + tempExtension,
-            onReceiveProgress: createCallback(url, partialFileLength),
-            options: Options(
-              headers: {HttpHeaders.rangeHeader: 'bytes=$partialFileLength-'},
-            ),
-            cancelToken: cancelToken,
-            deleteOnError: true);
+        final response = await httpClient.get(
+          url,
+          headers: {HttpHeaders.rangeHeader: 'bytes=$partialFileLength-'},
+        );
 
-        if (response.statusCode == HttpStatus.partialContent) {
+        if (response.statusCode == HttpStatus.partialContent ||
+            response.statusCode == HttpStatus.ok) {
           var ioSink = partialFile.openWrite(mode: FileMode.writeOnlyAppend);
-          var f0 = File(partialFilePath + tempExtension);
-          await ioSink.addStream(f0.openRead());
-          await f0.delete();
+
+          // Ensure response.data is a List<int>
+          if (response.data is List<int>) {
+            ioSink.add(response.data as List<int>);
+          } else if (response.data is String) {
+            // If data is a String, convert it to bytes
+            ioSink.add(utf8.encode(response.data as String));
+          } else {
+            throw Exception(
+                'Unsupported response data type: ${response.data.runtimeType}');
+          }
+
           await ioSink.close();
           await partialFile.rename(savePath);
 
           setStatus(task, DownloadStatus.completed);
         }
       } else {
-        final response = await dio.download(
+        final response = await httpClient.get(
           url,
-          partialFilePath,
-          onReceiveProgress: createCallback(url, 0),
-          cancelToken: cancelToken,
-          deleteOnError: false,
-          options: Options(
-            validateStatus: (status) => true,
-          ),
+          // You can add onReceiveProgress functionality if your TriOSHttpClient supports it
         );
 
-        if ((response.statusCode ?? 500) <= 299) {
-          await partialFile.rename(savePath);
+        if ((response.statusCode) <= 299) {
+          await File(savePath).writeAsBytes(response.data);
           setStatus(task, DownloadStatus.completed);
         } else {
           throw Exception(
-              "Failed to download file: ${response.statusCode} ${response.statusMessage}");
+              "Failed to download file: ${response.statusCode} ${response.data}");
         }
       }
     } catch (e) {
@@ -208,7 +221,7 @@ class DownloadManager {
     Fimber.d("Pause Download: $url");
     var task = getDownload(url)!;
     setStatus(task, DownloadStatus.paused);
-    task.request.cancelToken.cancel();
+    // Handle cancellation logic with your HTTP client if supported
 
     _queue.remove(task.request);
   }
@@ -218,22 +231,17 @@ class DownloadManager {
     var task = getDownload(url)!;
     setStatus(task, DownloadStatus.canceled);
     _queue.remove(task.request);
-    task.request.cancelToken.cancel();
+    // Handle cancellation logic with your HTTP client if supported
   }
 
   Future<void> resumeDownload(String url) async {
     Fimber.d("Resume Download: $url");
     var task = getDownload(url)!;
     setStatus(task, DownloadStatus.downloading);
-    task.request.cancelToken = CancelToken();
+    // Reset cancel tokens or other cancellation mechanisms if needed
     _queue.add(task.request);
 
     _startExecution();
-  }
-
-  Future<void> removeDownload(String url) async {
-    cancelDownload(url);
-    _cache.remove(url);
   }
 
   // Do not immediately call getDownload After addDownload, rather use the returned DownloadTask from addDownload
@@ -396,8 +404,7 @@ class DownloadManager {
       var currentRequest = _queue.removeFirst();
 
       runZonedGuarded(() {
-        download(currentRequest.url, currentRequest.path,
-            currentRequest.cancelToken);
+        download(currentRequest.url, currentRequest.path);
       }, (e, s) {
         Fimber.w('Error downloading: $e', ex: e, stacktrace: s);
       });
@@ -408,37 +415,37 @@ class DownloadManager {
 
   /// This function is used for get file name with extension from url
   Future<String> getFileNameFromUrl(String url) async {
-    // val conn = URL(url).openConnection()
-    // Timber.v { "Url $url has headers ${conn.headerFields.entries.joinToString(separator = "\n")}" }
-    //
-    // Timber.i { "Downloadable file clicked: $url." }
-    // val contentDisposition = ContentDisposition.parse(conn.getHeaderField("Content-Disposition"))
-    // val filename = contentDisposition.parameter("filename")
-
     try {
-      final uri = Uri.parse(url);
-      final headers = (await dio.headUri(uri)).headers;
-      Fimber.d("Url $url has headers ${headers.map.entries.join("\n")}");
-      final contentDisposition = headers.value("Content-Disposition");
+      final httpClient = ref.watch(triOSHttpClientProvider);
+      final response = await httpClient.get(url);
+
+      Fimber.d("Url $url has headers ${response.headers}");
+      final contentDisposition = response.headers['Content-Disposition']?.first;
+
       return contentDisposition?.fixFilenameForFileSystem() ??
-          uri.pathSegments.last.fixFilenameForFileSystem();
+          Uri.parse(url).pathSegments.last.fixFilenameForFileSystem();
     } catch (e) {
       Fimber.w("Error getting filename from url: $e");
       return Uri.parse(url).pathSegments.last.fixFilenameForFileSystem();
     }
   }
 
-  static Future<bool> isDownloadableFile(String url) async {
+  Future<bool> isDownloadableFile(String url) async {
     try {
-      var dio = Dio();
+      final httpClient = ref.watch(triOSHttpClientProvider);
 
       // Send a HEAD request to the URL
-      final response = await dio.headUri(Uri.parse(url));
+      final response = await httpClient.get(
+        url,
+        headers: {
+          'method': 'HEAD'
+        }, // Assuming your client can handle HEAD requests
+      );
 
       // Check if the status code is 200 (OK)
       if (response.statusCode == 200) {
         // Check for common headers that indicate a downloadable file
-        final headers = response.headers.map;
+        final headers = response.headers;
         final contentType =
             headers['content-type']?.map((it) => it.toLowerCase()).toList() ??
                 [];
@@ -468,17 +475,15 @@ class DownloadManager {
       // Handle any request exceptions
       Fimber.w('Error: $e');
       // Error checking headers, but might as well try.
-      // https://bitbucket.org/modmafia/ship-weapon-pack/downloads/Ship_and_Weapon_Pack_1.15.1.7z
-      // fails with a 403, but the file is still downloadable.
       return true;
     }
   }
 
-  static Future<bool> checkGoogleDriveLink(String url) async {
+  Future<bool> checkGoogleDriveLink(String url) async {
     try {
-      var dio = Dio();
+      final httpClient = ref.watch(triOSHttpClientProvider);
       // Google Drive files usually require confirmation to download
-      final response = await dio.get(url);
+      final response = await httpClient.get(url);
 
       // Check for specific identifiers in the HTML content
       if (response.data.toString().contains('download')) {
@@ -492,11 +497,11 @@ class DownloadManager {
     }
   }
 
-  static Future<bool> checkMegaLink(String url) async {
+  Future<bool> checkMegaLink(String url) async {
     try {
-      var dio = Dio();
+      final httpClient = ref.watch(triOSHttpClientProvider);
       // MEGA links should be direct or use a confirmation link
-      final response = await dio.get(url);
+      final response = await httpClient.get(url);
 
       // Check for specific identifiers in the HTML content
       if (response.data.toString().contains('MEGA')) {

@@ -2,36 +2,22 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:collection/collection.dart';
-import 'package:dio/dio.dart';
-import 'package:dio/io.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mutex/mutex.dart';
 import 'package:path/path.dart' as p;
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/http_client.dart';
 import 'package:trios/utils/logging.dart';
 
 import '../models/mod_variant.dart';
 import '../models/version_checker_info.dart';
 import '../trios/app_state.dart';
+import '../trios/providers.dart';
 import '../trios/settings/config_manager.dart';
 import 'mod_manager_logic.dart';
 
 class VersionCheckerNotifier
     extends AsyncNotifier<Map<String, RemoteVersionCheckResult>> {
-  Dio dioHttpClient = Dio(BaseOptions(
-    receiveTimeout: const Duration(seconds: 5),
-    sendTimeout: const Duration(seconds: 5),
-  )).let((dio) {
-    // allow self-signed certificate
-    (dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
-      final client = HttpClient();
-      client.badCertificateCallback =
-          (X509Certificate cert, String host, int port) => true;
-      return client;
-    };
-    return dio;
-  });
-
   @override
   Map<String, RemoteVersionCheckResult> build() {
     refresh(skipCache: false);
@@ -66,6 +52,7 @@ class VersionCheckerNotifier
   // Executes async, updates state every time a Version Check http request is completed.
   Future<void> refresh({required bool skipCache}) async {
     final skippingCache = AppState.skipCacheOnNextVersionCheck || skipCache;
+    final httpClient = ref.watch(triOSHttpClient);
 
     if (skippingCache) {
       await cacheLock.protect(() async {
@@ -102,11 +89,7 @@ class VersionCheckerNotifier
         if (skipCache ||
             currentTime.difference(lastCheck) > versionCheckCooldown) {
           // If enough time has passed since the last check (or we're ignoring the cache), check again.
-          return (
-            mod,
-            checkRemoteVersion(mod, dioHttpClient),
-            wasCached: false
-          );
+          return (mod, checkRemoteVersion(mod, httpClient), wasCached: false);
         } else {
           // Otherwise, return the cached result.
           return (
@@ -116,7 +99,7 @@ class VersionCheckerNotifier
           );
         }
       } else {
-        return (mod, checkRemoteVersion(mod, dioHttpClient), wasCached: false);
+        return (mod, checkRemoteVersion(mod, httpClient), wasCached: false);
       }
     }).toList();
 
@@ -233,7 +216,7 @@ class RemoteVersionCheckResult {
 
 Future<RemoteVersionCheckResult> checkRemoteVersion(
   ModVariant modVariant,
-  Dio dioHttpClient,
+  TriOSHttpClient httpClient,
 ) async {
   var remoteVersionUrl = modVariant.versionCheckerInfo?.masterVersionFile;
   if (remoteVersionUrl == null) {
@@ -243,14 +226,14 @@ Future<RemoteVersionCheckResult> checkRemoteVersion(
   final fixedUrl = fixUrl(remoteVersionUrl);
 
   try {
-    final response = await dioHttpClient
-        .get(
-          fixedUrl,
-          options: Options(headers: {
-            'Content-Type': 'application/json',
-          }),
-        )
-        .timeout(const Duration(seconds: 5));
+    final response = await httpClient.get(
+      fixedUrl,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      allowSelfSignedCertificates: true,
+    );
+    todo this doesn't work for all websites like dropbox
     final String body = response.data;
     if (response.statusCode == 200) {
       return RemoteVersionCheckResult(
@@ -263,7 +246,7 @@ Future<RemoteVersionCheckResult> checkRemoteVersion(
           "Failed to fetch remote version info for ${modVariant.modInfo.id}: ${response.statusCode} - $body");
     }
   } catch (e, st) {
-    Fimber.d(
+    Fimber.e(
         "Error fetching remote version info for ${modVariant.modInfo.id}: $e\n$st");
     return RemoteVersionCheckResult(
         modVariant.smolId, null, e, remoteVersionUrl);

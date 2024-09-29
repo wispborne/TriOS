@@ -275,14 +275,12 @@ class _AppShellState extends ConsumerState<AppShell>
                     ),
                     TabButton(
                       text: "Profiles",
-                      icon: Tooltip(
+                      icon: const Tooltip(
                         message: "Mod Profiles (unfinished)",
-                        child: Transform.rotate(
-                            angle: -0.7,
-                            child: const SvgImageIcon(
-                              "assets/images/icon-onslaught.svg",
-                              height: 23,
-                            )),
+                        child: SvgImageIcon(
+                          "assets/images/icon-view-carousel.svg",
+                          height: 23,
+                        ),
                       ),
                       isSelected: _currentPage == TriOSTools.modProfiles,
                       onPressed: () => _changeTab(TriOSTools.modProfiles),

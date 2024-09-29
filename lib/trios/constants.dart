@@ -5,7 +5,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:trios/utils/extensions.dart';
 
 class Constants {
-  static const version = "0.2.8-dev01";
+  static const version = "0.2.8-dev03";
 
   static const appName = "TriOS";
   static const appTitle = "$appName v$version";
@@ -25,7 +25,7 @@ class Constants {
     "where is omega?",
     "at com.fs.starfarer.oOOOOOOO",
     "SMOL 2",
-    "Interesting mod choices...",
+    "Interesting mods...",
     "Burn bright",
   ].random();
 

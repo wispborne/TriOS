@@ -224,9 +224,8 @@ class _Smol3State extends ConsumerState<Smol3>
                                 ref: ref),
                           ),
                         ),
-                        Disable(
-                          isEnabled: kDebugMode,
-                          child: Row(
+                        if (kDebugMode)
+                          Row(
                             children: [
                               const Spacer(),
                               const Padding(
@@ -236,8 +235,9 @@ class _Smol3State extends ConsumerState<Smol3>
                               SizedBox(
                                 width: 175,
                                 child: Builder(builder: (context) {
-                                  final profiles =
-                                      ref.watch(modProfilesProvider).valueOrNull;
+                                  final profiles = ref
+                                      .watch(modProfilesProvider)
+                                      .valueOrNull;
                                   final activeProfileId = ref.watch(appSettings
                                       .select((s) => s.activeModProfileId));
                                   return DropdownButton(
@@ -257,8 +257,10 @@ class _Smol3State extends ConsumerState<Smol3>
                                       onChanged: (value) {
                                         if (value is ModProfile) {
                                           ref
-                                              .read(modProfilesProvider.notifier)
-                                              .showActivateDialog(value, context);
+                                              .read(
+                                                  modProfilesProvider.notifier)
+                                              .showActivateDialog(
+                                                  value, context);
                                         }
                                       });
                                 }),
@@ -266,8 +268,7 @@ class _Smol3State extends ConsumerState<Smol3>
                               CopyModListButtonLarge(
                                   mods: mods, enabledMods: enabledMods)
                             ],
-                          ),
-                        )
+                          )
                       ],
                     ),
                   )),

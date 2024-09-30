@@ -233,8 +233,14 @@ Future<RemoteVersionCheckResult> checkRemoteVersion(
       },
       allowSelfSignedCertificates: true,
     );
-    todo this doesn't work for all websites like dropbox
-    final String body = response.data;
+
+    var data = response.data;
+
+    if (data is List<int>) {
+      data = String.fromCharCodes(data);
+    }
+
+    final String body = data;
     if (response.statusCode == 200) {
       return RemoteVersionCheckResult(
           modVariant.smolId,

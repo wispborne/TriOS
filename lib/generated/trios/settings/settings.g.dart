@@ -45,6 +45,8 @@ _$SettingsImpl _$$SettingsImplFromJson(Map<String, dynamic> json) =>
           (json['secondsBetweenModFolderChecks'] as num?)?.toInt() ?? 15,
       toastDurationSeconds:
           (json['toastDurationSeconds'] as num?)?.toInt() ?? 7,
+      maxHttpRequestsAtOnce:
+          (json['maxHttpRequestsAtOnce'] as num?)?.toInt() ?? 10,
       folderNamingSetting: $enumDecodeNullable(
               _$FolderNamingSettingEnumMap, json['folderNamingSetting']) ??
           FolderNamingSetting.doNotChangeNameForHighestVersion,
@@ -84,6 +86,7 @@ Map<String, dynamic> _$$SettingsImplToJson(_$SettingsImpl instance) =>
       'shouldAutoUpdateOnLaunch': instance.shouldAutoUpdateOnLaunch,
       'secondsBetweenModFolderChecks': instance.secondsBetweenModFolderChecks,
       'toastDurationSeconds': instance.toastDurationSeconds,
+      'maxHttpRequestsAtOnce': instance.maxHttpRequestsAtOnce,
       'folderNamingSetting':
           _$FolderNamingSettingEnumMap[instance.folderNamingSetting]!,
       'keepLastNVersions': instance.keepLastNVersions,

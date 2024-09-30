@@ -476,6 +476,44 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                           ),
                         ),
                       ),
+                      Padding(
+                        padding: const EdgeInsets.only(
+                            left: leftTextOptionPadding, top: 16),
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 400),
+                          child: Tooltip(
+                            message: "Affects how quickly Version Checker searches. If version checker is showing timeout errors, reduce this number.",
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                    "Max HTTP requests at once: ${ref.watch(appSettings.select((value) => value.maxHttpRequestsAtOnce))}",
+                                    style: theme.textTheme.bodyLarge),
+                                Slider(
+                                  value: ref
+                                      .watch(appSettings.select(
+                                          (value) => value.maxHttpRequestsAtOnce))
+                                      .toDouble()
+                                      .clamp(1, 100),
+                                  min: 1,
+                                  max: 100,
+                                  divisions: 10,
+                                  label:
+                                      "${ref.watch(appSettings.select((value) => value.maxHttpRequestsAtOnce))}",
+                                  onChanged: (value) {
+                                    ref.read(appSettings.notifier).update(
+                                        (state) => state.copyWith(
+                                            maxHttpRequestsAtOnce:
+                                                value.toInt()));
+                                  },
+                                  inactiveColor: theme.colorScheme.onSurface
+                                      .withOpacity(0.5),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                       // Checkbox for enabling crash reporting
                       Padding(
                         padding: const EdgeInsets.only(top: 16),

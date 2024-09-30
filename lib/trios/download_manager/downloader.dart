@@ -6,19 +6,13 @@ import 'dart:io';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // Import Riverpod
+import 'package:trios/trios/providers.dart';
 import 'package:trios/utils/extensions.dart';
-import 'package:trios/utils/http_client.dart';
 
 import '../../utils/logging.dart';
 import 'download_request.dart';
 import 'download_status.dart';
 import 'download_task.dart';
-
-// Assuming you have a provider set up for your TriOSHttpClient
-final triOSHttpClientProvider = Provider<TriOSHttpClient>((ref) {
-  final config = ApiClientConfig(); // Configure as needed
-  return TriOSHttpClient(config: config);
-});
 
 class DownloadManager {
   final Map<String, DownloadTask> _cache = <String, DownloadTask>{};
@@ -83,7 +77,7 @@ class DownloadManager {
       var partialFileExist = await partialFile.exists();
 
       // Access the HTTP client via ref
-      final httpClient = ref.watch(triOSHttpClientProvider);
+      final httpClient = ref.watch(triOSHttpClient);
 
       if (fileExist) {
         Fimber.d("File Exists: $savePath");
@@ -416,7 +410,7 @@ class DownloadManager {
   /// This function is used for get file name with extension from url
   Future<String> getFileNameFromUrl(String url) async {
     try {
-      final httpClient = ref.watch(triOSHttpClientProvider);
+      final httpClient = ref.watch(triOSHttpClient);
       final response = await httpClient.get(url);
 
       Fimber.d("Url $url has headers ${response.headers}");
@@ -432,7 +426,7 @@ class DownloadManager {
 
   Future<bool> isDownloadableFile(String url) async {
     try {
-      final httpClient = ref.watch(triOSHttpClientProvider);
+      final httpClient = ref.watch(triOSHttpClient);
 
       // Send a HEAD request to the URL
       final response = await httpClient.get(
@@ -481,7 +475,7 @@ class DownloadManager {
 
   Future<bool> checkGoogleDriveLink(String url) async {
     try {
-      final httpClient = ref.watch(triOSHttpClientProvider);
+      final httpClient = ref.watch(triOSHttpClient);
       // Google Drive files usually require confirmation to download
       final response = await httpClient.get(url);
 
@@ -499,7 +493,7 @@ class DownloadManager {
 
   Future<bool> checkMegaLink(String url) async {
     try {
-      final httpClient = ref.watch(triOSHttpClientProvider);
+      final httpClient = ref.watch(triOSHttpClient);
       // MEGA links should be direct or use a confirmation link
       final response = await httpClient.get(url);
 

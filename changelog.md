@@ -5,6 +5,7 @@
   - Timeout when checking for mod updates in some cases (tons of mods, slow PC, spotty internet).
     - TriOS now has a max of 10 API requests active at a time, rather than sending one per mod all at once.
     - Switched to a new HTTP client (wrapper around the native one), so let me know if network calls regress.
+    - New setting to control this added to Settings page.
 
 # 0.2.7
 - Added

@@ -49,6 +49,7 @@ mixin _$Settings {
   bool get shouldAutoUpdateOnLaunch => throw _privateConstructorUsedError;
   int get secondsBetweenModFolderChecks => throw _privateConstructorUsedError;
   int get toastDurationSeconds => throw _privateConstructorUsedError;
+  int get maxHttpRequestsAtOnce => throw _privateConstructorUsedError;
   FolderNamingSetting get folderNamingSetting =>
       throw _privateConstructorUsedError;
   int? get keepLastNVersions => throw _privateConstructorUsedError;
@@ -101,6 +102,7 @@ abstract class $SettingsCopyWith<$Res> {
       bool shouldAutoUpdateOnLaunch,
       int secondsBetweenModFolderChecks,
       int toastDurationSeconds,
+      int maxHttpRequestsAtOnce,
       FolderNamingSetting folderNamingSetting,
       int? keepLastNVersions,
       bool? allowCrashReporting,
@@ -152,6 +154,7 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
     Object? shouldAutoUpdateOnLaunch = null,
     Object? secondsBetweenModFolderChecks = null,
     Object? toastDurationSeconds = null,
+    Object? maxHttpRequestsAtOnce = null,
     Object? folderNamingSetting = null,
     Object? keepLastNVersions = freezed,
     Object? allowCrashReporting = freezed,
@@ -254,6 +257,10 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
           ? _value.toastDurationSeconds
           : toastDurationSeconds // ignore: cast_nullable_to_non_nullable
               as int,
+      maxHttpRequestsAtOnce: null == maxHttpRequestsAtOnce
+          ? _value.maxHttpRequestsAtOnce
+          : maxHttpRequestsAtOnce // ignore: cast_nullable_to_non_nullable
+              as int,
       folderNamingSetting: null == folderNamingSetting
           ? _value.folderNamingSetting
           : folderNamingSetting // ignore: cast_nullable_to_non_nullable
@@ -346,6 +353,7 @@ abstract class _$$SettingsImplCopyWith<$Res>
       bool shouldAutoUpdateOnLaunch,
       int secondsBetweenModFolderChecks,
       int toastDurationSeconds,
+      int maxHttpRequestsAtOnce,
       FolderNamingSetting folderNamingSetting,
       int? keepLastNVersions,
       bool? allowCrashReporting,
@@ -397,6 +405,7 @@ class __$$SettingsImplCopyWithImpl<$Res>
     Object? shouldAutoUpdateOnLaunch = null,
     Object? secondsBetweenModFolderChecks = null,
     Object? toastDurationSeconds = null,
+    Object? maxHttpRequestsAtOnce = null,
     Object? folderNamingSetting = null,
     Object? keepLastNVersions = freezed,
     Object? allowCrashReporting = freezed,
@@ -499,6 +508,10 @@ class __$$SettingsImplCopyWithImpl<$Res>
           ? _value.toastDurationSeconds
           : toastDurationSeconds // ignore: cast_nullable_to_non_nullable
               as int,
+      maxHttpRequestsAtOnce: null == maxHttpRequestsAtOnce
+          ? _value.maxHttpRequestsAtOnce
+          : maxHttpRequestsAtOnce // ignore: cast_nullable_to_non_nullable
+              as int,
       folderNamingSetting: null == folderNamingSetting
           ? _value.folderNamingSetting
           : folderNamingSetting // ignore: cast_nullable_to_non_nullable
@@ -562,6 +575,7 @@ class _$SettingsImpl implements _Settings {
       this.shouldAutoUpdateOnLaunch = false,
       this.secondsBetweenModFolderChecks = 15,
       this.toastDurationSeconds = 7,
+      this.maxHttpRequestsAtOnce = 10,
       this.folderNamingSetting =
           FolderNamingSetting.doNotChangeNameForHighestVersion,
       this.keepLastNVersions,
@@ -638,6 +652,9 @@ class _$SettingsImpl implements _Settings {
   final int toastDurationSeconds;
   @override
   @JsonKey()
+  final int maxHttpRequestsAtOnce;
+  @override
+  @JsonKey()
   final FolderNamingSetting folderNamingSetting;
   @override
   final int? keepLastNVersions;
@@ -663,7 +680,7 @@ class _$SettingsImpl implements _Settings {
 
   @override
   String toString() {
-    return 'Settings(gameDir: $gameDir, gameCoreDir: $gameCoreDir, modsDir: $modsDir, hasCustomModsDir: $hasCustomModsDir, isRulesHotReloadEnabled: $isRulesHotReloadEnabled, windowXPos: $windowXPos, windowYPos: $windowYPos, windowWidth: $windowWidth, windowHeight: $windowHeight, isMaximized: $isMaximized, isMinimized: $isMinimized, defaultTool: $defaultTool, jre23VmparamsFilename: $jre23VmparamsFilename, useJre23: $useJre23, showJre23ConsoleWindow: $showJre23ConsoleWindow, enableDirectLaunch: $enableDirectLaunch, launchSettings: $launchSettings, lastStarsectorVersion: $lastStarsectorVersion, isUpdatesFieldShown: $isUpdatesFieldShown, modsGridState: $modsGridState, shouldAutoUpdateOnLaunch: $shouldAutoUpdateOnLaunch, secondsBetweenModFolderChecks: $secondsBetweenModFolderChecks, toastDurationSeconds: $toastDurationSeconds, folderNamingSetting: $folderNamingSetting, keepLastNVersions: $keepLastNVersions, allowCrashReporting: $allowCrashReporting, updateToPrereleases: $updateToPrereleases, autoEnableAndDisableDependencies: $autoEnableAndDisableDependencies, enableLauncherPrecheck: $enableLauncherPrecheck, userId: $userId, activeModProfileId: $activeModProfileId)';
+    return 'Settings(gameDir: $gameDir, gameCoreDir: $gameCoreDir, modsDir: $modsDir, hasCustomModsDir: $hasCustomModsDir, isRulesHotReloadEnabled: $isRulesHotReloadEnabled, windowXPos: $windowXPos, windowYPos: $windowYPos, windowWidth: $windowWidth, windowHeight: $windowHeight, isMaximized: $isMaximized, isMinimized: $isMinimized, defaultTool: $defaultTool, jre23VmparamsFilename: $jre23VmparamsFilename, useJre23: $useJre23, showJre23ConsoleWindow: $showJre23ConsoleWindow, enableDirectLaunch: $enableDirectLaunch, launchSettings: $launchSettings, lastStarsectorVersion: $lastStarsectorVersion, isUpdatesFieldShown: $isUpdatesFieldShown, modsGridState: $modsGridState, shouldAutoUpdateOnLaunch: $shouldAutoUpdateOnLaunch, secondsBetweenModFolderChecks: $secondsBetweenModFolderChecks, toastDurationSeconds: $toastDurationSeconds, maxHttpRequestsAtOnce: $maxHttpRequestsAtOnce, folderNamingSetting: $folderNamingSetting, keepLastNVersions: $keepLastNVersions, allowCrashReporting: $allowCrashReporting, updateToPrereleases: $updateToPrereleases, autoEnableAndDisableDependencies: $autoEnableAndDisableDependencies, enableLauncherPrecheck: $enableLauncherPrecheck, userId: $userId, activeModProfileId: $activeModProfileId)';
   }
 
   @override
@@ -716,6 +733,8 @@ class _$SettingsImpl implements _Settings {
                     secondsBetweenModFolderChecks) &&
             (identical(other.toastDurationSeconds, toastDurationSeconds) ||
                 other.toastDurationSeconds == toastDurationSeconds) &&
+            (identical(other.maxHttpRequestsAtOnce, maxHttpRequestsAtOnce) ||
+                other.maxHttpRequestsAtOnce == maxHttpRequestsAtOnce) &&
             (identical(other.folderNamingSetting, folderNamingSetting) ||
                 other.folderNamingSetting == folderNamingSetting) &&
             (identical(other.keepLastNVersions, keepLastNVersions) ||
@@ -761,6 +780,7 @@ class _$SettingsImpl implements _Settings {
         shouldAutoUpdateOnLaunch,
         secondsBetweenModFolderChecks,
         toastDurationSeconds,
+        maxHttpRequestsAtOnce,
         folderNamingSetting,
         keepLastNVersions,
         allowCrashReporting,
@@ -812,6 +832,7 @@ abstract class _Settings implements Settings {
       final bool shouldAutoUpdateOnLaunch,
       final int secondsBetweenModFolderChecks,
       final int toastDurationSeconds,
+      final int maxHttpRequestsAtOnce,
       final FolderNamingSetting folderNamingSetting,
       final int? keepLastNVersions,
       final bool? allowCrashReporting,
@@ -875,6 +896,8 @@ abstract class _Settings implements Settings {
   int get secondsBetweenModFolderChecks;
   @override
   int get toastDurationSeconds;
+  @override
+  int get maxHttpRequestsAtOnce;
   @override
   FolderNamingSetting get folderNamingSetting;
   @override

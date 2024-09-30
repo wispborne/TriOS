@@ -22,7 +22,7 @@ All-in-one Starsector toolkit. Very very early development.
 ### rules.csv Autoreloader
 ![rules.csv Autoreloader](readme_resources/rules_reload.png)
 
-## Building
+## Building TriOS
 
 You will need to run the following command in a terminal in the project's root folder (I run it in IntelliJ's terminal).
 
@@ -30,8 +30,8 @@ You will need to run the following command in a terminal in the project's root f
 dart run build_runner watch --delete-conflicting-outputs
 ```
 
-### Building libarchive
-#### Windows
+## Building libarchive
+### Windows
 1. Download latest source: https://github.com/libarchive/libarchive/releases.
 1. Download/install Visual Studio, add C/C++ support module stuff.
 1. Download `vcpkg`. https://vcpkg.io/en/getting-started
@@ -46,7 +46,7 @@ dart run build_runner watch --delete-conflicting-outputs
 1. Run the CMake GUI, set output to `libarchive/build`, hit `Configure`, wait, hit `Generate`, then click `Open Project`.
 1. In VS, pick a Release Configuration and Run. It'll appear in `build/bin`. `MinSizeRel` seems good.
 
-#### MacOS
+### MacOS
 1. Install deps: 
    ```
    brew install autoconf automake libtool pkg-config bzip2 xz lz4 zlib zstd
@@ -71,7 +71,7 @@ dart run build_runner watch --delete-conflicting-outputs
    ```
    The output will be in `$HOME/libarchive-output`.
 
-#### Linux
+### Linux
 1. Install deps:
    ```
    TODO copy/paste here

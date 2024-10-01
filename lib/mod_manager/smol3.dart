@@ -2,7 +2,6 @@ import 'dart:ui';
 
 import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_color/flutter_color.dart';
@@ -26,7 +25,6 @@ import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/search.dart';
 import 'package:trios/widgets/add_new_mods_button.dart';
-import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:trios/widgets/text_with_icon.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -34,6 +32,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../dashboard/mod_dependencies_widget.dart';
 import '../dashboard/version_check_icon.dart';
 import '../models/mod.dart';
+import '../trios/constants.dart';
 import '../trios/download_manager/download_manager.dart';
 import '../widgets/mod_type_icon.dart';
 import '../widgets/moving_tooltip.dart';
@@ -224,7 +223,7 @@ class _Smol3State extends ConsumerState<Smol3>
                                 ref: ref),
                           ),
                         ),
-                        if (kDebugMode)
+                        if (Constants.isModProfilesEnabled)
                           Row(
                             children: [
                               const Spacer(),

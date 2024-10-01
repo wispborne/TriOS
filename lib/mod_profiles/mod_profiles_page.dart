@@ -47,7 +47,7 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
     return Tooltip(
       message: kDebugMode ? "" : "Work in progress",
       child: Disable(
-        isEnabled: kDebugMode,
+        isEnabled: Constants.isModProfilesEnabled,
         child: Row(
           children: [
             Expanded(

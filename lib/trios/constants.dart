@@ -5,7 +5,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:trios/utils/extensions.dart';
 
 class Constants {
-  static const version = "0.2.8-dev03";
+  static const version = "0.3.0-dev01";
 
   static const appName = "TriOS";
   static const appTitle = "$appName v$version";
@@ -69,7 +69,7 @@ class Constants {
   static DateFormat dateTimeFormat =
       DateFormat.yMMMMd(Intl.getCurrentLocale()).add_jm();
   static DateFormat gameDateFormat =
-  DateFormat("'Cycle' y , 'Month' M, 'Day' d");
+      DateFormat("'Cycle' y , 'Month' M, 'Day' d");
 
   static const modAuthorAliases = [
     ["RustyCabbage", "rubi", "ceruleanpancake"],
@@ -103,9 +103,11 @@ class Constants {
     ["Fellout", "felloutwastaken"],
     ["Mr. THG", "thog"],
     ["Derelict_Surveyor", "jdt15"],
-    ["astarat.", "Astarat", "Astarat and PureTilt"],
+    ["constat.", "Astarat", "Astarat and PureTilt"],
     ["Soren", "Søren", "Harmful Mechanic"],
   ];
+
+  static final isModProfilesEnabled = version.contains("dev");
 }
 
 final currentDirectory = Platform.resolvedExecutable.toFile().parent;

@@ -136,45 +136,7 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                           const Spacer(),
                           IconButton(
                               onPressed: () {
-                                // ref.read(saveFileProvider.notifier).readAllSaves(forceRefresh: true);
-                                // show saves in a dialog
-                                showDialog(
-                                    context: context,
-                                    builder: (context) {
-                                      return AlertDialog(
-                                        title: const Text('Saves'),
-                                        content: SizedBox(
-                                          width: 400,
-                                          height: 400,
-                                          child: Builder(builder: (context) {
-                                            ref
-                                                .watch(
-                                                    saveFileProvider.notifier)
-                                                .readAllSaves(
-                                                    forceRefresh: true);
-                                            final saves = ref
-                                                    .watch(saveFileProvider)
-                                                    .valueOrNull ??
-                                                [];
-                                            return ListView.builder(
-                                              itemCount: saves.length,
-                                              itemBuilder: (context, index) {
-                                                final save = saves[index];
-                                                return ListTile(
-                                                  title:
-                                                      Text(save.characterName),
-                                                  subtitle: Text(Constants
-                                                      .dateTimeFormat
-                                                      .format(save.saveDate
-                                                              ?.toLocal() ??
-                                                          DateTime.now())),
-                                                );
-                                              },
-                                            );
-                                          }),
-                                        ),
-                                      );
-                                    });
+                                ref.invalidate(saveFileProvider);
                               },
                               icon: const Icon(Icons.refresh)),
                         ],
@@ -452,11 +414,20 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                       style: theme.textTheme.labelSmall,
                       child: Column(
                         children: [
-                          if (isSaveGame)
+                          if (save != null)
                             Row(
                               children: [
+                                if (save.gameTimestamp != null)
+                                  Text(
+                                    "Level ${save.characterLevel}",
+                                    style: theme.textTheme.labelSmall,
+                                  ),
+                                Text("  •  ",
+                                    style: theme.textTheme.labelSmall),
                                 Text(
-                                  "Level ${save!.characterLevel}",
+                                  Constants.gameDateFormat.format(
+                                      DateTime.fromMicrosecondsSinceEpoch(
+                                          save.gameTimestamp! * 1000)),
                                   style: theme.textTheme.labelSmall,
                                 ),
                               ],
@@ -467,7 +438,7 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                                 '${enabledModVariants.length} mods',
                               ),
                               // bullet
-                              Text(" • ", style: theme.textTheme.labelSmall),
+                              Text("  •  ", style: theme.textTheme.labelSmall),
                               Tooltip(
                                 message:
                                     'Created: ${Constants.dateTimeFormat.format(dateCreated?.toLocal() ?? DateTime.now())}'
@@ -564,7 +535,13 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                                   Text(isActiveProfile ? 'Enabled' : 'Enable')),
                         if (isSaveGame)
                           OutlinedButton(
-                              onPressed: () {}, child: Text("Create Profile")),
+                              onPressed: () {
+                                ref
+                                    .read(modProfilesProvider.notifier)
+                                    .createModProfile(save!.characterName,
+                                        enabledModVariants: enabledModVariants);
+                              },
+                              child: const Text("Create Profile")),
                       ],
                     ),
                     // expansionAnimationStyle:

@@ -9,13 +9,11 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:xml/xml.dart';
 
-// Save file provider using AsyncNotifier
 final saveFileProvider =
     AsyncNotifierProvider<SaveFileNotifier, List<SaveFile>>(
   SaveFileNotifier.new,
 );
 
-// SaveFileNotifier class to manage saves asynchronously
 class SaveFileNotifier extends AsyncNotifier<List<SaveFile>> {
   final String descriptorFileName = "descriptor.xml";
   final List<String> datePatterns = [
@@ -29,7 +27,7 @@ class SaveFileNotifier extends AsyncNotifier<List<SaveFile>> {
     return [];
   }
 
-  Future<List<SaveFile>> readAllSaves({bool forceRefresh = false}) async {
+  Future<List<SaveFile>> readAllSaves() async {
     final gameFolder = ref.watch(AppState.gameFolder).valueOrNull;
     if (gameFolder == null) {
       Fimber.w("Game folder not set");
@@ -38,10 +36,10 @@ class SaveFileNotifier extends AsyncNotifier<List<SaveFile>> {
 
     final saveDir = Directory("${gameFolder.path}/saves");
 
-    if (!forceRefresh && state.valueOrNull?.isNotEmpty == true) {
-      Fimber.i("Saves already loaded, not refreshing.");
-      return state.value!;
-    }
+    // if (state.valueOrNull?.isNotEmpty == true) {
+    //   Fimber.i("Saves already loaded, not refreshing.");
+    //   return state.value!;
+    // }
 
     if (!await saveDir.exists()) {
       Fimber.w("Save folder does not exist");
@@ -72,8 +70,6 @@ class SaveFileNotifier extends AsyncNotifier<List<SaveFile>> {
     final document = XmlDocument.parse(contents);
     var rootElement = document.getElement('SaveGameData');
 
-    // Reading basic info
-
     final portraitPath =
         rootElement?.getElement('portraitName')?.innerText ?? "";
     final characterName =
@@ -88,10 +84,27 @@ class SaveFileNotifier extends AsyncNotifier<List<SaveFile>> {
     DateTime saveDate = DateTime.now();
     try {
       saveDate = DateFormat("yyyy-MM-dd HH:mm:ss.SS")
-          .parse(saveDateString.replaceAll(' UTC', ''));
+          // Save file dates are always in UTC
+          .parse(saveDateString.replaceAll(' UTC', ''), true);
     } catch (e) {
       Fimber.e('Error parsing save date: $e');
     }
+
+    final compressed =
+        rootElement?.getElement('compressed')?.innerText == 'true';
+    final isIronMode =
+        rootElement?.getElement('isIronMode')?.innerText == 'true';
+    final difficulty =
+        rootElement?.getElement('difficulty')?.innerText ?? "normal";
+
+    final gameDateElement = rootElement?.getElement('gameDate');
+    final secondsPerDay = double.tryParse(
+            gameDateElement?.getElement('secondsPerDay')?.innerText ??
+                '10.0') ??
+        10.0;
+    final timestamp = int.tryParse(
+            gameDateElement?.getElement('timestamp')?.innerText ?? '0') ??
+        0;
 
     // Reading mods
     final modsElement = rootElement?.getElement('allModsEverEnabled');
@@ -120,7 +133,6 @@ class SaveFileNotifier extends AsyncNotifier<List<SaveFile>> {
       });
     }
 
-    // Reading enabled mods
     final enabledModsElement = rootElement?.getElement('enabledMods');
     List<SaveFileMod> enabledMods = [];
 
@@ -144,6 +156,11 @@ class SaveFileNotifier extends AsyncNotifier<List<SaveFile>> {
       saveFileVersion: saveFileVersion,
       saveDate: saveDate,
       mods: enabledMods,
+      compressed: compressed,
+      isIronMode: isIronMode,
+      difficulty: difficulty,
+      gameTimestamp: timestamp,
+      secondsPerDay: secondsPerDay,
     );
   }
 }
@@ -156,6 +173,11 @@ class SaveFile {
   final String? saveFileVersion;
   final DateTime? saveDate;
   final List<SaveFileMod> mods;
+  final bool? compressed;
+  final bool? isIronMode;
+  final String? difficulty;
+  final int? gameTimestamp;
+  final double? secondsPerDay;
 
   SaveFile({
     required this.id,
@@ -165,6 +187,11 @@ class SaveFile {
     this.saveFileVersion,
     required this.saveDate,
     required this.mods,
+    required this.compressed,
+    required this.isIronMode,
+    required this.difficulty,
+    required this.gameTimestamp,
+    required this.secondsPerDay,
   });
 }
 

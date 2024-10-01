@@ -1,4 +1,4 @@
-# 0.2.8
+# 0.3.0
 - Added
   - Tooltip when launching game showing version, Java version, and RAM assigned.
 - Fixed

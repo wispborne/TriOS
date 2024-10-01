@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -8,8 +9,10 @@ import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:trios/mod_manager/audit_page.dart';
 import 'package:trios/mod_profiles/save_reader.dart';
 import 'package:trios/themes/theme_manager.dart';
+import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/settings.dart';
+import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 
@@ -290,6 +293,7 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
   final TextEditingController _nameController = TextEditingController();
   String? _editingProfileId;
   double axisSpacingForHeightHack = 8;
+  bool _isPortraitExpanded = false;
 
   @override
   Widget build(BuildContext context) {
@@ -301,7 +305,7 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
 
     final profile = widget.profile;
     final save = widget.save;
-    final isEditing = profile?.id == _editingProfileId;
+    final isEditing = !isSaveGame && profile?.id == _editingProfileId;
     final activeProfileId =
         ref.watch(appSettings.select((s) => s.activeModProfileId));
     final isActiveProfile = profile?.id == activeProfileId;
@@ -313,6 +317,13 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                 modName: mod.name,
                 smolVariantId: createSmolId(mod.id, mod.version)))
             .toList();
+
+    final modRootFolders = [
+      ref.watch(appSettings.select((s) => s.gameCoreDir)),
+      ...ref
+          .watch(AppState.mods)
+          .map((mod) => mod.findFirstEnabledOrHighestVersion?.modFolder)
+    ].whereNotNull().toList();
 
     var dateCreated = profile?.dateCreated ?? save!.saveDate;
     return ConstrainedBox(
@@ -330,33 +341,34 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
           ),
           child: Stack(
             children: [
-              Positioned(
-                right: 0,
-                top: 0,
-                child: isEditing
-                    ? IconButton(
-                        icon: const Icon(Icons.check),
-                        onPressed: () {
-                          ref
-                              .read(modProfilesProvider.notifier)
-                              .updateModProfile(
-                                profile!.copyWith(name: _nameController.text),
-                              );
-                          setState(() {
-                            _editingProfileId = null;
-                          });
-                        },
-                      )
-                    : IconButton(
-                        icon: const Icon(Icons.edit),
-                        onPressed: () {
-                          setState(() {
-                            _editingProfileId = profile!.id;
-                            _nameController.text = profile.name;
-                          });
-                        },
-                      ),
-              ),
+              if (!isSaveGame)
+                Positioned(
+                  right: 0,
+                  top: 0,
+                  child: isEditing
+                      ? IconButton(
+                          icon: const Icon(Icons.check),
+                          onPressed: () {
+                            ref
+                                .read(modProfilesProvider.notifier)
+                                .updateModProfile(
+                                  profile!.copyWith(name: _nameController.text),
+                                );
+                            setState(() {
+                              _editingProfileId = null;
+                            });
+                          },
+                        )
+                      : IconButton(
+                          icon: const Icon(Icons.edit),
+                          onPressed: () {
+                            setState(() {
+                              _editingProfileId = profile!.id;
+                              _nameController.text = profile.name;
+                            });
+                          },
+                        ),
+                ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -372,6 +384,44 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                           const SizedBox(
                             width: 8,
                           ),
+                          if (save?.portraitPath != null)
+                            Builder(
+                              builder: (context) {
+                                var portraitImage = modRootFolders
+                                    .map((dir) => dir
+                                        .resolve(save!.portraitPath!)
+                                        .toFile())
+                                    .firstWhereOrNull(
+                                        (file) => file.existsSync());
+
+                                if (portraitImage == null) {
+                                  return const SizedBox.shrink();
+                                }
+
+                                return GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      _isPortraitExpanded =
+                                          !_isPortraitExpanded; // Toggle between expanded and thumbnail
+                                    });
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(right: 8),
+                                    child: MouseRegion(
+                                      cursor: SystemMouseCursors.click,
+                                      child: Image.file(
+                                        portraitImage,
+                                        width: _isPortraitExpanded ? null : 36,
+                                        // Toggle width: full size or thumbnail
+                                        height: _isPortraitExpanded
+                                            ? null
+                                            : 36, // Optional: toggle height as well
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
                           Expanded(
                             child: Builder(builder: (context) {
                               return isEditing
@@ -406,11 +456,9 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                             Row(
                               children: [
                                 Text(
-                                  save!.characterName,
+                                  "Level ${save!.characterLevel}",
                                   style: theme.textTheme.labelSmall,
                                 ),
-                                // bullet
-                                Text(" • ", style: theme.textTheme.labelSmall),
                               ],
                             ),
                           Row(

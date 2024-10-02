@@ -28,6 +28,7 @@ class _RamChangerState extends ConsumerState<RamChanger> {
       return const SizedBox();
     }
     var vmparamsFile = getVmparamsFile(gamePath);
+
     final vmParamsWritable =
         ref.watch(AppState.isVmParamsFileWritable).valueOrNull;
     var isJre23VmparamsWritable =
@@ -35,9 +36,11 @@ class _RamChangerState extends ConsumerState<RamChanger> {
     final jre23Vmparams = getJre23VmparamsFile(gamePath);
 
     var ramChoices = [1.5, 2, 3, 4, 6, 8, 10, 11, 16];
-    return (vmParamsWritable == false || isJre23VmparamsWritable == false)
+    return (vmParamsWritable == false ||
+            (jre23Vmparams.existsSync() && isJre23VmparamsWritable == false))
         ? Text(
-            "Cannot write to vmparams file:\n${vmParamsWritable == false ? vmparamsFile.path : jre23Vmparams.path}.\n\nTry running ${Constants.appName} as an administrator.")
+            "Cannot write to vmparams file:\n${vmParamsWritable == false ? vmparamsFile.path : jre23Vmparams.path}."
+            "\n\nTry running ${Constants.appName} as an administrator.")
         : GridView.builder(
             shrinkWrap: true,
             itemCount: ramChoices.length,

@@ -67,7 +67,7 @@ class Constants {
   /// Warning: DON'T ADD ANYTHING TO THIS DIRECTLY. It will mutate the shared instance.
   /// Creating a new one each time is expensive, and hardcoding the pattern will hardcode the locale.
   static DateFormat dateTimeFormat =
-      DateFormat.yMMMMd(Intl.getCurrentLocale()).add_jm();
+      DateFormat.yMd(Intl.getCurrentLocale()).add_jm();
   static DateFormat gameDateFormat =
       DateFormat("'Cycle' y , 'Month' M, 'Day' d");
 

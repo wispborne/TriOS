@@ -34,6 +34,8 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
   bool get wantKeepAlive => true;
 
   final actualAxisSpacing = 8;
+
+  // Make a minute change to the height to force a row remeasure when the expansion tile is opened/closed.
   double axisSpacingForHeightHack = 8;
 
   @override
@@ -71,27 +73,33 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                   ),
                   Expanded(
                     child: modProfilesAsync.when(
-                      data: (modProfiles) {
-                        return AlignedGridView.count(
+                      data: (modProfilesObj) {
+                        final modProfiles = modProfilesObj.modProfiles
+                            .sortedByButBetter(
+                                (profile) => profile.dateModified)
+                            .reversed
+                            .toList();
+                        return AlignedGridView.extent(
                           crossAxisSpacing: axisSpacingForHeightHack,
                           mainAxisSpacing: 10,
-                          crossAxisCount: 2,
-                          itemCount: modProfiles.modProfiles.length + 1,
+                          maxCrossAxisExtent: 560,
+                          // crossAxisCount: 2,
+                          itemCount: modProfiles.length + 1,
                           itemBuilder: (context, index) {
                             if (index == 0) {
                               return ConstrainedBox(
                                   constraints: const BoxConstraints(
-                                      minHeight: minHeight),
+                                    minHeight: minHeight,
+                                  ),
                                   child: IntrinsicHeight(
                                       child: _buildNewProfileCard()));
                             } else {
-                              final profile =
-                                  modProfiles.modProfiles[index - 1];
+                              final profile = modProfiles[index - 1];
 
                               return ModProfileCard(
                                 minHeight: minHeight,
                                 profile: profile,
-                                modProfiles: modProfiles.modProfiles,
+                                modProfiles: modProfiles,
                                 save: null,
                                 saves: null,
                                 cardPadding: cardPadding,
@@ -145,6 +153,12 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                     Expanded(
                       child: saveGamesAsync.when(
                         data: (saveGames) {
+                          saveGames = saveGames
+                              .sortedByButBetter((save) =>
+                                  save.saveDate ??
+                                  DateTime.fromMicrosecondsSinceEpoch(0))
+                              .reversed
+                              .toList();
                           return AlignedGridView.count(
                             crossAxisSpacing: axisSpacingForHeightHack,
                             mainAxisSpacing: 10,
@@ -277,6 +291,7 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
             .map((mod) => ShallowModVariant(
                 modId: mod.id,
                 modName: mod.name,
+                version: mod.version,
                 smolVariantId: createSmolId(mod.id, mod.version)))
             .toList();
 

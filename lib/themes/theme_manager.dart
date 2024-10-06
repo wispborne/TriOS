@@ -216,6 +216,7 @@ class ThemeManager with ChangeNotifier {
         onSurface: swatch.onSurface,
         onSurfaceVariant: onSurfaceVariant,
         onPrimary: swatch.onPrimary,
+        onSecondary: swatch.onSecondary,
         surface: swatch.surface,
         error: ThemeManager.vanillaErrorColor,
         errorContainer: ThemeManager.vanillaErrorColor.lighter(5),
@@ -370,6 +371,16 @@ extension PaletteGeneratorExt on PaletteGenerator? {
       ),
       progressIndicatorTheme: ProgressIndicatorThemeData(
           color: onSurfaceColor, linearTrackColor: backgroundColor),
+    );
+  }
+}
+
+extension ColorSchemeExt on ThemeData {
+  lowContrastCardTheme() {
+    return copyWith(
+      cardTheme: cardTheme.copyWith(
+        color: colorScheme.surface.lighter(8),
+      ),
     );
   }
 }

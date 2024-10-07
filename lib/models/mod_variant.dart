@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
-import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:dart_mappable/dart_mappable.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/models/version.dart';
@@ -12,22 +12,23 @@ import 'package:trios/utils/logging.dart';
 
 import 'mod_info.dart';
 
-part '../generated/models/mod_variant.freezed.dart';
-// part '../generated/models/mod_variant.g.dart';
+part 'mod_variant.mapper.dart';
 
 typedef SmolId = String;
 
-@freezed
-class ModVariant with _$ModVariant implements Comparable<ModVariant> {
-  const ModVariant._();
+@MappableClass()
+class ModVariant implements Comparable<ModVariant> {
+  final ModInfo modInfo;
+  final VersionCheckerInfo? versionCheckerInfo;
+  final Directory modFolder;
+  final bool hasNonBrickedModInfo;
 
-  const factory ModVariant({
-    required ModInfo modInfo,
-    required VersionCheckerInfo? versionCheckerInfo,
-    required Directory modFolder,
-    required bool hasNonBrickedModInfo,
-    // required File? backupFile,
-  }) = _ModVariant;
+  ModVariant({
+    required this.modInfo,
+    required this.versionCheckerInfo,
+    required this.modFolder,
+    required this.hasNonBrickedModInfo,
+  });
 
   String get smolId => createSmolId(modInfo.id, modInfo.version);
 
@@ -72,8 +73,6 @@ class ModVariant with _$ModVariant implements Comparable<ModVariant> {
       return path;
     });
   }
-
-  // String get generatedVariantFolderName => generateUniqueVariantFolderName(modInfo);
 
   static String generateUniqueVariantFolderName(ModInfo modInfo) =>
       "${modInfo.name?.fixFilenameForFileSystem().take(100)}-${modInfo.version}";
@@ -123,6 +122,14 @@ class ModVariant with _$ModVariant implements Comparable<ModVariant> {
         .toString()
         .compareTo(other.modInfo.version.toString());
   }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ModVariant && other.smolId == smolId;
+  }
+
+  @override
+  int get hashCode => smolId.hashCode;
 }
 
 const modIconFilePaths = [
@@ -138,22 +145,3 @@ final smolIdAllowedChars = RegExp(r'[^0-9a-zA-Z\\.\-_]');
 String createSmolId(String id, Version? version) {
   return '${id.replaceAll(smolIdAllowedChars, '').take(6)}-${version.toString().replaceAll(smolIdAllowedChars, '').take(9)}-${(id.hashCode + version.hashCode).abs()}';
 }
-
-// private val smolIdAllowedChars = Regex("""[^0-9a-zA-Z\\.\-_]""")
-//         fun createSmolId(id: String, version: Version) =
-//             buildString {
-//                 append(id.replace(smolIdAllowedChars, "").take(6))
-//                 append("-")
-//                 append(version.toString().replace(smolIdAllowedChars, "").take(9))
-//                 append("-")
-//                 append(
-//                     Objects.hash(
-//                         id,
-//                         version.toString()
-//                     )
-//                         .absoluteValue // Increases chance of a collision but ids look less confusing.
-//                 )
-//             }
-//
-//         private val systemFolderNameAllowedChars = Regex("""[^0-9a-zA-Z\\.\-_ ]""")
-//         fun createSmolId(modInfo: ModInfo) = createSmolId(modInfo.id, modInfo.version)

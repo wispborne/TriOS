@@ -240,8 +240,6 @@ class _Smol3State extends ConsumerState<Smol3>
                                   final activeProfileId = ref.watch(appSettings
                                       .select((s) => s.activeModProfileId));
                                   return DropdownButton(
-                                      // issue where value can get out of sync with profiles somehow
-                                      // so we get `There should be exactly one item with [DropdownButton]'s value`
                                       value: profiles?.modProfiles
                                           .firstWhereOrNull(
                                               (p) => p.id == activeProfileId),

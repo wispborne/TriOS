@@ -9,6 +9,8 @@
     - Switched to a new HTTP client (wrapper around the native one), so let me know if network calls regress.
     - New setting to control this added to Settings page.
   - "Cannot write to vmparams file Miko_R3.txt" error when not using JRE 23.
+  - Mod version dropdowns sometimes breaking.
+    - Caused by dirty state and equality comparison comparing the whole object. Now compares just ids.
 - Changed
   - Roboto as default text theme again, instead of Ibm Plex Sans.
     - It's clearer at small sizes.

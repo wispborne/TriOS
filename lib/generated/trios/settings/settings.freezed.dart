@@ -575,7 +575,7 @@ class _$SettingsImpl implements _Settings {
       this.shouldAutoUpdateOnLaunch = false,
       this.secondsBetweenModFolderChecks = 15,
       this.toastDurationSeconds = 7,
-      this.maxHttpRequestsAtOnce = 10,
+      this.maxHttpRequestsAtOnce = 20,
       this.folderNamingSetting =
           FolderNamingSetting.doNotChangeNameForHighestVersion,
       this.keepLastNVersions,

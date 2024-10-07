@@ -46,7 +46,7 @@ _$SettingsImpl _$$SettingsImplFromJson(Map<String, dynamic> json) =>
       toastDurationSeconds:
           (json['toastDurationSeconds'] as num?)?.toInt() ?? 7,
       maxHttpRequestsAtOnce:
-          (json['maxHttpRequestsAtOnce'] as num?)?.toInt() ?? 10,
+          (json['maxHttpRequestsAtOnce'] as num?)?.toInt() ?? 20,
       folderNamingSetting: $enumDecodeNullable(
               _$FolderNamingSettingEnumMap, json['folderNamingSetting']) ??
           FolderNamingSetting.doNotChangeNameForHighestVersion,

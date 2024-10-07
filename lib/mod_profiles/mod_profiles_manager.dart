@@ -84,7 +84,7 @@ class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
 
   void cloneModProfile(ModProfile profile) {
     createModProfile(
-        '${profile.name} (Copy) ${DateTime.now().microsecondsSinceEpoch}',
+        '${profile.name} (Copy)',
         enabledModVariants: profile.enabledModVariants);
   }
 

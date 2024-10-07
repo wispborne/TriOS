@@ -105,19 +105,6 @@
       "secondaryVariant": "#3BCBE8",
       "surfaceContainer": "#010F3F"
     },
-    "Mentioned": {
-      "surface": "#A6192E",
-      "hyperlink": "#FFFFFF",
-      "isDark": true,
-      "primary": "#FFFFFF",
-      "primaryVariant": "#F5F5F5",
-      "secondary": "#B22234",
-      "secondaryVariant": "#8B1D31",
-      "surfaceContainer": "#780000",
-      "onPrimary": "#FFFFFF",
-      "onSecondary": "#FFFFFF",
-      "onSurface": "#FFFFFF"
-    },
     "Nia": {
       "surface": "#282C34",
       "hyperlink": "#D6D281",
@@ -221,6 +208,19 @@
       "secondary": "#00FFFF",
       "secondaryVariant": "#00B6B6",
       "surfaceContainer": "#17171A"
+    },
+    "Türkiye": {
+      "surface": "#e30917",
+      "hyperlink": "#FFFFFF",
+      "isDark": true,
+      "primary": "#FFFFFF",
+      "primaryVariant": "#F5F5F5",
+      "secondary": "#B22234",
+      "secondaryVariant": "#8B1D31",
+      "surfaceContainer": "#780000",
+      "onPrimary": "#FFFFFF",
+      "onSecondary": "#FFFFFF",
+      "onSurface": "#FFFFFF"
     },
     "VIC": {
       "surface": "#1B1B1B",

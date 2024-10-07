@@ -240,16 +240,24 @@ class _Smol3State extends ConsumerState<Smol3>
                                   final activeProfileId = ref.watch(appSettings
                                       .select((s) => s.activeModProfileId));
                                   return DropdownButton(
+                                      // issue where value can get out of sync with profiles somehow
+                                      // so we get `There should be exactly one item with [DropdownButton]'s value`
                                       value: profiles?.modProfiles
                                           .firstWhereOrNull(
                                               (p) => p.id == activeProfileId),
                                       isDense: true,
                                       isExpanded: true,
+                                      padding: const EdgeInsets.all(4),
                                       focusColor: Colors.transparent,
                                       items: profiles?.modProfiles
                                               .map((p) => DropdownMenuItem(
                                                     value: p,
-                                                    child: Text(p.name),
+                                                    child: Text(
+                                                      p.name,
+                                                      style: const TextStyle(
+                                                        fontSize: 13,
+                                                      ),
+                                                    ),
                                                   ))
                                               .toList() ??
                                           [],
@@ -525,7 +533,7 @@ class _Smol3State extends ConsumerState<Smol3>
                   (rendererContext.cell.value ?? "") +
                       " (${isEnabled ? enabledMods.length : disabledMods.length})",
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontFamily: 'Orbitron',
+                        fontFamily: ThemeManager.orbitron,
                         fontWeight: FontWeight.bold,
                       )),
             ),

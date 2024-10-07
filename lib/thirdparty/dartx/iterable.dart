@@ -287,36 +287,36 @@ extension IterableJoinToString<E> on Iterable<E> {
   /// If the collection could be huge, you can specify a non-negative value of
   /// [limit], in which case only the first [limit] elements will be appended,
   /// followed by the [truncated] string (which defaults to `'...'`).
-  String joinToString({
-    String separator = ', ',
-    String Function(E element)? transform,
-    String prefix = '',
-    String postfix = '',
-    int? limit,
-    String truncated = '...',
-  }) {
-    final buffer = StringBuffer();
-    var count = 0;
-    for (final element in this) {
-      if (limit != null && count >= limit) {
-        buffer.write(truncated);
-        return buffer.toString();
-      }
-      if (count > 0) {
-        buffer.write(separator);
-      }
-      buffer.write(prefix);
-      if (transform != null) {
-        buffer.write(transform(element));
-      } else {
-        buffer.write(element.toString());
-      }
-      buffer.write(postfix);
-
-      count++;
-    }
-    return buffer.toString();
-  }
+  // String joinToString({
+  //   String separator = ', ',
+  //   String Function(E element)? transform,
+  //   String prefix = '',
+  //   String postfix = '',
+  //   int? limit,
+  //   String truncated = '...',
+  // }) {
+  //   final buffer = StringBuffer();
+  //   var count = 0;
+  //   for (final element in this) {
+  //     if (limit != null && count >= limit) {
+  //       buffer.write(truncated);
+  //       return buffer.toString();
+  //     }
+  //     if (count > 0) {
+  //       buffer.write(separator);
+  //     }
+  //     buffer.write(prefix);
+  //     if (transform != null) {
+  //       buffer.write(transform(element));
+  //     } else {
+  //       buffer.write(element.toString());
+  //     }
+  //     buffer.write(postfix);
+  //
+  //     count++;
+  //   }
+  //   return buffer.toString();
+  // }
 }
 
 extension IterableSumBy<E> on Iterable<E> {

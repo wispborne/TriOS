@@ -36,6 +36,7 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
   @override
   Widget build(BuildContext context) {
     final selectedMod = widget.mod;
+    final theme = Theme.of(context);
     final modVariants = ref.watch(AppState.modVariants).valueOrNull;
     final enabledMods =
         ref.watch(AppState.enabledModsFile).valueOrNull?.enabledMods.toList();
@@ -44,9 +45,6 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
     final dependents = selectedMod != null
         ? calculateDependents(selectedMod.findFirstEnabledOrHighestVersion!)
             .getAsMods(allMods)
-            .sortedBy((mod) => mod.hasEnabledVariant
-                ? "        "
-                : mod.findFirstEnabledOrHighestVersion?.modInfo.name ?? "")
         : <Mod>[];
     const buttonsOpacity = 0.8;
 
@@ -338,31 +336,37 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
                                       ],
                                     );
                                   }),
-                                if (dependents.isNotEmpty)
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      const SizedBox(height: 16),
-                                      const Text("Dependents",
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.bold)),
-                                      Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: dependents.map((dep) {
-                                          final variant = dep
-                                              .findFirstEnabledOrHighestVersion;
-                                          final enabled =
-                                              variant?.isEnabled(allMods) ==
-                                                  true;
-                                          return Text(
-                                            "- ${variant?.modInfo.name} ${enabled ? "(enabled)" : ""}",
-                                          );
-                                        }).toList(),
-                                      ),
-                                    ],
-                                  ),
+                                const SizedBox(height: 16),
+                                const Text("Dependents",
+                                    style:
+                                        TextStyle(fontWeight: FontWeight.bold)),
+                                Builder(builder: (context) {
+                                  final enabledDependents = dependents
+                                      .where((mod) => mod.hasEnabledVariant)
+                                      .toList();
+                                  return enabledDependents.isNotEmpty
+                                      ? DependentsListWidget(
+                                          dependents: enabledDependents,
+                                          selectedMod: selectedMod,
+                                          allMods: allMods)
+                                      : const SizedBox();
+                                }),
+                                const SizedBox(height: 4),
+                                Text("   Disabled",
+                                    style: theme.textTheme.labelLarge?.copyWith(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600)),
+                                Builder(builder: (context) {
+                                  final disabledDependents = dependents
+                                      .where((mod) => !mod.hasEnabledVariant)
+                                      .toList();
+                                  return disabledDependents.isNotEmpty
+                                      ? DependentsListWidget(
+                                          dependents: disabledDependents,
+                                          selectedMod: selectedMod,
+                                          allMods: allMods)
+                                      : const SizedBox();
+                                }),
                               ]),
                         ),
                       ],
@@ -405,5 +409,40 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
                   satisfiedBy is Disabled;
             }))
         .toList();
+  }
+}
+
+class DependentsListWidget extends StatelessWidget {
+  const DependentsListWidget({
+    super.key,
+    required this.dependents,
+    required this.selectedMod,
+    required this.allMods,
+  });
+
+  final List<Mod> dependents;
+  final Mod selectedMod;
+  final List<Mod> allMods;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: dependents.map((modDep) {
+            final variant = modDep.findFirstEnabledOrHighestVersion;
+            final dependencyVersion = variant?.modInfo.dependencies
+                .firstWhereOrNull((dep) => dep.id == selectedMod.id)
+                ?.version;
+            final enabled = variant?.isEnabled(allMods) == true;
+            return Text(
+              "- ${variant?.modInfo.name}${dependencyVersion != null ? " (wants $dependencyVersion)" : ""}",
+            );
+          }).toList(),
+        ),
+      ],
+    );
   }
 }

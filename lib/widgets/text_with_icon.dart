@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 class TextWithIcon extends StatelessWidget {
-  final String text;
+  final String? text;
+  final Widget? widget;
   final Widget? leading;
   final Widget? trailing;
   final TextStyle? style;
@@ -11,8 +12,9 @@ class TextWithIcon extends StatelessWidget {
   final EdgeInsetsGeometry? trailingPadding;
 
   const TextWithIcon({
-    Key? key,
-    required this.text,
+    super.key,
+    this.text,
+    this.widget,
     this.leading,
     this.trailing,
     this.style,
@@ -20,7 +22,7 @@ class TextWithIcon extends StatelessWidget {
     this.maxLines,
     this.leadingPadding = const EdgeInsets.only(right: 8.0),
     this.trailingPadding = const EdgeInsets.only(left: 8.0),
-  }) : super(key: key);
+  })  : assert(text != null || widget != null);
 
   @override
   Widget build(BuildContext context) {
@@ -33,12 +35,14 @@ class TextWithIcon extends StatelessWidget {
             child: leading,
           ),
         Flexible(
-          child: Text(
-            text,
-            style: style,
-            overflow: overflow,
-            maxLines: maxLines,
-          ),
+          child: text != null
+              ? Text(
+                  text!,
+                  style: style,
+                  overflow: overflow,
+                  maxLines: maxLines,
+                )
+              : widget!,
         ),
         if (trailing != null)
           Padding(

@@ -1,12 +1,17 @@
 # 0.3.0
 - Added
+- **Mod Profiles**
   - Tooltip when launching game showing version, Java version, and RAM assigned.
+  - "Dependents" in the side panel now shows any specific version wanted.
 - Fixed
   - Timeout when checking for mod updates in some cases (tons of mods, slow PC, spotty internet).
     - TriOS now has a max of 10 API requests active at a time, rather than sending one per mod all at once.
     - Switched to a new HTTP client (wrapper around the native one), so let me know if network calls regress.
     - New setting to control this added to Settings page.
   - "Cannot write to vmparams file Miko_R3.txt" error when not using JRE 23.
+- Changed
+  - Roboto as default text theme again, instead of Ibm Plex Sans.
+    - It's clearer at small sizes.
 
 # 0.2.7
 - Added

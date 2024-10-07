@@ -1,6 +1,7 @@
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:trios/dashboard/mod_summary_widget.dart';
 import 'package:trios/dashboard/version_check_icon.dart';
 import 'package:trios/dashboard/version_check_text_readout.dart';
@@ -207,10 +208,13 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                             Expanded(
                               child: Text(
                                 modInfo.nameOrId,
-                                style: theme.textTheme.labelLarge?.copyWith(
+                                style: GoogleFonts.roboto(
+                                    textStyle:
+                                        theme.textTheme.labelLarge?.copyWith(
                                   color: compatTextColor
                                       ?.withOpacity(modTextOpacity),
-                                ),
+                                  fontWeight: FontWeight.normal,
+                                )),
                                 overflow: TextOverflow.fade,
                                 softWrap: false,
                                 maxLines: 1,

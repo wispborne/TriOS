@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
+import 'package:open_filex/open_filex.dart';
 import 'package:path/path.dart' as p;
 import 'package:trios/utils/logging.dart';
 import 'package:yaml/yaml.dart';
@@ -331,6 +332,10 @@ extension DirectoryExt on Directory {
         }
       }
     }
+  }
+
+  void openInExplorer() {
+    OpenFilex.open(path);
   }
 }
 

@@ -202,7 +202,8 @@ class ThemeManager with ChangeNotifier {
 
   static ThemeData customizeTheme(ThemeData themeBase, TriOSTheme swatch) {
     // Choose font here
-    final textTheme = GoogleFonts.ibmPlexSansTextTheme(themeBase.textTheme);
+    // final textTheme = GoogleFonts.ibmPlexSansTextTheme(themeBase.textTheme);
+    final textTheme = GoogleFonts.robotoTextTheme(themeBase.textTheme);
 
     final onSurfaceVariant = swatch.surface == null
         ? swatch.onSurface

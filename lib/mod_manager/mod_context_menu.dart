@@ -100,7 +100,7 @@ MenuItem menuItemChangeVersion(Mod mod, WidgetRef ref) {
 
   return MenuItem.submenu(
       label: "Enable Mod...",
-      icon: Icons.power_settings_new,
+      icon: Icons.toggle_on,
       onSelected: () {
         ref
             .watch(AppState.modVariants.notifier)

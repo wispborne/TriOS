@@ -5,7 +5,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:trios/utils/extensions.dart';
 
 class Constants {
-  static const version = "0.3.0-dev01";
+  static const version = "0.3.0-dev02";
 
   static const appName = "TriOS";
   static const appTitle = "$appName v$version";
@@ -67,9 +67,9 @@ class Constants {
   /// Warning: DON'T ADD ANYTHING TO THIS DIRECTLY. It will mutate the shared instance.
   /// Creating a new one each time is expensive, and hardcoding the pattern will hardcode the locale.
   static DateFormat dateTimeFormat =
-      DateFormat.yMd(Intl.getCurrentLocale()).add_jm();
+  DateFormat.yMd(Intl.getCurrentLocale()).add_jm();
   static DateFormat gameDateFormat =
-      DateFormat("'Cycle' y , 'Month' M, 'Day' d");
+  DateFormat("'Cycle' y , 'Month' M, 'Day' d");
 
   static const modAuthorAliases = [
     ["RustyCabbage", "rubi", "ceruleanpancake"],
@@ -110,6 +110,11 @@ class Constants {
   static final isModProfilesEnabled = version.contains("dev");
 }
 
-final currentDirectory = Platform.resolvedExecutable.toFile().parent;
-final currentMacOSAppPath = Platform.resolvedExecutable.toFile().parent.parent;
+final currentDirectory = Platform.resolvedExecutable
+    .toFile()
+    .parent;
+final currentMacOSAppPath = Platform.resolvedExecutable
+    .toFile()
+    .parent
+    .parent;
 final configDataFolderPath = getApplicationSupportDirectory();

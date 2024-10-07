@@ -94,7 +94,12 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                                       minHeight: minHeight,
                                     ),
                                     child: IntrinsicHeight(
-                                        child: _buildNewProfileCard()));
+                                        child: Column(
+                                      children: [
+                                        _buildNewProfileCard(),
+                                        const Spacer(),
+                                      ],
+                                    )));
                               } else {
                                 final profile = modProfiles[index - 1];
 
@@ -224,16 +229,21 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                 controller: newProfileNameController,
                 decoration: const InputDecoration(labelText: 'Name')),
             const SizedBox(height: 8.0),
-            ElevatedButton(
-              onPressed: () {
-                if (newProfileNameController.text.isNotEmpty) {
-                  ref
-                      .read(modProfilesProvider.notifier)
-                      .createModProfile(newProfileNameController.text);
-                  newProfileNameController.clear();
-                }
-              },
-              child: const Text('Create Profile'),
+            Row(
+              children: [
+                const Spacer(),
+                OutlinedButton(
+                  onPressed: () {
+                    if (newProfileNameController.text.isNotEmpty) {
+                      ref
+                          .read(modProfilesProvider.notifier)
+                          .createModProfile(newProfileNameController.text);
+                      newProfileNameController.clear();
+                    }
+                  },
+                  child: const Text('Create Profile'),
+                ),
+              ],
             ),
           ],
         ),
@@ -538,6 +548,16 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                         //       message: 'Id: ${profile.id}',
                         //       child: const Icon(
                         //           Icons.bug_report)),
+                        if (isSaveGame)
+                          // Open save folder
+                          IconButton(
+                            icon: const SvgImageIcon(
+                                "assets/images/icon-folder-open.svg"),
+                            tooltip: 'Open save folder',
+                            onPressed: () {
+                              save!.folder.openInExplorer();
+                            },
+                          ),
                         const SizedBox(width: 8),
                         if (!isSaveGame)
                           OutlinedButton(

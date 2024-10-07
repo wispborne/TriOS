@@ -4,16 +4,17 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/thirdparty/dartx/comparable.dart';
-import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/settings.dart';
+import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/widgets/text_with_icon.dart';
 
 import '../models/mod_variant.dart';
-import '../themes/theme_manager.dart';
 import '../utils/generic_settings_notifier.dart';
 import '../widgets/svg_image_icon.dart';
 import 'models/mod_profile.dart';
@@ -193,7 +194,7 @@ class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
           mod: mod,
           fromVariant: fromVariant,
           toVariant: null,
-          modProfileVariant: modProfileVariant,
+          variantAsShallowMod: modProfileVariant,
           toVariantAlternate: toVariantAlternate,
           changeType: ModChangeType.missingVariant,
         );
@@ -205,7 +206,7 @@ class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
         mod: mod,
         fromVariant: fromVariant,
         toVariant: toVariant,
-        modProfileVariant: modProfileVariant,
+        variantAsShallowMod: modProfileVariant,
         toVariantAlternate: null,
         changeType: ModChangeType.swap,
       );
@@ -229,7 +230,7 @@ class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
           mod: mod,
           fromVariant: null,
           toVariant: null,
-          modProfileVariant: modProfileVariant,
+          variantAsShallowMod: modProfileVariant,
           toVariantAlternate: null,
           changeType: ModChangeType.missingMod,
         );
@@ -241,7 +242,7 @@ class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
         mod: mod,
         fromVariant: null,
         toVariant: toVariant,
-        modProfileVariant: modProfileVariant,
+        variantAsShallowMod: modProfileVariant,
         toVariantAlternate: null,
         changeType: ModChangeType.enable,
       );
@@ -264,7 +265,7 @@ class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
         mod: mod,
         fromVariant: fromVariant,
         toVariant: null,
-        modProfileVariant: modProfileVariant,
+        variantAsShallowMod: modProfileVariant,
         toVariantAlternate: null,
         changeType: ModChangeType.disable,
       );
@@ -375,33 +376,49 @@ class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
     final missingVariants = changes
         .where((c) => c.changeType == ModChangeType.missingVariant)
         .toList();
+    final latestVariants = (ref.read(AppState.mods))
+        .map((mod) => mod.findHighestVersion)
+        .whereNotNull()
+        .toList();
+    final modIconsById = Map.fromEntries(
+        latestVariants.map((e) => MapEntry(e.modInfo.id, e.iconFilePath)));
 
     showDialog(
       context: context,
       builder: (context) {
         final hasMissingModsOrVariants =
             missingMods.isNotEmpty || missingVariants.isNotEmpty;
+        final theme = Theme.of(context);
+        final iconColor = theme.iconTheme.color?.withOpacity(0.8);
         return AlertDialog(
-          title: Text('Activate profile "${profile.name}"?'),
+          title: Text("Activate '${profile.name}'?"),
           content: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                    'The following changes will be made to your active mods:'),
-                const SizedBox(height: 16),
-                if (modsToEnable.isNotEmpty)
-                  _buildChangeSection('Will Be Enabled', modsToEnable,
-                      Icons.add_circle, Colors.green, context),
-                if (modsToDisable.isNotEmpty)
-                  _buildChangeSection('Will Be Disabled', modsToDisable,
-                      Icons.remove_circle, Colors.red, context),
-                if (modsToSwap.isNotEmpty)
-                  _buildChangeSection('Version Change', modsToSwap,
-                      Icons.swap_horiz, Colors.blue, context),
+                Text("Mods Being Enabled, Disabled, or Changing Version",
+                    style: theme.textTheme.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                // if (modsToEnable.isNotEmpty)
+                _buildChangeSection(null, "Enabling mod", modsToEnable,
+                    Icons.check, iconColor, modIconsById, context),
+                // if (modsToDisable.isNotEmpty)
+                const SizedBox(height: 8),
+                _buildChangeSection(null, "Disabling mod", modsToDisable,
+                    Icons.close, iconColor, modIconsById, context),
+                // if (modsToSwap.isNotEmpty)
+                const SizedBox(height: 8),
+                _buildChangeSection(null, "Swapping version", modsToSwap,
+                    Icons.swap_horiz, iconColor, modIconsById, context),
                 if (hasMissingModsOrVariants)
-                  _buildMissingModsSection(
-                      missingMods, missingVariants, context),
+                  Column(
+                    children: [
+                      const SizedBox(height: 8),
+                      _buildMissingModsSection(
+                          missingMods, missingVariants, iconColor, context),
+                    ],
+                  ),
               ],
             ),
           ),
@@ -442,18 +459,28 @@ class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
     );
   }
 
-  Widget _buildChangeSection(String title, List<ModChange> changes,
-      IconData icon, Color iconColor, BuildContext context) {
+  Widget _buildChangeSection(
+      String? title,
+      String? tooltip,
+      List<ModChange> changes,
+      IconData icon,
+      Color? iconColor,
+      Map<String, String?> modIconsById,
+      BuildContext context) {
     final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: theme.textTheme.titleMedium
-              ?.copyWith(fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 8),
+        if (title != null)
+          TextWithIcon(
+            text: title,
+            style: theme.textTheme.labelLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+              color: theme.colorScheme.onSurface,
+            ),
+          ),
+        if (title != null) const SizedBox(height: 8),
         ...changes.map((change) {
           final modName =
               change.mod?.findFirstEnabledOrHighestVersion?.modInfo.nameOrId ??
@@ -478,13 +505,29 @@ class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
             default:
               description = modName;
           }
-          return ListTile(
-            leading: Icon(icon, color: iconColor),
-            title: Text(description),
-            dense: true,
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 2),
+            child: TextWithIcon(
+              leading: Tooltip(
+                  message: tooltip,
+                  child: Icon(icon, color: iconColor, size: 20)),
+              widget: TextWithIcon(
+                leading: modIconsById[change.modId] != null
+                    ? Image.file(
+                        modIconsById[change.modId]!.toFile(),
+                        width: 20,
+                      )
+                    : null,
+                text: description,
+                style: GoogleFonts.roboto(
+                    textStyle: theme.textTheme.labelLarge?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontSize: 14,
+                )),
+              ),
+            ),
           );
         }),
-        const SizedBox(height: 16),
       ],
     );
   }
@@ -492,10 +535,11 @@ class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
   Widget _buildMissingModsSection(
     List<ModChange> missingMods,
     List<ModChange> missingVariants,
+    Color? iconColor,
     BuildContext context,
   ) {
     final theme = Theme.of(context);
-    final color = ThemeManager.vanillaWarningColor;
+    const Color? color = null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -514,7 +558,7 @@ class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
               ...missingMods.map((change) {
                 final modId = change.modId;
                 return ListTile(
-                  leading: Icon(Icons.warning, color: color),
+                  leading: const Icon(Icons.warning, color: color),
                   title: Text('Mod "$modId" is missing.'),
                   dense: true,
                 );
@@ -539,10 +583,10 @@ class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
                 final hasAlt = change.toVariantAlternate != null;
                 return ListTile(
                   leading: Icon(hasAlt ? Icons.upgrade : Icons.warning,
-                      color: color),
+                      color: iconColor),
                   title: Text(hasAlt
-                      ? 'Version ${change.modProfileVariant?.version} of "$modName" is not available, so ${change.toVariantAlternate!.bestVersion} will be used instead.'
-                      : 'Version ${change.modProfileVariant?.version} of "$modName" is not available.'),
+                      ? 'Version ${change.variantAsShallowMod?.version} of "$modName" is not available, so ${change.toVariantAlternate!.bestVersion} will be used instead.'
+                      : 'Version ${change.variantAsShallowMod?.version} of "$modName" is not available.'),
                   dense: true,
                 );
               }),
@@ -552,22 +596,27 @@ class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
         OutlinedButton(
             onPressed: () {
               Clipboard.setData(ClipboardData(
-                  text: (missingMods.map((e) => e.modProfileVariant).toList() +
-                          missingVariants
-                              .map((e) => e.modProfileVariant)
-                              .toList())
-                      .whereNotNull()
-                      .joinToString(
-                          separator: '\n',
-                          transform: (ShallowModVariant e) =>
-                              "${e.modName ?? e.modId} - ${e.version}")));
+                  text:
+                      (missingMods.map((e) => e.variantAsShallowMod).toList() +
+                              missingVariants
+                                  .map((e) => e.variantAsShallowMod)
+                                  .toList())
+                          .whereNotNull()
+                          .joinToString(
+                              separator: '\n',
+                              transform: (ShallowModVariant e) =>
+                                  "${e.modName ?? e.modId} - ${e.version}")));
             },
             child: const Text("Copy missing to clipboard")),
-        const SizedBox(height: 24),
-        Text(
-            "Missing mods will be discarded from your profile after activating.",
-            style: theme.textTheme.bodyMedium
-                ?.copyWith(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+        if (missingMods.isNotEmpty ||
+            missingVariants
+                .where((vari) => vari.toVariantAlternate == null)
+                .isNotEmpty)
+          Text(
+              "Missing mods will be discarded from your profile after activating.",
+              style: theme.textTheme.bodyMedium
+                  ?.copyWith(fontWeight: FontWeight.bold)),
         // const SizedBox(height: 8),
       ],
     );
@@ -581,7 +630,7 @@ class ModChange {
   final Mod? mod;
   final ModVariant? fromVariant;
   final ModVariant? toVariant;
-  final ShallowModVariant? modProfileVariant;
+  final ShallowModVariant? variantAsShallowMod;
 
   /// If desired variant is not available, this is an alternate that was found.
   final ModVariant? toVariantAlternate;
@@ -592,13 +641,13 @@ class ModChange {
     required this.mod,
     required this.fromVariant,
     required this.toVariant,
-    required this.modProfileVariant,
+    required this.variantAsShallowMod,
     required this.toVariantAlternate,
     required this.changeType,
   });
 
   @override
   String toString() {
-    return 'ModChange{modId: $modId, mod: $mod, fromVariant: $fromVariant, toVariant: $toVariant, modProfileVariant: $modProfileVariant, toVariantAlternate: $toVariantAlternate, changeType: $changeType}';
+    return 'ModChange{modId: $modId, mod: $mod, fromVariant: $fromVariant, toVariant: $toVariant, modProfileVariant: $variantAsShallowMod, toVariantAlternate: $toVariantAlternate, changeType: $changeType}';
   }
 }

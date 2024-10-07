@@ -57,7 +57,7 @@ class TriOSHttpClient {
     bool allowSelfSignedCertificates = false,
     Map<String, String>? headers,
     Duration timeout = const Duration(seconds: 30),
-    int retries = 3,
+    int tries = 2,
   }) {
     return _enqueueRequest(() {
       final Uri url = _resolveUrl(endpointOrUrl);
@@ -70,7 +70,7 @@ class TriOSHttpClient {
           headers: headers,
         ),
         timeout: timeout,
-        retries: retries,
+        retries: tries,
       );
     });
   }

@@ -150,6 +150,7 @@ class SaveFileNotifier extends AsyncNotifier<List<SaveFile>> {
 
     return SaveFile(
       id: folderOfSave.name,
+      folder: folderOfSave,
       characterName: characterName,
       characterLevel: characterLevel,
       portraitPath: portraitPath,
@@ -167,6 +168,7 @@ class SaveFileNotifier extends AsyncNotifier<List<SaveFile>> {
 
 class SaveFile {
   final String id;
+  final Directory folder;
   final String characterName;
   final int characterLevel;
   final String? portraitPath;
@@ -181,6 +183,7 @@ class SaveFile {
 
   SaveFile({
     required this.id,
+    required this.folder,
     required this.characterName,
     required this.characterLevel,
     this.portraitPath,

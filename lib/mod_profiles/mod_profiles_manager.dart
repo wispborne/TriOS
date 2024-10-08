@@ -23,6 +23,9 @@ final modProfilesProvider =
     AsyncNotifierProvider<ModProfileManagerNotifier, ModProfiles>(
         ModProfileManagerNotifier.new);
 
+// isChangingProfile state
+bool isChangingModProfileProvider = false;
+
 class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
   bool pauseAutomaticProfileUpdates = false;
 
@@ -298,6 +301,7 @@ class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
       Fimber.i("Pausing profile updates while swapping.");
       pauseAutomaticProfileUpdates = true;
       modVariantsNotifier.shouldAutomaticallyReloadOnFilesChanged = false;
+      isChangingModProfileProvider = true;
 
       for (final change in changes) {
         if (change.changeType == ModChangeType.missingMod ||
@@ -322,17 +326,22 @@ class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
         );
       }
 
+      Fimber.i("here1.");
       await modVariantsNotifier.validateModDependencies();
+      Fimber.i("here2.");
       ref.read(appSettings.notifier).update((s) => s.copyWith(
             activeModProfileId: modProfileId,
           ));
+      Fimber.i("here3.");
       Fimber.i("Finished activating mod profile $modProfileId.");
     } catch (e, stack) {
       Fimber.e("Failed to activate mod profile $modProfileId.",
           ex: e, stacktrace: stack);
     } finally {
+      Fimber.i("here4.");
       pauseAutomaticProfileUpdates = false;
       modVariantsNotifier.shouldAutomaticallyReloadOnFilesChanged = true;
+      isChangingModProfileProvider = false;
       // Reload all just in case.
       await modVariantsNotifier.reloadModVariants();
       Fimber.i("Resuming profile updates.");

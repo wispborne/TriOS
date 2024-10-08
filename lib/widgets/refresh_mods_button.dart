@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/widgets/disable.dart';
 
 import '../trios/app_state.dart';
 import 'conditional_wrap.dart';
@@ -9,6 +10,7 @@ class RefreshModsButton extends ConsumerStatefulWidget {
   final double iconSize;
   final Widget? labelWidget;
   final EdgeInsetsGeometry padding;
+  final bool isRefreshing;
   final bool iconOnly;
 
   const RefreshModsButton({
@@ -16,6 +18,7 @@ class RefreshModsButton extends ConsumerStatefulWidget {
     this.iconSize = 20,
     this.padding = const EdgeInsets.all(4),
     this.labelWidget,
+    required this.isRefreshing,
     required this.iconOnly,
   });
 
@@ -28,39 +31,43 @@ class _RefreshModsButtonState extends ConsumerState<RefreshModsButton> {
   Widget build(BuildContext context) {
     final modVariants = ref.watch(AppState.modVariants);
     final isRefreshing = (modVariants.isLoading ||
-        ref.watch(AppState.versionCheckResults).isLoading);
+        ref.watch(AppState.versionCheckResults).isLoading ||
+        widget.isRefreshing);
 
-    return Tooltip(
-        message: "Refresh mods and recheck versions",
-        child: widget.iconOnly
-            ? IconButton(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                icon: _icon(isRefreshing),
-                onPressed: () {
-                  _refresh();
-                },
-                constraints: const BoxConstraints(),
-              )
-            : Padding(
-                padding: widget.padding,
-                child: OutlinedButton.icon(
-                  onPressed: () => _refresh(),
-                  label: const Text("Refresh"),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Theme.of(context)
-                        .colorScheme
-                        .onSurface
-                        .withOpacity(0.8),
-                    side: BorderSide(
-                      color: Theme.of(context)
+    return Disable(
+      isEnabled: !isRefreshing,
+      child: Tooltip(
+          message: "Refresh mods and recheck versions",
+          child: widget.iconOnly
+              ? IconButton(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  icon: _icon(isRefreshing),
+                  onPressed: () {
+                    _refresh();
+                  },
+                  constraints: const BoxConstraints(),
+                )
+              : Padding(
+                  padding: widget.padding,
+                  child: OutlinedButton.icon(
+                    onPressed: () => _refresh(),
+                    label: Text(isRefreshing ? "Refreshing" : "Refresh"),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Theme.of(context)
                           .colorScheme
                           .onSurface
                           .withOpacity(0.8),
+                      side: BorderSide(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withOpacity(0.8),
+                      ),
                     ),
+                    icon: _icon(isRefreshing),
                   ),
-                  icon: _icon(isRefreshing),
-                ),
-              ));
+                )),
+    );
   }
 
   ConditionalWrap _icon(bool isRefreshing) {

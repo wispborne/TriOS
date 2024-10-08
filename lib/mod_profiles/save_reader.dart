@@ -118,7 +118,7 @@ class SaveFileNotifier extends AsyncNotifier<List<SaveFile>> {
           final name = spec.getElement('name')?.innerText ?? "";
           final versionInfo = spec.getElement('versionInfo');
           final version = Version(
-            raw: versionInfo?.getElement('string')?.innerText ?? "",
+            raw: versionInfo?.getElement('string')?.innerText,
             major: versionInfo?.getElement('major')?.innerText ?? "",
             minor: versionInfo?.getElement('minor')?.innerText ?? "",
             patch: versionInfo?.getElement('patch')?.innerText ?? "",

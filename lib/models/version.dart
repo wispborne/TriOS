@@ -48,7 +48,7 @@ class Version implements Comparable<Version> {
   bool operator ==(Object other) => other is Version && compareTo(other) == 0;
 
   @override
-  int get hashCode => raw.hashCode;
+  int get hashCode => toString().hashCode;
 
   /// - `sanitizeInput` should be true for `mod_info.json`, false for `.version`. Whether to remove all but numbers and symbols.
   static Version parse(String versionString, {required bool sanitizeInput}) {

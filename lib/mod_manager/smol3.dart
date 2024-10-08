@@ -77,7 +77,8 @@ class _Smol3State extends ConsumerState<Smol3>
   final searchController = SearchController();
 
   // Only update the UI once every 300ms
-  final Debouncer gridStateDebouncer = Debouncer(milliseconds: 300);
+  final Debouncer gridStateDebouncer =
+      Debouncer(initialDelayMs: 2000, milliseconds: 300);
 
   // Map<String, VersionCheckResult>? versionCheckResults;
   PlutoGridStateManager? stateManager;
@@ -161,7 +162,10 @@ class _Smol3State extends ConsumerState<Smol3>
     const double versionSelectorWidth = 130;
 
     // Only update the UI once every 300ms
-    gridStateDebouncer.run(() {
+    // gridStateDebouncer.run(() {
+
+    // Changing profile means lots of changes really fast, don't update the UI or else it'll be super laggy.
+    if (!isChangingModProfileProvider) {
       if (stateManager != null) {
         stateManager.refRows.clearFromOriginal();
         stateManager.refRows.addAll(createGridRows(enabledMods, disabledMods,
@@ -197,7 +201,8 @@ class _Smol3State extends ConsumerState<Smol3>
           stateManager.setCurrentCell(stateManager.firstCell, selectedRowIdx);
         }
       }
-    });
+    }
+    // });
 
     return Column(
       children: [
@@ -213,9 +218,9 @@ class _Smol3State extends ConsumerState<Smol3>
                     padding: const EdgeInsets.only(left: 2, right: 8),
                     child: Stack(
                       children: [
-                        const Row(
+                        Row(
                           children: [
-                            AddNewModsButton(
+                            const AddNewModsButton(
                               labelWidget: Padding(
                                 padding: EdgeInsets.only(left: 4),
                                 child: Text("Add Mod(s)"),
@@ -223,7 +228,10 @@ class _Smol3State extends ConsumerState<Smol3>
                             ),
                             RefreshModsButton(
                               iconOnly: false,
-                              padding: EdgeInsets.symmetric(horizontal: 4),
+                              isRefreshing:
+                                  isChangingModProfileProvider,
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 4),
                             ),
                           ],
                         ),

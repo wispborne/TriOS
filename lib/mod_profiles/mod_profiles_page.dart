@@ -615,7 +615,7 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                                 maxLines: 1,
                                 style: theme.textTheme.labelLarge),
                           ),
-                          Text(mod.version?.toString() ?? 'Unknown',
+                          Text(mod.version?.toString() ?? '???',
                               style: theme.textTheme.labelLarge),
                         ],
                       );

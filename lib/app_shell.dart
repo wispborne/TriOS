@@ -276,7 +276,7 @@ class _AppShellState extends ConsumerState<AppShell>
                     TabButton(
                       text: "Profiles",
                       icon: const Tooltip(
-                        message: "Mod Profiles (unfinished)",
+                        message: "Mod Profiles",
                         child: SvgImageIcon(
                           "assets/images/icon-view-carousel.svg",
                           height: 23,

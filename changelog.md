@@ -14,7 +14,6 @@
 - Changed
   - Roboto as default text theme again, instead of Ibm Plex Sans.
     - It's clearer at small sizes.
-  - Mod grid now only rerenders once every 300ms.
 
 # 0.2.7
 - Added

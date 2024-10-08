@@ -100,6 +100,7 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                 children: [
                                   const RefreshModsButton(
                                     iconOnly: true,
+                                    isRefreshing: false,
                                     padding:
                                         EdgeInsets.symmetric(horizontal: 4),
                                   ),
@@ -231,8 +232,9 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                           child: Row(
                                             children: [
                                               Text(
-                                                  isUpdatesFieldShown ? "UPDATES (${modsWithUpdates.whereNotNull().length})"
-                                                  : "${modsWithUpdates.whereNotNull().length} hidden updates",
+                                                  isUpdatesFieldShown
+                                                      ? "UPDATES (${modsWithUpdates.whereNotNull().length})"
+                                                      : "${modsWithUpdates.whereNotNull().length} hidden updates",
                                                   style: Theme.of(context)
                                                       .textTheme
                                                       .labelMedium),

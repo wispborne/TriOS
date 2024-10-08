@@ -66,6 +66,10 @@ List<TextSearchItemTerm> getModVariantSearchTags(ModVariant modVariant) {
 
 /// Searches just the enabled/highest version of each mod.
 List<Mod>? searchMods(List<Mod> mods, String? query) {
+  if (query == null || query.isEmpty) {
+    return mods;
+  }
+
   return searchModVariants(
           mods
               .map((mod) => mod.findFirstEnabledOrHighestVersion)

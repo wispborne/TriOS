@@ -337,6 +337,7 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
                                     );
                                   }),
                                 const SizedBox(height: 16),
+                                // TODO graphicslib doesn't show up for LazyLib 3.0 but it does for 2.8b
                                 const Text("Dependents",
                                     style:
                                         TextStyle(fontWeight: FontWeight.bold)),
@@ -352,7 +353,7 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
                                       : const SizedBox();
                                 }),
                                 const SizedBox(height: 4),
-                                Text("   Disabled",
+                                Text("Disabled Dependents",
                                     style: theme.textTheme.labelLarge?.copyWith(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w600)),

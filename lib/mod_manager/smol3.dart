@@ -22,6 +22,7 @@ import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/thirdparty/pluto_grid_plus/lib/pluto_grid_plus.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/settings.dart';
+import 'package:trios/utils/debouncer.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/search.dart';
 import 'package:trios/widgets/add_new_mods_button.dart';
@@ -75,6 +76,9 @@ class _Smol3State extends ConsumerState<Smol3>
   late List<Mod> filteredMods;
   final searchController = SearchController();
 
+  // Only update the UI once every 300ms
+  final Debouncer gridStateDebouncer = Debouncer(milliseconds: 300);
+
   // Map<String, VersionCheckResult>? versionCheckResults;
   PlutoGridStateManager? stateManager;
   List<PlutoColumn> gridColumns = [];
@@ -127,6 +131,12 @@ class _Smol3State extends ConsumerState<Smol3>
   }
 
   @override
+  void dispose() {
+    gridStateDebouncer.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     super.build(context);
     final theme = Theme.of(context);
@@ -149,41 +159,45 @@ class _Smol3State extends ConsumerState<Smol3>
         filteredMods.where((mod) => !mod.hasEnabledVariant).toList();
 
     const double versionSelectorWidth = 130;
-    if (stateManager != null) {
-      stateManager.refRows.clearFromOriginal();
-      stateManager.refRows.addAll(
-          createGridRows(enabledMods, disabledMods, shouldSort: query.isEmpty));
-      stateManager.refColumns.clearFromOriginal();
-      stateManager.refColumns.addAll(createColumns(versionSelectorWidth,
-          lightTextOpacity, versionCheckResults, enabledMods, disabledMods));
-      PlutoGridStateManager.initializeRows(
-          stateManager.refColumns, stateManager.refRows);
 
-      stateManager.setRowGroup(
-        PlutoRowGroupByColumnDelegate(
-          columns: [
-            gridColumns[0],
-          ],
-          showFirstExpandableIcon: false,
-          showCount: false,
-        ),
-      );
-      if (stateManager.rows.isNotEmpty) {
-        var enabledGroupRow = _getEnabledGroupRow(stateManager);
-        if (enabledGroupRow != null &&
-            gridState?.isGroupEnabledExpanded !=
-                stateManager.isExpandedGroupedRow(enabledGroupRow)) {
-          stateManager.toggleExpandedRowGroup(rowGroup: enabledGroupRow);
+    // Only update the UI once every 300ms
+    gridStateDebouncer.run(() {
+      if (stateManager != null) {
+        stateManager.refRows.clearFromOriginal();
+        stateManager.refRows.addAll(createGridRows(enabledMods, disabledMods,
+            shouldSort: query.isEmpty));
+        stateManager.refColumns.clearFromOriginal();
+        stateManager.refColumns.addAll(createColumns(versionSelectorWidth,
+            lightTextOpacity, versionCheckResults, enabledMods, disabledMods));
+        PlutoGridStateManager.initializeRows(
+            stateManager.refColumns, stateManager.refRows);
+
+        stateManager.setRowGroup(
+          PlutoRowGroupByColumnDelegate(
+            columns: [
+              gridColumns[0],
+            ],
+            showFirstExpandableIcon: false,
+            showCount: false,
+          ),
+        );
+        if (stateManager.rows.isNotEmpty) {
+          var enabledGroupRow = _getEnabledGroupRow(stateManager);
+          if (enabledGroupRow != null &&
+              gridState?.isGroupEnabledExpanded !=
+                  stateManager.isExpandedGroupedRow(enabledGroupRow)) {
+            stateManager.toggleExpandedRowGroup(rowGroup: enabledGroupRow);
+          }
+          var disabledGroupRow = _getDisabledGroupRow(stateManager);
+          if (disabledGroupRow != null &&
+              gridState?.isGroupDisabledExpanded !=
+                  stateManager.isExpandedGroupedRow(disabledGroupRow)) {
+            stateManager.toggleExpandedRowGroup(rowGroup: disabledGroupRow);
+          }
+          stateManager.setCurrentCell(stateManager.firstCell, selectedRowIdx);
         }
-        var disabledGroupRow = _getDisabledGroupRow(stateManager);
-        if (disabledGroupRow != null &&
-            gridState?.isGroupDisabledExpanded !=
-                stateManager.isExpandedGroupedRow(disabledGroupRow)) {
-          stateManager.toggleExpandedRowGroup(rowGroup: disabledGroupRow);
-        }
-        stateManager.setCurrentCell(stateManager.firstCell, selectedRowIdx);
       }
-    }
+    });
 
     return Column(
       children: [
@@ -251,7 +265,7 @@ class _Smol3State extends ConsumerState<Smol3>
                                               .map((p) => DropdownMenuItem(
                                                     value: p,
                                                     child: Text(
-                                                      p.name,
+                                                      "${p.name} (${p.enabledModVariants.length} mods)",
                                                       style: const TextStyle(
                                                         fontSize: 13,
                                                       ),

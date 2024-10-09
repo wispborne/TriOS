@@ -5,7 +5,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:trios/utils/extensions.dart';
 
 class Constants {
-  static const version = "0.3.0";
+  static const version = "0.3.1";
 
   static const appName = "TriOS";
   static const appTitle = "$appName v$version";
@@ -107,7 +107,7 @@ class Constants {
     ["Soren", "Søren", "Harmful Mechanic"],
   ];
 
-  static final isModProfilesEnabled = version.contains("dev");
+  static const isModProfilesEnabled = true;
 }
 
 final currentDirectory = Platform.resolvedExecutable.toFile().parent;

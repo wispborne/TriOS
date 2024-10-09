@@ -1,4 +1,4 @@
-# 0.3.0
+# 0.3.1
 - Added
   - **Mod Profiles**
   - Tooltip when launching game showing version, Java version, and RAM assigned.

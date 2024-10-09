@@ -331,7 +331,7 @@ extension PaletteGeneratorExt on PaletteGenerator? {
         ),
       ),
       iconTheme: IconThemeData(
-        color: onSurfaceColor,
+        color: onSurfaceColor.withOpacity(0.8),
       ),
       appBarTheme: AppBarTheme(
         backgroundColor: primaryColor,

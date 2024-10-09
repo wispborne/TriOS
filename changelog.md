@@ -1,8 +1,9 @@
 # 0.3.0
 - Added
-- **Mod Profiles**
+  - **Mod Profiles**
   - Tooltip when launching game showing version, Java version, and RAM assigned.
   - "Dependents" in the side panel now shows any specific version wanted.
+  - Installing a zip with multiple mods inside now shows the paths of each detected mod to make it easier to figure out which one you want.
 - Fixed
   - Timeout when checking for mod updates in some cases (tons of mods, slow PC, spotty internet).
     - TriOS now has a max of 10 API requests active at a time, rather than sending one per mod all at once.

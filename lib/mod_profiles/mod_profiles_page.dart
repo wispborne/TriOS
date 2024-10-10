@@ -46,172 +46,166 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
     const minHeight = 120.0;
     const cardPadding = 8.0;
 
-    return Tooltip(
-      message: kDebugMode ? "" : "Work in progress",
-      child: Disable(
-        isEnabled: Constants.isModProfilesEnabled,
-        child: Theme(
-          data: Theme.of(context).lowContrastCardTheme(),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding:
-                          const EdgeInsets.only(left: 4, right: 4, bottom: 4),
-                      child: Row(
-                        children: [
-                          Text(
-                            'Profiles',
-                            style: Theme.of(context)
-                                .textTheme
-                                .headlineSmall
-                                ?.copyWith(fontSize: 20),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Expanded(
-                      child: modProfilesAsync.when(
-                        data: (modProfilesObj) {
-                          final modProfiles = modProfilesObj.modProfiles
-                              .sortedByButBetter(
-                                  (profile) => profile.dateModified)
-                              .reversed
-                              .toList();
-                          return AlignedGridView.extent(
-                            crossAxisSpacing: axisSpacingForHeightHack,
-                            mainAxisSpacing: 10,
-                            maxCrossAxisExtent: 560,
-                            // crossAxisCount: 2,
-                            itemCount: modProfiles.length + 1,
-                            itemBuilder: (context, index) {
-                              if (index == 0) {
-                                return ConstrainedBox(
-                                    constraints: const BoxConstraints(
-                                      minHeight: minHeight,
-                                    ),
-                                    child: IntrinsicHeight(
-                                        child: Column(
-                                      children: [
-                                        _buildNewProfileCard(),
-                                        const Spacer(),
-                                      ],
-                                    )));
-                              } else {
-                                final profile = modProfiles[index - 1];
-
-                                return ModProfileCard(
-                                  minHeight: minHeight,
-                                  profile: profile,
-                                  modProfiles: modProfiles,
-                                  save: null,
-                                  saves: null,
-                                  cardPadding: cardPadding,
-                                  actualAxisSpacing: actualAxisSpacing,
-                                  axisSpacingForHeightHack:
-                                      axisSpacingForHeightHack,
-                                );
-                              }
-                            },
-                          );
-                        },
-                        loading: () =>
-                            const Center(child: CircularProgressIndicator()),
-                        error: (error, stackTrace) =>
-                            Center(child: Text('Error: $error')),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const VerticalDivider(),
-              Padding(
-                padding: const EdgeInsets.only(left: 0.0),
-                child: SizedBox(
-                  width: 300,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
+    return Theme(
+      data: Theme.of(context).lowContrastCardTheme(),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding:
+                      const EdgeInsets.only(left: 4, right: 4, bottom: 4),
+                  child: Row(
                     children: [
-                      Padding(
-                        padding:
-                            const EdgeInsets.only(left: 4, right: 4, bottom: 4),
-                        child: Row(
-                          children: [
-                            Text(
-                              'Save Games',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .headlineSmall
-                                  ?.copyWith(fontSize: 20),
-                            ),
-                            const Spacer(),
-                            IconButton(
-                                onPressed: () {
-                                  ref.invalidate(saveFileProvider);
-                                },
-                                icon: const Icon(Icons.refresh)),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        child: saveGamesAsync.when(
-                          data: (saveGames) {
-                            saveGames = saveGames
-                                .sortedByButBetter((save) =>
-                                    save.saveDate ??
-                                    DateTime.fromMicrosecondsSinceEpoch(0))
-                                .reversed
-                                .toList();
-                            return AlignedGridView.count(
-                              crossAxisSpacing: axisSpacingForHeightHack,
-                              mainAxisSpacing: 10,
-                              crossAxisCount: 1,
-                              itemCount: saveGames.length,
-                              itemBuilder: (context, index) {
-                                return ModProfileCard(
-                                  minHeight: minHeight,
-                                  profile: null,
-                                  modProfiles: null,
-                                  save: saveGames[index],
-                                  saves: saveGames,
-                                  cardPadding: cardPadding,
-                                  actualAxisSpacing: actualAxisSpacing,
-                                  axisSpacingForHeightHack:
-                                      axisSpacingForHeightHack,
-                                );
-                              },
-                            );
-                          },
-                          loading: () =>
-                              const Center(child: CircularProgressIndicator()),
-                          error: (error, stackTrace) =>
-                              Center(child: Text('Error: $error')),
-                        ),
+                      Text(
+                        'Profiles',
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineSmall
+                            ?.copyWith(fontSize: 20),
                       ),
                     ],
                   ),
                 ),
-              ),
-              SizedBox(
-                  width: 350,
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 8),
-                    child: Container(
-                        // round edges
-                        decoration: BoxDecoration(
-                          borderRadius:
-                              BorderRadius.circular(ThemeManager.cornerRadius),
-                        ),
-                        clipBehavior: Clip.antiAlias,
-                        child: const AuditPage()),
-                  )),
-            ],
+                Expanded(
+                  child: modProfilesAsync.when(
+                    data: (modProfilesObj) {
+                      final modProfiles = modProfilesObj.modProfiles
+                          .sortedByButBetter(
+                              (profile) => profile.dateModified)
+                          .reversed
+                          .toList();
+                      return AlignedGridView.extent(
+                        crossAxisSpacing: axisSpacingForHeightHack,
+                        mainAxisSpacing: 10,
+                        maxCrossAxisExtent: 560,
+                        // crossAxisCount: 2,
+                        itemCount: modProfiles.length + 1,
+                        itemBuilder: (context, index) {
+                          if (index == 0) {
+                            return ConstrainedBox(
+                                constraints: const BoxConstraints(
+                                  minHeight: minHeight,
+                                ),
+                                child: IntrinsicHeight(
+                                    child: Column(
+                                  children: [
+                                    _buildNewProfileCard(),
+                                    const Spacer(),
+                                  ],
+                                )));
+                          } else {
+                            final profile = modProfiles[index - 1];
+
+                            return ModProfileCard(
+                              minHeight: minHeight,
+                              profile: profile,
+                              modProfiles: modProfiles,
+                              save: null,
+                              saves: null,
+                              cardPadding: cardPadding,
+                              actualAxisSpacing: actualAxisSpacing,
+                              axisSpacingForHeightHack:
+                                  axisSpacingForHeightHack,
+                            );
+                          }
+                        },
+                      );
+                    },
+                    loading: () =>
+                        const Center(child: CircularProgressIndicator()),
+                    error: (error, stackTrace) =>
+                        Center(child: Text('Error: $error')),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
+          const VerticalDivider(),
+          Padding(
+            padding: const EdgeInsets.only(left: 0.0),
+            child: SizedBox(
+              width: 300,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding:
+                        const EdgeInsets.only(left: 4, right: 4, bottom: 4),
+                    child: Row(
+                      children: [
+                        Text(
+                          'Save Games',
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineSmall
+                              ?.copyWith(fontSize: 20),
+                        ),
+                        const Spacer(),
+                        IconButton(
+                            onPressed: () {
+                              ref.invalidate(saveFileProvider);
+                            },
+                            icon: const Icon(Icons.refresh)),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: saveGamesAsync.when(
+                      data: (saveGames) {
+                        saveGames = saveGames
+                            .sortedByButBetter((save) =>
+                                save.saveDate ??
+                                DateTime.fromMicrosecondsSinceEpoch(0))
+                            .reversed
+                            .toList();
+                        return AlignedGridView.count(
+                          crossAxisSpacing: axisSpacingForHeightHack,
+                          mainAxisSpacing: 10,
+                          crossAxisCount: 1,
+                          itemCount: saveGames.length,
+                          itemBuilder: (context, index) {
+                            return ModProfileCard(
+                              minHeight: minHeight,
+                              profile: null,
+                              modProfiles: null,
+                              save: saveGames[index],
+                              saves: saveGames,
+                              cardPadding: cardPadding,
+                              actualAxisSpacing: actualAxisSpacing,
+                              axisSpacingForHeightHack:
+                                  axisSpacingForHeightHack,
+                            );
+                          },
+                        );
+                      },
+                      loading: () =>
+                          const Center(child: CircularProgressIndicator()),
+                      error: (error, stackTrace) =>
+                          Center(child: Text('Error: $error')),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SizedBox(
+              width: 350,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 8),
+                child: Container(
+                    // round edges
+                    decoration: BoxDecoration(
+                      borderRadius:
+                          BorderRadius.circular(ThemeManager.cornerRadius),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: const AuditPage()),
+              )),
+        ],
       ),
     );
   }

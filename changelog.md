@@ -1,4 +1,12 @@
+# 0.3.2
+- Fixed
+  - Removed "work in progress" tooltip on Mod Profiles tab.
+
 # 0.3.1
+- Fixed 
+  - Forgot to enable Mod Profiles.
+
+# 0.3.0
 - Added
   - **Mod Profiles**
   - Tooltip when launching game showing version, Java version, and RAM assigned.

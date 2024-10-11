@@ -24,13 +24,26 @@ All-in-one Starsector toolkit. Very very early development.
 
 ## Building TriOS
 
-You will need to run the following command in a terminal in the project's root folder (I run it in IntelliJ's terminal).
+1. [Download and install/extract Flutter SDK](https://flutter-ko.dev/get-started/install) so that it's on your path.
+1. Download the TriOS source code, navigate to it, and run
+    ```
+    flutter build windows
+    ```
+    (substitute `macos` or `linux` depending on your platform).
+1. The output should tell you where it placed the compiled program.
 
+
+## Modifying TriOS
+Whenever you change a model class (anything using code gen), you'll need to run the following command in a terminal in the project's root folder (I run it in IntelliJ's terminal). No need to do this unless you're changing TriOS code; the generated code is included in the source code.
 ```
 dart run build_runner watch --delete-conflicting-outputs
 ```
 
 ## Building libarchive
+Note: you probably do not need to build libarchive yourself. TriOS has libarchive binaries already included in `assets/<platform>/libarchive`.
+
+The only time you need to build it yourself is if you have some architecture that the prebuilt ones don't support.
+
 ### Windows
 1. Download latest source: https://github.com/libarchive/libarchive/releases.
 1. Download/install Visual Studio, add C/C++ support module stuff.

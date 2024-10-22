@@ -5,7 +5,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:trios/utils/extensions.dart';
 
 class Constants {
-  static const version = "0.3.2";
+  static const version = "0.3.3";
 
   static const appName = "TriOS";
   static const appTitle = "$appName v$version";

@@ -61,6 +61,7 @@ class TriOSHttpClient {
   }) {
     return _enqueueRequest(() {
       final Uri url = _resolveUrl(endpointOrUrl);
+
       final client = allowSelfSignedCertificates
           ? _selfSignedHttpClient
           : _defaultHttpClient;

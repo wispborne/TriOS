@@ -1,3 +1,10 @@
+# 0.3.3
+- Changed
+  - Downloads now show up immediately when clicked.
+    - Before, it would wait until it retrieved the file name, which in the case of Google Drive, could take a while.
+  - Combined two http calls into one (get file name + check if there is a file to download).
+    - Should slightly speed up download of mods that use Google Drive (e.g. AotD).
+
 # 0.3.2
 - Fixed
   - Removed "work in progress" tooltip on Mod Profiles tab.

@@ -1,13 +1,15 @@
 class DownloadRequest {
   final String url;
-  final String path;
+  final String directory;
+  final String? filename;
 
   // var cancelToken = CancelToken();
   var forceDownload = false;
 
   DownloadRequest(
     this.url,
-    this.path,
+    this.directory,
+    this.filename,
   );
 
   @override
@@ -16,8 +18,9 @@ class DownloadRequest {
       other is DownloadRequest &&
           runtimeType == other.runtimeType &&
           url == other.url &&
-          path == other.path;
+          directory == other.directory &&
+          filename == other.filename;
 
   @override
-  int get hashCode => url.hashCode ^ path.hashCode;
+  int get hashCode => url.hashCode ^ directory.hashCode ^ (filename?.hashCode ?? 42);
 }

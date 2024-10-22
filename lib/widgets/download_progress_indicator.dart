@@ -23,7 +23,7 @@ class _DownloadProgressIndicatorState
           borderRadius: BorderRadius.circular(3),
           child: LinearProgressIndicator(
             value: widget.value.isIndeterminate
-                ? 0
+                ? null
                 : widget.value.progressPercent,
             minHeight: 10,
             color: widget.color,

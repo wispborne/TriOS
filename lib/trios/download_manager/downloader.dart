@@ -49,7 +49,7 @@ class DownloadManager {
         if (total == -1) {}
       };
 
-  Future<void> download(String url, String savePath,
+  Future<void> download(String url, String destFolder, String? filename,
       {forceDownload = false}) async {
     late String partialFilePath;
     late File partialFile;
@@ -59,18 +59,30 @@ class DownloadManager {
       if (task == null || task.status.value == DownloadStatus.canceled) {
         return;
       }
+
+      setStatus(task, DownloadStatus.retrievingFileInfo);
+      final headers = await fetchHeaders(url);
+
+      // If given a download folder, then get the file's name from the URL and put it in the folder.
+      // If given an actual filename rather than a folder, then we already have the name.
+      final isDirectory = await Directory(destFolder).exists();
+      final downloadFile = isDirectory
+          ? destFolder + Platform.pathSeparator + await fetchFileNameFromUrl(url, headers)
+          : destFolder + Platform.pathSeparator + filename!;
+      task.file.value = File(downloadFile);
+
       setStatus(task, DownloadStatus.downloading);
 
       Fimber.d(url);
 
       // Ensure there's a file to download
-      if (await isDownloadableFile(url) == false) {
+      if (await isDownloadableFile(url, headers) == false) {
         throw Exception(
             "No file to download found at '$url'.\nPlease contact the mod author.");
       }
 
-      var file = File(savePath.toString());
-      partialFilePath = savePath + partialExtension;
+      var file = File(downloadFile.toString());
+      partialFilePath = downloadFile + partialExtension;
       partialFile = File(partialFilePath);
 
       var fileExist = await file.exists();
@@ -80,7 +92,7 @@ class DownloadManager {
       final httpClient = ref.watch(triOSHttpClient);
 
       if (fileExist) {
-        Fimber.d("File Exists: $savePath");
+        Fimber.d("File Exists: $downloadFile");
         setStatus(task, DownloadStatus.completed);
       } else if (partialFileExist) {
         Fimber.d("Partial File Exists: $partialFilePath");
@@ -108,7 +120,7 @@ class DownloadManager {
           }
 
           await ioSink.close();
-          await partialFile.rename(savePath);
+          await partialFile.rename(downloadFile);
 
           setStatus(task, DownloadStatus.completed);
         }
@@ -119,7 +131,7 @@ class DownloadManager {
         );
 
         if ((response.statusCode) <= 299) {
-          await File(savePath).writeAsBytes(response.data);
+          await File(downloadFile).writeAsBytes(response.data);
           setStatus(task, DownloadStatus.completed);
         } else {
           throw Exception(
@@ -171,21 +183,21 @@ class DownloadManager {
     }
   }
 
-  Future<DownloadTask?> addDownload(String url, String savedDir) async {
-    if (url.isNotEmpty) {
-      if (savedDir.isEmpty) {
-        savedDir = ".";
-      }
-
-      var isDirectory = await Directory(savedDir).exists();
-      var downloadFilename = isDirectory
-          ? savedDir + Platform.pathSeparator + await getFileNameFromUrl(url)
-          : savedDir;
-
-      return _addDownloadRequest(DownloadRequest(url, downloadFilename));
+  /// Adds a download task with a given URL and saves it to the specified directory.
+  /// If the filename is not provided, it will be fetched from the URL.
+  ///
+  /// Returns a `DownloadTask` or `null` if the URL is empty.
+  Future<DownloadTask?> addDownload(
+      String url, String destFolder, String? fileName) async {
+    if (url.isEmpty) {
+      return null;
     }
 
-    return null;
+    if (destFolder.isEmpty) {
+      destFolder = ".";
+    }
+
+    return _addDownloadRequest(DownloadRequest(url, destFolder, fileName));
   }
 
   Future<DownloadTask> _addDownloadRequest(
@@ -201,8 +213,9 @@ class DownloadManager {
       }
     }
 
-    _queue.add(DownloadRequest(downloadRequest.url, downloadRequest.path));
-    var task = DownloadTask(_queue.last, File(downloadRequest.path));
+    _queue.add(DownloadRequest(downloadRequest.url, downloadRequest.directory,
+        downloadRequest.filename));
+    final task = DownloadTask(_queue.last);
 
     _cache[downloadRequest.url] = task;
 
@@ -261,7 +274,7 @@ class DownloadManager {
   // Batch Download Mechanism
   Future<void> addBatchDownloads(List<String> urls, String savedDir) async {
     for (final url in urls) {
-      addDownload(url, savedDir);
+      addDownload(url, savedDir, null);
     }
   }
 
@@ -398,7 +411,8 @@ class DownloadManager {
       var currentRequest = _queue.removeFirst();
 
       runZonedGuarded(() {
-        download(currentRequest.url, currentRequest.path);
+        download(currentRequest.url, currentRequest.directory,
+            currentRequest.filename);
       }, (e, s) {
         Fimber.w('Error downloading: $e', ex: e, stacktrace: s);
       });
@@ -408,13 +422,11 @@ class DownloadManager {
   }
 
   /// This function is used for get file name with extension from url
-  Future<String> getFileNameFromUrl(String url) async {
+  Future<String> fetchFileNameFromUrl(String url, HttpHeaders? headers) async {
     try {
-      final httpClient = ref.watch(triOSHttpClient);
-      final response = await httpClient.get(url);
-
-      Fimber.d("Url $url has headers ${response.headers}");
-      final contentDisposition = response.headers['Content-Disposition']?.first;
+      Fimber.d("Getting filename from url: $url");
+      Fimber.d("Url $url has headers:\n$headers");
+      final contentDisposition = headers?.value('Content-Disposition');
 
       return contentDisposition?.fixFilenameForFileSystem() ??
           Uri.parse(url).pathSegments.last.fixFilenameForFileSystem();
@@ -424,7 +436,9 @@ class DownloadManager {
     }
   }
 
-  Future<bool> isDownloadableFile(String url) async {
+  /// Sends a HEAD request to the given URL and returns the response headers.
+  /// Returns null if there was an error.
+  Future<HttpHeaders?> fetchHeaders(String url) async {
     try {
       final httpClient = ref.watch(triOSHttpClient);
 
@@ -432,45 +446,50 @@ class DownloadManager {
       final response = await httpClient.get(
         url,
         headers: {
-          'method': 'HEAD'
-        }, // Assuming your client can handle HEAD requests
+          'method': 'HEAD',
+        },
       );
 
-      // Check if the status code is 200 (OK)
+      // Return headers if the request is successful
       if (response.statusCode == 200) {
-        // Check for common headers that indicate a downloadable file
-        final headers = response.headers;
-        final contentType =
-            headers['content-type']?.map((it) => it.toLowerCase()).toList() ??
-                [];
-        final contentDisposition = headers['content-disposition']
-                ?.map((it) => it.toLowerCase())
-                .toList() ??
-            [];
-
-        // Check if the Content-Type is a common file type or if Content-Disposition is attachment
-        if (contentType.any((it) => it.startsWith('application/')) ||
-            contentDisposition.any((it) => it.contains('attachment'))) {
-          return true;
-        }
-
-        // Special handling for Google Drive and MEGA
-        if (url.contains('drive.google.com')) {
-          return await checkGoogleDriveLink(url);
-        } else if (url.contains('mega.nz')) {
-          return await checkMegaLink(url);
-        }
-
-        return false;
-      } else {
-        return false;
+        return response.headers;
       }
     } catch (e) {
-      // Handle any request exceptions
-      Fimber.w('Error: $e');
-      // Error checking headers, but might as well try.
-      return true;
+      // Log the error
+      Fimber.w('Error fetching headers: $e');
     }
+
+    // Return null if the request fails
+    return null;
+  }
+
+  /// Checks if a given URL points to a downloadable file.
+  /// Uses headers to determine if the content is downloadable.
+  Future<bool> isDownloadableFile(String url, HttpHeaders? headers) async {
+    if (headers != null) {
+      final contentType =
+          headers['content-type']?.map((it) => it.toLowerCase()).toList() ?? [];
+      final contentDisposition = headers['content-disposition']
+              ?.map((it) => it.toLowerCase())
+              .toList() ??
+          [];
+
+      // Check if the Content-Type indicates a downloadable file
+      if (contentType.any((it) => it.startsWith('application/')) ||
+          contentDisposition.any((it) => it.contains('attachment'))) {
+        return true;
+      }
+
+      // Special handling for Google Drive and MEGA
+      if (url.contains('drive.google.com')) {
+        return await checkGoogleDriveLink(url);
+      } else if (url.contains('mega.nz')) {
+        return await checkMegaLink(url);
+      }
+    }
+
+    // Return false if no downloadable file detected
+    return false;
   }
 
   Future<bool> checkGoogleDriveLink(String url) async {

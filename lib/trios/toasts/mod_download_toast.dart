@@ -108,9 +108,7 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                   builder: (context, status, child) {
                     // Fimber.i(item.isRunning.toString());
                     final isStopped = (!item.isRunning || !item.isStarted);
-                    final isFinished = (status != DownloadStatus.queued &&
-                        status != DownloadStatus.downloading &&
-                        status != DownloadStatus.paused);
+                    final isFinished = status.isCompleted;
                     if (isStopped && isFinished) {
                       Fimber.i(
                           "Debug: isStopped: $isStopped, isFinished: $isFinished");
@@ -122,11 +120,13 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                         Padding(
                           padding: const EdgeInsets.only(right: 16),
                           child: Tooltip(
-                            message: download.id,
+                            message: status.displayString,
                             child: Icon(
                               size: 40,
                               switch (status) {
                                 DownloadStatus.queued => Icons.schedule,
+                                DownloadStatus.retrievingFileInfo =>
+                                  Icons.downloading,
                                 DownloadStatus.downloading => Icons.downloading,
                                 DownloadStatus.completed => Icons.check_circle,
                                 DownloadStatus.failed => Icons.error,
@@ -135,6 +135,8 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                               },
                               color: switch (status) {
                                 DownloadStatus.queued => theme.iconTheme.color,
+                                DownloadStatus.retrievingFileInfo =>
+                                  theme.iconTheme.color,
                                 DownloadStatus.downloading =>
                                   theme.iconTheme.color,
                                 DownloadStatus.completed =>
@@ -183,15 +185,21 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                                   padding: const EdgeInsets.only(top: 8),
                                   child: ValueListenableBuilder(
                                     valueListenable: downloadTask.downloaded,
-                                    builder: (context, downloaded, child) =>
-                                        DownloadProgressIndicator(
-                                      color: status == DownloadStatus.failed
-                                          ? ThemeManager.vanillaErrorColor
-                                          : null,
-                                      value: DownloadProgress(
-                                          downloaded.bytesReceived,
-                                          downloaded.totalBytes),
-                                    ),
+                                    builder: (context, downloaded, child) {
+                                      final isIndeterminate = status ==
+                                              DownloadStatus.queued ||
+                                          status ==
+                                              DownloadStatus.retrievingFileInfo;
+                                      return DownloadProgressIndicator(
+                                        color: status == DownloadStatus.failed
+                                            ? ThemeManager.vanillaErrorColor
+                                            : null,
+                                        value: DownloadProgress(
+                                            downloaded.bytesReceived,
+                                            downloaded.totalBytes,
+                                            isIndeterminate: isIndeterminate),
+                                      );
+                                    },
                                   ),
                                 ),
                                 if (installedMod != null)

@@ -41,13 +41,15 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
     Directory destination, {
     ModInfo? modInfo,
   }) async {
-    return _downloadManager.addDownload(uri, destination.path).then((value) {
+    return _downloadManager
+        .addDownload(uri, destination.path, null)
+        .then((value) {
       if (value == null) {
         return null;
       }
       // generate guid for id
       final id = const Uuid().v4();
-      var download = modInfo == null
+      final download = modInfo == null
           ? Download(id, displayName, value)
           : ModDownload(id, displayName, value, modInfo);
       _downloads.add(download);
@@ -56,20 +58,23 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
       // Just for debugging.
       value.status.addListener(() async {
         switch (value.status.value) {
+          case DownloadStatus.queued:
+            Fimber.d("Download queued: $uri");
+            break;
+          case DownloadStatus.retrievingFileInfo:
+            Fimber.d("Retrieving file info: $uri");
+            break;
+          case DownloadStatus.downloading:
+            Fimber.d("Downloading: $uri");
+            break;
+          case DownloadStatus.paused:
+            Fimber.d("Download paused: $uri");
+            break;
           case DownloadStatus.completed:
             Fimber.d("Download complete: $uri");
             break;
           case DownloadStatus.failed:
             Fimber.w("Download failed: $uri");
-            break;
-          case DownloadStatus.paused:
-            Fimber.d("Download paused: $uri");
-            break;
-          case DownloadStatus.queued:
-            Fimber.d("Download queued: $uri");
-            break;
-          case DownloadStatus.downloading:
-            Fimber.d("Downloading: $uri");
             break;
           case DownloadStatus.canceled:
             Fimber.d("Download canceled: $uri");

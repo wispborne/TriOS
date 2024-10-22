@@ -252,7 +252,7 @@ Future<RemoteVersionCheckResult> checkRemoteVersion(
           "Failed to fetch remote version info for ${modVariant.modInfo.id}: ${response.statusCode} - $body");
     }
   } catch (e, st) {
-    Fimber.e(
+    Fimber.w(
         "Error fetching remote version info for ${modVariant.modInfo.id}: $e\n$st");
     return RemoteVersionCheckResult(
         modVariant.smolId, null, e, remoteVersionUrl);

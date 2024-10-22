@@ -12,12 +12,11 @@ class DownloadTask {
       ValueNotifier(DownloadStatus.queued);
   final ValueNotifier<DownloadedAmount> downloaded =
       ValueNotifier(DownloadedAmount(0, 0));
-  final File file;
+  final ValueNotifier<File?> file = ValueNotifier(null);
   Object? error;
 
   DownloadTask(
     this.request,
-    this.file,
   );
 
   Future<DownloadStatus> whenDownloadComplete(

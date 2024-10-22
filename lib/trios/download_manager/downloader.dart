@@ -102,6 +102,7 @@ class DownloadManager {
         final response = await httpClient.get(
           url,
           headers: {HttpHeaders.rangeHeader: 'bytes=$partialFileLength-'},
+          onProgress: createCallback(url, partialFileLength),
         );
 
         if (response.statusCode == HttpStatus.partialContent ||
@@ -127,7 +128,7 @@ class DownloadManager {
       } else {
         final response = await httpClient.get(
           url,
-          // You can add onReceiveProgress functionality if your TriOSHttpClient supports it
+          onProgress: createCallback(url, 0),
         );
 
         if ((response.statusCode) <= 299) {
@@ -492,6 +493,7 @@ class DownloadManager {
     return false;
   }
 
+  // TODO what the f is this code
   Future<bool> checkGoogleDriveLink(String url) async {
     try {
       final httpClient = ref.watch(triOSHttpClient);
@@ -510,6 +512,7 @@ class DownloadManager {
     }
   }
 
+  // TODO what the f is this code
   Future<bool> checkMegaLink(String url) async {
     try {
       final httpClient = ref.watch(triOSHttpClient);

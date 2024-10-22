@@ -58,6 +58,7 @@ class TriOSHttpClient {
     Map<String, String>? headers,
     Duration timeout = const Duration(seconds: 30),
     int tries = 2,
+    void Function(int receivedBytes, int totalBytes)? onProgress,
   }) {
     return _enqueueRequest(() {
       final Uri url = _resolveUrl(endpointOrUrl);
@@ -69,6 +70,7 @@ class TriOSHttpClient {
         () => _createRequest(
           () => client.getUrl(url),
           headers: headers,
+          onProgress: onProgress,
         ),
         timeout: timeout,
         retries: tries,
@@ -117,6 +119,7 @@ class TriOSHttpClient {
   Future<TriOSHttpResponse<dynamic>> _createRequest(
     Future<HttpClientRequest> Function() requestFactory, {
     Map<String, String>? headers,
+    void Function(int receivedBytes, int totalBytes)? onProgress,
   }) async {
     final request = await requestFactory();
     _logRequest(request);
@@ -142,8 +145,18 @@ class TriOSHttpClient {
     } else {
       // Binary response (e.g., for file downloads)
       responseBody = await response.fold<List<int>>([], (buffer, bytes) {
-        return buffer..addAll(bytes);
+        buffer.addAll(bytes);
+
+        if (onProgress != null) {
+          onProgress(buffer.length, response.contentLength);
+        }
+
+        return buffer;
       });
+    }
+
+    if (onProgress != null) {
+      onProgress(response.contentLength, response.contentLength);
     }
 
     // Return the full response encapsulated in TriOSHttpResponse

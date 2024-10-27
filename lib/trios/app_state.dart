@@ -127,7 +127,9 @@ class AppState {
         ref.watch(appSettings.select((value) => value.gameDir))?.toDirectory();
     if (gamePath == null) return false;
 
-    final filesAndFolders = [ref.read(enabledModsFile).valueOrNull?.enabledMods.toList()].whereNotNull();
+    final filesAndFolders = [
+      ref.read(enabledModsFile).valueOrNull?.enabledMods.toList()
+    ].whereNotNull();
     for (final file in filesAndFolders) {
       if (filesAndFolders.isEmpty) {
         Fimber.d("Cannot find or write to: $file");
@@ -160,10 +162,26 @@ class AppState {
 
   static final gameFolder = FutureProvider<Directory?>((ref) async =>
       ref.watch(appSettings.select((value) => value.gameDir))?.toDirectory());
+
   static final modsFolder = FutureProvider<Directory?>((ref) async {
     final gamePath = ref.watch(gameFolder).valueOrNull;
     if (gamePath == null) return null;
     return generateModsFolderPath(gamePath)?.toDirectory();
+  });
+
+  static final gameExecutable = FutureProvider<File?>((ref) async {
+    final isJre23 = ref.watch(appSettings).useJre23 ?? false;
+    final gamePath = ref.watch(gameFolder).value?.toDirectory();
+    if (gamePath == null) return null;
+
+    return isJre23
+        ? gamePath
+            .resolve(ref.watch(
+                    appSettings.select((value) => value.showJre23ConsoleWindow))
+                ? "start Miko_Rouge.bat"
+                : "Miko_Silent.bat")
+            .toFile()
+        : getGameExecutable(gamePath).toFile();
   });
 
   static final isVmParamsFileWritable = FutureProvider<bool>(
@@ -192,6 +210,83 @@ class AppState {
         .firstWhereOrNull((jre) => jre.isActive(isUsingJre23, jres));
     return activeJre;
   });
+
+  static final isGameRunning =
+      AsyncNotifierProvider<GameRunningChecker, bool>(GameRunningChecker.new);
+}
+
+class GameRunningChecker extends AsyncNotifier<bool> {
+  Timer? _timer;
+  static const int period = 1000;
+
+  @override
+  Future<bool> build() async {
+    // Retrieve the list of executable files
+    final List<File?> gameExecutables = [
+      ref.watch(AppState.gameExecutable).value
+    ];
+
+    // Extract executable names from file paths
+    final List<String> executableNames = gameExecutables
+        .whereType<File>()
+        .map((file) => file.path.split(Platform.pathSeparator).last)
+        .toList();
+
+    // Perform an initial check
+    bool isRunning = await _checkIfAnyProcessIsRunning(executableNames);
+
+    // Update the state with the initial value
+    state = AsyncValue.data(isRunning);
+
+    // Set up periodic checking every x milliseconds
+    const duration = Duration(milliseconds: period);
+    _timer = Timer.periodic(duration, (timer) async {
+      bool isRunning = await _checkIfAnyProcessIsRunning(executableNames);
+      state = AsyncValue.data(isRunning);
+    });
+
+    // Clean up the timer when the notifier is disposed
+    ref.onDispose(() {
+      _timer?.cancel();
+    });
+
+    return isRunning;
+  }
+
+  Future<bool> _checkIfAnyProcessIsRunning(List<String> identifiers) async {
+    try {
+      if (Platform.isWindows) {
+        // Use 'wmic' command on Windows to get processes with command line
+        ProcessResult result = await Process.run(
+          'wmic',
+          ['process', 'get', 'CommandLine'],
+        );
+        String output = result.stdout.toString().toLowerCase();
+        for (String identifier in identifiers) {
+          if (output.contains(identifier.toLowerCase())) {
+            return true;
+          }
+        }
+        return false;
+      } else if (Platform.isMacOS || Platform.isLinux) {
+        // Use 'ps aux' command to get processes with command line
+        ProcessResult result = await Process.run('ps', ['aux']);
+        String output = result.stdout.toString().toLowerCase();
+        for (String identifier in identifiers) {
+          if (output.contains(identifier.toLowerCase())) {
+            return true;
+          }
+        }
+        return false;
+      } else {
+        // Unsupported platform
+        return false;
+      }
+    } catch (e) {
+      // Handle any exceptions
+      return false;
+    }
+  }
 }
 
 Future<String?> readStarsectorVersionFromLog(Directory gamePath) async {

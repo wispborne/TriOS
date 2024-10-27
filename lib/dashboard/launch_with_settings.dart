@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/widgets/text_link_button.dart';
 
@@ -8,7 +11,9 @@ import '../launcher/launcher.dart';
 import '../models/launch_settings.dart';
 import '../themes/theme_manager.dart';
 import '../trios/app_state.dart';
+import '../trios/constants.dart';
 import '../trios/settings/settings.dart';
+import '../utils/util.dart';
 import '../widgets/checkbox_with_label.dart';
 
 class LaunchWithSettings extends ConsumerStatefulWidget {
@@ -132,14 +137,32 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                                       .onSecondary)),
                         ),
                       ),
-                      Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: Text(
-                              ref
-                                      .watch(AppState.starsectorVersion)
-                                      .valueOrNull ??
-                                  "Starsector version unknown",
-                              style: Theme.of(context).textTheme.labelMedium)),
+                      const SizedBox(
+                        height: 8,
+                      ),
+                      Tooltip(
+                        message: "${Constants.appName} is not needed to launch the game.",
+                        child: Builder(builder: (context) {
+                          final path = ref
+                              .watch(AppState.gameExecutable)
+                              .valueOrNull
+                              ?.absolute
+                              .path
+                              .let((p) {
+                            return currentPlatform != TargetPlatform.macOS
+                                ? p.let((p) => p.toFile().relativePath(
+                                    ref.watch(AppState.gameFolder).value!))
+                                : File(p).nameWithExtension;
+                          });
+
+                          return Text(path ?? "No game exe",
+                              style: Theme.of(context).textTheme.labelMedium);
+                        }),
+                      ),
+                      Text(
+                          ref.watch(AppState.starsectorVersion).valueOrNull ??
+                              "Starsector version unknown",
+                          style: Theme.of(context).textTheme.labelMedium),
                       // Removed because it's shown on the JRE & RAM Settings tile now.
                       // Builder(builder: (context) {
                       //   final activeJre =

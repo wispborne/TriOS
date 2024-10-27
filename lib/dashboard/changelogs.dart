@@ -128,12 +128,7 @@ class _ChangelogsState extends ConsumerState<Changelogs> {
                       TextSpan(children: textSpans),
                     );
                   })
-                : const Row(
-                    children: [
-                      Text("Loading..."),
-                      CircularProgressIndicator(),
-                    ],
-                  )),
+                : const Center(child: CircularProgressIndicator())),
       ],
     );
   }

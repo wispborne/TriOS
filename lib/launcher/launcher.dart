@@ -19,6 +19,7 @@ import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/platform_paths.dart';
+import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/stroke_text.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
@@ -75,6 +76,8 @@ class Launcher extends HookConsumerWidget {
       CurvedAnimation(parent: hoverController, curve: Curves.easeInOut),
     );
 
+    final isGameRunning = ref.watch(AppState.isGameRunning).valueOrNull;
+
     return MovingTooltipWidget(
       tooltipWidget: TooltipFrame(
           child: DefaultTextStyle.merge(
@@ -116,77 +119,80 @@ class Launcher extends HookConsumerWidget {
           ],
         ),
       )),
-      child: MouseRegion(
-        onEnter: (_) => hoverController.forward(),
-        onExit: (_) => hoverController.reverse(),
-        child: GestureDetector(
-          onTapDown: (_) => tapController.forward(),
-          onTapUp: (_) => tapController.reverse(),
-          onTapCancel: () => tapController.reverse(),
-          onTap: () {
-            try {
-              launchGame(ref, context);
-            } catch (e) {
-              Fimber.e('Error launching game: $e');
-            }
-          },
-          child: AnimatedBuilder(
-            animation: Listenable.merge([hoverController, tapController]),
-            builder: (context, child) {
-              return Transform.scale(
-                scale: scaleAnimation.value * tapScaleAnimation.value,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: colorAnimation.value,
-                    borderRadius:
-                        BorderRadius.circular(ThemeManager.cornerRadius),
-                    border: Border.all(
-                      color: theme.colorScheme.primary.darker(15),
-                      strokeAlign: BorderSide.strokeAlignOutside,
-                      width: 2,
+      child: Disable(
+        isEnabled: isGameRunning != true,
+        child: MouseRegion(
+          onEnter: (_) => hoverController.forward(),
+          onExit: (_) => hoverController.reverse(),
+          child: GestureDetector(
+            onTapDown: (_) => tapController.forward(),
+            onTapUp: (_) => tapController.reverse(),
+            onTapCancel: () => tapController.reverse(),
+            onTap: () {
+              try {
+                launchGame(ref, context);
+              } catch (e) {
+                Fimber.e('Error launching game: $e');
+              }
+            },
+            child: AnimatedBuilder(
+              animation: Listenable.merge([hoverController, tapController]),
+              builder: (context, child) {
+                return Transform.scale(
+                  scale: scaleAnimation.value * tapScaleAnimation.value,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: colorAnimation.value,
+                      borderRadius:
+                          BorderRadius.circular(ThemeManager.cornerRadius),
+                      border: Border.all(
+                        color: theme.colorScheme.primary.darker(15),
+                        strokeAlign: BorderSide.strokeAlignOutside,
+                        width: 2,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          blurRadius: boxShadowAnimation.value,
+                          blurStyle: BlurStyle.normal,
+                          color: theme.colorScheme.primary.withOpacity(0.25),
+                          offset: Offset.zero,
+                          spreadRadius: 2,
+                        ),
+                        BoxShadow(
+                          blurRadius: 4,
+                          blurStyle: BlurStyle.normal,
+                          color:
+                              Colors.black.mix(theme.colorScheme.primary, 0.5)!,
+                          offset: Offset.zero,
+                          spreadRadius: 1,
+                        ),
+                      ],
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        blurRadius: boxShadowAnimation.value,
-                        blurStyle: BlurStyle.normal,
-                        color: theme.colorScheme.primary.withOpacity(0.25),
-                        offset: Offset.zero,
-                        spreadRadius: 2,
-                      ),
-                      BoxShadow(
-                        blurRadius: 4,
-                        blurStyle: BlurStyle.normal,
-                        color:
-                            Colors.black.mix(theme.colorScheme.primary, 0.5)!,
-                        offset: Offset.zero,
-                        spreadRadius: 1,
-                      ),
-                    ],
-                  ),
-                  child: SizedBox(
-                    height: 38,
-                    width: 42,
-                    child: Transform.translate(
-                      offset: const Offset(0, -1),
-                      child: Center(
-                        child: StrokeText(
-                          'S',
-                          strokeWidth: 3,
-                          borderOnTop: true,
-                          strokeColor: theme.colorScheme.surfaceTint.darker(70),
-                          style: TextStyle(
-                            fontWeight: FontWeight.w900,
-                            fontFamily: "Orbitron",
-                            fontSize: 30,
-                            color: theme.colorScheme.primary.darker(5),
+                    child: SizedBox(
+                      height: 38,
+                      width: 42,
+                      child: Transform.translate(
+                        offset: const Offset(0, -1),
+                        child: Center(
+                          child: StrokeText(
+                            'S',
+                            strokeWidth: 3,
+                            borderOnTop: true,
+                            strokeColor: theme.colorScheme.surfaceTint.darker(70),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontFamily: "Orbitron",
+                              fontSize: 30,
+                              color: theme.colorScheme.primary.darker(5),
+                            ),
                           ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
         ),
       ),

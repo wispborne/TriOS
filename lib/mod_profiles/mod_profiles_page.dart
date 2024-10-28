@@ -55,8 +55,7 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding:
-                      const EdgeInsets.only(left: 4, right: 4, bottom: 4),
+                  padding: const EdgeInsets.only(left: 4, right: 4, bottom: 4),
                   child: Row(
                     children: [
                       Text(
@@ -73,8 +72,7 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                   child: modProfilesAsync.when(
                     data: (modProfilesObj) {
                       final modProfiles = modProfilesObj.modProfiles
-                          .sortedByButBetter(
-                              (profile) => profile.dateModified)
+                          .sortedByButBetter((profile) => profile.dateModified)
                           .reversed
                           .toList();
                       return AlignedGridView.extent(
@@ -292,6 +290,7 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
     final activeProfileId =
         ref.watch(appSettings.select((s) => s.activeModProfileId));
     final isActiveProfile = profile?.id == activeProfileId;
+    final isGameRunning = ref.watch(AppState.isGameRunning).value == true;
 
     var enabledModVariants = profile?.enabledModVariants ??
         save!.mods
@@ -554,17 +553,24 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                           ),
                         const SizedBox(width: 8),
                         if (!isSaveGame)
-                          OutlinedButton(
-                              onPressed: isActiveProfile
-                                  ? null
-                                  : () {
-                                      ref
-                                          .read(modProfilesProvider.notifier)
-                                          .showActivateDialog(
-                                              profile!, context);
-                                    },
-                              child:
-                                  Text(isActiveProfile ? 'Enabled' : 'Enable')),
+                          Disable(
+                            isEnabled: !isGameRunning,
+                            child: Tooltip(
+                              message: isGameRunning ? "Game is running" : "",
+                              child: OutlinedButton(
+                                  onPressed: isActiveProfile
+                                      ? null
+                                      : () {
+                                          ref
+                                              .read(
+                                                  modProfilesProvider.notifier)
+                                              .showActivateDialog(
+                                                  profile!, context);
+                                        },
+                                  child: Text(
+                                      isActiveProfile ? 'Enabled' : 'Enable')),
+                            ),
+                          ),
                         if (isSaveGame)
                           OutlinedButton(
                               onPressed: () {

@@ -26,6 +26,7 @@ import 'package:trios/utils/debouncer.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/search.dart';
 import 'package:trios/widgets/add_new_mods_button.dart';
+import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:trios/widgets/text_with_icon.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -125,8 +126,8 @@ class _Smol3State extends ConsumerState<Smol3>
     final versionCheckResults =
         ref.read(AppState.versionCheckResults).valueOrNull;
     const double versionSelectorWidth = 130;
-    gridColumns.addAll(createColumns(
-        versionSelectorWidth, lightTextOpacity, versionCheckResults, [], []));
+    gridColumns.addAll(createColumns(versionSelectorWidth, lightTextOpacity,
+        versionCheckResults, [], [], false));
     gridRows.addAll(createGridRows([], []));
   }
 
@@ -143,6 +144,7 @@ class _Smol3State extends ConsumerState<Smol3>
     final stateManager = ref.watch(_stateManagerProvider);
     final gridState =
         ref.watch(appSettings.select((value) => value.modsGridState));
+    final isGameRunning = ref.watch(AppState.isGameRunning).value == true;
 
     ref.watch(appSettings.select((value) => value.lastStarsectorVersion));
     final query = ref.watch(searchQuery);
@@ -170,8 +172,13 @@ class _Smol3State extends ConsumerState<Smol3>
         stateManager.refRows.addAll(createGridRows(enabledMods, disabledMods,
             shouldSort: query.isEmpty));
         stateManager.refColumns.clearFromOriginal();
-        stateManager.refColumns.addAll(createColumns(versionSelectorWidth,
-            lightTextOpacity, versionCheckResults, enabledMods, disabledMods));
+        stateManager.refColumns.addAll(createColumns(
+            versionSelectorWidth,
+            lightTextOpacity,
+            versionCheckResults,
+            enabledMods,
+            disabledMods,
+            isGameRunning));
         PlutoGridStateManager.initializeRows(
             stateManager.refColumns, stateManager.refRows);
 
@@ -250,41 +257,51 @@ class _Smol3State extends ConsumerState<Smol3>
                               padding: EdgeInsets.only(right: 8),
                               child: Text("Profile:"),
                             ),
-                            SizedBox(
-                              width: 175,
-                              child: Builder(builder: (context) {
-                                final profiles =
-                                    ref.watch(modProfilesProvider).valueOrNull;
-                                final activeProfileId = ref.watch(appSettings
-                                    .select((s) => s.activeModProfileId));
-                                return DropdownButton(
-                                    value: profiles?.modProfiles
-                                        .firstWhereOrNull(
-                                            (p) => p.id == activeProfileId),
-                                    isDense: true,
-                                    isExpanded: true,
-                                    padding: const EdgeInsets.all(4),
-                                    focusColor: Colors.transparent,
-                                    items: profiles?.modProfiles
-                                            .map((p) => DropdownMenuItem(
-                                                  value: p,
-                                                  child: Text(
-                                                    "${p.name} (${p.enabledModVariants.length} mods)",
-                                                    style: const TextStyle(
-                                                      fontSize: 13,
-                                                    ),
-                                                  ),
-                                                ))
-                                            .toList() ??
-                                        [],
-                                    onChanged: (value) {
-                                      if (value is ModProfile) {
-                                        ref
-                                            .read(modProfilesProvider.notifier)
-                                            .showActivateDialog(value, context);
-                                      }
-                                    });
-                              }),
+                            Tooltip(
+                              message: isGameRunning ? "Game is running" : "",
+                              child: Disable(
+                                isEnabled: !isGameRunning,
+                                child: SizedBox(
+                                  width: 175,
+                                  child: Builder(builder: (context) {
+                                    final profiles = ref
+                                        .watch(modProfilesProvider)
+                                        .valueOrNull;
+                                    final activeProfileId = ref.watch(
+                                        appSettings.select(
+                                            (s) => s.activeModProfileId));
+                                    return DropdownButton(
+                                        value: profiles?.modProfiles
+                                            .firstWhereOrNull(
+                                                (p) => p.id == activeProfileId),
+                                        isDense: true,
+                                        isExpanded: true,
+                                        padding: const EdgeInsets.all(4),
+                                        focusColor: Colors.transparent,
+                                        items: profiles?.modProfiles
+                                                .map((p) => DropdownMenuItem(
+                                                      value: p,
+                                                      child: Text(
+                                                        "${p.name} (${p.enabledModVariants.length} mods)",
+                                                        style: const TextStyle(
+                                                          fontSize: 13,
+                                                        ),
+                                                      ),
+                                                    ))
+                                                .toList() ??
+                                            [],
+                                        onChanged: (value) {
+                                          if (value is ModProfile) {
+                                            ref
+                                                .read(modProfilesProvider
+                                                    .notifier)
+                                                .showActivateDialog(
+                                                    value, context);
+                                          }
+                                        });
+                                  }),
+                                ),
+                              ),
                             ),
                             CopyModListButtonLarge(
                                 mods: mods, enabledMods: enabledMods)
@@ -517,6 +534,7 @@ class _Smol3State extends ConsumerState<Smol3>
     Map<String, RemoteVersionCheckResult>? versionCheckResults,
     List<Mod> enabledMods,
     List<Mod> disabledMods,
+    bool isGameRunning,
   ) {
     return [
       PlutoColumn(
@@ -578,10 +596,13 @@ class _Smol3State extends ConsumerState<Smol3>
                         showSwapToVersion: true),
                     child: tooltippy(
                       RowItemContainer(
-                        child: ModVersionSelectionDropdown(
-                            mod: mod,
-                            width: versionSelectorWidth,
-                            showTooltip: false),
+                        child: Disable(
+                          isEnabled: !isGameRunning,
+                          child: ModVersionSelectionDropdown(
+                              mod: mod,
+                              width: versionSelectorWidth,
+                              showTooltip: false),
+                        ),
                       ),
                       mod.modVariants,
                     ));
@@ -949,47 +970,50 @@ class _Smol3State extends ConsumerState<Smol3>
                                     versionCheckComparison?.comparisonInt,
                                     localVersionCheck,
                                     remoteVersionCheck),
-                            child: InkWell(
-                              onTap: () {
-                                if (remoteVersionCheck?.remoteVersion != null &&
-                                    versionCheckComparison?.comparisonInt ==
-                                        -1) {
-                                  ref
-                                      .read(downloadManager.notifier)
-                                      .downloadUpdateViaBrowser(
-                                          remoteVersionCheck!.remoteVersion!,
-                                          context,
-                                          activateVariantOnComplete: false,
-                                          modInfo: bestVersion.modInfo);
-                                } else {
-                                  showDialog(
-                                      context: context,
-                                      builder: (context) => AlertDialog(
-                                          content: ModListBasicEntry
-                                              .changeAndVersionCheckAlertDialogContent(
-                                                  changelogUrl,
-                                                  localVersionCheck,
-                                                  remoteVersionCheck,
-                                                  versionCheckComparison
-                                                      ?.comparisonInt)));
-                                }
-                              },
-                              onSecondaryTap: () => showDialog(
-                                  context: context,
-                                  builder: (context) => AlertDialog(
-                                      content: ModListBasicEntry
-                                          .changeAndVersionCheckAlertDialogContent(
-                                              changelogUrl,
-                                              localVersionCheck,
-                                              remoteVersionCheck,
-                                              versionCheckComparison
-                                                  ?.comparisonInt))),
-                              child: Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 5.0),
-                                child: VersionCheckIcon.fromComparison(
-                                    comparison: versionCheckComparison,
-                                    theme: theme),
+                            child: Disable(
+                              isEnabled: !isGameRunning,
+                              child: InkWell(
+                                onTap: () {
+                                  if (remoteVersionCheck?.remoteVersion != null &&
+                                      versionCheckComparison?.comparisonInt ==
+                                          -1) {
+                                    ref
+                                        .read(downloadManager.notifier)
+                                        .downloadUpdateViaBrowser(
+                                            remoteVersionCheck!.remoteVersion!,
+                                            context,
+                                            activateVariantOnComplete: false,
+                                            modInfo: bestVersion.modInfo);
+                                  } else {
+                                    showDialog(
+                                        context: context,
+                                        builder: (context) => AlertDialog(
+                                            content: ModListBasicEntry
+                                                .changeAndVersionCheckAlertDialogContent(
+                                                    changelogUrl,
+                                                    localVersionCheck,
+                                                    remoteVersionCheck,
+                                                    versionCheckComparison
+                                                        ?.comparisonInt)));
+                                  }
+                                },
+                                onSecondaryTap: () => showDialog(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                        content: ModListBasicEntry
+                                            .changeAndVersionCheckAlertDialogContent(
+                                                changelogUrl,
+                                                localVersionCheck,
+                                                remoteVersionCheck,
+                                                versionCheckComparison
+                                                    ?.comparisonInt))),
+                                child: Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(horizontal: 5.0),
+                                  child: VersionCheckIcon.fromComparison(
+                                      comparison: versionCheckComparison,
+                                      theme: theme),
+                                ),
                               ),
                             ),
                           ),

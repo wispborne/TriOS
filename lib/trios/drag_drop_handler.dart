@@ -38,9 +38,15 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
 
   @override
   Widget build(BuildContext context) {
+    final isGameRunning = ref.watch(AppState.isGameRunning).value == true;
+
     return DropRegion(
       formats: Formats.standardFormats,
       onPerformDrop: (detail) async {
+        if (isGameRunning) {
+          return;
+        }
+
         // The onDragDone callback is called twice for the same drop event, add a timer to avoid it.
         if (DateTime.now().millisecondsSinceEpoch - _lastDropTimestamp <
             _minDropInterval) {
@@ -227,44 +233,48 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
                             child: Center(
                               child: Padding(
                                   padding: const EdgeInsets.all(8.0),
-                                  child: FutureBuilder(
-                                      future: Future.wait(
-                                          hoveredEvents!.map((event) async {
-                                        if (event.dataReader == null) {
-                                          return null;
-                                        } else if (event.dataReader!
-                                            .canProvide(Formats.fileUri)) {
-                                          return await getFileFromReader(
-                                              event.dataReader!);
-                                        } else if (event.dataReader!
-                                            .canProvide(Formats.uri)) {
-                                          return (await getUriFromReader(
-                                                  event.dataReader!))
-                                              ?.uri;
-                                        }
-                                      })),
-                                      builder: (context, future) {
-                                        return IntrinsicHeight(
-                                          child: IntrinsicWidth(
-                                            child: ConstrainedBox(
-                                              constraints: const BoxConstraints(
-                                                  minWidth: 400),
-                                              child: FileCard(
-                                                entities: future.data
-                                                    .orEmpty()
-                                                    .whereNotNull()
-                                                    .whereType<File>()
-                                                    .toList(),
-                                                urls: future.data
-                                                    .orEmpty()
-                                                    .whereNotNull()
-                                                    .whereType<Uri>()
-                                                    .toList(),
+                                  child: isGameRunning
+                                      ? const Text(
+                                          "Game is running. Close to install mods.")
+                                      : FutureBuilder(
+                                          future: Future.wait(
+                                              hoveredEvents!.map((event) async {
+                                            if (event.dataReader == null) {
+                                              return null;
+                                            } else if (event.dataReader!
+                                                .canProvide(Formats.fileUri)) {
+                                              return await getFileFromReader(
+                                                  event.dataReader!);
+                                            } else if (event.dataReader!
+                                                .canProvide(Formats.uri)) {
+                                              return (await getUriFromReader(
+                                                      event.dataReader!))
+                                                  ?.uri;
+                                            }
+                                          })),
+                                          builder: (context, future) {
+                                            return IntrinsicHeight(
+                                              child: IntrinsicWidth(
+                                                child: ConstrainedBox(
+                                                  constraints:
+                                                      const BoxConstraints(
+                                                          minWidth: 400),
+                                                  child: FileCard(
+                                                    entities: future.data
+                                                        .orEmpty()
+                                                        .whereNotNull()
+                                                        .whereType<File>()
+                                                        .toList(),
+                                                    urls: future.data
+                                                        .orEmpty()
+                                                        .whereNotNull()
+                                                        .whereType<Uri>()
+                                                        .toList(),
+                                                  ),
+                                                ),
                                               ),
-                                            ),
-                                          ),
-                                        );
-                                      })),
+                                            );
+                                          })),
                             ),
                           )
                         : null),
@@ -278,7 +288,7 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
     final completer = Completer<String?>();
     reader.getValue(Formats.fileUri, (fileUri) {
       final filePath = fileUri?.toFilePath(windows: Platform.isWindows);
-      Fimber.v(() =>"Got dropped file uri: $filePath");
+      Fimber.v(() => "Got dropped file uri: $filePath");
       completer.complete(filePath);
     });
     return (await completer.future)?.let((path) => File(path));
@@ -287,7 +297,7 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
   Future<NamedUri?> getUriFromReader(DataReader reader) async {
     final completer = Completer<NamedUri?>();
     reader.getValue(Formats.uri, (uri) {
-      Fimber.v(() =>"Got dropped uri: ${uri?.uri}");
+      Fimber.v(() => "Got dropped uri: ${uri?.uri}");
       completer.complete(uri);
     });
     return await completer.future;

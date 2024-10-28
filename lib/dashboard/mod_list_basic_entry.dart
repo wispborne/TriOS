@@ -10,6 +10,7 @@ import 'package:trios/models/version_checker_info.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
+import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/tooltip_frame.dart';
 
@@ -24,8 +25,10 @@ import 'changelogs.dart';
 /// Displays just the mods specified.
 class ModListBasicEntry extends ConsumerStatefulWidget {
   final Mod mod;
+  final bool isDisabled;
 
-  const ModListBasicEntry({super.key, required this.mod});
+  const ModListBasicEntry(
+      {super.key, required this.mod, this.isDisabled = false});
 
   @override
   ConsumerState createState() => _ModListBasicEntryState();
@@ -249,54 +252,63 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                         localVersionCheck,
                         remoteVersionCheck,
                       ),
-                      child: InkWell(
-                        onTap: () {
-                          if (remoteVersionCheck?.remoteVersion != null &&
-                              versionCheckComparison == -1) {
-                            ref
-                                .read(downloadManager.notifier)
-                                .downloadUpdateViaBrowser(
-                                    remoteVersionCheck!.remoteVersion!, context,
-                                    activateVariantOnComplete: false,
-                                    modInfo: modInfo);
-                          } else {
-                            showDialog(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                    content: ModListBasicEntry
-                                        .changeAndVersionCheckAlertDialogContent(
-                                            changelogUrl,
-                                            localVersionCheck,
-                                            remoteVersionCheck,
-                                            versionCheckComparison)));
-                          }
-                        },
-                        onSecondaryTap: () => showDialog(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                                content: ModListBasicEntry
-                                    .changeAndVersionCheckAlertDialogContent(
-                                        changelogUrl,
-                                        localVersionCheck,
-                                        remoteVersionCheck,
-                                        versionCheckComparison))),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 5.0),
-                          child: VersionCheckIcon.fromComparison(
-                              comparison: versionCheckComparisonResult,
-                              theme: theme),
+                      child: Disable(
+                        isEnabled: !widget.isDisabled,
+                        child: InkWell(
+                          onTap: () {
+                            if (remoteVersionCheck?.remoteVersion != null &&
+                                versionCheckComparison == -1) {
+                              ref
+                                  .read(downloadManager.notifier)
+                                  .downloadUpdateViaBrowser(
+                                      remoteVersionCheck!.remoteVersion!,
+                                      context,
+                                      activateVariantOnComplete: false,
+                                      modInfo: modInfo);
+                            } else {
+                              showDialog(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                      content: ModListBasicEntry
+                                          .changeAndVersionCheckAlertDialogContent(
+                                              changelogUrl,
+                                              localVersionCheck,
+                                              remoteVersionCheck,
+                                              versionCheckComparison)));
+                            }
+                          },
+                          onSecondaryTap: () => showDialog(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                  content: ModListBasicEntry
+                                      .changeAndVersionCheckAlertDialogContent(
+                                          changelogUrl,
+                                          localVersionCheck,
+                                          remoteVersionCheck,
+                                          versionCheckComparison))),
+                          child: Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 5.0),
+                            child: VersionCheckIcon.fromComparison(
+                                comparison: versionCheckComparisonResult,
+                                theme: theme),
+                          ),
                         ),
                       ),
                     ),
                   ],
                 ),
-                checkWrapper: (child) => infoTooltip(child: child),
+                checkWrapper: (child) => infoTooltip(
+                    child:
+                        Disable(isEnabled: !widget.isDisabled, child: child)),
                 textPadding: const EdgeInsets.only(left: 0, bottom: 2),
                 value: isEnabled,
                 expand: true,
                 onChanged: (_) async {
-                  // if (enabledModIds == null) return;
-                  var isCurrentlyEnabled = isEnabled;
+                  if (widget.isDisabled) {
+                    return;
+                  }
+                  final isCurrentlyEnabled = isEnabled;
 
                   // We can disable mods without checking compatibility, but we can't enable them without checking.
                   if (!isCurrentlyEnabled) {
@@ -332,7 +344,7 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                     }
                   }
 
-                  var modsFolder =
+                  final modsFolder =
                       ref.read(appSettings.select((value) => value.modsDir));
                   if (modsFolder == null) return;
 

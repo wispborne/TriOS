@@ -9,6 +9,7 @@ import 'package:trios/models/enabled_mods.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
+import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/disable_if_cannot_write_mods.dart';
 import 'package:vs_scrollbar/vs_scrollbar.dart';
 
@@ -204,6 +205,8 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                 final listItems = updatesToDisplay +
                     (modsWithUpdates.isEmpty ? [] : [null]) +
                     (filteredModList.sortedByName.toList());
+                final isGameRunning =
+                    ref.watch(AppState.isGameRunning).requireValue;
 
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -256,24 +259,29 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                               ),
                                               const Spacer(),
                                               Tooltip(
-                                                  message:
-                                                      "Download all ${modsWithUpdates.whereNotNull().length} updates",
-                                                  child: SizedBox(
-                                                    child: TextButton.icon(
-                                                        label: const Text(
-                                                            "Update All"),
-                                                        onPressed: () {
-                                                          _onClickedDownloadModUpdatesDialog(
-                                                              modsWithUpdates,
-                                                              versionCheck,
-                                                              context);
-                                                        },
-                                                        icon: Icon(Icons.update,
-                                                            size: 24,
-                                                            color: Theme.of(
-                                                                    context)
-                                                                .colorScheme
-                                                                .primary)),
+                                                  message: isGameRunning
+                                                      ? "Game is running"
+                                                      : "Download all ${modsWithUpdates.whereNotNull().length} updates",
+                                                  child: Disable(
+                                                    isEnabled: !isGameRunning,
+                                                    child: SizedBox(
+                                                      child: TextButton.icon(
+                                                          label: const Text(
+                                                              "Update All"),
+                                                          onPressed: () {
+                                                            _onClickedDownloadModUpdatesDialog(
+                                                                modsWithUpdates,
+                                                                versionCheck,
+                                                                context);
+                                                          },
+                                                          icon: Icon(
+                                                              Icons.update,
+                                                              size: 24,
+                                                              color: Theme.of(
+                                                                      context)
+                                                                  .colorScheme
+                                                                  .primary)),
+                                                    ),
                                                   )),
                                             ],
                                           ),
@@ -311,7 +319,10 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                 return ContextMenuRegion(
                                   contextMenu:
                                       buildModContextMenu(mod, ref, context),
-                                  child: ModListBasicEntry(mod: mod),
+                                  child: ModListBasicEntry(
+                                    mod: mod,
+                                    isDisabled: isGameRunning,
+                                  ),
                                 );
                               }),
                         ),

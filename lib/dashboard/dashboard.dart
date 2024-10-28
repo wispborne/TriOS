@@ -6,6 +6,7 @@ import 'package:trios/chipper/chipper_home.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/widgets/disable.dart';
 
 import '../chipper/chipper_state.dart';
 import '../chipper/views/chipper_log.dart';
@@ -38,9 +39,10 @@ class _DashboardState extends ConsumerState<Dashboard>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-
+    final isGameRunning = ref.watch(AppState.isGameRunning).value == true;
     final logfile =
         ref.watch(ChipperState.logRawContents).valueOrNull?.filepath?.toFile();
+
     return Theme(
       data: Theme.of(context).lowContrastCardTheme(),
       child: Row(
@@ -48,32 +50,38 @@ class _DashboardState extends ConsumerState<Dashboard>
           Expanded(
             child: Column(
               children: [
-                Card(
-                    child: Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: Column(
-                    children: [
-                      const LaunchWithSettings(),
-                      if (Platform.isWindows)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 4),
-                          child: TriOSExpansionTile(
-                            title: const Text("JRE & RAM Settings"),
-                            leading: const Icon(Icons.speed, size: 32),
-                            subtitle: Text(
-                                "Java ${ref.watch(AppState.activeJre).valueOrNull?.version.versionString ?? "(unknown JRE)"} • ${ref.watch(currentRamAmountInMb).valueOrNull ?? "(unknown RAM)"} MB"),
-                            collapsedBackgroundColor: Theme.of(context)
-                                .colorScheme
-                                .surfaceContainerLow
-                                .withOpacity(0.5),
-                            children: const [
-                              GamePerformanceWidget(),
-                            ],
-                          ),
-                        )
-                    ],
+                Tooltip(
+                  message: isGameRunning ? "Game is running" : "",
+                  child: Disable(
+                    isEnabled: !isGameRunning,
+                    child: Card(
+                        child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Column(
+                        children: [
+                          const LaunchWithSettings(),
+                          if (Platform.isWindows)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: TriOSExpansionTile(
+                                title: const Text("JRE & RAM Settings"),
+                                leading: const Icon(Icons.speed, size: 32),
+                                subtitle: Text(
+                                    "Java ${ref.watch(AppState.activeJre).valueOrNull?.version.versionString ?? "(unknown JRE)"} • ${ref.watch(currentRamAmountInMb).valueOrNull ?? "(unknown RAM)"} MB"),
+                                collapsedBackgroundColor: Theme.of(context)
+                                    .colorScheme
+                                    .surfaceContainerLow
+                                    .withOpacity(0.5),
+                                children: const [
+                                  GamePerformanceWidget(),
+                                ],
+                              ),
+                            )
+                        ],
+                      ),
+                    )),
                   ),
-                )),
+                ),
                 Expanded(
                   child: Card(
                     child: Padding(

@@ -217,14 +217,13 @@ class AppState {
 
 class GameRunningChecker extends AsyncNotifier<bool> {
   Timer? _timer;
-  static const int period = 1000;
+  static const int period = 1500;
+  List<File?> gameExecutables = [];
 
   @override
   Future<bool> build() async {
     // Retrieve the list of executable files
-    final List<File?> gameExecutables = [
-      ref.watch(AppState.gameExecutable).value
-    ];
+    gameExecutables = [ref.watch(AppState.gameExecutable).value];
 
     // Extract executable names from file paths
     final List<String> executableNames = gameExecutables
@@ -240,9 +239,17 @@ class GameRunningChecker extends AsyncNotifier<bool> {
 
     // Set up periodic checking every x milliseconds
     const duration = Duration(milliseconds: period);
+    final isWindowFocused =
+        ref.watch(AppState.isWindowFocused.notifier).state;
+
+    _timer?.cancel();
     _timer = Timer.periodic(duration, (timer) async {
-      bool isRunning = await _checkIfAnyProcessIsRunning(executableNames);
-      state = AsyncValue.data(isRunning);
+      if (!isWindowFocused) {
+        return;
+      } else {
+        bool isRunning = await _checkIfAnyProcessIsRunning(executableNames);
+        state = AsyncValue.data(isRunning);
+      }
     });
 
     // Clean up the timer when the notifier is disposed

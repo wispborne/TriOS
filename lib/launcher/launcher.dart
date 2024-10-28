@@ -76,51 +76,53 @@ class Launcher extends HookConsumerWidget {
       CurvedAnimation(parent: hoverController, curve: Curves.easeInOut),
     );
 
-    final isGameRunning = ref.watch(AppState.isGameRunning).valueOrNull;
+    final isGameRunning = ref.watch(AppState.isGameRunning).valueOrNull == true;
 
     return MovingTooltipWidget(
       tooltipWidget: TooltipFrame(
           child: DefaultTextStyle.merge(
         style: theme.textTheme.labelLarge,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Launch ${ref.watch(AppState.starsectorVersion).valueOrNull}',
-              style: theme.textTheme.labelLarge
-                  ?.copyWith(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            Text.rich(
-              TextSpan(
+        child: isGameRunning
+            ? const Text("Game is running")
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const TextSpan(
-                    text: "Java: ",
+                  Text(
+                    'Launch ${ref.watch(AppState.starsectorVersion).valueOrNull}',
+                    style: theme.textTheme.labelLarge
+                        ?.copyWith(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
-                  TextSpan(
-                    text: ref
-                            .watch(AppState.activeJre)
-                            .valueOrNull
-                            ?.version
-                            .versionString ??
-                        "(unknown JRE)",
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const TextSpan(
-                    text: "\nRAM: ",
-                  ),
-                  TextSpan(
-                    text:
-                        "${ref.watch(currentRamAmountInMb).valueOrNull ?? "(unknown RAM)"} MB",
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  Text.rich(
+                    TextSpan(
+                      children: [
+                        const TextSpan(
+                          text: "Java: ",
+                        ),
+                        TextSpan(
+                          text: ref
+                                  .watch(AppState.activeJre)
+                                  .valueOrNull
+                                  ?.version
+                                  .versionString ??
+                              "(unknown JRE)",
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        const TextSpan(
+                          text: "\nRAM: ",
+                        ),
+                        TextSpan(
+                          text:
+                              "${ref.watch(currentRamAmountInMb).valueOrNull ?? "(unknown RAM)"} MB",
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
-            ),
-          ],
-        ),
       )),
       child: Disable(
-        isEnabled: isGameRunning != true,
+        isEnabled: !isGameRunning,
         child: MouseRegion(
           onEnter: (_) => hoverController.forward(),
           onExit: (_) => hoverController.reverse(),
@@ -178,7 +180,8 @@ class Launcher extends HookConsumerWidget {
                             'S',
                             strokeWidth: 3,
                             borderOnTop: true,
-                            strokeColor: theme.colorScheme.surfaceTint.darker(70),
+                            strokeColor:
+                                theme.colorScheme.surfaceTint.darker(70),
                             style: TextStyle(
                               fontWeight: FontWeight.w900,
                               fontFamily: "Orbitron",

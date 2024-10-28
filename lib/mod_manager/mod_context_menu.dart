@@ -24,10 +24,11 @@ ContextMenu buildModContextMenu(Mod mod, WidgetRef ref, BuildContext context,
   final currentStarsectorVersion =
       ref.read(appSettings.select((s) => s.lastStarsectorVersion));
   final modVariant = mod.findFirstEnabledOrHighestVersion!;
+  final isGameRunning = ref.watch(AppState.isGameRunning).value == true;
 
   return ContextMenu(
     entries: <ContextMenuEntry>[
-      if (showSwapToVersion && mod.modVariants.length > 1)
+      if (!isGameRunning && showSwapToVersion && mod.modVariants.length > 1)
         menuItemChangeVersion(mod, ref),
       menuItemOpenFolder(mod),
       menuItemOpenModInfoFile(mod),
@@ -47,8 +48,9 @@ ContextMenu buildModContextMenu(Mod mod, WidgetRef ref, BuildContext context,
               "${Constants.forumModPageUrl}${modVariant.versionCheckerInfo?.modThreadId}"));
         },
       ),
-      menuItemDeleteFolder(mod, context, ref),
+      if (!isGameRunning) menuItemDeleteFolder(mod, context, ref),
       if (currentStarsectorVersion != null &&
+          !isGameRunning &&
           Version.parse(modVariant.modInfo.gameVersion ?? "0.0.0",
                   sanitizeInput: true) !=
               Version.parse(currentStarsectorVersion, sanitizeInput: true))
@@ -60,7 +62,7 @@ ContextMenu buildModContextMenu(Mod mod, WidgetRef ref, BuildContext context,
                   modVariant, currentStarsectorVersion);
               ref.invalidate(AppState.modVariants);
             }),
-      menuItemDebugging(context, mod, ref),
+      menuItemDebugging(context, mod, ref, isGameRunning),
     ],
     padding: const EdgeInsets.all(8.0),
   );
@@ -236,7 +238,8 @@ MenuItem menuItemDeleteFolder(Mod mod, BuildContext context, WidgetRef ref) {
   }
 }
 
-MenuItem menuItemDebugging(BuildContext context, Mod mod, WidgetRef ref) {
+MenuItem menuItemDebugging(
+    BuildContext context, Mod mod, WidgetRef ref, bool isGameRunning) {
   final latestVersionWithDirectDownload = mod.modVariants
       .sortedDescending()
       .firstWhereOrNull((v) => v.versionCheckerInfo?.hasDirectDownload == true);
@@ -252,26 +255,27 @@ MenuItem menuItemDebugging(BuildContext context, Mod mod, WidgetRef ref) {
           icon: Icons.info_outline,
           onSelected: () => showDebugViewDialog(context, mod),
         ),
-        MenuItem(
-            label: (redownloadEnabled)
-                ? "Redownload & Reinstall"
-                : "Redownload unavailable",
-            icon: redownloadEnabled ? Icons.downloading : null,
-            onSelected: () {
-              if (redownloadEnabled) {
-                ref.read(downloadManager.notifier).downloadAndInstallMod(
-                    latestVersionWithDirectDownload.modInfo.nameOrId,
-                    latestVersionWithDirectDownload
-                        .versionCheckerInfo!.directDownloadURL!,
-                    context,
-                    activateVariantOnComplete: false,
-                    modInfo: latestVersionWithDirectDownload.modInfo);
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                  content: Text(
-                      "This mod does not support direct download. Please manually redownload/reinstall."),
-                ));
-              }
-            }),
+        if (!isGameRunning)
+          MenuItem(
+              label: (redownloadEnabled)
+                  ? "Redownload & Reinstall"
+                  : "Redownload unavailable",
+              icon: redownloadEnabled ? Icons.downloading : null,
+              onSelected: () {
+                if (redownloadEnabled) {
+                  ref.read(downloadManager.notifier).downloadAndInstallMod(
+                      latestVersionWithDirectDownload.modInfo.nameOrId,
+                      latestVersionWithDirectDownload
+                          .versionCheckerInfo!.directDownloadURL!,
+                      context,
+                      activateVariantOnComplete: false,
+                      modInfo: latestVersionWithDirectDownload.modInfo);
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content: Text(
+                        "This mod does not support direct download. Please manually redownload/reinstall."),
+                  ));
+                }
+              }),
       ]);
 }

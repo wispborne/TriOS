@@ -399,6 +399,28 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                             ),
                           ),
                         ),
+                        const SizedBox(height: 8),
+                        Tooltip(
+                          message:
+                              "When checked, updating an enabled mod switches to the new version.",
+                          child: CheckboxWithLabel(
+                            value: ref.watch(appSettings
+                                    .select((s) => s.modUpdateBehavior)) ==
+                                ModUpdateBehavior
+                                    .switchToNewVersionIfWasEnabled,
+                            onChanged: (newValue) {
+                              setState(() {
+                                ref.read(appSettings.notifier).update((s) =>
+                                    s.copyWith(
+                                        modUpdateBehavior: newValue == true
+                                            ? ModUpdateBehavior
+                                                .switchToNewVersionIfWasEnabled
+                                            : ModUpdateBehavior.doNotChange));
+                              });
+                            },
+                            labelWidget: const Text("Auto-swap to new versions"),
+                          ),
+                        ),
                       ]);
                     }),
                     SettingsGroup(name: "Misc", children: [
@@ -482,7 +504,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         child: ConstrainedBox(
                           constraints: const BoxConstraints(maxWidth: 400),
                           child: Tooltip(
-                            message: "Affects how quickly Version Checker searches. If version checker is showing timeout errors, reduce this number.",
+                            message:
+                                "Affects how quickly Version Checker searches. If version checker is showing timeout errors, reduce this number.",
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -491,8 +514,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                     style: theme.textTheme.bodyLarge),
                                 Slider(
                                   value: ref
-                                      .watch(appSettings.select(
-                                          (value) => value.maxHttpRequestsAtOnce))
+                                      .watch(appSettings.select((value) =>
+                                          value.maxHttpRequestsAtOnce))
                                       .toDouble()
                                       .clamp(1, 100),
                                   min: 1,

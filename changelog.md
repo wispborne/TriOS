@@ -1,6 +1,7 @@
 # 0.3.3
 - Added
   - Now checks if the game is running and disables mod changes through TriOS.
+  - Setting to switch to a newly updated version automatically.
 - Changed
   - Downloads now show up immediately when clicked.
     - Before, it would wait until it retrieved the file name, which in the case of Google Drive, could take a while.

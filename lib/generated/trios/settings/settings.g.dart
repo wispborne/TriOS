@@ -56,6 +56,9 @@ _$SettingsImpl _$$SettingsImplFromJson(Map<String, dynamic> json) =>
       autoEnableAndDisableDependencies:
           json['autoEnableAndDisableDependencies'] as bool? ?? false,
       enableLauncherPrecheck: json['enableLauncherPrecheck'] as bool? ?? true,
+      modUpdateBehavior: $enumDecodeNullable(
+              _$ModUpdateBehaviorEnumMap, json['modUpdateBehavior']) ??
+          ModUpdateBehavior.switchToNewVersionIfWasEnabled,
       userId: json['userId'] as String? ?? "",
       activeModProfileId: json['activeModProfileId'] as String?,
     );
@@ -95,6 +98,8 @@ Map<String, dynamic> _$$SettingsImplToJson(_$SettingsImpl instance) =>
       'autoEnableAndDisableDependencies':
           instance.autoEnableAndDisableDependencies,
       'enableLauncherPrecheck': instance.enableLauncherPrecheck,
+      'modUpdateBehavior':
+          _$ModUpdateBehaviorEnumMap[instance.modUpdateBehavior]!,
       'userId': instance.userId,
       'activeModProfileId': instance.activeModProfileId,
     };
@@ -115,4 +120,10 @@ const _$FolderNamingSettingEnumMap = {
       'doNotChangeNameForHighestVersion',
   FolderNamingSetting.allFoldersVersioned: 'allFoldersVersioned',
   FolderNamingSetting.doNotChangeNamesEver: 'doNotChangeNamesEver',
+};
+
+const _$ModUpdateBehaviorEnumMap = {
+  ModUpdateBehavior.doNotChange: 'doNotChange',
+  ModUpdateBehavior.switchToNewVersionIfWasEnabled:
+      'switchToNewVersionIfWasEnabled',
 };

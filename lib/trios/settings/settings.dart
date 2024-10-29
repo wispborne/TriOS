@@ -14,6 +14,7 @@ import '../../models/launch_settings.dart';
 import '../app_state.dart';
 
 part '../../generated/trios/settings/settings.freezed.dart';
+
 part '../../generated/trios/settings/settings.g.dart';
 
 const sharedPrefsSettingsKey = "settings";
@@ -71,13 +72,14 @@ class Settings with _$Settings {
     @Default(7) final int toastDurationSeconds,
     @Default(20) final int maxHttpRequestsAtOnce,
     @Default(FolderNamingSetting.doNotChangeNameForHighestVersion)
-        final FolderNamingSetting folderNamingSetting,
+    final FolderNamingSetting folderNamingSetting,
     final int? keepLastNVersions,
     final bool? allowCrashReporting,
     @Default(false) final bool updateToPrereleases,
     @Default(false) final bool autoEnableAndDisableDependencies,
     @Default(true) final bool enableLauncherPrecheck,
-
+    @Default(ModUpdateBehavior.switchToNewVersionIfWasEnabled)
+    final ModUpdateBehavior modUpdateBehavior,
     @Default("") final String userId, // For Sentry
 
     // Mod profiles are stored in [ModProfilesSettings] and [ModProfileManagerNotifier],
@@ -103,6 +105,8 @@ enum FolderNamingSetting {
 
   final num value;
 }
+
+enum ModUpdateBehavior { doNotChange, switchToNewVersionIfWasEnabled }
 
 /// When settings change, save them to shared prefs
 class SettingSaver extends Notifier<Settings> {

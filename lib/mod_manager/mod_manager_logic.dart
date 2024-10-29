@@ -44,8 +44,9 @@ class ModManagerNotifier extends AsyncNotifier<void> {
 
   Future<List<InstallModResult>> installModFromArchiveWithDefaultUI(
     File archiveFile,
-    BuildContext context,
-  ) async {
+    BuildContext context, {
+    bool forceDontEnableModUpdates = false,
+  }) async {
     try {
       final installModsResult = await installModFromArchive(
           ArchiveModInstallSource(archiveFile),
@@ -257,13 +258,51 @@ class ModManagerNotifier extends AsyncNotifier<void> {
       if (installModsResult.isEmpty) {
         return [];
       }
-      ref.invalidate(AppState.modVariants);
-      // We have toasts now.
-      // showSnackBar(
-      //     context: context,
-      //     content: Text(installModsResult.length == 1
-      //         ? "Installed: ${installModsResult.first.modInfo.name} ${installModsResult.first.modInfo.version}"
-      //         : "Installed ${installModsResult.length} mods (${installModsResult.map((it) => "${it.modInfo.name} ${it.modInfo.version}").join(", ")})"));
+
+      await ref.read(AppState.modVariants.notifier).reloadModVariants();
+      final refreshedVariants = ref.read(AppState.modVariants).value ?? [];
+
+      if (!forceDontEnableModUpdates &&
+          ref.read(appSettings.select((s) => s.modUpdateBehavior)) ==
+              ModUpdateBehavior.switchToNewVersionIfWasEnabled) {
+        final mods = ref.read(AppState.mods);
+        final successfulUpdates =
+            installModsResult.where((it) => it.err == null);
+        final enabledVariants = <ModVariant>[];
+
+        for (final installed in successfulUpdates) {
+          // Find the variant post-install so we can activate it.
+          final actualVariant = refreshedVariants.firstWhereOrNull(
+              (variant) => variant.smolId == installed.modInfo.smolId);
+          try {
+            // If the mod existed and was enabled, switch to the newly downloaded version.
+
+            if (actualVariant != null &&
+                actualVariant.mod(mods)?.isEnabledInGame == true) {
+              enabledVariants.add(actualVariant);
+              await ref
+                  .read(AppState.modVariants.notifier)
+                  .changeActiveModVariant(
+                      actualVariant.mod(mods)!, actualVariant);
+            }
+          } catch (ex) {
+            Fimber.w(
+                "Failed to activate mod ${installed.modInfo.smolId} after updating: $ex");
+            // }
+          }
+        }
+
+        // Refresh all variants of touched mods.
+        // final modifiedVariants = enabledVariants
+        //     .map((it) => it.mod(mods))
+        //     .whereNotNull()
+        //     .toSet()
+        //     .flatMap((it) => it.modVariants)
+        //     .toList();
+        await ref
+            .read(AppState.modVariants.notifier)
+            .reloadModVariants();
+      }
 
       final List<InstallModResult> errors =
           installModsResult.where((it) => it.err != null).toList();

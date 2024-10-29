@@ -166,6 +166,34 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                   style: theme.textTheme.labelMedium),
                             ),
                           ),
+                          SizedBox(
+                            height: 20,
+                            child: Tooltip(
+                              message:
+                                  "When checked, updating an enabled mod switches to the new version.",
+                              child: CheckboxWithLabel(
+                                value: ref.watch(appSettings
+                                        .select((s) => s.modUpdateBehavior)) ==
+                                    ModUpdateBehavior
+                                        .switchToNewVersionIfWasEnabled,
+                                onChanged: (newValue) {
+                                  setState(() {
+                                    ref.read(appSettings.notifier).update((s) =>
+                                        s.copyWith(
+                                            modUpdateBehavior: newValue == true
+                                                ? ModUpdateBehavior
+                                                    .switchToNewVersionIfWasEnabled
+                                                : ModUpdateBehavior
+                                                    .doNotChange));
+                                  });
+                                },
+                                checkboxScale: 0.8,
+                                textPadding: const EdgeInsets.all(0),
+                                labelWidget: Text("Swap on Update",
+                                    style: theme.textTheme.labelMedium),
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ),

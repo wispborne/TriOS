@@ -3,7 +3,7 @@
   - Now checks if the game is running and disables mod changes through TriOS.
   - Setting to switch to a newly updated version of a mod automatically.
 - Fixed
-  - Google Drive downloads not working (think I broke them in a recent update).
+  - Some Google Drive downloads not working (if they didn't link directly to the download).
 - Changed
   - Downloads now show up immediately when clicked.
     - Before, it would wait until it retrieved the file name, which in the case of Google Drive, could take a while.

@@ -13,6 +13,7 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/widgets/download_progress_indicator.dart';
 
+import '../../utils/util.dart';
 import '../../widgets/self_update_toast.dart';
 import '../app_state.dart';
 import '../download_manager/download_manager.dart';
@@ -187,6 +188,21 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
             ],
           ),
         ),
+        Padding(
+          padding: const EdgeInsets.only(top: 16),
+          child: ElevatedButton(
+            onPressed: () {
+              getStarsectorVersionFromObf().then((value) {
+                showSnackBar(
+                  context: context,
+                  content: Text("Game version: $value"),
+                );
+              });
+            },
+            child: const Text('Read game version from starfarer_obf.jar.'),
+          ),
+        ),
+        const SizedBox(height: 16),
         Card(
           child: Padding(
             padding: const EdgeInsets.all(8),

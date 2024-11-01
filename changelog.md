@@ -9,6 +9,8 @@
     - Before, it would wait until it retrieved the file name, which in the case of Google Drive, could take a while.
   - Combined two http calls into one (get file name + check if there is a file to download).
     - Should slightly speed up download of mods that use Google Drive (e.g. AotD).
+  - Now reads the game's version directly from `starfarer_obf.jar`, rather than from your log file.
+    - This fixes rare cases where the logfile has a different version than the game (e.g. right after updating), or has none (e.g. right after installing).
 
 # 0.3.2
 - Fixed

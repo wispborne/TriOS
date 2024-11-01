@@ -55,6 +55,11 @@ typedef LibArchiveExtractedFile = ({
   File extractedFile
 });
 
+typedef LibArchiveReadFile = ({
+  LibArchiveEntry archiveFile,
+  Uint8List extractedContent
+});
+
 /// Not thread-safe.
 class LibArchive {
   static var binding = _getArchive();
@@ -227,7 +232,7 @@ class LibArchive {
           return null;
         } else {
           try {
-            return extractSingleEntryInArchive(entryPtrPtr, destinationPath,
+            return _extractSingleEntryInArchive(entryPtrPtr, destinationPath,
                 errCode, writePtr, archivePtr, entry,
                 pathTransform: pathTransform);
           } catch (e, st) {
@@ -250,7 +255,7 @@ class LibArchive {
     }
   }
 
-  LibArchiveExtractedFile extractSingleEntryInArchive(
+  LibArchiveExtractedFile _extractSingleEntryInArchive(
     Pointer<Pointer<archive_entry>> entryPtrPtr,
     String destinationPath,
     int errCode,
@@ -361,6 +366,122 @@ class LibArchive {
       }
     } finally {
       calloc.free(buffer); //  Deallocate the temporary buffer
+    }
+  }
+
+  Future<List<LibArchiveReadFile?>> readEntriesInArchive(
+      File archivePath, {
+        bool Function(LibArchiveEntry entry)? fileFilter,
+        String Function(LibArchiveEntry entry)? pathTransform,
+        bool Function(Object ex, StackTrace st)? onError,
+      }) async {
+    final archivePtr = binding.archive_read_new();
+    final entryPtrPtr = calloc<Pointer<archive_entry>>();
+
+    try {
+      // Enable all filters and formats
+      binding.archive_read_support_filter_all(archivePtr);
+      binding.archive_read_support_format_all(archivePtr);
+
+      // Open the archive file
+      final openResult = binding.archive_read_open_filename(
+          archivePtr, archivePath.absolute.path.toNativeUtf8().cast<Char>(), 10240);
+      if (openResult != ARCHIVE_OK) {
+        throw Exception(
+            'Failed to open archive: ${binding.archive_error_string(archivePtr).toDartStringSafe()}');
+      }
+
+      final extractedFiles = <LibArchiveReadFile>[];
+
+      while (binding.archive_read_next_header(archivePtr, entryPtrPtr) == ARCHIVE_OK) {
+        try {
+          final entry = _getEntryInArchive(entryPtrPtr);
+
+          // Apply file filter if provided
+          if (fileFilter != null && !fileFilter(entry)) {
+            // Skip this entry
+            binding.archive_read_data_skip(archivePtr);
+            continue;
+          }
+
+          // Transform path if pathTransform is provided
+          if (pathTransform != null) {
+            final transformedPath = pathTransform(entry);
+            binding.archive_entry_set_pathname_utf8(
+                entryPtrPtr.value, transformedPath.toNativeUtf8().cast<Char>());
+          }
+
+          // Read data into memory
+          final extractedContent = _readData(archivePtr);
+
+          extractedFiles.add((
+          archiveFile: entry,
+          extractedContent: extractedContent,
+          ));
+        } catch (e, st) {
+          // Handle errors
+          if (onError != null && onError(e, st)) {
+            // Skip to the next entry
+            continue;
+          } else {
+            rethrow;
+          }
+        }
+      }
+
+      return extractedFiles;
+    } finally {
+      // Clean up
+      binding.archive_read_close(archivePtr);
+      binding.archive_read_free(archivePtr);
+      calloc.free(entryPtrPtr);
+    }
+  }
+
+  Uint8List _readData(Pointer<archive> ar) {
+    // Create a BytesBuilder to accumulate the data
+    final data = BytesBuilder();
+
+    // Allocate pointers for the output parameters
+    final bufferPtrPtr = calloc<Pointer<Void>>();
+    final sizePtr = calloc<Size>();
+    final offsetPtr = calloc<LongLong>();
+
+    try {
+      int errCode = 0;
+
+      while (true) {
+        errCode = binding.archive_read_data_block(
+            ar, bufferPtrPtr, sizePtr, offsetPtr);
+
+        if (errCode == ARCHIVE_EOF) {
+          // End of file
+          break;
+        }
+
+        if (errCode < ARCHIVE_OK) {
+          // Handle error
+          throw Exception('Error reading data block: $errCode');
+        }
+
+        // Access the data block
+        final bufferPtr = bufferPtrPtr.value.cast<Uint8>();
+        final int size = sizePtr.value;
+
+        // Read the data into a Uint8List
+        final chunk = bufferPtr.asTypedList(size);
+
+        // Add the chunk to the BytesBuilder
+        data.add(chunk);
+      }
+
+      // Return the accumulated data
+      return data.takeBytes();
+    } finally {
+      // Free allocated pointers
+      calloc.free(bufferPtrPtr);
+      calloc.free(sizePtr);
+      calloc.free(offsetPtr);
     }
   }
 

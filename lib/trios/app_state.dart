@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:collection/collection.dart';
@@ -103,6 +102,22 @@ class AppState {
     final gamePath =
         ref.watch(appSettings.select((value) => value.gameDir))?.toDirectory();
     if (gamePath == null) return null;
+
+    try {
+      final trueVersion = await getStarsectorVersionFromObf();
+      if (trueVersion != null && trueVersion.isNotEmpty) {
+        ref
+            .read(appSettings.notifier)
+            .update((s) => s.copyWith(lastStarsectorVersion: trueVersion));
+        return trueVersion;
+      }
+    } catch (e, stack) {
+      Fimber.w(
+          "Failed to read starsector version from obf jar, falling back to log.",
+          ex: e,
+          stacktrace: stack);
+    }
+
     try {
       final versionInLog = await readStarsectorVersionFromLog(gamePath);
       if (versionInLog != null) {
@@ -320,26 +335,6 @@ class GameRunningChecker extends AsyncNotifier<bool> {
     // Handle any exceptions
     return false;
   }
-}
-
-Future<String?> readStarsectorVersionFromLog(Directory gamePath) async {
-  Fimber.i("Looking through log file for game version.");
-  const versionContains = r"Starting Starsector";
-  final versionRegex = RegExp(r"Starting Starsector (.*) launcher");
-  final logfile = utf8.decode(getLogPath(gamePath).readAsBytesSync().toList(),
-      allowMalformed: true);
-  for (var line in logfile.split("\n")) {
-    if (line.contains(versionContains)) {
-      try {
-        final version = versionRegex.firstMatch(line)!.group(1);
-        if (version == null) continue;
-        return version;
-      } catch (_) {
-        continue;
-      }
-    }
-  }
-  return null;
 }
 
 /// Initialized in main.dart

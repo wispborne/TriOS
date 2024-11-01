@@ -178,7 +178,7 @@ class AppState {
         ? gamePath
             .resolve(ref.watch(
                     appSettings.select((value) => value.showJre23ConsoleWindow))
-                ? "start Miko_Rouge.bat"
+                ? "Miko_Rouge.bat"
                 : "Miko_Silent.bat")
             .toFile()
         : getGameExecutable(gamePath).toFile();
@@ -239,8 +239,7 @@ class GameRunningChecker extends AsyncNotifier<bool> {
 
     // Set up periodic checking every x milliseconds
     const duration = Duration(milliseconds: period);
-    final isWindowFocused =
-        ref.watch(AppState.isWindowFocused.notifier).state;
+    final isWindowFocused = ref.watch(AppState.isWindowFocused);
 
     _timer?.cancel();
     _timer = Timer.periodic(duration, (timer) async {
@@ -261,20 +260,45 @@ class GameRunningChecker extends AsyncNotifier<bool> {
   }
 
   Future<bool> _checkIfAnyProcessIsRunning(List<String> identifiers) async {
+    // First try using homebrew JPS to get Java processes
+    // Requires Java JDK on the host machine, or Java 23.
     try {
+      final jpsAtHomePath =
+          getAssetsPath().toFile().resolve("common/JpsAtHome.jar");
+      ProcessResult result = await Process.run(
+        'java',
+        ['-jar', jpsAtHomePath.path],
+      );
+      String output = result.stdout.toString().toLowerCase();
+      if (output.contains("com.fs.starfarer.starfarerlauncher".toLowerCase())) {
+        return true;
+      }
+    } catch (e) {
+      // ignored, probably can't run due to no java/jdk installed
+    }
+
+    // Fallback to using platform-specific commands to check process names.
+    try {
+      // Check the titles of all windows
       if (Platform.isWindows) {
-        // Use 'wmic' command on Windows to get processes with command line
-        ProcessResult result = await Process.run(
-          'wmic',
-          ['process', 'get', 'CommandLine'],
+        final process = await Process.run(
+          'powershell',
+          [
+            '-Command',
+            'Get-Process | Where-Object { \$_.MainWindowTitle } | Select-Object -ExpandProperty MainWindowTitle'
+          ],
         );
-        String output = result.stdout.toString().toLowerCase();
-        for (String identifier in identifiers) {
-          if (output.contains(identifier.toLowerCase())) {
-            return true;
-          }
+
+        if (process.exitCode == 0) {
+          final output = process.stdout as String;
+          final windowTitles =
+              output.split('\n').map((line) => line.trim()).toList();
+
+          final isStarsectorRunning = windowTitles.any((title) => title.contains(
+              'Starsector ${ref.watch(appSettings).lastStarsectorVersion}'));
+
+          return isStarsectorRunning;
         }
-        return false;
       } else if (Platform.isMacOS || Platform.isLinux) {
         // Use 'ps aux' command to get processes with command line
         ProcessResult result = await Process.run('ps', ['aux']);
@@ -290,9 +314,11 @@ class GameRunningChecker extends AsyncNotifier<bool> {
         return false;
       }
     } catch (e) {
-      // Handle any exceptions
-      return false;
+      // ignored - this is running every second while in focus, don't spam logs
     }
+
+    // Handle any exceptions
+    return false;
   }
 }
 

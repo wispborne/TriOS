@@ -10,8 +10,6 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/util.dart';
 
-import '../trios/constants.dart';
-
 class LibArchiveEntry {
   final String pathName;
   final int unpackedSize;
@@ -61,17 +59,7 @@ class LibArchive {
   static var binding = _getArchive();
 
   static LibArchiveBinding _getArchive() {
-    // TODO there's gotta be a better way to get the asset path.
-    // edit: Switching from Directory.current to Platform.resolvedExecutable.toFile().parent removed the need for a "is debug mode" check.
-    final assetsPath = switch (currentPlatform) {
-      TargetPlatform.windows => "data/flutter_assets/assets",
-      TargetPlatform.macOS =>
-        "../../Contents/Frameworks/App.framework/Resources/flutter_assets/assets/",
-      TargetPlatform.linux => "data/flutter_assets/assets",
-      _ => "data/flutter_assets/assets",
-    };
-    final currentAssetsPath =
-        p.join(currentDirectory.absolute.path, assetsPath);
+    final currentAssetsPath = getAssetsPath();
 
     final libArchivePathForPlatform = switch (Platform.operatingSystem) {
       "windows" =>

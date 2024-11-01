@@ -180,6 +180,7 @@ flutter:
     - assets/macos/libarchive/lib/
     - assets/linux/libarchive/lib/
     - assets/SMOL_Themes.json
+    - assets/common/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

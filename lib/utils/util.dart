@@ -16,6 +16,8 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:win32_registry/win32_registry.dart';
 
+import '../trios/constants.dart';
+
 MaterialColor createMaterialColor(Color color) {
   List strengths = <double>[.05];
   Map<int, Color> swatch = {};
@@ -172,6 +174,19 @@ class ColorGenerator {
       1.0,
     );
   }
+}
+
+String getAssetsPath() {
+  // edit: Switching from Directory.current to Platform.resolvedExecutable.toFile().parent removed the need for a "is debug mode" check.
+  final assetsPath = switch (currentPlatform) {
+    TargetPlatform.windows => "data/flutter_assets/assets",
+    TargetPlatform.macOS =>
+      "../../Contents/Frameworks/App.framework/Resources/flutter_assets/assets/",
+    TargetPlatform.linux => "data/flutter_assets/assets",
+    _ => "data/flutter_assets/assets",
+  };
+  final currentAssetsPath = p.join(currentDirectory.absolute.path, assetsPath);
+  return currentAssetsPath;
 }
 
 typedef ProgressCallback = void Function(

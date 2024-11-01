@@ -62,6 +62,9 @@ class TriOSHttpClient {
   }) {
     return _enqueueRequest(() {
       final Uri url = _resolveUrl(endpointOrUrl);
+      if (url.host.isEmpty) {
+        return Future.error(Exception('Invalid URL: $url'));
+      }
 
       final client = allowSelfSignedCertificates
           ? _selfSignedHttpClient

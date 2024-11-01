@@ -72,6 +72,9 @@ void _moveToRecycleBinWindows(String path, bool deleteIfFailed) {
 
   final result = SHFileOperation(fileOpStruct);
 
+  calloc.free(filePath);
+  calloc.free(fileOpStruct);
+
   if (result != 0) {
     Fimber.w("Failed to move file to Recycle Bin. Reason: $result");
 
@@ -80,9 +83,6 @@ void _moveToRecycleBinWindows(String path, bool deleteIfFailed) {
       Fimber.i("Deleted file: $path");
     }
   }
-
-  calloc.free(filePath);
-  calloc.free(fileOpStruct);
 }
 
 // macOS's underlying API

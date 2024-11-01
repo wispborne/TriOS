@@ -234,7 +234,7 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                     (modsWithUpdates.isEmpty ? [] : [null]) +
                     (filteredModList.sortedByName.toList());
                 final isGameRunning =
-                    ref.watch(AppState.isGameRunning).requireValue;
+                    ref.watch(AppState.isGameRunning).value ?? false;
 
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

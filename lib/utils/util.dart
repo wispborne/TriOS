@@ -10,6 +10,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
+import 'package:path/path.dart' as path;
+import 'package:trios/libarchive/libarchive.dart';
 import 'package:trios/models/mod_info_json.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/utils/extensions.dart';
@@ -112,6 +114,48 @@ List<File> getAllRulesCsvsInModsFolder(Directory modsFolder) {
 
 File getVanillaRulesCsvInGameFiles(Directory gameFiles) {
   return File(getRulesCsvInModFolder(gameFiles)!.absolute.path);
+}
+
+Future<String> getStarsectorVersionFromObf() async {
+  final libarchive = LibArchive();
+  final gameCorePath = defaultGameCorePath();
+  if (gameCorePath == null) {
+    throw Exception("Game core path not found.");
+  }
+
+  // final obfPath = p.join(gameCorePath.path, "starfarer_obf.jar").toFile();
+  // if (!obfPath.existsSync()) {
+  //   throw Exception("starfarer_obf.jar not found.");
+  // }
+  //
+  // final versionFileBytes = libarchive.extractSingleEntryInArchive(
+  //     obfPath, "data/config/version.json");
+  //
+  // // Open the class file in binary mode.
+  // final file = File(filePath);
+  // if (!await file.exists()) {
+  //   throw Exception("File not found: $filePath");
+  // }
+  //
+  // final bytes = await file.readAsBytes();
+  // const versionMarkers = ['versionOnly', 'versionString'];
+  //
+  // // Decode bytes as UTF-8 and search for markers to find the version string.
+  // final utf8String = utf8.decode(bytes, allowMalformed: true);
+  //
+  // for (var marker in versionMarkers) {
+  //   final markerIndex = utf8String.indexOf(marker);
+  //   if (markerIndex != -1) {
+  //     // Assuming version string appears immediately after the marker (as observed in the file).
+  //     final versionStart = utf8String.indexOf(RegExp(r'[\d.]'), markerIndex);
+  //     if (versionStart != -1) {
+  //       final versionEnd = utf8String.indexOf(RegExp(r'[^a-zA-Z0-9.-]'), versionStart);
+  //       return utf8String.substring(versionStart, versionEnd);
+  //     }
+  //   }
+  // }
+
+  throw Exception("Version not found in the file.");
 }
 
 class HexColor extends Color {

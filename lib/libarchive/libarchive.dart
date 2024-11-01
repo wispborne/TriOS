@@ -55,6 +55,7 @@ typedef LibArchiveExtractedFile = ({
   File extractedFile
 });
 
+/// Not thread-safe.
 class LibArchive {
   static var binding = _getArchive();
 

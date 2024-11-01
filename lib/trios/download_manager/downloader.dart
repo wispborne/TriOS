@@ -61,13 +61,17 @@ class DownloadManager {
       }
 
       setStatus(task, DownloadStatus.retrievingFileInfo);
+      url = makeDirectDownloadLink(url);
+
       final headers = await fetchHeaders(url);
 
       // If given a download folder, then get the file's name from the URL and put it in the folder.
       // If given an actual filename rather than a folder, then we already have the name.
       final isDirectory = await Directory(destFolder).exists();
       final downloadFile = isDirectory
-          ? destFolder + Platform.pathSeparator + await fetchFileNameFromUrl(url, headers)
+          ? destFolder +
+              Platform.pathSeparator +
+              await fetchFileNameFromUrl(url, headers)
           : destFolder + Platform.pathSeparator + filename!;
       task.file.value = File(downloadFile);
 
@@ -110,15 +114,7 @@ class DownloadManager {
           var ioSink = partialFile.openWrite(mode: FileMode.writeOnlyAppend);
 
           // Ensure response.data is a List<int>
-          if (response.data is List<int>) {
-            ioSink.add(response.data as List<int>);
-          } else if (response.data is String) {
-            // If data is a String, convert it to bytes
-            ioSink.add(utf8.encode(response.data as String));
-          } else {
-            throw Exception(
-                'Unsupported response data type: ${response.data.runtimeType}');
-          }
+          ioSink.add(getResponseBodyAsBytes(response.data));
 
           await ioSink.close();
           await partialFile.rename(downloadFile);
@@ -130,13 +126,14 @@ class DownloadManager {
           url,
           onProgress: createCallback(url, 0),
         );
+        final responseData = getResponseBodyAsBytes(response.data);
 
         if ((response.statusCode) <= 299) {
-          await File(downloadFile).writeAsBytes(response.data);
+          await File(downloadFile).writeAsBytes(responseData);
           setStatus(task, DownloadStatus.completed);
         } else {
           throw Exception(
-              "Failed to download file: ${response.statusCode} ${response.data}");
+              "Failed to download file: ${response.statusCode} $url");
         }
       }
     } catch (e) {
@@ -166,6 +163,70 @@ class DownloadManager {
     if (_queue.isNotEmpty) {
       _startExecution();
     }
+  }
+
+  List<int> getResponseBodyAsBytes(dynamic response) {
+    if (response is List<int>) {
+      return response;
+    } else if (response is String) {
+      return utf8.encode(response);
+    } else {
+      throw Exception(
+          'Unsupported response data type: ${response.runtimeType}');
+    }
+  }
+
+  /// AI Generated
+  String makeDirectDownloadLink(String url) {
+    // Create a lowercase version of the URL for comparison purposes
+    final urlLower = url.toLowerCase();
+
+    // Google Drive
+    if (urlLower.contains("drive.google.com") &&
+        !urlLower.contains("export=download")) {
+      if (urlLower.contains("/file/d/")) {
+        final fileIdMatch =
+            RegExp(r'file/d/([^/]+)', caseSensitive: false).firstMatch(url);
+        final fileId = fileIdMatch?.group(1);
+        if (fileId != null) {
+          url = "https://drive.google.com/uc?export=download&id=$fileId";
+        }
+      } else if (urlLower.contains("open") && urlLower.contains("id=")) {
+        url =
+            "${url.replaceFirst(RegExp("open", caseSensitive: false), "uc")}&export=download";
+      }
+    }
+
+    // Dropbox
+    else if (urlLower.contains("dropbox.com") && !urlLower.contains("dl=1")) {
+      if (urlLower.contains("dl=0")) {
+        url = url.replaceFirst(RegExp("dl=0", caseSensitive: false), "dl=1");
+      } else if (url.contains("?")) {
+        url = "$url&dl=1";
+      } else {
+        url = "$url?dl=1";
+      }
+    }
+
+    // OneDrive
+    else if (urlLower.contains("onedrive.live.com") &&
+        !urlLower.contains("download=1")) {
+      if (url.contains("?")) {
+        url = "$url&download=1";
+      } else {
+        url = "$url?download=1";
+      }
+    }
+
+    // GitHub (raw file download)
+    else if (urlLower.contains("github.com") && urlLower.contains("/blob/")) {
+      url = url
+          .replaceFirst(RegExp("github.com", caseSensitive: false),
+              "raw.githubusercontent.com")
+          .replaceFirst(RegExp("/blob/", caseSensitive: false), "/");
+    }
+
+    return url;
   }
 
   void disposeNotifiers(DownloadTask task) {

@@ -1,3 +1,7 @@
+# 0.3.4
+- Added
+  - **Weapon browser** (in Toolbox dropdown)
+
 # 0.3.3
 - Added
   - Now checks if the game is running and disables mod changes through TriOS.

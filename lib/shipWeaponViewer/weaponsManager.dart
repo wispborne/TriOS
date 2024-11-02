@@ -17,9 +17,12 @@ final weaponListNotifierProvider =
     AsyncNotifierProvider<WeaponsManager, List<Weapon>>(WeaponsManager.new);
 
 class WeaponsManager extends AsyncNotifier<List<Weapon>> {
+  int filesProcessed = 0;
+
   @override
   FutureOr<List<Weapon>> build() async {
     final currentTime = DateTime.now();
+    filesProcessed = 0;
     final gameCorePath =
         ref.watch(appSettings.select((s) => s.gameCoreDir))?.path;
 
@@ -35,7 +38,7 @@ class WeaponsManager extends AsyncNotifier<List<Weapon>> {
 
     final weapons = await parseAllWeapons(variants, gameCorePath);
     Fimber.i(
-        'Parsed ${weapons.length} weapons from ${variants.length + 1} mods in ${DateTime.now().difference(currentTime).inMilliseconds}ms');
+        'Parsed ${weapons.length} weapons from ${variants.length + 1} mods and $filesProcessed files in ${DateTime.now().difference(currentTime).inMilliseconds}ms');
     return weapons;
   }
 
@@ -70,7 +73,7 @@ class WeaponsManager extends AsyncNotifier<List<Weapon>> {
 
   Future<ParseResult> _parseWeaponsCsv(
       Directory folder, ModVariant? modVariant) async {
-    final file = p
+    final weaponsCsvFile = p
         .join(folder.path, 'data/weapons/weapon_data.csv')
         .toFile()
         .normalize
@@ -80,27 +83,63 @@ class WeaponsManager extends AsyncNotifier<List<Weapon>> {
     final errors = <String>[];
     final modName = modVariant?.modInfo.nameOrId ?? 'Vanilla';
 
-    if (!await file.exists()) {
-      errors.add('[$modName] Weapons CSV file not found at $file');
+    if (!await weaponsCsvFile.exists()) {
+      errors.add('[$modName] Weapons CSV file not found at $weaponsCsvFile');
       return ParseResult(weapons, errors);
+    }
+
+    // Read and parse the .wpn files
+    final wpnFilesDir = p.join(folder.path, 'data/weapons');
+    final wpnFiles = Directory(wpnFilesDir)
+        .listSync()
+        .whereType<File>()
+        .where((file) => file.path.endsWith('.wpn'))
+        .toList();
+
+    final wpnDataMap = <String, Map<String, dynamic>>{};
+
+    for (final wpnFile in wpnFiles) {
+      filesProcessed++;
+      try {
+        final wpnContent = await wpnFile.readAsString(encoding: utf8);
+        final cleanedContent = _removeCommentsFromJson(wpnContent);
+        final jsonData = cleanedContent.fixJsonToMap();
+        final weaponId = jsonData['id'] as String?;
+        if (weaponId != null) {
+          // Extract only the specified fields
+          final Map<String, dynamic> wpnFields = {
+            'specClass': jsonData['specClass'],
+            'type': jsonData['type'],
+            'size': jsonData['size'],
+            'turretSprite': p.join(folder.path, jsonData['turretSprite']).toFile().normalize.path,
+            'turretGunSprite': p.join(folder.path, jsonData['turretGunSprite']).toFile().normalize.path,
+            'hardpointSprite': p.join(folder.path, jsonData['hardpointSprite']).toFile().normalize.path,
+            'hardpointGunSprite': p.join(folder.path, jsonData['hardpointGunSprite']).toFile().normalize.path,
+          };
+          wpnDataMap[weaponId] = wpnFields;
+        } else {
+          errors.add('[$modName] .wpn file ${wpnFile.path} missing "id" field');
+        }
+      } catch (e) {
+        errors.add('[$modName] Failed to parse .wpn file ${wpnFile.path}: $e');
+        continue;
+      }
     }
 
     String content;
     try {
-      // Try reading the file with UTF-8 encoding
-      content = await file.readAsString(encoding: utf8);
+      filesProcessed++;
+      content = await weaponsCsvFile.readAsString(encoding: utf8);
     } on FileSystemException catch (e) {
-      // Handle file system exceptions (e.g., encoding issues)
-      errors.add('[$modName] Failed to read file at $file: $e');
+      errors.add('[$modName] Failed to read file at $weaponsCsvFile: $e');
       return ParseResult(weapons, errors);
     } catch (e) {
-      // Handle any other exceptions
-      errors.add('[$modName] Unexpected error reading file at $file: $e');
+      errors.add(
+          '[$modName] Unexpected error reading file at $weaponsCsvFile: $e');
       return ParseResult(weapons, errors);
     }
 
     // Preprocess the content to handle comments
-    // We'll process each line to remove comments starting with '#' outside of quotes
     final lines = content.split('\n');
     final processedLines = <String>[];
     final lineNumberMapping = <int>[];
@@ -110,7 +149,6 @@ class WeaponsManager extends AsyncNotifier<List<Weapon>> {
       String processedLine = _removeCommentOutsideQuotes(line);
 
       if (processedLine.trim().isEmpty) {
-        // Skip empty lines
         continue;
       }
 
@@ -118,7 +156,6 @@ class WeaponsManager extends AsyncNotifier<List<Weapon>> {
       lineNumberMapping.add(index + 1); // Original line number in the file
     }
 
-    // Rejoin the processed lines
     final processedContent = processedLines.join('\n');
 
     List<List<dynamic>> rows;
@@ -128,12 +165,13 @@ class WeaponsManager extends AsyncNotifier<List<Weapon>> {
         shouldParseNumbers: false,
       ).convert(processedContent);
     } catch (e) {
-      errors.add('[$modName] Failed to parse CSV content in file $file: $e');
+      errors.add(
+          '[$modName] Failed to parse CSV content in file $weaponsCsvFile: $e');
       return ParseResult(weapons, errors);
     }
 
     if (rows.isEmpty) {
-      errors.add('[$modName] Empty weapons CSV file at $file');
+      errors.add('[$modName] Empty weapons CSV file at $weaponsCsvFile');
       return ParseResult(weapons, errors);
     }
 
@@ -148,19 +186,16 @@ class WeaponsManager extends AsyncNotifier<List<Weapon>> {
         final key = headers[j];
         dynamic value = row.length > j ? row[j] : null;
 
-        // Handle null or empty values
         if (value == null || (value is String && value.trim().isEmpty)) {
           weaponData[key] = null;
           continue;
         }
 
-        // Convert 'TRUE'/'FALSE' to boolean
         if (value.toString().toUpperCase() == 'TRUE') {
           value = true;
         } else if (value.toString().toUpperCase() == 'FALSE') {
           value = false;
         } else {
-          // Attempt to parse numbers
           final numValue = num.tryParse(value.toString());
           value = numValue ?? value.toString();
         }
@@ -169,35 +204,63 @@ class WeaponsManager extends AsyncNotifier<List<Weapon>> {
       }
 
       try {
+        final weaponId = weaponData['id'] as String?;
+        if (weaponId == null || weaponId.isEmpty) {
+          final lineNumber = lineNumberMapping[i];
+          errors.add('[$modName] Weapon in CSV without id at line $lineNumber');
+          continue;
+        }
+
+        // Merge the .wpn data into weaponData
+        final wpnData = wpnDataMap[weaponId];
+        if (wpnData != null) {
+          weaponData.addAll(wpnData);
+        } else {
+          errors.add('[$modName] No .wpn data found for weapon id "$weaponId"');
+        }
+
+        // Create Weapon instance
         final weapon = WeaponMapper.fromMap(weaponData)
           ..modVariant = modVariant;
         weapons.add(weapon);
       } catch (e) {
-        // Use the original line number from the file for accurate error reporting
         final lineNumber = lineNumberMapping[i];
         errors.add('[$modName] Row $lineNumber: $e');
-        // Continue parsing the next row
       }
     }
 
     return ParseResult(weapons, errors);
   }
 
-// Helper function to remove comments starting with '#' outside of quotes
+  // Helper function to remove comments starting with '#' outside of quotes
   String _removeCommentOutsideQuotes(String line) {
     bool inQuotes = false;
+    String result = '';
     for (int i = 0; i < line.length; i++) {
       final char = line[i];
       if (char == '"') {
-        // Toggle inQuotes status
         inQuotes = !inQuotes;
-      } else if (char == '#' && !inQuotes) {
-        // Found '#' outside quotes, remove rest of the line
-        return line.substring(0, i).trimRight();
       }
+      if (!inQuotes && char == '#') {
+        break;
+      }
+      result += char;
     }
-    // No comment found outside quotes
-    return line;
+    return result.trimRight();
+  }
+
+  // Helper function to remove comments from JSON content
+  String _removeCommentsFromJson(String jsonContent) {
+    final lines = LineSplitter.split(jsonContent);
+    final nonCommentLines = lines.map((line) {
+      final index = line.indexOf('#');
+      if (index >= 0) {
+        return line.substring(0, index);
+      } else {
+        return line;
+      }
+    });
+    return nonCommentLines.join('\n');
   }
 }
 

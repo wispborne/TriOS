@@ -1,21 +1,33 @@
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as p;
 import 'package:trios/shipWeaponViewer/weaponsManager.dart';
 import 'package:trios/thirdparty/pluto_grid_plus/lib/pluto_grid_plus.dart';
+import 'package:trios/trios/settings/settings.dart';
 
 class WeaponPage extends ConsumerStatefulWidget {
-  const WeaponPage({Key? key}) : super(key: key);
+  const WeaponPage({super.key});
 
   @override
-  _WeaponPageState createState() => _WeaponPageState();
+  ConsumerState<WeaponPage> createState() => _WeaponPageState();
 }
 
 class _WeaponPageState extends ConsumerState<WeaponPage> {
   final SearchController _searchController = SearchController();
   PlutoGridStateManager? _stateManager;
+  late final String gameCorePath;
+
+  @override
+  void initState() {
+    super.initState();
+    // Obtain gameCorePath from settings or wherever it's stored
+    gameCorePath =
+        ref.read(appSettings.select((s) => s.gameCoreDir))?.path ?? '';
+  }
 
   @override
   void dispose() {
@@ -49,6 +61,39 @@ class _WeaponPageState extends ConsumerState<WeaponPage> {
         title: 'Mod',
         field: 'modVariant',
         type: PlutoColumnType.text(),
+        width: 100,
+        renderer: (rendererContext) {
+          final modName = rendererContext.cell.value;
+          return Tooltip(
+            message: modName,
+            child: Text(
+              modName,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.headlineSmall!.copyWith(fontSize: 14),
+            ),
+          );
+        },
+      ),
+      PlutoColumn(
+        title: '',
+        field: 'spritePaths',
+        type: PlutoColumnType.text(),
+        renderer: (rendererContext) {
+          List<String>? imagePaths = rendererContext.cell.value;
+          return Tooltip(
+            message: imagePaths?.firstWhere((path) => path.isNotEmpty,
+                    orElse: () => '') ??
+                '',
+            child: Center(
+              child: imagePaths == null || imagePaths.isEmpty
+                  ? Container()
+                  : WeaponImageCell(imagePaths: imagePaths),
+            ),
+          );
+        },
+        width: 60,
+        minWidth: 50,
       ),
       PlutoColumn(
         title: 'Name',
@@ -56,24 +101,22 @@ class _WeaponPageState extends ConsumerState<WeaponPage> {
         type: PlutoColumnType.text(),
       ),
       PlutoColumn(
-        title: 'ID',
-        field: 'id',
-        type: PlutoColumnType.text(),
-      ),
-      PlutoColumn(
         title: 'Tier',
         field: 'tier',
         type: PlutoColumnType.number(),
+        width: 60,
       ),
       PlutoColumn(
         title: 'Rarity',
         field: 'rarity',
         type: PlutoColumnType.number(),
+        width: 70,
       ),
       PlutoColumn(
-        title: 'Damage/Shot',
+        title: 'Dmg/Shot',
         field: 'damagePerShot',
         type: PlutoColumnType.number(),
+        width: 110,
       ),
       PlutoColumn(
         title: 'Type',
@@ -87,12 +130,30 @@ class _WeaponPageState extends ConsumerState<WeaponPage> {
       data: (weapons) {
         // Map weapons to rows for PlutoGrid
         List<PlutoRow> rows = weapons.map((weapon) {
+          // Determine the base path
+          final modFolderPath =
+              weapon.modVariant?.modFolder.path ?? gameCorePath;
+
+          // Collect all potential sprite paths
+          final spriteFields = [
+            weapon.hardpointGunSprite,
+            weapon.hardpointSprite,
+            weapon.turretGunSprite,
+            weapon.turretSprite,
+          ];
+
+          // Build the full paths
+          final spritePaths = spriteFields
+              .where((sprite) => sprite != null && sprite.isNotEmpty)
+              .map((sprite) => p.normalize(p.join(modFolderPath, sprite!)))
+              .toList();
+
           return PlutoRow(
             cells: {
               'modVariant': PlutoCell(
-                  value: weapon.modVariant?.modInfo.nameOrId ?? "Vanilla"),
-              'name': PlutoCell(value: weapon.name ?? ""),
-              'id': PlutoCell(value: weapon.id),
+                  value: weapon.modVariant?.modInfo.nameOrId ?? "(vanilla)"),
+              'spritePaths': PlutoCell(value: spritePaths),
+              'name': PlutoCell(value: weapon.name ?? weapon.id),
               'tier': PlutoCell(value: weapon.tier ?? ""),
               'rarity': PlutoCell(value: weapon.rarity ?? ""),
               'damagePerShot': PlutoCell(value: weapon.damagePerShot ?? ""),
@@ -123,50 +184,16 @@ class _WeaponPageState extends ConsumerState<WeaponPage> {
                         ),
                       ),
                       Center(
-                        child: SizedBox(
-                            height: 30,
-                            width: 300,
-                            child: SearchAnchor(
-                              searchController: _searchController,
-                              builder: (BuildContext context,
-                                  SearchController controller) {
-                                return SearchBar(
-                                    controller: controller,
-                                    leading: const Icon(Icons.search),
-                                    hintText: "Filter...",
-                                    trailing: [
-                                      controller.value.text.isEmpty
-                                          ? Container()
-                                          : IconButton(
-                                              icon: const Icon(Icons.clear),
-                                              constraints:
-                                                  const BoxConstraints(),
-                                              padding: EdgeInsets.zero,
-                                              onPressed: () {
-                                                controller.clear();
-                                                _filterGrid("");
-                                                // filteredMods =
-                                                //     filterMods(query);
-                                              },
-                                            )
-                                    ],
-                                    backgroundColor: WidgetStateProperty.all(
-                                        Theme.of(context)
-                                            .colorScheme
-                                            .surfaceContainer),
-                                    onChanged: (value) {
-                                      _filterGrid(value);
-                                      // setState(() {
-                                      //   query = value;
-                                      //   filteredMods = filterMods(value);
-                                      // });
-                                    });
-                              },
-                              suggestionsBuilder: (BuildContext context,
-                                  SearchController controller) {
-                                return [];
-                              },
-                            )),
+                        child: buildSearchBox(),
+                      ),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: IconButton(
+                          icon: const Icon(Icons.refresh),
+                          onPressed: () {
+                            ref.invalidate(weaponListNotifierProvider);
+                          },
+                        ),
                       ),
                     ],
                   ),
@@ -185,9 +212,7 @@ class _WeaponPageState extends ConsumerState<WeaponPage> {
                     _stateManager!.setShowColumnFilter(false);
                   },
                   configuration: PlutoGridConfiguration(
-                    columnSize: const PlutoGridColumnSizeConfig(
-                        // autoSizeMode: PlutoAutoSizeMode.,
-                        ),
+                    columnSize: const PlutoGridColumnSizeConfig(),
                     scrollbar: const PlutoGridScrollbarConfig(
                       isAlwaysShown: true,
                       hoverWidth: 10,
@@ -245,5 +270,110 @@ class _WeaponPageState extends ConsumerState<WeaponPage> {
         child: SelectableText('Error loading weapons: $error'),
       ),
     );
+  }
+
+  SizedBox buildSearchBox() {
+    return SizedBox(
+      height: 30,
+      width: 300,
+      child: SearchAnchor(
+        searchController: _searchController,
+        builder: (BuildContext context, SearchController controller) {
+          return SearchBar(
+            controller: controller,
+            leading: const Icon(Icons.search),
+            hintText: "Filter...",
+            trailing: [
+              controller.value.text.isEmpty
+                  ? Container()
+                  : IconButton(
+                      icon: const Icon(Icons.clear),
+                      constraints: const BoxConstraints(),
+                      padding: EdgeInsets.zero,
+                      onPressed: () {
+                        controller.clear();
+                        _filterGrid("");
+                      },
+                    )
+            ],
+            backgroundColor: WidgetStateProperty.all(
+              Theme.of(context).colorScheme.surfaceContainer,
+            ),
+            onChanged: (value) {
+              _filterGrid(value);
+            },
+          );
+        },
+        suggestionsBuilder:
+            (BuildContext context, SearchController controller) {
+          return [];
+        },
+      ),
+    );
+  }
+}
+
+// Custom widget for asynchronously checking file existence and displaying the image
+class WeaponImageCell extends StatefulWidget {
+  final List<String> imagePaths;
+
+  const WeaponImageCell({super.key, required this.imagePaths});
+
+  @override
+  State<WeaponImageCell> createState() => _WeaponImageCellState();
+}
+
+class _WeaponImageCellState extends State<WeaponImageCell> {
+  static final Map<String, bool> _fileExistsCache = {};
+
+  String? _existingImagePath;
+
+  @override
+  void initState() {
+    super.initState();
+    _findExistingImagePath();
+  }
+
+  void _findExistingImagePath() async {
+    for (String path in widget.imagePaths) {
+      if (_fileExistsCache.containsKey(path)) {
+        if (_fileExistsCache[path] == true) {
+          _existingImagePath = path;
+          break;
+        }
+      } else {
+        bool exists = await File(path).exists();
+        _fileExistsCache[path] = exists;
+        if (exists) {
+          _existingImagePath = path;
+          break;
+        }
+      }
+    }
+
+    if (mounted) {
+      setState(() {
+        // Trigger a rebuild with the found image path
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_existingImagePath == null) {
+      // While checking or if no image is found, show a placeholder
+      return const SizedBox(
+        width: 50,
+        height: 50,
+        child: Center(child: Icon(Icons.image_not_supported)),
+      );
+    } else {
+      return Image.file(
+        File(_existingImagePath!),
+        width: 50,
+        height: 50,
+        fit: BoxFit.contain,
+      );
+    }
   }
 }

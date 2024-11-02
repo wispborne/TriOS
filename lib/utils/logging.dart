@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 // import 'package:fimber/fimber.dart' as f;
@@ -7,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+
 // import 'package:platform_info/platform_info.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:trios/utils/extensions.dart';
@@ -111,7 +113,8 @@ configureLogging({
                   file is File &&
                   file.extension == ".log" &&
                   file.nameWithExtension != logFileName)
-              .forEach((FileSystemEntity file) => file.moveToTrash(deleteIfFailed: true));
+              .forEach((FileSystemEntity file) =>
+                  file.moveToTrash(deleteIfFailed: true));
         } catch (e) {
           Fimber.e("Error cleaning up old log files.", ex: e);
         }
@@ -228,8 +231,8 @@ final lastErrorMessagesAndTimestamps = <String, DateTime>{};
 SentryFlutterOptions configureSentry(
     SentryFlutterOptions options, Settings? settings) {
   // I'm lazy, please don't steal.
-  options.dsn =
-      'https://490328260deec1632d3833a7b5439dd5@o4507579573600256.ingest.us.sentry.io/4507579574648832';
+  options.dsn = utf8.decode(base64Decode(
+      'aHR0cHM6Ly80OTAzMjgyNjBkZWVjMTYzMmQzODMzYTdiNTQzOWRkNUBvNDUwNzU3OTU3MzYwMDI1Ni5pbmdlc3QudXMuc2VudHJ5LmlvLzQ1MDc1Nzk1NzQ2NDg4MzI='));
 
   options
     ..debug = kDebugMode

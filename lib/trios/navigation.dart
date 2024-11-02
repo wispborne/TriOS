@@ -6,5 +6,6 @@ enum TriOSTools {
   chipper,
   jreManager,
   portraits,
+  weapons,
   settings,
 }

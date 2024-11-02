@@ -10,6 +10,7 @@ import 'package:trios/utils/extensions.dart';
 import '../trios/constants.dart';
 import 'logging.dart';
 
+/// Creates a settings file that can notify on changes.
 abstract class GenericSettingsNotifier<T> extends AsyncNotifier<T> {
   late String _fileName;
   late File _file;

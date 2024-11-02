@@ -9,6 +9,7 @@ import 'package:trios/chipper/chipper_home.dart';
 import 'package:trios/dashboard/dashboard.dart';
 import 'package:trios/portraits/portraits_viewer.dart';
 import 'package:trios/rules_autofresh/rules_hotreload.dart';
+import 'package:trios/shipWeaponViewer/weaponPage.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/navigation.dart';
@@ -60,7 +61,8 @@ class _AppShellState extends ConsumerState<AppShell>
     4: TriOSTools.chipper,
     // 5: TriOSTools.jreManager,
     5: TriOSTools.portraits,
-    6: TriOSTools.settings,
+    6: TriOSTools.weapons,
+    7: TriOSTools.settings,
   };
 
   void _changeTab(TriOSTools tab) {
@@ -199,6 +201,7 @@ class _AppShellState extends ConsumerState<AppShell>
       //     : const Center(
       //         child: Text("Only supported on Windows for now, sorry.")),
       const Padding(padding: EdgeInsets.all(8), child: ImageGridScreen()),
+      const Padding(padding: EdgeInsets.all(8), child: WeaponPage()),
       const Padding(
         padding: EdgeInsets.all(8),
         child: SettingsPage(),
@@ -322,6 +325,17 @@ class _AppShellState extends ConsumerState<AppShell>
                                 SizedBox(width: 8),
                                 // Space between icon and text
                                 Text("Portraits"),
+                              ],
+                            )),
+                        PopupMenuItem(
+                            value: TriOSTools.weapons,
+                            child: Row(
+                              children: [
+                                SvgImageIcon(
+                                    "assets/images/icon-target.svg"),
+                                SizedBox(width: 8),
+                                // Space between icon and text
+                                Text("Weapons"),
                               ],
                             )),
                         // PopupMenuItem(

@@ -112,6 +112,7 @@ const _$TriOSToolsEnumMap = {
   TriOSTools.chipper: 'chipper',
   TriOSTools.jreManager: 'jreManager',
   TriOSTools.portraits: 'portraits',
+  TriOSTools.weapons: 'weapons',
   TriOSTools.settings: 'settings',
 };
 

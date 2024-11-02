@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:toastification/toastification.dart';
 import 'package:trios/mod_profiles/mod_profiles_manager.dart';
 import 'package:trios/models/download_progress.dart';
+import 'package:trios/shipWeaponViewer/weaponsManager.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
@@ -200,6 +201,21 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
               });
             },
             child: const Text('Read game version from starfarer_obf.jar.'),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(top: 16),
+          child: ElevatedButton(
+            onPressed: () {
+              showSnackBar(
+                context: context,
+                content: Text(ref.refresh(weaponListNotifierProvider)
+                        .valueOrNull
+                        ?.toString() ??
+                    "weh"),
+              );
+            },
+            child: const Text('Read weapons'),
           ),
         ),
         const SizedBox(height: 16),

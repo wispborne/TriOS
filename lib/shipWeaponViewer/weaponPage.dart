@@ -5,9 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
+import 'package:trios/shipWeaponViewer/models/weapon.dart';
 import 'package:trios/shipWeaponViewer/weaponsManager.dart';
 import 'package:trios/thirdparty/pluto_grid_plus/lib/pluto_grid_plus.dart';
 import 'package:trios/trios/settings/settings.dart';
+import 'package:trios/utils/logging.dart';
+import 'package:trios/widgets/checkbox_with_label.dart';
 
 class WeaponPage extends ConsumerStatefulWidget {
   const WeaponPage({super.key});
@@ -21,17 +24,16 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
   @override
   bool get wantKeepAlive => true;
   final SearchController _searchController = SearchController();
-  PlutoGridStateManager? _stateManager;
+  PlutoGridStateManager? _gridStateManager;
   late final String gameCorePath;
+  bool showHiddenWeapons = false;
 
   @override
   void initState() {
     super.initState();
     // Obtain gameCorePath from settings or wherever it's stored
     gameCorePath =
-        ref
-            .read(appSettings.select((s) => s.gameCoreDir))
-            ?.path ?? '';
+        ref.read(appSettings.select((s) => s.gameCoreDir))?.path ?? '';
   }
 
   @override
@@ -40,22 +42,43 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
     super.dispose();
   }
 
-  void _filterGrid(String query) {
-    if (_stateManager == null) return;
+  void _notifyGridFilterChanged() {
+    if (_gridStateManager == null) return;
+    final filters = <FilteredListFilter<PlutoRow>>[];
 
-    _stateManager!.setFilter(
-          (PlutoRow row) {
+    if (!showHiddenWeapons) {
+      filters.add((PlutoRow row) {
+        final weapon = row.data as Weapon;
+        return weapon.weaponType?.toLowerCase() != "decorative";
+      });
+    }
+
+    final query = _searchController.value.text;
+    if (query.isNotEmpty) {
+      filters.add((PlutoRow row) {
         return row.cells.values.any((cell) {
           final value = cell.value.toString().toLowerCase();
           return value.contains(query.toLowerCase());
         });
-      },
-    );
+      });
+    }
+
+    if (filters.isEmpty) {
+      _gridStateManager!.setFilter(null);
+    } else {
+      _gridStateManager!.setFilter(
+        (PlutoRow row) {
+          return filters.every((filter) => filter(row));
+        },
+      );
+    }
+
     setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     // Watch the weapons provider
     final weaponListAsyncValue = ref.watch(weaponListNotifierProvider);
     final theme = Theme.of(context);
@@ -88,7 +111,7 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
           List<String>? imagePaths = rendererContext.cell.value;
           return Tooltip(
             message: imagePaths?.firstWhere((path) => path.isNotEmpty,
-                orElse: () => '') ??
+                    orElse: () => '') ??
                 '',
             child: Center(
               child: imagePaths == null || imagePaths.isEmpty
@@ -133,8 +156,10 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
 
     return weaponListAsyncValue.when(
       data: (weapons) {
+        List<Weapon> filteredWeapons = weapons;
+
         // Map weapons to rows for PlutoGrid
-        List<PlutoRow> rows = weapons.map((weapon) {
+        List<PlutoRow> rows = filteredWeapons.map((weapon) {
           // Determine the base path
           final modFolderPath =
               weapon.modVariant?.modFolder.path ?? gameCorePath;
@@ -165,8 +190,12 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
               'type': PlutoCell(value: weapon.type ?? ""),
               // Add other fields if needed
             },
+            data: weapon,
           );
         }).toList();
+
+        final weaponCount = weaponListAsyncValue.valueOrNull?.length;
+        final filteredWeaponCount = _gridStateManager?.rows.length;
 
         return Column(
           children: [
@@ -181,10 +210,8 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
                       Align(
                         alignment: Alignment.centerLeft,
                         child: Text(
-                          '${weaponListAsyncValue.valueOrNull?.length ??
-                              "..."} Weapons',
-                          style: Theme
-                              .of(context)
+                          '${weaponCount ?? "..."}${weaponCount != filteredWeaponCount ? " ($filteredWeaponCount)" : ""} Weapons',
+                          style: Theme.of(context)
                               .textTheme
                               .headlineSmall
                               ?.copyWith(fontSize: 20),
@@ -195,11 +222,42 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
                       ),
                       Align(
                         alignment: Alignment.centerRight,
-                        child: IconButton(
-                          icon: const Icon(Icons.refresh),
-                          onPressed: () {
-                            ref.invalidate(weaponListNotifierProvider);
-                          },
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SizedBox(
+                              height: 30,
+                              child: Card.outlined(
+                                margin: const EdgeInsets.symmetric(),
+                                child: CheckboxWithLabel(
+                                  labelWidget: Padding(
+                                    padding: const EdgeInsets.only(right: 4),
+                                    child: Text("Hidden Weapons",
+                                        style: theme.textTheme.labelLarge!
+                                            .copyWith(fontSize: 14)),
+                                  ),
+                                  textPadding: const EdgeInsets.only(left: 4),
+                                  checkWrapper: (child) => Padding(
+                                    padding: const EdgeInsets.only(left: 4),
+                                    child: child,
+                                  ),
+                                  value: showHiddenWeapons,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      showHiddenWeapons = value ?? false;
+                                      _notifyGridFilterChanged();
+                                    });
+                                  },
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.refresh),
+                              onPressed: () {
+                                ref.invalidate(weaponListNotifierProvider);
+                              },
+                            ),
+                          ],
                         ),
                       ),
                     ],
@@ -214,9 +272,9 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
                   columns: columns,
                   rows: rows,
                   onLoaded: (PlutoGridOnLoadedEvent event) {
-                    _stateManager = event.stateManager;
+                    _gridStateManager = event.stateManager;
                     // Enable column filtering if needed
-                    _stateManager!.setShowColumnFilter(false);
+                    _gridStateManager!.setShowColumnFilter(false);
                   },
                   configuration: PlutoGridConfiguration(
                     columnSize: const PlutoGridColumnSizeConfig(),
@@ -239,14 +297,14 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
                       inactivatedBorderColor: Colors.transparent,
                       menuBackgroundColor: theme.colorScheme.surface,
                       gridBackgroundColor:
-                      theme.colorScheme.surfaceContainerHighest,
+                          theme.colorScheme.surfaceContainerHighest,
                       rowColor: Colors.transparent,
                       borderColor: Colors.transparent,
                       cellColorInEditState: Colors.transparent,
                       cellColorInReadOnlyState: Colors.transparent,
                       gridBorderColor: Colors.transparent,
                       activatedColor:
-                      theme.colorScheme.onSurface.withOpacity(0.1),
+                          theme.colorScheme.onSurface.withOpacity(0.1),
                       evenRowColor: theme.colorScheme.surface.withOpacity(0.4),
                       defaultCellPadding: EdgeInsets.zero,
                       defaultColumnFilterPadding: EdgeInsets.zero,
@@ -256,16 +314,15 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
                       columnTextStyle: theme.textTheme.headlineSmall!
                           .copyWith(fontSize: 14, fontWeight: FontWeight.bold),
                       dragTargetColumnColor:
-                      theme.colorScheme.surface.darker(20),
+                          theme.colorScheme.surface.darker(20),
                       iconColor: theme.colorScheme.onSurface.withAlpha(150),
                       cellTextStyle:
-                      theme.textTheme.labelLarge!.copyWith(fontSize: 14),
+                          theme.textTheme.labelLarge!.copyWith(fontSize: 14),
                     ),
                   ),
                   onChanged: (PlutoGridOnChangedEvent event) {
-                    print(
-                        'Value changed from ${event.oldValue} to ${event
-                            .value}');
+                    Fimber.d(
+                        'Value changed from ${event.oldValue} to ${event.value}');
                   },
                 ),
               ),
@@ -274,10 +331,9 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, stack) =>
-          Center(
-            child: SelectableText('Error loading weapons: $error'),
-          ),
+      error: (error, stack) => Center(
+        child: SelectableText('Error loading weapons: $error'),
+      ),
     );
   }
 
@@ -296,23 +352,20 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
               controller.value.text.isEmpty
                   ? Container()
                   : IconButton(
-                icon: const Icon(Icons.clear),
-                constraints: const BoxConstraints(),
-                padding: EdgeInsets.zero,
-                onPressed: () {
-                  controller.clear();
-                  _filterGrid("");
-                },
-              )
+                      icon: const Icon(Icons.clear),
+                      constraints: const BoxConstraints(),
+                      padding: EdgeInsets.zero,
+                      onPressed: () {
+                        controller.clear();
+                        _notifyGridFilterChanged();
+                      },
+                    )
             ],
             backgroundColor: WidgetStateProperty.all(
-              Theme
-                  .of(context)
-                  .colorScheme
-                  .surfaceContainer,
+              Theme.of(context).colorScheme.surfaceContainer,
             ),
             onChanged: (value) {
-              _filterGrid(value);
+              _notifyGridFilterChanged();
             },
           );
         },

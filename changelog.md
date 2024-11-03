@@ -1,6 +1,13 @@
 # 0.3.4
 - Added
   - **Weapon browser** (in Toolbox dropdown)
+- Fixed
+  - `__MACOSX` folders breaking mod installs.
+    - e.g. Diktat Enhancement.
+  - More Google Drive handling fixes
+    - Thank you to @DRE4DNOUGHT for all these bug reports!
+  - Mod installs sometimes failing if they required user input (dialog window) and took a long time.
+    - e.g. AotD or any other mod that uses google drive.
 
 # 0.3.3
 - Added

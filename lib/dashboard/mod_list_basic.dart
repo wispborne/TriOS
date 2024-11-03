@@ -417,7 +417,6 @@ class _ModListMiniState extends ConsumerState<ModListMini>
         if (remoteVersionCheck?.remoteVersion != null) {
           ref.read(downloadManager.notifier).downloadUpdateViaBrowser(
                 remoteVersionCheck!.remoteVersion!,
-                context,
                 activateVariantOnComplete: false,
                 modInfo: variant.modInfo,
               );

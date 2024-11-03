@@ -10,12 +10,14 @@ class TriOSHttpResponse<T> {
   final T data;
   final int statusCode;
   final HttpHeaders headers;
+  final HttpClientResponse httpResponse;
   final String? contentType;
 
   TriOSHttpResponse({
     required this.data,
     required this.statusCode,
     required this.headers,
+    required this.httpResponse,
     this.contentType,
   });
 }
@@ -167,6 +169,7 @@ class TriOSHttpClient {
       data: responseBody,
       statusCode: statusCode,
       headers: headersMap,
+      httpResponse: response,
       contentType: contentType,
     );
   }

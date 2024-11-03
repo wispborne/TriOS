@@ -52,7 +52,7 @@ dependencies:
   plist_parser: ^0.0.11
   shared_preferences: ^2.2.3
   # Networking & API
-#  http: ^1.2.1
+  html: ^0.15.5
   # Analytics
   sentry_flutter: ^8.8.0
   # UI & Widgets

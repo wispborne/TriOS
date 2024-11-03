@@ -981,7 +981,6 @@ class _Smol3State extends ConsumerState<Smol3>
                                         .read(downloadManager.notifier)
                                         .downloadUpdateViaBrowser(
                                             remoteVersionCheck!.remoteVersion!,
-                                            context,
                                             activateVariantOnComplete: false,
                                             modInfo: bestVersion.modInfo);
                                   } else {

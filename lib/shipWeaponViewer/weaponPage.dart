@@ -16,7 +16,10 @@ class WeaponPage extends ConsumerStatefulWidget {
   ConsumerState<WeaponPage> createState() => _WeaponPageState();
 }
 
-class _WeaponPageState extends ConsumerState<WeaponPage> {
+class _WeaponPageState extends ConsumerState<WeaponPage>
+    with AutomaticKeepAliveClientMixin<WeaponPage> {
+  @override
+  bool get wantKeepAlive => true;
   final SearchController _searchController = SearchController();
   PlutoGridStateManager? _stateManager;
   late final String gameCorePath;
@@ -26,7 +29,9 @@ class _WeaponPageState extends ConsumerState<WeaponPage> {
     super.initState();
     // Obtain gameCorePath from settings or wherever it's stored
     gameCorePath =
-        ref.read(appSettings.select((s) => s.gameCoreDir))?.path ?? '';
+        ref
+            .read(appSettings.select((s) => s.gameCoreDir))
+            ?.path ?? '';
   }
 
   @override
@@ -39,7 +44,7 @@ class _WeaponPageState extends ConsumerState<WeaponPage> {
     if (_stateManager == null) return;
 
     _stateManager!.setFilter(
-      (PlutoRow row) {
+          (PlutoRow row) {
         return row.cells.values.any((cell) {
           final value = cell.value.toString().toLowerCase();
           return value.contains(query.toLowerCase());
@@ -83,7 +88,7 @@ class _WeaponPageState extends ConsumerState<WeaponPage> {
           List<String>? imagePaths = rendererContext.cell.value;
           return Tooltip(
             message: imagePaths?.firstWhere((path) => path.isNotEmpty,
-                    orElse: () => '') ??
+                orElse: () => '') ??
                 '',
             child: Center(
               child: imagePaths == null || imagePaths.isEmpty
@@ -176,8 +181,10 @@ class _WeaponPageState extends ConsumerState<WeaponPage> {
                       Align(
                         alignment: Alignment.centerLeft,
                         child: Text(
-                          '${weaponListAsyncValue.valueOrNull?.length ?? "..."} Weapons',
-                          style: Theme.of(context)
+                          '${weaponListAsyncValue.valueOrNull?.length ??
+                              "..."} Weapons',
+                          style: Theme
+                              .of(context)
                               .textTheme
                               .headlineSmall
                               ?.copyWith(fontSize: 20),
@@ -232,14 +239,14 @@ class _WeaponPageState extends ConsumerState<WeaponPage> {
                       inactivatedBorderColor: Colors.transparent,
                       menuBackgroundColor: theme.colorScheme.surface,
                       gridBackgroundColor:
-                          theme.colorScheme.surfaceContainerHighest,
+                      theme.colorScheme.surfaceContainerHighest,
                       rowColor: Colors.transparent,
                       borderColor: Colors.transparent,
                       cellColorInEditState: Colors.transparent,
                       cellColorInReadOnlyState: Colors.transparent,
                       gridBorderColor: Colors.transparent,
                       activatedColor:
-                          theme.colorScheme.onSurface.withOpacity(0.1),
+                      theme.colorScheme.onSurface.withOpacity(0.1),
                       evenRowColor: theme.colorScheme.surface.withOpacity(0.4),
                       defaultCellPadding: EdgeInsets.zero,
                       defaultColumnFilterPadding: EdgeInsets.zero,
@@ -249,15 +256,16 @@ class _WeaponPageState extends ConsumerState<WeaponPage> {
                       columnTextStyle: theme.textTheme.headlineSmall!
                           .copyWith(fontSize: 14, fontWeight: FontWeight.bold),
                       dragTargetColumnColor:
-                          theme.colorScheme.surface.darker(20),
+                      theme.colorScheme.surface.darker(20),
                       iconColor: theme.colorScheme.onSurface.withAlpha(150),
                       cellTextStyle:
-                          theme.textTheme.labelLarge!.copyWith(fontSize: 14),
+                      theme.textTheme.labelLarge!.copyWith(fontSize: 14),
                     ),
                   ),
                   onChanged: (PlutoGridOnChangedEvent event) {
                     print(
-                        'Value changed from ${event.oldValue} to ${event.value}');
+                        'Value changed from ${event.oldValue} to ${event
+                            .value}');
                   },
                 ),
               ),
@@ -266,9 +274,10 @@ class _WeaponPageState extends ConsumerState<WeaponPage> {
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, stack) => Center(
-        child: SelectableText('Error loading weapons: $error'),
-      ),
+      error: (error, stack) =>
+          Center(
+            child: SelectableText('Error loading weapons: $error'),
+          ),
     );
   }
 
@@ -287,17 +296,20 @@ class _WeaponPageState extends ConsumerState<WeaponPage> {
               controller.value.text.isEmpty
                   ? Container()
                   : IconButton(
-                      icon: const Icon(Icons.clear),
-                      constraints: const BoxConstraints(),
-                      padding: EdgeInsets.zero,
-                      onPressed: () {
-                        controller.clear();
-                        _filterGrid("");
-                      },
-                    )
+                icon: const Icon(Icons.clear),
+                constraints: const BoxConstraints(),
+                padding: EdgeInsets.zero,
+                onPressed: () {
+                  controller.clear();
+                  _filterGrid("");
+                },
+              )
             ],
             backgroundColor: WidgetStateProperty.all(
-              Theme.of(context).colorScheme.surfaceContainer,
+              Theme
+                  .of(context)
+                  .colorScheme
+                  .surfaceContainer,
             ),
             onChanged: (value) {
               _filterGrid(value);

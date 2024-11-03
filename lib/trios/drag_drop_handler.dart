@@ -100,7 +100,6 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
             ref.read(downloadManager.notifier).downloadAndInstallMod(
                   "Web link download",
                   uri.uri.toString(),
-                  context,
                   activateVariantOnComplete: false,
                 );
             return null;
@@ -132,8 +131,7 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
                   // TODO: this works fine in _pickAndInstallMods with `await`, see what the difference is.
                   ref
                       .read(modManager.notifier)
-                      .installModFromArchiveWithDefaultUI(
-                          filePath.toFile(), context);
+                      .installModFromArchiveWithDefaultUI(filePath.toFile());
                 } catch (e, st) {
                   Fimber.e("Failed to install mod from archive",
                       ex: e, stacktrace: st);

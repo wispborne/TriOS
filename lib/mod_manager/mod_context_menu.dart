@@ -267,7 +267,6 @@ MenuItem menuItemDebugging(
                       latestVersionWithDirectDownload.modInfo.nameOrId,
                       latestVersionWithDirectDownload
                           .versionCheckerInfo!.directDownloadURL!,
-                      context,
                       activateVariantOnComplete: false,
                       modInfo: latestVersionWithDirectDownload.modInfo);
                 } else {

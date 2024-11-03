@@ -262,7 +262,6 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                                   .read(downloadManager.notifier)
                                   .downloadUpdateViaBrowser(
                                       remoteVersionCheck!.remoteVersion!,
-                                      context,
                                       activateVariantOnComplete: false,
                                       modInfo: modInfo);
                             } else {

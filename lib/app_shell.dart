@@ -112,7 +112,7 @@ class _AppShellState extends ConsumerState<AppShell>
                 Fimber.i("Update info: $updateInfo");
 
                 toastification.showCustom(
-                    context: context,
+                    context: ref.read(AppState.appContext),
                     builder: (context, item) =>
                         SelfUpdateToast(latestRelease, item));
 
@@ -141,52 +141,16 @@ class _AppShellState extends ConsumerState<AppShell>
     });
   }
 
-  void _askUserForReportingPermission() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text("Crash Reporting"),
-          content: Linkify(
-            text:
-                "${Constants.appName} can send crash/error reports to help me find and fix issues."
-                "\n\nNothing identifiable or personal is ever sent."
-                "\n\nInfo includes: app version, mod list, basic PC info (resolution, OS), randomly generated user id, and the crash details."
-                "\nNot sent: IP address, language/region/zip, PC name, any file paths, etc."
-                "\nExample of a report: https://i.imgur.com/k9E6zxO.png."
-                "\n\nWould you like to enable crash reporting?",
-            onOpen: (link) {
-              OpenFilex.open(link.url);
-            },
-          ),
-          actions: [
-            TextButton.icon(
-              onPressed: () {
-                ref.read(appSettings.notifier).update(
-                    (state) => state.copyWith(allowCrashReporting: true));
-                RestartableApp.restartApp(context);
-              },
-              icon: const Icon(Icons.track_changes),
-              label: const Text("Allow Reporting"),
-            ),
-            TextButton.icon(
-              onPressed: () {
-                ref.read(appSettings.notifier).update(
-                    (state) => state.copyWith(allowCrashReporting: false));
-                RestartableApp.restartApp(context);
-              },
-              icon:
-                  const SvgImageIcon("assets/images/icon-incognito-circle.svg"),
-              label: const Text("Keep Reporting Disabled"),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    // Set global Context, needs to be done next frame to avoid rebuilding and exploding everything
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (ref.read(AppState.appContext) == null ||
+          ref.read(AppState.appContext)?.mounted == false) {
+        ref.read(AppState.appContext.notifier).state = context;
+      }
+    });
+
     final tabChildren = [
       const Padding(
         padding: EdgeInsets.all(4),
@@ -331,8 +295,7 @@ class _AppShellState extends ConsumerState<AppShell>
                             value: TriOSTools.weapons,
                             child: Row(
                               children: [
-                                SvgImageIcon(
-                                    "assets/images/icon-target.svg"),
+                                SvgImageIcon("assets/images/icon-target.svg"),
                                 SizedBox(width: 8),
                                 // Space between icon and text
                                 Text("Weapons"),
@@ -505,6 +468,50 @@ class _AppShellState extends ConsumerState<AppShell>
           ),
           onDroppedLog: (_) => _changeTab(TriOSTools.chipper),
         ));
+  }
+
+  void _askUserForReportingPermission() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Crash Reporting"),
+          content: Linkify(
+            text:
+                "${Constants.appName} can send crash/error reports to help me find and fix issues."
+                "\n\nNothing identifiable or personal is ever sent."
+                "\n\nInfo includes: app version, mod list, basic PC info (resolution, OS), randomly generated user id, and the crash details."
+                "\nNot sent: IP address, language/region/zip, PC name, any file paths, etc."
+                "\nExample of a report: https://i.imgur.com/k9E6zxO.png."
+                "\n\nWould you like to enable crash reporting?",
+            onOpen: (link) {
+              OpenFilex.open(link.url);
+            },
+          ),
+          actions: [
+            TextButton.icon(
+              onPressed: () {
+                ref.read(appSettings.notifier).update(
+                    (state) => state.copyWith(allowCrashReporting: true));
+                RestartableApp.restartApp(context);
+              },
+              icon: const Icon(Icons.track_changes),
+              label: const Text("Allow Reporting"),
+            ),
+            TextButton.icon(
+              onPressed: () {
+                ref.read(appSettings.notifier).update(
+                    (state) => state.copyWith(allowCrashReporting: false));
+                RestartableApp.restartApp(context);
+              },
+              icon:
+                  const SvgImageIcon("assets/images/icon-incognito-circle.svg"),
+              label: const Text("Keep Reporting Disabled"),
+            ),
+          ],
+        );
+      },
+    );
   }
 }
 

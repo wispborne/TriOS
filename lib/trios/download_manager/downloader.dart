@@ -6,6 +6,8 @@ import 'dart:io';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // Import Riverpod
+import 'package:html/parser.dart';
+import 'package:trios/mod_manager/version_checker.dart';
 import 'package:trios/trios/providers.dart';
 import 'package:trios/utils/extensions.dart';
 
@@ -61,9 +63,12 @@ class DownloadManager {
       }
 
       setStatus(task, DownloadStatus.retrievingFileInfo);
-      url = makeDirectDownloadLink(url);
 
-      final headers = await fetchHeaders(url);
+      url = makeDirectDownloadLink(url);
+      final finalUrlAndHeaders = await fetchFinalUrlAndHeaders(url);
+      url = finalUrlAndHeaders.url;
+      url = makeDirectDownloadLink(url);
+      final headers = finalUrlAndHeaders.headers;
 
       // If given a download folder, then get the file's name from the URL and put it in the folder.
       // If given an actual filename rather than a folder, then we already have the name.
@@ -176,25 +181,32 @@ class DownloadManager {
     }
   }
 
-  /// AI Generated
+  /// Partly AI Generated
   String makeDirectDownloadLink(String url) {
     // Create a lowercase version of the URL for comparison purposes
     final urlLower = url.toLowerCase();
 
     // Google Drive
-    if (urlLower.contains("drive.google.com") &&
-        !urlLower.contains("export=download")) {
-      if (urlLower.contains("/file/d/")) {
-        final fileIdMatch =
-            RegExp(r'file/d/([^/]+)', caseSensitive: false).firstMatch(url);
-        final fileId = fileIdMatch?.group(1);
-        if (fileId != null) {
-          url = "https://drive.google.com/uc?export=download&id=$fileId";
+    if (isGoogleDrive(urlLower)) {
+      if (!urlLower.contains("export=download")) {
+        if (urlLower.contains("/file/d/")) {
+          final fileIdMatch =
+              RegExp(r'file/d/([^/]+)', caseSensitive: false).firstMatch(url);
+          final fileId = fileIdMatch?.group(1);
+          if (fileId != null) {
+            url = "https://drive.google.com/uc?export=download&id=$fileId";
+          }
+        } else if (urlLower.contains("open") && urlLower.contains("id=")) {
+          url =
+              "${url.replaceFirst(RegExp("open", caseSensitive: false), "uc")}&export=download";
         }
-      } else if (urlLower.contains("open") && urlLower.contains("id=")) {
-        url =
-            "${url.replaceFirst(RegExp("open", caseSensitive: false), "uc")}&export=download";
       }
+
+      Uri uri = Uri.parse(url);
+      url = uri.replace(queryParameters: {
+        ...uri.queryParameters,
+        'confirm': 't' // Skip Google Drive confirmation page
+      }).toString();
     }
 
     // Dropbox
@@ -227,6 +239,11 @@ class DownloadManager {
     }
 
     return url;
+  }
+
+  bool isGoogleDrive(String url) {
+    return (url.toLowerCase().contains("drive.google.com") ||
+        url.toLowerCase().contains("drive.usercontent.google.com"));
   }
 
   void disposeNotifiers(DownloadTask task) {
@@ -543,7 +560,7 @@ class DownloadManager {
       }
 
       // Special handling for Google Drive and MEGA
-      if (url.contains('drive.google.com')) {
+      if (isGoogleDrive(url)) {
         return await checkGoogleDriveLink(url);
       } else if (url.contains('mega.nz')) {
         return await checkMegaLink(url);
@@ -554,9 +571,88 @@ class DownloadManager {
     return false;
   }
 
-  // TODO what the f is this code
+  Future<UrlResponse> fetchFinalUrlAndHeaders(String url) async {
+    const int maxRedirects = 3;
+    int redirectCount = 0;
+    String currentUrl = url;
+    HttpHeaders currentHeaders;
+    final httpClient = ref.watch(triOSHttpClient);
+
+    while (redirectCount < maxRedirects) {
+      final response = await httpClient.get(
+        url,
+        headers: {
+          'method': 'HEAD',
+        },
+      );
+
+      if (response.httpResponse.redirects.isNotEmpty) {
+        currentUrl = response.httpResponse.redirects.last.location.toString();
+        currentUrl = fixUrl(currentUrl);
+      }
+
+      // Store headers from the latest response
+      currentHeaders = response.headers;
+
+      // Check for HTTP redirect
+      if (response.httpResponse.isRedirect ||
+          response.statusCode == 301 ||
+          response.statusCode == 302) {
+        final location = response.headers['location']?.firstOrNull;
+        if (location != null) {
+          currentUrl = Uri.parse(currentUrl).resolve(location).toString();
+          redirectCount++;
+          continue;
+        }
+      }
+
+      // If not an HTTP redirect, try a GET request to detect meta refresh
+      final getResponse = await httpClient.get(currentUrl, headers: {
+        'User-Agent': 'Mozilla/5.0',
+      });
+
+      // Update headers from the GET response
+      currentHeaders = getResponse.headers;
+
+      if (getResponse.headers['content-type']
+              ?.join(';')
+              .contains('text/html') ??
+          false) {
+        // Parse HTML to find <meta http-equiv="Refresh" content="...">
+        final document = parse(getResponse.data);
+        final metaRefresh = document.head
+            ?.getElementsByTagName('meta')
+            .firstWhereOrNull((element) =>
+                element.attributes['http-equiv']?.toLowerCase() == 'refresh');
+
+        if (metaRefresh != null) {
+          final content = metaRefresh.attributes['content'];
+          final urlMatch = RegExp(r'url=(.*)', caseSensitive: false)
+              .firstMatch(content ?? '');
+          if (urlMatch != null) {
+            currentUrl =
+                Uri.parse(currentUrl).resolve(urlMatch.group(1)!).toString();
+            redirectCount++;
+            continue;
+          }
+        }
+      }
+
+      // If no redirect or meta refresh, return the current URL and headers as final
+      return UrlResponse(currentUrl, currentHeaders);
+    }
+
+    // If max redirects exceeded, throw an error or return the last URL and headers
+    throw Exception('Too many redirects: $url');
+  }
+
+  // Determines if a Google Drive link has a download (because it doesn't use proper headers).
   Future<bool> checkGoogleDriveLink(String url) async {
     try {
+      if (url.contains('export=download')) {
+        return true;
+      }
+
       final httpClient = ref.watch(triOSHttpClient);
       // Google Drive files usually require confirmation to download
       final response = await httpClient.get(url);
@@ -573,7 +669,7 @@ class DownloadManager {
     }
   }
 
-  // TODO what the f is this code
+  // Determines if a MEGA link has a download (because it doesn't use proper headers).
   Future<bool> checkMegaLink(String url) async {
     try {
       final httpClient = ref.watch(triOSHttpClient);
@@ -591,4 +687,11 @@ class DownloadManager {
       return false;
     }
   }
+}
+
+class UrlResponse {
+  final String url;
+  final HttpHeaders headers;
+
+  UrlResponse(this.url, this.headers);
 }

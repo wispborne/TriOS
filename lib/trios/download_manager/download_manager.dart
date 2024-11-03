@@ -87,13 +87,12 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
   }
 
   downloadUpdateViaBrowser(
-      VersionCheckerInfo remoteVersion, BuildContext context,
+      VersionCheckerInfo remoteVersion,
       {required bool activateVariantOnComplete, ModInfo? modInfo}) {
     if (remoteVersion.directDownloadURL != null) {
       downloadAndInstallMod(
           "${remoteVersion.modName ?? "(no name"} ${remoteVersion.modVersion}",
           remoteVersion.directDownloadURL!.fixModDownloadUrl(),
-          context,
           activateVariantOnComplete: activateVariantOnComplete);
     } else if (remoteVersion.modThreadId != null) {
       launchUrl(Uri.parse(
@@ -106,8 +105,7 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
 
   void downloadAndInstallMod(
     String displayName,
-    String uri,
-    BuildContext context, {
+    String uri, {
     required bool activateVariantOnComplete,
     ModInfo? modInfo,
   }) {
@@ -128,7 +126,6 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
                 .read(modManager.notifier)
                 .installModFromArchiveWithDefaultUI(
                   tempFolder.listSync().first.toFile(),
-                  context,
                 )
                 .then((installedVariants) {
               if (activateVariantOnComplete) {

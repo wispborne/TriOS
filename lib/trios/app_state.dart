@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trios/jre_manager/jre_entry.dart';
@@ -31,6 +32,7 @@ class AppState {
   static final isWindowFocused = StateProvider<bool>((ref) => true);
   static final selfUpdate =
       AsyncNotifierProvider<SelfUpdater, DownloadProgress?>(SelfUpdater.new);
+  static final appContext = StateProvider<BuildContext?>((ref) => null);
 
   /// Master list of all mod variants found in the mods folder.
   static final modVariants =

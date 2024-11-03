@@ -35,7 +35,7 @@ class AddNewModsButton extends ConsumerWidget {
               ? Padding(
                   padding: padding,
                   child: OutlinedButton.icon(
-                    onPressed: () => _pickAndInstallMods(ref, context),
+                    onPressed: () => _pickAndInstallMods(ref),
                     label: labelWidget!,
                     icon: Icon(
                       Icons.add,
@@ -44,7 +44,7 @@ class AddNewModsButton extends ConsumerWidget {
                   ),
                 )
               : IconButton(
-                  onPressed: () => _pickAndInstallMods(ref, context),
+                  onPressed: () => _pickAndInstallMods(ref),
                   constraints: const BoxConstraints(),
                   iconSize: iconSize,
                   padding: padding,
@@ -58,14 +58,14 @@ class AddNewModsButton extends ConsumerWidget {
     );
   }
 
-  void _pickAndInstallMods(WidgetRef ref, BuildContext context) {
+  void _pickAndInstallMods(WidgetRef ref) {
     FilePicker.platform.pickFiles(allowMultiple: true).then((value) async {
       if (value == null) return;
 
       for (final file in value.files) {
         await ref
             .read(modManager.notifier)
-            .installModFromArchiveWithDefaultUI(File(file.path!), context);
+            .installModFromArchiveWithDefaultUI(File(file.path!));
       }
     });
   }

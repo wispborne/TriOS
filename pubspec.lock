@@ -813,6 +813,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.16.8"
+  multi_split_view:
+    dependency: "direct main"
+    description:
+      name: multi_split_view
+      sha256: "99c02f128e7423818d13b8f2e01e3027e953b35508019dcee214791bd0525db5"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.6.0"
   mutex:
     dependency: "direct main"
     description:

@@ -165,7 +165,7 @@ class _AppShellState extends ConsumerState<AppShell>
       //     : const Center(
       //         child: Text("Only supported on Windows for now, sorry.")),
       const Padding(padding: EdgeInsets.all(8), child: ImageGridScreen()),
-      const Padding(padding: EdgeInsets.all(8), child: WeaponPage()),
+      const WeaponPage(),
       const Padding(
         padding: EdgeInsets.all(8),
         child: SettingsPage(),

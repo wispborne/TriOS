@@ -157,6 +157,10 @@ class PlutoDualGridState extends State<PlutoDualGrid> {
         },
         onChanged: props.onChanged,
         onSelected: (PlutoGridOnSelectedEvent onSelectedEvent) {
+          if (widget.onSelected == null) {
+            return;
+          }
+
           if (onSelectedEvent.row == null || onSelectedEvent.cell == null) {
             widget.onSelected!(
               PlutoDualOnSelectedEvent(

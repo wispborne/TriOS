@@ -1,6 +1,7 @@
 # 0.3.4
 - Added
-  - **Weapon browser** (in Toolbox dropdown)
+  - **Weapon browser** (in Toolbox dropdown).
+    - Spoilers!
 - Fixed
   - `__MACOSX` folders breaking mod installs.
     - e.g. Diktat Enhancement.

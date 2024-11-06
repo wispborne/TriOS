@@ -11,9 +11,9 @@ import 'package:trios/shipWeaponViewer/models/weapon.dart';
 import 'package:trios/shipWeaponViewer/weaponsManager.dart';
 import 'package:trios/thirdparty/pluto_grid_plus/lib/pluto_grid_plus.dart';
 import 'package:trios/trios/settings/settings.dart';
+import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
-import 'package:trios/utils/extensions.dart';
 
 import '../widgets/MultiSplitViewMixin.dart';
 

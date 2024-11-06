@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:csv/csv.dart';
+import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:trios/models/mod_variant.dart';
@@ -34,12 +35,15 @@ final weaponListNotifierProvider = StreamProvider<List<Weapon>>((ref) async* {
       .toList();
 
   final allErrors = <String>[]; // To store all error messages
-  final allWeapons = <Weapon>[]; // To store all parsed weapons
+  List<Weapon> allWeapons = <Weapon>[]; // To store all parsed weapons
 
   // Parse the core game weapons
   final coreResult = await _parseWeaponsCsv(Directory(gameCorePath), null);
   filesProcessed += coreResult.filesProcessed;
+  // only add non-duplicate weapons
   allWeapons.addAll(coreResult.weapons);
+  allWeapons = allWeapons.distinctBy((e) => e.id).toList();
+
   if (coreResult.errors.isNotEmpty) {
     allErrors.addAll(coreResult.errors);
   }
@@ -49,6 +53,7 @@ final weaponListNotifierProvider = StreamProvider<List<Weapon>>((ref) async* {
     final modResult = await _parseWeaponsCsv(variant.modFolder, variant);
     filesProcessed += modResult.filesProcessed;
     allWeapons.addAll(modResult.weapons);
+    allWeapons = allWeapons.distinctBy((e) => e.id).toList();
 
     if (modResult.errors.isNotEmpty) {
       allErrors.addAll(modResult.errors);

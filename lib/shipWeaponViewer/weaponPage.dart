@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:ui';
 
+import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,6 +13,7 @@ import 'package:trios/thirdparty/pluto_grid_plus/lib/pluto_grid_plus.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
+import 'package:trios/utils/extensions.dart';
 
 import '../widgets/MultiSplitViewMixin.dart';
 
@@ -105,20 +107,28 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
         final existingRowIds = (_gridStateManagerTop?.rows ?? [])
             .map((row) => (row.data as Weapon).id)
             .toList();
+
         _gridStateManagerTop?.appendRows(buildRows((after.value ?? [])
             .where((weapon) => !existingRowIds.contains(weapon.id))
+            .distinctBy((weapon) => weapon.id)
             .toList()));
         _gridStateManagerBottom?.appendRows(buildRows((after.value ?? [])
             .where((weapon) => !existingRowIds.contains(weapon.id))
+            .distinctBy((weapon) => weapon.id)
             .toList()));
-        setState(() {});
+
+        _notifyGridFilterChanged();
       },
     );
 
     List<PlutoRow> rows = [];
 
     final weaponCount = weaponListAsyncValue.valueOrNull?.length;
-    final filteredWeaponCount = ref.watch(weaponListNotifierProvider).value?.length;
+    final filteredWeaponCount = _gridStateManagerTop?.rows.distinctBy((row) {
+          final weapon = row.data as Weapon;
+          return weapon.id;
+        }).length ??
+        0;
 
     return Column(
       children: [
@@ -137,7 +147,7 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
                       child: Row(
                         children: [
                           Text(
-                            '${weaponCount ?? "..."}${weaponCount != filteredWeaponCount ? " ($filteredWeaponCount)" : ""} Weapons',
+                            '${weaponCount ?? "..."} Weapons${weaponCount != filteredWeaponCount ? " ($filteredWeaponCount shown)" : ""}',
                             style: Theme.of(context)
                                 .textTheme
                                 .headlineSmall
@@ -180,6 +190,11 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
                           IconButton(
                             icon: const Icon(Icons.refresh),
                             onPressed: () {
+                              setState(() {
+                                _gridStateManagerTop?.removeAllRows();
+                                _gridStateManagerBottom?.removeAllRows();
+                              });
+                              _notifyGridFilterChanged();
                               ref.invalidate(weaponListNotifierProvider);
                             },
                           ),
@@ -291,15 +306,17 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
         if (isTop) {
           _gridStateManagerTop = event.stateManager;
           _gridStateManagerTop?.setShowColumnFilter(false);
+          _gridStateManagerTop?.clearCurrentSelecting();
+
+          // Add rows to the bottom grid if it exists, so it shows up with the same data
           _gridStateManagerBottom?.appendRows(
               buildRows(ref.read(weaponListNotifierProvider).value ?? []));
-          _gridStateManagerTop?.clearCurrentSelecting();
         } else {
           _gridStateManagerBottom = event.stateManager;
           _gridStateManagerBottom?.setShowColumnFilter(false);
           _gridStateManagerBottom?.appendRows(
               buildRows(ref.read(weaponListNotifierProvider).value ?? []));
-          _gridStateManagerTop?.clearCurrentSelecting();
+          _gridStateManagerBottom?.clearCurrentSelecting();
         }
       },
       configuration: PlutoGridConfiguration(
@@ -333,7 +350,7 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
           defaultCellPadding: EdgeInsets.zero,
           defaultColumnFilterPadding: EdgeInsets.zero,
           defaultColumnTitlePadding: EdgeInsets.zero,
-          enableRowColorAnimation: true,
+          enableRowColorAnimation: false,
           iconSize: 12,
           columnTextStyle: theme.textTheme.headlineSmall!
               .copyWith(fontSize: 14, fontWeight: FontWeight.bold),
@@ -341,6 +358,7 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
           iconColor: theme.colorScheme.onSurface.withAlpha(150),
           cellTextStyle: theme.textTheme.labelLarge!.copyWith(fontSize: 14),
           columnHeight: isTop ? PlutoGridSettings.rowHeight : 0,
+          oddRowColor: theme.colorScheme.surface.darker(5).withOpacity(0.4),
         ),
       ),
       onChanged: (PlutoGridOnChangedEvent event) {
@@ -355,10 +373,7 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
           PlutoCell(value: weapon.modVariant?.modInfo.nameOrId ?? "(vanilla)"),
       'spritePaths': PlutoCell(value: spritePaths),
       'name': PlutoCell(value: weapon.name ?? weapon.id),
-      'tier': PlutoCell(value: weapon.tier ?? ""),
-      'rarity': PlutoCell(value: weapon.rarity ?? ""),
       'damagePerShot': PlutoCell(value: weapon.damagePerShot ?? ""),
-      'type': PlutoCell(value: weapon.type ?? ""),
       // New fields
       'baseValue': PlutoCell(value: weapon.baseValue ?? ""),
       'range': PlutoCell(value: weapon.range ?? ""),
@@ -372,6 +387,7 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
       'reloadSize': PlutoCell(value: weapon.reloadSize ?? ""),
       'energyPerShot': PlutoCell(value: weapon.energyPerShot ?? ""),
       'energyPerSecond': PlutoCell(value: weapon.energyPerSecond ?? ""),
+      'tier': PlutoCell(value: weapon.tier ?? ""),
       'chargeup': PlutoCell(value: weapon.chargeup ?? ""),
       'chargedown': PlutoCell(value: weapon.chargedown ?? ""),
       'burstSize': PlutoCell(value: weapon.burstSize ?? ""),
@@ -391,22 +407,14 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
       'tags': PlutoCell(value: weapon.tags ?? ""),
       'groupTag': PlutoCell(value: weapon.groupTag ?? ""),
       'techManufacturer': PlutoCell(value: weapon.techManufacturer ?? ""),
-      'forWeaponTooltip': PlutoCell(value: weapon.forWeaponTooltip ?? ""),
       'primaryRoleStr': PlutoCell(value: weapon.primaryRoleStr ?? ""),
       'speedStr': PlutoCell(value: weapon.speedStr ?? ""),
       'trackingStr': PlutoCell(value: weapon.trackingStr ?? ""),
       'turnRateStr': PlutoCell(value: weapon.turnRateStr ?? ""),
       'accuracyStr': PlutoCell(value: weapon.accuracyStr ?? ""),
-      'customPrimary': PlutoCell(value: weapon.customPrimary ?? ""),
-      'customPrimaryHL': PlutoCell(value: weapon.customPrimaryHL ?? ""),
-      'customAncillary': PlutoCell(value: weapon.customAncillary ?? ""),
-      'customAncillaryHL': PlutoCell(value: weapon.customAncillaryHL ?? ""),
-      'noDPSInTooltip':
-          PlutoCell(value: weapon.noDPSInTooltip?.toString() ?? ""),
-      'number': PlutoCell(value: weapon.number ?? ""),
-      'specClass': PlutoCell(value: weapon.specClass ?? ""),
-      'weaponType': PlutoCell(value: weapon.weaponType ?? ""),
-      'size': PlutoCell(value: weapon.size ?? ""),
+      'specClass': PlutoCell(value: weapon.specClass?.toTitleCase() ?? ""),
+      'weaponType': PlutoCell(value: weapon.weaponType?.toTitleCase() ?? ""),
+      'size': PlutoCell(value: weapon.size?.toTitleCase() ?? ""),
     };
   }
 
@@ -456,6 +464,42 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
         title: 'Name',
         field: 'name',
         type: PlutoColumnType.text(),
+        renderer: (rendererContext) {
+          final weapon = rendererContext.row.data as Weapon;
+          return Tooltip(
+            message: weapon.id,
+            child: Text(
+              rendererContext.cell.value,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.headlineSmall!.copyWith(fontSize: 14),
+            ),
+          );
+        },
+      ),
+      PlutoColumn(
+        title: 'Weapon Type',
+        field: 'weaponType',
+        type: PlutoColumnType.text(),
+        width: 100,
+      ),
+      PlutoColumn(
+        title: 'Size',
+        field: 'size',
+        type: PlutoColumnType.text(),
+        width: 80,
+      ),
+      PlutoColumn(
+        title: 'Tech/Manufacturer',
+        field: 'techManufacturer',
+        type: PlutoColumnType.text(),
+        width: 150,
+      ),
+      PlutoColumn(
+        title: 'Primary Role',
+        field: 'primaryRoleStr',
+        type: PlutoColumnType.text(),
+        width: 120,
       ),
       PlutoColumn(
         title: 'Tier',
@@ -464,21 +508,10 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
         width: 60,
       ),
       PlutoColumn(
-        title: 'Rarity',
-        field: 'rarity',
-        type: PlutoColumnType.number(),
-        width: 70,
-      ),
-      PlutoColumn(
         title: 'Dmg/Shot',
         field: 'damagePerShot',
         type: PlutoColumnType.number(),
         width: 110,
-      ),
-      PlutoColumn(
-        title: 'Type',
-        field: 'type',
-        type: PlutoColumnType.text(),
       ),
       // New columns
       PlutoColumn(
@@ -662,24 +695,6 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
         width: 100,
       ),
       PlutoColumn(
-        title: 'Tech/Manufacturer',
-        field: 'techManufacturer',
-        type: PlutoColumnType.text(),
-        width: 150,
-      ),
-      PlutoColumn(
-        title: 'For Weapon Tooltip',
-        field: 'forWeaponTooltip',
-        type: PlutoColumnType.text(),
-        width: 150,
-      ),
-      PlutoColumn(
-        title: 'Primary Role',
-        field: 'primaryRoleStr',
-        type: PlutoColumnType.text(),
-        width: 120,
-      ),
-      PlutoColumn(
         title: 'Speed',
         field: 'speedStr',
         type: PlutoColumnType.text(),
@@ -704,58 +719,10 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
         width: 100,
       ),
       PlutoColumn(
-        title: 'Custom Primary',
-        field: 'customPrimary',
-        type: PlutoColumnType.text(),
-        width: 120,
-      ),
-      PlutoColumn(
-        title: 'Custom Primary HL',
-        field: 'customPrimaryHL',
-        type: PlutoColumnType.text(),
-        width: 130,
-      ),
-      PlutoColumn(
-        title: 'Custom Ancillary',
-        field: 'customAncillary',
-        type: PlutoColumnType.text(),
-        width: 130,
-      ),
-      PlutoColumn(
-        title: 'Custom Ancillary HL',
-        field: 'customAncillaryHL',
-        type: PlutoColumnType.text(),
-        width: 140,
-      ),
-      PlutoColumn(
-        title: 'No DPS In Tooltip',
-        field: 'noDPSInTooltip',
-        type: PlutoColumnType.text(),
-        width: 120,
-      ),
-      PlutoColumn(
-        title: 'Number',
-        field: 'number',
-        type: PlutoColumnType.number(),
-        width: 80,
-      ),
-      PlutoColumn(
         title: 'Spec Class',
         field: 'specClass',
         type: PlutoColumnType.text(),
         width: 100,
-      ),
-      PlutoColumn(
-        title: 'Weapon Type',
-        field: 'weaponType',
-        type: PlutoColumnType.text(),
-        width: 100,
-      ),
-      PlutoColumn(
-        title: 'Size',
-        field: 'size',
-        type: PlutoColumnType.text(),
-        width: 80,
       ),
       // Add additional columns if necessary
     ];

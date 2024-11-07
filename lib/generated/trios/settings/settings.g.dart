@@ -114,6 +114,7 @@ const _$TriOSToolsEnumMap = {
   TriOSTools.portraits: 'portraits',
   TriOSTools.weapons: 'weapons',
   TriOSTools.settings: 'settings',
+  TriOSTools.modBrowser: 'modBrowser',
 };
 
 const _$FolderNamingSettingEnumMap = {

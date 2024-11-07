@@ -8,4 +8,5 @@ enum TriOSTools {
   portraits,
   weapons,
   settings,
+  modBrowser,
 }

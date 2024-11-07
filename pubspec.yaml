@@ -111,6 +111,8 @@ dependencies:
   dart_mappable: ^4.2.2
   xml: ^6.5.0
   multi_split_view: ^3.6.0
+  # webview
+  flutter_inappwebview: ^6.1.5
 
 # Uncommented & Copied
 #  adaptive_theme: ^3.6.0

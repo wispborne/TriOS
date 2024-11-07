@@ -4,6 +4,7 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   desktop_drop
+  flutter_inappwebview_windows
   irondash_engine_context
   screen_retriever
   super_native_extensions

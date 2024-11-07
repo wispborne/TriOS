@@ -7,7 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:toastification/toastification.dart';
 import 'package:trios/mod_profiles/mod_profiles_manager.dart';
 import 'package:trios/models/download_progress.dart';
-import 'package:trios/shipWeaponViewer/weaponsManager.dart';
+import 'package:trios/weaponViewer/weaponsManager.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';

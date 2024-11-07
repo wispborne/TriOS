@@ -5,6 +5,7 @@ import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:screen_retriever/screen_retriever.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
@@ -26,6 +27,7 @@ import 'app_shell.dart';
 import 'trios/app_state.dart';
 
 Object? loggingError;
+WebViewEnvironment? webViewEnvironment;
 
 void main() async {
   try {
@@ -92,6 +94,19 @@ void main() async {
   } else {
     _runTriOS();
   }
+
+  // WebView
+  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.windows) {
+    final availableVersion = await WebViewEnvironment.getAvailableVersion();
+    assert(availableVersion != null,
+        'Failed to find an installed WebView2 Runtime or non-stable Microsoft Edge installation.');
+
+    // TODO webview fallback?
+    // webViewEnvironment = await WebViewEnvironment.create(
+    //     settings:
+    //         WebViewEnvironmentSettings(userDataFolder: 'YOUR_CUSTOM_PATH'));
+  }
+
   try {
     setWindowTitle(Constants.appTitle);
   } catch (e) {

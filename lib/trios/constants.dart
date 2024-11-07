@@ -5,7 +5,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:trios/utils/extensions.dart';
 
 class Constants {
-  static const version = "0.3.4";
+  static const version = "1.0.0-dev01";
 
   static const appName = "TriOS";
   static const appTitle = "$appName v$version";
@@ -63,6 +63,8 @@ class Constants {
     ".bz2",
   ];
   static const num maxPathLength = 260;
+
+  static const String modRepoUrl = "https://github.com/wispborne/StarsectorModRepo/raw/refs/heads/main/ModRepo.json";
 
   /// Warning: DON'T ADD ANYTHING TO THIS DIRECTLY. It will mutate the shared instance.
   /// Creating a new one each time is expensive, and hardcoding the pattern will hardcode the locale.

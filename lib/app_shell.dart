@@ -7,9 +7,9 @@ import 'package:open_filex/open_filex.dart';
 import 'package:toastification/toastification.dart';
 import 'package:trios/chipper/chipper_home.dart';
 import 'package:trios/dashboard/dashboard.dart';
+import 'package:trios/modBrowser/mod_browser_page.dart';
 import 'package:trios/portraits/portraits_viewer.dart';
 import 'package:trios/rules_autofresh/rules_hotreload.dart';
-import 'package:trios/shipWeaponViewer/weaponPage.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/navigation.dart';
@@ -21,6 +21,7 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/platform_specific.dart';
 import 'package:trios/vram_estimator/vram_estimator.dart';
+import 'package:trios/weaponViewer/weaponPage.dart';
 import 'package:trios/widgets/blur.dart';
 import 'package:trios/widgets/changelog_viewer.dart';
 import 'package:trios/widgets/dropdown_with_icon.dart';
@@ -63,6 +64,7 @@ class _AppShellState extends ConsumerState<AppShell>
     5: TriOSTools.portraits,
     6: TriOSTools.weapons,
     7: TriOSTools.settings,
+    8: TriOSTools.modBrowser,
   };
 
   void _changeTab(TriOSTools tab) {
@@ -160,16 +162,13 @@ class _AppShellState extends ConsumerState<AppShell>
       const Padding(padding: EdgeInsets.all(8), child: ModProfilePage()),
       const Padding(padding: EdgeInsets.all(8), child: VramEstimatorPage()),
       const Padding(padding: EdgeInsets.all(8), child: ChipperApp()),
-      // Platform.isWindows
-      //     ? const Padding(padding: EdgeInsets.all(0), child: JreManager())
-      //     : const Center(
-      //         child: Text("Only supported on Windows for now, sorry.")),
       const Padding(padding: EdgeInsets.all(8), child: ImageGridScreen()),
       const WeaponPage(),
       const Padding(
         padding: EdgeInsets.all(8),
         child: SettingsPage(),
       ),
+      const ModBrowserPage(),
     ];
     final theme = Theme.of(context);
 
@@ -263,6 +262,15 @@ class _AppShellState extends ConsumerState<AppShell>
                       ),
                       isSelected: _currentPage == TriOSTools.chipper,
                       onPressed: () => _changeTab(TriOSTools.chipper),
+                    ),
+                    TabButton(
+                      text: "Browse",
+                      icon: const Tooltip(
+                        message: "Mod Browser",
+                        child:const Icon(Icons.warning),
+                      ),
+                      isSelected: _currentPage == TriOSTools.modBrowser,
+                      onPressed: () => _changeTab(TriOSTools.modBrowser),
                     ),
                     const SizedBox(width: 4),
                     AnimatedPopupMenuButton<TriOSTools>(

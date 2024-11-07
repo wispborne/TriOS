@@ -7,8 +7,8 @@ import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:path/path.dart' as p;
-import 'package:trios/shipWeaponViewer/models/weapon.dart';
-import 'package:trios/shipWeaponViewer/weaponsManager.dart';
+import 'package:trios/weaponViewer/models/weapon.dart';
+import 'package:trios/weaponViewer/weaponsManager.dart';
 import 'package:trios/thirdparty/pluto_grid_plus/lib/pluto_grid_plus.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
@@ -31,21 +31,14 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
   final SearchController _searchController = SearchController();
   PlutoGridStateManager? _gridStateManagerTop;
   PlutoGridStateManager? _gridStateManagerBottom;
-  late final String gameCorePath;
   bool showHiddenWeapons = false;
   bool splitPane = false;
+  String gameCorePath = "";
 
   @override
   List<Area> get areas =>
       splitPane ? [Area(id: 'top'), Area(id: 'bottom')] : [Area(id: 'top')];
 
-  @override
-  void initState() {
-    super.initState();
-    // Obtain gameCorePath from settings or wherever it's stored
-    gameCorePath =
-        ref.read(appSettings.select((s) => s.gameCoreDir))?.path ?? '';
-  }
 
   @override
   void dispose() {
@@ -98,6 +91,8 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
     super.build(context);
     final weaponListAsyncValue = ref.read(weaponListNotifierProvider);
     final theme = Theme.of(context);
+    gameCorePath =
+        ref.watch(appSettings.select((s) => s.gameCoreDir))?.path ?? '';
 
     List<PlutoColumn> columns = buildCols(theme);
 

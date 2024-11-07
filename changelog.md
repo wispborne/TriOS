@@ -1,3 +1,7 @@
+# 1.0.0
+- Added
+  - **Mod Catalog**
+
 # 0.3.4
 - Added
   - **Weapon browser** (in Toolbox dropdown).

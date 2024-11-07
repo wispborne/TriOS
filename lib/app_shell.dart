@@ -264,10 +264,10 @@ class _AppShellState extends ConsumerState<AppShell>
                       onPressed: () => _changeTab(TriOSTools.chipper),
                     ),
                     TabButton(
-                      text: "Browse",
+                      text: "Catalog",
                       icon: const Tooltip(
-                        message: "Mod Browser",
-                        child:const Icon(Icons.warning),
+                        message: "Browse online mods",
+                        child: Icon(Icons.warning),
                       ),
                       isSelected: _currentPage == TriOSTools.modBrowser,
                       onPressed: () => _changeTab(TriOSTools.modBrowser),

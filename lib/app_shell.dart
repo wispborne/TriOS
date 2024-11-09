@@ -252,6 +252,15 @@ class _AppShellState extends ConsumerState<AppShell>
                       onPressed: () => _changeTab(TriOSTools.modProfiles),
                     ),
                     TabButton(
+                      text: "Catalog",
+                      icon: const Tooltip(
+                        message: "Browse online mods",
+                        child: Icon(Icons.warning),
+                      ),
+                      isSelected: _currentPage == TriOSTools.modBrowser,
+                      onPressed: () => _changeTab(TriOSTools.modBrowser),
+                    ),
+                    TabButton(
                       text: "Logs",
                       icon: const Tooltip(
                         message: "$chipperTitle Log Viewer",
@@ -262,15 +271,6 @@ class _AppShellState extends ConsumerState<AppShell>
                       ),
                       isSelected: _currentPage == TriOSTools.chipper,
                       onPressed: () => _changeTab(TriOSTools.chipper),
-                    ),
-                    TabButton(
-                      text: "Catalog",
-                      icon: const Tooltip(
-                        message: "Browse online mods",
-                        child: Icon(Icons.warning),
-                      ),
-                      isSelected: _currentPage == TriOSTools.modBrowser,
-                      onPressed: () => _changeTab(TriOSTools.modBrowser),
                     ),
                     const SizedBox(width: 4),
                     AnimatedPopupMenuButton<TriOSTools>(

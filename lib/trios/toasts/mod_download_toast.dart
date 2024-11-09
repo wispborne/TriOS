@@ -166,6 +166,7 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                                     child: Text(
                                       downloadTask.request.url,
                                       style: theme.textTheme.labelMedium,
+                                      maxLines: 3,
                                     ),
                                   ),
                                 ),

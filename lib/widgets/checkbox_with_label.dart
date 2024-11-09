@@ -6,7 +6,8 @@ class CheckboxWithLabel extends StatelessWidget {
   final String? label;
   final Widget? labelWidget;
   final Widget? prefixWidget;
-  final bool value;
+  final bool? value;
+  final bool tristate;
   final ValueChanged<bool?> onChanged;
   final TextStyle? labelStyle;
   final EdgeInsets textPadding;
@@ -22,6 +23,7 @@ class CheckboxWithLabel extends StatelessWidget {
     this.prefixWidget,
     required this.value,
     required this.onChanged,
+    this.tristate = false,
     this.checkWrapper,
     this.labelStyle,
     this.textPadding = const EdgeInsets.only(left: 8, bottom: 2),
@@ -43,6 +45,7 @@ class CheckboxWithLabel extends StatelessWidget {
             child: Checkbox(
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               value: value,
+              tristate: tristate,
               onChanged: onChanged,
             ),
           ),
@@ -51,14 +54,26 @@ class CheckboxWithLabel extends StatelessWidget {
       Flexible(
         child: Padding(
           padding: textPadding,
-          child: label != null ? Text(label!, style: labelStyle, textAlign: TextAlign.center) : labelWidget,
+          child: label != null
+              ? Text(label!, style: labelStyle, textAlign: TextAlign.center)
+              : labelWidget,
         ),
       ),
     ];
 
     return InkWell(
       onTap: () {
-        onChanged(!value);
+        switch (value) {
+          case true:
+            onChanged(false);
+            break;
+          case false:
+            onChanged(null);
+            break;
+          case null:
+            onChanged(true);
+            break;
+        }
       },
       borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
       child: Padding(

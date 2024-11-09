@@ -10,6 +10,7 @@ import 'package:html/parser.dart';
 import 'package:trios/mod_manager/version_checker.dart';
 import 'package:trios/trios/providers.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/http_client.dart';
 
 import '../../utils/logging.dart';
 import 'download_request.dart';
@@ -55,6 +56,8 @@ class DownloadManager {
       {forceDownload = false}) async {
     late String partialFilePath;
     late File partialFile;
+    final TriOSHttpClient httpClient = ref.watch(triOSHttpClient);
+
     try {
       var task = getDownload(url);
 
@@ -65,10 +68,14 @@ class DownloadManager {
       setStatus(task, DownloadStatus.retrievingFileInfo);
 
       url = makeDirectDownloadLink(url);
-      final finalUrlAndHeaders = await fetchFinalUrlAndHeaders(url);
+      final finalUrlAndHeaders = await fetchFinalUrlAndHeaders(url, httpClient);
       url = finalUrlAndHeaders.url;
       url = makeDirectDownloadLink(url);
       final headers = finalUrlAndHeaders.headers;
+      final headersMap = <String, String>{};
+      headers.forEach((key, value) {
+        headersMap[key] = value.join(',');
+      });
 
       // If given a download folder, then get the file's name from the URL and put it in the folder.
       // If given an actual filename rather than a folder, then we already have the name.
@@ -85,7 +92,7 @@ class DownloadManager {
       Fimber.d(url);
 
       // Ensure there's a file to download
-      if (await isDownloadableFile(url, headers) == false) {
+      if (await isDownloadableFile(url, headersMap, httpClient) == false) {
         throw Exception(
             "No file to download found at '$url'.\nPlease contact the mod author.");
       }
@@ -96,9 +103,6 @@ class DownloadManager {
 
       var fileExist = await file.exists();
       var partialFileExist = await partialFile.exists();
-
-      // Access the HTTP client via ref
-      final httpClient = ref.watch(triOSHttpClient);
 
       if (fileExist) {
         Fimber.d("File Exists: $downloadFile");
@@ -239,11 +243,6 @@ class DownloadManager {
     }
 
     return url;
-  }
-
-  bool isGoogleDrive(String url) {
-    return (url.toLowerCase().contains("drive.google.com") ||
-        url.toLowerCase().contains("drive.usercontent.google.com"));
   }
 
   void disposeNotifiers(DownloadTask task) {
@@ -544,26 +543,24 @@ class DownloadManager {
 
   /// Checks if a given URL points to a downloadable file.
   /// Uses headers to determine if the content is downloadable.
-  Future<bool> isDownloadableFile(String url, HttpHeaders? headers) async {
+  static Future<bool> isDownloadableFile(String url,
+      Map<String, String>? headers, TriOSHttpClient httpClient) async {
     if (headers != null) {
-      final contentType =
-          headers['content-type']?.map((it) => it.toLowerCase()).toList() ?? [];
-      final contentDisposition = headers['content-disposition']
-              ?.map((it) => it.toLowerCase())
-              .toList() ??
-          [];
+      final contentType = headers['content-type']?.toLowerCase() ?? "";
+      final contentDisposition =
+          headers['content-disposition']?.toLowerCase() ?? "";
 
       // Check if the Content-Type indicates a downloadable file
-      if (contentType.any((it) => it.startsWith('application/')) ||
-          contentDisposition.any((it) => it.contains('attachment'))) {
+      if (contentType.startsWith('application/') ||
+          contentDisposition.contains('attachment')) {
         return true;
       }
 
       // Special handling for Google Drive and MEGA
       if (isGoogleDrive(url)) {
-        return await checkGoogleDriveLink(url);
+        return await checkGoogleDriveLink(url, httpClient);
       } else if (url.contains('mega.nz')) {
-        return await checkMegaLink(url);
+        return await checkMegaLink(url, httpClient);
       }
     }
 
@@ -571,13 +568,12 @@ class DownloadManager {
     return false;
   }
 
-  Future<UrlResponse> fetchFinalUrlAndHeaders(String url) async {
+  static Future<UrlResponse> fetchFinalUrlAndHeaders(
+      String url, TriOSHttpClient httpClient) async {
     const int maxRedirects = 3;
     int redirectCount = 0;
     String currentUrl = url;
     HttpHeaders currentHeaders;
-    final httpClient = ref.watch(triOSHttpClient);
-
     while (redirectCount < maxRedirects) {
       final response = await httpClient.get(
         url,
@@ -646,14 +642,19 @@ class DownloadManager {
     throw Exception('Too many redirects: $url');
   }
 
+  static bool isGoogleDrive(String url) {
+    return (url.toLowerCase().contains("drive.google.com") ||
+        url.toLowerCase().contains("drive.usercontent.google.com"));
+  }
+
   // Determines if a Google Drive link has a download (because it doesn't use proper headers).
-  Future<bool> checkGoogleDriveLink(String url) async {
+  static Future<bool> checkGoogleDriveLink(
+      String url, TriOSHttpClient httpClient) async {
     try {
       if (url.contains('export=download')) {
         return true;
       }
 
-      final httpClient = ref.watch(triOSHttpClient);
       // Google Drive files usually require confirmation to download
       final response = await httpClient.get(url);
 
@@ -670,9 +671,9 @@ class DownloadManager {
   }
 
   // Determines if a MEGA link has a download (because it doesn't use proper headers).
-  Future<bool> checkMegaLink(String url) async {
+  static Future<bool> checkMegaLink(
+      String url, TriOSHttpClient httpClient) async {
     try {
-      final httpClient = ref.watch(triOSHttpClient);
       // MEGA links should be direct or use a confirmation link
       final response = await httpClient.get(url);
 
@@ -692,6 +693,11 @@ class DownloadManager {
 class UrlResponse {
   final String url;
   final HttpHeaders headers;
+  final Map<String, String> headersMap = <String, String>{};
 
-  UrlResponse(this.url, this.headers);
+  UrlResponse(this.url, this.headers) {
+    headers.forEach((key, value) {
+      headersMap[key] = value.join(',');
+    });
+  }
 }

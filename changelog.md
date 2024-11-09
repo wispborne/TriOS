@@ -1,6 +1,8 @@
 # 1.0.0
 - Added
   - **Mod Catalog**
+- Fixed
+  - Mod download notification url can't show more than 3 lines anymore.
 
 # 0.3.4
 - Added

@@ -194,6 +194,10 @@ extension StringExt on String {
       return word[0].toUpperCase() + word.substring(1).toLowerCase();
     }).join(' ');
   }
+
+  void openAsUriInBrowser() {
+    OpenFilex.open(this);
+  }
 }
 
 extension StringMapExt on Map<String, dynamic> {

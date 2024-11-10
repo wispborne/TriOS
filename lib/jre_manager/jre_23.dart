@@ -35,36 +35,36 @@ bool doesJre23ExistInGameFolder(Directory gameDir) {
       gameDir.resolve("Miko_Rouge.bat").toFile().existsSync();
 }
 
-// final jre23jdkDownloadProgress =
-//     StateProvider<DownloadProgress?>((ref) => null);
-// final jdk23ConfigDownloadProgress =
-//     StateProvider<DownloadProgress?>((ref) => null);
+// final jre23jdkTriOSDownloadProgress =
+//     StateProvider<TriOSDownloadProgress?>((ref) => null);
+// final jdk23ConfigTriOSDownloadProgress =
+//     StateProvider<TriOSDownloadProgress?>((ref) => null);
 
 // Define the state class
 class Jre23State {
-  final DownloadProgress? jre23jdkDownloadProgress;
-  final DownloadProgress? jdk23ConfigDownloadProgress;
+  final TriOSDownloadProgress? jre23jdkTriOSDownloadProgress;
+  final TriOSDownloadProgress? jdk23ConfigTriOSDownloadProgress;
   final String? errorMessage;
   final bool isInstalling;
 
   Jre23State({
-    this.jre23jdkDownloadProgress,
-    this.jdk23ConfigDownloadProgress,
+    this.jre23jdkTriOSDownloadProgress,
+    this.jdk23ConfigTriOSDownloadProgress,
     this.errorMessage,
     this.isInstalling = false,
   });
 
   Jre23State copyWith({
-    DownloadProgress? jre23jdkDownloadProgress,
-    DownloadProgress? jdk23ConfigDownloadProgress,
+    TriOSDownloadProgress? jre23jdkTriOSDownloadProgress,
+    TriOSDownloadProgress? jdk23ConfigTriOSDownloadProgress,
     String? errorMessage,
     bool? isInstalling,
   }) {
     return Jre23State(
-      jre23jdkDownloadProgress:
-          jre23jdkDownloadProgress ?? this.jre23jdkDownloadProgress,
-      jdk23ConfigDownloadProgress:
-          jdk23ConfigDownloadProgress ?? this.jdk23ConfigDownloadProgress,
+      jre23jdkTriOSDownloadProgress:
+          jre23jdkTriOSDownloadProgress ?? this.jre23jdkTriOSDownloadProgress,
+      jdk23ConfigTriOSDownloadProgress:
+          jdk23ConfigTriOSDownloadProgress ?? this.jdk23ConfigTriOSDownloadProgress,
       errorMessage: errorMessage ?? this.errorMessage,
       isInstalling: isInstalling ?? this.isInstalling,
     );
@@ -131,8 +131,8 @@ class Jre23Notifier extends AsyncNotifier<Jre23State> {
     final jdkZip = downloadFile(jdkUrl, savePath, null,
         onProgress: (bytesReceived, contentLength) {
       state = AsyncValue.data(state.value!.copyWith(
-        jre23jdkDownloadProgress:
-            DownloadProgress(bytesReceived, contentLength),
+        jre23jdkTriOSDownloadProgress:
+            TriOSDownloadProgress(bytesReceived, contentLength),
       ));
     });
 
@@ -156,8 +156,8 @@ class Jre23Notifier extends AsyncNotifier<Jre23State> {
     final configZip = downloadFile(himiUrl, savePath, null,
         onProgress: (bytesReceived, contentLength) {
       state = AsyncValue.data(state.value!.copyWith(
-        jdk23ConfigDownloadProgress:
-            DownloadProgress(bytesReceived, contentLength),
+        jdk23ConfigTriOSDownloadProgress:
+            TriOSDownloadProgress(bytesReceived, contentLength),
       ));
     });
 
@@ -328,12 +328,12 @@ class _InstallJre23CardState extends ConsumerState<InstallJre23Card> {
                   child: Column(
                     children: [
                       const Text("Starsector Himemi Config"),
-                      DownloadProgressIndicator(
+                      TriOSDownloadProgressIndicator(
                           value: ref
                                   .watch(jre23NotifierProvider)
                                   .value
-                                  ?.jdk23ConfigDownloadProgress ??
-                              const DownloadProgress(0, 0,
+                                  ?.jdk23ConfigTriOSDownloadProgress ??
+                              const TriOSDownloadProgress(0, 0,
                                   isIndeterminate: true)),
                     ],
                   )),
@@ -345,12 +345,12 @@ class _InstallJre23CardState extends ConsumerState<InstallJre23Card> {
                   child: Column(
                     children: [
                       const Text("JDK 23"),
-                      DownloadProgressIndicator(
+                      TriOSDownloadProgressIndicator(
                           value: ref
                                   .watch(jre23NotifierProvider)
                                   .value
-                                  ?.jre23jdkDownloadProgress ??
-                              const DownloadProgress(0, 0,
+                                  ?.jre23jdkTriOSDownloadProgress ??
+                              const TriOSDownloadProgress(0, 0,
                                   isIndeterminate: true)),
                     ],
                   )),

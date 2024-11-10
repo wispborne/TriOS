@@ -10,13 +10,18 @@ import 'package:trios/modBrowser/scraped_mod_card.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/download_manager/download_manager.dart';
 import 'package:trios/trios/providers.dart';
+import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/search.dart';
 import 'package:trios/weaponViewer/weaponsManager.dart';
+import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/tristate_icon_button.dart';
 
 import '../main.dart';
 import '../trios/download_manager/downloader.dart';
+import '../trios/settings/settings.dart';
 import '../widgets/MultiSplitViewMixin.dart';
+import '../widgets/moving_tooltip.dart';
 import 'mod_browser_manager.dart';
 
 class ModBrowserPage extends ConsumerStatefulWidget {
@@ -31,10 +36,22 @@ class _ModBrowserPage extends ConsumerState<ModBrowserPage>
   @override
   bool get wantKeepAlive => true;
   final SearchController _searchController = SearchController();
+  final urlController = TextEditingController();
   bool splitPane = true;
   List<ScrapedMod>? displayedMods;
   final GlobalKey webViewKey = GlobalKey();
   InAppWebViewController? webViewController;
+  final List<ContentBlocker> contentBlockers = [];
+  var contentBlockerEnabled = true;
+  final webSettings = InAppWebViewSettings(
+    useShouldOverrideUrlLoading: true,
+    useOnDownloadStart: true,
+    algorithmicDarkeningAllowed: true,
+    forceDark: ForceDark.ON,
+    forceDarkStrategy:
+        ForceDarkStrategy.PREFER_WEB_THEME_OVER_USER_AGENT_DARKENING,
+  );
+  double? webLoadingProgress;
   String? selectedModName;
   bool? filterHasDownloadLink;
   bool? filterDiscord;
@@ -102,6 +119,42 @@ class _ModBrowserPage extends ConsumerState<ModBrowserPage>
   }
 
   @override
+  void initState() {
+    downloadAdBlockList();
+  }
+
+  void downloadAdBlockList() async {
+    try {
+      var adblockList = await (await AppState.cacheManager.getSingleFile(
+              "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts"))
+          .readAsLines()
+        ..removeWhere((line) => line.trim().startsWith("#") || line.isEmpty);
+
+      List<String> transformed = adblockList.map((entry) {
+        // Extract the domain part by splitting and taking the second part
+        String domain = entry.split(" ")[1];
+        // Convert to the desired regex pattern format
+        return '.*.$domain/.*';
+      }).toList();
+
+      for (final adUrlFilter in transformed) {
+        contentBlockers.add(ContentBlocker(
+            trigger: ContentBlockerTrigger(
+              urlFilter: adUrlFilter,
+            ),
+            action: ContentBlockerAction(
+              type: ContentBlockerActionType.BLOCK,
+            )));
+      }
+
+      webViewController?.setSettings(
+          settings: webSettings..contentBlockers = contentBlockers);
+    } catch (ex, st) {
+      Fimber.w("Failed to download adblock list.", ex: ex, stacktrace: st);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     super.build(context);
     final httpClient = ref.watch(triOSHttpClient);
@@ -116,7 +169,7 @@ class _ModBrowserPage extends ConsumerState<ModBrowserPage>
         Expanded(
           child: Padding(
             padding:
-                const EdgeInsets.only(left: 8, right: 8, bottom: 8, top: 4),
+                const EdgeInsets.only(left: 4, right: 4, bottom: 4, top: 4),
             child: MultiSplitViewTheme(
               data: MultiSplitViewThemeData(
                   dividerThickness: 16,
@@ -136,127 +189,125 @@ class _ModBrowserPage extends ConsumerState<ModBrowserPage>
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              '${weaponCount ?? "..."} Mods${allMods?.items.length != displayedMods?.length ? " (${displayedMods?.length} shown)" : ""}',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .headlineSmall
-                                  ?.copyWith(fontSize: 20),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.only(top: 4),
-                              child: SizedBox(
-                                height: 50,
-                                child: Card(
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(
-                                        left: 8, right: 8),
-                                    child: Row(
-                                      children: [
-                                        const SizedBox(width: 4),
-                                        Align(
-                                          alignment: Alignment.centerLeft,
-                                          child: Row(
-                                            children: [
-                                              if (ref
-                                                  .watch(isLoadingWeaponsList))
-                                                const Padding(
-                                                  padding:
-                                                      EdgeInsets.only(left: 8),
-                                                  child: SizedBox(
-                                                    width: 12,
-                                                    height: 12,
-                                                    child:
-                                                        CircularProgressIndicator(
-                                                      strokeWidth: 2,
-                                                      strokeCap:
-                                                          StrokeCap.round,
-                                                    ),
+                            SizedBox(
+                              height: 50,
+                              child: Card(
+                                child: Padding(
+                                  padding:
+                                      const EdgeInsets.only(left: 4, right: 4),
+                                  child: Row(
+                                    children: [
+                                      const SizedBox(width: 4),
+                                      Align(
+                                        alignment: Alignment.centerLeft,
+                                        child: Row(
+                                          children: [
+                                            if (ref.watch(isLoadingWeaponsList))
+                                              const Padding(
+                                                padding:
+                                                    EdgeInsets.only(left: 8),
+                                                child: SizedBox(
+                                                  width: 12,
+                                                  height: 12,
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                    strokeWidth: 2,
+                                                    strokeCap: StrokeCap.round,
                                                   ),
                                                 ),
-                                            ],
-                                          ),
-                                        ),
-                                        SizedBox(
-                                            height: 30,
-                                            width: 200,
-                                            child: buildSearchBox()),
-                                        const Spacer(),
-                                        Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            buildTristateTooltipIconButton(
-                                                icon:
-                                                    const Icon(Icons.download),
-                                                filter: filterHasDownloadLink,
-                                                trueTooltip:
-                                                    'Showing only mods with a download link',
-                                                falseTooltip:
-                                                    'Hiding mods with a download link',
-                                                nullTooltip:
-                                                    'Showing all mods incl. with a download link',
-                                                onChanged: (value) {
-                                                  filterHasDownloadLink = value;
-                                                  updateFilter();
-                                                  setState(() {});
-                                                }),
-                                            buildTristateTooltipIconButton(
-                                                icon: const Icon(Icons.discord),
-                                                filter: filterDiscord,
-                                                trueTooltip:
-                                                    'Showing only mods on Discord',
-                                                falseTooltip:
-                                                    'Hiding mods on Discord',
-                                                nullTooltip:
-                                                    'Showing all mods incl. Discord',
-                                                onChanged: (value) {
-                                                  filterDiscord = value;
-                                                  updateFilter();
-                                                  setState(() {});
-                                                }),
-                                            buildTristateTooltipIconButton(
-                                                icon: const Icon(Icons.home),
-                                                filter: filterIndex,
-                                                trueTooltip:
-                                                    'Showing only mods on the Index',
-                                                falseTooltip:
-                                                    'Hiding mods on the Index',
-                                                nullTooltip:
-                                                    'Showing all mods incl. the Index',
-                                                onChanged: (value) {
-                                                  filterIndex = value;
-                                                  updateFilter();
-                                                  setState(() {});
-                                                }),
-                                            buildTristateTooltipIconButton(
-                                                icon: const Icon(Icons.garage),
-                                                filter: filterForumModding,
-                                                trueTooltip:
-                                                    "Showing only mods on the Forum (besides the Index)",
-                                                falseTooltip:
-                                                    'Hiding mods on the Forum (besides the Index)',
-                                                nullTooltip:
-                                                    'Showing all mods incl. Forum',
-                                                onChanged: (value) {
-                                                  filterForumModding = value;
-                                                  updateFilter();
-                                                  setState(() {});
-                                                }),
-                                            IconButton(
-                                              icon: const Icon(Icons.refresh),
-                                              tooltip: 'Redownload Catalog',
-                                              onPressed: () {
-                                                setState(() {});
-
-                                                ref.invalidate(
-                                                    browseModsNotifierProvider);
-                                              },
-                                            ),
+                                              ),
                                           ],
                                         ),
-                                      ],
-                                    ),
+                                      ),
+                                      SizedBox(
+                                          height: 30,
+                                          width: 200,
+                                          child: buildSearchBox()),
+                                      const Spacer(),
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          buildTristateTooltipIconButton(
+                                              icon: const Icon(Icons.download),
+                                              filter: filterHasDownloadLink,
+                                              trueTooltip:
+                                                  'Showing only mods with a download link',
+                                              falseTooltip:
+                                                  'Hiding mods with a download link',
+                                              nullTooltip:
+                                                  'Showing all mods incl. with a download link',
+                                              onChanged: (value) {
+                                                filterHasDownloadLink = value;
+                                                updateFilter();
+                                                setState(() {});
+                                              }),
+                                          buildTristateTooltipIconButton(
+                                              icon: const Icon(Icons.discord),
+                                              filter: filterDiscord,
+                                              trueTooltip:
+                                                  'Showing only mods on Discord',
+                                              falseTooltip:
+                                                  'Hiding mods on Discord',
+                                              nullTooltip:
+                                                  'Showing all mods incl. Discord',
+                                              onChanged: (value) {
+                                                filterDiscord = value;
+                                                updateFilter();
+                                                setState(() {});
+                                              }),
+                                          buildTristateTooltipIconButton(
+                                              icon: const Icon(Icons.home),
+                                              filter: filterIndex,
+                                              trueTooltip:
+                                                  'Showing only mods on the Index',
+                                              falseTooltip:
+                                                  'Hiding mods on the Index',
+                                              nullTooltip:
+                                                  'Showing all mods incl. the Index',
+                                              onChanged: (value) {
+                                                filterIndex = value;
+                                                updateFilter();
+                                                setState(() {});
+                                              }),
+                                          buildTristateTooltipIconButton(
+                                              icon: const Icon(Icons.garage),
+                                              filter: filterForumModding,
+                                              trueTooltip:
+                                                  "Showing only mods on the Forum (besides the Index)",
+                                              falseTooltip:
+                                                  'Hiding mods on the Forum (besides the Index)',
+                                              nullTooltip:
+                                                  'Showing all mods incl. Forum',
+                                              onChanged: (value) {
+                                                filterForumModding = value;
+                                                updateFilter();
+                                                setState(() {});
+                                              }),
+                                          // IconButton(
+                                          //   icon: const Icon(Icons.refresh),
+                                          //   tooltip: 'Redownload Catalog',
+                                          //   onPressed: () {
+                                          //     setState(() {});
+                                          //
+                                          //     ref.invalidate(
+                                          //         browseModsNotifierProvider);
+                                          //   },
+                                          // ),
+                                        ],
+                                      ),
+                                    ],
                                   ),
+                                ),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(left: 8),
+                              child: Opacity(
+                                opacity: 0.8,
+                                child: Text(
+                                  '${weaponCount ?? "..."} Mods${allMods?.items.length != displayedMods?.length ? " (${displayedMods?.length} shown)" : ""}',
+                                  style:
+                                      Theme.of(context).textTheme.labelMedium,
                                 ),
                               ),
                             ),
@@ -280,6 +331,7 @@ class _ModBrowserPage extends ConsumerState<ModBrowserPage>
                                         webViewController?.loadUrl(
                                             urlRequest:
                                                 URLRequest(url: WebUri(url)));
+                                        setState(() {});
                                       });
                                 },
                               ),
@@ -287,107 +339,260 @@ class _ModBrowserPage extends ConsumerState<ModBrowserPage>
                           ],
                         );
                       case 'right':
+                        final hasHiddenDarkModeTip = ref.watch(appSettings
+                            .select((s) => s.hasHiddenForumDarkModeTip));
                         return Column(
                           children: [
-                            Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 8.0),
-                              child: Row(
-                                children: [
-                                  const Spacer(),
-                                  OutlinedButton.icon(
-                                    onPressed: () {
-                                      showDialog(
-                                          context:
-                                              ref.read(AppState.appContext)!,
-                                          builder: (context) {
-                                            return AlertDialog(
-                                              title: const Text(
-                                                  "Forum Dark Theme"),
-                                              content: const Text(""
-                                                  "Read the whole thing first!\n"
-                                                  "\n1. Log in to the forum, then reopen this dialog."
-                                                  "\n2. Click the button below to navigate to the theme settings."
-                                                  "\n3. Next to 'Current Theme', click (change) and select 'Back n Black'."),
-                                              actions: [
-                                                TextButton(
-                                                  onPressed: () {
+                            SizedBox(
+                              height: 50,
+                              child: Card(
+                                child: Padding(
+                                  padding:
+                                      const EdgeInsets.only(left: 8, right: 8),
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    children: [
+                                      FutureBuilder(
+                                          future:
+                                              webViewController?.canGoBack() ??
+                                                  Future.value(false),
+                                          builder: (context, snapshot) {
+                                            final canGoBack = snapshot.hasData
+                                                ? snapshot.data!
+                                                : false;
+                                            return Disable(
+                                              isEnabled: canGoBack == true,
+                                              child: IconButton(
+                                                  onPressed: () async {
+                                                    await webViewController
+                                                        ?.goBack();
+                                                    setState(() {});
+                                                  },
+                                                  icon: const Icon(
+                                                      Icons.arrow_back)),
+                                            );
+                                          }),
+                                      FutureBuilder(
+                                          future: webViewController
+                                                  ?.canGoForward() ??
+                                              Future.value(false),
+                                          builder: (context, snapshot) {
+                                            final canGoForward =
+                                                snapshot.hasData
+                                                    ? snapshot.data!
+                                                    : false;
+                                            return Disable(
+                                              isEnabled: canGoForward == true,
+                                              child: IconButton(
+                                                  onPressed: () async {
+                                                    await webViewController
+                                                        ?.goForward();
+                                                    setState(() {});
+                                                  },
+                                                  icon: const Icon(
+                                                      Icons.arrow_forward)),
+                                            );
+                                          }),
+                                      FutureBuilder(
+                                          future: webViewController?.getUrl() ??
+                                              Future.value(null),
+                                          builder: (context, snapshot) {
+                                            return Disable(
+                                              isEnabled: snapshot.hasData &&
+                                                  snapshot.data != null,
+                                              child: IconButton(
+                                                  onPressed: () async {
+                                                    await webViewController
+                                                        ?.reload();
+                                                    setState(() {});
+                                                  },
+                                                  icon: const Icon(
+                                                      Icons.refresh)),
+                                            );
+                                          }),
+                                      Expanded(
+                                          child: FutureBuilder(
+                                              future:
+                                                  webViewController?.getUrl(),
+                                              builder: (context, snapshot) {
+                                                return TextField(
+                                                  controller: urlController,
+                                                  style: const TextStyle(
+                                                      fontSize: 12),
+                                                  maxLines: 1,
+                                                  onSubmitted: (url) {
                                                     webViewController?.loadUrl(
                                                         urlRequest: URLRequest(
-                                                            url: WebUri(
-                                                                "https://fractalsoftworks.com/forum/index.php?action=profile;area=theme")));
-                                                    Navigator.of(context).pop();
+                                                            url: WebUri(url)));
+                                                    setState(() {});
                                                   },
-                                                  child: const Text(
-                                                      "Forum Profile Prefs"),
-                                                ),
-                                                TextButton(
-                                                  onPressed: () {
-                                                    Navigator.of(context).pop();
-                                                  },
-                                                  child: const Text("Close"),
-                                                ),
-                                              ],
-                                            );
-                                          });
-                                    },
-                                    label: const Text("Forum Dark Theme"),
-                                    icon: const Icon(Icons.dark_mode),
-                                  )
-                                ],
+                                                  decoration:
+                                                      const InputDecoration(
+                                                          isDense: true,
+                                                          contentPadding:
+                                                              EdgeInsets.all(8),
+                                                          border:
+                                                              InputBorder.none,
+                                                          hintText: 'URL'),
+                                                );
+                                              })),
+                                      if (webLoadingProgress != null)
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                              left: 8, right: 8),
+                                          child: SizedBox(
+                                            width: 12,
+                                            height: 12,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              value: webLoadingProgress,
+                                              strokeCap: StrokeCap.round,
+                                            ),
+                                          ),
+                                        ),
+                                      Builder(builder: (context) {
+                                        onPressedDarkTheme() {
+                                          ref.read(appSettings.notifier).update(
+                                              (s) => s.copyWith(
+                                                  hasHiddenForumDarkModeTip:
+                                                      true));
+                                          showDialog(
+                                              context: ref
+                                                  .read(AppState.appContext)!,
+                                              builder: (context) {
+                                                return AlertDialog(
+                                                  title: const Text(
+                                                      "Forum Dark Theme Instructions"),
+                                                  content: const Text(""
+                                                      "Read the whole thing first!\n"
+                                                      "\n1. Log in to the forum, then reopen this dialog."
+                                                      "\n2. Click the button below to navigate to the theme settings."
+                                                      "\n3. Next to 'Current Theme', click (change) and select 'Back n Black'."),
+                                                  actions: [
+                                                    TextButton(
+                                                      onPressed: () {
+                                                        webViewController?.loadUrl(
+                                                            urlRequest: URLRequest(
+                                                                url: WebUri(
+                                                                    "https://fractalsoftworks.com/forum/index.php?action=profile;area=theme")));
+                                                        Navigator.of(context)
+                                                            .pop();
+                                                        setState(() {});
+                                                      },
+                                                      child: const Text(
+                                                          "Forum Profile Prefs"),
+                                                    ),
+                                                    TextButton(
+                                                      onPressed: () {
+                                                        Navigator.of(context)
+                                                            .pop();
+                                                      },
+                                                      child:
+                                                          const Text("Close"),
+                                                    ),
+                                                  ],
+                                                );
+                                              });
+                                        }
+
+                                        return hasHiddenDarkModeTip != true
+                                            ? OutlinedButton.icon(
+                                                onPressed: onPressedDarkTheme,
+                                                label: const Text(
+                                                    "Forum Dark Theme Instructions"),
+                                                icon:
+                                                    const Icon(Icons.dark_mode),
+                                              )
+                                            : MovingTooltipWidget.text(
+                                                message:
+                                                    "Forum Dark Theme Instructions",
+                                                child: IconButton(
+                                                    onPressed:
+                                                        onPressedDarkTheme,
+                                                    icon: const Icon(
+                                                        Icons.dark_mode)),
+                                              );
+                                      }),
+                                      MovingTooltipWidget.text(
+                                        message: "Open in Browser",
+                                        child: IconButton(
+                                            onPressed: () {
+                                              webViewController?.getUrl().then(
+                                                  (url) => url
+                                                      ?.toString()
+                                                      .openAsUriInBrowser());
+                                            },
+                                            icon: const Icon(Icons.public)),
+                                      )
+                                    ],
+                                  ),
+                                ),
                               ),
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 4),
                             Expanded(
-                              child: InAppWebView(
-                                key: webViewKey,
-                                webViewEnvironment: webViewEnvironment,
-                                shouldOverrideUrlLoading:
-                                    (controller, navigationAction) async {
-                                  if (navigationAction.request.url != null) {
-                                    final finalUrlAndHeaders =
-                                        await DownloadManager
-                                            .fetchFinalUrlAndHeaders(
-                                                navigationAction.request.url
-                                                    .toString(),
-                                                httpClient);
-                                    final url = finalUrlAndHeaders.url;
+                              child: IgnoringDropMouseRegion(
+                                child: InAppWebView(
+                                  key: webViewKey,
+                                  webViewEnvironment: webViewEnvironment,
+                                  shouldOverrideUrlLoading:
+                                      (controller, navigationAction) async {
+                                    if (navigationAction.request.url != null) {
+                                      final finalUrlAndHeaders =
+                                          await DownloadManager
+                                              .fetchFinalUrlAndHeaders(
+                                                  navigationAction.request.url
+                                                      .toString(),
+                                                  httpClient);
+                                      final url = finalUrlAndHeaders.url;
 
-                                    final isDownloadFile = await DownloadManager
-                                        .isDownloadableFile(
-                                            url.toString(),
-                                            finalUrlAndHeaders.headersMap,
-                                            httpClient);
+                                      final isDownloadFile =
+                                          await DownloadManager
+                                              .isDownloadableFile(
+                                                  url.toString(),
+                                                  finalUrlAndHeaders.headersMap,
+                                                  httpClient);
 
-                                    if (isDownloadFile) {
-                                      ref
-                                          .read(downloadManager.notifier)
-                                          .downloadAndInstallMod(
-                                              selectedModName ?? "Catalog Mod",
-                                              url.toString(),
-                                              activateVariantOnComplete: false);
+                                      if (isDownloadFile) {
+                                        ref
+                                            .read(downloadManager.notifier)
+                                            .downloadAndInstallMod(
+                                                selectedModName ??
+                                                    "Catalog Mod",
+                                                url.toString(),
+                                                activateVariantOnComplete:
+                                                    false);
 
-                                      return NavigationActionPolicy.CANCEL;
+                                        return NavigationActionPolicy.CANCEL;
+                                      }
                                     }
-                                  }
 
-                                  return NavigationActionPolicy.ALLOW;
-                                },
-                                onDownloadStartRequest: (controller, url) {},
-                                initialUrlRequest: URLRequest(
-                                    url: WebUri(
-                                        "https://fractalsoftworks.com/forum/index.php?topic=177.0")),
-                                initialSettings: InAppWebViewSettings(
-                                  useShouldOverrideUrlLoading: true,
-                                  useOnDownloadStart: true,
-                                  algorithmicDarkeningAllowed: true,
-                                  forceDark: ForceDark.ON,
-                                  forceDarkStrategy: ForceDarkStrategy
-                                      .PREFER_WEB_THEME_OVER_USER_AGENT_DARKENING,
+                                    return NavigationActionPolicy.ALLOW;
+                                  },
+                                  onDownloadStartRequest: (controller, url) {},
+                                  initialUrlRequest: URLRequest(
+                                      url: WebUri(
+                                          "https://fractalsoftworks.com/forum/index.php?topic=177.0")),
+                                  initialSettings: webSettings,
+                                  onWebViewCreated: (controller) {
+                                    webViewController = controller;
+                                  },
+                                  onProgressChanged: (controller, progress) {
+                                    setState(() {
+                                      if (progress == 100) {
+                                        webLoadingProgress = null;
+                                      } else {
+                                        webLoadingProgress = progress / 100;
+                                      }
+                                    });
+                                  },
+                                  onLoadStop: (controller, url) {
+                                    setState(() {
+                                      urlController.text = url.toString();
+                                    });
+                                  },
                                 ),
-                                onWebViewCreated: (controller) {
-                                  webViewController = controller;
-                                },
                               ),
                             ),
                           ],
@@ -423,7 +628,7 @@ class _ModBrowserPage extends ConsumerState<ModBrowserPage>
     required String nullTooltip,
     required Function(bool?) onChanged,
   }) {
-    return Tooltip(
+    return MovingTooltipWidget.text(
       message: switch (filter) {
         true => trueTooltip,
         false => falseTooltip,
@@ -472,6 +677,7 @@ class _ModBrowserPage extends ConsumerState<ModBrowserPage>
             Theme.of(context).colorScheme.surfaceContainer,
           ),
           onChanged: (value) {
+            updateFilter();
             setState(() {});
           },
         );
@@ -545,5 +751,23 @@ class _WeaponImageCellState extends State<WeaponImageCell> {
         fit: BoxFit.contain,
       );
     }
+  }
+}
+
+class IgnoringDropMouseRegion extends ConsumerWidget {
+  final Widget child;
+
+  const IgnoringDropMouseRegion({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return MouseRegion(
+      onEnter: (_) => ref.read(AppState.ignoringDrop.notifier).state = true,
+      onExit: (_) async {
+        await Future.delayed(const Duration(milliseconds: 500));
+        ref.read(AppState.ignoringDrop.notifier).state = false;
+      },
+      child: child,
+    );
   }
 }

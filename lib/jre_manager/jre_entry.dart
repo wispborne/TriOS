@@ -42,7 +42,7 @@ class JreToDownload implements JreEntry {
   @override
   final JreVersion version;
   final Function() installRunner;
-  // final StateProvider<DownloadProgress?> progressProvider;
+  // final StateProvider<TriOSDownloadProgress?> progressProvider;
 
   JreToDownload(this.version, this.installRunner);
 

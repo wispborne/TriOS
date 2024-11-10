@@ -3,18 +3,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/models/download_progress.dart';
 import 'package:trios/utils/extensions.dart';
 
-class DownloadProgressIndicator extends ConsumerStatefulWidget {
-  final DownloadProgress value;
+class TriOSDownloadProgressIndicator extends ConsumerStatefulWidget {
+  final TriOSDownloadProgress value;
   final Color? color;
 
-  const DownloadProgressIndicator({super.key, required this.value, this.color});
+  const TriOSDownloadProgressIndicator({super.key, required this.value, this.color});
 
   @override
-  ConsumerState createState() => _DownloadProgressIndicatorState();
+  ConsumerState createState() => _TriOSDownloadProgressIndicatorState();
 }
 
-class _DownloadProgressIndicatorState
-    extends ConsumerState<DownloadProgressIndicator> {
+class _TriOSDownloadProgressIndicatorState
+    extends ConsumerState<TriOSDownloadProgressIndicator> {
   @override
   Widget build(BuildContext context) {
     return Column(

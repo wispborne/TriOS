@@ -81,6 +81,7 @@ class Settings with _$Settings {
     @Default(ModUpdateBehavior.switchToNewVersionIfWasEnabled)
     final ModUpdateBehavior modUpdateBehavior,
     @Default("") final String userId, // For Sentry
+    final bool? hasHiddenForumDarkModeTip,
 
     // Mod profiles are stored in [ModProfilesSettings] and [ModProfileManagerNotifier],
     // in a different shared_prefs key.

@@ -60,6 +60,7 @@ _$SettingsImpl _$$SettingsImplFromJson(Map<String, dynamic> json) =>
               _$ModUpdateBehaviorEnumMap, json['modUpdateBehavior']) ??
           ModUpdateBehavior.switchToNewVersionIfWasEnabled,
       userId: json['userId'] as String? ?? "",
+      hasHiddenForumDarkModeTip: json['hasHiddenForumDarkModeTip'] as bool?,
       activeModProfileId: json['activeModProfileId'] as String?,
     );
 
@@ -101,6 +102,7 @@ Map<String, dynamic> _$$SettingsImplToJson(_$SettingsImpl instance) =>
       'modUpdateBehavior':
           _$ModUpdateBehaviorEnumMap[instance.modUpdateBehavior]!,
       'userId': instance.userId,
+      'hasHiddenForumDarkModeTip': instance.hasHiddenForumDarkModeTip,
       'activeModProfileId': instance.activeModProfileId,
     };
 

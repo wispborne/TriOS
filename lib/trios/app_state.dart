@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trios/jre_manager/jre_entry.dart';
@@ -31,8 +32,11 @@ class AppState {
   static ThemeManager theme = ThemeManager();
   static final isWindowFocused = StateProvider<bool>((ref) => true);
   static final selfUpdate =
-      AsyncNotifierProvider<SelfUpdater, DownloadProgress?>(SelfUpdater.new);
+      AsyncNotifierProvider<SelfUpdater, TriOSDownloadProgress?>(
+          SelfUpdater.new);
   static final appContext = StateProvider<BuildContext?>((ref) => null);
+  static final CacheManager cacheManager = CacheManager(
+      Config("trios_cache", stalePeriod: const Duration(hours: 3)));
 
   /// Master list of all mod variants found in the mods folder.
   static final modVariants =
@@ -230,6 +234,8 @@ class AppState {
 
   static final isGameRunning =
       AsyncNotifierProvider<GameRunningChecker, bool>(GameRunningChecker.new);
+
+  static final ignoringDrop = StateProvider<bool>((ref) => false);
 }
 
 class GameRunningChecker extends AsyncNotifier<bool> {

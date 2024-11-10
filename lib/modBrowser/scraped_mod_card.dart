@@ -2,7 +2,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:trios/modBrowser/models/scraped_mod.dart';
+import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/conditional_wrap.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/tooltip_frame.dart';
@@ -139,6 +141,7 @@ class _ScrapedModCardState extends State<ScrapedModCard> {
                               ),
                             ),
                           const Spacer(),
+                          const SizedBox(height: 8.0),
                           Tags(mod: mod),
                         ],
                       ),
@@ -253,8 +256,8 @@ class ModImage extends StatelessWidget {
         mod.images?.values.isNotEmpty == true ? mod.images?.values.first : null;
 
     if (mainImage != null && mainImage.url != null) {
-      return Tooltip(
-        message: mainImage.description ?? '',
+      return MovingTooltipWidget.text(
+        message: mainImage.description ?? "",
         child: Image.network(
           mainImage.url!,
           // width: 192.0,
@@ -309,12 +312,15 @@ class Tags extends StatelessWidget {
 
     if (tags.isNotEmpty) {
       return Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Icon(Icons.tag, size: 12.0),
+          const Opacity(opacity: 0.5, child: Icon(Icons.tag, size: 12.0)),
           const SizedBox(width: 6.0),
-          Text(
-            tags.join(', '),
-            style: const TextStyle(fontSize: 11.0),
+          Expanded(
+            child: Text(
+              tags.join(', '),
+              style: const TextStyle(fontSize: 11.0),
+            ),
           ),
         ],
       );
@@ -343,15 +349,19 @@ class BrowserIcon extends StatelessWidget {
     final forumUrl = mod.urls?[ModUrlType.Forum];
 
     if (forumUrl != null && forumUrl.isNotEmpty) {
-      return Tooltip(
+      return MovingTooltipWidget.text(
         message: 'Open in an external browser.\n$forumUrl',
         child: Opacity(
           opacity: iconOpacity,
-          child: IconButton(
-            icon: Icon(Icons.public, size: size),
-            onPressed: () {
-              linkLoader(forumUrl);
-            },
+          child: SizedBox(
+            width: size * 2,
+            height: size * 2,
+            child: IconButton(
+              icon: Icon(Icons.public, size: size),
+              onPressed: () {
+                InAppBrowser.openWithSystemBrowser(url: WebUri(forumUrl));
+              },
+            ),
           ),
         ),
       );
@@ -378,26 +388,36 @@ class DiscordIcon extends StatelessWidget {
     final discordUrl = mod.urls?[ModUrlType.Discord];
 
     if (discordUrl != null && discordUrl.isNotEmpty) {
-      return Tooltip(
-        message: 'Open in Discord.\n$discordUrl\nLong press to copy.',
+      return MovingTooltipWidget.text(
+        message: 'Open in Discord.\n$discordUrl\nRight-click to copy.',
         child: Opacity(
           opacity: iconOpacity,
-          child: GestureDetector(
-            onTap: () {
-              // Implement opening Discord URL
-            },
-            onLongPress: () {
-              // Copy to clipboard
-              Clipboard.setData(ClipboardData(text: discordUrl));
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Discord URL copied to clipboard'),
+          child: SizedBox(
+            width: size * 2,
+            height: size * 2,
+            child: GestureDetector(
+              onSecondaryTap: () {
+                // Copy to clipboard
+                Clipboard.setData(ClipboardData(text: discordUrl));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Discord URL copied to clipboard'),
+                  ),
+                );
+              },
+              child: IconButton(
+                onPressed: () {
+                  discordUrl
+                      .toString()
+                      .replaceAll("https://", "discord://")
+                      .replaceAll("http://", "discord://")
+                      .openAsUriInBrowser();
+                },
+                icon: Icon(
+                  Icons.chat,
+                  size: size,
                 ),
-              );
-            },
-            child: Icon(
-              Icons.chat,
-              size: size,
+              ),
             ),
           ),
         ),
@@ -425,18 +445,22 @@ class NexusModsIcon extends StatelessWidget {
     final nexusModsUrl = mod.urls?[ModUrlType.NexusMods];
 
     if (nexusModsUrl != null && nexusModsUrl.isNotEmpty) {
-      return Tooltip(
+      return MovingTooltipWidget.text(
         message: 'Open in NexusMods.\n$nexusModsUrl',
         child: Opacity(
           opacity: iconOpacity,
-          child: IconButton(
-            icon: Icon(
-              Icons.extension,
-              size: size,
-            ), // Use appropriate icon
-            onPressed: () {
-              // Implement opening NexusMods URL
-            },
+          child: SizedBox(
+            width: size * 2,
+            height: size * 2,
+            child: IconButton(
+              icon: Icon(
+                Icons.extension,
+                size: size,
+              ), // Use appropriate icon
+              onPressed: () {
+                // Implement opening NexusMods URL
+              },
+            ),
           ),
         ),
       );
@@ -465,15 +489,19 @@ class DirectDownloadIcon extends StatelessWidget {
     final downloadUrl = mod.urls?[ModUrlType.DirectDownload];
 
     if (downloadUrl != null && downloadUrl.isNotEmpty) {
-      return Tooltip(
+      return MovingTooltipWidget.text(
         message: 'Download.\n$downloadUrl',
         child: Opacity(
           opacity: iconOpacity,
-          child: IconButton(
-            icon: Icon(Icons.download, size: size),
-            onPressed: () {
-              linkLoader(downloadUrl);
-            },
+          child: SizedBox(
+            width: size * 2,
+            height: size * 2,
+            child: IconButton(
+              icon: Icon(Icons.download, size: size),
+              onPressed: () {
+                linkLoader(downloadUrl);
+              },
+            ),
           ),
         ),
       );
@@ -497,18 +525,22 @@ class DebugIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
+    return MovingTooltipWidget.text(
       message: 'Display all info (debug)',
       child: Opacity(
         opacity: iconOpacity,
-        child: IconButton(
-          icon: Icon(
-            Icons.bug_report,
-            size: size,
+        child: SizedBox(
+          width: size * 2,
+          height: size * 2,
+          child: IconButton(
+            icon: Icon(
+              Icons.bug_report,
+              size: size,
+            ),
+            onPressed: () {
+              _showDebugDialog(context, mod);
+            },
           ),
-          onPressed: () {
-            _showDebugDialog(context, mod);
-          },
         ),
       ),
     );

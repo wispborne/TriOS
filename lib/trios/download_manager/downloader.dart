@@ -378,7 +378,7 @@ class DownloadManager {
     }
   }
 
-  ValueNotifier<DownloadedAmount> getBatchDownloadProgress(List<String> urls) {
+  ValueNotifier<DownloadedAmount> getBatchTriOSDownloadProgress(List<String> urls) {
     ValueNotifier<DownloadedAmount> progress =
         ValueNotifier(DownloadedAmount(0, 0));
     var total = urls.length;

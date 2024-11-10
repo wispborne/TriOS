@@ -362,12 +362,12 @@ class _ChangeJreWidgetState extends ConsumerState<ChangeJreWidget> {
                                                     .textTheme
                                                     .bodySmall)),
                                       if (jre is JreToDownload)
-                                        DownloadProgressIndicator(
+                                        TriOSDownloadProgressIndicator(
                                           value: ref
                                                   .watch(jre23NotifierProvider)
                                                   .value
-                                                  ?.jre23jdkDownloadProgress ??
-                                              const DownloadProgress(0, 0,
+                                                  ?.jre23jdkTriOSDownloadProgress ??
+                                              const TriOSDownloadProgress(0, 0,
                                                   isIndeterminate: true),
                                         ),
                                     ],

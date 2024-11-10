@@ -182,9 +182,9 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                 ),
               ),
               const SizedBox(height: 4),
-              DownloadProgressIndicator(
+              TriOSDownloadProgressIndicator(
                 value: ref.watch(AppState.selfUpdate).valueOrNull ??
-                    const DownloadProgress(0, 0, isIndeterminate: true),
+                    const TriOSDownloadProgress(0, 0, isIndeterminate: true),
               ),
             ],
           ),

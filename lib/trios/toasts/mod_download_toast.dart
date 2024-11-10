@@ -191,11 +191,11 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                                               DownloadStatus.queued ||
                                           status ==
                                               DownloadStatus.retrievingFileInfo;
-                                      return DownloadProgressIndicator(
+                                      return TriOSDownloadProgressIndicator(
                                         color: status == DownloadStatus.failed
                                             ? ThemeManager.vanillaErrorColor
                                             : null,
-                                        value: DownloadProgress(
+                                        value: TriOSDownloadProgress(
                                             downloaded.bytesReceived,
                                             downloaded.totalBytes,
                                             isIndeterminate: isIndeterminate),

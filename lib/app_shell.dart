@@ -255,7 +255,7 @@ class _AppShellState extends ConsumerState<AppShell>
                       text: "Catalog",
                       icon: const Tooltip(
                         message: "Browse online mods",
-                        child: Icon(Icons.warning),
+                        child: Icon(Icons.cloud_download),
                       ),
                       isSelected: _currentPage == TriOSTools.modBrowser,
                       onPressed: () => _changeTab(TriOSTools.modBrowser),

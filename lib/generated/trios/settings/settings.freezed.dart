@@ -60,7 +60,8 @@ mixin _$Settings {
   bool get enableLauncherPrecheck => throw _privateConstructorUsedError;
   ModUpdateBehavior get modUpdateBehavior => throw _privateConstructorUsedError;
   String get userId => throw _privateConstructorUsedError; // For Sentry
-// Mod profiles are stored in [ModProfilesSettings] and [ModProfileManagerNotifier],
+  bool? get hasHiddenForumDarkModeTip =>
+      throw _privateConstructorUsedError; // Mod profiles are stored in [ModProfilesSettings] and [ModProfileManagerNotifier],
 // in a different shared_prefs key.
   String? get activeModProfileId => throw _privateConstructorUsedError;
 
@@ -112,6 +113,7 @@ abstract class $SettingsCopyWith<$Res> {
       bool enableLauncherPrecheck,
       ModUpdateBehavior modUpdateBehavior,
       String userId,
+      bool? hasHiddenForumDarkModeTip,
       String? activeModProfileId});
 
   $LaunchSettingsCopyWith<$Res> get launchSettings;
@@ -165,6 +167,7 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
     Object? enableLauncherPrecheck = null,
     Object? modUpdateBehavior = null,
     Object? userId = null,
+    Object? hasHiddenForumDarkModeTip = freezed,
     Object? activeModProfileId = freezed,
   }) {
     return _then(_value.copyWith(
@@ -296,6 +299,10 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
           ? _value.userId
           : userId // ignore: cast_nullable_to_non_nullable
               as String,
+      hasHiddenForumDarkModeTip: freezed == hasHiddenForumDarkModeTip
+          ? _value.hasHiddenForumDarkModeTip
+          : hasHiddenForumDarkModeTip // ignore: cast_nullable_to_non_nullable
+              as bool?,
       activeModProfileId: freezed == activeModProfileId
           ? _value.activeModProfileId
           : activeModProfileId // ignore: cast_nullable_to_non_nullable
@@ -369,6 +376,7 @@ abstract class _$$SettingsImplCopyWith<$Res>
       bool enableLauncherPrecheck,
       ModUpdateBehavior modUpdateBehavior,
       String userId,
+      bool? hasHiddenForumDarkModeTip,
       String? activeModProfileId});
 
   @override
@@ -422,6 +430,7 @@ class __$$SettingsImplCopyWithImpl<$Res>
     Object? enableLauncherPrecheck = null,
     Object? modUpdateBehavior = null,
     Object? userId = null,
+    Object? hasHiddenForumDarkModeTip = freezed,
     Object? activeModProfileId = freezed,
   }) {
     return _then(_$SettingsImpl(
@@ -553,6 +562,10 @@ class __$$SettingsImplCopyWithImpl<$Res>
           ? _value.userId
           : userId // ignore: cast_nullable_to_non_nullable
               as String,
+      hasHiddenForumDarkModeTip: freezed == hasHiddenForumDarkModeTip
+          ? _value.hasHiddenForumDarkModeTip
+          : hasHiddenForumDarkModeTip // ignore: cast_nullable_to_non_nullable
+              as bool?,
       activeModProfileId: freezed == activeModProfileId
           ? _value.activeModProfileId
           : activeModProfileId // ignore: cast_nullable_to_non_nullable
@@ -598,6 +611,7 @@ class _$SettingsImpl implements _Settings {
       this.enableLauncherPrecheck = true,
       this.modUpdateBehavior = ModUpdateBehavior.switchToNewVersionIfWasEnabled,
       this.userId = "",
+      this.hasHiddenForumDarkModeTip,
       this.activeModProfileId});
 
   factory _$SettingsImpl.fromJson(Map<String, dynamic> json) =>
@@ -690,6 +704,8 @@ class _$SettingsImpl implements _Settings {
   @JsonKey()
   final String userId;
 // For Sentry
+  @override
+  final bool? hasHiddenForumDarkModeTip;
 // Mod profiles are stored in [ModProfilesSettings] and [ModProfileManagerNotifier],
 // in a different shared_prefs key.
   @override
@@ -697,7 +713,7 @@ class _$SettingsImpl implements _Settings {
 
   @override
   String toString() {
-    return 'Settings(gameDir: $gameDir, gameCoreDir: $gameCoreDir, modsDir: $modsDir, hasCustomModsDir: $hasCustomModsDir, isRulesHotReloadEnabled: $isRulesHotReloadEnabled, windowXPos: $windowXPos, windowYPos: $windowYPos, windowWidth: $windowWidth, windowHeight: $windowHeight, isMaximized: $isMaximized, isMinimized: $isMinimized, defaultTool: $defaultTool, jre23VmparamsFilename: $jre23VmparamsFilename, useJre23: $useJre23, showJre23ConsoleWindow: $showJre23ConsoleWindow, enableDirectLaunch: $enableDirectLaunch, launchSettings: $launchSettings, lastStarsectorVersion: $lastStarsectorVersion, isUpdatesFieldShown: $isUpdatesFieldShown, modsGridState: $modsGridState, shouldAutoUpdateOnLaunch: $shouldAutoUpdateOnLaunch, secondsBetweenModFolderChecks: $secondsBetweenModFolderChecks, toastDurationSeconds: $toastDurationSeconds, maxHttpRequestsAtOnce: $maxHttpRequestsAtOnce, folderNamingSetting: $folderNamingSetting, keepLastNVersions: $keepLastNVersions, allowCrashReporting: $allowCrashReporting, updateToPrereleases: $updateToPrereleases, autoEnableAndDisableDependencies: $autoEnableAndDisableDependencies, enableLauncherPrecheck: $enableLauncherPrecheck, modUpdateBehavior: $modUpdateBehavior, userId: $userId, activeModProfileId: $activeModProfileId)';
+    return 'Settings(gameDir: $gameDir, gameCoreDir: $gameCoreDir, modsDir: $modsDir, hasCustomModsDir: $hasCustomModsDir, isRulesHotReloadEnabled: $isRulesHotReloadEnabled, windowXPos: $windowXPos, windowYPos: $windowYPos, windowWidth: $windowWidth, windowHeight: $windowHeight, isMaximized: $isMaximized, isMinimized: $isMinimized, defaultTool: $defaultTool, jre23VmparamsFilename: $jre23VmparamsFilename, useJre23: $useJre23, showJre23ConsoleWindow: $showJre23ConsoleWindow, enableDirectLaunch: $enableDirectLaunch, launchSettings: $launchSettings, lastStarsectorVersion: $lastStarsectorVersion, isUpdatesFieldShown: $isUpdatesFieldShown, modsGridState: $modsGridState, shouldAutoUpdateOnLaunch: $shouldAutoUpdateOnLaunch, secondsBetweenModFolderChecks: $secondsBetweenModFolderChecks, toastDurationSeconds: $toastDurationSeconds, maxHttpRequestsAtOnce: $maxHttpRequestsAtOnce, folderNamingSetting: $folderNamingSetting, keepLastNVersions: $keepLastNVersions, allowCrashReporting: $allowCrashReporting, updateToPrereleases: $updateToPrereleases, autoEnableAndDisableDependencies: $autoEnableAndDisableDependencies, enableLauncherPrecheck: $enableLauncherPrecheck, modUpdateBehavior: $modUpdateBehavior, userId: $userId, hasHiddenForumDarkModeTip: $hasHiddenForumDarkModeTip, activeModProfileId: $activeModProfileId)';
   }
 
   @override
@@ -768,6 +784,7 @@ class _$SettingsImpl implements _Settings {
             (identical(other.modUpdateBehavior, modUpdateBehavior) ||
                 other.modUpdateBehavior == modUpdateBehavior) &&
             (identical(other.userId, userId) || other.userId == userId) &&
+            (identical(other.hasHiddenForumDarkModeTip, hasHiddenForumDarkModeTip) || other.hasHiddenForumDarkModeTip == hasHiddenForumDarkModeTip) &&
             (identical(other.activeModProfileId, activeModProfileId) || other.activeModProfileId == activeModProfileId));
   }
 
@@ -807,6 +824,7 @@ class _$SettingsImpl implements _Settings {
         enableLauncherPrecheck,
         modUpdateBehavior,
         userId,
+        hasHiddenForumDarkModeTip,
         activeModProfileId
       ]);
 
@@ -860,6 +878,7 @@ abstract class _Settings implements Settings {
       final bool enableLauncherPrecheck,
       final ModUpdateBehavior modUpdateBehavior,
       final String userId,
+      final bool? hasHiddenForumDarkModeTip,
       final String? activeModProfileId}) = _$SettingsImpl;
 
   factory _Settings.fromJson(Map<String, dynamic> json) =
@@ -934,7 +953,9 @@ abstract class _Settings implements Settings {
   ModUpdateBehavior get modUpdateBehavior;
   @override
   String get userId; // For Sentry
-// Mod profiles are stored in [ModProfilesSettings] and [ModProfileManagerNotifier],
+  @override
+  bool?
+      get hasHiddenForumDarkModeTip; // Mod profiles are stored in [ModProfilesSettings] and [ModProfileManagerNotifier],
 // in a different shared_prefs key.
   @override
   String? get activeModProfileId;

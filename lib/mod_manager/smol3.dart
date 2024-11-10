@@ -1287,7 +1287,7 @@ class CopyModListButtonLarge extends StatelessWidget {
     return Tooltip(
         message: "Copy mod list to clipboard\n\nRight-click for ALL mods",
         child: Padding(
-          padding: const EdgeInsets.all(4),
+          padding: const EdgeInsets.only(left: 4, top: 4, bottom: 4),
           child: GestureDetector(
             onSecondaryTap: () {
               copyModListToClipboardFromMods(mods, context);

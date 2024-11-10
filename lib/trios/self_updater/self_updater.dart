@@ -40,14 +40,14 @@ class SelfUpdateInfo {
   }
 }
 
-class SelfUpdater extends AsyncNotifier<DownloadProgress?> {
+class SelfUpdater extends AsyncNotifier<TriOSDownloadProgress?> {
   static const String githubBase = "https://api.github.com";
   static const String githubLatestRelease =
       "$githubBase/repos/wispborne/trios/releases";
   static const String oldFileSuffix = ".delete-me";
 
   @override
-  Future<DownloadProgress?> build() async {
+  Future<TriOSDownloadProgress?> build() async {
     return null;
   }
 
@@ -307,7 +307,7 @@ class SelfUpdater extends AsyncNotifier<DownloadProgress?> {
         onProgress: (bytesReceived, contentLength) {
       Fimber.v(() =>
           "Downloaded: ${bytesReceived.bytesAsReadableMB()} / ${contentLength.bytesAsReadableMB()}");
-      state = AsyncData(DownloadProgress(bytesReceived, contentLength,
+      state = AsyncData(TriOSDownloadProgress(bytesReceived, contentLength,
           isIndeterminate: false));
     });
 

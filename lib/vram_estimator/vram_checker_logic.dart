@@ -9,15 +9,13 @@ import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/extensions.dart';
 
 import '../../models/mod_info_json.dart';
-import '../models/version.dart';
 import '../utils/util.dart';
 import 'image_reader/image_reader_async.dart';
 import 'image_reader/png_chatgpt.dart';
 import 'models/gpu_info.dart';
 import 'models/graphics_lib_config.dart';
 import 'models/graphics_lib_info.dart';
-import 'models/mod_image.dart';
-import 'models/mod_result.dart';
+import 'models/vram_checker_models.dart';
 
 class VramChecker {
   List<String>? enabledModIds;
@@ -31,6 +29,8 @@ class VramChecker {
   Function(Mod) modProgressOut = (it) => (it);
   Function(String) verboseOut = (it) => (it);
   Function(String) debugOut = (it) => (it);
+  bool Function() isCancelled;
+
   int maxFileHandles;
 
   /// [modProgressOut] is called with each mod as it is processed.
@@ -47,6 +47,7 @@ class VramChecker {
     Function(Mod)? modProgressOut,
     Function(String)? verboseOut,
     Function(String)? debugOut,
+    required this.isCancelled,
   }) {
     if (verboseOut != null) {
       this.verboseOut = verboseOut;
@@ -84,7 +85,8 @@ class VramChecker {
     summaryText = StringBuffer();
     startTime = DateTime.timestamp().millisecondsSinceEpoch;
 
-    const csvReader = CsvToListConverter(allowInvalid: true, convertEmptyTo: null);
+    const csvReader =
+        CsvToListConverter(allowInvalid: true, convertEmptyTo: null);
     // .skipEmptyRows(true)
     // .errorOnDifferentFieldCount(false);
 
@@ -102,23 +104,29 @@ class VramChecker {
 //     .build()
 
     if (foldersToCheck.none((it) => it.existsSync())) {
-      throw Exception("This doesn't exist! ${foldersToCheck.joinToString(transform: (it) => it.absolute.toString())}");
-    }
-
-    progressText.appendAndPrint("GraphicsLib Config: $graphicsLibConfig", debugOut);
-
-    if (enabledModIds != null) {
-      progressText.appendAndPrint("\nEnabled Mods:\n${enabledModIds?.join("\n")}", verboseOut);
+      throw Exception(
+          "This doesn't exist! ${foldersToCheck.joinToString(transform: (it) => it.absolute.toString())}");
     }
 
     progressText.appendAndPrint(
-        "Mods folders: ${foldersToCheck.joinToString(transform: (it) => it.absolute.toString())}", verboseOut);
+        "GraphicsLib Config: $graphicsLibConfig", debugOut);
+
+    if (enabledModIds != null) {
+      progressText.appendAndPrint(
+          "\nEnabled Mods:\n${enabledModIds?.join("\n")}", verboseOut);
+    }
+
+    progressText.appendAndPrint(
+        "Mods folders: ${foldersToCheck.joinToString(transform: (it) => it.absolute.toString())}",
+        verboseOut);
 
     Squadron.setId('VRAM_CHECKER');
     // Squadron.logLevel = SquadronLogLevel.config;
     // Squadron.setLogger(ConsoleSquadronLogger());
-    const settings = ConcurrencySettings(minWorkers: 1, maxWorkers: 4, maxParallel: 4);
-    final imageHeaderReaderPool = ReadImageHeadersWorkerPool(concurrencySettings: settings);
+    const settings =
+        ConcurrencySettings(minWorkers: 1, maxWorkers: 4, maxParallel: 4);
+    final imageHeaderReaderPool =
+        ReadImageHeadersWorkerPool(concurrencySettings: settings);
 
     final mods = (await Stream.fromIterable(foldersToCheck)
             .where((it) => it.existsSync())
@@ -127,18 +135,32 @@ class VramChecker {
             .asyncMap((it) => getModInfo(Directory(it.path), progressText))
             .where((it) => it != null)
             .map((modInfo) => modInfo!)
-            .where((it) => (modIdsToCheck == null) ? true : modIdsToCheck?.contains(it.id) == true)
+            .where((it) => (modIdsToCheck == null)
+                ? true
+                : modIdsToCheck?.contains(it.id) == true)
             .asyncMap((modInfo) async {
       progressText.appendAndPrint("\nFolder: ${modInfo.name}", verboseOut);
+      if (isCancelled()) {
+        throw Exception("Cancelled");
+      }
       final startTimeForMod = DateTime.timestamp().millisecondsSinceEpoch;
 
-      final filesInMod =
-          modInfo.modFolder.listSync(recursive: true).filter((it) => it is File).map((it) => it as File).toList();
+      final filesInMod = modInfo.modFolder
+          .toDirectory()
+          .listSync(recursive: true)
+          .filter((it) => it is File)
+          .map((it) => it as File)
+          .toList();
 
       final myGraphicsLibFilesToExcludeForMod = graphicsLibFilesToExcludeForMod(
-          filesInMod, csvReader, progressText, showGfxLibDebugOutput, graphicsLibConfig);
+          filesInMod,
+          csvReader,
+          progressText,
+          showGfxLibDebugOutput,
+          graphicsLibConfig);
 
-      final timeFinishedGettingGraphicsLibData = DateTime.timestamp().millisecondsSinceEpoch;
+      final timeFinishedGettingGraphicsLibData =
+          DateTime.timestamp().millisecondsSinceEpoch;
       if (showPerformance) {
         progressText.appendAndPrint(
             "Finished getting GraphicsLib images for ${modInfo.name} in ${(timeFinishedGettingGraphicsLibData - startTimeForMod)} ms",
@@ -147,27 +169,41 @@ class VramChecker {
 
       final modImages = (await Future.wait(filesInMod.filter((it) {
         final ext = p.extension(it.path).toLowerCase();
-        return ext.endsWith(".png") || ext.endsWith(".jpg") || ext.endsWith(".jpeg") || ext.endsWith(".gif");
+        return ext.endsWith(".png") ||
+            ext.endsWith(".jpg") ||
+            ext.endsWith(".jpeg") ||
+            ext.endsWith(".gif");
       }).map((file) async {
+        if (isCancelled()) {
+          throw Exception("Cancelled");
+        }
         ImageType imageType;
-        if (file.relativePath(modInfo.modFolder).contains(BACKGROUND_FOLDER_NAME)) {
+        if (file
+            .relativePath(modInfo.modFolder.toDirectory())
+            .contains(BACKGROUND_FOLDER_NAME)) {
           imageType = ImageType.background;
-        } else if (UNUSED_INDICATOR.any((suffix) => file.relativePath(modInfo.modFolder).contains(suffix))) {
+        } else if (UNUSED_INDICATOR.any((suffix) => file
+            .relativePath(modInfo.modFolder.toDirectory())
+            .contains(suffix))) {
           imageType = ImageType.unused;
         } else {
           imageType = ImageType.texture;
         }
 
         if (file.nameWithExtension.endsWith(".png")) {
-          return await getModImagePng(imageHeaderReaderPool, file, imageType, modInfo) ??
-              await getModImageGeneric(imageHeaderReaderPool, file, modInfo, imageType);
+          return await getModImagePng(
+                  imageHeaderReaderPool, file, imageType, modInfo) ??
+              await getModImageGeneric(
+                  imageHeaderReaderPool, file, modInfo, imageType);
         } else {
-          return await getModImageGeneric(imageHeaderReaderPool, file, modInfo, imageType);
+          return await getModImageGeneric(
+              imageHeaderReaderPool, file, modInfo, imageType);
         }
       })))
           .whereNotNull();
 
-      final timeFinishedGettingFileData = DateTime.timestamp().millisecondsSinceEpoch;
+      final timeFinishedGettingFileData =
+          DateTime.timestamp().millisecondsSinceEpoch;
       if (showPerformance) {
         progressText.appendAndPrint(
             "Finished getting file data for ${modInfo.formattedName} in ${(timeFinishedGettingFileData - timeFinishedGettingGraphicsLibData)} ms",
@@ -185,7 +221,9 @@ class VramChecker {
       }
 
       for (var it in unusedImages) {
-        progressText.appendAndPrint("  ${it.file.relativePath(modInfo.modFolder)}", verboseOut);
+        progressText.appendAndPrint(
+            "  ${it.file.relativePath(modInfo.modFolder.toDirectory())}",
+            verboseOut);
       }
 
       imagesToSumUp.removeAll(unusedImages);
@@ -193,11 +231,14 @@ class VramChecker {
 // The game only loads one background at a time and vanilla always has one loaded.
 // Therefore, a mod only increases the VRAM use by the size difference of the largest background over vanilla.
       final largestBackgroundBiggerThanVanilla = modImages
-          .filter((it) => it.imageType == ImageType.background && it.textureWidth > VANILLA_BACKGROUND_WIDTH)
+          .filter((it) =>
+              it.imageType == ImageType.background &&
+              it.textureWidth > VANILLA_BACKGROUND_WIDTH)
           .maxByOrNull<num>((it) => it.bytesUsed);
 
-      final modBackgroundsSmallerThanLargestVanilla =
-          modImages.filter((it) => it.imageType == ImageType.background && it != largestBackgroundBiggerThanVanilla);
+      final modBackgroundsSmallerThanLargestVanilla = modImages.filter((it) =>
+          it.imageType == ImageType.background &&
+          it != largestBackgroundBiggerThanVanilla);
 
       if (modBackgroundsSmallerThanLargestVanilla.isNotEmpty) {
         progressText.appendAndPrint(
@@ -205,7 +246,9 @@ class VramChecker {
             verboseOut);
       }
       for (var it in modBackgroundsSmallerThanLargestVanilla) {
-        progressText.appendAndPrint("   ${it.file.relativePath(modInfo.modFolder)}", verboseOut);
+        progressText.appendAndPrint(
+            "   ${it.file.relativePath(modInfo.modFolder.toDirectory())}",
+            verboseOut);
       }
 
       imagesToSumUp.removeAll(modBackgroundsSmallerThanLargestVanilla);
@@ -213,28 +256,33 @@ class VramChecker {
       for (var image in imagesToSumUp) {
         if (showCountedFiles) {
           progressText.appendAndPrint(
-              "${image.file.relativePath(modInfo.modFolder)} - TexHeight: ${image.textureHeight}, TexWidth: ${image.textureWidth}, ChannelBits: ${image.bitsInAllChannelsSum}, Mult: ${image.multiplier}\n   --> ${image.textureHeight} * ${image.textureWidth} * ${image.bitsInAllChannelsSum} * ${image.multiplier} = ${image.bytesUsed} bytes added over vanilla",
+              "${image.file.relativePath(modInfo.modFolder.toDirectory())} - TexHeight: ${image.textureHeight}, TexWidth: ${image.textureWidth}, ChannelBits: ${image.bitsInAllChannelsSum}, Mult: ${image.multiplier}\n   --> ${image.textureHeight} * ${image.textureWidth} * ${image.bitsInAllChannelsSum} * ${image.multiplier} = ${image.bytesUsed} bytes added over vanilla",
               verboseOut);
         }
       }
 
       final List<ModImage> imagesWithoutExcludedGfxLibMaps;
       if ((myGraphicsLibFilesToExcludeForMod != null)) {
-        final glibPaths = myGraphicsLibFilesToExcludeForMod.map((it) => it.relativeFilePath);
-        imagesWithoutExcludedGfxLibMaps =
-            imagesToSumUp.whereNot((image) => glibPaths.contains(image.file.relativeTo(modInfo.modFolder))).toList();
+        final glibPaths =
+            myGraphicsLibFilesToExcludeForMod.map((it) => it.relativeFilePath);
+        imagesWithoutExcludedGfxLibMaps = imagesToSumUp
+            .whereNot((image) => glibPaths.contains(
+                image.file.relativeTo(modInfo.modFolder.toDirectory())))
+            .toList();
       } else {
         imagesWithoutExcludedGfxLibMaps = imagesToSumUp;
       }
 
-      final mod = Mod(modInfo, (enabledModIds ?? []).contains(modInfo.id), imagesWithoutExcludedGfxLibMaps);
+      final mod = Mod(modInfo, (enabledModIds ?? []).contains(modInfo.id),
+          imagesWithoutExcludedGfxLibMaps);
 
       if (showPerformance) {
         progressText.appendAndPrint(
             "Finished calculating ${mod.images.length} file sizes for ${mod.info.formattedName} in ${(DateTime.timestamp().millisecondsSinceEpoch - timeFinishedGettingFileData)} ms",
             verboseOut);
       }
-      progressText.appendAndPrint(mod.totalBytesForMod.bytesAsReadableMB(), verboseOut);
+      progressText.appendAndPrint(
+          mod.totalBytesForMod.bytesAsReadableMB(), verboseOut);
       modProgressOut(mod);
       return mod;
     }).toList())
@@ -255,55 +303,74 @@ class VramChecker {
 
     if (showPerformance) {
       progressText.appendAndPrint(
-          "Finished run in ${(DateTime.timestamp().millisecondsSinceEpoch - startTime)} ms", verboseOut);
+          "Finished run in ${(DateTime.timestamp().millisecondsSinceEpoch - startTime)} ms",
+          verboseOut);
     }
 
-    final enabledModsString =
-        enabledMods.joinToString(separator: "\n    ", transform: (it) => it.info.formattedName).ifBlank("(none)");
+    final enabledModsString = enabledMods
+        .joinToString(
+            separator: "\n    ", transform: (it) => it.info.formattedName)
+        .ifBlank("(none)");
 
     progressText.appendAndPrint("\n", verboseOut);
     summaryText.writeln();
     summaryText.writeln("-------------");
     summaryText.writeln("VRAM Use Estimates");
+    summaryText.writeln(
+        "Time taken: ${(DateTime.now().millisecondsSinceEpoch - startTime)} ms");
     summaryText.writeln();
     summaryText.writeln("Configuration");
     summaryText.writeln("  Enabled Mods");
     summaryText.writeln("    $enabledModsString");
     summaryText.writeln("  GraphicsLib");
-    summaryText.writeln("    Normal Maps Enabled: ${graphicsLibConfig.areGfxLibNormalMapsEnabled}");
-    summaryText.writeln("    Material Maps Enabled: ${graphicsLibConfig.areGfxLibMaterialMapsEnabled}");
-    summaryText.writeln("    Surface Maps Enabled: ${graphicsLibConfig.areGfxLibSurfaceMapsEnabled}");
-    summaryText.writeln("    Edit 'config.properties' to choose your GraphicsLib settings.");
+    summaryText.writeln(
+        "    Normal Maps Enabled: ${graphicsLibConfig.areGfxLibNormalMapsEnabled}");
+    summaryText.writeln(
+        "    Material Maps Enabled: ${graphicsLibConfig.areGfxLibMaterialMapsEnabled}");
+    summaryText.writeln(
+        "    Surface Maps Enabled: ${graphicsLibConfig.areGfxLibSurfaceMapsEnabled}");
+    summaryText.writeln(
+        "    Edit 'config.properties' to choose your GraphicsLib settings.");
     try {
       getGPUInfo()?.also((info) {
         summaryText.writeln("  System");
-        summaryText.writeln(info.gpuString?.joinToString(separator: "\n", transform: (it) => "    $it"));
+        summaryText.writeln(info.gpuString
+            ?.joinToString(separator: "\n", transform: (it) => "    $it"));
 
 // If expected VRAM after loading game and mods is less than 300 MB, show warning
-        if (info.freeVRAM - (totalBytesOfEnabledMods + VANILLA_GAME_VRAM_USAGE_IN_BYTES) < 300000) {
+        if (info.freeVRAM -
+                (totalBytesOfEnabledMods + VANILLA_GAME_VRAM_USAGE_IN_BYTES) <
+            300000) {
           summaryText.writeln();
-          summaryText.writeln("WARNING: You may not have enough free VRAM to run your current modlist.");
+          summaryText.writeln(
+              "WARNING: You may not have enough free VRAM to run your current modlist.");
         }
       });
     } catch (it, st) {
       summaryText.writeln();
-      summaryText.writeln("Unable to get GPU information due to the follow error:");
+      summaryText
+          .writeln("Unable to get GPU information due to the follow error:");
       summaryText.writeln(st.toString());
     }
     summaryText.writeln();
 
-    summaryText
-        .writeln("Enabled + Disabled Mods w/o Vanilla".padRight(OUTPUT_LABEL_WIDTH) + totalBytes.bytesAsReadableMB());
-    summaryText.writeln("Enabled + Disabled Mods w/ Vanilla".padRight(OUTPUT_LABEL_WIDTH) +
+    summaryText.writeln(
+        "Enabled + Disabled Mods w/o Vanilla".padRight(OUTPUT_LABEL_WIDTH) +
+            totalBytes.bytesAsReadableMB());
+    summaryText.writeln("Enabled + Disabled Mods w/ Vanilla"
+            .padRight(OUTPUT_LABEL_WIDTH) +
         (totalBytes + VANILLA_GAME_VRAM_USAGE_IN_BYTES).bytesAsReadableMB());
     summaryText.writeln();
-    summaryText
-        .writeln("Enabled Mods w/o Vanilla".padRight(OUTPUT_LABEL_WIDTH) + totalBytesOfEnabledMods.bytesAsReadableMB());
+    summaryText.writeln(
+        "Enabled Mods w/o Vanilla".padRight(OUTPUT_LABEL_WIDTH) +
+            totalBytesOfEnabledMods.bytesAsReadableMB());
     summaryText.writeln("Enabled Mods w/ Vanilla".padRight(OUTPUT_LABEL_WIDTH) +
-        (totalBytesOfEnabledMods + VANILLA_GAME_VRAM_USAGE_IN_BYTES).bytesAsReadableMB());
+        (totalBytesOfEnabledMods + VANILLA_GAME_VRAM_USAGE_IN_BYTES)
+            .bytesAsReadableMB());
 
     summaryText.writeln();
-    summaryText.writeln("** This is only an estimate of VRAM use and actual use may be higher or lower.");
+    summaryText.writeln(
+        "** This is only an estimate of VRAM use and actual use may be higher or lower.");
     summaryText.writeln(
         "** Unused images in mods are counted unless they contain one of ${UNUSED_INDICATOR.joinToString(transform: (it) => "\"$it\"")} in the file name.");
 
@@ -313,7 +380,8 @@ class VramChecker {
     outputFile.create();
     outputFile.writeAsStringSync("$progressText\n$modTotals\n$summaryText");
 
-    summaryText.writeln("\nFile written to ${outputFile.absolute.path}.\nSummary copied to clipboard, ready to paste.");
+    summaryText.writeln(
+        "\nFile written to ${outputFile.absolute.path}.\nSummary copied to clipboard, ready to paste.");
 
     verboseOut(modTotals.toString());
     debugOut(summaryText.toString());
@@ -324,12 +392,16 @@ class VramChecker {
   }
 
   Future<ModImage?> getModImagePng(
-      ReadImageHeadersWorkerPool imageHeaderReaderPool, File file, ImageType imageType, VramCheckerMod modInfo) async {
+      ReadImageHeadersWorkerPool imageHeaderReaderPool,
+      File file,
+      ImageType imageType,
+      VramCheckerMod modInfo) async {
     ImageHeader? image;
     try {
       image =
           // await withFileHandleLimit(() => readPngFileHeaders(file.path));
-          await withFileHandleLimit(() => imageHeaderReaderPool.readPng(file.path));
+          await withFileHandleLimit(
+              () => imageHeaderReaderPool.readPng(file.path));
 
       if (image == null) {
         throw Exception("Image is null");
@@ -344,7 +416,9 @@ class VramChecker {
           imageType);
     } catch (e) {
       if (showSkippedFiles) {
-        progressText.appendAndPrint("Skipped non-image ${file.relativePath(modInfo.modFolder)} ($e)", verboseOut);
+        progressText.appendAndPrint(
+            "Skipped non-image ${file.relativePath(modInfo.modFolder.toDirectory())} ($e)",
+            verboseOut);
       }
 
       return null;
@@ -352,12 +426,16 @@ class VramChecker {
   }
 
   Future<ModImage?> getModImageGeneric(
-      ReadImageHeadersWorkerPool imageHeaderReaderPool, File file, VramCheckerMod modInfo, ImageType imageType) async {
+      ReadImageHeadersWorkerPool imageHeaderReaderPool,
+      File file,
+      VramCheckerMod modInfo,
+      ImageType imageType) async {
     ImageHeader? image;
     try {
       image =
           // await withFileHandleLimit(() => readPngFileHeaders(file.path));
-          await withFileHandleLimit(() => imageHeaderReaderPool.readGeneric(file.path));
+          await withFileHandleLimit(
+              () => imageHeaderReaderPool.readGeneric(file.path));
 
       if (image == null) {
         throw Exception("Image is null");
@@ -365,7 +443,9 @@ class VramChecker {
       // }
     } catch (e) {
       if (showSkippedFiles) {
-        progressText.appendAndPrint("Skipped non-image ${file.relativePath(modInfo.modFolder)} ($e)", verboseOut);
+        progressText.appendAndPrint(
+            "Skipped non-image ${file.relativePath(modInfo.modFolder.toDirectory())} ($e)",
+            verboseOut);
       }
 
       return null;
@@ -381,22 +461,24 @@ class VramChecker {
   }
 
   // Future<ModInfo?> loadModInfo(File file) async {
-  Future<VramCheckerMod?> getModInfo(Directory modFolder, StringBuffer progressText) async {
+  Future<VramCheckerMod?> getModInfo(
+      Directory modFolder, StringBuffer progressText) async {
     try {
       return modFolder
           .listSync()
           .whereType<File>()
           .firstWhereOrNull((file) => file.nameWithExtension == "mod_info.json")
           ?.let((modInfoFile) async {
-        var rawString = await withFileHandleLimit(() => modInfoFile.readAsString());
-        var jsonEncodedYaml = (rawString).replaceAll("\t", "  ").fixJsonToMap();
+        final rawString =
+            await withFileHandleLimit(() => modInfoFile.readAsString());
+        final jsonEncodedYaml = (rawString).replaceAll("\t", "  ").fixJson();
 
         // try {
-        final model = ModInfoJson.fromJson(jsonEncodedYaml);
+        final model = ModInfoJsonMapper.fromJson(jsonEncodedYaml);
 
         // progressText.appendAndPrint("Using 0.9.5a mod_info.json format for ${modInfoFile.absolute}", verboseOut);
 
-        return VramCheckerMod(model, modFolder);
+        return VramCheckerMod(model, modFolder.path);
         // } catch (e) {
         //   final model = ModInfoJsonModel_091a.fromJson(jsonEncodedYaml);
         //
@@ -407,20 +489,26 @@ class VramChecker {
       });
     } catch (e, st) {
       progressText.appendAndPrint(
-          "Unable to find or read 'mod_info.json' in ${modFolder.absolute}. ($e)\n$st", verboseOut);
+          "Unable to find or read 'mod_info.json' in ${modFolder.absolute}. ($e)\n$st",
+          verboseOut);
       return null;
     }
   }
 
-  List<GraphicsLibInfo>? graphicsLibFilesToExcludeForMod(List<File> filesInMod, CsvToListConverter csvReader,
-      StringBuffer progressText, bool showGfxLibDebugOutput, GraphicsLibConfig graphicsLibConfig) {
+  List<GraphicsLibInfo>? graphicsLibFilesToExcludeForMod(
+      List<File> filesInMod,
+      CsvToListConverter csvReader,
+      StringBuffer progressText,
+      bool showGfxLibDebugOutput,
+      GraphicsLibConfig graphicsLibConfig) {
     return filesInMod
         .filter((it) => it.nameWithExtension.endsWith(".csv"))
         .map((file) {
           try {
             return csvReader.convert(file.readAsStringSync());
           } catch (e) {
-            progressText.appendAndPrint("Unable to read ${file.path}: $e", verboseOut);
+            progressText.appendAndPrint(
+                "Unable to read ${file.path}: $e", verboseOut);
           }
 
           return [null];
@@ -428,13 +516,15 @@ class VramChecker {
         .whereNotNull()
         .filter((it) => it.isNotEmpty)
 // Look for a CSV with a header row containing certain column names
-        .firstWhereOrNull((it) => it.first?.containsAll(["id", "type", "map", "path"]) == true)
+        .firstWhereOrNull((it) =>
+            it.first?.containsAll(["id", "type", "map", "path"]) == true)
         ?.let((it) {
           final mapColumn = it.first?.indexOf("map");
           final pathColumn = it.first?.indexOf("path");
 
           if (mapColumn == null || pathColumn == null) {
-            progressText.appendAndPrint("Unable to find 'map' or 'path' column", verboseOut);
+            progressText.appendAndPrint(
+                "Unable to find 'map' or 'path' column", verboseOut);
             return null;
           }
 
@@ -462,9 +552,12 @@ class VramChecker {
               })
               .whereNotNull()
               .filter((it) => switch (it.mapType) {
-                    MapType.Normal => !graphicsLibConfig.areGfxLibNormalMapsEnabled,
-                    MapType.Material => !graphicsLibConfig.areGfxLibMaterialMapsEnabled,
-                    MapType.Surface => !graphicsLibConfig.areGfxLibSurfaceMapsEnabled,
+                    MapType.Normal =>
+                      !graphicsLibConfig.areGfxLibNormalMapsEnabled,
+                    MapType.Material =>
+                      !graphicsLibConfig.areGfxLibMaterialMapsEnabled,
+                    MapType.Surface =>
+                      !graphicsLibConfig.areGfxLibSurfaceMapsEnabled,
                     _ => false
                   })
               .also((it) {
@@ -480,7 +573,8 @@ class VramChecker {
 
   Future<T> withFileHandleLimit<T>(Future<T> Function() function) async {
     while (currentFileHandles + 1 > maxFileHandles) {
-      verboseOut("Waiting for file handles to free up. Current file handles: $currentFileHandles");
+      verboseOut(
+          "Waiting for file handles to free up. Current file handles: $currentFileHandles");
       await Future.delayed(const Duration(milliseconds: 100));
     }
     currentFileHandles++;
@@ -492,24 +586,10 @@ class VramChecker {
   }
 }
 
-class VramCheckerMod {
-  final ModInfoJson modInfo;
-  final Directory modFolder;
-
-  VramCheckerMod(this.modInfo, this.modFolder);
-
-  String get id => modInfo.id;
-
-  String? get name => modInfo.name;
-
-  Version? get version => modInfo.version;
-
-  String get formattedName => "$name $version ($id)";
-}
-
 extension ModListExt on Iterable<Mod> {
   int getBytesUsedByDedupedImages() {
-    return expand((mod) => mod.images.map((img) => Tuple2(mod.info.modFolder, img)))
+    return expand(
+            (mod) => mod.images.map((img) => Tuple2(mod.info.modFolder, img)))
         .toSet()
         .map((pair) => pair.item2.bytesUsed)
         .sum;

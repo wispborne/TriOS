@@ -1,77 +1,76 @@
 import 'dart:core';
 
 import 'package:collection/collection.dart';
-import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:dart_mappable/dart_mappable.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/util.dart';
 
-part '../generated/models/mod_info_json.freezed.dart';
-part '../generated/models/mod_info_json.g.dart';
+part 'mod_info_json.mapper.dart';
 
-@freezed
-class EnabledModsJsonMode with _$EnabledModsJsonMode {
-  const factory EnabledModsJsonMode(List<String> enabledMods) =
-      _EnabledModsJsonMode;
+@MappableClass()
+class EnabledModsJsonMode with EnabledModsJsonModeMappable {
+  final List<String> enabledMods;
 
-  factory EnabledModsJsonMode.fromJson(Map<String, dynamic> json) =>
-      _$EnabledModsJsonModeFromJson(json);
+  EnabledModsJsonMode(this.enabledMods);
 }
 
-@freezed
-class ModInfoJson with _$ModInfoJson {
-  const ModInfoJson._();
+@MappableClass()
+class ModInfoJson with ModInfoJsonMappable {
+  final String id;
+  final String? name;
 
-  const factory ModInfoJson(
-    final String id, {
-    final String? name,
-    @JsonConverterVersionNullable() final Version? version,
-    final String? author,
-    final String? gameVersion,
-    @Default([]) final List<Dependency> dependencies,
-    final String? description,
-    final String? originalGameVersion,
-    @JsonConverterBool() @Default(false) final bool utility,
-    @JsonConverterBool() @Default(false) final bool totalConversion,
-  }) = _ModInfoJson;
+  @MappableField(hook: NullableVersionHook())
+  final Version? version;
+  final String? author;
+  final String? gameVersion;
+  final List<Dependency> dependencies;
+  final String? description;
+  final String? originalGameVersion;
+  final bool utility;
+  final bool totalConversion;
 
-  factory ModInfoJson.fromJson(Map<String, dynamic> json) =>
-      _$ModInfoJsonFromJson(json);
+  ModInfoJson(
+    this.id, {
+    this.name,
+    this.version,
+    this.author,
+    this.gameVersion,
+    this.dependencies = const [],
+    this.description,
+    this.originalGameVersion,
+    this.utility = false,
+    this.totalConversion = false,
+  });
 
   String get formattedName => "$name $version ($id)";
 }
 
-@freezed
-class Dependency with _$Dependency {
-  const Dependency._();
+@MappableClass()
+class Dependency with DependencyMappable {
+  final String? id;
+  final String? name;
+  @MappableField(hook: NullableVersionHook())
+  final Version? version;
 
-  const factory Dependency({
-    final String? id,
-    final String? name,
-    @JsonConverterVersionNullable() final Version? version,
-    // String? version,
-  }) = _Dependency;
+  Dependency({this.id, this.name, this.version});
 
-  factory Dependency.fromJson(Map<String, dynamic> json) =>
-      _$DependencyFromJson(json);
+  String get formattedNameVersionId =>
+      "$name${version != null ? " $version" : ""}${id != null ? " ($id)" : ""}";
 
-  String get formattedNameVersionId => "$name${version != null ? " $version" : ""}${id != null ? " ($id)" : ""}";
-  String get formattedNameVersion => "$nameOrId${version != null ? " $version" : ""}";
+  String get formattedNameVersion =>
+      "$nameOrId${version != null ? " $version" : ""}";
+
   String get nameOrId => name ?? id ?? "(no name or id!)";
 }
 
-@freezed
-class VersionObject with _$VersionObject {
-  const VersionObject._();
+@MappableClass()
+class VersionObject with VersionObjectMappable {
+  final dynamic major;
+  final dynamic minor;
+  final dynamic patch;
 
-  const factory VersionObject(
-    final dynamic major,
-    final dynamic minor,
-    final dynamic patch,
-  ) = _VersionObject;
-
-  factory VersionObject.fromJson(Map<String, dynamic> json) =>
-      _$VersionObjectFromJson(json);
+  VersionObject(this.major, this.minor, this.patch);
 
   @override
   String toString() => [major, minor, patch].whereNotNull().join(".");
@@ -89,7 +88,6 @@ class VersionObject with _$VersionObject {
 
     result =
         (patch.toString().compareRecognizingNumbers(other.patch.toString()));
-    if (result != 0) return result;
     return result;
   }
 }

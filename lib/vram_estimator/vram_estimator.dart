@@ -1,11 +1,14 @@
-import 'dart:math';
+import 'dart:io';
 
 import 'package:collection/collection.dart';
-import 'package:trios/utils/logging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as p;
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/trios/constants.dart';
+import 'package:trios/trios/settings/config_manager.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/logging.dart';
 import 'package:trios/vram_estimator/vram_checker_logic.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/graph_radio_selector.dart';
@@ -15,47 +18,89 @@ import '../../trios/settings/settings.dart';
 import 'charts/bar_chart.dart';
 import 'charts/pie_chart.dart';
 import 'models/graphics_lib_config.dart';
-import 'models/mod_result.dart';
+import 'models/vram_checker_models.dart';
 
-class VramEstimatorPage extends ConsumerStatefulWidget {
-  const VramEstimatorPage({super.key});
+class VramEstimatorState {
+  final bool isScanning;
+  final Map<String, Mod> modVramInfo;
+  final bool isCancelled;
+  final DateTime? lastUpdated;
 
-  final String title = "VRAM Estimator";
-  final String subtitle = "Estimate VRAM usage for mods";
+  VramEstimatorState({
+    required this.isScanning,
+    required this.modVramInfo,
+    required this.isCancelled,
+    required this.lastUpdated,
+  });
 
-  @override
-  ConsumerState<VramEstimatorPage> createState() => _VramEstimatorPageState();
+  VramEstimatorState copyWith({
+    bool? isScanning,
+    Map<String, Mod>? modVramInfo,
+    bool? isCancelled,
+    DateTime? lastUpdated,
+  }) {
+    return VramEstimatorState(
+      isScanning: isScanning ?? this.isScanning,
+      modVramInfo: modVramInfo ?? this.modVramInfo,
+      isCancelled: isCancelled ?? this.isCancelled,
+      lastUpdated: lastUpdated ?? this.lastUpdated,
+    );
+  }
+
+  factory VramEstimatorState.initial() {
+    return VramEstimatorState(
+      isScanning: false,
+      modVramInfo: {},
+      isCancelled: false,
+      lastUpdated: null,
+    );
+  }
 }
 
-class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
-    with AutomaticKeepAliveClientMixin<VramEstimatorPage> {
+class VramEstimatorNotifier extends Notifier<VramEstimatorState> {
+  ConfigManager configManager = ConfigManager(
+      File(p.join("cache", "TriOS-VRAM_CheckerCache.json")).normalize.path);
+
   @override
-  bool get wantKeepAlive => true;
+  VramEstimatorState build() {
+    readFromDisk();
 
-  bool isScanning = false;
-  GraphType graphType = GraphType.bar;
-  Map<String, Mod> modVramInfo = {};
+    return VramEstimatorState.initial();
+  }
 
-  List<Mod> modVramInfoToShow = [];
-  double largestVramUsage = 0;
+  void readFromDisk() async {
+    await configManager.readConfig();
 
-  RangeValues? selectedSliderValues;
+    if (configManager.config.isNotEmpty) {
+      final modVramInfo =
+          configManager.config['modVramInfo'] as Map<String, dynamic>;
+      final lastUpdated = configManager.config['lastUpdated'] as String;
 
-  void _getVramUsage() async {
-    if (isScanning) return;
+      state = state.copyWith(
+        modVramInfo: modVramInfo
+            .map((key, value) => MapEntry(key, ModMapper.fromJson(value))),
+        isCancelled: false,
+        isScanning: false,
+        lastUpdated: Constants.dateTimeFormat.parse(lastUpdated),
+      );
+    }
+  }
+
+  Future<void> startEstimating() async {
+    if (state.isScanning) return;
 
     var settings = ref.read(appSettings);
     if (settings.modsDir == null || !settings.modsDir!.existsSync()) {
       Fimber.e('Mods folder not set');
+      // Optionally, you can set an error state here
       return;
     }
 
-    setState(() {
-      isScanning = true;
-      modVramInfo = {};
-      modVramInfoToShow = [];
-      largestVramUsage = 0;
-    });
+    state = state.copyWith(
+      isScanning: true,
+      modVramInfo: {},
+      isCancelled: false,
+    );
 
     try {
       final info = await VramChecker(
@@ -73,58 +118,114 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
         showGfxLibDebugOutput: true,
         showPerformance: true,
         modProgressOut: (Mod mod) {
-          // update modVramInfo with each mod's progress
-          setState(() {
-            modVramInfo = modVramInfo..[mod.info.id] = mod;
-            modVramInfoToShow = _calculateModsToShow();
-          });
+          // Update modVramInfo with each mod's progress
+          final updatedModVramInfo = {...state.modVramInfo, mod.info.id: mod};
+          state = state.copyWith(
+            modVramInfo: updatedModVramInfo,
+          );
+          final entries =
+              updatedModVramInfo.map((key, mod) => MapEntry(key, mod.toJson()));
+
+          configManager.updateConfig('modVramInfo', entries,
+              flushToDisk: false);
+          configManager.updateConfig(
+            'lastUpdated',
+            Constants.dateTimeFormat.format(DateTime.now()),
+            flushToDisk: true,
+          );
         },
         debugOut: Fimber.d,
-        verboseOut: null,
+        verboseOut: (String message) => Fimber.v(() => message),
+        isCancelled: () => state.isCancelled,
       ).check();
 
-      setState(() {
-        isScanning = false;
-        modVramInfo = info.fold<Map<String, Mod>>(
-            {},
-            (previousValue, element) =>
-                previousValue..[element.info.id] = element); // sort by mod size
-        largestVramUsage = modVramInfo.values
-                .maxByOrNull<num>((mod) => mod.totalBytesForMod)
-                ?.totalBytesForMod
-                .toDouble()
-                .coerceAtLeast(2) ??
-            2;
-        selectedSliderValues = RangeValues(0, _maxRange());
-        modVramInfoToShow = _calculateModsToShow();
-      });
+      final modVramInfo = info.fold<Map<String, Mod>>(
+        {},
+        (previousValue, element) => previousValue..[element.info.id] = element,
+      );
+
+      configManager.writeConfig();
+      state = state.copyWith(
+        isScanning: false,
+        modVramInfo: modVramInfo,
+        isCancelled: false,
+      );
     } catch (e) {
       Fimber.w('Error scanning for VRAM usage: $e');
-      setState(() {
-        isScanning = false;
-      });
+      // Optionally, set an error state
+      state = state.copyWith(
+        isScanning: false,
+        isCancelled: false,
+      );
     }
   }
+
+  void cancelEstimation() {
+    state = state.copyWith(isCancelled: true);
+  }
+}
+
+class VramEstimatorPage extends ConsumerStatefulWidget {
+  const VramEstimatorPage({super.key});
+
+  final String title = "VRAM Estimator";
+  final String subtitle = "Estimate VRAM usage for mods";
+
+  @override
+  ConsumerState<VramEstimatorPage> createState() => _VramEstimatorPageState();
+}
+
+class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
+    with AutomaticKeepAliveClientMixin<VramEstimatorPage> {
+  @override
+  bool get wantKeepAlive => true;
+
+  GraphType graphType = GraphType.bar;
+  RangeValues? selectedSliderValues;
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    var rangeMax = _maxRange();
+
+    final vramState = ref.watch(AppState.vramEstimatorProvider);
+    final isScanning = vramState.isScanning;
+    final modVramInfo = vramState.modVramInfo;
+
+    var modVramInfoToShow = _calculateModsToShow(modVramInfo);
+    var rangeMax = _maxRange(modVramInfo);
 
     var showRangeSlider = selectedSliderValues != null &&
         !isScanning &&
         modVramInfoToShow.isNotEmpty;
+
     return Column(children: <Widget>[
       Row(
         children: [
-          SpinningRefreshFAB(
-            onPressed: () {
-              if (!isScanning) _getVramUsage();
-            },
-            isScanning: isScanning,
-            tooltip: 'Estimate VRAM',
-            // needsAttention: modVramInfo.isEmpty && !isScanning,
+          Disable(
+            isEnabled: !isScanning,
+            child: SpinningRefreshFAB(
+              onPressed: () {
+                if (!isScanning) {
+                  ref
+                      .read(AppState.vramEstimatorProvider.notifier)
+                      .startEstimating();
+                }
+              },
+              isScanning: isScanning,
+              tooltip: 'Estimate VRAM',
+            ),
           ),
+          if (isScanning)
+            Padding(
+              padding: const EdgeInsets.only(left: 16.0),
+              child: OutlinedButton.icon(
+                onPressed: () => ref
+                    .read(AppState.vramEstimatorProvider.notifier)
+                    .cancelEstimation(),
+                label: Text(vramState.isCancelled ? 'Canceling...' : 'Cancel'),
+                icon: const Icon(Icons.cancel),
+              ),
+            ),
           Padding(
             padding: const EdgeInsets.only(left: 16.0),
             child: Disable(
@@ -135,7 +236,6 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
               ),
             ),
           ),
-          // const Spacer(),
           Padding(
             padding: const EdgeInsets.only(left: 32.0),
             child: Disable(
@@ -158,11 +258,12 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
       if (modVramInfo.isNotEmpty)
         Expanded(
           child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: switch (graphType) {
-                GraphType.bar => VramBarChart(modVramInfo: modVramInfoToShow),
-                GraphType.pie => VramPieChart(modVramInfo: modVramInfoToShow),
-              }),
+            padding: const EdgeInsets.all(16.0),
+            child: switch (graphType) {
+              GraphType.bar => VramBarChart(modVramInfo: modVramInfoToShow),
+              GraphType.pie => VramPieChart(modVramInfo: modVramInfoToShow),
+            },
+          ),
         ),
       if (showRangeSlider)
         SizedBox(
@@ -175,24 +276,24 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
                     style: Theme.of(context).textTheme.labelLarge),
                 Expanded(
                   child: RangeSlider(
-                      values: selectedSliderValues?.let((it) => RangeValues(
-                              it.start.coerceAtLeast(0),
-                              it.end.coerceAtMost(rangeMax))) ??
-                          RangeValues(0, rangeMax),
-                      min: 0,
-                      max: rangeMax,
-                      divisions: 50,
-                      labels: RangeLabels(
-                          (selectedSliderValues?.start ?? 0)
-                              .bytesAsReadableMB(),
-                          (selectedSliderValues?.end ?? rangeMax)
-                              .bytesAsReadableMB()),
-                      onChanged: (RangeValues values) {
-                        setState(() {
-                          selectedSliderValues = values;
-                          modVramInfoToShow = _calculateModsToShow();
-                        });
-                      }),
+                    values: selectedSliderValues?.let((it) => RangeValues(
+                            it.start.coerceAtLeast(0),
+                            it.end.coerceAtMost(rangeMax))) ??
+                        RangeValues(0, rangeMax),
+                    min: 0,
+                    max: rangeMax,
+                    divisions: 50,
+                    labels: RangeLabels(
+                      (selectedSliderValues?.start ?? 0).bytesAsReadableMB(),
+                      (selectedSliderValues?.end ?? rangeMax)
+                          .bytesAsReadableMB(),
+                    ),
+                    onChanged: (RangeValues values) {
+                      setState(() {
+                        selectedSliderValues = values;
+                      });
+                    },
+                  ),
                 ),
                 Text(rangeMax.bytesAsReadableMB(),
                     style: Theme.of(context).textTheme.labelLarge),
@@ -203,31 +304,17 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
     ]);
   }
 
-  List<Mod> _calculateModsToShow() {
+  List<Mod> _calculateModsToShow(Map<String, Mod> modVramInfo) {
     return modVramInfo.values
         .where((mod) =>
             mod.totalBytesForMod >= (selectedSliderValues?.start ?? 0) &&
-            mod.totalBytesForMod <= (selectedSliderValues?.end ?? _maxRange()))
+            mod.totalBytesForMod <=
+                (selectedSliderValues?.end ?? _maxRange(modVramInfo)))
         .sortedByDescending<num>((mod) => mod.totalBytesForMod)
         .toList();
   }
 
-  double roundToAppealing(double number) {
-    if (number <= 0) {
-      return 0; // Handle negative and zero
-    }
-
-    // Find the appropriate power of 10
-    int powerOfTen = (number.abs().toString().length - 1);
-
-    // Calculate the rounding base
-    double roundingBase = pow(10, powerOfTen).toDouble();
-
-    // Round up and multiply
-    return (number / roundingBase).ceil() * roundingBase;
-  }
-
-  double _maxRange() {
+  double _maxRange(Map<String, Mod> modVramInfo) {
     return modVramInfo.values
             .sortedBy<num>((mod) => mod.totalBytesForMod)
             .lastOrNull

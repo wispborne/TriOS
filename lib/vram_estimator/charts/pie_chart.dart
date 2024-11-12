@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:trios/utils/extensions.dart';
 
 import '../../../utils/util.dart';
-import '../models/mod_result.dart';
+import '../models/vram_checker_models.dart';
 
 class VramPieChart extends StatefulWidget {
   final List<Mod> modVramInfo;

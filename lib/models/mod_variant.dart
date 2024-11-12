@@ -17,7 +17,7 @@ part 'mod_variant.mapper.dart';
 typedef SmolId = String;
 
 @MappableClass()
-class ModVariant implements Comparable<ModVariant> {
+class ModVariant with ModVariantMappable implements Comparable<ModVariant> {
   final ModInfo modInfo;
   final VersionCheckerInfo? versionCheckerInfo;
   final Directory modFolder;

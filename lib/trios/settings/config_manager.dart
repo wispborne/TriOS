@@ -52,7 +52,7 @@ class ConfigManager {
   }
 
   /// Writes the in-memory configuration to the file asynchronously.
-  Future<void> _writeConfig() async {
+  Future<void> writeConfig() async {
     try {
       final file = File(_filePath);
       final contents = jsonEncode(_config);
@@ -66,9 +66,11 @@ class ConfigManager {
   ///
   /// [key] is the key to update in the configuration.
   /// [value] is the new value to set for the specified key.
-  Future<void> updateConfig(String key, dynamic value) async {
+  Future<void> updateConfig(String key, dynamic value, {bool flushToDisk = true}) async {
     _config[key] = value;
-    await _writeConfig();
+    if (flushToDisk) {
+      await writeConfig();
+    }
   }
 
   /// Replaces the entire configuration with a new one and saves the change to the disk.
@@ -76,7 +78,7 @@ class ConfigManager {
   /// [newConfig] is the new configuration to replace the current one.
   Future<void> setConfig(Map<String, dynamic> newConfig) async {
     _config = newConfig;
-    await _writeConfig();
+    await writeConfig();
   }
 
   /// Returns an unmodifiable view of the in-memory configuration.

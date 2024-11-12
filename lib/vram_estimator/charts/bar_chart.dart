@@ -4,7 +4,7 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/vram_estimator/models/gpu_info.dart';
 
 import '../../../utils/util.dart';
-import '../models/mod_result.dart';
+import '../models/vram_checker_models.dart';
 // ...  (Import extensions, any custom models, and util as in your existing code)
 
 class VramBarChart extends StatefulWidget {

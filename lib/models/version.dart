@@ -1,10 +1,14 @@
 import 'dart:math';
 
 import 'package:collection/collection.dart';
+import 'package:dart_mappable/dart_mappable.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 
-class Version implements Comparable<Version> {
+part 'version.mapper.dart';
+
+@MappableClass()
+class Version with VersionMappable implements Comparable<Version> {
   final String? raw;
   final String major;
   final String minor;

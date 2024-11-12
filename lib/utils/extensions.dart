@@ -534,7 +534,8 @@ extension IterableFileExt on Iterable<File> {
 
 extension ListExt<T> on List<T> {
   void removeAll(Iterable<T> elements) {
-    removeWhere((element) => elements.contains(element));
+    final elementsSet = elements.toSet(); // Faster lookup?
+    removeWhere((element) => elementsSet.contains(element));
   }
 }
 

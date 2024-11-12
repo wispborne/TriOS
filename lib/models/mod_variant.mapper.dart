@@ -13,6 +13,8 @@ class ModVariantMapper extends ClassMapperBase<ModVariant> {
   static ModVariantMapper ensureInitialized() {
     if (_instance == null) {
       MapperContainer.globals.use(_instance = ModVariantMapper._());
+      ModInfoMapper.ensureInitialized();
+      VersionCheckerInfoMapper.ensureInitialized();
     }
     return _instance!;
   }
@@ -101,6 +103,9 @@ extension ModVariantValueCopy<$R, $Out>
 
 abstract class ModVariantCopyWith<$R, $In extends ModVariant, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
+  ModInfoCopyWith<$R, ModInfo, ModInfo> get modInfo;
+  VersionCheckerInfoCopyWith<$R, VersionCheckerInfo, VersionCheckerInfo>?
+      get versionCheckerInfo;
   $R call(
       {ModInfo? modInfo,
       VersionCheckerInfo? versionCheckerInfo,
@@ -117,6 +122,13 @@ class _ModVariantCopyWithImpl<$R, $Out>
   @override
   late final ClassMapperBase<ModVariant> $mapper =
       ModVariantMapper.ensureInitialized();
+  @override
+  ModInfoCopyWith<$R, ModInfo, ModInfo> get modInfo =>
+      $value.modInfo.copyWith.$chain((v) => call(modInfo: v));
+  @override
+  VersionCheckerInfoCopyWith<$R, VersionCheckerInfo, VersionCheckerInfo>?
+      get versionCheckerInfo => $value.versionCheckerInfo?.copyWith
+          .$chain((v) => call(versionCheckerInfo: v));
   @override
   $R call(
           {ModInfo? modInfo,

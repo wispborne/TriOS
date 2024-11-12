@@ -201,7 +201,7 @@ class RemoteVersionCheckResult {
       smolId,
       json['remoteVersion'] == null
           ? null
-          : VersionCheckerInfo.fromJson(json['remoteVersion']),
+          : VersionCheckerInfoMapper.fromJson(json['remoteVersion']),
       // Not saved, so it will probably be null.
       json['error'],
       json['uri'] as String?,
@@ -244,7 +244,7 @@ Future<RemoteVersionCheckResult> checkRemoteVersion(
     if (response.statusCode == 200) {
       return RemoteVersionCheckResult(
           modVariant.smolId,
-          VersionCheckerInfo.fromJson(body.fixJsonToMap()),
+          VersionCheckerInfoMapper.fromJson(body.fixJson()),
           null,
           remoteVersionUrl);
     } else {

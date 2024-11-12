@@ -41,7 +41,7 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
     final isGameRunning = ref.watch(AppState.isGameRunning).value == true;
     final ignoringDrop = ref.watch(AppState.ignoringDrop) == true;
 
-    Fimber.i("Ignoring drop: $ignoringDrop");
+    // Fimber.i("Ignoring drop: $ignoringDrop");
 
     return DropRegion(
             formats: Formats.standardFormats,

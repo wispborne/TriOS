@@ -8,7 +8,7 @@ class VersionMappingHook extends MappingHook {
   @override
   dynamic beforeDecode(dynamic value) {
     if (value is Map<String, dynamic>) {
-      return Version.parse(VersionObject.fromJson(value).toString(),
+      return Version.parse(VersionObjectMapper.fromJson(value.toString()).toString(),
           sanitizeInput: false);
     }
     return Version.parse(value, sanitizeInput: true);

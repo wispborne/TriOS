@@ -446,9 +446,9 @@ class ModManagerNotifier extends AsyncNotifier<void> {
         extractedModInfos.whereNotNull().map((modInfoFile) async {
       ExtractedModInfo modInfo = (
         extractedFile: modInfoFile,
-        modInfo: ModInfo.fromJson(modInfoFile.extractedFile
+        modInfo: ModInfoMapper.fromJson(modInfoFile.extractedFile
             .readAsStringSyncAllowingMalformed()
-            .fixJsonToMap())
+            .fixJson())
       );
       return modInfo;
     }).toList());
@@ -886,8 +886,8 @@ Future<List<ModVariant>> getModsVariantsInFolder(Directory modsFolder) async {
 VersionCheckerInfo? getVersionCheckerInfo(File versionFile) {
   if (!versionFile.existsSync()) return null;
   try {
-    var info = VersionCheckerInfo.fromJson(
-        versionFile.readAsStringSync().fixJsonToMap());
+    var info = VersionCheckerInfoMapper.fromJson(
+        versionFile.readAsStringSync().fixJson());
 
     if (info.modThreadId != null) {
       info = info.copyWith(
@@ -935,11 +935,11 @@ Future<ModInfo?> getModInfo(
         ?.let((modInfoFile) async {
       var rawString =
           await withFileHandleLimit(() => modInfoFile.readAsString());
-      var jsonEncodedYaml = (rawString).replaceAll("\t", "  ").fixJsonToMap();
+      var jsonEncodedYaml = (rawString).replaceAll("\t", "  ").fixJson();
 
       // try {
       final model = ModInfo.fromJsonModel(
-          ModInfoJson.fromJson(jsonEncodedYaml), modFolder);
+          ModInfoJsonMapper.fromJson(jsonEncodedYaml), modFolder);
 
       // Fimber.v(() =>"Using 0.9.5a mod_info.json format for ${modInfoFile.absolute}");
 

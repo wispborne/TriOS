@@ -1,6 +1,7 @@
 # 1.0.0
 - Added
   - **Mod Catalog**
+  - VRAM now displayed on the Mods tab.
 - Fixed
   - Mod download notification url can't show more than 3 lines anymore.
 

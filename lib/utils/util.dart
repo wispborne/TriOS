@@ -4,14 +4,13 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:collection/collection.dart';
+import 'package:dart_mappable/dart_mappable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
 import 'package:trios/libarchive/libarchive.dart';
-import 'package:trios/models/mod_info_json.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
@@ -346,81 +345,93 @@ pollFileForModification(File file, StreamController<File?> streamController,
   }
 }
 
-class JsonConverterVersion implements JsonConverter<Version, dynamic> {
-  const JsonConverterVersion();
+class VersionHook extends MappingHook {
+  const VersionHook();
 
   @override
-  Version fromJson(dynamic json) {
+  dynamic beforeDecode(dynamic value) {
     try {
-      if (json is Map<String, dynamic>) {
-        // Shouldn't have to sanitize the input if they used the major/minor/patch json format.
-        return Version.parse(VersionObject.fromJson(json).toString(),
-            sanitizeInput: false);
+      if (value is Map<String, dynamic>) {
+        // Parse from a map with major, minor, patch keys
+        return VersionMapper.fromMap(value);
       }
-      return Version.parse(json, sanitizeInput: true);
+      // Parse from a string representation
+      return Version.parse(value.toString(), sanitizeInput: true);
     } catch (e) {
+      // Rethrow the exception to match your original behavior
       rethrow;
     }
   }
 
   @override
-  String toJson(dynamic object) {
-    if (object is VersionObject) {
-      return "${object.major}.${object.minor}.${object.patch}";
-    } else {
-      return object.toString();
+  dynamic beforeEncode(dynamic value) {
+    if (value is Version) {
+      return value.toString();
     }
+    return value;
   }
 }
 
-class JsonConverterVersionNullable implements JsonConverter<Version?, dynamic> {
-  const JsonConverterVersionNullable();
+class NullableVersionHook extends MappingHook {
+  const NullableVersionHook();
 
   @override
-  Version? fromJson(dynamic json) {
+  dynamic beforeDecode(dynamic value) {
+    if (value == null) return null;
     try {
-      return const JsonConverterVersion().fromJson(json);
+      return const VersionHook().beforeDecode(value);
     } catch (e) {
+      // Return null instead of throwing an exception
       return null;
     }
   }
 
   @override
-  String toJson(dynamic object) {
-    return const JsonConverterVersion().toJson(object);
+  dynamic beforeEncode(dynamic value) {
+    return const VersionHook().beforeEncode(value);
   }
 }
 
-class JsonConverterToString implements JsonConverter<String, dynamic> {
-  const JsonConverterToString();
+class ToStringHook extends MappingHook {
+  const ToStringHook();
 
   @override
-  String fromJson(dynamic json) {
-    return json.toString();
+  dynamic beforeDecode(dynamic value) {
+    return value?.toString();
   }
 
   @override
-  dynamic toJson(String object) {
-    return object;
+  dynamic beforeEncode(dynamic value) {
+    return value;
   }
 }
 
-class JsonConverterBool implements JsonConverter<bool, dynamic> {
-  const JsonConverterBool();
+class BoolHook extends MappingHook {
+  const BoolHook();
+
+  bool _tryParseBool(String value) {
+    final lower = value.toLowerCase();
+    if (lower == 'true') return true;
+    if (lower == 'false') return false;
+    return false;
+  }
 
   @override
-  bool fromJson(dynamic json) {
-    if (json == null) return false;
-    if (json is bool) return json;
-    if (json is String) {
-      return bool.tryParse(json, caseSensitive: false) ?? false;
+  dynamic beforeDecode(dynamic value) {
+    if (value == null) return false;
+    if (value is bool) return value;
+    if (value is String) {
+      return _tryParseBool(value);
     }
     return false;
   }
 
   @override
-  dynamic toJson(bool object) {
-    return object.toString();
+  dynamic beforeEncode(dynamic value) {
+    if (value is bool) {
+      return value.toString();
+    }
+    return value;
   }
 }
 

@@ -19,6 +19,7 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/platform_paths.dart';
 import 'package:trios/utils/util.dart';
+import 'package:trios/vram_estimator/vram_estimator.dart';
 
 import '../jre_manager/jre_manager_logic.dart';
 import '../mod_manager/audit_page.dart';
@@ -97,6 +98,11 @@ class AppState {
           DependencyCheck(compatibility, dependencyCheckResult));
     }).toMap();
   });
+
+  static final vramEstimatorProvider =
+      NotifierProvider<VramEstimatorNotifier, VramEstimatorState>(
+    VramEstimatorNotifier.new,
+  );
 
   static final enabledModsFile =
       AsyncNotifierProvider<EnabledModsNotifier, EnabledMods>(

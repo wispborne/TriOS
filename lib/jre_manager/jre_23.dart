@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
+import 'package:dart_mappable/dart_mappable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -18,8 +19,7 @@ import '../trios/settings/settings.dart';
 import '../widgets/disable.dart';
 import '../widgets/download_progress_indicator.dart';
 
-part '../generated/jre_manager/jre_23.freezed.dart';
-part '../generated/jre_manager/jre_23.g.dart';
+part 'jre_23.mapper.dart';
 
 final doesJre23ExistInGameFolderProvider = FutureProvider<bool>((ref) async {
   final gamePath =
@@ -251,8 +251,8 @@ class Jre23Notifier extends AsyncNotifier<Jre23State> {
     final response = await http.get(Uri.parse(versionCheckerUrl));
 
     if (response.statusCode == 200) {
-      final parsableJson = response.body.fixJsonToMap();
-      final versionChecker = Jre23VersionChecker.fromJson(parsableJson);
+      final parsableJson = response.body.fixJson();
+      final versionChecker = Jre23VersionCheckerMapper.fromJson(parsableJson);
       Fimber.i("Jre23VersionChecker: $versionChecker");
       return versionChecker;
     }
@@ -265,22 +265,32 @@ class Jre23Notifier extends AsyncNotifier<Jre23State> {
 final jre23NotifierProvider =
     AsyncNotifierProvider<Jre23Notifier, Jre23State>(() => Jre23Notifier());
 
-@freezed
-class Jre23VersionChecker with _$Jre23VersionChecker {
-  factory Jre23VersionChecker({
-    required final String masterVersionFile,
-    required final String modName,
-    final int? modThreadId,
-    @JsonConverterVersion() required final Version modVersion,
-    required final String starsectorVersion,
-    final String? windowsJDKDownload,
-    final String? windowsConfigDownload,
-    final String? linuxJDKDownload,
-    final String? linuxConfigDownload,
-  }) = _Jre23VersionChecker;
+@MappableClass()
+class Jre23VersionChecker with Jre23VersionCheckerMappable {
+  final String masterVersionFile;
+  final String modName;
+  final int? modThreadId;
 
-  factory Jre23VersionChecker.fromJson(Map<String, dynamic> json) =>
-      _$Jre23VersionCheckerFromJson(json);
+  @MappableField(hook: VersionHook())
+  final Version modVersion;
+
+  final String starsectorVersion;
+  final String? windowsJDKDownload;
+  final String? windowsConfigDownload;
+  final String? linuxJDKDownload;
+  final String? linuxConfigDownload;
+
+  Jre23VersionChecker({
+    required this.masterVersionFile,
+    required this.modName,
+    this.modThreadId,
+    required this.modVersion,
+    required this.starsectorVersion,
+    this.windowsJDKDownload,
+    this.windowsConfigDownload,
+    this.linuxJDKDownload,
+    this.linuxConfigDownload,
+  });
 }
 
 class InstallJre23Card extends ConsumerStatefulWidget {

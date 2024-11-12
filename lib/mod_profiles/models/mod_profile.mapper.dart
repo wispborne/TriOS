@@ -294,6 +294,7 @@ class ShallowModVariantMapper extends ClassMapperBase<ShallowModVariant> {
   static ShallowModVariantMapper ensureInitialized() {
     if (_instance == null) {
       MapperContainer.globals.use(_instance = ShallowModVariantMapper._());
+      VersionMapper.ensureInitialized();
     }
     return _instance!;
   }
@@ -386,6 +387,7 @@ extension ShallowModVariantValueCopy<$R, $Out>
 
 abstract class ShallowModVariantCopyWith<$R, $In extends ShallowModVariant,
     $Out> implements ClassCopyWith<$R, $In, $Out> {
+  VersionCopyWith<$R, Version, Version>? get version;
   $R call(
       {String? modId,
       String? modName,
@@ -403,6 +405,9 @@ class _ShallowModVariantCopyWithImpl<$R, $Out>
   @override
   late final ClassMapperBase<ShallowModVariant> $mapper =
       ShallowModVariantMapper.ensureInitialized();
+  @override
+  VersionCopyWith<$R, Version, Version>? get version =>
+      $value.version?.copyWith.$chain((v) => call(version: v));
   @override
   $R call(
           {String? modId,

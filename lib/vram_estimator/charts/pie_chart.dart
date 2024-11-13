@@ -27,7 +27,7 @@ class VramPieChartState extends State<VramPieChart> {
       const radius = 50.0;
       const shadows = [Shadow(color: Colors.black, blurRadius: 2)];
       return PieChartSectionData(
-        color: ColorGenerator.generateFromColor(mod.info.id, baseColor)
+        color: ColorGenerator.generateFromColor(mod.info.smolId, baseColor)
             .createMaterialColor()
             .shade700,
         value: mod.totalBytesForMod.toDouble(),

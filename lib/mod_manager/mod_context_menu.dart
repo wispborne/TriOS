@@ -48,6 +48,7 @@ ContextMenu buildModContextMenu(Mod mod, WidgetRef ref, BuildContext context,
               "${Constants.forumModPageUrl}${modVariant.versionCheckerInfo?.modThreadId}"));
         },
       ),
+      menuItemCheckVram(mod, ref),
       if (!isGameRunning) menuItemDeleteFolder(mod, context, ref),
       if (currentStarsectorVersion != null &&
           !isGameRunning &&
@@ -277,4 +278,15 @@ MenuItem menuItemDebugging(
                 }
               }),
       ]);
+}
+
+MenuItem menuItemCheckVram(Mod mod, WidgetRef ref) {
+  return MenuItem(
+    label: 'Estimate VRAM Usage',
+    icon: Icons.memory,
+    onSelected: () {
+      ref.read(AppState.vramEstimatorProvider.notifier).startEstimating(
+          smolIdsToCheck: [mod.findFirstEnabledOrHighestVersion!.smolId]);
+    },
+  );
 }

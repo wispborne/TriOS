@@ -74,7 +74,7 @@ class VramBarChartState extends State<VramBarChart> {
                                     width: width,
                                     height: 10,
                                     color: ColorGenerator.generateFromColor(
-                                            mod.info.id, baseColor)
+                                            mod.info.smolId, baseColor)
                                         .createMaterialColor()
                                         .shade700,
                                   ),
@@ -138,7 +138,7 @@ class VramBarChartState extends State<VramBarChart> {
                 BarChartRodData(
                   toY: mod.totalBytesForMod.toDouble(), // Y-axis value
                   color:
-                      ColorGenerator.generateFromColor(mod.info.id, baseColor)
+                      ColorGenerator.generateFromColor(mod.info.smolId, baseColor)
                           .createMaterialColor()
                           .shade700,
                   width: 12, // Adjust bar width

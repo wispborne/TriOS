@@ -29,7 +29,7 @@ class ModInfoMapper extends ClassMapperBase<ModInfo> {
       Field('name', _$name, opt: true);
   static Version? _$version(ModInfo v) => v.version;
   static const Field<ModInfo, Version> _f$version =
-      Field('version', _$version, opt: true);
+      Field('version', _$version, opt: true, hook: NullableVersionHook());
   static String? _$description(ModInfo v) => v.description;
   static const Field<ModInfo, String> _f$description =
       Field('description', _$description, opt: true);

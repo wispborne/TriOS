@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:dart_mappable/dart_mappable.dart';
+import 'package:trios/models/mod_variant.dart';
 
 import '../../models/mod_info_json.dart';
 import '../../models/version.dart';
@@ -26,13 +27,14 @@ class VramCheckerMod with VramCheckerModMappable {
 
   VramCheckerMod(this.modInfo, this.modFolder);
 
-  String get id => modInfo.id;
+  String get smolId => createSmolId(modInfo.id, modInfo.version);
+  String get modId => modInfo.id;
 
   String? get name => modInfo.name;
 
   Version? get version => modInfo.version;
 
-  String get formattedName => "$name $version ($id)";
+  String get formattedName => "$name $version (${modInfo.id})";
 }
 
 @MappableClass()

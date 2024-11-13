@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:collection/collection.dart';
 import 'package:csv/csv.dart';
 import 'package:path/path.dart' as p;
+import 'package:rxdart/rxdart.dart';
 import 'package:squadron/squadron.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/extensions.dart';
@@ -19,6 +20,7 @@ import 'models/vram_checker_models.dart';
 
 class VramChecker {
   List<String>? enabledModIds;
+  List<String>? smolIdsToCheck;
   List<String>? modIdsToCheck;
   List<Directory> foldersToCheck;
   bool showGfxLibDebugOutput;
@@ -36,6 +38,7 @@ class VramChecker {
   /// [modProgressOut] is called with each mod as it is processed.
   VramChecker({
     this.enabledModIds,
+    this.smolIdsToCheck,
     this.modIdsToCheck,
     required this.foldersToCheck,
     required this.showGfxLibDebugOutput,
@@ -133,12 +136,16 @@ class VramChecker {
             .expand((it) => it.listSync())
             .where((it) => FileSystemEntity.isDirectorySync(it.path))
             .asyncMap((it) => getModInfo(Directory(it.path), progressText))
-            .where((it) => it != null)
-            .map((modInfo) => modInfo!)
-            .where((it) => (modIdsToCheck == null)
-                ? true
-                : modIdsToCheck?.contains(it.id) == true)
-            .asyncMap((modInfo) async {
+            .whereNotNull()
+            .where((it) {
+      if (smolIdsToCheck != null && !smolIdsToCheck!.contains(it.smolId)) {
+        return false;
+      } else if (modIdsToCheck != null && !modIdsToCheck!.contains(it.modId)) {
+        return false;
+      } else {
+        return true;
+      }
+    }).asyncMap((modInfo) async {
       progressText.appendAndPrint("\nFolder: ${modInfo.name}", verboseOut);
       if (isCancelled()) {
         throw Exception("Cancelled");
@@ -273,7 +280,7 @@ class VramChecker {
         imagesWithoutExcludedGfxLibMaps = imagesToSumUp;
       }
 
-      final mod = Mod(modInfo, (enabledModIds ?? []).contains(modInfo.id),
+      final mod = Mod(modInfo, (enabledModIds ?? []).contains(modInfo.modId),
           imagesWithoutExcludedGfxLibMaps);
 
       if (showPerformance) {

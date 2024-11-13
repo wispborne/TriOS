@@ -15,6 +15,7 @@ part 'mod_info.mapper.dart';
 class ModInfo with ModInfoMappable {
   final String id;
   final String? name;
+  @MappableField(hook: NullableVersionHook())
   final Version? version;
   final String? description;
   final String? gameVersion;

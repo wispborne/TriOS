@@ -4,6 +4,7 @@ import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -66,7 +67,7 @@ const _standardRowHeight = 40.0;
 const _dependencyAddedRowHeight = 34.0;
 
 class _Smol3State extends ConsumerState<Smol3>
-    with AutomaticKeepAliveClientMixin {
+    with AutomaticKeepAliveClientMixin, SingleTickerProviderStateMixin {
   @override
   bool get wantKeepAlive => true;
 
@@ -76,6 +77,7 @@ class _Smol3State extends ConsumerState<Smol3>
   late List<Mod> modsToDisplay;
   late List<Mod> filteredMods;
   final searchController = SearchController();
+  AnimationController? animationController;
 
   // Only update the UI once every 300ms
   final Debouncer gridStateDebouncer =
@@ -122,6 +124,7 @@ class _Smol3State extends ConsumerState<Smol3>
   @override
   void initState() {
     super.initState();
+    animationController = AnimationController(vsync: this);
     modsToDisplay = ref.read(AppState.mods);
     filteredMods = modsToDisplay;
     final versionCheckResults =
@@ -162,6 +165,14 @@ class _Smol3State extends ConsumerState<Smol3>
         filteredMods.where((mod) => !mod.hasEnabledVariant).toList();
 
     const double versionSelectorWidth = 130;
+
+    ref.listen(AppState.vramEstimatorProvider, (prev, next) {
+      if (next.isScanning == true) {
+        animationController?.repeat();
+      } else {
+        animationController?.reset();
+      }
+    });
 
     // Only update the UI once every 300ms
     // gridStateDebouncer.run(() {
@@ -242,72 +253,89 @@ class _Smol3State extends ConsumerState<Smol3>
                               Builder(builder: (context) {
                                 final vramEst =
                                     ref.watch(AppState.vramEstimatorProvider);
-                                return OutlinedButton.icon(
-                                  onPressed: () => vramEst.isScanning
-                                      ? ref
-                                          .read(AppState
-                                              .vramEstimatorProvider.notifier)
-                                          .cancelEstimation()
-                                      : showDialog(
-                                          context: context,
-                                          builder: (context) => AlertDialog(
-                                                icon: const Icon(Icons.memory),
-                                                title:
-                                                    const Text("Estimate VRAM"),
-                                                content: Column(
-                                                  mainAxisSize:
-                                                      MainAxisSize.min,
-                                                  children: [
-                                                    const Text(
-                                                        "This will scan all enabled mods and estimate the total VRAM usage."),
-                                                    const SizedBox(height: 8),
-                                                    Text(
-                                                        "This may take a few minutes and cause your computer to lag!",
-                                                        style: TextStyle(
-                                                            color: Theme.of(
-                                                                    context)
-                                                                .colorScheme
-                                                                .error)),
+                                return Animate(
+                                  controller: animationController,
+                                  effects: [
+                                    if (vramEst.isScanning)
+                                    ShimmerEffect(
+                                      colors: [
+                                        theme.colorScheme.onSurface,
+                                        theme.colorScheme.secondary,
+                                        theme.colorScheme.primary,
+                                        theme.colorScheme.secondary,
+                                      ],
+                                      duration:
+                                          const Duration(milliseconds: 1500),
+                                    )
+                                  ],
+                                  child: OutlinedButton.icon(
+                                    onPressed: () => vramEst.isScanning
+                                        ? ref
+                                            .read(AppState
+                                                .vramEstimatorProvider.notifier)
+                                            .cancelEstimation()
+                                        : showDialog(
+                                            context: context,
+                                            builder: (context) => AlertDialog(
+                                                  icon:
+                                                      const Icon(Icons.memory),
+                                                  title: const Text(
+                                                      "Estimate VRAM"),
+                                                  content: Column(
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    children: [
+                                                      const Text(
+                                                          "This will scan all enabled mods and estimate the total VRAM usage."),
+                                                      const SizedBox(height: 8),
+                                                      Text(
+                                                          "This may take a few minutes and cause your computer to lag!",
+                                                          style: TextStyle(
+                                                              color: Theme.of(
+                                                                      context)
+                                                                  .colorScheme
+                                                                  .error)),
+                                                    ],
+                                                  ),
+                                                  actions: [
+                                                    TextButton(
+                                                        onPressed: () {
+                                                          Navigator.of(context)
+                                                              .pop();
+                                                        },
+                                                        child: const Text(
+                                                            "Cancel")),
+                                                    TextButton(
+                                                        onPressed: () {
+                                                          ref
+                                                              .read(AppState
+                                                                  .vramEstimatorProvider
+                                                                  .notifier)
+                                                              .startEstimating();
+                                                          Navigator.of(context)
+                                                              .pop();
+                                                        },
+                                                        child: const Text(
+                                                            "Estimate"))
                                                   ],
-                                                ),
-                                                actions: [
-                                                  TextButton(
-                                                      onPressed: () {
-                                                        Navigator.of(context)
-                                                            .pop();
-                                                      },
-                                                      child:
-                                                          const Text("Cancel")),
-                                                  TextButton(
-                                                      onPressed: () {
-                                                        ref
-                                                            .read(AppState
-                                                                .vramEstimatorProvider
-                                                                .notifier)
-                                                            .startEstimating();
-                                                        Navigator.of(context)
-                                                            .pop();
-                                                      },
-                                                      child: const Text(
-                                                          "Estimate"))
-                                                ],
-                                              )),
-                                  label: Text(vramEst.isScanning
-                                      ? "Cancel"
-                                      : "Est. VRAM"),
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: Theme.of(context)
-                                        .colorScheme
-                                        .onSurface
-                                        .withOpacity(0.8),
-                                    side: BorderSide(
-                                      color: Theme.of(context)
+                                                )),
+                                    label: Text(vramEst.isScanning
+                                        ? "Cancel Scan"
+                                        : "Est. VRAM"),
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: Theme.of(context)
                                           .colorScheme
                                           .onSurface
                                           .withOpacity(0.8),
+                                      side: BorderSide(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface
+                                            .withOpacity(0.8),
+                                      ),
                                     ),
+                                    icon: const Icon(Icons.memory),
                                   ),
-                                  icon: const Icon(Icons.memory),
                                 );
                               }),
                               const SizedBox(width: 8),
@@ -1138,20 +1166,21 @@ class _Smol3State extends ConsumerState<Smol3>
                   showSwapToVersion: true),
               child: RowItemContainer(
                 child: Builder(builder: (context) {
-                  final vramMap =
-                      ref.watch(AppState.vramEstimatorProvider).modVramInfo;
+                  final vramEstimatorState =
+                      ref.watch(AppState.vramEstimatorProvider);
+                  final vramMap = vramEstimatorState.modVramInfo;
                   final biggestFish = vramMap
                       .maxBy((e) => e.value.totalBytesForMod)
                       ?.value
                       .totalBytesForMod;
                   final ratio = biggestFish == null
                       ? 0.00
-                      : (vramMap[bestVersion.modInfo.id]
+                      : (vramMap[bestVersion.smolId]
                                   ?.totalBytesForMod
                                   .toDouble() ??
                               0) /
                           biggestFish.toDouble();
-                  final vramEstimate = vramMap[bestVersion.modInfo.id];
+                  final vramEstimate = vramMap[bestVersion.smolId];
 
                   return Expanded(
                     child: MovingTooltipWidget.text(
@@ -1160,34 +1189,62 @@ class _Smol3State extends ConsumerState<Smol3>
                           : "Version ${vramEstimate.info.version}"
                               "\n\n${vramEstimate.totalBytesForMod.bytesAsReadableMB()}"
                               "\n${vramEstimate.images.length} images"
-                          "\n\n",
+                              "",
                       child: Stack(
                         children: [
                           Align(
                             alignment: Alignment.centerLeft,
                             child: Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 8.0),
-                              child: Text(
-                                  vramEstimate?.totalBytesForMod
-                                          .bytesAsReadableMB() ??
-                                      "(needs scan)",
-                                  style: theme.textTheme.labelLarge
-                                      ?.copyWith(color: lightTextColor)),
-                            ),
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 8.0),
+                                child: vramEstimate?.totalBytesForMod != null
+                                    ? Text(
+                                        vramEstimate!.totalBytesForMod
+                                            .bytesAsReadableMB(),
+                                        style: theme.textTheme.labelLarge
+                                            ?.copyWith(color: lightTextColor))
+                                    : Align(
+                                        alignment: Alignment.centerRight,
+                                        child: Opacity(
+                                            opacity: 0.5,
+                                            child: Disable(
+                                              isEnabled: !vramEstimatorState
+                                                  .isScanning,
+                                              child: MovingTooltipWidget.text(
+                                                message: "Estimate VRAM usage",
+                                                child: IconButton(
+                                                  icon:
+                                                      const Icon(Icons.memory),
+                                                  iconSize: 24,
+                                                  onPressed: () {
+                                                    ref
+                                                        .read(AppState
+                                                            .vramEstimatorProvider
+                                                            .notifier)
+                                                        .startEstimating(
+                                                            smolIdsToCheck: [
+                                                          mod.findFirstEnabledOrHighestVersion!
+                                                              .smolId
+                                                        ]);
+                                                  },
+                                                ),
+                                              ),
+                                            )),
+                                      )),
                           ),
-                          Align(
-                            alignment: Alignment.bottomLeft,
-                            child: Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 8.0),
-                              child: LinearProgressIndicator(
-                                value: ratio,
-                                backgroundColor:
-                                    theme.colorScheme.surfaceContainer,
+                          if (vramEstimate != null)
+                            Align(
+                              alignment: Alignment.bottomLeft,
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 8.0),
+                                child: LinearProgressIndicator(
+                                  value: ratio,
+                                  backgroundColor:
+                                      theme.colorScheme.surfaceContainer,
+                                ),
                               ),
                             ),
-                          ),
                         ],
                       ),
                     ),

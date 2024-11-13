@@ -86,7 +86,7 @@ class VramEstimatorNotifier extends Notifier<VramEstimatorState> {
     }
   }
 
-  Future<void> startEstimating() async {
+  Future<void> startEstimating({List<String>? smolIdsToCheck}) async {
     if (state.isScanning) return;
 
     var settings = ref.read(appSettings);
@@ -98,13 +98,20 @@ class VramEstimatorNotifier extends Notifier<VramEstimatorState> {
 
     state = state.copyWith(
       isScanning: true,
-      modVramInfo: {},
       isCancelled: false,
     );
+
+    final smolIdsToCheckIntl = smolIdsToCheck ??
+        ref
+            .read(AppState.mods)
+            .map((mod) => mod.findFirstEnabledOrHighestVersion?.smolId)
+            .whereNotNull()
+            .toList();
 
     try {
       final info = await VramChecker(
         enabledModIds: ref.read(AppState.enabledModIds).value,
+        smolIdsToCheck: smolIdsToCheckIntl,
         modIdsToCheck: null,
         foldersToCheck: settings.modsDir == null ? [] : [settings.modsDir!],
         graphicsLibConfig: GraphicsLibConfig(
@@ -119,7 +126,10 @@ class VramEstimatorNotifier extends Notifier<VramEstimatorState> {
         showPerformance: true,
         modProgressOut: (Mod mod) {
           // Update modVramInfo with each mod's progress
-          final updatedModVramInfo = {...state.modVramInfo, mod.info.id: mod};
+          final updatedModVramInfo = {
+            ...state.modVramInfo,
+            mod.info.smolId: mod
+          };
           state = state.copyWith(
             modVramInfo: updatedModVramInfo,
           );
@@ -140,8 +150,9 @@ class VramEstimatorNotifier extends Notifier<VramEstimatorState> {
       ).check();
 
       final modVramInfo = info.fold<Map<String, Mod>>(
-        {},
-        (previousValue, element) => previousValue..[element.info.id] = element,
+        state.modVramInfo,
+        (previousValue, element) =>
+            previousValue..[element.info.smolId] = element,
       );
 
       configManager.writeConfig();

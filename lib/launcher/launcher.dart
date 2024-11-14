@@ -49,7 +49,8 @@ class Launcher extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     var theme = Theme.of(context);
-    final buttonBackgroundColor = theme.colorScheme.surfaceContainer;
+    final isGameRunning = ref.watch(AppState.isGameRunning).valueOrNull == true;
+    final buttonBackgroundColor = isGameRunning ? theme.disabledColor : theme.colorScheme.surfaceContainer;
 
     // Animation controllers for hover and tap effects
     final hoverController = useAnimationController(
@@ -75,8 +76,6 @@ class Launcher extends HookConsumerWidget {
     final boxShadowAnimation = Tween<double>(begin: 2, end: 10).animate(
       CurvedAnimation(parent: hoverController, curve: Curves.easeInOut),
     );
-
-    final isGameRunning = ref.watch(AppState.isGameRunning).valueOrNull == true;
 
     return MovingTooltipWidget(
       tooltipWidget: TooltipFrame(

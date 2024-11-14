@@ -26,6 +26,7 @@ import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/debouncer.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/search.dart';
 import 'package:trios/widgets/add_new_mods_button.dart';
 import 'package:trios/widgets/disable.dart';
@@ -74,7 +75,7 @@ class _Smol3State extends ConsumerState<Smol3>
   bool hasEverLoaded = false;
   Mod? selectedMod;
   int? selectedRowIdx;
-  late List<Mod> modsToDisplay;
+  late List<Mod> allMods;
   late List<Mod> filteredMods;
   final searchController = SearchController();
   AnimationController? animationController;
@@ -125,8 +126,8 @@ class _Smol3State extends ConsumerState<Smol3>
   void initState() {
     super.initState();
     animationController = AnimationController(vsync: this);
-    modsToDisplay = ref.read(AppState.mods);
-    filteredMods = modsToDisplay;
+    allMods = ref.read(AppState.mods);
+    filteredMods = allMods;
     final versionCheckResults =
         ref.read(AppState.versionCheckResults).valueOrNull;
     const double versionSelectorWidth = 130;
@@ -157,7 +158,7 @@ class _Smol3State extends ConsumerState<Smol3>
     final mods = ref.watch(AppState.mods);
     final versionCheckResults =
         ref.watch(AppState.versionCheckResults).valueOrNull;
-    modsToDisplay = mods;
+    allMods = mods;
     filteredMods = filterMods(query);
     final enabledMods =
         filteredMods.where((mod) => mod.hasEnabledVariant).toList();
@@ -180,19 +181,22 @@ class _Smol3State extends ConsumerState<Smol3>
     // Changing profile means lots of changes really fast, don't update the UI or else it'll be super laggy.
     if (!isChangingModProfileProvider) {
       if (stateManager != null) {
-        stateManager.refRows.clearFromOriginal();
-        stateManager.refRows.addAll(createGridRows(enabledMods, disabledMods,
-            shouldSort: query.isEmpty));
-        stateManager.refColumns.clearFromOriginal();
-        stateManager.refColumns.addAll(createColumns(
-            versionSelectorWidth,
-            lightTextOpacity,
-            versionCheckResults,
-            enabledMods,
-            disabledMods,
-            isGameRunning));
-        PlutoGridStateManager.initializeRows(
-            stateManager.refColumns, stateManager.refRows);
+        // stateManager.refRows.clearFromOriginal();
+        // var newRows = createGridRows(enabledMods, disabledMods,
+        //     shouldSort: query.isEmpty);
+        updateRows(stateManager, enabledMods);
+        updateRows(stateManager, disabledMods);
+        // stateManager.refRows.addAll(newRows);
+        // stateManager.refColumns.clearFromOriginal();
+        // stateManager.refColumns.addAll(createColumns(
+        //     versionSelectorWidth,
+        //     lightTextOpacity,
+        //     versionCheckResults,
+        //     enabledMods,
+        //     disabledMods,
+        //     isGameRunning));
+        // PlutoGridStateManager.initializeRows(
+        //     stateManager.refColumns, stateManager.refRows);
 
         stateManager.setRowGroup(
           PlutoRowGroupByColumnDelegate(
@@ -257,16 +261,16 @@ class _Smol3State extends ConsumerState<Smol3>
                                   controller: animationController,
                                   effects: [
                                     if (vramEst.isScanning)
-                                    ShimmerEffect(
-                                      colors: [
-                                        theme.colorScheme.onSurface,
-                                        theme.colorScheme.secondary,
-                                        theme.colorScheme.primary,
-                                        theme.colorScheme.secondary,
-                                      ],
-                                      duration:
-                                          const Duration(milliseconds: 1500),
-                                    )
+                                      ShimmerEffect(
+                                        colors: [
+                                          theme.colorScheme.onSurface,
+                                          theme.colorScheme.secondary,
+                                          theme.colorScheme.primary,
+                                          theme.colorScheme.secondary,
+                                        ],
+                                        duration:
+                                            const Duration(milliseconds: 1500),
+                                      )
                                   ],
                                   child: OutlinedButton.icon(
                                     onPressed: () => vramEst.isScanning
@@ -509,7 +513,7 @@ class _Smol3State extends ConsumerState<Smol3>
                     noRowsWidget: Center(
                         child: Container(
                             padding: const EdgeInsets.all(20),
-                            child: (hasEverLoaded && modsToDisplay.isEmpty)
+                            child: (hasEverLoaded && allMods.isEmpty)
                                 ? Column(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
@@ -555,7 +559,7 @@ class _Smol3State extends ConsumerState<Smol3>
   }
 
   List<Mod> filterMods(String query) {
-    return searchMods(modsToDisplay, query) ?? [];
+    return searchMods(allMods, query) ?? [];
   }
 
   void _toggleRowGroup(PlutoGridStateManager stateManager, PlutoRow row) {
@@ -592,15 +596,93 @@ class _Smol3State extends ConsumerState<Smol3>
   }
 
   Mod? _getModFromKey(Key? key) {
-    return key is ValueKey<Mod> ? key.value : null;
+    return key is ValueKey<String>
+        ? allMods.firstWhereOrNull((m) => m.id == key.value)
+        : null;
+  }
+
+  void updateRows(PlutoGridStateManager stateManager, List<Mod> mods) {
+    final newRows = mods
+        .where((mod) => stateManager.rows
+            .none((row) => _getModFromKey(row.key)?.id == mod.id))
+        .map((mod) => createRow(mod))
+        .whereNotNull()
+        .toList();
+
+    final List<(PlutoRow oldRow, PlutoRow newRow)> updatedRows = mods
+        .map((mod) {
+          final oldRow = stateManager.rows
+              .firstWhereOrNull((row) => _getModFromKey(row.key)?.id == mod.id);
+          if (oldRow == null) return null;
+          final newRow = createRow(mod);
+          return (oldRow, newRow);
+        })
+        .whereNotNull()
+        .cast<(PlutoRow oldRow, PlutoRow newRow)>()
+        .toList();
+
+    stateManager.appendRows(newRows);
+
+    for (final row in updatedRows) {
+      var oldRow = row.$1;
+      var newRow = row.$2;
+      final newCells = newRow.cells.values.toList();
+
+      oldRow.cells.entries.forEachIndexed((index, entry) {
+        String columnField = entry.key;
+        final newValue = newCells[index].value;
+
+        PlutoCell cell = oldRow.cells[columnField]!;
+
+        stateManager.changeCellValue(
+          cell,
+          newValue,
+          callOnChangedEvent: true,
+          force: true,
+          notify: false,
+        );
+      });
+    }
+
+    PlutoColumn? sortedColumn;
+    bool sortAscending = true;
+    for (final column in stateManager.refColumns) {
+      if (column.sort.isNone == false) {
+        sortedColumn = column;
+        sortAscending = column.sort.isAscending;
+        break;
+      }
+    }
+    if (sortAscending) {
+      stateManager.sortAscending(sortedColumn ??
+          gridColumns.firstWhere((e) => e.field == _Fields.name.toString()));
+    } else {
+      stateManager.sortDescending(sortedColumn ??
+          gridColumns.firstWhere((e) => e.field == _Fields.name.toString()));
+    }
+
+    // Notify listeners once after all updates in the row
+    stateManager.notifyListeners();
   }
 
   List<PlutoRow> createGridRows(List<Mod> enabledMods, List<Mod> disabledMods,
       {bool shouldSort = true}) {
     List<PlutoRow> sortIfNeeded(List<PlutoRow> rows) {
       if (shouldSort) {
-        return rows.sortedBy<String>(
-            (e) => e.cells[_Fields.name.toString()]?.value.toString() ?? "");
+        Fimber.i(rows
+                .firstOrNull?.cells[_Fields.name.toString()]!.value.runtimeType
+                .toString() ??
+            "");
+        final isNum =
+            rows.firstOrNull?.cells[_Fields.name.toString()]?.value is num;
+        return isNum
+            ? rows.sortedBy<num>((e) {
+                return e.cells[_Fields.name.toString()]?.value;
+              })
+            : rows.sortedBy<String>((e) {
+                return e.cells[_Fields.name.toString()]?.value?.toString() ??
+                    "";
+              });
       }
       return rows;
     }
@@ -838,8 +920,8 @@ class _Smol3State extends ConsumerState<Smol3>
                                                     .read(AppState
                                                         .modVariants.notifier)
                                                     .changeActiveModVariant(
-                                                        disabledVariant!.mod(
-                                                            modsToDisplay)!,
+                                                        disabledVariant!
+                                                            .mod(allMods)!,
                                                         disabledVariant);
                                               },
                                               style: buttonStyle,
@@ -1307,7 +1389,7 @@ class _Smol3State extends ConsumerState<Smol3>
             .countWhere((e) => e.isCurrentlySatisfied != true) ??
         0;
     return PlutoRow(
-      key: ValueKey(mod),
+      key: ValueKey(mod.id),
       height: satisfiableDependencies > 0
           ? _standardRowHeight +
               (_dependencyAddedRowHeight * satisfiableDependencies)
@@ -1342,7 +1424,8 @@ class _Smol3State extends ConsumerState<Smol3>
           value: bestVersion.modInfo.version?.raw,
         ),
         _Fields.vramEstimate.toString(): PlutoCell(
-          value: vramEstimate[mod.id]?.totalBytesForMod,
+          value: vramEstimate[mod.findFirstEnabledOrHighestVersion?.smolId]
+              ?.totalBytesForMod,
         ),
         _Fields.gameVersion.toString(): PlutoCell(
           value: bestVersion.modInfo.gameVersion,

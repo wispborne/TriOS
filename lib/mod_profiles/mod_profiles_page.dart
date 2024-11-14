@@ -226,9 +226,13 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                 OutlinedButton(
                   onPressed: () {
                     if (newProfileNameController.text.isNotEmpty) {
-                      ref
-                          .read(modProfilesProvider.notifier)
-                          .createModProfile(newProfileNameController.text);
+                      ref.read(modProfilesProvider.notifier).createModProfile(
+                          newProfileNameController.text,
+                          enabledModVariants: ref
+                              .read(AppState.enabledModVariants)
+                              .map((mod) =>
+                                  ShallowModVariant.fromModVariant(mod))
+                              .toList());
                       newProfileNameController.clear();
                     }
                   },

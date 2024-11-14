@@ -2,8 +2,11 @@
 - Added
   - **Mod Catalog**
   - VRAM now displayed on the Mods tab.
+  - Mod grid no longer resets itself constantly.
+    - It still doesn't save across TriOS restarts, not yet.
 - Fixed
   - Mod download notification url can't show more than 3 lines anymore.
+  - New mod profiles now use your current mods.
 
 # 0.3.4
 - Added

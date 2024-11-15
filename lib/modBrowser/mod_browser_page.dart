@@ -219,11 +219,7 @@ class _ModBrowserPage extends ConsumerState<ModBrowserPage>
                                           ],
                                         ),
                                       ),
-                                      SizedBox(
-                                          height: 30,
-                                          width: 200,
-                                          child: buildSearchBox()),
-                                      const Spacer(),
+                                      Text("Filters  ", style: theme.textTheme.labelLarge),
                                       Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
@@ -295,6 +291,11 @@ class _ModBrowserPage extends ConsumerState<ModBrowserPage>
                                           // ),
                                         ],
                                       ),
+                                      const Spacer(),
+                                      SizedBox(
+                                          height: 30,
+                                          width: 200,
+                                          child: buildSearchBox()),
                                     ],
                                   ),
                                 ),

@@ -748,27 +748,36 @@ class _Smol3State extends ConsumerState<Smol3>
           final isEnabled =
               _getEnabledGroupRow(rendererContext.stateManager)?.key ==
                   rendererContext.row.key;
-          final enabledModCount = filteredMods
-              .where((mod) => mod.hasEnabledVariant)
-              .length
-              .toString();
-          final disabledModCount = filteredMods
-              .where((mod) => !mod.hasEnabledVariant)
-              .length
-              .toString();
+          final modsInGroup = rendererContext.row.type is PlutoRowTypeGroup
+              ? (rendererContext.row.type as PlutoRowTypeGroup).children
+              : [];
+
+          double width = 0;
+          for (final column in rendererContext.stateManager.refColumns) {
+            if (column.field == _Fields.vramEstimate.toString()) break;
+            width += column.width;
+          }
+          // final combinedVram =
+
           return OverflowBox(
             maxWidth: double.infinity,
             alignment: Alignment.centerLeft,
             fit: OverflowBoxFit.deferToChild,
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 3),
-              child: Text(
-                  (rendererContext.cell.value ?? "") +
-                      " (${isEnabled ? enabledModCount : disabledModCount})",
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontFamily: ThemeManager.orbitron,
-                        fontWeight: FontWeight.bold,
-                      )),
+            child: Stack(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 3),
+                  child: Text(
+                      (rendererContext.cell.value ?? "") +
+                          " (${modsInGroup.length})",
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            fontFamily: ThemeManager.orbitron,
+                            fontWeight: FontWeight.bold,
+                          )),
+                ),
+                Padding(
+                    padding: EdgeInsets.only(left: width), child: Text("test"))
+              ],
             ),
           );
         }),

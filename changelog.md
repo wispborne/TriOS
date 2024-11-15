@@ -1,12 +1,20 @@
 # 1.0.0
 - Added
   - **Mod Catalog**
-  - VRAM now displayed on the Mods tab.
+    - Browse & download mods from the Official Forum and the Unofficial Discord.
+    - Same mods as here: https://starmodder2.pages.dev
+  - **VRAM Estimator** polish
+    - Now displayed on the Mods tab.
+    - Now remembered across restarts.
+    - You may now estimate one mod at a time.
   - Mod grid no longer resets itself constantly.
+    - e.g. sorting now works. 
     - It still doesn't save across TriOS restarts, not yet.
 - Fixed
   - Mod download notification url can't show more than 3 lines anymore.
-  - New mod profiles now use your current mods.
+  - Creating a new mod profile now uses your current mods.
+- Changed
+  - "Launch" button now reacts to clicks a bit faster and is more clear that the game's running.
 
 # 0.3.4
 - Added

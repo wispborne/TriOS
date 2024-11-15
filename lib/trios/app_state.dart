@@ -239,12 +239,12 @@ class AppState {
   });
 
   static final isGameRunning =
-      AsyncNotifierProvider<GameRunningChecker, bool>(GameRunningChecker.new);
+      AsyncNotifierProvider<_GameRunningChecker, bool>(_GameRunningChecker.new);
 
   static final ignoringDrop = StateProvider<bool>((ref) => false);
 }
 
-class GameRunningChecker extends AsyncNotifier<bool> {
+class _GameRunningChecker extends AsyncNotifier<bool> {
   Timer? _timer;
   static const int period = 1500;
   List<File?> gameExecutables = [];

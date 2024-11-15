@@ -59,7 +59,7 @@ class _DashboardState extends ConsumerState<Dashboard>
                       padding: const EdgeInsets.all(8),
                       child: Column(
                         children: [
-                          const LaunchWithSettings(),
+                          LaunchWithSettings(isGameRunning: isGameRunning),
                           if (Platform.isWindows)
                             Padding(
                               padding: const EdgeInsets.only(top: 4),

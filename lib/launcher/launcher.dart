@@ -50,7 +50,9 @@ class Launcher extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     var theme = Theme.of(context);
     final isGameRunning = ref.watch(AppState.isGameRunning).valueOrNull == true;
-    final buttonBackgroundColor = isGameRunning ? theme.disabledColor : theme.colorScheme.surfaceContainer;
+    final buttonBackgroundColor = isGameRunning
+        ? theme.disabledColor
+        : theme.colorScheme.surfaceContainer;
 
     // Animation controllers for hover and tap effects
     final hoverController = useAnimationController(

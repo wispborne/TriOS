@@ -65,6 +65,7 @@ class Constants {
   static const num maxPathLength = 260;
 
   static const String modRepoUrl = "https://github.com/wispborne/StarsectorModRepo/raw/refs/heads/main/ModRepo.json";
+  static const String patreonUrl = "https://www.patreon.com/wispborne";
 
   /// Warning: DON'T ADD ANYTHING TO THIS DIRECTLY. It will mutate the shared instance.
   /// Creating a new one each time is expensive, and hardcoding the pattern will hardcode the locale.

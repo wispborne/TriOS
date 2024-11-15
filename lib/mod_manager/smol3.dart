@@ -131,8 +131,8 @@ class _Smol3State extends ConsumerState<Smol3>
     final versionCheckResults =
         ref.read(AppState.versionCheckResults).valueOrNull;
     const double versionSelectorWidth = 130;
-    gridColumns.addAll(createColumns(versionSelectorWidth, lightTextOpacity,
-        versionCheckResults, [], [], false));
+    gridColumns.addAll(createColumns(
+        versionSelectorWidth, lightTextOpacity, versionCheckResults, false));
     gridRows.addAll(createGridRows([], []));
   }
 
@@ -197,30 +197,29 @@ class _Smol3State extends ConsumerState<Smol3>
         //     isGameRunning));
         // PlutoGridStateManager.initializeRows(
         //     stateManager.refColumns, stateManager.refRows);
-
-        stateManager.setRowGroup(
-          PlutoRowGroupByColumnDelegate(
-            columns: [
-              gridColumns[0],
-            ],
-            showFirstExpandableIcon: false,
-            showCount: false,
-          ),
-        );
+        //   stateManager.setRowGroup(
+        //     PlutoRowGroupByColumnDelegate(
+        //       columns: [
+        //         gridColumns[0],
+        //       ],
+        //       showFirstExpandableIcon: false,
+        //       showCount: false,
+        //     ),
+        //   );
         if (stateManager.rows.isNotEmpty) {
-          var enabledGroupRow = _getEnabledGroupRow(stateManager);
+          final enabledGroupRow = _getEnabledGroupRow(stateManager);
           if (enabledGroupRow != null &&
               gridState?.isGroupEnabledExpanded !=
                   stateManager.isExpandedGroupedRow(enabledGroupRow)) {
             stateManager.toggleExpandedRowGroup(rowGroup: enabledGroupRow);
           }
-          var disabledGroupRow = _getDisabledGroupRow(stateManager);
+          final disabledGroupRow = _getDisabledGroupRow(stateManager);
           if (disabledGroupRow != null &&
               gridState?.isGroupDisabledExpanded !=
                   stateManager.isExpandedGroupedRow(disabledGroupRow)) {
             stateManager.toggleExpandedRowGroup(rowGroup: disabledGroupRow);
           }
-          stateManager.setCurrentCell(stateManager.firstCell, selectedRowIdx);
+          // stateManager.setCurrentCell(stateManager.firstCell, selectedRowIdx);
         }
       }
     }
@@ -476,6 +475,15 @@ class _Smol3State extends ConsumerState<Smol3>
                           event.stateManager;
                       didSetStateManager?.call(event.stateManager);
                       // Most onLoad logic is done in beginning of `build` because that's called on rows/columns change
+                      event.stateManager.setRowGroup(
+                        PlutoRowGroupByColumnDelegate(
+                          columns: [
+                            gridColumns[0],
+                          ],
+                          showFirstExpandableIcon: false,
+                          showCount: false,
+                        ),
+                      );
                     },
                     columns: gridColumns,
                     rows: gridRows,
@@ -567,6 +575,7 @@ class _Smol3State extends ConsumerState<Smol3>
         row.cells[_Fields.enableDisable.toString()]?.value == 'Enabled';
     final isDisabledRow =
         row.cells[_Fields.enableDisable.toString()]?.value == 'Disabled';
+
     ref.read(appSettings.notifier).update((s) {
       if (isEnabledRow) {
         return s.copyWith(
@@ -602,16 +611,24 @@ class _Smol3State extends ConsumerState<Smol3>
   }
 
   void updateRows(PlutoGridStateManager stateManager, List<Mod> mods) {
+    final allRows = <PlutoRow>[];
+    for (final row in stateManager.rows) {
+      if (row.type is PlutoRowTypeGroup) {
+        allRows.addAll((row.type as PlutoRowTypeGroup).children);
+      }
+    }
+
     final newRows = mods
-        .where((mod) => stateManager.rows
-            .none((row) => _getModFromKey(row.key)?.id == mod.id))
+        .where((mod) {
+          return allRows.none((row) => _getModFromKey(row.key)?.id == mod.id);
+        })
         .map((mod) => createRow(mod))
         .whereNotNull()
         .toList();
 
     final List<(PlutoRow oldRow, PlutoRow newRow)> updatedRows = mods
         .map((mod) {
-          final oldRow = stateManager.rows
+          final oldRow = allRows
               .firstWhereOrNull((row) => _getModFromKey(row.key)?.id == mod.id);
           if (oldRow == null) return null;
           final newRow = createRow(mod);
@@ -621,7 +638,10 @@ class _Smol3State extends ConsumerState<Smol3>
         .cast<(PlutoRow oldRow, PlutoRow newRow)>()
         .toList();
 
-    stateManager.appendRows(newRows);
+    if (newRows.isNotEmpty) {
+      Fimber.d("Adding ${newRows.length} new rows");
+      stateManager.appendRows(newRows);
+    }
 
     for (final row in updatedRows) {
       var oldRow = row.$1;
@@ -707,8 +727,6 @@ class _Smol3State extends ConsumerState<Smol3>
     double versionSelectorWidth,
     double lightTextOpacity,
     Map<String, RemoteVersionCheckResult>? versionCheckResults,
-    List<Mod> enabledMods,
-    List<Mod> disabledMods,
     bool isGameRunning,
   ) {
     return [
@@ -730,6 +748,14 @@ class _Smol3State extends ConsumerState<Smol3>
           final isEnabled =
               _getEnabledGroupRow(rendererContext.stateManager)?.key ==
                   rendererContext.row.key;
+          final enabledModCount = filteredMods
+              .where((mod) => mod.hasEnabledVariant)
+              .length
+              .toString();
+          final disabledModCount = filteredMods
+              .where((mod) => !mod.hasEnabledVariant)
+              .length
+              .toString();
           return OverflowBox(
             maxWidth: double.infinity,
             alignment: Alignment.centerLeft,
@@ -738,7 +764,7 @@ class _Smol3State extends ConsumerState<Smol3>
               padding: const EdgeInsets.only(bottom: 3),
               child: Text(
                   (rendererContext.cell.value ?? "") +
-                      " (${isEnabled ? enabledMods.length : disabledMods.length})",
+                      " (${isEnabled ? enabledModCount : disabledModCount})",
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontFamily: ThemeManager.orbitron,
                         fontWeight: FontWeight.bold,

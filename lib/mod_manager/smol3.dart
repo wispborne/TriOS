@@ -56,8 +56,8 @@ typedef GridStateManagerCallback = Function(PlutoGridStateManager);
 
 final searchQuery = StateProvider.autoDispose<String>((ref) => "");
 
-final _stateManagerProvider =
-    StateProvider.autoDispose<PlutoGridStateManager?>((ref) => null);
+// final _stateManagerProvider =
+//     StateProvider.autoDispose<PlutoGridStateManager?>((ref) => null);
 
 class SmolGridUiState {
   int? sortedColumnIdx;
@@ -76,8 +76,10 @@ class _Smol3State extends ConsumerState<Smol3>
   Mod? selectedMod;
   int? selectedRowIdx;
   late List<Mod> allMods;
-  late List<Mod> filteredMods;
-  final searchController = SearchController();
+
+  // Don't touch outside of updateRows!
+  final List<String> _internalGridModIds = [];
+  final _searchController = SearchController();
   AnimationController? animationController;
 
   // Only update the UI once every 300ms
@@ -127,7 +129,6 @@ class _Smol3State extends ConsumerState<Smol3>
     super.initState();
     animationController = AnimationController(vsync: this);
     allMods = ref.read(AppState.mods);
-    filteredMods = allMods;
     final versionCheckResults =
         ref.read(AppState.versionCheckResults).valueOrNull;
     const double versionSelectorWidth = 130;
@@ -146,26 +147,20 @@ class _Smol3State extends ConsumerState<Smol3>
   Widget build(BuildContext context) {
     super.build(context);
     final theme = Theme.of(context);
-    final stateManager = ref.watch(_stateManagerProvider);
+    // final stateManager = ref.watch(_stateManagerProvider);
     final gridState =
         ref.watch(appSettings.select((value) => value.modsGridState));
     final isGameRunning = ref.watch(AppState.isGameRunning).value == true;
 
     ref.watch(appSettings.select((value) => value.lastStarsectorVersion));
-    final query = ref.watch(searchQuery);
-    searchController.value = TextEditingValue(text: query);
 
     final mods = ref.watch(AppState.mods);
     final versionCheckResults =
         ref.watch(AppState.versionCheckResults).valueOrNull;
     allMods = mods;
-    filteredMods = filterMods(query);
-    final enabledMods =
-        filteredMods.where((mod) => mod.hasEnabledVariant).toList();
+    final enabledMods = allMods.where((mod) => mod.hasEnabledVariant).toList();
     final disabledMods =
-        filteredMods.where((mod) => !mod.hasEnabledVariant).toList();
-
-    const double versionSelectorWidth = 130;
+        allMods.where((mod) => !mod.hasEnabledVariant).toList();
 
     ref.listen(AppState.vramEstimatorProvider, (prev, next) {
       if (next.isScanning == true) {
@@ -175,55 +170,41 @@ class _Smol3State extends ConsumerState<Smol3>
       }
     });
 
-    // Only update the UI once every 300ms
-    // gridStateDebouncer.run(() {
+    ref.listen(searchQuery, (prev, next) {
+      if (prev != next) {
+        Fimber.d("Search query changed from $prev to $next");
+        _searchController.value = TextEditingValue(text: next);
+        _notifyGridFilterChanged();
+      }
+    });
 
     // Changing profile means lots of changes really fast, don't update the UI or else it'll be super laggy.
     if (!isChangingModProfileProvider) {
       if (stateManager != null) {
-        // stateManager.refRows.clearFromOriginal();
-        // var newRows = createGridRows(enabledMods, disabledMods,
-        //     shouldSort: query.isEmpty);
-        updateRows(stateManager, enabledMods);
-        updateRows(stateManager, disabledMods);
-        // stateManager.refRows.addAll(newRows);
-        // stateManager.refColumns.clearFromOriginal();
-        // stateManager.refColumns.addAll(createColumns(
-        //     versionSelectorWidth,
-        //     lightTextOpacity,
-        //     versionCheckResults,
-        //     enabledMods,
-        //     disabledMods,
-        //     isGameRunning));
-        // PlutoGridStateManager.initializeRows(
-        //     stateManager.refColumns, stateManager.refRows);
-        //   stateManager.setRowGroup(
-        //     PlutoRowGroupByColumnDelegate(
-        //       columns: [
-        //         gridColumns[0],
-        //       ],
-        //       showFirstExpandableIcon: false,
-        //       showCount: false,
-        //     ),
-        //   );
-        if (stateManager.rows.isNotEmpty) {
-          final enabledGroupRow = _getEnabledGroupRow(stateManager);
+        final stateManagerNotNull = stateManager!;
+
+        updateRows(stateManagerNotNull, enabledMods);
+        updateRows(stateManagerNotNull, disabledMods);
+
+        if (stateManagerNotNull.refRows.originalList.isNotEmpty &&
+            stateManagerNotNull.enabledRowGroups) {
+          final enabledGroupRow = _getEnabledGroupRow(stateManagerNotNull);
           if (enabledGroupRow != null &&
               gridState?.isGroupEnabledExpanded !=
-                  stateManager.isExpandedGroupedRow(enabledGroupRow)) {
-            stateManager.toggleExpandedRowGroup(rowGroup: enabledGroupRow);
+                  stateManagerNotNull.isExpandedGroupedRow(enabledGroupRow)) {
+            stateManagerNotNull.toggleExpandedRowGroup(
+                rowGroup: enabledGroupRow);
           }
-          final disabledGroupRow = _getDisabledGroupRow(stateManager);
+          final disabledGroupRow = _getDisabledGroupRow(stateManagerNotNull);
           if (disabledGroupRow != null &&
               gridState?.isGroupDisabledExpanded !=
-                  stateManager.isExpandedGroupedRow(disabledGroupRow)) {
-            stateManager.toggleExpandedRowGroup(rowGroup: disabledGroupRow);
+                  stateManagerNotNull.isExpandedGroupedRow(disabledGroupRow)) {
+            stateManagerNotNull.toggleExpandedRowGroup(
+                rowGroup: disabledGroupRow);
           }
-          // stateManager.setCurrentCell(stateManager.firstCell, selectedRowIdx);
         }
       }
     }
-    // });
 
     return Column(
       children: [
@@ -346,8 +327,8 @@ class _Smol3State extends ConsumerState<Smol3>
                                 height: 30,
                                 width: 300,
                                 child: FilterModsSearchBar(
-                                    searchController: searchController,
-                                    query: query,
+                                    searchController: _searchController,
+                                    query: ref.watch(searchQuery),
                                     ref: ref),
                               ),
                               const Spacer(),
@@ -470,9 +451,7 @@ class _Smol3State extends ConsumerState<Smol3>
                         )),
                     onLoaded: (PlutoGridOnLoadedEvent event) {
                       hasEverLoaded = true;
-                      // stateManager = event.stateManager;
-                      ref.read(_stateManagerProvider.notifier).state =
-                          event.stateManager;
+                      stateManager = event.stateManager;
                       didSetStateManager?.call(event.stateManager);
                       // Most onLoad logic is done in beginning of `build` because that's called on rows/columns change
                       event.stateManager.setRowGroup(
@@ -502,9 +481,8 @@ class _Smol3State extends ConsumerState<Smol3>
 
                         if (mod == null) {
                           // Clicked on a group row
-                          final stateManager = ref.read(_stateManagerProvider);
                           if (stateManager == null) return;
-                          _toggleRowGroup(stateManager, row);
+                          _toggleRowGroup(stateManager!, row);
                         } else if (selectedMod == mod) {
                           setState(() {
                             selectedMod = null;
@@ -537,7 +515,7 @@ class _Smol3State extends ConsumerState<Smol3>
                                       const Text("mmm, vanilla")
                                     ],
                                   )
-                                : hasEverLoaded && filteredMods.isEmpty
+                                : hasEverLoaded && allMods.isEmpty
                                     ? const Text("No mods found")
                                     : const Text("Loading mods..."))),
                   );
@@ -566,10 +544,6 @@ class _Smol3State extends ConsumerState<Smol3>
     );
   }
 
-  List<Mod> filterMods(String query) {
-    return searchMods(allMods, query) ?? [];
-  }
-
   void _toggleRowGroup(PlutoGridStateManager stateManager, PlutoRow row) {
     final isEnabledRow =
         row.cells[_Fields.enableDisable.toString()]?.value == 'Enabled';
@@ -593,13 +567,13 @@ class _Smol3State extends ConsumerState<Smol3>
   }
 
   PlutoRow? _getEnabledGroupRow(PlutoGridStateManager stateManager) {
-    return stateManager.rows.firstWhereOrNull((row) {
+    return stateManager.refRows.originalList.firstWhereOrNull((row) {
       return row.cells[_Fields.enableDisable.toString()]?.value == 'Enabled';
     });
   }
 
   PlutoRow? _getDisabledGroupRow(PlutoGridStateManager stateManager) {
-    return stateManager.rows.firstWhereOrNull((row) {
+    return stateManager.refRows.originalList.firstWhereOrNull((row) {
       return row.cells[_Fields.enableDisable.toString()]?.value == 'Disabled';
     });
   }
@@ -610,38 +584,46 @@ class _Smol3State extends ConsumerState<Smol3>
         : null;
   }
 
-  void updateRows(PlutoGridStateManager stateManager, List<Mod> mods) {
-    final allRows = <PlutoRow>[];
-    for (final row in stateManager.rows) {
-      if (row.type is PlutoRowTypeGroup) {
-        allRows.addAll((row.type as PlutoRowTypeGroup).children);
-      }
-    }
-
-    final newRows = mods
-        .where((mod) {
-          return allRows.none((row) => _getModFromKey(row.key)?.id == mod.id);
-        })
-        .map((mod) => createRow(mod))
-        .whereNotNull()
-        .toList();
-
-    final List<(PlutoRow oldRow, PlutoRow newRow)> updatedRows = mods
-        .map((mod) {
-          final oldRow = allRows
-              .firstWhereOrNull((row) => _getModFromKey(row.key)?.id == mod.id);
-          if (oldRow == null) return null;
-          final newRow = createRow(mod);
-          return (oldRow, newRow);
-        })
-        .whereNotNull()
-        .cast<(PlutoRow oldRow, PlutoRow newRow)>()
-        .toList();
+  void updateRows(
+      PlutoGridStateManager stateManager, List<Mod> newOrChangedMods) {
+    // Look for mods that don't exist in the grid and add them
+    // We need to keep this cache because `stateManager.refRows.originalList` is the filtered data.
+    final modsInGrid = _internalGridModIds;
+    final newMods = newOrChangedMods.where((mod) {
+      return modsInGrid.none((existingModId) => existingModId == mod.id);
+    }).toList();
+    final newRows =
+        newMods.map((mod) => createRow(mod)).whereNotNull().toList();
 
     if (newRows.isNotEmpty) {
       Fimber.d("Adding ${newRows.length} new rows");
       stateManager.appendRows(newRows);
+      _internalGridModIds.addAll(newMods.map((e) => e.id));
     }
+
+    // Look for rows that have changed and update them
+    final List<PlutoRow> allRows = stateManager.refRows.originalList;
+    final List<PlutoRow> flattenedRows = [];
+
+    for (final row in allRows) {
+      flattenedRows.add(row);
+      if (row.type is PlutoRowTypeGroup) {
+        flattenedRows.addAll((row.type as PlutoRowTypeGroup).children);
+      }
+    }
+
+    final List<(PlutoRow oldRow, PlutoRow newRow)> updatedRows =
+        newOrChangedMods
+            .map((mod) {
+              final oldRow = flattenedRows.firstWhereOrNull(
+                  (row) => _getModFromKey(row.key)?.id == mod.id);
+              if (oldRow == null) return null;
+              final newRow = createRow(mod);
+              return (oldRow, newRow);
+            })
+            .whereNotNull()
+            .cast<(PlutoRow oldRow, PlutoRow newRow)>()
+            .toList();
 
     for (final row in updatedRows) {
       var oldRow = row.$1;
@@ -743,11 +725,8 @@ class _Smol3State extends ConsumerState<Smol3>
         backgroundColor: Colors.transparent,
         enableDropToResize: false,
         renderer: (rendererContext) => Builder(builder: (context) {
-          if (filteredMods.isEmpty) return const SizedBox();
+          if (allMods.isEmpty) return const SizedBox();
           if (rendererContext.row.depth > 0) return const SizedBox();
-          final isEnabled =
-              _getEnabledGroupRow(rendererContext.stateManager)?.key ==
-                  rendererContext.row.key;
           final modsInGroup = rendererContext.row.type is PlutoRowTypeGroup
               ? (rendererContext.row.type as PlutoRowTypeGroup).children
               : [];
@@ -796,7 +775,7 @@ class _Smol3State extends ConsumerState<Smol3>
           enableDropToResize: false,
           enableFilterMenuItem: false,
           renderer: (rendererContext) => Builder(builder: (context) {
-                if (filteredMods.isEmpty) return const SizedBox();
+                if (allMods.isEmpty) return const SizedBox();
                 final mod = _getModFromKey(rendererContext.row.key);
                 if (mod == null) return const SizedBox();
                 final bestVersion = mod.findFirstEnabledOrHighestVersion;
@@ -825,7 +804,7 @@ class _Smol3State extends ConsumerState<Smol3>
           field: _Fields.utilityIcon.toString(),
           type: PlutoColumnType.number(),
           renderer: (rendererContext) {
-            if (filteredMods.isEmpty) return const SizedBox();
+            if (allMods.isEmpty) return const SizedBox();
             final mod = _getModFromKey(rendererContext.row.key);
             if (mod == null) return const SizedBox();
             return RowItemContainer(
@@ -842,7 +821,7 @@ class _Smol3State extends ConsumerState<Smol3>
         type: PlutoColumnType.text(),
         enableSorting: false,
         renderer: (rendererContext) => Builder(builder: (context) {
-          if (filteredMods.isEmpty) return const SizedBox();
+          if (allMods.isEmpty) return const SizedBox();
           String? iconPath = rendererContext.cell.value;
           return iconPath != null
               ? RowItemContainer(
@@ -865,7 +844,7 @@ class _Smol3State extends ConsumerState<Smol3>
         field: _Fields.name.toString(),
         type: PlutoColumnType.text(),
         renderer: (rendererContext) => Builder(builder: (context) {
-          if (filteredMods.isEmpty) return const SizedBox();
+          if (allMods.isEmpty) return const SizedBox();
           final mod = _getModFromKey(rendererContext.row.key);
           if (mod == null) return const SizedBox();
           final theme = Theme.of(context);
@@ -1046,7 +1025,7 @@ class _Smol3State extends ConsumerState<Smol3>
         //             .author ??
         //         ""),
         renderer: (rendererContext) => Builder(builder: (context) {
-          if (filteredMods.isEmpty) return const SizedBox();
+          if (allMods.isEmpty) return const SizedBox();
           final mod = _getModFromKey(rendererContext.row.key);
           if (mod == null) return const SizedBox();
           final theme = Theme.of(context);
@@ -1075,7 +1054,7 @@ class _Smol3State extends ConsumerState<Smol3>
         minWidth: 100,
         type: PlutoColumnType.text(),
         renderer: (rendererContext) => Builder(builder: (context) {
-          if (filteredMods.isEmpty) return const SizedBox();
+          if (allMods.isEmpty) return const SizedBox();
           final mod = _getModFromKey(rendererContext.row.key);
           if (mod == null) return const SizedBox();
           final bestVersion = mod.findFirstEnabledOrHighestVersion;
@@ -1270,7 +1249,7 @@ class _Smol3State extends ConsumerState<Smol3>
         minWidth: 100,
         type: PlutoColumnType.number(),
         renderer: (rendererContext) => Builder(builder: (context) {
-          if (filteredMods.isEmpty) return const SizedBox();
+          if (allMods.isEmpty) return const SizedBox();
           final mod = _getModFromKey(rendererContext.row.key);
           if (mod == null) return const SizedBox();
           final theme = Theme.of(context);
@@ -1375,14 +1354,8 @@ class _Smol3State extends ConsumerState<Smol3>
         field: _Fields.gameVersion.toString(),
         minWidth: 120,
         type: PlutoColumnType.text(),
-        // onSort: (columnIndex, ascending) => _onSort(
-        //     columnIndex,
-        //     (mod) =>
-        //         mod.findFirstEnabledOrHighestVersion?.modInfo
-        //             .gameVersion ??
-        //         ""),
         renderer: (rendererContext) => Builder(builder: (context) {
-          if (filteredMods.isEmpty) return const SizedBox();
+          if (allMods.isEmpty) return const SizedBox();
           final mod = _getModFromKey(rendererContext.row.key);
           if (mod == null) return const SizedBox();
           final bestVersion = mod.findFirstEnabledOrHighestVersion;
@@ -1506,6 +1479,46 @@ class _Smol3State extends ConsumerState<Smol3>
       }),
     );
   }
+
+  void _notifyGridFilterChanged() {
+    if (stateManager == null) return;
+    final filters = <FilteredListFilter<PlutoRow>>[];
+
+    // Search query filter
+    final query = _searchController.value.text;
+    if (query.isNotEmpty) {
+      filters.add((PlutoRow row) {
+        final mod = _getModFromKey(row.key);
+        if (mod == null) return true;
+        final result = searchMods([mod], query) ?? [];
+        if (result.isNotEmpty) {
+          // Fimber.d("Search query: $query, results: $result");
+        }
+        return result.isNotEmpty;
+      });
+    }
+
+    // Apply all filters
+    if (filters.isEmpty) {
+      stateManager?.setFilter(null);
+    } else {
+      stateManager?.setFilter(
+        (PlutoRow row) {
+          return filters.every((filter) => filter(row));
+        },
+      );
+    }
+
+    setState(() {});
+  }
+
+  List<PlutoRow> getRowGroupChildren(List<PlutoRow> rows) {
+    return rows
+        .where((row) => row.type is PlutoRowTypeGroup)
+        .map((row) => (row.type as PlutoRowTypeGroup).children)
+        .expand((element) => element)
+        .toList();
+  }
 }
 
 class FilterModsSearchBar extends StatelessWidget {
@@ -1539,7 +1552,7 @@ class FilterModsSearchBar extends StatelessWidget {
                       onPressed: () {
                         controller.clear();
                         ref.read(searchQuery.notifier).state = "";
-                        // filteredMods =
+                        // allMods =
                         //     filterMods(query);
                       },
                     )
@@ -1550,7 +1563,7 @@ class FilterModsSearchBar extends StatelessWidget {
               ref.read(searchQuery.notifier).state = value;
               // setState(() {
               //   query = value;
-              //   filteredMods = filterMods(value);
+              //   allMods = filterMods(value);
               // });
             });
       },

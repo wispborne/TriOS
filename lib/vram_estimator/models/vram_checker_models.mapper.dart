@@ -78,16 +78,17 @@ class ModMapper extends ClassMapperBase<Mod> {
   static const Field<Mod, bool> _f$isEnabled = Field('isEnabled', _$isEnabled);
   static List<ModImage> _$images(Mod v) => v.images;
   static const Field<Mod, List<ModImage>> _f$images = Field('images', _$images);
-  static int _$totalBytesForMod(Mod v) => v.totalBytesForMod;
-  static const Field<Mod, int> _f$totalBytesForMod =
-      Field('totalBytesForMod', _$totalBytesForMod, mode: FieldMode.member);
+  static int _$maxPossibleBytesForMod(Mod v) => v.maxPossibleBytesForMod;
+  static const Field<Mod, int> _f$maxPossibleBytesForMod = Field(
+      'maxPossibleBytesForMod', _$maxPossibleBytesForMod,
+      mode: FieldMode.member);
 
   @override
   final MappableFields<Mod> fields = const {
     #info: _f$info,
     #isEnabled: _f$isEnabled,
     #images: _f$images,
-    #totalBytesForMod: _f$totalBytesForMod,
+    #maxPossibleBytesForMod: _f$maxPossibleBytesForMod,
   };
 
   static Mod _instantiate(DecodingData data) {
@@ -305,6 +306,7 @@ class ModImageMapper extends ClassMapperBase<ModImage> {
     if (_instance == null) {
       MapperContainer.globals.use(_instance = ModImageMapper._());
       ImageTypeMapper.ensureInitialized();
+      MapTypeMapper.ensureInitialized();
     }
     return _instance!;
   }
@@ -327,6 +329,9 @@ class ModImageMapper extends ClassMapperBase<ModImage> {
   static ImageType _$imageType(ModImage v) => v.imageType;
   static const Field<ModImage, ImageType> _f$imageType =
       Field('imageType', _$imageType);
+  static MapType? _$graphicsLibType(ModImage v) => v.graphicsLibType;
+  static const Field<ModImage, MapType> _f$graphicsLibType =
+      Field('graphicsLibType', _$graphicsLibType);
   static double _$multiplier(ModImage v) => v.multiplier;
   static const Field<ModImage, double> _f$multiplier =
       Field('multiplier', _$multiplier, mode: FieldMode.member);
@@ -341,6 +346,7 @@ class ModImageMapper extends ClassMapperBase<ModImage> {
     #textureWidth: _f$textureWidth,
     #bitsInAllChannelsSum: _f$bitsInAllChannelsSum,
     #imageType: _f$imageType,
+    #graphicsLibType: _f$graphicsLibType,
     #multiplier: _f$multiplier,
     #bytesUsed: _f$bytesUsed,
   };
@@ -351,7 +357,8 @@ class ModImageMapper extends ClassMapperBase<ModImage> {
         data.dec(_f$textureHeight),
         data.dec(_f$textureWidth),
         data.dec(_f$bitsInAllChannelsSum),
-        data.dec(_f$imageType));
+        data.dec(_f$imageType),
+        data.dec(_f$graphicsLibType));
   }
 
   @override
@@ -408,7 +415,8 @@ abstract class ModImageCopyWith<$R, $In extends ModImage, $Out>
       int? textureHeight,
       int? textureWidth,
       int? bitsInAllChannelsSum,
-      ImageType? imageType});
+      ImageType? imageType,
+      MapType? graphicsLibType});
   ModImageCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
 
@@ -426,14 +434,16 @@ class _ModImageCopyWithImpl<$R, $Out>
           int? textureHeight,
           int? textureWidth,
           int? bitsInAllChannelsSum,
-          ImageType? imageType}) =>
+          ImageType? imageType,
+          Object? graphicsLibType = $none}) =>
       $apply(FieldCopyWithData({
         if (filePath != null) #filePath: filePath,
         if (textureHeight != null) #textureHeight: textureHeight,
         if (textureWidth != null) #textureWidth: textureWidth,
         if (bitsInAllChannelsSum != null)
           #bitsInAllChannelsSum: bitsInAllChannelsSum,
-        if (imageType != null) #imageType: imageType
+        if (imageType != null) #imageType: imageType,
+        if (graphicsLibType != $none) #graphicsLibType: graphicsLibType
       }));
   @override
   ModImage $make(CopyWithData data) => ModImage(
@@ -441,7 +451,8 @@ class _ModImageCopyWithImpl<$R, $Out>
       data.get(#textureHeight, or: $value.textureHeight),
       data.get(#textureWidth, or: $value.textureWidth),
       data.get(#bitsInAllChannelsSum, or: $value.bitsInAllChannelsSum),
-      data.get(#imageType, or: $value.imageType));
+      data.get(#imageType, or: $value.imageType),
+      data.get(#graphicsLibType, or: $value.graphicsLibType));
 
   @override
   ModImageCopyWith<$R2, ModImage, $Out2> $chain<$R2, $Out2>(

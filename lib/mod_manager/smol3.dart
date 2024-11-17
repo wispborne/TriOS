@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
+import 'package:defer_pointer/defer_pointer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -28,6 +29,7 @@ import 'package:trios/utils/debouncer.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/search.dart';
+import 'package:trios/vram_estimator/vram_checker_logic.dart';
 import 'package:trios/widgets/add_new_mods_button.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
@@ -38,6 +40,8 @@ import '../dashboard/mod_dependencies_widget.dart';
 import '../dashboard/version_check_icon.dart';
 import '../models/mod.dart';
 import '../trios/download_manager/download_manager.dart';
+import '../vram_estimator/graphics_lib_config_provider.dart';
+import '../vram_estimator/models/graphics_lib_config.dart';
 import '../widgets/mod_type_icon.dart';
 import '../widgets/moving_tooltip.dart';
 import '../widgets/refresh_mods_button.dart';
@@ -127,7 +131,8 @@ class _Smol3State extends ConsumerState<Smol3>
   @override
   void initState() {
     super.initState();
-    animationController = AnimationController(vsync: this);
+    animationController = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 1500));
     allMods = ref.read(AppState.mods);
     final versionCheckResults =
         ref.read(AppState.versionCheckResults).valueOrNull;
@@ -164,7 +169,7 @@ class _Smol3State extends ConsumerState<Smol3>
 
     ref.listen(AppState.vramEstimatorProvider, (prev, next) {
       if (next.isScanning == true) {
-        animationController?.repeat();
+        animationController?.repeat(period: const Duration(milliseconds: 1500));
       } else {
         animationController?.reset();
       }
@@ -402,122 +407,125 @@ class _Smol3State extends ConsumerState<Smol3>
               children: [
                 Builder(builder: (context) {
                   final theme = Theme.of(context);
-                  return PlutoGrid(
-                    mode: PlutoGridMode.selectWithOneTap,
-                    configuration: PlutoGridConfiguration(
-                        scrollbar: const PlutoGridScrollbarConfig(
-                            isAlwaysShown: true,
-                            hoverWidth: 10,
-                            scrollbarThickness: 8,
-                            scrollbarRadius: Radius.circular(5),
-                            dragDevices: {
-                              PointerDeviceKind.stylus,
-                              PointerDeviceKind.touch,
-                              PointerDeviceKind.trackpad,
-                              PointerDeviceKind.invertedStylus
-                            }),
-                        style: PlutoGridStyleConfig.dark(
-                          enableCellBorderHorizontal: false,
-                          enableCellBorderVertical: false,
-                          rowHeight: _standardRowHeight,
-                          activatedBorderColor: Colors.transparent,
-                          inactivatedBorderColor: Colors.transparent,
-                          menuBackgroundColor: theme.colorScheme.surface,
-                          gridBackgroundColor:
-                              theme.colorScheme.surfaceContainerHighest,
-                          rowColor: Colors.transparent,
-                          borderColor: Colors.transparent,
-                          cellColorInEditState: Colors.transparent,
-                          cellColorInReadOnlyState: Colors.transparent,
-                          gridBorderColor: Colors.transparent,
-                          // cellCheckedColor: Colors.transparent,
-                          activatedColor:
-                              theme.colorScheme.onSurface.withOpacity(0.1),
-                          evenRowColor:
-                              theme.colorScheme.surface.withOpacity(0.4),
-                          defaultCellPadding: EdgeInsets.zero,
-                          defaultColumnFilterPadding: EdgeInsets.zero,
-                          defaultColumnTitlePadding: EdgeInsets.zero,
-                          enableRowColorAnimation: true,
-                          iconSize: 12,
-                          columnTextStyle: theme.textTheme.headlineSmall!
-                              .copyWith(
-                                  fontSize: 14, fontWeight: FontWeight.bold),
-                          dragTargetColumnColor:
-                              theme.colorScheme.surface.darker(20),
-                          iconColor: theme.colorScheme.onSurface.withAlpha(150),
-                          cellTextStyle: theme.textTheme.labelLarge!
-                              .copyWith(fontSize: 14),
-                        )),
-                    onLoaded: (PlutoGridOnLoadedEvent event) {
-                      hasEverLoaded = true;
-                      stateManager = event.stateManager;
-                      didSetStateManager?.call(event.stateManager);
-                      // Most onLoad logic is done in beginning of `build` because that's called on rows/columns change
-                      event.stateManager.setRowGroup(
-                        PlutoRowGroupByColumnDelegate(
-                          columns: [
-                            gridColumns[0],
-                          ],
-                          showFirstExpandableIcon: false,
-                          showCount: false,
-                        ),
-                      );
-                    },
-                    columns: gridColumns,
-                    rows: gridRows,
-                    rowColorCallback: (row) {
-                      if (row.row == _getEnabledGroupRow(row.stateManager) ||
-                          row.row == _getDisabledGroupRow(row.stateManager)) {
-                        return theme.colorScheme.onSurface.withOpacity(0.1);
-                      }
-                      return Colors.transparent;
-                    },
-                    onSelected: (event) {
-                      var row = event.row;
-
-                      if (row != null) {
-                        final mod = _getModFromKey(row.key);
-
-                        if (mod == null) {
-                          // Clicked on a group row
-                          if (stateManager == null) return;
-                          _toggleRowGroup(stateManager!, row);
-                        } else if (selectedMod == mod) {
-                          setState(() {
-                            selectedMod = null;
-                            selectedRowIdx = null;
-                          });
-                        } else {
-                          setState(() {
-                            selectedMod = mod;
-                            selectedRowIdx = event.rowIdx;
-                          });
+                  return DeferredPointerHandler(
+                    child: PlutoGrid(
+                      mode: PlutoGridMode.selectWithOneTap,
+                      configuration: PlutoGridConfiguration(
+                          scrollbar: const PlutoGridScrollbarConfig(
+                              isAlwaysShown: true,
+                              hoverWidth: 10,
+                              scrollbarThickness: 8,
+                              scrollbarRadius: Radius.circular(5),
+                              dragDevices: {
+                                PointerDeviceKind.stylus,
+                                PointerDeviceKind.touch,
+                                PointerDeviceKind.trackpad,
+                                PointerDeviceKind.invertedStylus
+                              }),
+                          style: PlutoGridStyleConfig.dark(
+                            enableCellBorderHorizontal: false,
+                            enableCellBorderVertical: false,
+                            rowHeight: _standardRowHeight,
+                            activatedBorderColor: Colors.transparent,
+                            inactivatedBorderColor: Colors.transparent,
+                            menuBackgroundColor: theme.colorScheme.surface,
+                            gridBackgroundColor:
+                                theme.colorScheme.surfaceContainerHighest,
+                            rowColor: Colors.transparent,
+                            borderColor: Colors.transparent,
+                            cellColorInEditState: Colors.transparent,
+                            cellColorInReadOnlyState: Colors.transparent,
+                            gridBorderColor: Colors.transparent,
+                            // cellCheckedColor: Colors.transparent,
+                            activatedColor:
+                                theme.colorScheme.onSurface.withOpacity(0.1),
+                            evenRowColor:
+                                theme.colorScheme.surface.withOpacity(0.4),
+                            defaultCellPadding: EdgeInsets.zero,
+                            defaultColumnFilterPadding: EdgeInsets.zero,
+                            defaultColumnTitlePadding: EdgeInsets.zero,
+                            enableRowColorAnimation: true,
+                            iconSize: 12,
+                            columnTextStyle: theme.textTheme.headlineSmall!
+                                .copyWith(
+                                    fontSize: 14, fontWeight: FontWeight.bold),
+                            dragTargetColumnColor:
+                                theme.colorScheme.surface.darker(20),
+                            iconColor:
+                                theme.colorScheme.onSurface.withAlpha(150),
+                            cellTextStyle: theme.textTheme.labelLarge!
+                                .copyWith(fontSize: 14),
+                          )),
+                      onLoaded: (PlutoGridOnLoadedEvent event) {
+                        hasEverLoaded = true;
+                        stateManager = event.stateManager;
+                        didSetStateManager?.call(event.stateManager);
+                        // Most onLoad logic is done in beginning of `build` because that's called on rows/columns change
+                        event.stateManager.setRowGroup(
+                          PlutoRowGroupByColumnDelegate(
+                            columns: [
+                              gridColumns[0],
+                            ],
+                            showFirstExpandableIcon: false,
+                            showCount: false,
+                          ),
+                        );
+                      },
+                      columns: gridColumns,
+                      rows: gridRows,
+                      rowColorCallback: (row) {
+                        if (row.row == _getEnabledGroupRow(row.stateManager) ||
+                            row.row == _getDisabledGroupRow(row.stateManager)) {
+                          return theme.colorScheme.onSurface.withOpacity(0.1);
                         }
-                      }
-                    },
-                    noRowsWidget: Center(
-                        child: Container(
-                            padding: const EdgeInsets.all(20),
-                            child: (hasEverLoaded && allMods.isEmpty)
-                                ? Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Transform.rotate(
-                                        angle: .50,
-                                        child: SvgImageIcon(
-                                            "assets/images/icon-ice-cream.svg",
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .onSurface,
-                                            width: 150),
-                                      ),
-                                      const Text("mmm, vanilla")
-                                    ],
-                                  )
-                                : hasEverLoaded && allMods.isEmpty
-                                    ? const Text("No mods found")
-                                    : const Text("Loading mods..."))),
+                        return Colors.transparent;
+                      },
+                      onSelected: (event) {
+                        var row = event.row;
+
+                        if (row != null) {
+                          final mod = _getModFromKey(row.key);
+
+                          if (mod == null) {
+                            // Clicked on a group row
+                            if (stateManager == null) return;
+                            _toggleRowGroup(stateManager!, row);
+                          } else if (selectedMod == mod) {
+                            setState(() {
+                              selectedMod = null;
+                              selectedRowIdx = null;
+                            });
+                          } else {
+                            setState(() {
+                              selectedMod = mod;
+                              selectedRowIdx = event.rowIdx;
+                            });
+                          }
+                        }
+                      },
+                      noRowsWidget: Center(
+                          child: Container(
+                              padding: const EdgeInsets.all(20),
+                              child: (hasEverLoaded && allMods.isEmpty)
+                                  ? Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Transform.rotate(
+                                          angle: .50,
+                                          child: SvgImageIcon(
+                                              "assets/images/icon-ice-cream.svg",
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurface,
+                                              width: 150),
+                                        ),
+                                        const Text("mmm, vanilla")
+                                      ],
+                                    )
+                                  : hasEverLoaded && allMods.isEmpty
+                                      ? const Text("No mods found")
+                                      : const Text("Loading mods..."))),
+                    ),
                   );
                 }),
                 if (selectedMod != null)
@@ -731,32 +739,99 @@ class _Smol3State extends ConsumerState<Smol3>
               ? (rendererContext.row.type as PlutoRowTypeGroup).children
               : [];
 
-          double width = 0;
+          double widthOFColsBeforeVram = 0;
           for (final column in rendererContext.stateManager.refColumns) {
             if (column.field == _Fields.vramEstimate.toString()) break;
-            width += column.width;
+            widthOFColsBeforeVram += column.width;
           }
-          // final combinedVram =
+          final vramMap = ref.watch(AppState.vramEstimatorProvider).modVramInfo;
+          final graphicsLibConfig = ref.watch(graphicsLibConfigProvider);
+          final smolIds = modsInGroup
+              .map((e) => _getModFromKey(e.key))
+              .whereNotNull()
+              .map((e) => e.findFirstEnabledOrHighestVersion)
+              .whereNotNull()
+              .toList();
+          final allEstimates =
+              smolIds.map((e) => vramMap[e.smolId]).whereNotNull().toList();
+          const disabledGraphicsLibConfig = GraphicsLibConfig.disabled;
+          final vramModsNoGraphicsLib = allEstimates
+              .map((e) =>
+                  e.bytesUsingGraphicsLibConfig(disabledGraphicsLibConfig))
+              .sum;
+          final vramFromGraphicsLib = allEstimates
+              .flatMap((e) => e.images.where((e) =>
+                  e.graphicsLibType != null &&
+                  e.isUsedBasedOnGraphicsLibConfig(graphicsLibConfig)))
+              .map((e) => e.bytesUsed)
+              .toList();
+          // TODO include vanilla graphicslib usage
+          final vramFromVanilla =
+              _getEnabledGroupRow(stateManager!) == rendererContext.row
+                  ? VramChecker.VANILLA_GAME_VRAM_USAGE_IN_BYTES
+                  : null;
 
           return OverflowBox(
             maxWidth: double.infinity,
             alignment: Alignment.centerLeft,
             fit: OverflowBoxFit.deferToChild,
-            child: Stack(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 3),
-                  child: Text(
-                      (rendererContext.cell.value ?? "") +
-                          " (${modsInGroup.length})",
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontFamily: ThemeManager.orbitron,
-                            fontWeight: FontWeight.bold,
-                          )),
-                ),
-                Padding(
-                    padding: EdgeInsets.only(left: width), child: Text("test"))
-              ],
+            child: DeferPointer(
+              paintOnTop: false,
+              child: Stack(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 3),
+                    child: Center(
+                      child: Text(
+                          (rendererContext.cell.value ?? "") +
+                              " (${modsInGroup.length})",
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    fontFamily: ThemeManager.orbitron,
+                                    fontWeight: FontWeight.bold,
+                                  )),
+                    ),
+                  ),
+                  Padding(
+                      padding:
+                          EdgeInsets.only(left: widthOFColsBeforeVram - 38),
+                      child: MovingTooltipWidget(
+                        tooltipWidget: TooltipFrame(
+                            child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // bold
+                            Text(
+                                "VRAM Impact from mods in '${rendererContext.cell.value}'",
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .labelLarge
+                                    ?.copyWith(fontWeight: FontWeight.bold)),
+                            Text(
+                                "\n"
+                                "\n${vramModsNoGraphicsLib.bytesAsReadableMB()} added by mods (${allEstimates.map((e) => e.images.length).sum} images)"
+                                "${vramFromGraphicsLib.sum() > 0 ? "\n${vramFromGraphicsLib.sum().bytesAsReadableMB()} added by your GraphicsLib settings (${vramFromGraphicsLib.length} images)" : ""}"
+                                "${vramFromVanilla != null ? "\n${vramFromVanilla.bytesAsReadableMB()} added by vanilla" : ""}"
+                                "\n---"
+                                "\n${(vramModsNoGraphicsLib + vramFromGraphicsLib.sum() + (vramFromVanilla ?? 0.0)).bytesAsReadableMB()} total",
+                                style: Theme.of(context).textTheme.labelLarge)
+                          ],
+                        )),
+                        child: Center(
+                          child: Opacity(
+                            opacity: lightTextOpacity,
+                            child: Text(
+                              "∑ ${(vramModsNoGraphicsLib + vramFromGraphicsLib.sum() + (vramFromVanilla ?? 0.0)).bytesAsReadableMB()}",
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelMedium
+                                  ?.copyWith(),
+                            ),
+                          ),
+                        ),
+                      ))
+                ],
+              ),
             ),
           );
         }),
@@ -1256,7 +1331,9 @@ class _Smol3State extends ConsumerState<Smol3>
           final lightTextColor =
               theme.colorScheme.onSurface.withOpacity(lightTextOpacity);
           final bestVersion = mod.findFirstEnabledOrHighestVersion;
+          final graphicsLibConfig = ref.watch(graphicsLibConfigProvider);
           if (bestVersion == null) return const SizedBox();
+
           return ContextMenuRegion(
               contextMenu: buildModContextMenu(mod, ref, context,
                   showSwapToVersion: true),
@@ -1266,26 +1343,38 @@ class _Smol3State extends ConsumerState<Smol3>
                       ref.watch(AppState.vramEstimatorProvider);
                   final vramMap = vramEstimatorState.modVramInfo;
                   final biggestFish = vramMap
-                      .maxBy((e) => e.value.totalBytesForMod)
+                      .maxBy((e) => e.value
+                          .bytesUsingGraphicsLibConfig(graphicsLibConfig))
                       ?.value
-                      .totalBytesForMod;
+                      .bytesUsingGraphicsLibConfig(graphicsLibConfig);
                   final ratio = biggestFish == null
                       ? 0.00
                       : (vramMap[bestVersion.smolId]
-                                  ?.totalBytesForMod
+                                  ?.bytesUsingGraphicsLibConfig(
+                                      graphicsLibConfig)
                                   .toDouble() ??
                               0) /
                           biggestFish.toDouble();
                   final vramEstimate = vramMap[bestVersion.smolId];
+                  final withoutGraphicsLib = vramEstimate?.images
+                      .where((e) => e.graphicsLibType == null)
+                      .map((e) => e.bytesUsed)
+                      .toList();
+                  final fromGraphicsLib = vramEstimate?.images
+                      .where((e) => e.graphicsLibType != null)
+                      .map((e) => e.bytesUsed)
+                      .toList();
 
                   return Expanded(
                     child: MovingTooltipWidget.text(
                       message: vramEstimate == null
                           ? ""
                           : "Version ${vramEstimate.info.version}"
-                              "\n\n${vramEstimate.totalBytesForMod.bytesAsReadableMB()}"
-                              "\n${vramEstimate.images.length} images"
-                              "",
+                              "\n"
+                              "\n${withoutGraphicsLib?.sum().bytesAsReadableMB()} from mod (${withoutGraphicsLib?.length} images)"
+                              "\n${fromGraphicsLib?.sum().bytesAsReadableMB()} added by your GraphicsLib settings (${fromGraphicsLib?.length} images)"
+                              "\n---"
+                              "\n${vramEstimate.bytesUsingGraphicsLibConfig(graphicsLibConfig).bytesAsReadableMB()} total",
                       child: Stack(
                         children: [
                           Align(
@@ -1293,9 +1382,14 @@ class _Smol3State extends ConsumerState<Smol3>
                             child: Padding(
                                 padding:
                                     const EdgeInsets.symmetric(horizontal: 8.0),
-                                child: vramEstimate?.totalBytesForMod != null
+                                child: vramEstimate
+                                            ?.bytesUsingGraphicsLibConfig(
+                                                graphicsLibConfig) !=
+                                        null
                                     ? Text(
-                                        vramEstimate!.totalBytesForMod
+                                        vramEstimate!
+                                            .bytesUsingGraphicsLibConfig(
+                                                graphicsLibConfig)
                                             .bytesAsReadableMB(),
                                         style: theme.textTheme.labelLarge
                                             ?.copyWith(color: lightTextColor))
@@ -1433,7 +1527,7 @@ class _Smol3State extends ConsumerState<Smol3>
         ),
         _Fields.vramEstimate.toString(): PlutoCell(
           value: vramEstimate[mod.findFirstEnabledOrHighestVersion?.smolId]
-              ?.totalBytesForMod,
+              ?.maxPossibleBytesForMod,
         ),
         _Fields.gameVersion.toString(): PlutoCell(
           value: bestVersion.modInfo.gameVersion,

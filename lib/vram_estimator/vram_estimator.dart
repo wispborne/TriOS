@@ -17,6 +17,7 @@ import 'package:trios/widgets/spinning_refresh_fab.dart';
 import '../../trios/settings/settings.dart';
 import 'charts/bar_chart.dart';
 import 'charts/pie_chart.dart';
+import 'graphics_lib_config_provider.dart';
 import 'models/graphics_lib_config.dart';
 import 'models/vram_checker_models.dart';
 
@@ -114,12 +115,8 @@ class VramEstimatorNotifier extends Notifier<VramEstimatorState> {
         smolIdsToCheck: smolIdsToCheckIntl,
         modIdsToCheck: null,
         foldersToCheck: settings.modsDir == null ? [] : [settings.modsDir!],
-        graphicsLibConfig: GraphicsLibConfig(
-          areAnyEffectsEnabled: false,
-          areGfxLibMaterialMapsEnabled: false,
-          areGfxLibNormalMapsEnabled: false,
-          areGfxLibSurfaceMapsEnabled: false,
-        ),
+        // TODO get graphicslib settings!
+        graphicsLibConfig: ref.read(graphicsLibConfigProvider) ?? GraphicsLibConfig.disabled,
         showCountedFiles: true,
         showSkippedFiles: true,
         showGfxLibDebugOutput: true,
@@ -201,9 +198,11 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
     final vramState = ref.watch(AppState.vramEstimatorProvider);
     final isScanning = vramState.isScanning;
     final modVramInfo = vramState.modVramInfo;
+    final graphicsLibConfig = ref.watch(graphicsLibConfigProvider);
 
-    var modVramInfoToShow = _calculateModsToShow(modVramInfo);
-    var rangeMax = _maxRange(modVramInfo);
+    var modVramInfoToShow =
+        _calculateModsToShow(modVramInfo, graphicsLibConfig);
+    var rangeMax = _maxRange(modVramInfo, graphicsLibConfig);
 
     var showRangeSlider = selectedSliderValues != null &&
         !isScanning &&
@@ -315,21 +314,27 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
     ]);
   }
 
-  List<Mod> _calculateModsToShow(Map<String, Mod> modVramInfo) {
+  List<Mod> _calculateModsToShow(
+      Map<String, Mod> modVramInfo, GraphicsLibConfig? graphicsLibConfig) {
     return modVramInfo.values
         .where((mod) =>
-            mod.totalBytesForMod >= (selectedSliderValues?.start ?? 0) &&
-            mod.totalBytesForMod <=
-                (selectedSliderValues?.end ?? _maxRange(modVramInfo)))
-        .sortedByDescending<num>((mod) => mod.totalBytesForMod)
+            mod.bytesUsingGraphicsLibConfig(graphicsLibConfig) >=
+                (selectedSliderValues?.start ?? 0) &&
+            mod.bytesUsingGraphicsLibConfig(graphicsLibConfig) <=
+                (selectedSliderValues?.end ??
+                    _maxRange(modVramInfo, graphicsLibConfig)))
+        .sortedByDescending<num>(
+            (mod) => mod.bytesUsingGraphicsLibConfig(graphicsLibConfig))
         .toList();
   }
 
-  double _maxRange(Map<String, Mod> modVramInfo) {
+  double _maxRange(
+      Map<String, Mod> modVramInfo, GraphicsLibConfig? graphicsLibConfig) {
     return modVramInfo.values
-            .sortedBy<num>((mod) => mod.totalBytesForMod)
+            .sortedBy<num>(
+                (mod) => mod.bytesUsingGraphicsLibConfig(graphicsLibConfig))
             .lastOrNull
-            ?.totalBytesForMod
+            ?.bytesUsingGraphicsLibConfig(graphicsLibConfig)
             .toDouble() ??
         2;
   }

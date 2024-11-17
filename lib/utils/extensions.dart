@@ -591,6 +591,12 @@ extension IntExt on int {
 // .distinctBy { (modFolder: Path, image: ModImage) -> image.file.relativeTo(modFolder).pathString + image.file.name }
 //     .sumOf { it.second.bytesUsed }
 
+extension IntListExt on List<int> {
+  int sum() {
+    return fold(0, (previousValue, element) => previousValue + element);
+  }
+}
+
 extension NumListExt on List<num> {
   num sum() {
     return fold(0, (previousValue, element) => previousValue + element);

@@ -1,27 +1,32 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/vram_estimator/graphics_lib_config_provider.dart';
+import 'package:trios/vram_estimator/models/graphics_lib_config.dart';
 
 import '../../../utils/util.dart';
 import '../models/vram_checker_models.dart';
 
-class VramPieChart extends StatefulWidget {
+class VramPieChart extends ConsumerStatefulWidget {
   final List<Mod> modVramInfo;
 
   const VramPieChart({super.key, required this.modVramInfo});
 
   @override
-  State<StatefulWidget> createState() => VramPieChartState();
+  ConsumerState createState() => VramPieChartState();
 }
 
-class VramPieChartState extends State<VramPieChart> {
+class VramPieChartState extends ConsumerState<VramPieChart> {
   int touchedIndex = -1;
+  GraphicsLibConfig? graphicsLibConfig;
 
   List<PieChartSectionData> createSections(BuildContext context) {
     final baseColor = Theme.of(context).colorScheme.primary;
 
     return widget.modVramInfo
-        .where((element) => element.totalBytesForMod > 0)
+        .where((element) =>
+            element.bytesUsingGraphicsLibConfig(graphicsLibConfig) > 0)
         .map((mod) {
       const fontSize = 12.0;
       const radius = 50.0;
@@ -30,9 +35,9 @@ class VramPieChartState extends State<VramPieChart> {
         color: ColorGenerator.generateFromColor(mod.info.smolId, baseColor)
             .createMaterialColor()
             .shade700,
-        value: mod.totalBytesForMod.toDouble(),
+        value: mod.bytesUsingGraphicsLibConfig(graphicsLibConfig).toDouble(),
         title:
-            "${mod.info.name} ${mod.info.version}\n${mod.totalBytesForMod.bytesAsReadableMB()}",
+            "${mod.info.name} ${mod.info.version}\n${mod.bytesUsingGraphicsLibConfig(graphicsLibConfig).bytesAsReadableMB()}",
         radius: radius,
         titlePositionPercentageOffset: 2,
         titleStyle: const TextStyle(
@@ -47,6 +52,8 @@ class VramPieChartState extends State<VramPieChart> {
 
   @override
   Widget build(BuildContext context) {
+    graphicsLibConfig = ref.watch(graphicsLibConfigProvider);
+
     return AspectRatio(
       aspectRatio: 1.3,
       child: Row(

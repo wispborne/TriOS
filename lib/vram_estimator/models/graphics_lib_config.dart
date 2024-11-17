@@ -1,30 +1,32 @@
+import 'package:dart_mappable/dart_mappable.dart';
+
+part 'graphics_lib_config.mapper.dart';
+
+@MappableClass()
 class GraphicsLibConfig {
-// @SerializedName("enableShaders")
-  bool areAnyEffectsEnabled;
+  @MappableField(key: 'enableShaders')
+  final bool areAnyEffectsEnabled;
 
-// @SerializedName("enableNormal")
-  bool areGfxLibNormalMapsEnabled;
+  @MappableField(key: 'enableNormal')
+  final bool areGfxLibNormalMapsEnabled;
 
-// @SerializedName("loadMaterial")
-  bool areGfxLibMaterialMapsEnabled;
+  @MappableField(key: 'loadMaterial')
+  final bool areGfxLibMaterialMapsEnabled;
 
-// @SerializedName("loadSurface")
-  bool areGfxLibSurfaceMapsEnabled;
+  @MappableField(key: 'loadSurface')
+  final bool areGfxLibSurfaceMapsEnabled;
 
-  GraphicsLibConfig(
-      {required this.areAnyEffectsEnabled,
-      required this.areGfxLibNormalMapsEnabled,
-      required this.areGfxLibMaterialMapsEnabled,
-      required this.areGfxLibSurfaceMapsEnabled});
+  const GraphicsLibConfig({
+    required this.areAnyEffectsEnabled,
+    required this.areGfxLibNormalMapsEnabled,
+    required this.areGfxLibMaterialMapsEnabled,
+    required this.areGfxLibSurfaceMapsEnabled,
+  });
 
-  @override
-  String toString() {
-    return "GraphicsLibConfig(areAnyEffectsEnabled: $areAnyEffectsEnabled, areGfxLibNormalMapsEnabled: $areGfxLibNormalMapsEnabled, areGfxLibMaterialMapsEnabled: $areGfxLibMaterialMapsEnabled, areGfxLibSurfaceMapsEnabled: $areGfxLibSurfaceMapsEnabled)";
-  }
-
-  static final Disabled = GraphicsLibConfig(
-      areAnyEffectsEnabled: false,
-      areGfxLibNormalMapsEnabled: false,
-      areGfxLibMaterialMapsEnabled: false,
-      areGfxLibSurfaceMapsEnabled: false);
+  static const disabled = GraphicsLibConfig(
+    areAnyEffectsEnabled: false,
+    areGfxLibNormalMapsEnabled: false,
+    areGfxLibMaterialMapsEnabled: false,
+    areGfxLibSurfaceMapsEnabled: false,
+  );
 }

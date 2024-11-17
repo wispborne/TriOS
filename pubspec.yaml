@@ -114,6 +114,7 @@ dependencies:
   # webview
   flutter_inappwebview: ^6.1.5
   flutter_cache_manager: ^3.4.1
+  defer_pointer: ^0.0.2
 
 # Uncommented & Copied
 #  adaptive_theme: ^3.6.0

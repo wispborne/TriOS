@@ -1,23 +1,26 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/vram_estimator/graphics_lib_config_provider.dart';
 import 'package:trios/vram_estimator/models/gpu_info.dart';
+import 'package:trios/vram_estimator/models/graphics_lib_config.dart';
 
 import '../../../utils/util.dart';
 import '../models/vram_checker_models.dart';
 // ...  (Import extensions, any custom models, and util as in your existing code)
 
-class VramBarChart extends StatefulWidget {
+class VramBarChart extends ConsumerStatefulWidget {
   final List<Mod> modVramInfo;
 
   const VramBarChart({super.key, required this.modVramInfo});
 
   @override
-  State<StatefulWidget> createState() => VramBarChartState();
+  ConsumerState createState() => VramBarChartState();
 }
 
-class VramBarChartState extends State<VramBarChart> {
-  // You might not need a 'touchedIndex' for a simple bar chart
+class VramBarChartState extends ConsumerState<VramBarChart> {
+  GraphicsLibConfig? graphicsLibConfig;
 
   @override
   Widget build(BuildContext context) {
@@ -25,6 +28,7 @@ class VramBarChartState extends State<VramBarChart> {
     final baseColor = Theme.of(context).colorScheme.primary;
     final maxVramUsed = _calculateMostVramUse();
     final theme = Theme.of(context);
+    graphicsLibConfig = ref.watch(graphicsLibConfigProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -44,7 +48,7 @@ class VramBarChartState extends State<VramBarChart> {
                     itemBuilder: (context, index) {
                       if (index > mods.length - 1) return const SizedBox();
                       final mod = mods[index];
-                      final percentOfMax = mod.totalBytesForMod / maxVramUsed;
+                      final percentOfMax = mod.bytesUsingGraphicsLibConfig(graphicsLibConfig) / maxVramUsed;
                       final width = layoutConstraints.maxWidth * percentOfMax;
 
                       return Container(
@@ -65,7 +69,7 @@ class VramBarChartState extends State<VramBarChart> {
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 8.0),
                                   child: Text(
-                                      mod.totalBytesForMod.bytesAsReadableMB(),
+                                      mod.bytesUsingGraphicsLibConfig(graphicsLibConfig).bytesAsReadableMB(),
                                       style: theme.textTheme.labelMedium),
                                 ),
                                 Opacity(
@@ -93,8 +97,8 @@ class VramBarChartState extends State<VramBarChart> {
 
   double _calculateMostVramUse() {
     return widget.modVramInfo
-            .maxByOrNull<num>((mod) => mod.totalBytesForMod)
-            ?.totalBytesForMod
+            .maxByOrNull<num>((mod) => mod.bytesUsingGraphicsLibConfig(graphicsLibConfig))
+            ?.bytesUsingGraphicsLibConfig(graphicsLibConfig)
             .toDouble() ??
         0;
   }
@@ -131,12 +135,12 @@ class VramBarChartState extends State<VramBarChart> {
   List<BarChartGroupData> _buildBarGroups(BuildContext context) {
     final baseColor = Theme.of(context).colorScheme.primary;
     return widget.modVramInfo
-        .where((element) => element.totalBytesForMod > 0)
+        .where((element) => element.bytesUsingGraphicsLibConfig(graphicsLibConfig) > 0)
         .map((mod) => BarChartGroupData(
               x: widget.modVramInfo.indexOf(mod),
               barRods: [
                 BarChartRodData(
-                  toY: mod.totalBytesForMod.toDouble(), // Y-axis value
+                  toY: mod.bytesUsingGraphicsLibConfig(graphicsLibConfig).toDouble(), // Y-axis value
                   color:
                       ColorGenerator.generateFromColor(mod.info.smolId, baseColor)
                           .createMaterialColor()

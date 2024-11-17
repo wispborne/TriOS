@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:collection/collection.dart';
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:trios/models/mod_variant.dart';
+import 'package:trios/vram_estimator/models/graphics_lib_config.dart';
+import 'package:trios/vram_estimator/models/graphics_lib_info.dart';
 
 import '../../models/mod_info_json.dart';
 import '../../models/version.dart';
@@ -17,7 +19,16 @@ class Mod with ModMappable {
 
   Mod(this.info, this.isEnabled, this.images);
 
-  late final totalBytesForMod = images.map((e) => e.bytesUsed).sum;
+  late final maxPossibleBytesForMod = images.map((e) => e.bytesUsed).sum;
+
+  int bytesUsingGraphicsLibConfig(GraphicsLibConfig? graphicsLibConfig) {
+    return images
+        .where((element) => graphicsLibConfig == null
+            ? true
+            : element.isUsedBasedOnGraphicsLibConfig(graphicsLibConfig))
+        .map((e) => e.bytesUsed)
+        .sum;
+  }
 }
 
 @MappableClass()
@@ -28,6 +39,7 @@ class VramCheckerMod with VramCheckerModMappable {
   VramCheckerMod(this.modInfo, this.modFolder);
 
   String get smolId => createSmolId(modInfo.id, modInfo.version);
+
   String get modId => modInfo.id;
 
   String? get name => modInfo.name;
@@ -45,9 +57,10 @@ class ModImage with ModImageMappable {
   int textureWidth;
   int bitsInAllChannelsSum;
   ImageType imageType;
+  MapType? graphicsLibType;
 
   ModImage(this.filePath, this.textureHeight, this.textureWidth,
-      this.bitsInAllChannelsSum, this.imageType);
+      this.bitsInAllChannelsSum, this.imageType, this.graphicsLibType);
 
   File get file => File(filePath);
 
@@ -63,6 +76,19 @@ class ModImage with ModImageMappable {
               ? vanillaBackgroundTextSizeInBytes
               : 0.0))
       .ceil();
+
+  bool isUsedBasedOnGraphicsLibConfig(GraphicsLibConfig? graphicsLibConfig) {
+    if (graphicsLibConfig == null) {
+      return graphicsLibType == null;
+    }
+
+    return switch (graphicsLibType) {
+      null => true,
+      MapType.Normal => graphicsLibConfig.areGfxLibNormalMapsEnabled,
+      MapType.Material => graphicsLibConfig.areGfxLibMaterialMapsEnabled,
+      MapType.Surface => graphicsLibConfig.areGfxLibSurfaceMapsEnabled,
+    };
+  }
 }
 
 @MappableEnum()

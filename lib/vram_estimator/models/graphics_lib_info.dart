@@ -1,3 +1,8 @@
+import 'package:dart_mappable/dart_mappable.dart';
+
+part 'graphics_lib_info.mapper.dart';
+
+@MappableClass()
 class GraphicsLibInfo {
   MapType mapType;
   String relativeFilePath;
@@ -10,4 +15,5 @@ class GraphicsLibInfo {
   }
 }
 
+@MappableEnum()
 enum MapType { Normal, Material, Surface }

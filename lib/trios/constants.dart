@@ -52,6 +52,7 @@ class Constants {
   static const forumModdingSubforumUrl = "$forumUrl?board=3.0";
   static const forumHostname = "fractalsoftworks.com";
   static const tipsFileRelativePath = "data/strings/tips.json";
+  static const graphicsLibId = "shaderLib";
   static const changelogUrl =
       "https://raw.githubusercontent.com/wispborne/TriOS/main/changelog.md";
   static const supportedArchiveExtensions = [

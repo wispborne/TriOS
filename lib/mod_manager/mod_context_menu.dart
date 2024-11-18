@@ -48,7 +48,8 @@ ContextMenu buildModContextMenu(Mod mod, WidgetRef ref, BuildContext context,
               "${Constants.forumModPageUrl}${modVariant.versionCheckerInfo?.modThreadId}"));
         },
       ),
-      menuItemCheckVram(mod, ref),
+      if (!ref.watch(AppState.vramEstimatorProvider).isScanning)
+        menuItemCheckVram(mod, ref),
       if (!isGameRunning) menuItemDeleteFolder(mod, context, ref),
       if (currentStarsectorVersion != null &&
           !isGameRunning &&

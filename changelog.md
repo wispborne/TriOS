@@ -7,6 +7,7 @@
     - Now displayed on the Mods tab.
     - Now remembered across restarts.
     - You may now estimate one mod at a time.
+    - Shows VRAM taken by your GraphicsLib settings for mods. 
   - Mod grid no longer resets itself constantly.
     - e.g. sorting now works. 
     - It still doesn't save across TriOS restarts, not yet.

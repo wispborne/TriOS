@@ -802,13 +802,31 @@ class _Smol3State extends ConsumerState<Smol3>
                           children: [
                             // bold
                             Text(
-                                "VRAM Impact from mods in '${rendererContext.cell.value}'",
+                                "Estimated VRAM use by ${rendererContext.cell.value} mods\n",
                                 style: Theme.of(context)
                                     .textTheme
                                     .labelLarge
                                     ?.copyWith(fontWeight: FontWeight.bold)),
+                            if (graphicsLibConfig != null)
+                              Text("GraphicsLib settings",
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .labelLarge
+                                      ?.copyWith(fontWeight: FontWeight.bold)),
+                            if (graphicsLibConfig != null)
+                              Text(
+                                  "Enabled: ${graphicsLibConfig.areAnyEffectsEnabled ? "yes" : "no"}",
+                                  style:
+                                      Theme.of(context).textTheme.labelLarge),
+                            if (graphicsLibConfig != null &&
+                                graphicsLibConfig.areAnyEffectsEnabled)
+                              Text(
+                                  "Normal maps: ${graphicsLibConfig.areGfxLibNormalMapsEnabled ? "on" : "off"}"
+                                  "\nMaterial maps: ${graphicsLibConfig.areGfxLibMaterialMapsEnabled ? "on" : "off"}"
+                                  "\nSurface maps: ${graphicsLibConfig.areGfxLibSurfaceMapsEnabled ? "on" : "off"}",
+                                  style:
+                                      Theme.of(context).textTheme.labelLarge),
                             Text(
-                                "\n"
                                 "\n${vramModsNoGraphicsLib.bytesAsReadableMB()} added by mods (${allEstimates.map((e) => e.images.length).sum} images)"
                                 "${vramFromGraphicsLib.sum() > 0 ? "\n${vramFromGraphicsLib.sum().bytesAsReadableMB()} added by your GraphicsLib settings (${vramFromGraphicsLib.length} images)" : ""}"
                                 "${vramFromVanilla != null ? "\n${vramFromVanilla.bytesAsReadableMB()} added by vanilla" : ""}"
@@ -1580,15 +1598,14 @@ class _Smol3State extends ConsumerState<Smol3>
 
     // Search query filter
     final query = _searchController.value.text;
+    final modsMatchingSearch = searchMods(allMods, query) ?? [];
     if (query.isNotEmpty) {
       filters.add((PlutoRow row) {
         final mod = _getModFromKey(row.key);
         if (mod == null) return true;
-        final result = searchMods([mod], query) ?? [];
-        if (result.isNotEmpty) {
-          // Fimber.d("Search query: $query, results: $result");
-        }
-        return result.isNotEmpty;
+        // final result = searchMods([mod], query) ?? [];
+        // return result.isNotEmpty;
+        return modsMatchingSearch.contains(mod);
       });
     }
 

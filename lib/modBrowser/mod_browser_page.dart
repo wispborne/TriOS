@@ -9,6 +9,7 @@ import 'package:trios/modBrowser/models/scraped_mod.dart';
 import 'package:trios/modBrowser/scraped_mod_card.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/download_manager/download_manager.dart';
+import 'package:trios/trios/drag_drop_handler.dart';
 import 'package:trios/trios/providers.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
@@ -219,7 +220,8 @@ class _ModBrowserPage extends ConsumerState<ModBrowserPage>
                                           ],
                                         ),
                                       ),
-                                      Text("Filters  ", style: theme.textTheme.labelLarge),
+                                      Text("Filters  ",
+                                          style: theme.textTheme.labelLarge),
                                       Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
@@ -364,14 +366,17 @@ class _ModBrowserPage extends ConsumerState<ModBrowserPage>
                                                 : false;
                                             return Disable(
                                               isEnabled: canGoBack == true,
-                                              child: IconButton(
-                                                  onPressed: () async {
-                                                    await webViewController
-                                                        ?.goBack();
-                                                    setState(() {});
-                                                  },
-                                                  icon: const Icon(
-                                                      Icons.arrow_back)),
+                                              child: MovingTooltipWidget.text(
+                                                message: "Back",
+                                                child: IconButton(
+                                                    onPressed: () async {
+                                                      await webViewController
+                                                          ?.goBack();
+                                                      setState(() {});
+                                                    },
+                                                    icon: const Icon(
+                                                        Icons.arrow_back)),
+                                              ),
                                             );
                                           }),
                                       FutureBuilder(
@@ -385,14 +390,17 @@ class _ModBrowserPage extends ConsumerState<ModBrowserPage>
                                                     : false;
                                             return Disable(
                                               isEnabled: canGoForward == true,
-                                              child: IconButton(
-                                                  onPressed: () async {
-                                                    await webViewController
-                                                        ?.goForward();
-                                                    setState(() {});
-                                                  },
-                                                  icon: const Icon(
-                                                      Icons.arrow_forward)),
+                                              child: MovingTooltipWidget.text(
+                                                message: "Forward",
+                                                child: IconButton(
+                                                    onPressed: () async {
+                                                      await webViewController
+                                                          ?.goForward();
+                                                      setState(() {});
+                                                    },
+                                                    icon: const Icon(
+                                                        Icons.arrow_forward)),
+                                              ),
                                             );
                                           }),
                                       FutureBuilder(
@@ -402,16 +410,30 @@ class _ModBrowserPage extends ConsumerState<ModBrowserPage>
                                             return Disable(
                                               isEnabled: snapshot.hasData &&
                                                   snapshot.data != null,
-                                              child: IconButton(
-                                                  onPressed: () async {
-                                                    await webViewController
-                                                        ?.reload();
-                                                    setState(() {});
-                                                  },
-                                                  icon: const Icon(
-                                                      Icons.refresh)),
+                                              child: MovingTooltipWidget.text(
+                                                message: "Reload",
+                                                child: IconButton(
+                                                    onPressed: () async {
+                                                      await webViewController
+                                                          ?.reload();
+                                                      setState(() {});
+                                                    },
+                                                    icon: const Icon(
+                                                        Icons.refresh)),
+                                              ),
                                             );
                                           }),
+                                      MovingTooltipWidget.text(
+                                        message: "Open in Browser",
+                                        child: IconButton(
+                                            onPressed: () {
+                                              webViewController?.getUrl().then(
+                                                  (url) => url
+                                                      ?.toString()
+                                                      .openAsUriInBrowser());
+                                            },
+                                            icon: const Icon(Icons.public)),
+                                      ),
                                       Expanded(
                                           child: FutureBuilder(
                                               future:
@@ -515,17 +537,6 @@ class _ModBrowserPage extends ConsumerState<ModBrowserPage>
                                                         Icons.dark_mode)),
                                               );
                                       }),
-                                      MovingTooltipWidget.text(
-                                        message: "Open in Browser",
-                                        child: IconButton(
-                                            onPressed: () {
-                                              webViewController?.getUrl().then(
-                                                  (url) => url
-                                                      ?.toString()
-                                                      .openAsUriInBrowser());
-                                            },
-                                            icon: const Icon(Icons.public)),
-                                      )
                                     ],
                                   ),
                                 ),
@@ -533,7 +544,7 @@ class _ModBrowserPage extends ConsumerState<ModBrowserPage>
                             ),
                             const SizedBox(height: 4),
                             Expanded(
-                              child: IgnoringDropMouseRegion(
+                              child: IgnoreDropMouseRegion(
                                 child: InAppWebView(
                                   key: webViewKey,
                                   webViewEnvironment: webViewEnvironment,
@@ -752,23 +763,5 @@ class _WeaponImageCellState extends State<WeaponImageCell> {
         fit: BoxFit.contain,
       );
     }
-  }
-}
-
-class IgnoringDropMouseRegion extends ConsumerWidget {
-  final Widget child;
-
-  const IgnoringDropMouseRegion({super.key, required this.child});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return MouseRegion(
-      onEnter: (_) => ref.read(AppState.ignoringDrop.notifier).state = true,
-      onExit: (_) async {
-        await Future.delayed(const Duration(milliseconds: 500));
-        ref.read(AppState.ignoringDrop.notifier).state = false;
-      },
-      child: child,
-    );
   }
 }

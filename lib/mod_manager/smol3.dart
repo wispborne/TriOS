@@ -1603,8 +1603,6 @@ class _Smol3State extends ConsumerState<Smol3>
       filters.add((PlutoRow row) {
         final mod = _getModFromKey(row.key);
         if (mod == null) return true;
-        // final result = searchMods([mod], query) ?? [];
-        // return result.isNotEmpty;
         return modsMatchingSearch.contains(mod);
       });
     }

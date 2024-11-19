@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:trios/modBrowser/models/scraped_mod.dart';
+import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/conditional_wrap.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
@@ -59,6 +60,7 @@ class _ScrapedModCardState extends State<ScrapedModCard> {
           }
         },
         child: Card(
+          margin: const EdgeInsets.all(0),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8.0),
             side: BorderSide(
@@ -82,7 +84,7 @@ class _ScrapedModCardState extends State<ScrapedModCard> {
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 14.0,
-                              fontFamily: 'Orbitron', // Customize your font
+                              fontFamily: ThemeManager.orbitron
                             ),
                           ),
                           if (mod.authorsList?.isNotEmpty == true)
@@ -114,13 +116,13 @@ class _ScrapedModCardState extends State<ScrapedModCard> {
                                           .textTheme
                                           .labelLarge
                                           ?.color
-                                          ?.withOpacity(0.6),
+                                          ?.withOpacity(0.8),
                                     ),
                               ),
                             ),
                           if ((mod.description?.isNotEmpty ?? false))
                             Padding(
-                              padding: const EdgeInsets.only(top: 4.0),
+                              padding: const EdgeInsets.only(top: 8.0),
                               child: ConditionalWrap(
                                 condition: mod.description?.isNotEmpty == true,
                                 wrapper: (child) => MovingTooltipWidget(
@@ -317,10 +319,14 @@ class Tags extends StatelessWidget {
           const Opacity(opacity: 0.5, child: Icon(Icons.tag, size: 12.0)),
           const SizedBox(width: 6.0),
           Expanded(
-            child: Text(
-              tags.join(', '),
-              style: const TextStyle(fontSize: 11.0),
-            ),
+            child: Text(tags.join(', '),
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: Theme.of(context)
+                          .textTheme
+                          .labelSmall
+                          ?.color
+                          ?.withOpacity(0.6),
+                    )),
           ),
         ],
       );
@@ -414,7 +420,7 @@ class DiscordIcon extends StatelessWidget {
                       .openAsUriInBrowser();
                 },
                 icon: Icon(
-                  Icons.chat,
+                  Icons.discord,
                   size: size,
                 ),
               ),
@@ -456,7 +462,7 @@ class NexusModsIcon extends StatelessWidget {
               icon: Icon(
                 Icons.extension,
                 size: size,
-              ), // Use appropriate icon
+              ),
               onPressed: () {
                 // Implement opening NexusMods URL
               },

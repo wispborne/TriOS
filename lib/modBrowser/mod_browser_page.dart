@@ -8,6 +8,7 @@ import 'package:multi_split_view/multi_split_view.dart';
 import 'package:trios/modBrowser/models/scraped_mod.dart';
 import 'package:trios/modBrowser/scraped_mod_card.dart';
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/download_manager/download_manager.dart';
 import 'package:trios/trios/drag_drop_handler.dart';
 import 'package:trios/trios/providers.dart';
@@ -16,6 +17,7 @@ import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/search.dart';
 import 'package:trios/weaponViewer/weaponsManager.dart';
 import 'package:trios/widgets/disable.dart';
+import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:trios/widgets/tristate_icon_button.dart';
 
 import '../main.dart';
@@ -193,6 +195,8 @@ class _ModBrowserPage extends ConsumerState<ModBrowserPage>
                             SizedBox(
                               height: 50,
                               child: Card(
+                                margin: const EdgeInsets.only(
+                                    left: 4, top: 4, bottom: 4),
                                 child: Padding(
                                   padding:
                                       const EdgeInsets.only(left: 4, right: 4),
@@ -226,7 +230,8 @@ class _ModBrowserPage extends ConsumerState<ModBrowserPage>
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
                                           buildTristateTooltipIconButton(
-                                              icon: const Icon(Icons.download),
+                                              icon: const Icon(
+                                                  Icons.download_for_offline),
                                               filter: filterHasDownloadLink,
                                               trueTooltip:
                                                   'Showing only mods with a download link',
@@ -254,7 +259,10 @@ class _ModBrowserPage extends ConsumerState<ModBrowserPage>
                                                 setState(() {});
                                               }),
                                           buildTristateTooltipIconButton(
-                                              icon: const Icon(Icons.home),
+                                              icon: const SvgImageIcon(
+                                                  'assets/images/icon-podium-gold.svg',
+                                                  width: 24,
+                                                  height: 24),
                                               filter: filterIndex,
                                               trueTooltip:
                                                   'Showing only mods on the Index',
@@ -268,7 +276,10 @@ class _ModBrowserPage extends ConsumerState<ModBrowserPage>
                                                 setState(() {});
                                               }),
                                           buildTristateTooltipIconButton(
-                                              icon: const Icon(Icons.garage),
+                                              icon: const SvgImageIcon(
+                                                  'assets/images/icon-podium-silver.svg',
+                                                  width: 24,
+                                                  height: 24),
                                               filter: filterForumModding,
                                               trueTooltip:
                                                   "Showing only mods on the Forum (besides the Index)",
@@ -327,15 +338,19 @@ class _ModBrowserPage extends ConsumerState<ModBrowserPage>
                                   }
                                   final profile = displayedMods![index];
 
-                                  return ScrapedModCard(
-                                      mod: profile,
-                                      linkLoader: (url) {
-                                        selectedModName = profile.name;
-                                        webViewController?.loadUrl(
-                                            urlRequest:
-                                                URLRequest(url: WebUri(url)));
-                                        setState(() {});
-                                      });
+                                  return Padding(
+                                    padding: const EdgeInsets.only(
+                                        left: 4, top: 4, bottom: 4),
+                                    child: ScrapedModCard(
+                                        mod: profile,
+                                        linkLoader: (url) {
+                                          selectedModName = profile.name;
+                                          webViewController?.loadUrl(
+                                              urlRequest:
+                                                  URLRequest(url: WebUri(url)));
+                                          setState(() {});
+                                        }),
+                                  );
                                 },
                               ),
                             ),
@@ -433,6 +448,17 @@ class _ModBrowserPage extends ConsumerState<ModBrowserPage>
                                                       .openAsUriInBrowser());
                                             },
                                             icon: const Icon(Icons.public)),
+                                      ),
+                                      MovingTooltipWidget.text(
+                                        message: "Index",
+                                        child: IconButton(
+                                            onPressed: () {
+                                              webViewController?.loadUrl(
+                                                  urlRequest: URLRequest(
+                                                      url: WebUri(Constants
+                                                          .forumModIndexUrl)));
+                                            },
+                                            icon: const Icon(Icons.home)),
                                       ),
                                       Expanded(
                                           child: FutureBuilder(
@@ -584,8 +610,7 @@ class _ModBrowserPage extends ConsumerState<ModBrowserPage>
                                   },
                                   onDownloadStartRequest: (controller, url) {},
                                   initialUrlRequest: URLRequest(
-                                      url: WebUri(
-                                          "https://fractalsoftworks.com/forum/index.php?topic=177.0")),
+                                      url: WebUri(Constants.forumModIndexUrl)),
                                   initialSettings: webSettings,
                                   onWebViewCreated: (controller) {
                                     webViewController = controller;

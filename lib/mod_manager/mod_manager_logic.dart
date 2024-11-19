@@ -442,16 +442,25 @@ class ModManagerNotifier extends AsyncNotifier<void> {
     final extractedModInfos = await modInstallSource.getActualFiles(
       modInfoFiles,
     );
-    final modInfos = await Future.wait(
+
+    final List<ExtractedModInfo> modInfos = await Future.wait(
         extractedModInfos.whereNotNull().map((modInfoFile) async {
-      ExtractedModInfo modInfo = (
-        extractedFile: modInfoFile,
-        modInfo: ModInfoMapper.fromJson(modInfoFile.extractedFile
-            .readAsStringSyncAllowingMalformed()
-            .fixJson())
-      );
-      return modInfo;
-    }).toList());
+      try {
+        ExtractedModInfo modInfo = (
+          extractedFile: modInfoFile,
+          modInfo: ModInfoMapper.fromJson(modInfoFile.extractedFile
+              .readAsStringSyncAllowingMalformed()
+              .fixJson())
+        );
+        return modInfo;
+      } catch (e, st) {
+        Fimber.e("Error reading mod_info.json files: $e",
+            ex: e, stacktrace: st);
+        return Future.error(
+            Exception("Error parsing '${modInfoFile.extractedFile.path}':\n$e"),
+            st);
+      }
+    }));
 
     // Check for mods that are already installed.
     var allModVariants = currentMods.variants;

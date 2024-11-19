@@ -40,8 +40,6 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
   Widget build(BuildContext context) {
     final isGameRunning = ref.watch(AppState.isGameRunning).value == true;
 
-    // Fimber.i("Ignoring drop: $ignoringDrop");
-
     return DropRegion(
       formats: Formats.standardFormats,
       onPerformDrop: (detail) async {
@@ -223,7 +221,7 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
       },
       child: Builder(builder: (context) {
         final ignoringDrop = ref.watch(AppState.ignoringDrop) == true;
-        if (!ignoringDrop) Fimber.i("Ignoring drop: $ignoringDrop");
+
         return Stack(
           children: [
             widget.child,

@@ -63,16 +63,20 @@ class CheckboxWithLabel extends StatelessWidget {
 
     return InkWell(
       onTap: () {
-        switch (value) {
-          case true:
-            onChanged(false);
-            break;
-          case false:
-            onChanged(null);
-            break;
-          case null:
-            onChanged(true);
-            break;
+        if (tristate) {
+          switch (value) {
+            case true:
+              onChanged(false);
+              break;
+            case false:
+              onChanged(null);
+              break;
+            case null:
+              onChanged(true);
+              break;
+          }
+        } else {
+          onChanged(!value!);
         }
       },
       borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),

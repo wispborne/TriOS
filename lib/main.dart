@@ -11,6 +11,7 @@ import 'package:screen_retriever/screen_retriever.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:toastification/toastification.dart';
+import 'package:trios/chipper/utils.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/self_updater/script_generator.dart';
 import 'package:trios/trios/self_updater/self_updater.dart';
@@ -28,6 +29,7 @@ import 'trios/app_state.dart';
 
 Object? loggingError;
 WebViewEnvironment? webViewEnvironment;
+List<Future<void> Function(BuildContext)> onAppLoadedActions = [];
 
 void main() async {
   try {
@@ -62,8 +64,25 @@ void main() async {
   bool allowCrashReporting = false;
   Settings? settings;
 
+  // Read existing app settings
   try {
     settings = readAppSettings();
+  } catch (e) {
+    Fimber.e("Error reading app settings.", ex: e);
+    onAppLoadedActions.add((context) async {
+      await showAlertDialog(
+        context,
+        title: "TriOS Settings Reset",
+        content: "Your ${Constants.appName} settings have been reset."
+            "\nThis may be due to an update or a broken settings file."
+            "\n\nPlease check your settings. Your mods have not been affected."
+            "\n\n\nError: \n$e",
+      );
+    });
+  }
+
+  // Set up Sentry
+  try {
     if (settings != null && settings.userId.isNullOrEmpty()) {
       final userId = const Uuid().v8();
       writeAppSettings(settings.copyWith(userId: userId));
@@ -95,11 +114,13 @@ void main() async {
     _runTriOS();
   }
 
-  // WebView
+  // WebView check
   if (!kIsWeb && defaultTargetPlatform == TargetPlatform.windows) {
     final availableVersion = await WebViewEnvironment.getAvailableVersion();
-    assert(availableVersion != null,
-        'Failed to find an installed WebView2 Runtime or non-stable Microsoft Edge installation.');
+    if (availableVersion == null) {
+      Fimber.e(
+          'Failed to find an installed WebView2 Runtime or non-stable Microsoft Edge installation.');
+    }
 
     // TODO webview fallback?
     // webViewEnvironment = await WebViewEnvironment.create(

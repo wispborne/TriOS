@@ -1,17 +1,14 @@
+import 'package:dart_mappable/dart_mappable.dart';
 
+part 'mods_grid_state.mapper.dart';
 
-import 'package:freezed_annotation/freezed_annotation.dart';
+@MappableClass()
+class ModsGridState with ModsGridStateMappable {
+  final bool isGroupEnabledExpanded;
+  final bool isGroupDisabledExpanded;
 
-part '../generated/mod_manager/mods_grid_state.freezed.dart';
-part '../generated/mod_manager/mods_grid_state.g.dart';
-
-@freezed
-class ModsGridState with _$ModsGridState{
-  factory ModsGridState({
-    @Default(true) bool isGroupEnabledExpanded,
-    @Default(true) bool isGroupDisabledExpanded,
-  }) = _ModsGridState;
-
-  factory ModsGridState.fromJson(Map<String, Object?> json) =>
-      _$ModsGridStateFromJson(json);
+  ModsGridState({
+    this.isGroupEnabledExpanded = true,
+    this.isGroupDisabledExpanded = true,
+  });
 }

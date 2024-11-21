@@ -1,23 +1,26 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:dart_mappable/dart_mappable.dart';
 
-part '../generated/models/launch_settings.freezed.dart';
-part '../generated/models/launch_settings.g.dart';
+part 'launch_settings.mapper.dart';
 
-@freezed
-class LaunchSettings with _$LaunchSettings {
-  const LaunchSettings._();
+@MappableClass()
+class LaunchSettings with LaunchSettingsMappable {
+  final bool? isFullscreen;
+  final bool? hasSound;
+  final int? resolutionWidth;
+  final int? resolutionHeight;
+  final int? numAASamples;
+  final double? screenScaling;
 
-  const factory LaunchSettings({
-    final bool? isFullscreen,
-    final bool? hasSound,
-    final int? resolutionWidth,
-    final int? resolutionHeight,
-    final int? numAASamples,
-    final double? screenScaling,
-  }) = _LaunchSettings;
+  const LaunchSettings({
+    this.isFullscreen,
+    this.hasSound,
+    this.resolutionWidth,
+    this.resolutionHeight,
+    this.numAASamples,
+    this.screenScaling,
+  });
 
-  factory LaunchSettings.fromJson(Map<String, Object?> json) => _$LaunchSettingsFromJson(json);
-
+  /// Overrides the current settings with values from another instance.
   LaunchSettings overrideWith(LaunchSettings? other) {
     return LaunchSettings(
       isFullscreen: other?.isFullscreen ?? isFullscreen,

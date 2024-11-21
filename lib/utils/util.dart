@@ -417,7 +417,7 @@ class BoolHook extends MappingHook {
   }
 
   @override
-  dynamic beforeDecode(dynamic value) {
+  bool? beforeDecode(dynamic value) {
     if (value == null) return false;
     if (value is bool) return value;
     if (value is String) {
@@ -432,6 +432,23 @@ class BoolHook extends MappingHook {
       return value.toString();
     }
     return value;
+  }
+}
+
+class DirectoryHook extends MappingHook {
+  const DirectoryHook();
+
+  @override
+  Directory? beforeDecode(dynamic value) {
+    if (value is String) {
+      return Directory(value);
+    }
+    return null;
+  }
+
+  @override
+  String? beforeEncode(dynamic value) {
+    return value?.path;
   }
 }
 

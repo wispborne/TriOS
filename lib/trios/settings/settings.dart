@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:dart_mappable/dart_mappable.dart';
 import 'package:trios/jre_manager/jre_23.dart';
 import 'package:trios/trios/navigation.dart';
 import 'package:trios/utils/extensions.dart';
@@ -13,9 +13,7 @@ import '../../mod_manager/mods_grid_state.dart';
 import '../../models/launch_settings.dart';
 import '../app_state.dart';
 
-part '../../generated/trios/settings/settings.freezed.dart';
-
-part '../../generated/trios/settings/settings.g.dart';
+part 'settings.mapper.dart';
 
 const sharedPrefsSettingsKey = "settings";
 
@@ -26,7 +24,7 @@ final appSettings =
 /// MacOs: /Users/<user>/Library/Preferences/org.wisp.TriOS.plist
 Settings? readAppSettings() {
   if (sharedPrefs.containsKey(sharedPrefsSettingsKey)) {
-    return Settings.fromJson(
+    return SettingsMapper.fromJson(
         jsonDecode(sharedPrefs.getString(sharedPrefsSettingsKey)!));
   } else {
     return null;
@@ -40,73 +38,103 @@ void writeAppSettings(Settings newSettings) {
 }
 
 /// Settings object model
-@freezed
-class Settings with _$Settings {
-  factory Settings({
-    @JsonDirectoryConverter() final Directory? gameDir,
-    @JsonDirectoryConverter() final Directory? gameCoreDir,
-    @JsonDirectoryConverter() final Directory? modsDir,
-    @Default(false) final bool hasCustomModsDir,
-    @Default(false) final bool isRulesHotReloadEnabled,
-    final double? windowXPos,
-    final double? windowYPos,
-    final double? windowWidth,
-    final double? windowHeight,
-    final bool? isMaximized,
-    final bool? isMinimized,
-    final TriOSTools? defaultTool,
-    final String? jre23VmparamsFilename,
-    final bool? useJre23,
-    @Default(true) final bool showJre23ConsoleWindow,
+@MappableClass()
+class Settings with SettingsMappable {
+  @MappableField(hook: DirectoryHook())
+  final Directory? gameDir;
+  @MappableField(hook: DirectoryHook())
+  final Directory? gameCoreDir;
+  @MappableField(hook: DirectoryHook())
+  final Directory? modsDir;
+  final bool hasCustomModsDir;
+  final bool isRulesHotReloadEnabled;
+  final double? windowXPos;
+  final double? windowYPos;
+  final double? windowWidth;
+  final double? windowHeight;
+  final bool? isMaximized;
+  final bool? isMinimized;
+  final TriOSTools? defaultTool;
+  final String? jre23VmparamsFilename;
+  final bool? useJre23;
+  final bool showJre23ConsoleWindow;
 
-    /// If true, TriOS acts as the launcher. If false, basically just clicks game exe.
-    @Default(false) final bool enableDirectLaunch,
-    @Default(LaunchSettings()) final LaunchSettings launchSettings,
-    final String? lastStarsectorVersion,
-    @Default(true) final bool isUpdatesFieldShown,
-    final ModsGridState? modsGridState,
+  /// If true, TriOS acts as the launcher. If false, basically just clicks game exe.
+  final bool enableDirectLaunch;
+  final LaunchSettings launchSettings;
+  final String? lastStarsectorVersion;
+  final bool isUpdatesFieldShown;
+  final ModsGridState? modsGridState;
 
-    // Settings Page
-    @Default(false) final bool shouldAutoUpdateOnLaunch,
-    @Default(15) final int secondsBetweenModFolderChecks,
-    @Default(7) final int toastDurationSeconds,
-    @Default(20) final int maxHttpRequestsAtOnce,
-    @Default(FolderNamingSetting.doNotChangeNameForHighestVersion)
-    final FolderNamingSetting folderNamingSetting,
-    final int? keepLastNVersions,
-    final bool? allowCrashReporting,
-    @Default(false) final bool updateToPrereleases,
-    @Default(false) final bool autoEnableAndDisableDependencies,
-    @Default(true) final bool enableLauncherPrecheck,
-    @Default(ModUpdateBehavior.switchToNewVersionIfWasEnabled)
-    final ModUpdateBehavior modUpdateBehavior,
-    @Default("") final String userId, // For Sentry
-    final bool? hasHiddenForumDarkModeTip,
+  // Settings Page
+  final bool shouldAutoUpdateOnLaunch;
+  final int secondsBetweenModFolderChecks;
+  final int toastDurationSeconds;
+  final int maxHttpRequestsAtOnce;
+  final FolderNamingSetting folderNamingSetting;
+  final int? keepLastNVersions;
+  final bool? allowCrashReporting;
+  final bool updateToPrereleases;
+  final bool autoEnableAndDisableDependencies;
+  final bool enableLauncherPrecheck;
+  final ModUpdateBehavior modUpdateBehavior;
+  final String userId; // For Sentry
+  final bool? hasHiddenForumDarkModeTip;
 
-    // Mod profiles are stored in [ModProfilesSettings] and [ModProfileManagerNotifier],
-    // in a different shared_prefs key.
-    final String? activeModProfileId,
-  }) = _Settings;
+  // Mod profiles are stored in [ModProfilesSettings] and [ModProfileManagerNotifier],
+  // in a different shared_prefs key.
+  final String? activeModProfileId;
 
-  factory Settings.fromJson(Map<String, Object?> json) =>
-      _$SettingsFromJson(json);
+  Settings({
+    this.gameDir,
+    this.gameCoreDir,
+    this.modsDir,
+    this.hasCustomModsDir = false,
+    this.isRulesHotReloadEnabled = false,
+    this.windowXPos,
+    this.windowYPos,
+    this.windowWidth,
+    this.windowHeight,
+    this.isMaximized,
+    this.isMinimized,
+    this.defaultTool,
+    this.jre23VmparamsFilename,
+    this.useJre23,
+    this.showJre23ConsoleWindow = true,
+    this.enableDirectLaunch = false,
+    this.launchSettings = const LaunchSettings(),
+    this.lastStarsectorVersion,
+    this.isUpdatesFieldShown = true,
+    this.modsGridState,
+    this.shouldAutoUpdateOnLaunch = false,
+    this.secondsBetweenModFolderChecks = 15,
+    this.toastDurationSeconds = 7,
+    this.maxHttpRequestsAtOnce = 20,
+    this.folderNamingSetting =
+        FolderNamingSetting.allFoldersVersioned,
+    this.keepLastNVersions,
+    this.allowCrashReporting,
+    this.updateToPrereleases = false,
+    this.autoEnableAndDisableDependencies = false,
+    this.enableLauncherPrecheck = true,
+    this.modUpdateBehavior = ModUpdateBehavior.switchToNewVersionIfWasEnabled,
+    this.userId = '',
+    this.hasHiddenForumDarkModeTip,
+    this.activeModProfileId,
+  });
 }
 
+@MappableEnum()
 enum FolderNamingSetting {
-  /// Always keeps one folder the same name, always containing the highest installed version.
-  doNotChangeNameForHighestVersion(0),
-
-  /// Every folder has the version appended to it.
-  allFoldersVersioned(1),
-
-  // Manual folder naming, use at own risk.
-  doNotChangeNamesEver(2);
-
-  const FolderNamingSetting(this.value);
-
-  final num value;
+  @MappableValue(0)
+  doNotChangeNameForHighestVersion,
+  @MappableValue(1)
+  allFoldersVersioned,
+  @MappableValue(2)
+  doNotChangeNamesEver;
 }
 
+@MappableEnum()
 enum ModUpdateBehavior { doNotChange, switchToNewVersionIfWasEnabled }
 
 /// When settings change, save them to shared prefs
@@ -158,13 +186,6 @@ class SettingSaver extends Notifier<Settings> {
     } else {
       return _setDefaults(Settings());
     }
-
-    // final gameDir = defaultGamePath()?.absolute;
-    // if (gameDir == null) {
-    //   return Settings();
-    // } else {
-    //   return Settings(gameDir: gameDir.path, modsDir: ref.read(modFolderPath)?.path);
-    // }
   }
 
   void update(Settings Function(Settings) update) {
@@ -210,23 +231,5 @@ class SettingSaver extends Notifier<Settings> {
     // Save to shared prefs
     writeAppSettings(newState);
     return newState;
-  }
-}
-
-class JsonDirectoryConverter implements JsonConverter<Directory?, String?> {
-  const JsonDirectoryConverter();
-
-  @override
-  Directory? fromJson(String? json) {
-    if (json == null) {
-      return null;
-    } else {
-      return json.toDirectory();
-    }
-  }
-
-  @override
-  String? toJson(Directory? object) {
-    return object?.path;
   }
 }

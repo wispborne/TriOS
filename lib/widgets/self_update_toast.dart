@@ -85,7 +85,7 @@ class SelfUpdateToast extends ConsumerWidget {
                         TriOSDownloadProgressIndicator(
                           value: ref.watch(AppState.selfUpdate).valueOrNull ??
                               const TriOSDownloadProgress(0, 0,
-                                  isIndeterminate: true),
+                                  isIndeterminate: false),
                         ),
                       ],
                     ),

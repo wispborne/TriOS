@@ -12,6 +12,7 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:toastification/toastification.dart';
 import 'package:trios/chipper/utils.dart';
+import 'package:trios/onboarding/onboarding_page.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/self_updater/script_generator.dart';
 import 'package:trios/trios/self_updater/self_updater.dart';
@@ -80,6 +81,13 @@ void main() async {
       );
     });
   }
+
+  onAppLoadedActions.add((context) async {
+    showDialog(
+      context: context,
+      builder: (context) => const OnboardingDialog(),
+    );
+  });
 
   // Set up Sentry
   try {

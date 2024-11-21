@@ -11,9 +11,11 @@ import 'package:trios/thirdparty/dartx/string.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/utils/platform_paths.dart';
 import 'package:trios/utils/util.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
 import 'package:trios/widgets/disable.dart';
+import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/settings_group.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:trios/widgets/text_with_icon.dart';
@@ -127,7 +129,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         ),
                         Padding(
                           padding: const EdgeInsets.only(top: 8.0),
-                          child: Tooltip(
+                          child: MovingTooltipWidget.text(
                             message: "Play with fire.",
                             child: CheckboxWithLabel(
                               value: ref.watch(appSettings.select(
@@ -224,7 +226,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       final lastNVersionsSetting = ref.watch(
                           appSettings.select((s) => s.keepLastNVersions));
                       return SettingsGroup(name: "Mod Organization", children: [
-                        Tooltip(
+                        MovingTooltipWidget.text(
                           message:
                               "If enabled, TriOS will always add the version number to the folder name when installing a mod."
                               "\nFor example; LazyLib-1.8b, LazyLib-1.8, LazyLib-1.7."
@@ -283,7 +285,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                               left: leftTextOptionPadding, top: 8),
                           child: Row(
                             children: [
-                              Tooltip(
+                              MovingTooltipWidget.text(
                                 message:
                                     "If you have multiple versions of a mod, this will keep the last N versions of each mod."
                                     "\n\nOlder versions will be automatically deleted when a new one is installed.",
@@ -296,11 +298,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                       child: DropdownButton<int>(
                                         value: lastNVersionsSetting,
                                         items: [
-                                          const DropdownMenuItem(
-                                              value: null, child: Text(" ∞")),
-                                          for (int i = 1; i <= 10; i++)
+                                          for (int i = 2; i <= 10; i++)
                                             DropdownMenuItem(
                                                 value: i, child: Text(" $i")),
+                                          const DropdownMenuItem(
+                                              value: null, child: Text(" ∞")),
                                         ],
                                         onChanged: (value) {
                                           ref.read(appSettings.notifier).update(
@@ -329,7 +331,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                           isEnabled: lastNVersionsSetting != null,
                           child: Padding(
                             padding: const EdgeInsets.only(top: 16),
-                            child: Tooltip(
+                            child: MovingTooltipWidget.text(
                               message: switch (lastNVersionsSetting) {
                                 null => "",
                                 1 =>
@@ -400,7 +402,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        Tooltip(
+                        MovingTooltipWidget.text(
                           message:
                               "When checked, updating an enabled mod switches to the new version.",
                           child: CheckboxWithLabel(
@@ -418,7 +420,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                             : ModUpdateBehavior.doNotChange));
                               });
                             },
-                            labelWidget: const Text("Auto-swap to new versions"),
+                            labelWidget:
+                                const Text("Auto-swap to new versions"),
                           ),
                         ),
                       ]);
@@ -430,7 +433,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Tooltip(
+                            MovingTooltipWidget.text(
                               message:
                                   "This sets how often we check if there are new or changed mods in your folder.\nA shorter time means more frequent checks.\nDoes not scan when ${Constants.appName} is in the background.",
                               child: Padding(
@@ -503,7 +506,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                             left: leftTextOptionPadding, top: 16),
                         child: ConstrainedBox(
                           constraints: const BoxConstraints(maxWidth: 400),
-                          child: Tooltip(
+                          child: MovingTooltipWidget.text(
                             message:
                                 "Affects how quickly Version Checker searches. If version checker is showing timeout errors, reduce this number.",
                             child: Column(
@@ -540,7 +543,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       // Checkbox for enabling crash reporting
                       Padding(
                         padding: const EdgeInsets.only(top: 16),
-                        child: Tooltip(
+                        child: MovingTooltipWidget.text(
                           message:
                               "This allows ${Constants.appName} to send crash/error reports to get fixed.\nNo personal/identifiable data is sent.\nWill soft-restart ${Constants.appName}.",
                           child: CheckboxWithLabel(
@@ -558,7 +561,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       ),
                       Padding(
                         padding: const EdgeInsets.only(top: 16),
-                        child: Tooltip(
+                        child: MovingTooltipWidget.text(
                           message:
                               "Whether to check for mod dependencies and prevent launching if they aren't met."
                               "\nDisable if TriOS is getting them wrong, or you'd just like to use vanilla dependency check behavior.",
@@ -630,16 +633,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     setState(() {
       gamePathExists = dirExists;
     });
-  }
-
-  bool validateGameFolderPath(String newGameDir) {
-    try {
-      if (newGameDir.isEmpty) return false;
-      return Directory(newGameDir).existsSync();
-    } catch (e) {
-      Fimber.w("Error validating game folder path", ex: e);
-      return false;
-    }
   }
 }
 

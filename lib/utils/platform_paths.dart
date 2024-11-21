@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/util.dart';
 
 File getVmparamsFile(Directory gamePath, {TargetPlatform? platform}) {
@@ -62,4 +63,15 @@ FileSystemEntity getGameExecutable(Directory gamePath, {TargetPlatform? platform
   }
       .toFile()
       .normalize;
+}
+
+
+bool validateGameFolderPath(String newGameDir) {
+  try {
+    if (newGameDir.isEmpty) return false;
+    return getGameExecutable(newGameDir.toDirectory()).existsSync();
+  } catch (e) {
+    Fimber.w("Error validating game folder path", ex: e);
+    return false;
+  }
 }

@@ -3,7 +3,7 @@ import 'package:dart_mappable/dart_mappable.dart';
 part 'graphics_lib_info.mapper.dart';
 
 @MappableClass()
-class GraphicsLibInfo {
+class GraphicsLibInfo with GraphicsLibInfoMappable {
   MapType mapType;
   String relativeFilePath;
 

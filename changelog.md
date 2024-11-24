@@ -14,7 +14,8 @@
 - Fixed
   - Mod download notification url can't show more than 3 lines anymore.
   - Creating a new mod profile now uses your current mods.
-  - TriOS update notification shows download size before downloading. 
+  - TriOS update notification shows download size before downloading.
+  - Delete Mods not working.
 - Changed
   - "Launch" button now reacts to clicks a bit faster and is more clear that the game's running.
 

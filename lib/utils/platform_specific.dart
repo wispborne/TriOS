@@ -61,7 +61,7 @@ bool windowsIsAdmin() {
 }
 
 void _moveToRecycleBinWindows(String path, bool deleteIfFailed) {
-  final filePath = TEXT(path);
+  final filePath = TEXT('$path\0'); // Ensure double null-termination
 
   final fileOpStruct = calloc<SHFILEOPSTRUCT>()
     ..ref.wFunc = FO_DELETE
@@ -76,12 +76,18 @@ void _moveToRecycleBinWindows(String path, bool deleteIfFailed) {
   calloc.free(fileOpStruct);
 
   if (result != 0) {
-    Fimber.w("Failed to move file to Recycle Bin. Reason: $result");
+    Fimber.w("SHFileOperation failed with error code: $result");
 
     if (deleteIfFailed) {
-      File(path).deleteSync();
-      Fimber.i("Deleted file: $path");
+      try {
+        File(path).deleteSync(recursive: true);
+        Fimber.i("Deleted file directly: $path");
+      } catch (e) {
+        Fimber.e("Failed to delete file directly: $path. Error: $e");
+      }
     }
+  } else {
+    Fimber.i("Moved to Recycle Bin: $path");
   }
 }
 

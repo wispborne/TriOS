@@ -3,7 +3,7 @@ import 'package:dart_mappable/dart_mappable.dart';
 part 'graphics_lib_config.mapper.dart';
 
 @MappableClass()
-class GraphicsLibConfig {
+class GraphicsLibConfig with GraphicsLibConfigMappable {
   @MappableField(key: 'enableShaders')
   final bool areAnyEffectsEnabled;
 

@@ -195,13 +195,16 @@ class _Smol3State extends ConsumerState<Smol3>
             stateManagerNotNull.enabledRowGroups) {
           final enabledGroupRow = _getEnabledGroupRow(stateManagerNotNull);
           if (enabledGroupRow != null &&
+              gridState?.isGroupEnabledExpanded != null &&
               gridState?.isGroupEnabledExpanded !=
                   stateManagerNotNull.isExpandedGroupedRow(enabledGroupRow)) {
             stateManagerNotNull.toggleExpandedRowGroup(
                 rowGroup: enabledGroupRow);
           }
+
           final disabledGroupRow = _getDisabledGroupRow(stateManagerNotNull);
           if (disabledGroupRow != null &&
+              gridState?.isGroupDisabledExpanded != null &&
               gridState?.isGroupDisabledExpanded !=
                   stateManagerNotNull.isExpandedGroupedRow(disabledGroupRow)) {
             stateManagerNotNull.toggleExpandedRowGroup(

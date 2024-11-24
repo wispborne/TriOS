@@ -281,24 +281,11 @@ class SelfUpdater extends AsyncNotifier<TriOSDownloadProgress?> {
   /// Returns the path of the downloaded file.
   Future<File> downloadRelease(Release release, Directory destDir,
       {String? platform}) async {
-    final platformToUse = platform ?? Platform.operatingSystem;
-
-    // Uses the file with the platform name somewhere in it.
-    final assetNameForPlatform = switch (platformToUse) {
-      "windows" => "windows",
-      "linux" => "linux",
-      "macos" => "macos",
-      _ => throw UnsupportedError("Unsupported platform: $platformToUse"),
-    };
-
-    final downloadLink = release.assets
-        .firstWhereOrNull((element) =>
-            element.name.toLowerCase().contains(assetNameForPlatform))
-        ?.browserDownloadUrl;
+    final downloadLink =
+        getAssetForPlatform(release, platform: platform)?.browserDownloadUrl;
 
     if (downloadLink == null) {
-      throw Exception(
-          "No download link found for platform: $assetNameForPlatform");
+      throw Exception("No download link found for platform.");
     }
 
     Fimber.i("Download link: $downloadLink");
@@ -312,5 +299,20 @@ class SelfUpdater extends AsyncNotifier<TriOSDownloadProgress?> {
     });
 
     return downloadResult;
+  }
+
+  static Asset? getAssetForPlatform(Release release, {String? platform}) {
+    final platformToUse = platform ?? Platform.operatingSystem;
+
+    // Uses the file with the platform name somewhere in it.
+    final assetNameForPlatform = switch (platformToUse) {
+      "windows" => "windows",
+      "linux" => "linux",
+      "macos" => "macos",
+      _ => throw UnsupportedError("Unsupported platform: $platformToUse"),
+    };
+
+    return release.assets.firstWhereOrNull(
+        (element) => element.name.toLowerCase().contains(assetNameForPlatform));
   }
 }

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:toastification/toastification.dart';
 import 'package:trios/models/download_progress.dart';
 import 'package:trios/themes/theme_manager.dart';
+import 'package:trios/trios/self_updater/self_updater.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/download_progress_indicator.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
@@ -68,8 +69,10 @@ class SelfUpdateToast extends ConsumerWidget {
                             Padding(
                               padding: const EdgeInsets.all(8.0),
                               child: Disable(
-                                isEnabled:
-                                    ref.watch(AppState.selfUpdate).valueOrNull == null,
+                                isEnabled: ref
+                                        .watch(AppState.selfUpdate)
+                                        .valueOrNull ==
+                                    null,
                                 child: ElevatedButton.icon(
                                     onPressed: () {
                                       ref
@@ -84,7 +87,11 @@ class SelfUpdateToast extends ConsumerWidget {
                         ),
                         TriOSDownloadProgressIndicator(
                           value: ref.watch(AppState.selfUpdate).valueOrNull ??
-                              const TriOSDownloadProgress(0, 0,
+                              TriOSDownloadProgress(
+                                  0,
+                                  SelfUpdater.getAssetForPlatform(latestRelease)
+                                          ?.size ??
+                                      0,
                                   isIndeterminate: false),
                         ),
                       ],

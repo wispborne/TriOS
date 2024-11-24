@@ -83,10 +83,9 @@ class _OnboardingDialogState extends ConsumerState<OnboardingDialog> {
                   padding: const EdgeInsets.only(left: 32),
                   child: Row(
                     children: [
-                      if (validateGameFolderPath(textEditingController.text))
-                        const Padding(
-                          padding: EdgeInsets.only(right: 8),
-                          child: Icon(Icons.check),
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: Icon(validateGameFolderPath(textEditingController.text) ? Icons.check : Icons.close),
                         ),
                       Expanded(
                         child: TextFormField(

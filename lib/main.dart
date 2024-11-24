@@ -149,8 +149,8 @@ void main() async {
     Rect windowFrame = Rect.fromLTWH(
         settings?.windowXPos ?? 0,
         settings?.windowYPos ?? 0,
-        settings?.windowWidth ?? 800,
-        settings?.windowHeight ?? 600);
+        settings?.windowWidth ?? 900,
+        settings?.windowHeight ?? 700);
     setWindowFrame(windowFrame);
     if (settings?.isMaximized ?? false) {
       windowManager.maximize();

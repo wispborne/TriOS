@@ -123,7 +123,7 @@ class VramChecker {
         "Mods folders: ${foldersToCheck.joinToString(transform: (it) => it.absolute.toString())}",
         verboseOut);
 
-    Squadron.setId('VRAM_CHECKER');
+    // Squadron.setId('VRAM_CHECKER');
     // Squadron.logLevel = SquadronLogLevel.config;
     // Squadron.setLogger(ConsoleSquadronLogger());
     const settings =

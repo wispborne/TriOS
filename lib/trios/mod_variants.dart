@@ -10,7 +10,7 @@ import 'package:trios/models/mod_variant.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 
-import '../mod_manager/audit_page.dart';
+import '../mod_manager/audit_log.dart';
 import '../mod_manager/mod_manager_logic.dart';
 import '../models/mod.dart';
 import '../utils/logging.dart';
@@ -203,7 +203,8 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
   Future<void> validateModDependencies({
     List<String>? modsToFreeze,
   }) async {
-    if (ref.watch(appSettings.select((value) => value.autoEnableAndDisableDependencies)) ==
+    if (ref.watch(appSettings
+            .select((value) => value.autoEnableAndDisableDependencies)) ==
         false) {
       Fimber.d("Auto dependency validation is disabled.");
       return;

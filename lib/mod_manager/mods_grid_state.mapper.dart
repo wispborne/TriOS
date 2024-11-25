@@ -13,6 +13,7 @@ class ModsGridStateMapper extends ClassMapperBase<ModsGridState> {
   static ModsGridStateMapper ensureInitialized() {
     if (_instance == null) {
       MapperContainer.globals.use(_instance = ModsGridStateMapper._());
+      SmolColumnMapper.ensureInitialized();
     }
     return _instance!;
   }
@@ -30,17 +31,32 @@ class ModsGridStateMapper extends ClassMapperBase<ModsGridState> {
   static const Field<ModsGridState, bool> _f$isGroupDisabledExpanded = Field(
       'isGroupDisabledExpanded', _$isGroupDisabledExpanded,
       opt: true, def: true);
+  static SmolColumn? _$sortedColumn(ModsGridState v) => v.sortedColumn;
+  static const Field<ModsGridState, SmolColumn> _f$sortedColumn =
+      Field('sortedColumn', _$sortedColumn, opt: true);
+  static bool? _$sortAscending(ModsGridState v) => v.sortAscending;
+  static const Field<ModsGridState, bool> _f$sortAscending =
+      Field('sortAscending', _$sortAscending, opt: true);
+  static List<SmolColumn>? _$columnOrder(ModsGridState v) => v.columnOrder;
+  static const Field<ModsGridState, List<SmolColumn>> _f$columnOrder =
+      Field('columnOrder', _$columnOrder, opt: true);
 
   @override
   final MappableFields<ModsGridState> fields = const {
     #isGroupEnabledExpanded: _f$isGroupEnabledExpanded,
     #isGroupDisabledExpanded: _f$isGroupDisabledExpanded,
+    #sortedColumn: _f$sortedColumn,
+    #sortAscending: _f$sortAscending,
+    #columnOrder: _f$columnOrder,
   };
 
   static ModsGridState _instantiate(DecodingData data) {
     return ModsGridState(
         isGroupEnabledExpanded: data.dec(_f$isGroupEnabledExpanded),
-        isGroupDisabledExpanded: data.dec(_f$isGroupDisabledExpanded));
+        isGroupDisabledExpanded: data.dec(_f$isGroupDisabledExpanded),
+        sortedColumn: data.dec(_f$sortedColumn),
+        sortAscending: data.dec(_f$sortAscending),
+        columnOrder: data.dec(_f$columnOrder));
   }
 
   @override
@@ -96,7 +112,14 @@ extension ModsGridStateValueCopy<$R, $Out>
 
 abstract class ModsGridStateCopyWith<$R, $In extends ModsGridState, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
-  $R call({bool? isGroupEnabledExpanded, bool? isGroupDisabledExpanded});
+  ListCopyWith<$R, SmolColumn, ObjectCopyWith<$R, SmolColumn, SmolColumn>>?
+      get columnOrder;
+  $R call(
+      {bool? isGroupEnabledExpanded,
+      bool? isGroupDisabledExpanded,
+      SmolColumn? sortedColumn,
+      bool? sortAscending,
+      List<SmolColumn>? columnOrder});
   ModsGridStateCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
 
@@ -109,19 +132,38 @@ class _ModsGridStateCopyWithImpl<$R, $Out>
   late final ClassMapperBase<ModsGridState> $mapper =
       ModsGridStateMapper.ensureInitialized();
   @override
-  $R call({bool? isGroupEnabledExpanded, bool? isGroupDisabledExpanded}) =>
+  ListCopyWith<$R, SmolColumn, ObjectCopyWith<$R, SmolColumn, SmolColumn>>?
+      get columnOrder => $value.columnOrder != null
+          ? ListCopyWith(
+              $value.columnOrder!,
+              (v, t) => ObjectCopyWith(v, $identity, t),
+              (v) => call(columnOrder: v))
+          : null;
+  @override
+  $R call(
+          {bool? isGroupEnabledExpanded,
+          bool? isGroupDisabledExpanded,
+          Object? sortedColumn = $none,
+          Object? sortAscending = $none,
+          Object? columnOrder = $none}) =>
       $apply(FieldCopyWithData({
         if (isGroupEnabledExpanded != null)
           #isGroupEnabledExpanded: isGroupEnabledExpanded,
         if (isGroupDisabledExpanded != null)
-          #isGroupDisabledExpanded: isGroupDisabledExpanded
+          #isGroupDisabledExpanded: isGroupDisabledExpanded,
+        if (sortedColumn != $none) #sortedColumn: sortedColumn,
+        if (sortAscending != $none) #sortAscending: sortAscending,
+        if (columnOrder != $none) #columnOrder: columnOrder
       }));
   @override
   ModsGridState $make(CopyWithData data) => ModsGridState(
       isGroupEnabledExpanded:
           data.get(#isGroupEnabledExpanded, or: $value.isGroupEnabledExpanded),
       isGroupDisabledExpanded: data.get(#isGroupDisabledExpanded,
-          or: $value.isGroupDisabledExpanded));
+          or: $value.isGroupDisabledExpanded),
+      sortedColumn: data.get(#sortedColumn, or: $value.sortedColumn),
+      sortAscending: data.get(#sortAscending, or: $value.sortAscending),
+      columnOrder: data.get(#columnOrder, or: $value.columnOrder));
 
   @override
   ModsGridStateCopyWith<$R2, ModsGridState, $Out2> $chain<$R2, $Out2>(

@@ -22,7 +22,7 @@ import 'package:trios/utils/util.dart';
 import 'package:trios/vram_estimator/vram_estimator.dart';
 
 import '../jre_manager/jre_manager_logic.dart';
-import '../mod_manager/audit_page.dart';
+import '../mod_manager/audit_log.dart';
 import '../mod_manager/version_checker.dart';
 import '../models/enabled_mods.dart';
 import '../models/mod.dart';
@@ -80,8 +80,7 @@ class AppState {
   });
 
   static final modAudit =
-      StateNotifierProvider<ModAuditNotifier, List<AuditEntry>>(
-          (ref) => ModAuditNotifier());
+      AsyncNotifierProvider<AuditLog, List<AuditEntry>>(AuditLog.new);
 
   static final modCompatibility = Provider<Map<SmolId, DependencyCheck>>((ref) {
     final modVariants = ref.watch(AppState.modVariants).valueOrNull ?? [];

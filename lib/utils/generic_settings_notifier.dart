@@ -4,78 +4,91 @@ import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mutex/mutex.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:toml/toml.dart';
 import 'package:trios/utils/extensions.dart';
 
 import '../trios/constants.dart';
 import 'logging.dart';
 
-/// Creates a settings file that can notify on changes.
+/// A generic class for managing settings stored in TOML or JSON files.
+///
+/// This class handles serialization and deserialization of settings objects,
+/// and provides mechanisms for thread-safe updates and automatic persistence
+/// to disk.
 abstract class GenericSettingsNotifier<T> extends AsyncNotifier<T> {
+  late File settingsFile;
   late String _fileName;
-  late File _file;
   final _mutex = Mutex();
 
-  // Subclasses should provide a factory for default state
-  T Function() get defaultStateFactory;
+  /// Specifies the file format for the settings file.
+  /// Must be overridden in subclasses to return either `FileFormat.toml` or `FileFormat.json`.
+  FileFormat get fileFormat;
 
-  // Subclasses must provide a function for serialization (to JSON)
-  dynamic Function(T) get toJson;
+  /// Subclasses must provide a factory for default state creation.
+  T Function() get createDefaultState;
 
-  // Subclasses must provide a function for deserialization (from JSON)
-  T Function(dynamic) get fromJson;
+  /// Subclasses must provide a function to serialize the settings to a map.
+  Map<String, dynamic> Function(T) get toMap;
 
-  // Provide file name during initialization
+  /// Subclasses must provide a function to deserialize a map into the settings object.
+  T Function(Map<String, dynamic>) get fromMap;
+
+  /// The name of the file where settings will be stored.
   String get fileName;
 
-  // This is called when the notifier is first created. It will initialize and load the state.
+  /// Initializes and loads the state from the settings file (TOML or JSON),
+  /// or uses the default state if the file is missing or invalid.
   @override
   Future<T> build() async {
     _fileName = fileName;
-    _file = await _getFile();
+    settingsFile = await _getFile();
 
-    // Use mutex to prevent race conditions during file access
     return await _mutex.protect(() async {
-      if (await _file.exists()) {
+      if (await settingsFile.exists()) {
         try {
-          final contents = await _file.readAsString();
-          // pls
-          final jsonData = jsonDecode(jsonDecode(contents));
-          final loadedState = fromJson(jsonData);
+          final contents = await settingsFile.readAsString();
+          final loadedState = fileFormat == FileFormat.toml
+              ? fromMap(TomlDocument.parse(contents).toMap())
+              : fromMap(jsonDecode(contents) as Map<String, dynamic>);
           Fimber.i("State successfully loaded from disk.");
           return loadedState;
         } catch (e, stacktrace) {
           Fimber.e("Error reading from disk, creating backup: $e",
               ex: e, stacktrace: stacktrace);
           await _createBackup();
-          return defaultStateFactory(); // Return default state if error occurs
+          return createDefaultState();
         }
       } else {
         Fimber.i("File does not exist, creating default state.");
-        await _writeToDisk(defaultStateFactory());
-        return defaultStateFactory();
+        await writeSettingsToDisk(createDefaultState());
+        return createDefaultState();
       }
     });
   }
 
-  // Update the state using a mutator function and persist to disk if changed
+  /// Updates the current state using the provided mutator function and persists the updated state to disk.
+  ///
+  /// The `mutator` function modifies the current state, and the updated state is saved if changes are detected.
+  /// If an error occurs during the update, the optional `onError` callback is invoked.
   @override
   Future<T> update(
     FutureOr<T> Function(T currentState) mutator, {
     FutureOr<T> Function(Object, StackTrace)? onError,
   }) async {
     final oldState = state.asData?.value;
-    if (oldState == null) return oldState!;
+    if (oldState == null) {
+      throw StateError('Cannot update because the current state is null.');
+    }
 
     try {
       final newState = await mutator(oldState);
 
       if (newState != oldState) {
-        state = AsyncData(newState); // Notify listeners immediately
+        state = AsyncData(newState); // Notify listeners
         Fimber.i("State updated, writing to disk...");
 
         await _mutex.protect(() async {
-          await _writeToDisk(newState);
+          await writeSettingsToDisk(newState);
           Fimber.i("State successfully written to disk.");
         });
       }
@@ -92,33 +105,44 @@ abstract class GenericSettingsNotifier<T> extends AsyncNotifier<T> {
     }
   }
 
-  // Writes the given state to disk as JSON
-  Future<void> _writeToDisk(T currentState) async {
-    final jsonData = toJson(currentState);
-    final jsonString = jsonEncode(jsonData);
-    await _file.writeAsString(jsonString);
+  /// Writes the provided state to the settings file (TOML or JSON) on disk.
+  Future<void> writeSettingsToDisk(T currentState) async {
+    try {
+      final serializedData = fileFormat == FileFormat.toml
+          ? TomlDocument.fromMap(toMap(currentState)).toString()
+          : jsonEncode(toMap(currentState));
+      await settingsFile.writeAsString(serializedData);
+    } catch (e, stackTrace) {
+      Fimber.e("Error serializing and saving settings data: $e",
+          ex: e, stacktrace: stackTrace);
+      rethrow;
+    }
   }
 
-  // Create a backup of the corrupted file with a numbered .bak extension
+  /// Creates a backup of the current settings file with a `.bak` extension.
   Future<void> _createBackup() async {
     int backupNumber = 1;
     File backupFile;
     do {
-      backupFile = _file.parent
+      backupFile = settingsFile.parent
           .resolve("${_fileName}_backup_$backupNumber.bak")
           .toFile();
       backupNumber++;
     } while (await backupFile.exists());
 
-    await _file.copy(backupFile.path);
+    await settingsFile.copy(backupFile.path);
     Fimber.i("Backup created at ${backupFile.path}");
   }
 
+  /// Resolves the path for the settings file and ensures the directory exists.
   Future<File> _getFile() async {
     final dir = await configDataFolderPath;
-    await dir.create(recursive: true); // Ensure directory exists
+    await dir.create(recursive: true);
     final path = dir.resolve(_fileName).path;
     Fimber.i("File path resolved: $path");
     return File(path);
   }
 }
+
+/// Supported file formats for the settings file.
+enum FileFormat { toml, json }

@@ -705,3 +705,16 @@ extension FutureListExt<T> on List<Future<T>> {
     return results;
   }
 }
+
+extension EnumFromStringCaseInsensitive on Iterable {
+
+  /// Converts a string to an enum value of the provided enum type,
+  /// ignoring case sensitivity. Returns `null` if no match is found.
+  /// Use `enum.values.enumFromStringCaseInsensitive<String>("string")` to get the enum value.
+  T? enumFromStringCaseInsensitive<T>(String value) {
+    return firstWhere(
+          (e) => e.toString().split('.').last.toLowerCase() == value.toLowerCase(),
+      orElse: () => null,
+    ) as T?;
+  }
+}

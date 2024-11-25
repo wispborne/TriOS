@@ -5,7 +5,7 @@
 list(APPEND FLUTTER_PLUGIN_LIST
   desktop_drop
   irondash_engine_context
-  screen_retriever
+  screen_retriever_linux
   sentry_flutter
   super_native_extensions
   url_launcher_linux

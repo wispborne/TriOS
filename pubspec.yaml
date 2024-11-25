@@ -35,7 +35,7 @@ dependencies:
   freezed_annotation: ^2.4.1
   json_annotation: ^4.9.0
   riverpod_annotation: ^2.3.5
-  squadron_builder: ^2.4.5
+  squadron_builder: ^6.1.1
   # Collections & Utilities
   collection: ^1.18.0
   dart_extensions_methods: ^2.0.0
@@ -56,7 +56,7 @@ dependencies:
   # Analytics
   sentry_flutter: ^8.8.0
   # UI & Widgets
-  desktop_drop: ^0.4.4
+  desktop_drop: ^0.5.0
   dropdown_button2: ^2.3.9
   fl_chart: ^0.69.0
   flutter_animate: ^4.5.0
@@ -78,7 +78,7 @@ dependencies:
   url_launcher: ^6.2.6
   vs_scrollbar: ^1.0.0
   # Logging & Debugging
-  logger: ^2.4.0
+  logger: ^2.5.0
   # Platform-Specific
   ffi: ^2.1.2
   windows_system_info: ^0.0.4
@@ -100,8 +100,8 @@ dependencies:
   ktx: ^1.1.6
   mutex: ^3.1.0
   platform_info: ^5.0.0
-  screen_retriever: ^0.1.9
-  squadron: ^5.1.6
+  screen_retriever: ^0.2.0
+  squadron: ^6.1.3
   stack_trace: ^1.11.1
   uuid: ^4.4.0
   # For pluto_grid_plus
@@ -115,6 +115,7 @@ dependencies:
   flutter_inappwebview: ^6.1.5
   flutter_cache_manager: ^3.4.1
   defer_pointer: ^0.0.2
+  toml: ^0.16.0
 
 # Uncommented & Copied
 #  adaptive_theme: ^3.6.0
@@ -139,7 +140,7 @@ dev_dependencies:
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^4.0.0
+  flutter_lints: ^5.0.0
   riverpod_generator: ^2.4.0
   build_runner: ^2.4.12
   #  custom_lint: ^0.6.4
@@ -147,8 +148,8 @@ dev_dependencies:
   json_serializable: ^6.8.0
   #  riverpod_lint: ^2.3.9 # <https://github.com/google/reflectable.dart/pull/326>
   #analyzer: ^6.4.1
-  flutter_launcher_icons: "^0.13.1"
-  ffigen: ^13.0.0
+  flutter_launcher_icons: ^0.14.1
+  ffigen: ^16.0.0
   msix: ^3.16.7
   dart_mappable_builder: ^4.2.3
 

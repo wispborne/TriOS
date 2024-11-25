@@ -3,7 +3,7 @@
 part of 'image_reader_async.dart';
 
 // **************************************************************************
-// Generator: WorkerGenerator 2.4.2
+// Generator: WorkerGenerator 6.1.1
 // **************************************************************************
 
 /// WorkerService class for ReadImageHeaders
@@ -12,12 +12,10 @@ class _$ReadImageHeadersWorkerService extends ReadImageHeaders
   _$ReadImageHeadersWorkerService() : super();
 
   @override
-  Map<int, CommandHandler> get operations => _operations;
-
-  late final Map<int, CommandHandler> _operations =
+  late final Map<int, CommandHandler> operations =
       Map.unmodifiable(<int, CommandHandler>{
-    _$readGenericId: ($) => readGeneric($.args[0]),
-    _$readPngId: ($) => readPng($.args[0]),
+    _$readGenericId: ($) => readGeneric(_$X.$impl.$dsr0($.args[0])),
+    _$readPngId: ($) => readPng(_$X.$impl.$dsr0($.args[0])),
   });
 
   static const int _$readGenericId = 1;
@@ -25,45 +23,81 @@ class _$ReadImageHeadersWorkerService extends ReadImageHeaders
 }
 
 /// Service initializer for ReadImageHeaders
-WorkerService $ReadImageHeadersInitializer(WorkerRequest startRequest) =>
+WorkerService $ReadImageHeadersInitializer(WorkerRequest $$) =>
     _$ReadImageHeadersWorkerService();
 
-/// Operations map for ReadImageHeaders
-@Deprecated(
-    'squadron_builder now supports "plain old Dart objects" as services. '
-    'Services do not need to derive from WorkerService nor do they need to mix in '
-    'with \$ReadImageHeadersOperations anymore.')
-mixin $ReadImageHeadersOperations on WorkerService {
-  @override
-  // not needed anymore, generated for compatibility with previous versions of squadron_builder
-  Map<int, CommandHandler> get operations => WorkerService.noOperations;
-}
-
 /// Worker for ReadImageHeaders
-class ReadImageHeadersWorker extends Worker implements ReadImageHeaders {
-  ReadImageHeadersWorker({PlatformWorkerHook? platformWorkerHook})
-      : super($ReadImageHeadersActivator,
-            platformWorkerHook: platformWorkerHook);
+base class ReadImageHeadersWorker extends Worker implements ReadImageHeaders {
+  ReadImageHeadersWorker(
+      {PlatformThreadHook? threadHook, ExceptionManager? exceptionManager})
+      : super($ReadImageHeadersActivator(Squadron.platformType));
+
+  ReadImageHeadersWorker.vm(
+      {PlatformThreadHook? threadHook, ExceptionManager? exceptionManager})
+      : super($ReadImageHeadersActivator(SquadronPlatformType.vm));
+
+  ReadImageHeadersWorker.js(
+      {PlatformThreadHook? threadHook, ExceptionManager? exceptionManager})
+      : super($ReadImageHeadersActivator(SquadronPlatformType.js),
+            threadHook: threadHook, exceptionManager: exceptionManager);
+
+  ReadImageHeadersWorker.wasm(
+      {PlatformThreadHook? threadHook, ExceptionManager? exceptionManager})
+      : super($ReadImageHeadersActivator(SquadronPlatformType.wasm));
 
   @override
   Future<ImageHeader?> readGeneric(String path) =>
-      send(_$ReadImageHeadersWorkerService._$readGenericId, args: [path]);
+      send(_$ReadImageHeadersWorkerService._$readGenericId, args: [path])
+          .then(_$X.$impl.$dsr2);
 
   @override
   Future<ImageHeader?> readPng(String path) =>
-      send(_$ReadImageHeadersWorkerService._$readPngId, args: [path]);
+      send(_$ReadImageHeadersWorkerService._$readPngId, args: [path])
+          .then(_$X.$impl.$dsr2);
 }
 
 /// Worker pool for ReadImageHeaders
-class ReadImageHeadersWorkerPool extends WorkerPool<ReadImageHeadersWorker>
+base class ReadImageHeadersWorkerPool extends WorkerPool<ReadImageHeadersWorker>
     implements ReadImageHeaders {
   ReadImageHeadersWorkerPool(
       {ConcurrencySettings? concurrencySettings,
-      PlatformWorkerHook? platformWorkerHook})
+      PlatformThreadHook? threadHook,
+      ExceptionManager? exceptionManager})
       : super(
-            () =>
-                ReadImageHeadersWorker(platformWorkerHook: platformWorkerHook),
-            concurrencySettings: concurrencySettings);
+          (ExceptionManager exceptionManager) => ReadImageHeadersWorker(
+              threadHook: threadHook, exceptionManager: exceptionManager),
+          concurrencySettings: concurrencySettings,
+        );
+
+  ReadImageHeadersWorkerPool.vm(
+      {ConcurrencySettings? concurrencySettings,
+      PlatformThreadHook? threadHook,
+      ExceptionManager? exceptionManager})
+      : super(
+          (ExceptionManager exceptionManager) => ReadImageHeadersWorker.vm(
+              threadHook: threadHook, exceptionManager: exceptionManager),
+          concurrencySettings: concurrencySettings,
+        );
+
+  ReadImageHeadersWorkerPool.js(
+      {ConcurrencySettings? concurrencySettings,
+      PlatformThreadHook? threadHook,
+      ExceptionManager? exceptionManager})
+      : super(
+          (ExceptionManager exceptionManager) => ReadImageHeadersWorker.js(
+              threadHook: threadHook, exceptionManager: exceptionManager),
+          concurrencySettings: concurrencySettings,
+        );
+
+  ReadImageHeadersWorkerPool.wasm(
+      {ConcurrencySettings? concurrencySettings,
+      PlatformThreadHook? threadHook,
+      ExceptionManager? exceptionManager})
+      : super(
+          (ExceptionManager exceptionManager) => ReadImageHeadersWorker.wasm(
+              threadHook: threadHook, exceptionManager: exceptionManager),
+          concurrencySettings: concurrencySettings,
+        );
 
   @override
   Future<ImageHeader?> readGeneric(String path) =>
@@ -71,4 +105,22 @@ class ReadImageHeadersWorkerPool extends WorkerPool<ReadImageHeadersWorker>
 
   @override
   Future<ImageHeader?> readPng(String path) => execute((w) => w.readPng(path));
+}
+
+final class _$X {
+  _$X._();
+
+  static _$X? _impl;
+
+  static _$X get $impl {
+    if (_impl == null) {
+      Squadron.onConverterChanged(() => _impl = _$X._());
+      _impl = _$X._();
+    }
+    return _impl!;
+  }
+
+  late final $dsr0 = Squadron.converter.value<String>();
+  late final $dsr1 = Squadron.converter.value<ImageHeader>();
+  late final $dsr2 = Squadron.converter.nullable($dsr1);
 }

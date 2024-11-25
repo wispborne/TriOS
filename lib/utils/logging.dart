@@ -7,7 +7,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 
 // import 'package:platform_info/platform_info.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
@@ -24,6 +23,7 @@ String? logFilePath;
 
 Logger _consoleLogger = Logger();
 Logger? _fileLogger;
+AdvancedFileOutput? _advancedFileOutput;
 bool _allowSentryReporting = false;
 const useFimber = false;
 bool didLoggingInitializeSuccessfully = false;
@@ -86,6 +86,16 @@ configureLogging({
           logFolderName?.toDirectory().createSync(recursive: true);
         }
 
+        // Closes file handles to the log file if they exist.
+        await _advancedFileOutput?.destroy();
+
+        _advancedFileOutput = AdvancedFileOutput(
+          path: logFolderName!,
+          maxFileSizeKB: 25000,
+          writeImmediately: [Level.error, Level.fatal],
+          latestFileName: logFileName,
+        );
+
         _fileLogger = Logger(
           level: kDebugMode ? Level.debug : Level.info,
           filter: ProductionFilter(),
@@ -97,11 +107,7 @@ configureLogging({
             printTime: true,
             stackTraceMaxLines: 20,
           ),
-          output: AdvancedFileOutput(
-              path: logFolderName!,
-              maxFileSizeKB: 25000,
-              writeImmediately: [Level.error, Level.fatal],
-              latestFileName: logFileName),
+          output: _advancedFileOutput,
         );
 
         // Clean up old log files.

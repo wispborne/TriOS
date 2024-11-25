@@ -8,14 +8,18 @@ import 'package:squadron/squadron.dart';
 
 import 'image_reader_async.dart';
 
-void _start$ReadImageHeaders(WorkerRequest command) {
-  /// VM entry point for ReadImageHeaders
-  run($ReadImageHeadersInitializer, command);
+void main() {
+  /// Web entry point for ReadImageHeaders
+  run($ReadImageHeadersInitializer);
 }
 
 EntryPoint $getReadImageHeadersActivator(SquadronPlatformType platform) {
-  if (platform.isVm) {
-    return _start$ReadImageHeaders;
+  if (platform.isJs) {
+    return Squadron.uri(
+        'lib/vram_estimator/image_reader/image_reader_async.web.g.dart.js');
+  } else if (platform.isWasm) {
+    return Squadron.uri(
+        'lib/vram_estimator/image_reader/image_reader_async.web.g.dart.wasm');
   } else {
     throw UnsupportedError('${platform.label} not supported.');
   }

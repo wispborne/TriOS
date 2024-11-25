@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
+import 'package:dart_mappable/dart_mappable.dart';
 import 'package:defer_pointer/defer_pointer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -49,6 +50,8 @@ import '../widgets/tooltip_frame.dart';
 import 'mod_context_menu.dart';
 import 'mod_summary_panel.dart';
 
+part 'smol3.mapper.dart';
+
 class Smol3 extends ConsumerStatefulWidget {
   const Smol3({super.key});
 
@@ -59,14 +62,6 @@ class Smol3 extends ConsumerStatefulWidget {
 typedef GridStateManagerCallback = Function(PlutoGridStateManager);
 
 final searchQuery = StateProvider.autoDispose<String>((ref) => "");
-
-// final _stateManagerProvider =
-//     StateProvider.autoDispose<PlutoGridStateManager?>((ref) => null);
-
-class SmolGridUiState {
-  int? sortedColumnIdx;
-  bool? sortAscending;
-}
 
 const _standardRowHeight = 40.0;
 const _dependencyAddedRowHeight = 34.0;
@@ -506,6 +501,19 @@ class _Smol3State extends ConsumerState<Smol3>
                           }
                         }
                       },
+                      onColumnsMoved: (event) {
+                        ref.read(appSettings.notifier).update((s) {
+                          return s.copyWith(
+                              modsGridState:
+                                  (s.modsGridState ?? ModsGridState()).copyWith(
+                                      columnOrder: event.columns
+                                          .map((c) => SmolColumn.values
+                                              .enumFromStringCaseInsensitive<
+                                                  SmolColumn?>(c.field))
+                                          .whereNotNull()
+                                          .toList()));
+                        });
+                      },
                       noRowsWidget: Center(
                           child: Container(
                               padding: const EdgeInsets.all(20),
@@ -557,9 +565,9 @@ class _Smol3State extends ConsumerState<Smol3>
 
   void _toggleRowGroup(PlutoGridStateManager stateManager, PlutoRow row) {
     final isEnabledRow =
-        row.cells[_Fields.enableDisable.toString()]?.value == 'Enabled';
+        row.cells[SmolColumn.enableDisable.toString()]?.value == 'Enabled';
     final isDisabledRow =
-        row.cells[_Fields.enableDisable.toString()]?.value == 'Disabled';
+        row.cells[SmolColumn.enableDisable.toString()]?.value == 'Disabled';
 
     ref.read(appSettings.notifier).update((s) {
       if (isEnabledRow) {
@@ -579,13 +587,14 @@ class _Smol3State extends ConsumerState<Smol3>
 
   PlutoRow? _getEnabledGroupRow(PlutoGridStateManager stateManager) {
     return stateManager.refRows.originalList.firstWhereOrNull((row) {
-      return row.cells[_Fields.enableDisable.toString()]?.value == 'Enabled';
+      return row.cells[SmolColumn.enableDisable.toString()]?.value == 'Enabled';
     });
   }
 
   PlutoRow? _getDisabledGroupRow(PlutoGridStateManager stateManager) {
     return stateManager.refRows.originalList.firstWhereOrNull((row) {
-      return row.cells[_Fields.enableDisable.toString()]?.value == 'Disabled';
+      return row.cells[SmolColumn.enableDisable.toString()]?.value ==
+          'Disabled';
     });
   }
 
@@ -668,10 +677,10 @@ class _Smol3State extends ConsumerState<Smol3>
     }
     if (sortAscending) {
       stateManager.sortAscending(sortedColumn ??
-          gridColumns.firstWhere((e) => e.field == _Fields.name.toString()));
+          gridColumns.firstWhere((e) => e.field == SmolColumn.name.toString()));
     } else {
       stateManager.sortDescending(sortedColumn ??
-          gridColumns.firstWhere((e) => e.field == _Fields.name.toString()));
+          gridColumns.firstWhere((e) => e.field == SmolColumn.name.toString()));
     }
 
     // Notify listeners once after all updates in the row
@@ -682,18 +691,18 @@ class _Smol3State extends ConsumerState<Smol3>
       {bool shouldSort = true}) {
     List<PlutoRow> sortIfNeeded(List<PlutoRow> rows) {
       if (shouldSort) {
-        Fimber.i(rows
-                .firstOrNull?.cells[_Fields.name.toString()]!.value.runtimeType
+        Fimber.i(rows.firstOrNull?.cells[SmolColumn.name.toString()]!.value
+                .runtimeType
                 .toString() ??
             "");
         final isNum =
-            rows.firstOrNull?.cells[_Fields.name.toString()]?.value is num;
+            rows.firstOrNull?.cells[SmolColumn.name.toString()]?.value is num;
         return isNum
             ? rows.sortedBy<num>((e) {
-                return e.cells[_Fields.name.toString()]?.value;
+                return e.cells[SmolColumn.name.toString()]?.value;
               })
             : rows.sortedBy<String>((e) {
-                return e.cells[_Fields.name.toString()]?.value?.toString() ??
+                return e.cells[SmolColumn.name.toString()]?.value?.toString() ??
                     "";
               });
       }
@@ -722,10 +731,10 @@ class _Smol3State extends ConsumerState<Smol3>
     Map<String, RemoteVersionCheckResult>? versionCheckResults,
     bool isGameRunning,
   ) {
-    return [
+    final columns = [
       PlutoColumn(
         title: '',
-        field: _Fields.enableDisable.toString(),
+        field: SmolColumn.enableDisable.toString(),
         type: PlutoColumnType.select(['Enabled', 'Disabled']),
         width: 0.00000000000001,
         suppressedAutoSize: true,
@@ -744,7 +753,7 @@ class _Smol3State extends ConsumerState<Smol3>
 
           double widthOFColsBeforeVram = 0;
           for (final column in rendererContext.stateManager.refColumns) {
-            if (column.field == _Fields.vramEstimate.toString()) break;
+            if (column.field == SmolColumn.vramEstimate.toString()) break;
             widthOFColsBeforeVram += column.width;
           }
           final vramMap = ref.watch(AppState.vramEstimatorProvider).modVramInfo;
@@ -862,7 +871,7 @@ class _Smol3State extends ConsumerState<Smol3>
           // Version selector
           width: versionSelectorWidth + 20,
           minWidth: versionSelectorWidth + 20,
-          field: _Fields.versionSelector.toString(),
+          field: SmolColumn.versionSelector.toString(),
           type: PlutoColumnType.text(),
           enableSorting: false,
           enableAutoEditing: false,
@@ -897,7 +906,7 @@ class _Smol3State extends ConsumerState<Smol3>
           // Utility/Total Conversion icon
           width: 40,
           minWidth: 40,
-          field: _Fields.utilityIcon.toString(),
+          field: SmolColumn.utilityIcon.toString(),
           type: PlutoColumnType.number(),
           renderer: (rendererContext) {
             if (allMods.isEmpty) return const SizedBox();
@@ -913,7 +922,7 @@ class _Smol3State extends ConsumerState<Smol3>
         // Mod icon
         width: 43,
         minWidth: 43,
-        field: _Fields.modIcon.toString(),
+        field: SmolColumn.modIcon.toString(),
         type: PlutoColumnType.text(),
         enableSorting: false,
         renderer: (rendererContext) => Builder(builder: (context) {
@@ -937,7 +946,7 @@ class _Smol3State extends ConsumerState<Smol3>
       ),
       PlutoColumn(
         title: 'Name',
-        field: _Fields.name.toString(),
+        field: SmolColumn.name.toString(),
         type: PlutoColumnType.text(),
         renderer: (rendererContext) => Builder(builder: (context) {
           if (allMods.isEmpty) return const SizedBox();
@@ -1111,7 +1120,7 @@ class _Smol3State extends ConsumerState<Smol3>
       ),
       PlutoColumn(
         title: 'Author',
-        field: _Fields.author.toString(),
+        field: SmolColumn.author.toString(),
         type: PlutoColumnType.text(),
         textAlign: PlutoColumnTextAlign.left,
         // onSort: (columnIndex, ascending) => _onSort(
@@ -1146,7 +1155,7 @@ class _Smol3State extends ConsumerState<Smol3>
       ),
       PlutoColumn(
         title: 'Version(s)',
-        field: _Fields.versions.toString(),
+        field: SmolColumn.versions.toString(),
         minWidth: 100,
         type: PlutoColumnType.text(),
         renderer: (rendererContext) => Builder(builder: (context) {
@@ -1340,7 +1349,7 @@ class _Smol3State extends ConsumerState<Smol3>
       ),
       PlutoColumn(
         title: 'VRAM Est.',
-        field: _Fields.vramEstimate.toString(),
+        field: SmolColumn.vramEstimate.toString(),
         width: 100,
         minWidth: 100,
         type: PlutoColumnType.number(),
@@ -1466,7 +1475,7 @@ class _Smol3State extends ConsumerState<Smol3>
       ),
       PlutoColumn(
         title: 'Game Version',
-        field: _Fields.gameVersion.toString(),
+        field: SmolColumn.gameVersion.toString(),
         minWidth: 120,
         type: PlutoColumnType.text(),
         renderer: (rendererContext) => Builder(builder: (context) {
@@ -1497,6 +1506,15 @@ class _Smol3State extends ConsumerState<Smol3>
         }),
       ),
     ];
+
+    return ref
+            .read(appSettings.select((s) => s.modsGridState))
+            ?.columnOrder
+            ?.map(
+                (e) => columns.firstWhereOrNull((c) => c.field == e.toString()))
+            .whereNotNull()
+            .toList() ??
+        columns;
   }
 
   PlutoRow? createRow(Mod mod) {
@@ -1518,14 +1536,14 @@ class _Smol3State extends ConsumerState<Smol3>
               (_dependencyAddedRowHeight * satisfiableDependencies)
           : null,
       cells: {
-        _Fields.enableDisable.toString(): PlutoCell(
+        SmolColumn.enableDisable.toString(): PlutoCell(
           value: mod.hasEnabledVariant ? 'Enabled' : 'Disabled',
         ),
         // Enable/Disable
-        _Fields.versionSelector.toString(): PlutoCell(value: mod),
+        SmolColumn.versionSelector.toString(): PlutoCell(value: mod),
 
         // Utility/Total Conversion icon
-        _Fields.utilityIcon.toString(): PlutoCell(
+        SmolColumn.utilityIcon.toString(): PlutoCell(
           value: bestVersion.modInfo.isUtility
               ? 1
               : bestVersion.modInfo.isTotalConversion
@@ -1533,24 +1551,24 @@ class _Smol3State extends ConsumerState<Smol3>
                   : 0,
         ),
         // Icon
-        _Fields.modIcon.toString(): PlutoCell(
+        SmolColumn.modIcon.toString(): PlutoCell(
           value: bestVersion.iconFilePath,
         ),
         // Name
-        _Fields.name.toString(): PlutoCell(
+        SmolColumn.name.toString(): PlutoCell(
           value: bestVersion.modInfo.name,
         ),
-        _Fields.author.toString(): PlutoCell(
+        SmolColumn.author.toString(): PlutoCell(
           value: mod.findFirstEnabledOrHighestVersion?.modInfo.author,
         ),
-        _Fields.versions.toString(): PlutoCell(
+        SmolColumn.versions.toString(): PlutoCell(
           value: bestVersion.modInfo.version?.raw,
         ),
-        _Fields.vramEstimate.toString(): PlutoCell(
+        SmolColumn.vramEstimate.toString(): PlutoCell(
           value: vramEstimate[mod.findFirstEnabledOrHighestVersion?.smolId]
               ?.maxPossibleBytesForMod,
         ),
-        _Fields.gameVersion.toString(): PlutoCell(
+        SmolColumn.gameVersion.toString(): PlutoCell(
           value: bestVersion.modInfo.gameVersion,
         ),
       },
@@ -1754,7 +1772,8 @@ class RowItemContainer extends StatelessWidget {
   }
 }
 
-enum _Fields {
+@MappableEnum()
+enum SmolColumn {
   enableDisable,
   versionSelector,
   utilityIcon,

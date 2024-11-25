@@ -30,9 +30,34 @@ class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
   bool pauseAutomaticProfileUpdates = false;
 
   @override
+  FileFormat get fileFormat => FileFormat.json;
+
+  @override
   Future<ModProfiles> build() async {
     // Load the initial state
-    final initialState = await super.build();
+    var initialState = await super.build();
+
+    // Look for pre-1.0 double/trible encoded json files and migrate them to proper json
+    final existingJsonFile = settingsFile.parent
+        .resolve("${settingsFile.nameWithoutExtension}.json")
+        .toFile();
+    if (initialState.modProfiles.isEmpty && existingJsonFile.existsSync()) {
+      try {
+        Fimber.i("Migrating mod profiles to proper json.");
+        final jsonContents = existingJsonFile.readAsStringSync();
+        final modProfiles = ModProfilesMapper.fromMap(
+            jsonDecode(jsonDecode(jsonDecode(jsonContents))));
+
+        if (modProfiles.modProfiles.isNotEmpty) {
+          await existingJsonFile.rename("${existingJsonFile.path}.bak");
+          initialState = modProfiles;
+          await writeSettingsToDisk(modProfiles);
+        }
+      } catch (e, stack) {
+        Fimber.e("Failed to migrate mod profiles to proper json.",
+            ex: e, stacktrace: stack);
+      }
+    }
 
     // Set up the listener to watch enabled mod variants
     ref.listen<List<ModVariant>>(AppState.enabledModVariants, (previous, next) {
@@ -43,18 +68,19 @@ class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
   }
 
   @override
-  ModProfiles Function() get defaultStateFactory =>
+  ModProfiles Function() get createDefaultState =>
       () => const ModProfiles(modProfiles: []);
 
   @override
   String get fileName => "trios_mod_profiles.json";
 
   @override
-  ModProfiles Function(dynamic json) get fromJson =>
-      (json) => ModProfilesMapper.fromJson(json);
+  ModProfiles Function(Map<String, dynamic> map) get fromMap =>
+      (json) => ModProfilesMapper.fromMap(json);
 
   @override
-  dynamic Function(ModProfiles) get toJson => (state) => jsonEncode(state);
+  Map<String, dynamic> Function(ModProfiles) get toMap =>
+      (state) => state.toMap();
 
   ModProfile? getCurrentModProfile() {
     final currentProfileId =
@@ -86,8 +112,7 @@ class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
   }
 
   void cloneModProfile(ModProfile profile) {
-    createModProfile(
-        '${profile.name} (Copy)',
+    createModProfile('${profile.name} (Copy)',
         enabledModVariants: profile.enabledModVariants);
   }
 

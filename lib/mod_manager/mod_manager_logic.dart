@@ -52,7 +52,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
     }
 
     try {
-      final installModsResult = await installModFromArchive(
+      final installModsResult = await installModFromDisk(
           ArchiveModInstallSource(archiveFile),
           ref.read(appSettings.select((s) => s.modsDir))!,
           ref.read(AppState.mods), (modsBeingInstalled) {
@@ -392,14 +392,14 @@ class ModManagerNotifier extends AsyncNotifier<void> {
     }
   }
 
-  /// Given an archive file, attempts to install the mod(s) contained within it.
-  /// If there are multiple mods in the archive, or one or more mods are already installed, the user will be asked which mods to install/delete.
+  /// Given an [InstallModResult], attempts to install the mod(s) contained within it.
+  /// If there are multiple mods in the source, or one or more mods are already installed, the user will be asked which mods to install/delete.
   /// Returns a list of ModInfos and any errors that occurred when installing each.
   /// userInputNeededHandler should return the list of SmolIds to install.
   /// [modInstallSource] should be an archive file or a folder.
   /// [destinationFolder] is the game's mods folder.
   /// [currentMods] is a list of all installed mods.
-  Future<List<InstallModResult>> installModFromArchive(
+  Future<List<InstallModResult>> installModFromDisk(
       ModInstallSource modInstallSource,
       Directory destinationFolder,
       List<Mod> currentMods,
@@ -413,7 +413,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
           userInputNeededHandler,
       {bool dryRun = false}) async {
     Fimber.i(
-        "Installing mod from archive: ${modInstallSource.entity.path} to ${destinationFolder.path}");
+        "Installing mod from ${modInstallSource.runtimeType}: ${modInstallSource.entity.path} to ${destinationFolder.path}");
 
     if (!modInstallSource.entity.existsSync()) {
       throw Exception("File does not exist: ${modInstallSource.entity.path}");
@@ -433,11 +433,11 @@ class ModManagerNotifier extends AsyncNotifier<void> {
 
     if (modInfoFiles.isEmpty) {
       throw Exception(
-          "No mod_info.json file found in archive:\n${modInstallSource.entity.path}");
+          "No mod_info.json file found in source:\n${modInstallSource.entity.path}");
     }
 
     Fimber.i(
-        "Found mod_info.json(s) file in archive: ${modInfoFiles.map((it) => it).toList()}");
+        "Found mod_info.json(s) file in source: ${modInfoFiles.map((it) => it).toList()}");
 
     final extractedModInfos = await modInstallSource.getActualFiles(
       modInfoFiles,

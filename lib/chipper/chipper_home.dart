@@ -8,10 +8,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
-import 'package:trios/utils/platform_paths.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
-import '../trios/settings/settings.dart';
 import 'chipper_state.dart';
 import 'copy.dart';
 import 'views/about_view.dart';
@@ -27,23 +25,6 @@ class ChipperApp extends ConsumerStatefulWidget {
 
   @override
   ConsumerState createState() => _ChipperAppState();
-}
-
-loadDefaultLog(WidgetRef ref) {
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    final gamePath =
-        ref.read(appSettings.select((value) => value.gameDir))?.toDirectory();
-    var gameFilesPath = getLogPath(gamePath!);
-
-    if (gameFilesPath.existsSync()) {
-      gameFilesPath.readAsBytes().then((bytes) async {
-        final content = utf8.decode(bytes.toList(), allowMalformed: true);
-        return ref
-            .read(ChipperState.logRawContents.notifier)
-            .parseLog(LogFile(gameFilesPath.path, content));
-      });
-    }
-  });
 }
 
 class _ChipperAppState extends ConsumerState<ChipperApp>
@@ -93,7 +74,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
     super.initState();
 
     if (ref.read(ChipperState.logRawContents).valueOrNull == null) {
-      loadDefaultLog(ref);
+      ref.read(ChipperState.logRawContents.notifier).loadDefaultLog();
     }
   }
 
@@ -111,7 +92,9 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                 Row(mainAxisSize: MainAxisSize.min, children: [
                   TextButton.icon(
                       onPressed: () {
-                        loadDefaultLog(ref);
+                        ref
+                            .read(ChipperState.logRawContents.notifier)
+                            .loadDefaultLog();
                       },
                       icon: const Icon(Icons.refresh),
                       style: ButtonStyle(

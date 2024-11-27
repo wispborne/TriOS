@@ -2,11 +2,12 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:trios/chipper/chipper_home.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/relative_timestamp.dart';
 import 'package:trios/widgets/disable.dart';
+import 'package:trios/widgets/moving_tooltip.dart';
 
 import '../chipper/chipper_state.dart';
 import '../chipper/views/chipper_log.dart';
@@ -32,7 +33,7 @@ class _DashboardState extends ConsumerState<Dashboard>
   void initState() {
     super.initState();
     if (ref.read(ChipperState.logRawContents).valueOrNull == null) {
-      loadDefaultLog(ref);
+      ref.read(ChipperState.logRawContents.notifier).loadDefaultLog();
     }
   }
 
@@ -86,76 +87,80 @@ class _DashboardState extends ConsumerState<Dashboard>
                   child: Card(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: Column(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 4),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Text("Starsector Log",
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleLarge
-                                        ?.copyWith(fontSize: 20)),
-                                Padding(
-                                  padding:
-                                      const EdgeInsets.only(left: 8, top: 4),
-                                  child: TextButton.icon(
-                                      onPressed: () {
-                                        loadDefaultLog(ref);
-                                      },
-                                      icon: const Icon(Icons.refresh),
-                                      style: ButtonStyle(
-                                          foregroundColor:
-                                              WidgetStateProperty.all(
-                                                  Theme.of(context)
-                                                      .colorScheme
-                                                      .onSurface)),
-                                      label: const Text("Reload")),
-                                ),
-                                const Spacer(),
-                                Tooltip(
-                                  message: logfile?.path ?? "",
-                                  child: Text(logfile?.nameWithExtension ?? "",
+                      child: Builder(builder: (context) {
+                        final errors =
+                            ref.watch(ChipperState.logRawContents).valueOrNull;
+
+                        return Column(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 4),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Text("Starsector Log",
                                       style: Theme.of(context)
                                           .textTheme
-                                          .labelSmall),
-                                )
-                              ],
+                                          .titleLarge
+                                          ?.copyWith(fontSize: 20)),
+                                  Padding(
+                                    padding:
+                                        const EdgeInsets.only(left: 8, top: 4),
+                                    child: TextButton.icon(
+                                        onPressed: () {
+                                          ref
+                                              .read(ChipperState
+                                                  .logRawContents.notifier)
+                                              .loadDefaultLog();
+                                        },
+                                        icon: const Icon(Icons.refresh),
+                                        style: ButtonStyle(
+                                            foregroundColor:
+                                                WidgetStateProperty.all(
+                                                    Theme.of(context)
+                                                        .colorScheme
+                                                        .onSurface)),
+                                        label: const Text("Reload")),
+                                  ),
+                                  const Spacer(),
+                                  MovingTooltipWidget.text(
+                                    message: logfile?.path ?? "",
+                                    child: Text(
+                                      "${logfile?.nameWithExtension ?? ""} • last updated ${errors?.lastUpdated?.relativeTimestamp() ?? "unknown"}",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelSmall,
+                                    ),
+                                  )
+                                ],
+                              ),
                             ),
-                          ),
-                          Expanded(
-                            child: Builder(builder: (context) {
-                              // ChipperState.loadedLog.addListener(() {
-                              //   setState(() {});
-                              // });
-                              final errors = ref
-                                  .watch(ChipperState.logRawContents)
-                                  .valueOrNull
-                                  ?.errorBlock;
-                              if (errors != null) {
-                                return DefaultTextStyle.merge(
-                                    child: ChipperLog(
-                                        errors: errors, showInfoLogs: true),
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyMedium
-                                        ?.copyWith(fontSize: 14));
-                              } else {
-                                return const SizedBox(
-                                    width: 350,
-                                    child: Column(
-                                      children: [
-                                        Text("No log loaded"),
-                                      ],
-                                    ));
-                              }
-                            }),
-                          ),
-                        ],
-                      ),
+                            Expanded(
+                                child: (errors != null)
+                                    ? DefaultTextStyle.merge(
+                                        child: Padding(
+                                          padding:
+                                              const EdgeInsets.only(bottom: 4),
+                                          child: ChipperLog(
+                                            errors: errors.errorBlock,
+                                            showInfoLogs: true,
+                                          ),
+                                        ),
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium
+                                            ?.copyWith(fontSize: 14))
+                                    : const SizedBox(
+                                        width: 350,
+                                        child: Column(
+                                          children: [
+                                            Text("No log loaded"),
+                                          ],
+                                        ))),
+                          ],
+                        );
+                      }),
                     ),
                   ),
                 )

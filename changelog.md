@@ -20,6 +20,8 @@
 - Changed
   - "Launch" button now reacts to clicks a bit faster and is more clear that the game's running.
   - Mod Audit Log on Profiles page is now persisted across restarts.
+  - Starsector log shown on the Dashboard now automatically refreshes when the game closes.
+    - And shows when it was last refreshed.
 
 # 0.3.4
 - Added

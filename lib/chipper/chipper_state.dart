@@ -1,8 +1,12 @@
 import 'dart:collection';
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/chipper/views/chipper_home.dart';
+import 'package:trios/trios/app_state.dart';
+import 'package:trios/trios/settings/settings.dart';
+import 'package:trios/utils/platform_paths.dart';
 
 import 'models/error_lines.dart';
 import 'models/mod_entry.dart';
@@ -10,16 +14,24 @@ import 'models/user_mods.dart';
 
 class ChipperState {
   // static LoadedLog loadedLog = LoadedLog();
-  static final isLoadingLog = StateProvider<bool>((ref) => ref.watch(logRawContents).isLoading);
+  static final isLoadingLog =
+      StateProvider<bool>((ref) => ref.watch(logRawContents).isLoading);
 
   // static final logRawContents = StateProvider<LogFile?>((ref) => null);
   static final logRawContents =
-      AsyncNotifierProvider<_ChipperLogParserNotifier, LogChips?>(_ChipperLogParserNotifier.new);
+      AsyncNotifierProvider<_ChipperLogParserNotifier, LogChips?>(
+          _ChipperLogParserNotifier.new);
 }
 
 class _ChipperLogParserNotifier extends AsyncNotifier<LogChips?> {
   @override
   LogChips? build() {
+    ref.listen(AppState.isGameRunning, (wasRunning, isRunning) {
+      if (wasRunning?.valueOrNull == true && isRunning.valueOrNull == false) {
+        loadDefaultLog();
+      }
+    });
+
     return null;
   }
 
@@ -35,6 +47,18 @@ class _ChipperLogParserNotifier extends AsyncNotifier<LogChips?> {
       // });
     });
   }
+
+  loadDefaultLog() {
+    final gamePath = ref.read(appSettings.select((value) => value.gameDir));
+    final gameFilesPath = getLogPath(gamePath!);
+
+    if (gameFilesPath.existsSync()) {
+      gameFilesPath.readAsBytes().then((bytes) async {
+        final content = utf8.decode(bytes.toList(), allowMalformed: true);
+        return parseLog(LogFile(gameFilesPath.path, content));
+      });
+    }
+  }
 }
 
 class LogFile {
@@ -49,9 +73,12 @@ class LogChips {
   final String? gameVersion;
   final String? os;
   final String? javaVersion;
-  UserMods modList = UserMods(UnmodifiableListView<ModEntry>([]), isPerfectList: false);
+  UserMods modList =
+      UserMods(UnmodifiableListView<ModEntry>([]), isPerfectList: false);
   UnmodifiableListView<LogLine> errorBlock = UnmodifiableListView([]);
   final int timeTaken;
+  final DateTime? lastUpdated;
 
-  LogChips(this.filepath, this.gameVersion, this.os, this.javaVersion, this.modList, this.errorBlock, this.timeTaken);
+  LogChips(this.filepath, this.gameVersion, this.os, this.javaVersion,
+      this.modList, this.errorBlock, this.timeTaken, this.lastUpdated);
 }

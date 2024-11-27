@@ -133,7 +133,7 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                               _onClickedTimer?.cancel();
                               _onClickedTimer = Timer(
                                   const Duration(seconds: 5),
-                                  () => setState(() {}));
+                                  () => {});
                               Launcher.launchGame(ref, context);
                             },
                             style: ElevatedButton.styleFrom(

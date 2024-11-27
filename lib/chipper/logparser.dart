@@ -28,7 +28,8 @@ class LogParser {
   final poorMansModList = List<ModEntry>.empty(growable: true);
 
   Future<LogChips?> parse(String stream) async {
-    configureLogging(consoleOnly: true); // Needed because isolate has its own memory.
+    configureLogging(
+        consoleOnly: true); // Needed because isolate has its own memory.
     String? gameVersion;
     String? os;
     String? javaVersion;
@@ -38,12 +39,12 @@ class LogParser {
     try {
       final stopwatch = Stopwatch()..start();
       const splitter = LineSplitter();
-      var logLines = splitter.convert(stream);
+      final logLines = splitter.convert(stream);
 
       logLines
           // .transform(splitter)
           .forEachIndexed((index, line) {
-        Fimber.v(() =>"Parsing line $index: $line");
+        Fimber.v(() => "Parsing line $index: $line");
 
         // Do `.contains` checks as a rough filter before doing a full regex match because contains is much faster.
         // Parsing a long filter without a game version, OS, or java version took 37s without this optimization and 5s with it.
@@ -86,7 +87,7 @@ class LogParser {
           final thread = threadPattern.firstMatch(line)?.group(1);
 
           if (thread != null) {
-            Fimber.v(() =>"Looking for previous log entry for line '$line'.");
+            Fimber.v(() => "Looking for previous log entry for line '$line'.");
             // Only look max 10 lines up for perf (edit: removed).  `&& i > (index - 10)`
             // Edit: It didn't affect perf much, but it did cause some INFO lines to be missed.
             for (var i = (index - 1); i >= 0; i--) {
@@ -108,7 +109,7 @@ class LogParser {
               }
             }
 
-            Fimber.v(() =>"Found it.");
+            Fimber.v(() => "Found it.");
           }
 
           isReadingError = true;
@@ -116,7 +117,7 @@ class LogParser {
 
         // If there's no "enabled mods" block that is found right after app launch, add mod names that are found elsewhere.
         if (modList.isEmpty && line.contains(poorMansModListContains)) {
-          var modEntry = ModEntry(
+          final modEntry = ModEntry(
               poorMansModListRegex.firstMatch(line)?.group(1), null, null);
           if (modEntry.modName != null &&
               poorMansModList.none((it) => it.modName == modEntry.modName)) {
@@ -129,7 +130,7 @@ class LogParser {
           if (err != null) {
             errorBlock.add(err);
           } else {
-            var err = GeneralErrorLogLine.tryCreate(index + 1, line);
+            final err = GeneralErrorLogLine.tryCreate(index + 1, line);
             if (err != null) {
               errorBlock.add(err);
             } else {
@@ -142,18 +143,25 @@ class LogParser {
 
       // javaVersion ??= "(no java version in log)";
 
-      var userMods = modList.isNotEmpty
+      final userMods = modList.isNotEmpty
           ? UserMods(UnmodifiableListView(modList), isPerfectList: true)
           : UserMods(
               UnmodifiableListView(
                   poorMansModList..sortBy((element) => element.modName!)),
               isPerfectList: false);
 
-      var elapsedMilliseconds = stopwatch.elapsedMilliseconds;
-      var chips = LogChips(null, gameVersion, os, javaVersion, userMods,
-          UnmodifiableListView(errorBlock), elapsedMilliseconds);
+      final elapsedMilliseconds = stopwatch.elapsedMilliseconds;
+      final chips = LogChips(
+          null,
+          gameVersion,
+          os,
+          javaVersion,
+          userMods,
+          UnmodifiableListView(errorBlock),
+          elapsedMilliseconds,
+          DateTime.now());
       Fimber.i("Parsing took $elapsedMilliseconds ms");
-      Fimber.v(() =>chips.errorBlock
+      Fimber.v(() => chips.errorBlock
           .map((element) => "\n${element.lineNumber}-${element.fullError}")
           .toList()
           .toString());

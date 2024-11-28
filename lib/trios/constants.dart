@@ -42,6 +42,10 @@ class Constants {
     "mod_info.json.disabled-by-TriOS",
     "mod_info.json.disabled-by-SMOL",
   ];
+  static const modInfoFileNames = [
+    modInfoFileName,
+    ...modInfoFileDisabledNames,
+  ];
 
   static const versionCheckerCsvPath = "data/config/version/version_files.csv";
   static const versionCheckerFileEnding = ".version";

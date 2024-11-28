@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:super_clipboard/src/reader.dart';
 import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 import 'package:trios/chipper/chipper_state.dart';
+import 'package:trios/mod_manager/mod_install_source.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/download_manager/download_manager.dart';
@@ -117,9 +118,10 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
         }
 
         if (files.any((file) =>
-            file is File &&
-            file.extension
-                .equalsAnyIgnoreCase(Constants.supportedArchiveExtensions))) {
+            (file is File &&
+                file.extension.equalsAnyIgnoreCase(
+                    Constants.supportedArchiveExtensions)) ||
+            file.isDirectory())) {
           {
             setState(() {
               _inProgress = true;
@@ -127,12 +129,20 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
             try {
               // Install each dropped archive in turn.
               // Log any errors and continue with the next archive.
-              for (var filePath in files) {
+              for (var file in files) {
                 try {
                   // TODO: this works fine in _pickAndInstallMods with `await`, see what the difference is.
-                  ref
-                      .read(modManager.notifier)
-                      .installModFromArchiveWithDefaultUI(filePath.toFile());
+                  if (file.isFile()) {
+                    ref
+                        .read(modManager.notifier)
+                        .installModFromSourceWithDefaultUI(
+                            ArchiveModInstallSource(File(file.path)));
+                  } else {
+                    ref
+                        .read(modManager.notifier)
+                        .installModFromSourceWithDefaultUI(
+                            DirectoryModInstallSource(Directory(file.path)));
+                  }
                 } catch (e, st) {
                   Fimber.e("Failed to install mod from archive",
                       ex: e, stacktrace: st);
@@ -320,9 +330,9 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
       if (reader == null) continue;
 
       if (reader.canProvide(Formats.fileUri)) {
-        if ((await getFileFromReader(reader))?.isFile() == true) {
-          supportedItems.add(item);
-        }
+        // if ((await getFileFromReader(reader))?.isFile() == true) {
+        supportedItems.add(item);
+        // }
       } else if (reader.canProvide(Formats.uri)) {
         supportedItems.add(item);
       }
@@ -342,8 +352,7 @@ class IgnoreDropMouseRegion extends ConsumerStatefulWidget {
       _IgnoreDropMouseRegionState();
 }
 
-class _IgnoreDropMouseRegionState
-    extends ConsumerState<IgnoreDropMouseRegion> {
+class _IgnoreDropMouseRegionState extends ConsumerState<IgnoreDropMouseRegion> {
   bool _isDragging = false;
 
   void _updateIgnoringDrop(bool state) {

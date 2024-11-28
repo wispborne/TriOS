@@ -204,6 +204,10 @@ extension StringMapExt on Map<String, dynamic> {
   String toJsonString() {
     return jsonEncode(this);
   }
+
+  String prettyPrintJson() {
+    return JsonEncoder.withIndent('  ').convert(this);
+  }
 }
 
 final _letterDigitSplitterRegex = RegExp(r"(?<=\D)(?=\d)|(?<=\d)(?=\D)");

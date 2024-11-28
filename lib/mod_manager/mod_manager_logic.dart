@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:collection/collection.dart';
@@ -42,8 +41,8 @@ class ModManagerNotifier extends AsyncNotifier<void> {
     return null;
   }
 
-  Future<List<InstallModResult>> installModFromArchiveWithDefaultUI(
-    File archiveFile, {
+  Future<List<InstallModResult>> installModFromSourceWithDefaultUI(
+    ModInstallSource modInstallSource, {
     bool forceDontEnableModUpdates = false,
   }) async {
     final context = ref.read(AppState.appContext);
@@ -53,7 +52,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
 
     try {
       final installModsResult = await installModFromDisk(
-          ArchiveModInstallSource(archiveFile),
+          modInstallSource,
           ref.read(appSettings.select((s) => s.modsDir))!,
           ref.read(AppState.mods), (modsBeingInstalled) {
         return showDialog<List<ExtractedModInfo>>(
@@ -96,8 +95,9 @@ class ModManagerNotifier extends AsyncNotifier<void> {
                                       child: Column(
                                     children: [
                                       Text(
-                                          const JsonEncoder.withIndent("  ")
-                                              .convert(it.modInfo.modInfo),
+                                          it.modInfo.modInfo
+                                              .toMap()
+                                              .prettyPrintJson(),
                                           style: const TextStyle(fontSize: 12)),
                                     ],
                                   )),
@@ -511,6 +511,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
               "Dry run: Would delete mod folder ${modToDelete.modFolder} before reinstalling same variant.");
           continue;
         }
+
         try {
           modToDelete.modFolder.moveToTrash(deleteIfFailed: true);
           Fimber.i(
@@ -525,6 +526,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
             err: e,
             st: st,
           ));
+
           // If there was an error deleting the mod folder, don't install the new version.
           modInfosToInstall.removeWhere(
               (it) => it.modInfo.smolId == modToDelete.modInfo.smolId);
@@ -668,13 +670,14 @@ class ModManagerNotifier extends AsyncNotifier<void> {
   }
 
   Future<InstallModResult> installMod(
-      ExtractedModInfo modInfoToInstall,
-      List<Mod> currentMods,
-      List<String> archiveFileList,
-      ModInstallSource modInstallSource,
-      Directory destinationFolder,
-      String targetModFolderName,
-      {bool dryRun = false}) async {
+    ExtractedModInfo modInfoToInstall,
+    List<Mod> currentMods,
+    List<String> sourceFileList,
+    ModInstallSource modInstallSource,
+    Directory destinationFolder,
+    String targetModFolderName, {
+    bool dryRun = false,
+  }) async {
     final modInfo = modInfoToInstall.modInfo;
     var existingMod = currentMods.firstWhereOrNull((it) => it.id == modInfo.id);
 
@@ -682,7 +685,8 @@ class ModManagerNotifier extends AsyncNotifier<void> {
       // We need to handle both when mod_info.json is at / and when at /mod/mod/mod/mod_info.json.
       final modInfoParentFolder =
           modInfoToInstall.extractedFile.originalFile.parent;
-      final modInfoSiblings = archiveFileList
+      // TODO this is always empty because `sourceFileList` uses relative paths and `modInfoParentFolder` is an absolute path.
+      final modInfoSiblings = sourceFileList
           .where((it) => it.toFile().parent.path == modInfoParentFolder.path)
           .toList();
       Fimber.d(
@@ -704,12 +708,10 @@ class ModManagerNotifier extends AsyncNotifier<void> {
 
       final extractedMod = await modInstallSource.createFilesAtDestination(
         destinationFolder.path,
-        fileFilter: (entry) => entry.file.isFile()
-            ? modInfoSiblings.contains(entry.file.path)
-            : p.isWithin(modInfoParentFolder.path, entry.file.path),
+        fileFilter: (entry) => p.isWithin(modInfoParentFolder.path, entry),
         pathTransform: (entry) => p.join(
           targetModFolderName,
-          p.relative(entry.file.path, from: modInfoParentFolder.path),
+          p.relative(entry, from: modInfoParentFolder.path),
         ),
         onError: (e, st) {
           errors.add((e, st));

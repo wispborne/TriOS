@@ -1,14 +1,15 @@
 ![TriOS logo](assets/images/telos_faction_crest.png)
 # TriOS
-All-in-one Starsector toolkit. Very very early development.
+All-in-one Starsector launcher, mod manager, and toolkit.
 
 ## Tools
 
 - **Launcher/Dashboard**: Replacement for the game launcher.
-- (WIP) **VRAM Estimator**: Now with visualization.
+- **Mod Manager**: Manage your installed mods.
+- **Mod Profiles**: Save custom mod loadouts. Load save game mod loadouts.
+- **VRAM Estimator**: Now with visualization.
+- **StarModder**: Online mod catalog & downloader.
 - **Chipper**: Logfile viewer.
-- **Mod Manager**: SMOL 2.0.
-- (TODO) **StarModder**: Mod database viewer.
 - **Rules.csv Autoreloader**: Hot reload for your mod rules.csv.
 
 ## Screenshots
@@ -25,12 +26,12 @@ All-in-one Starsector toolkit. Very very early development.
 ## Building TriOS
 
 1. [Download and install/extract Flutter SDK](https://flutter-ko.dev/get-started/install) so that it's on your path.
-1. Download the TriOS source code, navigate to it, and run
+2. Download the TriOS source code, navigate to it, and run
     ```
     flutter build windows
     ```
     (substitute `macos` or `linux` depending on your platform).
-1. The output should tell you where it placed the compiled program.
+3. The output should tell you where it placed the compiled program.
 
 
 ## Modifying TriOS

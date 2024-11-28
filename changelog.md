@@ -8,9 +8,13 @@
     - Now remembered across restarts.
     - You may now estimate one mod at a time.
     - Shows VRAM taken by your GraphicsLib settings for mods. 
+  - **Onboarding** popup on first launch.
+    - Prompts for game location and how many versions of each mod to keep.
   - Mod grid no longer resets itself constantly.
     - e.g. sorting now works. 
     - It still doesn't save across TriOS restarts, not yet.
+  - May now install a mod from folder, not just from zip/7z/rar.
+    - Either drag'n'drop a folder or select the `mod_info.json` file from the Add button.
 - Fixed
   - Mod download notification url can't show more than 3 lines anymore.
   - Creating a new mod profile now uses your current mods.

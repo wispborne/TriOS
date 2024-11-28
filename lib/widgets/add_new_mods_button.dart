@@ -3,8 +3,10 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/mod_manager/mod_install_source.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/trios/constants.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/disable_if_cannot_write_mods.dart';
 
@@ -63,9 +65,14 @@ class AddNewModsButton extends ConsumerWidget {
       if (value == null) return;
 
       for (final file in value.files) {
-        await ref
-            .read(modManager.notifier)
-            .installModFromArchiveWithDefaultUI(File(file.path!));
+        if (Constants.modInfoFileNames.contains(file.name)) {
+          await ref.read(modManager.notifier).installModFromSourceWithDefaultUI(
+              DirectoryModInstallSource(
+                  Directory(File(file.path!).parent.path)));
+        } else {
+          await ref.read(modManager.notifier).installModFromSourceWithDefaultUI(
+              ArchiveModInstallSource(File(file.path!)));
+        }
       }
     });
   }

@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/mod_manager/version_checker.dart';
 import 'package:trios/models/version_checker_info.dart';
@@ -10,6 +9,7 @@ import 'package:trios/utils/logging.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../mod_manager/mod_install_source.dart';
 import '../../mod_manager/mod_manager_logic.dart';
 import '../../models/mod_info.dart';
 import '../constants.dart';
@@ -86,8 +86,7 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
     });
   }
 
-  downloadUpdateViaBrowser(
-      VersionCheckerInfo remoteVersion,
+  downloadUpdateViaBrowser(VersionCheckerInfo remoteVersion,
       {required bool activateVariantOnComplete, ModInfo? modInfo}) {
     if (remoteVersion.directDownloadURL != null) {
       downloadAndInstallMod(
@@ -124,8 +123,8 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
           try {
             ref
                 .read(modManager.notifier)
-                .installModFromArchiveWithDefaultUI(
-                  tempFolder.listSync().first.toFile(),
+                .installModFromSourceWithDefaultUI(
+                  ArchiveModInstallSource(tempFolder.listSync().first.toFile()),
                 )
                 .then((installedVariants) {
               if (activateVariantOnComplete) {

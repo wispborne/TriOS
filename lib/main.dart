@@ -78,12 +78,15 @@ void main() async {
     });
   }
 
-  onAppLoadedActions.add((context) async {
-    showDialog(
-      context: context,
-      builder: (context) => const OnboardingDialog(),
-    );
-  });
+  if (settings?.allowCrashReporting == null) {
+    onAppLoadedActions.add((context) async {
+      showDialog(
+        context: context,
+        builder: (context) => const OnboardingCarousel(),
+        barrierDismissible: false,
+      );
+    });
+  }
 
   // Set up Sentry
   try {

@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:toastification/toastification.dart';
@@ -26,7 +25,6 @@ import 'package:trios/widgets/blur.dart';
 import 'package:trios/widgets/changelog_viewer.dart';
 import 'package:trios/widgets/dropdown_with_icon.dart';
 import 'package:trios/widgets/lazy_indexed_stack.dart';
-import 'package:trios/widgets/restartable_app.dart';
 import 'package:trios/widgets/self_update_toast.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:trios/widgets/tab_button.dart';
@@ -93,12 +91,6 @@ class _AppShellState extends ConsumerState<AppShell>
       _changeTab(defaultTool);
     } catch (e) {
       Fimber.e("Error setting default tool: $e");
-    }
-
-    //
-    //  Show dialog asking for crash reporting permission
-    if (ref.read(appSettings.select((s) => s.allowCrashReporting)) == null) {
-      onAppLoadedActions.add(_createDialogAskingUserForReportingPermission());
     }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -499,59 +491,6 @@ class _AppShellState extends ConsumerState<AppShell>
           ),
           onDroppedLog: (_) => _changeTab(TriOSTools.chipper),
         ));
-  }
-
-  Future<void> Function(BuildContext)
-      _createDialogAskingUserForReportingPermission() {
-    return (BuildContext context) => showDialog(
-          context: context,
-          builder: (context) {
-            return AlertDialog(
-              title: const Text("Crash Reporting"),
-              content: Linkify(
-                text:
-                    "${Constants.appName} can send crash/error reports to help me find and fix issues."
-                    "\n\nNothing identifiable or personal is ever sent."
-                    "\n\nInfo includes: app version, mod list, basic PC info (resolution, OS), randomly generated user id, and the crash details."
-                    "\nNot sent: IP address, language/region/zip, PC name, any file paths, etc."
-                    "\nExample of a report: https://i.imgur.com/k9E6zxO.png."
-                    "\n\nWould you like to enable crash reporting?",
-                onOpen: (link) {
-                  OpenFilex.open(link.url);
-                },
-              ),
-              actions: [
-                TextButton.icon(
-                  onPressed: () {
-                    final settingSaver = ref.read(appSettings.notifier);
-                    settingSaver.update(
-                        (state) => state.copyWith(allowCrashReporting: true));
-                    settingSaver.settingsManager.writeSettingsToDiskSync(
-                        settingSaver.currentState,
-                        flush: true);
-                    RestartableApp.restartApp(context);
-                  },
-                  icon: const Icon(Icons.track_changes),
-                  label: const Text("Allow Reporting"),
-                ),
-                TextButton.icon(
-                  onPressed: () {
-                    final settingSaver = ref.read(appSettings.notifier);
-                    settingSaver.update(
-                        (state) => state.copyWith(allowCrashReporting: false));
-                    settingSaver.settingsManager.writeSettingsToDiskSync(
-                        settingSaver.currentState,
-                        flush: true);
-                    RestartableApp.restartApp(context);
-                  },
-                  icon: const SvgImageIcon(
-                      "assets/images/icon-incognito-circle.svg"),
-                  label: const Text("Keep Reporting Disabled"),
-                ),
-              ],
-            );
-          },
-        );
   }
 }
 

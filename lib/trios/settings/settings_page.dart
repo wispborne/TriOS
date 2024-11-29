@@ -558,7 +558,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         padding: const EdgeInsets.only(top: 16),
                         child: MovingTooltipWidget.text(
                           message:
-                              "This allows ${Constants.appName} to send crash/error reports to get fixed.\nNo personal/identifiable data is sent.\nWill soft-restart ${Constants.appName}.",
+                              "This allows ${Constants.appName} to send crash/error reports to get fixed.\nNo personal/identifiable data is sent.\nWill soft-restart ${Constants.appName} to apply.",
                           child: CheckboxWithLabel(
                             value: ref.watch(appSettings.select(
                                 (value) => value.allowCrashReporting ?? false)),
@@ -596,7 +596,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                     Theme(
                       data: theme.copyWith(dividerColor: Colors.transparent),
                       child: TriOSExpansionTile(
-                        title: const Text("Debugging Stuff"),
+                        title: const Text("Debugging"),
+                        subtitle: const Text(
+                            "Junk drawer of developer actions and info"),
                         leading: Icon(Icons.bug_report,
                             color: Theme.of(context)
                                 .iconTheme
@@ -637,6 +639,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         var newModDirPath = settings.hasCustomModsDir
             ? settings.modsDir?.toDirectory()
             : generateModsFolderPath(newGameDir.toDirectory());
+        newModDirPath = newModDirPath?.normalize.toDirectory();
 
         return state.copyWith(
             gameDir: Directory(newGameDir).normalize, modsDir: newModDirPath);

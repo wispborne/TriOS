@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:toastification/toastification.dart';
 import 'package:trios/mod_profiles/mod_profiles_manager.dart';
 import 'package:trios/models/download_progress.dart';
+import 'package:trios/onboarding/onboarding_page.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
@@ -58,6 +59,19 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
               });
             },
             child: const Text('Check for update (allow older versions)'),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(top: 16),
+          child: ElevatedButton(
+            onPressed: () async {
+              showDialog(
+                context: context,
+                builder: (context) => const OnboardingCarousel(),
+                barrierDismissible: false,
+              );
+            },
+            child: const Text('Show Initial Setup Dialog'),
           ),
         ),
         Padding(

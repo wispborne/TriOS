@@ -21,6 +21,7 @@
   - TriOS update notification shows download size before downloading.
   - Delete Mods not working.
   - Logfile not properly rolling over at 25MB until app restart.
+  - Mods folder path used `/` instead of `\`.
 - Changed
   - "Launch" button now reacts to clicks a bit faster and is more clear that the game's running.
   - Mod Audit Log on Profiles page is now persisted across restarts.

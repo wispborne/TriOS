@@ -7,14 +7,21 @@ class SvgImageIcon extends StatelessWidget {
   final double? height;
   final Color? color;
 
-  const SvgImageIcon(this.assetName, {super.key, this.width, this.height, this.color});
+  const SvgImageIcon(this.assetName,
+      {super.key, this.width, this.height, this.color});
 
   @override
   Widget build(BuildContext context) {
-    var iconThemeData = IconTheme.of(context);
+    final iconThemeData = IconTheme.of(context);
+    final colorLocal = color ?? iconThemeData.color;
     return Opacity(
       opacity: iconThemeData.opacity ?? 1,
-      child: SvgPicture.asset(assetName, width: width, height: height, color: color ?? iconThemeData.color),
+      child: SvgPicture.asset(assetName,
+          width: width,
+          height: height,
+          colorFilter: colorLocal == null
+              ? null
+              : ColorFilter.mode(colorLocal, BlendMode.srcIn)),
     );
   }
 }

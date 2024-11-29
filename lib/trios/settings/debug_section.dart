@@ -7,11 +7,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:toastification/toastification.dart';
 import 'package:trios/mod_profiles/mod_profiles_manager.dart';
 import 'package:trios/models/download_progress.dart';
-import 'package:trios/weaponViewer/weaponsManager.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/weaponViewer/weaponsManager.dart';
 import 'package:trios/widgets/download_progress_indicator.dart';
 
 import '../../utils/util.dart';
@@ -138,10 +138,12 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                       ),
                       TextButton(
                         onPressed: () {
-                          sharedPrefs.clear();
+                          ref
+                              .read(AppState.modAudit.notifier)
+                              .update((_) => []);
                           ref
                               .read(appSettings.notifier)
-                              .update((state) => Settings());
+                              .update((_) => Settings());
                         },
                         child: const Text('Wipe Settings'),
                       ),
@@ -209,7 +211,8 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
             onPressed: () {
               showSnackBar(
                 context: context,
-                content: Text(ref.refresh(weaponListNotifierProvider)
+                content: Text(ref
+                        .refresh(weaponListNotifierProvider)
                         .valueOrNull
                         ?.toString() ??
                     "weh"),
@@ -257,7 +260,7 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                   const SizedBox(height: 8),
                   DebugSettingsGroup(
                     child: Text(
-                        "Settings\n${sharedPrefs.getString(sharedPrefsSettingsKey)}"),
+                        "Settings\n${ref.watch(appSettings).toMap().prettyPrintToml()}"),
                   ),
                   const SizedBox(height: 8),
                   DebugSettingsGroup(

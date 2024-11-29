@@ -6,6 +6,7 @@ import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:path/path.dart' as p;
+import 'package:toml/toml.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:yaml/yaml.dart';
 
@@ -205,8 +206,45 @@ extension StringMapExt on Map<String, dynamic> {
     return jsonEncode(this);
   }
 
+  /// Recursively removes entries with `null` values, using an iterative approach.
+  Map<String, dynamic> removeNullValues() {
+    final map = this;
+    final stack = <Map<String, dynamic>>[map]; // Stack of maps to process
+
+    while (stack.isNotEmpty) {
+      final currentMap = stack.removeLast();
+
+      currentMap.removeWhere((key, value) {
+        if (value is Map<String, dynamic>) {
+          stack.add(value); // Add nested map to stack
+          return false; // Keep the key for now
+        } else if (value is List) {
+          // Process each element in the list
+          currentMap[key] = value
+              .where((item) =>
+                  item is! Map<String, dynamic> ||
+                  item.removeNullValues().isNotEmpty)
+              .toList();
+          return (currentMap[key] as List).isEmpty; // Remove if list is empty
+        }
+        return value == null; // Remove key if value is null
+      });
+
+      // Remove keys with empty maps
+      currentMap.removeWhere((key, value) => value is Map && value.isEmpty);
+    }
+
+    return map;
+  }
+
   String prettyPrintJson() {
     return JsonEncoder.withIndent('  ').convert(this);
+  }
+
+  String prettyPrintToml() {
+    return TomlDocument.fromMap(
+            Map<String, dynamic>.from(this).removeNullValues())
+        .toString();
   }
 }
 
@@ -711,13 +749,12 @@ extension FutureListExt<T> on List<Future<T>> {
 }
 
 extension EnumFromStringCaseInsensitive on Iterable {
-
   /// Converts a string to an enum value of the provided enum type,
   /// ignoring case sensitivity. Returns `null` if no match is found.
   /// Use `enum.values.enumFromStringCaseInsensitive<String>("string")` to get the enum value.
   T? enumFromStringCaseInsensitive<T>(String value) {
     return firstWhere(
-          (e) => e.toString().split('.').last.toLowerCase() == value.toLowerCase(),
+      (e) => e.toString().split('.').last.toLowerCase() == value.toLowerCase(),
       orElse: () => null,
     ) as T?;
   }

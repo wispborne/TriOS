@@ -3,10 +3,9 @@ import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trios/jre_manager/jre_entry.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
@@ -30,7 +29,7 @@ import 'data_cache/enabled_mods.dart';
 import 'mod_variants.dart';
 
 class AppState {
-  static ThemeManager theme = ThemeManager();
+  // static ThemeManager theme = ThemeManager();
   static final isWindowFocused = StateProvider<bool>((ref) => true);
   static final selfUpdate =
       AsyncNotifierProvider<SelfUpdater, TriOSDownloadProgress?>(
@@ -64,6 +63,10 @@ class AppState {
       );
     }).toList();
   }
+
+  static final themeData = AsyncNotifierProvider<ThemeManager, ThemeState>(
+    ThemeManager.new,
+  );
 
   /// Projection of [modVariants], grouping them by mod id.
   static final mods = Provider<List<Mod>>((ref) {
@@ -349,9 +352,6 @@ class _GameRunningChecker extends AsyncNotifier<bool> {
     return false;
   }
 }
-
-/// Initialized in main.dart
-late SharedPreferences sharedPrefs;
 
 var currentFileHandles = 0;
 var maxFileHandles = 2000;

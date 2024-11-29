@@ -523,8 +523,12 @@ class _AppShellState extends ConsumerState<AppShell>
               actions: [
                 TextButton.icon(
                   onPressed: () {
-                    ref.read(appSettings.notifier).update(
+                    final settingSaver = ref.read(appSettings.notifier);
+                    settingSaver.update(
                         (state) => state.copyWith(allowCrashReporting: true));
+                    settingSaver.settingsManager.writeSettingsToDiskSync(
+                        settingSaver.currentState,
+                        flush: true);
                     RestartableApp.restartApp(context);
                   },
                   icon: const Icon(Icons.track_changes),
@@ -532,8 +536,12 @@ class _AppShellState extends ConsumerState<AppShell>
                 ),
                 TextButton.icon(
                   onPressed: () {
-                    ref.read(appSettings.notifier).update(
+                    final settingSaver = ref.read(appSettings.notifier);
+                    settingSaver.update(
                         (state) => state.copyWith(allowCrashReporting: false));
+                    settingSaver.settingsManager.writeSettingsToDiskSync(
+                        settingSaver.currentState,
+                        flush: true);
                     RestartableApp.restartApp(context);
                   },
                   icon: const SvgImageIcon(

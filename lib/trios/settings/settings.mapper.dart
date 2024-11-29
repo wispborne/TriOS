@@ -169,6 +169,9 @@ class SettingsMapper extends ClassMapperBase<Settings> {
   static const Field<Settings, bool> _f$showJre23ConsoleWindow = Field(
       'showJre23ConsoleWindow', _$showJre23ConsoleWindow,
       opt: true, def: true);
+  static String? _$themeKey(Settings v) => v.themeKey;
+  static const Field<Settings, String> _f$themeKey =
+      Field('themeKey', _$themeKey, opt: true);
   static bool _$enableDirectLaunch(Settings v) => v.enableDirectLaunch;
   static const Field<Settings, bool> _f$enableDirectLaunch =
       Field('enableDirectLaunch', _$enableDirectLaunch, opt: true, def: false);
@@ -261,6 +264,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #jre23VmparamsFilename: _f$jre23VmparamsFilename,
     #useJre23: _f$useJre23,
     #showJre23ConsoleWindow: _f$showJre23ConsoleWindow,
+    #themeKey: _f$themeKey,
     #enableDirectLaunch: _f$enableDirectLaunch,
     #launchSettings: _f$launchSettings,
     #lastStarsectorVersion: _f$lastStarsectorVersion,
@@ -299,6 +303,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
         jre23VmparamsFilename: data.dec(_f$jre23VmparamsFilename),
         useJre23: data.dec(_f$useJre23),
         showJre23ConsoleWindow: data.dec(_f$showJre23ConsoleWindow),
+        themeKey: data.dec(_f$themeKey),
         enableDirectLaunch: data.dec(_f$enableDirectLaunch),
         launchSettings: data.dec(_f$launchSettings),
         lastStarsectorVersion: data.dec(_f$lastStarsectorVersion),
@@ -389,6 +394,7 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
       String? jre23VmparamsFilename,
       bool? useJre23,
       bool? showJre23ConsoleWindow,
+      String? themeKey,
       bool? enableDirectLaunch,
       LaunchSettings? launchSettings,
       String? lastStarsectorVersion,
@@ -443,6 +449,7 @@ class _SettingsCopyWithImpl<$R, $Out>
           Object? jre23VmparamsFilename = $none,
           Object? useJre23 = $none,
           bool? showJre23ConsoleWindow,
+          Object? themeKey = $none,
           bool? enableDirectLaunch,
           LaunchSettings? launchSettings,
           Object? lastStarsectorVersion = $none,
@@ -481,6 +488,7 @@ class _SettingsCopyWithImpl<$R, $Out>
         if (useJre23 != $none) #useJre23: useJre23,
         if (showJre23ConsoleWindow != null)
           #showJre23ConsoleWindow: showJre23ConsoleWindow,
+        if (themeKey != $none) #themeKey: themeKey,
         if (enableDirectLaunch != null) #enableDirectLaunch: enableDirectLaunch,
         if (launchSettings != null) #launchSettings: launchSettings,
         if (lastStarsectorVersion != $none)
@@ -534,6 +542,7 @@ class _SettingsCopyWithImpl<$R, $Out>
       useJre23: data.get(#useJre23, or: $value.useJre23),
       showJre23ConsoleWindow:
           data.get(#showJre23ConsoleWindow, or: $value.showJre23ConsoleWindow),
+      themeKey: data.get(#themeKey, or: $value.themeKey),
       enableDirectLaunch:
           data.get(#enableDirectLaunch, or: $value.enableDirectLaunch),
       launchSettings: data.get(#launchSettings, or: $value.launchSettings),

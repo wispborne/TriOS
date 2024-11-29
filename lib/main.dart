@@ -7,9 +7,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:screen_retriever/screen_retriever.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:toastification/toastification.dart';
 import 'package:trios/chipper/utils.dart';
 import 'package:trios/onboarding/onboarding_page.dart';
@@ -38,6 +38,7 @@ void main() async {
   } catch (e) {
     print("Error initializing Flutter widgets.");
   }
+  Constants.configDataFolderPath = await getApplicationSupportDirectory();
   try {
     print("Initializing TriOS logging framework...");
     configureLogging();
@@ -53,21 +54,16 @@ void main() async {
   } catch (ex) {
     Fimber.e("Error initializing!", ex: ex);
   }
-  try {
-    // SharedPreferences.setMockInitialValues({});
-    sharedPrefs = await SharedPreferences.getInstance();
-  } catch (e) {
-    Fimber.e(
-        "Error initializing shared prefs.\nDelete `%APPDATA%/org.wisp/TriOS/shared_preferences.json\n(or look here for MacOS/Linux: https://pub.dev/packages/shared_preferences#storage-location-by-platform).",
-        ex: e);
-  }
+
+  AppSettingsManager settingsManager = AppSettingsManager();
 
   bool allowCrashReporting = false;
   Settings? settings;
 
   // Read existing app settings
   try {
-    settings = readAppSettings();
+    settingsManager.loadSync();
+    settings = settingsManager.state;
   } catch (e) {
     Fimber.e("Error reading app settings.", ex: e);
     onAppLoadedActions.add((context) async {
@@ -93,7 +89,8 @@ void main() async {
   try {
     if (settings != null && settings.userId.isNullOrEmpty()) {
       final userId = const Uuid().v8();
-      writeAppSettings(settings.copyWith(userId: userId));
+      settingsManager
+          .writeSettingsToDiskSync(settings.copyWith(userId: userId));
     }
     allowCrashReporting = settings?.allowCrashReporting ?? false;
     configureLogging(allowSentryReporting: allowCrashReporting);
@@ -141,16 +138,17 @@ void main() async {
   } catch (e) {
     Fimber.e("Error setting window title.", ex: e);
   }
-  const minSize = Size(900, 600);
+  const minSize = Size(1050, 700);
 
   try {
 // Restore window position and size
 //     final settings = readAppSettings();
     Rect windowFrame = Rect.fromLTWH(
-        settings?.windowXPos ?? 0,
-        settings?.windowYPos ?? 0,
-        settings?.windowWidth ?? 900,
-        settings?.windowHeight ?? 700);
+      settings?.windowXPos ?? 0,
+      settings?.windowYPos ?? 0,
+      settings?.windowWidth ?? 1050,
+      settings?.windowHeight ?? 800,
+    );
     setWindowFrame(windowFrame);
     if (settings?.isMaximized ?? false) {
       windowManager.maximize();
@@ -231,9 +229,6 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
   @override
   void initState() {
     super.initState();
-    AppState.theme.addListener(() {
-      setState(() {});
-    });
 
     ref.listenManual(AppState.mods, (_, variants) {
       if (ref.read(
@@ -261,14 +256,20 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
 
   @override
   Widget build(BuildContext context) {
-    final currentTheme = AppState.theme.currentThemeData();
+    final currentTheme = ref.watch(AppState.themeData).valueOrNull;
+
+    if (currentTheme == null) {
+      return const SizedBox();
+    }
 
     return MaterialApp(
       title: Constants.appTitle,
-      theme: currentTheme,
-      themeMode: AppState.theme.currentThemeBrightness(),
+      theme: currentTheme.themeData,
+      themeMode: currentTheme.themeData.brightness == Brightness.light
+          ? ThemeMode.light
+          : ThemeMode.dark,
       debugShowCheckedModeBanner: false,
-      darkTheme: currentTheme,
+      darkTheme: currentTheme.themeData,
       home: const ToastificationConfigProvider(
           config: ToastificationConfig(
             alignment: Alignment.bottomRight,

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
@@ -9,8 +10,10 @@ import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/thirdparty/dartx/comparable.dart';
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/generic_settings_manager.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/widgets/text_with_icon.dart';
 
@@ -26,16 +29,34 @@ final modProfilesProvider =
 // isChangingProfile state
 bool isChangingModProfileProvider = false;
 
-class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
-  bool pauseAutomaticProfileUpdates = false;
+class ModProfilesSettingsManager extends GenericAsyncSettingsManager<ModProfiles> {
+  @override
+  ModProfiles Function() get createDefaultState =>
+      () => const ModProfiles(modProfiles: []);
+
+  @override
+  String get fileName => "trios_mod_profiles.json";
+
+  @override
+  ModProfiles Function(Map<String, dynamic> map) get fromMap =>
+      (json) => ModProfilesMapper.fromMap(json);
+
+  @override
+  Map<String, dynamic> Function(ModProfiles) get toMap =>
+      (state) => state.toMap();
 
   @override
   FileFormat get fileFormat => FileFormat.json;
+}
+
+class ModProfileManagerNotifier extends GenericSettingsAsyncNotifier<ModProfiles> {
+  bool pauseAutomaticProfileUpdates = false;
 
   @override
   Future<ModProfiles> build() async {
     // Load the initial state
     var initialState = await super.build();
+    final settingsFile = settingsManager.settingsFile;
 
     // Look for pre-1.0 double/trible encoded json files and migrate them to proper json
     final existingJsonFile = settingsFile.parent
@@ -51,7 +72,7 @@ class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
         if (modProfiles.modProfiles.isNotEmpty) {
           await existingJsonFile.rename("${existingJsonFile.path}.bak");
           initialState = modProfiles;
-          await writeSettingsToDisk(modProfiles);
+          await settingsManager.writeSettingsToDisk(modProfiles);
         }
       } catch (e, stack) {
         Fimber.e("Failed to migrate mod profiles to proper json.",
@@ -68,19 +89,9 @@ class ModProfileManagerNotifier extends GenericSettingsNotifier<ModProfiles> {
   }
 
   @override
-  ModProfiles Function() get createDefaultState =>
-      () => const ModProfiles(modProfiles: []);
-
-  @override
-  String get fileName => "trios_mod_profiles.json";
-
-  @override
-  ModProfiles Function(Map<String, dynamic> map) get fromMap =>
-      (json) => ModProfilesMapper.fromMap(json);
-
-  @override
-  Map<String, dynamic> Function(ModProfiles) get toMap =>
-      (state) => state.toMap();
+  GenericAsyncSettingsManager<ModProfiles> createSettingsManager() {
+    return ModProfilesSettingsManager();
+  }
 
   ModProfile? getCurrentModProfile() {
     final currentProfileId =

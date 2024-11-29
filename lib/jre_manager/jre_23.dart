@@ -5,7 +5,6 @@ import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:http/http.dart' as http;
 import 'package:trios/jre_manager/jre_manager_logic.dart';
 import 'package:trios/models/download_progress.dart';
@@ -63,8 +62,8 @@ class Jre23State {
     return Jre23State(
       jre23jdkTriOSDownloadProgress:
           jre23jdkTriOSDownloadProgress ?? this.jre23jdkTriOSDownloadProgress,
-      jdk23ConfigTriOSDownloadProgress:
-          jdk23ConfigTriOSDownloadProgress ?? this.jdk23ConfigTriOSDownloadProgress,
+      jdk23ConfigTriOSDownloadProgress: jdk23ConfigTriOSDownloadProgress ??
+          this.jdk23ConfigTriOSDownloadProgress,
       errorMessage: errorMessage ?? this.errorMessage,
       isInstalling: isInstalling ?? this.isInstalling,
     );

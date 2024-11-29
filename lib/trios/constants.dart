@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:intl/intl.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:trios/utils/extensions.dart';
 
 class Constants {
@@ -69,7 +68,8 @@ class Constants {
   ];
   static const num maxPathLength = 260;
 
-  static const String modRepoUrl = "https://github.com/wispborne/StarsectorModRepo/raw/refs/heads/main/ModRepo.json";
+  static const String modRepoUrl =
+      "https://github.com/wispborne/StarsectorModRepo/raw/refs/heads/main/ModRepo.json";
   static const String patreonUrl = "https://www.patreon.com/wispborne";
 
   /// Warning: DON'T ADD ANYTHING TO THIS DIRECTLY. It will mutate the shared instance.
@@ -78,6 +78,9 @@ class Constants {
       DateFormat.yMd(Intl.getCurrentLocale()).add_jm();
   static DateFormat gameDateFormat =
       DateFormat("'Cycle' y , 'Month' M, 'Day' d");
+
+  /// getApplicationSupportDirectory()
+  static late final Directory configDataFolderPath; // Set in main
 
   static const modAuthorAliases = [
     ["RustyCabbage", "rubi", "ceruleanpancake"],
@@ -118,4 +121,3 @@ class Constants {
 
 final currentDirectory = Platform.resolvedExecutable.toFile().parent;
 final currentMacOSAppPath = Platform.resolvedExecutable.toFile().parent.parent;
-final configDataFolderPath = getApplicationSupportDirectory();

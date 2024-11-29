@@ -154,12 +154,18 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       Row(
                         children: [
                           DropdownMenu(
-                            dropdownMenuEntries: ThemeManager.allThemes.entries
+                            dropdownMenuEntries: (ref
+                                        .watch(AppState.themeData)
+                                        .valueOrNull
+                                        ?.availableThemes
+                                        .entries ??
+                                    [])
                                 .map((theme) => (
                                       theme.key,
                                       theme,
-                                      ThemeManager.convertToThemeData(
-                                          theme.value)
+                                      ref
+                                          .read(AppState.themeData.notifier)
+                                          .convertToThemeData(theme.value)
                                     ))
                                 .map((obj) {
                                   var (key, triosTheme, themeData) = obj;
@@ -202,18 +208,25 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                 })
                                 .distinctBy((e) => e.value)
                                 .toList(),
-                            onSelected: (TriOSTheme? theme) =>
-                                AppState.theme.switchThemes(context, theme!),
-                            initialSelection: AppState.theme.currentTheme(),
+                            onSelected: (TriOSTheme? theme) => ref
+                                .read(AppState.themeData.notifier)
+                                .switchThemes(theme!),
+                            initialSelection: ref
+                                .watch(AppState.themeData.notifier)
+                                .currentTheme,
                             // borderRadius: BorderRadius.all(
                             //     Radius.circular(ThemeManager.cornerRadius)),
                             // padding: const EdgeInsets.symmetric(horizontal: 0),
                           ),
                           IconButton(
                             tooltip: "I'm feeling lucky",
-                            onPressed: () => AppState.theme.switchThemes(
-                                context,
-                                ThemeManager.allThemes.values.random()),
+                            onPressed: () => ref
+                                .read(AppState.themeData.notifier)
+                                .switchThemes(ref
+                                    .read(AppState.themeData.notifier)
+                                    .allThemes
+                                    .values
+                                    .random()),
                             icon: SvgImageIcon(
                               "assets/images/icon-dice.svg",
                               color: theme.colorScheme.onSurface,

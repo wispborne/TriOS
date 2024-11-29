@@ -1,17 +1,17 @@
-import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dart_mappable/dart_mappable.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/jre_manager/jre_23.dart';
 import 'package:trios/trios/navigation.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/generic_settings_manager.dart';
+import 'package:trios/utils/generic_settings_notifier.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/util.dart';
 
 import '../../mod_manager/mods_grid_state.dart';
 import '../../models/launch_settings.dart';
-import '../app_state.dart';
 
 part 'settings.mapper.dart';
 
@@ -22,20 +22,20 @@ final appSettings =
     NotifierProvider<SettingSaver, Settings>(() => SettingSaver());
 
 /// MacOs: /Users/<user>/Library/Preferences/org.wisp.TriOS.plist
-Settings? readAppSettings() {
-  if (sharedPrefs.containsKey(sharedPrefsSettingsKey)) {
-    return SettingsMapper.fromJson(
-        jsonDecode(sharedPrefs.getString(sharedPrefsSettingsKey)!));
-  } else {
-    return null;
-  }
-}
-
-/// Use `appSettings` instead, which updates relevant data. Only use this while app is starting up.
-void writeAppSettings(Settings newSettings) {
-  sharedPrefs.setString(
-      sharedPrefsSettingsKey, jsonEncode(newSettings.toJson()));
-}
+// Settings? readAppSettings() {
+//   if (sharedPrefs.containsKey(sharedPrefsSettingsKey)) {
+//     return SettingsMapper.fromJson(
+//         jsonDecode(sharedPrefs.getString(sharedPrefsSettingsKey)!));
+//   } else {
+//     return null;
+//   }
+// }
+//
+// /// Use `appSettings` instead, which updates relevant data. Only use this while app is starting up.
+// void writeAppSettings(Settings newSettings) {
+//   sharedPrefs.setString(
+//       sharedPrefsSettingsKey, jsonEncode(newSettings.toJson()));
+// }
 
 /// Settings object model
 @MappableClass()
@@ -58,6 +58,7 @@ class Settings with SettingsMappable {
   final String? jre23VmparamsFilename;
   final bool? useJre23;
   final bool showJre23ConsoleWindow;
+  final String? themeKey;
 
   /// If true, TriOS acts as the launcher. If false, basically just clicks game exe.
   final bool enableDirectLaunch;
@@ -101,6 +102,7 @@ class Settings with SettingsMappable {
     this.jre23VmparamsFilename,
     this.useJre23,
     this.showJre23ConsoleWindow = true,
+    this.themeKey,
     this.enableDirectLaunch = false,
     this.launchSettings = const LaunchSettings(),
     this.lastStarsectorVersion,
@@ -110,8 +112,7 @@ class Settings with SettingsMappable {
     this.secondsBetweenModFolderChecks = 15,
     this.toastDurationSeconds = 7,
     this.maxHttpRequestsAtOnce = 20,
-    this.folderNamingSetting =
-        FolderNamingSetting.allFoldersVersioned,
+    this.folderNamingSetting = FolderNamingSetting.allFoldersVersioned,
     this.keepLastNVersions,
     this.allowCrashReporting,
     this.updateToPrereleases = false,
@@ -138,7 +139,7 @@ enum FolderNamingSetting {
 enum ModUpdateBehavior { doNotChange, switchToNewVersionIfWasEnabled }
 
 /// When settings change, save them to shared prefs
-class SettingSaver extends Notifier<Settings> {
+class SettingSaver extends GenericSettingsNotifier<Settings> {
   Settings _setDefaults(Settings settings) {
     var newSettings = settings;
 
@@ -165,36 +166,25 @@ class SettingSaver extends Notifier<Settings> {
 
   @override
   Settings build() {
-    Settings? settings;
-    try {
-      settings = readAppSettings();
-    } catch (e) {
-      Fimber.e(
-          "Error reading settings from shared prefs. Making a backup and resetting to default",
-          ex: e);
-      final backup = sharedPrefs.getString(sharedPrefsSettingsKey);
-      if (backup != null) {
-        sharedPrefs.setString("${sharedPrefsSettingsKey}_backup", backup);
-      }
-    }
+    Settings? settings = super.build();
 
     configureLogging(
-        allowSentryReporting: settings?.allowCrashReporting ?? false);
+        allowSentryReporting: settings.allowCrashReporting ?? false);
 
-    if (settings != null) {
-      return _setDefaults(settings);
-    } else {
-      return _setDefaults(Settings());
-    }
+    return _setDefaults(settings);
   }
 
-  void update(Settings Function(Settings) update) {
+  @override
+  Settings update(
+    Settings Function(Settings currentState) mutator, {
+    Settings Function(Object, StackTrace)? onError,
+  }) {
     final prevState = state;
-    var newState = update(state);
+    var newState = mutator(state);
 
     if (prevState == newState) {
       Fimber.v(() => "No settings change: $newState");
-      return;
+      return newState;
     }
 
     if (prevState.allowCrashReporting != newState.allowCrashReporting) {
@@ -211,6 +201,7 @@ class SettingSaver extends Notifier<Settings> {
     newState = _recalculatePathsAndSaveToDisk(prevState, newState);
     // Update state, triggering rebuilds
     state = newState;
+    return newState;
   }
 
   Settings _recalculatePathsAndSaveToDisk(
@@ -228,8 +219,31 @@ class SettingSaver extends Notifier<Settings> {
 
     Fimber.d("Updated settings: $newState");
 
-    // Save to shared prefs
-    writeAppSettings(newState);
+    // Save to disk
+    settingsManager.writeSettingsToDiskSync(newState);
     return newState;
   }
+
+  @override
+  GenericSettingsManager<Settings> createSettingsManager() =>
+      AppSettingsManager();
+}
+
+class AppSettingsManager extends GenericSettingsManager<Settings> {
+  @override
+  Settings Function() get createDefaultState => () => Settings();
+
+  @override
+  FileFormat get fileFormat => FileFormat.json;
+
+  @override
+  String get fileName => "trios_settings.${fileFormat.name}";
+
+  @override
+  Settings Function(Map<String, dynamic> map) get fromMap =>
+      (map) => SettingsMapper.fromMap(map);
+
+  @override
+  Map<String, dynamic> Function(Settings settings) get toMap =>
+      (settings) => settings.toMap();
 }

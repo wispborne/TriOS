@@ -207,7 +207,7 @@ class TriOSHttpClient {
   }
 
   void _logResponse(HttpClientRequest request, HttpClientResponse response) {
-    Fimber.d(
+    Fimber.v(() =>
         'Response:${request.method} ${request.uri}:  ${response.statusCode}');
     Fimber.v(() => 'Headers: ${response.headers}');
   }

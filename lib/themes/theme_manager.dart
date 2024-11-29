@@ -1,16 +1,20 @@
 import 'dart:convert';
 
-import 'package:collection/collection.dart';
+import 'package:dart_mappable/dart_mappable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_color/flutter_color.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:palette_generator/palette_generator.dart';
 import 'package:trios/themes/theme.dart';
+import 'package:trios/thirdparty/dartx/map.dart';
+import 'package:trios/trios/settings/settings.dart';
 
 import '../mod_manager/mod_manager_logic.dart';
-import '../trios/app_state.dart';
 import '../utils/logging.dart';
+
+part 'theme_manager.mapper.dart';
 
 Color? getStateColorForDependencyText(
     ModDependencySatisfiedState dependencyState) {
@@ -24,21 +28,25 @@ Color? getStateColorForDependencyText(
   };
 }
 
-class ThemeManager with ChangeNotifier {
+@MappableClass(
+    generateMethods: GenerateMethods.copy |
+        GenerateMethods.equals |
+        GenerateMethods.stringify)
+class ThemeState {
+  final ThemeData themeData;
+  final Map<String, TriOSTheme> availableThemes;
+  final TriOSTheme currentTheme;
+
+  ThemeState(this.themeData, this.availableThemes, this.currentTheme);
+}
+
+class ThemeManager extends AsyncNotifier<ThemeState> {
   static const double cornerRadius = 8;
-  static Color vanillaErrorColor = const Color.fromARGB(255, 252, 99, 0);
-  static Color vanillaWarningColor = const Color.fromARGB(255, 253, 212, 24);
+  static const Color vanillaErrorColor = Color.fromARGB(255, 252, 99, 0);
+  static const Color vanillaWarningColor = Color.fromARGB(255, 253, 212, 24);
   static const String orbitron = "Orbitron";
 
-  static TriOSTheme _theme = StarsectorTriOSTheme();
   static const bool _isMaterial3 = true;
-  static const String _key = "currentThemeId";
-  static final allThemes = {
-    "StarsectorTriOSTheme": StarsectorTriOSTheme(),
-    "HalloweenTriOSTheme": HalloweenTriOSTheme(),
-    "XmasTriOSTheme": XmasTriOSTheme(),
-  };
-
   static final boxShadow = BoxShadow(
     color: Colors.black.withOpacity(0.5),
     spreadRadius: 4,
@@ -46,100 +54,90 @@ class ThemeManager with ChangeNotifier {
     offset: const Offset(0, 3), // changes position of shadow
   );
 
-  // static final backgroundShader = FutureProvider<FragmentProgram>((ref) async {
-  //   return FragmentProgram.fromAsset("assets/shaders/grain.frag");
-  // });
+  late Map<String, TriOSTheme> allThemes;
+  late TriOSTheme _currentTheme;
 
-  ThemeManager() {
-    // Load themes, then load the current theme from shared prefs and switch to it.
-    loadThemes().then((_) {
-      if (sharedPrefs.containsKey(_key)) {
-        try {
-          _theme = allThemes[sharedPrefs.getString(_key)]!;
-          notifyListeners();
-        } catch (e, st) {
-          Fimber.w("Error loading theme from shared prefs.",
-              ex: e, stacktrace: st);
-          _theme = allThemes.values.first;
-        }
-        // _isMaterial3 = sharedPrefs.getBool(_keyMaterial) ?? false;
-      } else {
-        _theme = allThemes.values.first;
-      }
-    });
-  }
+  @override
+  Future<ThemeState> build() async {
+    await _loadThemes();
 
-  TriOSTheme currentTheme() {
-    return _theme;
-  }
-
-  ThemeData currentThemeData() {
-    return convertToThemeData(_theme);
-  }
-
-  ThemeMode currentThemeBrightness() {
-    return _theme.isDark ? ThemeMode.dark : ThemeMode.light;
-  }
-
-  bool isMaterial3() {
-    return _isMaterial3;
-  }
-
-  void switchThemes(BuildContext context, TriOSTheme theme) {
-    _theme = theme;
-    notifyListeners();
-    final themeKey =
-        allThemes.entries.firstWhereOrNull((it) => it.value == theme)!.key;
-    Fimber.i("Changed theme: $themeKey.");
-    sharedPrefs.setString(_key, themeKey);
-  }
-
-  // void switchMaterial() {
-  //   _isMaterial3 = !_isMaterial3;
-  //   sharedPrefs.setBool(_keyMaterial, _isMaterial3);
-  //   Fimber.i("Changed material. Material: $_isMaterial3");
-  //   notifyListeners();
-  // }
-
-  Future<void> loadThemes() async {
-    final themesJsonString =
-        await rootBundle.loadString("assets/SMOL_Themes.json");
-    final themesJson = (jsonDecode(themesJsonString)
-        as Map<String, dynamic>)["themes"] as Map<String, dynamic>;
-
-    for (var theme in themesJson.entries) {
-      try {
-        allThemes[theme.key] = TriOSTheme.fromHexCodes(
-          isDark: theme.value["isDark"] ?? true,
-          primary: theme.value["primary"],
-          primaryVariant: theme.value["primaryVariant"],
-          secondary: theme.value["secondary"],
-          secondaryVariant: theme.value["secondaryVariant"],
-          background: theme.value["background"],
-          surface: theme.value["surface"],
-          error: theme.value["error"],
-          onPrimary: theme.value["onPrimary"],
-          onSecondary: theme.value["onSecondary"],
-          // onBackground: theme.value["onBackground"],
-          onSurface: theme.value["onSurface"],
-          onError: theme.value["onError"],
-          hyperlink: theme.value["hyperlink"],
-        );
-      } catch (e, st) {
-        Fimber.e("Error loading theme: ${theme.key}", ex: e, stacktrace: st);
-      }
+    try {
+      _currentTheme = allThemes.getOrElse(
+          ref.watch(appSettings.select((s) => s.themeKey ?? "")),
+          () => allThemes.values.first);
+    } catch (e, st) {
+      Fimber.w("Error loading theme from shared preferences.",
+          ex: e, stacktrace: st);
+      _currentTheme = allThemes.values.first;
     }
 
-    Fimber.i("Loaded themes: ${allThemes.keys}");
+    final themeData = convertToThemeData(_currentTheme);
+    return ThemeState(themeData, allThemes, _currentTheme);
   }
 
-  static ThemeData convertToThemeData(TriOSTheme theme) {
+  Future<void> _loadThemes() async {
+    allThemes = {
+      "StarsectorTriOSTheme": StarsectorTriOSTheme(),
+      "HalloweenTriOSTheme": HalloweenTriOSTheme(),
+      "XmasTriOSTheme": XmasTriOSTheme(),
+    };
+
+    try {
+      final themesJsonString =
+          await rootBundle.loadString("assets/SMOL_Themes.json");
+      final themesJson = jsonDecode(themesJsonString) as Map<String, dynamic>;
+      final themesMap = themesJson["themes"] as Map<String, dynamic>;
+
+      for (var themeEntry in themesMap.entries) {
+        try {
+          final themeData = themeEntry.value as Map<String, dynamic>;
+          allThemes[themeEntry.key] = TriOSTheme.fromHexCodes(
+            isDark: themeData["isDark"] ?? true,
+            primary: themeData["primary"],
+            primaryVariant: themeData["primaryVariant"],
+            secondary: themeData["secondary"],
+            secondaryVariant: themeData["secondaryVariant"],
+            background: themeData["background"],
+            surface: themeData["surface"],
+            error: themeData["error"],
+            onPrimary: themeData["onPrimary"],
+            onSecondary: themeData["onSecondary"],
+            onSurface: themeData["onSurface"],
+            onError: themeData["onError"],
+            hyperlink: themeData["hyperlink"],
+          );
+        } catch (e, st) {
+          Fimber.e("Error loading theme: ${themeEntry.key}",
+              ex: e, stacktrace: st);
+        }
+      }
+
+      Fimber.i("Loaded themes: ${allThemes.keys}");
+    } catch (e, st) {
+      Fimber.e("Error loading themes from assets.", ex: e, stacktrace: st);
+    }
+  }
+
+  Future<void> switchThemes(TriOSTheme theme) async {
+    _currentTheme = theme;
+    state = AsyncData(ThemeState(convertToThemeData(theme), allThemes, theme));
+
+    final themeKey =
+        allThemes.entries.firstWhere((entry) => entry.value == theme).key;
+    ref
+        .read(appSettings.notifier)
+        .update((s) => s.copyWith(themeKey: themeKey));
+
+    Fimber.i("Changed theme: $themeKey.");
+  }
+
+  ThemeData convertToThemeData(TriOSTheme theme) {
     return theme.isDark
-        ? getDarkTheme(theme, _isMaterial3)
-        : getLightTheme(theme, _isMaterial3);
+        ? _getDarkTheme(theme, _isMaterial3)
+        : _getLightTheme(theme, _isMaterial3);
   }
 
-  static ThemeData getDarkTheme(TriOSTheme swatch, bool material3) {
+  ThemeData _getDarkTheme(TriOSTheme swatch, bool material3) {
     final seedColor = swatch.primary;
 
     var darkThemeBase = ThemeData(
@@ -148,7 +146,7 @@ class ThemeManager with ChangeNotifier {
       useMaterial3: material3,
     );
 
-    final customTheme = customizeTheme(darkThemeBase, swatch);
+    final customTheme = _customizeTheme(darkThemeBase, swatch);
     return customTheme.copyWith(
       colorScheme: customTheme.colorScheme.copyWith(
         surfaceContainerLowest: swatch.surfaceContainer?.darker(15),
@@ -163,7 +161,7 @@ class ThemeManager with ChangeNotifier {
     );
   }
 
-  static ThemeData getLightTheme(TriOSTheme swatch, bool material3) {
+  ThemeData _getLightTheme(TriOSTheme swatch, bool material3) {
     final seedColor = swatch.primary;
 
     var lightThemeBase = ThemeData(
@@ -172,37 +170,36 @@ class ThemeManager with ChangeNotifier {
       useMaterial3: material3,
     );
 
-    var customTheme = customizeTheme(
+    var customTheme = _customizeTheme(
       lightThemeBase,
       swatch.copyWith(),
     );
     return customTheme.copyWith(
-        colorScheme: customTheme.colorScheme.copyWith(
-          primary: swatch.primary,
-          secondary: swatch.secondary,
-          // tertiary: swatch.tertiary,
-          surfaceContainerLowest: swatch.surfaceContainer?.darker(15),
-          surfaceContainerLow: swatch.surfaceContainer?.darker(5),
-          surfaceContainer: swatch.surfaceContainer?.lighter(5),
-          surfaceContainerHigh: swatch.surfaceContainer?.lighter(10),
-          surfaceContainerHighest: swatch.surface,
-        ),
-        textTheme: customTheme.textTheme.copyWith(
-          bodyMedium: customTheme.textTheme.bodyMedium?.copyWith(fontSize: 16),
-        ),
-        iconTheme: customTheme.iconTheme.copyWith(
-          color: customTheme.colorScheme.onSurfaceVariant.withOpacity(0.3),
-        ),
-        tabBarTheme: customTheme.tabBarTheme.copyWith(
-          labelColor: customTheme.colorScheme.onSurface,
-          unselectedLabelColor: customTheme.colorScheme.onSurfaceVariant,
-        ),
-        snackBarTheme: const SnackBarThemeData());
+      colorScheme: customTheme.colorScheme.copyWith(
+        primary: swatch.primary,
+        secondary: swatch.secondary,
+        surfaceContainerLowest: swatch.surfaceContainer?.darker(15),
+        surfaceContainerLow: swatch.surfaceContainer?.darker(5),
+        surfaceContainer: swatch.surfaceContainer?.lighter(5),
+        surfaceContainerHigh: swatch.surfaceContainer?.lighter(10),
+        surfaceContainerHighest: swatch.surface,
+      ),
+      textTheme: customTheme.textTheme.copyWith(
+        bodyMedium: customTheme.textTheme.bodyMedium?.copyWith(fontSize: 16),
+      ),
+      iconTheme: customTheme.iconTheme.copyWith(
+        color: customTheme.colorScheme.onSurfaceVariant.withOpacity(0.3),
+      ),
+      tabBarTheme: customTheme.tabBarTheme.copyWith(
+        labelColor: customTheme.colorScheme.onSurface,
+        unselectedLabelColor: customTheme.colorScheme.onSurfaceVariant,
+      ),
+      snackBarTheme: const SnackBarThemeData(),
+    );
   }
 
-  static ThemeData customizeTheme(ThemeData themeBase, TriOSTheme swatch) {
+  ThemeData _customizeTheme(ThemeData themeBase, TriOSTheme swatch) {
     // Choose font here
-    // final textTheme = GoogleFonts.ibmPlexSansTextTheme(themeBase.textTheme);
     final textTheme = GoogleFonts.robotoTextTheme(themeBase.textTheme);
 
     final onSurfaceVariant = swatch.surface == null
@@ -219,17 +216,14 @@ class ThemeManager with ChangeNotifier {
         onPrimary: swatch.onPrimary,
         onSecondary: swatch.onSecondary,
         surface: swatch.surface,
-        error: ThemeManager.vanillaErrorColor,
-        errorContainer: ThemeManager.vanillaErrorColor.lighter(5),
-        // tertiary: swatch.tertiary,
+        error: vanillaErrorColor,
+        errorContainer: vanillaErrorColor.lighter(5),
       ),
       scaffoldBackgroundColor: swatch.surfaceContainer,
       dialogBackgroundColor: swatch.surfaceContainer,
       cardColor: swatch.surfaceContainer,
-      // cardColor: swatch.card,
       cardTheme: themeBase.cardTheme.copyWith(
         color: swatch.surfaceContainer,
-        // color: swatch.card,
         elevation: 4,
         surfaceTintColor: Colors.transparent,
       ),
@@ -237,25 +231,34 @@ class ThemeManager with ChangeNotifier {
         backgroundColor: swatch.surfaceContainer,
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
-          style: OutlinedButton.styleFrom(
-        side: BorderSide(color: primaryVariant),
-      )),
+        style: OutlinedButton.styleFrom(
+          side: BorderSide(color: primaryVariant),
+        ),
+      ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-            // Default is a bit too dark imo.
-            backgroundColor: themeBase.colorScheme.surfaceContainer),
+          backgroundColor: themeBase.colorScheme.surfaceContainer,
+        ),
       ),
       floatingActionButtonTheme: themeBase.floatingActionButtonTheme.copyWith(
         backgroundColor: swatch.primary,
         foregroundColor: themeBase.colorScheme.surface,
       ),
-      checkboxTheme: themeBase.checkboxTheme
-          .copyWith(checkColor: WidgetStateProperty.all(Colors.transparent)),
+      checkboxTheme: themeBase.checkboxTheme.copyWith(
+        checkColor: MaterialStateProperty.all(Colors.transparent),
+      ),
       textTheme: textTheme.copyWith(
         bodyMedium: textTheme.bodyMedium?.copyWith(fontSize: 16),
       ),
     );
   }
+
+  // Expose methods or properties as needed
+  Map<String, TriOSTheme> get availableThemes => allThemes;
+
+  TriOSTheme get currentTheme => _currentTheme;
+
+  bool get isMaterial3 => _isMaterial3;
 }
 
 extension PaletteGeneratorExt on PaletteGenerator? {

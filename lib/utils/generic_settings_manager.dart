@@ -6,6 +6,7 @@ import 'package:mutex/mutex.dart';
 import 'package:path/path.dart' as p;
 import 'package:toml/toml.dart';
 import 'package:trios/trios/constants.dart';
+import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart'; // For path operations
 
 /// Supported file formats for the settings file.
@@ -36,7 +37,7 @@ abstract class GenericAsyncSettingsManager<T> {
   /// Override to do custom serialization
   Future<String> serialize(T obj) async {
     return fileFormat == FileFormat.toml
-        ? TomlDocument.fromMap(toMap(obj)).toString()
+        ? TomlDocument.fromMap(toMap(obj).removeNullValues()).toString()
         : jsonEncode(toMap(obj));
   }
 
@@ -93,17 +94,38 @@ abstract class GenericAsyncSettingsManager<T> {
     });
   }
 
-  /// Writes the provided state to the settings file (TOML or JSON) on disk.
-  Future<void> writeSettingsToDisk(T currentState) async {
-    try {
-      final serializedData = await serialize(currentState);
-      await settingsFile.writeAsString(serializedData);
-      Fimber.i("Settings successfully written to disk.");
-    } catch (e, stackTrace) {
-      Fimber.e("Error serializing and saving settings data: $e",
-          ex: e, stacktrace: stackTrace);
-      rethrow;
+  // Debouncing variables
+  Timer? _debounceTimer;
+  Completer<void>? _writeCompleter;
+  final Duration _debounceDuration = Duration(milliseconds: 500);
+
+  /// Writes the provided state to the settings file (TOML or JSON) on disk with debouncing.
+  Future<void> writeSettingsToDisk(T currentState) {
+    // Cancel any existing timer
+    _debounceTimer?.cancel();
+
+    // Create a new completer if none exists or the previous one is completed
+    if (_writeCompleter == null || _writeCompleter!.isCompleted) {
+      _writeCompleter = Completer<void>();
     }
+
+    _debounceTimer = Timer(_debounceDuration, () async {
+      try {
+        final serializedData = await serialize(currentState);
+        await settingsFile.writeAsString(serializedData);
+        Fimber.i("Settings successfully written to disk.");
+        _writeCompleter?.complete();
+      } catch (e, stackTrace) {
+        Fimber.e("Error serializing and saving settings data: $e",
+            ex: e, stacktrace: stackTrace);
+        _writeCompleter?.completeError(e, stackTrace);
+        rethrow;
+      } finally {
+        _writeCompleter = null;
+      }
+    });
+
+    return _writeCompleter!.future;
   }
 
   /// Updates the current state using the provided mutator function and persists the updated state to disk.
@@ -246,19 +268,29 @@ abstract class GenericSettingsManager<T> {
     });
   }
 
-  /// Writes the provided state to the settings file (TOML or JSON) on disk synchronously.
-  void writeSettingsToDiskSync(T currentState, {bool flush = false}) {
-    try {
-      final serializedData = fileFormat == FileFormat.toml
-          ? TomlDocument.fromMap(toMap(currentState)).toString()
-          : jsonEncode(toMap(currentState));
-      settingsFile.writeAsStringSync(serializedData, flush: flush);
-      Fimber.i("Settings successfully written to disk.");
-    } catch (e, stackTrace) {
-      Fimber.e("Error serializing and saving settings data: $e",
-          ex: e, stacktrace: stackTrace);
-      rethrow;
-    }
+  // Debouncing variables
+  Timer? _debounceTimer;
+  final Duration _debounceDuration = Duration(milliseconds: 500);
+
+  /// Writes the provided state to the settings file (TOML or JSON) on disk with debouncing.
+  void writeSettingsToDiskSync(T currentState) {
+    // Cancel any existing timer
+    _debounceTimer?.cancel();
+
+    // Schedule a new write
+    _debounceTimer = Timer(_debounceDuration, () {
+      try {
+        final serializedData = fileFormat == FileFormat.toml
+            ? TomlDocument.fromMap(toMap(currentState)).toString()
+            : jsonEncode(toMap(currentState));
+        settingsFile.writeAsStringSync(serializedData);
+        Fimber.i("Settings successfully written to disk.");
+      } catch (e, stackTrace) {
+        Fimber.e("Error serializing and saving settings data: $e",
+            ex: e, stacktrace: stackTrace);
+        rethrow;
+      }
+    });
   }
 
   /// Updates the current state using the provided mutator function and persists the updated state to disk.

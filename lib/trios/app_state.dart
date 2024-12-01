@@ -45,8 +45,8 @@ class AppState {
 
   /// String is the smolId
   static final versionCheckResults =
-      AsyncNotifierProvider<VersionCheckerAsyncManager, VersionCheckerState>(
-          VersionCheckerAsyncManager.new);
+      AsyncNotifierProvider<VersionCheckerAsyncProvider, VersionCheckerState>(
+          VersionCheckerAsyncProvider.new);
 
   static var skipCacheOnNextVersionCheck = false;
 

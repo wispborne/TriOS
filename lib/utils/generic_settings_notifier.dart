@@ -2,18 +2,29 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/utils/generic_settings_manager.dart';
+import 'package:trios/utils/logging.dart';
 
 abstract class GenericSettingsAsyncNotifier<T> extends AsyncNotifier<T> {
-  late final GenericAsyncSettingsManager<T> settingsManager;
+  late GenericAsyncSettingsManager<T> settingsManager;
 
   /// Subclasses must provide the settings manager instance.
   GenericAsyncSettingsManager<T> createSettingsManager();
 
+  GenericSettingsAsyncNotifier() {
+    settingsManager = createSettingsManager();
+  }
+
   @override
   Future<T> build() async {
-    settingsManager = createSettingsManager();
-    final settings = await settingsManager.readSettingsFromDisk();
-    return settings;
+    try {
+      final settings = await settingsManager.readSettingsFromDisk();
+      return settings;
+    } catch (e, stackTrace) {
+      state = AsyncError(e, stackTrace);
+      Fimber.w("Error building settings notifier",
+          ex: e, stacktrace: stackTrace);
+      rethrow;
+    }
   }
 
   /// Updates the current state using the provided mutator function and persists the updated state to disk.
@@ -33,25 +44,33 @@ abstract class GenericSettingsAsyncNotifier<T> extends AsyncNotifier<T> {
   T get currentState => settingsManager.state;
 }
 
-
 abstract class GenericSettingsNotifier<T> extends Notifier<T> {
-  late final GenericSettingsManager<T> settingsManager;
+  late GenericSettingsManager<T> settingsManager;
 
   /// Subclasses must provide the settings manager instance.
   GenericSettingsManager<T> createSettingsManager();
 
+  GenericSettingsNotifier() {
+    settingsManager = createSettingsManager();
+  }
+
   @override
   T build() {
-    settingsManager = createSettingsManager();
-    settingsManager.loadSync();
-    return settingsManager.state;
+    try {
+      settingsManager.loadSync();
+      return settingsManager.state;
+    } catch (e, stackTrace) {
+      Fimber.w("Error building settings notifier",
+          ex: e, stacktrace: stackTrace);
+      rethrow;
+    }
   }
 
   /// Updates the current state using the provided mutator function and persists the updated state to disk.
   T update(
-      T Function(T currentState) mutator, {
-        T Function(Object, StackTrace)? onError,
-      }) {
+    T Function(T currentState) mutator, {
+    T Function(Object, StackTrace)? onError,
+  }) {
     try {
       final newState = settingsManager.updateSync(mutator, onError: onError);
 

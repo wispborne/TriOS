@@ -9,6 +9,7 @@ import 'package:trios/mod_profiles/mod_profiles_manager.dart';
 import 'package:trios/models/download_progress.dart';
 import 'package:trios/onboarding/onboarding_page.dart';
 import 'package:trios/themes/theme_manager.dart';
+import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
@@ -41,7 +42,8 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
       children: [
         Padding(
           padding: const EdgeInsets.only(top: 16),
-          child: ElevatedButton(
+          child: ElevatedButton.icon(
+            icon: const Icon(Icons.security_update_good),
             onPressed: () async {
               ref
                   .watch(AppState.selfUpdate.notifier)
@@ -58,12 +60,24 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                 );
               });
             },
-            child: const Text('Check for update (allow older versions)'),
+            label: const Text('Check for update (allow older versions)'),
           ),
         ),
         Padding(
           padding: const EdgeInsets.only(top: 16),
-          child: ElevatedButton(
+          child: ElevatedButton.icon(
+            icon: const Icon(Icons.folder_special),
+            onPressed: () {
+              final folder = Constants.configDataFolderPath;
+              folder.openInExplorer();
+            },
+            label: const Text('Open ${Constants.appName} Settings Folder'),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(top: 16),
+          child: ElevatedButton.icon(
+            icon: const Icon(Icons.restart_alt),
             onPressed: () async {
               showDialog(
                 context: context,
@@ -71,12 +85,13 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                 barrierDismissible: false,
               );
             },
-            child: const Text('Show Initial Setup Dialog'),
+            label: const Text('Show Initial Setup Dialog'),
           ),
         ),
         Padding(
           padding: const EdgeInsets.only(top: 16),
-          child: ElevatedButton(
+          child: ElevatedButton.icon(
+            icon: const Icon(Icons.play_arrow),
             onPressed: () async {
               // hardcoded name
               runZonedGuarded(() {
@@ -91,12 +106,13 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                 );
               });
             },
-            child: const Text('Run existing self-update script if exists'),
+            label: const Text('Run existing self-update script if exists'),
           ),
         ),
         Padding(
           padding: const EdgeInsets.only(top: 16),
-          child: ElevatedButton(
+          child: ElevatedButton.icon(
+            icon: const Icon(Icons.cloud_download_rounded),
             onPressed: () {
               final testMod = ref
                   .read(AppState.modVariants)
@@ -111,12 +127,13 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                     modInfo: testMod.modInfo,
                   );
             },
-            child: const Text('Redownload MagicLib (shows toast)'),
+            label: const Text('Redownload MagicLib (shows toast)'),
           ),
         ),
         Padding(
           padding: const EdgeInsets.only(top: 16),
-          child: ElevatedButton(
+          child: ElevatedButton.icon(
+            icon: const Icon(Icons.notification_add),
             onPressed: () {
               final testMod = ref
                   .read(AppState.modVariants)
@@ -129,12 +146,13 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                 builder: (context, item) => ModAddedToast(testMod, item),
               );
             },
-            child: const Text('Show Mod Added Toast for MagicLib'),
+            label: const Text('Show Mod Added Toast for MagicLib'),
           ),
         ),
         Padding(
           padding: const EdgeInsets.only(top: 16),
-          child: ElevatedButton(
+          child: ElevatedButton.icon(
+            icon: const Icon(Icons.clean_hands),
             onPressed: () {
               // confirmation prompt
               showDialog(
@@ -166,16 +184,17 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                 },
               );
             },
-            child: const Text('Wipe Settings'),
+            label: const Text('Wipe Settings'),
           ),
         ),
         Padding(
           padding: const EdgeInsets.only(top: 16),
-          child: ElevatedButton(
+          child: ElevatedButton.icon(
+            icon: const Icon(Icons.nearby_error),
             onPressed: () {
               throw Exception("This is a test error");
             },
-            child: const Text('Throw error'),
+            label: const Text('Throw error'),
           ),
         ),
         SizedBox(
@@ -185,7 +204,8 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
             children: [
               Padding(
                 padding: const EdgeInsets.only(top: 16.0),
-                child: ElevatedButton(
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.system_security_update_warning),
                   onPressed: () async {
                     final latestRelease = await ref
                         .watch(AppState.selfUpdate.notifier)
@@ -194,37 +214,39 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                         .read(AppState.selfUpdate.notifier)
                         .updateSelf(latestRelease!);
                   },
-                  child: const Text("Force Update"),
+                  label: const Text("Force Update"),
                 ),
               ),
               const SizedBox(height: 4),
               TriOSDownloadProgressIndicator(
                 value: ref.watch(AppState.selfUpdate).valueOrNull ??
-                    const TriOSDownloadProgress(0, 0, isIndeterminate: true),
+                    const TriOSDownloadProgress(0, 1, isIndeterminate: false),
               ),
             ],
           ),
         ),
         Padding(
           padding: const EdgeInsets.only(top: 16),
-          child: ElevatedButton(
+          child: ElevatedButton.icon(
+            icon: const Icon(Icons.developer_mode),
             onPressed: () {
               getStarsectorVersionFromObf().then((value) {
                 showSnackBar(
-                  context: context,
+                  context: ref.read(AppState.appContext)!,
                   content: Text("Game version: $value"),
                 );
               });
             },
-            child: const Text('Read game version from starfarer_obf.jar.'),
+            label: const Text('Read game version from starfarer_obf.jar.'),
           ),
         ),
         Padding(
           padding: const EdgeInsets.only(top: 16),
-          child: ElevatedButton(
+          child: ElevatedButton.icon(
+            icon: const Icon(Icons.diversity_1),
             onPressed: () {
               showSnackBar(
-                context: context,
+                context: ref.read(AppState.appContext)!,
                 content: Text(ref
                         .refresh(weaponListNotifierProvider)
                         .valueOrNull
@@ -232,7 +254,7 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                     "weh"),
               );
             },
-            child: const Text('Read weapons'),
+            label: const Text('Read weapons'),
           ),
         ),
         const SizedBox(height: 16),

@@ -25,13 +25,13 @@ class VersionCheckerManager
     extends GenericAsyncSettingsManager<VersionCheckerState> {
   @override
   VersionCheckerState Function() get createDefaultState =>
-      throw UnimplementedError();
+      () => VersionCheckerState({});
 
   @override
-  FileFormat get fileFormat => throw UnimplementedError();
+  FileFormat get fileFormat => FileFormat.json;
 
   @override
-  String get fileName => throw UnimplementedError();
+  String get fileName => "trios_version_checker_cache.${fileFormat.name}";
 
   @override
   VersionCheckerState Function(Map<String, dynamic> map) get fromMap =>
@@ -42,7 +42,7 @@ class VersionCheckerManager
       (obj) => obj.toMap();
 }
 
-class VersionCheckerAsyncManager
+class VersionCheckerAsyncProvider
     extends GenericSettingsAsyncNotifier<VersionCheckerState> {
   /// Time before the next version check can be done. Tracked per mod.
   static const versionCheckCooldown = Duration(minutes: 5);
@@ -51,30 +51,18 @@ class VersionCheckerAsyncManager
   final Map<String, RemoteVersionCheckResult> _versionCheckResultsCache = {};
   final cacheLock = Mutex();
 
-  Timer? _writeDebounceTimer;
-  final Duration _writeCooldown = const Duration(seconds: 5);
-  Completer<void>? _pendingWriteCompleter;
+  @override
+  GenericAsyncSettingsManager<VersionCheckerState> createSettingsManager() =>
+      VersionCheckerManager();
 
   @override
   Future<VersionCheckerState> build() async {
     await super.build();
-    refresh(skipCache: false);
+    // IMPORTANT: Automatically refreshes whenever mods change.
+    final modsRef = ref.watch(AppState.mods);
+    await refresh(skipCache: false);
     return VersionCheckerState(_versionCheckResultsCache);
   }
-
-  // Future<void> _debounceWriteToCacheFile() async {
-  //   if (_writeDebounceTimer?.isActive ?? false) {
-  //     _writeDebounceTimer?.cancel();
-  //   }
-  //   _writeDebounceTimer = Timer(_writeCooldown, () async {
-  //     if (_pendingWriteCompleter != null) {
-  //       await _pendingWriteCompleter!.future;
-  //     }
-  //     await cacheLock.protect(() async {
-  //       await writeToCacheFile(VersionCheckerState(_versionCheckResultsCache));
-  //     });
-  //   });
-  // }
 
   // Executes async, updates state every time a Version Check http request is completed.
   Future<void> refresh({required bool skipCache}) async {
@@ -84,7 +72,7 @@ class VersionCheckerAsyncManager
     if (skippingCache) {
       await cacheLock.protect(() async {
         _versionCheckResultsCache.clear();
-        state = AsyncValue.data(updateOrCreateState(_versionCheckResultsCache));
+        update((s) => _mutateOrCreateState(_versionCheckResultsCache));
         AppState.skipCacheOnNextVersionCheck = false;
       });
     } else if (_versionCheckResultsCache.isEmpty) {
@@ -94,8 +82,7 @@ class VersionCheckerAsyncManager
 
     var currentTime = DateTime.now();
 
-    // IMPORTANT: Automatically refreshes whenever the modVariants change.
-    final modsRef = ref.watch(AppState.mods);
+    final modsRef = ref.read(AppState.mods);
     // Doesn't check every variant. Only looks up the highest version that has a .version file.
     final variantsToCheck = modsRef
         .map((mod) => mod.modVariants.sortedDescending().firstWhereOrNull(
@@ -136,8 +123,7 @@ class VersionCheckerAsyncManager
             () => "Caching remote version info for ${mod.modInfo.id}: $result");
         await cacheLock.protect(() async {
           _versionCheckResultsCache[mod.smolId] = result;
-          state =
-              AsyncValue.data(updateOrCreateState(_versionCheckResultsCache));
+          update((s) => _mutateOrCreateState(_versionCheckResultsCache));
         });
       }).catchError((e, st) async {
         Fimber.e("Error fetching remote version info. Storing error. $e\n$st");
@@ -146,17 +132,13 @@ class VersionCheckerAsyncManager
           ..error = e;
         await cacheLock.protect(() async {
           _versionCheckResultsCache[mod.smolId] = errResult;
-          state =
-              AsyncValue.data(updateOrCreateState(_versionCheckResultsCache));
+          update((s) => _mutateOrCreateState(_versionCheckResultsCache));
         });
       });
-      //     .whenComplete(() async {
-      //   await _debounceWriteToCacheFile();
-      // });
     }
   }
 
-  VersionCheckerState updateOrCreateState(
+  VersionCheckerState _mutateOrCreateState(
       Map<String, RemoteVersionCheckResult> versionCheckResultsCache) {
     return state.valueOrNull?.copyWith(
           versionCheckResultsBySmolId: versionCheckResultsCache,
@@ -166,44 +148,6 @@ class VersionCheckerAsyncManager
 
   final versionCheckerCacheFile =
       File(p.join("cache", "TriOS-VersionCheckerCache.json")).normalize;
-
-  // Future<void> writeToCacheFile(
-  //     VersionCheckerState versionCheckResultsBySmolId) async {
-  //   try {
-  //     versionCheckerCacheFile.createSync(recursive: true);
-  //     final config = ConfigManager(versionCheckerCacheFile.path);
-  //     // await config.readConfig();
-  //     // TODO this is kinda cursed because it's double-encoding json (once here, once in ConfigManager), but it works for now.
-  //     // Ideally we'd use @Transient to avoid writing the error field to the cache.
-  //     await config.setConfig(versionCheckResultsBySmolId.map((key, value) {
-  //       return MapEntry(key, value.toJson());
-  //     }));
-  //     Fimber.i(
-  //         "Saved config to ${config.file}: ${versionCheckResultsBySmolId.length} entries.");
-  //   } catch (e, st) {
-  //     Fimber.w("Error saving version checker cache.", ex: e, stacktrace: st);
-  //   }
-  // }
-
-  // Future<VersionCheckerState?> readFromCacheFile() async {
-  //   try {
-  //     final config = ConfigManager(versionCheckerCacheFile.path);
-  //     await config.readConfig();
-  //     final cache = config.config;
-  //     Fimber.i("Read config from ${config.file}: ${cache.length} entries.");
-  //     return cache.map((key, value) {
-  //       return MapEntry(key, RemoteVersionCheckResult.fromJson(key, value));
-  //     });
-  //   } catch (e, st) {
-  //     Fimber.w("Error reading version checker cache.", ex: e, stacktrace: st);
-  //     writeToCacheFile({}); // Clear the cache if it's corrupted.
-  //     return null;
-  //   }
-  // }
-
-  @override
-  GenericAsyncSettingsManager<VersionCheckerState> createSettingsManager() =>
-      VersionCheckerManager();
 }
 
 /// Result of looking up a remote version checker file.

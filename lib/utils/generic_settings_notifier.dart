@@ -12,7 +12,7 @@ abstract class GenericSettingsAsyncNotifier<T> extends AsyncNotifier<T> {
   @override
   Future<T> build() async {
     settingsManager = createSettingsManager();
-    final settings = await settingsManager.load();
+    final settings = await settingsManager.readSettingsFromDisk();
     return settings;
   }
 

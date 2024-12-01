@@ -312,9 +312,8 @@ class ShallowModVariantMapper extends ClassMapperBase<ShallowModVariant> {
   static const Field<ShallowModVariant, String> _f$smolVariantId =
       Field('smolVariantId', _$smolVariantId);
   static Version? _$version(ShallowModVariant v) => v.version;
-  static const Field<ShallowModVariant, Version> _f$version = Field(
-      'version', _$version,
-      opt: true, hook: NullableVersionMappingHook());
+  static const Field<ShallowModVariant, Version> _f$version =
+      Field('version', _$version, opt: true, hook: VersionHook());
 
   @override
   final MappableFields<ShallowModVariant> fields = const {

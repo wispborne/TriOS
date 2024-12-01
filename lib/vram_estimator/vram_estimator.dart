@@ -1,13 +1,11 @@
-import 'dart:io';
-
 import 'package:collection/collection.dart';
+import 'package:dart_mappable/dart_mappable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:path/path.dart' as p;
 import 'package:trios/trios/app_state.dart';
-import 'package:trios/trios/constants.dart';
-import 'package:trios/trios/settings/config_manager.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/generic_settings_manager.dart';
+import 'package:trios/utils/generic_settings_notifier.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/vram_estimator/vram_checker_logic.dart';
 import 'package:trios/widgets/disable.dart';
@@ -21,7 +19,10 @@ import 'graphics_lib_config_provider.dart';
 import 'models/graphics_lib_config.dart';
 import 'models/vram_checker_models.dart';
 
-class VramEstimatorState {
+part 'vram_estimator.mapper.dart';
+
+@MappableClass()
+class VramEstimatorState with VramEstimatorStateMappable {
   final bool isScanning;
   final Map<String, Mod> modVramInfo;
   final bool isCancelled;
@@ -34,20 +35,6 @@ class VramEstimatorState {
     required this.lastUpdated,
   });
 
-  VramEstimatorState copyWith({
-    bool? isScanning,
-    Map<String, Mod>? modVramInfo,
-    bool? isCancelled,
-    DateTime? lastUpdated,
-  }) {
-    return VramEstimatorState(
-      isScanning: isScanning ?? this.isScanning,
-      modVramInfo: modVramInfo ?? this.modVramInfo,
-      isCancelled: isCancelled ?? this.isCancelled,
-      lastUpdated: lastUpdated ?? this.lastUpdated,
-    );
-  }
-
   factory VramEstimatorState.initial() {
     return VramEstimatorState(
       isScanning: false,
@@ -58,34 +45,56 @@ class VramEstimatorState {
   }
 }
 
-class VramEstimatorNotifier extends Notifier<VramEstimatorState> {
-  ConfigManager configManager = ConfigManager(
-      File(p.join("cache", "TriOS-VRAM_CheckerCache.json")).normalize.path);
+class VramEstimatorManager extends GenericSettingsManager<VramEstimatorState> {
+  @override
+  VramEstimatorState Function() get createDefaultState =>
+      () => VramEstimatorState.initial();
 
   @override
-  VramEstimatorState build() {
-    readFromDisk();
+  FileFormat get fileFormat => FileFormat.json;
 
-    return VramEstimatorState.initial();
-  }
+  @override
+  String get fileName => "TriOS-VRAM_CheckerCache.json";
 
-  void readFromDisk() async {
-    await configManager.readConfig();
+  @override
+  VramEstimatorState Function(Map<String, dynamic> map) get fromMap =>
+      (map) => VramEstimatorStateMapper.fromMap(map);
 
-    if (configManager.config.isNotEmpty) {
-      final modVramInfo =
-          configManager.config['modVramInfo'] as Map<String, dynamic>;
-      final lastUpdated = configManager.config['lastUpdated'] as String;
+  @override
+  Map<String, dynamic> Function(VramEstimatorState obj) get toMap =>
+      (obj) => obj.toMap();
+}
 
-      state = state.copyWith(
-        modVramInfo: modVramInfo
-            .map((key, value) => MapEntry(key, ModMapper.fromJson(value))),
-        isCancelled: false,
-        isScanning: false,
-        lastUpdated: Constants.dateTimeFormat.parse(lastUpdated),
-      );
-    }
-  }
+class VramEstimatorNotifier
+    extends GenericSettingsNotifier<VramEstimatorState> {
+  // @override
+  // VramEstimatorState build() {
+  //   readFromDisk();
+  //
+  //   return VramEstimatorState.initial();
+  // }
+
+  @override
+  GenericSettingsManager<VramEstimatorState> createSettingsManager() =>
+      VramEstimatorManager();
+
+  // void readFromDisk() async {
+  //   await configManager.readConfig();
+  //
+  //   if (configManager.config.isNotEmpty) {
+  //     final modVramInfo =
+  //         configManager.config['modVramInfo'] as Map<String, dynamic>;
+  //     final lastUpdated = configManager.config['lastUpdated'] as String;
+  //
+  //     state = state.copyWith(
+  //       modVramInfo: modVramInfo
+  //           .map((key, value) => MapEntry(key, ModMapper.fromJson(value))),
+  //       isCancelled: false,
+  //       isScanning: false,
+  //       lastUpdated: Constants.dateTimeFormat.parse(lastUpdated),
+  //     );
+  //   }
+  // }
 
   Future<void> startEstimating({List<String>? smolIdsToCheck}) async {
     if (state.isScanning) return;
@@ -116,7 +125,8 @@ class VramEstimatorNotifier extends Notifier<VramEstimatorState> {
         modIdsToCheck: null,
         foldersToCheck: settings.modsDir == null ? [] : [settings.modsDir!],
         // TODO get graphicslib settings!
-        graphicsLibConfig: ref.read(graphicsLibConfigProvider) ?? GraphicsLibConfig.disabled,
+        graphicsLibConfig:
+            ref.read(graphicsLibConfigProvider) ?? GraphicsLibConfig.disabled,
         showCountedFiles: true,
         showSkippedFiles: true,
         showGfxLibDebugOutput: true,
@@ -133,12 +143,11 @@ class VramEstimatorNotifier extends Notifier<VramEstimatorState> {
           final entries =
               updatedModVramInfo.map((key, mod) => MapEntry(key, mod.toJson()));
 
-          configManager.updateConfig('modVramInfo', entries,
-              flushToDisk: false);
-          configManager.updateConfig(
-            'lastUpdated',
-            Constants.dateTimeFormat.format(DateTime.now()),
-            flushToDisk: true,
+          update(
+            (state) => state.copyWith(
+              modVramInfo: updatedModVramInfo,
+              lastUpdated: DateTime.now(),
+            ),
           );
         },
         debugOut: Fimber.d,
@@ -152,18 +161,21 @@ class VramEstimatorNotifier extends Notifier<VramEstimatorState> {
             previousValue..[element.info.smolId] = element,
       );
 
-      configManager.writeConfig();
-      state = state.copyWith(
-        isScanning: false,
-        modVramInfo: modVramInfo,
-        isCancelled: false,
+      update(
+        (state) => state.copyWith(
+          modVramInfo: modVramInfo,
+          isScanning: false,
+          isCancelled: false,
+        ),
       );
     } catch (e) {
       Fimber.w('Error scanning for VRAM usage: $e');
       // Optionally, set an error state
-      state = state.copyWith(
-        isScanning: false,
-        isCancelled: false,
+      update(
+        (state) => state.copyWith(
+          isScanning: false,
+          isCancelled: false,
+        ),
       );
     }
   }

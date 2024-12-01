@@ -90,9 +90,14 @@ extension ModInfoExt on ModInfo {
 }
 
 extension ModExt on Mod {
+  // VersionCheckComparison? updateCheck(
+  //     Map<String, RemoteVersionCheckResult> versionChecks) {
+  //   return modVariants.updateCheck(versionChecks);
+  // }
+
   VersionCheckComparison? updateCheck(
-      Map<String, RemoteVersionCheckResult> versionChecks) {
-    return modVariants.updateCheck(versionChecks);
+      VersionCheckerState? versionChecks) {
+    return modVariants.updateCheck(versionChecks?.versionCheckResultsBySmolId ?? {});
   }
 }
 
@@ -160,8 +165,8 @@ extension ModVariantExt on ModVariant {
   }
 
   VersionCheckComparison? updateCheck(
-      Map<String, RemoteVersionCheckResult> versionChecks) {
-    return VersionCheckComparison(this, versionChecks);
+      VersionCheckerState? versionChecks) {
+    return VersionCheckComparison(this, versionChecks?.versionCheckResultsBySmolId ?? {});
   }
 }
 

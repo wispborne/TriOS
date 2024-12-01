@@ -12,12 +12,14 @@ class RefreshModsButton extends ConsumerStatefulWidget {
   final EdgeInsetsGeometry padding;
   final bool isRefreshing;
   final bool iconOnly;
+  final bool outlined;
 
   const RefreshModsButton({
     super.key,
     this.iconSize = 20,
     this.padding = const EdgeInsets.all(4),
     this.labelWidget,
+    this.outlined = false,
     required this.isRefreshing,
     required this.iconOnly,
   });
@@ -47,26 +49,42 @@ class _RefreshModsButtonState extends ConsumerState<RefreshModsButton> {
                   },
                   constraints: const BoxConstraints(),
                 )
-              : Padding(
-                  padding: widget.padding,
-                  child: OutlinedButton.icon(
-                    onPressed: () => _refresh(),
-                    label: Text(isRefreshing ? "Refreshing" : "Refresh"),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Theme.of(context)
-                          .colorScheme
-                          .onSurface
-                          .withOpacity(0.8),
-                      side: BorderSide(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurface
-                            .withOpacity(0.8),
+              : widget.outlined
+                  ? SizedBox(
+                      height: 32,
+                      child: IconButton.outlined(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        icon: _icon(isRefreshing),
+                        onPressed: () {
+                          _refresh();
+                        },
+                        style: OutlinedButton.styleFrom(
+                          shape: const RoundedRectangleBorder(
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(16))),
+                        ),
                       ),
-                    ),
-                    icon: _icon(isRefreshing),
-                  ),
-                )),
+                    )
+                  : Padding(
+                      padding: widget.padding,
+                      child: OutlinedButton.icon(
+                        onPressed: () => _refresh(),
+                        label: Text(isRefreshing ? "Refreshing" : "Refresh"),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Theme.of(context)
+                              .colorScheme
+                              .onSurface
+                              .withOpacity(0.8),
+                          side: BorderSide(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurface
+                                .withOpacity(0.8),
+                          ),
+                        ),
+                        icon: _icon(isRefreshing),
+                      ),
+                    )),
     );
   }
 

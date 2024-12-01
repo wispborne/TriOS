@@ -28,10 +28,24 @@ abstract class GenericAsyncSettingsManager<T> {
   T Function() get createDefaultState;
 
   /// Subclasses must provide a function to serialize the settings to a map.
-  Map<String, dynamic> Function(T) get toMap;
+  Map<String, dynamic> Function(T obj) get toMap;
 
   /// Subclasses must provide a function to deserialize a map into the settings object.
-  T Function(Map<String, dynamic>) get fromMap;
+  T Function(Map<String, dynamic> map) get fromMap;
+
+  /// Override to do custom serialization
+  Future<String> serialize(T obj) async {
+    return fileFormat == FileFormat.toml
+        ? TomlDocument.fromMap(toMap(obj)).toString()
+        : jsonEncode(toMap(obj));
+  }
+
+  /// Override to do custom deserialization
+  Future<T> deserialize(String contents) async {
+    return fileFormat == FileFormat.toml
+        ? fromMap(TomlDocument.parse(contents).toMap())
+        : fromMap(jsonDecode(contents) as Map<String, dynamic>);
+  }
 
   /// The name of the file where settings will be stored.
   String get fileName;
@@ -51,7 +65,7 @@ abstract class GenericAsyncSettingsManager<T> {
 
   /// Initializes and loads the state from the settings file (TOML or JSON),
   /// or uses the default state if the file is missing or invalid.
-  Future<T> load() async {
+  Future<T> readSettingsFromDisk() async {
     _fileName = fileName;
     settingsFile = await _getFile();
 
@@ -59,9 +73,7 @@ abstract class GenericAsyncSettingsManager<T> {
       if (await settingsFile.exists()) {
         try {
           final contents = await settingsFile.readAsString();
-          final loadedState = fileFormat == FileFormat.toml
-              ? fromMap(TomlDocument.parse(contents).toMap())
-              : fromMap(jsonDecode(contents) as Map<String, dynamic>);
+          final loadedState = await deserialize(contents);
           Fimber.i("Settings successfully loaded from disk.");
           state = loadedState;
           return state;
@@ -84,9 +96,7 @@ abstract class GenericAsyncSettingsManager<T> {
   /// Writes the provided state to the settings file (TOML or JSON) on disk.
   Future<void> writeSettingsToDisk(T currentState) async {
     try {
-      final serializedData = fileFormat == FileFormat.toml
-          ? TomlDocument.fromMap(toMap(currentState)).toString()
-          : jsonEncode(toMap(currentState));
+      final serializedData = await serialize(currentState);
       await settingsFile.writeAsString(serializedData);
       Fimber.i("Settings successfully written to disk.");
     } catch (e, stackTrace) {
@@ -187,10 +197,10 @@ abstract class GenericSettingsManager<T> {
   T Function() get createDefaultState;
 
   /// Subclasses must provide a function to serialize the settings to a map.
-  Map<String, dynamic> Function(T) get toMap;
+  Map<String, dynamic> Function(T obj) get toMap;
 
   /// Subclasses must provide a function to deserialize a map into the settings object.
-  T Function(Map<String, dynamic>) get fromMap;
+  T Function(Map<String, dynamic> map) get fromMap;
 
   /// The name of the file where settings will be stored.
   String get fileName;

@@ -15,6 +15,7 @@ import 'package:trios/utils/util.dart';
 
 import '../libarchive/libarchive.dart';
 import '../trios/settings/settings.dart';
+import '../utils/dart_mappable_utils.dart';
 import '../widgets/disable.dart';
 import '../widgets/download_progress_indicator.dart';
 

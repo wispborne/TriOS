@@ -12,6 +12,7 @@ import 'package:trios/utils/util.dart';
 
 import '../../mod_manager/mods_grid_state.dart';
 import '../../models/launch_settings.dart';
+import '../../utils/dart_mappable_utils.dart';
 
 part 'settings.mapper.dart';
 
@@ -65,6 +66,7 @@ class Settings with SettingsMappable {
   final LaunchSettings launchSettings;
   final String? lastStarsectorVersion;
   final bool isUpdatesFieldShown;
+  @MappableField(hook: SafeDecodeHook())
   final ModsGridState? modsGridState;
 
   // Settings Page

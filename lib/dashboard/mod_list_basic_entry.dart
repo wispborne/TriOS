@@ -132,7 +132,7 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
     final gameVersion = ref.watch(AppState.starsectorVersion).value;
     final modInfo = modVariant.modInfo;
     final versionCheckComparisonResult =
-        mod.updateCheck(cachedVersionChecks ?? {});
+        mod.updateCheck(cachedVersionChecks);
     final versionCheckComparison = versionCheckComparisonResult?.comparisonInt;
     final localVersionCheck =
         versionCheckComparisonResult?.variant.versionCheckerInfo;

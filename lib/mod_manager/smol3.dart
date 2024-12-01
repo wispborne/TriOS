@@ -222,6 +222,7 @@ class _Smol3State extends ConsumerState<Smol3>
                       child: Padding(
                           padding: const EdgeInsets.only(left: 2, right: 8),
                           child: Row(
+                            mainAxisSize: MainAxisSize.max,
                             children: [
                               const SizedBox(width: 4),
                               const AddNewModsButton(
@@ -234,6 +235,7 @@ class _Smol3State extends ConsumerState<Smol3>
                               const SizedBox(width: 4),
                               RefreshModsButton(
                                 iconOnly: false,
+                                outlined: true,
                                 isRefreshing: isChangingModProfileProvider,
                               ),
                               const SizedBox(width: 4),
@@ -335,6 +337,7 @@ class _Smol3State extends ConsumerState<Smol3>
                                     ref: ref),
                               ),
                               const Spacer(),
+                              const SizedBox(width: 8),
                               const Padding(
                                 padding: EdgeInsets.only(right: 8),
                                 child: Text("Profile:"),
@@ -501,18 +504,11 @@ class _Smol3State extends ConsumerState<Smol3>
                           }
                         }
                       },
-                      onColumnsMoved: (event) {
-                        ref.read(appSettings.notifier).update((s) {
-                          return s.copyWith(
-                              modsGridState:
-                                  (s.modsGridState ?? ModsGridState()).copyWith(
-                                      columnOrder: event.columns
-                                          .map((c) => SmolColumn.values
-                                              .enumFromStringCaseInsensitive<
-                                                  SmolColumn?>(c.field))
-                                          .whereNotNull()
-                                          .toList()));
-                        });
+                      onColumnsMoved: (event) async {
+                        // Without this delay, the grid rebuilds immediately because it's watching modsGridState
+                        // which results in the column header draggable getting "stuck" onscreen.
+                        await Future.delayed(Duration(seconds: 1));
+                        saveCurrentGridColumnsState();
                       },
                       noRowsWidget: Center(
                           child: Container(
@@ -561,6 +557,34 @@ class _Smol3State extends ConsumerState<Smol3>
         ),
       ],
     );
+  }
+
+  void saveCurrentGridColumnsState() {
+    ref.read(appSettings.notifier).update((s) {
+      final savedState = (s.modsGridState ?? ModsGridState());
+      List<ModsGridColumnState> newColumnStates = [];
+
+      for (final displayedCol in stateManager?.columns ?? <PlutoColumn>[]) {
+        final colDefinition = smolColumnByField(displayedCol);
+        final storedCol = savedState.columns
+            ?.firstWhereOrNull((e) => e.column.name == colDefinition.name);
+
+        newColumnStates.add(
+            (storedCol ?? ModsGridColumnState(column: colDefinition)).copyWith(
+          width: displayedCol.width,
+          visible: !displayedCol.hide,
+          sortedAscending:
+              displayedCol.sort.isNone ? null : displayedCol.sort.isAscending,
+        ));
+      }
+
+      return s.copyWith(
+          modsGridState: savedState.copyWith(columns: newColumnStates));
+    });
+  }
+
+  SmolColumn smolColumnByField(PlutoColumn c) {
+    return SmolColumn.values.byName(c.field.split(".")[1]);
   }
 
   void _toggleRowGroup(PlutoGridStateManager stateManager, PlutoRow row) {
@@ -728,7 +752,7 @@ class _Smol3State extends ConsumerState<Smol3>
   List<PlutoColumn> createColumns(
     double versionSelectorWidth,
     double lightTextOpacity,
-    Map<String, RemoteVersionCheckResult>? versionCheckResults,
+    VersionCheckerState? versionCheckResults,
     bool isGameRunning,
   ) {
     final columns = [
@@ -1172,7 +1196,7 @@ class _Smol3State extends ConsumerState<Smol3>
               ref.watch(AppState.versionCheckResults).valueOrNull;
           //
           final versionCheckComparison =
-              mod.updateCheck(versionCheckResultsNew ?? {});
+              mod.updateCheck(versionCheckResultsNew);
           final localVersionCheck =
               versionCheckComparison?.variant.versionCheckerInfo;
           final remoteVersionCheck = versionCheckComparison?.remoteVersionCheck;
@@ -1507,14 +1531,39 @@ class _Smol3State extends ConsumerState<Smol3>
       ),
     ];
 
-    return ref
-            .read(appSettings.select((s) => s.modsGridState))
-            ?.columnOrder
-            ?.map(
-                (e) => columns.firstWhereOrNull((c) => c.field == e.toString()))
-            .whereNotNull()
-            .toList() ??
-        columns;
+    final savedColumnState =
+        ref.read(appSettings.select((s) => s.modsGridState?.columns));
+
+    if (savedColumnState == null) {
+      return columns;
+    }
+
+    final result = savedColumnState
+        .map((stateCol) {
+          final columnToShow = columns.firstWhereOrNull(
+            (plutoCol) => plutoCol.field == stateCol.column.toString(),
+          );
+
+          if (columnToShow == null) {
+            return null; // Skip if the column does not exist
+          }
+
+          // Update column properties
+          if (stateCol.width != null) {
+            columnToShow.width = stateCol.width!;
+          }
+          columnToShow.hide = !stateCol.visible;
+          if (stateCol.sortedAscending != null) {
+            columnToShow.sort = stateCol.sortedAscending!
+                ? PlutoColumnSort.ascending
+                : PlutoColumnSort.descending;
+          }
+
+          return columnToShow;
+        })
+        .whereNotNull()
+        .toList();
+    return result;
   }
 
   PlutoRow? createRow(Mod mod) {

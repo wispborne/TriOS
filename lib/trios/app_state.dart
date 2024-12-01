@@ -44,9 +44,9 @@ class AppState {
           ModVariantsNotifier.new);
 
   /// String is the smolId
-  static final versionCheckResults = AsyncNotifierProvider<
-      VersionCheckerNotifier,
-      Map<String, RemoteVersionCheckResult>>(VersionCheckerNotifier.new);
+  static final versionCheckResults =
+      AsyncNotifierProvider<VersionCheckerAsyncManager, VersionCheckerState>(
+          VersionCheckerAsyncManager.new);
 
   static var skipCacheOnNextVersionCheck = false;
 

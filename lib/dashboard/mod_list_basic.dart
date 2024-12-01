@@ -211,9 +211,7 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                     filteredModList
                         .map((e) => e as Mod?)
                         .filter((mod) {
-                          return mod
-                                  ?.updateCheck(versionCheck ?? {})
-                                  ?.hasUpdate ==
+                          return mod?.updateCheck(versionCheck)?.hasUpdate ==
                               true;
                           // final variant = mod?.findHighestVersion;
                           // if (variant?.versionCheckerInfo == null) return false;
@@ -407,13 +405,13 @@ class _ModListMiniState extends ConsumerState<ModListMini>
 
   void _onClickedDownloadModUpdatesDialog(
       List<Mod?> modsWithUpdates,
-      Map<String, RemoteVersionCheckResult>? versionCheck,
+      VersionCheckerState? versionCheck,
       BuildContext context) {
     downloadUpdates() {
       for (var mod in modsWithUpdates) {
         if (mod == null) continue;
         final variant = mod.findHighestVersion!;
-        final remoteVersionCheck = versionCheck?[variant.smolId];
+        final remoteVersionCheck = versionCheck?.versionCheckResultsBySmolId[variant.smolId];
         if (remoteVersionCheck?.remoteVersion != null) {
           ref.read(downloadManager.notifier).downloadUpdateViaBrowser(
                 remoteVersionCheck!.remoteVersion!,

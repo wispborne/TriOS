@@ -1,11 +1,10 @@
 import 'dart:io';
 
-import 'package:collection/collection.dart';
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/models/version.dart';
-import 'package:trios/utils/util.dart';
 
+import '../utils/dart_mappable_utils.dart';
 import 'mod_info_json.dart';
 
 part 'mod_info.mapper.dart';
@@ -15,7 +14,7 @@ part 'mod_info.mapper.dart';
 class ModInfo with ModInfoMappable {
   final String id;
   final String? name;
-  @MappableField(hook: NullableVersionHook())
+  @MappableField(hook: VersionHook())
   final Version? version;
   final String? description;
   final String? gameVersion;

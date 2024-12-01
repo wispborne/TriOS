@@ -4,7 +4,8 @@ import 'package:collection/collection.dart';
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/utils/extensions.dart';
-import 'package:trios/utils/util.dart';
+
+import '../utils/dart_mappable_utils.dart';
 
 part 'mod_info_json.mapper.dart';
 
@@ -20,7 +21,7 @@ class ModInfoJson with ModInfoJsonMappable {
   final String id;
   final String? name;
 
-  @MappableField(hook: NullableVersionHook())
+  @MappableField(hook: VersionHook())
   final Version? version;
   final String? author;
   final String? gameVersion;
@@ -50,7 +51,7 @@ class ModInfoJson with ModInfoJsonMappable {
 class Dependency with DependencyMappable {
   final String? id;
   final String? name;
-  @MappableField(hook: NullableVersionHook())
+  @MappableField(hook: VersionHook())
   final Version? version;
 
   Dependency({this.id, this.name, this.version});

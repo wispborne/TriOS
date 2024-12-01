@@ -48,7 +48,7 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
     var cachedVersionChecks =
         ref.watch(AppState.versionCheckResults).valueOrNull;
     final versionCheckComparisonResult =
-        modVariant.updateCheck(cachedVersionChecks ?? {});
+        modVariant.updateCheck(cachedVersionChecks);
     final versionCheckComparison = versionCheckComparisonResult?.comparisonInt;
     final localVersionCheck =
         versionCheckComparisonResult?.variant.versionCheckerInfo;
@@ -70,7 +70,8 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: const EdgeInsets.only(left: 8, top: 10, right: 8, bottom: 8),
+                  padding: const EdgeInsets.only(
+                      left: 8, top: 10, right: 8, bottom: 8),
                   child: SizedBox(
                     width: modVariant.iconFilePath != null ? 40 : 0,
                     child: Center(

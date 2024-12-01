@@ -1,74 +1,108 @@
+import 'dart:io';
+
 import 'package:dart_mappable/dart_mappable.dart';
-import 'package:trios/models/mod_info_json.dart';
-import 'package:trios/models/version.dart';
 
-class VersionMappingHook extends MappingHook {
-  const VersionMappingHook();
+import '../models/version.dart';
 
-  @override
-  dynamic beforeDecode(dynamic value) {
-    if (value is Map<String, dynamic>) {
-      return Version.parse(VersionObjectMapper.fromJson(value.toString()).toString(),
-          sanitizeInput: false);
-    }
-    return Version.parse(value, sanitizeInput: true);
-  }
-
-  @override
-  dynamic beforeEncode(dynamic value) {
-    if (value is VersionObject) {
-      return "${value.major}.${value.minor}.${value.patch}";
-    } else {
-      return value.toString();
-    }
-  }
-}
-
-class NullableVersionMappingHook extends MappingHook {
-  const NullableVersionMappingHook();
+class VersionHook extends MappingHook {
+  const VersionHook();
 
   @override
   dynamic beforeDecode(dynamic value) {
     if (value == null) return null;
-    return const VersionMappingHook().beforeDecode(value);
+    try {
+      if (value is Map<String, dynamic>) {
+        // Handle decoding from map representation
+        return VersionMapper.fromMap(value);
+      }
+      // Handle decoding from string
+      return Version.parse(value.toString(), sanitizeInput: true);
+    } catch (_) {
+      return null; // Graceful fallback on error
+    }
   }
 
   @override
   dynamic beforeEncode(dynamic value) {
-    if (value == null) return null;
-    return const VersionMappingHook().beforeEncode(value);
+    return value is Version ? value.toString() : value;
   }
 }
 
-class StringMappingHook extends MappingHook {
-  const StringMappingHook();
+class NullableHook<T> extends MappingHook {
+  final MappingHook hook;
+
+  const NullableHook(this.hook);
 
   @override
   dynamic beforeDecode(dynamic value) {
-    return value.toString();
+    return value == null ? null : hook.beforeDecode(value);
   }
 
   @override
   dynamic beforeEncode(dynamic value) {
-    return value;
+    return value == null ? null : hook.beforeEncode(value);
   }
 }
 
-class BoolMappingHook extends MappingHook {
-  const BoolMappingHook();
+class BoolHook extends MappingHook {
+  const BoolHook();
 
   @override
-  dynamic beforeDecode(dynamic value) {
+  bool beforeDecode(dynamic value) {
     if (value == null) return false;
     if (value is bool) return value;
     if (value is String) {
-      return bool.tryParse(value, caseSensitive: false) ?? false;
+      final lower = value.toLowerCase();
+      return lower == 'true'
+          ? true
+          : lower == 'false'
+              ? false
+              : false;
     }
     return false;
   }
 
   @override
   dynamic beforeEncode(dynamic value) {
-    return value.toString();
+    return value is bool ? value.toString() : value;
+  }
+}
+
+class ToStringHook extends MappingHook {
+  const ToStringHook();
+
+  @override
+  dynamic beforeDecode(dynamic value) => value?.toString();
+
+  @override
+  dynamic beforeEncode(dynamic value) => value;
+}
+
+class DirectoryHook extends MappingHook {
+  const DirectoryHook();
+
+  @override
+  Directory? beforeDecode(dynamic value) {
+    return value is String ? Directory(value) : null;
+  }
+
+  @override
+  String? beforeEncode(dynamic value) {
+    return value is Directory ? value.path : null;
+  }
+}
+
+class SafeDecodeHook<T> extends MappingHook {
+  final T? defaultValue;
+
+  const SafeDecodeHook({this.defaultValue});
+
+  @override
+  dynamic beforeDecode(dynamic value) {
+    try {
+      return value;
+    } catch (_) {
+      return defaultValue;
+    }
   }
 }

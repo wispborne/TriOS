@@ -29,6 +29,7 @@ final modProfilesProvider =
 // isChangingProfile state
 bool isChangingModProfileProvider = false;
 
+/// Stores [ModProfile]s, provides methods to manage them, observable state.
 class ModProfilesSettingsManager extends GenericAsyncSettingsManager<ModProfiles> {
   @override
   ModProfiles Function() get createDefaultState =>

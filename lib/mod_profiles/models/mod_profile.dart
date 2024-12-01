@@ -22,7 +22,7 @@ class ShallowModVariant with ShallowModVariantMappable {
     required this.modId,
     this.modName,
     required this.smolVariantId,
-    @MappableField(key: 'version', hook: NullableVersionMappingHook())
+    @MappableField(key: 'version', hook: VersionHook())
     this.version,
   });
 

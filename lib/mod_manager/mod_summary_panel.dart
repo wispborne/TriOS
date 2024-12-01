@@ -82,7 +82,8 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
           final variant = selectedMod!.findHighestVersion;
           final versionCheck = ref
               .watch(AppState.versionCheckResults)
-              .valueOrNull?[variant?.smolId];
+              .valueOrNull
+              ?.versionCheckResultsBySmolId[variant?.smolId];
           if (variant == null) return const SizedBox();
           final iconFilePath = variant.iconFilePath;
 

@@ -144,7 +144,7 @@ class ModInfoJsonMapper extends ClassMapperBase<ModInfoJson> {
       Field('name', _$name, opt: true);
   static Version? _$version(ModInfoJson v) => v.version;
   static const Field<ModInfoJson, Version> _f$version =
-      Field('version', _$version, opt: true, hook: NullableVersionHook());
+      Field('version', _$version, opt: true, hook: VersionHook());
   static String? _$author(ModInfoJson v) => v.author;
   static const Field<ModInfoJson, String> _f$author =
       Field('author', _$author, opt: true);
@@ -344,7 +344,7 @@ class DependencyMapper extends ClassMapperBase<Dependency> {
       Field('name', _$name, opt: true);
   static Version? _$version(Dependency v) => v.version;
   static const Field<Dependency, Version> _f$version =
-      Field('version', _$version, opt: true, hook: NullableVersionHook());
+      Field('version', _$version, opt: true, hook: VersionHook());
 
   @override
   final MappableFields<Dependency> fields = const {

@@ -86,43 +86,46 @@ configureLogging({
           logFolderName?.toDirectory().createSync(recursive: true);
         }
 
-        // Closes file handles to the log file if they exist.
-        await _advancedFileOutput?.destroy();
+        // Only set up file logging once, otherwise it messes up sink handling.
+        if (_advancedFileOutput == null) {
+          // Closes file handles to the log file if they exist.
+          await _advancedFileOutput?.destroy();
 
-        _advancedFileOutput = AdvancedFileOutput(
-          path: logFolderName!,
-          maxFileSizeKB: 25000,
-          writeImmediately: [Level.error, Level.fatal],
-          latestFileName: logFileName,
-        );
+          _advancedFileOutput = AdvancedFileOutput(
+            path: logFolderName!,
+            maxFileSizeKB: 25000,
+            writeImmediately: [Level.error, Level.fatal],
+            latestFileName: logFileName,
+          );
 
-        _fileLogger = Logger(
-          level: kDebugMode ? Level.debug : Level.info,
-          filter: ProductionFilter(),
-          printer: PrettyPrinterCustom(
-            stackTraceBeginIndex: stackTraceBeginIndex,
-            methodCount: methodCount,
-            colors: false,
-            printEmojis: true,
-            printTime: true,
-            stackTraceMaxLines: 20,
-          ),
-          output: _advancedFileOutput,
-        );
+          _fileLogger = Logger(
+            level: kDebugMode ? Level.debug : Level.info,
+            filter: ProductionFilter(),
+            printer: PrettyPrinterCustom(
+              stackTraceBeginIndex: stackTraceBeginIndex,
+              methodCount: methodCount,
+              colors: false,
+              printEmojis: true,
+              printTime: true,
+              stackTraceMaxLines: 20,
+            ),
+            output: _advancedFileOutput,
+          );
 
-        // Clean up old log files.
-        try {
-          logFolderName
-              ?.toDirectory()
-              .listSync()
-              .where((file) =>
-                  file is File &&
-                  file.extension == ".log" &&
-                  file.nameWithExtension != logFileName)
-              .forEach((FileSystemEntity file) =>
-                  file.moveToTrash(deleteIfFailed: true));
-        } catch (e) {
-          Fimber.e("Error cleaning up old log files.", ex: e);
+          // Clean up old log files.
+          try {
+            logFolderName
+                ?.toDirectory()
+                .listSync()
+                .where((file) =>
+                    file is File &&
+                    file.extension == ".log" &&
+                    file.nameWithExtension != logFileName)
+                .forEach((FileSystemEntity file) =>
+                    file.moveToTrash(deleteIfFailed: true));
+          } catch (e) {
+            Fimber.e("Error cleaning up old log files.", ex: e);
+          }
         }
       } catch (e) {
         Fimber.e("Error setting up file logging. Falling back to console only.",

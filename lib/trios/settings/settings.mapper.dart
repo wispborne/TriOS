@@ -186,8 +186,9 @@ class SettingsMapper extends ClassMapperBase<Settings> {
   static const Field<Settings, bool> _f$isUpdatesFieldShown =
       Field('isUpdatesFieldShown', _$isUpdatesFieldShown, opt: true, def: true);
   static ModsGridState? _$modsGridState(Settings v) => v.modsGridState;
-  static const Field<Settings, ModsGridState> _f$modsGridState =
-      Field('modsGridState', _$modsGridState, opt: true);
+  static const Field<Settings, ModsGridState> _f$modsGridState = Field(
+      'modsGridState', _$modsGridState,
+      opt: true, hook: SafeDecodeHook());
   static bool _$shouldAutoUpdateOnLaunch(Settings v) =>
       v.shouldAutoUpdateOnLaunch;
   static const Field<Settings, bool> _f$shouldAutoUpdateOnLaunch = Field(

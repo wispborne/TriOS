@@ -16,7 +16,6 @@ import '../models/mod_variant.dart';
 import '../models/version_checker_info.dart';
 import '../trios/app_state.dart';
 import '../trios/providers.dart';
-import '../utils/dart_mappable_utils.dart';
 import 'mod_manager_logic.dart';
 
 part 'version_checker.mapper.dart';
@@ -45,11 +44,11 @@ class VersionCheckerManager
 class VersionCheckerAsyncProvider
     extends GenericSettingsAsyncNotifier<VersionCheckerState> {
   /// Time before the next version check can be done. Tracked per mod.
-  static const versionCheckCooldown = Duration(minutes: 5);
+  static const versionCheckCooldown = Duration(minutes: 60);
 
   /// Actual source of truth for the state, persists between rebuilds.
   final Map<String, RemoteVersionCheckResult> _versionCheckResultsCache = {};
-  final cacheLock = Mutex();
+  final _cacheLock = Mutex();
 
   @override
   GenericAsyncSettingsManager<VersionCheckerState> createSettingsManager() =>
@@ -58,87 +57,107 @@ class VersionCheckerAsyncProvider
   @override
   Future<VersionCheckerState> build() async {
     await super.build();
-    // IMPORTANT: Automatically refreshes whenever mods change.
-    final modsRef = ref.watch(AppState.mods);
+    // Automatically refreshes whenever mods change.
+    ref.watch(AppState.mods);
     await refresh(skipCache: false);
     return VersionCheckerState(_versionCheckResultsCache);
   }
 
-  // Executes async, updates state every time a Version Check http request is completed.
+  /// Refreshes the version check results, updating the state accordingly.
   Future<void> refresh({required bool skipCache}) async {
-    final skippingCache = AppState.skipCacheOnNextVersionCheck || skipCache;
-    final httpClient = ref.watch(triOSHttpClient);
+    await _initializeCache(skipCache);
 
-    if (skippingCache) {
-      await cacheLock.protect(() async {
+    final variantsToCheck = _getVariantsToCheck();
+    final versionCheckTasks =
+        _createVersionCheckTasks(variantsToCheck, skipCache);
+
+    await _executeVersionCheckTasks(versionCheckTasks);
+  }
+
+  /// Initializes the cache by clearing it or loading from disk based on skipCache.
+  Future<void> _initializeCache(bool skipCache) async {
+    final shouldSkipCache = AppState.skipCacheOnNextVersionCheck || skipCache;
+
+    if (shouldSkipCache) {
+      await _cacheLock.protect(() async {
         _versionCheckResultsCache.clear();
-        update((s) => _mutateOrCreateState(_versionCheckResultsCache));
+        update((s) => _updateStateWithCache(_versionCheckResultsCache));
         AppState.skipCacheOnNextVersionCheck = false;
       });
     } else if (_versionCheckResultsCache.isEmpty) {
-      // Load from file cache if not already loaded and not skipping the cache.
       await settingsManager.readSettingsFromDisk();
+      _versionCheckResultsCache
+          .addAll(settingsManager.state.versionCheckResultsBySmolId);
     }
+  }
 
-    var currentTime = DateTime.now();
-
+  /// Retrieves the list of mod variants that need version checking.
+  List<ModVariant> _getVariantsToCheck() {
     final modsRef = ref.read(AppState.mods);
-    // Doesn't check every variant. Only looks up the highest version that has a .version file.
-    final variantsToCheck = modsRef
+    return modsRef
         .map((mod) => mod.modVariants.sortedDescending().firstWhereOrNull(
             (variant) => variant.versionCheckerInfo?.seemsLegit == true))
         .whereNotNull()
         .toList();
+  }
 
-    final versionCheckFutures = variantsToCheck.map((mod) {
-      // Always check if never checked before.
-      if (_versionCheckResultsCache[mod.smolId] != null) {
-        final lastCheck = _versionCheckResultsCache[mod.smolId]!.timestamp;
-        if (skipCache ||
-            currentTime.difference(lastCheck) > versionCheckCooldown) {
-          // If enough time has passed since the last check (or we're ignoring the cache), check again.
-          return (mod, checkRemoteVersion(mod, httpClient), wasCached: false);
-        } else {
-          // Otherwise, return the cached result.
-          return (
-            mod,
-            Future.value(_versionCheckResultsCache[mod.smolId]!),
-            wasCached: true
-          );
-        }
+  /// Creates tasks for version checking each mod variant.
+  List<VersionCheckTask> _createVersionCheckTasks(
+      List<ModVariant> variantsToCheck, bool skipCache) {
+    final httpClient = ref.watch(triOSHttpClient);
+    final currentTime = DateTime.now();
+
+    return variantsToCheck.map((modVariant) {
+      final cachedResult = _versionCheckResultsCache[modVariant.smolId];
+      final needsUpdate = skipCache ||
+          cachedResult == null ||
+          currentTime.difference(cachedResult.timestamp) > versionCheckCooldown;
+
+      if (needsUpdate) {
+        final future = checkRemoteVersion(modVariant, httpClient);
+        return VersionCheckTask(modVariant, future, wasCached: false);
       } else {
-        return (mod, checkRemoteVersion(mod, httpClient), wasCached: false);
+        return VersionCheckTask(modVariant, Future.value(cachedResult),
+            wasCached: true);
+      }
+    }).toList();
+  }
+
+  /// Executes the version check tasks, updating the cache and state.
+  Future<void> _executeVersionCheckTasks(List<VersionCheckTask> tasks) async {
+    final futures = tasks.where((task) => !task.wasCached).map((task) async {
+      try {
+        final result = await task.future;
+        Fimber.v(() =>
+            "Caching remote version info for ${task.modVariant.modInfo.id}: $result");
+        _updateCache(result);
+      } catch (e, st) {
+        Fimber.e(
+            "Error fetching remote version info for ${task.modVariant.modInfo.id}: $e\n$st");
+        final errorResult = RemoteVersionCheckResult(null, null)
+          ..smolId = task.modVariant.smolId
+          ..error = e;
+        _updateCache(errorResult);
       }
     }).toList();
 
-    // Set up handlers for the futures.
-    for (var futResult in versionCheckFutures) {
-      final (mod, future, wasCached: wasCached) = futResult;
-      if (wasCached) {
-        continue; // No need to do anything if the data was already there.
-      }
-
-      future.then((result) async {
-        Fimber.v(
-            () => "Caching remote version info for ${mod.modInfo.id}: $result");
-        await cacheLock.protect(() async {
-          _versionCheckResultsCache[mod.smolId] = result;
-          update((s) => _mutateOrCreateState(_versionCheckResultsCache));
-        });
-      }).catchError((e, st) async {
-        Fimber.e("Error fetching remote version info. Storing error. $e\n$st");
-        final errResult = RemoteVersionCheckResult(null, null)
-          ..smolId = mod.smolId
-          ..error = e;
-        await cacheLock.protect(() async {
-          _versionCheckResultsCache[mod.smolId] = errResult;
-          update((s) => _mutateOrCreateState(_versionCheckResultsCache));
-        });
-      });
-    }
+    await Future.wait(futures);
   }
 
-  VersionCheckerState _mutateOrCreateState(
+  /// Updates the cache and state with the provided result.
+  Future<void> _updateCache(RemoteVersionCheckResult result) async {
+    if (result.smolId == null) {
+      Fimber.e("No smolId for $result");
+      return;
+    }
+    await _cacheLock.protect(() async {
+      _versionCheckResultsCache[result.smolId!] = result;
+      await update((s) => _updateStateWithCache(_versionCheckResultsCache));
+    });
+  }
+
+  /// Updates the state with the current cache.
+  VersionCheckerState _updateStateWithCache(
       Map<String, RemoteVersionCheckResult> versionCheckResultsCache) {
     return state.valueOrNull?.copyWith(
           versionCheckResultsBySmolId: versionCheckResultsCache,
@@ -150,13 +169,21 @@ class VersionCheckerAsyncProvider
       File(p.join("cache", "TriOS-VersionCheckerCache.json")).normalize;
 }
 
+/// Represents a task for checking the version of a mod variant.
+class VersionCheckTask {
+  final ModVariant modVariant;
+  final Future<RemoteVersionCheckResult> future;
+  final bool wasCached;
+
+  VersionCheckTask(this.modVariant, this.future, {required this.wasCached});
+}
+
 /// Result of looking up a remote version checker file.
 /// Cached in TriOS, rather than doing a network request every time.
 @MappableClass()
 class RemoteVersionCheckResult with RemoteVersionCheckResultMappable {
   String? smolId;
   Object? error;
-  @MappableField(hook: VersionHook())
   final VersionCheckerInfo? remoteVersion;
   final String? uri;
   final DateTime timestamp;
@@ -188,7 +215,7 @@ Future<RemoteVersionCheckResult> checkRemoteVersion(
   if (remoteVersionUrl == null) {
     return RemoteVersionCheckResult(null, null)
       ..smolId = modVariant.smolId
-      ..error = Exception("No remote version url for ${modVariant.modInfo.id}");
+      ..error = Exception("No remote version URL for ${modVariant.modInfo.id}");
   }
   final fixedUrl = fixUrl(remoteVersionUrl);
 
@@ -225,14 +252,14 @@ Future<RemoteVersionCheckResult> checkRemoteVersion(
   }
 }
 
-/// User linked to the page for their version file on github instead of to the raw file.
+/// User linked to the page for their version file on GitHub instead of to the raw file.
 final _githubFilePageRegex = RegExp(
     r"https://github.com/.+/blob/.+/assets/.+.version",
     caseSensitive: false);
 
-/// User set dl=0 instead of dl=1 when hosted on dropbox.
+/// User set dl=0 instead of dl=1 when hosted on Dropbox.
 final _dropboxDlPageRegex = RegExp(
-    """https://www.dropbox.com/s/.+/.+.version?dl=0""",
+    r"https://www.dropbox.com/s/.+/.+.version\?dl=0",
     caseSensitive: false);
 
 String fixUrl(String urlString) {

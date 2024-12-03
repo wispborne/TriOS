@@ -26,8 +26,7 @@ class RemoteVersionCheckResultMapper
   static VersionCheckerInfo? _$remoteVersion(RemoteVersionCheckResult v) =>
       v.remoteVersion;
   static const Field<RemoteVersionCheckResult, VersionCheckerInfo>
-      _f$remoteVersion =
-      Field('remoteVersion', _$remoteVersion, hook: VersionHook());
+      _f$remoteVersion = Field('remoteVersion', _$remoteVersion);
   static String? _$uri(RemoteVersionCheckResult v) => v.uri;
   static const Field<RemoteVersionCheckResult, String> _f$uri =
       Field('uri', _$uri);

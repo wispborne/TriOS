@@ -8,7 +8,7 @@ class VersionHook extends MappingHook {
   const VersionHook();
 
   @override
-  dynamic beforeDecode(dynamic value) {
+  Version? beforeDecode(dynamic value) {
     if (value == null) return null;
     try {
       if (value is Map<String, dynamic>) {

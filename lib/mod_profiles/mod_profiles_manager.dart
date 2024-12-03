@@ -73,7 +73,8 @@ class ModProfileManagerNotifier extends GenericSettingsAsyncNotifier<ModProfiles
         if (modProfiles.modProfiles.isNotEmpty) {
           await existingJsonFile.rename("${existingJsonFile.path}.bak");
           initialState = modProfiles;
-          await settingsManager.writeSettingsToDisk(modProfiles);
+          state = AsyncData(initialState);
+          settingsManager.scheduleWriteSettingsToDisk();
         }
       } catch (e, stack) {
         Fimber.e("Failed to migrate mod profiles to proper json.",

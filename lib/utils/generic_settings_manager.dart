@@ -11,6 +11,7 @@ import 'package:trios/utils/logging.dart'; // For path operations
 
 /// Supported file formats for the settings file.
 enum FileFormat { toml, json }
+final Duration _debounceDuration = Duration(milliseconds: 300);
 
 /// A generic class for managing settings stored in TOML or JSON files.
 /// This class can be used independently of Riverpod.
@@ -79,7 +80,7 @@ abstract class GenericAsyncSettingsManager<T> {
           state = loadedState;
           return state;
         } catch (e, stacktrace) {
-          Fimber.e("Error reading from disk, creating backup: $e",
+          Fimber.e("Error reading from disk, creating backup and then wiping: $e",
               ex: e, stacktrace: stacktrace);
           await _createBackup();
           state = createDefaultState();
@@ -88,7 +89,7 @@ abstract class GenericAsyncSettingsManager<T> {
       } else {
         Fimber.i("Settings file does not exist, creating default state.");
         state = createDefaultState();
-        await writeSettingsToDisk(state);
+        scheduleWriteSettingsToDisk();
         return state;
       }
     });
@@ -97,10 +98,9 @@ abstract class GenericAsyncSettingsManager<T> {
   // Debouncing variables
   Timer? _debounceTimer;
   Completer<void>? _writeCompleter;
-  final Duration _debounceDuration = Duration(milliseconds: 500);
 
-  /// Writes the provided state to the settings file (TOML or JSON) on disk with debouncing.
-  Future<void> writeSettingsToDisk(T currentState) {
+  /// Schedules a write operation to disk.
+  Future<void> scheduleWriteSettingsToDisk() {
     // Cancel any existing timer
     _debounceTimer?.cancel();
 
@@ -111,7 +111,7 @@ abstract class GenericAsyncSettingsManager<T> {
 
     _debounceTimer = Timer(_debounceDuration, () async {
       try {
-        final serializedData = await serialize(currentState);
+        final serializedData = await serialize(state);
         await settingsFile.writeAsString(serializedData);
         Fimber.i("Settings successfully written to disk.");
         _writeCompleter?.complete();
@@ -141,7 +141,7 @@ abstract class GenericAsyncSettingsManager<T> {
         if (newState != oldState) {
           state = newState;
           Fimber.i("Settings updated, writing to disk...");
-          await writeSettingsToDisk(state);
+          scheduleWriteSettingsToDisk();
         } else {
           Fimber.v(() => "No settings change detected.");
         }
@@ -161,13 +161,9 @@ abstract class GenericAsyncSettingsManager<T> {
 
   /// Creates a backup of the current settings file with a `.bak` extension.
   Future<void> _createBackup() async {
-    int backupNumber = 1;
     File backupFile;
-    do {
-      final backupFileName = "${_fileName}_backup_$backupNumber.bak";
-      backupFile = File(p.join(settingsFile.parent.path, backupFileName));
-      backupNumber++;
-    } while (await backupFile.exists());
+    final backupFileName = "${_fileName}_backup.bak";
+    backupFile = File(p.join(settingsFile.parent.path, backupFileName));
 
     await settingsFile.copy(backupFile.path);
     Fimber.i("Backup created at ${backupFile.path}");
@@ -270,7 +266,6 @@ abstract class GenericSettingsManager<T> {
 
   // Debouncing variables
   Timer? _debounceTimer;
-  final Duration _debounceDuration = Duration(milliseconds: 500);
 
   /// Writes the provided state to the settings file (TOML or JSON) on disk with debouncing.
   void writeSettingsToDiskSync(T currentState) {

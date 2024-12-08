@@ -17,18 +17,17 @@ import 'models/gpu_info.dart';
 import 'models/graphics_lib_config.dart';
 import 'models/graphics_lib_info.dart';
 import 'models/vram_checker_models.dart';
+import '../models/mod_variant.dart';
 
 class VramChecker {
   List<String>? enabledModIds;
-  List<String>? smolIdsToCheck;
-  List<String>? modIdsToCheck;
-  List<Directory> foldersToCheck;
+  List<ModVariant> modsToCheck;
   bool showGfxLibDebugOutput;
   bool showPerformance;
   bool showSkippedFiles;
   bool showCountedFiles;
   GraphicsLibConfig graphicsLibConfig;
-  Function(Mod) modProgressOut = (it) => (it);
+  Function(VRamMod) modProgressOut = (it) => (it);
   Function(String) verboseOut = (it) => (it);
   Function(String) debugOut = (it) => (it);
   bool Function() isCancelled;
@@ -38,16 +37,14 @@ class VramChecker {
   /// [modProgressOut] is called with each mod as it is processed.
   VramChecker({
     this.enabledModIds,
-    this.smolIdsToCheck,
-    this.modIdsToCheck,
-    required this.foldersToCheck,
+    required this.modsToCheck,
     required this.showGfxLibDebugOutput,
     required this.showPerformance,
     required this.showSkippedFiles,
     required this.showCountedFiles,
     required this.graphicsLibConfig,
     this.maxFileHandles = 2000,
-    Function(Mod)? modProgressOut,
+    Function(VRamMod)? modProgressOut,
     Function(String)? verboseOut,
     Function(String)? debugOut,
     required this.isCancelled,
@@ -82,7 +79,7 @@ class VramChecker {
 
   var startTime = DateTime.timestamp().millisecondsSinceEpoch;
 
-  Future<List<Mod>> check() async {
+  Future<List<VRamMod>> check() async {
     progressText = StringBuffer();
     modTotals = StringBuffer();
     summaryText = StringBuffer();
@@ -106,6 +103,7 @@ class VramChecker {
 //     .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
 //     .build()
 
+    var foldersToCheck = modsToCheck.map((it) => it.modFolder).toList();
     if (foldersToCheck.none((it) => it.existsSync())) {
       throw Exception(
           "This doesn't exist! ${foldersToCheck.joinToString(transform: (it) => it.absolute.toString())}");
@@ -137,15 +135,7 @@ class VramChecker {
             .where((it) => FileSystemEntity.isDirectorySync(it.path))
             .asyncMap((it) => getModInfo(Directory(it.path), progressText))
             .whereNotNull()
-            .where((it) {
-      if (smolIdsToCheck != null && !smolIdsToCheck!.contains(it.smolId)) {
-        return false;
-      } else if (modIdsToCheck != null && !modIdsToCheck!.contains(it.modId)) {
-        return false;
-      } else {
-        return true;
-      }
-    }).asyncMap((modInfo) async {
+            .asyncMap((modInfo) async {
       progressText.appendAndPrint("\nFolder: ${modInfo.name}", verboseOut);
       if (isCancelled()) {
         throw Exception("Cancelled");
@@ -292,8 +282,8 @@ class VramChecker {
       //   imagesWithoutExcludedGfxLibMaps = imagesToSumUp;
       // }
 
-      final mod = Mod(modInfo, (enabledModIds ?? []).contains(modInfo.modId),
-          imagesToSumUp);
+      final mod = VRamMod(modInfo,
+          (enabledModIds ?? []).contains(modInfo.modId), imagesToSumUp);
 
       if (showPerformance) {
         progressText.appendAndPrint(
@@ -620,7 +610,7 @@ class VramChecker {
   }
 }
 
-extension ModListExt on Iterable<Mod> {
+extension ModListExt on Iterable<VRamMod> {
   int getBytesUsedByDedupedImages() {
     return expand(
             (mod) => mod.images.map((img) => Tuple2(mod.info.modFolder, img)))

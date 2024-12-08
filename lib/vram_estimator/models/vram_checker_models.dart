@@ -12,12 +12,12 @@ import '../../models/version.dart';
 part 'vram_checker_models.mapper.dart';
 
 @MappableClass()
-class Mod with ModMappable {
+class VRamMod with VRamModMappable {
   VramCheckerMod info;
   bool isEnabled;
   List<ModImage> images;
 
-  Mod(this.info, this.isEnabled, this.images);
+  VRamMod(this.info, this.isEnabled, this.images);
 
   late final maxPossibleBytesForMod = images.map((e) => e.bytesUsed).sum;
 

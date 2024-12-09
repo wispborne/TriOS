@@ -9,7 +9,7 @@ import '../../../utils/util.dart';
 import '../models/vram_checker_models.dart';
 
 class VramPieChart extends ConsumerStatefulWidget {
-  final List<Mod> modVramInfo;
+  final List<VramMod> modVramInfo;
 
   const VramPieChart({super.key, required this.modVramInfo});
 

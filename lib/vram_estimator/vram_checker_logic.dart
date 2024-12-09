@@ -21,13 +21,13 @@ import '../models/mod_variant.dart';
 
 class VramChecker {
   List<String>? enabledModIds;
-  List<ModVariant> modsToCheck;
+  List<ModVariant> variantsToCheck;
   bool showGfxLibDebugOutput;
   bool showPerformance;
   bool showSkippedFiles;
   bool showCountedFiles;
   GraphicsLibConfig graphicsLibConfig;
-  Function(VRamMod) modProgressOut = (it) => (it);
+  Function(VramMod) modProgressOut = (it) => (it);
   Function(String) verboseOut = (it) => (it);
   Function(String) debugOut = (it) => (it);
   bool Function() isCancelled;
@@ -37,14 +37,14 @@ class VramChecker {
   /// [modProgressOut] is called with each mod as it is processed.
   VramChecker({
     this.enabledModIds,
-    required this.modsToCheck,
+    required this.variantsToCheck,
     required this.showGfxLibDebugOutput,
     required this.showPerformance,
     required this.showSkippedFiles,
     required this.showCountedFiles,
     required this.graphicsLibConfig,
     this.maxFileHandles = 2000,
-    Function(VRamMod)? modProgressOut,
+    Function(VramMod)? modProgressOut,
     Function(String)? verboseOut,
     Function(String)? debugOut,
     required this.isCancelled,
@@ -79,7 +79,7 @@ class VramChecker {
 
   var startTime = DateTime.timestamp().millisecondsSinceEpoch;
 
-  Future<List<VRamMod>> check() async {
+  Future<List<VramMod>> check() async {
     progressText = StringBuffer();
     modTotals = StringBuffer();
     summaryText = StringBuffer();
@@ -103,7 +103,7 @@ class VramChecker {
 //     .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
 //     .build()
 
-    var foldersToCheck = modsToCheck.map((it) => it.modFolder).toList();
+    var foldersToCheck = variantsToCheck.map((it) => it.modFolder).toList();
     if (foldersToCheck.none((it) => it.existsSync())) {
       throw Exception(
           "This doesn't exist! ${foldersToCheck.joinToString(transform: (it) => it.absolute.toString())}");
@@ -282,7 +282,7 @@ class VramChecker {
       //   imagesWithoutExcludedGfxLibMaps = imagesToSumUp;
       // }
 
-      final mod = VRamMod(modInfo,
+      final mod = VramMod(modInfo,
           (enabledModIds ?? []).contains(modInfo.modId), imagesToSumUp);
 
       if (showPerformance) {
@@ -610,7 +610,7 @@ class VramChecker {
   }
 }
 
-extension ModListExt on Iterable<VRamMod> {
+extension ModListExt on Iterable<VramMod> {
   int getBytesUsedByDedupedImages() {
     return expand(
             (mod) => mod.images.map((img) => Tuple2(mod.info.modFolder, img)))

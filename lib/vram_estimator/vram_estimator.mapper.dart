@@ -13,7 +13,7 @@ class VramEstimatorStateMapper extends ClassMapperBase<VramEstimatorState> {
   static VramEstimatorStateMapper ensureInitialized() {
     if (_instance == null) {
       MapperContainer.globals.use(_instance = VramEstimatorStateMapper._());
-      ModMapper.ensureInitialized();
+      VramModMapper.ensureInitialized();
     }
     return _instance!;
   }
@@ -24,8 +24,9 @@ class VramEstimatorStateMapper extends ClassMapperBase<VramEstimatorState> {
   static bool _$isScanning(VramEstimatorState v) => v.isScanning;
   static const Field<VramEstimatorState, bool> _f$isScanning =
       Field('isScanning', _$isScanning);
-  static Map<String, Mod> _$modVramInfo(VramEstimatorState v) => v.modVramInfo;
-  static const Field<VramEstimatorState, Map<String, Mod>> _f$modVramInfo =
+  static Map<String, VramMod> _$modVramInfo(VramEstimatorState v) =>
+      v.modVramInfo;
+  static const Field<VramEstimatorState, Map<String, VramMod>> _f$modVramInfo =
       Field('modVramInfo', _$modVramInfo);
   static bool _$isCancelled(VramEstimatorState v) => v.isCancelled;
   static const Field<VramEstimatorState, bool> _f$isCancelled =
@@ -105,10 +106,11 @@ extension VramEstimatorStateValueCopy<$R, $Out>
 
 abstract class VramEstimatorStateCopyWith<$R, $In extends VramEstimatorState,
     $Out> implements ClassCopyWith<$R, $In, $Out> {
-  MapCopyWith<$R, String, Mod, ModCopyWith<$R, Mod, Mod>> get modVramInfo;
+  MapCopyWith<$R, String, VramMod, VramModCopyWith<$R, VramMod, VramMod>>
+      get modVramInfo;
   $R call(
       {bool? isScanning,
-      Map<String, Mod>? modVramInfo,
+      Map<String, VramMod>? modVramInfo,
       bool? isCancelled,
       DateTime? lastUpdated});
   VramEstimatorStateCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
@@ -124,13 +126,13 @@ class _VramEstimatorStateCopyWithImpl<$R, $Out>
   late final ClassMapperBase<VramEstimatorState> $mapper =
       VramEstimatorStateMapper.ensureInitialized();
   @override
-  MapCopyWith<$R, String, Mod, ModCopyWith<$R, Mod, Mod>> get modVramInfo =>
-      MapCopyWith($value.modVramInfo, (v, t) => v.copyWith.$chain(t),
-          (v) => call(modVramInfo: v));
+  MapCopyWith<$R, String, VramMod, VramModCopyWith<$R, VramMod, VramMod>>
+      get modVramInfo => MapCopyWith($value.modVramInfo,
+          (v, t) => v.copyWith.$chain(t), (v) => call(modVramInfo: v));
   @override
   $R call(
           {bool? isScanning,
-          Map<String, Mod>? modVramInfo,
+          Map<String, VramMod>? modVramInfo,
           bool? isCancelled,
           Object? lastUpdated = $none}) =>
       $apply(FieldCopyWithData({

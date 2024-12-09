@@ -287,7 +287,7 @@ MenuItem menuItemCheckVram(Mod mod, WidgetRef ref) {
     icon: Icons.memory,
     onSelected: () {
       ref.read(AppState.vramEstimatorProvider.notifier).startEstimating(
-          smolIdsToCheck: [mod.findFirstEnabledOrHighestVersion!.smolId]);
+          variantsToCheck: [mod.findFirstEnabledOrHighestVersion!]);
     },
   );
 }

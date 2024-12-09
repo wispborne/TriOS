@@ -11,7 +11,7 @@ import '../models/vram_checker_models.dart';
 // ...  (Import extensions, any custom models, and util as in your existing code)
 
 class VramBarChart extends ConsumerStatefulWidget {
-  final List<Mod> modVramInfo;
+  final List<VramMod> modVramInfo;
 
   const VramBarChart({super.key, required this.modVramInfo});
 
@@ -48,7 +48,9 @@ class VramBarChartState extends ConsumerState<VramBarChart> {
                     itemBuilder: (context, index) {
                       if (index > mods.length - 1) return const SizedBox();
                       final mod = mods[index];
-                      final percentOfMax = mod.bytesUsingGraphicsLibConfig(graphicsLibConfig) / maxVramUsed;
+                      final percentOfMax =
+                          mod.bytesUsingGraphicsLibConfig(graphicsLibConfig) /
+                              maxVramUsed;
                       final width = layoutConstraints.maxWidth * percentOfMax;
 
                       return Container(
@@ -69,7 +71,10 @@ class VramBarChartState extends ConsumerState<VramBarChart> {
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 8.0),
                                   child: Text(
-                                      mod.bytesUsingGraphicsLibConfig(graphicsLibConfig).bytesAsReadableMB(),
+                                      mod
+                                          .bytesUsingGraphicsLibConfig(
+                                              graphicsLibConfig)
+                                          .bytesAsReadableMB(),
                                       style: theme.textTheme.labelMedium),
                                 ),
                                 Opacity(
@@ -97,7 +102,8 @@ class VramBarChartState extends ConsumerState<VramBarChart> {
 
   double _calculateMostVramUse() {
     return widget.modVramInfo
-            .maxByOrNull<num>((mod) => mod.bytesUsingGraphicsLibConfig(graphicsLibConfig))
+            .maxByOrNull<num>(
+                (mod) => mod.bytesUsingGraphicsLibConfig(graphicsLibConfig))
             ?.bytesUsingGraphicsLibConfig(graphicsLibConfig)
             .toDouble() ??
         0;
@@ -135,16 +141,19 @@ class VramBarChartState extends ConsumerState<VramBarChart> {
   List<BarChartGroupData> _buildBarGroups(BuildContext context) {
     final baseColor = Theme.of(context).colorScheme.primary;
     return widget.modVramInfo
-        .where((element) => element.bytesUsingGraphicsLibConfig(graphicsLibConfig) > 0)
+        .where((element) =>
+            element.bytesUsingGraphicsLibConfig(graphicsLibConfig) > 0)
         .map((mod) => BarChartGroupData(
               x: widget.modVramInfo.indexOf(mod),
               barRods: [
                 BarChartRodData(
-                  toY: mod.bytesUsingGraphicsLibConfig(graphicsLibConfig).toDouble(), // Y-axis value
-                  color:
-                      ColorGenerator.generateFromColor(mod.info.smolId, baseColor)
-                          .createMaterialColor()
-                          .shade700,
+                  toY: mod
+                      .bytesUsingGraphicsLibConfig(graphicsLibConfig)
+                      .toDouble(), // Y-axis value
+                  color: ColorGenerator.generateFromColor(
+                          mod.info.smolId, baseColor)
+                      .createMaterialColor()
+                      .shade700,
                   width: 12, // Adjust bar width
                 ),
               ],

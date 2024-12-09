@@ -56,13 +56,13 @@ extension ImageTypeMapperExtension on ImageType {
   }
 }
 
-class ModMapper extends ClassMapperBase<Mod> {
-  ModMapper._();
+class VramModMapper extends ClassMapperBase<VramMod> {
+  VramModMapper._();
 
-  static ModMapper? _instance;
-  static ModMapper ensureInitialized() {
+  static VramModMapper? _instance;
+  static VramModMapper ensureInitialized() {
     if (_instance == null) {
-      MapperContainer.globals.use(_instance = ModMapper._());
+      MapperContainer.globals.use(_instance = VramModMapper._());
       VramCheckerModMapper.ensureInitialized();
       ModImageMapper.ensureInitialized();
     }
@@ -70,90 +70,98 @@ class ModMapper extends ClassMapperBase<Mod> {
   }
 
   @override
-  final String id = 'Mod';
+  final String id = 'VramMod';
 
-  static VramCheckerMod _$info(Mod v) => v.info;
-  static const Field<Mod, VramCheckerMod> _f$info = Field('info', _$info);
-  static bool _$isEnabled(Mod v) => v.isEnabled;
-  static const Field<Mod, bool> _f$isEnabled = Field('isEnabled', _$isEnabled);
-  static List<ModImage> _$images(Mod v) => v.images;
-  static const Field<Mod, List<ModImage>> _f$images = Field('images', _$images);
-  static int _$maxPossibleBytesForMod(Mod v) => v.maxPossibleBytesForMod;
-  static const Field<Mod, int> _f$maxPossibleBytesForMod = Field(
+  static VramCheckerMod _$info(VramMod v) => v.info;
+  static const Field<VramMod, VramCheckerMod> _f$info = Field('info', _$info);
+  static bool _$isEnabled(VramMod v) => v.isEnabled;
+  static const Field<VramMod, bool> _f$isEnabled =
+      Field('isEnabled', _$isEnabled);
+  static List<ModImage> _$images(VramMod v) => v.images;
+  static const Field<VramMod, List<ModImage>> _f$images =
+      Field('images', _$images);
+  static int _$maxPossibleBytesForMod(VramMod v) => v.maxPossibleBytesForMod;
+  static const Field<VramMod, int> _f$maxPossibleBytesForMod = Field(
       'maxPossibleBytesForMod', _$maxPossibleBytesForMod,
       mode: FieldMode.member);
 
   @override
-  final MappableFields<Mod> fields = const {
+  final MappableFields<VramMod> fields = const {
     #info: _f$info,
     #isEnabled: _f$isEnabled,
     #images: _f$images,
     #maxPossibleBytesForMod: _f$maxPossibleBytesForMod,
   };
 
-  static Mod _instantiate(DecodingData data) {
-    return Mod(data.dec(_f$info), data.dec(_f$isEnabled), data.dec(_f$images));
+  static VramMod _instantiate(DecodingData data) {
+    return VramMod(
+        data.dec(_f$info), data.dec(_f$isEnabled), data.dec(_f$images));
   }
 
   @override
   final Function instantiate = _instantiate;
 
-  static Mod fromMap(Map<String, dynamic> map) {
-    return ensureInitialized().decodeMap<Mod>(map);
+  static VramMod fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<VramMod>(map);
   }
 
-  static Mod fromJson(String json) {
-    return ensureInitialized().decodeJson<Mod>(json);
+  static VramMod fromJson(String json) {
+    return ensureInitialized().decodeJson<VramMod>(json);
   }
 }
 
-mixin ModMappable {
+mixin VramModMappable {
   String toJson() {
-    return ModMapper.ensureInitialized().encodeJson<Mod>(this as Mod);
+    return VramModMapper.ensureInitialized()
+        .encodeJson<VramMod>(this as VramMod);
   }
 
   Map<String, dynamic> toMap() {
-    return ModMapper.ensureInitialized().encodeMap<Mod>(this as Mod);
+    return VramModMapper.ensureInitialized()
+        .encodeMap<VramMod>(this as VramMod);
   }
 
-  ModCopyWith<Mod, Mod, Mod> get copyWith =>
-      _ModCopyWithImpl(this as Mod, $identity, $identity);
+  VramModCopyWith<VramMod, VramMod, VramMod> get copyWith =>
+      _VramModCopyWithImpl(this as VramMod, $identity, $identity);
   @override
   String toString() {
-    return ModMapper.ensureInitialized().stringifyValue(this as Mod);
+    return VramModMapper.ensureInitialized().stringifyValue(this as VramMod);
   }
 
   @override
   bool operator ==(Object other) {
-    return ModMapper.ensureInitialized().equalsValue(this as Mod, other);
+    return VramModMapper.ensureInitialized()
+        .equalsValue(this as VramMod, other);
   }
 
   @override
   int get hashCode {
-    return ModMapper.ensureInitialized().hashValue(this as Mod);
+    return VramModMapper.ensureInitialized().hashValue(this as VramMod);
   }
 }
 
-extension ModValueCopy<$R, $Out> on ObjectCopyWith<$R, Mod, $Out> {
-  ModCopyWith<$R, Mod, $Out> get $asMod =>
-      $base.as((v, t, t2) => _ModCopyWithImpl(v, t, t2));
+extension VramModValueCopy<$R, $Out> on ObjectCopyWith<$R, VramMod, $Out> {
+  VramModCopyWith<$R, VramMod, $Out> get $asVramMod =>
+      $base.as((v, t, t2) => _VramModCopyWithImpl(v, t, t2));
 }
 
-abstract class ModCopyWith<$R, $In extends Mod, $Out>
+abstract class VramModCopyWith<$R, $In extends VramMod, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
   VramCheckerModCopyWith<$R, VramCheckerMod, VramCheckerMod> get info;
   ListCopyWith<$R, ModImage, ModImageCopyWith<$R, ModImage, ModImage>>
       get images;
   $R call({VramCheckerMod? info, bool? isEnabled, List<ModImage>? images});
-  ModCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
+  VramModCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
 
-class _ModCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Mod, $Out>
-    implements ModCopyWith<$R, Mod, $Out> {
-  _ModCopyWithImpl(super.value, super.then, super.then2);
+class _VramModCopyWithImpl<$R, $Out>
+    extends ClassCopyWithBase<$R, VramMod, $Out>
+    implements VramModCopyWith<$R, VramMod, $Out> {
+  _VramModCopyWithImpl(super.value, super.then, super.then2);
 
   @override
-  late final ClassMapperBase<Mod> $mapper = ModMapper.ensureInitialized();
+  late final ClassMapperBase<VramMod> $mapper =
+      VramModMapper.ensureInitialized();
   @override
   VramCheckerModCopyWith<$R, VramCheckerMod, VramCheckerMod> get info =>
       $value.info.copyWith.$chain((v) => call(info: v));
@@ -169,14 +177,14 @@ class _ModCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Mod, $Out>
         if (images != null) #images: images
       }));
   @override
-  Mod $make(CopyWithData data) => Mod(
+  VramMod $make(CopyWithData data) => VramMod(
       data.get(#info, or: $value.info),
       data.get(#isEnabled, or: $value.isEnabled),
       data.get(#images, or: $value.images));
 
   @override
-  ModCopyWith<$R2, Mod, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
-      _ModCopyWithImpl($value, $cast, t);
+  VramModCopyWith<$R2, VramMod, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
+      _VramModCopyWithImpl($value, $cast, t);
 }
 
 class VramCheckerModMapper extends ClassMapperBase<VramCheckerMod> {

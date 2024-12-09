@@ -13,6 +13,7 @@ import 'package:trios/widgets/graph_radio_selector.dart';
 import 'package:trios/widgets/spinning_refresh_fab.dart';
 
 import '../../trios/settings/settings.dart';
+import '../models/mod_variant.dart';
 import 'charts/bar_chart.dart';
 import 'charts/pie_chart.dart';
 import 'graphics_lib_config_provider.dart';
@@ -24,7 +25,7 @@ part 'vram_estimator.mapper.dart';
 @MappableClass()
 class VramEstimatorState with VramEstimatorStateMappable {
   final bool isScanning;
-  final Map<String, Mod> modVramInfo;
+  final Map<String, VramMod> modVramInfo;
   final bool isCancelled;
   final DateTime? lastUpdated;
 
@@ -96,7 +97,7 @@ class VramEstimatorNotifier
   //   }
   // }
 
-  Future<void> startEstimating({List<String>? smolIdsToCheck}) async {
+  Future<void> startEstimating({List<ModVariant>? variantsToCheck}) async {
     if (state.isScanning) return;
 
     var settings = ref.read(appSettings);
@@ -111,19 +112,15 @@ class VramEstimatorNotifier
       isCancelled: false,
     );
 
-    final smolIdsToCheckIntl = smolIdsToCheck ??
-        ref
-            .read(AppState.mods)
-            .map((mod) => mod.findFirstEnabledOrHighestVersion?.smolId)
-            .whereNotNull()
-            .toList();
-
     try {
       final info = await VramChecker(
         enabledModIds: ref.read(AppState.enabledModIds).value,
-        smolIdsToCheck: smolIdsToCheckIntl,
-        modIdsToCheck: null,
-        foldersToCheck: settings.modsDir == null ? [] : [settings.modsDir!],
+        variantsToCheck: variantsToCheck ??
+            ref
+                .read(AppState.mods)
+                .map((mod) => mod.findFirstEnabledOrHighestVersion)
+                .whereNotNull()
+                .toList(),
         // TODO get graphicslib settings!
         graphicsLibConfig:
             ref.read(graphicsLibConfigProvider) ?? GraphicsLibConfig.disabled,
@@ -131,7 +128,7 @@ class VramEstimatorNotifier
         showSkippedFiles: true,
         showGfxLibDebugOutput: true,
         showPerformance: true,
-        modProgressOut: (Mod mod) {
+        modProgressOut: (VramMod mod) {
           // Update modVramInfo with each mod's progress
           final updatedModVramInfo = {
             ...state.modVramInfo,
@@ -140,8 +137,6 @@ class VramEstimatorNotifier
           state = state.copyWith(
             modVramInfo: updatedModVramInfo,
           );
-          final entries =
-              updatedModVramInfo.map((key, mod) => MapEntry(key, mod.toJson()));
 
           update(
             (state) => state.copyWith(
@@ -155,7 +150,7 @@ class VramEstimatorNotifier
         isCancelled: () => state.isCancelled,
       ).check();
 
-      final modVramInfo = info.fold<Map<String, Mod>>(
+      final modVramInfo = info.fold<Map<String, VramMod>>(
         state.modVramInfo,
         (previousValue, element) =>
             previousValue..[element.info.smolId] = element,
@@ -326,8 +321,8 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
     ]);
   }
 
-  List<Mod> _calculateModsToShow(
-      Map<String, Mod> modVramInfo, GraphicsLibConfig? graphicsLibConfig) {
+  List<VramMod> _calculateModsToShow(
+      Map<String, VramMod> modVramInfo, GraphicsLibConfig? graphicsLibConfig) {
     return modVramInfo.values
         .where((mod) =>
             mod.bytesUsingGraphicsLibConfig(graphicsLibConfig) >=
@@ -341,7 +336,7 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
   }
 
   double _maxRange(
-      Map<String, Mod> modVramInfo, GraphicsLibConfig? graphicsLibConfig) {
+      Map<String, VramMod> modVramInfo, GraphicsLibConfig? graphicsLibConfig) {
     return modVramInfo.values
             .sortedBy<num>(
                 (mod) => mod.bytesUsingGraphicsLibConfig(graphicsLibConfig))

@@ -59,7 +59,7 @@ class ModProfileManagerNotifier extends GenericSettingsAsyncNotifier<ModProfiles
     var initialState = await super.build();
     final settingsFile = settingsManager.settingsFile;
 
-    // Look for pre-1.0 double/trible encoded json files and migrate them to proper json
+    // Look for pre-1.0 double/triple encoded json files and migrate them to proper json
     final existingJsonFile = settingsFile.parent
         .resolve("${settingsFile.nameWithoutExtension}.json")
         .toFile();

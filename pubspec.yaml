@@ -34,7 +34,6 @@ dependencies:
   # Annotations & Code Generation
   freezed_annotation: ^2.4.1
   json_annotation: ^4.9.0
-  riverpod_annotation: ^2.3.5
   squadron_builder: ^6.1.1
   # Collections & Utilities
   collection: ^1.18.0
@@ -92,7 +91,9 @@ dependencies:
   # Security
   crypto: ^3.0.3
   # State Management
-  flutter_riverpod: ^2.5.1
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.6.1
+  hooks_riverpod: ^2.6.1
   # Other
   dynamic_library: ^0.9.0
   intl: ^0.19.0
@@ -105,7 +106,6 @@ dependencies:
   uuid: ^4.4.0
   # For pluto_grid_plus
   pdf: ^3.11.0
-  hooks_riverpod: ^2.5.1
   rxdart: ^0.28.0
   dart_mappable: ^4.2.2
   xml: ^6.5.0
@@ -115,6 +115,7 @@ dependencies:
   flutter_cache_manager: ^3.4.1
   defer_pointer: ^0.0.2
   toml: ^0.16.0
+  diffutil_dart: ^4.0.1
 
 # Uncommented & Copied
 #  adaptive_theme: ^3.6.0
@@ -140,7 +141,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
-  riverpod_generator: ^2.4.0
+  riverpod_generator: ^2.6.1
   build_runner: ^2.4.12
   #  custom_lint: ^0.6.4
   freezed: ^2.5.2

@@ -1,32 +1,32 @@
 import 'package:collection/collection.dart';
-import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:dart_mappable/dart_mappable.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/utils/extensions.dart';
 
 import 'mod_variant.dart';
 
-part '../generated/models/mod.freezed.dart';
+part 'mod.mapper.dart';
 
-@freezed
-class Mod with _$Mod implements Comparable<Mod> {
-  const Mod._();
+@MappableClass()
+class Mod with ModMappable implements Comparable<Mod> {
+  Mod({
+    required this.id,
+    required this.isEnabledInGame,
+    required this.modVariants,
+  });
 
-  const factory Mod({
-    required String id,
-    required bool isEnabledInGame,
-    required List<ModVariant> modVariants,
-  }) = _Mod;
+  final String id;
+  final bool isEnabledInGame;
+  final List<ModVariant> modVariants;
 
-  bool isEnabled(ModVariant variant) {
-    return isEnabledInGame && variant.isModInfoEnabled;
-  }
+  bool isEnabled(ModVariant variant) =>
+      isEnabledInGame && variant.isModInfoEnabled;
 
   bool isEnabledInGameSync(List<String> enabledModIds) =>
       enabledModIds.contains(id);
 
-  List<ModVariant> get enabledVariants {
-    return modVariants.where((variant) => isEnabled(variant)).toList();
-  }
+  List<ModVariant> get enabledVariants =>
+      modVariants.where((variant) => isEnabled(variant)).toList();
 
   ModVariant? get findFirstEnabled {
     for (var variant in modVariants) {
@@ -37,15 +37,15 @@ class Mod with _$Mod implements Comparable<Mod> {
     return null;
   }
 
-  ModVariant? get findFirstDisabled {
-    return modVariants.firstWhereOrNull((variant) => !isEnabled(variant));
-  }
+  bool get isEnabledOnUi => findFirstEnabled != null;
+
+  ModVariant? get findFirstDisabled =>
+      modVariants.firstWhereOrNull((variant) => !isEnabled(variant));
 
   ModVariant? get findHighestVersion => modVariants.findHighestVersion;
 
-  ModVariant? get findFirstEnabledOrHighestVersion {
-    return findFirstEnabled ?? findHighestVersion;
-  }
+  ModVariant? get findFirstEnabledOrHighestVersion =>
+      findFirstEnabled ?? findHighestVersion;
 
   ModVariant? get findHighestEnabledVersion {
     return modVariants
@@ -53,13 +53,9 @@ class Mod with _$Mod implements Comparable<Mod> {
         .maxByOrNull((variant) => variant);
   }
 
-  bool get hasEnabledVariant {
-    return (findFirstEnabled) != null;
-  }
+  bool get hasEnabledVariant => (findFirstEnabled) != null;
 
-  bool get hasDisabledVariant {
-    return (findFirstDisabled) != null;
-  }
+  bool get hasDisabledVariant => (findFirstDisabled) != null;
 
   @override
   int compareTo(Mod other) =>

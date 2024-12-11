@@ -40,6 +40,10 @@ extension DoubleExt on double {
 // Long.bytesAsReadableMB: String
 // get() = "%.3f MB".format(this / 1000000f)
 
+extension BoolExt on bool {
+  Comparable toComparable() => this ? 0 : 1;
+}
+
 extension StringBufferExt on StringBuffer {
   appendAndPrint(String line, Function(String) traceOut) {
     traceOut(line);
@@ -434,9 +438,11 @@ extension IterableExt<T> on Iterable<T> {
   /// If [nullsLast] is true, all elements for which the [selector] function returns null are placed at the end of the list. Otherwise, they are placed at the beginning.
   ///
   /// This is like [List.sort] but with a more intuitive way of handling nulls.
-  List<T> sortedByButBetter<R extends Comparable<R>>(
-      R? Function(T item) selector,
-      {bool nullsLast = false}) {
+  List<T> sortedByButBetter<R extends Comparable>(
+    R? Function(T item) selector, {
+    bool isAscending = true,
+    bool nullsLast = false,
+  }) {
     if (isEmpty) return toList();
     return toList()
       ..sort((a, b) {
@@ -448,11 +454,11 @@ extension IterableExt<T> on Iterable<T> {
           return nullsLast ? -1 : 1;
         }
         return aValue.compareTo(bValue);
-      });
+      })
+      ..let((sorted) => isAscending ? sorted : sorted.reversed);
   }
 
-  List<T> sortedByDescending<R extends Comparable<R>>(
-      R? Function(T item) selector,
+  List<T> sortedByDescending<R extends Comparable>(R? Function(T item) selector,
       {bool nullsLast = true}) {
     if (isEmpty) return toList();
     return toList()

@@ -4,14 +4,12 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:collection/collection.dart';
-import 'package:dart_mappable/dart_mappable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
 import 'package:trios/libarchive/libarchive.dart';
-import 'package:trios/models/version.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/platform_paths.dart';
@@ -349,4 +347,14 @@ String jsonEncodePrettily(dynamic json) {
   var spaces = ' ' * 2;
   var encoder = JsonEncoder.withIndent(spaces);
   return encoder.convert(json);
+}
+
+T time<T>(T Function() function, {bool ignoreZero = true}) {
+  final stopwatch = Stopwatch()..start();
+  final result = function();
+  stopwatch.stop();
+  if (!ignoreZero || stopwatch.elapsedMilliseconds > 0) {
+    Fimber.d('Time taken: ${stopwatch.elapsedMilliseconds}ms');
+  }
+  return result;
 }

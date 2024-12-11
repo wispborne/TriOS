@@ -1466,9 +1466,8 @@ class _Smol3State extends ConsumerState<Smol3>
                                                             .vramEstimatorProvider
                                                             .notifier)
                                                         .startEstimating(
-                                                            smolIdsToCheck: [
+                                                            variantsToCheck: [
                                                           mod.findFirstEnabledOrHighestVersion!
-                                                              .smolId
                                                         ]);
                                                   },
                                                 ),

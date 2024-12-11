@@ -16,12 +16,11 @@ final Duration _debounceDuration = Duration(milliseconds: 300);
 /// A generic class for managing settings stored in TOML or JSON files.
 /// This class can be used independently of Riverpod.
 abstract class GenericAsyncSettingsManager<T> {
-  late File settingsFile;
-  late String _fileName;
+  File settingsFile = File("");
   final _mutex = Mutex();
 
   /// The current state of the settings.
-  late T state;
+  T? state;
 
   /// Specifies the file format for the settings file.
   FileFormat get fileFormat;
@@ -34,6 +33,10 @@ abstract class GenericAsyncSettingsManager<T> {
 
   /// Subclasses must provide a function to deserialize a map into the settings object.
   T Function(Map<String, dynamic> map) get fromMap;
+
+  GenericAsyncSettingsManager() {
+    state = createDefaultState();
+  }
 
   /// Override to do custom serialization
   Future<String> serialize(T obj) async {
@@ -56,7 +59,7 @@ abstract class GenericAsyncSettingsManager<T> {
   Future<File> _getFile() async {
     final dir = await getConfigDataFolderPath();
     await dir.create(recursive: true);
-    final path = p.join(dir.path, _fileName);
+    final path = p.join(dir.path, fileName);
     Fimber.i("Settings file path resolved: $path");
     return File(path);
   }
@@ -68,7 +71,6 @@ abstract class GenericAsyncSettingsManager<T> {
   /// Initializes and loads the state from the settings file (TOML or JSON),
   /// or uses the default state if the file is missing or invalid.
   Future<T> readSettingsFromDisk() async {
-    _fileName = fileName;
     settingsFile = await _getFile();
 
     return await _mutex.protect(() async {
@@ -78,19 +80,19 @@ abstract class GenericAsyncSettingsManager<T> {
           final loadedState = await deserialize(contents);
           Fimber.i("Settings successfully loaded from disk.");
           state = loadedState;
-          return state;
+          return state!;
         } catch (e, stacktrace) {
           Fimber.e("Error reading from disk, creating backup and then wiping: $e",
               ex: e, stacktrace: stacktrace);
           await _createBackup();
           state = createDefaultState();
-          return state;
+          return state!;
         }
       } else {
         Fimber.i("Settings file does not exist, creating default state.");
         state = createDefaultState();
         scheduleWriteSettingsToDisk();
-        return state;
+        return state!;
       }
     });
   }
@@ -111,7 +113,7 @@ abstract class GenericAsyncSettingsManager<T> {
 
     _debounceTimer = Timer(_debounceDuration, () async {
       try {
-        final serializedData = await serialize(state);
+        final serializedData = await serialize(state!);
         await settingsFile.writeAsString(serializedData);
         Fimber.i("Settings successfully written to disk.");
         _writeCompleter?.complete();
@@ -134,7 +136,7 @@ abstract class GenericAsyncSettingsManager<T> {
     FutureOr<T> Function(Object, StackTrace)? onError,
   }) async {
     return await _mutex.protect(() async {
-      final oldState = state;
+      final oldState = state!;
       try {
         final newState = await mutator(oldState);
 
@@ -146,7 +148,7 @@ abstract class GenericAsyncSettingsManager<T> {
           Fimber.v(() => "No settings change detected.");
         }
 
-        return state;
+        return state!;
       } catch (e, stacktrace) {
         if (onError != null) {
           return await onError(e, stacktrace);
@@ -162,7 +164,7 @@ abstract class GenericAsyncSettingsManager<T> {
   /// Creates a backup of the current settings file with a `.bak` extension.
   Future<void> _createBackup() async {
     File backupFile;
-    final backupFileName = "${_fileName}_backup.bak";
+    final backupFileName = "${fileName}_backup.bak";
     backupFile = File(p.join(settingsFile.parent.path, backupFileName));
 
     await settingsFile.copy(backupFile.path);
@@ -201,12 +203,11 @@ class SyncLock {
 /// A generic class for managing settings stored in TOML or JSON files.
 /// This class can be used independently of Riverpod.
 abstract class GenericSettingsManager<T> {
-  late File settingsFile;
-  late String _fileName;
+  File settingsFile = File("");
   final _lock = SyncLock();
 
   /// The current state of the settings.
-  late T state;
+  T? state;
 
   /// Specifies the file format for the settings file.
   FileFormat get fileFormat;
@@ -223,11 +224,15 @@ abstract class GenericSettingsManager<T> {
   /// The name of the file where settings will be stored.
   String get fileName;
 
+  GenericSettingsManager() {
+    state = createDefaultState();
+  }
+
   /// Resolves the path for the settings file and ensures the directory exists.
   File _getFileSync() {
     final dir = getConfigDataFolderPathSync();
     dir.createSync(recursive: true);
-    final path = p.join(dir.path, _fileName);
+    final path = p.join(dir.path, fileName);
     Fimber.i("Settings file path resolved: $path");
     return File(path);
   }
@@ -238,7 +243,6 @@ abstract class GenericSettingsManager<T> {
   /// Initializes and loads the state from the settings file (TOML or JSON),
   /// or uses the default state if the file is missing or invalid.
   void loadSync() {
-    _fileName = fileName;
     settingsFile = _getFileSync();
 
     _lock.protectSync(() {
@@ -259,7 +263,7 @@ abstract class GenericSettingsManager<T> {
       } else {
         Fimber.i("Settings file does not exist, creating default state.");
         state = createDefaultState();
-        writeSettingsToDiskSync(state);
+        writeSettingsToDiskSync(state!);
       }
     });
   }
@@ -294,19 +298,19 @@ abstract class GenericSettingsManager<T> {
     T Function(Object, StackTrace)? onError,
   }) {
     return _lock.protectSync(() {
-      final oldState = state;
+      final oldState = state!;
       try {
         final newState = mutator(oldState);
 
         if (newState != oldState) {
           state = newState;
           Fimber.i("Settings updated, writing to disk...");
-          writeSettingsToDiskSync(state);
+          writeSettingsToDiskSync(state!);
         } else {
           Fimber.v(() => "No settings change detected.");
         }
 
-        return state;
+        return state!;
       } catch (e, stacktrace) {
         if (onError != null) {
           return onError(e, stacktrace);
@@ -324,7 +328,7 @@ abstract class GenericSettingsManager<T> {
     int backupNumber = 1;
     File backupFile;
     do {
-      final backupFileName = "${_fileName}_backup_$backupNumber.bak";
+      final backupFileName = "${fileName}_backup_$backupNumber.bak";
       backupFile = File(p.join(settingsFile.parent.path, backupFileName));
       backupNumber++;
     } while (backupFile.existsSync());

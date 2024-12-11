@@ -7,6 +7,7 @@ import 'package:toastification/toastification.dart';
 import 'package:trios/chipper/chipper_home.dart';
 import 'package:trios/dashboard/dashboard.dart';
 import 'package:trios/modBrowser/mod_browser_page.dart';
+import 'package:trios/mod_manager/smol4.dart';
 import 'package:trios/portraits/portraits_viewer.dart';
 import 'package:trios/rules_autofresh/rules_hotreload.dart';
 import 'package:trios/themes/theme_manager.dart';
@@ -51,6 +52,7 @@ class AppShell extends ConsumerStatefulWidget {
 class _AppShellState extends ConsumerState<AppShell>
     with SingleTickerProviderStateMixin {
   late TriOSTools _currentPage;
+  bool isNewGrid = true;
 
   final tabToolMap = {
     0: TriOSTools.dashboard,
@@ -163,7 +165,23 @@ class _AppShellState extends ConsumerState<AppShell>
         padding: EdgeInsets.all(4),
         child: Dashboard(),
       ),
-      const Smol3(),
+      Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  isNewGrid = !isNewGrid;
+                });
+              },
+              child: Text(!isNewGrid ? 'Old Grid' : 'New Grid'),
+            ),
+          ),
+          Expanded(child: isNewGrid ? Smol4() : Smol3()),
+        ],
+      ),
+      // const Smol3(),
       const Padding(padding: EdgeInsets.all(8), child: ModProfilePage()),
       const Padding(padding: EdgeInsets.all(8), child: VramEstimatorPage()),
       const Padding(padding: EdgeInsets.all(8), child: ChipperApp()),

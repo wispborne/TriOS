@@ -41,7 +41,7 @@ abstract class GenericSettingsAsyncNotifier<T> extends AsyncNotifier<T> {
   }
 
   /// Provides access to the current settings state.
-  T get currentState => settingsManager.state;
+  T get currentState => settingsManager.state!;
 }
 
 abstract class GenericSettingsNotifier<T> extends Notifier<T> {
@@ -58,7 +58,7 @@ abstract class GenericSettingsNotifier<T> extends Notifier<T> {
   T build() {
     try {
       settingsManager.loadSync();
-      return settingsManager.state;
+      return settingsManager.state!;
     } catch (e, stackTrace) {
       Fimber.w("Error building settings notifier",
           ex: e, stacktrace: stackTrace);
@@ -85,5 +85,5 @@ abstract class GenericSettingsNotifier<T> extends Notifier<T> {
   }
 
   /// Provides access to the current settings state.
-  T get currentState => settingsManager.state;
+  T get currentState => settingsManager.state!;
 }

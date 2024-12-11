@@ -87,7 +87,7 @@ class VersionCheckerAsyncProvider
     } else if (_versionCheckResultsCache.isEmpty) {
       await settingsManager.readSettingsFromDisk();
       _versionCheckResultsCache
-          .addAll(settingsManager.state.versionCheckResultsBySmolId);
+          .addAll(settingsManager.state!.versionCheckResultsBySmolId);
     }
   }
 

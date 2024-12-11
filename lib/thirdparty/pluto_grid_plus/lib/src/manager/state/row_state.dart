@@ -340,10 +340,12 @@ mixin RowState implements IPlutoGridState {
   }
 
   @override
-  void appendRows(List<PlutoRow> rows) {
+  void appendRows(List<PlutoRow> rows, {bool notify = true}) {
     _insertRows(refRows.length, rows);
 
-    notifyListeners(true, appendRows.hashCode);
+    if (notify) {
+      notifyListeners(true, appendRows.hashCode);
+    }
   }
 
   @override

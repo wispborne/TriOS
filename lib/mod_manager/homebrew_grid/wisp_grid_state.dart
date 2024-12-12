@@ -6,26 +6,36 @@ part 'wisp_grid_state.mapper.dart';
 class WispGridState with WispGridStateMappable {
   final String? sortField;
   final bool isSortDescending;
-  final Map<ModGridHeader, ModGridColumnSetting>? columnSettings;
-  final GroupingSetting? groupingSetting;
+  final Map<ModGridHeader, ModGridColumnSetting> columnSettings;
+  final GroupingSetting groupingSetting;
 
   WispGridState({
     this.sortField,
     this.isSortDescending = true,
-    this.columnSettings,
-    this.groupingSetting,
+    this.columnSettings = const {
+      ModGridHeader.favorites: ModGridColumnSetting(position: 0, width: 50),
+      ModGridHeader.changeVariantButton: ModGridColumnSetting(position: 1, width: 200),
+      ModGridHeader.icons: ModGridColumnSetting(position: 2, width: 40),
+      ModGridHeader.modIcon: ModGridColumnSetting(position: 3, width: 40),
+      ModGridHeader.name: ModGridColumnSetting(position: 4, width: 200),
+      ModGridHeader.author: ModGridColumnSetting(position: 5, width: 200),
+      ModGridHeader.version: ModGridColumnSetting(position: 6, width: 100),
+      ModGridHeader.vramImpact: ModGridColumnSetting(position: 7, width: 100),
+      ModGridHeader.gameVersion: ModGridColumnSetting(position: 8, width: 100),
+    },
+    this.groupingSetting = const GroupingSetting(grouping: ModGridGroupEnum.enabledState),
   });
 }
 
 @MappableClass()
 class ModGridColumnSetting with ModGridColumnSettingMappable {
   final int position;
-  double? width;
+  final double width;
   final bool isVisible;
 
-  ModGridColumnSetting({
+  const ModGridColumnSetting({
     required this.position,
-    this.width,
+    required this.width,
     this.isVisible = true,
   });
 }
@@ -35,7 +45,7 @@ class GroupingSetting with GroupingSettingMappable {
   final ModGridGroupEnum grouping;
   final bool isSortDescending;
 
-  GroupingSetting({
+  const GroupingSetting({
     required this.grouping,
     this.isSortDescending = false,
   });
@@ -45,11 +55,12 @@ class GroupingSetting with GroupingSettingMappable {
 enum ModGridHeader {
   favorites,
   changeVariantButton,
+  icons,
+  modIcon,
   name,
   author,
   version,
   vramImpact,
-  icons,
   gameVersion,
   // category
 }

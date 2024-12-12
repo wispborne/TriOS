@@ -28,15 +28,29 @@ class WispGridStateMapper extends ClassMapperBase<WispGridState> {
   static bool _$isSortDescending(WispGridState v) => v.isSortDescending;
   static const Field<WispGridState, bool> _f$isSortDescending =
       Field('isSortDescending', _$isSortDescending, opt: true, def: true);
-  static Map<ModGridHeader, ModGridColumnSetting>? _$columnSettings(
+  static Map<ModGridHeader, ModGridColumnSetting> _$columnSettings(
           WispGridState v) =>
       v.columnSettings;
   static const Field<WispGridState, Map<ModGridHeader, ModGridColumnSetting>>
-      _f$columnSettings = Field('columnSettings', _$columnSettings, opt: true);
-  static GroupingSetting? _$groupingSetting(WispGridState v) =>
+      _f$columnSettings =
+      Field('columnSettings', _$columnSettings, opt: true, def: const {
+    ModGridHeader.favorites: ModGridColumnSetting(position: 0, width: 50),
+    ModGridHeader.changeVariantButton:
+        ModGridColumnSetting(position: 1, width: 200),
+    ModGridHeader.icons: ModGridColumnSetting(position: 2, width: 40),
+    ModGridHeader.modIcon: ModGridColumnSetting(position: 3, width: 40),
+    ModGridHeader.name: ModGridColumnSetting(position: 4, width: 200),
+    ModGridHeader.author: ModGridColumnSetting(position: 5, width: 200),
+    ModGridHeader.version: ModGridColumnSetting(position: 6, width: 100),
+    ModGridHeader.vramImpact: ModGridColumnSetting(position: 7, width: 100),
+    ModGridHeader.gameVersion: ModGridColumnSetting(position: 8, width: 100)
+  });
+  static GroupingSetting _$groupingSetting(WispGridState v) =>
       v.groupingSetting;
-  static const Field<WispGridState, GroupingSetting> _f$groupingSetting =
-      Field('groupingSetting', _$groupingSetting, opt: true);
+  static const Field<WispGridState, GroupingSetting> _f$groupingSetting = Field(
+      'groupingSetting', _$groupingSetting,
+      opt: true,
+      def: const GroupingSetting(grouping: ModGridGroupEnum.enabledState));
 
   @override
   final MappableFields<WispGridState> fields = const {
@@ -112,8 +126,8 @@ abstract class WispGridStateCopyWith<$R, $In extends WispGridState, $Out>
       ModGridHeader,
       ModGridColumnSetting,
       ModGridColumnSettingCopyWith<$R, ModGridColumnSetting,
-          ModGridColumnSetting>>? get columnSettings;
-  GroupingSettingCopyWith<$R, GroupingSetting, GroupingSetting>?
+          ModGridColumnSetting>> get columnSettings;
+  GroupingSettingCopyWith<$R, GroupingSetting, GroupingSetting>
       get groupingSetting;
   $R call(
       {String? sortField,
@@ -137,26 +151,25 @@ class _WispGridStateCopyWithImpl<$R, $Out>
       ModGridHeader,
       ModGridColumnSetting,
       ModGridColumnSettingCopyWith<$R, ModGridColumnSetting,
-          ModGridColumnSetting>>? get columnSettings =>
-      $value.columnSettings != null
-          ? MapCopyWith($value.columnSettings!, (v, t) => v.copyWith.$chain(t),
-              (v) => call(columnSettings: v))
-          : null;
+          ModGridColumnSetting>> get columnSettings => MapCopyWith(
+      $value.columnSettings,
+      (v, t) => v.copyWith.$chain(t),
+      (v) => call(columnSettings: v));
   @override
-  GroupingSettingCopyWith<$R, GroupingSetting, GroupingSetting>?
-      get groupingSetting => $value.groupingSetting?.copyWith
+  GroupingSettingCopyWith<$R, GroupingSetting, GroupingSetting>
+      get groupingSetting => $value.groupingSetting.copyWith
           .$chain((v) => call(groupingSetting: v));
   @override
   $R call(
           {Object? sortField = $none,
           bool? isSortDescending,
-          Object? columnSettings = $none,
-          Object? groupingSetting = $none}) =>
+          Map<ModGridHeader, ModGridColumnSetting>? columnSettings,
+          GroupingSetting? groupingSetting}) =>
       $apply(FieldCopyWithData({
         if (sortField != $none) #sortField: sortField,
         if (isSortDescending != null) #isSortDescending: isSortDescending,
-        if (columnSettings != $none) #columnSettings: columnSettings,
-        if (groupingSetting != $none) #groupingSetting: groupingSetting
+        if (columnSettings != null) #columnSettings: columnSettings,
+        if (groupingSetting != null) #groupingSetting: groupingSetting
       }));
   @override
   WispGridState $make(CopyWithData data) => WispGridState(
@@ -189,9 +202,9 @@ class ModGridColumnSettingMapper extends ClassMapperBase<ModGridColumnSetting> {
   static int _$position(ModGridColumnSetting v) => v.position;
   static const Field<ModGridColumnSetting, int> _f$position =
       Field('position', _$position);
-  static double? _$width(ModGridColumnSetting v) => v.width;
+  static double _$width(ModGridColumnSetting v) => v.width;
   static const Field<ModGridColumnSetting, double> _f$width =
-      Field('width', _$width, opt: true);
+      Field('width', _$width);
   static bool _$isVisible(ModGridColumnSetting v) => v.isVisible;
   static const Field<ModGridColumnSetting, bool> _f$isVisible =
       Field('isVisible', _$isVisible, opt: true, def: true);
@@ -281,10 +294,10 @@ class _ModGridColumnSettingCopyWithImpl<$R, $Out>
   late final ClassMapperBase<ModGridColumnSetting> $mapper =
       ModGridColumnSettingMapper.ensureInitialized();
   @override
-  $R call({int? position, Object? width = $none, bool? isVisible}) =>
+  $R call({int? position, double? width, bool? isVisible}) =>
       $apply(FieldCopyWithData({
         if (position != null) #position: position,
-        if (width != $none) #width: width,
+        if (width != null) #width: width,
         if (isVisible != null) #isVisible: isVisible
       }));
   @override

@@ -913,7 +913,7 @@ class _Smol3State extends ConsumerState<Smol3>
                     contextMenu: buildModContextMenu(mod, ref, context,
                         showSwapToVersion: true),
                     child: tooltippy(
-                      RowItemContainer(
+                      _RowItemContainer(
                         child: Disable(
                           isEnabled: !isGameRunning,
                           child: ModVersionSelectionDropdown(
@@ -936,7 +936,7 @@ class _Smol3State extends ConsumerState<Smol3>
             if (allMods.isEmpty) return const SizedBox();
             final mod = _getModFromKey(rendererContext.row.key);
             if (mod == null) return const SizedBox();
-            return RowItemContainer(
+            return _RowItemContainer(
               child: ModTypeIcon(
                   modVariant: mod.findFirstEnabledOrHighestVersion!),
             );
@@ -953,7 +953,7 @@ class _Smol3State extends ConsumerState<Smol3>
           if (allMods.isEmpty) return const SizedBox();
           String? iconPath = rendererContext.cell.value;
           return iconPath != null
-              ? RowItemContainer(
+              ? _RowItemContainer(
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
@@ -999,7 +999,7 @@ class _Smol3State extends ConsumerState<Smol3>
                       ),
                       child: tooltippy(
                         // affixToTop( child:
-                        RowItemContainer(
+                        _RowItemContainer(
                           child: ConstrainedBox(
                             constraints: const BoxConstraints(
                               minWidth: 600,
@@ -1163,7 +1163,7 @@ class _Smol3State extends ConsumerState<Smol3>
           return ContextMenuRegion(
               contextMenu: buildModContextMenu(mod, ref, context,
                   showSwapToVersion: true),
-              child: RowItemContainer(
+              child: _RowItemContainer(
                 child: Text(
                   rendererContext.cell.value
                           ?.toString()
@@ -1208,7 +1208,7 @@ class _Smol3State extends ConsumerState<Smol3>
               // affixToTop(                      child:
               mod.modVariants.isEmpty
                   ? const Text("")
-                  : RowItemContainer(
+                  : _RowItemContainer(
                       child: Row(
                         children: [
                           if (changelogUrl.isNotNullOrEmpty())
@@ -1391,7 +1391,7 @@ class _Smol3State extends ConsumerState<Smol3>
           return ContextMenuRegion(
               contextMenu: buildModContextMenu(mod, ref, context,
                   showSwapToVersion: true),
-              child: RowItemContainer(
+              child: _RowItemContainer(
                 child: Builder(builder: (context) {
                   final vramEstimatorState =
                       ref.watch(AppState.vramEstimatorProvider);
@@ -1511,7 +1511,7 @@ class _Smol3State extends ConsumerState<Smol3>
           return ContextMenuRegion(
               contextMenu: buildModContextMenu(mod, ref, context,
                   showSwapToVersion: true),
-              child: RowItemContainer(
+              child: _RowItemContainer(
                 child: Opacity(
                   opacity: lightTextOpacity,
                   child: Text(rendererContext.cell.value ?? "(no game version)",
@@ -1794,10 +1794,10 @@ class CopyModListButtonLarge extends StatelessWidget {
   }
 }
 
-class RowItemContainer extends StatelessWidget {
+class _RowItemContainer extends StatelessWidget {
   final Widget child;
 
-  const RowItemContainer({super.key, required this.child});
+  const _RowItemContainer({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {

@@ -3,14 +3,27 @@ import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_group.dart';
+import 'package:trios/mod_manager/homebrew_grid/wispgrid_mod_row_view.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/vram_estimator/vram_estimator.dart';
 
+// TODO make this absolute, not relative
+part '../../generated/mod_manager/homebrew_grid/wisp_grid.g.dart';
+
 part 'wisp_grid.mapper.dart';
+
+@riverpod
+WispGridState modGridState(Ref ref) {
+  // TODO get from settings
+  return WispGridState(
+      groupingSetting:
+          GroupingSetting(grouping: ModGridGroupEnum.enabledState));
+}
 
 class WispGrid extends ConsumerStatefulWidget {
   final List<Mod?> mods;
@@ -29,9 +42,7 @@ class _WispGridState extends ConsumerState<WispGrid> {
     final vramEstState = ref.watch(AppState.vramEstimatorProvider);
 
     // todo: get from state
-    final gridState = WispGridState(
-        groupingSetting:
-            GroupingSetting(grouping: ModGridGroupEnum.enabledState));
+    final gridState = ref.watch(modGridStateProvider);
     final groupingSetting =
         GroupingSetting(grouping: ModGridGroupEnum.enabledState);
 
@@ -87,12 +98,7 @@ class _WispGridState extends ConsumerState<WispGrid> {
         itemBuilder: (context, index) {
           final mod = flattenedList[index];
 
-          return ListTile(
-            title: Text(mod.findFirstEnabledOrHighestVersion?.modInfo.nameOrId ??
-                'No Name'),
-            subtitle: Text(
-                mod.findFirstEnabledOrHighestVersion?.modInfo.author ?? 'No Author')
-          );
+          return WispGridModRowView(mod: mod);
         });
   }
 }
@@ -105,7 +111,7 @@ class WispGridRow<T> with WispGridRowMappable {
 }
 
 @MappableClass()
-class WispGridModRow extends WispGridRow<Mod> {
+class WispGridModRow extends WispGridRow<Mod> with WispGridModRowMappable {
   WispGridModRow(super.mod);
 }
 

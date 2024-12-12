@@ -141,8 +141,9 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
-  riverpod_generator: ^2.6.1
-  build_runner: ^2.4.12
+  riverpod_generator: ^2.6.3
+  riverpod_lint: ^2.6.3
+  build_runner: ^2.4.13
   #  custom_lint: ^0.6.4
   freezed: ^2.5.2
   json_serializable: ^6.8.0
@@ -152,6 +153,7 @@ dev_dependencies:
   ffigen: ^16.0.0
   msix: ^3.16.7
   dart_mappable_builder: ^4.2.3
+  custom_lint: ^0.7.0
 
 flutter_launcher_icons:
   image_path: "assets/images/telos_faction_crest.png"

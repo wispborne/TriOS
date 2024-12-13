@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_group.dart';
+import 'package:trios/mod_manager/homebrew_grid/wispgrid_mod_header_row_view.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_mod_row_view.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/trios/app_state.dart';
@@ -27,6 +28,9 @@ WispGridState modGridState(Ref ref) {
 
 class WispGrid extends ConsumerStatefulWidget {
   final List<Mod?> mods;
+
+  static const double versionSelectorWidth = 130;
+  static const lightTextOpacity = 0.8;
 
   const WispGrid({super.key, required this.mods});
 
@@ -94,9 +98,13 @@ class _WispGridState extends ConsumerState<WispGrid> {
 
     // TODO smooth scrolling: https://github.com/dridino/smooth_list_view/blob/main/lib/smooth_list_view.dart
     return ListView.builder(
-        itemCount: flattenedList.length,
+        itemCount: flattenedList.length + 1, // +1 for header
         itemBuilder: (context, index) {
-          final mod = flattenedList[index];
+          if (index == 0) {
+            return WispGridModHeaderRowView();
+          }
+
+          final mod = flattenedList[index + 1]; // +1 for header
 
           return WispGridModRowView(mod: mod);
         });

@@ -43,8 +43,11 @@ dependencies:
   # Data & File Handling
   csv: ^6.0.0
   cross_file: ^0.3.4+1
-  file_picker: ^8.0.2
-  open_filex: ^4.5.0
+  file_picker: ^8.0.6
+  open_filex:
+    git: # Fork that fixes build warnings, original package seems abandoned.
+      url: https://github.com/xvrh/open_file
+      ref: 3ed35135c0e2c0e4b75f16fb462be362a0423e71
   path: ^1.9.0
   path_drawing: ^1.0.1
   path_provider: ^2.0.11
@@ -96,7 +99,7 @@ dependencies:
   hooks_riverpod: ^2.6.1
   # Other
   dynamic_library: ^0.9.0
-  intl: ^0.19.0
+  intl: ^0.20.1
   ktx: ^1.1.6
   mutex: ^3.1.0
   platform_info: ^5.0.0
@@ -107,7 +110,7 @@ dependencies:
   # For pluto_grid_plus
   pdf: ^3.11.0
   rxdart: ^0.28.0
-  dart_mappable: ^4.2.2
+  dart_mappable: ^4.3.0
   xml: ^6.5.0
   multi_split_view: ^3.6.0
   # webview

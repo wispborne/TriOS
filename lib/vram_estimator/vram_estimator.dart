@@ -119,7 +119,7 @@ class VramEstimatorNotifier
             ref
                 .read(AppState.mods)
                 .map((mod) => mod.findFirstEnabledOrHighestVersion)
-                .whereNotNull()
+                .nonNulls
                 .toList(),
         // TODO get graphicslib settings!
         graphicsLibConfig:

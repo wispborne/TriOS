@@ -61,7 +61,7 @@ class SaveFileNotifier extends AsyncNotifier<List<SaveFile>> {
       }
     }));
 
-    return newSaves.whereNotNull().toList();
+    return newSaves.nonNulls.toList();
   }
 
   Future<SaveFile> readSave(Directory folderOfSave) async {

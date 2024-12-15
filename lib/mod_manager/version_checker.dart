@@ -97,7 +97,7 @@ class VersionCheckerAsyncProvider
     return modsRef
         .map((mod) => mod.modVariants.sortedDescending().firstWhereOrNull(
             (variant) => variant.versionCheckerInfo?.seemsLegit == true))
-        .whereNotNull()
+        .nonNulls
         .toList();
   }
 

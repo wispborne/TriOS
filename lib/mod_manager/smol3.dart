@@ -637,7 +637,7 @@ class _Smol3State extends ConsumerState<Smol3>
       return modsInGrid.none((existingModId) => existingModId == mod.id);
     }).toList();
     final newRows =
-        newMods.map((mod) => createRow(mod)).whereNotNull().toList();
+        newMods.map((mod) => createRow(mod)).nonNulls.toList();
 
     if (newRows.isNotEmpty) {
       Fimber.d("Adding ${newRows.length} new rows");
@@ -665,7 +665,7 @@ class _Smol3State extends ConsumerState<Smol3>
               final newRow = createRow(mod);
               return (oldRow, newRow);
             })
-            .whereNotNull()
+            .nonNulls
             .cast<(PlutoRow oldRow, PlutoRow newRow)>()
             .toList();
 
@@ -737,13 +737,13 @@ class _Smol3State extends ConsumerState<Smol3>
       ...sortIfNeeded(
         enabledMods
             .mapIndexed((index, mod) => createRow(mod))
-            .whereNotNull()
+            .nonNulls
             .toList(),
       ),
       ...sortIfNeeded(
         disabledMods
             .mapIndexed((index, mod) => createRow(mod))
-            .whereNotNull()
+            .nonNulls
             .toList(),
       ),
     ];
@@ -784,12 +784,12 @@ class _Smol3State extends ConsumerState<Smol3>
           final graphicsLibConfig = ref.watch(graphicsLibConfigProvider);
           final smolIds = modsInGroup
               .map((e) => _getModFromKey(e.key))
-              .whereNotNull()
+              .nonNulls
               .map((e) => e.findFirstEnabledOrHighestVersion)
-              .whereNotNull()
+              .nonNulls
               .toList();
           final allEstimates =
-              smolIds.map((e) => vramMap[e.smolId]).whereNotNull().toList();
+              smolIds.map((e) => vramMap[e.smolId]).nonNulls.toList();
           const disabledGraphicsLibConfig = GraphicsLibConfig.disabled;
           final vramModsNoGraphicsLib = allEstimates
               .map((e) =>
@@ -1560,7 +1560,7 @@ class _Smol3State extends ConsumerState<Smol3>
 
           return columnToShow;
         })
-        .whereNotNull()
+        .nonNulls
         .toList();
     return result;
   }

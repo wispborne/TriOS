@@ -74,7 +74,7 @@ class VersionObject with VersionObjectMappable {
   VersionObject(this.major, this.minor, this.patch);
 
   @override
-  String toString() => [major, minor, patch].whereNotNull().join(".");
+  String toString() => [major, minor, patch].nonNulls.join(".");
 
   int compareTo(VersionObject? other) {
     if (other == null) return 0;

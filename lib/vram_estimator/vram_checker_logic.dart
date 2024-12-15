@@ -207,7 +207,7 @@ class VramChecker {
               imageHeaderReaderPool, file, modInfo, imageType, graphicsLibType);
         }
       })))
-          .whereNotNull()
+          .nonNulls
           .toList();
 
       final timeFinishedGettingFileData =
@@ -536,7 +536,7 @@ class VramChecker {
 
           return [null];
         })
-        .whereNotNull()
+        .nonNulls
         .filter((csvRows) => csvRows.isNotEmpty)
         .firstWhereOrNull((csvRows) =>
             csvRows.first?.containsAll(["id", "type", "map", "path"]) == true);
@@ -570,7 +570,7 @@ class VramChecker {
 
           return null;
         })
-        .whereNotNull()
+        .nonNulls
         .toList();
   }
 

@@ -56,7 +56,7 @@ class _RulesHotReloadState extends ConsumerState<RulesHotReload> {
     final modVariants = ref.watch(AppState.modVariants).valueOrNull;
     final modRulesDotCsvFiles = modVariants
             ?.map((variant) => getRulesCsvInModFolder(variant.modFolder))
-            .whereNotNull()
+            .nonNulls
             .toList() ??
         [];
 

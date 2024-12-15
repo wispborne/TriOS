@@ -79,7 +79,7 @@ class AppState {
 
   static final enabledModVariants = Provider<List<ModVariant>>((ref) {
     final mods = ref.watch(AppState.mods);
-    return mods.map((mod) => mod.findFirstEnabled).whereNotNull().toList();
+    return mods.map((mod) => mod.findFirstEnabled).nonNulls.toList();
   });
 
   static final modAudit =
@@ -158,7 +158,7 @@ class AppState {
 
     final filesAndFolders = [
       ref.read(enabledModsFile).valueOrNull?.enabledMods.toList()
-    ].whereNotNull();
+    ].nonNulls;
     for (final file in filesAndFolders) {
       if (filesAndFolders.isEmpty) {
         Fimber.d("Cannot find or write to: $file");
@@ -172,7 +172,7 @@ class AppState {
     final gamePath =
         ref.watch(appSettings.select((value) => value.gameDir))?.toDirectory();
     if (gamePath == null) return false;
-    final filesAndFolders = [getVmparamsFile(gamePath)].whereNotNull();
+    final filesAndFolders = [getVmparamsFile(gamePath)].nonNulls;
     for (var file in filesAndFolders) {
       if (!file.existsSync() || await file.isNotWritable()) {
         Fimber.d("Cannot find or write to: $file");

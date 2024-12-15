@@ -249,7 +249,7 @@ class LibArchive {
             }
           }
         }
-      }).whereNotNull().toList();
+      }).nonNulls.toList();
     } finally {
       binding.archive_write_free(writePtr);
     }

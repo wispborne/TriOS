@@ -127,7 +127,7 @@ class SeparatedSelectionContainerDelegate
     for (final Selectable selectable in selectables) {
       final allSelectedContent = getAllSelectables(selectable)
           .map((e) => e.getSelectedContent())
-          .whereNotNull();
+          .nonNulls;
       selections.addAll(allSelectedContent);
     }
     if (selections.isEmpty) {

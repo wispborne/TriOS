@@ -425,7 +425,7 @@ class ModProfileManagerNotifier extends GenericSettingsAsyncNotifier<ModProfiles
         .toList();
     final latestVariants = (ref.read(AppState.mods))
         .map((mod) => mod.findHighestVersion)
-        .whereNotNull()
+        .nonNulls
         .toList();
     final modIconsById = Map.fromEntries(
         latestVariants.map((e) => MapEntry(e.modInfo.id, e.iconFilePath)));
@@ -648,7 +648,7 @@ class ModProfileManagerNotifier extends GenericSettingsAsyncNotifier<ModProfiles
                               missingVariants
                                   .map((e) => e.variantAsShallowMod)
                                   .toList())
-                          .whereNotNull()
+                          .nonNulls
                           .joinToString(
                               separator: '\n',
                               transform: (ShallowModVariant e) =>

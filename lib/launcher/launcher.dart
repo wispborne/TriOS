@@ -268,7 +268,7 @@ class Launcher extends HookConsumerWidget {
         .enabledMods
         .toList();
     final enabledVariants =
-        (mods.map((mod) => mod.findFirstEnabled)).whereNotNull().toList();
+        (mods.map((mod) => mod.findFirstEnabled)).nonNulls.toList();
     final modCompatibility = ref.read(AppState.modCompatibility);
     final currentGameVersion =
         ref.read(appSettings.select((s) => s.lastStarsectorVersion));
@@ -354,7 +354,7 @@ class Launcher extends HookConsumerWidget {
       }
     }
 
-    return launchPrecheckFailures.whereNotNull().toList();
+    return launchPrecheckFailures.nonNulls.toList();
   }
 
   static StarsectorVanillaLaunchPreferences? getStarsectorLaunchPrefs() {

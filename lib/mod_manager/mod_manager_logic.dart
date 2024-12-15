@@ -295,7 +295,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
         // Refresh all variants of touched mods.
         // final modifiedVariants = enabledVariants
         //     .map((it) => it.mod(mods))
-        //     .whereNotNull()
+        //     .nonNulls
         //     .toSet()
         //     .flatMap((it) => it.modVariants)
         //     .toList();
@@ -444,7 +444,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
     );
 
     final List<ExtractedModInfo> modInfos = await Future.wait(
-        extractedModInfos.whereNotNull().map((modInfoFile) async {
+        extractedModInfos.nonNulls.map((modInfoFile) async {
       try {
         ExtractedModInfo modInfo = (
           extractedFile: modInfoFile,
@@ -466,7 +466,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
     var allModVariants = currentMods.variants;
     final alreadyPresentModVariants = modInfos
         .map((it) => getModVariantForModInfo(it.modInfo, allModVariants))
-        .whereNotNull()
+        .nonNulls
         .toList();
 
     if (alreadyPresentModVariants.isNotEmpty) {
@@ -501,7 +501,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
       // Find any mods that are already installed.
       final existingVariantsMatchingOneBeingInstalled = modInfosToInstall
           .map((it) => getModVariantForModInfo(it.modInfo, allModVariants))
-          .whereNotNull()
+          .nonNulls
           .toList();
 
       // If the same mod variant is already installed, delete it first.
@@ -1062,7 +1062,7 @@ addModsFolderFileWatcher(
 //       .listSync()
 //       .whereType<Directory>()
 //       .map((it) => getModInfoFile(it))
-//       .whereNotNull()
+//       .nonNulls
 //       .toList();
 //
 //   final newPathsAndLastModified = modInfoFiles
@@ -1134,7 +1134,7 @@ void copyModListToClipboardFromIds(
   final enabledModsList = modIds
       .orEmpty()
       .map((id) => allMods.firstWhereOrNull((mod) => mod.id == id))
-      .whereNotNull()
+      .nonNulls
       .toList()
       .sortedByName;
   copyModListToClipboardFromMods(enabledModsList, context);

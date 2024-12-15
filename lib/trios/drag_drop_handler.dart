@@ -109,7 +109,7 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
 
           return null;
         })))
-            .whereNotNull()
+            .nonNulls
             .toList();
 
         if (files.isEmpty) {
@@ -191,7 +191,7 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
         //
         //   return null;
         // })))
-        //     .whereNotNull()
+        //     .nonNulls
         //     .toList()
 
         final files = (await filterToSupportedTypes(detail.session.items))
@@ -280,12 +280,12 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
                                                       child: FileCard(
                                                         entities: future.data
                                                             .orEmpty()
-                                                            .whereNotNull()
+                                                            .nonNulls
                                                             .whereType<File>()
                                                             .toList(),
                                                         urls: future.data
                                                             .orEmpty()
-                                                            .whereNotNull()
+                                                            .nonNulls
                                                             .whereType<Uri>()
                                                             .toList(),
                                                       ),

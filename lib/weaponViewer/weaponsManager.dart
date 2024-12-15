@@ -31,7 +31,7 @@ final weaponListNotifierProvider = StreamProvider<List<Weapon>>((ref) async* {
   final variants = ref
       .watch(AppState.mods)
       .map((mod) => mod.findFirstEnabledOrHighestVersion)
-      .whereNotNull()
+      .nonNulls
       .toList();
 
   final allErrors = <String>[]; // To store all error messages

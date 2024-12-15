@@ -248,7 +248,7 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
         foregroundColor: themeBase.colorScheme.surface,
       ),
       checkboxTheme: themeBase.checkboxTheme.copyWith(
-        checkColor: MaterialStateProperty.all(Colors.transparent),
+        checkColor: WidgetStateProperty.all(Colors.transparent),
       ),
       textTheme: textTheme.copyWith(
         bodyMedium: textTheme.bodyMedium?.copyWith(fontSize: 16),

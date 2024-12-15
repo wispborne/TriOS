@@ -55,7 +55,7 @@ class ArchiveModInstallSource extends ModInstallSource {
       fileFilter: (entry) => filePaths.contains(entry.file.path),
     );
 
-    return extractedFiles.whereNotNull().map((extracted) {
+    return extractedFiles.nonNulls.map((extracted) {
       return SourcedFile(
         extracted.archiveFile.file.toFile(),
         extracted.extractedFile,
@@ -79,7 +79,7 @@ class ArchiveModInstallSource extends ModInstallSource {
                 ? (entry) => pathTransform(entry.file.path)
                 : null,
             onError: onError))
-        .whereNotNull()
+        .nonNulls
         .map((it) => SourcedFile(
               it.archiveFile.file.toFile(),
               it.extractedFile,

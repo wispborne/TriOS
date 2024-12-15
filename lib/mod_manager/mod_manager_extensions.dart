@@ -222,7 +222,7 @@ extension ModVariantsExt on List<ModVariant> {
       // See if the remote version is newer than ALL local versions,
       // not just the one with the .version file we're checking.
       final List<VersionCheckComparison> versionChecks =
-          map((v) => versionCheck.compareToLocal(v)).whereNotNull().toList();
+          map((v) => versionCheck.compareToLocal(v)).nonNulls.toList();
       if (versionChecks.isEmpty) continue;
       // If the remote version is newer than all local versions with a VC file, we have an update.
       final isRemoteNewerThanAllLocal = versionChecks.all((comparison) =>

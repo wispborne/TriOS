@@ -25,7 +25,7 @@ class Version with VersionMappable implements Comparable<Version> {
 
   @override
   String toString() =>
-      raw ?? [major, minor, patch, build].whereNotNull().join(".");
+      raw ?? [major, minor, patch, build].nonNulls.join(".");
 
   @override
   int compareTo(Version? other) {

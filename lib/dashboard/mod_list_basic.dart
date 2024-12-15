@@ -249,7 +249,7 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                               itemCount: listItems.length, // UPDATES title
                               itemBuilder: (context, index) {
                                 if (index == 0 &&
-                                    modsWithUpdates.whereNotNull().isNotEmpty) {
+                                    modsWithUpdates.nonNulls.isNotEmpty) {
                                   return Column(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
@@ -262,8 +262,8 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                             children: [
                                               Text(
                                                   isUpdatesFieldShown
-                                                      ? "UPDATES (${modsWithUpdates.whereNotNull().length})"
-                                                      : "${modsWithUpdates.whereNotNull().length} hidden updates",
+                                                      ? "UPDATES (${modsWithUpdates.nonNulls.length})"
+                                                      : "${modsWithUpdates.nonNulls.length} hidden updates",
                                                   style: Theme.of(context)
                                                       .textTheme
                                                       .labelMedium),
@@ -287,7 +287,7 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                               Tooltip(
                                                   message: isGameRunning
                                                       ? "Game is running"
-                                                      : "Download all ${modsWithUpdates.whereNotNull().length} updates",
+                                                      : "Download all ${modsWithUpdates.nonNulls.length} updates",
                                                   child: Disable(
                                                     isEnabled: !isGameRunning,
                                                     child: SizedBox(
@@ -319,7 +319,7 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                 // Hide the second "ALL MODS" title if there are no updates.
                                 // Definitely a hack. Proper fix would be to change `listItems`
                                 // to a container/viewmodel instead of mods.
-                                if (updatesToDisplay.whereNotNull().isEmpty &&
+                                if (updatesToDisplay.nonNulls.isEmpty &&
                                     mod == null &&
                                     index == 1) {
                                   return Container();

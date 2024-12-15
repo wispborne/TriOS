@@ -76,12 +76,12 @@ List<Mod>? searchMods(List<Mod> mods, String? query) {
   return searchModVariants(
           mods
               .map((mod) => mod.findFirstEnabledOrHighestVersion)
-              .whereNotNull()
+              .nonNulls
               .toList(),
           query)
       .map((modVariant) => mods.firstWhereOrNull(
           (mod) => mod.findFirstEnabledOrHighestVersion == modVariant))
-      .whereNotNull()
+      .nonNulls
       .toList();
 }
 

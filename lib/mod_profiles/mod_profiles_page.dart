@@ -309,7 +309,7 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
       ...ref
           .watch(AppState.mods)
           .map((mod) => mod.findFirstEnabledOrHighestVersion?.modFolder)
-    ].whereNotNull().toList();
+    ].nonNulls.toList();
 
     var dateCreated = profile?.dateCreated ?? save!.saveDate;
     return ConstrainedBox(

@@ -71,7 +71,7 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
               return Future.value(null);
             }
           })))
-            .whereNotNull()
+            .nonNulls
             .flattened
             .toList();
     // for (var variant in variants) {
@@ -189,7 +189,7 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
 
     // TODO update ONLY the mod that changed and any dependents/dependencies.
     await reloadModVariants(
-        onlyVariants: [...enabledVariants, modVariant].whereNotNull().toList());
+        onlyVariants: [...enabledVariants, modVariant].nonNulls.toList());
 
     if (validateDependencies) {
       validateModDependencies(modsToFreeze: [mod.id]);

@@ -667,8 +667,10 @@ class _RowItemContainer extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              // mainAxisAlignment: MainAxisAlignment.center,
-              children: [child],
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                child,
+              ],
             ),
           ),
         ),

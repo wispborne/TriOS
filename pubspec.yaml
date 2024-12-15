@@ -43,6 +43,7 @@ dependencies:
   diffutil_dart: ^4.0.1
   dropdown_button2: ^2.3.9
   dynamic_library: ^0.9.0
+  easy_sticky_header: ^1.1.1
   ffi: ^2.1.2
   file_picker: ^8.0.6
   fl_chart: ^0.69.0

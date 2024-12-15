@@ -21,6 +21,8 @@ class TabButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final foregroundColor =
+        isSelected ? colors.primary : colors.onSurface.withOpacity(0.8);
 
     return Padding(
       padding: const EdgeInsets.all(0),
@@ -28,8 +30,7 @@ class TabButton extends StatelessWidget {
         style: TextButton.styleFrom(
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
           backgroundColor: isSelected ? Colors.transparent : Colors.transparent,
-          foregroundColor:
-              isSelected ? colors.primary : colors.onSurface.withOpacity(0.8),
+          foregroundColor: foregroundColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(0.0),
           ),
@@ -39,7 +40,10 @@ class TabButton extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            SizedBox(height: iconSize, child: icon),
+            IconTheme(
+              data: IconThemeData(color: foregroundColor),
+              child: SizedBox(height: iconSize, child: icon),
+            ),
             SizedBox(height: iconSpacing),
             Text(
               text,

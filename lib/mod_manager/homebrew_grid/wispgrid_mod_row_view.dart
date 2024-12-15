@@ -43,7 +43,7 @@ class WispGridModRowView extends ConsumerStatefulWidget {
 }
 
 class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
-  static const _standardRowHeight = 40.0; // todo should be 40
+  static const _standardRowHeight = 40.0;
   static const _dependencyAddedRowHeight = 0.0;
 
   @override

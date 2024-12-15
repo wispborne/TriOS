@@ -55,7 +55,7 @@ dependencies:
   # Networking & API
   html: ^0.15.5
   # Analytics
-  sentry_flutter: ^8.8.0
+  sentry_flutter: 8.8.0
   # UI & Widgets
   desktop_drop: ^0.5.0
   dropdown_button2: ^2.3.9

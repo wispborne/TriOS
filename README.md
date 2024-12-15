@@ -26,12 +26,13 @@ All-in-one Starsector launcher, mod manager, and toolkit.
 ## Building TriOS
 
 1. [Download and install/extract Flutter SDK](https://flutter-ko.dev/get-started/install) so that it's on your path.
-2. Download the TriOS source code, navigate to it, and run
+2. Follow the instructions for your platform so that InAppWebView can build: https://inappwebview.dev/docs/intro/#setup-windows.
+3. Download the TriOS source code, navigate to it, and run
     ```
     flutter build windows
     ```
     (substitute `macos` or `linux` depending on your platform).
-3. The output should tell you where it placed the compiled program.
+4. The output should tell you where it placed the compiled program.
 
 
 ## Modifying TriOS

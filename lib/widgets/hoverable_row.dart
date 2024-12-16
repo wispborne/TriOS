@@ -10,6 +10,7 @@ class HoverableRow extends StatefulWidget {
   final CrossAxisAlignment? crossAxisAlignment;
   final TextDirection? textDirection;
   final VerticalDirection? verticalDirection;
+  final VoidCallback? onTap; // Optional click handler
 
   const HoverableRow({
     super.key,
@@ -22,6 +23,7 @@ class HoverableRow extends StatefulWidget {
     this.crossAxisAlignment,
     this.textDirection,
     this.verticalDirection,
+    this.onTap, // Add onTap parameter
   });
 
   @override
@@ -44,29 +46,38 @@ class _HoverableRowState extends State<HoverableRow> {
           _isHovering = false;
         });
       },
-      cursor: SystemMouseCursors.click,
-      child: Container(
-        decoration: BoxDecoration(
-          color: _isHovering
-              ? widget.hoverColor ?? Colors.black.withOpacity(0.2)
-              : Colors.transparent,
-          borderRadius: widget.borderRadius,
-        ),
-        padding: widget.padding,
-        child: Row(
-          mainAxisAlignment:
-              widget.mainAxisAlignment ?? MainAxisAlignment.start,
-          mainAxisSize: widget.mainAxisSize ?? MainAxisSize.max,
-          crossAxisAlignment:
-              widget.crossAxisAlignment ?? CrossAxisAlignment.center,
-          textDirection: widget.textDirection,
-          verticalDirection: widget.verticalDirection ?? VerticalDirection.down,
-          children: widget.children.map((child) {
-            return HoverData(
-              isHovering: _isHovering,
-              child: child,
-            );
-          }).toList(),
+      cursor: widget.onTap != null
+          ? SystemMouseCursors.click
+          : SystemMouseCursors.basic,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        // Handle tap if onTap is provided
+        behavior: HitTestBehavior.translucent,
+        // Ensure taps are detected even on empty spaces
+        child: Container(
+          decoration: BoxDecoration(
+            color: _isHovering
+                ? widget.hoverColor ?? Colors.black.withOpacity(0.2)
+                : Colors.transparent,
+            borderRadius: widget.borderRadius,
+          ),
+          padding: widget.padding,
+          child: Row(
+            mainAxisAlignment:
+                widget.mainAxisAlignment ?? MainAxisAlignment.start,
+            mainAxisSize: widget.mainAxisSize ?? MainAxisSize.max,
+            crossAxisAlignment:
+                widget.crossAxisAlignment ?? CrossAxisAlignment.center,
+            textDirection: widget.textDirection,
+            verticalDirection:
+                widget.verticalDirection ?? VerticalDirection.down,
+            children: widget.children.map((child) {
+              return HoverData(
+                isHovering: _isHovering,
+                child: child,
+              );
+            }).toList(),
+          ),
         ),
       ),
     );

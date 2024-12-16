@@ -4,14 +4,14 @@ part 'wisp_grid_state.mapper.dart';
 
 @MappableClass()
 class WispGridState with WispGridStateMappable {
-  final String? sortField;
+  final ModGridSortField? sortField;
   final bool isSortDescending;
   final Map<ModGridHeader, ModGridColumnSetting> columnSettings;
   final GroupingSetting groupingSetting;
 
   WispGridState({
-    this.sortField,
-    this.isSortDescending = true,
+    this.sortField = ModGridSortField.name,
+    this.isSortDescending = false,
     this.columnSettings = const {
       ModGridHeader.favorites: ModGridColumnSetting(position: 0, width: 50),
       ModGridHeader.changeVariantButton: ModGridColumnSetting(position: 1, width: 160),

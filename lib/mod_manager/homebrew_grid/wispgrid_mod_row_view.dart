@@ -35,8 +35,10 @@ import '../../widgets/svg_image_icon.dart';
 
 class WispGridModRowView extends ConsumerStatefulWidget {
   final Mod mod;
+  final Function(Mod? mod) onModRowSelected;
 
-  const WispGridModRowView({super.key, required this.mod});
+  const WispGridModRowView(
+      {super.key, required this.mod, required this.onModRowSelected});
 
   @override
   ConsumerState createState() => _WispGridModRowViewState();
@@ -75,6 +77,9 @@ class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
             ref: ref,
             child: HoverableRow(
               crossAxisAlignment: CrossAxisAlignment.start,
+              onTap: () => {
+                widget.onModRowSelected(mod),
+              },
               children: (gridState.columnSettings.entries.map((columnSetting) {
                 return Builder(builder: (context) {
                   final header = columnSetting.key;
@@ -113,11 +118,11 @@ class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
                       }),
                     ModGridHeader.modIcon => Builder(builder: (context) {
                         String? iconPath = bestVersion.iconFilePath;
-                        return iconPath != null
-                            ? _RowItemContainer(
-                                height: height,
-                                width: state.width,
-                                child: Row(
+                        return _RowItemContainer(
+                          height: height,
+                          width: state.width,
+                          child: iconPath != null
+                              ? Row(
                                   mainAxisAlignment: MainAxisAlignment.start,
                                   children: [
                                     Image.file(
@@ -126,9 +131,9 @@ class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
                                       height: 32,
                                     ),
                                   ],
-                                ),
-                              )
-                            : const SizedBox(width: 32, height: 32);
+                                )
+                              : const SizedBox(width: 32, height: 32),
+                        );
                       }),
                     ModGridHeader.icons => _RowItemContainer(
                         height: height,
@@ -221,99 +226,104 @@ class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
           child: _RowItemContainer(
             height: height,
             width: state.width,
-            child: Builder(builder: (context) {
-              final vramEstimatorState =
-                  ref.watch(AppState.vramEstimatorProvider);
-              final vramMap = vramEstimatorState.modVramInfo;
-              final biggestFish = vramMap
-                  .maxBy((e) =>
-                      e.value.bytesUsingGraphicsLibConfig(graphicsLibConfig))
-                  ?.value
-                  .bytesUsingGraphicsLibConfig(graphicsLibConfig);
-              final ratio = biggestFish == null
-                  ? 0.00
-                  : (vramMap[bestVersion.smolId]
-                              ?.bytesUsingGraphicsLibConfig(graphicsLibConfig)
-                              .toDouble() ??
-                          0) /
-                      biggestFish.toDouble();
-              final vramEstimate = vramMap[bestVersion.smolId];
-              final withoutGraphicsLib = vramEstimate?.images
-                  .where((e) => e.graphicsLibType == null)
-                  .map((e) => e.bytesUsed)
-                  .toList();
-              final fromGraphicsLib = vramEstimate?.images
-                  .where((e) => e.graphicsLibType != null)
-                  .map((e) => e.bytesUsed)
-                  .toList();
+            child: Expanded(
+              child: Builder(builder: (context) {
+                final vramEstimatorState =
+                    ref.watch(AppState.vramEstimatorProvider);
+                final vramMap = vramEstimatorState.modVramInfo;
+                final biggestFish = vramMap
+                    .maxBy((e) =>
+                        e.value.bytesUsingGraphicsLibConfig(graphicsLibConfig))
+                    ?.value
+                    .bytesUsingGraphicsLibConfig(graphicsLibConfig);
+                final ratio = biggestFish == null
+                    ? 0.00
+                    : (vramMap[bestVersion.smolId]
+                                ?.bytesUsingGraphicsLibConfig(graphicsLibConfig)
+                                .toDouble() ??
+                            0) /
+                        biggestFish.toDouble();
+                final vramEstimate = vramMap[bestVersion.smolId];
+                final withoutGraphicsLib = vramEstimate?.images
+                    .where((e) => e.graphicsLibType == null)
+                    .map((e) => e.bytesUsed)
+                    .toList();
+                final fromGraphicsLib = vramEstimate?.images
+                    .where((e) => e.graphicsLibType != null)
+                    .map((e) => e.bytesUsed)
+                    .toList();
 
-              return MovingTooltipWidget.text(
-                message: vramEstimate == null
-                    ? ""
-                    : "Version ${vramEstimate.info.version}"
-                        "\n"
-                        "\n${withoutGraphicsLib?.sum().bytesAsReadableMB()} from mod (${withoutGraphicsLib?.length} images)"
-                        "\n${fromGraphicsLib?.sum().bytesAsReadableMB()} added by your GraphicsLib settings (${fromGraphicsLib?.length} images)"
-                        "\n---"
-                        "\n${vramEstimate.bytesUsingGraphicsLibConfig(graphicsLibConfig).bytesAsReadableMB()} total",
-                child: Stack(
-                  children: [
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                          child: vramEstimate?.bytesUsingGraphicsLibConfig(
-                                      graphicsLibConfig) !=
-                                  null
-                              ? Text(
-                                  vramEstimate!
-                                      .bytesUsingGraphicsLibConfig(
-                                          graphicsLibConfig)
-                                      .bytesAsReadableMB(),
-                                  style: theme.textTheme.labelLarge
-                                      ?.copyWith(color: lightTextColor))
-                              : Align(
-                                  alignment: Alignment.centerRight,
-                                  child: Opacity(
-                                      opacity: 0.5,
-                                      child: Disable(
-                                        isEnabled:
-                                            !vramEstimatorState.isScanning,
-                                        child: MovingTooltipWidget.text(
-                                          message: "Estimate VRAM usage",
-                                          child: IconButton(
-                                            icon: const Icon(Icons.memory),
-                                            iconSize: 24,
-                                            onPressed: () {
-                                              ref
-                                                  .read(AppState
-                                                      .vramEstimatorProvider
-                                                      .notifier)
-                                                  .startEstimating(
-                                                      variantsToCheck: [
-                                                    mod.findFirstEnabledOrHighestVersion!
-                                                  ]);
-                                            },
-                                          ),
-                                        ),
-                                      )),
-                                )),
-                    ),
-                    if (vramEstimate != null)
+                return MovingTooltipWidget.text(
+                  message: vramEstimate == null
+                      ? ""
+                      : "Version ${vramEstimate.info.version}"
+                          "\n"
+                          "\n${withoutGraphicsLib?.sum().bytesAsReadableMB()} from mod (${withoutGraphicsLib?.length} images)"
+                          "\n${fromGraphicsLib?.sum().bytesAsReadableMB()} added by your GraphicsLib settings (${fromGraphicsLib?.length} images)"
+                          "\n---"
+                          "\n${vramEstimate.bytesUsingGraphicsLibConfig(graphicsLibConfig).bytesAsReadableMB()} total",
+                  child: Stack(
+                    children: [
                       Align(
-                        alignment: Alignment.bottomLeft,
+                        alignment: Alignment.centerLeft,
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                          child: LinearProgressIndicator(
-                            value: ratio,
-                            backgroundColor: theme.colorScheme.surfaceContainer,
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 8.0),
+                            child: vramEstimate?.bytesUsingGraphicsLibConfig(
+                                        graphicsLibConfig) !=
+                                    null
+                                ? Text(
+                                    vramEstimate!
+                                        .bytesUsingGraphicsLibConfig(
+                                            graphicsLibConfig)
+                                        .bytesAsReadableMB(),
+                                    style: theme.textTheme.labelLarge
+                                        ?.copyWith(color: lightTextColor))
+                                : Align(
+                                    alignment: Alignment.centerRight,
+                                    child: Opacity(
+                                        opacity: 0.5,
+                                        child: Disable(
+                                          isEnabled:
+                                              !vramEstimatorState.isScanning,
+                                          child: MovingTooltipWidget.text(
+                                            message: "Estimate VRAM usage",
+                                            child: IconButton(
+                                              icon: const Icon(Icons.memory),
+                                              iconSize: 24,
+                                              onPressed: () {
+                                                ref
+                                                    .read(AppState
+                                                        .vramEstimatorProvider
+                                                        .notifier)
+                                                    .startEstimating(
+                                                        variantsToCheck: [
+                                                      mod.findFirstEnabledOrHighestVersion!
+                                                    ]);
+                                              },
+                                            ),
+                                          ),
+                                        )),
+                                  )),
+                      ),
+                      if (vramEstimate != null)
+                        Align(
+                          alignment: Alignment.bottomLeft,
+                          child: Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 8.0),
+                            child: LinearProgressIndicator(
+                              value: ratio,
+                              backgroundColor:
+                                  theme.colorScheme.surfaceContainer,
+                            ),
                           ),
                         ),
-                      ),
-                  ],
-                ),
-              );
-            }),
+                    ],
+                  ),
+                );
+              }),
+            ),
           ));
     });
   }

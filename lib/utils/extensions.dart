@@ -444,18 +444,19 @@ extension IterableExt<T> on Iterable<T> {
     bool nullsLast = false,
   }) {
     if (isEmpty) return toList();
-    return toList()
-      ..sort((a, b) {
-        final aValue = selector(a);
-        final bValue = selector(b);
-        if (aValue == null) {
-          return nullsLast ? 1 : -1;
-        } else if (bValue == null) {
-          return nullsLast ? -1 : 1;
-        }
-        return aValue.compareTo(bValue);
-      })
-      ..let((sorted) => isAscending ? sorted : sorted.reversed);
+    return (toList()
+          ..sort((a, b) {
+            final aValue = selector(a);
+            final bValue = selector(b);
+            if (aValue == null) {
+              return nullsLast ? 1 : -1;
+            } else if (bValue == null) {
+              return nullsLast ? -1 : 1;
+            }
+            return aValue.compareTo(bValue);
+          }))
+        .let((sorted) => isAscending ? sorted : sorted.reversed)
+        .toList();
   }
 
   List<T> sortedByDescending<R extends Comparable>(R? Function(T item) selector,

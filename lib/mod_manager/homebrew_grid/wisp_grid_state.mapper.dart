@@ -22,12 +22,12 @@ class WispGridStateMapper extends ClassMapperBase<WispGridState> {
   @override
   final String id = 'WispGridState';
 
-  static String? _$sortField(WispGridState v) => v.sortField;
-  static const Field<WispGridState, String> _f$sortField =
-      Field('sortField', _$sortField, opt: true);
+  static ModGridSortField? _$sortField(WispGridState v) => v.sortField;
+  static const Field<WispGridState, ModGridSortField> _f$sortField =
+      Field('sortField', _$sortField, opt: true, def: ModGridSortField.name);
   static bool _$isSortDescending(WispGridState v) => v.isSortDescending;
   static const Field<WispGridState, bool> _f$isSortDescending =
-      Field('isSortDescending', _$isSortDescending, opt: true, def: true);
+      Field('isSortDescending', _$isSortDescending, opt: true, def: false);
   static Map<ModGridHeader, ModGridColumnSetting> _$columnSettings(
           WispGridState v) =>
       v.columnSettings;
@@ -130,7 +130,7 @@ abstract class WispGridStateCopyWith<$R, $In extends WispGridState, $Out>
   GroupingSettingCopyWith<$R, GroupingSetting, GroupingSetting>
       get groupingSetting;
   $R call(
-      {String? sortField,
+      {ModGridSortField? sortField,
       bool? isSortDescending,
       Map<ModGridHeader, ModGridColumnSetting>? columnSettings,
       GroupingSetting? groupingSetting});

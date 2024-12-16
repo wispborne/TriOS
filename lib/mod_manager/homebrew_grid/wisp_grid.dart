@@ -2,7 +2,6 @@ import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:easy_sticky_header/easy_sticky_header.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_group.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_mod_group_row.dart';
@@ -14,24 +13,22 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/vram_estimator/vram_estimator.dart';
 
-// TODO make this absolute, not relative
-part '../../generated/mod_manager/homebrew_grid/wisp_grid.g.dart';
-
-@riverpod
-WispGridState modGridState(Ref ref) {
-  // TODO get from settings
+// provider for grid state
+final modGridStateProvider = StateProvider<WispGridState>((ref) {
   return WispGridState(
       groupingSetting:
           GroupingSetting(grouping: ModGridGroupEnum.enabledState));
-}
+});
 
 class WispGrid extends ConsumerStatefulWidget {
   final List<Mod?> mods;
+  final Function(dynamic mod) onModRowSelected;
 
   static const double versionSelectorWidth = 130;
   static const lightTextOpacity = 0.8;
 
-  const WispGrid({super.key, required this.mods});
+  const WispGrid(
+      {super.key, required this.mods, required this.onModRowSelected});
 
   @override
   ConsumerState createState() => _WispGridState();
@@ -51,10 +48,12 @@ class _WispGridState extends ConsumerState<WispGrid> {
 
     final grouping =
         groupingSetting.grouping.mapToGroup(); // TODO (SL.modMetadata)
-    final activeSortField = gridState.sortField?.let((field) => ModGridSortField
-            .values
-            .enumFromStringCaseInsensitive<ModGridSortField>(field)) ??
-        ModGridSortField.name;
+    final activeSortField = gridState.sortField ?? ModGridSortField.name;
+    // ?.let((field) =>
+    // ModGridSortField
+    //     .values
+    //     .enumFromStringCaseInsensitive<ModGridSortField>(field)) ??
+    // ModGridSortField.name;
 
     final mods = widget.mods.nonNulls
         // TODO also sort by favorited, when we get there
@@ -74,9 +73,9 @@ class _WispGridState extends ConsumerState<WispGrid> {
     final displayedMods = [WispGridModHeaderRowView() as Widget] +
         mods
             .flatMap((entry) {
-              final modState = entry.key;
+              final groupSortValue = entry.key;
               final modsInGroup = entry.value;
-              final isCollapsed = collapseStates[modState] == true;
+              final isCollapsed = collapseStates[groupSortValue] == true;
               final groupName =
                   modsInGroup.firstOrNull?.let(grouping.getGroupName) ?? "";
 
@@ -84,13 +83,21 @@ class _WispGridState extends ConsumerState<WispGrid> {
                 groupName: groupName,
                 modsInGroup: modsInGroup,
                 isCollapsed: isCollapsed,
+                setCollapsed: (isCollapsed) {
+                  setState(() {
+                    collapseStates[groupSortValue] = isCollapsed;
+                  });
+                },
                 isFirstGroupShown: isFirstGroup,
               );
               isFirstGroup = false;
               final items = isCollapsed
                   ? []
                   : modsInGroup
-                      .map((mod) => WispGridModRowView(mod: mod))
+                      .map((mod) => WispGridModRowView(
+                            mod: mod,
+                            onModRowSelected: widget.onModRowSelected,
+                          ))
                       .toList();
 
               return <Widget>[header, ...items];

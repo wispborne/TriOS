@@ -22,8 +22,10 @@ class _WispGridModHeaderRowViewState
       return Builder(builder: (context) {
         final header = columnSetting.key;
         final state = columnSetting.value;
-        final headerTextStyle =
-            Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold);
+        final headerTextStyle = Theme.of(context)
+            .textTheme
+            .bodySmall
+            ?.copyWith(fontWeight: FontWeight.bold);
 
         return switch (header) {
           ModGridHeader.favorites => SizedBox(
@@ -82,18 +84,34 @@ class _SortableHeaderState extends ConsumerState<SortableHeader> {
   Widget build(BuildContext context) {
     final gridState = ref.watch(modGridStateProvider);
     final isSortDescending = gridState.isSortDescending;
-    final isActive = gridState.sortField == widget.columnSortField.toString();
+    final isActive = gridState.sortField == widget.columnSortField;
 
     return InkWell(
       onTap: () {
-        // ref.read(modGridStateProvider.notifier).toggleSortField(
-        //     widget.columnSortField, isSortDescending);
+        ref.read(modGridStateProvider.notifier).update((state) {
+          // if (state.sortField == widget.columnSortField.toString()) {
+          return state.copyWith(
+            sortField: widget.columnSortField,
+            isSortDescending: !state.isSortDescending,
+          );
+          // } else {
+          //   return state.copyWith(
+          //       sortField: widget.columnSortField.toString(),
+          //       isSortDescending: !state.isSortDescending);
+          // }
+        });
       },
       child: Row(
         children: [
           widget.child,
           if (isActive)
-            Icon(isSortDescending ? Icons.arrow_downward : Icons.arrow_upward)
+            Padding(
+              padding: const EdgeInsets.only(left: 4),
+              child: Icon(
+                isSortDescending ? Icons.arrow_drop_down : Icons.arrow_drop_up,
+                size: 20
+              ),
+            )
         ],
       ),
     );

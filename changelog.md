@@ -10,12 +10,15 @@
     - Shows VRAM taken by your GraphicsLib settings for mods. 
   - **Onboarding** popup on first launch.
     - Prompts for game location and how many versions of each mod to keep.
-  - Mod grid no longer resets itself constantly.
-    - e.g. sorting now works. 
-    - It still doesn't save across TriOS restarts, not yet.
+  - **Mod Grid rewritten** from scratch.
+    - Improved performance.
+    - Switched to reuse my old SMOL code and away from the 3rd-party library :)
+    - (more to come)
   - May now install a mod from folder, not just from zip/7z/rar.
     - Either drag'n'drop a folder or select the `mod_info.json` file from the Add button.
 - Fixed
+  - Mod grid no longer resets itself constantly.
+    - e.g. sorting now works.
   - Mod download notification url can't show more than 3 lines anymore.
   - Creating a new mod profile now uses your current mods.
   - TriOS update notification shows download size before downloading.
@@ -23,6 +26,8 @@
   - Logfile not properly rolling over at 25MB until app restart.
   - Mods folder path used `/` instead of `\`.
 - Changed
+  - Note: TriOS settings have been reset due to a new format. 
+    - Mod profiles should be fine. 
   - "Launch" button now reacts to clicks a bit faster and is more clear that the game's running.
   - Mod Audit Log on Profiles page is now persisted across restarts.
   - Starsector log shown on the Dashboard now automatically refreshes when the game closes.

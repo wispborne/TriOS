@@ -222,7 +222,7 @@ class SettingSaver extends GenericSettingsNotifier<Settings> {
     Fimber.d("Updated settings: $newState");
 
     // Save to disk
-    settingsManager.writeSettingsToDiskSync(newState);
+    settingsManager.scheduleWriteSettingsToDisk(newState);
     return newState;
   }
 
@@ -239,11 +239,31 @@ class AppSettingsManager extends GenericSettingsManager<Settings> {
   FileFormat get fileFormat => FileFormat.json;
 
   @override
-  String get fileName => "trios_settings.${fileFormat.name}";
+  String get fileName => "trios_settings-v1.${fileFormat.name}";
 
   @override
   Settings Function(Map<String, dynamic> map) get fromMap =>
       (map) => SettingsMapper.fromMap(map);
+
+  // @override
+  // void loadSync() {
+  //   super.loadSync();
+  //
+  //   _migrateFromV1();
+  // }
+
+  // void _migrateFromV1() {
+  //   final sharedPrefsFile = Constants.configDataFolderPath.resolve("shared_preferences.json").toFile();
+  //
+  //   if (!sharedPrefsFile.existsSync()) {
+  //     return;
+  //   }
+  //
+  //   Fimber.i("Migrating from old shared prefs.");
+  //   final sharedPrefs = sharedPrefsFile.readAsStringSync();
+  //   final oldPrefs = SettingsMapper.fromJson(sharedPrefs);
+  //   Fimber.i("Old prefs: $oldPrefs");
+  // }
 
   @override
   Map<String, dynamic> Function(Settings settings) get toMap =>

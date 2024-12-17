@@ -11,6 +11,7 @@ import 'package:trios/utils/logging.dart'; // For path operations
 
 /// Supported file formats for the settings file.
 enum FileFormat { toml, json }
+
 final Duration _debounceDuration = Duration(milliseconds: 300);
 
 /// A generic class for managing settings stored in TOML or JSON files.
@@ -78,20 +79,22 @@ abstract class GenericAsyncSettingsManager<T> {
         try {
           final contents = await settingsFile.readAsString();
           final loadedState = await deserialize(contents);
-          Fimber.i("Settings successfully loaded from disk.");
+          Fimber.i("$fileName successfully loaded from disk.");
           state = loadedState;
           return state!;
         } catch (e, stacktrace) {
-          Fimber.e("Error reading from disk, creating backup and then wiping: $e",
-              ex: e, stacktrace: stacktrace);
+          Fimber.e(
+              "Error reading from disk, creating backup and then wiping: $e",
+              ex: e,
+              stacktrace: stacktrace);
           await _createBackup();
           state = createDefaultState();
           return state!;
         }
       } else {
-        Fimber.i("Settings file does not exist, creating default state.");
+        Fimber.i("$fileName does not exist, creating default state.");
         state = createDefaultState();
-        scheduleWriteSettingsToDisk();
+        await writeSettingsToDisk(state!);
         return state!;
       }
     });
@@ -113,12 +116,10 @@ abstract class GenericAsyncSettingsManager<T> {
 
     _debounceTimer = Timer(_debounceDuration, () async {
       try {
-        final serializedData = await serialize(state!);
-        await settingsFile.writeAsString(serializedData);
-        Fimber.i("Settings successfully written to disk.");
+        await writeSettingsToDisk(state!);
         _writeCompleter?.complete();
       } catch (e, stackTrace) {
-        Fimber.e("Error serializing and saving settings data: $e",
+        Fimber.e("Error serializing and saving settings data to $fileName: $e",
             ex: e, stacktrace: stackTrace);
         _writeCompleter?.completeError(e, stackTrace);
         rethrow;
@@ -128,6 +129,12 @@ abstract class GenericAsyncSettingsManager<T> {
     });
 
     return _writeCompleter!.future;
+  }
+
+  Future<void> writeSettingsToDisk(T currentState) async {
+    final serializedData = await serialize(currentState);
+    await settingsFile.writeAsString(serializedData);
+    Fimber.i("$fileName successfully written to disk.");
   }
 
   /// Updates the current state using the provided mutator function and persists the updated state to disk.
@@ -142,10 +149,10 @@ abstract class GenericAsyncSettingsManager<T> {
 
         if (newState != oldState) {
           state = newState;
-          Fimber.i("Settings updated, writing to disk...");
+          Fimber.i("$fileName updated, writing to disk...");
           scheduleWriteSettingsToDisk();
         } else {
-          Fimber.v(() => "No settings change detected.");
+          Fimber.v(() => "No $fileName settings change detected.");
         }
 
         return state!;
@@ -153,7 +160,7 @@ abstract class GenericAsyncSettingsManager<T> {
         if (onError != null) {
           return await onError(e, stacktrace);
         } else {
-          Fimber.e("Error during settings update: $e",
+          Fimber.e("Error during $fileName update: $e",
               ex: e, stacktrace: stacktrace);
           rethrow;
         }
@@ -168,7 +175,7 @@ abstract class GenericAsyncSettingsManager<T> {
     backupFile = File(p.join(settingsFile.parent.path, backupFileName));
 
     await settingsFile.copy(backupFile.path);
-    Fimber.i("Backup created at ${backupFile.path}");
+    Fimber.i("Backup of $fileName created at ${backupFile.path}");
   }
 }
 
@@ -221,7 +228,7 @@ abstract class GenericSettingsManager<T> {
   /// Subclasses must provide a function to deserialize a map into the settings object.
   T Function(Map<String, dynamic> map) get fromMap;
 
-  /// The name of the file where settings will be stored.
+  /// The name of the settings file, including extension.
   String get fileName;
 
   GenericSettingsManager() {
@@ -252,7 +259,7 @@ abstract class GenericSettingsManager<T> {
           final loadedState = fileFormat == FileFormat.toml
               ? fromMap(TomlDocument.parse(contents).toMap())
               : fromMap(jsonDecode(contents) as Map<String, dynamic>);
-          Fimber.i("Settings successfully loaded from disk.");
+          Fimber.i("$fileName successfully loaded from disk.");
           state = loadedState;
         } catch (e, stacktrace) {
           Fimber.e("Error reading from disk, creating backup: $e",
@@ -261,9 +268,9 @@ abstract class GenericSettingsManager<T> {
           state = createDefaultState();
         }
       } else {
-        Fimber.i("Settings file does not exist, creating default state.");
+        Fimber.i("$fileName does not exist, creating default state.");
         state = createDefaultState();
-        writeSettingsToDiskSync(state!);
+        writeSettingsToDisk(state!);
       }
     });
   }
@@ -272,24 +279,28 @@ abstract class GenericSettingsManager<T> {
   Timer? _debounceTimer;
 
   /// Writes the provided state to the settings file (TOML or JSON) on disk with debouncing.
-  void writeSettingsToDiskSync(T currentState) {
+  void scheduleWriteSettingsToDisk(T currentState) {
     // Cancel any existing timer
     _debounceTimer?.cancel();
 
     // Schedule a new write
     _debounceTimer = Timer(_debounceDuration, () {
-      try {
-        final serializedData = fileFormat == FileFormat.toml
-            ? TomlDocument.fromMap(toMap(currentState)).toString()
-            : jsonEncode(toMap(currentState));
-        settingsFile.writeAsStringSync(serializedData);
-        Fimber.i("Settings successfully written to disk.");
-      } catch (e, stackTrace) {
-        Fimber.e("Error serializing and saving settings data: $e",
-            ex: e, stacktrace: stackTrace);
-        rethrow;
-      }
+      writeSettingsToDisk(currentState);
     });
+  }
+
+  void writeSettingsToDisk(T currentState) {
+    try {
+      final serializedData = fileFormat == FileFormat.toml
+          ? TomlDocument.fromMap(toMap(currentState)).toString()
+          : jsonEncode(toMap(currentState));
+      settingsFile.writeAsStringSync(serializedData);
+      Fimber.i("$fileName successfully written to disk.");
+    } catch (e, stackTrace) {
+      Fimber.e("Error serializing and saving $fileName settings data: $e",
+          ex: e, stacktrace: stackTrace);
+      rethrow;
+    }
   }
 
   /// Updates the current state using the provided mutator function and persists the updated state to disk.
@@ -304,10 +315,10 @@ abstract class GenericSettingsManager<T> {
 
         if (newState != oldState) {
           state = newState;
-          Fimber.i("Settings updated, writing to disk...");
-          writeSettingsToDiskSync(state!);
+          Fimber.i("$fileName updated, writing to disk...");
+          scheduleWriteSettingsToDisk(state!);
         } else {
-          Fimber.v(() => "No settings change detected.");
+          Fimber.v(() => "No $fileName settings change detected.");
         }
 
         return state!;
@@ -315,7 +326,7 @@ abstract class GenericSettingsManager<T> {
         if (onError != null) {
           return onError(e, stacktrace);
         } else {
-          Fimber.e("Error during settings update: $e",
+          Fimber.e("Error during $fileName update: $e",
               ex: e, stacktrace: stacktrace);
           rethrow;
         }
@@ -334,6 +345,6 @@ abstract class GenericSettingsManager<T> {
     } while (backupFile.existsSync());
 
     settingsFile.copySync(backupFile.path);
-    Fimber.i("Backup created at ${backupFile.path}");
+    Fimber.i("Backup of $fileName created at ${backupFile.path}");
   }
 }

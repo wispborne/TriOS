@@ -75,134 +75,138 @@ class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
           _buildModGridTooltip(
             modVariants: mod.modVariants,
             ref: ref,
-            child: HoverableRow(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              onTap: () => {
-                widget.onModRowSelected(mod),
-              },
-              children: (gridState.columnSettings.entries.map((columnSetting) {
-                return Builder(builder: (context) {
-                  final header = columnSetting.key;
-                  final state = columnSetting.value;
-                  final isHovering = HoverData.of(context)?.isHovering ?? false;
+            child: ContextMenuRegion(
+              contextMenu: buildModContextMenu(mod, ref, context,
+                  showSwapToVersion: true),
+              child: HoverableRow(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                onTap: () => {
+                  widget.onModRowSelected(mod),
+                },
+                children: (gridState.columnSettings.entries.map((columnSetting) {
+                  return Builder(builder: (context) {
+                    final header = columnSetting.key;
+                    final state = columnSetting.value;
+                    final isHovering = HoverData.of(context)?.isHovering ?? false;
 
-                  return switch (header) {
-                    ModGridHeader.favorites => _RowItemContainer(
-                        height: height,
-                        width: state.width,
-                        child: Expanded(
-                          child: FavoriteButton(
-                            favoritesWidth: state.width,
-                            mod: mod,
-                            isRowHighlighted: isHovering,
-                          ),
-                        ),
-                      ),
-                    ModGridHeader.changeVariantButton =>
-                      Builder(builder: (context) {
-                        return ContextMenuRegion(
-                            contextMenu: buildModContextMenu(mod, ref, context,
-                                showSwapToVersion: true),
-                            child: _RowItemContainer(
-                              height: height,
-                              width: state.width,
-                              child: Disable(
-                                isEnabled: !isGameRunning,
-                                child: ModVersionSelectionDropdown(
-                                  mod: mod,
-                                  width: WispGrid.versionSelectorWidth,
-                                  showTooltip: false,
-                                ),
-                              ),
-                            ));
-                      }),
-                    ModGridHeader.modIcon => Builder(builder: (context) {
-                        String? iconPath = bestVersion.iconFilePath;
-                        return _RowItemContainer(
+                    return switch (header) {
+                      ModGridHeader.favorites => _RowItemContainer(
                           height: height,
                           width: state.width,
-                          child: iconPath != null
-                              ? Row(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  children: [
-                                    Image.file(
-                                      iconPath.toFile(),
-                                      width: 32,
-                                      height: 32,
-                                    ),
-                                  ],
-                                )
-                              : const SizedBox(width: 32, height: 32),
-                        );
-                      }),
-                    ModGridHeader.icons => _RowItemContainer(
-                        height: height,
-                        width: state.width,
-                        child: ModTypeIcon(modVariant: bestVersion),
-                      ),
-                    ModGridHeader.name =>
-                      buildNameCell(mod, height, bestVersion, allMods, state),
-                    ModGridHeader.author => Builder(builder: (context) {
-                        final theme = Theme.of(context);
-                        final lightTextColor = theme.colorScheme.onSurface
-                            .withOpacity(WispGrid.lightTextOpacity);
-                        return ContextMenuRegion(
-                            contextMenu: buildModContextMenu(mod, ref, context,
-                                showSwapToVersion: true),
-                            child: _RowItemContainer(
-                              height: height,
-                              width: state.width,
-                              child: Text(
-                                bestVersion.modInfo.author
-                                        ?.toString()
-                                        .replaceAll("\n", "   ") ??
-                                    "(no author)",
-                                maxLines: 1,
-                                style: theme.textTheme.labelLarge
-                                    ?.copyWith(color: lightTextColor),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ));
-                      }),
-                    ModGridHeader.version => _buildVersionCell(
-                        WispGrid.lightTextOpacity,
-                        mod,
-                        height,
-                        isGameRunning,
-                        bestVersion,
-                        state),
-                    ModGridHeader.vramImpact => buildVramCell(
-                        WispGrid.lightTextOpacity, mod, height, state),
-                    ModGridHeader.gameVersion => Builder(builder: (context) {
-                        final theme = Theme.of(context);
-
-                        return ContextMenuRegion(
-                            contextMenu: buildModContextMenu(mod, ref, context,
-                                showSwapToVersion: true),
-                            child: _RowItemContainer(
-                              height: height,
-                              width: state.width,
-                              child: Opacity(
-                                opacity: WispGrid.lightTextOpacity,
+                          child: Expanded(
+                            child: FavoriteButton(
+                              favoritesWidth: state.width,
+                              mod: mod,
+                              isRowHighlighted: isHovering,
+                            ),
+                          ),
+                        ),
+                      ModGridHeader.changeVariantButton =>
+                        Builder(builder: (context) {
+                          return ContextMenuRegion(
+                              contextMenu: buildModContextMenu(mod, ref, context,
+                                  showSwapToVersion: true),
+                              child: _RowItemContainer(
+                                height: height,
+                                width: state.width,
+                                child: Disable(
+                                  isEnabled: !isGameRunning,
+                                  child: ModVersionSelectionDropdown(
+                                    mod: mod,
+                                    width: WispGrid.versionSelectorWidth,
+                                    showTooltip: false,
+                                  ),
+                                ),
+                              ));
+                        }),
+                      ModGridHeader.modIcon => Builder(builder: (context) {
+                          String? iconPath = bestVersion.iconFilePath;
+                          return _RowItemContainer(
+                            height: height,
+                            width: state.width,
+                            child: iconPath != null
+                                ? Row(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: [
+                                      Image.file(
+                                        iconPath.toFile(),
+                                        width: 32,
+                                        height: 32,
+                                      ),
+                                    ],
+                                  )
+                                : const SizedBox(width: 32, height: 32),
+                          );
+                        }),
+                      ModGridHeader.icons => _RowItemContainer(
+                          height: height,
+                          width: state.width,
+                          child: ModTypeIcon(modVariant: bestVersion),
+                        ),
+                      ModGridHeader.name =>
+                        buildNameCell(mod, height, bestVersion, allMods, state),
+                      ModGridHeader.author => Builder(builder: (context) {
+                          final theme = Theme.of(context);
+                          final lightTextColor = theme.colorScheme.onSurface
+                              .withOpacity(WispGrid.lightTextOpacity);
+                          return ContextMenuRegion(
+                              contextMenu: buildModContextMenu(mod, ref, context,
+                                  showSwapToVersion: true),
+                              child: _RowItemContainer(
+                                height: height,
+                                width: state.width,
                                 child: Text(
-                                    bestVersion.modInfo.gameVersion ??
-                                        "(no game version)",
-                                    style: compareGameVersions(
-                                                bestVersion.modInfo.gameVersion,
-                                                ref
-                                                    .watch(appSettings)
-                                                    .lastStarsectorVersion) ==
-                                            GameCompatibility.perfectMatch
-                                        ? theme.textTheme.labelLarge
-                                        : theme.textTheme.labelLarge?.copyWith(
-                                            color: ThemeManager
-                                                .vanillaErrorColor)),
-                              ),
-                            ));
-                      }),
-                  };
-                });
-              }).toList()),
+                                  bestVersion.modInfo.author
+                                          ?.toString()
+                                          .replaceAll("\n", "   ") ??
+                                      "(no author)",
+                                  maxLines: 1,
+                                  style: theme.textTheme.labelLarge
+                                      ?.copyWith(color: lightTextColor),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ));
+                        }),
+                      ModGridHeader.version => _buildVersionCell(
+                          WispGrid.lightTextOpacity,
+                          mod,
+                          height,
+                          isGameRunning,
+                          bestVersion,
+                          state),
+                      ModGridHeader.vramImpact => buildVramCell(
+                          WispGrid.lightTextOpacity, mod, height, state),
+                      ModGridHeader.gameVersion => Builder(builder: (context) {
+                          final theme = Theme.of(context);
+
+                          return ContextMenuRegion(
+                              contextMenu: buildModContextMenu(mod, ref, context,
+                                  showSwapToVersion: true),
+                              child: _RowItemContainer(
+                                height: height,
+                                width: state.width,
+                                child: Opacity(
+                                  opacity: WispGrid.lightTextOpacity,
+                                  child: Text(
+                                      bestVersion.modInfo.gameVersion ??
+                                          "(no game version)",
+                                      style: compareGameVersions(
+                                                  bestVersion.modInfo.gameVersion,
+                                                  ref
+                                                      .watch(appSettings)
+                                                      .lastStarsectorVersion) ==
+                                              GameCompatibility.perfectMatch
+                                          ? theme.textTheme.labelLarge
+                                          : theme.textTheme.labelLarge?.copyWith(
+                                              color: ThemeManager
+                                                  .vanillaErrorColor)),
+                                ),
+                              ));
+                        }),
+                    };
+                  });
+                }).toList()),
+              ),
             ),
           ),
         ],
@@ -704,8 +708,8 @@ _buildModGridTooltip(
       modVariants.preferHighestVersionForGameVersion(gameVersion)!;
 
   return MovingTooltipWidget(
-    tooltipWidget: SizedBox(
-      width: 400,
+    tooltipWidget: ConstrainedBox(
+      constraints: const BoxConstraints(minWidth: 400, minHeight: 200),
       child: TooltipFrame(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

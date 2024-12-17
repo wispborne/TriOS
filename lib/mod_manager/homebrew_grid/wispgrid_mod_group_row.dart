@@ -12,6 +12,7 @@ import 'package:trios/widgets/tooltip_frame.dart';
 import '../../vram_estimator/graphics_lib_config_provider.dart';
 import '../../vram_estimator/models/graphics_lib_config.dart';
 import '../../vram_estimator/vram_checker_logic.dart';
+import 'wisp_grid_state.dart';
 
 class WispGridModGroupRowView extends ConsumerStatefulWidget {
   final String groupName;
@@ -61,6 +62,14 @@ class _WispGridModRowState extends ConsumerState<WispGridModGroupRowView> {
         ? VramChecker.VANILLA_GAME_VRAM_USAGE_IN_BYTES
         : null;
 
+    // Calculate the offset of the VRAM column
+    final gridState = ref.watch(modGridStateProvider);
+    final cellWidthBeforeVramColumn = gridState.columnSettings.entries
+        .sortedBy<num>((entry) => entry.value.position)
+        .takeWhile((element) => element.key != ModGridHeader.vramImpact)
+        .map((e) => e.value.width)
+        .sum;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Card(
@@ -74,8 +83,9 @@ class _WispGridModRowState extends ConsumerState<WispGridModGroupRowView> {
           borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
+            child: Stack(
+              alignment: Alignment.centerLeft,
+              // crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Row(
                   children: [
@@ -85,7 +95,7 @@ class _WispGridModRowState extends ConsumerState<WispGridModGroupRowView> {
                       child: Icon(
                         widget.isCollapsed
                             ? Icons.keyboard_arrow_right
-                            : Icons.keyboard_arrow_up,
+                            : Icons.keyboard_arrow_down,
                         size: 16,
                       ),
                     ),
@@ -97,59 +107,64 @@ class _WispGridModRowState extends ConsumerState<WispGridModGroupRowView> {
                             )),
                   ],
                 ),
-                Spacer(),
-                Padding(
-                    padding: EdgeInsets.only(right: 8),
-                    child: MovingTooltipWidget(
-                      tooltipWidget: TooltipFrame(
-                          child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // bold
-                          Text("Estimated VRAM use by ${groupName} mods\n",
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .labelLarge
-                                  ?.copyWith(fontWeight: FontWeight.bold)),
-                          if (graphicsLibConfig != null)
-                            Text("GraphicsLib settings",
+                Positioned(
+                  // Subtract padding added to group that isn't present on the mod row
+                  left: cellWidthBeforeVramColumn - 20,
+                  child: Padding(
+                      padding: EdgeInsets.only(right: 8, left: 0),
+                      child: MovingTooltipWidget(
+                        tooltipWidget: TooltipFrame(
+                            child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // bold
+                            Text("Estimated VRAM use by ${groupName} mods\n",
                                 style: Theme.of(context)
                                     .textTheme
                                     .labelLarge
                                     ?.copyWith(fontWeight: FontWeight.bold)),
-                          if (graphicsLibConfig != null)
+                            if (graphicsLibConfig != null)
+                              Text("GraphicsLib settings",
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .labelLarge
+                                      ?.copyWith(fontWeight: FontWeight.bold)),
+                            if (graphicsLibConfig != null)
+                              Text(
+                                  "Enabled: ${graphicsLibConfig.areAnyEffectsEnabled ? "yes" : "no"}",
+                                  style:
+                                      Theme.of(context).textTheme.labelLarge),
+                            if (graphicsLibConfig != null &&
+                                graphicsLibConfig.areAnyEffectsEnabled)
+                              Text(
+                                  "Normal maps: ${graphicsLibConfig.areGfxLibNormalMapsEnabled ? "on" : "off"}"
+                                  "\nMaterial maps: ${graphicsLibConfig.areGfxLibMaterialMapsEnabled ? "on" : "off"}"
+                                  "\nSurface maps: ${graphicsLibConfig.areGfxLibSurfaceMapsEnabled ? "on" : "off"}",
+                                  style:
+                                      Theme.of(context).textTheme.labelLarge),
                             Text(
-                                "Enabled: ${graphicsLibConfig.areAnyEffectsEnabled ? "yes" : "no"}",
-                                style: Theme.of(context).textTheme.labelLarge),
-                          if (graphicsLibConfig != null &&
-                              graphicsLibConfig.areAnyEffectsEnabled)
-                            Text(
-                                "Normal maps: ${graphicsLibConfig.areGfxLibNormalMapsEnabled ? "on" : "off"}"
-                                "\nMaterial maps: ${graphicsLibConfig.areGfxLibMaterialMapsEnabled ? "on" : "off"}"
-                                "\nSurface maps: ${graphicsLibConfig.areGfxLibSurfaceMapsEnabled ? "on" : "off"}",
-                                style: Theme.of(context).textTheme.labelLarge),
-                          Text(
-                              "\n${vramModsNoGraphicsLib.bytesAsReadableMB()} added by mods (${allEstimates.map((e) => e.images.length).sum} images)"
-                              "${vramFromGraphicsLib.sum() > 0 ? "\n${vramFromGraphicsLib.sum().bytesAsReadableMB()} added by your GraphicsLib settings (${vramFromGraphicsLib.length} images)" : ""}"
-                              "${vramFromVanilla != null ? "\n${vramFromVanilla.bytesAsReadableMB()} added by vanilla" : ""}"
-                              "\n---"
-                              "\n${(vramModsNoGraphicsLib + vramFromGraphicsLib.sum() + (vramFromVanilla ?? 0.0)).bytesAsReadableMB()} total",
-                              style: Theme.of(context).textTheme.labelLarge)
-                        ],
-                      )),
-                      child: Center(
-                        child: Opacity(
-                          opacity: WispGrid.lightTextOpacity,
-                          child: Text(
-                            "∑ ${(vramModsNoGraphicsLib + vramFromGraphicsLib.sum() + (vramFromVanilla ?? 0.0)).bytesAsReadableMB()}",
-                            style: Theme.of(context)
-                                .textTheme
-                                .labelMedium
-                                ?.copyWith(),
+                                "\n${vramModsNoGraphicsLib.bytesAsReadableMB()} added by mods (${allEstimates.map((e) => e.images.length).sum} images)"
+                                "${vramFromGraphicsLib.sum() > 0 ? "\n${vramFromGraphicsLib.sum().bytesAsReadableMB()} added by your GraphicsLib settings (${vramFromGraphicsLib.length} images)" : ""}"
+                                "${vramFromVanilla != null ? "\n${vramFromVanilla.bytesAsReadableMB()} added by vanilla" : ""}"
+                                "\n---"
+                                "\n${(vramModsNoGraphicsLib + vramFromGraphicsLib.sum() + (vramFromVanilla ?? 0.0)).bytesAsReadableMB()} total",
+                                style: Theme.of(context).textTheme.labelLarge)
+                          ],
+                        )),
+                        child: Center(
+                          child: Opacity(
+                            opacity: WispGrid.lightTextOpacity,
+                            child: Text(
+                              "∑ ${(vramModsNoGraphicsLib + vramFromGraphicsLib.sum() + (vramFromVanilla ?? 0.0)).bytesAsReadableMB()}",
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelMedium
+                                  ?.copyWith(),
+                            ),
                           ),
                         ),
-                      ),
-                    ))
+                      )),
+                )
               ],
             ),
           ),

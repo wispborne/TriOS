@@ -93,7 +93,7 @@ void main() async {
     if (settings != null && settings.userId.isNullOrEmpty()) {
       final userId = const Uuid().v8();
       settingsManager
-          .writeSettingsToDiskSync(settings.copyWith(userId: userId));
+          .writeSettingsToDisk(settings.copyWith(userId: userId));
     }
     allowCrashReporting = settings?.allowCrashReporting ?? false;
     configureLogging(allowSentryReporting: allowCrashReporting);

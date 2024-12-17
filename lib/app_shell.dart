@@ -166,16 +166,22 @@ class _AppShellState extends ConsumerState<AppShell>
         child: Dashboard(),
       ),
       Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: ElevatedButton(
+            padding: const EdgeInsets.only(top: 8, right: 8),
+            child: OutlinedButton.icon(
+              iconAlignment: IconAlignment.end,
               onPressed: () {
                 setState(() {
                   isNewGrid = !isNewGrid;
                 });
               },
-              child: Text(!isNewGrid ? 'Old Grid' : 'New Grid'),
+              icon: SvgImageIcon(
+                "assets/images/icon-traffic-cone.svg",
+                height: 20,
+              ),
+              label: Text(isNewGrid ? 'Back to old grid' : 'Go to new grid'),
             ),
           ),
           Expanded(child: isNewGrid ? Smol4() : Smol3()),

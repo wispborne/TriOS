@@ -28,7 +28,7 @@ ContextMenu buildModContextMenu(Mod mod, WidgetRef ref, BuildContext context,
 
   return ContextMenu(
     entries: <ContextMenuEntry>[
-      if (!isGameRunning && showSwapToVersion && mod.modVariants.length > 1)
+      if (!isGameRunning && showSwapToVersion)
         menuItemChangeVersion(mod, ref),
       menuItemOpenFolder(mod),
       menuItemOpenModInfoFile(mod),
@@ -103,7 +103,7 @@ MenuItem menuItemChangeVersion(Mod mod, WidgetRef ref) {
   final enabledSmolId = mod.findFirstEnabled?.smolId;
 
   return MenuItem.submenu(
-      label: "Enable Mod...",
+      label: "Change to...",
       icon: Icons.toggle_on,
       onSelected: () {
         ref

@@ -10,7 +10,6 @@ import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/thirdparty/dartx/comparable.dart';
 import 'package:trios/trios/app_state.dart';
-import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/generic_settings_manager.dart';
@@ -30,13 +29,14 @@ final modProfilesProvider =
 bool isChangingModProfileProvider = false;
 
 /// Stores [ModProfile]s, provides methods to manage them, observable state.
-class ModProfilesSettingsManager extends GenericAsyncSettingsManager<ModProfiles> {
+class ModProfilesSettingsManager
+    extends GenericAsyncSettingsManager<ModProfiles> {
   @override
   ModProfiles Function() get createDefaultState =>
       () => const ModProfiles(modProfiles: []);
 
   @override
-  String get fileName => "trios_mod_profiles.json";
+  String get fileName => "trios_mod_profiles-v2.json";
 
   @override
   ModProfiles Function(Map<String, dynamic> map) get fromMap =>
@@ -50,8 +50,9 @@ class ModProfilesSettingsManager extends GenericAsyncSettingsManager<ModProfiles
   FileFormat get fileFormat => FileFormat.json;
 }
 
-class ModProfileManagerNotifier extends GenericSettingsAsyncNotifier<ModProfiles> {
-  bool pauseAutomaticProfileUpdates = false;
+class ModProfileManagerNotifier
+    extends GenericSettingsAsyncNotifier<ModProfiles> {
+  bool _pauseAutomaticProfileUpdates = false;
 
   @override
   Future<ModProfiles> build() async {
@@ -60,9 +61,21 @@ class ModProfileManagerNotifier extends GenericSettingsAsyncNotifier<ModProfiles
     final settingsFile = settingsManager.settingsFile;
 
     // Look for pre-1.0 double/triple encoded json files and migrate them to proper json
-    final existingJsonFile = settingsFile.parent
-        .resolve("${settingsFile.nameWithoutExtension}.json")
-        .toFile();
+    initialState = await migrateFromV1(settingsFile, initialState);
+
+    // Set up the listener to watch enabled mod variants
+    ref.listen<List<ModVariant>>(AppState.enabledModVariants, (previous, next) {
+      updateFromModList();
+    });
+
+    return initialState;
+  }
+
+  Future<ModProfiles> migrateFromV1(
+      File settingsFile, ModProfiles initialState) async {
+    // Look for pre-1.0 double/triple encoded json files and migrate them to proper json
+    final existingJsonFile =
+        settingsFile.parent.resolve("trios_mod_profiles.json").toFile();
     if (initialState.modProfiles.isEmpty && existingJsonFile.existsSync()) {
       try {
         Fimber.i("Migrating mod profiles to proper json.");
@@ -74,19 +87,13 @@ class ModProfileManagerNotifier extends GenericSettingsAsyncNotifier<ModProfiles
           await existingJsonFile.rename("${existingJsonFile.path}.bak");
           initialState = modProfiles;
           state = AsyncData(initialState);
-          settingsManager.scheduleWriteSettingsToDisk();
+          await settingsManager.writeSettingsToDisk(initialState);
         }
       } catch (e, stack) {
         Fimber.e("Failed to migrate mod profiles to proper json.",
             ex: e, stacktrace: stack);
       }
     }
-
-    // Set up the listener to watch enabled mod variants
-    ref.listen<List<ModVariant>>(AppState.enabledModVariants, (previous, next) {
-      updateFromModList();
-    });
-
     return initialState;
   }
 
@@ -103,7 +110,7 @@ class ModProfileManagerNotifier extends GenericSettingsAsyncNotifier<ModProfiles
   }
 
   void updateFromModList() {
-    if (pauseAutomaticProfileUpdates) return;
+    if (_pauseAutomaticProfileUpdates) return;
 
     final mods = ref.read(AppState.enabledModVariants);
     final enabledModVariants = mods.sortedByName
@@ -337,7 +344,7 @@ class ModProfileManagerNotifier extends GenericSettingsAsyncNotifier<ModProfiles
 
       // Pause automatic profile updates while swapping
       Fimber.i("Pausing profile updates while swapping.");
-      pauseAutomaticProfileUpdates = true;
+      _pauseAutomaticProfileUpdates = true;
       modVariantsNotifier.shouldAutomaticallyReloadOnFilesChanged = false;
       isChangingModProfileProvider = true;
 
@@ -377,7 +384,7 @@ class ModProfileManagerNotifier extends GenericSettingsAsyncNotifier<ModProfiles
           ex: e, stacktrace: stack);
     } finally {
       Fimber.i("here4.");
-      pauseAutomaticProfileUpdates = false;
+      _pauseAutomaticProfileUpdates = false;
       modVariantsNotifier.shouldAutomaticallyReloadOnFilesChanged = true;
       isChangingModProfileProvider = false;
       // Reload all just in case.

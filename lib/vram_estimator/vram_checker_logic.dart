@@ -4,12 +4,11 @@ import 'dart:io';
 import 'package:collection/collection.dart';
 import 'package:csv/csv.dart';
 import 'package:path/path.dart' as p;
-import 'package:rxdart/rxdart.dart';
 import 'package:squadron/squadron.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/extensions.dart';
 
-import '../../models/mod_info_json.dart';
+import '../models/mod_variant.dart';
 import '../utils/util.dart';
 import 'image_reader/image_reader_async.dart';
 import 'image_reader/png_chatgpt.dart';
@@ -17,7 +16,6 @@ import 'models/gpu_info.dart';
 import 'models/graphics_lib_config.dart';
 import 'models/graphics_lib_info.dart';
 import 'models/vram_checker_models.dart';
-import '../models/mod_variant.dart';
 
 class VramChecker {
   List<String>? enabledModIds;
@@ -103,12 +101,6 @@ class VramChecker {
 //     .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
 //     .build()
 
-    var foldersToCheck = variantsToCheck.map((it) => it.modFolder).toList();
-    if (foldersToCheck.none((it) => it.existsSync())) {
-      throw Exception(
-          "This doesn't exist! ${foldersToCheck.joinToString(transform: (it) => it.absolute.toString())}");
-    }
-
     progressText.appendAndPrint(
         "GraphicsLib Config: $graphicsLibConfig", debugOut);
 
@@ -116,10 +108,6 @@ class VramChecker {
       progressText.appendAndPrint(
           "\nEnabled Mods:\n${enabledModIds?.join("\n")}", verboseOut);
     }
-
-    progressText.appendAndPrint(
-        "Mods folders: ${foldersToCheck.joinToString(transform: (it) => it.absolute.toString())}",
-        verboseOut);
 
     // Squadron.setId('VRAM_CHECKER');
     // Squadron.logLevel = SquadronLogLevel.config;
@@ -129,12 +117,8 @@ class VramChecker {
     final imageHeaderReaderPool =
         ReadImageHeadersWorkerPool(concurrencySettings: settings);
 
-    final mods = (await Stream.fromIterable(foldersToCheck)
-            .where((it) => it.existsSync())
-            .expand((it) => it.listSync())
-            .where((it) => FileSystemEntity.isDirectorySync(it.path))
-            .asyncMap((it) => getModInfo(Directory(it.path), progressText))
-            .whereNotNull()
+    final mods = (await Stream.fromIterable(variantsToCheck
+                .map((it) => VramCheckerMod(it.modInfo, it.modFolder.path)))
             .asyncMap((modInfo) async {
       progressText.appendAndPrint("\nFolder: ${modInfo.name}", verboseOut);
       if (isCancelled()) {
@@ -482,41 +466,6 @@ class VramChecker {
       imageType,
       graphicsLibType,
     );
-  }
-
-  // Future<ModInfo?> loadModInfo(File file) async {
-  Future<VramCheckerMod?> getModInfo(
-      Directory modFolder, StringBuffer progressText) async {
-    try {
-      return modFolder
-          .listSync()
-          .whereType<File>()
-          .firstWhereOrNull((file) => file.nameWithExtension == "mod_info.json")
-          ?.let((modInfoFile) async {
-        final rawString =
-            await withFileHandleLimit(() => modInfoFile.readAsString());
-        final jsonEncodedYaml = (rawString).replaceAll("\t", "  ").fixJson();
-
-        // try {
-        final model = ModInfoJsonMapper.fromJson(jsonEncodedYaml);
-
-        // progressText.appendAndPrint("Using 0.9.5a mod_info.json format for ${modInfoFile.absolute}", verboseOut);
-
-        return VramCheckerMod(model, modFolder.path);
-        // } catch (e) {
-        //   final model = ModInfoJsonModel_091a.fromJson(jsonEncodedYaml);
-        //
-        //   progressText.appendAndPrint("Using 0.9.1a mod_info.json format for ${modInfoFile.absolute}", verboseOut);
-        //
-        //   return ModInfo(model.id, modFolder, model.name, model.version.toString(), model.gameVersion);
-        // }
-      });
-    } catch (e, st) {
-      progressText.appendAndPrint(
-          "Unable to find or read 'mod_info.json' in ${modFolder.absolute}. ($e)\n$st",
-          verboseOut);
-      return null;
-    }
   }
 
   List<GraphicsLibInfo>? getGraphicsLibSettingsForMod(

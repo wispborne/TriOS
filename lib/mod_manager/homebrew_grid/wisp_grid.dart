@@ -8,6 +8,7 @@ import 'package:trios/mod_manager/homebrew_grid/wispgrid_mod_group_row.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_mod_header_row_view.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_mod_row_view.dart';
 import 'package:trios/models/mod.dart';
+import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
@@ -36,6 +37,7 @@ class WispGrid extends ConsumerStatefulWidget {
 
 class _WispGridState extends ConsumerState<WispGrid> {
   Map<Object?, bool> collapseStates = {};
+  ScrollController _gridScrollController = ScrollController();
 
   @override
   Widget build(BuildContext context) {
@@ -121,27 +123,32 @@ class _WispGridState extends ConsumerState<WispGrid> {
 
     // TODO smooth scrolling: https://github.com/dridino/smooth_list_view/blob/main/lib/smooth_list_view.dart
     return StickyHeader(
-      child: ListView.builder(
-          itemCount: displayedMods.length,
-          itemBuilder: (context, index) {
-            final item = displayedMods[index];
+      child: Scrollbar(
+        controller: _gridScrollController,
+        thumbVisibility: true,
+        child: ListView.builder(
+            itemCount: displayedMods.length,
+            controller: _gridScrollController,
+            itemBuilder: (context, index) {
+              final item = displayedMods[index];
 
-            if (item is WispGridModGroupRowView) {
-              return StickyContainerWidget(
-                index: index,
-                child: item,
-              );
-              // return WispGridModHeaderRowView();
-            }
+              if (item is WispGridModGroupRowView) {
+                return StickyContainerWidget(
+                  index: index,
+                  child: item,
+                );
+                // return WispGridModHeaderRowView();
+              }
 
-            try {
-              // final mod = displayedMods[index - 1]; // -1 for header
-              return item; //WispGridModRowView(mod: mod);
-            } catch (e) {
-              Fimber.v(() => 'Error in WispGrid: $e');
-              return Text("Incoherent screaming");
-            }
-          }),
+              try {
+                // final mod = displayedMods[index - 1]; // -1 for header
+                return item; //WispGridModRowView(mod: mod);
+              } catch (e) {
+                Fimber.v(() => 'Error in WispGrid: $e');
+                return Text("Incoherent screaming");
+              }
+            }),
+      ),
     );
   }
 }

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:dart_mappable/dart_mappable.dart';
+import 'package:trios/models/mod_info.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/vram_estimator/models/graphics_lib_config.dart';
 import 'package:trios/vram_estimator/models/graphics_lib_info.dart';
@@ -33,7 +34,7 @@ class VramMod with VramModMappable {
 
 @MappableClass()
 class VramCheckerMod with VramCheckerModMappable {
-  final ModInfoJson modInfo;
+  final ModInfo modInfo;
   final String modFolder;
 
   VramCheckerMod(this.modInfo, this.modFolder);

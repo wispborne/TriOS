@@ -13,6 +13,7 @@ import '../mod_profiles/mod_profiles_manager.dart';
 import '../mod_profiles/models/mod_profile.dart';
 import '../models/mod.dart';
 import '../trios/settings/settings.dart';
+import '../utils/search.dart';
 import '../widgets/disable.dart';
 
 class Smol4 extends ConsumerStatefulWidget {
@@ -29,6 +30,7 @@ class _Smol4State extends ConsumerState<Smol4>
   Mod? selectedMod;
   final _searchController = SearchController();
   AnimationController? animationController;
+  List<Mod> filteredMods = [];
 
   @override
   void initState() {
@@ -43,6 +45,10 @@ class _Smol4State extends ConsumerState<Smol4>
     final allMods = ref.watch(AppState.mods);
     final isGameRunning = ref.watch(AppState.isGameRunning).value == true;
     final theme = Theme.of(context);
+
+    // _searchController.value = TextEditingValue(text: ref.watch(searchQuery));
+    final query = _searchController.value.text;
+    final modsMatchingSearch = searchMods(allMods, query) ?? [];
 
     return Stack(
       children: [
@@ -247,7 +253,7 @@ class _Smol4State extends ConsumerState<Smol4>
             ),
             Expanded(
               child: WispGrid(
-                  mods: allMods,
+                  mods: modsMatchingSearch,
                   onModRowSelected: (mod) {
                     setState(() {
                       if (selectedMod == mod) {

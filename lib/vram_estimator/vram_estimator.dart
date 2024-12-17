@@ -121,7 +121,6 @@ class VramEstimatorNotifier
                 .map((mod) => mod.findFirstEnabledOrHighestVersion)
                 .nonNulls
                 .toList(),
-        // TODO get graphicslib settings!
         graphicsLibConfig:
             ref.read(graphicsLibConfigProvider) ?? GraphicsLibConfig.disabled,
         showCountedFiles: true,

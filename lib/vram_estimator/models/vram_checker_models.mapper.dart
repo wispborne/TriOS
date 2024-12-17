@@ -194,7 +194,7 @@ class VramCheckerModMapper extends ClassMapperBase<VramCheckerMod> {
   static VramCheckerModMapper ensureInitialized() {
     if (_instance == null) {
       MapperContainer.globals.use(_instance = VramCheckerModMapper._());
-      ModInfoJsonMapper.ensureInitialized();
+      ModInfoMapper.ensureInitialized();
     }
     return _instance!;
   }
@@ -202,8 +202,8 @@ class VramCheckerModMapper extends ClassMapperBase<VramCheckerMod> {
   @override
   final String id = 'VramCheckerMod';
 
-  static ModInfoJson _$modInfo(VramCheckerMod v) => v.modInfo;
-  static const Field<VramCheckerMod, ModInfoJson> _f$modInfo =
+  static ModInfo _$modInfo(VramCheckerMod v) => v.modInfo;
+  static const Field<VramCheckerMod, ModInfo> _f$modInfo =
       Field('modInfo', _$modInfo);
   static String _$modFolder(VramCheckerMod v) => v.modFolder;
   static const Field<VramCheckerMod, String> _f$modFolder =
@@ -272,8 +272,8 @@ extension VramCheckerModValueCopy<$R, $Out>
 
 abstract class VramCheckerModCopyWith<$R, $In extends VramCheckerMod, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
-  ModInfoJsonCopyWith<$R, ModInfoJson, ModInfoJson> get modInfo;
-  $R call({ModInfoJson? modInfo, String? modFolder});
+  ModInfoCopyWith<$R, ModInfo, ModInfo> get modInfo;
+  $R call({ModInfo? modInfo, String? modFolder});
   VramCheckerModCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
       Then<$Out2, $R2> t);
 }
@@ -287,11 +287,10 @@ class _VramCheckerModCopyWithImpl<$R, $Out>
   late final ClassMapperBase<VramCheckerMod> $mapper =
       VramCheckerModMapper.ensureInitialized();
   @override
-  ModInfoJsonCopyWith<$R, ModInfoJson, ModInfoJson> get modInfo =>
+  ModInfoCopyWith<$R, ModInfo, ModInfo> get modInfo =>
       $value.modInfo.copyWith.$chain((v) => call(modInfo: v));
   @override
-  $R call({ModInfoJson? modInfo, String? modFolder}) =>
-      $apply(FieldCopyWithData({
+  $R call({ModInfo? modInfo, String? modFolder}) => $apply(FieldCopyWithData({
         if (modInfo != null) #modInfo: modInfo,
         if (modFolder != null) #modFolder: modFolder
       }));

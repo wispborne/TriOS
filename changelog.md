@@ -21,7 +21,7 @@
     - e.g. sorting now works.
   - Mod download notification url can't show more than 3 lines anymore.
   - Creating a new mod profile now uses your current mods.
-  - TriOS update notification shows download size before downloading.
+  - TriOS update notification shows download size before downloading and doesn't endlessly animate.
   - Delete Mods not working.
   - Logfile not properly rolling over at 25MB until app restart.
   - Mods folder path used `/` instead of `\`.
@@ -32,6 +32,8 @@
   - Mod Audit Log on Profiles page is now persisted across restarts.
   - Starsector log shown on the Dashboard now automatically refreshes when the game closes.
     - And shows when it was last refreshed.
+  - Slightly faster + more reliable VRAM checker thanks to @deliagwath.
+    - No longer re-parsing `mod_info.json` files every time.
 
 # 0.3.4
 - Added

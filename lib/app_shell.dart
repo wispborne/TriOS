@@ -383,7 +383,8 @@ class _AppShellState extends ConsumerState<AppShell>
                     color: Theme.of(context).iconTheme.color,
                     onPressed: () {
                       try {
-                        launchUrlString(logFilePath!.toFile().normalize.path);
+                        launchUrlString(
+                            logFilePath!.toFile().normalize.parent.path);
                       } catch (e, st) {
                         Fimber.e("Error opening log file: $e",
                             ex: e, stacktrace: st);
@@ -554,21 +555,30 @@ class FilePermissionShield extends StatelessWidget {
     ];
 
     // Check if any paths are non-writable
-    final hasNonWritablePaths = paths.any((path) => path.isWritable == false);
+    final nonWritablePaths = paths.where((path) => path.isWritable == false);
 
     // If all paths are writable, return an empty widget
-    if (!hasNonWritablePaths) {
+    if (nonWritablePaths.isEmpty) {
       return const SizedBox();
     }
 
     return Tooltip(
-      message: "Admin permissions needed for some files."
-          "\n${paths.joinToString(
-        separator: "\n",
-        transform: (path) =>
-            "${path.isWritable ? "✅" : "❌"} ${path.description} is ${path.isWritable ? 'writable' : 'not writable'}."
-            "\n    (${path.path ?? 'unknown path'}).",
-      )}",
+      richMessage: TextSpan(
+        children: [
+          TextSpan(
+            text: "Right-click TriOS.exe and select 'Run as Administrator'.",
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          TextSpan(
+              text: "\n\nIt may not be able to modify game files, otherwise."),
+          TextSpan(
+              text: "\n${nonWritablePaths.joinToString(
+            separator: "\n",
+            transform: (path) => "❌ Unable to edit ${path.description}."
+                "\n    (${path.path ?? 'unknown path'}).",
+          )}")
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -577,7 +587,7 @@ class FilePermissionShield extends StatelessWidget {
             color: ThemeManager.vanillaWarningColor,
           ),
           Text(
-            "Check Permissions",
+            "Must Run as Admin",
             style: TextStyle(
               color: ThemeManager.vanillaWarningColor,
               fontSize: 12,
@@ -605,7 +615,7 @@ class AdminPermissionShield extends StatelessWidget {
 
     return Tooltip(
       message:
-          "Running as Administrator.\nDrag'n'drop will not work due to Windows limitations.",
+          "Running as Administrator.\nDrag'n'drop will not work due to Windows security limits.",
       child: SvgImageIcon(
         "assets/images/icon-admin-shield-half.svg",
         color: Theme.of(context).iconTheme.color,

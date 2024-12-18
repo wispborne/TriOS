@@ -365,20 +365,24 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
               final isLast = _currentPage == totalPages - 1;
               return SizedBox(
                 height: 8 * 5,
-                child: ElevatedButton.icon(
-                  icon: Icon(isLast ? Icons.check : Icons.arrow_forward),
-                  iconAlignment: IconAlignment.end,
-                  onPressed: () {
-                    if (!isLast) {
-                      _pageController.nextPage(
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeInOut,
-                      );
-                    } else {
-                      _saveSettings(context);
-                    }
-                  },
-                  label: Text(isLast ? "Finish" : "Next"),
+                child: Disable(
+                  isEnabled: gameDirPath != null &&
+                      validateGameFolderPath(gameDirPath!),
+                  child: ElevatedButton.icon(
+                    icon: Icon(isLast ? Icons.check : Icons.arrow_forward),
+                    iconAlignment: IconAlignment.end,
+                    onPressed: () {
+                      if (!isLast) {
+                        _pageController.nextPage(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                        );
+                      } else {
+                        _saveSettings(context);
+                      }
+                    },
+                    label: Text(isLast ? "Finish" : "Next"),
+                  ),
                 ),
               );
             }),

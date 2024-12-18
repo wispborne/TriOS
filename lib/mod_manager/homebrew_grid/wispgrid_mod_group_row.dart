@@ -67,7 +67,7 @@ class _WispGridModRowState extends ConsumerState<WispGridModGroupRowView> {
     final cellWidthBeforeVramColumn = gridState.columnSettings.entries
         .sortedBy<num>((entry) => entry.value.position)
         .takeWhile((element) => element.key != ModGridHeader.vramImpact)
-        .map((e) => e.value.width)
+        .map((e) => e.value.width + WispGrid.gridRowSpacing)
         .sum;
 
     return Padding(

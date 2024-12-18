@@ -34,6 +34,7 @@
     - And shows when it was last refreshed.
   - Slightly faster + more reliable VRAM checker thanks to @deliagwath.
     - No longer re-parsing `mod_info.json` files every time.
+  - TriOS log button now opens folder instead of file.
 
 # 0.3.4
 - Added

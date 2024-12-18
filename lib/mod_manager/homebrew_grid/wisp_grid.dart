@@ -8,7 +8,6 @@ import 'package:trios/mod_manager/homebrew_grid/wispgrid_mod_group_row.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_mod_header_row_view.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_mod_row_view.dart';
 import 'package:trios/models/mod.dart';
-import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
@@ -22,6 +21,7 @@ final modGridStateProvider = StateProvider<WispGridState>((ref) {
 });
 
 class WispGrid extends ConsumerStatefulWidget {
+  static const gridRowSpacing = 10.0;
   final List<Mod?> mods;
   final Function(dynamic mod) onModRowSelected;
 
@@ -37,7 +37,7 @@ class WispGrid extends ConsumerStatefulWidget {
 
 class _WispGridState extends ConsumerState<WispGrid> {
   Map<Object?, bool> collapseStates = {};
-  ScrollController _gridScrollController = ScrollController();
+  final ScrollController _gridScrollController = ScrollController();
 
   @override
   Widget build(BuildContext context) {
@@ -72,52 +72,53 @@ class _WispGridState extends ConsumerState<WispGrid> {
 
     bool isFirstGroup = true; // dumb but works
 
-    final displayedMods = [WispGridModHeaderRowView() as Widget] +
-        mods
-            .flatMap((entry) {
-              final groupSortValue = entry.key;
-              final modsInGroup = entry.value;
-              final isCollapsed = collapseStates[groupSortValue] == true;
-              final groupName =
-                  modsInGroup.firstOrNull?.let(grouping.getGroupName) ?? "";
+    final displayedMods =
+        [SizedBox(height: 30, child: WispGridModHeaderRowView()) as Widget] +
+            mods
+                .flatMap((entry) {
+                  final groupSortValue = entry.key;
+                  final modsInGroup = entry.value;
+                  final isCollapsed = collapseStates[groupSortValue] == true;
+                  final groupName =
+                      modsInGroup.firstOrNull?.let(grouping.getGroupName) ?? "";
 
-              final header = WispGridModGroupRowView(
-                groupName: groupName,
-                modsInGroup: modsInGroup,
-                isCollapsed: isCollapsed,
-                setCollapsed: (isCollapsed) {
-                  setState(() {
-                    collapseStates[groupSortValue] = isCollapsed;
-                  });
-                },
-                isFirstGroupShown: isFirstGroup,
-              );
-              isFirstGroup = false;
-              final items = isCollapsed
-                  ? []
-                  : modsInGroup
-                      .map((mod) => WispGridModRowView(
-                            mod: mod,
-                            onModRowSelected: widget.onModRowSelected,
-                          ))
-                      .toList();
+                  final header = WispGridModGroupRowView(
+                    groupName: groupName,
+                    modsInGroup: modsInGroup,
+                    isCollapsed: isCollapsed,
+                    setCollapsed: (isCollapsed) {
+                      setState(() {
+                        collapseStates[groupSortValue] = isCollapsed;
+                      });
+                    },
+                    isFirstGroupShown: isFirstGroup,
+                  );
+                  isFirstGroup = false;
+                  final items = isCollapsed
+                      ? []
+                      : modsInGroup
+                          .map((mod) => WispGridModRowView(
+                                mod: mod,
+                                onModRowSelected: widget.onModRowSelected,
+                              ))
+                          .toList();
 
-              return <Widget>[header, ...items];
-              // sticky header logic here in SMOL, needs to be added somehow
-              // stickyHeader {
-              //     ModGridSectionHeader(
-              //         contentPadding = contentPadding,
-              //         isCollapsed = isCollapsed,
-              //         setCollapsed = { collapseStates[modState] = it },
-              //         groupName = groupName,
-              //         modsInGroup = modsInGroup,
-              //         vramPosition = vramPosition
-              //     )
-              // }
-              // return isCollapsed ? null : modsInGroup;
-            })
-            .nonNulls
-            .toList();
+                  return <Widget>[header, ...items];
+                  // sticky header logic here in SMOL, needs to be added somehow
+                  // stickyHeader {
+                  //     ModGridSectionHeader(
+                  //         contentPadding = contentPadding,
+                  //         isCollapsed = isCollapsed,
+                  //         setCollapsed = { collapseStates[modState] = it },
+                  //         groupName = groupName,
+                  //         modsInGroup = modsInGroup,
+                  //         vramPosition = vramPosition
+                  //     )
+                  // }
+                  // return isCollapsed ? null : modsInGroup;
+                })
+                .nonNulls
+                .toList();
 
     // final flattenedList = displayedMods.expand((element) => element).toList();
 

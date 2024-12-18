@@ -45,8 +45,8 @@ class WispGridModRowView extends ConsumerStatefulWidget {
 }
 
 class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
-  static const _standardRowHeight = 40.0;
   static const _dependencyAddedRowHeight = 0.0;
+  static const _standardRowHeight = 40.0;
 
   @override
   Widget build(BuildContext context) {
@@ -83,11 +83,14 @@ class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
                 onTap: () => {
                   widget.onModRowSelected(mod),
                 },
-                children: (gridState.columnSettings.entries.map((columnSetting) {
+                spacing: WispGrid.gridRowSpacing,
+                children:
+                    (gridState.columnSettings.entries.map((columnSetting) {
                   return Builder(builder: (context) {
                     final header = columnSetting.key;
                     final state = columnSetting.value;
-                    final isHovering = HoverData.of(context)?.isHovering ?? false;
+                    final isHovering =
+                        HoverData.of(context)?.isHovering ?? false;
 
                     return switch (header) {
                       ModGridHeader.favorites => _RowItemContainer(
@@ -104,7 +107,8 @@ class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
                       ModGridHeader.changeVariantButton =>
                         Builder(builder: (context) {
                           return ContextMenuRegion(
-                              contextMenu: buildModContextMenu(mod, ref, context,
+                              contextMenu: buildModContextMenu(
+                                  mod, ref, context,
                                   showSwapToVersion: true),
                               child: _RowItemContainer(
                                 height: height,
@@ -150,7 +154,8 @@ class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
                           final lightTextColor = theme.colorScheme.onSurface
                               .withOpacity(WispGrid.lightTextOpacity);
                           return ContextMenuRegion(
-                              contextMenu: buildModContextMenu(mod, ref, context,
+                              contextMenu: buildModContextMenu(
+                                  mod, ref, context,
                                   showSwapToVersion: true),
                               child: _RowItemContainer(
                                 height: height,
@@ -180,7 +185,8 @@ class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
                           final theme = Theme.of(context);
 
                           return ContextMenuRegion(
-                              contextMenu: buildModContextMenu(mod, ref, context,
+                              contextMenu: buildModContextMenu(
+                                  mod, ref, context,
                                   showSwapToVersion: true),
                               child: _RowItemContainer(
                                 height: height,
@@ -191,15 +197,17 @@ class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
                                       bestVersion.modInfo.gameVersion ??
                                           "(no game version)",
                                       style: compareGameVersions(
-                                                  bestVersion.modInfo.gameVersion,
+                                                  bestVersion
+                                                      .modInfo.gameVersion,
                                                   ref
                                                       .watch(appSettings)
                                                       .lastStarsectorVersion) ==
                                               GameCompatibility.perfectMatch
                                           ? theme.textTheme.labelLarge
-                                          : theme.textTheme.labelLarge?.copyWith(
-                                              color: ThemeManager
-                                                  .vanillaErrorColor)),
+                                          : theme.textTheme.labelLarge
+                                              ?.copyWith(
+                                                  color: ThemeManager
+                                                      .vanillaErrorColor)),
                                 ),
                               ));
                         }),
@@ -664,10 +672,7 @@ class _RowItemContainer extends StatelessWidget {
   final double width;
 
   const _RowItemContainer(
-      {super.key,
-      required this.child,
-      required this.height,
-      required this.width});
+      {required this.child, required this.height, required this.width});
 
   @override
   Widget build(BuildContext context) {
@@ -677,15 +682,12 @@ class _RowItemContainer extends StatelessWidget {
         SizedBox(
           height: height,
           width: width,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                child,
-              ],
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              child,
+            ],
           ),
         ),
       ],

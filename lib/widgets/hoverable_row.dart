@@ -10,6 +10,7 @@ class HoverableRow extends StatefulWidget {
   final CrossAxisAlignment? crossAxisAlignment;
   final TextDirection? textDirection;
   final VerticalDirection? verticalDirection;
+  final double? spacing;
   final VoidCallback? onTap; // Optional click handler
 
   const HoverableRow({
@@ -23,6 +24,7 @@ class HoverableRow extends StatefulWidget {
     this.crossAxisAlignment,
     this.textDirection,
     this.verticalDirection,
+    this.spacing,
     this.onTap, // Add onTap parameter
   });
 
@@ -71,6 +73,7 @@ class _HoverableRowState extends State<HoverableRow> {
             textDirection: widget.textDirection,
             verticalDirection:
                 widget.verticalDirection ?? VerticalDirection.down,
+            spacing: widget.spacing ?? 0.0,
             children: widget.children.map((child) {
               return HoverData(
                 isHovering: _isHovering,

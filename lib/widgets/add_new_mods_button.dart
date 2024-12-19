@@ -26,14 +26,17 @@ class AddNewModsButton extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isGameRunning = ref.watch(AppState.isGameRunning).value == true;
 
+    var isIconOnly = labelWidget != null;
     return Tooltip(
       message: isGameRunning
           ? "Game is running"
-          : "Add new mod(s)\n\nTip: drag'n'drop to install mods!",
+          : isIconOnly
+              ? "Tip: drag'n'drop to install mods!"
+              : "Add new mod(s)\n\nTip: drag'n'drop to install mods!",
       child: Disable(
         isEnabled: !isGameRunning,
         child: DisableIfCannotWriteMods(
-          child: labelWidget != null
+          child: isIconOnly
               ? Padding(
                   padding: padding,
                   child: OutlinedButton.icon(

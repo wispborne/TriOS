@@ -351,22 +351,32 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
                                           dependents: enabledDependents,
                                           selectedMod: selectedMod,
                                           allMods: allMods)
-                                      : const SizedBox();
+                                      : Text(
+                                          "No mods depend on ${variant.modInfo.name}",
+                                          style: theme.textTheme.labelLarge,
+                                        );
                                 }),
                                 const SizedBox(height: 4),
-                                Text("Disabled Dependents",
-                                    style: theme.textTheme.labelLarge?.copyWith(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600)),
                                 Builder(builder: (context) {
                                   final disabledDependents = dependents
                                       .where((mod) => !mod.hasEnabledVariant)
                                       .toList();
                                   return disabledDependents.isNotEmpty
-                                      ? DependentsListWidget(
-                                          dependents: disabledDependents,
-                                          selectedMod: selectedMod,
-                                          allMods: allMods)
+                                      ? Column(
+                                          children: [
+                                            Text("Disabled Dependents",
+                                                style: theme
+                                                    .textTheme.labelLarge
+                                                    ?.copyWith(
+                                                        fontSize: 14,
+                                                        fontWeight:
+                                                            FontWeight.w600)),
+                                            DependentsListWidget(
+                                                dependents: disabledDependents,
+                                                selectedMod: selectedMod,
+                                                allMods: allMods),
+                                          ],
+                                        )
                                       : const SizedBox();
                                 }),
                               ]),

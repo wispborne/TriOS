@@ -25,6 +25,7 @@
   - Delete Mods not working.
   - Logfile not properly rolling over at 25MB until app restart.
   - Mods folder path used `/` instead of `\`.
+  - Launch precheck no longer full height.
 - Changed
   - Note: TriOS settings have been reset due to a new format. 
     - Mod profiles should be fine. 
@@ -35,6 +36,7 @@
   - Slightly faster + more reliable VRAM checker thanks to @deliagwath.
     - No longer re-parsing `mod_info.json` files every time.
   - TriOS log button now opens folder instead of file.
+  - Tooltip border uses a theme color.
 
 # 0.3.4
 - Added

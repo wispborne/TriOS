@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:trios/models/mod_variant.dart';
+import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 
 class ModTypeIcon extends StatelessWidget {
@@ -13,7 +14,7 @@ class ModTypeIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return modVariant.modInfo.isTotalConversion || modVariant.modInfo.isUtility
-        ? Tooltip(
+        ? MovingTooltipWidget.text(
             message: getTooltipText(modVariant),
             child: Opacity(
               opacity: 0.7,

@@ -37,22 +37,44 @@ class MovingTooltipWidget extends StatefulWidget {
     Size offset = const Size(5, 5),
     TooltipPosition position = TooltipPosition.bottomRight,
   }) {
-    return message.isNotNullOrBlank ? Builder(builder: (context) {
+    return message.isNotNullOrBlank
+        ? Builder(builder: (context) {
+            return MovingTooltipWidget(
+              key: key,
+              tooltipWidget: TooltipFrame(
+                  child: Text(message,
+                      style: textStyle ??
+                          Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(fontSize: 14))),
+              windowEdgePadding: windowEdgePadding,
+              offset: offset,
+              position: position,
+              child: child,
+            );
+          })
+        : child;
+  }
+
+  static Widget framed({
+    Key? key,
+    required Widget tooltipWidget,
+    required Widget child,
+    double windowEdgePadding = 10.0,
+    Size offset = const Size(5, 5),
+    TooltipPosition position = TooltipPosition.bottomRight,
+  }) {
+    return Builder(builder: (context) {
       return MovingTooltipWidget(
         key: key,
-        tooltipWidget: TooltipFrame(
-            child: Text(message,
-                style: textStyle ??
-                    Theme.of(context)
-                        .textTheme
-                        .bodyMedium
-                        ?.copyWith(fontSize: 14))),
+        tooltipWidget: TooltipFrame(child: tooltipWidget),
         windowEdgePadding: windowEdgePadding,
         offset: offset,
         position: position,
         child: child,
       );
-    }) : child;
+    });
   }
 
   @override

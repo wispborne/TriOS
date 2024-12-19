@@ -14,9 +14,9 @@ class WispGridState with WispGridStateMappable {
     this.isSortDescending = false,
     this.columnSettings = const {
       ModGridHeader.favorites: ModGridColumnSetting(position: 0, width: 50),
-      ModGridHeader.changeVariantButton: ModGridColumnSetting(position: 1, width: 160),
-      ModGridHeader.icons: ModGridColumnSetting(position: 2, width: 40),
-      ModGridHeader.modIcon: ModGridColumnSetting(position: 3, width: 40),
+      ModGridHeader.changeVariantButton: ModGridColumnSetting(position: 1, width: 140),
+      ModGridHeader.icons: ModGridColumnSetting(position: 2, width: 35),
+      ModGridHeader.modIcon: ModGridColumnSetting(position: 3, width: 35),
       ModGridHeader.name: ModGridColumnSetting(position: 4, width: 200),
       ModGridHeader.author: ModGridColumnSetting(position: 5, width: 200),
       ModGridHeader.version: ModGridColumnSetting(position: 6, width: 100),

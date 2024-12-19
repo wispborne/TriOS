@@ -215,7 +215,7 @@ class Launcher extends HookConsumerWidget {
           builder: (context) {
             return AlertDialog(
               title: const Text('Launch precheck failed'),
-              content: Column(children: [
+              content: Column(mainAxisSize: MainAxisSize.min, children: [
                 ...launchPrecheckFailures
                     // .distinctBy((it) => it.message)
                     .map((failure) {

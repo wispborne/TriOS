@@ -19,7 +19,7 @@ class TooltipFrame extends StatelessWidget {
         decoration: BoxDecoration(
           color: theme.cardColor,
           borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
-          border: Border.all(color: theme.colorScheme.onSurface),
+          border: Border.all(color: theme.colorScheme.secondary),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.4),

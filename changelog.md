@@ -12,8 +12,8 @@
     - Prompts for game location and how many versions of each mod to keep.
   - **Mod Grid rewritten** from scratch.
     - Improved performance.
+    - Saves column width, position, and sorting.
     - Switched to reuse my old SMOL code and away from the 3rd-party library :)
-    - (more to come)
   - May now install a mod from folder, not just from zip/7z/rar.
     - Either drag'n'drop a folder or select the `mod_info.json` file from the Add button.
 - Fixed

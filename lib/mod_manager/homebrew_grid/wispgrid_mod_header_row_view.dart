@@ -221,31 +221,28 @@ class DraggableHeader extends ConsumerWidget {
             ?.key ==
         header;
 
-    draggableChild(bool isHovered) {
+    Widget draggableChild(bool isHovered) {
       return Stack(
         alignment: Alignment.center,
         fit: StackFit.expand,
         children: [
-          Opacity(
-            opacity: isHovered ? _opacity : 1,
-            child: child,
-          ),
+          child,
+          if (isHovered) Container(color: Colors.black.withOpacity(0.5)),
           if (isFirst)
             MovingTooltipWidget.text(
               message: 'Reset grid',
               child: Opacity(
                 opacity: showDragHandle ? 1 : 0,
                 child: IconButton(
-                    padding: EdgeInsets.zero,
-                    style: ElevatedButton.styleFrom(
-                      shape: CircleBorder(),
-                    ),
-                    onPressed: () {
-                      ref
-                          .read(modGridStateProvider.notifier)
-                          .update((state) => WispGridState());
-                    },
-                    icon: Icon(Icons.settings_backup_restore)),
+                  padding: EdgeInsets.zero,
+                  style: ElevatedButton.styleFrom(shape: const CircleBorder()),
+                  onPressed: () {
+                    ref
+                        .read(modGridStateProvider.notifier)
+                        .update((state) => WispGridState());
+                  },
+                  icon: const Icon(Icons.settings_backup_restore),
+                ),
               ),
             )
           else
@@ -255,9 +252,7 @@ class DraggableHeader extends ConsumerWidget {
                 opacity: showDragHandle ? 1 : 0,
                 child: MouseRegion(
                   cursor: SystemMouseCursors.grab,
-                  child: Opacity(
-                      opacity: _opacity,
-                      child: Icon(Icons.drag_indicator, size: 16)),
+                  child: const Icon(Icons.drag_indicator, size: 16),
                 ),
               ),
             ),
@@ -267,10 +262,13 @@ class DraggableHeader extends ConsumerWidget {
 
     return Draggable<ModGridHeader>(
       data: header,
-      feedback: Icon(Icons.drag_indicator, size: 16),
+      feedback: const Icon(Icons.drag_indicator, size: 16),
       axis: Axis.horizontal,
-      dragAnchorStrategy: (draggable, context, position) => Offset(16, 8),
-      childWhenDragging: Opacity(opacity: 0.5, child: draggableChild(false)),
+      dragAnchorStrategy: (draggable, context, position) => const Offset(16, 8),
+      childWhenDragging: Opacity(
+        opacity: 0.5,
+        child: draggableChild(false),
+      ),
       child: DragTarget<ModGridHeader>(
         builder: (context, candidateData, rejectedData) {
           final isHovered = candidateData.isNotEmpty;

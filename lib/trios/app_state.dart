@@ -156,9 +156,8 @@ class AppState {
         ref.watch(appSettings.select((value) => value.gameDir))?.toDirectory();
     if (gamePath == null) return false;
 
-    final filesAndFolders = [
-      ref.read(enabledModsFile).valueOrNull?.enabledMods.toList()
-    ].nonNulls;
+    final filesAndFolders =
+        [ref.read(enabledModsFile).valueOrNull?.enabledMods.toList()].nonNulls;
     for (final file in filesAndFolders) {
       if (filesAndFolders.isEmpty) {
         Fimber.d("Cannot find or write to: $file");
@@ -253,6 +252,12 @@ class _GameRunningChecker extends AsyncNotifier<bool> {
 
   @override
   Future<bool> build() async {
+    final isSettingEnabled =
+        ref.watch(appSettings.select((value) => value.checkIfGameIsRunning));
+    if (!isSettingEnabled) {
+      return false;
+    }
+
     // Retrieve the list of executable files
     gameExecutables = [ref.watch(AppState.gameExecutable).value];
 

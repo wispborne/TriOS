@@ -86,6 +86,8 @@ class Settings with SettingsMappable {
   final bool autoEnableAndDisableDependencies;
   final bool enableLauncherPrecheck;
   final ModUpdateBehavior modUpdateBehavior;
+  final bool checkIfGameIsRunning;
+
   final String userId; // For Sentry
   final bool? hasHiddenForumDarkModeTip;
 
@@ -129,6 +131,7 @@ class Settings with SettingsMappable {
     this.autoEnableAndDisableDependencies = false,
     this.enableLauncherPrecheck = true,
     this.modUpdateBehavior = ModUpdateBehavior.switchToNewVersionIfWasEnabled,
+    this.checkIfGameIsRunning = true,
     this.userId = '',
     this.hasHiddenForumDarkModeTip,
     this.activeModProfileId,

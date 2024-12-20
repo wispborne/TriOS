@@ -16,6 +16,7 @@
     - Switched to reuse my old SMOL code and away from the 3rd-party library :)
   - May now install a mod from folder, not just from zip/7z/rar.
     - Either drag'n'drop a folder or select the `mod_info.json` file from the Add button.
+  - Setting to disable "game is running" check.
 - Fixed
   - Mod grid no longer resets itself constantly.
     - e.g. sorting now works.

@@ -244,6 +244,10 @@ class SettingsMapper extends ClassMapperBase<Settings> {
   static const Field<Settings, ModUpdateBehavior> _f$modUpdateBehavior = Field(
       'modUpdateBehavior', _$modUpdateBehavior,
       opt: true, def: ModUpdateBehavior.switchToNewVersionIfWasEnabled);
+  static bool _$checkIfGameIsRunning(Settings v) => v.checkIfGameIsRunning;
+  static const Field<Settings, bool> _f$checkIfGameIsRunning = Field(
+      'checkIfGameIsRunning', _$checkIfGameIsRunning,
+      opt: true, def: true);
   static String _$userId(Settings v) => v.userId;
   static const Field<Settings, String> _f$userId =
       Field('userId', _$userId, opt: true, def: '');
@@ -291,6 +295,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #autoEnableAndDisableDependencies: _f$autoEnableAndDisableDependencies,
     #enableLauncherPrecheck: _f$enableLauncherPrecheck,
     #modUpdateBehavior: _f$modUpdateBehavior,
+    #checkIfGameIsRunning: _f$checkIfGameIsRunning,
     #userId: _f$userId,
     #hasHiddenForumDarkModeTip: _f$hasHiddenForumDarkModeTip,
     #activeModProfileId: _f$activeModProfileId,
@@ -333,6 +338,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
             data.dec(_f$autoEnableAndDisableDependencies),
         enableLauncherPrecheck: data.dec(_f$enableLauncherPrecheck),
         modUpdateBehavior: data.dec(_f$modUpdateBehavior),
+        checkIfGameIsRunning: data.dec(_f$checkIfGameIsRunning),
         userId: data.dec(_f$userId),
         hasHiddenForumDarkModeTip: data.dec(_f$hasHiddenForumDarkModeTip),
         activeModProfileId: data.dec(_f$activeModProfileId));
@@ -424,6 +430,7 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
       bool? autoEnableAndDisableDependencies,
       bool? enableLauncherPrecheck,
       ModUpdateBehavior? modUpdateBehavior,
+      bool? checkIfGameIsRunning,
       String? userId,
       bool? hasHiddenForumDarkModeTip,
       String? activeModProfileId});
@@ -484,6 +491,7 @@ class _SettingsCopyWithImpl<$R, $Out>
           bool? autoEnableAndDisableDependencies,
           bool? enableLauncherPrecheck,
           ModUpdateBehavior? modUpdateBehavior,
+          bool? checkIfGameIsRunning,
           String? userId,
           Object? hasHiddenForumDarkModeTip = $none,
           Object? activeModProfileId = $none}) =>
@@ -535,6 +543,8 @@ class _SettingsCopyWithImpl<$R, $Out>
         if (enableLauncherPrecheck != null)
           #enableLauncherPrecheck: enableLauncherPrecheck,
         if (modUpdateBehavior != null) #modUpdateBehavior: modUpdateBehavior,
+        if (checkIfGameIsRunning != null)
+          #checkIfGameIsRunning: checkIfGameIsRunning,
         if (userId != null) #userId: userId,
         if (hasHiddenForumDarkModeTip != $none)
           #hasHiddenForumDarkModeTip: hasHiddenForumDarkModeTip,
@@ -595,6 +605,8 @@ class _SettingsCopyWithImpl<$R, $Out>
           data.get(#enableLauncherPrecheck, or: $value.enableLauncherPrecheck),
       modUpdateBehavior:
           data.get(#modUpdateBehavior, or: $value.modUpdateBehavior),
+      checkIfGameIsRunning:
+          data.get(#checkIfGameIsRunning, or: $value.checkIfGameIsRunning),
       userId: data.get(#userId, or: $value.userId),
       hasHiddenForumDarkModeTip: data.get(#hasHiddenForumDarkModeTip,
           or: $value.hasHiddenForumDarkModeTip),

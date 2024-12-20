@@ -577,16 +577,34 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         child: MovingTooltipWidget.text(
                           message:
                               "Whether to check for mod dependencies and prevent launching if they aren't met."
-                              "\nDisable if TriOS is getting them wrong, or you'd just like to use vanilla dependency check behavior.",
+                              "\nDisable if ${Constants.appName} is getting them wrong, or you'd just like to use vanilla dependency check behavior.",
                           child: CheckboxWithLabel(
-                            value: ref.watch(appSettings.select((value) =>
-                                value.enableLauncherPrecheck ?? false)),
+                            value: ref.watch(appSettings.select(
+                                (value) => value.enableLauncherPrecheck)),
                             onChanged: (value) {
                               ref.read(appSettings.notifier).update((state) =>
                                   state.copyWith(
                                       enableLauncherPrecheck: value ?? false));
                             },
                             label: "Enable Launch Precheck",
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 16),
+                        child: MovingTooltipWidget.text(
+                          message:
+                              "Whether to check if the game is running and lock parts of ${Constants.appName}."
+                              "\nDisable if ${Constants.appName} is detecting incorrectly.",
+                          child: CheckboxWithLabel(
+                            value: ref.watch(appSettings
+                                .select((value) => value.checkIfGameIsRunning)),
+                            onChanged: (value) {
+                              ref.read(appSettings.notifier).update((state) =>
+                                  state.copyWith(
+                                      checkIfGameIsRunning: value ?? false));
+                            },
+                            label: "Check if game is running",
                           ),
                         ),
                       ),

@@ -293,7 +293,7 @@ abstract class GenericSettingsManager<T> {
     try {
       final serializedData = fileFormat == FileFormat.toml
           ? TomlDocument.fromMap(toMap(currentState)).toString()
-          : jsonEncode(toMap(currentState));
+          : toMap(currentState).prettyPrintJson();
       settingsFile.writeAsStringSync(serializedData);
       Fimber.i("$fileName successfully written to disk.");
     } catch (e, stackTrace) {

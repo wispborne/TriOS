@@ -6,6 +6,196 @@
 
 part of 'wisp_grid_state.dart';
 
+class ModGridHeaderMapper extends EnumMapper<ModGridHeader> {
+  ModGridHeaderMapper._();
+
+  static ModGridHeaderMapper? _instance;
+  static ModGridHeaderMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(_instance = ModGridHeaderMapper._());
+    }
+    return _instance!;
+  }
+
+  static ModGridHeader fromValue(dynamic value) {
+    ensureInitialized();
+    return MapperContainer.globals.fromValue(value);
+  }
+
+  @override
+  ModGridHeader decode(dynamic value) {
+    switch (value) {
+      case 'favorites':
+        return ModGridHeader.favorites;
+      case 'changeVariantButton':
+        return ModGridHeader.changeVariantButton;
+      case 'icons':
+        return ModGridHeader.icons;
+      case 'modIcon':
+        return ModGridHeader.modIcon;
+      case 'name':
+        return ModGridHeader.name;
+      case 'author':
+        return ModGridHeader.author;
+      case 'version':
+        return ModGridHeader.version;
+      case 'vramImpact':
+        return ModGridHeader.vramImpact;
+      case 'gameVersion':
+        return ModGridHeader.gameVersion;
+      default:
+        throw MapperException.unknownEnumValue(value);
+    }
+  }
+
+  @override
+  dynamic encode(ModGridHeader self) {
+    switch (self) {
+      case ModGridHeader.favorites:
+        return 'favorites';
+      case ModGridHeader.changeVariantButton:
+        return 'changeVariantButton';
+      case ModGridHeader.icons:
+        return 'icons';
+      case ModGridHeader.modIcon:
+        return 'modIcon';
+      case ModGridHeader.name:
+        return 'name';
+      case ModGridHeader.author:
+        return 'author';
+      case ModGridHeader.version:
+        return 'version';
+      case ModGridHeader.vramImpact:
+        return 'vramImpact';
+      case ModGridHeader.gameVersion:
+        return 'gameVersion';
+    }
+  }
+}
+
+extension ModGridHeaderMapperExtension on ModGridHeader {
+  String toValue() {
+    ModGridHeaderMapper.ensureInitialized();
+    return MapperContainer.globals.toValue<ModGridHeader>(this) as String;
+  }
+}
+
+class ModGridGroupEnumMapper extends EnumMapper<ModGridGroupEnum> {
+  ModGridGroupEnumMapper._();
+
+  static ModGridGroupEnumMapper? _instance;
+  static ModGridGroupEnumMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(_instance = ModGridGroupEnumMapper._());
+    }
+    return _instance!;
+  }
+
+  static ModGridGroupEnum fromValue(dynamic value) {
+    ensureInitialized();
+    return MapperContainer.globals.fromValue(value);
+  }
+
+  @override
+  ModGridGroupEnum decode(dynamic value) {
+    switch (value) {
+      case 'enabledState':
+        return ModGridGroupEnum.enabledState;
+      case 'author':
+        return ModGridGroupEnum.author;
+      case 'modType':
+        return ModGridGroupEnum.modType;
+      case 'gameVersion':
+        return ModGridGroupEnum.gameVersion;
+      default:
+        throw MapperException.unknownEnumValue(value);
+    }
+  }
+
+  @override
+  dynamic encode(ModGridGroupEnum self) {
+    switch (self) {
+      case ModGridGroupEnum.enabledState:
+        return 'enabledState';
+      case ModGridGroupEnum.author:
+        return 'author';
+      case ModGridGroupEnum.modType:
+        return 'modType';
+      case ModGridGroupEnum.gameVersion:
+        return 'gameVersion';
+    }
+  }
+}
+
+extension ModGridGroupEnumMapperExtension on ModGridGroupEnum {
+  String toValue() {
+    ModGridGroupEnumMapper.ensureInitialized();
+    return MapperContainer.globals.toValue<ModGridGroupEnum>(this) as String;
+  }
+}
+
+class ModGridSortFieldMapper extends EnumMapper<ModGridSortField> {
+  ModGridSortFieldMapper._();
+
+  static ModGridSortFieldMapper? _instance;
+  static ModGridSortFieldMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(_instance = ModGridSortFieldMapper._());
+    }
+    return _instance!;
+  }
+
+  static ModGridSortField fromValue(dynamic value) {
+    ensureInitialized();
+    return MapperContainer.globals.fromValue(value);
+  }
+
+  @override
+  ModGridSortField decode(dynamic value) {
+    switch (value) {
+      case 'enabledState':
+        return ModGridSortField.enabledState;
+      case 'name':
+        return ModGridSortField.name;
+      case 'author':
+        return ModGridSortField.author;
+      case 'version':
+        return ModGridSortField.version;
+      case 'vramImpact':
+        return ModGridSortField.vramImpact;
+      case 'gameVersion':
+        return ModGridSortField.gameVersion;
+      default:
+        throw MapperException.unknownEnumValue(value);
+    }
+  }
+
+  @override
+  dynamic encode(ModGridSortField self) {
+    switch (self) {
+      case ModGridSortField.enabledState:
+        return 'enabledState';
+      case ModGridSortField.name:
+        return 'name';
+      case ModGridSortField.author:
+        return 'author';
+      case ModGridSortField.version:
+        return 'version';
+      case ModGridSortField.vramImpact:
+        return 'vramImpact';
+      case ModGridSortField.gameVersion:
+        return 'gameVersion';
+    }
+  }
+}
+
+extension ModGridSortFieldMapperExtension on ModGridSortField {
+  String toValue() {
+    ModGridSortFieldMapper.ensureInitialized();
+    return MapperContainer.globals.toValue<ModGridSortField>(this) as String;
+  }
+}
+
 class WispGridStateMapper extends ClassMapperBase<WispGridState> {
   WispGridStateMapper._();
 
@@ -13,6 +203,8 @@ class WispGridStateMapper extends ClassMapperBase<WispGridState> {
   static WispGridStateMapper ensureInitialized() {
     if (_instance == null) {
       MapperContainer.globals.use(_instance = WispGridStateMapper._());
+      ModGridSortFieldMapper.ensureInitialized();
+      ModGridHeaderMapper.ensureInitialized();
       ModGridColumnSettingMapper.ensureInitialized();
       GroupingSettingMapper.ensureInitialized();
     }
@@ -36,9 +228,9 @@ class WispGridStateMapper extends ClassMapperBase<WispGridState> {
       Field('columnSettings', _$columnSettings, opt: true, def: const {
     ModGridHeader.favorites: ModGridColumnSetting(position: 0, width: 50),
     ModGridHeader.changeVariantButton:
-        ModGridColumnSetting(position: 1, width: 160),
-    ModGridHeader.icons: ModGridColumnSetting(position: 2, width: 40),
-    ModGridHeader.modIcon: ModGridColumnSetting(position: 3, width: 40),
+        ModGridColumnSetting(position: 1, width: 130),
+    ModGridHeader.icons: ModGridColumnSetting(position: 2, width: 25),
+    ModGridHeader.modIcon: ModGridColumnSetting(position: 3, width: 32),
     ModGridHeader.name: ModGridColumnSetting(position: 4, width: 200),
     ModGridHeader.author: ModGridColumnSetting(position: 5, width: 200),
     ModGridHeader.version: ModGridColumnSetting(position: 6, width: 100),
@@ -319,6 +511,7 @@ class GroupingSettingMapper extends ClassMapperBase<GroupingSetting> {
   static GroupingSettingMapper ensureInitialized() {
     if (_instance == null) {
       MapperContainer.globals.use(_instance = GroupingSettingMapper._());
+      ModGridGroupEnumMapper.ensureInitialized();
     }
     return _instance!;
   }

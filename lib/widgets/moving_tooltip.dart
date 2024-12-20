@@ -42,12 +42,10 @@ class MovingTooltipWidget extends StatefulWidget {
             return MovingTooltipWidget(
               key: key,
               tooltipWidget: TooltipFrame(
-                  child: Text(message,
-                      style: textStyle ??
-                          Theme.of(context)
-                              .textTheme
-                              .bodyMedium
-                              ?.copyWith(fontSize: 14))),
+                  child: Text(
+                message,
+                style: textStyle ?? Theme.of(context).textTheme.bodySmall,
+              )),
               windowEdgePadding: windowEdgePadding,
               offset: offset,
               position: position,

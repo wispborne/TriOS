@@ -67,6 +67,7 @@ class _ModVersionSelectionDropdownState
       disabledForegroundColor: textColor,
       backgroundColor: buttonColor,
       disabledBackgroundColor: buttonColor,
+      padding: const EdgeInsets.symmetric(horizontal: 12.0),
       textStyle:
           const TextStyle(fontWeight: FontWeight.w900, fontFamily: "Orbitron"),
       shape: RoundedRectangleBorder(

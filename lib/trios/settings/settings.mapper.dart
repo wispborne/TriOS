@@ -111,6 +111,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       MapperContainer.globals.use(_instance = SettingsMapper._());
       TriOSToolsMapper.ensureInitialized();
       LaunchSettingsMapper.ensureInitialized();
+      WispGridStateMapper.ensureInitialized();
       ModsGridStateMapper.ensureInitialized();
       FolderNamingSettingMapper.ensureInitialized();
       ModUpdateBehaviorMapper.ensureInitialized();
@@ -185,10 +186,17 @@ class SettingsMapper extends ClassMapperBase<Settings> {
   static bool _$isUpdatesFieldShown(Settings v) => v.isUpdatesFieldShown;
   static const Field<Settings, bool> _f$isUpdatesFieldShown =
       Field('isUpdatesFieldShown', _$isUpdatesFieldShown, opt: true, def: true);
-  static ModsGridState? _$modsGridState(Settings v) => v.modsGridState;
-  static const Field<Settings, ModsGridState> _f$modsGridState = Field(
+  static WispGridState _$modsGridState(Settings v) => v.modsGridState;
+  static const Field<Settings, WispGridState> _f$modsGridState = Field(
       'modsGridState', _$modsGridState,
-      opt: true, hook: SafeDecodeHook());
+      opt: true,
+      def: const WispGridState(
+          groupingSetting:
+              GroupingSetting(grouping: ModGridGroupEnum.enabledState)),
+      hook: SafeDecodeHook());
+  static ModsGridState? _$oldModsGridState(Settings v) => v.oldModsGridState;
+  static const Field<Settings, ModsGridState> _f$oldModsGridState =
+      Field('oldModsGridState', _$oldModsGridState, opt: true);
   static bool _$shouldAutoUpdateOnLaunch(Settings v) =>
       v.shouldAutoUpdateOnLaunch;
   static const Field<Settings, bool> _f$shouldAutoUpdateOnLaunch = Field(
@@ -271,6 +279,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #lastStarsectorVersion: _f$lastStarsectorVersion,
     #isUpdatesFieldShown: _f$isUpdatesFieldShown,
     #modsGridState: _f$modsGridState,
+    #oldModsGridState: _f$oldModsGridState,
     #shouldAutoUpdateOnLaunch: _f$shouldAutoUpdateOnLaunch,
     #secondsBetweenModFolderChecks: _f$secondsBetweenModFolderChecks,
     #toastDurationSeconds: _f$toastDurationSeconds,
@@ -310,6 +319,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
         lastStarsectorVersion: data.dec(_f$lastStarsectorVersion),
         isUpdatesFieldShown: data.dec(_f$isUpdatesFieldShown),
         modsGridState: data.dec(_f$modsGridState),
+        oldModsGridState: data.dec(_f$oldModsGridState),
         shouldAutoUpdateOnLaunch: data.dec(_f$shouldAutoUpdateOnLaunch),
         secondsBetweenModFolderChecks:
             data.dec(_f$secondsBetweenModFolderChecks),
@@ -378,7 +388,8 @@ extension SettingsValueCopy<$R, $Out> on ObjectCopyWith<$R, Settings, $Out> {
 abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
   LaunchSettingsCopyWith<$R, LaunchSettings, LaunchSettings> get launchSettings;
-  ModsGridStateCopyWith<$R, ModsGridState, ModsGridState>? get modsGridState;
+  WispGridStateCopyWith<$R, WispGridState, WispGridState> get modsGridState;
+  ModsGridStateCopyWith<$R, ModsGridState, ModsGridState>? get oldModsGridState;
   $R call(
       {Directory? gameDir,
       Directory? gameCoreDir,
@@ -400,7 +411,8 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
       LaunchSettings? launchSettings,
       String? lastStarsectorVersion,
       bool? isUpdatesFieldShown,
-      ModsGridState? modsGridState,
+      WispGridState? modsGridState,
+      ModsGridState? oldModsGridState,
       bool? shouldAutoUpdateOnLaunch,
       int? secondsBetweenModFolderChecks,
       int? toastDurationSeconds,
@@ -431,8 +443,12 @@ class _SettingsCopyWithImpl<$R, $Out>
       get launchSettings =>
           $value.launchSettings.copyWith.$chain((v) => call(launchSettings: v));
   @override
-  ModsGridStateCopyWith<$R, ModsGridState, ModsGridState>? get modsGridState =>
-      $value.modsGridState?.copyWith.$chain((v) => call(modsGridState: v));
+  WispGridStateCopyWith<$R, WispGridState, WispGridState> get modsGridState =>
+      $value.modsGridState.copyWith.$chain((v) => call(modsGridState: v));
+  @override
+  ModsGridStateCopyWith<$R, ModsGridState, ModsGridState>?
+      get oldModsGridState => $value.oldModsGridState?.copyWith
+          .$chain((v) => call(oldModsGridState: v));
   @override
   $R call(
           {Object? gameDir = $none,
@@ -455,7 +471,8 @@ class _SettingsCopyWithImpl<$R, $Out>
           LaunchSettings? launchSettings,
           Object? lastStarsectorVersion = $none,
           bool? isUpdatesFieldShown,
-          Object? modsGridState = $none,
+          WispGridState? modsGridState,
+          Object? oldModsGridState = $none,
           bool? shouldAutoUpdateOnLaunch,
           int? secondsBetweenModFolderChecks,
           int? toastDurationSeconds,
@@ -496,7 +513,8 @@ class _SettingsCopyWithImpl<$R, $Out>
           #lastStarsectorVersion: lastStarsectorVersion,
         if (isUpdatesFieldShown != null)
           #isUpdatesFieldShown: isUpdatesFieldShown,
-        if (modsGridState != $none) #modsGridState: modsGridState,
+        if (modsGridState != null) #modsGridState: modsGridState,
+        if (oldModsGridState != $none) #oldModsGridState: oldModsGridState,
         if (shouldAutoUpdateOnLaunch != null)
           #shouldAutoUpdateOnLaunch: shouldAutoUpdateOnLaunch,
         if (secondsBetweenModFolderChecks != null)
@@ -552,6 +570,8 @@ class _SettingsCopyWithImpl<$R, $Out>
       isUpdatesFieldShown:
           data.get(#isUpdatesFieldShown, or: $value.isUpdatesFieldShown),
       modsGridState: data.get(#modsGridState, or: $value.modsGridState),
+      oldModsGridState:
+          data.get(#oldModsGridState, or: $value.oldModsGridState),
       shouldAutoUpdateOnLaunch: data.get(#shouldAutoUpdateOnLaunch,
           or: $value.shouldAutoUpdateOnLaunch),
       secondsBetweenModFolderChecks: data.get(#secondsBetweenModFolderChecks,

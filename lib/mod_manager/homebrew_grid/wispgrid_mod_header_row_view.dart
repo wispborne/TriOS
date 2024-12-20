@@ -4,11 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
 import 'package:trios/thirdparty/dartx/map.dart';
+import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/widgets/MultiSplitViewMixin.dart';
+import 'package:trios/widgets/hoverable_widget.dart';
+import 'package:trios/widgets/moving_tooltip.dart';
 
-import '../../widgets/MultiSplitViewMixin.dart';
-import '../../widgets/hoverable_widget.dart';
-import '../../widgets/moving_tooltip.dart';
 import 'wisp_grid.dart';
 
 class WispGridModHeaderRowView extends ConsumerStatefulWidget {
@@ -26,7 +27,7 @@ class _WispGridModHeaderRowViewState
 
   @override
   List<Area> get areas => ref
-      .read(modGridStateProvider)
+      .read(appSettings.select((s) => s.modsGridState))
       .columnSettings
       .entries
       .sortedByButBetter((entry) => entry.value.position)
@@ -67,22 +68,24 @@ class _WispGridModHeaderRowViewState
     // Defer state update until resizing finishes
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _isResizing = false;
-      ref.read(modGridStateProvider.notifier).update((state) {
-        final columnSettings = state.columnSettings.toMap();
+      ref.read(appSettings.notifier).update((state) {
+        final columnSettings = state.modsGridState.columnSettings.toMap();
         for (final area in multiSplitController.areas) {
           final header = ModGridHeader.values
               .firstWhere((header) => header.toString() == area.id);
           columnSettings[header] =
               columnSettings[header]!.copyWith(width: area.size);
         }
-        return state.copyWith(columnSettings: columnSettings);
+        return state.copyWith(
+            modsGridState:
+                state.modsGridState.copyWith(columnSettings: columnSettings));
       });
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final gridState = ref.watch(modGridStateProvider);
+    final gridState = ref.watch(appSettings.select((s) => s.modsGridState));
     final theme = Theme.of(context);
 
     return HoverableWidget(builder: (context, isHovering) {
@@ -206,20 +209,9 @@ class DraggableHeader extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isFirst = ref
-            .watch(modGridStateProvider)
-            .columnSettings
-            .entries
-            .firstOrNull
-            ?.key ==
-        header;
-    final isLast = ref
-            .watch(modGridStateProvider)
-            .columnSettings
-            .entries
-            .lastOrNull
-            ?.key ==
-        header;
+    var gridState = ref.watch(appSettings.select((s) => s.modsGridState));
+    final isFirst = gridState.columnSettings.entries.firstOrNull?.key == header;
+    final isLast = gridState.columnSettings.entries.lastOrNull?.key == header;
 
     Widget draggableChild(bool isHovered) {
       return Stack(
@@ -237,9 +229,8 @@ class DraggableHeader extends ConsumerWidget {
                   padding: EdgeInsets.zero,
                   style: ElevatedButton.styleFrom(shape: const CircleBorder()),
                   onPressed: () {
-                    ref
-                        .read(modGridStateProvider.notifier)
-                        .update((state) => WispGridState());
+                    ref.read(appSettings.notifier).update((state) =>
+                        state.copyWith(modsGridState: WispGridState()));
                   },
                   icon: const Icon(Icons.settings_backup_restore),
                 ),
@@ -276,8 +267,8 @@ class DraggableHeader extends ConsumerWidget {
         },
         onWillAcceptWithDetails: (data) => data.data != header,
         onAcceptWithDetails: (data) {
-          ref.read(modGridStateProvider.notifier).update((state) {
-            final columnSettings = state.columnSettings.toMap();
+          ref.read(appSettings.notifier).update((state) {
+            final columnSettings = state.modsGridState.columnSettings.toMap();
             final draggedHeader = data.data;
             final draggedSetting = columnSettings.remove(draggedHeader)!;
 
@@ -288,10 +279,11 @@ class DraggableHeader extends ConsumerWidget {
                 columnSettings[header]!.position.clamp(0, sorted.length);
             sorted.insert(targetIndex, MapEntry(draggedHeader, draggedSetting));
 
-            return state.copyWith(columnSettings: {
+            return state.copyWith(
+                modsGridState: state.modsGridState.copyWith(columnSettings: {
               for (int i = 0; i < sorted.length; i++)
                 sorted[i].key: sorted[i].value.copyWith(position: i),
-            });
+            }));
           });
         },
       ),
@@ -313,18 +305,19 @@ class SortableHeader extends ConsumerStatefulWidget {
 class _SortableHeaderState extends ConsumerState<SortableHeader> {
   @override
   Widget build(BuildContext context) {
-    final gridState = ref.watch(modGridStateProvider);
+    final gridState = ref.watch(appSettings.select((s) => s.modsGridState));
     final isSortDescending = gridState.isSortDescending;
     final isActive = gridState.sortField == widget.columnSortField;
 
     return InkWell(
       onTap: () {
-        ref.read(modGridStateProvider.notifier).update((state) {
+        ref.read(appSettings.notifier).update((state) {
           // if (state.sortField == widget.columnSortField.toString()) {
           return state.copyWith(
+              modsGridState: state.modsGridState.copyWith(
             sortField: widget.columnSortField,
-            isSortDescending: !state.isSortDescending,
-          );
+            isSortDescending: !state.modsGridState.isSortDescending,
+          ));
           // } else {
           //   return state.copyWith(
           //       sortField: widget.columnSortField.toString(),

@@ -15,6 +15,7 @@ import '../models/mod.dart';
 import '../trios/settings/settings.dart';
 import '../utils/search.dart';
 import '../widgets/disable.dart';
+import '../widgets/moving_tooltip.dart';
 
 class Smol4 extends ConsumerStatefulWidget {
   const Smol4({super.key});
@@ -190,7 +191,7 @@ class _Smol4State extends ConsumerState<Smol4>
                                     padding: EdgeInsets.only(right: 8),
                                     child: Text("Profile:"),
                                   ),
-                                  Tooltip(
+                                  MovingTooltipWidget.text(
                                     message:
                                         isGameRunning ? "Game is running" : "",
                                     child: Disable(

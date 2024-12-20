@@ -9,7 +9,7 @@ class TooltipFrame extends StatelessWidget {
   const TooltipFrame(
       {super.key,
       required this.child,
-      this.padding = const EdgeInsets.all(16)});
+      this.padding = const EdgeInsets.all(8)});
 
   @override
   Widget build(BuildContext context) {

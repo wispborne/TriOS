@@ -9,6 +9,7 @@ import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/disable_if_cannot_write_mods.dart';
+import 'package:trios/widgets/moving_tooltip.dart';
 
 class AddNewModsButton extends ConsumerWidget {
   final double iconSize;
@@ -27,7 +28,7 @@ class AddNewModsButton extends ConsumerWidget {
     final isGameRunning = ref.watch(AppState.isGameRunning).value == true;
 
     var isIconOnly = labelWidget != null;
-    return Tooltip(
+    return MovingTooltipWidget.text(
       message: isGameRunning
           ? "Game is running"
           : isIconOnly

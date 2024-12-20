@@ -149,7 +149,7 @@ class _Smol3State extends ConsumerState<Smol3>
     final theme = Theme.of(context);
     // final stateManager = ref.watch(_stateManagerProvider);
     final gridState =
-        ref.watch(appSettings.select((value) => value.modsGridState));
+        ref.watch(appSettings.select((value) => value.oldModsGridState));
     final isGameRunning = ref.watch(AppState.isGameRunning).value == true;
 
     ref.watch(appSettings.select((value) => value.lastStarsectorVersion));
@@ -505,7 +505,7 @@ class _Smol3State extends ConsumerState<Smol3>
                         }
                       },
                       onColumnsMoved: (event) async {
-                        // Without this delay, the grid rebuilds immediately because it's watching modsGridState
+                        // Without this delay, the grid rebuilds immediately because it's watching oldModsGridState
                         // which results in the column header draggable getting "stuck" onscreen.
                         await Future.delayed(Duration(seconds: 1));
                         saveCurrentGridColumnsState();
@@ -561,7 +561,7 @@ class _Smol3State extends ConsumerState<Smol3>
 
   void saveCurrentGridColumnsState() {
     ref.read(appSettings.notifier).update((s) {
-      final savedState = (s.modsGridState ?? ModsGridState());
+      final savedState = (s.oldModsGridState ?? ModsGridState());
       List<ModsGridColumnState> newColumnStates = [];
 
       for (final displayedCol in stateManager?.columns ?? <PlutoColumn>[]) {
@@ -579,7 +579,7 @@ class _Smol3State extends ConsumerState<Smol3>
       }
 
       return s.copyWith(
-          modsGridState: savedState.copyWith(columns: newColumnStates));
+          oldModsGridState: savedState.copyWith(columns: newColumnStates));
     });
   }
 
@@ -596,12 +596,12 @@ class _Smol3State extends ConsumerState<Smol3>
     ref.read(appSettings.notifier).update((s) {
       if (isEnabledRow) {
         return s.copyWith(
-            modsGridState: (s.modsGridState ?? ModsGridState()).copyWith(
+            oldModsGridState: (s.oldModsGridState ?? ModsGridState()).copyWith(
                 isGroupEnabledExpanded:
                     !stateManager.isExpandedGroupedRow(row)));
       } else if (isDisabledRow) {
         return s.copyWith(
-            modsGridState: (s.modsGridState ?? ModsGridState()).copyWith(
+            oldModsGridState: (s.oldModsGridState ?? ModsGridState()).copyWith(
                 isGroupDisabledExpanded:
                     !stateManager.isExpandedGroupedRow(row)));
       }
@@ -636,8 +636,7 @@ class _Smol3State extends ConsumerState<Smol3>
     final newMods = newOrChangedMods.where((mod) {
       return modsInGrid.none((existingModId) => existingModId == mod.id);
     }).toList();
-    final newRows =
-        newMods.map((mod) => createRow(mod)).nonNulls.toList();
+    final newRows = newMods.map((mod) => createRow(mod)).nonNulls.toList();
 
     if (newRows.isNotEmpty) {
       Fimber.d("Adding ${newRows.length} new rows");
@@ -1531,7 +1530,7 @@ class _Smol3State extends ConsumerState<Smol3>
     ];
 
     final savedColumnState =
-        ref.read(appSettings.select((s) => s.modsGridState?.columns));
+        ref.read(appSettings.select((s) => s.oldModsGridState?.columns));
 
     if (savedColumnState == null) {
       return columns;
@@ -1764,7 +1763,7 @@ class CopyModListButtonLarge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
+    return MovingTooltipWidget.text(
         message: "Copy mod list to clipboard\n\nRight-click for ALL mods",
         child: Padding(
           padding: const EdgeInsets.only(left: 4, top: 4, bottom: 4),

@@ -5,6 +5,7 @@ import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/tooltip_frame.dart';
@@ -63,7 +64,7 @@ class _WispGridModRowState extends ConsumerState<WispGridModGroupRowView> {
         : null;
 
     // Calculate the offset of the VRAM column
-    final gridState = ref.watch(modGridStateProvider);
+    final gridState = ref.watch(appSettings.select((s) => s.modsGridState));
     final cellWidthBeforeVramColumn = gridState.columnSettings.entries
         .sortedBy<num>((entry) => entry.value.position)
         .takeWhile((element) => element.key != ModGridHeader.vramImpact)

@@ -50,7 +50,7 @@ class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
 
   @override
   Widget build(BuildContext context) {
-    final gridState = ref.watch(modGridStateProvider);
+    final gridState = ref.watch(appSettings.select((s) => s.modsGridState));
     final isGameRunning = ref.watch(AppState.isGameRunning).value == true;
     final mod = widget.mod;
     final allMods = ref.watch(AppState.mods);
@@ -107,8 +107,7 @@ class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
                                             isEnabled: !isGameRunning,
                                             child: ModVersionSelectionDropdown(
                                               mod: mod,
-                                              width:
-                                                  WispGrid.versionSelectorWidth,
+                                              width: state.width,
                                               showTooltip: false,
                                             ),
                                           ),
@@ -581,7 +580,7 @@ class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
 
     if (unmetDependencies.isEmpty) return Container();
 
-    final gridState = ref.watch(modGridStateProvider);
+    final gridState = ref.watch(appSettings.select((s) => s.modsGridState));
     final cellWidthBeforeNameColumn = gridState.columnSettings.entries
         .sortedBy<num>((entry) => entry.value.position)
         .takeWhile((element) => element.key != ModGridHeader.name)

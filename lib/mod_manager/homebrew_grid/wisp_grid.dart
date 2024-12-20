@@ -9,23 +9,18 @@ import 'package:trios/mod_manager/homebrew_grid/wispgrid_mod_header_row_view.dar
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_mod_row_view.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/vram_estimator/vram_estimator.dart';
 
-// provider for grid state
-final modGridStateProvider = StateProvider<WispGridState>((ref) {
-  return WispGridState(
-      groupingSetting:
-          GroupingSetting(grouping: ModGridGroupEnum.enabledState));
-});
 
 class WispGrid extends ConsumerStatefulWidget {
   static const gridRowSpacing = 10.0;
   final List<Mod?> mods;
   final Function(dynamic mod) onModRowSelected;
 
-  static const double versionSelectorWidth = 130;
+  // static const double versionSelectorWidth = 130;
   static const lightTextOpacity = 0.8;
 
   const WispGrid(
@@ -44,7 +39,7 @@ class _WispGridState extends ConsumerState<WispGrid> {
     final vramEstState = ref.watch(AppState.vramEstimatorProvider);
 
     // todo: get from state
-    final gridState = ref.watch(modGridStateProvider);
+    final gridState = ref.watch(appSettings.select((s) => s.modsGridState));
     final groupingSetting =
         GroupingSetting(grouping: ModGridGroupEnum.enabledState);
 

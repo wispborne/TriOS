@@ -10,6 +10,7 @@ import 'package:trios/utils/generic_settings_notifier.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/util.dart';
 
+import '../../mod_manager/homebrew_grid/wisp_grid_state.dart';
 import '../../mod_manager/mods_grid_state.dart';
 import '../../models/launch_settings.dart';
 import '../../utils/dart_mappable_utils.dart';
@@ -49,6 +50,8 @@ class Settings with SettingsMappable {
   final Directory? modsDir;
   final bool hasCustomModsDir;
   final bool isRulesHotReloadEnabled;
+
+  // Window State
   final double? windowXPos;
   final double? windowYPos;
   final double? windowWidth;
@@ -56,6 +59,7 @@ class Settings with SettingsMappable {
   final bool? isMaximized;
   final bool? isMinimized;
   final TriOSTools? defaultTool;
+
   final String? jre23VmparamsFilename;
   final bool? useJre23;
   final bool showJre23ConsoleWindow;
@@ -67,7 +71,8 @@ class Settings with SettingsMappable {
   final String? lastStarsectorVersion;
   final bool isUpdatesFieldShown;
   @MappableField(hook: SafeDecodeHook())
-  final ModsGridState? modsGridState;
+  final WispGridState modsGridState;
+  final ModsGridState? oldModsGridState;
 
   // Settings Page
   final bool shouldAutoUpdateOnLaunch;
@@ -109,7 +114,10 @@ class Settings with SettingsMappable {
     this.launchSettings = const LaunchSettings(),
     this.lastStarsectorVersion,
     this.isUpdatesFieldShown = true,
-    this.modsGridState,
+    this.modsGridState = const WispGridState(
+        groupingSetting:
+            GroupingSetting(grouping: ModGridGroupEnum.enabledState)),
+    this.oldModsGridState,
     this.shouldAutoUpdateOnLaunch = false,
     this.secondsBetweenModFolderChecks = 15,
     this.toastDurationSeconds = 7,

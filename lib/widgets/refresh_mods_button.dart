@@ -5,6 +5,7 @@ import 'package:trios/widgets/disable.dart';
 
 import '../trios/app_state.dart';
 import 'conditional_wrap.dart';
+import 'moving_tooltip.dart';
 
 class RefreshModsButton extends ConsumerStatefulWidget {
   final double iconSize;
@@ -38,7 +39,7 @@ class _RefreshModsButtonState extends ConsumerState<RefreshModsButton> {
 
     return Disable(
       isEnabled: !isRefreshing,
-      child: Tooltip(
+      child: MovingTooltipWidget.text(
           message: "Refresh mods and recheck versions",
           child: widget.iconOnly
               ? IconButton(

@@ -1,7 +1,6 @@
 import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -23,6 +22,7 @@ import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/vram_estimator/graphics_lib_config_provider.dart';
 import 'package:trios/widgets/disable.dart';
+import 'package:trios/widgets/hoverable_widget.dart';
 import 'package:trios/widgets/mod_type_icon.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/text_with_icon.dart';
@@ -31,7 +31,6 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../dashboard/version_check_icon.dart';
 import '../../trios/download_manager/download_manager.dart';
-import '../../widgets/hoverable_row.dart';
 import '../../widgets/svg_image_icon.dart';
 
 class WispGridModRowView extends ConsumerStatefulWidget {
@@ -64,136 +63,168 @@ class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
           ContextMenuRegion(
             contextMenu:
                 buildModContextMenu(mod, ref, context, showSwapToVersion: true),
-            child: HoverableRow(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              onTap: () => {
-                widget.onModRowSelected(mod),
-              },
-              spacing: WispGrid.gridRowSpacing,
-              children: (gridState.columnSettings.entries.map((columnSetting) {
-                return Builder(builder: (context) {
-                  final header = columnSetting.key;
-                  final state = columnSetting.value;
-                  final isHovering = HoverData.of(context)?.isHovering ?? false;
+            child: HoverableWidget(
+                onTap: () => {
+                      widget.onModRowSelected(mod),
+                    },
+                builder: (context, isHovering) {
+                  return Container(
+                    color:
+                        isHovering ? Colors.black.withValues(alpha: 0.2) : null,
+                    child: Column(
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          spacing: WispGrid.gridRowSpacing,
+                          children: (gridState.columnSettings.entries
+                              .map((columnSetting) {
+                            return Builder(builder: (context) {
+                              final header = columnSetting.key;
+                              final state = columnSetting.value;
 
-                  return switch (header) {
-                    ModGridHeader.favorites => _RowItemContainer(
-                        height: height,
-                        width: state.width,
-                        child: Expanded(
-                          child: FavoriteButton(
-                            favoritesWidth: state.width,
-                            mod: mod,
-                            isRowHighlighted: isHovering,
-                          ),
-                        ),
-                      ),
-                    ModGridHeader.changeVariantButton =>
-                      Builder(builder: (context) {
-                        return ContextMenuRegion(
-                            contextMenu: buildModContextMenu(mod, ref, context,
-                                showSwapToVersion: true),
-                            child: _RowItemContainer(
-                              height: height,
-                              width: state.width,
-                              child: Disable(
-                                isEnabled: !isGameRunning,
-                                child: ModVersionSelectionDropdown(
-                                  mod: mod,
-                                  width: WispGrid.versionSelectorWidth,
-                                  showTooltip: false,
-                                ),
-                              ),
-                            ));
-                      }),
-                    ModGridHeader.modIcon => Builder(builder: (context) {
-                        String? iconPath = bestVersion.iconFilePath;
-                        return _RowItemContainer(
-                          height: height,
-                          width: state.width,
-                          child: iconPath != null
-                              ? Row(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  children: [
-                                    Image.file(
-                                      iconPath.toFile(),
-                                      width: 32,
-                                      height: 32,
+                              return switch (header) {
+                                ModGridHeader.favorites => _RowItemContainer(
+                                    height: height,
+                                    width: state.width,
+                                    child: Expanded(
+                                      child: FavoriteButton(
+                                        favoritesWidth: state.width,
+                                        mod: mod,
+                                        isRowHighlighted: isHovering,
+                                      ),
                                     ),
-                                  ],
-                                )
-                              : const SizedBox(width: 32, height: 32),
-                        );
-                      }),
-                    ModGridHeader.icons => _RowItemContainer(
-                        height: height,
-                        width: state.width,
-                        child: ModTypeIcon(modVariant: bestVersion),
-                      ),
-                    ModGridHeader.name =>
-                      buildNameCell(mod, height, bestVersion, allMods, state),
-                    ModGridHeader.author => Builder(builder: (context) {
-                        final theme = Theme.of(context);
-                        final lightTextColor = theme.colorScheme.onSurface
-                            .withOpacity(WispGrid.lightTextOpacity);
-                        return ContextMenuRegion(
-                            contextMenu: buildModContextMenu(mod, ref, context,
-                                showSwapToVersion: true),
-                            child: _RowItemContainer(
-                              height: height,
-                              width: state.width,
-                              child: Text(
-                                bestVersion.modInfo.author
-                                        ?.toString()
-                                        .replaceAll("\n", "   ") ??
-                                    "(no author)",
-                                maxLines: 1,
-                                style: theme.textTheme.labelLarge
-                                    ?.copyWith(color: lightTextColor),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ));
-                      }),
-                    ModGridHeader.version => _buildVersionCell(
-                        WispGrid.lightTextOpacity,
-                        mod,
-                        height,
-                        isGameRunning,
-                        bestVersion,
-                        state),
-                    ModGridHeader.vramImpact => buildVramCell(
-                        WispGrid.lightTextOpacity, mod, height, state),
-                    ModGridHeader.gameVersion => Builder(builder: (context) {
-                        final theme = Theme.of(context);
+                                  ),
+                                ModGridHeader.changeVariantButton =>
+                                  Builder(builder: (context) {
+                                    return ContextMenuRegion(
+                                        contextMenu: buildModContextMenu(
+                                            mod, ref, context,
+                                            showSwapToVersion: true),
+                                        child: _RowItemContainer(
+                                          height: height,
+                                          width: state.width,
+                                          child: Disable(
+                                            isEnabled: !isGameRunning,
+                                            child: ModVersionSelectionDropdown(
+                                              mod: mod,
+                                              width:
+                                                  WispGrid.versionSelectorWidth,
+                                              showTooltip: false,
+                                            ),
+                                          ),
+                                        ));
+                                  }),
+                                ModGridHeader.modIcon =>
+                                  Builder(builder: (context) {
+                                    String? iconPath = bestVersion.iconFilePath;
+                                    return _RowItemContainer(
+                                      height: height,
+                                      width: state.width,
+                                      child: iconPath != null
+                                          ? Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.start,
+                                              children: [
+                                                Image.file(
+                                                  iconPath.toFile(),
+                                                  width: 32,
+                                                  height: 32,
+                                                ),
+                                              ],
+                                            )
+                                          : const SizedBox(
+                                              width: 32, height: 32),
+                                    );
+                                  }),
+                                ModGridHeader.icons => _RowItemContainer(
+                                    height: height,
+                                    width: state.width,
+                                    child: ModTypeIcon(modVariant: bestVersion),
+                                  ),
+                                ModGridHeader.name => buildNameCell(
+                                    mod, bestVersion, allMods, state),
+                                ModGridHeader.author =>
+                                  Builder(builder: (context) {
+                                    final theme = Theme.of(context);
+                                    final lightTextColor = theme
+                                        .colorScheme.onSurface
+                                        .withOpacity(WispGrid.lightTextOpacity);
+                                    return ContextMenuRegion(
+                                        contextMenu: buildModContextMenu(
+                                            mod, ref, context,
+                                            showSwapToVersion: true),
+                                        child: _RowItemContainer(
+                                          height: height,
+                                          width: state.width,
+                                          child: Text(
+                                            bestVersion.modInfo.author
+                                                    ?.toString()
+                                                    .replaceAll("\n", "   ") ??
+                                                "(no author)",
+                                            maxLines: 1,
+                                            style: theme.textTheme.labelLarge
+                                                ?.copyWith(
+                                                    color: lightTextColor),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ));
+                                  }),
+                                ModGridHeader.version => _buildVersionCell(
+                                    WispGrid.lightTextOpacity,
+                                    mod,
+                                    height,
+                                    isGameRunning,
+                                    bestVersion,
+                                    state),
+                                ModGridHeader.vramImpact => buildVramCell(
+                                    WispGrid.lightTextOpacity,
+                                    mod,
+                                    height,
+                                    state),
+                                ModGridHeader.gameVersion =>
+                                  Builder(builder: (context) {
+                                    final theme = Theme.of(context);
 
-                        return ContextMenuRegion(
-                            contextMenu: buildModContextMenu(mod, ref, context,
-                                showSwapToVersion: true),
-                            child: _RowItemContainer(
-                              height: height,
-                              width: state.width,
-                              child: Opacity(
-                                opacity: WispGrid.lightTextOpacity,
-                                child: Text(
-                                    bestVersion.modInfo.gameVersion ??
-                                        "(no game version)",
-                                    style: compareGameVersions(
-                                                bestVersion.modInfo.gameVersion,
-                                                ref
-                                                    .watch(appSettings)
-                                                    .lastStarsectorVersion) ==
-                                            GameCompatibility.perfectMatch
-                                        ? theme.textTheme.labelLarge
-                                        : theme.textTheme.labelLarge?.copyWith(
-                                            color: ThemeManager
-                                                .vanillaErrorColor)),
-                              ),
-                            ));
-                      }),
-                  };
-                });
-              }).toList()),
-            ),
+                                    return ContextMenuRegion(
+                                        contextMenu: buildModContextMenu(
+                                            mod, ref, context,
+                                            showSwapToVersion: true),
+                                        child: _RowItemContainer(
+                                          height: height,
+                                          width: state.width,
+                                          child: Opacity(
+                                            opacity: WispGrid.lightTextOpacity,
+                                            child: Text(
+                                                bestVersion
+                                                        .modInfo.gameVersion ??
+                                                    "(no game version)",
+                                                style: compareGameVersions(
+                                                            bestVersion.modInfo
+                                                                .gameVersion,
+                                                            ref
+                                                                .watch(
+                                                                    appSettings)
+                                                                .lastStarsectorVersion) ==
+                                                        GameCompatibility
+                                                            .perfectMatch
+                                                    ? theme.textTheme.labelLarge
+                                                    : theme.textTheme.labelLarge
+                                                        ?.copyWith(
+                                                            color: ThemeManager
+                                                                .vanillaErrorColor)),
+                                          ),
+                                        ));
+                                  }),
+                              };
+                            });
+                          }).toList()),
+                        ),
+                        buildMissingDependencyButton(
+                            mod.findFirstEnabled, allMods)
+                      ],
+                    ),
+                  );
+                }),
           ),
         ],
       ),
@@ -504,159 +535,154 @@ class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
     });
   }
 
-  Builder buildNameCell(Mod mod, double height, ModVariant bestVersion,
-      List<Mod> allMods, ModGridColumnSetting state) {
+  Builder buildNameCell(Mod mod, ModVariant bestVersion, List<Mod> allMods,
+      ModGridColumnSetting state) {
     return Builder(builder: (context) {
       final theme = Theme.of(context);
       final enabledVersion = mod.findFirstEnabled;
-      final modCompatibility =
-          ref.watch(AppState.modCompatibility)[enabledVersion?.smolId];
-      final unmetDependencies = modCompatibility?.dependencyChecks
-              .where((e) => !e.isCurrentlySatisfied)
-              .toList() ??
-          [];
 
-      return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        SizedBox(
-          height: height,
-          child: ContextMenuRegion(
-              contextMenu: buildModContextMenu(
-                mod,
-                ref,
-                context,
-                showSwapToVersion: true,
-              ),
-              child: _RowItemContainer(
-                height: _standardRowHeight,
-                width: state.width,
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    minWidth: 600,
-                  ),
-                  child: Text(
-                    bestVersion.modInfo.name ?? "(no name)",
-                    style: GoogleFonts.roboto(
-                      textStyle: theme.textTheme.labelLarge
-                          ?.copyWith(fontWeight: FontWeight.bold),
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  // )
-                ),
-              )),
-        ),
-        if (unmetDependencies.isNotEmpty)
-          OverflowBox(
-            maxWidth: double.infinity,
-            alignment: Alignment.centerLeft,
-            fit: OverflowBoxFit.deferToChild,
-            child: Padding(
-              padding: const EdgeInsets.only(left: 4),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  ...unmetDependencies.map((checkResult) {
-                    final buttonStyle = OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
-                      minimumSize: const Size(60, 34),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(
-                            ThemeManager.cornerRadius), // Rounded corners
-                      ),
-                    );
-
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 4),
-                      child: MovingTooltipWidget.text(
-                        message:
-                            "${enabledVersion?.modInfo.nameOrId} requires ${checkResult.dependency.formattedNameVersion}",
-                        child: Row(
-                          children: [
-                            // if (checkResult.satisfiedAmount is Disabled)
-                            Padding(
-                              padding: const EdgeInsets.only(right: 8),
-                              child: Builder(builder: (context) {
-                                if (checkResult.satisfiedAmount is Disabled) {
-                                  final disabledVariant =
-                                      (checkResult.satisfiedAmount as Disabled)
-                                          .modVariant;
-                                  return OutlinedButton(
-                                      onPressed: () {
-                                        ref
-                                            .read(AppState.modVariants.notifier)
-                                            .changeActiveModVariant(
-                                                disabledVariant!.mod(allMods)!,
-                                                disabledVariant);
-                                      },
-                                      style: buttonStyle,
-                                      child: TextWithIcon(
-                                        text:
-                                            "Enable ${disabledVariant?.modInfo.formattedNameVersion}",
-                                        leading:
-                                            disabledVariant?.iconFilePath ==
-                                                    null
-                                                ? null
-                                                : Image.file(
-                                                    (disabledVariant
-                                                                ?.iconFilePath ??
-                                                            "")
-                                                        .toFile(),
-                                                    height: 20,
-                                                    isAntiAlias: true,
-                                                  ),
-                                        leadingPadding:
-                                            const EdgeInsets.only(right: 4),
-                                      ));
-                                } else {
-                                  final missingDependency =
-                                      checkResult.dependency;
-
-                                  return OutlinedButton(
-                                      onPressed: () async {
-                                        final modName = missingDependency
-                                            .formattedNameVersionId;
-                                        // Advanced search
-                                        final url = Uri.parse(
-                                            'https://www.google.com/search?q=starsector+$modName+download');
-
-                                        if (await canLaunchUrl(url)) {
-                                          await launchUrl(url);
-                                        } else {
-                                          showSnackBar(
-                                              context: context,
-                                              content: const Text(
-                                                  "Couldn't open browser. Google recommends Chrome for a faster experience!"));
-                                        }
-                                      },
-                                      style: buttonStyle,
-                                      child: TextWithIcon(
-                                        text:
-                                            "Search ${missingDependency.formattedNameVersionId}",
-                                        leading: const SvgImageIcon(
-                                          "assets/images/icon-search.svg",
-                                          width: 20,
-                                          height: 20,
-                                        ),
-                                        leadingPadding:
-                                            const EdgeInsets.only(right: 4),
-                                      ));
-                                }
-                              }),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ],
-              ),
-            ),
+      return ContextMenuRegion(
+          contextMenu: buildModContextMenu(
+            mod,
+            ref,
+            context,
+            showSwapToVersion: true,
           ),
-      ]);
+          child: _RowItemContainer(
+            height: _standardRowHeight,
+            width: state.width,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                minWidth: 600,
+              ),
+              child: Text(
+                bestVersion.modInfo.name ?? "(no name)",
+                style: GoogleFonts.roboto(
+                  textStyle: theme.textTheme.labelLarge
+                      ?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              // )
+            ),
+          ));
     });
+  }
+
+  Widget buildMissingDependencyButton(
+      ModVariant? enabledVersion, List<Mod> allMods) {
+    final modCompatibility =
+        ref.watch(AppState.modCompatibility)[enabledVersion?.smolId];
+    final unmetDependencies = modCompatibility?.dependencyChecks
+            .where((e) => !e.isCurrentlySatisfied)
+            .toList() ??
+        [];
+
+    if (unmetDependencies.isEmpty) return Container();
+
+    final gridState = ref.watch(modGridStateProvider);
+    final cellWidthBeforeNameColumn = gridState.columnSettings.entries
+        .sortedBy<num>((entry) => entry.value.position)
+        .takeWhile((element) => element.key != ModGridHeader.name)
+        .map((e) => e.value.width + WispGrid.gridRowSpacing)
+        .sum;
+
+    return Padding(
+      padding: EdgeInsets.only(left: cellWidthBeforeNameColumn, bottom: 4),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ...unmetDependencies.map((checkResult) {
+            final buttonStyle = OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              minimumSize: const Size(60, 34),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(
+                    ThemeManager.cornerRadius), // Rounded corners
+              ),
+            );
+
+            return Padding(
+              padding: const EdgeInsets.only(right: 4),
+              child: MovingTooltipWidget.text(
+                message:
+                    "${enabledVersion?.modInfo.nameOrId} requires ${checkResult.dependency.formattedNameVersion}",
+                child: Row(
+                  children: [
+                    // if (checkResult.satisfiedAmount is Disabled)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: Builder(builder: (context) {
+                        if (checkResult.satisfiedAmount is Disabled) {
+                          final disabledVariant =
+                              (checkResult.satisfiedAmount as Disabled)
+                                  .modVariant;
+                          return OutlinedButton(
+                              onPressed: () {
+                                ref
+                                    .read(AppState.modVariants.notifier)
+                                    .changeActiveModVariant(
+                                        disabledVariant!.mod(allMods)!,
+                                        disabledVariant);
+                              },
+                              style: buttonStyle,
+                              child: TextWithIcon(
+                                text:
+                                    "Enable ${disabledVariant?.modInfo.formattedNameVersion}",
+                                leading: disabledVariant?.iconFilePath == null
+                                    ? null
+                                    : Image.file(
+                                        (disabledVariant?.iconFilePath ?? "")
+                                            .toFile(),
+                                        height: 20,
+                                        isAntiAlias: true,
+                                      ),
+                                leadingPadding: const EdgeInsets.only(right: 4),
+                              ));
+                        } else {
+                          final missingDependency = checkResult.dependency;
+
+                          return OutlinedButton(
+                              onPressed: () async {
+                                final modName =
+                                    missingDependency.formattedNameVersionId;
+                                // Advanced search
+                                final url = Uri.parse(
+                                    'https://www.google.com/search?q=starsector+$modName+download');
+
+                                if (await canLaunchUrl(url)) {
+                                  await launchUrl(url);
+                                } else {
+                                  showSnackBar(
+                                      context: context,
+                                      content: const Text(
+                                          "Couldn't open browser. Google recommends Chrome for a faster experience!"));
+                                }
+                              },
+                              style: buttonStyle,
+                              child: TextWithIcon(
+                                text:
+                                    "Search ${missingDependency.formattedNameVersionId}",
+                                leading: const SvgImageIcon(
+                                  "assets/images/icon-search.svg",
+                                  width: 20,
+                                  height: 20,
+                                ),
+                                leadingPadding: const EdgeInsets.only(right: 4),
+                              ));
+                        }
+                      }),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        ],
+      ),
+    );
   }
 }
 

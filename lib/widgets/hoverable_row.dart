@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:trios/widgets/hoverable_widget.dart';
 
 class HoverableRow extends StatefulWidget {
   final List<Widget> children;
@@ -53,9 +54,7 @@ class _HoverableRowState extends State<HoverableRow> {
           : SystemMouseCursors.basic,
       child: GestureDetector(
         onTap: widget.onTap,
-        // Handle tap if onTap is provided
         behavior: HitTestBehavior.translucent,
-        // Ensure taps are detected even on empty spaces
         child: Container(
           decoration: BoxDecoration(
             color: _isHovering
@@ -84,24 +83,5 @@ class _HoverableRowState extends State<HoverableRow> {
         ),
       ),
     );
-  }
-}
-
-class HoverData extends InheritedWidget {
-  final bool isHovering;
-
-  const HoverData({
-    super.key,
-    required super.child,
-    required this.isHovering,
-  });
-
-  static HoverData? of(BuildContext context) {
-    return context.dependOnInheritedWidgetOfExactType<HoverData>();
-  }
-
-  @override
-  bool updateShouldNotify(HoverData oldWidget) {
-    return oldWidget.isHovering != isHovering;
   }
 }

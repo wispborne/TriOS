@@ -88,7 +88,8 @@ class _WispGridModHeaderRowViewState
     final gridState = ref.watch(appSettings.select((s) => s.modsGridState));
     final theme = Theme.of(context);
 
-    return HoverableWidget(builder: (context, isHovering) {
+    return HoverableWidget(child: Builder(builder: (context) {
+      final isHovering = HoverData.of(context)?.isHovering ?? false;
       return MultiSplitViewTheme(
         data: MultiSplitViewThemeData(
           dividerThickness: WispGrid.gridRowSpacing,
@@ -191,7 +192,7 @@ class _WispGridModHeaderRowViewState
               });
             }),
       );
-    });
+    }));
   }
 }
 

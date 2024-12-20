@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 
 class HoverableWidget extends StatefulWidget {
-  final Widget Function(BuildContext context, bool isHovering) builder;
+  final Widget child;
+  final Color? hoverColor;
+  final BorderRadius? borderRadius;
+  final EdgeInsetsGeometry? padding;
   final VoidCallback? onTap;
 
   const HoverableWidget({
     super.key,
-    required this.builder,
+    required this.child,
+    this.hoverColor,
+    this.borderRadius,
+    this.padding,
     this.onTap,
   });
 
@@ -36,8 +42,39 @@ class _HoverableWidgetState extends State<HoverableWidget> {
       child: GestureDetector(
         onTap: widget.onTap,
         behavior: HitTestBehavior.translucent,
-        child: widget.builder(context, _isHovering),
+        child: Container(
+          decoration: BoxDecoration(
+            color: _isHovering
+                ? widget.hoverColor ?? Colors.black.withOpacity(0.2)
+                : Colors.transparent,
+            borderRadius: widget.borderRadius,
+          ),
+          padding: widget.padding,
+          child: HoverData(
+            isHovering: _isHovering,
+            child: widget.child,
+          ),
+        ),
       ),
     );
+  }
+}
+
+class HoverData extends InheritedWidget {
+  final bool isHovering;
+
+  const HoverData({
+    super.key,
+    required super.child,
+    required this.isHovering,
+  });
+
+  static HoverData? of(BuildContext context) {
+    return context.dependOnInheritedWidgetOfExactType<HoverData>();
+  }
+
+  @override
+  bool updateShouldNotify(HoverData oldWidget) {
+    return oldWidget.isHovering != isHovering;
   }
 }

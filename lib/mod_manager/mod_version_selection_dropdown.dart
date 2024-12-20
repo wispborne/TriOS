@@ -143,7 +143,7 @@ class _ModVersionSelectionDropdownState
           value: null,
           child: Text("Disable", overflow: TextOverflow.ellipsis))));
 
-    var dropdownWidth = buttonWidth;
+    final dropdownWidth = buttonWidth;
     return Tooltip(
       message: widget.showTooltip
           ? (!isSupportedByGameVersion ? gameVersionMessage : "")
@@ -161,6 +161,7 @@ class _ModVersionSelectionDropdownState
               height: buttonHeight,
               width: dropdownWidth,
               overlayColor: WidgetStateColor.transparent),
+          dropdownStyleData: DropdownStyleData(openInterval: Interval(0, 0.15)),
           selectedItemBuilder: (BuildContext context) {
             return items.map((item) {
               return SizedBox(

@@ -18,6 +18,7 @@ import 'package:trios/models/mod_variant.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/thirdparty/dartx/map.dart';
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/trios/mod_metadata.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/vram_estimator/graphics_lib_config_provider.dart';
@@ -30,6 +31,7 @@ import 'package:trios/widgets/tooltip_frame.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../dashboard/version_check_icon.dart';
+import '../../trios/constants.dart';
 import '../../trios/download_manager/download_manager.dart';
 import '../../widgets/svg_image_icon.dart';
 
@@ -202,6 +204,33 @@ class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
                                                   ?.copyWith(
                                                       color: ThemeManager
                                                           .vanillaErrorColor)),
+                                    ),
+                                  ));
+                            }),
+                          ModGridHeader.firstSeen =>
+                            Builder(builder: (context) {
+                              final metadata = ref
+                                  .watch(modsMetadataProvider)
+                                  .valueOrNull
+                                  ?.getMergedModMetadata(mod.id);
+                              final theme = Theme.of(context);
+                              return ContextMenuRegion(
+                                  contextMenu: buildModContextMenu(
+                                      mod, ref, context,
+                                      showSwapToVersion: true),
+                                  child: _RowItemContainer(
+                                    height: height,
+                                    width: state.width,
+                                    child: Opacity(
+                                      opacity: WispGrid.lightTextOpacity,
+                                      child: Text(
+                                          metadata?.let((m) => Constants
+                                                  .dateTimeFormat
+                                                  .format(DateTime
+                                                      .fromMillisecondsSinceEpoch(
+                                                          m.firstSeen))) ??
+                                              "",
+                                          style: theme.textTheme.labelLarge),
                                     ),
                                   ));
                             }),
@@ -751,9 +780,9 @@ class FavoriteButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // todo: implement favorites
-    // final profile = ref.watch(userProfileProvider);
-    final isFavorited = false; //profile.favoriteMods.contains(mod.id);
+    final modMetadata =
+        ref.watch(modsMetadataProvider).valueOrNull?.userMetadata[mod.id];
+    final isFavorited = modMetadata?.isFavorited ?? false;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -765,7 +794,11 @@ class FavoriteButton extends ConsumerWidget {
               cursor: SystemMouseCursors.click,
               child: GestureDetector(
                 onTap: () {
-                  // setModFavorited(ref, mod.id, !isFavorited);
+                  ref.read(modsMetadataProvider.notifier).updateModUserMetadata(
+                      mod.id,
+                      (oldMetadata) => oldMetadata.copyWith(
+                            isFavorited: !(oldMetadata.isFavorited ?? false),
+                          ));
                 },
                 child: Icon(
                   isFavorited ? Icons.favorite : Icons.favorite_border,

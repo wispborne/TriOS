@@ -188,6 +188,16 @@ class _WispGridModHeaderRowViewState
                               child: Text('Game Version',
                                   style: headerTextStyle))),
                     ),
+                  ModGridHeader.firstSeen => DraggableHeader(
+                      showDragHandle: isHovering,
+                      header: header,
+                      child: SizedBox(
+                          width: state.width,
+                          child: SortableHeader(
+                              columnSortField: ModGridSortField.firstSeen,
+                              child: Text('First Seen',
+                                  style: headerTextStyle))),
+                    ),
                 };
               });
             }),

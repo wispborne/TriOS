@@ -43,7 +43,7 @@ abstract class GenericAsyncSettingsManager<T> {
   Future<String> serialize(T obj) async {
     return fileFormat == FileFormat.toml
         ? TomlDocument.fromMap(toMap(obj).removeNullValues()).toString()
-        : jsonEncode(toMap(obj));
+        : toMap(obj).prettyPrintJson();
   }
 
   /// Override to do custom deserialization

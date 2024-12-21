@@ -1,9 +1,12 @@
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/thirdparty/dartx/map.dart';
+import 'package:trios/utils/extensions.dart';
 
 import '../models/mod_variant.dart';
 import '../utils/generic_settings_manager.dart';
 import '../utils/generic_settings_notifier.dart';
+import 'app_state.dart';
 
 part 'mod_metadata.mapper.dart';
 
@@ -17,6 +20,38 @@ class ModMetadataStore extends GenericSettingsAsyncNotifier<ModsMetadata> {
   GenericAsyncSettingsManager<ModsMetadata> createSettingsManager() =>
       _ModsMetadataManager();
 
+  @override
+  Future<ModsMetadata> build() async {
+    final settings = await super.build();
+    bool isDirty = false;
+
+    // Create metadata for all mods and variants if they don't exist.
+    // This sets the firstSeen timestamp to now.
+    final allMods = ref.watch(AppState.mods);
+    for (final mod in allMods) {
+      final baseMetadata = settings.baseMetadata[mod.id] ?? ModMetadata.empty();
+      final baseVariantMetadata = mod.modVariants
+          .map((variant) => MapEntry(
+              variant.smolId,
+              baseMetadata.variantsMetadata[variant.smolId] ??
+                  ModVariantMetadata.empty()))
+          .toMap();
+      final newModMetadata =
+          baseMetadata.copyWith(variantsMetadata: baseVariantMetadata);
+
+      if (settings.baseMetadata[mod.id].hashCode != newModMetadata.hashCode) {
+        settings.baseMetadata[mod.id] = newModMetadata;
+        isDirty = true;
+      }
+    }
+
+    if (isDirty) {
+      settingsManager.writeSettingsToDisk(settings);
+    }
+
+    return settings;
+  }
+
   /// Returns a mod metadata object containing user metadata first and, if not found, base metadata.
   /// Make sure not to write using this, as it combines user and base metadata.
   ModMetadata? getMergedModMetadata(String modId) {
@@ -27,6 +62,30 @@ class ModMetadataStore extends GenericSettingsAsyncNotifier<ModsMetadata> {
   /// Make sure not to write using this, as it combines user and base metadata.
   ModVariantMetadata? getMergedModVariantMetadata(String modId, String smolId) {
     return state.valueOrNull?.getMergedModVariantMetadata(modId, smolId);
+  }
+
+  void updateModUserMetadata(String modId,
+      ModMetadata Function(ModMetadata oldMetadata) newUserMetadata) {
+    final userMetadata = state.valueOrNull?.userMetadata.toMap() ?? {};
+    userMetadata[modId] =
+        newUserMetadata(userMetadata[modId] ?? ModMetadata.empty());
+    update((s) => s.copyWith(userMetadata: userMetadata));
+  }
+
+  void updateModVariantUserMetadata(
+      String modId,
+      String smolId,
+      ModVariantMetadata Function(ModVariantMetadata oldMetadata)
+          newUserMetadata) {
+    final userMetadata = state.valueOrNull?.userMetadata.toMap() ?? {};
+    if (userMetadata[modId] == null) {
+      userMetadata[modId] = ModMetadata.empty();
+    }
+
+    userMetadata[modId]!.variantsMetadata[smolId] = newUserMetadata(
+        userMetadata[modId]!.variantsMetadata[smolId] ??
+            ModVariantMetadata.empty());
+    update((s) => s.copyWith(userMetadata: userMetadata));
   }
 }
 
@@ -72,7 +131,7 @@ class ModsMetadata with ModsMetadataMappable {
 
     return userMetadata != null && baseMetadata != null
         ? userMetadata.backfillWith(baseMetadata)
-        : baseMetadata;
+        : userMetadata ?? baseMetadata;
   }
 
   /// Returns a mod variant metadata object containing user metadata first and, if not found, base metadata.
@@ -82,7 +141,7 @@ class ModsMetadata with ModsMetadataMappable {
 
     return userMetadata != null && baseMetadata != null
         ? userMetadata.backfillWith(baseMetadata)
-        : baseMetadata;
+        : userMetadata ?? baseMetadata;
   }
 }
 
@@ -90,14 +149,17 @@ class ModsMetadata with ModsMetadataMappable {
 @MappableClass()
 class ModMetadata with ModMetadataMappable {
   final Map<SmolId, ModVariantMetadata> variantsMetadata;
-  final int? firstSeen;
+  final int firstSeen;
   final bool? isFavorited;
 
   ModMetadata({
-    required this.variantsMetadata,
+    this.variantsMetadata = const {},
     required this.firstSeen,
-    required this.isFavorited,
+    this.isFavorited,
   });
+
+  static ModMetadata empty() => ModMetadata(
+      variantsMetadata: {}, firstSeen: DateTime.now().millisecondsSinceEpoch);
 
   /// Returns a mod metadata object containing user metadata first and, if not found, base metadata.
   ModMetadata backfillWith(ModMetadata base) {
@@ -109,7 +171,7 @@ class ModMetadata with ModMetadataMappable {
             ? MapEntry(key, value.backfillWith(baseModVariantMetadata))
             : MapEntry(key, value);
       }),
-      firstSeen: firstSeen ?? base.firstSeen,
+      firstSeen: firstSeen,
       isFavorited: isFavorited ?? base.isFavorited,
     );
   }
@@ -118,11 +180,14 @@ class ModMetadata with ModMetadataMappable {
 /// Stores metadata for a mod variant.
 @MappableClass()
 class ModVariantMetadata with ModVariantMetadataMappable {
-  final int? firstSeen;
+  final int firstSeen;
 
   ModVariantMetadata({
     required this.firstSeen,
   });
+
+  static ModVariantMetadata empty() =>
+      ModVariantMetadata(firstSeen: DateTime.now().millisecondsSinceEpoch);
 
   /// Returns a mod variant metadata object containing user metadata first and, if not found, base metadata.
   ModVariantMetadata backfillWith(ModVariantMetadata base) {

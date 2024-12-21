@@ -14,6 +14,9 @@
     - Improved performance.
     - Saves column width, position, and sorting.
     - Switched to reuse my old SMOL code and away from the 3rd-party library :)
+  - "Favorites" to pin a mod on the Mods tab.
+  - Mods can now be sorted by "First Seen".
+    - This is the date the mod was first seen by TriOS, not when it was first installed.
   - May now install a mod from folder, not just from zip/7z/rar.
     - Either drag'n'drop a folder or select the `mod_info.json` file from the Add button.
   - Setting to disable "game is running" check.

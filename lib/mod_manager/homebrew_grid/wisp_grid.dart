@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:easy_sticky_header/easy_sticky_header.dart';
 import 'package:flutter/material.dart';
@@ -14,6 +15,7 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/vram_estimator/vram_estimator.dart';
 
+import '../../trios/mod_metadata.dart';
 
 class WispGrid extends ConsumerStatefulWidget {
   static const gridRowSpacing = 10.0;
@@ -38,7 +40,6 @@ class _WispGridState extends ConsumerState<WispGrid> {
   Widget build(BuildContext context) {
     final vramEstState = ref.watch(AppState.vramEstimatorProvider);
 
-    // todo: get from state
     final gridState = ref.watch(appSettings.select((s) => s.modsGridState));
     final groupingSetting =
         GroupingSetting(grouping: ModGridGroupEnum.enabledState);
@@ -46,6 +47,7 @@ class _WispGridState extends ConsumerState<WispGrid> {
     final grouping =
         groupingSetting.grouping.mapToGroup(); // TODO (SL.modMetadata)
     final activeSortField = gridState.sortField ?? ModGridSortField.name;
+    final metadata = ref.watch(modsMetadataProvider.notifier);
     // ?.let((field) =>
     // ModGridSortField
     //     .values
@@ -53,11 +55,25 @@ class _WispGridState extends ConsumerState<WispGrid> {
     // ModGridSortField.name;
 
     final mods = widget.mods.nonNulls
-        // TODO also sort by favorited, when we get there
-        .sortedByButBetter(
-          (mod) => _getSortValueForMod(mod, activeSortField, vramEstState),
-          isAscending: !gridState.isSortDescending,
+        // Sort by favorites first, then by the active sort field
+        .sorted(
+          (left, right) {
+            final leftMetadata = metadata.getMergedModMetadata(left.id);
+            final rightMetadata = metadata.getMergedModMetadata(right.id);
+            final leftFavorited = leftMetadata?.isFavorited == true;
+            final rightFavorited = rightMetadata?.isFavorited == true;
+
+            if (leftFavorited != rightFavorited) {
+              return leftFavorited ? -1 : 1;
+            }
+
+            return _getSortValueForMod(left, leftMetadata, activeSortField, vramEstState)
+                    ?.compareTo(_getSortValueForMod(
+                        right, rightMetadata, activeSortField, vramEstState)) ??
+                0;
+          },
         )
+        .let((mods) => gridState.isSortDescending ? mods.reversed : mods)
         .groupBy((Mod mod) => grouping.getGroupSortValue(mod))
         .entries
         .let((entries) => groupingSetting.isSortDescending
@@ -149,8 +165,8 @@ class _WispGridState extends ConsumerState<WispGrid> {
   }
 }
 
-Comparable? _getSortValueForMod(Mod mod, ModGridSortField sortField,
-    VramEstimatorState vramEstimatorState) {
+Comparable? _getSortValueForMod(Mod mod, ModMetadata? metadata,
+    ModGridSortField sortField, VramEstimatorState vramEstimatorState) {
   return switch (sortField) {
     ModGridSortField.name =>
       mod.findFirstEnabledOrHighestVersion?.modInfo.nameOrId,
@@ -164,5 +180,6 @@ Comparable? _getSortValueForMod(Mod mod, ModGridSortField sortField,
         ?.maxPossibleBytesForMod,
     ModGridSortField.gameVersion =>
       mod.findFirstEnabledOrHighestVersion?.modInfo.gameVersion,
+    ModGridSortField.firstSeen => metadata?.firstSeen,
   };
 }

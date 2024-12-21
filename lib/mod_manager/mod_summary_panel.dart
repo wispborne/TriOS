@@ -14,7 +14,9 @@ import '../models/mod.dart';
 import '../models/mod_variant.dart';
 import '../trios/app_state.dart';
 import '../trios/constants.dart';
+import '../trios/mod_metadata.dart';
 import '../widgets/mod_type_icon.dart';
+import '../widgets/moving_tooltip.dart';
 import '../widgets/palette_generator_mixin.dart';
 
 class ModSummaryPanel extends ConsumerStatefulWidget {
@@ -86,6 +88,10 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
               ?.versionCheckResultsBySmolId[variant?.smolId];
           if (variant == null) return const SizedBox();
           final iconFilePath = variant.iconFilePath;
+          final modMetadata = ref
+              .watch(modsMetadataProvider)
+              .valueOrNull
+              ?.getMergedModMetadata(selectedMod.id);
 
           // if (iconFilePath != null) {
           //   PaletteGenerator.fromImageProvider(
@@ -287,6 +293,23 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
                                       Text(variant.modInfo.author ??
                                           "(no author)"),
                                     ],
+                                  ),
+                                if (modMetadata != null)
+                                  MovingTooltipWidget.text(
+                                    message: "First seen by TriOS",
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const SizedBox(height: 16),
+                                        const Text("First Seen",
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.bold)),
+                                        Text(Constants.dateTimeFormat.format(
+                                            DateTime.fromMillisecondsSinceEpoch(
+                                                modMetadata.firstSeen))),
+                                      ],
+                                    ),
                                   ),
                                 if (variant.modInfo.description
                                     .isNotNullOrEmpty())

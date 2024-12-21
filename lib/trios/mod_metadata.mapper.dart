@@ -159,13 +159,14 @@ class ModMetadataMapper extends ClassMapperBase<ModMetadata> {
   static Map<String, ModVariantMetadata> _$variantsMetadata(ModMetadata v) =>
       v.variantsMetadata;
   static const Field<ModMetadata, Map<String, ModVariantMetadata>>
-      _f$variantsMetadata = Field('variantsMetadata', _$variantsMetadata);
-  static int? _$firstSeen(ModMetadata v) => v.firstSeen;
+      _f$variantsMetadata =
+      Field('variantsMetadata', _$variantsMetadata, opt: true, def: const {});
+  static int _$firstSeen(ModMetadata v) => v.firstSeen;
   static const Field<ModMetadata, int> _f$firstSeen =
       Field('firstSeen', _$firstSeen);
   static bool? _$isFavorited(ModMetadata v) => v.isFavorited;
   static const Field<ModMetadata, bool> _f$isFavorited =
-      Field('isFavorited', _$isFavorited);
+      Field('isFavorited', _$isFavorited, opt: true);
 
   @override
   final MappableFields<ModMetadata> fields = const {
@@ -266,11 +267,11 @@ class _ModMetadataCopyWithImpl<$R, $Out>
   @override
   $R call(
           {Map<String, ModVariantMetadata>? variantsMetadata,
-          Object? firstSeen = $none,
+          int? firstSeen,
           Object? isFavorited = $none}) =>
       $apply(FieldCopyWithData({
         if (variantsMetadata != null) #variantsMetadata: variantsMetadata,
-        if (firstSeen != $none) #firstSeen: firstSeen,
+        if (firstSeen != null) #firstSeen: firstSeen,
         if (isFavorited != $none) #isFavorited: isFavorited
       }));
   @override
@@ -300,7 +301,7 @@ class ModVariantMetadataMapper extends ClassMapperBase<ModVariantMetadata> {
   @override
   final String id = 'ModVariantMetadata';
 
-  static int? _$firstSeen(ModVariantMetadata v) => v.firstSeen;
+  static int _$firstSeen(ModVariantMetadata v) => v.firstSeen;
   static const Field<ModVariantMetadata, int> _f$firstSeen =
       Field('firstSeen', _$firstSeen);
 
@@ -382,8 +383,8 @@ class _ModVariantMetadataCopyWithImpl<$R, $Out>
   late final ClassMapperBase<ModVariantMetadata> $mapper =
       ModVariantMetadataMapper.ensureInitialized();
   @override
-  $R call({Object? firstSeen = $none}) => $apply(
-      FieldCopyWithData({if (firstSeen != $none) #firstSeen: firstSeen}));
+  $R call({int? firstSeen}) =>
+      $apply(FieldCopyWithData({if (firstSeen != null) #firstSeen: firstSeen}));
   @override
   ModVariantMetadata $make(CopyWithData data) =>
       ModVariantMetadata(firstSeen: data.get(#firstSeen, or: $value.firstSeen));

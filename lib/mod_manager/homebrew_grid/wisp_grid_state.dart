@@ -23,6 +23,7 @@ class WispGridState with WispGridStateMappable {
       ModGridHeader.version: ModGridColumnSetting(position: 6, width: 100),
       ModGridHeader.vramImpact: ModGridColumnSetting(position: 7, width: 100),
       ModGridHeader.gameVersion: ModGridColumnSetting(position: 8, width: 100),
+      ModGridHeader.firstSeen: ModGridColumnSetting(position: 9, width: 100),
     },
     this.groupingSetting =
         const GroupingSetting(grouping: ModGridGroupEnum.enabledState),
@@ -65,6 +66,7 @@ enum ModGridHeader {
   version,
   vramImpact,
   gameVersion,
+  firstSeen,
   // category
 }
 
@@ -85,5 +87,6 @@ enum ModGridSortField {
   version,
   vramImpact,
   gameVersion,
+  firstSeen,
   // category
 }

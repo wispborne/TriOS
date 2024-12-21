@@ -2,6 +2,7 @@ import 'package:dart_mappable/dart_mappable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/thirdparty/dartx/map.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/logging.dart';
 
 import '../models/mod_variant.dart';
 import '../utils/generic_settings_manager.dart';
@@ -22,7 +23,11 @@ class ModMetadataStore extends GenericSettingsAsyncNotifier<ModsMetadata> {
 
   @override
   Future<ModsMetadata> build() async {
+    int timestamp = DateTime.now().millisecondsSinceEpoch;
     final settings = await super.build();
+    Fimber.d(
+        "Read metadata in ${DateTime.now().millisecondsSinceEpoch - timestamp}ms.");
+    timestamp = DateTime.now().millisecondsSinceEpoch;
     bool isDirty = false;
 
     // Create metadata for all mods and variants if they don't exist.
@@ -44,6 +49,9 @@ class ModMetadataStore extends GenericSettingsAsyncNotifier<ModsMetadata> {
         isDirty = true;
       }
     }
+
+    Fimber.d(
+        "Updated metadata in ${DateTime.now().millisecondsSinceEpoch - timestamp}ms.");
 
     if (isDirty) {
       settingsManager.writeSettingsToDisk(settings);
@@ -150,12 +158,12 @@ class ModsMetadata with ModsMetadataMappable {
 class ModMetadata with ModMetadataMappable {
   final Map<SmolId, ModVariantMetadata> variantsMetadata;
   final int firstSeen;
-  final bool? isFavorited;
+  final bool isFavorited;
 
   ModMetadata({
     this.variantsMetadata = const {},
     required this.firstSeen,
-    this.isFavorited,
+    this.isFavorited = false,
   });
 
   static ModMetadata empty() => ModMetadata(
@@ -172,7 +180,7 @@ class ModMetadata with ModMetadataMappable {
             : MapEntry(key, value);
       }),
       firstSeen: firstSeen,
-      isFavorited: isFavorited ?? base.isFavorited,
+      isFavorited: isFavorited,
     );
   }
 }
@@ -192,7 +200,7 @@ class ModVariantMetadata with ModVariantMetadataMappable {
   /// Returns a mod variant metadata object containing user metadata first and, if not found, base metadata.
   ModVariantMetadata backfillWith(ModVariantMetadata base) {
     return ModVariantMetadata(
-      firstSeen: firstSeen ?? base.firstSeen,
+      firstSeen: firstSeen,
     );
   }
 }

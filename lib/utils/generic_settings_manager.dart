@@ -88,6 +88,7 @@ abstract class GenericAsyncSettingsManager<T> {
               ex: e,
               stacktrace: stacktrace);
           await _createBackup();
+          await writeSettingsToDisk(createDefaultState());
           state = createDefaultState();
           return state!;
         }

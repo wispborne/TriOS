@@ -164,9 +164,9 @@ class ModMetadataMapper extends ClassMapperBase<ModMetadata> {
   static int _$firstSeen(ModMetadata v) => v.firstSeen;
   static const Field<ModMetadata, int> _f$firstSeen =
       Field('firstSeen', _$firstSeen);
-  static bool? _$isFavorited(ModMetadata v) => v.isFavorited;
+  static bool _$isFavorited(ModMetadata v) => v.isFavorited;
   static const Field<ModMetadata, bool> _f$isFavorited =
-      Field('isFavorited', _$isFavorited, opt: true);
+      Field('isFavorited', _$isFavorited, opt: true, def: false);
 
   @override
   final MappableFields<ModMetadata> fields = const {
@@ -268,11 +268,11 @@ class _ModMetadataCopyWithImpl<$R, $Out>
   $R call(
           {Map<String, ModVariantMetadata>? variantsMetadata,
           int? firstSeen,
-          Object? isFavorited = $none}) =>
+          bool? isFavorited}) =>
       $apply(FieldCopyWithData({
         if (variantsMetadata != null) #variantsMetadata: variantsMetadata,
         if (firstSeen != null) #firstSeen: firstSeen,
-        if (isFavorited != $none) #isFavorited: isFavorited
+        if (isFavorited != null) #isFavorited: isFavorited
       }));
   @override
   ModMetadata $make(CopyWithData data) => ModMetadata(

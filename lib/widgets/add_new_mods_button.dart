@@ -46,6 +46,7 @@ class AddNewModsButton extends ConsumerWidget {
                     icon: Icon(
                       Icons.add,
                       size: iconSize,
+                      color: Theme.of(context).colorScheme.primary,
                     ),
                   ),
                 )

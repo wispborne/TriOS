@@ -21,8 +21,7 @@ Color? getStateColorForDependencyText(
   return switch (dependencyState) {
     Satisfied _ => null,
     Missing _ => ThemeManager.vanillaErrorColor,
-    Disabled _ =>
-    ThemeManager
+    Disabled _ => ThemeManager
         .vanillaWarningColor, // Disabled means it's present, so we can just enable it.
     VersionInvalid _ => ThemeManager.vanillaErrorColor,
     VersionWarning _ => ThemeManager.vanillaWarningColor,
@@ -31,8 +30,8 @@ Color? getStateColorForDependencyText(
 
 @MappableClass(
     generateMethods: GenerateMethods.copy |
-    GenerateMethods.equals |
-    GenerateMethods.stringify)
+        GenerateMethods.equals |
+        GenerateMethods.stringify)
 class ThemeState with ThemeStateMappable {
   final ThemeData themeData;
   final Map<String, TriOSTheme> availableThemes;
@@ -46,6 +45,8 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
   static const Color vanillaErrorColor = Color.fromARGB(255, 252, 99, 0);
   static const Color vanillaWarningColor = Color.fromARGB(255, 253, 212, 24);
   static const String orbitron = "Orbitron";
+  static const iconOpacity = 0.3;
+  static const iconButtonOpacity = 0.8;
 
   static const bool _isMaterial3 = true;
   static final boxShadow = BoxShadow(
@@ -65,7 +66,7 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
     try {
       _currentTheme = allThemes.getOrElse(
           ref.watch(appSettings.select((s) => s.themeKey ?? "")),
-              () => allThemes.values.first);
+          () => allThemes.values.first);
     } catch (e, st) {
       Fimber.w("Error loading theme from shared preferences.",
           ex: e, stacktrace: st);
@@ -85,7 +86,7 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
 
     try {
       final themesJsonString =
-      await rootBundle.loadString("assets/SMOL_Themes.json");
+          await rootBundle.loadString("assets/SMOL_Themes.json");
       final themesJson = jsonDecode(themesJsonString) as Map<String, dynamic>;
       final themesMap = themesJson["themes"] as Map<String, dynamic>;
 
@@ -124,9 +125,7 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
     state = AsyncData(ThemeState(convertToThemeData(theme), allThemes, theme));
 
     final themeKey =
-        allThemes.entries
-            .firstWhere((entry) => entry.value == theme)
-            .key;
+        allThemes.entries.firstWhere((entry) => entry.value == theme).key;
     ref
         .read(appSettings.notifier)
         .update((s) => s.copyWith(themeKey: themeKey));
@@ -191,7 +190,8 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
         bodyMedium: customTheme.textTheme.bodyMedium?.copyWith(fontSize: 16),
       ),
       iconTheme: customTheme.iconTheme.copyWith(
-        color: customTheme.colorScheme.onSurfaceVariant.withOpacity(0.3),
+        color:
+            customTheme.colorScheme.onSurfaceVariant.withOpacity(iconOpacity),
       ),
       tabBarTheme: customTheme.tabBarTheme.copyWith(
         labelColor: customTheme.colorScheme.onSurface,
@@ -236,6 +236,8 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           side: BorderSide(color: primaryVariant),
+          iconColor:
+              themeBase.colorScheme.onSurface.withValues(alpha: iconButtonOpacity),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -280,28 +282,16 @@ extension PaletteGeneratorExt on PaletteGenerator? {
     }
 
     Color primaryColor =
-        palette.dominantColor?.color ?? Theme
-            .of(context)
-            .colorScheme
-            .primary;
+        palette.dominantColor?.color ?? Theme.of(context).colorScheme.primary;
     Color surfaceColor = palette.darkVibrantColor?.color ??
         palette.darkMutedColor?.color ??
-        Theme
-            .of(context)
-            .colorScheme
-            .surface;
+        Theme.of(context).colorScheme.surface;
     Color onSurfaceColor = palette.lightVibrantColor?.color ??
         palette.lightMutedColor?.color ??
-        Theme
-            .of(context)
-            .colorScheme
-            .onSurface;
+        Theme.of(context).colorScheme.onSurface;
     Color backgroundColor = palette.darkMutedColor?.color ??
         palette.darkVibrantColor?.color ??
-        Theme
-            .of(context)
-            .colorScheme
-            .surface;
+        Theme.of(context).colorScheme.surface;
     // Color buttonBackgroundColor =
     //     palette.darkVibrantColor?.color ?? Colors.white;
     // Color buttonTextColor =
@@ -356,8 +346,7 @@ extension PaletteGeneratorExt on PaletteGenerator? {
         iconTheme: IconThemeData(
           color: onSurfaceColor,
         ),
-        titleTextStyle: Theme
-            .of(context)
+        titleTextStyle: Theme.of(context)
             .textTheme
             .titleLarge
             ?.copyWith(color: onSurfaceColor),
@@ -409,9 +398,7 @@ extension ColorSchemeExt on ThemeData {
 MaterialColor createMaterialColor(Color color) {
   List<double> strengths = <double>[.05];
   final Map<int, Color> swatch = {};
-  final int r = color.red,
-      g = color.green,
-      b = color.blue;
+  final int r = color.red, g = color.green, b = color.blue;
 
   for (int i = 1; i < 10; i++) {
     strengths.add(0.1 * i);
@@ -488,19 +475,15 @@ showSnackBar({
   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
     content: type != null
         ? DefaultTextStyle.merge(
-        child: content,
-        style: const TextStyle(
-            color: Colors.white, fontWeight: FontWeight.bold))
+            child: content,
+            style: const TextStyle(
+                color: Colors.white, fontWeight: FontWeight.bold))
         : content,
     backgroundColor: switch (type) {
       SnackBarType.info => Colors.blue,
       SnackBarType.warn => ThemeManager.vanillaWarningColor,
       SnackBarType.error => ThemeManager.vanillaErrorColor,
-      null =>
-      Theme
-          .of(context)
-          .snackBarTheme
-          .backgroundColor
+      null => Theme.of(context).snackBarTheme.backgroundColor
     },
     elevation: elevation,
     margin: margin,
@@ -534,37 +517,37 @@ showSnackBar({
 class StarsectorTriOSTheme extends TriOSTheme {
   StarsectorTriOSTheme()
       : super(
-    isDark: true,
-    primary: const Color.fromRGBO(73, 252, 255, 1),
-    secondary: const Color.fromRGBO(59, 203, 232, 1),
-    // tertiary: const Color.fromRGBO(0, 255, 255, 1),
-    surface: const Color.fromRGBO(14, 22, 43, 1),
-    surfaceContainer: const Color.fromRGBO(32, 41, 65, 1.0),
-  );
+          isDark: true,
+          primary: const Color.fromRGBO(73, 252, 255, 1),
+          secondary: const Color.fromRGBO(59, 203, 232, 1),
+          // tertiary: const Color.fromRGBO(0, 255, 255, 1),
+          surface: const Color.fromRGBO(14, 22, 43, 1),
+          surfaceContainer: const Color.fromRGBO(32, 41, 65, 1.0),
+        );
 }
 
 class HalloweenTriOSTheme extends TriOSTheme {
   HalloweenTriOSTheme()
       : super(
-    isDark: true,
-    primary: HexColor("#FF0000"),
-    secondary: HexColor("#FF4D00").lighter(10),
-    // tertiary: HexColor("#FF4D00").lighter(20),
-    surface: HexColor("#272121"),
-    surfaceContainer: HexColor("#272121").lighter(3),
-  );
+          isDark: true,
+          primary: HexColor("#FF0000"),
+          secondary: HexColor("#FF4D00").lighter(10),
+          // tertiary: HexColor("#FF4D00").lighter(20),
+          surface: HexColor("#272121"),
+          surfaceContainer: HexColor("#272121").lighter(3),
+        );
 }
 
 class XmasTriOSTheme extends TriOSTheme {
   XmasTriOSTheme()
       : super(
-    isDark: true,
-    primary: HexColor("#f23942").darker(10),
-    secondary: HexColor("#70BA7F").lighter(10),
-    // tertiary:  HexColor("#b47c4b").lighter(30),
-    surface: const Color.fromRGBO(26, 46, 31, 1.0).darker(5),
-    surfaceContainer: HexColor("#171e13").lighter(8),
-  );
+          isDark: true,
+          primary: HexColor("#f23942").darker(10),
+          secondary: HexColor("#70BA7F").lighter(10),
+          // tertiary:  HexColor("#b47c4b").lighter(30),
+          surface: const Color.fromRGBO(26, 46, 31, 1.0).darker(5),
+          surfaceContainer: HexColor("#171e13").lighter(8),
+        );
 }
 
 /// For use with ColorFiltered

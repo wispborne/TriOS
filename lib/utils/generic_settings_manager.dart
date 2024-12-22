@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
+import "package:msgpack_dart/msgpack_dart.dart" as m2;
 import 'package:mutex/mutex.dart';
 import 'package:path/path.dart' as p;
 import 'package:toml/toml.dart';
@@ -10,7 +12,7 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart'; // For path operations
 
 /// Supported file formats for the settings file.
-enum FileFormat { toml, json }
+enum FileFormat { toml, json, msgpack }
 
 final Duration _debounceDuration = Duration(milliseconds: 300);
 
@@ -40,17 +42,27 @@ abstract class GenericAsyncSettingsManager<T> {
   }
 
   /// Override to do custom serialization
-  Future<String> serialize(T obj) async {
-    return fileFormat == FileFormat.toml
-        ? TomlDocument.fromMap(toMap(obj).removeNullValues()).toString()
-        : toMap(obj).prettyPrintJson();
+  Future<Uint8List> serialize(T obj) async {
+    if (fileFormat == FileFormat.toml) {
+      return utf8.encode(
+          TomlDocument.fromMap(toMap(obj).removeNullValues()).toString());
+    } else if (fileFormat == FileFormat.msgpack) {
+      return m2.serialize(toMap(obj));
+    } else {
+      return utf8.encode(toMap(obj).prettyPrintJson());
+    }
   }
 
   /// Override to do custom deserialization
-  Future<T> deserialize(String contents) async {
-    return fileFormat == FileFormat.toml
-        ? fromMap(TomlDocument.parse(contents).toMap())
-        : fromMap(jsonDecode(contents) as Map<String, dynamic>);
+  Future<T> deserialize(Uint8List contents) async {
+    if (fileFormat == FileFormat.toml) {
+      return fromMap(TomlDocument.parse(utf8.decode(contents)).toMap());
+    } else if (fileFormat == FileFormat.msgpack) {
+      return fromMap(
+          (m2.deserialize(contents) as Map<dynamic, dynamic>).cast());
+    } else {
+      return fromMap(jsonDecode(utf8.decode(contents)) as Map<String, dynamic>);
+    }
   }
 
   /// The name of the file where settings will be stored.
@@ -77,7 +89,7 @@ abstract class GenericAsyncSettingsManager<T> {
     return await _mutex.protect(() async {
       if (await settingsFile.exists()) {
         try {
-          final contents = await settingsFile.readAsString();
+          final contents = await settingsFile.readAsBytes();
           final loadedState = await deserialize(contents);
           Fimber.i("$fileName successfully loaded from disk.");
           state = loadedState;
@@ -134,7 +146,7 @@ abstract class GenericAsyncSettingsManager<T> {
 
   Future<void> writeSettingsToDisk(T currentState) async {
     final serializedData = await serialize(currentState);
-    await settingsFile.writeAsString(serializedData);
+    await settingsFile.writeAsBytes(serializedData);
     Fimber.i("$fileName successfully written to disk.");
   }
 

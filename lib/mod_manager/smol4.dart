@@ -253,17 +253,20 @@ class _Smol4State extends ConsumerState<Smol4>
               ],
             ),
             Expanded(
-              child: WispGrid(
-                  mods: modsMatchingSearch,
-                  onModRowSelected: (mod) {
-                    setState(() {
-                      if (selectedMod == mod) {
-                        selectedMod = null;
-                      } else {
-                        selectedMod = mod;
-                      }
-                    });
-                  }),
+              child: Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: WispGrid(
+                    mods: modsMatchingSearch,
+                    onModRowSelected: (mod) {
+                      setState(() {
+                        if (selectedMod == mod) {
+                          selectedMod = null;
+                        } else {
+                          selectedMod = mod;
+                        }
+                      });
+                    }),
+              ),
             ),
           ],
         ),

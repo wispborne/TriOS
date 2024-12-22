@@ -441,23 +441,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       ]);
                     }),
                     SettingsGroup(name: "Misc", children: [
-                      Padding(
-                        padding: const EdgeInsets.only(top: 16),
-                        child: MovingTooltipWidget.text(
-                          message: "Opens the onboarding page again.",
-                          child: ElevatedButton(
-                            onPressed: () {
-                              showDialog(
-                                context: context,
-                                builder: (context) =>
-                                    const OnboardingCarousel(),
-                                barrierDismissible: false,
-                              );
-                            },
-                            child: const Text('Open Onboarding'),
-                          ),
-                        ),
-                      ),
                       // Slider for number of seconds between mod info update checks (secondsBetweenModFolderChecks in mod_manager_logic.dart).
                       ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 400),
@@ -568,6 +551,23 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                 ),
                               ],
                             ),
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 16),
+                        child: MovingTooltipWidget.text(
+                          message: "Opens the onboarding page again.",
+                          child: ElevatedButton(
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (context) =>
+                                    const OnboardingCarousel(),
+                                barrierDismissible: false,
+                              );
+                            },
+                            child: const Text('Open Onboarding'),
                           ),
                         ),
                       ),

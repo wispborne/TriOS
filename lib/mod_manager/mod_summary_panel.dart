@@ -3,6 +3,7 @@ import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:trios/modBrowser/mod_browser_manager.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/themes/theme_manager.dart';
@@ -92,6 +93,7 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
               .watch(modsMetadataProvider)
               .valueOrNull
               ?.getMergedModMetadata(selectedMod.id);
+          final forumThreadId = versionCheck?.remoteVersion?.modThreadId;
 
           // if (iconFilePath != null) {
           //   PaletteGenerator.fromImageProvider(
@@ -230,9 +232,7 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
                                           ],
                                         ),
                                       )),
-                                if (versionCheck?.remoteVersion?.modThreadId
-                                        .isNotNullOrEmpty() ??
-                                    false)
+                                if (forumThreadId.isNotNullOrEmpty() ?? false)
                                   Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
@@ -240,7 +240,7 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
                                       const SizedBox(height: 16),
                                       Builder(builder: (context) {
                                         final uri = Uri.parse(
-                                            "${Constants.forumModPageUrl}${versionCheck?.remoteVersion?.modThreadId}");
+                                            "${Constants.forumModPageUrl}${forumThreadId}");
                                         return Tooltip(
                                           message: uri.toString(),
                                           child: Opacity(
@@ -311,6 +311,14 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
                                       ],
                                     ),
                                   ),
+                                Builder(builder: (context) {
+                                  if (forumThreadId != null) {
+                                    
+                                  }
+
+                                  return Container();
+                                }),
+
                                 if (variant.modInfo.description
                                     .isNotNullOrEmpty())
                                   Column(

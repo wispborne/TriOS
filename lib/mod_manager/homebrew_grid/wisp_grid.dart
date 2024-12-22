@@ -67,7 +67,8 @@ class _WispGridState extends ConsumerState<WispGrid> {
               return leftFavorited ? -1 : 1;
             }
 
-            return _getSortValueForMod(left, leftMetadata, activeSortField, vramEstState)
+            return _getSortValueForMod(
+                        left, leftMetadata, activeSortField, vramEstState)
                     ?.compareTo(_getSortValueForMod(
                         right, rightMetadata, activeSortField, vramEstState)) ??
                 0;

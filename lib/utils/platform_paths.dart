@@ -17,7 +17,8 @@ File getVmparamsFile(Directory gamePath, {TargetPlatform? platform}) {
       .normalize;
 }
 
-File getJre23VmparamsFile(Directory gamePath) => gamePath.resolve("Miko_R3.txt").toFile().normalize;
+File getJre23VmparamsFile(Directory gamePath) =>
+    gamePath.resolve("Miko_R3.txt").toFile().normalize;
 
 Directory getJreDir(Directory gamePath, {TargetPlatform? platform}) {
   return switch (platform ?? currentPlatform) {
@@ -34,8 +35,7 @@ File getJavaExecutable(Directory jrePath, {TargetPlatform? platform}) {
   return switch (platform ?? currentPlatform) {
     TargetPlatform.windows => jrePath.resolve("bin/java.exe"),
     TargetPlatform.linux => jrePath.resolve("bin/java"), // not sure about this
-    TargetPlatform.macOS =>
-      jrePath.resolve("bin/java"), // not sure about this
+    TargetPlatform.macOS => jrePath.resolve("bin/java"), // not sure about this
     _ => throw UnsupportedError("Platform not supported: $currentPlatform"),
   }
       .toFile()
@@ -54,7 +54,8 @@ File getLogPath(Directory gamePath, {TargetPlatform? platform}) {
       .normalize;
 }
 
-FileSystemEntity getGameExecutable(Directory gamePath, {TargetPlatform? platform}) {
+FileSystemEntity getGameExecutable(Directory gamePath,
+    {TargetPlatform? platform}) {
   return switch (platform ?? currentPlatform) {
     TargetPlatform.windows => gamePath.resolve("starsector.exe"),
     TargetPlatform.linux => gamePath.resolve("starsector.sh"),
@@ -65,10 +66,15 @@ FileSystemEntity getGameExecutable(Directory gamePath, {TargetPlatform? platform
       .normalize;
 }
 
-
 bool validateGameFolderPath(String newGameDir) {
   try {
     if (newGameDir.isEmpty) return false;
+    if (Platform.isMacOS) {
+      return newGameDir
+          .toDirectory()
+          .resolve("Contents/MacOS/starsector_mac.sh")
+          .existsSync();
+    }
     return getGameExecutable(newGameDir.toDirectory()).existsSync();
   } catch (e) {
     Fimber.w("Error validating game folder path", ex: e);

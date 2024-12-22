@@ -33,6 +33,9 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
   bool enableMultipleVersions = true;
   int? lastNVersionsSetting;
   bool allowCrashReporting = false;
+  List<Widget> pages = [];
+
+  int get totalPages => pages.length;
 
   @override
   void initState() {
@@ -44,6 +47,11 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
     lastNVersionsSetting =
         enableMultipleVersions ? settings.keepLastNVersions : null;
     allowCrashReporting = settings.allowCrashReporting ?? false;
+    pages = [
+      _buildGameDirectoryAndModPreferencesPage(),
+      _buildCrashReportingPage(),
+      if (Platform.isMacOS) _buildMacOSPage(),
+    ];
   }
 
   @override
@@ -53,29 +61,39 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
         canPop: false,
         child: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: Column(
+          child: Stack(
             children: [
-              TriOSAppIcon(),
-              const Text(
-                "Setup",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: PageView(
-                  controller: _pageController,
-                  onPageChanged: (index) {
-                    setState(() {
-                      _currentPage = index;
-                    });
-                  },
-                  children: [
-                    _buildGameDirectoryAndModPreferencesPage(),
-                    _buildCrashReportingPage(),
-                  ],
+              Align(
+                alignment: Alignment.topRight,
+                child: MovingTooltipWidget.text(
+                  message: "ಠ_ಠ",
+                  child: IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.close)),
                 ),
               ),
-              _buildBottomNavigation(),
+              Column(
+                children: [
+                  TriOSAppIcon(),
+                  const Text(
+                    "Setup",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 16),
+                  Expanded(
+                    child: PageView(
+                      controller: _pageController,
+                      onPageChanged: (index) {
+                        setState(() {
+                          _currentPage = index;
+                        });
+                      },
+                      children: pages,
+                    ),
+                  ),
+                  _buildBottomNavigation(),
+                ],
+              ),
             ],
           ),
         ),
@@ -302,9 +320,32 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
     );
   }
 
-  Widget _buildBottomNavigation() {
-    final totalPages = 2;
+  Widget _buildMacOSPage() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text("MacOS Instructions",
+            style: TextStyle(fontWeight: FontWeight.bold)),
+        Text(
+            "A few steps are required for full functionality (self-update, mod updates)."),
+        const SizedBox(height: 16),
+        Text(
+          "1. Open Terminal"
+          "\n2. Run the following commands:",
+        ),
+        const SizedBox(height: 8),
+        Text(
+          '/bin/bash -c "\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"',
+        ),
+        const SizedBox(height: 8),
+        Text(
+          "brew install xz zstd zlib",
+        ),
+      ]),
+    );
+  }
 
+  Widget _buildBottomNavigation() {
     return Stack(
       children: [
         Row(

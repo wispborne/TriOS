@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:toastification/toastification.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
+import 'package:trios/onboarding/onboarding_page.dart';
 import 'package:trios/thirdparty/dartx/comparable.dart';
 import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/thirdparty/dartx/string.dart';
@@ -440,6 +441,23 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       ]);
                     }),
                     SettingsGroup(name: "Misc", children: [
+                      Padding(
+                        padding: const EdgeInsets.only(top: 16),
+                        child: MovingTooltipWidget.text(
+                          message: "Opens the onboarding page again.",
+                          child: ElevatedButton(
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (context) =>
+                                    const OnboardingCarousel(),
+                                barrierDismissible: false,
+                              );
+                            },
+                            child: const Text('Open Onboarding'),
+                          ),
+                        ),
+                      ),
                       // Slider for number of seconds between mod info update checks (secondsBetweenModFolderChecks in mod_manager_logic.dart).
                       ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 400),

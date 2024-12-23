@@ -20,6 +20,7 @@
   - May now install a mod from folder, not just from zip/7z/rar.
     - Either drag'n'drop a folder or select the `mod_info.json` file from the Add button.
   - Setting to disable "game is running" check.
+  - Warning if user has 2+ enabled mod folders for the same mod.
 - Fixed
   - Mod grid no longer resets itself constantly.
     - e.g. sorting now works.

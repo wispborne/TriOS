@@ -245,7 +245,8 @@ Future<RemoteVersionCheckResult> checkRemoteVersion(
     }
   } catch (e, st) {
     Fimber.w(
-        "Error fetching remote version info for ${modVariant.modInfo.id}: $e\n$st");
+        "Error fetching remote version info for ${modVariant.modInfo.id}");
+    Fimber.v(() => '', ex: e, stacktrace: st);
     return RemoteVersionCheckResult(null, remoteVersionUrl)
       ..smolId = modVariant.smolId
       ..error = e;

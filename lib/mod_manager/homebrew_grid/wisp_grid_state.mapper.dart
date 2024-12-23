@@ -159,6 +159,8 @@ class ModGridSortFieldMapper extends EnumMapper<ModGridSortField> {
     switch (value) {
       case 'enabledState':
         return ModGridSortField.enabledState;
+      case 'icons':
+        return ModGridSortField.icons;
       case 'name':
         return ModGridSortField.name;
       case 'author':
@@ -181,6 +183,8 @@ class ModGridSortFieldMapper extends EnumMapper<ModGridSortField> {
     switch (self) {
       case ModGridSortField.enabledState:
         return 'enabledState';
+      case ModGridSortField.icons:
+        return 'icons';
       case ModGridSortField.name:
         return 'name';
       case ModGridSortField.author:

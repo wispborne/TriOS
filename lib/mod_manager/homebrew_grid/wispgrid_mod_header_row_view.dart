@@ -1,11 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
 import 'package:trios/thirdparty/dartx/map.dart';
 import 'package:trios/trios/settings/settings.dart';
-import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/MultiSplitViewMixin.dart';
 import 'package:trios/widgets/hoverable_widget.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
@@ -28,9 +28,7 @@ class _WispGridModHeaderRowViewState
   @override
   List<Area> get areas => ref
       .read(appSettings.select((s) => s.modsGridState))
-      .columnSettings
-      .entries
-      .sortedByButBetter((entry) => entry.value.position)
+      .sortedVisibleColumns
       .map((entry) => Area(id: entry.key.toString(), size: entry.value.width))
       .toList();
 
@@ -69,7 +67,8 @@ class _WispGridModHeaderRowViewState
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _isResizing = false;
       ref.read(appSettings.notifier).update((state) {
-        final columnSettings = state.modsGridState.columnSettings.toMap();
+        final columnSettings =
+            Map.fromEntries(state.modsGridState.sortedColumns);
         for (final area in multiSplitController.areas) {
           final header = ModGridHeader.values
               .firstWhere((header) => header.toString() == area.id);
@@ -88,121 +87,176 @@ class _WispGridModHeaderRowViewState
     final gridState = ref.watch(appSettings.select((s) => s.modsGridState));
     final theme = Theme.of(context);
 
-    return HoverableWidget(child: Builder(builder: (context) {
-      final isHovering = HoverData.of(context)?.isHovering ?? false;
-      return MultiSplitViewTheme(
-        data: MultiSplitViewThemeData(
-          dividerThickness: WispGrid.gridRowSpacing,
-          dividerPainter: DividerPainters.grooved1(
-            color: isHovering
-                ? theme.colorScheme.onSurface.withOpacity(_opacity)
-                : Colors.transparent,
-            highlightedColor: theme.colorScheme.onSurface,
-            size: 20,
-            animationDuration: const Duration(milliseconds: 100),
-            highlightedSize: 20,
+    return ContextMenuRegion(
+      contextMenu: ContextMenu(
+        entries: [
+          MenuItem(
+              label: 'Reset grid',
+              icon: Icons.settings_backup_restore,
+              onSelected: () {
+                ref
+                    .read(appSettings.notifier)
+                    .update((s) => s.copyWith(modsGridState: WispGridState()));
+              }),
+          MenuDivider(),
+          // Visibility toggles
+          ...gridState.columnSettings.entries.map((columnSetting) {
+            final header = columnSetting.key;
+            final isVisible =
+                gridState.columnSettings[header]?.isVisible ?? true;
+            return MenuItem(
+              label: header.displayName,
+              icon: isVisible ? Icons.visibility : Icons.visibility_off,
+              onSelected: () {
+                ref.read(appSettings.notifier).update((s) {
+                  final columnSettings = s.modsGridState.columnSettings.toMap();
+                  final headerSetting = columnSettings[header]!;
+                  columnSettings[header] = headerSetting.copyWith(
+                      isVisible: !headerSetting.isVisible);
+
+                  return s.copyWith(
+                      modsGridState: s.modsGridState
+                          .copyWith(columnSettings: columnSettings));
+                });
+              },
+            );
+          })
+        ],
+      ),
+      child: HoverableWidget(child: Builder(builder: (context) {
+        final isHovering = HoverData.of(context)?.isHovering ?? false;
+        return MultiSplitViewTheme(
+          data: MultiSplitViewThemeData(
+            dividerThickness: WispGrid.gridRowSpacing,
+            dividerPainter: DividerPainters.grooved1(
+              color: isHovering
+                  ? theme.colorScheme.onSurface.withOpacity(_opacity)
+                  : Colors.transparent,
+              highlightedColor: theme.colorScheme.onSurface,
+              size: 20,
+              animationDuration: const Duration(milliseconds: 100),
+              highlightedSize: 20,
+            ),
           ),
-        ),
-        child: MultiSplitView(
-            controller: multiSplitController,
-            axis: Axis.horizontal,
-            builder: (context, area) {
-              // child: Row(
-              // children: (gridState.columnSettings.entries.map((columnSetting) {
-              final columnSetting =
-                  gridState.columnSettings.entries.elementAt(area.index);
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+                horizontal: WispGrid.gridRowSpacing * 2),
+            // idk why multiplying by 2 works
+            child: MultiSplitView(
+                controller: multiSplitController,
+                axis: Axis.horizontal,
+                builder: (context, area) {
+                  // child: Row(
+                  // children: (gridState.columnSettings.entries.map((columnSetting) {
+                  final columnSetting =
+                      gridState.sortedVisibleColumns.elementAt(area.index);
 
-              return Builder(builder: (context) {
-                final header = columnSetting.key;
-                final state = columnSetting.value;
-                final headerTextStyle = Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(fontWeight: FontWeight.bold);
+                  return Builder(builder: (context) {
+                    final header = columnSetting.key;
+                    final state = columnSetting.value;
+                    final headerTextStyle = Theme.of(context)
+                        .textTheme
+                        .bodySmall
+                        ?.copyWith(fontWeight: FontWeight.bold);
 
-                return switch (header) {
-                  ModGridHeader.favorites => DraggableHeader(
-                      showDragHandle: isHovering,
-                      header: header,
-                      child: SizedBox(
-                        width: state.width,
-                        child: Container(),
-                      ),
-                    ),
-                  ModGridHeader.changeVariantButton => DraggableHeader(
-                      showDragHandle: isHovering,
-                      header: header,
-                      child: SizedBox(width: state.width, child: Container())),
-                  ModGridHeader.icons => DraggableHeader(
-                      showDragHandle: isHovering,
-                      header: header,
-                      child: SizedBox(width: state.width, child: Container())),
-                  ModGridHeader.modIcon => DraggableHeader(
-                      showDragHandle: isHovering,
-                      header: header,
-                      child: SizedBox(width: state.width, child: Container())),
-                  ModGridHeader.name => DraggableHeader(
-                      showDragHandle: isHovering,
-                      header: header,
-                      child: SizedBox(
-                          width: state.width,
+                    return switch (header) {
+                      ModGridHeader.favorites => DraggableHeader(
+                          showDragHandle: isHovering,
+                          header: header,
+                          child: SizedBox(
+                            width: state.width,
+                            child: Container(),
+                          ),
+                        ),
+                      ModGridHeader.changeVariantButton => DraggableHeader(
+                          showDragHandle: isHovering,
+                          header: header,
+                          child:
+                              SizedBox(width: state.width, child: Container())),
+                      ModGridHeader.icons => DraggableHeader(
+                          showDragHandle: isHovering,
+                          header: header,
                           child: SortableHeader(
-                              columnSortField: ModGridSortField.name,
-                              child: Text('Name', style: headerTextStyle))),
-                    ),
-                  ModGridHeader.author => DraggableHeader(
-                      showDragHandle: isHovering,
-                      header: header,
-                      child: SizedBox(
-                          width: state.width,
-                          child: SortableHeader(
-                              columnSortField: ModGridSortField.author,
-                              child: Text('Author', style: headerTextStyle))),
-                    ),
-                  ModGridHeader.version => DraggableHeader(
-                      showDragHandle: isHovering,
-                      header: header,
-                      child: SizedBox(
-                          width: state.width,
-                          child: SortableHeader(
-                              columnSortField: ModGridSortField.version,
-                              child: Text('Version', style: headerTextStyle))),
-                    ),
-                  ModGridHeader.vramImpact => DraggableHeader(
-                      showDragHandle: isHovering,
-                      header: header,
-                      child: SizedBox(
-                          width: state.width,
-                          child: SortableHeader(
-                              columnSortField: ModGridSortField.vramImpact,
-                              child:
-                                  Text('VRAM Impact', style: headerTextStyle))),
-                    ),
-                  ModGridHeader.gameVersion => DraggableHeader(
-                      showDragHandle: isHovering,
-                      header: header,
-                      child: SizedBox(
-                          width: state.width,
-                          child: SortableHeader(
-                              columnSortField: ModGridSortField.gameVersion,
-                              child: Text('Game Version',
-                                  style: headerTextStyle))),
-                    ),
-                  ModGridHeader.firstSeen => DraggableHeader(
-                      showDragHandle: isHovering,
-                      header: header,
-                      child: SizedBox(
-                          width: state.width,
-                          child: SortableHeader(
-                              columnSortField: ModGridSortField.firstSeen,
-                              child: Text('First Seen',
-                                  style: headerTextStyle))),
-                    ),
-                };
-              });
-            }),
-      );
-    }));
+                              columnSortField: ModGridSortField.icons,
+                              child: SizedBox(
+                                  width: state.width, child: Container()))),
+                      ModGridHeader.modIcon => DraggableHeader(
+                          showDragHandle: isHovering,
+                          header: header,
+                          child:
+                              SizedBox(width: state.width, child: Container())),
+                      ModGridHeader.name => DraggableHeader(
+                          showDragHandle: isHovering,
+                          header: header,
+                          child: SizedBox(
+                              width: state.width,
+                              child: SortableHeader(
+                                  columnSortField: ModGridSortField.name,
+                                  child: Text('Name', style: headerTextStyle))),
+                        ),
+                      ModGridHeader.author => DraggableHeader(
+                          showDragHandle: isHovering,
+                          header: header,
+                          child: SizedBox(
+                              width: state.width,
+                              child: SortableHeader(
+                                  columnSortField: ModGridSortField.author,
+                                  child:
+                                      Text('Author', style: headerTextStyle))),
+                        ),
+                      ModGridHeader.version => DraggableHeader(
+                          showDragHandle: isHovering,
+                          header: header,
+                          child: SizedBox(
+                              width: state.width,
+                              child: SortableHeader(
+                                  columnSortField: ModGridSortField.version,
+                                  child:
+                                      Text('Version', style: headerTextStyle))),
+                        ),
+                      ModGridHeader.vramImpact => DraggableHeader(
+                          showDragHandle: isHovering,
+                          header: header,
+                          child: SizedBox(
+                              width: state.width,
+                              child: MovingTooltipWidget.text(
+                                message:
+                                    'An *estimate* of how much VRAM is used based on the images in the mod folder.'
+                                    '\nThis is typically a worst-case estimate, and may be inaccurate.',
+                                child: SortableHeader(
+                                    columnSortField:
+                                        ModGridSortField.vramImpact,
+                                    child: Text('VRAM Est.',
+                                        style: headerTextStyle)),
+                              )),
+                        ),
+                      ModGridHeader.gameVersion => DraggableHeader(
+                          showDragHandle: isHovering,
+                          header: header,
+                          child: SizedBox(
+                              width: state.width,
+                              child: SortableHeader(
+                                  columnSortField: ModGridSortField.gameVersion,
+                                  child: Text('Game Version',
+                                      style: headerTextStyle))),
+                        ),
+                      ModGridHeader.firstSeen => DraggableHeader(
+                          showDragHandle: isHovering,
+                          header: header,
+                          child: SizedBox(
+                              width: state.width,
+                              child: SortableHeader(
+                                  columnSortField: ModGridSortField.firstSeen,
+                                  child: Text('First Seen',
+                                      style: headerTextStyle))),
+                        ),
+                    };
+                  });
+                }),
+          ),
+        );
+      })),
+    );
   }
 }
 
@@ -221,8 +275,8 @@ class DraggableHeader extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     var gridState = ref.watch(appSettings.select((s) => s.modsGridState));
-    final isFirst = gridState.columnSettings.entries.firstOrNull?.key == header;
-    final isLast = gridState.columnSettings.entries.lastOrNull?.key == header;
+    final isFirst = gridState.sortedVisibleColumns.firstOrNull?.key == header;
+    final isLast = gridState.sortedVisibleColumns.lastOrNull?.key == header;
 
     Widget draggableChild(bool isHovered) {
       return Stack(

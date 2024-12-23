@@ -18,12 +18,10 @@ import 'package:trios/vram_estimator/vram_estimator.dart';
 import '../../trios/mod_metadata.dart';
 
 class WispGrid extends ConsumerStatefulWidget {
-  static const gridRowSpacing = 10.0;
+  static const gridRowSpacing = 8.0;
+  static const lightTextOpacity = 0.8;
   final List<Mod?> mods;
   final Function(dynamic mod) onModRowSelected;
-
-  // static const double versionSelectorWidth = 130;
-  static const lightTextOpacity = 0.8;
 
   const WispGrid(
       {super.key, required this.mods, required this.onModRowSelected});
@@ -48,11 +46,6 @@ class _WispGridState extends ConsumerState<WispGrid> {
         groupingSetting.grouping.mapToGroup(); // TODO (SL.modMetadata)
     final activeSortField = gridState.sortField ?? ModGridSortField.name;
     final metadata = ref.watch(modsMetadataProvider.notifier);
-    // ?.let((field) =>
-    // ModGridSortField
-    //     .values
-    //     .enumFromStringCaseInsensitive<ModGridSortField>(field)) ??
-    // ModGridSortField.name;
 
     final mods = widget.mods.nonNulls
         // Sort by favorites first, then by the active sort field
@@ -116,23 +109,10 @@ class _WispGridState extends ConsumerState<WispGrid> {
                           .toList();
 
                   return <Widget>[header, ...items];
-                  // sticky header logic here in SMOL, needs to be added somehow
-                  // stickyHeader {
-                  //     ModGridSectionHeader(
-                  //         contentPadding = contentPadding,
-                  //         isCollapsed = isCollapsed,
-                  //         setCollapsed = { collapseStates[modState] = it },
-                  //         groupName = groupName,
-                  //         modsInGroup = modsInGroup,
-                  //         vramPosition = vramPosition
-                  //     )
-                  // }
-                  // return isCollapsed ? null : modsInGroup;
                 })
                 .nonNulls
                 .toList();
 
-    // final flattenedList = displayedMods.expand((element) => element).toList();
 
     // TODO smooth scrolling: https://github.com/dridino/smooth_list_view/blob/main/lib/smooth_list_view.dart
     return StickyHeader(
@@ -150,12 +130,10 @@ class _WispGridState extends ConsumerState<WispGrid> {
                   index: index,
                   child: item,
                 );
-                // return WispGridModHeaderRowView();
               }
 
               try {
-                // final mod = displayedMods[index - 1]; // -1 for header
-                return item; //WispGridModRowView(mod: mod);
+                return item;
               } catch (e) {
                 Fimber.v(() => 'Error in WispGrid: $e');
                 return Text("Incoherent screaming");
@@ -169,6 +147,13 @@ class _WispGridState extends ConsumerState<WispGrid> {
 Comparable? _getSortValueForMod(Mod mod, ModMetadata? metadata,
     ModGridSortField sortField, VramEstimatorState vramEstimatorState) {
   return switch (sortField) {
+    ModGridSortField.icons =>
+      mod.findFirstEnabledOrHighestVersion?.modInfo.isUtility == true
+          ? "utility"
+          : mod.findFirstEnabledOrHighestVersion?.modInfo.isTotalConversion ==
+                  true
+              ? "total conversion"
+              : "other",
     ModGridSortField.name =>
       mod.findFirstEnabledOrHighestVersion?.modInfo.nameOrId,
     ModGridSortField.enabledState => mod.isEnabledOnUi.toComparable(),

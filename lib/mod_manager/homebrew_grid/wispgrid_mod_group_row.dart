@@ -65,8 +65,7 @@ class _WispGridModRowState extends ConsumerState<WispGridModGroupRowView> {
 
     // Calculate the offset of the VRAM column
     final gridState = ref.watch(appSettings.select((s) => s.modsGridState));
-    final cellWidthBeforeVramColumn = gridState.columnSettings.entries
-        .sortedBy<num>((entry) => entry.value.position)
+    final cellWidthBeforeVramColumn = gridState.sortedVisibleColumns
         .takeWhile((element) => element.key != ModGridHeader.vramImpact)
         .map((e) => e.value.width + WispGrid.gridRowSpacing)
         .sum;
@@ -110,7 +109,7 @@ class _WispGridModRowState extends ConsumerState<WispGridModGroupRowView> {
                 ),
                 Positioned(
                   // Subtract padding added to group that isn't present on the mod row
-                  left: cellWidthBeforeVramColumn - 20,
+                  left: cellWidthBeforeVramColumn - 20 + WispGrid.gridRowSpacing,
                   child: Padding(
                       padding: EdgeInsets.only(right: 8, left: 0),
                       child: MovingTooltipWidget(

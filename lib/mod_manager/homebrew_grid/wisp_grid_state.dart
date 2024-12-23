@@ -1,4 +1,5 @@
 import 'package:dart_mappable/dart_mappable.dart';
+import 'package:trios/utils/extensions.dart';
 
 part 'wisp_grid_state.mapper.dart';
 
@@ -28,6 +29,15 @@ class WispGridState with WispGridStateMappable {
     this.groupingSetting =
         const GroupingSetting(grouping: ModGridGroupEnum.enabledState),
   });
+
+  List<MapEntry<ModGridHeader, ModGridColumnSetting>> get sortedColumns {
+    return columnSettings.entries
+        .sortedByButBetter((entry) => entry.value.position);
+  }
+
+  List<MapEntry<ModGridHeader, ModGridColumnSetting>> get sortedVisibleColumns {
+    return sortedColumns.where((entry) => entry.value.isVisible).toList();
+  }
 }
 
 @MappableClass()
@@ -70,6 +80,33 @@ enum ModGridHeader {
   // category
 }
 
+extension ModGridHeaderName on ModGridHeader {
+  String get displayName {
+    switch (this) {
+      case ModGridHeader.favorites:
+        return 'Favorite';
+      case ModGridHeader.changeVariantButton:
+        return 'Version Select';
+      case ModGridHeader.icons:
+        return 'Mod Type Icon';
+      case ModGridHeader.modIcon:
+        return 'Mod Icon';
+      case ModGridHeader.name:
+        return 'Name';
+      case ModGridHeader.author:
+        return 'Author';
+      case ModGridHeader.version:
+        return 'Version';
+      case ModGridHeader.vramImpact:
+        return 'VRAM Est.';
+      case ModGridHeader.gameVersion:
+        return 'Game Version';
+      case ModGridHeader.firstSeen:
+        return 'First Seen';
+    }
+  }
+}
+
 @MappableEnum()
 enum ModGridGroupEnum {
   enabledState,
@@ -82,6 +119,7 @@ enum ModGridGroupEnum {
 @MappableEnum()
 enum ModGridSortField {
   enabledState,
+  icons,
   name,
   author,
   version,

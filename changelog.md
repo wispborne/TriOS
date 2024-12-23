@@ -12,7 +12,7 @@
     - Prompts for game location and how many versions of each mod to keep.
   - **Mod Grid rewritten** from scratch.
     - Improved performance.
-    - Saves column width, position, and sorting.
+    - Saves column width, position, visibility, and sorting.
     - Switched to reuse my old SMOL code and away from the 3rd-party library :)
   - "Favorites" to pin a mod on the Mods tab.
   - Mods can now be sorted by "First Seen".

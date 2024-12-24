@@ -1,26 +1,14 @@
 name: trios
-description: "Starsector toolkit."
+description: "Starsector mod manager, launcher, and toolkit."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
-# The following defines the version and build number for your application.
-# A version number is three numbers separated by dots, like 1.2.43
-# followed by an optional build number separated by a +.
-# Both the version and the builder number may be overridden in flutter
-# build by specifying --build-name and --build-number, respectively.
-# In Android, build-name is used as versionName while build-number used as versionCode.
-# Read more about Android versioning at https://developer.android.com/studio/publish/versioning
-# In iOS, build-name is used as CFBundleShortVersionString while build-number is used as CFBundleVersion.
-# Read more about iOS versioning at
-# https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
-# In Windows, build-name is used as the major, minor, and patch parts
-# of the product and file versions while build-number is used as the build suffix.
 version: 1.0.0+1
 
 environment:
   sdk: '>=3.4.0 <4.0.0'
-  flutter: '^3.27.1'
+  flutter: '3.27.1'
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -40,7 +28,6 @@ dependencies:
   dart_mappable: ^4.3.0
   defer_pointer: ^0.0.2
   desktop_drop: ^0.5.0
-  diffutil_dart: ^4.0.1
   dropdown_button2: ^2.3.9
   dynamic_library: ^0.9.0
   easy_sticky_header: ^1.1.1

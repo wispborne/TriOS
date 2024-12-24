@@ -33,7 +33,7 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
   bool enableMultipleVersions = true;
   int? lastNVersionsSetting;
   bool allowCrashReporting = false;
-  List<Widget> pages = [];
+  List<Widget Function()> pages = [];
 
   int get totalPages => pages.length;
 
@@ -48,10 +48,10 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
         enableMultipleVersions ? settings.keepLastNVersions : null;
     allowCrashReporting = settings.allowCrashReporting ?? false;
     pages = [
-      _buildGameDirectoryAndModPreferencesPage(),
-      _buildCrashReportingPage(),
-      if (Platform.isMacOS) _buildMacOSPage(),
+      () =>_buildGameDirectoryAndModPreferencesPage(),
+      () => _buildCrashReportingPage(),
     ];
+    if (Platform.isMacOS) pages.add(() => _buildMacOSPage());
   }
 
   @override
@@ -88,7 +88,7 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
                           _currentPage = index;
                         });
                       },
-                      children: pages,
+                      children: pages.map((page) => page()).toList(),
                     ),
                   ),
                   _buildBottomNavigation(),

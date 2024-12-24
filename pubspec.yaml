@@ -70,6 +70,7 @@ dependencies:
       url: https://github.com/xvrh/open_file
       ref: 3ed35135c0e2c0e4b75f16fb462be362a0423e71
   palette_generator: ^0.3.3+3
+#  pasteboard: ^0.3.0
   path_drawing: ^1.0.1
   path_provider: ^2.0.11
   path: ^1.9.0
@@ -80,6 +81,7 @@ dependencies:
   riverpod_annotation: ^2.6.1
   rxdart: ^0.28.0
   screen_retriever: ^0.2.0
+#  screenshot: ^3.0.0
   sentry_flutter: 8.8.0 # 8.11.0 is broken, can't compile after a clean.
   squadron_builder: ^6.1.1
   squadron: ^6.1.3

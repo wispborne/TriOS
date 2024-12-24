@@ -40,7 +40,11 @@ class _RamChangerState extends ConsumerState<RamChanger> {
             (jre23Vmparams.existsSync() && isJre23VmparamsWritable == false))
         ? Text(
             "Cannot write to vmparams file:\n${vmParamsWritable == false ? vmparamsFile.path : jre23Vmparams.path}."
-            "\n\nTry running ${Constants.appName} as an administrator.")
+            "\n\nTry running ${Constants.appName} as an administrator.",
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: ThemeManager.vanillaWarningColor,
+                ),
+          )
         : GridView.builder(
             shrinkWrap: true,
             itemCount: ramChoices.length,

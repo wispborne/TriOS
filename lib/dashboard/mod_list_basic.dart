@@ -1,8 +1,9 @@
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+// import 'package:pasteboard/pasteboard.dart';
+// import 'package:screenshot/screenshot.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/enabled_mods.dart';
@@ -11,6 +12,7 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/disable_if_cannot_write_mods.dart';
+// import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:vs_scrollbar/vs_scrollbar.dart';
 
 import '../mod_manager/mod_context_menu.dart';
@@ -35,6 +37,7 @@ class _ModListMiniState extends ConsumerState<ModListMini>
     with SingleTickerProviderStateMixin {
   final ScrollController _scrollController = ScrollController();
   final searchController = SearchController();
+  // final screenshotController = ScreenshotController();
   bool hideDisabled = false;
 
   @override
@@ -54,7 +57,8 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                 .where((mod) => !hideDisabled || mod.hasEnabledVariant)
                 .toList()
             : mods)
-        .let((mods) => query.isEmpty ? mods : searchMods(mods, query) ?? []);
+        .let((mods) => query.isEmpty ? mods : searchMods(mods, query) ?? [])
+        .sortedByName;
 
     final versionCheck = ref.watch(AppState.versionCheckResults).valueOrNull;
     searchController.value = TextEditingValue(text: query);
@@ -334,10 +338,49 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                         Padding(
                                           padding: const EdgeInsets.only(
                                               bottom: 4.0),
-                                          child: Text("ALL MODS",
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .labelMedium),
+                                          child: Row(
+                                            children: [
+                                              Text("ALL MODS",
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .labelMedium),
+                                              // Screenshot doesn't work because it creates a child outside of
+                                              // the provider scope (of riverpod), and can't render.
+                                              // MovingTooltipWidget.text(
+                                              //   message:
+                                              //       "Copy screenshot to clipboard",
+                                              //   child: IconButton(
+                                              //     onPressed: () {
+                                              //       screenshotController
+                                              //           .captureFromLongWidget(
+                                              //               InheritedTheme
+                                              //                   .captureAll(
+                                              //         context,
+                                              //         Material(
+                                              //           child: Column(
+                                              //             children: filteredModList
+                                              //                 .map((mod) =>
+                                              //                     ModListBasicEntry(
+                                              //                         mod: mod))
+                                              //                 .toList(),
+                                              //           ),
+                                              //         ),
+                                              //       ))
+                                              //           .then((value) {
+                                              //         Pasteboard.writeImage(
+                                              //             value);
+                                              //       });
+                                              //     },
+                                              //     constraints:
+                                              //         const BoxConstraints(),
+                                              //     icon: Icon(Icons.photo_camera,
+                                              //         size: 15,
+                                              //         color: theme.colorScheme
+                                              //             .onSurface),
+                                              //   ),
+                                              // ),
+                                            ],
+                                          ),
                                         ),
                                       ]);
                                 }
@@ -403,15 +446,14 @@ class _ModListMiniState extends ConsumerState<ModListMini>
     );
   }
 
-  void _onClickedDownloadModUpdatesDialog(
-      List<Mod?> modsWithUpdates,
-      VersionCheckerState? versionCheck,
-      BuildContext context) {
+  void _onClickedDownloadModUpdatesDialog(List<Mod?> modsWithUpdates,
+      VersionCheckerState? versionCheck, BuildContext context) {
     downloadUpdates() {
       for (var mod in modsWithUpdates) {
         if (mod == null) continue;
         final variant = mod.findHighestVersion!;
-        final remoteVersionCheck = versionCheck?.versionCheckResultsBySmolId[variant.smolId];
+        final remoteVersionCheck =
+            versionCheck?.versionCheckResultsBySmolId[variant.smolId];
         if (remoteVersionCheck?.remoteVersion != null) {
           ref.read(downloadManager.notifier).downloadUpdateViaBrowser(
                 remoteVersionCheck!.remoteVersion!,

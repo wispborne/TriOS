@@ -334,9 +334,8 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
     ref
         .read(AppState.modAudit.notifier)
         .addAuditEntry(modVariant.smolId, ModAction.enable, reason: reason);
-    ref
-        .read(AppState.modsMetadata.notifier)
-        .updateModVariantBaseMetadata(mod.id, modVariant.smolId, (oldMetadata) {
+    ref.read(AppState.modsMetadata.notifier).updateModBaseMetadata(mod.id,
+        (oldMetadata) {
       return oldMetadata.copyWith(
           lastEnabled: DateTime.now().millisecondsSinceEpoch);
     });

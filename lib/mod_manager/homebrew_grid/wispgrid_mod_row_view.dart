@@ -247,10 +247,6 @@ class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
                                 }),
                               ModGridHeader.lastEnabled =>
                                 Builder(builder: (context) {
-                                  final variantMetadata =
-                                      metadata?.variantsMetadata[mod
-                                          .findFirstEnabledOrHighestVersion
-                                          ?.smolId];
                                   return ContextMenuRegion(
                                       contextMenu: buildModContextMenu(
                                           mod, ref, context,
@@ -261,7 +257,7 @@ class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
                                           child: Opacity(
                                             opacity: WispGrid.lightTextOpacity,
                                             child: Text(
-                                                variantMetadata?.lastEnabled?.let(
+                                                metadata?.lastEnabled?.let(
                                                         (lastEnabled) => Constants
                                                             .dateTimeFormat
                                                             .format(DateTime

@@ -180,10 +180,14 @@ class ModMetadata with ModMetadataMappable {
   final int firstSeen;
   final bool isFavorited;
 
+  /// Timestamp of when the mod variant was last enabled by TriOS.
+  final int? lastEnabled;
+
   ModMetadata({
     this.variantsMetadata = const {},
     required this.firstSeen,
     this.isFavorited = false,
+    this.lastEnabled,
   });
 
   static ModMetadata empty() => ModMetadata(
@@ -196,16 +200,17 @@ class ModMetadata with ModMetadataMappable {
       ...variantsMetadata,
     }.map((key, userVariant) {
       final baseVariant = base.variantsMetadata[key];
-      if (baseVariant != null && userVariant != null) {
+      if (baseVariant != null) {
         return MapEntry(key, userVariant.backfillWith(baseVariant));
       }
-      return MapEntry(key, userVariant ?? baseVariant!);
+      return MapEntry(key, userVariant);
     });
 
     return ModMetadata(
       variantsMetadata: mergedVariants,
       firstSeen: firstSeen,
       isFavorited: isFavorited,
+      lastEnabled: lastEnabled ?? base.lastEnabled,
     );
   }
 }
@@ -216,12 +221,8 @@ class ModVariantMetadata with ModVariantMetadataMappable {
   /// Timestamp of when the mod variant was first seen by TriOS.
   final int firstSeen;
 
-  /// Timestamp of when the mod variant was last enabled by TriOS.
-  final int? lastEnabled;
-
   ModVariantMetadata({
     required this.firstSeen,
-    this.lastEnabled,
   });
 
   static ModVariantMetadata empty() =>
@@ -231,7 +232,6 @@ class ModVariantMetadata with ModVariantMetadataMappable {
   ModVariantMetadata backfillWith(ModVariantMetadata base) {
     return ModVariantMetadata(
       firstSeen: firstSeen,
-      lastEnabled: lastEnabled ?? base.lastEnabled,
     );
   }
 }

@@ -167,9 +167,6 @@ Comparable? _getSortValueForMod(Mod mod, ModMetadata? metadata,
     ModGridSortField.gameVersion =>
       mod.findFirstEnabledOrHighestVersion?.modInfo.gameVersion,
     ModGridSortField.firstSeen => metadata?.firstSeen ?? 0,
-    ModGridSortField.lastEnabled => metadata
-            ?.variantsMetadata[mod.findFirstEnabledOrHighestVersion!.smolId]
-            ?.lastEnabled ??
-        0,
+    ModGridSortField.lastEnabled => metadata?.lastEnabled ?? 0,
   };
 }

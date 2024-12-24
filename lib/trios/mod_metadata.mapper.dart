@@ -167,19 +167,24 @@ class ModMetadataMapper extends ClassMapperBase<ModMetadata> {
   static bool _$isFavorited(ModMetadata v) => v.isFavorited;
   static const Field<ModMetadata, bool> _f$isFavorited =
       Field('isFavorited', _$isFavorited, opt: true, def: false);
+  static int? _$lastEnabled(ModMetadata v) => v.lastEnabled;
+  static const Field<ModMetadata, int> _f$lastEnabled =
+      Field('lastEnabled', _$lastEnabled, opt: true);
 
   @override
   final MappableFields<ModMetadata> fields = const {
     #variantsMetadata: _f$variantsMetadata,
     #firstSeen: _f$firstSeen,
     #isFavorited: _f$isFavorited,
+    #lastEnabled: _f$lastEnabled,
   };
 
   static ModMetadata _instantiate(DecodingData data) {
     return ModMetadata(
         variantsMetadata: data.dec(_f$variantsMetadata),
         firstSeen: data.dec(_f$firstSeen),
-        isFavorited: data.dec(_f$isFavorited));
+        isFavorited: data.dec(_f$isFavorited),
+        lastEnabled: data.dec(_f$lastEnabled));
   }
 
   @override
@@ -242,7 +247,8 @@ abstract class ModMetadataCopyWith<$R, $In extends ModMetadata, $Out>
   $R call(
       {Map<String, ModVariantMetadata>? variantsMetadata,
       int? firstSeen,
-      bool? isFavorited});
+      bool? isFavorited,
+      int? lastEnabled});
   ModMetadataCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
 
@@ -268,18 +274,21 @@ class _ModMetadataCopyWithImpl<$R, $Out>
   $R call(
           {Map<String, ModVariantMetadata>? variantsMetadata,
           int? firstSeen,
-          bool? isFavorited}) =>
+          bool? isFavorited,
+          Object? lastEnabled = $none}) =>
       $apply(FieldCopyWithData({
         if (variantsMetadata != null) #variantsMetadata: variantsMetadata,
         if (firstSeen != null) #firstSeen: firstSeen,
-        if (isFavorited != null) #isFavorited: isFavorited
+        if (isFavorited != null) #isFavorited: isFavorited,
+        if (lastEnabled != $none) #lastEnabled: lastEnabled
       }));
   @override
   ModMetadata $make(CopyWithData data) => ModMetadata(
       variantsMetadata:
           data.get(#variantsMetadata, or: $value.variantsMetadata),
       firstSeen: data.get(#firstSeen, or: $value.firstSeen),
-      isFavorited: data.get(#isFavorited, or: $value.isFavorited));
+      isFavorited: data.get(#isFavorited, or: $value.isFavorited),
+      lastEnabled: data.get(#lastEnabled, or: $value.lastEnabled));
 
   @override
   ModMetadataCopyWith<$R2, ModMetadata, $Out2> $chain<$R2, $Out2>(
@@ -304,20 +313,14 @@ class ModVariantMetadataMapper extends ClassMapperBase<ModVariantMetadata> {
   static int _$firstSeen(ModVariantMetadata v) => v.firstSeen;
   static const Field<ModVariantMetadata, int> _f$firstSeen =
       Field('firstSeen', _$firstSeen);
-  static int? _$lastEnabled(ModVariantMetadata v) => v.lastEnabled;
-  static const Field<ModVariantMetadata, int> _f$lastEnabled =
-      Field('lastEnabled', _$lastEnabled, opt: true);
 
   @override
   final MappableFields<ModVariantMetadata> fields = const {
     #firstSeen: _f$firstSeen,
-    #lastEnabled: _f$lastEnabled,
   };
 
   static ModVariantMetadata _instantiate(DecodingData data) {
-    return ModVariantMetadata(
-        firstSeen: data.dec(_f$firstSeen),
-        lastEnabled: data.dec(_f$lastEnabled));
+    return ModVariantMetadata(firstSeen: data.dec(_f$firstSeen));
   }
 
   @override
@@ -375,7 +378,7 @@ extension ModVariantMetadataValueCopy<$R, $Out>
 
 abstract class ModVariantMetadataCopyWith<$R, $In extends ModVariantMetadata,
     $Out> implements ClassCopyWith<$R, $In, $Out> {
-  $R call({int? firstSeen, int? lastEnabled});
+  $R call({int? firstSeen});
   ModVariantMetadataCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
       Then<$Out2, $R2> t);
 }
@@ -389,15 +392,11 @@ class _ModVariantMetadataCopyWithImpl<$R, $Out>
   late final ClassMapperBase<ModVariantMetadata> $mapper =
       ModVariantMetadataMapper.ensureInitialized();
   @override
-  $R call({int? firstSeen, Object? lastEnabled = $none}) =>
-      $apply(FieldCopyWithData({
-        if (firstSeen != null) #firstSeen: firstSeen,
-        if (lastEnabled != $none) #lastEnabled: lastEnabled
-      }));
+  $R call({int? firstSeen}) =>
+      $apply(FieldCopyWithData({if (firstSeen != null) #firstSeen: firstSeen}));
   @override
-  ModVariantMetadata $make(CopyWithData data) => ModVariantMetadata(
-      firstSeen: data.get(#firstSeen, or: $value.firstSeen),
-      lastEnabled: data.get(#lastEnabled, or: $value.lastEnabled));
+  ModVariantMetadata $make(CopyWithData data) =>
+      ModVariantMetadata(firstSeen: data.get(#firstSeen, or: $value.firstSeen));
 
   @override
   ModVariantMetadataCopyWith<$R2, ModVariantMetadata, $Out2> $chain<$R2, $Out2>(

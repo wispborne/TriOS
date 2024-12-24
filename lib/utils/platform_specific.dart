@@ -28,6 +28,9 @@ base class TOKEN_ELEVATION extends Struct {
 
 /// Check if the current process has admin privileges (Windows-specific)
 bool windowsIsAdmin() {
+  if (!Platform.isWindows) {
+    return false;
+  }
   const int TokenElevation = 20; // TokenElevation value
   final tokenHandle = calloc<HANDLE>();
   final elevation =

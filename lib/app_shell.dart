@@ -562,15 +562,21 @@ class FilePermissionShield extends StatelessWidget {
       return const SizedBox();
     }
 
+    final isAlreadyAdmin = windowsIsAdmin();
+
     return Tooltip(
       richMessage: TextSpan(
         children: [
           TextSpan(
-            text: "Right-click TriOS.exe and select 'Run as Administrator'.",
+            text: isAlreadyAdmin
+                ? "Unable to find or modify file(s)."
+                : "Right-click TriOS.exe and select 'Run as Administrator'.",
             style: const TextStyle(fontWeight: FontWeight.bold),
           ),
           TextSpan(
-              text: "\n\nIt may not be able to modify game files, otherwise."),
+              text: isAlreadyAdmin
+                  ? "\nEnsure that they exist and are not read-only.\n"
+                  : "\nTriOS may not be able to modify game files, otherwise.\n"),
           TextSpan(
               text: "\n${nonWritablePaths.joinToString(
             separator: "\n",
@@ -587,7 +593,7 @@ class FilePermissionShield extends StatelessWidget {
             color: ThemeManager.vanillaWarningColor,
           ),
           Text(
-            "Must Run as Admin",
+            isAlreadyAdmin ? "Warning" : "Must Run as Admin",
             style: TextStyle(
               color: ThemeManager.vanillaWarningColor,
               fontSize: 12,

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:multi_split_view/multi_split_view.dart';
+import 'package:trios/mod_manager/homebrew_grid/vram_checker_explanation.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
 import 'package:trios/thirdparty/dartx/map.dart';
 import 'package:trios/trios/settings/settings.dart';
@@ -229,8 +230,29 @@ class _WispGridModHeaderRowViewState
                                 child: SortableHeader(
                                     columnSortField:
                                         ModGridSortField.vramImpact,
-                                    child: Text('VRAM Est.',
-                                        style: headerTextStyle)),
+                                    child: Row(
+                                      children: [
+                                        Text('VRAM Est.',
+                                            style: headerTextStyle),
+                                        const SizedBox(width: 4),
+                                        MovingTooltipWidget.text(
+                                          message:
+                                              "About VRAM & VRAM Estimator",
+                                          child: IconButton(
+                                            onPressed: () => showDialog(
+                                                context: context,
+                                                builder: (context) =>
+                                                    VramCheckerExplanationDialog()),
+                                            padding: const EdgeInsets.all(2),
+                                            constraints: const BoxConstraints(),
+                                            icon: const Icon(
+                                              Icons.info_outline,
+                                              size: 20,
+                                            ),
+                                          ),
+                                        )
+                                      ],
+                                    )),
                               )),
                         ),
                       ModGridHeader.gameVersion => DraggableHeader(

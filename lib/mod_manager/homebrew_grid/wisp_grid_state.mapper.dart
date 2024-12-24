@@ -254,7 +254,7 @@ class WispGridStateMapper extends ClassMapperBase<WispGridState> {
     ModGridHeader.name: ModGridColumnSetting(position: 4, width: 200),
     ModGridHeader.author: ModGridColumnSetting(position: 5, width: 200),
     ModGridHeader.version: ModGridColumnSetting(position: 6, width: 100),
-    ModGridHeader.vramImpact: ModGridColumnSetting(position: 7, width: 100),
+    ModGridHeader.vramImpact: ModGridColumnSetting(position: 7, width: 110),
     ModGridHeader.gameVersion: ModGridColumnSetting(position: 8, width: 100),
     ModGridHeader.firstSeen: ModGridColumnSetting(position: 9, width: 100),
     ModGridHeader.lastEnabled: ModGridColumnSetting(position: 10, width: 100)

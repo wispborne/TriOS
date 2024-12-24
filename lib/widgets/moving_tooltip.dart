@@ -6,6 +6,33 @@ import 'package:trios/widgets/tooltip_frame.dart';
 
 enum TooltipPosition { topLeft, topRight, bottomLeft, bottomRight }
 
+/// Manages which tooltip (by nesting depth) is currently allowed to display.
+class _TooltipVisibilityManager {
+  int _activeDepth = -1;
+  GlobalKey? _activeKey;
+
+  /// Returns whether the given depth is allowed to show now.
+  bool canShow(int depth) => depth >= _activeDepth;
+
+  /// Registers this tooltip as visible at the given depth.
+  void registerShowing(int depth, GlobalKey key) {
+    if (depth >= _activeDepth) {
+      _activeDepth = depth;
+      _activeKey = key;
+    }
+  }
+
+  /// Unregisters the tooltip if it was the active one.
+  void unregister(int depth, GlobalKey key) {
+    if (_activeKey == key) {
+      _activeDepth = -1;
+      _activeKey = null;
+    }
+  }
+}
+
+final _TooltipVisibilityManager _tooltipManager = _TooltipVisibilityManager();
+
 class MovingTooltipWidget extends StatefulWidget {
   final Widget child;
   final Widget tooltipWidget;
@@ -82,6 +109,17 @@ class MovingTooltipWidget extends StatefulWidget {
 class _MovingTooltipWidgetState extends State<MovingTooltipWidget> {
   OverlayEntry? _overlayEntry;
   Size? _tooltipWidgetSize;
+  late final int _depth;
+  final GlobalKey _thisKey = GlobalKey();
+
+  /// Determines the nesting depth of this tooltip relative to any ancestor
+  @override
+  void initState() {
+    super.initState();
+    final parentState =
+        context.findAncestorStateOfType<_MovingTooltipWidgetState>();
+    _depth = (parentState?._depth ?? 0) + 1;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -93,8 +131,10 @@ class _MovingTooltipWidgetState extends State<MovingTooltipWidget> {
     );
   }
 
+  /// Shows the tooltip if permitted by the global manager
   void _showTooltip(Offset mousePosition) {
     _hideTooltip(); // Ensure no previous tooltip lingers
+    if (!_tooltipManager.canShow(_depth)) return;
 
     _overlayEntry = OverlayEntry(builder: (context) {
       return LayoutBuilder(
@@ -118,9 +158,7 @@ class _MovingTooltipWidgetState extends State<MovingTooltipWidget> {
           // The first build will capture the size, and the second will position the tooltip correctly.
           if (_tooltipWidgetSize == null) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted) {
-                setState(() {});
-              }
+              if (mounted) setState(() {});
             });
           }
 
@@ -198,6 +236,7 @@ class _MovingTooltipWidgetState extends State<MovingTooltipWidget> {
       );
     });
 
+    _tooltipManager.registerShowing(_depth, _thisKey);
     Overlay.of(context).insert(_overlayEntry!);
   }
 
@@ -209,13 +248,18 @@ class _MovingTooltipWidgetState extends State<MovingTooltipWidget> {
     super.dispose();
   }
 
+  /// Requests a rebuild so the tooltip's position can track the mouse
   void _updateTooltipPosition(Offset mousePosition) {
     _overlayEntry?.markNeedsBuild();
     _showTooltip(mousePosition);
   }
 
+  /// Hides the tooltip and unregisters it with the manager
   void _hideTooltip() {
-    _overlayEntry?.remove();
-    _overlayEntry = null;
+    if (_overlayEntry != null) {
+      _tooltipManager.unregister(_depth, _thisKey);
+      _overlayEntry!.remove();
+      _overlayEntry = null;
+    }
   }
 }

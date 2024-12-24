@@ -42,6 +42,7 @@ class JreToDownload implements JreEntry {
   @override
   final JreVersion version;
   final Function() installRunner;
+
   // final StateProvider<TriOSDownloadProgress?> progressProvider;
 
   JreToDownload(this.version, this.installRunner);
@@ -60,10 +61,10 @@ class JreVersion {
 
   int get version {
     try {
-      if (versionString.startsWith("1."))
-        return int.parse(versionString.substring(2, 3));
-      return int.parse(versionString
-          .takeWhile((char) => char != '.' && char != '-' && char != '+'));
+      return versionString.startsWith("1.")
+          ? int.parse(versionString.substring(2, 3))
+          : int.parse(versionString
+              .takeWhile((char) => char != '.' && char != '-' && char != '+'));
     } catch (e, st) {
       Fimber.d(e.toString(), ex: e, stacktrace: st);
       return 0;

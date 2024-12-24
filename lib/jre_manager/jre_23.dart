@@ -35,11 +35,6 @@ bool doesJre23ExistInGameFolder(Directory gameDir) {
       gameDir.resolve("Miko_Rouge.bat").toFile().existsSync();
 }
 
-// final jre23jdkTriOSDownloadProgress =
-//     StateProvider<TriOSDownloadProgress?>((ref) => null);
-// final jdk23ConfigTriOSDownloadProgress =
-//     StateProvider<TriOSDownloadProgress?>((ref) => null);
-
 // Define the state class
 class Jre23State {
   final TriOSDownloadProgress? jre23jdkTriOSDownloadProgress;
@@ -291,96 +286,4 @@ class Jre23VersionChecker with Jre23VersionCheckerMappable {
     this.linuxJDKDownload,
     this.linuxConfigDownload,
   });
-}
-
-class InstallJre23Card extends ConsumerStatefulWidget {
-  const InstallJre23Card({super.key});
-
-  @override
-  ConsumerState createState() => _InstallJre23CardState();
-}
-
-class _InstallJre23CardState extends ConsumerState<InstallJre23Card> {
-  bool? installingJre23State;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
-              child:
-                  Text("JRE 23", style: Theme.of(context).textTheme.titleLarge),
-            ),
-            Disable(
-              isEnabled: installingJre23State != true,
-              child: ElevatedButton(
-                  onPressed: () async {
-                    setState(() {
-                      installingJre23State = true;
-                    });
-                    await ref
-                        .watch(jre23NotifierProvider.notifier)
-                        .installJre23();
-                    setState(() {
-                      installingJre23State = false;
-                    });
-                  },
-                  child: const Text("Install")),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(top: 8.0),
-              child: SizedBox(
-                  width: 200,
-                  child: Column(
-                    children: [
-                      const Text("Starsector Himemi Config"),
-                      TriOSDownloadProgressIndicator(
-                          value: ref
-                                  .watch(jre23NotifierProvider)
-                                  .value
-                                  ?.jdk23ConfigTriOSDownloadProgress ??
-                              const TriOSDownloadProgress(0, 0,
-                                  isIndeterminate: true)),
-                    ],
-                  )),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(top: 8.0),
-              child: SizedBox(
-                  width: 200,
-                  child: Column(
-                    children: [
-                      const Text("JDK 23"),
-                      TriOSDownloadProgressIndicator(
-                          value: ref
-                                  .watch(jre23NotifierProvider)
-                                  .value
-                                  ?.jre23jdkTriOSDownloadProgress ??
-                              const TriOSDownloadProgress(0, 0,
-                                  isIndeterminate: true)),
-                    ],
-                  )),
-            ),
-            Text(switch (installingJre23State) {
-              true => "Installing JRE 23...",
-              false => "JRE 23 installed!",
-              _ => ""
-            }),
-            const Spacer(),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                  "This will overwrite any existing JRE23 install.\nJRE23 is provided by Himemi.",
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodySmall),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }

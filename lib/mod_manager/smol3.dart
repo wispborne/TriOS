@@ -1282,7 +1282,7 @@ class _Smol3State extends ConsumerState<Smol3>
                             ),
                           MovingTooltipWidget(
                             tooltipWidget:
-                                ModListBasicEntry.buildVersionCheckTextReadout(
+                                ModListBasicEntry.buildVersionCheckTextReadoutForTooltip(
                                     null,
                                     versionCheckComparison?.comparisonInt,
                                     localVersionCheck,

@@ -59,51 +59,50 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
         fontFeatures: [const FontFeature.tabularFigures()],
         color: theme.colorScheme.primary);
     const spacing = 4.0;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 56),
-          child: ModTooltipFancyTitleHeader(
-            iconPath: modVariant.iconFilePath,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(
-                      left: 8, top: 10, right: 8, bottom: 8),
-                  child: SizedBox(
-                    width: modVariant.iconFilePath != null ? 40 : 0,
-                    child: Center(
-                      child: Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: modVariant.iconFilePath != null
-                              ? Image.file(
-                                  (modVariant.iconFilePath ?? "").toFile(),
-                                  isAntiAlias: true,
-                                )
-                              : Container(),
-                        ),
+        ModTooltipFancyTitleHeader(
+          iconPath: modVariant.iconFilePath,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(
+                    left: 8, top: 10, right: 8, bottom: 8),
+                child: SizedBox(
+                  width: modVariant.iconFilePath != null ? 40 : 0,
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: modVariant.iconFilePath != null
+                            ? Image.file(
+                                (modVariant.iconFilePath ?? "").toFile(),
+                                isAntiAlias: true,
+                              )
+                            : Container(),
                       ),
                     ),
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(modInfo.name ?? "(no name)",
-                          style: theme.textTheme.titleMedium),
-                      Text("${modInfo.id} • ${modInfo.version ?? ""}",
-                          style: theme.textTheme.labelSmall),
-                    ],
-                  ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(modInfo.name ?? "(no name)",
+                        style: theme.textTheme.titleMedium),
+                    Text("${modInfo.id} • ${modInfo.version ?? ""}",
+                        style: theme.textTheme.labelSmall),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
         Padding(
@@ -226,7 +225,7 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
                   child: Opacity(
                     opacity: 0.6,
                     child: Text(
-                        "Tip: Add a LunaSettings icon or add an icon.png file to the mod folder to get an icon like this!",
+                        "Tip: Add a LunaSettings icon or add an icon.png file to the mod folder to get an icon.",
                         style: Theme.of(context)
                             .textTheme
                             .labelMedium

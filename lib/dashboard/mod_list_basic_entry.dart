@@ -33,15 +33,17 @@ class ModListBasicEntry extends ConsumerStatefulWidget {
   @override
   ConsumerState createState() => _ModListBasicEntryState();
 
-  static Widget buildVersionCheckTextReadout(
+  static Widget buildVersionCheckTextReadoutForTooltip(
     String? changelogUrl,
     int? versionCheckComparison,
     VersionCheckerInfo? localVersionCheck,
     RemoteVersionCheckResult? remoteVersionCheck,
   ) {
-    return SizedBox(
-        width: changelogUrl.isNotNullOrEmpty() ? 800 : 400,
-        child: Row(
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             if (changelogUrl.isNotNullOrEmpty())
@@ -73,14 +75,17 @@ class ModListBasicEntry extends ConsumerStatefulWidget {
                   }),
                 ),
               ),
-            Expanded(
-              child: TooltipFrame(
+            TooltipFrame(
+              child: SizedBox(
+                width: 400,
                 child: VersionCheckTextReadout(versionCheckComparison,
                     localVersionCheck, remoteVersionCheck, true),
               ),
             ),
           ],
-        ));
+        ),
+      ],
+    );
   }
 
   static IntrinsicHeight changeAndVersionCheckAlertDialogContent(
@@ -131,8 +136,7 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
 
     final gameVersion = ref.watch(AppState.starsectorVersion).value;
     final modInfo = modVariant.modInfo;
-    final versionCheckComparisonResult =
-        mod.updateCheck(cachedVersionChecks);
+    final versionCheckComparisonResult = mod.updateCheck(cachedVersionChecks);
     final versionCheckComparison = versionCheckComparisonResult?.comparisonInt;
     final localVersionCheck =
         versionCheckComparisonResult?.variant.versionCheckerInfo;
@@ -147,22 +151,6 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
     final modTextOpacity =
         compatWithGame == GameCompatibility.incompatible ? 0.55 : 1.0;
 
-    infoTooltip({required Widget child}) => MovingTooltipWidget(
-        position: TooltipPosition.topLeft,
-        tooltipWidget: SizedBox(
-          width: 400,
-          child: TooltipFrame(
-            padding: const EdgeInsets.all(0),
-            child: ModSummaryWidget(
-              modVariant: modVariant,
-              compatWithGame: compatWithGame,
-              compatTextColor: compatTextColor,
-              showIconTip: false,
-            ),
-          ),
-        ),
-        child: child);
-
     const rowHeight = 25.0;
 
     return Row(
@@ -172,24 +160,22 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
           child: InkWell(
             child: SizedBox(
               height: rowHeight,
-              child: CheckboxWithLabel(
-                labelWidget: Row(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(right: 6),
-                      child: MovingTooltipWidget(
-                        position: TooltipPosition.topLeft,
-                        tooltipWidget: SizedBox(
-                          width: 400,
-                          child: TooltipFrame(
-                            padding: const EdgeInsets.all(0),
-                            child: ModSummaryWidget(
-                                modVariant: modVariant,
-                                compatWithGame: compatWithGame,
-                                compatTextColor: compatTextColor,
-                                showIconTip: true),
-                          ),
-                        ),
+              child: MovingTooltipWidget.framed(
+                padding: const EdgeInsets.all(0),
+                tooltipWidget: SizedBox(
+                  width: 400,
+                  child: ModSummaryWidget(
+                    modVariant: modVariant,
+                    compatWithGame: compatWithGame,
+                    compatTextColor: compatTextColor,
+                    showIconTip: true,
+                  ),
+                ),
+                child: CheckboxWithLabel(
+                  labelWidget: Row(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(right: 6),
                         child: SizedBox(
                           height: rowHeight,
                           child: ClipRRect(
@@ -203,9 +189,7 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                           ),
                         ),
                       ),
-                    ),
-                    Expanded(
-                      child: infoTooltip(
+                      Expanded(
                         child: Row(
                           children: [
                             Expanded(
@@ -242,130 +226,132 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                           ],
                         ),
                       ),
-                    ),
-                    MovingTooltipWidget(
-                      position: TooltipPosition.topLeft,
-                      tooltipWidget:
-                          ModListBasicEntry.buildVersionCheckTextReadout(
-                        changelogUrl,
-                        versionCheckComparison,
-                        localVersionCheck,
-                        remoteVersionCheck,
-                      ),
-                      child: Disable(
-                        isEnabled: !widget.isDisabled,
-                        child: InkWell(
-                          onTap: () {
-                            if (remoteVersionCheck?.remoteVersion != null &&
-                                versionCheckComparison == -1) {
-                              ref
-                                  .read(downloadManager.notifier)
-                                  .downloadUpdateViaBrowser(
-                                      remoteVersionCheck!.remoteVersion!,
-                                      activateVariantOnComplete: false,
-                                      modInfo: modInfo);
-                            } else {
-                              showDialog(
-                                  context: context,
-                                  builder: (context) => AlertDialog(
-                                      content: ModListBasicEntry
-                                          .changeAndVersionCheckAlertDialogContent(
-                                              changelogUrl,
-                                              localVersionCheck,
-                                              remoteVersionCheck,
-                                              versionCheckComparison)));
-                            }
-                          },
-                          onSecondaryTap: () => showDialog(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                  content: ModListBasicEntry
-                                      .changeAndVersionCheckAlertDialogContent(
-                                          changelogUrl,
-                                          localVersionCheck,
-                                          remoteVersionCheck,
-                                          versionCheckComparison))),
-                          child: Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 5.0),
-                            child: VersionCheckIcon.fromComparison(
-                                comparison: versionCheckComparisonResult,
-                                theme: theme),
+                      MovingTooltipWidget(
+                        position: TooltipPosition.topLeft,
+                        tooltipWidget: ModListBasicEntry
+                            .buildVersionCheckTextReadoutForTooltip(
+                          changelogUrl,
+                          versionCheckComparison,
+                          localVersionCheck,
+                          remoteVersionCheck,
+                        ),
+                        child: Disable(
+                          isEnabled: !widget.isDisabled,
+                          child: InkWell(
+                            onTap: () {
+                              if (remoteVersionCheck?.remoteVersion != null &&
+                                  versionCheckComparison == -1) {
+                                ref
+                                    .read(downloadManager.notifier)
+                                    .downloadUpdateViaBrowser(
+                                        remoteVersionCheck!.remoteVersion!,
+                                        activateVariantOnComplete: false,
+                                        modInfo: modInfo);
+                              } else {
+                                showDialog(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                        content: ModListBasicEntry
+                                            .changeAndVersionCheckAlertDialogContent(
+                                                changelogUrl,
+                                                localVersionCheck,
+                                                remoteVersionCheck,
+                                                versionCheckComparison)));
+                              }
+                            },
+                            onSecondaryTap: () => showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                    content: ModListBasicEntry
+                                        .changeAndVersionCheckAlertDialogContent(
+                                            changelogUrl,
+                                            localVersionCheck,
+                                            remoteVersionCheck,
+                                            versionCheckComparison))),
+                            child: Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 5.0),
+                              child: VersionCheckIcon.fromComparison(
+                                  comparison: versionCheckComparisonResult,
+                                  theme: theme),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                checkWrapper: (child) => infoTooltip(
-                    child:
-                        Disable(isEnabled: !widget.isDisabled, child: child)),
-                textPadding: const EdgeInsets.only(left: 0, bottom: 2),
-                value: isEnabled,
-                expand: true,
-                onChanged: (_) async {
-                  if (widget.isDisabled) {
-                    return;
-                  }
-                  final isCurrentlyEnabled = isEnabled;
-
-                  // We can disable mods without checking compatibility, but we can't enable them without checking.
-                  if (!isCurrentlyEnabled) {
-                    // Check game version compatibility
-                    final compatResult = compatWithGame;
-                    if (compatResult == GameCompatibility.incompatible) {
-                      showSnackBar(
-                        context: context,
-                        type: SnackBarType.error,
-                        content: Text(
-                            "'${modInfo.name}' requires game version ${modInfo.gameVersion} but you have $gameVersion"),
-                      );
+                    ],
+                  ),
+                  checkWrapper: (child) =>
+                      Disable(isEnabled: !widget.isDisabled, child: child),
+                  textPadding: const EdgeInsets.only(left: 0, bottom: 2),
+                  value: isEnabled,
+                  expand: true,
+                  onChanged: (_) async {
+                    if (widget.isDisabled) {
                       return;
                     }
+                    final isCurrentlyEnabled = isEnabled;
 
-                    final allMods = ref.read(AppState.modVariants).value ?? [];
-                    final enabledMods = ref.read(AppState.enabledModIds).value!;
-                    // Check dependencies
-                    final dependencyCheck = modInfo.checkDependencies(
-                        allMods, enabledMods, gameVersion);
-
-                    // Check if any dependencies are completely missing
-                    final missingDependencies = dependencyCheck
-                        .where((element) => element.satisfiedAmount is Missing);
-                    if (missingDependencies.isNotEmpty) {
-                      showSnackBar(
+                    // We can disable mods without checking compatibility, but we can't enable them without checking.
+                    if (!isCurrentlyEnabled) {
+                      // Check game version compatibility
+                      final compatResult = compatWithGame;
+                      if (compatResult == GameCompatibility.incompatible) {
+                        showSnackBar(
                           context: context,
                           type: SnackBarType.error,
                           content: Text(
-                            "'${modInfo.name}' is missing '${missingDependencies.joinToString(transform: (it) => it.dependency.name ?? it.dependency.id ?? "<unknown>")}'.",
-                          ));
-                      return;
-                    }
-                  }
+                              "'${modInfo.name}' requires game version ${modInfo.gameVersion} but you have $gameVersion"),
+                        );
+                        return;
+                      }
 
-                  final modsFolder =
-                      ref.read(appSettings.select((value) => value.modsDir));
-                  if (modsFolder == null) return;
+                      final allMods =
+                          ref.read(AppState.modVariants).value ?? [];
+                      final enabledMods =
+                          ref.read(AppState.enabledModIds).value!;
+                      // Check dependencies
+                      final dependencyCheck = modInfo.checkDependencies(
+                          allMods, enabledMods, gameVersion);
 
-                  try {
-                    if (isCurrentlyEnabled) {
-                      // Disable
-                      ref
-                          .read(AppState.modVariants.notifier)
-                          .changeActiveModVariant(mod, null);
-                    } else {
-                      // Enable highest version
-                      ref
-                          .read(AppState.modVariants.notifier)
-                          .changeActiveModVariant(mod, mod.findHighestVersion);
+                      // Check if any dependencies are completely missing
+                      final missingDependencies = dependencyCheck.where(
+                          (element) => element.satisfiedAmount is Missing);
+                      if (missingDependencies.isNotEmpty) {
+                        showSnackBar(
+                            context: context,
+                            type: SnackBarType.error,
+                            content: Text(
+                              "'${modInfo.name}' is missing '${missingDependencies.joinToString(transform: (it) => it.dependency.name ?? it.dependency.id ?? "<unknown>")}'.",
+                            ));
+                        return;
+                      }
                     }
-                  } catch (e) {
-                    showSnackBar(
-                        context: context,
-                        type: SnackBarType.error,
-                        content: Text(e.toString()));
-                  }
-                },
+
+                    final modsFolder =
+                        ref.read(appSettings.select((value) => value.modsDir));
+                    if (modsFolder == null) return;
+
+                    try {
+                      if (isCurrentlyEnabled) {
+                        // Disable
+                        ref
+                            .read(AppState.modVariants.notifier)
+                            .changeActiveModVariant(mod, null);
+                      } else {
+                        // Enable highest version
+                        ref
+                            .read(AppState.modVariants.notifier)
+                            .changeActiveModVariant(
+                                mod, mod.findHighestVersion);
+                      }
+                    } catch (e) {
+                      showSnackBar(
+                          context: context,
+                          type: SnackBarType.error,
+                          content: Text(e.toString()));
+                    }
+                  },
+                ),
               ),
             ),
           ),

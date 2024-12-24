@@ -492,7 +492,7 @@ class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
                     ),
                   MovingTooltipWidget(
                     tooltipWidget:
-                        ModListBasicEntry.buildVersionCheckTextReadout(
+                        ModListBasicEntry.buildVersionCheckTextReadoutForTooltip(
                             null,
                             versionCheckComparison?.comparisonInt,
                             localVersionCheck,

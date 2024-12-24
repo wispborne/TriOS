@@ -136,8 +136,8 @@ class _VersionCheckTextReadoutState
                       padding: const EdgeInsets.only(top: 2),
                       child: Text(
                           "This is usually caused by the mod author. Please visit the mod page to manually find updates.",
-                          style: theme.textTheme.labelLarge
-                              ?.copyWith(color: ThemeManager.vanillaErrorColor)),
+                          style: theme.textTheme.labelLarge?.copyWith(
+                              color: ThemeManager.vanillaErrorColor)),
                     ),
                     Text(
                         "If the in-game Version Checker is working for this specific mod, please report a TriOS bug.",

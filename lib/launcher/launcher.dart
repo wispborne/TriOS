@@ -23,7 +23,6 @@ import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/stroke_text.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
-import 'package:trios/widgets/tooltip_frame.dart';
 import 'package:win32_registry/win32_registry.dart';
 
 import '../themes/theme_manager.dart';
@@ -79,14 +78,14 @@ class Launcher extends HookConsumerWidget {
       CurvedAnimation(parent: hoverController, curve: Curves.easeInOut),
     );
 
-    return MovingTooltipWidget(
-      tooltipWidget: TooltipFrame(
-          child: DefaultTextStyle.merge(
+    return MovingTooltipWidget.framed(
+      tooltipWidget: DefaultTextStyle.merge(
         style: theme.textTheme.labelLarge,
         child: isGameRunning
             ? const Text("Game is running")
             : Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     'Launch ${ref.watch(AppState.starsectorVersion).valueOrNull}',
@@ -121,7 +120,7 @@ class Launcher extends HookConsumerWidget {
                   ),
                 ],
               ),
-      )),
+      ),
       child: Disable(
         isEnabled: !isGameRunning,
         child: MouseRegion(

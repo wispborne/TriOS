@@ -45,6 +45,8 @@ class ModGridHeaderMapper extends EnumMapper<ModGridHeader> {
         return ModGridHeader.gameVersion;
       case 'firstSeen':
         return ModGridHeader.firstSeen;
+      case 'lastEnabled':
+        return ModGridHeader.lastEnabled;
       default:
         throw MapperException.unknownEnumValue(value);
     }
@@ -73,6 +75,8 @@ class ModGridHeaderMapper extends EnumMapper<ModGridHeader> {
         return 'gameVersion';
       case ModGridHeader.firstSeen:
         return 'firstSeen';
+      case ModGridHeader.lastEnabled:
+        return 'lastEnabled';
     }
   }
 }
@@ -173,6 +177,8 @@ class ModGridSortFieldMapper extends EnumMapper<ModGridSortField> {
         return ModGridSortField.gameVersion;
       case 'firstSeen':
         return ModGridSortField.firstSeen;
+      case 'lastEnabled':
+        return ModGridSortField.lastEnabled;
       default:
         throw MapperException.unknownEnumValue(value);
     }
@@ -197,6 +203,8 @@ class ModGridSortFieldMapper extends EnumMapper<ModGridSortField> {
         return 'gameVersion';
       case ModGridSortField.firstSeen:
         return 'firstSeen';
+      case ModGridSortField.lastEnabled:
+        return 'lastEnabled';
     }
   }
 }
@@ -248,7 +256,8 @@ class WispGridStateMapper extends ClassMapperBase<WispGridState> {
     ModGridHeader.version: ModGridColumnSetting(position: 6, width: 100),
     ModGridHeader.vramImpact: ModGridColumnSetting(position: 7, width: 100),
     ModGridHeader.gameVersion: ModGridColumnSetting(position: 8, width: 100),
-    ModGridHeader.firstSeen: ModGridColumnSetting(position: 9, width: 100)
+    ModGridHeader.firstSeen: ModGridColumnSetting(position: 9, width: 100),
+    ModGridHeader.lastEnabled: ModGridColumnSetting(position: 10, width: 100)
   });
   static GroupingSetting _$groupingSetting(WispGridState v) =>
       v.groupingSetting;

@@ -6,6 +6,7 @@ import 'package:trios/utils/logging.dart';
 
 abstract class GenericSettingsAsyncNotifier<T> extends AsyncNotifier<T> {
   late GenericAsyncSettingsManager<T> settingsManager;
+  bool _isInitialized = false;
 
   /// Subclasses must provide the settings manager instance.
   GenericAsyncSettingsManager<T> createSettingsManager();
@@ -16,14 +17,19 @@ abstract class GenericSettingsAsyncNotifier<T> extends AsyncNotifier<T> {
 
   @override
   Future<T> build() async {
-    try {
-      final settings = await settingsManager.readSettingsFromDisk();
-      return settings;
-    } catch (e, stackTrace) {
-      state = AsyncError(e, stackTrace);
-      Fimber.w("Error building settings notifier",
-          ex: e, stacktrace: stackTrace);
-      rethrow;
+    if (!_isInitialized) {
+      try {
+        final settings = await settingsManager.readSettingsFromDisk();
+        _isInitialized = true;
+        return settings;
+      } catch (e, stackTrace) {
+        state = AsyncError(e, stackTrace);
+        Fimber.w("Error building settings notifier",
+            ex: e, stacktrace: stackTrace);
+        rethrow;
+      }
+    } else {
+      return state.value!;
     }
   }
 
@@ -46,6 +52,7 @@ abstract class GenericSettingsAsyncNotifier<T> extends AsyncNotifier<T> {
 
 abstract class GenericSettingsNotifier<T> extends Notifier<T> {
   late GenericSettingsManager<T> settingsManager;
+  bool _isInitialized = false;
 
   /// Subclasses must provide the settings manager instance.
   GenericSettingsManager<T> createSettingsManager();
@@ -56,13 +63,18 @@ abstract class GenericSettingsNotifier<T> extends Notifier<T> {
 
   @override
   T build() {
-    try {
-      settingsManager.loadSync();
+    if (!_isInitialized) {
+      try {
+        settingsManager.loadSync();
+        _isInitialized = true;
+        return settingsManager.state!;
+      } catch (e, stackTrace) {
+        Fimber.w("Error building settings notifier",
+            ex: e, stacktrace: stackTrace);
+        rethrow;
+      }
+    } else {
       return settingsManager.state!;
-    } catch (e, stackTrace) {
-      Fimber.w("Error building settings notifier",
-          ex: e, stacktrace: stackTrace);
-      rethrow;
     }
   }
 

@@ -90,7 +90,7 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
           if (variant == null) return const SizedBox();
           final iconFilePath = variant.iconFilePath;
           final modMetadata = ref
-              .watch(modsMetadataProvider)
+              .watch(AppState.modsMetadata)
               .valueOrNull
               ?.getMergedModMetadata(selectedMod.id);
           final forumThreadId = versionCheck?.remoteVersion?.modThreadId;

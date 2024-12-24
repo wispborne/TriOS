@@ -11,10 +11,6 @@ import 'app_state.dart';
 
 part 'mod_metadata.mapper.dart';
 
-/// Provides [ModMetadata]s, observable state.
-final modsMetadataProvider =
-    AsyncNotifierProvider<ModMetadataStore, ModsMetadata>(ModMetadataStore.new);
-
 /// Stores [ModMetadata]s, provides methods to manage them, observable state.
 class ModMetadataStore extends GenericSettingsAsyncNotifier<ModsMetadata> {
   @override
@@ -73,27 +69,51 @@ class ModMetadataStore extends GenericSettingsAsyncNotifier<ModsMetadata> {
   }
 
   void updateModUserMetadata(String modId,
-      ModMetadata Function(ModMetadata oldMetadata) newUserMetadata) {
+      ModMetadata Function(ModMetadata oldMetadata) metadataUpdater) {
     final userMetadata = state.valueOrNull?.userMetadata.toMap() ?? {};
     userMetadata[modId] =
-        newUserMetadata(userMetadata[modId] ?? ModMetadata.empty());
+        metadataUpdater(userMetadata[modId] ?? ModMetadata.empty());
     update((s) => s.copyWith(userMetadata: userMetadata));
+  }
+
+  void updateModBaseMetadata(String modId,
+      ModMetadata Function(ModMetadata oldMetadata) metadataUpdater) {
+    final baseMetadata = state.valueOrNull?.baseMetadata.toMap() ?? {};
+    baseMetadata[modId] =
+        metadataUpdater(baseMetadata[modId] ?? ModMetadata.empty());
+    update((s) => s.copyWith(baseMetadata: baseMetadata));
   }
 
   void updateModVariantUserMetadata(
       String modId,
       String smolId,
       ModVariantMetadata Function(ModVariantMetadata oldMetadata)
-          newUserMetadata) {
+          metadataUpdater) {
     final userMetadata = state.valueOrNull?.userMetadata.toMap() ?? {};
     if (userMetadata[modId] == null) {
       userMetadata[modId] = ModMetadata.empty();
     }
 
-    userMetadata[modId]!.variantsMetadata[smolId] = newUserMetadata(
+    userMetadata[modId]!.variantsMetadata[smolId] = metadataUpdater(
         userMetadata[modId]!.variantsMetadata[smolId] ??
             ModVariantMetadata.empty());
     update((s) => s.copyWith(userMetadata: userMetadata));
+  }
+
+  void updateModVariantBaseMetadata(
+      String modId,
+      String smolId,
+      ModVariantMetadata Function(ModVariantMetadata oldMetadata)
+          metadataUpdater) {
+    final baseMetadata = state.valueOrNull?.baseMetadata.toMap() ?? {};
+    if (baseMetadata[modId] == null) {
+      baseMetadata[modId] = ModMetadata.empty();
+    }
+
+    baseMetadata[modId]!.variantsMetadata[smolId] = metadataUpdater(
+        baseMetadata[modId]!.variantsMetadata[smolId] ??
+            ModVariantMetadata.empty());
+    update((s) => s.copyWith(baseMetadata: baseMetadata));
   }
 }
 
@@ -169,16 +189,21 @@ class ModMetadata with ModMetadataMappable {
   static ModMetadata empty() => ModMetadata(
       variantsMetadata: {}, firstSeen: DateTime.now().millisecondsSinceEpoch);
 
-  /// Returns a mod metadata object containing user metadata first and, if not found, base metadata.
+  /// Merges all fields from this (user) and [base], with user data overriding what it explicitly sets.
   ModMetadata backfillWith(ModMetadata base) {
-    return ModMetadata(
-      variantsMetadata: variantsMetadata.map((key, value) {
-        final baseModVariantMetadata = base.variantsMetadata[key];
+    final mergedVariants = {
+      ...base.variantsMetadata,
+      ...variantsMetadata,
+    }.map((key, userVariant) {
+      final baseVariant = base.variantsMetadata[key];
+      if (baseVariant != null && userVariant != null) {
+        return MapEntry(key, userVariant.backfillWith(baseVariant));
+      }
+      return MapEntry(key, userVariant ?? baseVariant!);
+    });
 
-        return baseModVariantMetadata != null
-            ? MapEntry(key, value.backfillWith(baseModVariantMetadata))
-            : MapEntry(key, value);
-      }),
+    return ModMetadata(
+      variantsMetadata: mergedVariants,
       firstSeen: firstSeen,
       isFavorited: isFavorited,
     );
@@ -188,19 +213,25 @@ class ModMetadata with ModMetadataMappable {
 /// Stores metadata for a mod variant.
 @MappableClass()
 class ModVariantMetadata with ModVariantMetadataMappable {
+  /// Timestamp of when the mod variant was first seen by TriOS.
   final int firstSeen;
+
+  /// Timestamp of when the mod variant was last enabled by TriOS.
+  final int? lastEnabled;
 
   ModVariantMetadata({
     required this.firstSeen,
+    this.lastEnabled,
   });
 
   static ModVariantMetadata empty() =>
       ModVariantMetadata(firstSeen: DateTime.now().millisecondsSinceEpoch);
 
-  /// Returns a mod variant metadata object containing user metadata first and, if not found, base metadata.
+  /// Merges all fields from this (user) and [base], with user data overriding what it explicitly sets.
   ModVariantMetadata backfillWith(ModVariantMetadata base) {
     return ModVariantMetadata(
       firstSeen: firstSeen,
+      lastEnabled: lastEnabled ?? base.lastEnabled,
     );
   }
 }

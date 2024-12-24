@@ -26,6 +26,7 @@ import '../mod_manager/version_checker.dart';
 import '../models/enabled_mods.dart';
 import '../models/mod.dart';
 import 'data_cache/enabled_mods.dart';
+import 'mod_metadata.dart';
 import 'mod_variants.dart';
 
 class AppState {
@@ -63,6 +64,11 @@ class AppState {
       );
     }).toList();
   }
+
+  /// Provides [ModMetadata]s, observable state.
+  static final modsMetadata =
+      AsyncNotifierProvider<ModMetadataStore, ModsMetadata>(
+          ModMetadataStore.new);
 
   static final themeData = AsyncNotifierProvider<ThemeManager, ThemeState>(
     ThemeManager.new,

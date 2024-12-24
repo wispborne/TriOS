@@ -1412,7 +1412,7 @@ packages:
     source: hosted
     version: "6.1.1"
   stack_trace:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: stack_trace
       sha256: "9f47fd3630d76be3ab26f0ee06d213679aa425996925ff3feffdec504931c377"

@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:logger/logger.dart';
-import 'package:stack_trace/stack_trace.dart';
 
 /// Default implementation of [LogPrinter].
 ///
@@ -257,10 +256,71 @@ class PrettyPrinterCustom extends LogPrinter {
     );
   }
 
+  /// Filters a stacktrace string to include lines considered relevant plus a little context.
+  /// AI generated
+  String filterStacktrace(
+    StackTrace stackTrace, {
+    int contextBefore = 2,
+    int contextAfter = 1,
+    String projectPackagePrefix = 'package:trios',
+  }) {
+    final lines = stackTrace.toString().split('\n');
+
+    // Identify relevant lines, then store their indices.
+    final relevantIndices = <int>[];
+    for (var i = 0; i < lines.length; i++) {
+      final line = lines[i];
+      if (line.contains(projectPackagePrefix)) {
+        relevantIndices.add(i);
+      }
+    }
+
+    if (relevantIndices.isEmpty) {
+      // Nothing relevant found; fall back to returning everything or a portion.
+      return stackTrace.toString();
+    }
+
+    // Build a set of indices to keep.
+    final indicesToKeep = <int>{};
+    for (final index in relevantIndices) {
+      // Add the relevant line itself.
+      indicesToKeep.add(index);
+
+      // Add preceding context.
+      for (var j = 1; j <= contextBefore; j++) {
+        final neighborIndex = index - j;
+        if (neighborIndex >= 0) {
+          indicesToKeep.add(neighborIndex);
+        } else {
+          break;
+        }
+      }
+
+      // Add succeeding context.
+      for (var j = 1; j <= contextAfter; j++) {
+        final neighborIndex = index + j;
+        if (neighborIndex < lines.length) {
+          indicesToKeep.add(neighborIndex);
+        } else {
+          break;
+        }
+      }
+    }
+
+    // Build final filtered lines in original order.
+    final filteredLines = <String>[];
+    final sortedIndices = indicesToKeep.toList()..sort();
+    for (final index in sortedIndices) {
+      filteredLines.add(lines[index]);
+    }
+
+    return filteredLines.join('\n');
+  }
+
   String? formatStackTrace(
       StackTrace? stackTrace, int? methodCount, int? stackTraceMaxLines) {
     List<String> lines =
-        (stackTrace == null ? "" : Trace.from(stackTrace).terse)
+        (stackTrace == null ? "" : filterStacktrace(stackTrace))
             .toString()
             .split('\n')
             .where(

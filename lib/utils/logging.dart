@@ -49,8 +49,8 @@ configureLogging({
     const stackTraceBeginIndex = 4;
     const methodCount = 7;
     var consolePrinter = PrettyPrinterCustom(
-      stackTraceBeginIndex: 3,
-      methodCount: 9,
+      stackTraceBeginIndex: 0,
+      methodCount: 20,
       // Anything other than 0 halves the speed of logging.
       // errorMethodCount: 5,
       // lineLength: 50,

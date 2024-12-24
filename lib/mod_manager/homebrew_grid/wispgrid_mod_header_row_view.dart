@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
@@ -148,8 +150,9 @@ class _WispGridModHeaderRowViewState
                 builder: (context, area) {
                   // child: Row(
                   // children: (gridState.columnSettings.entries.map((columnSetting) {
-                  final columnSetting =
-                      gridState.sortedVisibleColumns.elementAt(area.index);
+                  final columnSetting = gridState.sortedVisibleColumns
+                      .elementAt(min(area.index,
+                          gridState.sortedVisibleColumns.length - 1));
 
                   return Builder(builder: (context) {
                     final header = columnSetting.key;
@@ -248,6 +251,16 @@ class _WispGridModHeaderRowViewState
                               child: SortableHeader(
                                   columnSortField: ModGridSortField.firstSeen,
                                   child: Text('First Seen',
+                                      style: headerTextStyle))),
+                        ),
+                      ModGridHeader.lastEnabled => DraggableHeader(
+                          showDragHandle: isHovering,
+                          header: header,
+                          child: SizedBox(
+                              width: state.width,
+                              child: SortableHeader(
+                                  columnSortField: ModGridSortField.lastEnabled,
+                                  child: Text('Last Enabled',
                                       style: headerTextStyle))),
                         ),
                     };

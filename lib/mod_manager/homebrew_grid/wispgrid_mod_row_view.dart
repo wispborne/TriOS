@@ -18,7 +18,6 @@ import 'package:trios/models/mod_variant.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/thirdparty/dartx/map.dart';
 import 'package:trios/trios/app_state.dart';
-import 'package:trios/trios/mod_metadata.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/vram_estimator/graphics_lib_config_provider.dart';
@@ -68,6 +67,11 @@ class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
           },
           child: Builder(builder: (context) {
             final isHovering = HoverData.of(context)?.isHovering ?? false;
+            final metadata = ref
+                .watch(AppState.modsMetadata)
+                .valueOrNull
+                ?.getMergedModMetadata(mod.id);
+            final theme = Theme.of(context);
 
             return Container(
               decoration: BoxDecoration(
@@ -220,11 +224,6 @@ class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
                                 }),
                               ModGridHeader.firstSeen =>
                                 Builder(builder: (context) {
-                                  final metadata = ref
-                                      .watch(modsMetadataProvider)
-                                      .valueOrNull
-                                      ?.getMergedModMetadata(mod.id);
-                                  final theme = Theme.of(context);
                                   return ContextMenuRegion(
                                       contextMenu: buildModContextMenu(
                                           mod, ref, context,
@@ -245,6 +244,33 @@ class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
                                                   theme.textTheme.labelLarge),
                                         ),
                                       ));
+                                }),
+                              ModGridHeader.lastEnabled =>
+                                Builder(builder: (context) {
+                                  final variantMetadata =
+                                      metadata?.variantsMetadata[mod
+                                          .findFirstEnabledOrHighestVersion
+                                          ?.smolId];
+                                  return ContextMenuRegion(
+                                      contextMenu: buildModContextMenu(
+                                          mod, ref, context,
+                                          showSwapToVersion: true),
+                                      child: _RowItemContainer(
+                                          height: height,
+                                          width: state.width,
+                                          child: Opacity(
+                                            opacity: WispGrid.lightTextOpacity,
+                                            child: Text(
+                                                variantMetadata?.lastEnabled?.let(
+                                                        (lastEnabled) => Constants
+                                                            .dateTimeFormat
+                                                            .format(DateTime
+                                                                .fromMillisecondsSinceEpoch(
+                                                                    lastEnabled))) ??
+                                                    "",
+                                                style:
+                                                    theme.textTheme.labelLarge),
+                                          )));
                                 }),
                             };
                           });
@@ -796,7 +822,7 @@ class FavoriteButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final modMetadata =
-        ref.watch(modsMetadataProvider).valueOrNull?.userMetadata[mod.id];
+        ref.watch(AppState.modsMetadata).valueOrNull?.userMetadata[mod.id];
     final isFavorited = modMetadata?.isFavorited ?? false;
 
     return Row(
@@ -809,11 +835,14 @@ class FavoriteButton extends ConsumerWidget {
               cursor: SystemMouseCursors.click,
               child: GestureDetector(
                 onTap: () {
-                  ref.read(modsMetadataProvider.notifier).updateModUserMetadata(
-                      mod.id,
-                      (oldMetadata) => oldMetadata.copyWith(
-                            isFavorited: !(oldMetadata.isFavorited ?? false),
-                          ));
+                  ref
+                      .read(AppState.modsMetadata.notifier)
+                      .updateModUserMetadata(
+                          mod.id,
+                          (oldMetadata) => oldMetadata.copyWith(
+                                isFavorited:
+                                    !(oldMetadata.isFavorited ?? false),
+                              ));
                 },
                 child: Icon(
                   isFavorited ? Icons.favorite : Icons.favorite_border,

@@ -160,12 +160,12 @@ abstract class GenericAsyncSettingsManager<T> {
       try {
         final newState = await mutator(oldState);
 
-        if (newState != oldState) {
+        if (newState.hashCode != oldState.hashCode) {
           state = newState;
           Fimber.i("$fileName updated, writing to disk...");
           scheduleWriteSettingsToDisk();
         } else {
-          Fimber.v(() => "No $fileName settings change detected.");
+          Fimber.d("No $fileName settings change detected.");
         }
 
         return state!;

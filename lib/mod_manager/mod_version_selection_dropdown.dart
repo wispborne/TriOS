@@ -64,9 +64,11 @@ class _ModVersionSelectionDropdownState
         : widget.mod.isEnabledInGame
             ? theme.colorScheme.secondary
             : theme.colorScheme.surface;
-    var textColor = widget.mod.isEnabledInGame
-        ? theme.colorScheme.onSecondary
-        : theme.colorScheme.onSurface;
+    var textColor = hasMultipleEnabled
+        ? theme.colorScheme.onSecondary.darker(20)
+        : widget.mod.isEnabledInGame
+            ? theme.colorScheme.onSecondary
+            : theme.colorScheme.onSurface;
     final buttonStyle = ElevatedButton.styleFrom(
       foregroundColor: textColor,
       disabledForegroundColor: textColor,
@@ -93,8 +95,8 @@ class _ModVersionSelectionDropdownState
         "This mod requires a different version of the game.";
     final errorTooltip = hasMultipleEnabled
         ? "Warning"
-        "\nYou have two or more enabled mod folders for ${mainVariant?.modInfo.nameOrId}. The game will pick one at 'random'."
-        "\nSelect one version from the dropdown."
+            "\nYou have two or more enabled mod folders for ${mainVariant?.modInfo.nameOrId}. The game will pick one at 'random'."
+            "\nSelect one version from the dropdown."
         : "";
     final warningIcon = Icon(
       Icons.warning,

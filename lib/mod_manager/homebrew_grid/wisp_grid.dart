@@ -45,7 +45,7 @@ class _WispGridState extends ConsumerState<WispGrid> {
     final grouping =
         groupingSetting.grouping.mapToGroup(); // TODO (SL.modMetadata)
     final activeSortField = gridState.sortField ?? ModGridSortField.name;
-    final metadata = ref.watch(modsMetadataProvider.notifier);
+    final metadata = ref.watch(AppState.modsMetadata.notifier);
 
     final mods = widget.mods.nonNulls
         // Sort by favorites first, then by the active sort field
@@ -60,14 +60,14 @@ class _WispGridState extends ConsumerState<WispGrid> {
               return leftFavorited ? -1 : 1;
             }
 
-            return _getSortValueForMod(
+            final sortResult = _getSortValueForMod(
                         left, leftMetadata, activeSortField, vramEstState)
                     ?.compareTo(_getSortValueForMod(
                         right, rightMetadata, activeSortField, vramEstState)) ??
                 0;
+            return gridState.isSortDescending ? sortResult * -1 : sortResult;
           },
         )
-        .let((mods) => gridState.isSortDescending ? mods.reversed : mods)
         .groupBy((Mod mod) => grouping.getGroupSortValue(mod))
         .entries
         .let((entries) => groupingSetting.isSortDescending
@@ -113,7 +113,6 @@ class _WispGridState extends ConsumerState<WispGrid> {
                 .nonNulls
                 .toList();
 
-
     // TODO smooth scrolling: https://github.com/dridino/smooth_list_view/blob/main/lib/smooth_list_view.dart
     return StickyHeader(
       child: Scrollbar(
@@ -158,14 +157,19 @@ Comparable? _getSortValueForMod(Mod mod, ModMetadata? metadata,
       mod.findFirstEnabledOrHighestVersion?.modInfo.nameOrId,
     ModGridSortField.enabledState => mod.isEnabledOnUi.toComparable(),
     ModGridSortField.author =>
-      mod.findFirstEnabledOrHighestVersion?.modInfo.author?.toLowerCase(),
+      mod.findFirstEnabledOrHighestVersion?.modInfo.author?.toLowerCase() ?? "",
     ModGridSortField.version =>
       mod.findFirstEnabledOrHighestVersion?.modInfo.version,
     ModGridSortField.vramImpact => vramEstimatorState
-        .modVramInfo[mod.findHighestEnabledVersion?.smolId]
-        ?.maxPossibleBytesForMod,
+            .modVramInfo[mod.findHighestEnabledVersion?.smolId]
+            ?.maxPossibleBytesForMod ??
+        0,
     ModGridSortField.gameVersion =>
       mod.findFirstEnabledOrHighestVersion?.modInfo.gameVersion,
-    ModGridSortField.firstSeen => metadata?.firstSeen,
+    ModGridSortField.firstSeen => metadata?.firstSeen ?? 0,
+    ModGridSortField.lastEnabled => metadata
+            ?.variantsMetadata[mod.findFirstEnabledOrHighestVersion!.smolId]
+            ?.lastEnabled ??
+        0,
   };
 }

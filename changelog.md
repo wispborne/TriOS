@@ -15,10 +15,11 @@
     - Saves column width, position, visibility, and sorting.
     - Switched to reuse my old SMOL code and away from the 3rd-party library :)
   - "Favorites" to pin a mod on the Mods tab.
-  - Mods can now be sorted by "First Seen".
-    - This is the date the mod was first seen by TriOS, not when it was first installed.
+  - Mods can now be sorted by "First Seen" or "Last Enabled".
+    - This is the date the mod was first seen or enabled by TriOS, not when it was first installed.
   - May now install a mod from folder, not just from zip/7z/rar.
     - Either drag'n'drop a folder or select the `mod_info.json` file from the Add button.
+  - Tooltips are now more responsive and have replaced most of the old, "standard" styled tooltips.
   - Setting to disable "game is running" check.
   - Warning if user has 2+ enabled mod folders for the same mod.
 - Fixed
@@ -31,6 +32,7 @@
   - Logfile not properly rolling over at 25MB until app restart.
   - Mods folder path used `/` instead of `\`.
   - Launch precheck no longer full height.
+  - Version checker errors now have a capped height.
 - Changed
   - Note: TriOS settings have been reset due to a new format. 
     - Mod profiles should be fine. 

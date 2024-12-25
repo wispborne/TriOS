@@ -220,6 +220,7 @@ Future<RemoteVersionCheckResult> checkRemoteVersion(
   final fixedUrl = fixUrl(remoteVersionUrl);
 
   try {
+    // TODO https://bitbucket.org/niatahl/trailer-moments/downloads/trailermoments.version doesn't work
     final response = await httpClient.get(
       fixedUrl,
       headers: {

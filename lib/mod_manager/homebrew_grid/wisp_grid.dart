@@ -1,6 +1,5 @@
 import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
-import 'package:easy_sticky_header/easy_sticky_header.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
@@ -114,31 +113,26 @@ class _WispGridState extends ConsumerState<WispGrid> {
                 .toList();
 
     // TODO smooth scrolling: https://github.com/dridino/smooth_list_view/blob/main/lib/smooth_list_view.dart
-    return StickyHeader(
-      child: Scrollbar(
-        controller: _gridScrollController,
-        thumbVisibility: true,
-        child: ListView.builder(
-            itemCount: displayedMods.length,
-            controller: _gridScrollController,
-            itemBuilder: (context, index) {
-              final item = displayedMods[index];
+    return Scrollbar(
+      controller: _gridScrollController,
+      thumbVisibility: true,
+      child: ListView.builder(
+          itemCount: displayedMods.length,
+          controller: _gridScrollController,
+          itemBuilder: (context, index) {
+            final item = displayedMods[index];
 
-              if (item is WispGridModGroupRowView) {
-                return StickyContainerWidget(
-                  index: index,
-                  child: item,
-                );
-              }
+            if (item is WispGridModGroupRowView) {
+              return item;
+            }
 
-              try {
-                return item;
-              } catch (e) {
-                Fimber.v(() => 'Error in WispGrid: $e');
-                return Text("Incoherent screaming");
-              }
-            }),
-      ),
+            try {
+              return item;
+            } catch (e) {
+              Fimber.v(() => 'Error in WispGrid: $e');
+              return Text("Incoherent screaming");
+            }
+          }),
     );
   }
 }

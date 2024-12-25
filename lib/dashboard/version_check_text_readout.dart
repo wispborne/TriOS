@@ -160,14 +160,12 @@ class _VersionCheckTextReadoutState
                     ),
                     ConstrainedBox(
                       constraints: const BoxConstraints(maxHeight: 120),
-                      child: Expanded(
-                        child: Text("${remoteVersionCheck?.error}",
-                            overflow: TextOverflow.fade,
-                            style: theme.textTheme.labelLarge?.copyWith(
-                                fontFeatures: [
-                                  const FontFeature.tabularFigures()
-                                ])),
-                      ),
+                      child: Text("${remoteVersionCheck?.error}",
+                          overflow: TextOverflow.fade,
+                          style: theme.textTheme.labelLarge?.copyWith(
+                              fontFeatures: [
+                                const FontFeature.tabularFigures()
+                              ])),
                     ),
                   ],
                 ),

@@ -44,6 +44,7 @@
     - No longer re-parsing `mod_info.json` files every time.
   - TriOS log button now opens folder instead of file.
   - Tooltip border uses a theme color.
+  - Removed sticky headers, as they had some bugs I couldn't fix.
 
 # 0.3.4
 - Added

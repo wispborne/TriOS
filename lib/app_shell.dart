@@ -26,6 +26,7 @@ import 'package:trios/widgets/blur.dart';
 import 'package:trios/widgets/changelog_viewer.dart';
 import 'package:trios/widgets/dropdown_with_icon.dart';
 import 'package:trios/widgets/lazy_indexed_stack.dart';
+import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/self_update_toast.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:trios/widgets/tab_button.dart';
@@ -210,7 +211,7 @@ class _AppShellState extends ConsumerState<AppShell>
             children: [
               Padding(
                 padding: const EdgeInsets.only(right: 16.0),
-                child: Tooltip(
+                child: MovingTooltipWidget.text(
                   message: Constants.appSubtitle,
                   child: const Stack(children: [
 // if (ref.watch(AppState.isWindowFocused))
@@ -247,7 +248,7 @@ class _AppShellState extends ConsumerState<AppShell>
                   children: [
                     Column(
                       children: [
-                        Tooltip(
+                        MovingTooltipWidget.text(
                             message: "Dashboard",
                             child: TabButton(
                               text: "Dash",
@@ -257,93 +258,99 @@ class _AppShellState extends ConsumerState<AppShell>
                             )),
                       ],
                     ),
-                    TabButton(
-                      text: "Mods",
-                      icon: Transform.rotate(
-                          angle: 0.7,
-                          child: const SvgImageIcon(
-                            "assets/images/icon-onslaught.svg",
-                            height: 23,
-                          )),
-                      isSelected: _currentPage == TriOSTools.modManager,
-                      onPressed: () => _changeTab(TriOSTools.modManager),
+                    MovingTooltipWidget.text(
+                      message: "Mod Manager",
+                      child: TabButton(
+                        text: "Mods",
+                        icon: Transform.rotate(
+                            angle: 0.7,
+                            child: const SvgImageIcon(
+                              "assets/images/icon-onslaught.svg",
+                              height: 23,
+                            )),
+                        isSelected: _currentPage == TriOSTools.modManager,
+                        onPressed: () => _changeTab(TriOSTools.modManager),
+                      ),
                     ),
-                    TabButton(
-                      text: "Profiles",
-                      icon: const Tooltip(
-                        message: "Mod Profiles",
-                        child: SvgImageIcon(
+                    MovingTooltipWidget.text(
+                      message: "Mod Profiles",
+                      child: TabButton(
+                        text: "Profiles",
+                        icon: SvgImageIcon(
                           "assets/images/icon-view-carousel.svg",
                           height: 23,
                         ),
+                        isSelected: _currentPage == TriOSTools.modProfiles,
+                        onPressed: () => _changeTab(TriOSTools.modProfiles),
                       ),
-                      isSelected: _currentPage == TriOSTools.modProfiles,
-                      onPressed: () => _changeTab(TriOSTools.modProfiles),
                     ),
-                    TabButton(
-                      text: "Catalog",
-                      icon: const Tooltip(
-                        message: "Browse online mods",
-                        child: Icon(Icons.cloud_download),
+                    MovingTooltipWidget.text(
+                      message: "Browse online mods",
+                      child: TabButton(
+                        text: "Catalog",
+                        icon: Icon(Icons.cloud_download),
+                        isSelected: _currentPage == TriOSTools.modBrowser,
+                        onPressed: () => _changeTab(TriOSTools.modBrowser),
                       ),
-                      isSelected: _currentPage == TriOSTools.modBrowser,
-                      onPressed: () => _changeTab(TriOSTools.modBrowser),
                     ),
-                    TabButton(
-                      text: "Logs",
-                      icon: const Tooltip(
-                        message: "$chipperTitle Log Viewer",
-                        child: ImageIcon(
+                    MovingTooltipWidget.text(
+                      message: "$chipperTitle Log Viewer",
+                      child: TabButton(
+                        text: "Logs",
+                        icon: ImageIcon(
                           AssetImage("assets/images/chipper/icon.png"),
                           size: 22,
                         ),
+                        isSelected: _currentPage == TriOSTools.chipper,
+                        onPressed: () => _changeTab(TriOSTools.chipper),
                       ),
-                      isSelected: _currentPage == TriOSTools.chipper,
-                      onPressed: () => _changeTab(TriOSTools.chipper),
                     ),
                     const SizedBox(width: 4),
-                    AnimatedPopupMenuButton<TriOSTools>(
-                      icon: SvgImageIcon("assets/images/icon-toolbox.svg",
-                          color: theme.iconTheme.color),
-                      onSelected: (TriOSTools value) => _changeTab(value),
-                      menuItems: const [
-                        PopupMenuItem(
-                            value: TriOSTools.vramEstimator,
-                            child: Row(
-                              children: [
-                                SvgImageIcon("assets/images/icon-weight.svg"),
-                                SizedBox(width: 8),
-                                // Space between icon and text
-                                Text("VRAM"),
-                              ],
-                            )),
-                        PopupMenuItem(
-                            value: TriOSTools.portraits,
-                            child: Row(
-                              children: [
-                                SvgImageIcon(
-                                    "assets/images/icon-account-box-outline.svg"),
-                                SizedBox(width: 8),
-                                // Space between icon and text
-                                Text("Portraits"),
-                              ],
-                            )),
-                        PopupMenuItem(
-                            value: TriOSTools.weapons,
-                            child: Row(
-                              children: [
-                                SvgImageIcon("assets/images/icon-target.svg"),
-                                SizedBox(width: 8),
-                                // Space between icon and text
-                                Text("Weapons"),
-                              ],
-                            )),
-                        // PopupMenuItem(
-                        //     text: "Portraits",
-                        //     icon: const SvgImageIcon(
-                        //         "assets/images/icon-account-box-outline.svg"),
-                        //     page: TriOSTools.portraits),
-                      ],
+                    MovingTooltipWidget.text(
+                      message: "More tools",
+                      child: AnimatedPopupMenuButton<TriOSTools>(
+                        icon: SvgImageIcon("assets/images/icon-toolbox.svg",
+                            color: theme.iconTheme.color),
+                        onSelected: (TriOSTools value) => _changeTab(value),
+                        menuItems: const [
+                          PopupMenuItem(
+                              value: TriOSTools.vramEstimator,
+                              child: Row(
+                                children: [
+                                  SvgImageIcon("assets/images/icon-weight.svg"),
+                                  SizedBox(width: 8),
+                                  // Space between icon and text
+                                  Text("VRAM"),
+                                ],
+                              )),
+                          PopupMenuItem(
+                              value: TriOSTools.portraits,
+                              child: Row(
+                                children: [
+                                  SvgImageIcon(
+                                      "assets/images/icon-account-box-outline.svg"),
+                                  SizedBox(width: 8),
+                                  // Space between icon and text
+                                  Text("Portraits"),
+                                ],
+                              )),
+                          PopupMenuItem(
+                              value: TriOSTools.weapons,
+                              child: Row(
+                                children: [
+                                  SvgImageIcon("assets/images/icon-target.svg"),
+                                  SizedBox(width: 8),
+                                  // Space between icon and text
+                                  Text("Weapons"),
+                                ],
+                              )),
+                          // PopupMenuItem(
+                          //     text: "Portraits",
+                          //     icon: const SvgImageIcon(
+                          //         "assets/images/icon-account-box-outline.svg"),
+                          //     page: TriOSTools.portraits),
+                        ],
+                      ),
                     )
                   ],
                 ),
@@ -362,7 +369,7 @@ class _AppShellState extends ConsumerState<AppShell>
                     ref.watch(AppState.gameFolder).valueOrNull?.path;
                 return gameFolderPath == null
                     ? Container()
-                    : Tooltip(
+                    : MovingTooltipWidget.text(
                         message: "Open Starsector folder",
                         child: IconButton(
                           icon: const SvgImageIcon(
@@ -375,7 +382,7 @@ class _AppShellState extends ConsumerState<AppShell>
                       );
               }),
               if (logFilePath != null)
-                Tooltip(
+                MovingTooltipWidget.text(
                   message: "${Constants.appName} log file",
                   child: IconButton(
                     icon:
@@ -392,7 +399,7 @@ class _AppShellState extends ConsumerState<AppShell>
                     },
                   ),
                 ),
-              Tooltip(
+              MovingTooltipWidget.text(
                   message: "Settings",
                   child: IconButton(
                       // text: "Settings",
@@ -422,7 +429,7 @@ class _AppShellState extends ConsumerState<AppShell>
               FilePermissionShield(ref: ref),
               const AdminPermissionShield(),
               const Spacer(),
-              Tooltip(
+              MovingTooltipWidget.text(
                 message: "${Constants.appName} Changelog",
                 child: IconButton(
                   icon: const SvgImageIcon(
@@ -432,7 +439,7 @@ class _AppShellState extends ConsumerState<AppShell>
                       showUnreleasedVersions: false),
                 ),
               ),
-              Tooltip(
+              MovingTooltipWidget.text(
                 message: "About",
                 child: IconButton(
                   icon: const SvgImageIcon("assets/images/icon-info.svg"),
@@ -448,7 +455,7 @@ class _AppShellState extends ConsumerState<AppShell>
                   },
                 ),
               ),
-              Tooltip(
+              MovingTooltipWidget.text(
                 message: "Patreon",
                 child: IconButton(
                   icon: const SvgImageIcon("assets/images/icon-donate.svg"),
@@ -458,12 +465,11 @@ class _AppShellState extends ConsumerState<AppShell>
                   },
                 ),
               ),
-              Tooltip(
+              MovingTooltipWidget.text(
                 message:
                     "When enabled, modifying a mod's rules.csv will\nreload in-game rules as long as dev mode is enabled."
                     "\n\nrules.csv hot reload is ${isRulesHotReloadEnabled ? "enabled" : "disabled"}."
                     "\nClick to ${isRulesHotReloadEnabled ? "disable" : "enable"}.",
-                textAlign: TextAlign.center,
                 child: InkWell(
                   borderRadius:
                       BorderRadius.circular(ThemeManager.cornerRadius),
@@ -564,8 +570,9 @@ class FilePermissionShield extends StatelessWidget {
 
     final isAlreadyAdmin = windowsIsAdmin();
 
-    return Tooltip(
-      richMessage: TextSpan(
+    return MovingTooltipWidget.framed(
+      tooltipWidget: RichText(
+          text: TextSpan(
         children: [
           TextSpan(
             text: isAlreadyAdmin
@@ -584,7 +591,7 @@ class FilePermissionShield extends StatelessWidget {
                 "\n    (${path.path ?? 'unknown path'}).",
           )}")
         ],
-      ),
+      )),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -619,7 +626,7 @@ class AdminPermissionShield extends StatelessWidget {
       return const SizedBox(); // Don't show anything if not on Windows or not Admin
     }
 
-    return Tooltip(
+    return MovingTooltipWidget.text(
       message:
           "Running as Administrator.\nDrag'n'drop will not work due to Windows security limits.",
       child: SvgImageIcon(

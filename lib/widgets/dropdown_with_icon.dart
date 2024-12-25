@@ -71,6 +71,7 @@ class _AnimatedPopupMenuButtonState<T> extends State<AnimatedPopupMenuButton<T>>
           ),
         ],
       ),
+      tooltip: "",
       offset: const Offset(0, 48),
       // Menu will appear below the button
       onSelected: (T value) {

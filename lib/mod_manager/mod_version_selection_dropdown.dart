@@ -157,23 +157,26 @@ class _ModVersionSelectionDropdownState
     }
 
     // Multiple variants tracked
-    final items = (widget.mod.modVariants
-        .map(
-          (variant) => DropdownMenuItem(
-            value: variant,
-            child: Text(variant.modInfo.version.toString(),
-                style: TextStyle(
-                    color: modCompatibilityMap[variant.smolId]
-                        ?.gameCompatibility
-                        .getGameCompatibilityColor()),
-                overflow: TextOverflow.ellipsis),
-          ),
-        )
-        .distinctBy((item) => item.value?.smolId)
-        .sortedByDescending<ModVariant>((item) => item.value)
-      ..add(const DropdownMenuItem(
-          value: null,
-          child: Text("Disable", overflow: TextOverflow.ellipsis))));
+    final items = [
+      const DropdownMenuItem(
+        value: null,
+        child: Text("Disable", overflow: TextOverflow.ellipsis),
+      ),
+      ...(widget.mod.modVariants
+          .map(
+            (variant) => DropdownMenuItem(
+              value: variant,
+              child: Text(variant.modInfo.version.toString(),
+                  style: TextStyle(
+                      color: modCompatibilityMap[variant.smolId]
+                          ?.gameCompatibility
+                          .getGameCompatibilityColor()),
+                  overflow: TextOverflow.ellipsis),
+            ),
+          )
+          .distinctBy((item) => item.value?.smolId)
+          .sortedByDescending<ModVariant>((item) => item.value))
+    ];
 
     final dropdownWidth = buttonWidth;
     return Tooltip(
@@ -182,7 +185,7 @@ class _ModVersionSelectionDropdownState
           : "",
       child: Disable(
         isEnabled: isButtonEnabled,
-        child: DropdownButton2(
+        child: DropdownButton2<ModVariant?>(
           items: items,
           value: widget.mod.findFirstEnabled,
           alignment: Alignment.centerLeft,

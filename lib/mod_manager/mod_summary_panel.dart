@@ -3,7 +3,6 @@ import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:trios/modBrowser/mod_browser_manager.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/themes/theme_manager.dart';
@@ -15,7 +14,6 @@ import '../models/mod.dart';
 import '../models/mod_variant.dart';
 import '../trios/app_state.dart';
 import '../trios/constants.dart';
-import '../trios/mod_metadata.dart';
 import '../widgets/mod_type_icon.dart';
 import '../widgets/moving_tooltip.dart';
 import '../widgets/palette_generator_mixin.dart';
@@ -240,7 +238,7 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
                                       const SizedBox(height: 16),
                                       Builder(builder: (context) {
                                         final uri = Uri.parse(
-                                            "${Constants.forumModPageUrl}${forumThreadId}");
+                                            "${Constants.forumModPageUrl}$forumThreadId");
                                         return Tooltip(
                                           message: uri.toString(),
                                           child: Opacity(
@@ -270,13 +268,15 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        Text(selectedMod.modVariants
-                                            .joinToString(
-                                                separator: ",  ",
-                                                transform: (variant) =>
-                                                    variant.modInfo.version
-                                                        ?.toString() ??
-                                                    "")),
+                                        Text(
+                                            selectedMod.modVariants
+                                                .joinToString(
+                                                    separator: ",  ",
+                                                    transform: (variant) =>
+                                                        variant.modInfo.version
+                                                            ?.toString() ??
+                                                        ""),
+                                            style: theme.textTheme.labelLarge),
                                       ],
                                     ),
                                   ],
@@ -290,8 +290,10 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
                                       const Text("Author",
                                           style: TextStyle(
                                               fontWeight: FontWeight.bold)),
-                                      Text(variant.modInfo.author ??
-                                          "(no author)"),
+                                      Text(
+                                          variant.modInfo.author ??
+                                              "(no author)",
+                                          style: theme.textTheme.labelLarge),
                                     ],
                                   ),
                                 if (modMetadata != null)
@@ -305,16 +307,17 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
                                         const Text("First Seen",
                                             style: TextStyle(
                                                 fontWeight: FontWeight.bold)),
-                                        Text(Constants.dateTimeFormat.format(
-                                            DateTime.fromMillisecondsSinceEpoch(
-                                                modMetadata.firstSeen))),
+                                        Text(
+                                            Constants.dateTimeFormat.format(
+                                                DateTime
+                                                    .fromMillisecondsSinceEpoch(
+                                                        modMetadata.firstSeen)),
+                                            style: theme.textTheme.labelLarge),
                                       ],
                                     ),
                                   ),
                                 Builder(builder: (context) {
-                                  if (forumThreadId != null) {
-                                    
-                                  }
+                                  if (forumThreadId != null) {}
 
                                   return Container();
                                 }),
@@ -326,27 +329,31 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
                                         CrossAxisAlignment.start,
                                     children: [
                                       const SizedBox(height: 16),
-                                      const Text("Description",
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.bold)),
-                                      Text(variant.modInfo.description ??
-                                          "(no description)"),
+                                      Text("Description",
+                                          style: theme.textTheme.labelLarge
+                                              ?.copyWith(
+                                                  fontWeight: FontWeight.bold)),
+                                      Text(
+                                          variant.modInfo.description ??
+                                              "(no description)",
+                                          style: theme.textTheme.labelLarge),
                                     ],
                                   ),
-                                if (variant.modInfo.dependencies.isNotEmpty)
-                                  Builder(builder: (context) {
-                                    if (modVariants == null ||
-                                        enabledMods == null) {
-                                      return const SizedBox();
-                                    }
-                                    return Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        const SizedBox(height: 16),
-                                        const Text("Dependencies",
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold)),
+                                Builder(builder: (context) {
+                                  if (modVariants == null ||
+                                      enabledMods == null) {
+                                    return const SizedBox();
+                                  }
+                                  return Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const SizedBox(height: 16),
+                                      const Text("Dependencies",
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.bold)),
+                                      if (variant
+                                          .modInfo.dependencies.isNotEmpty)
                                         Column(
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
@@ -359,15 +366,19 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
                                                     gameVersion);
                                             return Text(
                                                 "- ${dep.formattedNameVersion} ${dependencyState.getDependencyStateText()}",
-                                                style: TextStyle(
-                                                    color:
-                                                        getStateColorForDependencyText(
+                                                style: theme
+                                                    .textTheme.labelLarge
+                                                    ?.copyWith(
+                                                        color: getStateColorForDependencyText(
                                                             dependencyState)));
                                           }).toList(),
                                         ),
-                                      ],
-                                    );
-                                  }),
+                                      if (variant.modInfo.dependencies.isEmpty)
+                                        Text("None",
+                                            style: theme.textTheme.labelLarge),
+                                    ],
+                                  );
+                                }),
                                 const SizedBox(height: 16),
                                 // TODO graphicslib doesn't show up for LazyLib 3.0 but it does for 2.8b
                                 const Text("Dependents",
@@ -381,7 +392,9 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
                                       ? DependentsListWidget(
                                           dependents: enabledDependents,
                                           selectedMod: selectedMod,
-                                          allMods: allMods)
+                                          allMods: allMods,
+                                          style: theme.textTheme.labelLarge,
+                                        )
                                       : Text(
                                           "No mods depend on ${variant.modInfo.name}",
                                           style: theme.textTheme.labelLarge,
@@ -393,20 +406,28 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
                                       .where((mod) => !mod.hasEnabledVariant)
                                       .toList();
                                   return disabledDependents.isNotEmpty
-                                      ? Column(
-                                          children: [
-                                            Text("Disabled Dependents",
-                                                style: theme
-                                                    .textTheme.labelLarge
-                                                    ?.copyWith(
-                                                        fontSize: 14,
-                                                        fontWeight:
-                                                            FontWeight.w600)),
-                                            DependentsListWidget(
+                                      ? Opacity(
+                                          opacity: 0.8,
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text("Disabled Dependents",
+                                                  style: theme
+                                                      .textTheme.labelLarge
+                                                      ?.copyWith(
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.w600,
+                                                  )),
+                                              DependentsListWidget(
                                                 dependents: disabledDependents,
                                                 selectedMod: selectedMod,
-                                                allMods: allMods),
-                                          ],
+                                                allMods: allMods,
+                                                style:
+                                                    theme.textTheme.labelLarge,
+                                              ),
+                                            ],
+                                          ),
                                         )
                                       : const SizedBox();
                                 }),
@@ -461,11 +482,13 @@ class DependentsListWidget extends StatelessWidget {
     required this.dependents,
     required this.selectedMod,
     required this.allMods,
+    this.style,
   });
 
   final List<Mod> dependents;
   final Mod selectedMod;
   final List<Mod> allMods;
+  final TextStyle? style;
 
   @override
   Widget build(BuildContext context) {
@@ -482,6 +505,7 @@ class DependentsListWidget extends StatelessWidget {
             final enabled = variant?.isEnabled(allMods) == true;
             return Text(
               "- ${variant?.modInfo.name}${dependencyVersion != null ? " (wants $dependencyVersion)" : ""}",
+              style: style,
             );
           }).toList(),
         ),

@@ -69,7 +69,7 @@ class _VramCheckerExplanationDialogState
                               Text("About this tool", style: titleStyle),
                               const SizedBox(height: 8),
                               const Text(
-                                  'This tool estimates the amount of VRAM used by a mod in the worst-case scenario, based on the images in the mod folder.'
+                                  'This tool estimates the amount of VRAM used by a mod, based on the images in the mod folder.'
                                   '\nIt has no way of reliably telling whether the mod actually uses the image in-game, which means'
                                   ' that unused images will still be counted against it.'),
                               const SizedBox(height: 8),

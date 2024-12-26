@@ -12,6 +12,7 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/disable_if_cannot_write_mods.dart';
+import 'package:trios/widgets/moving_tooltip.dart';
 // import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:vs_scrollbar/vs_scrollbar.dart';
 
@@ -109,7 +110,7 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                     padding:
                                         EdgeInsets.symmetric(horizontal: 4),
                                   ),
-                                  Tooltip(
+                                  MovingTooltipWidget.text(
                                     message:
                                         "Copy mod list to clipboard\n\nRight-click for ALL mods",
                                     child: GestureDetector(
@@ -172,7 +173,7 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                           ),
                           SizedBox(
                             height: 20,
-                            child: Tooltip(
+                            child: MovingTooltipWidget.text(
                               message:
                                   "When checked, updating an enabled mod switches to the new version.",
                               child: CheckboxWithLabel(
@@ -288,7 +289,7 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                                         .colorScheme.onSurface),
                                               ),
                                               const Spacer(),
-                                              Tooltip(
+                                              MovingTooltipWidget.text(
                                                   message: isGameRunning
                                                       ? "Game is running"
                                                       : "Download all ${modsWithUpdates.nonNulls.length} updates",

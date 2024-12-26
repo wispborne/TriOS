@@ -219,18 +219,20 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                             //     Radius.circular(ThemeManager.cornerRadius)),
                             // padding: const EdgeInsets.symmetric(horizontal: 0),
                           ),
-                          IconButton(
-                            tooltip: "I'm feeling lucky",
-                            onPressed: () => ref
-                                .read(AppState.themeData.notifier)
-                                .switchThemes(ref
-                                    .read(AppState.themeData.notifier)
-                                    .allThemes
-                                    .values
-                                    .random()),
-                            icon: SvgImageIcon(
-                              "assets/images/icon-dice.svg",
-                              color: theme.colorScheme.onSurface,
+                          MovingTooltipWidget.text(
+                            message: "I'm feeling lucky",
+                            child: IconButton(
+                              onPressed: () => ref
+                                  .read(AppState.themeData.notifier)
+                                  .switchThemes(ref
+                                      .read(AppState.themeData.notifier)
+                                      .allThemes
+                                      .values
+                                      .random()),
+                              icon: SvgImageIcon(
+                                "assets/images/icon-dice.svg",
+                                color: theme.colorScheme.onSurface,
+                              ),
                             ),
                           ),
                         ],

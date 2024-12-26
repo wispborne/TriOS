@@ -226,7 +226,7 @@ class _WispGridModHeaderRowViewState
                               child: MovingTooltipWidget.text(
                                 message:
                                     'An *estimate* of how much VRAM is used based on the images in the mod folder.'
-                                    '\nThis is typically a worst-case estimate, and may be inaccurate.',
+                                    '\nThis may be inaccurate.',
                                 child: SortableHeader(
                                     columnSortField:
                                         ModGridSortField.vramImpact,

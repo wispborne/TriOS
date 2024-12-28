@@ -1,60 +1,111 @@
-// data class JreEntry(
-// val versionString: String,
-// val path: Path
-// ) {
-// val isUsedByGame = path.name == JreManager.gameJreFolderName
-// val version = runCatching {
-// if (versionString.startsWith("1.")) versionString.removePrefix("1.").take(1).toInt()
-// else versionString.takeWhile { it != '.' }.toInt()
-// }
-//     .onFailure { Timber.d(it) }
-//     .getOrElse { 0 }
-// }
-
 import 'dart:io';
 
+import 'package:dart_extensions_methods/dart_extension_methods.dart';
+import 'package:dart_mappable/dart_mappable.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http;
+import 'package:trios/models/version.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 
-abstract class JreEntry {
-  JreVersion get version;
+import '../libarchive/libarchive.dart';
+import '../models/download_progress.dart';
+import '../trios/settings/settings.dart';
+import '../utils/dart_mappable_utils.dart';
+import '../utils/util.dart';
+import 'jre_manager_logic.dart';
+
+part 'jre_entry.mapper.dart';
+
+abstract class JreEntry implements Comparable<JreEntry> {
+  /// e.g. C:\Program Files (x86)\Starsector
+  final Directory gamePath;
+  final Directory jreRelativePath;
+  JreVersion version;
+
+  JreEntry(this.gamePath, this.jreRelativePath, this.version);
 
   int get versionInt => version.version;
 
   String get versionString => version.versionString;
+
+  /// e.g. vmparams, Miko_R3.txt, Miko_R4.txt
+  String get vmParamsFileRelativePath;
+
+  @override
+  int compareTo(JreEntry other) => version.compareTo(other.version);
+
+  @override
+  int get hashCode => version.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      other is JreEntry && version == other.version;
+
+  bool get isSupportedByTriOS =>
+      JreManager.supportedJreVersions.contains(version.version);
 }
 
-class JreEntryInstalled implements JreEntry {
-  @override
-  final JreVersion version;
-  final Directory path;
+abstract class JreEntryInstalled extends JreEntry {
+  String? ramAmountInMb;
 
-  JreEntryInstalled(this.version, this.path);
+  JreEntryInstalled(super.gamePath, super.jreRelativePath, super.version) {
+    ramAmountInMb = getRamAmountFromVmparamsInMb(readVmParamsFile());
+  }
 
-  @override
-  int get versionInt => version.version;
+  bool get isCustomJre;
 
-  @override
-  String get versionString => version.versionString;
+  Future<void> setRamAmountInMb(double ramAmountInMb);
+
+  String readVmParamsFile() =>
+      vmParamsFileRelativePath.toFile().readAsStringSync();
+
+  Directory get jreAbsolutePath =>
+      gamePath.resolve(jreRelativePath.path).toDirectory();
+
+  File get vmParamsFileAbsolutePath =>
+      gamePath.resolve(vmParamsFileRelativePath).toFile();
+
+  bool isActive({required List<JreEntryInstalled> activeJres}) =>
+      activeJres.any((it) => it == this);
+
+  Future<bool> canWriteToVmParamsFile() async =>
+      vmParamsFileAbsolutePath.existsSync() &&
+      await vmParamsFileAbsolutePath.isWritable();
+
+  /// True if we can currently launch the game with this JRE.
+  /// So, if it is a standard JRE, it needs to be in the `jre` folder.
+  /// If it is a custom JRE, it needs to have all files present.
+  bool hasAllFilesReadyToLaunch();
+
+  /// Parses the amount of RAM from the vmparams file
+  String? getRamAmountFromVmparamsInMb(String vmparams) {
+    var ramMatch = maxRamInVmparamsRegex.stringMatch(vmparams);
+    if (ramMatch == null) {
+      return null;
+    }
+    // eg 2048m
+    var amountWithLowercaseChar = ramMatch.toLowerCase();
+    // remove all non-numeric characters
+    final replace = RegExp(r"[^\d]");
+    final valueAsDouble =
+        double.tryParse(amountWithLowercaseChar.replaceAll(replace, ""));
+    if (valueAsDouble == null) return null;
+
+    final amountInMb = amountWithLowercaseChar.endsWith("g")
+        // Convert from GB to MB
+        ? (valueAsDouble * mbPerGb).toStringAsFixed(0)
+        : valueAsDouble.toStringAsFixed(0);
+    return amountInMb;
+  }
 }
 
-class JreToDownload implements JreEntry {
-  @override
-  final JreVersion version;
-  final Function() installRunner;
-
-  // final StateProvider<TriOSDownloadProgress?> progressProvider;
-
-  JreToDownload(this.version, this.installRunner);
-
-  @override
-  int get versionInt => version.version;
-
-  @override
-  String get versionString => version.versionString;
-}
-
-class JreVersion {
+/// Represents a JRE version.
+/// e.g. 1.8.0_291, 1.8.0_291-b10, 1.8.0_291-b10-jre
+@MappableClass()
+class JreVersion with JreVersionMappable implements Comparable<JreVersion> {
   final String versionString;
 
   JreVersion(this.versionString);
@@ -72,13 +123,382 @@ class JreVersion {
   }
 
   @override
-  bool operator ==(Object other) {
-    if (other is JreVersion) {
-      return versionString == other.versionString;
-    }
-    return false;
+  int compareTo(JreVersion other) =>
+      versionString.compareTo(other.versionString);
+}
+
+class StandardInstalledJreEntry extends JreEntryInstalled {
+  StandardInstalledJreEntry(
+      super.gamePath, super.jreRelativePath, super.version);
+
+  File get vmParamsFile => gamePath.resolve(vmParamsFileRelativePath).toFile();
+
+  @override
+  bool get isCustomJre => false;
+
+  @override
+  String get vmParamsFileRelativePath => switch (currentPlatform) {
+        TargetPlatform.windows => "vmparams",
+        TargetPlatform.linux => "starsector.sh",
+        TargetPlatform.macOS => "starsector_mac.sh",
+        _ => throw UnsupportedError("Platform not supported: $currentPlatform"),
+      };
+
+  @override
+  String readVmParamsFile() => vmParamsFile.readAsStringSync();
+
+  @override
+  Future<void> setRamAmountInMb(double ramAmountInMb) async {
+    final newRamStr = "${ramAmountInMb.toStringAsFixed(0)}m";
+    final newVmparams = vmParamsFile
+        .readAsStringSync()
+        .replaceAll(maxRamInVmparamsRegex, newRamStr)
+        .replaceAll(minRamInVmparamsRegex, newRamStr);
+    await vmParamsFile.writeAsString(newVmparams);
   }
 
   @override
-  int get hashCode => versionString.hashCode;
+  bool hasAllFilesReadyToLaunch() =>
+      vmParamsFileAbsolutePath.existsSync() &&
+      jreRelativePath.name == "jre" &&
+      jreAbsolutePath.existsSync();
+}
+
+abstract class CustomInstalledJreEntry extends StandardInstalledJreEntry {
+  CustomInstalledJreEntry(super.gamePath, super.jreRelativePath, super.version);
+
+  @override
+  bool get isCustomJre => true;
+}
+
+class Jre23InstalledJreEntry extends CustomInstalledJreEntry {
+  Jre23InstalledJreEntry(super.gamePath, super.jreRelativePath, super.version);
+
+  Directory get mikohimeFolder => gamePath.resolve("mikohime").toDirectory();
+
+  @override
+  String get vmParamsFileRelativePath => "Miko_R3.txt";
+
+  @override
+  bool hasAllFilesReadyToLaunch() =>
+      vmParamsFileAbsolutePath.existsSync() &&
+      jreAbsolutePath.existsSync() &&
+      mikohimeFolder.existsSync();
+}
+
+class Jre24InstalledJreEntry extends CustomInstalledJreEntry {
+  Jre24InstalledJreEntry(super.gamePath, super.jreRelativePath, super.version);
+
+  Directory get mikohimeFolder => gamePath.resolve("mikohime").toDirectory();
+
+  @override
+  String get vmParamsFileRelativePath => "Miko_R4.txt";
+
+  @override
+  bool hasAllFilesReadyToLaunch() =>
+      vmParamsFileAbsolutePath.existsSync() &&
+      jreAbsolutePath.existsSync() &&
+      mikohimeFolder.existsSync();
+}
+
+@MappableClass()
+class CustomJreDownloadState with CustomJreDownloadStateMappable {
+  final TriOSDownloadProgress? downloadProgress;
+  final String? errorMessage;
+  final bool isInstalling;
+
+  CustomJreDownloadState({
+    this.downloadProgress,
+    this.errorMessage,
+    this.isInstalling = false,
+  });
+}
+
+abstract class JreToDownload extends JreEntry {
+  CustomJreNotifier _createDownloadProvider();
+
+  JreToDownload(super.gamePath, super.jreRelativePath, super.version) {
+    downloadProvider =
+        AsyncNotifierProvider<CustomJreNotifier, CustomJreDownloadState>(
+            () => _createDownloadProvider());
+  }
+
+  late AsyncNotifierProvider<CustomJreNotifier, CustomJreDownloadState>
+      downloadProvider;
+}
+
+abstract class CustomJreToDownload extends JreToDownload {
+  CustomJreToDownload(super.gamePath, super.jreRelativePath, super.version);
+
+  String get versionCheckerUrl;
+}
+
+class Jre23JreToDownload extends CustomJreToDownload {
+  Jre23JreToDownload(super.gamePath, super.jreRelativePath, super.version);
+
+  @override
+  CustomJreNotifier _createDownloadProvider() =>
+      CustomJreNotifier("23", versionCheckerUrl);
+
+  @override
+  String get versionCheckerUrl =>
+      "https://raw.githubusercontent.com/Yumeris/Mikohime_Repo/main/Java23.version";
+
+  @override
+  JreVersion get version => JreVersion("23");
+
+  @override
+  String get vmParamsFileRelativePath => "Miko_R3.txt";
+}
+
+class Jre24JreToDownload extends CustomJreToDownload {
+  Jre24JreToDownload(super.gamePath, super.jreRelativePath, super.version);
+
+  @override
+  CustomJreNotifier _createDownloadProvider() =>
+      CustomJreNotifier("24", versionCheckerUrl);
+
+  @override
+  String get versionCheckerUrl =>
+      "https://raw.githubusercontent.com/Yumeris/Mikohime_Repo/main/Java24.version";
+
+  @override
+  JreVersion get version => JreVersion("24");
+
+  @override
+  String get vmParamsFileRelativePath => "Miko_R4.txt";
+}
+
+class CustomJreNotifier extends AsyncNotifier<CustomJreDownloadState> {
+  static const _gameFolderFilesFolderNamePart = "Files to put into starsector";
+  static const _vmParamsFolderNamePart = "Pick VMParam";
+
+  final String _jreVersion;
+  final String _versionCheckerUrl;
+
+  CustomJreNotifier(this._jreVersion, this._versionCheckerUrl);
+
+  @override
+  Future<CustomJreDownloadState> build() async {
+    // Initialize the state
+    return CustomJreDownloadState();
+  }
+
+  Future<void> installCustomJre() async {
+    final gamePath =
+        ref.read(appSettings.select((value) => value.gameDir))?.toDirectory();
+    if (gamePath == null) {
+      Fimber.e("Game path not set");
+      state = AsyncValue.error("Game path not set", StackTrace.current);
+      return;
+    }
+
+    final customJreInfo = await _getVersionCheckerInfo();
+
+    if (customJreInfo == null) {
+      Fimber.e("Custom JRE version checker file not found.");
+      state = AsyncValue.error(
+          "Custom JRE version checker file not found.", StackTrace.current);
+      return;
+    }
+
+    var libArchive = LibArchive();
+    var versionChecker = customJreInfo;
+    final savePath = Directory.systemTemp
+        .createTempSync('trios_jre$_jreVersion-')
+        .absolute
+        .normalize;
+
+    state = AsyncValue.loading();
+
+    try {
+      final jdkZip = _downloadCustomJreJdkForPlatform(versionChecker, savePath);
+      final configZip = _downloadCustomJreConfig(versionChecker, savePath);
+      await _installCustomJREConfig(
+          libArchive, gamePath, savePath, await configZip);
+      await _installCustomJREJdk(libArchive, gamePath, await jdkZip);
+
+      state = AsyncValue.data(state.value!.copyWith(isInstalling: false));
+    } catch (e, stackTrace) {
+      Fimber.e("Error installing JRE $_jreVersion",
+          ex: e, stacktrace: stackTrace);
+      state = AsyncValue.error(e, stackTrace);
+    } finally {
+      Fimber.i("Deleting temp folder $savePath");
+      savePath.deleteSync(recursive: true);
+    }
+  }
+
+  Future<CustomJreVersionCheckerFile?> _getVersionCheckerInfo() async {
+    final response = await http.get(Uri.parse(_versionCheckerUrl));
+
+    if (response.statusCode == 200) {
+      final parsableJson = response.body.fixJson();
+      final versionChecker =
+          CustomJreVersionCheckerFileMapper.fromJson(parsableJson);
+      // Fimber.i("Jre23VersionChecker: $versionChecker");
+      return versionChecker;
+    }
+
+    return null;
+  }
+
+  Future<File> _downloadCustomJreJdkForPlatform(
+      CustomJreVersionCheckerFile versionChecker, Directory savePath) async {
+    final jdkUrl = switch (currentPlatform) {
+      TargetPlatform.linux => versionChecker.linuxJDKDownload,
+      TargetPlatform.windows => versionChecker.windowsJDKDownload,
+      _ => throw UnsupportedError(
+          "$currentPlatform not supported for JRE $_jreVersion"),
+    };
+
+    if (jdkUrl == null) {
+      Fimber.e("No JRE $_jreVersion JDK download link for $currentPlatform");
+      throw UnsupportedError(
+          "No JRE $_jreVersion JDK download link for $currentPlatform");
+    }
+
+    final jdkZip = downloadFile(jdkUrl, savePath, null,
+        onProgress: (bytesReceived, contentLength) {
+      state = AsyncValue.data(state.value!.copyWith(
+        downloadProgress: TriOSDownloadProgress(bytesReceived, contentLength),
+      ));
+    });
+
+    return jdkZip;
+  }
+
+  Future<File> _downloadCustomJreConfig(
+      CustomJreVersionCheckerFile versionChecker, Directory savePath) async {
+    final himiUrl = switch (currentPlatform) {
+      TargetPlatform.linux => versionChecker.linuxConfigDownload,
+      TargetPlatform.windows => versionChecker.windowsConfigDownload,
+      _ => throw UnsupportedError(
+          "$currentPlatform not supported for JRE $_jreVersion"),
+    };
+
+    if (himiUrl == null) {
+      Fimber.e(
+          "No JRE $_jreVersion Himi/config download link for $currentPlatform");
+      throw UnsupportedError(
+          "No JRE $_jreVersion Hime/config download link for $currentPlatform");
+    }
+
+    final configZip = downloadFile(himiUrl, savePath, null,
+        onProgress: (bytesReceived, contentLength) {
+      state = AsyncValue.data(state.value!.copyWith(
+        downloadProgress: TriOSDownloadProgress(bytesReceived, contentLength),
+      ));
+    });
+
+    return configZip;
+  }
+
+  Future<void> _installCustomJREJdk(
+      LibArchive libArchive, Directory gamePath, File jdkZip) async {
+    final filesInJdkZip = libArchive.listEntriesInArchive(jdkZip);
+
+    if (filesInJdkZip.isEmpty) {
+      Fimber.e("No files in JRE $_jreVersion JDK zip");
+      return;
+    }
+
+    final topLevelFolder = filesInJdkZip
+        .minByOrNull<num>((element) => element.pathName.length)!
+        .pathName;
+    if (gamePath.resolve(topLevelFolder).path.toDirectory().existsSync()) {
+      Fimber.i("JRE $_jreVersion JDK already exists in game folder. Aborting.");
+      return;
+    }
+
+    final extractedJdkFiles = await libArchive.extractEntriesInArchive(
+        jdkZip, gamePath.absolute.path);
+    Fimber.i(
+        "Extracted JRE $_jreVersion JDK files: ${extractedJdkFiles.joinToString(separator: ', ', transform: (it) => it?.extractedFile.path ?? "")}");
+  }
+
+  Future<void> _installCustomJREConfig(LibArchive libArchive,
+      Directory gamePath, Directory savePath, File configZip) async {
+    final filesInConfigZip = (await libArchive.extractEntriesInArchive(
+            configZip, savePath.absolute.path))
+        .map((e) => e?.extractedFile.normalize)
+        .whereType<File>()
+        .toList();
+    Fimber.i(
+        "Extracted JRE $_jreVersion Himemi files: ${filesInConfigZip.joinToString(separator: ', ', transform: (it) => it.path)}");
+
+    final gameFolderFilesFolder = filesInConfigZip
+        .filter((file) =>
+            file.path.containsIgnoreCase(_gameFolderFilesFolderNamePart))
+        .rootFolder()!
+        .path
+        .toDirectory();
+
+    Fimber.i('Moving "$gameFolderFilesFolder" to "$gamePath"');
+    await gameFolderFilesFolder.moveDirectory(gamePath, overwrite: true);
+    Fimber.i('Moved "$gameFolderFilesFolder" to "$gamePath"');
+
+    Fimber.i("Looking for VMParams file");
+    final vmParamsFile = filesInConfigZip
+        .filter((file) => file.path.containsIgnoreCase(_vmParamsFolderNamePart))
+        .rootFolder()!
+        .listSync()
+        .first
+        .toDirectory()
+        .listSync()
+        .first
+        .toFile();
+
+    if (!vmParamsFile.existsSync()) {
+      Fimber.e("VMParams file not found in '$savePath'");
+      return;
+    } else {
+      Fimber.i("Found VMParams file: $vmParamsFile");
+    }
+
+    final vmParams = vmParamsFile.readAsStringSync();
+    Fimber.d("VMParams: $vmParams");
+
+    // ref.read(appSettings.notifier).update((it) =>
+    //     it.copyWith(jre23VmparamsFilename: vmParamsFile.nameWithExtension));
+
+    final vanillaRam = ref.read(currentRamAmountInMb).value;
+    final newVmparams = vmParams
+        .replaceAll(maxRamInVmparamsRegex, "${vanillaRam}m")
+        .replaceAll(minRamInVmparamsRegex, "${vanillaRam}m");
+
+    Fimber.i('Writing "$vmParamsFile" to "$gamePath"');
+    gamePath
+        .resolve(vmParamsFile.nameWithExtension)
+        .toFile()
+        .writeAsStringSync(newVmparams);
+  }
+}
+
+@MappableClass()
+class CustomJreVersionCheckerFile with CustomJreVersionCheckerFileMappable {
+  final String masterVersionFile;
+  final String modName;
+  final int? modThreadId;
+
+  @MappableField(hook: VersionHook())
+  final Version modVersion;
+
+  final String starsectorVersion;
+  final String? windowsJDKDownload;
+  final String? windowsConfigDownload;
+  final String? linuxJDKDownload;
+  final String? linuxConfigDownload;
+
+  CustomJreVersionCheckerFile({
+    required this.masterVersionFile,
+    required this.modName,
+    this.modThreadId,
+    required this.modVersion,
+    required this.starsectorVersion,
+    this.windowsJDKDownload,
+    this.windowsConfigDownload,
+    this.linuxJDKDownload,
+    this.linuxConfigDownload,
+  });
 }

@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
@@ -173,27 +172,6 @@ class AppState {
     return true;
   });
 
-  static final canWriteToStarsectorFolder = FutureProvider<bool>((ref) async {
-    final gamePath =
-        ref.watch(appSettings.select((value) => value.gameDir))?.toDirectory();
-    if (gamePath == null) return false;
-    final filesAndFolders = [getVmparamsFile(gamePath)].nonNulls;
-    for (var file in filesAndFolders) {
-      if (!file.existsSync() || await file.isNotWritable()) {
-        Fimber.d("Cannot find or write to: $file");
-        return false;
-      }
-    }
-    return true;
-  });
-
-  static final vmParamsFile = FutureProvider<File?>((ref) async {
-    final gamePath =
-        ref.watch(appSettings.select((value) => value.gameDir))?.toDirectory();
-    if (gamePath == null) return null;
-    return getVmparamsFile(gamePath);
-  });
-
   static final gameFolder = FutureProvider<Directory?>((ref) async =>
       ref.watch(appSettings.select((value) => value.gameDir))?.toDirectory());
 
@@ -204,30 +182,43 @@ class AppState {
   });
 
   static final gameExecutable = FutureProvider<File?>((ref) async {
-    final isJre23 = ref.watch(appSettings).useJre23 ?? false;
+    final isJre23 =
+        ref.watch(jreManagerProvider).valueOrNull?.activeJre?.isCustomJre ??
+            false;
     final gamePath = ref.watch(gameFolder).value?.toDirectory();
     if (gamePath == null) return null;
 
     return isJre23
         ? gamePath
-            .resolve(ref.watch(
-                    appSettings.select((value) => value.showJre23ConsoleWindow))
+            .resolve(ref.watch(appSettings
+                    .select((value) => value.showCustomJreConsoleWindow))
                 ? "Miko_Rouge.bat"
                 : "Miko_Silent.bat")
             .toFile()
         : getGameExecutable(gamePath).toFile();
   });
 
-  static final isVmParamsFileWritable = FutureProvider<bool>(
-      (ref) async => ref.watch(vmParamsFile).value?.isWritable() ?? false);
-  static final jre23VmparamsFile = FutureProvider<File?>((ref) async {
-    final gamePath = ref.watch(gameFolder).valueOrNull;
-    if (gamePath == null) return null;
-    return getJre23VmparamsFile(gamePath);
+  static final vmParamsFile = FutureProvider<File?>((ref) async {
+    return ref
+        .watch(jreManagerProvider)
+        .valueOrNull
+        ?.activeJre
+        ?.vmParamsFileAbsolutePath
+        .toFile();
   });
 
-  static final isJre23VmparamsFileWritable = FutureProvider<bool>(
-      (ref) async => ref.watch(jre23VmparamsFile).value?.isWritable() ?? false);
+  static final canWriteToStarsectorFolder = FutureProvider<bool>((ref) async {
+    final vmParamsFileLocal = ref.watch(vmParamsFile).valueOrNull;
+    if (vmParamsFileLocal == null) return false;
+    final filesAndFolders = [vmParamsFileLocal].nonNulls;
+    for (var file in filesAndFolders) {
+      if (!file.existsSync() || await file.isNotWritable()) {
+        Fimber.d("Cannot find or write to: $file");
+        return false;
+      }
+    }
+    return true;
+  });
 
   static final isEnabledModsFileWritable = FutureProvider<bool>((ref) async {
     final modsPath = ref.watch(modsFolder).valueOrNull;
@@ -235,15 +226,8 @@ class AppState {
     return ref.read(AppState.enabledModsFile.notifier).isWritable();
   });
 
-  static final activeJre = FutureProvider<JreEntryInstalled?>((ref) async {
-    final jres = await findJREs(ref.watch(gameFolder).valueOrNull?.path);
-    final isUsingJre23 =
-        ref.watch(appSettings.select((value) => value.useJre23));
-    var activeJre = jres
-        .orEmpty()
-        .firstWhereOrNull((jre) => jre.isActive(isUsingJre23, jres));
-    return activeJre;
-  });
+  static final activeJre = FutureProvider<JreEntryInstalled?>(
+      (ref) async => ref.watch(jreManagerProvider).valueOrNull?.activeJre);
 
   static final isGameRunning =
       AsyncNotifierProvider<_GameRunningChecker, bool>(_GameRunningChecker.new);
@@ -254,7 +238,7 @@ class AppState {
 class _GameRunningChecker extends AsyncNotifier<bool> {
   Timer? _timer;
   static const int period = 1500;
-  List<File?> gameExecutables = [];
+  List<File?> _gameExecutables = [];
 
   @override
   Future<bool> build() async {
@@ -265,10 +249,10 @@ class _GameRunningChecker extends AsyncNotifier<bool> {
     }
 
     // Retrieve the list of executable files
-    gameExecutables = [ref.watch(AppState.gameExecutable).value];
+    _gameExecutables = [ref.watch(AppState.gameExecutable).value];
 
     // Extract executable names from file paths
-    final List<String> executableNames = gameExecutables
+    final List<String> executableNames = _gameExecutables
         .whereType<File>()
         .map((file) => file.path.split(Platform.pathSeparator).last)
         .toList();

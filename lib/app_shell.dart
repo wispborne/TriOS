@@ -34,6 +34,7 @@ import 'package:trios/widgets/trios_app_icon.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 import 'about/about_page.dart';
+import 'jre_manager/jre_manager_logic.dart';
 import 'launcher/launcher.dart';
 import 'main.dart';
 import 'mod_manager/smol3.dart';
@@ -54,6 +55,7 @@ class _AppShellState extends ConsumerState<AppShell>
     with SingleTickerProviderStateMixin {
   late TriOSTools _currentPage;
   bool isNewGrid = true;
+  final rightToolbarScrollController = ScrollController();
 
   final tabToolMap = {
     0: TriOSTools.dashboard,
@@ -425,60 +427,82 @@ class _AppShellState extends ConsumerState<AppShell>
               const SizedBox(
                 width: 8,
               ),
-              const Spacer(),
-              FilePermissionShield(ref: ref),
-              const AdminPermissionShield(),
-              const Spacer(),
-              MovingTooltipWidget.text(
-                message: "${Constants.appName} Changelog",
-                child: IconButton(
-                  icon: const SvgImageIcon(
-                      "assets/images/icon-bullhorn-variant.svg"),
-                  color: Theme.of(context).iconTheme.color,
-                  onPressed: () => showTriOSChangelogDialog(context,
-                      showUnreleasedVersions: false),
-                ),
-              ),
-              MovingTooltipWidget.text(
-                message: "About",
-                child: IconButton(
-                  icon: const SvgImageIcon("assets/images/icon-info.svg"),
-                  color: Theme.of(context).iconTheme.color,
-                  onPressed: () {
-                    showAboutDialog(
-                      context: context,
-                      applicationIcon: const TriOSAppIcon(),
-                      applicationName: Constants.appTitle,
-                      applicationVersion: "A Starsector toolkit\nby Wisp",
-                      children: [const AboutPage()],
-                    );
-                  },
-                ),
-              ),
-              MovingTooltipWidget.text(
-                message: "Patreon",
-                child: IconButton(
-                  icon: const SvgImageIcon("assets/images/icon-donate.svg"),
-                  color: Theme.of(context).iconTheme.color,
-                  onPressed: () {
-                    Constants.patreonUrl.openAsUriInBrowser();
-                  },
-                ),
-              ),
-              MovingTooltipWidget.text(
-                message:
-                    "When enabled, modifying a mod's rules.csv will\nreload in-game rules as long as dev mode is enabled."
-                    "\n\nrules.csv hot reload is ${isRulesHotReloadEnabled ? "enabled" : "disabled"}."
-                    "\nClick to ${isRulesHotReloadEnabled ? "disable" : "enable"}.",
-                child: InkWell(
-                  borderRadius:
-                      BorderRadius.circular(ThemeManager.cornerRadius),
-                  onTap: () => ref.read(appSettings.notifier).update((state) =>
-                      state.copyWith(
-                          isRulesHotReloadEnabled: !isRulesHotReloadEnabled)),
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 16.0),
-                    child: RulesHotReload(isEnabled: isRulesHotReloadEnabled),
+              Expanded(
+                child: Scrollbar(
+                  controller: rightToolbarScrollController,
+                  scrollbarOrientation: ScrollbarOrientation.top,
+                  thickness: 4,
+                  child: SingleChildScrollView(
+                    controller: rightToolbarScrollController,
+                    scrollDirection: Axis.horizontal,
+                    reverse: true,
+                    clipBehavior: Clip.antiAlias,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        FilePermissionShield(),
+                        const AdminPermissionShield(),
+                        // const Spacer(),
+                        MovingTooltipWidget.text(
+                          message: "${Constants.appName} Changelog",
+                          child: IconButton(
+                            icon: const SvgImageIcon(
+                                "assets/images/icon-bullhorn-variant.svg"),
+                            color: Theme.of(context).iconTheme.color,
+                            onPressed: () => showTriOSChangelogDialog(context,
+                                showUnreleasedVersions: false),
+                          ),
+                        ),
+                        MovingTooltipWidget.text(
+                          message: "About",
+                          child: IconButton(
+                            icon: const SvgImageIcon(
+                                "assets/images/icon-info.svg"),
+                            color: Theme.of(context).iconTheme.color,
+                            onPressed: () {
+                              showAboutDialog(
+                                context: context,
+                                applicationIcon: const TriOSAppIcon(),
+                                applicationName: Constants.appTitle,
+                                applicationVersion:
+                                    "A Starsector toolkit\nby Wisp",
+                                children: [const AboutPage()],
+                              );
+                            },
+                          ),
+                        ),
+                        MovingTooltipWidget.text(
+                          message: "Patreon",
+                          child: IconButton(
+                            icon: const SvgImageIcon(
+                                "assets/images/icon-donate.svg"),
+                            color: Theme.of(context).iconTheme.color,
+                            onPressed: () {
+                              Constants.patreonUrl.openAsUriInBrowser();
+                            },
+                          ),
+                        ),
+                        MovingTooltipWidget.text(
+                          message:
+                              "When enabled, modifying a mod's rules.csv will\nreload in-game rules as long as dev mode is enabled."
+                              "\n\nrules.csv hot reload is ${isRulesHotReloadEnabled ? "enabled" : "disabled"}."
+                              "\nClick to ${isRulesHotReloadEnabled ? "disable" : "enable"}.",
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(
+                                ThemeManager.cornerRadius),
+                            onTap: () => ref.read(appSettings.notifier).update(
+                                (state) => state.copyWith(
+                                    isRulesHotReloadEnabled:
+                                        !isRulesHotReloadEnabled)),
+                            child: Padding(
+                              padding: const EdgeInsets.only(left: 16.0),
+                              child: RulesHotReload(
+                                  isEnabled: isRulesHotReloadEnabled),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -533,30 +557,50 @@ class MenuOption {
   MenuOption({required this.text, required this.icon, required this.page});
 }
 
-class FilePermissionShield extends StatelessWidget {
-  const FilePermissionShield({
+class FilePermissionShield extends ConsumerWidget {
+  bool isStandardVmparamsWritable = false;
+  bool areAllCustomJresWritable = false;
+  List<String> customVmParamsFilesThatCannotBeWritten = [];
+
+  FilePermissionShield({
     super.key,
-    required this.ref,
   });
 
-  final WidgetRef ref;
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // copied from RamChanger
+    ref.listen(jreManagerProvider, (prev, next) async {
+      final newState = next.valueOrNull;
+      if (newState != null && prev?.valueOrNull != newState) {
+        customVmParamsFilesThatCannotBeWritten.clear();
+        isStandardVmparamsWritable =
+            await newState.standardActiveJre?.canWriteToVmParamsFile() ?? false;
+        areAllCustomJresWritable = true;
+        for (final customJre in newState.customInstalledJres) {
+          if (!await customJre.canWriteToVmParamsFile()) {
+            areAllCustomJresWritable = false;
+            customVmParamsFilesThatCannotBeWritten
+                .add(customJre.vmParamsFileRelativePath);
+            break;
+          }
+        }
+      }
+    });
+    final usesCustomJre =
+        ref.watch(jreManagerProvider).valueOrNull?.activeJre?.isCustomJre ??
+            false;
+
     final paths = [
       (
         description: 'vmparams file',
-        isWritable:
-            ref.watch(AppState.isVmParamsFileWritable).valueOrNull ?? false,
+        isWritable: isStandardVmparamsWritable ?? false,
         path: ref.watch(AppState.vmParamsFile).valueOrNull?.path,
       ),
-      if ((ref.watch(appSettings.select((s) => s.useJre23)) ?? false))
+      if (usesCustomJre)
         (
           description: 'JRE 23 vmparams file',
-          isWritable:
-              ref.watch(AppState.isJre23VmparamsFileWritable).valueOrNull ??
-                  false,
-          path: ref.watch(AppState.jre23VmparamsFile).valueOrNull?.path,
+          isWritable: areAllCustomJresWritable ?? false,
+          path: customVmParamsFilesThatCannotBeWritten
         ),
     ];
 

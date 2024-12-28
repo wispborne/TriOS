@@ -249,7 +249,8 @@ class Launcher extends HookConsumerWidget {
   }
 
   static void _launchGameWithoutPrecheck(WidgetRef ref) {
-    if (ref.read(appSettings.select((value) => value.useJre23 ?? false))) {
+    if (ref.read(jreManagerProvider).valueOrNull?.activeJre?.isCustomJre ==
+        true) {
       launchGameJre23(ref);
     } else {
       launchGameVanilla(ref);
@@ -434,10 +435,10 @@ class Launcher extends HookConsumerWidget {
     // Starsector folder
     final gameDir =
         ref.read(appSettings.select((value) => value.gameDir))?.toDirectory();
-    final command =
-        ref.read(appSettings.select((value) => value.showJre23ConsoleWindow))
-            ? "start Miko_Rouge.bat"
-            : "Miko_Silent.bat";
+    final command = ref.read(
+            appSettings.select((value) => value.showCustomJreConsoleWindow))
+        ? "start Miko_Rouge.bat"
+        : "Miko_Silent.bat";
 
     Fimber.d("gameDir: $gameDir");
     final process = await Process.start(
@@ -480,7 +481,9 @@ class Launcher extends HookConsumerWidget {
     }
 
     var javaExe = getJavaExecutable(getJreDir(gamePath));
-    var vmParams = getVmparamsFile(gamePath);
+    final standardJre =
+        ref.read(jreManagerProvider).valueOrNull?.standardInstalledJres.first;
+    var vmParams = standardJre!.vmParamsFileAbsolutePath;
 
     if (javaExe.existsSync() != true) {
       Fimber.w('Java not found at $javaExe');

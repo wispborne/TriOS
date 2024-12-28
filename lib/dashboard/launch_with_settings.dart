@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/jre_manager/jre_manager_logic.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/widgets/disable.dart';
@@ -57,8 +58,8 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
             starsectorLaunchPrefs?.resolution.split("x")[0]);
 
     // final gameDir = ref.read(appSettings.select((value) => value.gameDir));
-    final isUsingJre23 =
-        ref.watch(appSettings.select((value) => value.useJre23));
+    final isUsingCustomJre =
+        ref.watch(jreManagerProvider).valueOrNull?.activeJre?.isCustomJre;
     // var currentScreenScaling = ref.watch(appSettings.select((value) => value.launchSettings)).screenScaling ??
     //     starsectorLaunchPrefs?.screenScaling ??
     //     1;
@@ -71,7 +72,7 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
       isEnabled: !isRunning,
       child: Stack(
         children: [
-          if (isUsingJre23 != true)
+          if (isUsingCustomJre != true)
             Positioned(
               right: 0,
               child: Padding(
@@ -131,9 +132,8 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                             onPressed: () {
                               if (isRunning) return;
                               _onClickedTimer?.cancel();
-                              _onClickedTimer = Timer(
-                                  const Duration(seconds: 5),
-                                  () => {});
+                              _onClickedTimer =
+                                  Timer(const Duration(seconds: 5), () => {});
                               Launcher.launchGame(ref, context);
                             },
                             style: ElevatedButton.styleFrom(
@@ -200,22 +200,22 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                       ],
                     ),
                   ),
-                  if (isUsingJre23 == true)
+                  if (isUsingCustomJre == true)
                     Padding(
                       padding: const EdgeInsets.only(top: 8.0),
                       child: CheckboxWithLabel(
                         label: "Show JRE 23 Console Window",
                         value: ref.watch(appSettings.select(
-                                (value) => value.showJre23ConsoleWindow)) ??
+                                (value) => value.showCustomJreConsoleWindow)) ??
                             false,
                         onChanged: (bool? value) {
                           ref.read(appSettings.notifier).update((state) =>
                               state.copyWith(
-                                  showJre23ConsoleWindow: value ?? false));
+                                  showCustomJreConsoleWindow: value ?? false));
                         },
                       ),
                     ),
-                  if (isUsingJre23 != true && enableDirectLaunch == true)
+                  if (isUsingCustomJre != true && enableDirectLaunch == true)
                     Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Column(
@@ -330,7 +330,7 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                               ]),
                       ),
                     ),
-                  if (isUsingJre23 != true)
+                  if (isUsingCustomJre != true)
                     Opacity(
                         opacity: 0.8,
                         child: Padding(

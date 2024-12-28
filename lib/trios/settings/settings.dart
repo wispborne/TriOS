@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:trios/jre_manager/jre_23.dart';
 import 'package:trios/trios/navigation.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/generic_settings_manager.dart';
@@ -60,9 +59,8 @@ class Settings with SettingsMappable {
   final bool? isMinimized;
   final TriOSTools? defaultTool;
 
-  final String? jre23VmparamsFilename;
-  final bool? useJre23;
-  final bool showJre23ConsoleWindow;
+  final String? lastActiveJreVersion;
+  final bool showCustomJreConsoleWindow;
   final String? themeKey;
 
   /// If true, TriOS acts as the launcher. If false, basically just clicks game exe.
@@ -108,9 +106,8 @@ class Settings with SettingsMappable {
     this.isMaximized,
     this.isMinimized,
     this.defaultTool,
-    this.jre23VmparamsFilename,
-    this.useJre23,
-    this.showJre23ConsoleWindow = true,
+    this.lastActiveJreVersion,
+    this.showCustomJreConsoleWindow = true,
     this.themeKey,
     this.enableDirectLaunch = false,
     this.launchSettings = const LaunchSettings(),
@@ -158,18 +155,6 @@ class SettingSaver extends GenericSettingsNotifier<Settings> {
 
     if (settings.gameDir == null || newSettings.gameDir.toString().isEmpty) {
       newSettings = newSettings.copyWith(gameDir: defaultGamePath());
-    }
-
-    final jre23existInGameFolder =
-        doesJre23ExistInGameFolder(newSettings.gameDir!);
-    if (newSettings.useJre23 == null) {
-      newSettings = newSettings.copyWith(useJre23: (jre23existInGameFolder));
-    } else {
-      // If useJRe23 is set to true, but it doesn't exist, set it to false.
-      // Otherwise they might be unable to launch the game or turn off 23.
-      if (newSettings.useJre23 == true && !jre23existInGameFolder) {
-        newSettings = newSettings.copyWith(useJre23: false);
-      }
     }
 
     // Calculates the default mods folder on first run.

@@ -1,13 +1,20 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:dart_mappable/dart_mappable.dart';
 
-part '../generated/models/download_progress.freezed.dart';
+part 'download_progress.mapper.dart';
 
-@freezed
-class TriOSDownloadProgress with _$TriOSDownloadProgress {
-  const TriOSDownloadProgress._();
+@MappableClass()
+class TriOSDownloadProgress with TriOSDownloadProgressMappable {
+  final int bytesReceived;
+  final int bytesTotal;
+  final bool isIndeterminate;
+  final String? customStatus;
 
-  const factory TriOSDownloadProgress(final int bytesReceived, final int bytesTotal,
-      {@Default(false) final bool isIndeterminate, final String? customStatus}) = _TriOSDownloadProgress;
+  const TriOSDownloadProgress(
+    this.bytesReceived,
+    this.bytesTotal, {
+    this.isIndeterminate = false,
+    this.customStatus,
+  });
 
   double get progressPercent => (bytesReceived / bytesTotal).clamp(0, 1);
 }

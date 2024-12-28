@@ -160,15 +160,13 @@ class SettingsMapper extends ClassMapperBase<Settings> {
   static TriOSTools? _$defaultTool(Settings v) => v.defaultTool;
   static const Field<Settings, TriOSTools> _f$defaultTool =
       Field('defaultTool', _$defaultTool, opt: true);
-  static String? _$jre23VmparamsFilename(Settings v) => v.jre23VmparamsFilename;
-  static const Field<Settings, String> _f$jre23VmparamsFilename =
-      Field('jre23VmparamsFilename', _$jre23VmparamsFilename, opt: true);
-  static bool? _$useJre23(Settings v) => v.useJre23;
-  static const Field<Settings, bool> _f$useJre23 =
-      Field('useJre23', _$useJre23, opt: true);
-  static bool _$showJre23ConsoleWindow(Settings v) => v.showJre23ConsoleWindow;
-  static const Field<Settings, bool> _f$showJre23ConsoleWindow = Field(
-      'showJre23ConsoleWindow', _$showJre23ConsoleWindow,
+  static String? _$lastActiveJreVersion(Settings v) => v.lastActiveJreVersion;
+  static const Field<Settings, String> _f$lastActiveJreVersion =
+      Field('lastActiveJreVersion', _$lastActiveJreVersion, opt: true);
+  static bool _$showCustomJreConsoleWindow(Settings v) =>
+      v.showCustomJreConsoleWindow;
+  static const Field<Settings, bool> _f$showCustomJreConsoleWindow = Field(
+      'showCustomJreConsoleWindow', _$showCustomJreConsoleWindow,
       opt: true, def: true);
   static String? _$themeKey(Settings v) => v.themeKey;
   static const Field<Settings, String> _f$themeKey =
@@ -274,9 +272,8 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #isMaximized: _f$isMaximized,
     #isMinimized: _f$isMinimized,
     #defaultTool: _f$defaultTool,
-    #jre23VmparamsFilename: _f$jre23VmparamsFilename,
-    #useJre23: _f$useJre23,
-    #showJre23ConsoleWindow: _f$showJre23ConsoleWindow,
+    #lastActiveJreVersion: _f$lastActiveJreVersion,
+    #showCustomJreConsoleWindow: _f$showCustomJreConsoleWindow,
     #themeKey: _f$themeKey,
     #enableDirectLaunch: _f$enableDirectLaunch,
     #launchSettings: _f$launchSettings,
@@ -315,9 +312,8 @@ class SettingsMapper extends ClassMapperBase<Settings> {
         isMaximized: data.dec(_f$isMaximized),
         isMinimized: data.dec(_f$isMinimized),
         defaultTool: data.dec(_f$defaultTool),
-        jre23VmparamsFilename: data.dec(_f$jre23VmparamsFilename),
-        useJre23: data.dec(_f$useJre23),
-        showJre23ConsoleWindow: data.dec(_f$showJre23ConsoleWindow),
+        lastActiveJreVersion: data.dec(_f$lastActiveJreVersion),
+        showCustomJreConsoleWindow: data.dec(_f$showCustomJreConsoleWindow),
         themeKey: data.dec(_f$themeKey),
         enableDirectLaunch: data.dec(_f$enableDirectLaunch),
         launchSettings: data.dec(_f$launchSettings),
@@ -409,9 +405,8 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
       bool? isMaximized,
       bool? isMinimized,
       TriOSTools? defaultTool,
-      String? jre23VmparamsFilename,
-      bool? useJre23,
-      bool? showJre23ConsoleWindow,
+      String? lastActiveJreVersion,
+      bool? showCustomJreConsoleWindow,
       String? themeKey,
       bool? enableDirectLaunch,
       LaunchSettings? launchSettings,
@@ -470,9 +465,8 @@ class _SettingsCopyWithImpl<$R, $Out>
           Object? isMaximized = $none,
           Object? isMinimized = $none,
           Object? defaultTool = $none,
-          Object? jre23VmparamsFilename = $none,
-          Object? useJre23 = $none,
-          bool? showJre23ConsoleWindow,
+          Object? lastActiveJreVersion = $none,
+          bool? showCustomJreConsoleWindow,
           Object? themeKey = $none,
           bool? enableDirectLaunch,
           LaunchSettings? launchSettings,
@@ -509,11 +503,10 @@ class _SettingsCopyWithImpl<$R, $Out>
         if (isMaximized != $none) #isMaximized: isMaximized,
         if (isMinimized != $none) #isMinimized: isMinimized,
         if (defaultTool != $none) #defaultTool: defaultTool,
-        if (jre23VmparamsFilename != $none)
-          #jre23VmparamsFilename: jre23VmparamsFilename,
-        if (useJre23 != $none) #useJre23: useJre23,
-        if (showJre23ConsoleWindow != null)
-          #showJre23ConsoleWindow: showJre23ConsoleWindow,
+        if (lastActiveJreVersion != $none)
+          #lastActiveJreVersion: lastActiveJreVersion,
+        if (showCustomJreConsoleWindow != null)
+          #showCustomJreConsoleWindow: showCustomJreConsoleWindow,
         if (themeKey != $none) #themeKey: themeKey,
         if (enableDirectLaunch != null) #enableDirectLaunch: enableDirectLaunch,
         if (launchSettings != null) #launchSettings: launchSettings,
@@ -566,11 +559,10 @@ class _SettingsCopyWithImpl<$R, $Out>
       isMaximized: data.get(#isMaximized, or: $value.isMaximized),
       isMinimized: data.get(#isMinimized, or: $value.isMinimized),
       defaultTool: data.get(#defaultTool, or: $value.defaultTool),
-      jre23VmparamsFilename:
-          data.get(#jre23VmparamsFilename, or: $value.jre23VmparamsFilename),
-      useJre23: data.get(#useJre23, or: $value.useJre23),
-      showJre23ConsoleWindow:
-          data.get(#showJre23ConsoleWindow, or: $value.showJre23ConsoleWindow),
+      lastActiveJreVersion:
+          data.get(#lastActiveJreVersion, or: $value.lastActiveJreVersion),
+      showCustomJreConsoleWindow: data.get(#showCustomJreConsoleWindow,
+          or: $value.showCustomJreConsoleWindow),
       themeKey: data.get(#themeKey, or: $value.themeKey),
       enableDirectLaunch:
           data.get(#enableDirectLaunch, or: $value.enableDirectLaunch),

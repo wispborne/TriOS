@@ -1,20 +1,14 @@
-import 'dart:async';
-import 'dart:io';
-
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:styled_text/styled_text.dart';
-import 'package:trios/jre_manager/jre_23.dart';
 import 'package:trios/jre_manager/ram_changer.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
-import 'package:trios/utils/logging.dart';
 import 'package:trios/widgets/conditional_wrap.dart';
 import 'package:trios/widgets/download_progress_indicator.dart';
 
 import '../models/download_progress.dart';
-import '../trios/app_state.dart';
 import '../widgets/disable_if_cannot_write_game_folder.dart';
 import 'jre_entry.dart';
 import 'jre_manager_logic.dart';
@@ -40,7 +34,7 @@ class _GamePerformanceWidgetState extends ConsumerState<GamePerformanceWidget>
       return const Center(child: Text("Game directory not set."));
     }
 
-    final vmparams = ref.watch(vmparamsVanillaContent).value;
+    final jreManager = ref.watch(jreManagerProvider).value;
 
     return Stack(
       children: [
@@ -52,7 +46,9 @@ class _GamePerformanceWidgetState extends ConsumerState<GamePerformanceWidget>
             SizedBox(width: 350, child: ChangeJreWidget()),
             SizedBox(
               width: 350,
-              child: ChangeRamWidget(vmparams: vmparams),
+              child: ChangeRamWidget(
+                currentRamAmountInMb: jreManager?.activeJre?.ramAmountInMb,
+              ),
             ),
           ],
         ),
@@ -74,134 +70,17 @@ class ChangeJreWidget extends ConsumerStatefulWidget {
 }
 
 class _ChangeJreWidgetState extends ConsumerState<ChangeJreWidget> {
-  List<JreEntry> jres = [];
-  StreamSubscription? jreWatcherSubscription;
   bool isModifyingFiles = false;
 
   @override
-  void initState() {
-    super.initState();
-    _reloadJres();
-    _watchJres();
-  }
-
-  _reloadJres() {
-    // TODO probably probably a nicer solution than a mounted check.
-    if (isModifyingFiles || !mounted) return;
-    findJREs(ref.read(appSettings.select((value) => value.gameDir))?.path)
-        .then((value) {
-      jres = value.map((e) => e as JreEntry).toList();
-
-      if (!jres
-          .any((jre) => jre is JreEntryInstalled && jre.versionInt == 23)) {
-        // Cheating a little by only passing in the progress provider for the JDK download, but it is a much larger download so it should always be the bottleneck.
-        jres += [
-          JreToDownload(JreVersion("23-Himemi"), () {
-            ref.watch(jre23NotifierProvider.notifier).installJre23();
-          })
-        ];
-      }
-
-      setState(() {});
-    });
-  }
-
-  _watchJres() async {
-    jreWatcherSubscription?.cancel();
-    final jresDir =
-        ref.read(appSettings.select((value) => value.gameDir))?.toDirectory();
-    if (jresDir == null) return;
-    jreWatcherSubscription = jresDir.watch().listen((event) {
-      _reloadJres();
-    });
-  }
-
-  Future<void> _changeJre(JreEntryInstalled newJre) async {
-    var gamePath =
-        ref.read(appSettings.select((value) => value.gameDir))?.toDirectory();
-    if (gamePath == null || !gamePath.existsSync()) {
-      return;
-    }
-    final isUsingJre23 =
-        ref.watch(appSettings.select((value) => value.useJre23));
-
-    var currentJreSource =
-        jres.firstWhereOrNull((element) => element.isActive(isUsingJre23, jres))
-            as JreEntryInstalled?;
-
-    if (currentJreSource != null &&
-        newJre.version == currentJreSource.version) {
-      Fimber.i("JRE ${newJre.versionString} is already active.");
-      return;
-    }
-
-    Directory? currentJreDest;
-    var gameJrePath =
-        Directory(gamePath.resolve(gameJreFolderName).absolute.path);
-
-    if (currentJreSource != null && currentJreSource.path.existsSync()) {
-      // We'll move the current JRE to a new folder, which has the JRE's version string in the name.
-      currentJreDest =
-          "${gameJrePath.path}-${currentJreSource.versionString}".toDirectory();
-
-      // If the destination already exists, add a random suffix to the name.
-      if (currentJreDest.existsSync()) {
-        currentJreDest =
-            "${currentJreDest.path}-${DateTime.now().millisecondsSinceEpoch.toString().takeLast(6)}"
-                .toDirectory();
-      }
-
-      try {
-        Fimber.i(
-            "Moving JRE ${currentJreSource.versionString} from '${currentJreSource.path}' to '$currentJreDest'.");
-        await currentJreSource.path.moveDirectory(currentJreDest);
-      } catch (e, st) {
-        Fimber.w(
-            "Unable to move currently used JRE. Make sure the game is not running.",
-            ex: e,
-            stacktrace: st);
-        return;
-      }
-    }
-
-    // Rename target JRE to "jre".
-    try {
-      await newJre.path.moveDirectory(gameJrePath);
-      Fimber.i("Moved JRE ${newJre.versionString} to '$gameJrePath'.");
-      ref.invalidate(AppState.activeJre);
-    } catch (e, st) {
-      Fimber.w(
-          "Unable to move new JRE ${newJre.versionString} to '$gameJrePath'. Maybe you need to run as Admin?",
-          ex: e,
-          stacktrace: st);
-      if (!gameJrePath.existsSync() &&
-          currentJreDest != null &&
-          currentJreDest.existsSync()) {
-        Fimber.w(
-            "Rolling back JRE change. Moving '$currentJreDest' to '$gameJrePath'.");
-
-        try {
-          await currentJreDest.moveDirectory(gameJrePath);
-        } catch (e, st) {
-          Fimber.e("Failed to roll back JRE change.", ex: e, stacktrace: st);
-        }
-      }
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    ref.listen(appSettings.select((value) => value.gameDir),
-        (_, newJresDir) async {
-      if (newJresDir == null) return;
-      _reloadJres();
-      _watchJres();
-    });
-    final isUsingJre23 =
-        ref.watch(appSettings.select((value) => value.useJre23));
+    final jreManager = ref.watch(jreManagerProvider).valueOrNull;
+    final isUsingCustomJre = jreManager?.activeJre is CustomJreToDownload;
+    final jres = jreManager?.installedJres.orEmpty().toList() ?? [];
+    final activeJres = jreManager?.activeJres.orEmpty().toList() ?? [];
+    final activeJre = jreManager?.activeJre;
 
     var iconSize = 40.0;
-    bool jreVersionSupportCheck(int version) => version <= 8 || version == 23;
 
     return DisableIfCannotWriteGameFolder(
       child: Stack(
@@ -232,7 +111,9 @@ class _ChangeJreWidgetState extends ConsumerState<ChangeJreWidget> {
                     ..sort(
                         (a, b) => a.versionString.compareTo(b.versionString)))
                     ConditionalWrap(
-                      condition: !jre.isActive(isUsingJre23, jres),
+                      condition:
+                          jreManager?.activeJres.none((it) => it == jre) ??
+                              true,
                       wrapper: (child) => InkWell(
                         onTap: () async {
                           if (jre is JreToDownload) {
@@ -253,15 +134,17 @@ class _ChangeJreWidgetState extends ConsumerState<ChangeJreWidget> {
                                       TextButton(
                                           onPressed: () async {
                                             Navigator.of(context).pop();
-                                            await jre.installRunner();
-                                            _reloadJres();
+                                            ref
+                                                .read(jre
+                                                    .downloadProvider.notifier)
+                                                .installCustomJre();
                                           },
                                           child: const Text("Download")),
                                     ],
                                   );
                                 });
                           } else if (jre is JreEntryInstalled) {
-                            if (!jreVersionSupportCheck(jre.versionInt)) {
+                            if (!jre.isSupportedByTriOS) {
                               showDialog(
                                   context: context,
                                   builder: (context) => const AlertDialog(
@@ -273,18 +156,12 @@ class _ChangeJreWidgetState extends ConsumerState<ChangeJreWidget> {
                               setState(() {
                                 isModifyingFiles = true;
                               });
-                              if (jre.versionInt == 23) {
-                                ref.read(appSettings.notifier).update(
-                                    (it) => it.copyWith(useJre23: true));
-                              } else {
-                                ref.read(appSettings.notifier).update(
-                                    (it) => it.copyWith(useJre23: false));
-                                await _changeJre(jre);
-                              }
+                              await ref
+                                  .read(jreManagerProvider.notifier)
+                                  .changeActiveJre(jre);
                               setState(() {
                                 isModifyingFiles = false;
                               });
-                              _reloadJres();
                             }
                           }
                         },
@@ -292,13 +169,12 @@ class _ChangeJreWidgetState extends ConsumerState<ChangeJreWidget> {
                         child: child,
                       ),
                       child: Opacity(
-                        opacity:
-                            jreVersionSupportCheck(jre.versionInt) ? 1 : 0.5,
+                        opacity: jre.isSupportedByTriOS ? 1 : 0.5,
                         child: Padding(
                           padding: const EdgeInsets.only(left: 16.0),
                           child: Row(
                             children: [
-                              jre.isActive(isUsingJre23, jres)
+                              jre == activeJre
                                   ? Container(
                                       width: iconSize,
                                       height: iconSize,
@@ -307,10 +183,7 @@ class _ChangeJreWidgetState extends ConsumerState<ChangeJreWidget> {
                                           color: Theme.of(context)
                                               .colorScheme
                                               .primary),
-                                      child: Icon(
-                                          jre is JreEntryInstalled
-                                              ? Icons.coffee
-                                              : Icons.download,
+                                      child: Icon(Icons.coffee,
                                           color: Theme.of(context)
                                               .colorScheme
                                               .onPrimary))
@@ -338,9 +211,7 @@ class _ChangeJreWidgetState extends ConsumerState<ChangeJreWidget> {
                                                     .textTheme
                                                     .titleMedium
                                                     ?.copyWith(
-                                                        color: jre.isActive(
-                                                                isUsingJre23,
-                                                                jres)
+                                                        color: jre == activeJre
                                                             ? Theme.of(context)
                                                                 .colorScheme
                                                                 .primary
@@ -357,17 +228,18 @@ class _ChangeJreWidgetState extends ConsumerState<ChangeJreWidget> {
                                       if (jre is JreEntryInstalled)
                                         Opacity(
                                             opacity: 0.8,
-                                            child: Text(jre.path.name,
+                                            child: Text(
+                                                jre.jreAbsolutePath.name,
                                                 style: Theme.of(context)
                                                     .textTheme
                                                     .bodySmall)),
                                       if (jre is JreToDownload)
                                         TriOSDownloadProgressIndicator(
                                           value: ref
-                                                  .watch(jre23NotifierProvider)
+                                                  .watch(jre.downloadProvider)
                                                   .value
-                                                  ?.jre23jdkTriOSDownloadProgress ??
-                                              const TriOSDownloadProgress(0, 0,
+                                                  ?.downloadProgress ??
+                                              TriOSDownloadProgress(0, 0,
                                                   isIndeterminate: true),
                                         ),
                                     ],
@@ -392,10 +264,10 @@ class _ChangeJreWidgetState extends ConsumerState<ChangeJreWidget> {
 class ChangeRamWidget extends StatelessWidget {
   const ChangeRamWidget({
     super.key,
-    required this.vmparams,
+    required this.currentRamAmountInMb,
   });
 
-  final String? vmparams;
+  final String? currentRamAmountInMb;
 
   @override
   Widget build(BuildContext context) {
@@ -409,10 +281,9 @@ class ChangeRamWidget extends StatelessWidget {
                 Text("Change RAM",
                     style: Theme.of(context).textTheme.titleLarge),
                 StyledText(
-                    text: vmparams == null ||
-                            getRamAmountFromVmparamsInMb(vmparams!) == null
+                    text: currentRamAmountInMb == null
                         ? "No vmparams file found."
-                        : "Assigned: <b>${getRamAmountFromVmparamsInMb(vmparams!)!} MB</b>",
+                        : "Assigned: <b>${currentRamAmountInMb!} MB</b>",
                     tags: {
                       "b": StyledTextTag(
                           style: Theme.of(context)

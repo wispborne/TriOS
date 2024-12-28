@@ -6,9 +6,7 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/conditional_wrap.dart';
 
 import '../themes/theme_manager.dart';
-import '../trios/app_state.dart';
 import '../trios/settings/settings.dart';
-import '../utils/platform_paths.dart';
 import '../widgets/fixed_height_grid_item.dart';
 
 class RamChanger extends ConsumerStatefulWidget {
@@ -19,6 +17,10 @@ class RamChanger extends ConsumerStatefulWidget {
 }
 
 class _RamChangerState extends ConsumerState<RamChanger> {
+  bool isStandardVmparamsWritable = false;
+  bool areAllCustomJresWritable = false;
+  List<String> vmParamsFilesThatCannotBeWritten = [];
+
   @override
   Widget build(BuildContext context) {
     final currentRamInMb = ref.watch(currentRamAmountInMb);
@@ -27,19 +29,26 @@ class _RamChangerState extends ConsumerState<RamChanger> {
     if (gamePath == null) {
       return const SizedBox();
     }
-    var vmparamsFile = getVmparamsFile(gamePath);
+    final jreManager = ref.watch(jreManagerProvider).valueOrNull;
+    if (jreManager != null) {
+      setWhetherVmParamsAreWritable(jreManager);
+    }
 
-    final vmParamsWritable =
-        ref.watch(AppState.isVmParamsFileWritable).valueOrNull;
-    var isJre23VmparamsWritable =
-        ref.watch(AppState.isJre23VmparamsFileWritable).valueOrNull;
-    final jre23Vmparams = getJre23VmparamsFile(gamePath);
+    ref.listen(jreManagerProvider, (prev, next) async {
+      final newState = next.valueOrNull;
+      if (newState != null && prev?.valueOrNull != newState) {
+        await setWhetherVmParamsAreWritable(newState);
+      }
+    });
 
-    var ramChoices = [1.5, 2, 3, 4, 6, 8, 10, 11, 16];
-    return (vmParamsWritable == false ||
-            (jre23Vmparams.existsSync() && isJre23VmparamsWritable == false))
+    final standardJre = jreManager?.standardInstalledJres.firstOrNull;
+    final vmParamsWritable = standardJre?.canWriteToVmParamsFile() ?? false;
+
+    final ramChoices = [1.5, 2, 3, 4, 6, 8, 10, 11, 16];
+    return (isStandardVmparamsWritable == false ||
+            areAllCustomJresWritable == false)
         ? Text(
-            "Cannot write to vmparams file:\n${vmParamsWritable == false ? vmparamsFile.path : jre23Vmparams.path}."
+            "Cannot write to vmparams file:\n${vmParamsFilesThatCannotBeWritten.join("\n")}."
             "\n\nTry running ${Constants.appName} as an administrator.",
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: ThemeManager.vanillaWarningColor,
@@ -77,11 +86,35 @@ class _RamChangerState extends ConsumerState<RamChanger> {
                 ),
                 child: ElevatedButton(
                   onPressed: () {
-                    changeRamAmount(ref, (ram * mbPerGb).toDouble());
+                    ref
+                        .read(jreManagerProvider.notifier)
+                        .changeRamAmount((ram * mbPerGb).toDouble());
                   },
                   child: Text("$ram GB"),
                 ),
               );
             });
+  }
+
+  Future<void> setWhetherVmParamsAreWritable(JreManagerState newState) async {
+    vmParamsFilesThatCannotBeWritten.clear();
+    isStandardVmparamsWritable =
+        await newState.standardActiveJre?.canWriteToVmParamsFile() ?? false;
+    if (!isStandardVmparamsWritable) {
+      vmParamsFilesThatCannotBeWritten
+          .add(newState.standardActiveJre?.vmParamsFileRelativePath ?? "");
+    }
+    areAllCustomJresWritable = true;
+
+    for (final customJre in newState.customInstalledJres) {
+      if (!await customJre.canWriteToVmParamsFile()) {
+        areAllCustomJresWritable = false;
+        vmParamsFilesThatCannotBeWritten
+            .add(customJre.vmParamsFileRelativePath);
+        break;
+      }
+    }
+
+    setState(() {});
   }
 }

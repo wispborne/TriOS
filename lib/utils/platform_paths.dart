@@ -5,21 +5,6 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/util.dart';
 
-File getVmparamsFile(Directory gamePath, {TargetPlatform? platform}) {
-  return switch (platform ?? currentPlatform) {
-    TargetPlatform.windows => gamePath.resolve("vmparams"),
-    TargetPlatform.linux => gamePath.resolve("starsector.sh"),
-    TargetPlatform.macOS =>
-      gamePath.resolve("Contents/MacOS/starsector_mac.sh"),
-    _ => throw UnsupportedError("Platform not supported: $currentPlatform"),
-  }
-      .toFile()
-      .normalize;
-}
-
-File getJre23VmparamsFile(Directory gamePath) =>
-    gamePath.resolve("Miko_R3.txt").toFile().normalize;
-
 Directory getJreDir(Directory gamePath, {TargetPlatform? platform}) {
   return switch (platform ?? currentPlatform) {
     TargetPlatform.windows => gamePath.resolve("jre"),

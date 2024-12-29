@@ -1,4 +1,3 @@
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:styled_text/styled_text.dart';
@@ -102,7 +101,8 @@ class _ChangeJreWidgetState extends ConsumerState<ChangeJreWidget> {
                               height: 32,
                               width: 32,
                               child: IconButton(
-                                  onPressed: () => ref.invalidate(jreManagerProvider),
+                                  onPressed: () =>
+                                      ref.invalidate(jreManagerProvider),
                                   icon: const Icon(Icons.refresh),
                                   padding: EdgeInsets.zero),
                             )),
@@ -134,10 +134,11 @@ class _ChangeJreWidgetState extends ConsumerState<ChangeJreWidget> {
                                       TextButton(
                                           onPressed: () async {
                                             Navigator.of(context).pop();
-                                            ref
+                                            await ref
                                                 .read(jre
                                                     .downloadProvider.notifier)
                                                 .installCustomJre();
+                                            ref.invalidate(jreManagerProvider);
                                           },
                                           child: const Text("Download")),
                                     ],
@@ -234,14 +235,26 @@ class _ChangeJreWidgetState extends ConsumerState<ChangeJreWidget> {
                                                     .textTheme
                                                     .bodySmall)),
                                       if (jre is JreToDownload)
-                                        TriOSDownloadProgressIndicator(
-                                          value: ref
-                                                  .watch(jre.downloadProvider)
-                                                  .value
-                                                  ?.downloadProgress ??
-                                              TriOSDownloadProgress(0, 0,
-                                                  isIndeterminate: true),
-                                        ),
+                                        Builder(builder: (context) {
+                                          final downloadState = ref
+                                              .watch(jre.downloadProvider)
+                                              .valueOrNull;
+                                          return downloadState
+                                                      ?.downloadProgress ==
+                                                  null
+                                              ? Text("Click to download",
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .labelLarge)
+                                              : TriOSDownloadProgressIndicator(
+                                                  value: downloadState
+                                                          ?.downloadProgress ??
+                                                      TriOSDownloadProgress(
+                                                          0, 1,
+                                                          isIndeterminate:
+                                                              false),
+                                                );
+                                        }),
                                     ],
                                   ),
                                 ),

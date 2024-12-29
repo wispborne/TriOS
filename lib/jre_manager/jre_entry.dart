@@ -22,10 +22,9 @@ part 'jre_entry.mapper.dart';
 abstract class JreEntry implements Comparable<JreEntry> {
   /// e.g. C:\Program Files (x86)\Starsector
   final Directory gamePath;
-  final Directory jreRelativePath;
   JreVersion version;
 
-  JreEntry(this.gamePath, this.jreRelativePath, this.version);
+  JreEntry(this.gamePath, this.version);
 
   int get versionInt => version.version;
 
@@ -50,18 +49,27 @@ abstract class JreEntry implements Comparable<JreEntry> {
 
 abstract class JreEntryInstalled extends JreEntry {
   String? ramAmountInMb;
+  final Directory jreRelativePath;
 
-  JreEntryInstalled(super.gamePath, super.jreRelativePath, super.version) {
+  JreEntryInstalled(super.gamePath, this.jreRelativePath, super.version) {
     ramAmountInMb = getRamAmountFromVmparamsInMb(readVmParamsFile());
   }
 
   bool get isCustomJre;
+
   bool get isStandardJre;
 
-  Future<void> setRamAmountInMb(double ramAmountInMb);
+  Future<void> setRamAmountInMb(double ramAmountInMb) async {
+    final newRamStr = "${ramAmountInMb.toStringAsFixed(0)}m";
+    final newVmparams = vmParamsFileAbsolutePath
+        .readAsStringSync()
+        .replaceAll(maxRamInVmparamsRegex, newRamStr)
+        .replaceAll(minRamInVmparamsRegex, newRamStr);
+    await vmParamsFileAbsolutePath.writeAsString(newVmparams);
+  }
 
   String readVmParamsFile() =>
-      vmParamsFileRelativePath.toFile().readAsStringSync();
+      vmParamsFileAbsolutePath.toFile().readAsStringSync();
 
   Directory get jreAbsolutePath =>
       gamePath.resolve(jreRelativePath.path).toDirectory();
@@ -132,10 +140,9 @@ class StandardInstalledJreEntry extends JreEntryInstalled {
   StandardInstalledJreEntry(
       super.gamePath, super.jreRelativePath, super.version);
 
-  File get vmParamsFile => gamePath.resolve(vmParamsFileRelativePath).toFile();
-
   @override
   bool get isCustomJre => false;
+
   @override
   bool get isStandardJre => true;
 
@@ -148,41 +155,39 @@ class StandardInstalledJreEntry extends JreEntryInstalled {
       };
 
   @override
-  String readVmParamsFile() => vmParamsFile.readAsStringSync();
-
-  @override
-  Future<void> setRamAmountInMb(double ramAmountInMb) async {
-    final newRamStr = "${ramAmountInMb.toStringAsFixed(0)}m";
-    final newVmparams = vmParamsFile
-        .readAsStringSync()
-        .replaceAll(maxRamInVmparamsRegex, newRamStr)
-        .replaceAll(minRamInVmparamsRegex, newRamStr);
-    await vmParamsFile.writeAsString(newVmparams);
-  }
-
-  @override
   bool hasAllFilesReadyToLaunch() =>
       vmParamsFileAbsolutePath.existsSync() &&
       jreRelativePath.name == "jre" &&
       jreAbsolutePath.existsSync();
 }
 
-abstract class CustomInstalledJreEntry extends StandardInstalledJreEntry {
+abstract class CustomInstalledJreEntry extends JreEntryInstalled {
   CustomInstalledJreEntry(super.gamePath, super.jreRelativePath, super.version);
 
   @override
   bool get isCustomJre => true;
+
   @override
   bool get isStandardJre => false;
+
+  String launchFileName(bool silent);
 }
 
-class Jre23InstalledJreEntry extends CustomInstalledJreEntry {
-  Jre23InstalledJreEntry(super.gamePath, super.jreRelativePath, super.version);
+abstract class MikohimeCustomJreEntry extends CustomInstalledJreEntry {
+  MikohimeCustomJreEntry(super.gamePath, super.jreRelativePath, super.version);
 
   Directory get mikohimeFolder => gamePath.resolve("mikohime").toDirectory();
+}
+
+class Jre23InstalledJreEntry extends MikohimeCustomJreEntry {
+  Jre23InstalledJreEntry(super.gamePath, super.jreRelativePath, super.version);
 
   @override
   String get vmParamsFileRelativePath => "Miko_R3.txt";
+
+  @override
+  String launchFileName(bool silent) =>
+      silent ? "Miko_Silent.bat" : "Miko_Rouge.bat";
 
   @override
   bool hasAllFilesReadyToLaunch() =>
@@ -191,13 +196,15 @@ class Jre23InstalledJreEntry extends CustomInstalledJreEntry {
       mikohimeFolder.existsSync();
 }
 
-class Jre24InstalledJreEntry extends CustomInstalledJreEntry {
+class Jre24InstalledJreEntry extends MikohimeCustomJreEntry {
   Jre24InstalledJreEntry(super.gamePath, super.jreRelativePath, super.version);
-
-  Directory get mikohimeFolder => gamePath.resolve("mikohime").toDirectory();
 
   @override
   String get vmParamsFileRelativePath => "Miko_R4.txt";
+
+  @override
+  String launchFileName(bool silent) =>
+      silent ? "Miko_Silent.bat" : "Miko_Rouge.bat";
 
   @override
   bool hasAllFilesReadyToLaunch() =>
@@ -222,7 +229,7 @@ class CustomJreDownloadState with CustomJreDownloadStateMappable {
 abstract class JreToDownload extends JreEntry {
   CustomJreNotifier _createDownloadProvider();
 
-  JreToDownload(super.gamePath, super.jreRelativePath, super.version) {
+  JreToDownload(super.gamePath, super.version) {
     downloadProvider =
         AsyncNotifierProvider<CustomJreNotifier, CustomJreDownloadState>(
             () => _createDownloadProvider());
@@ -233,42 +240,36 @@ abstract class JreToDownload extends JreEntry {
 }
 
 abstract class CustomJreToDownload extends JreToDownload {
-  CustomJreToDownload(super.gamePath, super.jreRelativePath, super.version);
+  CustomJreToDownload(super.gamePath, super.version);
 
   String get versionCheckerUrl;
 }
 
 class Jre23JreToDownload extends CustomJreToDownload {
-  Jre23JreToDownload(super.gamePath, super.jreRelativePath, super.version);
+  Jre23JreToDownload(super.gamePath, super.version);
 
   @override
   CustomJreNotifier _createDownloadProvider() =>
-      CustomJreNotifier("23", versionCheckerUrl);
+      CustomJreNotifier(versionString, versionCheckerUrl);
 
   @override
   String get versionCheckerUrl =>
       "https://raw.githubusercontent.com/Yumeris/Mikohime_Repo/main/Java23.version";
 
   @override
-  JreVersion get version => JreVersion("23");
-
-  @override
   String get vmParamsFileRelativePath => "Miko_R3.txt";
 }
 
 class Jre24JreToDownload extends CustomJreToDownload {
-  Jre24JreToDownload(super.gamePath, super.jreRelativePath, super.version);
+  Jre24JreToDownload(super.gamePath, super.version);
 
   @override
   CustomJreNotifier _createDownloadProvider() =>
-      CustomJreNotifier("24", versionCheckerUrl);
+      CustomJreNotifier(versionString, versionCheckerUrl);
 
   @override
   String get versionCheckerUrl =>
-      "https://raw.githubusercontent.com/Yumeris/Mikohime_Repo/main/Java24.version";
-
-  @override
-  JreVersion get version => JreVersion("24");
+      "https://gist.githubusercontent.com/wispborne/bbf0b9f68fe7eb9954e399fd1d6979d6/raw/Mikohime_Java_24.version";
 
   @override
   String get vmParamsFileRelativePath => "Miko_R4.txt";
@@ -301,7 +302,8 @@ class CustomJreNotifier extends AsyncNotifier<CustomJreDownloadState> {
     final customJreInfo = await _getVersionCheckerInfo();
 
     if (customJreInfo == null) {
-      Fimber.e("Custom JRE version checker file not found.");
+      Fimber.e(
+          "Custom JRE version checker file not found at $_versionCheckerUrl");
       state = AsyncValue.error(
           "Custom JRE version checker file not found.", StackTrace.current);
       return;

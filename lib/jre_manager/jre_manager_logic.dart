@@ -47,8 +47,10 @@ class JreManager extends AsyncNotifier<JreManagerState> {
   Future<JreManagerState> build() async {
     final installedJres = await _findJREs();
     _startWatchingJres();
-    final activeJres =
-        installedJres.where((jre) => jre.hasAllFilesReadyToLaunch()).toList();
+    final activeJres = installedJres
+        .whereType<JreEntryInstalled>()
+        .where((jre) => jre.hasAllFilesReadyToLaunch())
+        .toList();
     final lastActiveJreVersion =
         ref.watch(appSettings.select((value) => value.lastActiveJreVersion));
 
@@ -73,13 +75,13 @@ class JreManager extends AsyncNotifier<JreManagerState> {
 
   /// Async find all JREs in the game directory,
   /// including any supported downloadable JREs to the list.
-  Future<List<JreEntryInstalled>> _findJREs() async {
+  Future<List<JreEntry>> _findJREs() async {
     final gamePath = ref.watch(appSettings.select((value) => value.gameDir));
     if (gamePath == null || !gamePath.existsSync()) {
       return [];
     }
 
-    return (await Future.wait(
+    final List<JreEntry> jres = (await Future.wait(
             gamePath.listSync().whereType<Directory>().map((jrePath) async {
       var javaExe = getJavaExecutable(jrePath);
       if (!javaExe.existsSync()) {
@@ -118,8 +120,23 @@ class JreManager extends AsyncNotifier<JreManagerState> {
           return StandardInstalledJreEntry(gamePath, jrePath, jreVersion);
       }
     })))
-        .whereType<JreEntryInstalled>()
+        .whereType<JreEntry>()
         .toList();
+
+    // Add downloadable JREs
+    final downloadableJres = [
+      Jre23JreToDownload(gamePath, JreVersion("23-beta")),
+      Jre24JreToDownload(gamePath, JreVersion("24-beta")),
+    ];
+
+    for (final downloadableJre in downloadableJres) {
+      if (jres
+          .none((jre) => jre.versionString == downloadableJre.versionString)) {
+        jres.add(downloadableJre);
+      }
+    }
+
+    return jres;
   }
 
   Future<void> changeActiveJre(JreEntryInstalled newJre) async {
@@ -153,20 +170,40 @@ class JreManager extends AsyncNotifier<JreManagerState> {
       Fimber.e("JRE ${newJre.versionString} is not a supported JRE.");
       return;
     }
+    // From here on out, we're switching to a standard JRE.
 
-    // TODO: extract this into a function called "activateStandardJre"
-    // to make it simple to swap from a custom JRE to a standard JRE that isn't in the "jre" folder.
+    // If we're switching to a standard JRE that's not in the "jre" folder, we need to swap it with the active standard one,
+    // even if we're switching from a custom JRE.
+    final needToChangeStandardJres = newJre.hasAllFilesReadyToLaunch() == false;
+
+    if (needToChangeStandardJres) {
+      didSwapFail = !await _activateStandardJre(gamePath, newJre);
+    }
+
+    if (!didSwapFail) {
+      ref.read(appSettings.notifier).update(
+          (it) => it.copyWith(lastActiveJreVersion: newJre.versionString));
+    }
+
+    // Refresh JRE list
+    ref.invalidateSelf();
+  }
+
+  /// Returns false if the swap failed.
+  Future<bool> _activateStandardJre(
+      Directory gamePath, StandardInstalledJreEntry newJre) async {
+    final sourceStandardJre = state.valueOrNull?.standardActiveJre;
     Directory? currentJreDest;
     final gameJrePath =
         gamePath.resolve(Constants.gameJreFolderName).toDirectory();
 
     // Step: If current JRE is standard, then change its folder name from `jre` to `jre-${version}`.
-    if (currentJreSource != null &&
-        !currentJreSource.isCustomJre &&
-        currentJreSource.jreAbsolutePath.existsSync()) {
+    if (sourceStandardJre != null &&
+        !sourceStandardJre.isCustomJre &&
+        sourceStandardJre.jreAbsolutePath.existsSync()) {
       // We'll move the current JRE to a new folder, which has the JRE's version string in the name.
       currentJreDest =
-          "${currentJreSource.jreAbsolutePath}-${currentJreSource.versionString}"
+          "${sourceStandardJre.jreAbsolutePath.path}-${sourceStandardJre.versionString}"
               .toDirectory();
 
       // If the destination already exists, add a random suffix to the name.
@@ -178,51 +215,43 @@ class JreManager extends AsyncNotifier<JreManagerState> {
 
       try {
         Fimber.i(
-            "Moving JRE ${currentJreSource.versionString} from '${currentJreSource.jreAbsolutePath}' to '$currentJreDest'.");
-        await currentJreSource.jreAbsolutePath.moveDirectory(currentJreDest);
+            "Moving JRE ${sourceStandardJre.versionString} from '${sourceStandardJre.jreAbsolutePath.path}' to '$currentJreDest'.");
+        await sourceStandardJre.jreAbsolutePath.moveDirectory(currentJreDest);
       } catch (e, st) {
-        didSwapFail = true;
         Fimber.w(
             "Unable to move currently used JRE. Make sure the game is not running.",
             ex: e,
             stacktrace: st);
-        return;
+        return false;
       }
     }
 
-    // Step: If target JRE is standard, change its name to "jre".
-    if (newJre.isStandardJre) {
-      try {
-        await newJre.jreAbsolutePath.moveDirectory(gameJrePath);
-        Fimber.i("Moved JRE ${newJre.versionString} to '$gameJrePath'.");
-      } catch (e, st) {
-        didSwapFail = true;
+    // Step: Change the name of the target JRE to "jre".
+    try {
+      await newJre.jreAbsolutePath.moveDirectory(gameJrePath);
+      Fimber.i("Moved JRE ${newJre.versionString} to '$gameJrePath'.");
+    } catch (e, st) {
+      Fimber.w(
+          "Unable to move new JRE ${newJre.versionString} to '$gameJrePath'. Maybe you need to run as Admin?",
+          ex: e,
+          stacktrace: st);
+      if (!gameJrePath.existsSync() &&
+          currentJreDest != null &&
+          currentJreDest.existsSync()) {
         Fimber.w(
-            "Unable to move new JRE ${newJre.versionString} to '$gameJrePath'. Maybe you need to run as Admin?",
-            ex: e,
-            stacktrace: st);
-        if (!gameJrePath.existsSync() &&
-            currentJreDest != null &&
-            currentJreDest.existsSync()) {
-          Fimber.w(
-              "Rolling back JRE change. Moving '$currentJreDest' to '$gameJrePath'.");
+            "Rolling back JRE change. Moving '$currentJreDest' to '$gameJrePath'.");
 
-          try {
-            await currentJreDest.moveDirectory(gameJrePath);
-          } catch (e, st) {
-            Fimber.e("Failed to roll back JRE change.", ex: e, stacktrace: st);
-          }
+        try {
+          await currentJreDest.moveDirectory(gameJrePath);
+        } catch (e, st) {
+          Fimber.e("Failed to roll back JRE change.", ex: e, stacktrace: st);
         }
       }
+
+      return false;
     }
 
-    if (!didSwapFail) {
-      ref.read(appSettings.notifier).update(
-          (it) => it.copyWith(lastActiveJreVersion: newJre.versionString));
-    }
-
-    // Refresh JRE list
-    ref.invalidateSelf();
+    return true;
   }
 
   _startWatchingJres() async {
@@ -238,6 +267,8 @@ class JreManager extends AsyncNotifier<JreManagerState> {
 
 class JreManagerState {
   final List<JreEntry> installedJres;
+
+  /// All valid JREs (one standard, could be multiple custom JREs).
   final List<JreEntryInstalled> activeJres;
   final String? _lastActiveJreVersion;
 
@@ -247,6 +278,7 @@ class JreManagerState {
     this._lastActiveJreVersion,
   );
 
+  /// Returns the last activated JRE (via TriOS).
   JreEntryInstalled? get activeJre =>
       activeJres.firstWhereOrNull(
           (it) => it.versionString == _lastActiveJreVersion) ??
@@ -258,8 +290,9 @@ class JreManagerState {
   List<CustomInstalledJreEntry> get customInstalledJres =>
       installedJres.whereType<CustomInstalledJreEntry>().toList();
 
+  /// Returns the active JRE that is not a custom JRE.
   StandardInstalledJreEntry? get standardActiveJre =>
-      activeJres.firstWhereOrNull((it) => it is StandardInstalledJreEntry)
+      activeJres.firstWhereOrNull((it) => it.isStandardJre)
           as StandardInstalledJreEntry?;
 
   bool get isUsingJre23 => activeJres.any((jre) => jre.versionInt == 23);

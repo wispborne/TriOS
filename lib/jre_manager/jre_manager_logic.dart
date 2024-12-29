@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
@@ -44,7 +45,7 @@ class JreManager extends AsyncNotifier<JreManagerState> {
 
   @override
   Future<JreManagerState> build() async {
-    final installedJres = await findJREs();
+    final installedJres = await _findJREs();
     _startWatchingJres();
     final activeJres =
         installedJres.where((jre) => jre.hasAllFilesReadyToLaunch()).toList();
@@ -72,7 +73,7 @@ class JreManager extends AsyncNotifier<JreManagerState> {
 
   /// Async find all JREs in the game directory,
   /// including any supported downloadable JREs to the list.
-  Future<List<JreEntryInstalled>> findJREs() async {
+  Future<List<JreEntryInstalled>> _findJREs() async {
     final gamePath = ref.watch(appSettings.select((value) => value.gameDir));
     if (gamePath == null || !gamePath.existsSync()) {
       return [];
@@ -128,6 +129,7 @@ class JreManager extends AsyncNotifier<JreManagerState> {
       return;
     }
 
+    bool didSwapFail = false;
     final currentJreSource = state.valueOrNull?.activeJre;
 
     if (currentJreSource != null &&
@@ -152,11 +154,16 @@ class JreManager extends AsyncNotifier<JreManagerState> {
       return;
     }
 
+    // TODO: extract this into a function called "activateStandardJre"
+    // to make it simple to swap from a custom JRE to a standard JRE that isn't in the "jre" folder.
     Directory? currentJreDest;
-    final gameJrePath = currentJreSource!.jreAbsolutePath;
+    final gameJrePath =
+        gamePath.resolve(Constants.gameJreFolderName).toDirectory();
 
-    // If current JRE is custom, don't move it.
-    if (currentJreSource.jreAbsolutePath.existsSync() && !currentJreSource.isCustomJre) {
+    // Step: If current JRE is standard, then change its folder name from `jre` to `jre-${version}`.
+    if (currentJreSource != null &&
+        !currentJreSource.isCustomJre &&
+        currentJreSource.jreAbsolutePath.existsSync()) {
       // We'll move the current JRE to a new folder, which has the JRE's version string in the name.
       currentJreDest =
           "${currentJreSource.jreAbsolutePath}-${currentJreSource.versionString}"
@@ -174,6 +181,7 @@ class JreManager extends AsyncNotifier<JreManagerState> {
             "Moving JRE ${currentJreSource.versionString} from '${currentJreSource.jreAbsolutePath}' to '$currentJreDest'.");
         await currentJreSource.jreAbsolutePath.moveDirectory(currentJreDest);
       } catch (e, st) {
+        didSwapFail = true;
         Fimber.w(
             "Unable to move currently used JRE. Make sure the game is not running.",
             ex: e,
@@ -182,32 +190,38 @@ class JreManager extends AsyncNotifier<JreManagerState> {
       }
     }
 
-    // Rename target JRE to "jre".
-    try {
-      await newJre.jreAbsolutePath.moveDirectory(gameJrePath);
-      Fimber.i("Moved JRE ${newJre.versionString} to '$gameJrePath'.");
-      ref.read(appSettings.notifier).update(
-          (it) => it.copyWith(lastActiveJreVersion: newJre.versionString));
-      findJREs();
-    } catch (e, st) {
-      Fimber.w(
-          "Unable to move new JRE ${newJre.versionString} to '$gameJrePath'. Maybe you need to run as Admin?",
-          ex: e,
-          stacktrace: st);
-      if (!gameJrePath.existsSync() &&
-          currentJreDest != null &&
-          currentJreDest.existsSync()) {
+    // Step: If target JRE is standard, change its name to "jre".
+    if (newJre.isStandardJre) {
+      try {
+        await newJre.jreAbsolutePath.moveDirectory(gameJrePath);
+        Fimber.i("Moved JRE ${newJre.versionString} to '$gameJrePath'.");
+      } catch (e, st) {
+        didSwapFail = true;
         Fimber.w(
-            "Rolling back JRE change. Moving '$currentJreDest' to '$gameJrePath'.");
+            "Unable to move new JRE ${newJre.versionString} to '$gameJrePath'. Maybe you need to run as Admin?",
+            ex: e,
+            stacktrace: st);
+        if (!gameJrePath.existsSync() &&
+            currentJreDest != null &&
+            currentJreDest.existsSync()) {
+          Fimber.w(
+              "Rolling back JRE change. Moving '$currentJreDest' to '$gameJrePath'.");
 
-        try {
-          await currentJreDest.moveDirectory(gameJrePath);
-        } catch (e, st) {
-          Fimber.e("Failed to roll back JRE change.", ex: e, stacktrace: st);
+          try {
+            await currentJreDest.moveDirectory(gameJrePath);
+          } catch (e, st) {
+            Fimber.e("Failed to roll back JRE change.", ex: e, stacktrace: st);
+          }
         }
       }
     }
 
+    if (!didSwapFail) {
+      ref.read(appSettings.notifier).update(
+          (it) => it.copyWith(lastActiveJreVersion: newJre.versionString));
+    }
+
+    // Refresh JRE list
     ref.invalidateSelf();
   }
 
@@ -217,7 +231,7 @@ class JreManager extends AsyncNotifier<JreManagerState> {
         ref.read(appSettings.select((value) => value.gameDir))?.toDirectory();
     if (jresDir == null) return;
     _jreWatcherSubscription = jresDir.watch().listen((event) {
-      findJREs();
+      _findJREs();
     });
   }
 }

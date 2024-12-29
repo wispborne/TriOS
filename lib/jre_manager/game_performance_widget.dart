@@ -13,8 +13,6 @@ import '../widgets/disable_if_cannot_write_game_folder.dart';
 import 'jre_entry.dart';
 import 'jre_manager_logic.dart';
 
-const gameJreFolderName = "jre";
-
 class GamePerformanceWidget extends ConsumerStatefulWidget {
   const GamePerformanceWidget({super.key});
 
@@ -98,12 +96,16 @@ class _ChangeJreWidgetState extends ConsumerState<ChangeJreWidget> {
                         Center(
                             child: Text("Change JRE",
                                 style: Theme.of(context).textTheme.titleLarge)),
-                        // Align(
-                        //     alignment: Alignment.centerRight,
-                        //     child: IconButton(
-                        //         onPressed: _reloadJres,
-                        //         icon: const Icon(Icons.refresh),
-                        //         padding: EdgeInsets.zero)),
+                        Align(
+                            alignment: Alignment.centerRight,
+                            child: SizedBox(
+                              height: 32,
+                              width: 32,
+                              child: IconButton(
+                                  onPressed: () => ref.invalidate(jreManagerProvider),
+                                  icon: const Icon(Icons.refresh),
+                                  padding: EdgeInsets.zero),
+                            )),
                       ],
                     ),
                   ),
@@ -111,9 +113,7 @@ class _ChangeJreWidgetState extends ConsumerState<ChangeJreWidget> {
                     ..sort(
                         (a, b) => a.versionString.compareTo(b.versionString)))
                     ConditionalWrap(
-                      condition:
-                          jreManager?.activeJres.none((it) => it == jre) ??
-                              true,
+                      condition: jre != activeJre,
                       wrapper: (child) => InkWell(
                         onTap: () async {
                           if (jre is JreToDownload) {
@@ -229,7 +229,7 @@ class _ChangeJreWidgetState extends ConsumerState<ChangeJreWidget> {
                                         Opacity(
                                             opacity: 0.8,
                                             child: Text(
-                                                jre.jreAbsolutePath.name,
+                                                "${jre.jreAbsolutePath.name}/",
                                                 style: Theme.of(context)
                                                     .textTheme
                                                     .bodySmall)),

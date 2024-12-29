@@ -34,6 +34,7 @@ class Constants {
   static const archivesFolderName = "Mod_Backups";
   static const modInfoFileName = "mod_info.json";
   static const unbrickedModInfoFileName = modInfoFileName;
+  static const gameJreFolderName = "jre";
 
   //     // Backwards compat, first one is the one used for new disable actions.
   static const modInfoFileDisabledNames = [

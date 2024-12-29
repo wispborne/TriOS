@@ -56,6 +56,7 @@ abstract class JreEntryInstalled extends JreEntry {
   }
 
   bool get isCustomJre;
+  bool get isStandardJre;
 
   Future<void> setRamAmountInMb(double ramAmountInMb);
 
@@ -135,6 +136,8 @@ class StandardInstalledJreEntry extends JreEntryInstalled {
 
   @override
   bool get isCustomJre => false;
+  @override
+  bool get isStandardJre => true;
 
   @override
   String get vmParamsFileRelativePath => switch (currentPlatform) {
@@ -169,6 +172,8 @@ abstract class CustomInstalledJreEntry extends StandardInstalledJreEntry {
 
   @override
   bool get isCustomJre => true;
+  @override
+  bool get isStandardJre => false;
 }
 
 class Jre23InstalledJreEntry extends CustomInstalledJreEntry {

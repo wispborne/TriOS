@@ -10,6 +10,7 @@ import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/platform_paths.dart';
 import 'package:trios/utils/util.dart';
+import 'package:trios/widgets/code.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/restartable_app.dart';
@@ -47,11 +48,10 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
     lastNVersionsSetting =
         enableMultipleVersions ? settings.keepLastNVersions : null;
     allowCrashReporting = settings.allowCrashReporting ?? false;
-    pages = [
-      () =>_buildGameDirectoryAndModPreferencesPage(),
-      () => _buildCrashReportingPage(),
-    ];
+    pages = [];
     if (Platform.isMacOS) pages.add(() => _buildMacOSPage());
+    pages.add(() => _buildGameDirectoryAndModPreferencesPage());
+    pages.add(() => _buildCrashReportingPage());
   }
 
   @override
@@ -324,23 +324,37 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text("MacOS Instructions",
-            style: TextStyle(fontWeight: FontWeight.bold)),
-        Text(
-            "A few steps are required for full functionality (self-update, mod updates)."),
+        Transform.translate(
+            offset: const Offset(-12, 0), child: Icon(Icons.apple, size: 72)),
+        Text("MacOS-only Instructions",
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        const SizedBox(height: 8),
+        Text("Required for self-update, mod updates & mod installs.",
+            style: TextStyle(fontStyle: FontStyle.italic)),
         const SizedBox(height: 16),
-        Text(
-          "1. Open Terminal"
-          "\n2. Run the following commands:",
+        Text("1. Open the Terminal app."),
+        const SizedBox(height: 8),
+        Text("2. Paste into Terminal to install Homebrew: "),
+        Padding(
+          padding: const EdgeInsets.only(left: 16),
+          child: Code(
+            showCopyButton: true,
+            child: SelectableText(
+              '/bin/bash -c "\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"',
+            ),
+          ),
         ),
         const SizedBox(height: 8),
-        Text(
-          '/bin/bash -c "\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"',
-        ),
-        const SizedBox(height: 8),
-        Text(
-          "brew install xz zstd zlib",
-        ),
+        Text("3. Paste into Terminal to install compression libs: "),
+        Padding(
+          padding: const EdgeInsets.only(left: 16),
+          child: Code(
+            showCopyButton: true,
+            child: SelectableText(
+              "brew install xz zstd zlib",
+            ),
+          ),
+        )
       ]),
     );
   }

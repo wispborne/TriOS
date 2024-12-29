@@ -34,6 +34,7 @@
   - Mods folder path used `/` instead of `\`.
   - Launch precheck no longer full height.
   - Version checker errors now have a capped height.
+  - MacOS running the game when clicking "Open Game Folder".
 - Changed
   - Note: TriOS settings have been reset due to a new format. 
     - Mod profiles should be fine. 

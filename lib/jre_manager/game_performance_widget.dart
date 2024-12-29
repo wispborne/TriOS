@@ -1,3 +1,4 @@
+import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:styled_text/styled_text.dart';
@@ -263,6 +264,15 @@ class _ChangeJreWidgetState extends ConsumerState<ChangeJreWidget> {
                           ),
                         ),
                       ),
+                    ),
+                  if (jres.countWhere((it) => it is MikohimeCustomJreEntry) > 1)
+                    Text(
+                      "Multiple Mikohime JREs are not supported.",
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurface
+                              .withValues(alpha: 0.5)),
                     ),
                 ]),
               ),

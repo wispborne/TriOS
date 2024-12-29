@@ -396,6 +396,67 @@ extension DirectoryExt on Directory {
   void openInExplorer() {
     OpenFilex.open(path);
   }
+
+  /// Moves the directory to [destDir]. If [destDir] already exists, it is first renamed
+  /// by appending [suffixForReplacedDestDir]. If that newly renamed folder name also exists, a timestamp
+  /// segment is appended to ensure uniqueness.
+  /// Returns false if the swap fails.
+  Future<bool> swapDirectoryWith({
+    required Directory destDir,
+    required String suffixForReplacedDestDir,
+  }) async {
+    Directory sourceDir = this;
+    Directory? oldDest;
+
+    // If the destination folder already exists, rename it to avoid overwriting.
+    if (destDir.existsSync()) {
+      oldDest = "${destDir.path}-$suffixForReplacedDestDir".toDirectory();
+      if (oldDest.existsSync()) {
+        oldDest =
+            "${oldDest.path}-${DateTime.now().millisecondsSinceEpoch.toString().takeLast(6)}"
+                .toDirectory();
+      }
+
+      try {
+        Fimber.i(
+            "Moving existing destination folder from '${destDir.path}' to '${oldDest.path}'.");
+        await destDir.moveDirectory(oldDest);
+      } catch (e, st) {
+        Fimber.w(
+          "Unable to move existing destination folder. Make sure it's not in use.",
+          ex: e,
+          stacktrace: st,
+        );
+        return false;
+      }
+    }
+
+    // Move the source folder to the destination folder.
+    try {
+      Fimber.i(
+          "Moving source folder from '${sourceDir.path}' to '${destDir.path}'.");
+      await sourceDir.moveDirectory(destDir);
+    } catch (e, st) {
+      Fimber.w(
+        "Unable to move source folder to destination. Maybe you need to run as Admin?",
+        ex: e,
+        stacktrace: st,
+      );
+      if (!destDir.existsSync() && oldDest != null && oldDest.existsSync()) {
+        Fimber.w(
+            "Rolling back directory change. Moving '${oldDest.path}' back to '${destDir.path}'.");
+        try {
+          await oldDest.moveDirectory(destDir);
+        } catch (e, st) {
+          Fimber.e("Failed to roll back directory change.",
+              ex: e, stacktrace: st);
+        }
+      }
+      return false;
+    }
+
+    return true;
+  }
 }
 
 extension IterableExt<T> on Iterable<T> {

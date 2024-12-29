@@ -10,6 +10,7 @@
     - Shows VRAM taken by your GraphicsLib settings for mods. 
   - **Onboarding** popup on first launch.
     - Prompts for game location and how many versions of each mod to keep.
+  - **JRE 24** (by Himemi) download support.
   - **Mod Grid rewritten** from scratch.
     - Improved performance.
     - Saves column width, position, visibility, and sorting.

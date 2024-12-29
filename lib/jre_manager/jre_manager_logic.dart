@@ -159,25 +159,45 @@ class JreManager extends AsyncNotifier<JreManagerState> {
 
     // Switching to custom JRE is just an app setting change,
     // no need to move the JRE.
-    if (newJre is CustomInstalledJreEntry) {
+    if (newJre is MikohimeCustomJreEntry) {
       ref.read(appSettings.notifier).update(
           (it) => it.copyWith(lastActiveJreVersion: newJre.versionString));
       ref.invalidateSelf();
       return;
-    }
+    } else if (newJre is MikohimeCustomJreEntry) {
+      // Unused, realized too late that there's no way to tell which JRE is associated with which mikohime folder.
+      // So I'm just not going to support multiple Himemi JREs.
+      final existingMikohimeJre = state.valueOrNull?.activeJres
+          .firstWhereOrNull((it) => it is MikohimeCustomJreEntry);
+      final needsToReplaceMikohimeJre =
+          newJre.jreRelativePath.name != newJre.mikohimeFolder.name;
 
-    if (newJre is! StandardInstalledJreEntry) {
+      // Swap the mikohime folder with the existing mikohime folder
+      if (needsToReplaceMikohimeJre && existingMikohimeJre != null) {
+        final swapResult = await newJre.jreAbsolutePath.swapDirectoryWith(
+          destDir: existingMikohimeJre.jreAbsolutePath,
+          suffixForReplacedDestDir: existingMikohimeJre.versionString,
+        );
+        if (!swapResult) {
+          didSwapFail = true;
+          Fimber.w(
+              "Failed to swap out currently active JRE. Game might still be running.");
+        }
+      }
+    } else if (newJre is StandardInstalledJreEntry) {
+      // From here on out, we're switching to a standard JRE.
+
+      // If we're switching to a standard JRE that's not in the "jre" folder, we need to swap it with the active standard one,
+      // even if we're switching from a custom JRE.
+      final needToChangeStandardJres =
+          newJre.hasAllFilesReadyToLaunch() == false;
+
+      if (needToChangeStandardJres) {
+        didSwapFail = !await _activateStandardJre(gamePath, newJre);
+      }
+    } else {
       Fimber.e("JRE ${newJre.versionString} is not a supported JRE.");
-      return;
-    }
-    // From here on out, we're switching to a standard JRE.
-
-    // If we're switching to a standard JRE that's not in the "jre" folder, we need to swap it with the active standard one,
-    // even if we're switching from a custom JRE.
-    final needToChangeStandardJres = newJre.hasAllFilesReadyToLaunch() == false;
-
-    if (needToChangeStandardJres) {
-      didSwapFail = !await _activateStandardJre(gamePath, newJre);
+      didSwapFail = true;
     }
 
     if (!didSwapFail) {
@@ -192,62 +212,39 @@ class JreManager extends AsyncNotifier<JreManagerState> {
   /// Returns false if the swap failed.
   Future<bool> _activateStandardJre(
       Directory gamePath, StandardInstalledJreEntry newJre) async {
-    final sourceStandardJre = state.valueOrNull?.standardActiveJre;
-    Directory? currentJreDest;
+    final existingStandardJre = state.valueOrNull?.standardActiveJre;
     final gameJrePath =
         gamePath.resolve(Constants.gameJreFolderName).toDirectory();
 
-    // Step: If current JRE is standard, then change its folder name from `jre` to `jre-${version}`.
-    if (sourceStandardJre != null &&
-        !sourceStandardJre.isCustomJre &&
-        sourceStandardJre.jreAbsolutePath.existsSync()) {
-      // We'll move the current JRE to a new folder, which has the JRE's version string in the name.
-      currentJreDest =
-          "${sourceStandardJre.jreAbsolutePath.path}-${sourceStandardJre.versionString}"
+    // If there is an active standard JRE, attempt to swap it out.
+    if (existingStandardJre != null &&
+        existingStandardJre.jreAbsolutePath.existsSync()) {
+      final currentJreDest =
+          "${existingStandardJre.jreAbsolutePath.path}-${existingStandardJre.versionString}"
               .toDirectory();
 
-      // If the destination already exists, add a random suffix to the name.
-      if (currentJreDest.existsSync()) {
-        currentJreDest =
-            "${currentJreDest.path}-${DateTime.now().millisecondsSinceEpoch.toString().takeLast(6)}"
-                .toDirectory();
-      }
+      final swapResult =
+          await existingStandardJre.jreAbsolutePath.swapDirectoryWith(
+        destDir: currentJreDest,
+        suffixForReplacedDestDir: existingStandardJre.versionString,
+      );
 
-      try {
-        Fimber.i(
-            "Moving JRE ${sourceStandardJre.versionString} from '${sourceStandardJre.jreAbsolutePath.path}' to '$currentJreDest'.");
-        await sourceStandardJre.jreAbsolutePath.moveDirectory(currentJreDest);
-      } catch (e, st) {
+      if (!swapResult) {
         Fimber.w(
-            "Unable to move currently used JRE. Make sure the game is not running.",
-            ex: e,
-            stacktrace: st);
+            "Failed to swap out currently active JRE. Game might still be running.");
         return false;
       }
     }
 
-    // Step: Change the name of the target JRE to "jre".
-    try {
-      await newJre.jreAbsolutePath.moveDirectory(gameJrePath);
-      Fimber.i("Moved JRE ${newJre.versionString} to '$gameJrePath'.");
-    } catch (e, st) {
+    // Move the new JRE to the active game JRE path
+    final moveResult = await newJre.jreAbsolutePath.swapDirectoryWith(
+      destDir: gameJrePath,
+      suffixForReplacedDestDir: newJre.versionString,
+    );
+
+    if (!moveResult) {
       Fimber.w(
-          "Unable to move new JRE ${newJre.versionString} to '$gameJrePath'. Maybe you need to run as Admin?",
-          ex: e,
-          stacktrace: st);
-      if (!gameJrePath.existsSync() &&
-          currentJreDest != null &&
-          currentJreDest.existsSync()) {
-        Fimber.w(
-            "Rolling back JRE change. Moving '$currentJreDest' to '$gameJrePath'.");
-
-        try {
-          await currentJreDest.moveDirectory(gameJrePath);
-        } catch (e, st) {
-          Fimber.e("Failed to roll back JRE change.", ex: e, stacktrace: st);
-        }
-      }
-
+          "Failed to activate new JRE ${newJre.versionString}. Attempting rollback.");
       return false;
     }
 

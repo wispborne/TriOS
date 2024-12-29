@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:trios/models/version.dart';
+import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 
@@ -157,7 +158,7 @@ class StandardInstalledJreEntry extends JreEntryInstalled {
   @override
   bool hasAllFilesReadyToLaunch() =>
       vmParamsFileAbsolutePath.existsSync() &&
-      jreRelativePath.name == "jre" &&
+      jreRelativePath.name == Constants.gameJreFolderName &&
       jreAbsolutePath.existsSync();
 }
 
@@ -177,6 +178,14 @@ abstract class MikohimeCustomJreEntry extends CustomInstalledJreEntry {
   MikohimeCustomJreEntry(super.gamePath, super.jreRelativePath, super.version);
 
   Directory get mikohimeFolder => gamePath.resolve("mikohime").toDirectory();
+
+  @override
+  bool hasAllFilesReadyToLaunch() =>
+      vmParamsFileAbsolutePath.existsSync() &&
+      jreAbsolutePath.existsSync() &&
+      mikohimeFolder.existsSync();
+// Ideally would check that the mikohime folder is for this specific JRE.
+// But idk how.
 }
 
 class Jre23InstalledJreEntry extends MikohimeCustomJreEntry {
@@ -188,12 +197,6 @@ class Jre23InstalledJreEntry extends MikohimeCustomJreEntry {
   @override
   String launchFileName(bool silent) =>
       silent ? "Miko_Silent.bat" : "Miko_Rouge.bat";
-
-  @override
-  bool hasAllFilesReadyToLaunch() =>
-      vmParamsFileAbsolutePath.existsSync() &&
-      jreAbsolutePath.existsSync() &&
-      mikohimeFolder.existsSync();
 }
 
 class Jre24InstalledJreEntry extends MikohimeCustomJreEntry {
@@ -205,12 +208,6 @@ class Jre24InstalledJreEntry extends MikohimeCustomJreEntry {
   @override
   String launchFileName(bool silent) =>
       silent ? "Miko_Silent.bat" : "Miko_Rouge.bat";
-
-  @override
-  bool hasAllFilesReadyToLaunch() =>
-      vmParamsFileAbsolutePath.existsSync() &&
-      jreAbsolutePath.existsSync() &&
-      mikohimeFolder.existsSync();
 }
 
 @MappableClass()

@@ -377,8 +377,26 @@ class _AppShellState extends ConsumerState<AppShell>
                           icon: const SvgImageIcon(
                               "assets/images/icon-folder-game.svg"),
                           color: Theme.of(context).iconTheme.color,
-                          onPressed: () {
-                            OpenFilex.open(gameFolderPath);
+                          onPressed: () async {
+                            if (Platform.isMacOS) {
+                              // Hack for mac to reveal the Contents folder
+                              // otherwise it runs the game.
+                              try {
+                                final process = await Process.start(
+                                    'open', ["-R", "$gameFolderPath/Contents"]);
+                                final result = await process.exitCode;
+                                if (result != 0) {
+                                  Fimber.e(
+                                      "Error opening game folder: $result");
+                                }
+                              } catch (e, st) {
+                                Fimber.e("Error opening game folder: $e",
+                                    ex: e, stacktrace: st);
+                              }
+                            } else {
+                              // Everybody else just opens the folder
+                              OpenFilex.open(gameFolderPath);
+                            }
                           },
                         ),
                       );

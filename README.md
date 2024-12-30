@@ -87,9 +87,9 @@ The only time you need to build it yourself is if you have some architecture tha
    The output will be in `$HOME/libarchive-output`.
 
 ### Linux
-1. Install deps:
+1. Install deps (not sure if all are required or if all are exactly correct, this is pulled from `history`):
    ```
-   TODO copy/paste here
+   apt install build-essential autoconf automake libtool pkg-config libbz2-dev liblzma-dev libz-dev libzstd-dev gettext libxml2 libxml2-dev
    ```
 1. Check out source:
    ```

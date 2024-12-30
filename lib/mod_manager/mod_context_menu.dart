@@ -55,7 +55,25 @@ ContextMenu buildModBulkActionContextMenu(
 
   return ContextMenu(
     entries: <ContextMenuEntry>[
-      if (!isGameRunning)
+      if (!isGameRunning && mods.any((mod) => !mod.hasEnabledVariant))
+        MenuItem(
+          label: 'Enable selected',
+          icon: Icons.toggle_on,
+          onSelected: () async {
+            for (final mod in mods.sublist(0, mods.length - 1)) {
+              await ref
+                  .read(AppState.modVariants.notifier)
+                  .changeActiveModVariant(mod, mod.findHighestVersion,
+                      validateDependencies: false);
+            }
+            await ref
+                .read(AppState.modVariants.notifier)
+                .changeActiveModVariant(mods.last, mods.last.findHighestVersion,
+                    validateDependencies: true);
+            ref.invalidate(AppState.modVariants);
+          },
+        ),
+      if (!isGameRunning && mods.any((mod) => mod.hasEnabledVariant))
         MenuItem(
           label: 'Disable selected',
           icon: Icons.toggle_off,
@@ -74,6 +92,17 @@ ContextMenu buildModBulkActionContextMenu(
             ref.invalidate(AppState.modVariants);
           },
         ),
+      // check vram of selected
+      MenuItem(
+        label: 'Check VRAM of selected',
+        icon: Icons.memory,
+        onSelected: () {
+          ref.read(AppState.vramEstimatorProvider.notifier).startEstimating(
+              variantsToCheck: mods
+                  .map((mod) => mod.findFirstEnabledOrHighestVersion!)
+                  .toList());
+        },
+      ),
     ],
     padding: const EdgeInsets.all(8.0),
   );

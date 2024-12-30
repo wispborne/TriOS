@@ -69,7 +69,7 @@ class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
     final bestVersion = mod.findFirstEnabledOrHighestVersion!;
 
     return HoverableWidget(
-      onTap: (event) {
+      onTapDown: () {
         if (HardwareKeyboard.instance.isShiftPressed) {
           widget.onRowCheck(
             modId: mod.id,
@@ -109,9 +109,9 @@ class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
         // Mix in any hover/checked overlay color
         final backgroundColor = backgroundBaseColor.mix(
             widget.isChecked
-                ? Colors.white.withOpacity(0.2)
+                ? theme.colorScheme.onSurface.withOpacity(0.4)
                 : isHovering
-                    ? Colors.black.withOpacity(0.2)
+                    ? theme.colorScheme.onInverseSurface.withOpacity(0.2)
                     : Colors.transparent,
             0.5);
 

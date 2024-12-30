@@ -94,7 +94,7 @@ class _WispGridModHeaderRowViewState
       contextMenu: ContextMenu(
         entries: [
           MenuItem(
-              label: 'Reset grid',
+              label: 'Reset grid layout',
               icon: Icons.settings_backup_restore,
               onSelected: () {
                 ref
@@ -322,7 +322,7 @@ class DraggableHeader extends ConsumerWidget {
           if (isHovered) Container(color: Colors.black.withOpacity(0.5)),
           if (isFirst)
             MovingTooltipWidget.text(
-              message: 'Reset grid',
+              message: 'Reset grid layout',
               child: Opacity(
                 opacity: showDragHandle ? 1 : 0,
                 child: IconButton(

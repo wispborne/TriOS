@@ -7,6 +7,7 @@ import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/conditional_wrap.dart';
 import 'package:trios/widgets/download_progress_indicator.dart';
+import 'package:trios/widgets/moving_tooltip.dart';
 
 import '../models/download_progress.dart';
 import '../widgets/disable_if_cannot_write_game_folder.dart';
@@ -266,13 +267,19 @@ class _ChangeJreWidgetState extends ConsumerState<ChangeJreWidget> {
                       ),
                     ),
                   if (jres.countWhere((it) => it is MikohimeCustomJreEntry) > 1)
-                    Text(
-                      "Multiple Mikohime JREs are not supported.",
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onSurface
-                              .withValues(alpha: 0.5)),
+                    MovingTooltipWidget.text(
+                      message:
+                          "Because Mikohime JREs use the same 'mikohime' folder and same launcher .bat files, you may see more than one here but "
+                          "launching any of them will only run the last one installed.",
+                      child: Text(
+                        "Multiple \"Mikohime\" JREs are not supported."
+                        "\nOnly the last-installed one will run.",
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurface
+                                .withValues(alpha: 0.5)),
+                      ),
                     ),
                 ]),
               ),

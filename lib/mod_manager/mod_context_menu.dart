@@ -34,7 +34,8 @@ ContextMenu buildModContextMenu(Mod mod, WidgetRef ref, BuildContext context,
       buildMenuItemOpenFolder(mod),
       buildMenuItemOpenModInfoFile(mod),
       buildMenuItemOpenForumPage(modVariant, context),
-      if (!ref.watch(AppState.vramEstimatorProvider).isScanning)
+      if (ref.watch(AppState.vramEstimatorProvider).valueOrNull?.isScanning !=
+          true)
         buildMenuItemCheckVram(mod, ref),
       if (!isGameRunning) menuItemDeleteFolder(mod, context, ref),
       if (isModGameVersionIncorrect(

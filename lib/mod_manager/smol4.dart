@@ -86,10 +86,12 @@ class _Smol4State extends ConsumerState<Smol4>
                                   Builder(builder: (context) {
                                     final vramEst = ref
                                         .watch(AppState.vramEstimatorProvider);
+                                    final isScanningVram =
+                                        vramEst.valueOrNull?.isScanning == true;
                                     return Animate(
                                       controller: animationController,
                                       effects: [
-                                        if (vramEst.isScanning)
+                                        if (isScanningVram)
                                           ShimmerEffect(
                                             colors: [
                                               theme.colorScheme.onSurface,
@@ -102,7 +104,7 @@ class _Smol4State extends ConsumerState<Smol4>
                                           )
                                       ],
                                       child: OutlinedButton.icon(
-                                        onPressed: () => vramEst.isScanning
+                                        onPressed: () => isScanningVram
                                             ? ref
                                                 .read(AppState
                                                     .vramEstimatorProvider
@@ -157,7 +159,7 @@ class _Smol4State extends ConsumerState<Smol4>
                                                                 "Estimate"))
                                                       ],
                                                     )),
-                                        label: Text(vramEst.isScanning
+                                        label: Text(isScanningVram
                                             ? "Cancel Scan"
                                             : "Est. VRAM"),
                                         style: OutlinedButton.styleFrom(

@@ -107,7 +107,7 @@ class AppState {
   });
 
   static final vramEstimatorProvider =
-      NotifierProvider<VramEstimatorNotifier, VramEstimatorState>(
+      AsyncNotifierProvider<VramEstimatorNotifier, VramEstimatorState>(
     VramEstimatorNotifier.new,
   );
 

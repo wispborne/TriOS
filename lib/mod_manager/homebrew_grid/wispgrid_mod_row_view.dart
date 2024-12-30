@@ -308,7 +308,8 @@ class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
           child: Builder(builder: (context) {
             final vramEstimatorState =
                 ref.watch(AppState.vramEstimatorProvider);
-            final vramMap = vramEstimatorState.modVramInfo;
+            final vramProvider = ref.watch(AppState.vramEstimatorProvider);
+            final vramMap = vramProvider.valueOrNull?.modVramInfo ?? {};
             final biggestFish = vramMap
                 .maxBy((e) =>
                     e.value.bytesUsingGraphicsLibConfig(graphicsLibConfig))
@@ -361,7 +362,7 @@ class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
                                 child: Opacity(
                                     opacity: 0.5,
                                     child: Disable(
-                                      isEnabled: !vramEstimatorState.isScanning,
+                                      isEnabled: vramEstimatorState.valueOrNull?.isScanning != true,
                                       child: MovingTooltipWidget.text(
                                         message: "Estimate VRAM usage",
                                         child: IconButton(

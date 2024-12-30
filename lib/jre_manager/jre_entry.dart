@@ -210,19 +210,6 @@ class Jre24InstalledJreEntry extends MikohimeCustomJreEntry {
       silent ? "Miko_Silent.bat" : "Miko_Rouge.bat";
 }
 
-@MappableClass()
-class CustomJreDownloadState with CustomJreDownloadStateMappable {
-  final TriOSDownloadProgress? downloadProgress;
-  final String? errorMessage;
-  final bool isInstalling;
-
-  CustomJreDownloadState({
-    this.downloadProgress,
-    this.errorMessage,
-    this.isInstalling = false,
-  });
-}
-
 abstract class JreToDownload extends JreEntry {
   CustomJreNotifier _createDownloadProvider();
 
@@ -278,6 +265,8 @@ class CustomJreNotifier extends AsyncNotifier<CustomJreDownloadState> {
 
   final String _jreVersion;
   final String _versionCheckerUrl;
+  CustomJreDownloadState _mikohimeDownloadState = CustomJreDownloadState();
+  CustomJreDownloadState _jdkDownloadState = CustomJreDownloadState();
 
   CustomJreNotifier(this._jreVersion, this._versionCheckerUrl);
 
@@ -287,7 +276,17 @@ class CustomJreNotifier extends AsyncNotifier<CustomJreDownloadState> {
     return CustomJreDownloadState();
   }
 
+  void _updateDownloadState() {
+    state = AsyncValue.data(CustomJreDownloadState.aggregate({
+      "jdk": _jdkDownloadState,
+      "mikohime": _mikohimeDownloadState,
+    }));
+  }
+
   Future<void> installCustomJre() async {
+    _mikohimeDownloadState = CustomJreDownloadState();
+    _jdkDownloadState = CustomJreDownloadState();
+
     final gamePath =
         ref.read(appSettings.select((value) => value.gameDir))?.toDirectory();
     if (gamePath == null) {
@@ -364,9 +363,10 @@ class CustomJreNotifier extends AsyncNotifier<CustomJreDownloadState> {
 
     final jdkZip = downloadFile(jdkUrl, savePath, null,
         onProgress: (bytesReceived, contentLength) {
-      state = AsyncValue.data(state.value!.copyWith(
+      _jdkDownloadState = _jdkDownloadState.copyWith(
         downloadProgress: TriOSDownloadProgress(bytesReceived, contentLength),
-      ));
+      );
+      _updateDownloadState();
     });
 
     return jdkZip;
@@ -390,9 +390,10 @@ class CustomJreNotifier extends AsyncNotifier<CustomJreDownloadState> {
 
     final configZip = downloadFile(himiUrl, savePath, null,
         onProgress: (bytesReceived, contentLength) {
-      state = AsyncValue.data(state.value!.copyWith(
+      _mikohimeDownloadState = _mikohimeDownloadState.copyWith(
         downloadProgress: TriOSDownloadProgress(bytesReceived, contentLength),
-      ));
+      );
+      _updateDownloadState();
     });
 
     return configZip;
@@ -476,6 +477,53 @@ class CustomJreNotifier extends AsyncNotifier<CustomJreDownloadState> {
         .resolve(vmParamsFile.nameWithExtension)
         .toFile()
         .writeAsStringSync(newVmparams);
+  }
+}
+
+@MappableClass()
+class CustomJreDownloadState with CustomJreDownloadStateMappable {
+  final TriOSDownloadProgress? downloadProgress;
+  final String? errorMessage;
+  final bool isInstalling;
+
+  CustomJreDownloadState({
+    this.downloadProgress,
+    this.errorMessage,
+    this.isInstalling = false,
+  });
+
+  /// Aggregates a map of [CustomJreDownloadState] objects into one.
+  ///
+  /// - Sums the download progress fields across all states via [TriOSDownloadProgress.aggregate].
+  /// - Chooses the first non-null [errorMessage] from any state.
+  /// - Marks [isInstalling] as true if any state is installing.
+  static CustomJreDownloadState aggregate(
+    Map<String, CustomJreDownloadState> states,
+  ) {
+    if (states.isEmpty) {
+      return CustomJreDownloadState();
+    }
+
+    final progressList = states.values
+        .map((s) => s.downloadProgress)
+        .whereType<TriOSDownloadProgress>()
+        .toList();
+
+    final aggregatedProgress = progressList.isEmpty
+        ? null
+        : TriOSDownloadProgress.aggregate(progressList);
+
+    final firstError = states.values
+        .map((s) => s.errorMessage)
+        .firstWhere((err) => err != null, orElse: () => null);
+
+    final anyInstalling = states.values.any((s) => s.isInstalling);
+
+    return CustomJreDownloadState(
+      downloadProgress: aggregatedProgress,
+      errorMessage: firstError,
+      isInstalling: anyInstalling,
+    );
   }
 }
 

@@ -223,8 +223,11 @@ class _WispGridState extends ConsumerState<WispGrid> {
   }
 }
 
-Comparable? _getSortValueForMod(Mod mod, ModMetadata? metadata,
-    ModGridSortField sortField, VramEstimatorState vramEstimatorState) {
+Comparable? _getSortValueForMod(
+    Mod mod,
+    ModMetadata? metadata,
+    ModGridSortField sortField,
+    AsyncValue<VramEstimatorState> vramEstimatorStateProvider) {
   return switch (sortField) {
     ModGridSortField.icons =>
       mod.findFirstEnabledOrHighestVersion?.modInfo.isUtility == true
@@ -240,8 +243,9 @@ Comparable? _getSortValueForMod(Mod mod, ModMetadata? metadata,
       mod.findFirstEnabledOrHighestVersion?.modInfo.author?.toLowerCase() ?? "",
     ModGridSortField.version =>
       mod.findFirstEnabledOrHighestVersion?.modInfo.version,
-    ModGridSortField.vramImpact => vramEstimatorState
-            .modVramInfo[mod.findHighestEnabledVersion?.smolId]
+    ModGridSortField.vramImpact => vramEstimatorStateProvider
+            .valueOrNull
+            ?.modVramInfo[mod.findHighestEnabledVersion?.smolId]
             ?.maxPossibleBytesForMod ??
         0,
     ModGridSortField.gameVersion =>

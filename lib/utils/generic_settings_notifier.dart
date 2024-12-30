@@ -19,6 +19,7 @@ abstract class GenericSettingsAsyncNotifier<T> extends AsyncNotifier<T> {
   Future<T> build() async {
     if (!_isInitialized) {
       try {
+        state = AsyncValue.loading();
         final settings = await settingsManager.readSettingsFromDisk();
         _isInitialized = true;
         return settings;

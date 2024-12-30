@@ -151,6 +151,7 @@ abstract class GenericAsyncSettingsManager<T> {
   }
 
   /// Updates the current state using the provided mutator function and persists the updated state to disk.
+  /// You probably you want to use the [update] in a [GenericSettingsAsyncNotifier] instead.
   Future<T> update(
     FutureOr<T> Function(T currentState) mutator, {
     FutureOr<T> Function(Object, StackTrace)? onError,

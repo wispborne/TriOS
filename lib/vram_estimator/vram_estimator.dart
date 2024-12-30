@@ -46,7 +46,8 @@ class VramEstimatorState with VramEstimatorStateMappable {
   }
 }
 
-class VramEstimatorManager extends GenericSettingsManager<VramEstimatorState> {
+class VramEstimatorManager
+    extends GenericAsyncSettingsManager<VramEstimatorState> {
   @override
   VramEstimatorState Function() get createDefaultState =>
       () => VramEstimatorState.initial();
@@ -67,7 +68,7 @@ class VramEstimatorManager extends GenericSettingsManager<VramEstimatorState> {
 }
 
 class VramEstimatorNotifier
-    extends GenericSettingsNotifier<VramEstimatorState> {
+    extends GenericSettingsAsyncNotifier<VramEstimatorState> {
   // @override
   // VramEstimatorState build() {
   //   readFromDisk();
@@ -76,7 +77,7 @@ class VramEstimatorNotifier
   // }
 
   @override
-  GenericSettingsManager<VramEstimatorState> createSettingsManager() =>
+  GenericAsyncSettingsManager<VramEstimatorState> createSettingsManager() =>
       VramEstimatorManager();
 
   // void readFromDisk() async {
@@ -98,7 +99,7 @@ class VramEstimatorNotifier
   // }
 
   Future<void> startEstimating({List<ModVariant>? variantsToCheck}) async {
-    if (state.isScanning) return;
+    if (state.valueOrNull?.isScanning == true) return;
 
     var settings = ref.read(appSettings);
     if (settings.modsDir == null || !settings.modsDir!.existsSync()) {
@@ -107,10 +108,7 @@ class VramEstimatorNotifier
       return;
     }
 
-    state = state.copyWith(
-      isScanning: true,
-      isCancelled: false,
-    );
+    update((s) => s.copyWith(isScanning: true, isCancelled: false));
 
     try {
       final info = await VramChecker(
@@ -130,13 +128,9 @@ class VramEstimatorNotifier
         modProgressOut: (VramMod mod) {
           // Update modVramInfo with each mod's progress
           final updatedModVramInfo = {
-            ...state.modVramInfo,
+            ...state.requireValue.modVramInfo,
             mod.info.smolId: mod
           };
-          state = state.copyWith(
-            modVramInfo: updatedModVramInfo,
-          );
-
           update(
             (state) => state.copyWith(
               modVramInfo: updatedModVramInfo,
@@ -146,11 +140,11 @@ class VramEstimatorNotifier
         },
         debugOut: Fimber.d,
         verboseOut: (String message) => Fimber.v(() => message),
-        isCancelled: () => state.isCancelled,
+        isCancelled: () => state.valueOrNull?.isCancelled ?? false,
       ).check();
 
       final modVramInfo = info.fold<Map<String, VramMod>>(
-        state.modVramInfo,
+        state.requireValue.modVramInfo,
         (previousValue, element) =>
             previousValue..[element.info.smolId] = element,
       );
@@ -175,7 +169,7 @@ class VramEstimatorNotifier
   }
 
   void cancelEstimation() {
-    state = state.copyWith(isCancelled: true);
+    update((s) => s.copyWith(isCancelled: true));
   }
 }
 
@@ -201,7 +195,11 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
   Widget build(BuildContext context) {
     super.build(context);
 
-    final vramState = ref.watch(AppState.vramEstimatorProvider);
+    final vramStateProvider = ref.watch(AppState.vramEstimatorProvider);
+    if (vramStateProvider.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    final vramState = vramStateProvider.requireValue;
     final isScanning = vramState.isScanning;
     final modVramInfo = vramState.modVramInfo;
     final graphicsLibConfig = ref.watch(graphicsLibConfigProvider);

@@ -40,7 +40,8 @@ class _WispGridModRowState extends ConsumerState<WispGridModGroupRowView> {
   Widget build(BuildContext context) {
     final groupName = widget.groupName;
     final modsInGroup = widget.modsInGroup;
-    final vramMap = ref.watch(AppState.vramEstimatorProvider).modVramInfo;
+    final vramProvider = ref.watch(AppState.vramEstimatorProvider);
+    final vramMap = vramProvider.valueOrNull?.modVramInfo ?? {};
     final graphicsLibConfig = ref.watch(graphicsLibConfigProvider);
     final smolIds = modsInGroup.nonNulls
         .map((e) => e.findFirstEnabledOrHighestVersion)

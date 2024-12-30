@@ -14,7 +14,8 @@
   - **Mod Grid rewritten** from scratch.
     - Improved performance.
     - Saves column width, position, visibility, and sorting.
-    - Switched to reuse my old SMOL code and away from the 3rd-party library :)
+    - Switched to reuse my old SMOL code :)
+  - **Mass-enable/disable** mods, using control-click and shift-click to select mods.
   - "Favorites" to pin a mod on the Mods tab.
   - Mods can now be sorted by "First Seen" or "Last Enabled".
     - This is the date the mod was first seen or enabled by TriOS, not when it was first installed.

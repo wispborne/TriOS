@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 class HoverableWidget extends StatefulWidget {
@@ -5,7 +6,7 @@ class HoverableWidget extends StatefulWidget {
   final Color? hoverColor;
   final BorderRadius? borderRadius;
   final EdgeInsetsGeometry? padding;
-  final VoidCallback? onTap;
+  final Function(PointerEvent)? onTap;
 
   const HoverableWidget({
     super.key,
@@ -39,8 +40,15 @@ class _HoverableWidgetState extends State<HoverableWidget> {
       cursor: widget.onTap != null
           ? SystemMouseCursors.click
           : SystemMouseCursors.basic,
-      child: GestureDetector(
-        onTap: widget.onTap,
+      child: Listener(
+        onPointerDown: (event) {
+          if (widget.onTap == null) return;
+          switch (event.buttons) {
+            case kPrimaryMouseButton:
+              widget.onTap!(event);
+              break;
+          }
+        },
         behavior: HitTestBehavior.translucent,
         child: Container(
           decoration: BoxDecoration(

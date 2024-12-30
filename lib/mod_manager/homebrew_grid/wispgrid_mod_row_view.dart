@@ -1,7 +1,8 @@
 import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_context_menu/flutter_context_menu.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:trios/dashboard/changelogs.dart';
@@ -9,7 +10,6 @@ import 'package:trios/dashboard/mod_dependencies_widget.dart';
 import 'package:trios/dashboard/mod_list_basic_entry.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
-import 'package:trios/mod_manager/mod_context_menu.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/mod_manager/mod_version_selection_dropdown.dart';
@@ -37,9 +37,20 @@ import '../../widgets/svg_image_icon.dart';
 class WispGridModRowView extends ConsumerStatefulWidget {
   final Mod mod;
   final Function(Mod? mod) onModRowSelected;
+  final bool isChecked;
+
+  final void Function({
+    required String modId,
+    required bool shiftPressed,
+    required bool ctrlPressed,
+  }) onRowCheck;
 
   const WispGridModRowView(
-      {super.key, required this.mod, required this.onModRowSelected});
+      {super.key,
+      required this.mod,
+      required this.onModRowSelected,
+      required this.isChecked,
+      required this.onRowCheck});
 
   @override
   ConsumerState createState() => _WispGridModRowViewState();
@@ -57,231 +68,226 @@ class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
     final height = _standardRowHeight;
     final bestVersion = mod.findFirstEnabledOrHighestVersion!;
 
-    return SizedBox(
-      child: ContextMenuRegion(
-        contextMenu:
-            buildModContextMenu(mod, ref, context, showSwapToVersion: true),
-        child: HoverableWidget(
-          onTap: () => {
-            widget.onModRowSelected(mod),
-          },
-          child: Builder(builder: (context) {
-            final isHovering = HoverData.of(context)?.isHovering ?? false;
-            final metadata = ref
-                .watch(AppState.modsMetadata)
-                .valueOrNull
-                ?.getMergedModMetadata(mod.id);
-            final theme = Theme.of(context);
+    return HoverableWidget(
+      onTap: (event) {
+        if (HardwareKeyboard.instance.isShiftPressed) {
+          widget.onRowCheck(
+            modId: mod.id,
+            shiftPressed: true,
+            ctrlPressed: false,
+          );
+        } else if (HardwareKeyboard.instance.isControlPressed) {
+          widget.onRowCheck(
+            modId: mod.id,
+            shiftPressed: false,
+            ctrlPressed: true,
+          );
+        } else {
+          widget.onModRowSelected(mod);
+          widget.onRowCheck(
+            modId: mod.id,
+            shiftPressed: false,
+            ctrlPressed: false,
+          );
+        }
+      },
+      child: Builder(builder: (context) {
+        final isHovering = HoverData.of(context)?.isHovering ?? false;
+        final metadata = ref
+            .watch(AppState.modsMetadata)
+            .valueOrNull
+            ?.getMergedModMetadata(mod.id);
+        final theme = Theme.of(context);
+        final modMetadata =
+            ref.watch(AppState.modsMetadata).valueOrNull?.userMetadata[mod.id];
+        final isFavorited = modMetadata?.isFavorited ?? false;
 
-            return Container(
-              decoration: BoxDecoration(
-                color: isHovering
+        final backgroundBaseColor = isFavorited
+            ? theme.colorScheme.primary.withOpacity(0.3)
+            : Colors.transparent;
+
+        // Mix in any hover/checked overlay color
+        final backgroundColor = backgroundBaseColor.mix(
+            widget.isChecked
+                ? Colors.white.withOpacity(0.2)
+                : isHovering
                     ? Colors.black.withOpacity(0.2)
                     : Colors.transparent,
-              ),
-              child: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 0.0),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      spacing: WispGrid.gridRowSpacing,
-                      children: [
-                        SizedBox(width: WispGrid.gridRowSpacing),
-                        ...(gridState.sortedVisibleColumns.map((columnSetting) {
-                          return Builder(builder: (context) {
-                            final header = columnSetting.key;
-                            final state = columnSetting.value;
+            0.5);
 
-                            return switch (header) {
-                              ModGridHeader.favorites => _RowItemContainer(
-                                  height: height,
-                                  width: state.width,
-                                  child: Expanded(
-                                    child: FavoriteButton(
-                                      favoritesWidth: state.width,
-                                      mod: mod,
-                                      isRowHighlighted: isHovering,
-                                    ),
+        return Container(
+          decoration: BoxDecoration(
+            color: backgroundColor,
+          ),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 0.0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  spacing: WispGrid.gridRowSpacing,
+                  children: [
+                    SizedBox(width: WispGrid.gridRowSpacing),
+                    ...(gridState.sortedVisibleColumns.map((columnSetting) {
+                      return Builder(builder: (context) {
+                        final header = columnSetting.key;
+                        final state = columnSetting.value;
+
+                        return switch (header) {
+                          ModGridHeader.favorites => _RowItemContainer(
+                              height: height,
+                              width: state.width,
+                              child: Expanded(
+                                child: FavoriteButton(
+                                  favoritesWidth: state.width,
+                                  mod: mod,
+                                  isRowHighlighted: isHovering,
+                                  isFavorited: isFavorited,
+                                ),
+                              ),
+                            ),
+                          ModGridHeader.changeVariantButton =>
+                            Builder(builder: (context) {
+                              return _RowItemContainer(
+                                height: height,
+                                width: state.width,
+                                child: Disable(
+                                  isEnabled: !isGameRunning,
+                                  child: ModVersionSelectionDropdown(
+                                    mod: mod,
+                                    width: state.width,
+                                    showTooltip: false,
                                   ),
                                 ),
-                              ModGridHeader.changeVariantButton =>
-                                Builder(builder: (context) {
-                                  return ContextMenuRegion(
-                                      contextMenu: buildModContextMenu(
-                                          mod, ref, context,
-                                          showSwapToVersion: true),
-                                      child: _RowItemContainer(
-                                        height: height,
-                                        width: state.width,
-                                        child: Disable(
-                                          isEnabled: !isGameRunning,
-                                          child: ModVersionSelectionDropdown(
-                                            mod: mod,
-                                            width: state.width,
-                                            showTooltip: false,
+                              );
+                            }),
+                          ModGridHeader.modIcon => Builder(builder: (context) {
+                              String? iconPath = bestVersion.iconFilePath;
+                              return _RowItemContainer(
+                                height: height,
+                                width: state.width,
+                                child: iconPath != null
+                                    ? Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.start,
+                                        children: [
+                                          Image.file(
+                                            iconPath.toFile(),
+                                            width: 32,
+                                            height: 32,
                                           ),
-                                        ),
-                                      ));
-                                }),
-                              ModGridHeader.modIcon =>
-                                Builder(builder: (context) {
-                                  String? iconPath = bestVersion.iconFilePath;
-                                  return _RowItemContainer(
-                                    height: height,
-                                    width: state.width,
-                                    child: iconPath != null
-                                        ? Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.start,
-                                            children: [
-                                              Image.file(
-                                                iconPath.toFile(),
-                                                width: 32,
-                                                height: 32,
-                                              ),
-                                            ],
-                                          )
-                                        : const SizedBox(width: 32, height: 32),
-                                  );
-                                }),
-                              ModGridHeader.icons => _RowItemContainer(
-                                  height: height,
-                                  width: state.width,
-                                  child: ModTypeIcon(modVariant: bestVersion),
+                                        ],
+                                      )
+                                    : const SizedBox(width: 32, height: 32),
+                              );
+                            }),
+                          ModGridHeader.icons => _RowItemContainer(
+                              height: height,
+                              width: state.width,
+                              child: ModTypeIcon(modVariant: bestVersion),
+                            ),
+                          ModGridHeader.name =>
+                            buildNameCell(mod, bestVersion, allMods, state),
+                          ModGridHeader.author => Builder(builder: (context) {
+                              final theme = Theme.of(context);
+                              final lightTextColor = theme.colorScheme.onSurface
+                                  .withOpacity(WispGrid.lightTextOpacity);
+                              return _RowItemContainer(
+                                height: height,
+                                width: state.width,
+                                child: Text(
+                                  bestVersion.modInfo.author
+                                          ?.toString()
+                                          .replaceAll("\n", "   ") ??
+                                      "(no author)",
+                                  maxLines: 1,
+                                  style: theme.textTheme.labelLarge
+                                      ?.copyWith(color: lightTextColor),
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                              ModGridHeader.name =>
-                                buildNameCell(mod, bestVersion, allMods, state),
-                              ModGridHeader.author =>
-                                Builder(builder: (context) {
-                                  final theme = Theme.of(context);
-                                  final lightTextColor = theme
-                                      .colorScheme.onSurface
-                                      .withOpacity(WispGrid.lightTextOpacity);
-                                  return ContextMenuRegion(
-                                      contextMenu: buildModContextMenu(
-                                          mod, ref, context,
-                                          showSwapToVersion: true),
-                                      child: _RowItemContainer(
-                                        height: height,
-                                        width: state.width,
-                                        child: Text(
-                                          bestVersion.modInfo.author
-                                                  ?.toString()
-                                                  .replaceAll("\n", "   ") ??
-                                              "(no author)",
-                                          maxLines: 1,
-                                          style: theme.textTheme.labelLarge
-                                              ?.copyWith(color: lightTextColor),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ));
-                                }),
-                              ModGridHeader.version => _buildVersionCell(
-                                  WispGrid.lightTextOpacity,
-                                  mod,
-                                  height,
-                                  isGameRunning,
-                                  bestVersion,
-                                  state),
-                              ModGridHeader.vramImpact => buildVramCell(
-                                  WispGrid.lightTextOpacity,
-                                  mod,
-                                  height,
-                                  state),
-                              ModGridHeader.gameVersion =>
-                                Builder(builder: (context) {
-                                  final theme = Theme.of(context);
+                              );
+                            }),
+                          ModGridHeader.version => _buildVersionCell(
+                              WispGrid.lightTextOpacity,
+                              mod,
+                              height,
+                              isGameRunning,
+                              bestVersion,
+                              state),
+                          ModGridHeader.vramImpact => buildVramCell(
+                              WispGrid.lightTextOpacity, mod, height, state),
+                          ModGridHeader.gameVersion =>
+                            Builder(builder: (context) {
+                              final theme = Theme.of(context);
 
-                                  return ContextMenuRegion(
-                                      contextMenu: buildModContextMenu(
-                                          mod, ref, context,
-                                          showSwapToVersion: true),
-                                      child: _RowItemContainer(
-                                        height: height,
-                                        width: state.width,
-                                        child: Opacity(
-                                          opacity: WispGrid.lightTextOpacity,
-                                          child: Text(
-                                              bestVersion.modInfo.gameVersion ??
-                                                  "(no game version)",
-                                              style: compareGameVersions(
-                                                          bestVersion.modInfo
-                                                              .gameVersion,
-                                                          ref
-                                                              .watch(
-                                                                  appSettings)
-                                                              .lastStarsectorVersion) ==
-                                                      GameCompatibility
-                                                          .perfectMatch
-                                                  ? theme.textTheme.labelLarge
-                                                  : theme.textTheme.labelLarge
-                                                      ?.copyWith(
-                                                          color: ThemeManager
-                                                              .vanillaErrorColor)),
-                                        ),
-                                      ));
-                                }),
-                              ModGridHeader.firstSeen =>
-                                Builder(builder: (context) {
-                                  return ContextMenuRegion(
-                                      contextMenu: buildModContextMenu(
-                                          mod, ref, context,
-                                          showSwapToVersion: true),
-                                      child: _RowItemContainer(
-                                        height: height,
-                                        width: state.width,
-                                        child: Opacity(
-                                          opacity: WispGrid.lightTextOpacity,
-                                          child: Text(
-                                              metadata?.let((m) => Constants
-                                                      .dateTimeFormat
-                                                      .format(DateTime
-                                                          .fromMillisecondsSinceEpoch(
-                                                              m.firstSeen))) ??
-                                                  "",
-                                              style:
-                                                  theme.textTheme.labelLarge),
-                                        ),
-                                      ));
-                                }),
-                              ModGridHeader.lastEnabled =>
-                                Builder(builder: (context) {
-                                  return ContextMenuRegion(
-                                      contextMenu: buildModContextMenu(
-                                          mod, ref, context,
-                                          showSwapToVersion: true),
-                                      child: _RowItemContainer(
-                                          height: height,
-                                          width: state.width,
-                                          child: Opacity(
-                                            opacity: WispGrid.lightTextOpacity,
-                                            child: Text(
-                                                metadata?.lastEnabled?.let(
-                                                        (lastEnabled) => Constants
-                                                            .dateTimeFormat
-                                                            .format(DateTime
-                                                                .fromMillisecondsSinceEpoch(
-                                                                    lastEnabled))) ??
-                                                    "",
-                                                style:
-                                                    theme.textTheme.labelLarge),
-                                          )));
-                                }),
-                            };
-                          });
-                        }).toList()),
-                        SizedBox(width: WispGrid.gridRowSpacing),
-                      ],
-                    ),
-                  ),
-                  buildMissingDependencyButton(mod.findFirstEnabled, allMods)
-                ],
+                              return _RowItemContainer(
+                                height: height,
+                                width: state.width,
+                                child: Opacity(
+                                  opacity: WispGrid.lightTextOpacity,
+                                  child: Text(
+                                      bestVersion.modInfo.gameVersion ??
+                                          "(no game version)",
+                                      style: compareGameVersions(
+                                                  bestVersion
+                                                      .modInfo.gameVersion,
+                                                  ref
+                                                      .watch(appSettings)
+                                                      .lastStarsectorVersion) ==
+                                              GameCompatibility.perfectMatch
+                                          ? theme.textTheme.labelLarge
+                                          : theme.textTheme.labelLarge
+                                              ?.copyWith(
+                                                  color: ThemeManager
+                                                      .vanillaErrorColor)),
+                                ),
+                              );
+                            }),
+                          ModGridHeader.firstSeen => _RowItemContainer(
+                              height: height,
+                              width: state.width,
+                              child: Opacity(
+                                opacity: WispGrid.lightTextOpacity,
+                                child: Text(
+                                    metadata?.let((m) => Constants
+                                            .dateTimeFormat
+                                            .format(DateTime
+                                                .fromMillisecondsSinceEpoch(
+                                                    m.firstSeen))) ??
+                                        "",
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: theme.textTheme.labelLarge),
+                              ),
+                            ),
+                          ModGridHeader.lastEnabled => _RowItemContainer(
+                              height: height,
+                              width: state.width,
+                              child: Opacity(
+                                opacity: WispGrid.lightTextOpacity,
+                                child: Text(
+                                    metadata?.lastEnabled?.let((lastEnabled) =>
+                                            Constants.dateTimeFormat.format(
+                                                DateTime
+                                                    .fromMillisecondsSinceEpoch(
+                                                        lastEnabled))) ??
+                                        "",
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: theme.textTheme.labelLarge),
+                              )),
+                        };
+                      });
+                    }).toList()),
+                    SizedBox(width: WispGrid.gridRowSpacing),
+                  ],
+                ),
               ),
-            );
-          }),
-        ),
-      ),
+              buildMissingDependencyButton(mod.findFirstEnabled, allMods)
+            ],
+          ),
+        );
+      }),
     );
   }
 
@@ -295,111 +301,104 @@ class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
       final graphicsLibConfig = ref.watch(graphicsLibConfigProvider);
       if (bestVersion == null) return const SizedBox();
 
-      return ContextMenuRegion(
-          contextMenu:
-              buildModContextMenu(mod, ref, context, showSwapToVersion: true),
-          child: _RowItemContainer(
-            height: height,
-            width: state.width,
-            child: Expanded(
-              child: Builder(builder: (context) {
-                final vramEstimatorState =
-                    ref.watch(AppState.vramEstimatorProvider);
-                final vramMap = vramEstimatorState.modVramInfo;
-                final biggestFish = vramMap
-                    .maxBy((e) =>
-                        e.value.bytesUsingGraphicsLibConfig(graphicsLibConfig))
-                    ?.value
-                    .bytesUsingGraphicsLibConfig(graphicsLibConfig);
-                final ratio = biggestFish == null
-                    ? 0.00
-                    : (vramMap[bestVersion.smolId]
-                                ?.bytesUsingGraphicsLibConfig(graphicsLibConfig)
-                                .toDouble() ??
-                            0) /
-                        biggestFish.toDouble();
-                final vramEstimate = vramMap[bestVersion.smolId];
-                final withoutGraphicsLib = vramEstimate?.images
-                    .where((e) => e.graphicsLibType == null)
-                    .map((e) => e.bytesUsed)
-                    .toList();
-                final fromGraphicsLib = vramEstimate?.images
-                    .where((e) => e.graphicsLibType != null)
-                    .map((e) => e.bytesUsed)
-                    .toList();
+      return _RowItemContainer(
+        height: height,
+        width: state.width,
+        child: Expanded(
+          child: Builder(builder: (context) {
+            final vramEstimatorState =
+                ref.watch(AppState.vramEstimatorProvider);
+            final vramMap = vramEstimatorState.modVramInfo;
+            final biggestFish = vramMap
+                .maxBy((e) =>
+                    e.value.bytesUsingGraphicsLibConfig(graphicsLibConfig))
+                ?.value
+                .bytesUsingGraphicsLibConfig(graphicsLibConfig);
+            final ratio = biggestFish == null
+                ? 0.00
+                : (vramMap[bestVersion.smolId]
+                            ?.bytesUsingGraphicsLibConfig(graphicsLibConfig)
+                            .toDouble() ??
+                        0) /
+                    biggestFish.toDouble();
+            final vramEstimate = vramMap[bestVersion.smolId];
+            final withoutGraphicsLib = vramEstimate?.images
+                .where((e) => e.graphicsLibType == null)
+                .map((e) => e.bytesUsed)
+                .toList();
+            final fromGraphicsLib = vramEstimate?.images
+                .where((e) => e.graphicsLibType != null)
+                .map((e) => e.bytesUsed)
+                .toList();
 
-                return MovingTooltipWidget.text(
-                  message: vramEstimate == null
-                      ? ""
-                      : "Version ${vramEstimate.info.version}"
-                          "\n"
-                          "\n${withoutGraphicsLib?.sum().bytesAsReadableMB()} from mod (${withoutGraphicsLib?.length} images)"
-                          "\n${fromGraphicsLib?.sum().bytesAsReadableMB()} added by your GraphicsLib settings (${fromGraphicsLib?.length} images)"
-                          "\n---"
-                          "\n${vramEstimate.bytesUsingGraphicsLibConfig(graphicsLibConfig).bytesAsReadableMB()} total",
-                  child: Stack(
-                    children: [
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 8.0),
-                            child: vramEstimate?.bytesUsingGraphicsLibConfig(
-                                        graphicsLibConfig) !=
-                                    null
-                                ? Text(
-                                    vramEstimate!
-                                        .bytesUsingGraphicsLibConfig(
-                                            graphicsLibConfig)
-                                        .bytesAsReadableMB(),
-                                    style: theme.textTheme.labelLarge
-                                        ?.copyWith(color: lightTextColor))
-                                : Align(
-                                    alignment: Alignment.centerRight,
-                                    child: Opacity(
-                                        opacity: 0.5,
-                                        child: Disable(
-                                          isEnabled:
-                                              !vramEstimatorState.isScanning,
-                                          child: MovingTooltipWidget.text(
-                                            message: "Estimate VRAM usage",
-                                            child: IconButton(
-                                              icon: const Icon(Icons.memory),
-                                              iconSize: 24,
-                                              onPressed: () {
-                                                ref
-                                                    .read(AppState
-                                                        .vramEstimatorProvider
-                                                        .notifier)
-                                                    .startEstimating(
-                                                        variantsToCheck: [
-                                                      mod.findFirstEnabledOrHighestVersion!
-                                                    ]);
-                                              },
-                                            ),
-                                          ),
-                                        )),
-                                  )),
-                      ),
-                      if (vramEstimate != null)
-                        Align(
-                          alignment: Alignment.bottomLeft,
-                          child: Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 8.0),
-                            child: LinearProgressIndicator(
-                              value: ratio,
-                              backgroundColor:
-                                  theme.colorScheme.surfaceContainer,
-                            ),
-                          ),
-                        ),
-                    ],
+            return MovingTooltipWidget.text(
+              message: vramEstimate == null
+                  ? ""
+                  : "Version ${vramEstimate.info.version}"
+                      "\n"
+                      "\n${withoutGraphicsLib?.sum().bytesAsReadableMB()} from mod (${withoutGraphicsLib?.length} images)"
+                      "\n${fromGraphicsLib?.sum().bytesAsReadableMB()} added by your GraphicsLib settings (${fromGraphicsLib?.length} images)"
+                      "\n---"
+                      "\n${vramEstimate.bytesUsingGraphicsLibConfig(graphicsLibConfig).bytesAsReadableMB()} total",
+              child: Stack(
+                children: [
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: vramEstimate?.bytesUsingGraphicsLibConfig(
+                                    graphicsLibConfig) !=
+                                null
+                            ? Text(
+                                vramEstimate!
+                                    .bytesUsingGraphicsLibConfig(
+                                        graphicsLibConfig)
+                                    .bytesAsReadableMB(),
+                                style: theme.textTheme.labelLarge
+                                    ?.copyWith(color: lightTextColor))
+                            : Align(
+                                alignment: Alignment.centerRight,
+                                child: Opacity(
+                                    opacity: 0.5,
+                                    child: Disable(
+                                      isEnabled: !vramEstimatorState.isScanning,
+                                      child: MovingTooltipWidget.text(
+                                        message: "Estimate VRAM usage",
+                                        child: IconButton(
+                                          icon: const Icon(Icons.memory),
+                                          iconSize: 24,
+                                          onPressed: () {
+                                            ref
+                                                .read(AppState
+                                                    .vramEstimatorProvider
+                                                    .notifier)
+                                                .startEstimating(
+                                                    variantsToCheck: [
+                                                  mod.findFirstEnabledOrHighestVersion!
+                                                ]);
+                                          },
+                                        ),
+                                      ),
+                                    )),
+                              )),
                   ),
-                );
-              }),
-            ),
-          ));
+                  if (vramEstimate != null)
+                    Align(
+                      alignment: Alignment.bottomLeft,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: LinearProgressIndicator(
+                          value: ratio,
+                          backgroundColor: theme.colorScheme.surfaceContainer,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            );
+          }),
+        ),
+      );
     });
   }
 
@@ -491,8 +490,8 @@ class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
                       ),
                     ),
                   MovingTooltipWidget(
-                    tooltipWidget:
-                        ModListBasicEntry.buildVersionCheckTextReadoutForTooltip(
+                    tooltipWidget: ModListBasicEntry
+                        .buildVersionCheckTextReadoutForTooltip(
                             null,
                             versionCheckComparison?.comparisonInt,
                             localVersionCheck,
@@ -593,34 +592,26 @@ class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
       ModGridColumnSetting state) {
     return Builder(builder: (context) {
       final theme = Theme.of(context);
-      final enabledVersion = mod.findFirstEnabled;
 
-      return ContextMenuRegion(
-          contextMenu: buildModContextMenu(
-            mod,
-            ref,
-            context,
-            showSwapToVersion: true,
+      return _RowItemContainer(
+        height: _standardRowHeight,
+        width: state.width,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            minWidth: 600,
           ),
-          child: _RowItemContainer(
-            height: _standardRowHeight,
-            width: state.width,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                minWidth: 600,
-              ),
-              child: Text(
-                bestVersion.modInfo.name ?? "(no name)",
-                style: GoogleFonts.roboto(
-                  textStyle: theme.textTheme.labelLarge
-                      ?.copyWith(fontWeight: FontWeight.bold),
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              // )
+          child: Text(
+            bestVersion.modInfo.name ?? "(no name)",
+            style: GoogleFonts.roboto(
+              textStyle: theme.textTheme.labelLarge
+                  ?.copyWith(fontWeight: FontWeight.bold),
             ),
-          ));
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          // )
+        ),
+      );
     });
   }
 
@@ -805,22 +796,20 @@ _buildModGridTooltip(
 
 class FavoriteButton extends ConsumerWidget {
   const FavoriteButton({
-    Key? key,
+    super.key,
     required this.favoritesWidth,
     required this.mod,
     required this.isRowHighlighted,
-  }) : super(key: key);
+    required this.isFavorited,
+  });
 
   final double favoritesWidth;
   final Mod mod;
   final bool isRowHighlighted;
+  final bool isFavorited;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final modMetadata =
-        ref.watch(AppState.modsMetadata).valueOrNull?.userMetadata[mod.id];
-    final isFavorited = modMetadata?.isFavorited ?? false;
-
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [

@@ -118,7 +118,7 @@ class _WispGridModRowState extends ConsumerState<WispGridModGroupRowView> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             // bold
-                            Text("Estimated VRAM use by ${groupName} mods\n",
+                            Text("Estimated VRAM use by $groupName mods\n",
                                 style: Theme.of(context)
                                     .textTheme
                                     .labelLarge

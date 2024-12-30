@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
+import 'package:trios/models/mod_variant.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/download_manager/download_manager.dart';
@@ -29,48 +30,98 @@ ContextMenu buildModContextMenu(Mod mod, WidgetRef ref, BuildContext context,
   return ContextMenu(
     entries: <ContextMenuEntry>[
       if (!isGameRunning && showSwapToVersion)
-        menuItemChangeVersion(mod, ref),
-      menuItemOpenFolder(mod),
-      menuItemOpenModInfoFile(mod),
-      MenuItem(
-        label:
-            'Open Forum Page${modVariant.versionCheckerInfo?.modThreadId == null ? ' (not set)' : ''}',
-        icon: Icons.open_in_browser,
-        onSelected: () {
-          if (modVariant.versionCheckerInfo?.modThreadId == null) {
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-              content: Text(
-                  "Mod has not set up Version Checker, or it does not contain a forum thread id."),
-            ));
-            return;
-          }
-          launchUrl(Uri.parse(
-              "${Constants.forumModPageUrl}${modVariant.versionCheckerInfo?.modThreadId}"));
-        },
-      ),
+        buildMenuItemChangeVersion(mod, ref),
+      buildMenuItemOpenFolder(mod),
+      buildMenuItemOpenModInfoFile(mod),
+      buildMenuItemOpenForumPage(modVariant, context),
       if (!ref.watch(AppState.vramEstimatorProvider).isScanning)
-        menuItemCheckVram(mod, ref),
+        buildMenuItemCheckVram(mod, ref),
       if (!isGameRunning) menuItemDeleteFolder(mod, context, ref),
-      if (currentStarsectorVersion != null &&
-          !isGameRunning &&
-          Version.parse(modVariant.modInfo.gameVersion ?? "0.0.0",
-                  sanitizeInput: true) !=
-              Version.parse(currentStarsectorVersion, sanitizeInput: true))
-        MenuItem(
-            label: 'Force to $currentStarsectorVersion',
-            icon: Icons.electric_bolt,
-            onSelected: () {
-              ref.read(modManager.notifier).forceChangeModGameVersion(
-                  modVariant, currentStarsectorVersion);
-              ref.invalidate(AppState.modVariants);
-            }),
-      menuItemDebugging(context, mod, ref, isGameRunning),
+      if (isModGameVersionIncorrect(
+          currentStarsectorVersion, isGameRunning, modVariant))
+        buildMenuItemForceChangeModGameVesion(
+            currentStarsectorVersion!, ref, modVariant),
+      buildMenuItemDebugging(context, mod, ref, isGameRunning),
     ],
     padding: const EdgeInsets.all(8.0),
   );
 }
 
-MenuItem menuItemOpenFolder(Mod mod) {
+ContextMenu buildModBulkActionContextMenu(
+    List<Mod> mods, WidgetRef ref, BuildContext context) {
+  final currentStarsectorVersion =
+      ref.read(appSettings.select((s) => s.lastStarsectorVersion));
+  final isGameRunning = ref.watch(AppState.isGameRunning).value == true;
+
+  return ContextMenu(
+    entries: <ContextMenuEntry>[
+      if (!isGameRunning)
+        MenuItem(
+          label: 'Disable selected',
+          icon: Icons.toggle_off,
+          onSelected: () async {
+            // Validate dependencies only at the end.
+            for (final mod in mods.sublist(0, mods.length - 1)) {
+              await ref
+                  .read(AppState.modVariants.notifier)
+                  .changeActiveModVariant(mod, null,
+                      validateDependencies: false);
+            }
+            await ref
+                .read(AppState.modVariants.notifier)
+                .changeActiveModVariant(mods.last, null,
+                    validateDependencies: true);
+            ref.invalidate(AppState.modVariants);
+          },
+        ),
+    ],
+    padding: const EdgeInsets.all(8.0),
+  );
+}
+
+bool isModGameVersionIncorrect(String? currentStarsectorVersion,
+    bool isGameRunning, ModVariant modVariant) {
+  return currentStarsectorVersion != null &&
+      !isGameRunning &&
+      Version.parse(modVariant.modInfo.gameVersion ?? "0.0.0",
+              sanitizeInput: true) !=
+          Version.parse(currentStarsectorVersion, sanitizeInput: true);
+}
+
+MenuItem<dynamic> buildMenuItemForceChangeModGameVesion(
+    String currentStarsectorVersion, WidgetRef ref, ModVariant modVariant) {
+  return MenuItem(
+      label: 'Force to $currentStarsectorVersion',
+      icon: Icons.electric_bolt,
+      onSelected: () {
+        ref
+            .read(modManager.notifier)
+            .forceChangeModGameVersion(modVariant, currentStarsectorVersion);
+        ref.invalidate(AppState.modVariants);
+      });
+}
+
+MenuItem<dynamic> buildMenuItemOpenForumPage(
+    ModVariant modVariant, BuildContext context) {
+  return MenuItem(
+    label:
+        'Open Forum Page${modVariant.versionCheckerInfo?.modThreadId == null ? ' (not set)' : ''}',
+    icon: Icons.open_in_browser,
+    onSelected: () {
+      if (modVariant.versionCheckerInfo?.modThreadId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text(
+              "Mod has not set up Version Checker, or it does not contain a forum thread id."),
+        ));
+        return;
+      }
+      launchUrl(Uri.parse(
+          "${Constants.forumModPageUrl}${modVariant.versionCheckerInfo?.modThreadId}"));
+    },
+  );
+}
+
+MenuItem buildMenuItemOpenFolder(Mod mod) {
   if (mod.modVariants.length == 1) {
     return MenuItem(
         label: 'Open Folder',
@@ -99,7 +150,7 @@ MenuItem menuItemOpenFolder(Mod mod) {
   }
 }
 
-MenuItem menuItemChangeVersion(Mod mod, WidgetRef ref) {
+MenuItem buildMenuItemChangeVersion(Mod mod, WidgetRef ref) {
   final enabledSmolId = mod.findFirstEnabled?.smolId;
 
   return MenuItem.submenu(
@@ -137,7 +188,7 @@ MenuItem menuItemChangeVersion(Mod mod, WidgetRef ref) {
       ]);
 }
 
-MenuItem menuItemOpenModInfoFile(Mod mod) {
+MenuItem buildMenuItemOpenModInfoFile(Mod mod) {
   final modVariant = mod.findFirstEnabledOrHighestVersion!;
   return MenuItem(
     label: 'Open mod_info.json',
@@ -240,7 +291,7 @@ MenuItem menuItemDeleteFolder(Mod mod, BuildContext context, WidgetRef ref) {
   }
 }
 
-MenuItem menuItemDebugging(
+MenuItem buildMenuItemDebugging(
     BuildContext context, Mod mod, WidgetRef ref, bool isGameRunning) {
   final latestVersionWithDirectDownload = mod.modVariants
       .sortedDescending()
@@ -281,7 +332,7 @@ MenuItem menuItemDebugging(
       ]);
 }
 
-MenuItem menuItemCheckVram(Mod mod, WidgetRef ref) {
+MenuItem buildMenuItemCheckVram(Mod mod, WidgetRef ref) {
   return MenuItem(
     label: 'Estimate VRAM Usage',
     icon: Icons.memory,

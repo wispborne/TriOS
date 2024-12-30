@@ -1,12 +1,15 @@
 import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ktx/collections.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_group.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_mod_group_row.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_mod_header_row_view.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_mod_row_view.dart';
+import 'package:trios/mod_manager/mod_context_menu.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/settings.dart';
@@ -30,8 +33,13 @@ class WispGrid extends ConsumerStatefulWidget {
 }
 
 class _WispGridState extends ConsumerState<WispGrid> {
-  Map<Object?, bool> collapseStates = {};
   final ScrollController _gridScrollController = ScrollController();
+  final Map<Object?, bool> collapseStates = {};
+  final Set<String> _checkedModIds = {};
+
+  /// Used for shift-clicking to select a range.
+  String? _lastCheckedModId;
+  List<Mod> _lastDisplayedMods = [];
 
   @override
   Widget build(BuildContext context) {
@@ -73,6 +81,7 @@ class _WispGridState extends ConsumerState<WispGrid> {
             ? entries.sortedByDescending((entry) => entry.key)
             : entries.sortedByDescending((entry) => entry.key).reversed)
         .toList();
+    _lastDisplayedMods = mods.flatMap((entry) => entry.value).toList();
 
     bool isFirstGroup = true; // dumb but works
 
@@ -101,10 +110,7 @@ class _WispGridState extends ConsumerState<WispGrid> {
                   final items = isCollapsed
                       ? []
                       : modsInGroup
-                          .map((mod) => WispGridModRowView(
-                                mod: mod,
-                                onModRowSelected: widget.onModRowSelected,
-                              ))
+                          .map((mod) => buildWrappedModRow(mod, context))
                           .toList();
 
                   return <Widget>[header, ...items];
@@ -116,24 +122,104 @@ class _WispGridState extends ConsumerState<WispGrid> {
     return Scrollbar(
       controller: _gridScrollController,
       thumbVisibility: true,
-      child: ListView.builder(
-          itemCount: displayedMods.length,
-          controller: _gridScrollController,
-          itemBuilder: (context, index) {
-            final item = displayedMods[index];
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: SizedBox(
+          width: gridState.sortedVisibleColumns
+              .map((e) => e.value.width + WispGrid.gridRowSpacing + 10)
+              .sum
+              .coerceAtMost(MediaQuery.of(context).size.width * 1.3),
+          child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: displayedMods.length,
+              controller: _gridScrollController,
+              itemBuilder: (context, index) {
+                final item = displayedMods[index];
 
-            if (item is WispGridModGroupRowView) {
-              return item;
-            }
+                if (item is WispGridModGroupRowView) {
+                  return item;
+                }
 
-            try {
-              return item;
-            } catch (e) {
-              Fimber.v(() => 'Error in WispGrid: $e');
-              return Text("Incoherent screaming");
-            }
-          }),
+                try {
+                  return item;
+                } catch (e) {
+                  Fimber.v(() => 'Error in WispGrid: $e');
+                  return Text("Incoherent screaming");
+                }
+              }),
+        ),
+      ),
     );
+  }
+
+  ContextMenuRegion buildWrappedModRow(Mod mod, BuildContext context) {
+    return ContextMenuRegion(
+      contextMenu: _checkedModIds.length > 1
+          ? buildModBulkActionContextMenu(
+              _lastDisplayedMods
+                  .where((mod) => _checkedModIds.contains(mod.id))
+                  .toList(),
+              ref,
+              context)
+          : buildModContextMenu(mod, ref, context, showSwapToVersion: true),
+      child: WispGridModRowView(
+        mod: mod,
+        onModRowSelected: widget.onModRowSelected,
+        isChecked: _checkedModIds.contains(mod.id),
+        onRowCheck: _onRowCheck,
+      ),
+    );
+  }
+
+  /// Handles multi-check logic for shift/control-clicking a row.
+  /// Updates the set of checked mod IDs and the last checked mod ID.
+  /// - `modId` The unique identifier of the row that was clicked.
+  /// - `shiftPressed` True if the Shift key was held during the click.
+  /// - `ctrlPressed` True if the Control (or Command on macOS) key was held during the click.
+  void _onRowCheck({
+    required String modId,
+    required bool shiftPressed,
+    required bool ctrlPressed,
+  }) {
+    final orderedModIds = _lastDisplayedMods.map((mod) => mod.id).toList();
+
+    setState(() {
+      if (!shiftPressed && !ctrlPressed) {
+        _checkedModIds.clear();
+        _lastCheckedModId = modId;
+        return;
+      }
+
+      if (shiftPressed && _lastCheckedModId != null) {
+        final lastIndex = orderedModIds.indexOf(_lastCheckedModId!);
+        final currentIndex = orderedModIds.indexOf(modId);
+
+        if (lastIndex == -1 || currentIndex == -1) {
+          _checkedModIds
+            ..clear()
+            ..add(modId);
+          _lastCheckedModId = modId;
+          return;
+        }
+
+        final start = lastIndex < currentIndex ? lastIndex : currentIndex;
+        final end = lastIndex < currentIndex ? currentIndex : lastIndex;
+        final selectedRange = orderedModIds.sublist(start, end + 1);
+        final allSelected = selectedRange.every(_checkedModIds.contains);
+
+        allSelected
+            ? _checkedModIds.removeAll(selectedRange)
+            : _checkedModIds.addAll(selectedRange);
+
+        _lastCheckedModId = modId;
+      } else if (ctrlPressed) {
+        _checkedModIds.contains(modId)
+            ? _checkedModIds.remove(modId)
+            : _checkedModIds.add(modId);
+
+        _lastCheckedModId = modId;
+      }
+    });
   }
 }
 

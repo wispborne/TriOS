@@ -37,7 +37,6 @@ import 'about/about_page.dart';
 import 'jre_manager/jre_manager_logic.dart';
 import 'launcher/launcher.dart';
 import 'main.dart';
-import 'mod_manager/smol3.dart';
 import 'mod_profiles/mod_profiles_page.dart';
 import 'trios/app_state.dart';
 import 'trios/drag_drop_handler.dart';
@@ -168,29 +167,7 @@ class _AppShellState extends ConsumerState<AppShell>
         padding: EdgeInsets.all(4),
         child: Dashboard(),
       ),
-      Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          // Padding(
-          //   padding: const EdgeInsets.only(top: 8, right: 8),
-          //   child: OutlinedButton.icon(
-          //     iconAlignment: IconAlignment.end,
-          //     onPressed: () {
-          //       setState(() {
-          //         isNewGrid = !isNewGrid;
-          //       });
-          //     },
-          //     icon: SvgImageIcon(
-          //       "assets/images/icon-traffic-cone.svg",
-          //       height: 20,
-          //     ),
-          //     label: Text(isNewGrid ? 'Back to old grid' : 'Go to new grid'),
-          //   ),
-          // ),
-          Expanded(child: isNewGrid ? Smol4() : Smol3()),
-        ],
-      ),
-      // const Smol3(),
+      const Smol4(),
       const Padding(padding: EdgeInsets.all(8), child: ModProfilePage()),
       const Padding(padding: EdgeInsets.all(8), child: VramEstimatorPage()),
       const Padding(padding: EdgeInsets.all(8), child: ChipperApp()),

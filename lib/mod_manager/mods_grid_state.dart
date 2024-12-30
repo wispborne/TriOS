@@ -1,5 +1,4 @@
 import 'package:dart_mappable/dart_mappable.dart';
-import 'package:trios/mod_manager/smol3.dart';
 import 'package:trios/utils/dart_mappable_utils.dart';
 
 part 'mods_grid_state.mapper.dart';
@@ -24,6 +23,19 @@ class ModsGridState with ModsGridStateMappable {
     this.sortAscending,
     this.columns,
   });
+}
+
+@MappableEnum()
+enum SmolColumn {
+  enableDisable,
+  versionSelector,
+  utilityIcon,
+  modIcon,
+  name,
+  author,
+  versions,
+  vramEstimate,
+  gameVersion,
 }
 
 @MappableClass()

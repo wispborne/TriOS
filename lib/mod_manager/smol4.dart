@@ -4,7 +4,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/mod_manager/mod_summary_panel.dart';
-import 'package:trios/mod_manager/smol3.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/widgets/add_new_mods_button.dart';
 import 'package:trios/widgets/refresh_mods_button.dart';
@@ -16,6 +15,10 @@ import '../trios/settings/settings.dart';
 import '../utils/search.dart';
 import '../widgets/disable.dart';
 import '../widgets/moving_tooltip.dart';
+import 'homebrew_grid/copy_mod_list_button.dart';
+import 'homebrew_grid/filter_mods_search_view.dart';
+
+final searchQuery = StateProvider.autoDispose<String>((ref) => "");
 
 class Smol4 extends ConsumerStatefulWidget {
   const Smol4({super.key});

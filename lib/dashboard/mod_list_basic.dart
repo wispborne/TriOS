@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 // import 'package:pasteboard/pasteboard.dart';
 // import 'package:screenshot/screenshot.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
+import 'package:trios/mod_manager/smol4.dart';
 import 'package:trios/models/enabled_mods.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
@@ -13,11 +15,9 @@ import 'package:trios/widgets/checkbox_with_label.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/disable_if_cannot_write_mods.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
-// import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:vs_scrollbar/vs_scrollbar.dart';
 
 import '../mod_manager/mod_context_menu.dart';
-import '../mod_manager/smol3.dart';
 import '../mod_manager/version_checker.dart';
 import '../models/mod.dart';
 import '../trios/app_state.dart';
@@ -38,6 +38,7 @@ class _ModListMiniState extends ConsumerState<ModListMini>
     with SingleTickerProviderStateMixin {
   final ScrollController _scrollController = ScrollController();
   final searchController = SearchController();
+
   // final screenshotController = ScreenshotController();
   bool hideDisabled = false;
 

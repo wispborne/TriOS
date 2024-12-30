@@ -13,6 +13,7 @@ import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/disable.dart';
+import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 
 import '../models/mod_variant.dart';
@@ -58,12 +59,36 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                   child: Row(
                     children: [
                       Text(
-                        'Profiles',
+                        'Mod Profiles',
                         style: Theme.of(context)
                             .textTheme
                             .headlineSmall
                             ?.copyWith(fontSize: 20),
                       ),
+                      IconButton(
+                          icon: const Icon(Icons.info),
+                          onPressed: () {
+                            showDialog(
+                                context: context,
+                                builder: (context) {
+                                  return AlertDialog(
+                                    title: const Text("Mod Profiles"),
+                                    content: const Text(
+                                        "Mod profiles are a way to quickly switch between different mods, including specific versions."
+                                        "\nWhen one is enabled, any mods you change will update the profile as well."
+                                        "\n"
+                                        "\n\nYou can also generate profiles from your saves."),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.of(context).pop();
+                                        },
+                                        child: const Text("OK"),
+                                      ),
+                                    ],
+                                  );
+                                });
+                          }),
                     ],
                   ),
                 ),
@@ -142,11 +167,14 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                               ?.copyWith(fontSize: 20),
                         ),
                         const Spacer(),
-                        IconButton(
-                            onPressed: () {
-                              ref.invalidate(saveFileProvider);
-                            },
-                            icon: const Icon(Icons.refresh)),
+                        MovingTooltipWidget.text(
+                          message: 'Reread from Saves folder',
+                          child: IconButton(
+                              onPressed: () {
+                                ref.invalidate(saveFileProvider);
+                              },
+                              icon: const Icon(Icons.refresh)),
+                        ),
                       ],
                     ),
                   ),
@@ -416,7 +444,7 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                                       decoration: const InputDecoration(
                                           labelText: 'Name'),
                                     )
-                                  : Tooltip(
+                                  : MovingTooltipWidget.text(
                                       message:
                                           profile?.name ?? save?.characterName,
                                       child: Text(
@@ -463,7 +491,7 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                               ),
                               // bullet
                               Text("  •  ", style: theme.textTheme.labelSmall),
-                              Tooltip(
+                              MovingTooltipWidget.text(
                                 message:
                                     'Created: ${Constants.dateTimeFormat.format(dateCreated?.toLocal() ?? DateTime.now())}'
                                     '\nLast modified: ${Constants.dateTimeFormat.format(profile?.dateModified?.toLocal() ?? DateTime.now())}',
@@ -486,57 +514,64 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                       children: [
                         const Spacer(),
                         if (!isSaveGame)
-                          IconButton(
-                              icon: const SvgImageIcon(
-                                  "assets/images/icon-clone.svg"),
-                              tooltip: 'Duplicate profile',
-                              onPressed: () {
-                                ref
-                                    .read(modProfilesProvider.notifier)
-                                    .cloneModProfile(profile!);
-                              }),
-                        IconButton(
-                          icon: const Icon(Icons.content_copy),
-                          tooltip: 'Copy mod list to clipboard',
-                          onPressed: () {
-                            _copyModListToClipboard(enabledModVariants);
-                          },
+                          MovingTooltipWidget.text(
+                            message: 'Duplicate profile',
+                            child: IconButton(
+                                icon: const SvgImageIcon(
+                                    "assets/images/icon-clone.svg"),
+                                onPressed: () {
+                                  ref
+                                      .read(modProfilesProvider.notifier)
+                                      .cloneModProfile(profile!);
+                                }),
+                          ),
+                        MovingTooltipWidget.text(
+                          message: 'Copy mod list to clipboard',
+                          child: IconButton(
+                            icon: const Icon(Icons.content_copy),
+                            onPressed: () {
+                              _copyModListToClipboard(enabledModVariants);
+                            },
+                          ),
                         ),
                         if (!isSaveGame)
                           Disable(
                             isEnabled: widget.modProfiles!.length > 1 &&
                                 activeProfileId != profile?.id,
-                            child: IconButton(
-                              icon: const Icon(Icons.delete),
-                              tooltip: 'Delete profile',
-                              onPressed: () {
-                                showDialog(
-                                    context: context,
-                                    builder: (context) => AlertDialog(
-                                          title: const Text('Delete profile?'),
-                                          content: Text(
-                                              "Are you sure you want to delete profile '${profile?.name}'?"),
-                                          actions: [
-                                            TextButton(
-                                              onPressed: () {
-                                                Navigator.of(context).pop();
-                                              },
-                                              child: const Text('Cancel'),
-                                            ),
-                                            TextButton(
-                                              onPressed: () {
-                                                Navigator.of(context).pop();
-                                                ref
-                                                    .read(modProfilesProvider
-                                                        .notifier)
-                                                    .removeModProfile(
-                                                        profile!.id);
-                                              },
-                                              child: const Text('Delete'),
-                                            ),
-                                          ],
-                                        ));
-                              },
+                            child: MovingTooltipWidget.text(
+                              message: 'Delete profile',
+                              child: IconButton(
+                                icon: const Icon(Icons.delete),
+                                onPressed: () {
+                                  showDialog(
+                                      context: context,
+                                      builder: (context) => AlertDialog(
+                                            title:
+                                                const Text('Delete profile?'),
+                                            content: Text(
+                                                "Are you sure you want to delete profile '${profile?.name}'?"),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () {
+                                                  Navigator.of(context).pop();
+                                                },
+                                                child: const Text('Cancel'),
+                                              ),
+                                              TextButton(
+                                                onPressed: () {
+                                                  Navigator.of(context).pop();
+                                                  ref
+                                                      .read(modProfilesProvider
+                                                          .notifier)
+                                                      .removeModProfile(
+                                                          profile!.id);
+                                                },
+                                                child: const Text('Delete'),
+                                              ),
+                                            ],
+                                          ));
+                                },
+                              ),
                             ),
                           ),
                         // if (kDebugMode)
@@ -546,19 +581,21 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                         //           Icons.bug_report)),
                         if (isSaveGame)
                           // Open save folder
-                          IconButton(
-                            icon: const SvgImageIcon(
-                                "assets/images/icon-folder-open.svg"),
-                            tooltip: 'Open save folder',
-                            onPressed: () {
-                              save!.folder.openInExplorer();
-                            },
+                          MovingTooltipWidget.text(
+                            message: 'Open save folder',
+                            child: IconButton(
+                              icon: const SvgImageIcon(
+                                  "assets/images/icon-folder-open.svg"),
+                              onPressed: () {
+                                save!.folder.openInExplorer();
+                              },
+                            ),
                           ),
                         const SizedBox(width: 8),
                         if (!isSaveGame)
                           Disable(
                             isEnabled: !isGameRunning,
-                            child: Tooltip(
+                            child: MovingTooltipWidget.text(
                               message: isGameRunning ? "Game is running" : "",
                               child: OutlinedButton(
                                   onPressed: isActiveProfile

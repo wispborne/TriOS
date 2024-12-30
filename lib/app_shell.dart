@@ -552,17 +552,23 @@ class MenuOption {
   MenuOption({required this.text, required this.icon, required this.page});
 }
 
-class FilePermissionShield extends ConsumerWidget {
-  bool isStandardVmparamsWritable = false;
-  bool areAllCustomJresWritable = false;
-  List<String> customVmParamsFilesThatCannotBeWritten = [];
-
-  FilePermissionShield({
+class FilePermissionShield extends ConsumerStatefulWidget {
+  const FilePermissionShield({
     super.key,
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<FilePermissionShield> createState() =>
+      _FilePermissionShieldState();
+}
+
+class _FilePermissionShieldState extends ConsumerState<FilePermissionShield> {
+  bool isStandardVmparamsWritable = false;
+  bool areAllCustomJresWritable = false;
+  List<String> customVmParamsFilesThatCannotBeWritten = [];
+
+  @override
+  Widget build(BuildContext context) {
     // copied from RamChanger
     ref.listen(jreManagerProvider, (prev, next) async {
       final newState = next.valueOrNull;

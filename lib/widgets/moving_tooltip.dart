@@ -203,7 +203,7 @@ class MovingTooltipWidget extends StatefulWidget {
 
   static Widget text({
     Key? key,
-    required String message,
+    required String? message,
     required Widget child,
     TextStyle? textStyle,
     double windowEdgePadding = 10.0,
@@ -217,7 +217,7 @@ class MovingTooltipWidget extends StatefulWidget {
                 key: key,
                 tooltipWidget: TooltipFrame(
                   child: Text(
-                    message,
+                    message!,
                     style: textStyle ?? Theme.of(context).textTheme.bodySmall,
                   ),
                 ),

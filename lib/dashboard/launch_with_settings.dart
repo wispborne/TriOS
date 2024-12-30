@@ -68,6 +68,8 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
         ref.watch(appSettings.select((s) => s.enableDirectLaunch));
     final isRunning = widget.isGameRunning || _onClickedTimer?.isActive == true;
 
+    final showLauncherControls =
+        isUsingCustomJre != true && enableDirectLaunch == true;
     return Disable(
       isEnabled: !isRunning,
       child: Stack(
@@ -215,7 +217,7 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                         },
                       ),
                     ),
-                  if (isUsingCustomJre != true && enableDirectLaunch == true)
+                  if (showLauncherControls)
                     Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Column(
@@ -330,7 +332,7 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                               ]),
                       ),
                     ),
-                  if (isUsingCustomJre != true)
+                  if (showLauncherControls)
                     Opacity(
                         opacity: 0.8,
                         child: Padding(

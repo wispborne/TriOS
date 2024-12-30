@@ -90,6 +90,7 @@ class _DashboardState extends ConsumerState<Dashboard>
                       child: Builder(builder: (context) {
                         final errors =
                             ref.watch(ChipperState.logRawContents).valueOrNull;
+                        final theme = Theme.of(context);
 
                         return Column(
                           children: [
@@ -114,7 +115,8 @@ class _DashboardState extends ConsumerState<Dashboard>
                                                   .logRawContents.notifier)
                                               .loadDefaultLog();
                                         },
-                                        icon: const Icon(Icons.refresh),
+                                        icon: Icon(Icons.refresh,
+                                            color: theme.colorScheme.onSurface),
                                         style: ButtonStyle(
                                             foregroundColor:
                                                 WidgetStateProperty.all(

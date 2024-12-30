@@ -35,23 +35,20 @@ class _GamePerformanceWidgetState extends ConsumerState<GamePerformanceWidget>
 
     final jreManager = ref.watch(jreManagerProvider).value;
 
-    return Stack(
-      children: [
-        GridView(
-          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-              maxCrossAxisExtent: 380, crossAxisSpacing: 8, mainAxisSpacing: 8),
-          shrinkWrap: true,
-          children: [
-            SizedBox(width: 350, child: ChangeJreWidget()),
-            SizedBox(
-              width: 350,
-              child: ChangeRamWidget(
-                currentRamAmountInMb: jreManager?.activeJre?.ramAmountInMb,
-              ),
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxHeight: 380),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(width: 350, child: ChangeJreWidget()),
+          SizedBox(
+            width: 350,
+            child: ChangeRamWidget(
+              currentRamAmountInMb: jreManager?.activeJre?.ramAmountInMb,
             ),
-          ],
-        ),
-      ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -74,9 +71,9 @@ class _ChangeJreWidgetState extends ConsumerState<ChangeJreWidget> {
   @override
   Widget build(BuildContext context) {
     final jreManager = ref.watch(jreManagerProvider).valueOrNull;
-    final isUsingCustomJre = jreManager?.activeJre is CustomJreToDownload;
+    // final isUsingCustomJre = jreManager?.activeJre is CustomJreToDownload;
     final jres = jreManager?.installedJres.orEmpty().toList() ?? [];
-    final activeJres = jreManager?.activeJres.orEmpty().toList() ?? [];
+    // final activeJres = jreManager?.activeJres.orEmpty().toList() ?? [];
     final activeJre = jreManager?.activeJre;
 
     var iconSize = 40.0;

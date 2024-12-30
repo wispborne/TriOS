@@ -41,9 +41,6 @@ class _RamChangerState extends ConsumerState<RamChanger> {
       }
     });
 
-    final standardJre = jreManager?.standardInstalledJres.firstOrNull;
-    final vmParamsWritable = standardJre?.canWriteToVmParamsFile() ?? false;
-
     final ramChoices = [1.5, 2, 3, 4, 6, 8, 10, 11, 16];
     return (isStandardVmparamsWritable == false ||
             areAllCustomJresWritable == false)

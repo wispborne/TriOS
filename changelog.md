@@ -48,7 +48,8 @@
   - TriOS log button now opens folder instead of file.
   - Tooltip border uses a theme color.
   - Removed sticky headers, as they had some bugs I couldn't fix.
-  - Moved "Disable" button to the top of the dropdown
+  - Moved "Disable" button to the top of the dropdown.
+  - Tons of other small UI fixes and tweaks.
 
 # 0.3.4
 - Added

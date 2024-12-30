@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:collection/collection.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:trios/models/version.dart';
@@ -15,11 +14,7 @@ final saveFileProvider =
 );
 
 class SaveFileNotifier extends AsyncNotifier<List<SaveFile>> {
-  final String descriptorFileName = "descriptor.xml";
-  final List<String> datePatterns = [
-    "yyyy-MM-dd HH:mm:ss.SSS zzz",
-    "yyyy-MM-dd HH:mm:ss.S zzz",
-  ];
+  final String _descriptorFileName = "descriptor.xml";
 
   @override
   Future<List<SaveFile>> build() async {
@@ -65,7 +60,7 @@ class SaveFileNotifier extends AsyncNotifier<List<SaveFile>> {
   }
 
   Future<SaveFile> readSave(Directory folderOfSave) async {
-    final file = folderOfSave.resolve(descriptorFileName).toFile();
+    final file = folderOfSave.resolve(_descriptorFileName).toFile();
     final contents = await file.readAsString();
     final document = XmlDocument.parse(contents);
     var rootElement = document.getElement('SaveGameData');

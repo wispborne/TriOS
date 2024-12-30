@@ -182,16 +182,33 @@ MenuItem buildMenuItemOpenFolder(Mod mod) {
 
 MenuItem buildMenuItemChangeVersion(Mod mod, WidgetRef ref) {
   final enabledSmolId = mod.findFirstEnabled?.smolId;
+  final isEnabled = enabledSmolId != null;
 
   return MenuItem.submenu(
       label: "Change to...",
       icon: Icons.toggle_on,
       onSelected: () {
-        ref
-            .watch(AppState.modVariants.notifier)
-            .changeActiveModVariant(mod, mod.findHighestVersion);
+        if (isEnabled) {
+          ref
+              .watch(AppState.modVariants.notifier)
+              .changeActiveModVariant(mod, null);
+        } else {
+          ref
+              .watch(AppState.modVariants.notifier)
+              .changeActiveModVariant(mod, mod.findHighestVersion);
+        }
       },
       items: [
+        if (isEnabled)
+          MenuItem(
+            label: "Disable",
+            icon: Icons.close,
+            onSelected: () {
+              ref
+                  .watch(AppState.modVariants.notifier)
+                  .changeActiveModVariant(mod, null);
+            },
+          ),
         for (var variant in mod.modVariants.sortedDescending())
           MenuItem(
             icon: variant.smolId == enabledSmolId
@@ -203,16 +220,6 @@ MenuItem buildMenuItemChangeVersion(Mod mod, WidgetRef ref) {
               ref
                   .watch(AppState.modVariants.notifier)
                   .changeActiveModVariant(mod, variant);
-            },
-          ),
-        if (enabledSmolId != null)
-          MenuItem(
-            label: "Disable",
-            icon: Icons.close,
-            onSelected: () {
-              ref
-                  .watch(AppState.modVariants.notifier)
-                  .changeActiveModVariant(mod, null);
             },
           ),
       ]);

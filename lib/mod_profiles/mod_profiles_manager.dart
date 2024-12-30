@@ -14,6 +14,7 @@ import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/generic_settings_manager.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/text_with_icon.dart';
 
 import '../models/mod_variant.dart';
@@ -446,36 +447,44 @@ class ModProfileManagerNotifier
         final iconColor = theme.iconTheme.color?.withOpacity(0.8);
         return AlertDialog(
           title: Text("Activate '${profile.name}'?"),
-          content: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text("Mods Being Enabled, Disabled, or Changing Version",
-                    style: theme.textTheme.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                // if (modsToEnable.isNotEmpty)
-                _buildChangeSection(null, "Enabling mod", modsToEnable,
-                    Icons.check, iconColor, modIconsById, context),
-                // if (modsToDisable.isNotEmpty)
-                const SizedBox(height: 8),
-                _buildChangeSection(null, "Disabling mod", modsToDisable,
-                    Icons.close, iconColor, modIconsById, context),
-                // if (modsToSwap.isNotEmpty)
-                const SizedBox(height: 8),
-                _buildChangeSection(null, "Swapping version", modsToSwap,
-                    Icons.swap_horiz, iconColor, modIconsById, context),
-                if (hasMissingModsOrVariants)
-                  Column(
+          content: changes.isEmpty
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text("This will not change which mods are enabled."),
+                  ],
+                )
+              : SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Text("Mods Being Enabled, Disabled, or Changing Version",
+                          style: theme.textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold)),
                       const SizedBox(height: 8),
-                      _buildMissingModsSection(
-                          missingMods, missingVariants, iconColor, context),
+                      // if (modsToEnable.isNotEmpty)
+                      _buildChangeSection(null, "Enabling mod", modsToEnable,
+                          Icons.check, iconColor, modIconsById, context),
+                      // if (modsToDisable.isNotEmpty)
+                      const SizedBox(height: 8),
+                      _buildChangeSection(null, "Disabling mod", modsToDisable,
+                          Icons.close, iconColor, modIconsById, context),
+                      // if (modsToSwap.isNotEmpty)
+                      const SizedBox(height: 8),
+                      _buildChangeSection(null, "Swapping version", modsToSwap,
+                          Icons.swap_horiz, iconColor, modIconsById, context),
+                      if (hasMissingModsOrVariants)
+                        Column(
+                          children: [
+                            const SizedBox(height: 8),
+                            _buildMissingModsSection(missingMods,
+                                missingVariants, iconColor, context),
+                          ],
+                        ),
                     ],
                   ),
-              ],
-            ),
-          ),
+                ),
           actions: [
             TextButton(
               onPressed: () {
@@ -562,7 +571,7 @@ class ModProfileManagerNotifier
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 2),
             child: TextWithIcon(
-              leading: Tooltip(
+              leading: MovingTooltipWidget.text(
                   message: tooltip,
                   child: Icon(icon, color: iconColor, size: 20)),
               widget: TextWithIcon(

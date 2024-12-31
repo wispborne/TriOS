@@ -20,12 +20,14 @@ import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/vram_estimator/vram_estimator.dart';
+import 'package:trios/widgets/post_update_toast.dart';
 import 'package:trios/widgets/restartable_app.dart';
 import 'package:uuid/uuid.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:window_size/window_size.dart';
 
 import 'app_shell.dart';
+import 'models/version.dart';
 import 'trios/app_state.dart';
 
 Object? loggingError;
@@ -78,6 +80,7 @@ void main() async {
     });
   }
 
+  // Show onboarding if crash reporting is not set.
   if (settings?.allowCrashReporting == null) {
     onAppLoadedActions.add((context) async {
       showDialog(
@@ -88,12 +91,29 @@ void main() async {
     });
   }
 
+  // Show changelog notification if post-update or 1.0.x.
+  try {
+    final version = Version.parse(Constants.version, sanitizeInput: false);
+    if (settings?.showChangelogNextLaunch == true ||
+        (settings?.showChangelogNextLaunch == null &&
+            version.major.toInt() == 1 &&
+            version.minor.toInt() == 0)) {
+      onAppLoadedActions.add((context) async {
+        toastification.showCustom(
+            context: context,
+            autoCloseDuration: Duration(milliseconds: 8000),
+            builder: (context, item) => PostUpdateToast(item: item));
+      });
+    }
+  } catch (e) {
+    Fimber.w("Error checking for changelog notification.", ex: e);
+  }
+
   // Set up Sentry
   try {
     if (settings != null && settings.userId.isNullOrEmpty()) {
       final userId = const Uuid().v8();
-      settingsManager
-          .writeSettingsToDisk(settings.copyWith(userId: userId));
+      settingsManager.writeSettingsToDisk(settings.copyWith(userId: userId));
     }
     allowCrashReporting = settings?.allowCrashReporting ?? false;
     configureLogging(allowSentryReporting: allowCrashReporting);

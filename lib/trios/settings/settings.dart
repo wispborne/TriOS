@@ -62,6 +62,7 @@ class Settings with SettingsMappable {
   final String? lastActiveJreVersion;
   final bool showCustomJreConsoleWindow;
   final String? themeKey;
+  final bool? showChangelogNextLaunch;
 
   /// If true, TriOS acts as the launcher. If false, basically just clicks game exe.
   final bool enableDirectLaunch;
@@ -109,6 +110,7 @@ class Settings with SettingsMappable {
     this.lastActiveJreVersion,
     this.showCustomJreConsoleWindow = true,
     this.themeKey,
+    this.showChangelogNextLaunch,
     this.enableDirectLaunch = false,
     this.launchSettings = const LaunchSettings(),
     this.lastStarsectorVersion,

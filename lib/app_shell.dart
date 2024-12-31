@@ -90,16 +90,18 @@ class _AppShellState extends ConsumerState<AppShell>
     } catch (e) {
       Fimber.i("No default tool found in settings: $e");
     }
-// Set the current tab to the index of the previously selected tool.
+
+    // Set the current tab to the index of the previously selected tool.
     try {
       _changeTab(defaultTool);
     } catch (e) {
       Fimber.e("Error setting default tool: $e");
     }
 
+
+    // Check for updates on launch and show toast if available.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       try {
-        // Check for updates on launch and show toast if available.
         ref
             .watch(AppState.selfUpdate.notifier)
             .getLatestRelease()

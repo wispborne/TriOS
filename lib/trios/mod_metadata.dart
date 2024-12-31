@@ -1,5 +1,7 @@
 import 'package:dart_mappable/dart_mappable.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/models/mod.dart';
 import 'package:trios/thirdparty/dartx/map.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
@@ -26,9 +28,24 @@ class ModMetadataStore extends GenericSettingsAsyncNotifier<ModsMetadata> {
     timestamp = DateTime.now().millisecondsSinceEpoch;
     bool isDirty = false;
 
-    // Create metadata for all mods and variants if they don't exist.
-    // This sets the firstSeen timestamp to now.
-    final allMods = ref.watch(AppState.mods);
+    // Can't call ref.watch here because it can cause build to get called multiple times
+    // on startup, resulting in the metadata never loading properly.
+    final allMods = ref.read(AppState.mods);
+    _initializeMissingMetadata(allMods, settings, isDirty, timestamp);
+
+    ref.listen(AppState.mods, (prev, newMods) {
+      if (!listEquals(prev, newMods)) {
+        _initializeMissingMetadata(newMods, settings, isDirty, timestamp);
+      }
+    });
+
+    return settings;
+  }
+
+  // Create metadata for all mods and variants if they don't exist.
+  // This sets the firstSeen timestamp to now.
+  void _initializeMissingMetadata(
+      List<Mod> allMods, ModsMetadata settings, bool isDirty, int timestamp) {
     for (final mod in allMods) {
       final baseMetadata = settings.baseMetadata[mod.id] ?? ModMetadata.empty();
       final baseVariantMetadata = mod.modVariants
@@ -52,8 +69,6 @@ class ModMetadataStore extends GenericSettingsAsyncNotifier<ModsMetadata> {
     if (isDirty) {
       settingsManager.writeSettingsToDisk(settings);
     }
-
-    return settings;
   }
 
   /// Returns a mod metadata object containing user metadata first and, if not found, base metadata.

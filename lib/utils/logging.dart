@@ -147,11 +147,37 @@ configureLogging({
   }
 
   if (printPlatformInfo) {
-    Fimber.i("Logging started.");
-    Fimber.i("Platform: ${Platform.operatingSystemVersion}");
+    printLoggingStartedInfo();
   }
 
   didLoggingInitializeSuccessfully = true;
+}
+
+void printLoggingStartedInfo() {
+  final b = StringBuffer("Logging started.\n");
+
+  for (var info in [
+    () =>
+        "Platform: ${Platform.operatingSystem} - ${Platform.operatingSystemVersion}",
+    () => "Dart version: ${Platform.version}",
+    () => "Processors: ${Platform.numberOfProcessors}",
+    () => "Executable: ${Platform.executable}",
+    () => "Release mode: $kReleaseMode",
+    // () {
+    //   final env = Platform.environment;
+    //   return "Env vars:\n${env.entries.map((e) => "${e.key}: ${e.value}").join('\n')}";
+    // },
+    () => "Startup timestamp: ${DateTime.now().millisecondsSinceEpoch}",
+    () => "Memory (RSS): ${ProcessInfo.currentRss.bytesAsReadableMB()}"
+  ]) {
+    try {
+      b.writeln(info());
+    } catch (e) {
+      stdout.writeln("Error: $e");
+    }
+  }
+
+  Fimber.i(b.toString());
 }
 
 class Fimber {

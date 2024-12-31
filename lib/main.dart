@@ -41,7 +41,7 @@ void main() async {
   Constants.configDataFolderPath = await getApplicationSupportDirectory();
   try {
     print("Initializing TriOS logging framework...");
-    configureLogging();
+    configureLogging(printPlatformInfo: true);
     Fimber.i("${Constants.appTitle} logging started.");
     Fimber.i(
         "Platform: ${Platform.operatingSystem} ${Platform.operatingSystemVersion}.");

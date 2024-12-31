@@ -467,13 +467,30 @@ class _AppShellState extends ConsumerState<AppShell>
                           ),
                         ),
                         MovingTooltipWidget.text(
-                          message: "Patreon",
+                          message: "Show donation popup",
                           child: IconButton(
                             icon: const SvgImageIcon(
                                 "assets/images/icon-donate.svg"),
                             color: Theme.of(context).iconTheme.color,
                             onPressed: () {
-                              Constants.patreonUrl.openAsUriInBrowser();
+                              // donate options
+                              // Constants.patreonUrl.openAsUriInBrowser();
+                              // Constants.kofiUrl.openAsUriInBrowser();
+                              showDialog(
+                                  context: context,
+                                  builder: (context) {
+                                    return AlertDialog(
+                                      title: const Text("Donations"),
+                                      content: DonateView(),
+                                      actions: [
+                                        TextButton(
+                                            onPressed: () {
+                                              Navigator.of(context).pop();
+                                            },
+                                            child: const Text("Close")),
+                                      ],
+                                    );
+                                  });
                             },
                           ),
                         ),
@@ -541,6 +558,67 @@ class _AppShellState extends ConsumerState<AppShell>
           ),
           onDroppedLog: (_) => _changeTab(TriOSTools.chipper),
         ));
+  }
+}
+
+class DonateView extends StatelessWidget {
+  const DonateView({
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 650),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SelectableText(
+              "TriOS, like SMOL before it, is a hobby that I do because I enjoy it, and because I enjoy giving to Starsector."
+              "\nThey're the result of many hundreds of hours of coding, and I hope they have been useful (and even enjoyable) for you."
+              "\n"
+              "\nIf you feel like donating, thank you. If you can't donate but wish you were rich enough to just give money away, thank you anyway :)"
+              "\nTake care of yourself,"
+              "\n- Wisp",
+              style: Theme.of(context)
+                  .textTheme
+                  .labelLarge
+                  ?.copyWith(fontSize: 16)),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: 300,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: 4,
+              children: [
+                ListTile(
+                  title: const Text("Patreon"),
+                  leading: SvgImageIcon(
+                    "assets/images/icon-patreon.svg",
+                    height: 20,
+                  ),
+                  tileColor: Theme.of(context).colorScheme.surfaceContainer,
+                  onTap: () {
+                    Constants.patreonUrl.openAsUriInBrowser();
+                    Navigator.of(context).pop();
+                  },
+                ),
+                ListTile(
+                  title: const Text("Ko-Fi"),
+                  leading: Icon(Icons.coffee, size: 20),
+                  tileColor: Theme.of(context).colorScheme.surfaceContainer,
+                  onTap: () {
+                    Constants.kofiUrl.openAsUriInBrowser();
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

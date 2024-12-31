@@ -1,32 +1,33 @@
 # 1.0.0
 - Added
+  - **Onboarding** popup on first launch.
+    - Prompts for game location and how many versions of each mod to keep.
   - **Mod Catalog**
     - Browse & download mods from the Official Forum and the Unofficial Discord.
     - Same mods as here: https://starmodder2.pages.dev
-  - **VRAM Estimator** polish
-    - Now displayed on the Mods tab.
-    - Now remembered across restarts.
-    - You may now estimate one mod at a time.
-    - Shows VRAM taken by your GraphicsLib settings for mods. 
-  - **Onboarding** popup on first launch.
-    - Prompts for game location and how many versions of each mod to keep.
   - **JRE 24** (by Himemi) download support.
   - **Mod Grid rewritten** from scratch.
     - Improved performance.
     - Saves column width, position, visibility, and sorting.
     - Switched to reuse my old SMOL code :)
+  - **VRAM Estimator** polish
+    - Now displayed on the Mods tab.
+    - Now remembered across restarts.
+    - You may now estimate one mod at a time.
+    - Shows VRAM taken by your GraphicsLib settings for mods.
+  - May now select outdated mods to be asked if you want to **force them to run** anyway.
+    - Mods "updated" this way will show asterisks next to their version. Hover to see the original version.
+    - Do this at your own risk! Mods sometimes work on a newer game version, and sometimes don't.
   - **Mass-enable/disable** mods, using control-click and shift-click to select mods.
     - Can also mass-force mods to work with the current Starsector version.
-  - "Favorites" to pin a mod on the Mods tab.
-  - Mods can now be sorted by "First Seen" or "Last Enabled".
+  - **Favorites** let you pin a mod on the Mods tab.
+  - Mods can now be sorted by **"First Seen" or "Last Enabled"**.
     - This is the date the mod was first seen or enabled by TriOS, not when it was first installed.
-  - May now install a mod from folder, not just from zip/7z/rar.
+  - May now **install a mod from folder**, not just from zip/7z/rar.
     - Either drag'n'drop a folder or select the `mod_info.json` file from the Add button.
-  - Tooltips are now more responsive and have replaced most of the old, "standard" styled tooltips.
-  - Setting to disable "game is running" check.
-  - Warning if user has 2+ enabled mod folders for the same mod.
-  - May now select outdated mods to be asked if you want to force them to run anyway.
-    - Mods "updated" this way will show asterisks next to their version. Hover to see the original version.
+  - **Tooltips are now more responsive** and have replaced most of the old, "standard" styled tooltips.
+  - Setting to **disable "game is running"** check.
+  - Warning for 2+ enabled mod folders for the same mod.
 - Fixed
   - Mod grid no longer resets itself constantly.
     - e.g. sorting now works.
@@ -39,6 +40,7 @@
   - Launch precheck no longer full height.
   - Version checker errors now have a capped height.
   - MacOS running the game when clicking "Open Game Folder".
+  - On settings page, game folder and mods folder paths had opposite-facing slashes and it was awful.
 - Changed
   - Note: TriOS settings have been reset due to a new format. 
     - Mod profiles should be fine. 

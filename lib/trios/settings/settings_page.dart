@@ -46,7 +46,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   @override
   void initState() {
     super.initState();
-    gamePathTextController.text = ref.read(appSettings).gameDir?.path ?? "";
+    gamePathTextController.text = ref.read(appSettings).gameDir?.normalize.path ?? "";
     gamePathExists = Directory(gamePathTextController.text).existsSync();
   }
 
@@ -97,7 +97,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                     .getDirectoryPath();
                                 if (newGameDir == null) return;
                                 tryUpdateGamePath(newGameDir, settings);
-                                gamePathTextController.text = newGameDir;
+                                gamePathTextController.text = newGameDir.toDirectory().normalize.path;
                               },
                             ),
                           ],
@@ -107,7 +107,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         padding: const EdgeInsets.only(
                             left: leftTextOptionPadding, top: 8.0),
                         child: SelectableText(
-                          "Mods Folder: ${ref.read(appSettings).modsDir?.path}",
+                          "Mods Folder: ${ref.read(appSettings).modsDir?.normalize.path}",
                           style: theme.textTheme.bodyMedium?.copyWith(
                               fontFeatures: [
                                 const FontFeature.tabularFigures()
@@ -154,70 +154,74 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                     SettingsGroup(name: "Theme", children: [
                       Row(
                         children: [
-                          DropdownMenu(
-                            dropdownMenuEntries: (ref
-                                        .watch(AppState.themeData)
-                                        .valueOrNull
-                                        ?.availableThemes
-                                        .entries ??
-                                    [])
-                                .map((theme) => (
-                                      theme.key,
-                                      theme,
-                                      ref
-                                          .read(AppState.themeData.notifier)
-                                          .convertToThemeData(theme.value)
-                                    ))
-                                .map((obj) {
-                                  var (key, triosTheme, themeData) = obj;
-                                  return DropdownMenuEntry(
-                                    value: triosTheme.value,
-                                    style: ButtonStyle(
-                                        backgroundColor:
-                                            WidgetStateProperty.all(themeData
-                                                .scaffoldBackgroundColor)),
-                                    labelWidget: Row(
-                                      children: [
-                                        SizedBox(
-                                            width: 40,
-                                            height: 20,
-                                            child: Container(
+                          MovingTooltipWidget.text(
+                            message: "Change up the colors."
+                                "\nNote: only the default theme of StarsectorTriOSTheme is fully tested.",
+                            child: DropdownMenu(
+                              dropdownMenuEntries: (ref
+                                          .watch(AppState.themeData)
+                                          .valueOrNull
+                                          ?.availableThemes
+                                          .entries ??
+                                      [])
+                                  .map((theme) => (
+                                        theme.key,
+                                        theme,
+                                        ref
+                                            .read(AppState.themeData.notifier)
+                                            .convertToThemeData(theme.value)
+                                      ))
+                                  .map((obj) {
+                                    var (key, triosTheme, themeData) = obj;
+                                    return DropdownMenuEntry(
+                                      value: triosTheme.value,
+                                      style: ButtonStyle(
+                                          backgroundColor:
+                                              WidgetStateProperty.all(themeData
+                                                  .scaffoldBackgroundColor)),
+                                      labelWidget: Row(
+                                        children: [
+                                          SizedBox(
+                                              width: 40,
+                                              height: 20,
+                                              child: Container(
+                                                  color: themeData
+                                                      .colorScheme.primary,
+                                                  child:
+                                                      const SizedBox.shrink())),
+                                          const SizedBox(width: 8),
+                                          SizedBox(
+                                              width: 20,
+                                              height: 20,
+                                              child: Container(
+                                                  color: themeData
+                                                      .colorScheme.secondary,
+                                                  child:
+                                                      const SizedBox.shrink())),
+                                          const SizedBox(width: 16),
+                                          Text(triosTheme.key,
+                                              style: theme.textTheme.bodyLarge
+                                                  ?.copyWith(
                                                 color: themeData
-                                                    .colorScheme.primary,
-                                                child:
-                                                    const SizedBox.shrink())),
-                                        const SizedBox(width: 8),
-                                        SizedBox(
-                                            width: 20,
-                                            height: 20,
-                                            child: Container(
-                                                color: themeData
-                                                    .colorScheme.secondary,
-                                                child:
-                                                    const SizedBox.shrink())),
-                                        const SizedBox(width: 16),
-                                        Text(triosTheme.key,
-                                            style: theme.textTheme.bodyLarge
-                                                ?.copyWith(
-                                              color: themeData
-                                                  .colorScheme.onSurface,
-                                            )),
-                                      ],
-                                    ),
-                                    label: triosTheme.key,
-                                  );
-                                })
-                                .distinctBy((e) => e.value)
-                                .toList(),
-                            onSelected: (TriOSTheme? theme) => ref
-                                .read(AppState.themeData.notifier)
-                                .switchThemes(theme!),
-                            initialSelection: ref
-                                .watch(AppState.themeData.notifier)
-                                .currentTheme,
-                            // borderRadius: BorderRadius.all(
-                            //     Radius.circular(ThemeManager.cornerRadius)),
-                            // padding: const EdgeInsets.symmetric(horizontal: 0),
+                                                    .colorScheme.onSurface,
+                                              )),
+                                        ],
+                                      ),
+                                      label: triosTheme.key,
+                                    );
+                                  })
+                                  .distinctBy((e) => e.value)
+                                  .toList(),
+                              onSelected: (TriOSTheme? theme) => ref
+                                  .read(AppState.themeData.notifier)
+                                  .switchThemes(theme!),
+                              initialSelection: ref
+                                  .watch(AppState.themeData.notifier)
+                                  .currentTheme,
+                              // borderRadius: BorderRadius.all(
+                              //     Radius.circular(ThemeManager.cornerRadius)),
+                              // padding: const EdgeInsets.symmetric(horizontal: 0),
+                            ),
                           ),
                           MovingTooltipWidget.text(
                             message: "I'm feeling lucky",
@@ -446,41 +450,41 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       // Slider for number of seconds between mod info update checks (secondsBetweenModFolderChecks in mod_manager_logic.dart).
                       ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 400),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            MovingTooltipWidget.text(
-                              message:
-                                  "This sets how often we check if there are new or changed mods in your folder.\nA shorter time means more frequent checks.\nDoes not scan when ${Constants.appName} is in the background.",
-                              child: Padding(
+                        child: MovingTooltipWidget.text(
+                          message:
+                              "This sets how often we check if there are new or changed mods in your folder.\nA shorter time means more frequent checks.\nDoes not scan when ${Constants.appName} is in the background.",
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Padding(
                                 padding: const EdgeInsets.only(
                                     left: leftTextOptionPadding),
                                 child: Text(
                                     "Rescan mod folder every: ${ref.watch(appSettings.select((value) => value.secondsBetweenModFolderChecks))} seconds",
                                     style: theme.textTheme.bodyLarge),
                               ),
-                            ),
-                            Slider(
-                              value: ref
-                                  .watch(appSettings.select((value) =>
-                                      value.secondsBetweenModFolderChecks))
-                                  .toDouble()
-                                  .clamp(1, 30),
-                              min: 1,
-                              max: 30,
-                              divisions: 29,
-                              label:
-                                  "${ref.watch(appSettings.select((value) => value.secondsBetweenModFolderChecks))}",
-                              onChanged: (value) {
-                                ref.read(appSettings.notifier).update((state) =>
-                                    state.copyWith(
-                                        secondsBetweenModFolderChecks:
-                                            value.toInt()));
-                              },
-                              inactiveColor:
-                                  theme.colorScheme.onSurface.withOpacity(0.5),
-                            ),
-                          ],
+                              Slider(
+                                value: ref
+                                    .watch(appSettings.select((value) =>
+                                        value.secondsBetweenModFolderChecks))
+                                    .toDouble()
+                                    .clamp(1, 30),
+                                min: 1,
+                                max: 30,
+                                divisions: 29,
+                                label:
+                                    "${ref.watch(appSettings.select((value) => value.secondsBetweenModFolderChecks))}",
+                                onChanged: (value) {
+                                  ref.read(appSettings.notifier).update(
+                                      (state) => state.copyWith(
+                                          secondsBetweenModFolderChecks:
+                                              value.toInt()));
+                                },
+                                inactiveColor: theme.colorScheme.onSurface
+                                    .withOpacity(0.5),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                       Padding(
@@ -488,32 +492,37 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                             left: leftTextOptionPadding, top: 16),
                         child: ConstrainedBox(
                           constraints: const BoxConstraints(maxWidth: 400),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                  "Toast duration: ${ref.watch(appSettings.select((value) => value.toastDurationSeconds))} seconds",
-                                  style: theme.textTheme.bodyLarge),
-                              Slider(
-                                value: ref
-                                    .watch(appSettings.select(
-                                        (value) => value.toastDurationSeconds))
-                                    .toDouble()
-                                    .clamp(1, 45),
-                                min: 1,
-                                max: 45,
-                                divisions: 45,
-                                label:
-                                    "${ref.watch(appSettings.select((value) => value.toastDurationSeconds))}",
-                                onChanged: (value) {
-                                  ref.read(appSettings.notifier).update(
-                                      (state) => state.copyWith(
-                                          toastDurationSeconds: value.toInt()));
-                                },
-                                inactiveColor: theme.colorScheme.onSurface
-                                    .withOpacity(0.5),
-                              ),
-                            ],
+                          child: MovingTooltipWidget.text(
+                            message:
+                                "How long notifications (e.g. 'Downloading') should appear for.",
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                    "Notification duration: ${ref.watch(appSettings.select((value) => value.toastDurationSeconds))} seconds",
+                                    style: theme.textTheme.bodyLarge),
+                                Slider(
+                                  value: ref
+                                      .watch(appSettings.select((value) =>
+                                          value.toastDurationSeconds))
+                                      .toDouble()
+                                      .clamp(1, 45),
+                                  min: 1,
+                                  max: 45,
+                                  divisions: 45,
+                                  label:
+                                      "${ref.watch(appSettings.select((value) => value.toastDurationSeconds))}",
+                                  onChanged: (value) {
+                                    ref.read(appSettings.notifier).update(
+                                        (state) => state.copyWith(
+                                            toastDurationSeconds:
+                                                value.toInt()));
+                                  },
+                                  inactiveColor: theme.colorScheme.onSurface
+                                      .withOpacity(0.5),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -717,7 +726,7 @@ class CheckForUpdatesButton extends StatelessWidget {
               content: Text(
                   "You are already on the latest version (current: ${Constants.version}, found: ${release.tagName}${release.prerelease ? " (prerelease)" : ""})"),
               action: SnackBarAction(
-                label: "I don't believe you",
+                label: "I don't believe you (show update prompt)",
                 backgroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
                 onPressed: () {
                   ref

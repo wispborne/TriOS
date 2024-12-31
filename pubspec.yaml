@@ -76,7 +76,7 @@ dependencies:
   stringr: ^1.0.0
   styled_text: ^8.1.0
   super_drag_and_drop: ^0.8.22
-  flutter_svg: ^2.0.10+1
+  flutter_svg: ^2.0.16
   text_search: ^1.0.2
   toastification: ^2.0.0
   toml: ^0.16.0

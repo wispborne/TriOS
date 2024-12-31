@@ -364,6 +364,8 @@ class _ModBrowserPage extends ConsumerState<ModBrowserPage>
                             SizedBox(
                               height: 50,
                               child: Card(
+                                margin: const EdgeInsets.only(
+                                    top: 4, bottom: 4, right: 4),
                                 child: Padding(
                                   padding:
                                       const EdgeInsets.only(left: 8, right: 8),
@@ -705,8 +707,10 @@ class _ModBrowserPage extends ConsumerState<ModBrowserPage>
                     constraints: const BoxConstraints(),
                     padding: EdgeInsets.zero,
                     onPressed: () {
-                      controller.clear();
-                      // _notifyGridFilterChanged();
+                      setState(() {
+                        controller.clear();
+                        updateFilter();
+                      });
                     },
                   )
           ],

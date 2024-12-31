@@ -3,8 +3,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-// import 'package:pasteboard/pasteboard.dart';
-// import 'package:screenshot/screenshot.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/mod_manager/smol4.dart';
@@ -39,7 +37,6 @@ class _ModListMiniState extends ConsumerState<ModListMini>
   final ScrollController _scrollController = ScrollController();
   final searchController = SearchController();
 
-  // final screenshotController = ScreenshotController();
   bool hideDisabled = false;
 
   @override

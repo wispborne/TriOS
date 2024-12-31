@@ -151,7 +151,6 @@ class _TooltipLayout extends SingleChildRenderObjectWidget {
   final TooltipPosition position;
 
   const _TooltipLayout({
-    super.key,
     required Widget child,
     required this.mousePosition,
     required this.windowEdgePadding,

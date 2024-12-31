@@ -2,6 +2,7 @@
 - Added
   - **Onboarding** popup on first launch.
     - Prompts for game location and how many versions of each mod to keep.
+    - Will reset your settings to default due to new settings format.
   - **Mod Catalog**
     - Browse & download mods from the Official Forum and the Unofficial Discord.
     - Same mods as here: https://starmodder2.pages.dev
@@ -54,6 +55,7 @@
   - Tooltip border uses a theme color.
   - Removed sticky headers, as they had some bugs I couldn't fix.
   - Moved "Disable" button to the top of the dropdown.
+  - Removed auto-update setting in order to prevent potential crash loops.
   - Tons of other small UI fixes and tweaks.
 
 # 0.3.4

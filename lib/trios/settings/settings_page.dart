@@ -118,16 +118,16 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                     SettingsGroup(
                       name: "${Constants.appName} Updates",
                       children: [
-                        CheckboxWithLabel(
-                          value: ref.watch(appSettings.select(
-                              (value) => value.shouldAutoUpdateOnLaunch)),
-                          onChanged: (value) {
-                            ref.read(appSettings.notifier).update((state) =>
-                                state.copyWith(
-                                    shouldAutoUpdateOnLaunch: value ?? false));
-                          },
-                          label: "Auto-update ${Constants.appName} on launch",
-                        ),
+                        // CheckboxWithLabel(
+                        //   value: ref.watch(appSettings.select(
+                        //       (value) => value.shouldAutoUpdateOnLaunch)),
+                        //   onChanged: (value) {
+                        //     ref.read(appSettings.notifier).update((state) =>
+                        //         state.copyWith(
+                        //             shouldAutoUpdateOnLaunch: value ?? false));
+                        //   },
+                        //   label: "Auto-update ${Constants.appName} on launch",
+                        // ),
                         Padding(
                           padding: const EdgeInsets.only(top: 8.0),
                           child: MovingTooltipWidget.text(

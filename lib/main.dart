@@ -147,7 +147,7 @@ void main() async {
   if (!kIsWeb && defaultTargetPlatform == TargetPlatform.windows) {
     final availableVersion = await WebViewEnvironment.getAvailableVersion();
     if (availableVersion == null) {
-      Fimber.e(
+      Fimber.w(
           'Failed to find an installed WebView2 Runtime or non-stable Microsoft Edge installation.');
     }
 

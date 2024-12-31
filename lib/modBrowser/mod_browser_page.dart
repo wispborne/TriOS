@@ -2,9 +2,11 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:multi_split_view/multi_split_view.dart';
+import 'package:open_filex/open_filex.dart';
 import 'package:trios/modBrowser/models/scraped_mod.dart';
 import 'package:trios/modBrowser/scraped_mod_card.dart';
 import 'package:trios/trios/app_state.dart';
@@ -15,6 +17,7 @@ import 'package:trios/trios/providers.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/search.dart';
+import 'package:trios/utils/util.dart';
 import 'package:trios/weaponViewer/weaponsManager.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
@@ -43,118 +46,54 @@ class _ModBrowserPage extends ConsumerState<ModBrowserPage>
   bool splitPane = true;
   List<ScrapedMod>? displayedMods;
   final GlobalKey webViewKey = GlobalKey();
-  InAppWebViewController? webViewController;
   final List<ContentBlocker> contentBlockers = [];
   var contentBlockerEnabled = true;
-  final webSettings = InAppWebViewSettings(
-    useShouldOverrideUrlLoading: true,
-    useOnDownloadStart: true,
-    algorithmicDarkeningAllowed: true,
-    forceDark: ForceDark.ON,
-    forceDarkStrategy:
-        ForceDarkStrategy.PREFER_WEB_THEME_OVER_USER_AGENT_DARKENING,
-  );
+  InAppWebViewController? webViewController;
+  InAppWebViewSettings? webSettings;
   double? webLoadingProgress;
   String? selectedModName;
   bool? filterHasDownloadLink;
   bool? filterDiscord;
   bool? filterIndex;
   bool? filterForumModding;
+  bool? _webview2RequiredAndMissing;
 
   @override
   List<Area> get areas => splitPane
       ? [Area(id: 'left', size: 500), Area(id: 'right')]
       : [Area(id: 'left')];
 
-  void updateFilter() {
-    final query = _searchController.value.text;
-    final allMods = ref.watch(browseModsNotifierProvider).value?.items ?? [];
-
-    if (query.isNotEmpty) {
-      displayedMods = searchScrapedMods(allMods, query);
-    } else {
-      displayedMods = allMods;
-    }
-
-    if (filterHasDownloadLink == true) {
-      displayedMods = displayedMods
-          ?.where(
-              (mod) => mod.urls?.containsKey(ModUrlType.DirectDownload) == true)
-          .toList();
-    } else if (filterHasDownloadLink == false) {
-      displayedMods = displayedMods
-          ?.where(
-              (mod) => mod.urls?.containsKey(ModUrlType.DirectDownload) != true)
-          .toList();
-    }
-
-    if (filterDiscord == true) {
-      displayedMods = displayedMods
-          ?.where((mod) => mod.sources?.contains(ModSource.Discord) == true)
-          .toList();
-    } else if (filterDiscord == false) {
-      displayedMods = displayedMods
-          ?.where((mod) => mod.sources?.contains(ModSource.Discord) != true)
-          .toList();
-    }
-
-    if (filterIndex == true) {
-      displayedMods = displayedMods
-          ?.where((mod) => mod.sources?.contains(ModSource.Index) == true)
-          .toList();
-    } else if (filterIndex == false) {
-      displayedMods = displayedMods
-          ?.where((mod) => mod.sources?.contains(ModSource.Index) != true)
-          .toList();
-    }
-
-    if (filterForumModding == true) {
-      displayedMods = displayedMods
-          ?.where(
-              (mod) => mod.sources?.contains(ModSource.ModdingSubforum) == true)
-          .toList();
-    } else if (filterForumModding == false) {
-      displayedMods = displayedMods
-          ?.where(
-              (mod) => mod.sources?.contains(ModSource.ModdingSubforum) != true)
-          .toList();
-    }
-  }
-
   @override
   void initState() {
-    downloadAdBlockList();
+    super.initState();
+
+    if (currentPlatform != TargetPlatform.windows) {
+      _webview2RequiredAndMissing = false;
+    } else {
+      WebViewEnvironment.getAvailableVersion().then((availableVersion) {
+        Fimber.i("Available WebView2 version: $availableVersion");
+        if (availableVersion != null) {
+          _enableWebView();
+        } else {
+          _webview2RequiredAndMissing = true;
+        }
+      });
+    }
   }
 
-  void downloadAdBlockList() async {
-    try {
-      var adblockList = await (await AppState.cacheManager.getSingleFile(
-              "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts"))
-          .readAsLines()
-        ..removeWhere((line) => line.trim().startsWith("#") || line.isEmpty);
-
-      List<String> transformed = adblockList.map((entry) {
-        // Extract the domain part by splitting and taking the second part
-        String domain = entry.split(" ")[1];
-        // Convert to the desired regex pattern format
-        return '.*.$domain/.*';
-      }).toList();
-
-      for (final adUrlFilter in transformed) {
-        contentBlockers.add(ContentBlocker(
-            trigger: ContentBlockerTrigger(
-              urlFilter: adUrlFilter,
-            ),
-            action: ContentBlockerAction(
-              type: ContentBlockerActionType.BLOCK,
-            )));
-      }
-
-      webViewController?.setSettings(
-          settings: webSettings..contentBlockers = contentBlockers);
-    } catch (ex, st) {
-      Fimber.w("Failed to download adblock list.", ex: ex, stacktrace: st);
-    }
+  _enableWebView() {
+    setState(() {
+      _webview2RequiredAndMissing = false;
+      webSettings = InAppWebViewSettings(
+        useShouldOverrideUrlLoading: true,
+        useOnDownloadStart: true,
+        algorithmicDarkeningAllowed: true,
+        forceDark: ForceDark.ON,
+        forceDarkStrategy:
+            ForceDarkStrategy.PREFER_WEB_THEME_OVER_USER_AGENT_DARKENING,
+      );
+      downloadAdBlockList();
+    });
   }
 
   @override
@@ -164,7 +103,6 @@ class _ModBrowserPage extends ConsumerState<ModBrowserPage>
     final allMods = ref.watch(browseModsNotifierProvider).value;
     displayedMods ??= allMods?.items;
     final theme = Theme.of(context);
-
     final weaponCount = allMods?.items.length;
 
     return Column(
@@ -573,66 +511,94 @@ class _ModBrowserPage extends ConsumerState<ModBrowserPage>
                             const SizedBox(height: 4),
                             Expanded(
                               child: IgnoreDropMouseRegion(
-                                child: InAppWebView(
-                                  key: webViewKey,
-                                  webViewEnvironment: webViewEnvironment,
-                                  shouldOverrideUrlLoading:
-                                      (controller, navigationAction) async {
-                                    if (navigationAction.request.url != null) {
-                                      final finalUrlAndHeaders =
-                                          await DownloadManager
-                                              .fetchFinalUrlAndHeaders(
-                                                  navigationAction.request.url
-                                                      .toString(),
-                                                  httpClient);
-                                      final url = finalUrlAndHeaders.url;
+                                  child: switch (_webview2RequiredAndMissing) {
+                                false => InAppWebView(
+                                    key: webViewKey,
+                                    webViewEnvironment: webViewEnvironment,
+                                    shouldOverrideUrlLoading:
+                                        (controller, navigationAction) async {
+                                      if (navigationAction.request.url !=
+                                          null) {
+                                        final finalUrlAndHeaders =
+                                            await DownloadManager
+                                                .fetchFinalUrlAndHeaders(
+                                                    navigationAction.request.url
+                                                        .toString(),
+                                                    httpClient);
+                                        final url = finalUrlAndHeaders.url;
 
-                                      final isDownloadFile =
-                                          await DownloadManager
-                                              .isDownloadableFile(
+                                        final isDownloadFile =
+                                            await DownloadManager
+                                                .isDownloadableFile(
+                                                    url.toString(),
+                                                    finalUrlAndHeaders
+                                                        .headersMap,
+                                                    httpClient);
+
+                                        if (isDownloadFile) {
+                                          ref
+                                              .read(downloadManager.notifier)
+                                              .downloadAndInstallMod(
+                                                  selectedModName ??
+                                                      "Catalog Mod",
                                                   url.toString(),
-                                                  finalUrlAndHeaders.headersMap,
-                                                  httpClient);
+                                                  activateVariantOnComplete:
+                                                      false);
 
-                                      if (isDownloadFile) {
-                                        ref
-                                            .read(downloadManager.notifier)
-                                            .downloadAndInstallMod(
-                                                selectedModName ??
-                                                    "Catalog Mod",
-                                                url.toString(),
-                                                activateVariantOnComplete:
-                                                    false);
-
-                                        return NavigationActionPolicy.CANCEL;
+                                          return NavigationActionPolicy.CANCEL;
+                                        }
                                       }
-                                    }
 
-                                    return NavigationActionPolicy.ALLOW;
-                                  },
-                                  onDownloadStartRequest: (controller, url) {},
-                                  initialUrlRequest: URLRequest(
-                                      url: WebUri(Constants.forumModIndexUrl)),
-                                  initialSettings: webSettings,
-                                  onWebViewCreated: (controller) {
-                                    webViewController = controller;
-                                  },
-                                  onProgressChanged: (controller, progress) {
-                                    setState(() {
-                                      if (progress == 100) {
-                                        webLoadingProgress = null;
-                                      } else {
-                                        webLoadingProgress = progress / 100;
-                                      }
-                                    });
-                                  },
-                                  onLoadStop: (controller, url) {
-                                    setState(() {
-                                      urlController.text = url.toString();
-                                    });
-                                  },
-                                ),
-                              ),
+                                      return NavigationActionPolicy.ALLOW;
+                                    },
+                                    onDownloadStartRequest:
+                                        (controller, url) {},
+                                    initialUrlRequest: URLRequest(
+                                        url:
+                                            WebUri(Constants.forumModIndexUrl)),
+                                    initialSettings: webSettings,
+                                    onWebViewCreated: (controller) {
+                                      webViewController = controller;
+                                    },
+                                    onProgressChanged: (controller, progress) {
+                                      setState(() {
+                                        if (progress == 100) {
+                                          webLoadingProgress = null;
+                                        } else {
+                                          webLoadingProgress = progress / 100;
+                                        }
+                                      });
+                                    },
+                                    onLoadStop: (controller, url) {
+                                      setState(() {
+                                        urlController.text = url.toString();
+                                      });
+                                    },
+                                  ),
+                                null => Center(
+                                    child: const Text(
+                                        "Checking for webview support...")),
+                                true => Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        "Unable to display web browser",
+                                        style: theme.textTheme.headlineSmall,
+                                      ),
+                                      const SizedBox(height: 16),
+                                      const Text(
+                                          "WebView2 is required but not installed."),
+                                      Linkify(
+                                        text:
+                                            "Please install it from https://developer.microsoft.com/en-us/microsoft-edge/webview2/",
+                                        onOpen: (link) =>
+                                            OpenFilex.open(link.url),
+                                      ),
+                                      const Text(
+                                          "and then restart ${Constants.appName}."),
+                                    ],
+                                  ),
+                              }),
                             ),
                           ],
                         );
@@ -651,6 +617,92 @@ class _ModBrowserPage extends ConsumerState<ModBrowserPage>
     //   child: SelectableText('Error loading weapons: $error'),
     // ),
     // );
+  }
+
+  void updateFilter() {
+    final query = _searchController.value.text;
+    final allMods = ref.watch(browseModsNotifierProvider).value?.items ?? [];
+
+    if (query.isNotEmpty) {
+      displayedMods = searchScrapedMods(allMods, query);
+    } else {
+      displayedMods = allMods;
+    }
+
+    if (filterHasDownloadLink == true) {
+      displayedMods = displayedMods
+          ?.where(
+              (mod) => mod.urls?.containsKey(ModUrlType.DirectDownload) == true)
+          .toList();
+    } else if (filterHasDownloadLink == false) {
+      displayedMods = displayedMods
+          ?.where(
+              (mod) => mod.urls?.containsKey(ModUrlType.DirectDownload) != true)
+          .toList();
+    }
+
+    if (filterDiscord == true) {
+      displayedMods = displayedMods
+          ?.where((mod) => mod.sources?.contains(ModSource.Discord) == true)
+          .toList();
+    } else if (filterDiscord == false) {
+      displayedMods = displayedMods
+          ?.where((mod) => mod.sources?.contains(ModSource.Discord) != true)
+          .toList();
+    }
+
+    if (filterIndex == true) {
+      displayedMods = displayedMods
+          ?.where((mod) => mod.sources?.contains(ModSource.Index) == true)
+          .toList();
+    } else if (filterIndex == false) {
+      displayedMods = displayedMods
+          ?.where((mod) => mod.sources?.contains(ModSource.Index) != true)
+          .toList();
+    }
+
+    if (filterForumModding == true) {
+      displayedMods = displayedMods
+          ?.where(
+              (mod) => mod.sources?.contains(ModSource.ModdingSubforum) == true)
+          .toList();
+    } else if (filterForumModding == false) {
+      displayedMods = displayedMods
+          ?.where(
+              (mod) => mod.sources?.contains(ModSource.ModdingSubforum) != true)
+          .toList();
+    }
+  }
+
+  void downloadAdBlockList() async {
+    try {
+      var adblockList = await (await AppState.cacheManager.getSingleFile(
+              "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts"))
+          .readAsLines()
+        ..removeWhere((line) => line.trim().startsWith("#") || line.isEmpty);
+
+      List<String> transformed = adblockList.map((entry) {
+        // Extract the domain part by splitting and taking the second part
+        String domain = entry.split(" ")[1];
+        // Convert to the desired regex pattern format
+        return '.*.$domain/.*';
+      }).toList();
+
+      for (final adUrlFilter in transformed) {
+        contentBlockers.add(ContentBlocker(
+            trigger: ContentBlockerTrigger(
+              urlFilter: adUrlFilter,
+            ),
+            action: ContentBlockerAction(
+              type: ContentBlockerActionType.BLOCK,
+            )));
+      }
+
+      webViewController?.setSettings(
+          settings: webSettings!..contentBlockers = contentBlockers);
+    } catch (ex, st) {
+      Fimber.w("Failed to download adblock list.", ex: ex, stacktrace: st);
+    }
   }
 
   @override

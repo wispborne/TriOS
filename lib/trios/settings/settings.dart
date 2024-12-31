@@ -74,6 +74,7 @@ class Settings with SettingsMappable {
   final ModsGridState? oldModsGridState;
 
   // Settings Page
+  @Deprecated("Bad idea, can get stuck in crash -> downgrade -> auto-update -> crash loop.")
   final bool shouldAutoUpdateOnLaunch;
   final int secondsBetweenModFolderChecks;
   final int toastDurationSeconds;

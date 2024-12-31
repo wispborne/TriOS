@@ -121,12 +121,12 @@ class _AppShellState extends ConsumerState<AppShell>
                     builder: (context, item) =>
                         SelfUpdateToast(latestRelease, item));
 
-                if (ref.read(appSettings
-                    .select((value) => value.shouldAutoUpdateOnLaunch))) {
-                  ref
-                      .read(AppState.selfUpdate.notifier)
-                      .updateSelf(latestRelease);
-                }
+                // if (ref.read(appSettings
+                //     .select((value) => value.shouldAutoUpdateOnLaunch))) {
+                //   ref
+                //       .read(AppState.selfUpdate.notifier)
+                //       .updateSelf(latestRelease);
+                // }
               }
             }
           } catch (e, s) {

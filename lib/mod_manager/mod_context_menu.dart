@@ -104,6 +104,54 @@ ContextMenu buildModBulkActionContextMenu(
                   .toList());
         },
       ),
+
+      if (mods.any((mod) => isModGameVersionIncorrect(currentStarsectorVersion,
+          isGameRunning, mod.findFirstEnabledOrHighestVersion!)))
+        MenuItem(
+            label: 'Force selected to $currentStarsectorVersion',
+            icon: Icons.electric_bolt,
+            onSelected: () {
+              showDialog(
+                  context: ref.context,
+                  builder: (context) {
+                    final modsToForce = mods.where((mod) =>
+                        isModGameVersionIncorrect(
+                            currentStarsectorVersion,
+                            isGameRunning,
+                            mod.findFirstEnabledOrHighestVersion!));
+
+                    return AlertDialog(
+                      title: Text("Force to $currentStarsectorVersion?"),
+                      content: Text(
+                          "Simple mods like portrait packs should be fine. "
+                          "Game updates usually don't break mods, "
+                          "but it depends on the mod and the game version"
+                          "\n\n"
+                          "Are you sure you want to modify the mod_info.json file "
+                          "to allow ${modsToForce.length} mod(s) to run on $currentStarsectorVersion?"),
+                      actions: [
+                        TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                            child: const Text("Cancel")),
+                        TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                              for (final mod in modsToForce) {
+                                ref
+                                    .read(modManager.notifier)
+                                    .forceChangeModGameVersion(
+                                        mod.findFirstEnabledOrHighestVersion!,
+                                        currentStarsectorVersion!);
+                              }
+                              ref.invalidate(AppState.modVariants);
+                            },
+                            child: const Text("Force"))
+                      ],
+                    );
+                  });
+            }),
     ],
     padding: const EdgeInsets.all(8.0),
   );
@@ -124,11 +172,43 @@ MenuItem<dynamic> buildMenuItemForceChangeModGameVesion(
       label: 'Force to $currentStarsectorVersion',
       icon: Icons.electric_bolt,
       onSelected: () {
-        ref
-            .read(modManager.notifier)
-            .forceChangeModGameVersion(modVariant, currentStarsectorVersion);
-        ref.invalidate(AppState.modVariants);
+        showDialog(
+            context: ref.context,
+            builder: (context) {
+              return buildForceGameVersionWarningDialog(
+                  currentStarsectorVersion, modVariant, context, ref);
+            });
       });
+}
+
+AlertDialog buildForceGameVersionWarningDialog(String currentStarsectorVersion,
+    ModVariant modVariant, BuildContext context, WidgetRef ref,
+    {Function()? onForced}) {
+  return AlertDialog(
+    title: Text("Force to $currentStarsectorVersion?"),
+    content: Text("Simple mods like portrait packs should be fine. "
+        "Game updates usually don't break mods, "
+        "but it depends on the mod and the game version"
+        "\n\n"
+        "Are you sure you want to modify the mod_info.json file "
+        "to allow ${modVariant.modInfo.nameOrId} to run on $currentStarsectorVersion?"),
+    actions: [
+      TextButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+          child: const Text("Cancel")),
+      TextButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+            ref.read(modManager.notifier).forceChangeModGameVersion(
+                modVariant, currentStarsectorVersion);
+            ref.invalidate(AppState.modVariants);
+            onForced?.call();
+          },
+          child: const Text("Force"))
+    ],
+  );
 }
 
 MenuItem<dynamic> buildMenuItemOpenForumPage(

@@ -23,7 +23,6 @@ import 'package:trios/utils/platform_specific.dart';
 import 'package:trios/utils/util.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/text_with_icon.dart';
-import 'package:trios/widgets/tooltip_frame.dart';
 
 import '../chipper/utils.dart';
 import '../models/mod.dart';
@@ -87,20 +86,15 @@ class ModManagerNotifier extends AsyncNotifier<void> {
                                   themeData.iconTheme.color?.withOpacity(0.7);
                               const iconSize = 20.0;
                               const subtitleSize = 14.0;
-                              return MovingTooltipWidget(
+                              return MovingTooltipWidget.framed(
                                 tooltipWidget: ConstrainedBox(
                                   constraints:
                                       const BoxConstraints(maxWidth: 500),
-                                  child: TooltipFrame(
-                                      child: Column(
-                                    children: [
-                                      Text(
-                                          it.modInfo.modInfo
-                                              .toMap()
-                                              .prettyPrintJson(),
-                                          style: const TextStyle(fontSize: 12)),
-                                    ],
-                                  )),
+                                  child: Text(
+                                      it.modInfo.modInfo
+                                          .toMap()
+                                          .prettyPrintJson(),
+                                      style: const TextStyle(fontSize: 12)),
                                 ),
                                 child: CheckboxListTile(
                                   title: Column(
@@ -443,8 +437,8 @@ class ModManagerNotifier extends AsyncNotifier<void> {
       modInfoFiles,
     );
 
-    final List<ExtractedModInfo> modInfos = await Future.wait(
-        extractedModInfos.nonNulls.map((modInfoFile) async {
+    final List<ExtractedModInfo> modInfos =
+        await Future.wait(extractedModInfos.nonNulls.map((modInfoFile) async {
       try {
         ExtractedModInfo modInfo = (
           extractedFile: modInfoFile,

@@ -92,6 +92,19 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
               .valueOrNull
               ?.getMergedModMetadata(selectedMod.id);
           final forumThreadId = versionCheck?.remoteVersion?.modThreadId;
+          final labelTextStyle =
+              Theme.of(context).textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  );
+          final bodyOpacity = 0.92;
+          final bodyTextStyle =
+              Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: Theme.of(context)
+                        .textTheme
+                        .bodyMedium
+                        ?.color
+                        ?.withOpacity(bodyOpacity),
+                  );
 
           // if (iconFilePath != null) {
           //   PaletteGenerator.fromImageProvider(
@@ -239,13 +252,17 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
                                       Builder(builder: (context) {
                                         final uri = Uri.parse(
                                             "${Constants.forumModPageUrl}$forumThreadId");
-                                        return Tooltip(
+                                        return MovingTooltipWidget.text(
                                           message: uri.toString(),
                                           child: Opacity(
                                             opacity: buttonsOpacity,
                                             child: OutlinedButton.icon(
-                                                icon: const SvgImageIcon(
-                                                    "assets/images/icon-web.svg"),
+                                                icon: SvgImageIcon(
+                                                  "assets/images/icon-web.svg",
+                                                  color: Theme.of(context)
+                                                      .colorScheme
+                                                      .primary,
+                                                ),
                                                 label: const Text(
                                                   "Forum Thread",
                                                 ),
@@ -261,9 +278,7 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     const SizedBox(height: 16),
-                                    const Text("Version(s)",
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold)),
+                                    Text("Version(s)", style: labelTextStyle),
                                     Column(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
@@ -276,7 +291,7 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
                                                         variant.modInfo.version
                                                             ?.toString() ??
                                                         ""),
-                                            style: theme.textTheme.labelLarge),
+                                            style: bodyTextStyle),
                                       ],
                                     ),
                                   ],
@@ -287,33 +302,52 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
                                         CrossAxisAlignment.start,
                                     children: [
                                       const SizedBox(height: 16),
-                                      const Text("Author",
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.bold)),
+                                      Text("Author", style: labelTextStyle),
                                       Text(
                                           variant.modInfo.author ??
                                               "(no author)",
-                                          style: theme.textTheme.labelLarge),
+                                          style: bodyTextStyle),
                                     ],
                                   ),
                                 if (modMetadata != null)
                                   MovingTooltipWidget.text(
                                     message: "First seen by TriOS",
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        const SizedBox(height: 16),
-                                        const Text("First Seen",
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold)),
-                                        Text(
-                                            Constants.dateTimeFormat.format(
-                                                DateTime
-                                                    .fromMillisecondsSinceEpoch(
-                                                        modMetadata.firstSeen)),
-                                            style: theme.textTheme.labelLarge),
-                                      ],
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(top: 16),
+                                      child: Row(
+                                        children: [
+                                          Text("First Seen: ",
+                                              style: labelTextStyle),
+                                          Text(
+                                              Constants.dateTimeFormat.format(
+                                                  DateTime
+                                                      .fromMillisecondsSinceEpoch(
+                                                          modMetadata
+                                                              .firstSeen)),
+                                              style: bodyTextStyle),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                if (modMetadata != null &&
+                                    modMetadata.lastEnabled != null)
+                                  MovingTooltipWidget.text(
+                                    message: "Last enabled by TriOS",
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(top: 4),
+                                      child: Row(
+                                        children: [
+                                          Text("Last enabled: ",
+                                              style: labelTextStyle),
+                                          Text(
+                                              Constants.dateTimeFormat.format(
+                                                  DateTime
+                                                      .fromMillisecondsSinceEpoch(
+                                                          modMetadata
+                                                              .lastEnabled!)),
+                                              style: bodyTextStyle),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 Builder(builder: (context) {
@@ -330,13 +364,11 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
                                     children: [
                                       const SizedBox(height: 16),
                                       Text("Description",
-                                          style: theme.textTheme.labelLarge
-                                              ?.copyWith(
-                                                  fontWeight: FontWeight.bold)),
+                                          style: labelTextStyle),
                                       Text(
                                           variant.modInfo.description ??
                                               "(no description)",
-                                          style: theme.textTheme.labelLarge),
+                                          style: bodyTextStyle),
                                     ],
                                   ),
                                 Builder(builder: (context) {
@@ -349,29 +381,32 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
                                         CrossAxisAlignment.start,
                                     children: [
                                       const SizedBox(height: 16),
-                                      const Text("Dependencies",
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.bold)),
+                                      Text("Dependencies",
+                                          style: labelTextStyle),
                                       if (variant
                                           .modInfo.dependencies.isNotEmpty)
-                                        Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: variant.modInfo.dependencies
-                                              .map((dep) {
-                                            var dependencyState =
-                                                dep.isSatisfiedByAny(
-                                                    modVariants,
-                                                    enabledMods,
-                                                    gameVersion);
-                                            return Text(
-                                                "- ${dep.formattedNameVersion} ${dependencyState.getDependencyStateText()}",
-                                                style: theme
-                                                    .textTheme.labelLarge
-                                                    ?.copyWith(
-                                                        color: getStateColorForDependencyText(
-                                                            dependencyState)));
-                                          }).toList(),
+                                        Opacity(
+                                          opacity: bodyOpacity,
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: variant
+                                                .modInfo.dependencies
+                                                .map((dep) {
+                                              var dependencyState =
+                                                  dep.isSatisfiedByAny(
+                                                      modVariants,
+                                                      enabledMods,
+                                                      gameVersion);
+                                              return Text(
+                                                  "- ${dep.formattedNameVersion} ${dependencyState.getDependencyStateText()}",
+                                                  style: theme
+                                                      .textTheme.labelLarge
+                                                      ?.copyWith(
+                                                          color: getStateColorForDependencyText(
+                                                              dependencyState)));
+                                            }).toList(),
+                                          ),
                                         ),
                                       if (variant.modInfo.dependencies.isEmpty)
                                         Text("None",
@@ -393,11 +428,11 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
                                           dependents: enabledDependents,
                                           selectedMod: selectedMod,
                                           allMods: allMods,
-                                          style: theme.textTheme.labelLarge,
+                                          style: bodyTextStyle,
                                         )
                                       : Text(
                                           "No mods depend on ${variant.modInfo.name}",
-                                          style: theme.textTheme.labelLarge,
+                                          style: bodyTextStyle,
                                         );
                                 }),
                                 const SizedBox(height: 4),
@@ -423,8 +458,7 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
                                                 dependents: disabledDependents,
                                                 selectedMod: selectedMod,
                                                 allMods: allMods,
-                                                style:
-                                                    theme.textTheme.labelLarge,
+                                                style: bodyTextStyle,
                                               ),
                                             ],
                                           ),

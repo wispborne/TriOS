@@ -7,6 +7,7 @@ import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
@@ -14,11 +15,12 @@ import 'package:trios/widgets/moving_tooltip.dart';
 import '../models/mod.dart';
 import '../models/mod_variant.dart';
 import '../utils/logging.dart';
+import 'mod_context_menu.dart';
 
 class ModVersionSelectionDropdown extends ConsumerStatefulWidget {
   final Mod mod;
   final double width;
-  final showTooltip;
+  final bool showTooltip;
 
   const ModVersionSelectionDropdown({
     super.key,
@@ -35,7 +37,6 @@ class _ModVersionSelectionDropdownState
     extends ConsumerState<ModVersionSelectionDropdown> {
   @override
   Widget build(BuildContext context) {
-    // final enabledMods = ref.watch(AppState.enabledModsFile).valueOrNull;
     final isSingleVariant = widget.mod.modVariants.length == 1;
     final theme = Theme.of(context);
     const buttonHeight = 32.00;
@@ -56,8 +57,9 @@ class _ModVersionSelectionDropdownState
         d.satisfiedAmount is Satisfied ||
         d.satisfiedAmount is VersionWarning ||
         d.satisfiedAmount is Disabled);
-    final isButtonEnabled =
-        isSupportedByGameVersion && areAllDependenciesSatisfied == true;
+    final isButtonEnabled = areAllDependenciesSatisfied == true;
+    // Pseudo-disabled means it's enabled but has a warning outline.
+    final isButtonPseudoDisabled = isButtonEnabled && !isSupportedByGameVersion;
 
     final buttonColor = hasMultipleEnabled
         ? errorColor
@@ -80,7 +82,7 @@ class _ModVersionSelectionDropdownState
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
         side: BorderSide(
-          color: isButtonEnabled
+          color: (isButtonEnabled && !isButtonPseudoDisabled)
               ? hasMultipleEnabled
                   ? ThemeManager.vanillaErrorColor.darker(20)
                   : theme.colorScheme.secondary.darker(20)
@@ -97,58 +99,74 @@ class _ModVersionSelectionDropdownState
         ? "Warning"
             "\nYou have two or more enabled mod folders for ${mainVariant?.modInfo.nameOrId}. The game will pick one at 'random'."
             "\nSelect one version from the dropdown."
-        : "";
+        : null;
     final warningIcon = Icon(
       Icons.warning,
       color: textColor,
       size: 20,
     );
+    final currentStarsectorVersion =
+        ref.watch(appSettings.select((s) => s.lastStarsectorVersion));
+    final isGameRunning = ref.watch(AppState.isGameRunning).value == true;
+
+    Future<void> switchToVariant(ModVariant? modVariant) async {
+      if (modVariant != null &&
+          isModGameVersionIncorrect(
+              currentStarsectorVersion, isGameRunning, modVariant)) {
+        showDialog(
+            context: ref.context,
+            builder: (context) {
+              return buildForceGameVersionWarningDialog(
+                  currentStarsectorVersion!, modVariant, context, ref,
+                  onForced: () {
+                ref
+                    .read(AppState.modVariants.notifier)
+                    .changeActiveModVariant(widget.mod, modVariant);
+              });
+            });
+      } else {
+        await ref
+            .read(AppState.modVariants.notifier)
+            .changeActiveModVariant(widget.mod, modVariant);
+      }
+    }
 
     if (isSingleVariant) {
-      return Tooltip(
-        message: widget.showTooltip
-            ? (!isSupportedByGameVersion ? gameVersionMessage : "")
-            : "",
+      return MovingTooltipWidget.text(
+        message: errorTooltip ??
+            (widget.showTooltip
+                ? (!isSupportedByGameVersion ? gameVersionMessage : "")
+                : null),
         child: Disable(
           isEnabled: isButtonEnabled,
           child: SizedBox(
             width: buttonWidth,
             height: buttonHeight,
-            child: MovingTooltipWidget.text(
-              message: errorTooltip,
-              child: ElevatedButton(
-                onPressed: () async {
-                  if (!mounted) return;
-                  // Enable if disabled, disable if enabled
-                  try {
-                    if (widget.mod.hasEnabledVariant) {
-                      await ref
-                          .read(AppState.modVariants.notifier)
-                          .changeActiveModVariant(widget.mod, null);
-                    } else {
-                      await ref
-                          .read(AppState.modVariants.notifier)
-                          .changeActiveModVariant(
-                              widget.mod, widget.mod.findHighestVersion);
-                    }
-                  } catch (e, st) {
-                    Fimber.e("Error changing active mod variant: $e\n$st");
-                  }
-                },
-                style: buttonStyle,
-                child: Stack(
-                  children: [
-                    (hasMultipleEnabled
-                        ? Align(
-                            alignment: Alignment.centerLeft, child: warningIcon)
-                        : Container()),
-                    Center(
-                      child: Text(
-                        widget.mod.hasEnabledVariant ? "Disable" : "Enable",
-                      ),
+            child: ElevatedButton(
+              onPressed: () async {
+                if (!mounted) return;
+                // Enable if disabled, disable if enabled
+                try {
+                  widget.mod.hasEnabledVariant
+                      ? await switchToVariant(null)
+                      : await switchToVariant(widget.mod.findHighestVersion);
+                } catch (e, st) {
+                  Fimber.e("Error changing active mod variant: $e\n$st");
+                }
+              },
+              style: buttonStyle,
+              child: Stack(
+                children: [
+                  (hasMultipleEnabled
+                      ? Align(
+                          alignment: Alignment.centerLeft, child: warningIcon)
+                      : Container()),
+                  Center(
+                    child: Text(
+                      widget.mod.hasEnabledVariant ? "Disable" : "Enable",
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -179,10 +197,11 @@ class _ModVersionSelectionDropdownState
     ];
 
     final dropdownWidth = buttonWidth;
-    return Tooltip(
-      message: widget.showTooltip
-          ? (!isSupportedByGameVersion ? gameVersionMessage : "")
-          : "",
+    return MovingTooltipWidget.text(
+      message: errorTooltip ??
+          (widget.showTooltip
+              ? (!isSupportedByGameVersion ? gameVersionMessage : null)
+              : null),
       child: Disable(
         isEnabled: isButtonEnabled,
         child: DropdownButton2<ModVariant?>(
@@ -201,50 +220,45 @@ class _ModVersionSelectionDropdownState
             return items.map((item) {
               return SizedBox(
                 width: dropdownWidth,
-                child: MovingTooltipWidget.text(
-                  message: errorTooltip,
-                  child: ElevatedButton(
-                    onPressed: null,
-                    style: buttonStyle,
-                    child: Stack(
-                      children: [
-                        (hasMultipleEnabled
-                            ? Align(
-                                alignment: Alignment.centerLeft,
-                                child: warningIcon)
-                            : Container()),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const SizedBox(width: 10),
-                            Expanded(
-                                child: Align(
-                              alignment: Alignment.center,
-                              child: item.value == null
-                                  ? const Text("Enable")
-                                  : item.child,
-                            )),
-                            SizedBox(
-                              width: 10,
-                              child: Icon(
-                                Icons.arrow_drop_down,
-                                color: textColor,
-                              ),
+                child: ElevatedButton(
+                  onPressed: null,
+                  style: buttonStyle,
+                  child: Stack(
+                    children: [
+                      (hasMultipleEnabled
+                          ? Align(
+                              alignment: Alignment.centerLeft,
+                              child: warningIcon)
+                          : Container()),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const SizedBox(width: 10),
+                          Expanded(
+                              child: Align(
+                            alignment: Alignment.center,
+                            child: item.value == null
+                                ? const Text("Enable")
+                                : item.child,
+                          )),
+                          SizedBox(
+                            width: 10,
+                            child: Icon(
+                              Icons.arrow_drop_down,
+                              color: textColor,
                             ),
-                          ],
-                        ),
-                      ],
-                    ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
               );
             }).toList();
           },
           onChanged: (ModVariant? variant) async {
-            await ref
-                .read(AppState.modVariants.notifier)
-                .changeActiveModVariant(widget.mod, variant);
+            await switchToVariant(variant);
           },
         ),
       ),

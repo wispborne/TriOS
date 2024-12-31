@@ -156,7 +156,7 @@ class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
                                   child: ModVersionSelectionDropdown(
                                     mod: mod,
                                     width: state.width,
-                                    showTooltip: false,
+                                    showTooltip: true,
                                   ),
                                 ),
                               );
@@ -219,27 +219,34 @@ class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
                           ModGridHeader.gameVersion =>
                             Builder(builder: (context) {
                               final theme = Theme.of(context);
+                              final originalGameVersion =
+                                  bestVersion.modInfo.originalGameVersion;
 
-                              return _RowItemContainer(
-                                height: height,
-                                width: state.width,
-                                child: Opacity(
-                                  opacity: WispGrid.lightTextOpacity,
-                                  child: Text(
-                                      bestVersion.modInfo.gameVersion ??
-                                          "(no game version)",
-                                      style: compareGameVersions(
-                                                  bestVersion
-                                                      .modInfo.gameVersion,
-                                                  ref
-                                                      .watch(appSettings)
-                                                      .lastStarsectorVersion) ==
-                                              GameCompatibility.perfectMatch
-                                          ? theme.textTheme.labelLarge
-                                          : theme.textTheme.labelLarge
-                                              ?.copyWith(
-                                                  color: ThemeManager
-                                                      .vanillaErrorColor)),
+                              return MovingTooltipWidget.text(
+                                message: originalGameVersion != null
+                                    ? "Original game version: $originalGameVersion"
+                                    : null,
+                                child: _RowItemContainer(
+                                  height: height,
+                                  width: state.width,
+                                  child: Opacity(
+                                    opacity: WispGrid.lightTextOpacity,
+                                    child: Text(
+                                        "${bestVersion.modInfo.gameVersion ?? "(no game version)"}"
+                                        "${originalGameVersion != null ? "**" : ""}",
+                                        style: compareGameVersions(
+                                                    bestVersion
+                                                        .modInfo.gameVersion,
+                                                    ref
+                                                        .watch(appSettings)
+                                                        .lastStarsectorVersion) ==
+                                                GameCompatibility.perfectMatch
+                                            ? theme.textTheme.labelLarge
+                                            : theme.textTheme.labelLarge
+                                                ?.copyWith(
+                                                    color: ThemeManager
+                                                        .vanillaErrorColor)),
+                                  ),
                                 ),
                               );
                             }),
@@ -362,7 +369,9 @@ class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
                                 child: Opacity(
                                     opacity: 0.5,
                                     child: Disable(
-                                      isEnabled: vramEstimatorState.valueOrNull?.isScanning != true,
+                                      isEnabled: vramEstimatorState
+                                              .valueOrNull?.isScanning !=
+                                          true,
                                       child: MovingTooltipWidget.text(
                                         message: "Estimate VRAM usage",
                                         child: IconButton(

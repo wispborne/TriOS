@@ -16,6 +16,7 @@
     - Saves column width, position, visibility, and sorting.
     - Switched to reuse my old SMOL code :)
   - **Mass-enable/disable** mods, using control-click and shift-click to select mods.
+    - Can also mass-force mods to work with the current Starsector version.
   - "Favorites" to pin a mod on the Mods tab.
   - Mods can now be sorted by "First Seen" or "Last Enabled".
     - This is the date the mod was first seen or enabled by TriOS, not when it was first installed.
@@ -24,6 +25,8 @@
   - Tooltips are now more responsive and have replaced most of the old, "standard" styled tooltips.
   - Setting to disable "game is running" check.
   - Warning if user has 2+ enabled mod folders for the same mod.
+  - May now select outdated mods to be asked if you want to force them to run anyway.
+    - Mods "updated" this way will show asterisks next to their version. Hover to see the original version.
 - Fixed
   - Mod grid no longer resets itself constantly.
     - e.g. sorting now works.

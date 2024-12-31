@@ -13,6 +13,7 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/platform_specific.dart';
 import 'package:trios/utils/pretty_printer_custom.dart';
+import 'package:uuid/uuid.dart';
 
 import '../trios/constants.dart';
 import '../trios/settings/settings.dart';
@@ -269,6 +270,8 @@ SentryFlutterOptions configureSentry(
   options.dsn = utf8.decode(base64Decode(
       'aHR0cHM6Ly80OTAzMjgyNjBkZWVjMTYzMmQzODMzYTdiNTQzOWRkNUBvNDUwNzU3OTU3MzYwMDI1Ni5pbmdlc3QudXMuc2VudHJ5LmlvLzQ1MDc1Nzk1NzQ2NDg4MzI='));
 
+  final userId = getSentryUserId(settings);
+
   options
     ..debug = kDebugMode
     ..sendDefaultPii = false
@@ -287,6 +290,10 @@ SentryFlutterOptions configureSentry(
     if (message != null) {
       // Don't report overflow errors.
       if (message.contains(" overflowed by ")) {
+        return null;
+      }
+
+      if (event.exceptions?.firstOrNull is NetworkImageLoadException) {
         return null;
       }
 
@@ -314,8 +321,7 @@ SentryFlutterOptions configureSentry(
       release: Constants.version,
       dist: Constants.version,
       platform: Platform.operatingSystemVersion,
-      user: event.user
-          ?.copyWith(id: settings?.userId.toString(), ipAddress: "127.0.0.1"),
+      user: event.user?.copyWith(id: userId, ipAddress: "127.0.0.1"),
       contexts: event.contexts.copyWith(
         device: event.contexts.device?.copyWith(
           name: "redacted",
@@ -338,6 +344,40 @@ SentryFlutterOptions configureSentry(
   };
 
   return options;
+}
+
+String getSentryUserId(Settings? settings) {
+  final userIdFile =
+      Constants.configDataFolderPath.resolve("user_id_sentry.txt").toFile();
+  var userId = "";
+
+  // Read user id from file.
+  try {
+    if (userIdFile.existsSync()) {
+      userId = userIdFile.readAsStringSync();
+    }
+  } catch (e) {
+    Fimber.e("Error reading user ID from file.", ex: e);
+  }
+
+  // If user id is empty or too long, migrate it or generate a new one.
+  if (userId.isEmpty || userId.length > 100) {
+    try {
+      // Migrate from user id in settings to user id file.
+      if (settings != null && settings.userId.isNotNullOrEmpty()) {
+        userId = settings.userId;
+      } else {
+        // Generate a new user id.
+        userId = const Uuid().v8();
+      }
+
+      userIdFile.writeAsStringSync(userId);
+    } catch (e) {
+      Fimber.w("Error setting user ID.", ex: e);
+    }
+  }
+
+  return userId;
 }
 
 /// ChatGPT generated.

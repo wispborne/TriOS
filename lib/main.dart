@@ -22,7 +22,6 @@ import 'package:trios/utils/logging.dart';
 import 'package:trios/vram_estimator/vram_estimator.dart';
 import 'package:trios/widgets/post_update_toast.dart';
 import 'package:trios/widgets/restartable_app.dart';
-import 'package:uuid/uuid.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:window_size/window_size.dart';
 
@@ -108,13 +107,15 @@ void main() async {
   } catch (e) {
     Fimber.w("Error checking for changelog notification.", ex: e);
   }
+  try {
+    settingsManager.writeSettingsToDisk(
+        settings!.copyWith(showChangelogNextLaunch: false));
+  } catch (e) {
+    Fimber.w("Error writing changelog notification setting.", ex: e);
+  }
 
   // Set up Sentry
   try {
-    if (settings != null && settings.userId.isNullOrEmpty()) {
-      final userId = const Uuid().v8();
-      settingsManager.writeSettingsToDisk(settings.copyWith(userId: userId));
-    }
     allowCrashReporting = settings?.allowCrashReporting ?? false;
     configureLogging(allowSentryReporting: allowCrashReporting);
   } catch (e) {

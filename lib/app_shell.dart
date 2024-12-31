@@ -98,7 +98,6 @@ class _AppShellState extends ConsumerState<AppShell>
       Fimber.e("Error setting default tool: $e");
     }
 
-
     // Check for updates on launch and show toast if available.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       try {
@@ -646,6 +645,7 @@ class _FilePermissionShieldState extends ConsumerState<FilePermissionShield> {
   bool isStandardVmparamsWritable = false;
   bool areAllCustomJresWritable = false;
   List<String> customVmParamsFilesThatCannotBeWritten = [];
+  bool _initialized = false;
 
   @override
   Widget build(BuildContext context) {
@@ -653,23 +653,17 @@ class _FilePermissionShieldState extends ConsumerState<FilePermissionShield> {
     ref.listen(jreManagerProvider, (prev, next) async {
       final newState = next.valueOrNull;
       if (newState != null && prev?.valueOrNull != newState) {
-        customVmParamsFilesThatCannotBeWritten.clear();
-        isStandardVmparamsWritable =
-            await newState.standardActiveJre?.canWriteToVmParamsFile() ?? false;
-        areAllCustomJresWritable = true;
-        for (final customJre in newState.customInstalledJres) {
-          if (!await customJre.canWriteToVmParamsFile()) {
-            areAllCustomJresWritable = false;
-            customVmParamsFilesThatCannotBeWritten
-                .add(customJre.vmParamsFileRelativePath);
-            break;
-          }
-        }
+        await refresh(newState);
       }
     });
+
     final usesCustomJre =
         ref.watch(jreManagerProvider).valueOrNull?.activeJre?.isCustomJre ??
             false;
+
+    if (!_initialized) {
+      return const SizedBox();
+    }
 
     final paths = [
       (
@@ -735,6 +729,24 @@ class _FilePermissionShieldState extends ConsumerState<FilePermissionShield> {
         ],
       ),
     );
+  }
+
+  Future<void> refresh(JreManagerState newState) async {
+    customVmParamsFilesThatCannotBeWritten.clear();
+    isStandardVmparamsWritable =
+        await newState.standardActiveJre?.canWriteToVmParamsFile() ?? false;
+    areAllCustomJresWritable = true;
+    for (final customJre in newState.customInstalledJres) {
+      if (!await customJre.canWriteToVmParamsFile()) {
+        areAllCustomJresWritable = false;
+        customVmParamsFilesThatCannotBeWritten
+            .add(customJre.vmParamsFileRelativePath);
+        break;
+      }
+    }
+    setState(() {
+      _initialized = true;
+    });
   }
 }
 

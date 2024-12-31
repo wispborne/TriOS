@@ -87,6 +87,7 @@ class Settings with SettingsMappable {
   final ModUpdateBehavior modUpdateBehavior;
   final bool checkIfGameIsRunning;
 
+  @Deprecated("Use getSentryUserId instead.")
   final String userId; // For Sentry
   final bool? hasHiddenForumDarkModeTip;
 

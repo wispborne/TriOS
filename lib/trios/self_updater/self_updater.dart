@@ -118,6 +118,10 @@ class SelfUpdater extends AsyncNotifier<TriOSDownloadProgress?> {
           mode: ProcessStartMode.detached,
         );
       }
+
+      // Show changelog next launch.
+      ref.read(appSettings.notifier).settingsManager.writeSettingsToDisk(
+          ref.read(appSettings).copyWith(showChangelogNextLaunch: true));
       if (exitSelfAfter) {
         await Future.delayed(const Duration(milliseconds: 500));
         Fimber.i(

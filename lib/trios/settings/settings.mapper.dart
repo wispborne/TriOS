@@ -171,6 +171,10 @@ class SettingsMapper extends ClassMapperBase<Settings> {
   static String? _$themeKey(Settings v) => v.themeKey;
   static const Field<Settings, String> _f$themeKey =
       Field('themeKey', _$themeKey, opt: true);
+  static bool? _$showChangelogNextLaunch(Settings v) =>
+      v.showChangelogNextLaunch;
+  static const Field<Settings, bool> _f$showChangelogNextLaunch =
+      Field('showChangelogNextLaunch', _$showChangelogNextLaunch, opt: true);
   static bool _$enableDirectLaunch(Settings v) => v.enableDirectLaunch;
   static const Field<Settings, bool> _f$enableDirectLaunch =
       Field('enableDirectLaunch', _$enableDirectLaunch, opt: true, def: false);
@@ -275,6 +279,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #lastActiveJreVersion: _f$lastActiveJreVersion,
     #showCustomJreConsoleWindow: _f$showCustomJreConsoleWindow,
     #themeKey: _f$themeKey,
+    #showChangelogNextLaunch: _f$showChangelogNextLaunch,
     #enableDirectLaunch: _f$enableDirectLaunch,
     #launchSettings: _f$launchSettings,
     #lastStarsectorVersion: _f$lastStarsectorVersion,
@@ -315,6 +320,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
         lastActiveJreVersion: data.dec(_f$lastActiveJreVersion),
         showCustomJreConsoleWindow: data.dec(_f$showCustomJreConsoleWindow),
         themeKey: data.dec(_f$themeKey),
+        showChangelogNextLaunch: data.dec(_f$showChangelogNextLaunch),
         enableDirectLaunch: data.dec(_f$enableDirectLaunch),
         launchSettings: data.dec(_f$launchSettings),
         lastStarsectorVersion: data.dec(_f$lastStarsectorVersion),
@@ -408,6 +414,7 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
       String? lastActiveJreVersion,
       bool? showCustomJreConsoleWindow,
       String? themeKey,
+      bool? showChangelogNextLaunch,
       bool? enableDirectLaunch,
       LaunchSettings? launchSettings,
       String? lastStarsectorVersion,
@@ -468,6 +475,7 @@ class _SettingsCopyWithImpl<$R, $Out>
           Object? lastActiveJreVersion = $none,
           bool? showCustomJreConsoleWindow,
           Object? themeKey = $none,
+          Object? showChangelogNextLaunch = $none,
           bool? enableDirectLaunch,
           LaunchSettings? launchSettings,
           Object? lastStarsectorVersion = $none,
@@ -508,6 +516,8 @@ class _SettingsCopyWithImpl<$R, $Out>
         if (showCustomJreConsoleWindow != null)
           #showCustomJreConsoleWindow: showCustomJreConsoleWindow,
         if (themeKey != $none) #themeKey: themeKey,
+        if (showChangelogNextLaunch != $none)
+          #showChangelogNextLaunch: showChangelogNextLaunch,
         if (enableDirectLaunch != null) #enableDirectLaunch: enableDirectLaunch,
         if (launchSettings != null) #launchSettings: launchSettings,
         if (lastStarsectorVersion != $none)
@@ -564,6 +574,8 @@ class _SettingsCopyWithImpl<$R, $Out>
       showCustomJreConsoleWindow: data.get(#showCustomJreConsoleWindow,
           or: $value.showCustomJreConsoleWindow),
       themeKey: data.get(#themeKey, or: $value.themeKey),
+      showChangelogNextLaunch: data.get(#showChangelogNextLaunch,
+          or: $value.showChangelogNextLaunch),
       enableDirectLaunch:
           data.get(#enableDirectLaunch, or: $value.enableDirectLaunch),
       launchSettings: data.get(#launchSettings, or: $value.launchSettings),
@@ -590,8 +602,7 @@ class _SettingsCopyWithImpl<$R, $Out>
           data.get(#allowCrashReporting, or: $value.allowCrashReporting),
       updateToPrereleases:
           data.get(#updateToPrereleases, or: $value.updateToPrereleases),
-      autoEnableAndDisableDependencies: data.get(
-          #autoEnableAndDisableDependencies,
+      autoEnableAndDisableDependencies: data.get(#autoEnableAndDisableDependencies,
           or: $value.autoEnableAndDisableDependencies),
       enableLauncherPrecheck:
           data.get(#enableLauncherPrecheck, or: $value.enableLauncherPrecheck),

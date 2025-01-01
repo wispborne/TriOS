@@ -205,6 +205,7 @@ class MovingTooltipWidget extends StatefulWidget {
     required String? message,
     required Widget child,
     TextStyle? textStyle,
+    Color? backgroundColor,
     double windowEdgePadding = 10.0,
     Size offset = const Size(5, 5),
     TooltipPosition position = TooltipPosition.bottomRight,
@@ -215,6 +216,7 @@ class MovingTooltipWidget extends StatefulWidget {
               return MovingTooltipWidget(
                 key: key,
                 tooltipWidget: TooltipFrame(
+                  backgroundColor: backgroundColor,
                   child: Text(
                     message!,
                     style: textStyle ?? Theme.of(context).textTheme.bodySmall,

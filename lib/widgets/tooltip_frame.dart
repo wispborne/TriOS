@@ -5,11 +5,14 @@ import '../themes/theme_manager.dart';
 class TooltipFrame extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;
+  final Color? backgroundColor;
 
-  const TooltipFrame(
-      {super.key,
-      required this.child,
-      this.padding = const EdgeInsets.all(8)});
+  const TooltipFrame({
+    super.key,
+    required this.child,
+    this.padding = const EdgeInsets.all(8),
+    this.backgroundColor,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +20,7 @@ class TooltipFrame extends StatelessWidget {
     return Card(
       child: Container(
         decoration: BoxDecoration(
-          color: theme.cardColor,
+          color: backgroundColor ?? theme.cardColor,
           borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
           border: Border.all(color: theme.colorScheme.secondary),
           boxShadow: [

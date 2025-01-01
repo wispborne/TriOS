@@ -62,7 +62,7 @@ class _ChangelogViewerState extends State<ChangelogViewer> {
                 ),
                 child: Row(children: [
                   SvgImageIcon(
-                    "icon-bullhorn-variant",
+                    "assets/images/icon-bullhorn-variant.svg",
                     width: 36,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),

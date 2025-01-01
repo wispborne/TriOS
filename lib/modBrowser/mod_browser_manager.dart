@@ -1,5 +1,6 @@
-import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+// import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http;
 import 'package:trios/modBrowser/models/scraped_mod.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/logging.dart';
@@ -10,17 +11,17 @@ final browseModsNotifierProvider =
     StreamProvider<ScrapedModsRepo>((ref) async* {
   final currentTime = DateTime.now();
   ref.watch(isLoadingBrowseModsList.notifier).state = true;
-  final cache = CacheManager(Config("trios_modrepo_cache"));
+  // final cache = CacheManager(Config("trios_modrepo_cache"));
   String modRepo;
 
   try {
-    final cache = CacheManager(Config("trios_modrepo_cache"));
-    modRepo =
-        (await cache.getSingleFile(Constants.modRepoUrl)).readAsStringSync();
+    // final cache = CacheManager(Config("trios_modrepo_cache"));
+    modRepo = (await http.get(Uri.parse(Constants.modRepoUrl))).body;
+    // (await cache.getSingleFile(Constants.modRepoUrl)).readAsStringSync();
   } catch (ex, st) {
     Fimber.w('Failed to fetch mod repo', ex: ex, stacktrace: st);
     ref.watch(isLoadingBrowseModsList.notifier).state = false;
-    cache.emptyCache();
+    // cache.emptyCache();
     return;
   }
 

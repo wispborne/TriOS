@@ -34,7 +34,9 @@ dependencies:
   file_picker: ^8.0.6
   fl_chart: ^0.69.0
   flutter_animate: ^4.5.0
-  flutter_cache_manager: ^3.4.1
+  # Was used for mod catalog adblock list, which turns out isn't supported on Windows.
+  # Also used for mod repo cache, but it's only 190kb and only fetched once per run.
+ # flutter_cache_manager: ^3.4.1
   flutter_color: ^2.1.0
   freezed_annotation: ^2.4.1
   google_fonts: ^6.2.1

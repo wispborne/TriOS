@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/jre_manager/jre_entry.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
@@ -35,8 +34,6 @@ class AppState {
       AsyncNotifierProvider<SelfUpdater, TriOSDownloadProgress?>(
           SelfUpdater.new);
   static final appContext = StateProvider<BuildContext?>((ref) => null);
-  static final CacheManager cacheManager = CacheManager(
-      Config("trios_cache", stalePeriod: const Duration(hours: 3)));
 
   /// Master list of all mod variants found in the mods folder.
   static final modVariants =

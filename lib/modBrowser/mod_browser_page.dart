@@ -92,7 +92,7 @@ class _ModBrowserPage extends ConsumerState<ModBrowserPage>
         forceDarkStrategy:
             ForceDarkStrategy.PREFER_WEB_THEME_OVER_USER_AGENT_DARKENING,
       );
-      downloadAdBlockList();
+      // downloadAdBlockList();
     });
   }
 
@@ -674,36 +674,52 @@ class _ModBrowserPage extends ConsumerState<ModBrowserPage>
     }
   }
 
-  void downloadAdBlockList() async {
-    try {
-      var adblockList = await (await AppState.cacheManager.getSingleFile(
-              "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts"))
-          .readAsLines()
-        ..removeWhere((line) => line.trim().startsWith("#") || line.isEmpty);
+  // static CacheManager? _adblockListCacheManager;
 
-      List<String> transformed = adblockList.map((entry) {
-        // Extract the domain part by splitting and taking the second part
-        String domain = entry.split(" ")[1];
-        // Convert to the desired regex pattern format
-        return '.*.$domain/.*';
-      }).toList();
-
-      for (final adUrlFilter in transformed) {
-        contentBlockers.add(ContentBlocker(
-            trigger: ContentBlockerTrigger(
-              urlFilter: adUrlFilter,
-            ),
-            action: ContentBlockerAction(
-              type: ContentBlockerActionType.BLOCK,
-            )));
-      }
-
-      webViewController?.setSettings(
-          settings: webSettings!..contentBlockers = contentBlockers);
-    } catch (ex, st) {
-      Fimber.w("Failed to download adblock list.", ex: ex, stacktrace: st);
-    }
-  }
+  // Only supported on Android, iOS, MacOS: https://inappwebview.dev/docs/webview/content-blockers
+  // void downloadAdBlockList() async {
+  //   try {
+  //     _adblockListCacheManager ??= CacheManager(
+  //         Config("trios_adblock_list_cache", stalePeriod: const Duration(days: 3)));
+  //   } catch (ex, st) {
+  //     Fimber.e('Failed to create mod catalog adblock list cache manager',
+  //         ex: ex, stacktrace: st);
+  //   }
+  //
+  //   if (_adblockListCacheManager == null) return;
+  //
+  //   try {
+  //     final cacheManagerLocal = _adblockListCacheManager!;
+  //     final adblockList = await (await cacheManagerLocal.getSingleFile(
+  //             "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts"))
+  //         .readAsLines()
+  //       ..removeWhere((line) => line.trim().startsWith("#") || line.isEmpty);
+  //
+  //     List<String> transformed = adblockList.map((entry) {
+  //       // Extract the domain part by splitting and taking the second part
+  //       String domain = entry.split(" ")[1];
+  //       // Convert to the desired regex pattern format
+  //       return '.*.$domain/.*';
+  //     })
+  //         .whereType<String>()
+  //         .toList();
+  //
+  //     for (final adUrlFilter in transformed) {
+  //       contentBlockers.add(ContentBlocker(
+  //           trigger: ContentBlockerTrigger(
+  //             urlFilter: adUrlFilter,
+  //           ),
+  //           action: ContentBlockerAction(
+  //             type: ContentBlockerActionType.BLOCK,
+  //           )));
+  //     }
+  //
+  //     webViewController?.setSettings(
+  //         settings: webSettings!..contentBlockers = contentBlockers);
+  //   } catch (ex, st) {
+  //     Fimber.w("Failed to download adblock list.", ex: ex, stacktrace: st);
+  //   }
+  // }
 
   @override
   void dispose() {

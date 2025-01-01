@@ -24,8 +24,8 @@ class WispGridState with WispGridStateMappable {
       ModGridHeader.version: ModGridColumnSetting(position: 6, width: 100),
       ModGridHeader.vramImpact: ModGridColumnSetting(position: 7, width: 110),
       ModGridHeader.gameVersion: ModGridColumnSetting(position: 8, width: 100),
-      ModGridHeader.firstSeen: ModGridColumnSetting(position: 9, width: 100),
-      ModGridHeader.lastEnabled: ModGridColumnSetting(position: 10, width: 100),
+      ModGridHeader.firstSeen: ModGridColumnSetting(position: 9, width: 150),
+      ModGridHeader.lastEnabled: ModGridColumnSetting(position: 10, width: 150),
     },
     this.groupingSetting =
         const GroupingSetting(grouping: ModGridGroupEnum.enabledState),
@@ -105,7 +105,7 @@ extension ModGridHeaderName on ModGridHeader {
         return 'Game Version';
       case ModGridHeader.firstSeen:
         return 'First Seen';
-        case ModGridHeader.lastEnabled:
+      case ModGridHeader.lastEnabled:
         return 'Last Enabled';
     }
   }

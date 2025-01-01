@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
@@ -33,7 +34,8 @@ class _WispGridModHeaderRowViewState
       .read(appSettings.select((s) => s.modsGridState))
       .sortedVisibleColumns
       .map((entry) => Area(id: entry.key.toString(), size: entry.value.width))
-      .toList();
+      .toList()
+    ..add(Area(id: 'endspace'));
 
   @override
   void initState() {
@@ -74,7 +76,8 @@ class _WispGridModHeaderRowViewState
             Map.fromEntries(state.modsGridState.sortedColumns);
         for (final area in multiSplitController.areas) {
           final header = ModGridHeader.values
-              .firstWhere((header) => header.toString() == area.id);
+              .firstWhereOrNull((header) => header.toString() == area.id);
+          if (header == null) continue;
           columnSettings[header] =
               columnSettings[header]!.copyWith(width: area.size);
         }
@@ -91,41 +94,7 @@ class _WispGridModHeaderRowViewState
     final theme = Theme.of(context);
 
     return ContextMenuRegion(
-      contextMenu: ContextMenu(
-        entries: [
-          MenuItem(
-              label: 'Reset grid layout',
-              icon: Icons.settings_backup_restore,
-              onSelected: () {
-                ref
-                    .read(appSettings.notifier)
-                    .update((s) => s.copyWith(modsGridState: WispGridState()));
-              }),
-          MenuDivider(),
-          // Visibility toggles
-          ...gridState.columnSettings.entries.map((columnSetting) {
-            final header = columnSetting.key;
-            final isVisible =
-                gridState.columnSettings[header]?.isVisible ?? true;
-            return MenuItem(
-              label: header.displayName,
-              icon: isVisible ? Icons.visibility : Icons.visibility_off,
-              onSelected: () {
-                ref.read(appSettings.notifier).update((s) {
-                  final columnSettings = s.modsGridState.columnSettings.toMap();
-                  final headerSetting = columnSettings[header]!;
-                  columnSettings[header] = headerSetting.copyWith(
-                      isVisible: !headerSetting.isVisible);
-
-                  return s.copyWith(
-                      modsGridState: s.modsGridState
-                          .copyWith(columnSettings: columnSettings));
-                });
-              },
-            );
-          })
-        ],
-      ),
+      contextMenu: buildHeaderContextMenu(gridState),
       child: HoverableWidget(child: Builder(builder: (context) {
         final isHovering = HoverData.of(context)?.isHovering ?? false;
         return MultiSplitViewTheme(
@@ -149,13 +118,14 @@ class _WispGridModHeaderRowViewState
                 controller: multiSplitController,
                 axis: Axis.horizontal,
                 builder: (context, area) {
-                  // child: Row(
-                  // children: (gridState.columnSettings.entries.map((columnSetting) {
+                  if (area.id == 'endspace') return Container();
+
                   final columnSetting = gridState.sortedVisibleColumns
                       .elementAt(min(area.index,
                           gridState.sortedVisibleColumns.length - 1));
 
                   return Builder(builder: (context) {
+
                     final header = columnSetting.key;
                     final state = columnSetting.value;
                     final headerTextStyle = Theme.of(context)
@@ -291,6 +261,43 @@ class _WispGridModHeaderRowViewState
           ),
         );
       })),
+    );
+  }
+
+  ContextMenu buildHeaderContextMenu(WispGridState gridState) {
+    return ContextMenu(
+      entries: [
+        MenuItem(
+            label: 'Reset grid layout',
+            icon: Icons.settings_backup_restore,
+            onSelected: () {
+              ref
+                  .read(appSettings.notifier)
+                  .update((s) => s.copyWith(modsGridState: WispGridState()));
+            }),
+        MenuDivider(),
+        // Visibility toggles
+        ...gridState.columnSettings.entries.map((columnSetting) {
+          final header = columnSetting.key;
+          final isVisible = gridState.columnSettings[header]?.isVisible ?? true;
+          return MenuItem(
+            label: header.displayName,
+            icon: isVisible ? Icons.visibility : Icons.visibility_off,
+            onSelected: () {
+              ref.read(appSettings.notifier).update((s) {
+                final columnSettings = s.modsGridState.columnSettings.toMap();
+                final headerSetting = columnSettings[header]!;
+                columnSettings[header] =
+                    headerSetting.copyWith(isVisible: !headerSetting.isVisible);
+
+                return s.copyWith(
+                    modsGridState: s.modsGridState
+                        .copyWith(columnSettings: columnSettings));
+              });
+            },
+          );
+        })
+      ],
     );
   }
 }

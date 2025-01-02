@@ -33,7 +33,8 @@ class WispGrid extends ConsumerStatefulWidget {
 }
 
 class _WispGridState extends ConsumerState<WispGrid> {
-  final ScrollController _gridScrollController = ScrollController();
+  final ScrollController _gridScrollControllerVertical = ScrollController();
+  final ScrollController _gridScrollControllerHorizontal = ScrollController();
   final Map<Object?, bool> collapseStates = {};
   final Set<String> _checkedModIds = {};
 
@@ -120,33 +121,37 @@ class _WispGridState extends ConsumerState<WispGrid> {
 
     // TODO smooth scrolling: https://github.com/dridino/smooth_list_view/blob/main/lib/smooth_list_view.dart
     return Scrollbar(
-      controller: _gridScrollController,
-      thumbVisibility: true,
+      controller: _gridScrollControllerHorizontal,
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        child: SizedBox(
-          width: gridState.sortedVisibleColumns
-              .map((e) => e.value.width + WispGrid.gridRowSpacing + 10)
-              .sum
-              .coerceAtMost(MediaQuery.of(context).size.width * 1.3),
-          child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: displayedMods.length,
-              controller: _gridScrollController,
-              itemBuilder: (context, index) {
-                final item = displayedMods[index];
+        controller: _gridScrollControllerHorizontal,
+        child: Scrollbar(
+          controller: _gridScrollControllerVertical,
+          scrollbarOrientation: ScrollbarOrientation.left,
+          child: SizedBox(
+            width: gridState.sortedVisibleColumns
+                .map((e) => e.value.width + WispGrid.gridRowSpacing + 10)
+                .sum
+                .coerceAtMost(MediaQuery.of(context).size.width * 1.3),
+            child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: displayedMods.length,
+                controller: _gridScrollControllerVertical,
+                itemBuilder: (context, index) {
+                  final item = displayedMods[index];
 
-                if (item is WispGridModGroupRowView) {
-                  return item;
-                }
+                  if (item is WispGridModGroupRowView) {
+                    return item;
+                  }
 
-                try {
-                  return item;
-                } catch (e) {
-                  Fimber.v(() => 'Error in WispGrid: $e');
-                  return Text("Incoherent screaming");
-                }
-              }),
+                  try {
+                    return item;
+                  } catch (e) {
+                    Fimber.v(() => 'Error in WispGrid: $e');
+                    return Text("Incoherent screaming");
+                  }
+                }),
+          ),
         ),
       ),
     );

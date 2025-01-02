@@ -1,3 +1,7 @@
+# 1.0.1
+- Fixed
+  - No/hidden scrollbars on mod grid.
+
 # 1.0.0
 - Added
   - **Onboarding** popup on first launch.

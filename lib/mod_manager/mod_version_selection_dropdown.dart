@@ -94,12 +94,14 @@ class _ModVersionSelectionDropdownState
     );
 
     const gameVersionMessage =
-        "This mod requires a different version of the game.";
+        "This mod requires a different version of the game";
     final errorTooltip = hasMultipleEnabled
         ? "Warning"
             "\nYou have two or more enabled mod folders for ${mainVariant?.modInfo.nameOrId}. The game will pick one at 'random'."
             "\nSelect one version from the dropdown."
-        : null;
+        : areAllDependenciesSatisfied == false
+            ? "Requires ${modDependenciesSatisfied?.where((it) => !it.canBeSatisfiedWithInstalledMods).joinToString(transform: (it) => it.dependency.nameOrId)}"
+            : null;
     final warningIcon = Icon(
       Icons.warning,
       color: textColor,
@@ -132,11 +134,15 @@ class _ModVersionSelectionDropdownState
     }
 
     if (isSingleVariant) {
+      final tooltipMessage = errorTooltip ??
+          (widget.showTooltip
+              ? (!isSupportedByGameVersion ? gameVersionMessage : "")
+              : null);
       return MovingTooltipWidget.text(
-        message: errorTooltip ??
-            (widget.showTooltip
-                ? (!isSupportedByGameVersion ? gameVersionMessage : "")
-                : null),
+        message: tooltipMessage,
+        warningLevel: tooltipMessage != null
+            ? TooltipWarningLevel.warning
+            : TooltipWarningLevel.none,
         child: Disable(
           isEnabled: isButtonEnabled,
           child: SizedBox(

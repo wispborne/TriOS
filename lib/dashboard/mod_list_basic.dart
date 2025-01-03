@@ -60,7 +60,6 @@ class _ModListMiniState extends ConsumerState<ModListMini>
         .sortedByName;
 
     final versionCheck = ref.watch(AppState.versionCheckResults).valueOrNull;
-    searchController.value = TextEditingValue(text: query);
     final theme = Theme.of(context);
 
     return Padding(

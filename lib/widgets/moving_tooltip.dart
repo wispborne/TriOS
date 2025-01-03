@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/thirdparty/dartx/string.dart';
 import 'package:trios/widgets/tooltip_frame.dart';
 
@@ -184,6 +185,8 @@ class _TooltipLayout extends SingleChildRenderObjectWidget {
   }
 }
 
+enum TooltipWarningLevel { none, warning, error }
+
 class MovingTooltipWidget extends StatefulWidget {
   final Widget child;
   final Widget tooltipWidget;
@@ -204,6 +207,7 @@ class MovingTooltipWidget extends StatefulWidget {
     Key? key,
     required String? message,
     required Widget child,
+    TooltipWarningLevel? warningLevel,
     TextStyle? textStyle,
     Color? backgroundColor,
     double windowEdgePadding = 10.0,
@@ -217,9 +221,27 @@ class MovingTooltipWidget extends StatefulWidget {
                 key: key,
                 tooltipWidget: TooltipFrame(
                   backgroundColor: backgroundColor,
+                  borderColor: switch (warningLevel) {
+                    null || TooltipWarningLevel.none => null,
+                    TooltipWarningLevel.warning ||
+                    TooltipWarningLevel.error =>
+                      Theme.of(context)
+                          .colorScheme
+                          .onSecondaryContainer
+                          .withOpacity(0.5),
+                  },
                   child: Text(
                     message!,
-                    style: textStyle ?? Theme.of(context).textTheme.bodySmall,
+                    style: (textStyle ?? Theme.of(context).textTheme.bodySmall)
+                        ?.copyWith(
+                            color: switch (warningLevel) {
+                      null => textStyle?.color,
+                      TooltipWarningLevel.none => null,
+                      TooltipWarningLevel.warning =>
+                        ThemeManager.vanillaWarningColor,
+                      TooltipWarningLevel.error =>
+                        ThemeManager.vanillaErrorColor,
+                    }),
                   ),
                 ),
                 windowEdgePadding: windowEdgePadding,

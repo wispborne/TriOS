@@ -6,12 +6,14 @@ class TooltipFrame extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;
   final Color? backgroundColor;
+  final Color? borderColor;
 
   const TooltipFrame({
     super.key,
     required this.child,
     this.padding = const EdgeInsets.all(8),
     this.backgroundColor,
+    this.borderColor,
   });
 
   @override
@@ -22,7 +24,7 @@ class TooltipFrame extends StatelessWidget {
         decoration: BoxDecoration(
           color: backgroundColor ?? theme.cardColor,
           borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
-          border: Border.all(color: theme.colorScheme.secondary),
+          border: Border.all(color: borderColor ?? theme.colorScheme.secondary),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.4),

@@ -118,6 +118,9 @@ class _WispGridState extends ConsumerState<WispGrid> {
                 })
                 .nonNulls
                 .toList();
+    final totalRowWidth = gridState.sortedVisibleColumns
+        .map((e) => e.value.width + WispGrid.gridRowSpacing)
+        .sum;
 
     // TODO smooth scrolling: https://github.com/dridino/smooth_list_view/blob/main/lib/smooth_list_view.dart
     return Scrollbar(
@@ -141,7 +144,16 @@ class _WispGridState extends ConsumerState<WispGrid> {
                   final item = displayedMods[index];
 
                   if (item is WispGridModGroupRowView) {
-                    return item;
+                    return Row(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 4),
+                          child: SizedBox(width: totalRowWidth, child: item),
+                        ),
+                        Spacer(),
+                      ],
+                    );
                   }
 
                   try {

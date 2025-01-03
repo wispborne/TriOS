@@ -161,9 +161,10 @@ bool isModGameVersionIncorrect(String? currentStarsectorVersion,
     bool isGameRunning, ModVariant modVariant) {
   return currentStarsectorVersion != null &&
       !isGameRunning &&
-      Version.parse(modVariant.modInfo.gameVersion ?? "0.0.0",
-              sanitizeInput: true) !=
-          Version.parse(currentStarsectorVersion, sanitizeInput: true);
+      !Version.parse(modVariant.modInfo.gameVersion ?? "0.0.0",
+              sanitizeInput: true)
+          .equalsSymbolic(
+              Version.parse(currentStarsectorVersion, sanitizeInput: true));
 }
 
 MenuItem<dynamic> buildMenuItemForceChangeModGameVesion(

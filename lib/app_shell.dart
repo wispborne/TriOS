@@ -462,7 +462,14 @@ class _AppShellState extends ConsumerState<AppShell>
                                 applicationName: Constants.appTitle,
                                 applicationVersion:
                                     "A Starsector toolkit\nby Wisp",
-                                children: [const AboutPage()],
+                                children: [
+                                  ConstrainedBox(
+                                    constraints: const BoxConstraints(
+                                      maxWidth: 700,
+                                    ),
+                                    child: const AboutPage(),
+                                  )
+                                ],
                               );
                             },
                           ),

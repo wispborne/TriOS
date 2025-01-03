@@ -1,3 +1,12 @@
+# 1.0.2
+- Fixed
+  - Crash on Mod Catalog for some Windows 10 users.
+    - Hopefully.
+  - Too-tall VRAM tooltip on Enabled/Disabled groups. 
+  - Search on Dashboard not allowing typing properly.
+  - Game version compatibility treating different RCs as different game versions.
+  - No tooltip explaining why a mod missing a dependency cannot be enabled.
+
 # 1.0.1
 - Fixed
   - No/hidden scrollbars on mod grid.

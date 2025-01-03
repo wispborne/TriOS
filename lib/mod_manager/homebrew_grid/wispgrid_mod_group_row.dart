@@ -71,103 +71,102 @@ class _WispGridModRowState extends ConsumerState<WispGridModGroupRowView> {
         .map((e) => e.value.width + WispGrid.gridRowSpacing)
         .sum;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: Card(
-        child: InkWell(
-          onTap: () {
-            widget.setCollapsed(!widget.isCollapsed);
-          },
-          // no ripple
-          highlightColor: Colors.transparent,
-          splashColor: Colors.transparent,
-          borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-            child: Stack(
-              alignment: Alignment.centerLeft,
-              // crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Row(
-                  children: [
-                    SizedBox(
-                      height: 24,
-                      width: 24,
-                      child: Icon(
-                        widget.isCollapsed
-                            ? Icons.keyboard_arrow_right
-                            : Icons.keyboard_arrow_down,
-                        size: 16,
-                      ),
+    return Card(
+      child: InkWell(
+        onTap: () {
+          widget.setCollapsed(!widget.isCollapsed);
+        },
+        // no ripple
+        highlightColor: Colors.transparent,
+        splashColor: Colors.transparent,
+        borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+          child: Stack(
+            alignment: Alignment.centerLeft,
+            // crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Row(
+                children: [
+                  SizedBox(
+                    height: 24,
+                    width: 24,
+                    child: Icon(
+                      widget.isCollapsed
+                          ? Icons.keyboard_arrow_right
+                          : Icons.keyboard_arrow_down,
+                      size: 16,
                     ),
-                    SizedBox(width: 4),
-                    Text("${groupName ?? ""} (${modsInGroup.length})",
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              fontFamily: ThemeManager.orbitron,
-                              fontWeight: FontWeight.bold,
-                            )),
-                  ],
-                ),
-                Positioned(
-                  // Subtract padding added to group that isn't present on the mod row
-                  left: cellWidthBeforeVramColumn - 20 + WispGrid.gridRowSpacing,
-                  child: Padding(
-                      padding: EdgeInsets.only(right: 8, left: 0),
-                      child: MovingTooltipWidget(
-                        tooltipWidget: TooltipFrame(
-                            child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // bold
-                            Text("Estimated VRAM use by $groupName mods\n",
+                  ),
+                  SizedBox(width: 4),
+                  Text("${groupName ?? ""} (${modsInGroup.length})",
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            fontFamily: ThemeManager.orbitron,
+                            fontWeight: FontWeight.bold,
+                          )),
+                ],
+              ),
+              Positioned(
+                // Subtract padding added to group that isn't present on the mod row
+                left:
+                    cellWidthBeforeVramColumn - 20 + WispGrid.gridRowSpacing,
+                child: Padding(
+                    padding: EdgeInsets.only(right: 8, left: 0),
+                    child: MovingTooltipWidget(
+                      tooltipWidget: TooltipFrame(
+                          child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // bold
+                          Text("Estimated VRAM use by $groupName mods\n",
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelLarge
+                                  ?.copyWith(fontWeight: FontWeight.bold)),
+                          if (graphicsLibConfig != null)
+                            Text("GraphicsLib settings",
                                 style: Theme.of(context)
                                     .textTheme
                                     .labelLarge
                                     ?.copyWith(fontWeight: FontWeight.bold)),
-                            if (graphicsLibConfig != null)
-                              Text("GraphicsLib settings",
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .labelLarge
-                                      ?.copyWith(fontWeight: FontWeight.bold)),
-                            if (graphicsLibConfig != null)
-                              Text(
-                                  "Enabled: ${graphicsLibConfig.areAnyEffectsEnabled ? "yes" : "no"}",
-                                  style:
-                                      Theme.of(context).textTheme.labelLarge),
-                            if (graphicsLibConfig != null &&
-                                graphicsLibConfig.areAnyEffectsEnabled)
-                              Text(
-                                  "Normal maps: ${graphicsLibConfig.areGfxLibNormalMapsEnabled ? "on" : "off"}"
-                                  "\nMaterial maps: ${graphicsLibConfig.areGfxLibMaterialMapsEnabled ? "on" : "off"}"
-                                  "\nSurface maps: ${graphicsLibConfig.areGfxLibSurfaceMapsEnabled ? "on" : "off"}",
-                                  style:
-                                      Theme.of(context).textTheme.labelLarge),
+                          if (graphicsLibConfig != null)
                             Text(
-                                "\n${vramModsNoGraphicsLib.bytesAsReadableMB()} added by mods (${allEstimates.map((e) => e.images.length).sum} images)"
-                                "${vramFromGraphicsLib.sum() > 0 ? "\n${vramFromGraphicsLib.sum().bytesAsReadableMB()} added by your GraphicsLib settings (${vramFromGraphicsLib.length} images)" : ""}"
-                                "${vramFromVanilla != null ? "\n${vramFromVanilla.bytesAsReadableMB()} added by vanilla" : ""}"
-                                "\n---"
-                                "\n${(vramModsNoGraphicsLib + vramFromGraphicsLib.sum() + (vramFromVanilla ?? 0.0)).bytesAsReadableMB()} total",
-                                style: Theme.of(context).textTheme.labelLarge)
-                          ],
-                        )),
-                        child: Center(
-                          child: Opacity(
-                            opacity: WispGrid.lightTextOpacity,
-                            child: Text(
-                              "∑ ${(vramModsNoGraphicsLib + vramFromGraphicsLib.sum() + (vramFromVanilla ?? 0.0)).bytesAsReadableMB()}",
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .labelMedium
-                                  ?.copyWith(),
-                            ),
+                                "Enabled: ${graphicsLibConfig.areAnyEffectsEnabled ? "yes" : "no"}",
+                                style:
+                                    Theme.of(context).textTheme.labelLarge),
+                          if (graphicsLibConfig != null &&
+                              graphicsLibConfig.areAnyEffectsEnabled)
+                            Text(
+                                "Normal maps: ${graphicsLibConfig.areGfxLibNormalMapsEnabled ? "on" : "off"}"
+                                "\nMaterial maps: ${graphicsLibConfig.areGfxLibMaterialMapsEnabled ? "on" : "off"}"
+                                "\nSurface maps: ${graphicsLibConfig.areGfxLibSurfaceMapsEnabled ? "on" : "off"}",
+                                style:
+                                    Theme.of(context).textTheme.labelLarge),
+                          Text(
+                              "\n${vramModsNoGraphicsLib.bytesAsReadableMB()} added by mods (${allEstimates.map((e) => e.images.length).sum} images)"
+                              "${vramFromGraphicsLib.sum() > 0 ? "\n${vramFromGraphicsLib.sum().bytesAsReadableMB()} added by your GraphicsLib settings (${vramFromGraphicsLib.length} images)" : ""}"
+                              "${vramFromVanilla != null ? "\n${vramFromVanilla.bytesAsReadableMB()} added by vanilla" : ""}"
+                              "\n---"
+                              "\n${(vramModsNoGraphicsLib + vramFromGraphicsLib.sum() + (vramFromVanilla ?? 0.0)).bytesAsReadableMB()} total",
+                              style: Theme.of(context).textTheme.labelLarge)
+                        ],
+                      )),
+                      child: Center(
+                        child: Opacity(
+                          opacity: WispGrid.lightTextOpacity,
+                          child: Text(
+                            "∑ ${(vramModsNoGraphicsLib + vramFromGraphicsLib.sum() + (vramFromVanilla ?? 0.0)).bytesAsReadableMB()}",
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelMedium
+                                ?.copyWith(),
                           ),
                         ),
-                      )),
-                )
-              ],
-            ),
+                      ),
+                    )),
+              )
+            ],
           ),
         ),
       ),

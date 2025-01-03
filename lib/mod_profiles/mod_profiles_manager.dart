@@ -180,18 +180,15 @@ class ModProfileManagerNotifier
     update((oldState) => oldState.copyWith(modProfiles: newModProfiles));
   }
 
-  List<ModChange> computeModProfileChanges(String modProfileId) {
-    final profile = state.valueOrNull?.modProfiles
-        .firstWhereOrNull((profile) => profile.id == modProfileId);
-    if (profile == null) {
-      Fimber.w("Profile $modProfileId not found.");
-      return [];
-    }
-
-    final allMods = ref.read(AppState.mods);
-    final modVariants = ref.read(AppState.modVariants).valueOrNull ?? [];
-    final currentlyEnabledModVariants = ref.read(AppState.enabledModVariants);
-
+  /// Computes the differences between what mods are currently enabled and
+  /// what mods are enabled within the specified [modProfileId], returning
+  /// a list of changes (enable, disable, swap, missing).
+  static List<ModChange> computeModProfileChanges(
+    ModProfile profile,
+    List<Mod> allMods,
+    List<ModVariant> modVariants,
+    List<ModVariant> currentlyEnabledModVariants,
+  ) {
     final currentlyEnabledShallows = currentlyEnabledModVariants.sortedByName
         .map((variant) => ShallowModVariant.fromModVariant(variant))
         .toList();
@@ -341,7 +338,11 @@ class ModProfileManagerNotifier
         return;
       }
 
-      final changes = computeModProfileChanges(modProfileId);
+      final allMods = ref.read(AppState.mods);
+      final modVariants = ref.read(AppState.modVariants).valueOrNull ?? [];
+      final currentlyEnabledModVariants = ref.read(AppState.enabledModVariants);
+      final changes = computeModProfileChanges(
+          profile, allMods, modVariants, currentlyEnabledModVariants);
 
       // Pause automatic profile updates while swapping
       Fimber.i("Pausing profile updates while swapping.");
@@ -416,8 +417,11 @@ class ModProfileManagerNotifier
       return;
     }
 
-    final modProfileManager = ref.read(modProfilesProvider.notifier);
-    final changes = modProfileManager.computeModProfileChanges(profile.id);
+    final allMods = ref.read(AppState.mods);
+    final modVariants = ref.read(AppState.modVariants).valueOrNull ?? [];
+    final currentlyEnabledModVariants = ref.read(AppState.enabledModVariants);
+    final changes = computeModProfileChanges(
+        profile, allMods, modVariants, currentlyEnabledModVariants);
 
     // Group changes by type
     final modsToEnable =

@@ -51,6 +51,15 @@ class Version with VersionMappable implements Comparable<Version> {
   @override
   bool operator ==(Object other) => other is Version && compareTo(other) == 0;
 
+  /// Compares two versions without using the "raw" version string.
+  /// Use for comparing game versions.
+  bool equalsSymbolic(Version other) {
+    return major == other.major &&
+        minor == other.minor &&
+        patch == other.patch &&
+        build == other.build;
+  }
+
   @override
   int get hashCode => toString().hashCode;
 

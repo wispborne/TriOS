@@ -1,9 +1,10 @@
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:open_filex/open_filex.dart';
 import 'package:styled_text/styled_text.dart';
 import 'package:trios/jre_manager/ram_changer.dart';
-import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
@@ -114,10 +115,8 @@ class _ChangeJreWidgetState extends ConsumerState<ChangeJreWidget> {
                     ..sort(
                         (a, b) => a.versionString.compareTo(b.versionString)))
                     MovingTooltipWidget.text(
-                      textStyle: jre is JreToDownload
-                          ? Theme.of(context).textTheme.labelMedium?.copyWith(
-                                color: ThemeManager.vanillaWarningColor,
-                              )
+                      warningLevel: jre is JreToDownload
+                          ? TooltipWarningLevel.warning
                           : null,
                       message: jre is JreToDownload
                           ? "Run ${Constants.appName} as an administrator if installation hangs after downloading."
@@ -279,7 +278,39 @@ class _ChangeJreWidgetState extends ConsumerState<ChangeJreWidget> {
                                       ],
                                     ),
                                   ),
-                                )
+                                ),
+                                if (jre is CustomJreToDownload)
+                                  Builder(builder: (context) {
+                                    return MovingTooltipWidget.text(
+                                      message: "Download links",
+                                      child: IconButton(
+                                          icon: Icon(Icons.info_outline),
+                                          onPressed: () {
+                                            showDialog(
+                                                context: context,
+                                                builder: (context) {
+                                                  return AlertDialog(
+                                                      title: const Text(
+                                                          "Download Info"),
+                                                      content: Column(
+                                                          mainAxisSize:
+                                                              MainAxisSize.min,
+                                                          children: [
+                                                            Text(
+                                                                "JRE will be downloaded from:"),
+                                                            Linkify(
+                                                                text: jre
+                                                                    .versionCheckerUrl,
+                                                                onOpen: (link) {
+                                                                  OpenFilex
+                                                                      .open(link
+                                                                          .url);
+                                                                }),
+                                                          ]));
+                                                });
+                                          }),
+                                    );
+                                  })
                               ],
                             ),
                           ),

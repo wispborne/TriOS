@@ -147,11 +147,11 @@ configureLogging({
     //     filenamePrefix: logFileName, filenamePostfix: ".log"));
   }
 
+  didLoggingInitializeSuccessfully = true;
+
   if (printPlatformInfo) {
     printLoggingStartedInfo();
   }
-
-  didLoggingInitializeSuccessfully = true;
 }
 
 void printLoggingStartedInfo() {
@@ -178,7 +178,7 @@ void printLoggingStartedInfo() {
     }
   }
 
-  Fimber.i(b.toString());
+  Fimber.i(b.toString().trim());
 }
 
 class Fimber {

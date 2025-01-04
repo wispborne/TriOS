@@ -7,6 +7,9 @@
 - Fixed
   - Changelogs not shown correctly for mods using Google Drive to host the text. 
   - Double scrollbar on Mods tab.
+  - WebView not working because the data folder couldn't be accessed (showed a popup warning).
+    - WebView data folder is now `C:\Users\%USERPROFLE%\AppData\Roaming\org.wisp\TriOS\EBWebView`.
+    - If you logged in to the forum, you'll need to log in again.
 
 # 1.0.2
 - Fixed

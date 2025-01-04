@@ -2,10 +2,12 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/chipper/utils.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/mod_manager/mod_summary_panel.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/widgets/add_new_mods_button.dart';
+import 'package:trios/widgets/dropdown_with_icon.dart';
 import 'package:trios/widgets/refresh_mods_button.dart';
 
 import '../mod_profiles/mod_profiles_manager.dart';
@@ -249,7 +251,52 @@ class _Smol4State extends ConsumerState<Smol4>
                                       mods: allMods,
                                       enabledMods: allMods
                                           .where((mod) => mod.hasEnabledVariant)
-                                          .toList())
+                                          .toList()),
+                                  Builder(builder: (context) {
+                                    final isDoubleClick = ref.watch(
+                                        appSettings.select(
+                                            (s) => s.doubleClickForModsPanel));
+
+                                    return AnimatedPopupMenuButton(
+                                        icon: Icon(Icons.more_vert),
+                                        showArrow: false,
+                                        onSelected: (value) {
+                                          ref.read(appSettings.notifier).update(
+                                              (s) => s.copyWith(
+                                                  doubleClickForModsPanel:
+                                                      !value));
+                                        },
+                                        menuItems: [
+                                          PopupMenuItem(
+                                              value: isDoubleClick,
+                                              child: Row(
+                                                children: [
+                                                  AbsorbPointer(
+                                                    child: Checkbox(
+                                                        value: isDoubleClick,
+                                                        onChanged: (_) {}),
+                                                  ),
+                                                  SizedBox(width: 8),
+                                                  // Space between icon and text
+                                                  Text(
+                                                      "Double-click to view side panel"),
+                                                ],
+                                              )),
+                                        ]);
+                                  }),
+                                  MovingTooltipWidget.text(
+                                    message: "Open side panel",
+                                    child: IconButton(
+                                        onPressed: () {
+                                          setState(() {
+                                            selectedMod = modsMatchingSearch
+                                                    .isEmpty
+                                                ? null
+                                                : modsMatchingSearch.random();
+                                          });
+                                        },
+                                        icon: Icon(Icons.view_sidebar)),
+                                  ),
                                 ],
                               ))),
                     ),
@@ -261,16 +308,18 @@ class _Smol4State extends ConsumerState<Smol4>
               child: Padding(
                 padding: const EdgeInsets.only(top: 4),
                 child: WispGrid(
-                    mods: modsMatchingSearch,
-                    onModRowSelected: (mod) {
-                      setState(() {
-                        if (selectedMod == mod) {
-                          selectedMod = null;
-                        } else {
-                          selectedMod = mod;
-                        }
-                      });
-                    }),
+                  mods: modsMatchingSearch,
+                  onModRowSelected: (mod) {
+                    setState(() {
+                      if (selectedMod == mod) {
+                        selectedMod = null;
+                      } else {
+                        selectedMod = mod;
+                      }
+                    });
+                  },
+                  selectedMod: selectedMod,
+                ),
               ),
             ),
           ],

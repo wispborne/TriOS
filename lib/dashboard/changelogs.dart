@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -47,8 +49,16 @@ class _ChangelogsState extends ConsumerState<Changelogs> {
 
       final httpClient = ref.read(triOSHttpClient);
       isLoading = true;
-      httpClient.get(changelogUrl).then((value) {
-        changelog = value.data.toString().trim();
+      httpClient.get(changelogUrl).then((response) {
+        var data = response.data;
+
+        if (data is List<int>) {
+          data = utf8.decode(data);
+        } else {
+          data = data.toString();
+        }
+
+        changelog = data.toString().trim();
         var lines = changelog.split("\n");
 
         // Remove the first line if it contains "Changelog"

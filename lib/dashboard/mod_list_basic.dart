@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:flutter_context_menu/flutter_context_menu.dart';
+import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:trios/mod_manager/mod_manager_extensions.dart';

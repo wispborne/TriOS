@@ -21,10 +21,12 @@ import 'menu_item.dart';
 final class MenuHeader extends ContextMenuEntry {
   final String text;
   final bool disableUppercase;
+  final double opacity;
 
   const MenuHeader({
     required this.text,
     this.disableUppercase = false,
+    this.opacity = 0.6,
   });
 
   @override
@@ -36,7 +38,7 @@ final class MenuHeader extends ContextMenuEntry {
         child: Text(
           disableUppercase ? text : text.toUpperCase(),
           style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: Theme.of(context).disabledColor.withOpacity(0.3),
+                color: Theme.of(context).disabledColor.withOpacity(opacity),
               ),
         ),
       ),

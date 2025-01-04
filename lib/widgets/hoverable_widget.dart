@@ -6,6 +6,7 @@ class HoverableWidget extends StatefulWidget {
   final BorderRadius? borderRadius;
   final EdgeInsetsGeometry? padding;
   final Function()? onTapDown;
+  final Function()? onDoubleTap;
   final Function()? onTap;
 
   const HoverableWidget({
@@ -15,6 +16,7 @@ class HoverableWidget extends StatefulWidget {
     this.borderRadius,
     this.padding,
     this.onTapDown,
+    this.onDoubleTap,
     this.onTap,
   });
 
@@ -44,6 +46,9 @@ class _HoverableWidgetState extends State<HoverableWidget> {
       child: GestureDetector(
         onTap: () {
           if (widget.onTap != null) widget.onTap!();
+        },
+        onDoubleTap: () {
+          if (widget.onDoubleTap != null) widget.onDoubleTap!();
         },
         onTapDown: (event) {
           if (widget.onTapDown != null) widget.onTapDown!();

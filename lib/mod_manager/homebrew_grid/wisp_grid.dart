@@ -1,7 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_context_menu/flutter_context_menu.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ktx/collections.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
@@ -11,6 +11,7 @@ import 'package:trios/mod_manager/homebrew_grid/wispgrid_mod_header_row_view.dar
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_mod_row_view.dart';
 import 'package:trios/mod_manager/mod_context_menu.dart';
 import 'package:trios/models/mod.dart';
+import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
@@ -24,9 +25,10 @@ class WispGrid extends ConsumerStatefulWidget {
   static const lightTextOpacity = 0.8;
   final List<Mod?> mods;
   final Function(dynamic mod) onModRowSelected;
+  final Mod? selectedMod;
 
   const WispGrid(
-      {super.key, required this.mods, required this.onModRowSelected});
+      {super.key, required this.mods, required this.onModRowSelected, this.selectedMod});
 
   @override
   ConsumerState createState() => _WispGridState();
@@ -125,44 +127,50 @@ class _WispGridState extends ConsumerState<WispGrid> {
     // TODO smooth scrolling: https://github.com/dridino/smooth_list_view/blob/main/lib/smooth_list_view.dart
     return Scrollbar(
       controller: _gridScrollControllerHorizontal,
+      scrollbarOrientation: ScrollbarOrientation.bottom,
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         controller: _gridScrollControllerHorizontal,
-        child: Scrollbar(
-          controller: _gridScrollControllerVertical,
-          scrollbarOrientation: ScrollbarOrientation.left,
-          child: SizedBox(
-            width: gridState.sortedVisibleColumns
-                .map((e) => e.value.width + WispGrid.gridRowSpacing + 10)
-                .sum
-                .coerceAtMost(MediaQuery.of(context).size.width * 1.3),
-            child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: displayedMods.length,
-                controller: _gridScrollControllerVertical,
-                itemBuilder: (context, index) {
-                  final item = displayedMods[index];
+        child: SizedBox(
+          width: gridState.sortedVisibleColumns
+              .map((e) => e.value.width + WispGrid.gridRowSpacing + 10)
+              .sum
+              .coerceAtMost(MediaQuery.of(context).size.width * 1.3),
+          child: Scrollbar(
+            controller: _gridScrollControllerVertical,
+            scrollbarOrientation: ScrollbarOrientation.left,
+            child: ScrollConfiguration(
+              behavior: ScrollConfiguration.of(context).copyWith(
+                scrollbars: false,
+              ),
+              child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: displayedMods.length,
+                  controller: _gridScrollControllerVertical,
+                  itemBuilder: (context, index) {
+                    final item = displayedMods[index];
 
-                  if (item is WispGridModGroupRowView) {
-                    return Row(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 4),
-                          child: SizedBox(width: totalRowWidth, child: item),
-                        ),
-                        Spacer(),
-                      ],
-                    );
-                  }
+                    if (item is WispGridModGroupRowView) {
+                      return Row(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 4),
+                            child: SizedBox(width: totalRowWidth, child: item),
+                          ),
+                          Spacer(),
+                        ],
+                      );
+                    }
 
-                  try {
-                    return item;
-                  } catch (e) {
-                    Fimber.v(() => 'Error in WispGrid: $e');
-                    return Text("Incoherent screaming");
-                  }
-                }),
+                    try {
+                      return item;
+                    } catch (e) {
+                      Fimber.v(() => 'Error in WispGrid: $e');
+                      return Text("Incoherent screaming");
+                    }
+                  }),
+            ),
           ),
         ),
       ),
@@ -170,6 +178,9 @@ class _WispGridState extends ConsumerState<WispGrid> {
   }
 
   ContextMenuRegion buildWrappedModRow(Mod mod, BuildContext context) {
+    final doubleClickForModsPanel =
+        ref.watch(appSettings.select((s) => s.doubleClickForModsPanel));
+
     return ContextMenuRegion(
       contextMenu: _checkedModIds.length > 1
           ? buildModBulkActionContextMenu(
@@ -181,9 +192,37 @@ class _WispGridState extends ConsumerState<WispGrid> {
           : buildModContextMenu(mod, ref, context, showSwapToVersion: true),
       child: WispGridModRowView(
         mod: mod,
-        onModRowSelected: widget.onModRowSelected,
-        isChecked: _checkedModIds.contains(mod.id),
-        onRowCheck: _onRowCheck,
+        onTapped: () {
+          if (HardwareKeyboard.instance.isShiftPressed) {
+            _onRowCheck(
+              modId: mod.id,
+              shiftPressed: true,
+              ctrlPressed: false,
+            );
+          } else if (HardwareKeyboard.instance.isControlPressed) {
+            _onRowCheck(
+              modId: mod.id,
+              shiftPressed: false,
+              ctrlPressed: true,
+            );
+          } else {
+            if (!doubleClickForModsPanel || widget.selectedMod != null) {
+              widget.onModRowSelected(mod);
+            }
+            _onRowCheck(
+              modId: mod.id,
+              shiftPressed: false,
+              ctrlPressed: false,
+            );
+          }
+        },
+        onDoubleTapped: () {
+          if (doubleClickForModsPanel) {
+            widget.onModRowSelected(mod);
+          }
+        },
+        // onModRowSelected: widget.onModRowSelected,
+        isRowChecked: _checkedModIds.contains(mod.id),
       ),
     );
   }

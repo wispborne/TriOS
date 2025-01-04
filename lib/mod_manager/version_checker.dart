@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:collection/collection.dart';
@@ -64,10 +65,12 @@ class VersionCheckerAsyncProvider
   }
 
   /// Refreshes the version check results, updating the state accordingly.
-  Future<void> refresh({required bool skipCache}) async {
-    await _initializeCache(skipCache);
+  Future<void> refresh({required bool skipCache, List<ModVariant>? specificVariantsToCheck}) async {
+    if (specificVariantsToCheck == null) {
+      await _initializeCache(skipCache);
+    }
 
-    final variantsToCheck = _getVariantsToCheck();
+    final variantsToCheck = specificVariantsToCheck ?? _getVariantsToCheck();
     final versionCheckTasks =
         _createVersionCheckTasks(variantsToCheck, skipCache);
 
@@ -232,7 +235,7 @@ Future<RemoteVersionCheckResult> checkRemoteVersion(
     var data = response.data;
 
     if (data is List<int>) {
-      data = String.fromCharCodes(data);
+      data = utf8.decode(data);
     }
 
     final String body = data;

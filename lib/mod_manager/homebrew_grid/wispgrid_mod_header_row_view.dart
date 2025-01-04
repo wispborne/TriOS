@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_context_menu/flutter_context_menu.dart';
+import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:trios/mod_manager/homebrew_grid/vram_checker_explanation.dart';

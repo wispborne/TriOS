@@ -256,8 +256,8 @@ class WispGridStateMapper extends ClassMapperBase<WispGridState> {
     ModGridHeader.version: ModGridColumnSetting(position: 6, width: 100),
     ModGridHeader.vramImpact: ModGridColumnSetting(position: 7, width: 110),
     ModGridHeader.gameVersion: ModGridColumnSetting(position: 8, width: 100),
-    ModGridHeader.firstSeen: ModGridColumnSetting(position: 9, width: 100),
-    ModGridHeader.lastEnabled: ModGridColumnSetting(position: 10, width: 100)
+    ModGridHeader.firstSeen: ModGridColumnSetting(position: 9, width: 150),
+    ModGridHeader.lastEnabled: ModGridColumnSetting(position: 10, width: 150)
   });
   static GroupingSetting _$groupingSetting(WispGridState v) =>
       v.groupingSetting;

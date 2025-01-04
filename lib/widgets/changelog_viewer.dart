@@ -1,35 +1,50 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
-import 'package:http/http.dart' as http;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/utils/http_client.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 
 import '../trios/constants.dart';
+import '../trios/providers.dart';
 import '../utils/extensions.dart';
 
-class ChangelogViewer extends StatefulWidget {
+class TriOSChangelogViewer extends ConsumerStatefulWidget {
   final String url;
   final bool showUnreleasedVersions;
 
-  const ChangelogViewer(
+  const TriOSChangelogViewer(
       {super.key, required this.url, required this.showUnreleasedVersions});
 
   @override
-  State<ChangelogViewer> createState() => _ChangelogViewerState();
+  ConsumerState<TriOSChangelogViewer> createState() => _TriOSChangelogViewerState();
 }
 
-class _ChangelogViewerState extends State<ChangelogViewer> {
+class _TriOSChangelogViewerState extends ConsumerState<TriOSChangelogViewer> {
   late Future<String> _markdownContent;
 
   @override
   void initState() {
     super.initState();
-    _markdownContent = fetchMarkdown(widget.url);
+    final httpClient = ref.read(triOSHttpClient);
+    _markdownContent = fetchMarkdown(widget.url, httpClient);
   }
 
-  Future<String> fetchMarkdown(String url) async {
-    final response = await http.get(Uri.parse(url));
+  Future<String> fetchMarkdown(String url, TriOSHttpClient httpClient) async {
+    final response = await httpClient.get(
+      url,
+      allowSelfSignedCertificates: true,
+    );
     if (response.statusCode == 200) {
-      return response.body;
+      var data = response.data;
+
+      if (data is List<int>) {
+        data = utf8.decode(data);
+      }
+
+      final String body = data;
+      return body;
     } else {
       throw Exception('Failed to load Markdown content');
     }
@@ -94,7 +109,7 @@ showTriOSChangelogDialog(BuildContext context,
         content: SizedBox(
           width: 600,
           height: 1200,
-          child: ChangelogViewer(
+          child: TriOSChangelogViewer(
               url: Constants.changelogUrl,
               showUnreleasedVersions: showUnreleasedVersions),
         ),

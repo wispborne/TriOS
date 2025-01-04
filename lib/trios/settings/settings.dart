@@ -73,6 +73,9 @@ class Settings with SettingsMappable {
   final WispGridState modsGridState;
   final ModsGridState? oldModsGridState;
 
+  // Mods Page
+  final bool doubleClickForModsPanel;
+
   // Settings Page
   @Deprecated("Bad idea, can get stuck in crash -> downgrade -> auto-update -> crash loop.")
   final bool shouldAutoUpdateOnLaunch;
@@ -121,6 +124,7 @@ class Settings with SettingsMappable {
         groupingSetting:
             GroupingSetting(grouping: ModGridGroupEnum.enabledState)),
     this.oldModsGridState,
+    this.doubleClickForModsPanel = true,
     this.shouldAutoUpdateOnLaunch = false,
     this.secondsBetweenModFolderChecks = 15,
     this.toastDurationSeconds = 7,

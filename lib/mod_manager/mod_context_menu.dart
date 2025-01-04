@@ -3,11 +3,11 @@ import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/models/version.dart';
+import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/download_manager/download_manager.dart';
 import 'package:trios/trios/settings/settings.dart';
@@ -49,19 +49,23 @@ ContextMenu buildModContextMenu(Mod mod, WidgetRef ref, BuildContext context,
 }
 
 ContextMenu buildModBulkActionContextMenu(
-    List<Mod> mods, WidgetRef ref, BuildContext context) {
+    List<Mod> selectedMods, WidgetRef ref, BuildContext context) {
   final currentStarsectorVersion =
       ref.read(appSettings.select((s) => s.lastStarsectorVersion));
   final isGameRunning = ref.watch(AppState.isGameRunning).value == true;
 
   return ContextMenu(
     entries: <ContextMenuEntry>[
-      if (!isGameRunning && mods.any((mod) => !mod.hasEnabledVariant))
+      MenuHeader(
+        text: "${selectedMods.length} mods selected",
+      ),
+      if (!isGameRunning && selectedMods.any((mod) => !mod.hasEnabledVariant))
         MenuItem(
-          label: 'Enable selected',
+          label: 'Enable',
           icon: Icons.toggle_on,
           onSelected: () async {
-            for (final mod in mods.sublist(0, mods.length - 1)) {
+            for (final mod
+                in selectedMods.sublist(0, selectedMods.length - 1)) {
               await ref
                   .read(AppState.modVariants.notifier)
                   .changeActiveModVariant(mod, mod.findHighestVersion,
@@ -69,18 +73,20 @@ ContextMenu buildModBulkActionContextMenu(
             }
             await ref
                 .read(AppState.modVariants.notifier)
-                .changeActiveModVariant(mods.last, mods.last.findHighestVersion,
+                .changeActiveModVariant(
+                    selectedMods.last, selectedMods.last.findHighestVersion,
                     validateDependencies: true);
             ref.invalidate(AppState.modVariants);
           },
         ),
-      if (!isGameRunning && mods.any((mod) => mod.hasEnabledVariant))
+      if (!isGameRunning && selectedMods.any((mod) => mod.hasEnabledVariant))
         MenuItem(
-          label: 'Disable selected',
+          label: 'Disable',
           icon: Icons.toggle_off,
           onSelected: () async {
             // Validate dependencies only at the end.
-            for (final mod in mods.sublist(0, mods.length - 1)) {
+            for (final mod
+                in selectedMods.sublist(0, selectedMods.length - 1)) {
               await ref
                   .read(AppState.modVariants.notifier)
                   .changeActiveModVariant(mod, null,
@@ -88,7 +94,7 @@ ContextMenu buildModBulkActionContextMenu(
             }
             await ref
                 .read(AppState.modVariants.notifier)
-                .changeActiveModVariant(mods.last, null,
+                .changeActiveModVariant(selectedMods.last, null,
                     validateDependencies: true);
             ref.invalidate(AppState.modVariants);
           },
@@ -99,22 +105,35 @@ ContextMenu buildModBulkActionContextMenu(
         icon: Icons.memory,
         onSelected: () {
           ref.read(AppState.vramEstimatorProvider.notifier).startEstimating(
-              variantsToCheck: mods
+              variantsToCheck: selectedMods
+                  .map((mod) => mod.findFirstEnabledOrHighestVersion!)
+                  .toList());
+        },
+      ),
+      MenuItem(
+        label: 'Check for updates',
+        icon: Icons.refresh,
+        onSelected: () {
+          ref.read(AppState.versionCheckResults.notifier).refresh(
+              skipCache: true,
+              specificVariantsToCheck: selectedMods
                   .map((mod) => mod.findFirstEnabledOrHighestVersion!)
                   .toList());
         },
       ),
 
-      if (mods.any((mod) => isModGameVersionIncorrect(currentStarsectorVersion,
-          isGameRunning, mod.findFirstEnabledOrHighestVersion!)))
+      if (selectedMods.any((mod) => isModGameVersionIncorrect(
+          currentStarsectorVersion,
+          isGameRunning,
+          mod.findFirstEnabledOrHighestVersion!)))
         MenuItem(
-            label: 'Force selected to $currentStarsectorVersion',
+            label: 'Force to $currentStarsectorVersion',
             icon: Icons.electric_bolt,
             onSelected: () {
               showDialog(
                   context: ref.context,
                   builder: (context) {
-                    final modsToForce = mods.where((mod) =>
+                    final modsToForce = selectedMods.where((mod) =>
                         isModGameVersionIncorrect(
                             currentStarsectorVersion,
                             isGameRunning,

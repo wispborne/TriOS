@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:trios/widgets/disable.dart';
 
 import '../core/models/context_menu_entry.dart';
 import '../core/models/context_menu_item.dart';
@@ -34,6 +35,8 @@ final class MenuItem<T> extends ContextMenuItem<T> {
   final String label;
   final IconData? icon;
   final BoxConstraints? constraints;
+  final bool enabled;
+  final TextStyle? textStyle;
 
   const MenuItem({
     required this.label,
@@ -41,6 +44,8 @@ final class MenuItem<T> extends ContextMenuItem<T> {
     super.value,
     super.onSelected,
     this.constraints,
+    this.enabled = true,
+    this.textStyle,
   });
 
   const MenuItem.submenu({
@@ -49,6 +54,8 @@ final class MenuItem<T> extends ContextMenuItem<T> {
     this.icon,
     super.onSelected,
     this.constraints,
+    this.enabled = true,
+    this.textStyle,
   }) : super.submenu(items: items);
 
   @override
@@ -63,52 +70,55 @@ final class MenuItem<T> extends ContextMenuItem<T> {
     );
     final focusedTextColor = context.colorScheme.onSurface;
     final foregroundColor = isFocused ? focusedTextColor : normalTextColor;
-    final textStyle = TextStyle(color: foregroundColor, height: 1.0);
+    final usedTextStyle = TextStyle(color: foregroundColor, height: 1.0).merge(textStyle);
 
     // ~~~~~~~~~~ //
 
-    return ConstrainedBox(
-      constraints: constraints ?? const BoxConstraints.expand(height: 32.0),
-      child: Material(
-        color: isFocused ? context.theme.focusColor.withAlpha(20) : background,
-        borderRadius: BorderRadius.circular(4.0),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: () => handleItemSelection(context),
-          canRequestFocus: false,
-          child: DefaultTextStyle(
-            style: textStyle,
-            child: Row(
-              children: [
-                SizedBox.square(
-                  dimension: 32.0,
-                  child: Icon(
-                    icon,
-                    size: 16.0,
-                    color: foregroundColor,
-                  ),
-                ),
-                const SizedBox(width: 4.0),
-                Expanded(
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const SizedBox(width: 8.0),
-                SizedBox.square(
-                  dimension: 32.0,
-                  child: Align(
-                    alignment: AlignmentDirectional.centerStart,
+    return Disable(
+      isEnabled: enabled,
+      child: ConstrainedBox(
+        constraints: constraints ?? const BoxConstraints.expand(height: 32.0),
+        child: Material(
+          color: isFocused ? context.theme.focusColor.withAlpha(20) : background,
+          borderRadius: BorderRadius.circular(4.0),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: () => handleItemSelection(context),
+            canRequestFocus: false,
+            child: DefaultTextStyle(
+              style: usedTextStyle,
+              child: Row(
+                children: [
+                  SizedBox.square(
+                    dimension: 32.0,
                     child: Icon(
-                      isSubmenuItem ? Icons.arrow_right : null,
+                      icon,
                       size: 16.0,
                       color: foregroundColor,
                     ),
                   ),
-                )
-              ],
+                  const SizedBox(width: 4.0),
+                  Expanded(
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 8.0),
+                  SizedBox.square(
+                    dimension: 32.0,
+                    child: Align(
+                      alignment: AlignmentDirectional.centerStart,
+                      child: Icon(
+                        isSubmenuItem ? Icons.arrow_right : null,
+                        size: 16.0,
+                        color: foregroundColor,
+                      ),
+                    ),
+                  )
+                ],
+              ),
             ),
           ),
         ),

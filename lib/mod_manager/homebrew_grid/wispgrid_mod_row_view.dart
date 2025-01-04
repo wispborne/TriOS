@@ -3,6 +3,7 @@ import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_color/flutter_color.dart';
+import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:trios/dashboard/changelogs.dart';
@@ -36,21 +37,25 @@ import '../../widgets/svg_image_icon.dart';
 
 class WispGridModRowView extends ConsumerStatefulWidget {
   final Mod mod;
-  final Function(Mod? mod) onModRowSelected;
-  final bool isChecked;
 
-  final void Function({
-    required String modId,
-    required bool shiftPressed,
-    required bool ctrlPressed,
-  }) onRowCheck;
+  // final Function(Mod? mod) onModRowSelected;
+  final bool isRowChecked;
+  final void Function() onTapped;
+  final void Function() onDoubleTapped;
 
-  const WispGridModRowView(
-      {super.key,
-      required this.mod,
-      required this.onModRowSelected,
-      required this.isChecked,
-      required this.onRowCheck});
+  // final void Function({
+  //   required String modId,
+  //   required bool shiftPressed,
+  //   required bool ctrlPressed,
+  // }) onRowCheck;
+
+  const WispGridModRowView({
+    super.key,
+    required this.mod,
+    required this.onTapped,
+    required this.onDoubleTapped,
+    required this.isRowChecked,
+  });
 
   @override
   ConsumerState createState() => _WispGridModRowViewState();
@@ -69,28 +74,8 @@ class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
     final bestVersion = mod.findFirstEnabledOrHighestVersion!;
 
     return HoverableWidget(
-      onTapDown: () {
-        if (HardwareKeyboard.instance.isShiftPressed) {
-          widget.onRowCheck(
-            modId: mod.id,
-            shiftPressed: true,
-            ctrlPressed: false,
-          );
-        } else if (HardwareKeyboard.instance.isControlPressed) {
-          widget.onRowCheck(
-            modId: mod.id,
-            shiftPressed: false,
-            ctrlPressed: true,
-          );
-        } else {
-          widget.onModRowSelected(mod);
-          widget.onRowCheck(
-            modId: mod.id,
-            shiftPressed: false,
-            ctrlPressed: false,
-          );
-        }
-      },
+      onTapDown: () => widget.onTapped(),
+      onDoubleTap: () => widget.onDoubleTapped(),
       child: Builder(builder: (context) {
         final isHovering = HoverData.of(context)?.isHovering ?? false;
         final metadata = ref
@@ -108,7 +93,7 @@ class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
 
         // Mix in any hover/checked overlay color
         final backgroundColor = backgroundBaseColor.mix(
-            widget.isChecked
+            widget.isRowChecked
                 ? theme.colorScheme.onSurface.withOpacity(0.4)
                 : isHovering
                     ? theme.colorScheme.onInverseSurface.withOpacity(0.2)
@@ -435,164 +420,185 @@ class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
           : _RowItemContainer(
               height: height,
               width: state.width,
-              child: Row(
-                children: [
-                  if (changelogUrl.isNotNullOrEmpty())
-                    MovingTooltipWidget(
-                      tooltipWidget: SizedBox(
-                        width: 400,
-                        height: 400,
-                        child: TooltipFrame(
-                          child: Stack(
-                            children: [
-                              Align(
-                                  alignment: Alignment.topRight,
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(
-                                        bottom: 4, top: 0),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.end,
-                                      children: [
-                                        Padding(
-                                          padding:
-                                              const EdgeInsets.only(right: 4),
-                                          child: SvgImageIcon(
-                                            "assets/images/icon-bullhorn-variant.svg",
-                                            color: theme.colorScheme.primary,
-                                            width: 20,
-                                            height: 20,
-                                          ),
-                                        ),
-                                        Text("Click horn to see full changelog",
-                                            style: theme.textTheme.bodySmall
-                                                ?.copyWith(
-                                              fontWeight: FontWeight.bold,
+              child: ContextMenuRegion(
+                contextMenu: ContextMenu(entries: [
+                  MenuItem(
+                    label: 'Recheck',
+                    icon: Icons.refresh,
+                    onSelected: () {
+                      ref.read(AppState.versionCheckResults.notifier).refresh(
+                          skipCache: true,
+                          specificVariantsToCheck: [
+                            mod.findFirstEnabledOrHighestVersion!
+                          ]);
+                    },
+                  ),
+                ]),
+                child: Row(
+                  children: [
+                    if (changelogUrl.isNotNullOrEmpty())
+                      MovingTooltipWidget(
+                        tooltipWidget: SizedBox(
+                          width: 400,
+                          height: 400,
+                          child: TooltipFrame(
+                            child: Stack(
+                              children: [
+                                Align(
+                                    alignment: Alignment.topRight,
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(
+                                          bottom: 4, top: 0),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.end,
+                                        children: [
+                                          Padding(
+                                            padding:
+                                                const EdgeInsets.only(right: 4),
+                                            child: SvgImageIcon(
+                                              "assets/images/icon-bullhorn-variant.svg",
                                               color: theme.colorScheme.primary,
-                                            )),
-                                      ],
-                                    ),
-                                  )),
-                              Padding(
-                                padding: const EdgeInsets.only(top: 12),
-                                child: Changelogs(
-                                  localVersionCheck,
-                                  remoteVersionCheck,
+                                              width: 20,
+                                              height: 20,
+                                            ),
+                                          ),
+                                          Text(
+                                              "Click horn to see full changelog",
+                                              style: theme.textTheme.bodySmall
+                                                  ?.copyWith(
+                                                fontWeight: FontWeight.bold,
+                                                color:
+                                                    theme.colorScheme.primary,
+                                              )),
+                                        ],
+                                      ),
+                                    )),
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 12),
+                                  child: Changelogs(
+                                    localVersionCheck,
+                                    remoteVersionCheck,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                      child: InkWell(
-                        onTap: () {
-                          showDialog(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                  content: Changelogs(
-                                      localVersionCheck, remoteVersionCheck)));
-                        },
-                        child: SvgImageIcon(
-                          "assets/images/icon-bullhorn-variant.svg",
-                          color: theme.iconTheme.color?.withOpacity(0.7),
-                          width: 20,
-                          height: 20,
-                        ),
-                      ),
-                    ),
-                  MovingTooltipWidget(
-                    tooltipWidget: ModListBasicEntry
-                        .buildVersionCheckTextReadoutForTooltip(
-                            null,
-                            versionCheckComparison?.comparisonInt,
-                            localVersionCheck,
-                            remoteVersionCheck),
-                    child: Disable(
-                      isEnabled: !isGameRunning,
-                      child: InkWell(
-                        onTap: () {
-                          if (remoteVersionCheck?.remoteVersion != null &&
-                              versionCheckComparison?.comparisonInt == -1) {
-                            ref
-                                .read(downloadManager.notifier)
-                                .downloadUpdateViaBrowser(
-                                    remoteVersionCheck!.remoteVersion!,
-                                    activateVariantOnComplete: false,
-                                    modInfo: bestVersion.modInfo);
-                          } else {
+                        child: InkWell(
+                          onTap: () {
                             showDialog(
                                 context: context,
                                 builder: (context) => AlertDialog(
-                                    content: ModListBasicEntry
-                                        .changeAndVersionCheckAlertDialogContent(
-                                            changelogUrl,
-                                            localVersionCheck,
-                                            remoteVersionCheck,
-                                            versionCheckComparison
-                                                ?.comparisonInt)));
-                          }
-                        },
-                        onSecondaryTap: () => showDialog(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                                content: ModListBasicEntry
-                                    .changeAndVersionCheckAlertDialogContent(
-                                        changelogUrl,
-                                        localVersionCheck,
-                                        remoteVersionCheck,
-                                        versionCheckComparison
-                                            ?.comparisonInt))),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 5.0),
-                          child: VersionCheckIcon.fromComparison(
-                              comparison: versionCheckComparison, theme: theme),
+                                    content: Changelogs(localVersionCheck,
+                                        remoteVersionCheck)));
+                          },
+                          child: SvgImageIcon(
+                            "assets/images/icon-bullhorn-variant.svg",
+                            color: theme.iconTheme.color?.withOpacity(0.7),
+                            width: 20,
+                            height: 20,
+                          ),
+                        ),
+                      ),
+                    MovingTooltipWidget(
+                      tooltipWidget: ModListBasicEntry
+                          .buildVersionCheckTextReadoutForTooltip(
+                              null,
+                              versionCheckComparison?.comparisonInt,
+                              localVersionCheck,
+                              remoteVersionCheck),
+                      child: Disable(
+                        isEnabled: !isGameRunning,
+                        child: InkWell(
+                          onTap: () {
+                            if (remoteVersionCheck?.remoteVersion != null &&
+                                versionCheckComparison?.comparisonInt == -1) {
+                              ref
+                                  .read(downloadManager.notifier)
+                                  .downloadUpdateViaBrowser(
+                                      remoteVersionCheck!.remoteVersion!,
+                                      activateVariantOnComplete: false,
+                                      modInfo: bestVersion.modInfo);
+                            } else {
+                              showDialog(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                      content: ModListBasicEntry
+                                          .changeAndVersionCheckAlertDialogContent(
+                                              changelogUrl,
+                                              localVersionCheck,
+                                              remoteVersionCheck,
+                                              versionCheckComparison
+                                                  ?.comparisonInt)));
+                            }
+                          },
+                          onSecondaryTap: () => showDialog(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                  content: ModListBasicEntry
+                                      .changeAndVersionCheckAlertDialogContent(
+                                          changelogUrl,
+                                          localVersionCheck,
+                                          remoteVersionCheck,
+                                          versionCheckComparison
+                                              ?.comparisonInt))),
+                          child: Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 5.0),
+                            child: VersionCheckIcon.fromComparison(
+                                comparison: versionCheckComparison,
+                                theme: theme),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  Expanded(
-                    child: Builder(builder: (context) {
-                      final variantsWithEnabledFirst = mod.modVariants.sorted(
-                        (a, b) => a.isModInfoEnabled != b.isModInfoEnabled
-                            ? (a.isModInfoEnabled ? -1 : 1)
-                            : a.compareTo(b),
-                      );
+                    Expanded(
+                      child: Builder(builder: (context) {
+                        final variantsWithEnabledFirst = mod.modVariants.sorted(
+                          (a, b) => a.isModInfoEnabled != b.isModInfoEnabled
+                              ? (a.isModInfoEnabled ? -1 : 1)
+                              : a.compareTo(b),
+                        );
 
-                      final text = RichText(
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        text: TextSpan(
-                          children: [
-                            for (var i = 0;
-                                i < variantsWithEnabledFirst.length;
-                                i++) ...[
-                              if (i > 0)
+                        final text = RichText(
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          text: TextSpan(
+                            children: [
+                              for (var i = 0;
+                                  i < variantsWithEnabledFirst.length;
+                                  i++) ...[
+                                if (i > 0)
+                                  TextSpan(
+                                      text: ', ',
+                                      style: theme.textTheme.labelLarge
+                                          ?.copyWith(
+                                              color: disabledVersionTextColor)),
                                 TextSpan(
-                                    text: ', ',
-                                    style: theme.textTheme.labelLarge?.copyWith(
-                                        color: disabledVersionTextColor)),
-                              TextSpan(
-                                text: variantsWithEnabledFirst[i]
-                                    .modInfo
-                                    .version
-                                    .toString(),
-                                style: theme.textTheme.labelLarge?.copyWith(
-                                  color: enabledVersion ==
-                                          variantsWithEnabledFirst[i]
-                                      ? null
-                                      : disabledVersionTextColor,
+                                  text: variantsWithEnabledFirst[i]
+                                      .modInfo
+                                      .version
+                                      .toString(),
+                                  style: theme.textTheme.labelLarge?.copyWith(
+                                    color: enabledVersion ==
+                                            variantsWithEnabledFirst[i]
+                                        ? null
+                                        : disabledVersionTextColor,
+                                  ),
                                 ),
-                              ),
+                              ],
                             ],
-                          ],
-                        ),
-                      );
+                          ),
+                        );
 
-                      return MovingTooltipWidget.framed(
-                          tooltipWidget: text, child: text);
-                    }),
-                  ),
-                ],
-                // ),
+                        return MovingTooltipWidget.framed(
+                            tooltipWidget: text, child: text);
+                      }),
+                    ),
+                  ],
+                  // ),
+                ),
               ),
             );
     });

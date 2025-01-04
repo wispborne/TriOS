@@ -1,3 +1,12 @@
+# 1.0.3
+- Added
+  - Mods tab: right-click on a version number for a menu to recheck updates.
+  - Mods tab: option to need a double-click to open the side panel.
+    - Default is to need double-click (currently is single-click).
+- Fixed
+  - Changelogs not shown correctly for mods using Google Drive to host the text. 
+  - Double scrollbar on Mods tab.
+
 # 1.0.2
 - Fixed
   - Crash on Mod Catalog for some Windows 10 users.

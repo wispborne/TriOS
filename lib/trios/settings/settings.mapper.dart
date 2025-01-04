@@ -199,6 +199,11 @@ class SettingsMapper extends ClassMapperBase<Settings> {
   static ModsGridState? _$oldModsGridState(Settings v) => v.oldModsGridState;
   static const Field<Settings, ModsGridState> _f$oldModsGridState =
       Field('oldModsGridState', _$oldModsGridState, opt: true);
+  static bool _$doubleClickForModsPanel(Settings v) =>
+      v.doubleClickForModsPanel;
+  static const Field<Settings, bool> _f$doubleClickForModsPanel = Field(
+      'doubleClickForModsPanel', _$doubleClickForModsPanel,
+      opt: true, def: true);
   static bool _$shouldAutoUpdateOnLaunch(Settings v) =>
       v.shouldAutoUpdateOnLaunch;
   static const Field<Settings, bool> _f$shouldAutoUpdateOnLaunch = Field(
@@ -286,6 +291,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #isUpdatesFieldShown: _f$isUpdatesFieldShown,
     #modsGridState: _f$modsGridState,
     #oldModsGridState: _f$oldModsGridState,
+    #doubleClickForModsPanel: _f$doubleClickForModsPanel,
     #shouldAutoUpdateOnLaunch: _f$shouldAutoUpdateOnLaunch,
     #secondsBetweenModFolderChecks: _f$secondsBetweenModFolderChecks,
     #toastDurationSeconds: _f$toastDurationSeconds,
@@ -327,6 +333,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
         isUpdatesFieldShown: data.dec(_f$isUpdatesFieldShown),
         modsGridState: data.dec(_f$modsGridState),
         oldModsGridState: data.dec(_f$oldModsGridState),
+        doubleClickForModsPanel: data.dec(_f$doubleClickForModsPanel),
         shouldAutoUpdateOnLaunch: data.dec(_f$shouldAutoUpdateOnLaunch),
         secondsBetweenModFolderChecks:
             data.dec(_f$secondsBetweenModFolderChecks),
@@ -421,6 +428,7 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
       bool? isUpdatesFieldShown,
       WispGridState? modsGridState,
       ModsGridState? oldModsGridState,
+      bool? doubleClickForModsPanel,
       bool? shouldAutoUpdateOnLaunch,
       int? secondsBetweenModFolderChecks,
       int? toastDurationSeconds,
@@ -482,6 +490,7 @@ class _SettingsCopyWithImpl<$R, $Out>
           bool? isUpdatesFieldShown,
           WispGridState? modsGridState,
           Object? oldModsGridState = $none,
+          bool? doubleClickForModsPanel,
           bool? shouldAutoUpdateOnLaunch,
           int? secondsBetweenModFolderChecks,
           int? toastDurationSeconds,
@@ -526,6 +535,8 @@ class _SettingsCopyWithImpl<$R, $Out>
           #isUpdatesFieldShown: isUpdatesFieldShown,
         if (modsGridState != null) #modsGridState: modsGridState,
         if (oldModsGridState != $none) #oldModsGridState: oldModsGridState,
+        if (doubleClickForModsPanel != null)
+          #doubleClickForModsPanel: doubleClickForModsPanel,
         if (shouldAutoUpdateOnLaunch != null)
           #shouldAutoUpdateOnLaunch: shouldAutoUpdateOnLaunch,
         if (secondsBetweenModFolderChecks != null)
@@ -586,6 +597,8 @@ class _SettingsCopyWithImpl<$R, $Out>
       modsGridState: data.get(#modsGridState, or: $value.modsGridState),
       oldModsGridState:
           data.get(#oldModsGridState, or: $value.oldModsGridState),
+      doubleClickForModsPanel: data.get(#doubleClickForModsPanel,
+          or: $value.doubleClickForModsPanel),
       shouldAutoUpdateOnLaunch: data.get(#shouldAutoUpdateOnLaunch,
           or: $value.shouldAutoUpdateOnLaunch),
       secondsBetweenModFolderChecks: data.get(#secondsBetweenModFolderChecks,
@@ -613,8 +626,7 @@ class _SettingsCopyWithImpl<$R, $Out>
       userId: data.get(#userId, or: $value.userId),
       hasHiddenForumDarkModeTip: data.get(#hasHiddenForumDarkModeTip,
           or: $value.hasHiddenForumDarkModeTip),
-      activeModProfileId:
-          data.get(#activeModProfileId, or: $value.activeModProfileId));
+      activeModProfileId: data.get(#activeModProfileId, or: $value.activeModProfileId));
 
   @override
   SettingsCopyWith<$R2, Settings, $Out2> $chain<$R2, $Out2>(

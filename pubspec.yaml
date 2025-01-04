@@ -20,7 +20,8 @@ dependencies:
   flutter:
     sdk: flutter
   collection: ^1.18.0
-  flutter_context_menu: ^0.2.0
+  # Copied to thirdparty/flutter_context_menu to be able to customize. Was abandoned lib.
+#  flutter_context_menu: ^0.2.0
   cross_file: ^0.3.4+1
   crypto: ^3.0.3
   csv: ^6.0.0

@@ -74,6 +74,12 @@ class Constants {
   static const String patreonUrl = "https://www.patreon.com/wispborne";
   static const String kofiUrl = "https://ko-fi.com/wispborne";
 
+  // Self-update
+  static const String githubBase = "https://api.github.com";
+  /// Hardcoded per_page.
+  static const String githubLatestRelease =
+      "$githubBase/repos/wispborne/trios/releases?per_page=100";
+
   /// Warning: DON'T ADD ANYTHING TO THIS DIRECTLY. It will mutate the shared instance.
   /// Creating a new one each time is expensive, and hardcoding the pattern will hardcode the locale.
   static DateFormat dateTimeFormat =

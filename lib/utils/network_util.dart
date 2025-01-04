@@ -4,60 +4,76 @@ import 'package:http/http.dart' as http;
 import 'package:trios/utils/logging.dart';
 
 class NetworkUtils {
-  static Future<Release?> getRelease(Uri githubReleaseUrl,
-      {required bool includePrereleases}) async {
+  /// Fetch a single release (the latest that meets [includePrereleases] criteria).
+  /// This returns only the **first** matching release from the response.
+  static Future<Release?> getRelease(
+    Uri githubReleasesUrl, {
+    required bool includePrereleases,
+  }) async {
+    return (await getAllReleases(githubReleasesUrl,
+            includePrereleases: includePrereleases, limit: 1))
+        ?.firstOrNull;
+  }
+
+  /// Fetch **all** TriOS releases from GitHub's Releases API (with optional limit).
+  ///
+  /// - [includePrereleases]: Whether to include prerelease versions or not.
+  /// - [limit]: If provided, returns at most this many releases (starting from newest).
+  ///
+  /// Example usage:
+  /// ```dart
+  ///   final releases = await NetworkUtils.getAllReleases(
+  ///     Uri.parse('https://api.github.com/repos/wispborne/TriOS/releases'),
+  ///     includePrereleases: true,
+  ///     limit: 5,
+  ///   );
+  ///   releases.forEach((r) => print(r.tagName));
+  /// ```
+  static Future<List<Release>?> getAllReleases(
+    Uri githubReleasesUrl, {
+    bool includePrereleases = false,
+    int? limit,
+  }) async {
     try {
       final response = await http.get(
-        githubReleaseUrl,
+        githubReleasesUrl,
         headers: {
           'Accept': 'application/vnd.github+json',
         },
       );
 
       var message =
-          'Request: ${response.request}. Headers: ${response.request?.headers}.\nRequest Status: ${response.statusCode}. Body: ${response.body}';
+          'Request: ${response.request}. Headers: ${response.request?.headers}.\n'
+          'Request Status: ${response.statusCode}. Body: ${response.body}';
 
       if (response.statusCode == 200) {
-        // Fimber.v(() =>message);
         final jsonData = jsonDecode(response.body);
-        /*
-        * "url" -> "https://api.github.com/repos/wispborne/TriOS/releases/142440421"
-        * "assets_url" -> "https://api.github.com/repos/wispborne/TriOS/releases/142440421/assets"
-        * "upload_url" -> "https://uploads.github.com/repos/wispborne/TriOS/releases/142440421/assets{?name,label}"
-        * "html_url" -> "https://github.com/wispborne/TriOS/releases/tag/9"
-        * "id" -> 142440421
-        * "author" -> [_Map]
-        * "node_id" -> "RE_kwDOLQl5mM4IfXfl"
-        * "tag_name" -> "9"
-        * "target_commitish" -> "4f6880c6c0c5cc50f02b5fcee3276b55fb8a8c92"
-        * "name" -> "Build 9"
-        * "draft" -> false
-        * "prerelease" -> false
-        * "created_at" -> "2024-02-17T08:08:42Z"
-        * "published_at" -> "2024-02-17T08:14:43Z"
-        * "assets" -> [_GrowableList]
-        * "tarball_url" -> "https://api.github.com/repos/wispborne/TriOS/tarball/9"
-        * "zipball_url" -> "https://api.github.com/repos/wispborne/TriOS/zipball/9"
-        * "body" -> "setting as a non-prerelease to test self-update"
-         */
         if (jsonData.isNotEmpty) {
-          List<Release> releases = [];
-          // Somehow this works but using .map doesn't.
+          // Parse all releases
+          final allReleases = <Release>[];
           for (var releaseJson in jsonData) {
             var release = Release.fromJson(releaseJson);
+            // Skip prerelease if not requested
             if (includePrereleases || !release.prerelease) {
-              releases.add(release);
+              allReleases.add(release);
             }
           }
 
-          return releases.firstOrNull;
+          // Sort by published date descending, just to be safe (GitHub usually returns newest first).
+          allReleases.sort((a, b) => b.publishedAt.compareTo(a.publishedAt));
+
+          // If a limit is specified, return only that many
+          if (limit != null && limit > 0 && allReleases.length > limit) {
+            return allReleases.take(limit).toList();
+          }
+
+          return allReleases;
         }
       } else {
         Fimber.w(message);
       }
     } catch (error, st) {
-      Fimber.w('Error fetching release data: $error',
-          ex: error, stacktrace: st);
+      Fimber.w('Error fetching releases: $error', ex: error, stacktrace: st);
     }
 
     return null;
@@ -71,20 +87,13 @@ class Release {
   final String htmlUrl;
   final int id;
 
-  // final Author author;
-  // final String nodeId;
   final String tagName;
-
-  // final String targetCommitish;
   final String name;
   final bool draft;
   final bool prerelease;
   final DateTime createdAt;
   final DateTime publishedAt;
   final List<Asset> assets;
-
-  // final String tarballUrl;
-  // final String zipballUrl;
   final String body;
 
   Release({
@@ -93,21 +102,16 @@ class Release {
     required this.uploadUrl,
     required this.htmlUrl,
     required this.id,
-    // required this.nodeId,
     required this.tagName,
-    // required this.targetCommitish,
     required this.name,
     required this.draft,
     required this.prerelease,
     required this.createdAt,
     required this.publishedAt,
     required this.assets,
-    // required this.tarballUrl,
-    // required this.zipballUrl,
     required this.body,
   });
 
-  // To convert json into the data class
   factory Release.fromJson(Map<String, dynamic> json) {
     return Release(
       url: json['url'],
@@ -115,17 +119,15 @@ class Release {
       uploadUrl: json['upload_url'],
       htmlUrl: json['html_url'],
       id: json['id'],
-      // nodeId: json['node_id'],
       tagName: json['tag_name'],
-      // targetCommitish: json['target_commitish'],
       name: json['name'],
       draft: json['draft'],
       prerelease: json['prerelease'],
       createdAt: DateTime.parse(json['created_at']),
       publishedAt: DateTime.parse(json['published_at']),
-      assets: (json['assets'] as List).map((e) => Asset.fromJson(e)).toList(),
-      // tarballUrl: json['tarball_url'],
-      // zipballUrl: json['zipball_url'],
+      assets: (json['assets'] as List)
+          .map((e) => Asset.fromJson(e as Map<String, dynamic>))
+          .toList(),
       body: json['body'],
     );
   }
@@ -134,33 +136,17 @@ class Release {
 class Asset {
   final String url;
   final int id;
-
-  // final String nodeId;
   final String name;
-
-  // final String label;
   final String contentType;
-
-  // final String state;
   final int size;
-
-  // final int downloadCount;
-  // final DateTime createdAt;
-  // final DateTime updatedAt;
   final String browserDownloadUrl;
 
   Asset({
     required this.url,
     required this.id,
-    // required this.nodeId,
     required this.name,
-    // required this.label,
     required this.contentType,
-    // required this.state,
     required this.size,
-    // required this.downloadCount,
-    // required this.createdAt,
-    // required this.updatedAt,
     required this.browserDownloadUrl,
   });
 
@@ -168,16 +154,9 @@ class Asset {
     return Asset(
       url: json['url'],
       id: json['id'],
-      // nodeId: json['node_id'],
       name: json['name'],
-      // label: json['label'],
-      // uploader: Uploader.fromJson(json['uploader']),
       contentType: json['content_type'],
-      // state: json['state'],
       size: json['size'],
-      // downloadCount: json['download_count'],
-      // createdAt: DateTime.parse(json['created_at']),
-      // updatedAt: DateTime.parse(json['updated_at']),
       browserDownloadUrl: json['browser_download_url'],
     );
   }

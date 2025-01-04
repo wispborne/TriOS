@@ -41,9 +41,6 @@ class SelfUpdateInfo {
 }
 
 class SelfUpdater extends AsyncNotifier<TriOSDownloadProgress?> {
-  static const String githubBase = "https://api.github.com";
-  static const String githubLatestRelease =
-      "$githubBase/repos/wispborne/trios/releases";
   static const String oldFileSuffix = ".delete-me";
 
   @override
@@ -276,7 +273,7 @@ class SelfUpdater extends AsyncNotifier<TriOSDownloadProgress?> {
     final includePrereleasesToUse = includePrereleases ??
         ref.read(appSettings.select((s) => s.updateToPrereleases)) ??
         false;
-    return await NetworkUtils.getRelease(Uri.parse(githubLatestRelease),
+    return await NetworkUtils.getRelease(Uri.parse(Constants.githubLatestRelease),
         includePrereleases: includePrereleasesToUse);
   }
 

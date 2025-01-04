@@ -13,8 +13,11 @@ import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/utils/network_util.dart';
 import 'package:trios/weaponViewer/weaponsManager.dart';
+import 'package:trios/widgets/checkbox_with_label.dart';
 import 'package:trios/widgets/download_progress_indicator.dart';
+import 'package:trios/widgets/moving_tooltip.dart';
 
 import '../../utils/util.dart';
 import '../../widgets/self_update_toast.dart';
@@ -32,7 +35,24 @@ class SettingsDebugSection extends ConsumerStatefulWidget {
 }
 
 class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
-  final searchController = SearchController();
+  final _searchController = SearchController();
+  List<Release>? _releases;
+  Release? _selectedRelease;
+  bool _includePrereleases = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchReleases();
+  }
+
+  void _fetchReleases() {
+    NetworkUtils.getAllReleases(
+      Uri.parse(Constants.githubLatestRelease),
+      includePrereleases: _includePrereleases,
+      limit: 50,
+    ).then((value) => setState(() => _releases = value));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,6 +60,56 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 16),
+          child: Row(
+            children: [
+              DropdownMenu<Release?>(
+                dropdownMenuEntries: _releases?.map((release) {
+                      return DropdownMenuEntry(
+                        value: release,
+                        label: release.tagName,
+                      );
+                    }).toList() ??
+                    [],
+                onSelected: (value) {
+                  setState(() {
+                    _selectedRelease = value;
+                  });
+                },
+              ),
+              MovingTooltipWidget.text(
+                message: "CAUTION: May mess up TriOS's settings (not mods)."
+                    "\nGoing back in time is not tested. Recommend backing up your settings first (click Log File button to open folder).",
+                warningLevel: TooltipWarningLevel.error,
+                child: ElevatedButton.icon(
+                    icon: _selectedRelease != null
+                        ? const Icon(Icons.settings_backup_restore, size: 20)
+                        : null,
+                    onPressed: () {
+                      if (_selectedRelease != null) {
+                        ref
+                            .watch(AppState.selfUpdate.notifier)
+                            .updateSelf(_selectedRelease!);
+                      }
+                    },
+                    label: Text(_selectedRelease == null
+                        ? "<- Select a release"
+                        : 'Update to ${_selectedRelease?.tagName}')),
+              ),
+              CheckboxWithLabel(
+                value: _includePrereleases,
+                label: "Include pre-releases",
+                onChanged: (value) {
+                  setState(() {
+                    _includePrereleases = value ?? false;
+                    _fetchReleases();
+                  });
+                },
+              ),
+            ],
+          ),
+        ),
         Padding(
           padding: const EdgeInsets.only(top: 16),
           child: ElevatedButton.icon(
@@ -324,7 +394,7 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                         children: [
                           Text("Mod Compatibility"),
                           SearchAnchor(
-                            searchController: searchController,
+                            searchController: _searchController,
                             builder: (BuildContext context,
                                 SearchController controller) {
                               return SearchBar(
@@ -360,7 +430,7 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                             },
                           ),
                           Text(
-                            "${searchController.text}:\n${ref.watch(AppState.modCompatibility)[searchController.text]?.toString() ?? "(id not found)"}",
+                            "${_searchController.text}:\n${ref.watch(AppState.modCompatibility)[_searchController.text]?.toString() ?? "(id not found)"}",
                           ),
                           const SizedBox(height: 8),
                           Text(

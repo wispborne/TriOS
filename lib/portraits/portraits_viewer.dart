@@ -1,14 +1,13 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/portraits/portraits_loader.dart';
+import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
-import 'package:trios/widgets/tooltip_frame.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 import '../utils/logging.dart';
@@ -193,16 +192,15 @@ class ResponsiveImageGrid extends ConsumerWidget {
             } catch (error) {
               Fimber.w('Error reading file size: $error');
             }
-            return MovingTooltipWidget(
-              tooltipWidget: TooltipFrame(
-                child: Column(
-                  children: [
-                    Text(mod.modInfo.nameOrId),
-                    Text(portrait.imageFile.path.toFile().relativeTo(modsPath)),
-                    Text(bytesAsReadableKB),
-                    Text('${portrait.width} x ${portrait.height}'),
-                  ],
-                ),
+            return MovingTooltipWidget.framed(
+              tooltipWidget: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(mod.modInfo.nameOrId),
+                  Text(portrait.imageFile.path.toFile().relativeTo(modsPath)),
+                  Text(bytesAsReadableKB),
+                  Text('${portrait.width} x ${portrait.height}'),
+                ],
               ),
               child: ContextMenuRegion(
                   contextMenu: ContextMenu(entries: <ContextMenuEntry>[

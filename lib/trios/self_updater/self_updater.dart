@@ -117,8 +117,9 @@ class SelfUpdater extends AsyncNotifier<TriOSDownloadProgress?> {
       }
 
       // Show changelog next launch.
-      ref.read(appSettings.notifier).settingsManager.writeSettingsToDisk(
-          ref.read(appSettings).copyWith(showChangelogNextLaunch: true));
+      ref
+          .read(appSettings.notifier)
+          .update((s) => s.copyWith(showChangelogNextLaunch: true));
       if (exitSelfAfter) {
         await Future.delayed(const Duration(milliseconds: 500));
         Fimber.i(
@@ -273,7 +274,8 @@ class SelfUpdater extends AsyncNotifier<TriOSDownloadProgress?> {
     final includePrereleasesToUse = includePrereleases ??
         ref.read(appSettings.select((s) => s.updateToPrereleases)) ??
         false;
-    return await NetworkUtils.getRelease(Uri.parse(Constants.githubLatestRelease),
+    return await NetworkUtils.getRelease(
+        Uri.parse(Constants.githubLatestRelease),
         includePrereleases: includePrereleasesToUse);
   }
 

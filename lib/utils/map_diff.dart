@@ -54,24 +54,27 @@ class MapComparer<K, V> {
 }
 
 extension MapComparison<K, V> on Map<K, V> {
+  MapDiff<K, V> diff(Map<K, V> other) => compareWith(other);
 
-  MapDiff<K, V> diff(Map<K, V> other) => this.compareWith(other);
-
-    MapDiff<K, V> compareWith(Map<K, V> other) {
+  MapDiff<K, V> compareWith(Map<K, V> other) {
     final added = <K, V>{};
     final removed = <K, V>{};
     final modified = <K, MapEntry<V, V>>{};
 
-    // Check for added or modified entries
     other.forEach((key, newValue) {
+      // If this map doesn't have [key], it's added.
       if (!containsKey(key)) {
         added[key] = newValue;
-      } else if (this[key] != newValue) {
-        modified[key] = MapEntry(this[key] as V, newValue);
+      } else {
+        final oldValue = this[key];
+        // If the values are not deeply equal, mark modified.
+        if (!_deepEquals(oldValue, newValue)) {
+          modified[key] = MapEntry(oldValue as V, newValue);
+        }
       }
     });
 
-    // Check for removed entries
+    // Anything in 'this' that is not in 'other' is removed.
     forEach((key, oldValue) {
       if (!other.containsKey(key)) {
         removed[key] = oldValue;
@@ -84,4 +87,31 @@ extension MapComparison<K, V> on Map<K, V> {
       modified: modified,
     );
   }
+}
+
+/// A helper function to compare values deeply:
+/// - If both values are Maps, compare their contents recursively.
+/// - If both values are null or identical, they're equal.
+/// - Otherwise, default to `==` comparison.
+bool _deepEquals(dynamic a, dynamic b) {
+  // Quick check for identical() or both null
+  if (identical(a, b)) return true;
+  if (a == null || b == null) return a == b;
+
+  // Handle nested maps
+  if (a is Map && b is Map) {
+    if (a.length != b.length) return false;
+    for (final key in a.keys) {
+      if (!b.containsKey(key)) return false;
+      if (!_deepEquals(a[key], b[key])) return false;
+    }
+    return true;
+  }
+
+  // Optionally handle lists, sets, etc. if needed:
+  // if (a is List && b is List) { ... }
+  // if (a is Set && b is Set) { ... }
+
+  // Fallback to standard equality
+  return a == b;
 }

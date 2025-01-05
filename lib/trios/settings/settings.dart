@@ -1,12 +1,17 @@
+import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as p;
+import 'package:toml/toml.dart';
+import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/navigation.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/generic_settings_manager.dart';
-import 'package:trios/utils/generic_settings_notifier.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/utils/map_diff.dart';
 import 'package:trios/utils/util.dart';
 
 import '../../mod_manager/homebrew_grid/wisp_grid_state.dart';
@@ -20,7 +25,7 @@ const sharedPrefsSettingsKey = "settings";
 
 /// Settings State Provider
 final appSettings =
-    NotifierProvider<SettingSaver, Settings>(() => SettingSaver());
+    NotifierProvider<AppSettingNotifier, Settings>(() => AppSettingNotifier());
 
 /// MacOs: /Users/<user>/Library/Preferences/org.wisp.TriOS.plist
 // Settings? readAppSettings() {
@@ -77,7 +82,8 @@ class Settings with SettingsMappable {
   final bool doubleClickForModsPanel;
 
   // Settings Page
-  @Deprecated("Bad idea, can get stuck in crash -> downgrade -> auto-update -> crash loop.")
+  @Deprecated(
+      "Bad idea, can get stuck in crash -> downgrade -> auto-update -> crash loop.")
   final bool shouldAutoUpdateOnLaunch;
   final int secondsBetweenModFolderChecks;
   final int toastDurationSeconds;
@@ -156,31 +162,52 @@ enum FolderNamingSetting {
 @MappableEnum()
 enum ModUpdateBehavior { doNotChange, switchToNewVersionIfWasEnabled }
 
-/// When settings change, save them to shared prefs
-class SettingSaver extends GenericSettingsNotifier<Settings> {
-  Settings _setDefaults(Settings settings) {
-    var newSettings = settings;
+/// Manages loading, storing, and updating the app's [Settings] while keeping the UI reactive.
+/// It uses a debounced write strategy to minimize frequent disk writes.
+class AppSettingNotifier extends Notifier<Settings> {
+  final Duration _debounceDuration = Duration(milliseconds: 300);
+  Timer? _debounceTimer;
+  bool _isInitialized = false;
 
-    if (settings.gameDir == null || newSettings.gameDir.toString().isEmpty) {
-      newSettings = newSettings.copyWith(gameDir: defaultGamePath());
-    }
-
-    // Calculates the default mods folder on first run.
-    newSettings = _recalculatePathsAndSaveToDisk(settings, newSettings);
-    return newSettings;
-  }
+  /// Performs synchronous file I/O for [Settings].
+  final SettingsFileManager _fileManager = SettingsFileManager();
 
   @override
   Settings build() {
-    Settings? settings = super.build();
+    if (!_isInitialized) {
+      try {
+        final loadedState = _fileManager.loadSync();
+        // If the file is missing or unreadable, create a default Settings instance.
+        if (loadedState != null) {
+          state = loadedState;
+        } else {
+          state = Settings();
+          _fileManager.writeSync(state!);
+        }
+        _isInitialized = true;
+      } catch (e, stackTrace) {
+        Fimber.w("Error building settings notifier",
+            ex: e, stacktrace: stackTrace);
+        rethrow;
+      }
+    }
 
+    final settings = state!;
     configureLogging(
         allowSentryReporting: settings.allowCrashReporting ?? false);
-
-    return _setDefaults(settings);
+    return _applyDefaultsIfNeeded(settings);
   }
 
-  @override
+  /// Queues a settings write operation for [newSettings]. Waits [_debounceDuration] before writing.
+  void _scheduleWriteSettings(Settings newSettings) {
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(_debounceDuration, () {
+      _fileManager.writeSync(newSettings);
+    });
+  }
+
+  /// Updates [Settings] in memory by applying [mutator], optionally handling errors,
+  /// and triggers a debounced disk write if changes occur.
   Settings update(
     Settings Function(Settings currentState) mutator, {
     Settings Function(Object, StackTrace)? onError,
@@ -203,73 +230,130 @@ class SettingSaver extends GenericSettingsNotifier<Settings> {
       }
     }
 
-    // Recalculate mod folder if the game path changes
-    newState = _recalculatePathsAndSaveToDisk(prevState, newState);
-    // Update state, triggering rebuilds
+    newState = _recalculatePathsIfNeeded(prevState, newState);
     state = newState;
+    Fimber.i("Settings updated: ${prevState.toMap().diff(newState.toMap())}");
+    _scheduleWriteSettings(newState);
     return newState;
   }
 
-  Settings _recalculatePathsAndSaveToDisk(
-      Settings prevState, Settings newState) {
-    // Recalculate mod folder if the game path changes
-    if (newState.gameDir != null && newState.gameDir != prevState.gameDir) {
-      if (!newState.hasCustomModsDir) {
-        var newModsDir = generateModsFolderPath(newState.gameDir!)?.path;
-        newState = newState.copyWith(modsDir: newModsDir?.toDirectory());
-      }
+  /// Adds defaults if critical fields are missing and schedules a disk write if anything changes.
+  Settings _applyDefaultsIfNeeded(Settings settings) {
+    var updated = settings;
+    var changed = false;
 
-      newState = newState.copyWith(
-          gameCoreDir: generateGameCorePath(newState.gameDir!));
+    if (updated.gameDir == null || updated.gameDir.toString().isEmpty) {
+      updated = updated.copyWith(gameDir: defaultGamePath());
+      changed = true;
     }
 
-    Fimber.d("Updated settings: $newState");
+    final recalc = _recalculatePathsIfNeeded(settings, updated);
+    if (recalc != updated) {
+      updated = recalc;
+      changed = true;
+    }
 
-    // Save to disk
-    settingsManager.scheduleWriteSettingsToDisk(newState);
-    return newState;
+    if (changed) {
+      _scheduleWriteSettings(updated);
+    }
+    return updated;
   }
 
-  @override
-  GenericSettingsManager<Settings> createSettingsManager() =>
-      AppSettingsManager();
+  /// Adjusts mod-related paths if the [gameDir] changes.
+  /// No immediate disk write—this is deferred to a later step.
+  Settings _recalculatePathsIfNeeded(Settings prevState, Settings newState) {
+    var updated = newState;
+
+    if (updated.gameDir != null && updated.gameDir != prevState.gameDir) {
+      if (!updated.hasCustomModsDir) {
+        final newModsDir = generateModsFolderPath(updated.gameDir!)?.path;
+        updated = updated.copyWith(modsDir: newModsDir?.toDirectory());
+      }
+      updated = updated.copyWith(
+        gameCoreDir: generateGameCorePath(updated.gameDir!),
+      );
+    }
+    return updated;
+  }
 }
 
-class AppSettingsManager extends GenericSettingsManager<Settings> {
-  @override
-  Settings Function() get createDefaultState => () => Settings();
+/// Performs synchronous file I/O for [Settings], backing up corrupt or unreadable files.
+class SettingsFileManager {
+  final SyncLock _lock = SyncLock();
+  late final File _settingsFile;
 
-  @override
-  FileFormat get fileFormat => FileFormat.json;
+  /// Hardcoded file format and file name.
+  final FileFormat _fileFormat = FileFormat.json;
+  final String _fileName = 'trios_settings-v1.json';
 
-  @override
-  String get fileName => "trios_settings-v1.${fileFormat.name}";
+  /// Singleton instance, if needed.
+  static final SettingsFileManager _instance = SettingsFileManager._internal();
 
-  @override
-  Settings Function(Map<String, dynamic> map) get fromMap =>
-      (map) => SettingsMapper.fromMap(map);
+  factory SettingsFileManager() => _instance;
 
-  // @override
-  // void loadSync() {
-  //   super.loadSync();
-  //
-  //   _migrateFromV1();
-  // }
+  SettingsFileManager._internal() {
+    _settingsFile = _getFileSync();
+  }
 
-  // void _migrateFromV1() {
-  //   final sharedPrefsFile = Constants.configDataFolderPath.resolve("shared_preferences.json").toFile();
-  //
-  //   if (!sharedPrefsFile.existsSync()) {
-  //     return;
-  //   }
-  //
-  //   Fimber.i("Migrating from old shared prefs.");
-  //   final sharedPrefs = sharedPrefsFile.readAsStringSync();
-  //   final oldPrefs = SettingsMapper.fromJson(sharedPrefs);
-  //   Fimber.i("Old prefs: $oldPrefs");
-  // }
+  Directory getConfigDataFolderPathSync() => Constants.configDataFolderPath;
 
-  @override
-  Map<String, dynamic> Function(Settings settings) get toMap =>
-      (settings) => settings.toMap();
+  File _getFileSync() {
+    final dir = getConfigDataFolderPathSync();
+    dir.createSync(recursive: true);
+    final fullPath = p.join(dir.path, _fileName);
+    Fimber.i("Settings file path resolved: $fullPath");
+    return File(fullPath);
+  }
+
+  void _createBackupSync() {
+    int backupNumber = 1;
+    File backupFile;
+    do {
+      final backupFileName = "${_fileName}_backup_$backupNumber.bak";
+      backupFile = File(p.join(_settingsFile.parent.path, backupFileName));
+      backupNumber++;
+    } while (backupFile.existsSync());
+
+    _settingsFile.copySync(backupFile.path);
+    Fimber.i("Backup of $_fileName created at ${backupFile.path}");
+  }
+
+  /// Attempts to load [Settings] from disk, returning `null` on failure.
+  Settings? loadSync() {
+    return _lock.protectSync(() {
+      if (_settingsFile.existsSync()) {
+        try {
+          final contents = _settingsFile.readAsStringSync();
+          final map = (_fileFormat == FileFormat.toml)
+              ? TomlDocument.parse(contents).toMap()
+              : jsonDecode(contents) as Map<String, dynamic>;
+          Fimber.i("$_fileName successfully loaded from disk.");
+          return SettingsMapper.fromMap(map);
+        } catch (e, stackTrace) {
+          Fimber.e("Error reading from disk, creating backup: $e",
+              ex: e, stacktrace: stackTrace);
+          _createBackupSync();
+        }
+      }
+      return null;
+    });
+  }
+
+  /// Writes [settings] to the file system, replacing any existing data.
+  void writeSync(Settings settings) {
+    try {
+      _lock.protectSync(() {
+        final serializedData = (_fileFormat == FileFormat.toml)
+            ? TomlDocument.fromMap(settings.toMap()).toString()
+            : settings.toMap().prettyPrintJson();
+
+        _settingsFile.writeAsStringSync(serializedData);
+        Fimber.i("$_fileName successfully written to disk.");
+      });
+    } catch (e, stackTrace) {
+      Fimber.e("Error serializing and saving $_fileName: $e",
+          ex: e, stacktrace: stackTrace);
+      rethrow;
+    }
+  }
 }

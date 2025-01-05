@@ -514,7 +514,7 @@ class _ModBrowserPage extends ConsumerState<ModBrowserPage>
                                   child: switch (_webview2RequiredAndMissing) {
                                 false => InAppWebView(
                                     key: webViewKey,
-                                    webViewEnvironment: webViewEnvironment,
+                                    webViewEnvironment: ref.watch(webViewEnvironment),
                                     shouldOverrideUrlLoading:
                                         (controller, navigationAction) async {
                                       if (navigationAction.request.url !=

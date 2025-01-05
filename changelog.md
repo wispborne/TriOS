@@ -10,6 +10,7 @@
   - WebView not working because the data folder couldn't be accessed (showed a popup warning).
     - WebView data folder is now `C:\Users\%USERPROFLE%\AppData\Roaming\org.wisp\TriOS\EBWebView`.
     - If you logged in to the forum, you'll need to log in again.
+  - Tall tooltips on Portraits Viewer.
 
 # 1.0.2
 - Fixed

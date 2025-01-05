@@ -30,7 +30,8 @@ import 'models/version.dart';
 import 'trios/app_state.dart';
 
 Object? loggingError;
-WebViewEnvironment? webViewEnvironment;
+StateProvider<WebViewEnvironment?> webViewEnvironment =
+    StateProvider<WebViewEnvironment?>((ref) => null);
 List<Future<void> Function(BuildContext)> onAppLoadedActions = [];
 
 void main() async {
@@ -56,15 +57,14 @@ void main() async {
     Fimber.e("Error initializing!", ex: ex);
   }
 
-  AppSettingsManager settingsManager = AppSettingsManager();
+  final SettingsFileManager _fileManager = SettingsFileManager();
 
   bool allowCrashReporting = false;
   Settings? settings;
 
   // Read existing app settings
   try {
-    settingsManager.loadSync();
-    settings = settingsManager.state;
+    settings = _fileManager.loadSync();
   } catch (e) {
     Fimber.e("Error reading app settings.", ex: e);
     onAppLoadedActions.add((context) async {
@@ -107,11 +107,12 @@ void main() async {
   } catch (e) {
     Fimber.w("Error checking for changelog notification.", ex: e);
   }
-  try {
-    settingsManager.writeSettingsToDisk(
-        settings!.copyWith(showChangelogNextLaunch: false));
-  } catch (e) {
-    Fimber.w("Error writing changelog notification setting.", ex: e);
+  if (settings != null) {
+    try {
+      _fileManager.writeSync(settings.copyWith(showChangelogNextLaunch: false));
+    } catch (e) {
+      Fimber.w("Error writing changelog notification setting.", ex: e);
+    }
   }
 
   // Set up Sentry
@@ -141,21 +142,6 @@ void main() async {
     }
   } else {
     _runTriOS();
-  }
-
-  // WebView check
-  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.windows) {
-    final availableVersion = await WebViewEnvironment.getAvailableVersion();
-    if (availableVersion != null) {
-      var userDataFolder = Constants.configDataFolderPath.path;
-      webViewEnvironment = await WebViewEnvironment.create(
-          settings: WebViewEnvironmentSettings(userDataFolder: userDataFolder));
-      Fimber.i(
-          "WebView2 environment initialized. Data folder: $userDataFolder");
-    } else {
-      Fimber.w(
-          'Failed to find an installed WebView2 Runtime or non-stable Microsoft Edge installation.');
-    }
   }
 
   try {

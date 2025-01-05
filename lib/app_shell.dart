@@ -1,6 +1,8 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:toastification/toastification.dart';
@@ -82,6 +84,26 @@ class _AppShellState extends ConsumerState<AppShell>
   @override
   void initState() {
     super.initState();
+
+    // WebView check
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.windows) {
+      WebViewEnvironment.getAvailableVersion().then((availableVersion) {
+        if (availableVersion != null) {
+          var userDataFolder = Constants.configDataFolderPath.path;
+          WebViewEnvironment.create(
+                  settings: WebViewEnvironmentSettings(
+                      userDataFolder: userDataFolder))
+              .then((newWebViewEnvironment) {
+            ref.read(webViewEnvironment.notifier).state = newWebViewEnvironment;
+            Fimber.i(
+                "WebView2 environment initialized. Data folder: $userDataFolder");
+          }).onError((error, stackTrace) {
+            Fimber.e("Error creating WebView2 environment: $error",
+                ex: error, stacktrace: stackTrace);
+          });
+        }
+      });
+    }
 
     var defaultTool = TriOSTools.dashboard;
     try {
@@ -292,7 +314,7 @@ class _AppShellState extends ConsumerState<AppShell>
                         icon: SvgImageIcon("assets/images/icon-toolbox.svg",
                             color: theme.iconTheme.color),
                         onSelected: (TriOSTools value) => _changeTab(value),
-                        menuItems: const [
+                        menuItems: [
                           PopupMenuItem(
                               value: TriOSTools.vramEstimator,
                               child: Row(
@@ -305,24 +327,33 @@ class _AppShellState extends ConsumerState<AppShell>
                               )),
                           PopupMenuItem(
                               value: TriOSTools.portraits,
-                              child: Row(
-                                children: [
-                                  SvgImageIcon(
-                                      "assets/images/icon-account-box-outline.svg"),
-                                  SizedBox(width: 8),
-                                  // Space between icon and text
-                                  Text("Portraits"),
-                                ],
+                              child: MovingTooltipWidget.text(
+                                message: "Warning: spoilers!",
+                                warningLevel: TooltipWarningLevel.warning,
+                                child: Row(
+                                  children: [
+                                    SvgImageIcon(
+                                        "assets/images/icon-account-box-outline.svg"),
+                                    SizedBox(width: 8),
+                                    // Space between icon and text
+                                    Text("Portraits"),
+                                  ],
+                                ),
                               )),
                           PopupMenuItem(
                               value: TriOSTools.weapons,
-                              child: Row(
-                                children: [
-                                  SvgImageIcon("assets/images/icon-target.svg"),
-                                  SizedBox(width: 8),
-                                  // Space between icon and text
-                                  Text("Weapons"),
-                                ],
+                              child: MovingTooltipWidget.text(
+                                message: "Warning: spoilers!",
+                                warningLevel: TooltipWarningLevel.warning,
+                                child: Row(
+                                  children: [
+                                    SvgImageIcon(
+                                        "assets/images/icon-target.svg"),
+                                    SizedBox(width: 8),
+                                    // Space between icon and text
+                                    Text("Weapons"),
+                                  ],
+                                ),
                               )),
                           // PopupMenuItem(
                           //     text: "Portraits",

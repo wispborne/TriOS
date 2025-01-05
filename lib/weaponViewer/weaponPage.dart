@@ -7,13 +7,14 @@ import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:path/path.dart' as p;
-import 'package:trios/weaponViewer/models/weapon.dart';
-import 'package:trios/weaponViewer/weaponsManager.dart';
 import 'package:trios/thirdparty/pluto_grid_plus/lib/pluto_grid_plus.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/weaponViewer/models/weapon.dart';
+import 'package:trios/weaponViewer/weaponsManager.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
+import 'package:trios/widgets/moving_tooltip.dart';
 
 import '../widgets/MultiSplitViewMixin.dart';
 
@@ -38,7 +39,6 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
   @override
   List<Area> get areas =>
       splitPane ? [Area(id: 'top'), Area(id: 'bottom')] : [Area(id: 'top')];
-
 
   @override
   void dispose() {
@@ -170,12 +170,17 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
                       alignment: Alignment.centerRight,
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
+                        spacing: 8,
                         children: [
-                          buildToolbarButton(
-                              theme, "Show Hidden", showHiddenWeapons, (value) {
-                            showHiddenWeapons = value ?? false;
-                            _notifyGridFilterChanged();
-                          }),
+                          MovingTooltipWidget.text(
+                            message: "Show hidden weapons",
+                            child: buildToolbarButton(
+                                theme, "Show Hidden", showHiddenWeapons,
+                                (value) {
+                              showHiddenWeapons = value ?? false;
+                              _notifyGridFilterChanged();
+                            }),
+                          ),
                           buildToolbarButton(theme, "Compare", splitPane,
                               (value) {
                             splitPane = value ?? false;

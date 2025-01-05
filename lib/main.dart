@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:collection/collection.dart';
-import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
@@ -26,7 +25,6 @@ import 'package:window_manager/window_manager.dart';
 import 'package:window_size/window_size.dart';
 
 import 'app_shell.dart';
-import 'models/version.dart';
 import 'trios/app_state.dart';
 
 Object? loggingError;
@@ -57,14 +55,14 @@ void main() async {
     Fimber.e("Error initializing!", ex: ex);
   }
 
-  final SettingsFileManager _fileManager = SettingsFileManager();
+  final SettingsFileManager fileManager = SettingsFileManager();
 
   bool allowCrashReporting = false;
   Settings? settings;
 
   // Read existing app settings
   try {
-    settings = _fileManager.loadSync();
+    settings = fileManager.loadSync();
   } catch (e) {
     Fimber.e("Error reading app settings.", ex: e);
     onAppLoadedActions.add((context) async {
@@ -90,13 +88,9 @@ void main() async {
     });
   }
 
-  // Show changelog notification if post-update or 1.0.x.
+  // Show changelog notification if post-update.
   try {
-    final version = Version.parse(Constants.version, sanitizeInput: false);
-    if (settings?.showChangelogNextLaunch == true ||
-        (settings?.showChangelogNextLaunch == null &&
-            version.major.toInt() == 1 &&
-            version.minor.toInt() == 0)) {
+    if (settings?.showChangelogNextLaunch == true) {
       onAppLoadedActions.add((context) async {
         toastification.showCustom(
             context: context,
@@ -109,7 +103,7 @@ void main() async {
   }
   if (settings != null) {
     try {
-      _fileManager.writeSync(settings.copyWith(showChangelogNextLaunch: false));
+      fileManager.writeSync(settings.copyWith(showChangelogNextLaunch: false));
     } catch (e) {
       Fimber.w("Error writing changelog notification setting.", ex: e);
     }

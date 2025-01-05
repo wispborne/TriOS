@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:trios/mod_manager/smol4.dart';
+import 'package:trios/mod_manager/mods_grid_page.dart';
 
 class FilterModsSearchBar extends StatelessWidget {
   const FilterModsSearchBar({

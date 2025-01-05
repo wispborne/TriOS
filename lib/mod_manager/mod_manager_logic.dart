@@ -855,6 +855,7 @@ typedef InstallModResult = ({
 
 Future<List<ModVariant>> getModsVariantsInFolder(Directory modsFolder) async {
   final mods = <ModVariant?>[];
+  if (!modsFolder.existsSync()) return [];
   final folders =
       [modsFolder] + [...modsFolder.listSync().whereType<Directory>()];
 
@@ -1031,15 +1032,18 @@ addModsFolderFileWatcher(
   Directory modsFolder,
   Function(List<File> modInfoFilesFound) onUpdated,
 ) {
-  final watcher = modsFolder.watch();
-  watcher.listen((event) {
-    if (event.type == FileSystemEvent.create ||
-        event.type == FileSystemEvent.delete ||
-        event.type == FileSystemEvent.modify) {
-      // checkModsFolderForUpdates(modsFolder, (_) {});
-      onUpdated([event.path.toFile()]);
-    }
-  });
+  modsFolder.watch()
+    ..listen((event) {
+      if (event.type == FileSystemEvent.create ||
+          event.type == FileSystemEvent.delete ||
+          event.type == FileSystemEvent.modify) {
+        // checkModsFolderForUpdates(modsFolder, (_) {});
+        onUpdated([event.path.toFile()]);
+      }
+    })
+    ..handleError((error) {
+      Fimber.w("Error watching mods folder: $error");
+    });
 }
 
 // final _lastPathsAndLastModified = <String, DateTime>{};

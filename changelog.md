@@ -11,6 +11,7 @@
     - WebView data folder is now `C:\Users\%USERPROFLE%\AppData\Roaming\org.wisp\TriOS\EBWebView`.
     - If you logged in to the forum, you'll need to log in again.
   - Tall tooltips on Portraits Viewer.
+  - App not checking correctly if game/mods folders exist in some cases.
 
 # 1.0.2
 - Fixed

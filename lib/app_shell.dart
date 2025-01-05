@@ -9,7 +9,7 @@ import 'package:toastification/toastification.dart';
 import 'package:trios/chipper/chipper_home.dart';
 import 'package:trios/dashboard/dashboard.dart';
 import 'package:trios/modBrowser/mod_browser_page.dart';
-import 'package:trios/mod_manager/smol4.dart';
+import 'package:trios/mod_manager/mods_grid_page.dart';
 import 'package:trios/portraits/portraits_viewer.dart';
 import 'package:trios/rules_autofresh/rules_hotreload.dart';
 import 'package:trios/themes/theme_manager.dart';
@@ -190,7 +190,7 @@ class _AppShellState extends ConsumerState<AppShell>
         padding: EdgeInsets.all(4),
         child: Dashboard(),
       ),
-      const Smol4(),
+      const ModsGridPage(),
       const Padding(padding: EdgeInsets.all(8), child: ModProfilePage()),
       const Padding(padding: EdgeInsets.all(8), child: VramEstimatorPage()),
       const Padding(padding: EdgeInsets.all(8), child: ChipperApp()),

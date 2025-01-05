@@ -255,7 +255,7 @@ class JreManager extends AsyncNotifier<JreManagerState> {
     _jreWatcherSubscription?.cancel();
     final jresDir =
         ref.read(appSettings.select((value) => value.gameDir))?.toDirectory();
-    if (jresDir == null) return;
+    if (jresDir == null || !jresDir.existsSync()) return;
     _jreWatcherSubscription = jresDir.watch().listen((event) {
       _findJREs();
     });

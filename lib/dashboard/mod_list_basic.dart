@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
-import 'package:trios/mod_manager/smol4.dart';
+import 'package:trios/mod_manager/mods_grid_page.dart';
 import 'package:trios/models/enabled_mods.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';

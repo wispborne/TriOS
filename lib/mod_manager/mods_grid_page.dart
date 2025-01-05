@@ -22,14 +22,14 @@ import 'homebrew_grid/filter_mods_search_view.dart';
 
 final searchQuery = StateProvider.autoDispose<String>((ref) => "");
 
-class Smol4 extends ConsumerStatefulWidget {
-  const Smol4({super.key});
+class ModsGridPage extends ConsumerStatefulWidget {
+  const ModsGridPage({super.key});
 
   @override
-  ConsumerState createState() => _Smol4State();
+  ConsumerState createState() => _ModsGridState();
 }
 
-class _Smol4State extends ConsumerState<Smol4>
+class _ModsGridState extends ConsumerState<ModsGridPage>
     with AutomaticKeepAliveClientMixin, SingleTickerProviderStateMixin {
   @override
   bool get wantKeepAlive => true;

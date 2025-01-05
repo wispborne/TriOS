@@ -20,7 +20,7 @@ abstract class GenericSettingsAsyncNotifier<T> extends AsyncNotifier<T> {
     if (!_isInitialized) {
       try {
         state = AsyncValue.loading();
-        Fimber.i("Building settings notifier");
+        Fimber.i("Building settings notifier: $runtimeType");
         final settings = await settingsManager.readSettingsFromDisk();
         _isInitialized = true;
         return settings;

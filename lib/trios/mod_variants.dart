@@ -30,7 +30,7 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
     if (!_initializedFileWatcher) {
       _initializedFileWatcher = true;
       final modsPath = ref.watch(appSettings.select((value) => value.modsDir));
-      if (modsPath != null) {
+      if (modsPath != null && modsPath.existsSync()) {
         addModsFolderFileWatcher(modsPath, (List<File> files) {
           if (shouldAutomaticallyReloadOnFilesChanged) {
             Fimber.i("Mods folder changed, invalidating mod variants.");

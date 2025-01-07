@@ -412,7 +412,7 @@ class _AppShellState extends ConsumerState<AppShell>
               }),
               if (logFilePath != null)
                 MovingTooltipWidget.text(
-                  message: "${Constants.appName} log file",
+                  message: "Open ${Constants.appName} log file folder",
                   child: IconButton(
                     icon:
                         const SvgImageIcon("assets/images/icon-file-debug.svg"),

@@ -253,38 +253,38 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                                       enabledMods: allMods
                                           .where((mod) => mod.hasEnabledVariant)
                                           .toList()),
-                                  Builder(builder: (context) {
-                                    final isDoubleClick = ref.watch(
-                                        appSettings.select(
-                                            (s) => s.doubleClickForModsPanel));
-
-                                    return AnimatedPopupMenuButton(
-                                        icon: Icon(Icons.more_vert),
-                                        showArrow: false,
-                                        onSelected: (value) {
-                                          ref.read(appSettings.notifier).update(
-                                              (s) => s.copyWith(
-                                                  doubleClickForModsPanel:
-                                                      !value));
-                                        },
-                                        menuItems: [
-                                          PopupMenuItem(
-                                              value: isDoubleClick,
-                                              child: Row(
-                                                children: [
-                                                  AbsorbPointer(
-                                                    child: Checkbox(
-                                                        value: isDoubleClick,
-                                                        onChanged: (_) {}),
-                                                  ),
-                                                  SizedBox(width: 8),
-                                                  // Space between icon and text
-                                                  Text(
-                                                      "Double-click to view side panel"),
-                                                ],
-                                              )),
-                                        ]);
-                                  }),
+                                  // Builder(builder: (context) {
+                                  //   final isDoubleClick = ref.watch(
+                                  //       appSettings.select(
+                                  //           (s) => s.doubleClickForModsPanel));
+                                  //
+                                  //   return AnimatedPopupMenuButton(
+                                  //       icon: Icon(Icons.more_vert),
+                                  //       showArrow: false,
+                                  //       onSelected: (value) {
+                                  //         ref.read(appSettings.notifier).update(
+                                  //             (s) => s.copyWith(
+                                  //                 doubleClickForModsPanel:
+                                  //                     !value));
+                                  //       },
+                                  //       menuItems: [
+                                  //         PopupMenuItem(
+                                  //             value: isDoubleClick,
+                                  //             child: Row(
+                                  //               children: [
+                                  //                 AbsorbPointer(
+                                  //                   child: Checkbox(
+                                  //                       value: isDoubleClick,
+                                  //                       onChanged: (_) {}),
+                                  //                 ),
+                                  //                 SizedBox(width: 8),
+                                  //                 // Space between icon and text
+                                  //                 Text(
+                                  //                     "Double-click to view side panel"),
+                                  //               ],
+                                  //             )),
+                                  //       ]);
+                                  // }),
                                   MovingTooltipWidget.text(
                                     message: "Open side panel",
                                     child: IconButton(

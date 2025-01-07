@@ -14,7 +14,9 @@
   - Tall tooltips on Portraits Viewer.
   - App not checking correctly if game/mods folders exist in some cases.
   - Errors sent to Sentry not including my custom messages.
-  - Mods tab: "Disable" option for disabled mods.
+  - Mods tab: removed "Disable" option for already-disabled mods.
+- Changed
+  - Mods tab: Side panel now has a dedicated button to open it, rather than a single-click.
 
 # 1.0.2
 - Fixed

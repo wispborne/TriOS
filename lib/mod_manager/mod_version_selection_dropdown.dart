@@ -214,6 +214,7 @@ class _ModVersionSelectionDropdownState
         child: DropdownButton2<ModVariant?>(
           items: items,
           value: widget.mod.findFirstEnabled,
+          openWithLongPress: false,
           alignment: Alignment.centerLeft,
           hint: buildDropdownButton(dropdownWidth, buttonStyle,
               hasMultipleEnabled, warningIcon, null, textColor),

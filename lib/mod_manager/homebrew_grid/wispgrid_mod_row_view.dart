@@ -75,7 +75,7 @@ class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
 
     return HoverableWidget(
       onTapDown: () => widget.onTapped(),
-      onDoubleTap: () => widget.onDoubleTapped(),
+      // onDoubleTap: () => widget.onDoubleTapped(),
       child: Builder(builder: (context) {
         final isHovering = HoverData.of(context)?.isHovering ?? false;
         final metadata = ref

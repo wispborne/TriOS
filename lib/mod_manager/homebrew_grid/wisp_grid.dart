@@ -28,7 +28,10 @@ class WispGrid extends ConsumerStatefulWidget {
   final Mod? selectedMod;
 
   const WispGrid(
-      {super.key, required this.mods, required this.onModRowSelected, this.selectedMod});
+      {super.key,
+      required this.mods,
+      required this.onModRowSelected,
+      this.selectedMod});
 
   @override
   ConsumerState createState() => _WispGridState();
@@ -178,8 +181,13 @@ class _WispGridState extends ConsumerState<WispGrid> {
   }
 
   ContextMenuRegion buildWrappedModRow(Mod mod, BuildContext context) {
-    final doubleClickForModsPanel =
-        ref.watch(appSettings.select((s) => s.doubleClickForModsPanel));
+    // Disabling the click for mods panel functionality because
+    // having the double-click introduces a delay on all single-clicks in the row,
+    // and single-clicking for the side panel is too annoying.
+    // TODO see if there's a way to stop the onDoubleTap from delaying single-clicks
+    // on the version dropdown popup.
+    final doubleClickForModsPanel = true;
+    // ref.watch(appSettings.select((s) => s.doubleClickForModsPanel));
 
     return ContextMenuRegion(
       contextMenu: _checkedModIds.length > 1

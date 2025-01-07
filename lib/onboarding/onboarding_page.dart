@@ -155,7 +155,9 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
                     var newGameDir =
                         await FilePicker.platform.getDirectoryPath();
                     if (newGameDir == null) return;
-                    textEditingController.text = newGameDir;
+                    setState(() {
+                      textEditingController.text = newGameDir;
+                    });
                   },
                 ),
               ],

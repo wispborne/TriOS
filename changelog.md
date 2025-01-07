@@ -15,6 +15,9 @@
   - App not checking correctly if game/mods folders exist in some cases.
   - Errors sent to Sentry not including my custom messages.
   - Mods tab: removed "Disable" option for already-disabled mods.
+  - Linux & others probably: During onboarding, fixed selecting a game folder not actually selecting it.
+  - Linux: fixed "Run as admin" always showing.
+  - Linux: fixed "Open log folder" not working.
 - Changed
   - Mods tab: Side panel now has a dedicated button to open it, rather than a single-click.
 

@@ -419,8 +419,12 @@ class _AppShellState extends ConsumerState<AppShell>
                     color: Theme.of(context).iconTheme.color,
                     onPressed: () {
                       try {
-                        launchUrlString(
-                            logFilePath!.toFile().normalize.parent.path);
+                        logFilePath!
+                            .toFile()
+                            .normalize
+                            .parent
+                            .path
+                            .openAsUriInBrowser();
                       } catch (e, st) {
                         Fimber.e("Error opening log file: $e",
                             ex: e, stacktrace: st);
@@ -772,7 +776,7 @@ class _FilePermissionShieldState extends ConsumerState<FilePermissionShield> {
   Future<void> refresh(JreManagerState newState) async {
     customVmParamsFilesThatCannotBeWritten.clear();
     isStandardVmparamsWritable =
-        await newState.standardActiveJre?.canWriteToVmParamsFile() ?? false;
+        await newState.standardActiveJre?.canWriteToVmParamsFile() ?? true;
     areAllCustomJresWritable = true;
     for (final customJre in newState.customInstalledJres) {
       if (!await customJre.canWriteToVmParamsFile()) {

@@ -38,6 +38,14 @@ jobs:
       - run: flutter upgrade
       - run: flutter config --enable-windows-desktop
 
+      # Use Visual C++ 2019 toolset so that the WebView doesn't crash on Windows 10
+      - name: Set up Visual Studio 2019
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+          toolset: 14.29
+          vcvars_ver: 14.29
+
       - name: Build Windows
         run: |
           echo "Building Windows app..."

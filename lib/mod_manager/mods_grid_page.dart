@@ -218,6 +218,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                                                       p.id == activeProfileId),
                                               isDense: true,
                                               isExpanded: true,
+                                              hint: const Text("(none active)"),
                                               padding: const EdgeInsets.all(4),
                                               focusColor: Colors.transparent,
                                               items: profiles?.modProfiles

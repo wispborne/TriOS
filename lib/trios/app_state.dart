@@ -117,10 +117,11 @@ class AppState {
   static final starsectorVersion = FutureProvider<String?>((ref) async {
     final gamePath =
         ref.watch(appSettings.select((value) => value.gameDir))?.toDirectory();
-    if (gamePath == null) return null;
+    if (gamePath == null || gamePath.existsSync() == false) return null;
+    final gameCorePath = generateGameCorePath(gamePath)!;
 
     try {
-      final trueVersion = await getStarsectorVersionFromObf();
+      final trueVersion = await getStarsectorVersionFromObf(gameCorePath);
       if (trueVersion != null && trueVersion.isNotEmpty) {
         ref
             .read(appSettings.notifier)

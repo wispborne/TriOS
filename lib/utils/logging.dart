@@ -257,7 +257,9 @@ class Fimber {
     }
 
     if (_allowSentryReporting) {
-      Sentry.captureException(ex, stackTrace: stacktrace);
+      Sentry.captureException(ex, stackTrace: stacktrace, withScope: (scope) {
+        scope.setContexts("extra-data", {"message": message});
+      });
     }
   }
 }

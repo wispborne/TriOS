@@ -77,9 +77,6 @@ Directory? generateGameCorePath(Directory gamePath) {
   }
 }
 
-Directory? defaultGameCorePath() =>
-    generateGameCorePath(defaultGamePath())?.normalize;
-
 Directory? generateModsFolderPath(Directory gamePath) {
   if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
     return Directory(p.join(gamePath.path, "mods")).normalize;
@@ -113,16 +110,12 @@ File getVanillaRulesCsvInGameFiles(Directory gameFiles) {
   return File(getRulesCsvInModFolder(gameFiles)!.absolute.path);
 }
 
-Future<String?> getStarsectorVersionFromObf() async {
+Future<String?> getStarsectorVersionFromObf(Directory gameCorePath) async {
   final libarchive = LibArchive();
-  final gameCorePath = defaultGameCorePath();
-  if (gameCorePath == null) {
-    throw Exception("Game core path not found.");
-  }
 
   final obfPath = p.join(gameCorePath.path, "starfarer_obf.jar").toFile();
   if (!obfPath.existsSync()) {
-    throw Exception("starfarer_obf.jar not found.");
+    throw Exception("${obfPath.path} not found.");
   }
 
   final extractedVersionFile = (await libarchive.readEntriesInArchive(obfPath,

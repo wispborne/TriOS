@@ -32,9 +32,6 @@ bool isChangingModProfileProvider = false;
 /// Stores [ModProfile]s, provides methods to manage them, observable state.
 class ModProfilesSettingsManager
     extends GenericAsyncSettingsManager<ModProfiles> {
-  @override
-  ModProfiles Function() get createDefaultState =>
-      () => const ModProfiles(modProfiles: []);
 
   @override
   String get fileName => "trios_mod_profiles-v2.json";
@@ -54,6 +51,9 @@ class ModProfilesSettingsManager
 class ModProfileManagerNotifier
     extends GenericSettingsAsyncNotifier<ModProfiles> {
   bool _pauseAutomaticProfileUpdates = false;
+
+  @override
+  ModProfiles createDefaultState() => const ModProfiles(modProfiles: []);
 
   @override
   Future<ModProfiles> build() async {
@@ -88,7 +88,7 @@ class ModProfileManagerNotifier
           await existingJsonFile.rename("${existingJsonFile.path}.bak");
           initialState = modProfiles;
           state = AsyncData(initialState);
-          await settingsManager.writeSettingsToDisk(initialState);
+          await settingsManager.scheduleWriteSettingsToDisk(initialState);
         }
       } catch (e, stack) {
         Fimber.e("Failed to migrate mod profiles to proper json.",
@@ -153,7 +153,7 @@ class ModProfileManagerNotifier
               1,
     );
 
-    update((prevState) => prevState.copyWith(
+    updateState((prevState) => prevState.copyWith(
         modProfiles: [...?state.valueOrNull?.modProfiles, newModProfile]));
   }
 
@@ -166,7 +166,7 @@ class ModProfileManagerNotifier
             profile.id == updatedProfile.id ? updatedProfile : profile)
         .toList();
 
-    update((oldState) => oldState.copyWith(modProfiles: newModProfiles));
+    updateState((oldState) => oldState.copyWith(modProfiles: newModProfiles));
   }
 
   void removeModProfile(String modProfileId) {
@@ -177,7 +177,7 @@ class ModProfileManagerNotifier
     final newModProfiles = state.value!.modProfiles
         .where((profile) => profile.id != modProfileId)
         .toList();
-    update((oldState) => oldState.copyWith(modProfiles: newModProfiles));
+    updateState((oldState) => oldState.copyWith(modProfiles: newModProfiles));
   }
 
   /// Computes the differences between what mods are currently enabled and

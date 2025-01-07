@@ -35,7 +35,6 @@ class SettingsDebugSection extends ConsumerStatefulWidget {
 }
 
 class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
-  final _searchController = SearchController();
   List<Release>? _releases;
   Release? _selectedRelease;
   bool _includePrereleases = false;
@@ -242,7 +241,7 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                         onPressed: () {
                           ref
                               .read(AppState.modAudit.notifier)
-                              .update((_) => []);
+                              .updateState((_) => []);
                           ref
                               .read(appSettings.notifier)
                               .update((_) => Settings());
@@ -300,7 +299,9 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
           child: ElevatedButton.icon(
             icon: const Icon(Icons.developer_mode),
             onPressed: () {
-              getStarsectorVersionFromObf().then((value) {
+              getStarsectorVersionFromObf(
+                      ref.watch(appSettings.select((s) => s.gameCoreDir))!)
+                  .then((value) {
                 showSnackBar(
                   context: ref.read(AppState.appContext)!,
                   content: Text("Game version: $value"),
@@ -364,81 +365,108 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                   Text(
                       "Max RAM usage: ${ProcessInfo.maxRss.bytesAsReadableMB()}"),
                   const SizedBox(height: 8),
-                  DebugSettingsGroup(
-                    child: Text(
-                        "Settings\n${ref.watch(appSettings).toMap().prettyPrintToml()}"),
-                  ),
-                  const SizedBox(height: 8),
-                  DebugSettingsGroup(
-                    child: Text(
-                      "Mod Profiles\n${ref.watch(modProfilesProvider).valueOrNull}",
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  DebugSettingsGroup(
-                    child: Text(
-                      "Environment variables\n${Platform.environment}",
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  DebugSettingsGroup(
-                    child: Builder(builder: (context) {
-                      final allSmolIds = ref
-                              .watch(AppState.modVariants)
-                              .valueOrNull
-                              ?.map((variant) => variant.smolId)
-                              .toList() ??
-                          [];
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text("Mod Compatibility"),
-                          SearchAnchor(
-                            searchController: _searchController,
-                            builder: (BuildContext context,
-                                SearchController controller) {
-                              return SearchBar(
-                                controller: controller,
-                                leading: const Icon(Icons.search),
-                                hintText: "Filter by variant id",
-                                backgroundColor: WidgetStateProperty.all(
-                                  Theme.of(context)
-                                      .colorScheme
-                                      .surfaceContainer,
-                                ),
-                                onChanged: (value) {
-                                  controller.openView();
-                                },
-                                onTap: () {
-                                  controller.openView();
-                                },
-                              );
-                            },
-                            suggestionsBuilder: (BuildContext context,
-                                SearchController controller) {
-                              return allSmolIds
-                                  .where((id) => id.contains(controller.text))
-                                  .map((id) => ListTile(
-                                        title: Text(id),
-                                        onTap: () {
-                                          setState(() {
-                                            controller.closeView(id);
-                                          });
-                                        },
-                                      ))
-                                  .toList();
-                            },
-                          ),
-                          Text(
-                            "${_searchController.text}:\n${ref.watch(AppState.modCompatibility)[_searchController.text]?.toString() ?? "(id not found)"}",
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            "ALL\n${ref.watch(AppState.modCompatibility)}",
-                          ),
-                        ],
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.settings),
+                    label: const Text("Show Current App Settings"),
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: const Text("Settings"),
+                            content: SingleChildScrollView(
+                              child: SelectableText(ref
+                                  .watch(appSettings)
+                                  .toMap()
+                                  .prettyPrintToml()),
+                            ),
+                          );
+                        },
                       );
-                    }),
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.view_carousel),
+                    label: const Text("Show Loaded Mod Profiles"),
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: const Text("Mod Profiles"),
+                            content: SingleChildScrollView(
+                              child: SelectableText(ref
+                                      .watch(modProfilesProvider)
+                                      .valueOrNull
+                                      ?.toMap()
+                                      .prettyPrintToml() ??
+                                  ""),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.landscape),
+                    label: const Text("Show Environment Variables"),
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: const Text("Environment Variables"),
+                            content: SingleChildScrollView(
+                              child: SelectableText(
+                                  Platform.environment.prettyPrintToml() ?? ""),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.heart_broken),
+                    label: const Text("Show Mod Compatibility"),
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: const Text("Mod Compatibility"),
+                            content: SingleChildScrollView(
+                              child: ModCompatibilityFilterWidget(),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.check),
+                    label: const Text("Show Loaded Version Checker Cache"),
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: const Text("Version Checker Cache"),
+                            content: SingleChildScrollView(
+                              child: SelectableText(ref
+                                      .watch(AppState.versionCheckResults)
+                                      .valueOrNull
+                                      ?.toMap()
+                                      .prettyPrintJson() ??
+                                  ""),
+                            ),
+                          );
+                        },
+                      );
+                    },
                   ),
                 ],
               ),
@@ -465,5 +493,81 @@ class DebugSettingsGroup extends StatelessWidget {
         child: child,
       ),
     );
+  }
+}
+
+class ModCompatibilityFilterWidget extends ConsumerStatefulWidget {
+  const ModCompatibilityFilterWidget({super.key});
+
+  @override
+  ConsumerState<ModCompatibilityFilterWidget> createState() =>
+      _ModCompatibilityFilterWidgetState();
+}
+
+class _ModCompatibilityFilterWidgetState
+    extends ConsumerState<ModCompatibilityFilterWidget> {
+  final _searchController = SearchController();
+
+  @override
+  Widget build(BuildContext context) {
+    return Builder(builder: (context) {
+      final allSmolIds = ref
+              .watch(AppState.modVariants)
+              .valueOrNull
+              ?.map((variant) => variant.smolId)
+              .toList() ??
+          [];
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text("Mod Compatibility"),
+          SearchAnchor(
+            searchController: _searchController,
+            builder: (BuildContext context, SearchController controller) {
+              return SearchBar(
+                controller: controller,
+                leading: const Icon(Icons.search),
+                hintText: "Filter by variant id",
+                backgroundColor: WidgetStateProperty.all(
+                  Theme.of(context).colorScheme.surfaceContainer,
+                ),
+                onChanged: (value) {
+                  controller.openView();
+                },
+                onTap: () {
+                  controller.openView();
+                },
+              );
+            },
+            suggestionsBuilder:
+                (BuildContext context, SearchController controller) {
+              return allSmolIds
+                  .where((id) => id.contains(controller.text))
+                  .map((id) => ListTile(
+                        title: Text(id),
+                        onTap: () {
+                          setState(() {
+                            controller.closeView(id);
+                          });
+                        },
+                      ))
+                  .toList();
+            },
+          ),
+          SelectableText(
+            "${_searchController.text.ifBlank("(no search)")}:\n${ref.watch(AppState.modCompatibility)[_searchController.text]?.toString() ?? "(id not found)"}",
+          ),
+          const SizedBox(height: 24),
+          Text("ALL Mods",
+              style: Theme.of(context)
+                  .textTheme
+                  .labelLarge
+                  ?.copyWith(fontSize: 16, fontWeight: FontWeight.bold)),
+          SelectableText(
+            ref.watch(AppState.modCompatibility).entries.toList().join('\n'),
+          ),
+        ],
+      );
+    });
   }
 }

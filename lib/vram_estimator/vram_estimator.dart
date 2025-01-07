@@ -48,9 +48,6 @@ class VramEstimatorState with VramEstimatorStateMappable {
 
 class VramEstimatorManager
     extends GenericAsyncSettingsManager<VramEstimatorState> {
-  @override
-  VramEstimatorState Function() get createDefaultState =>
-      () => VramEstimatorState.initial();
 
   @override
   FileFormat get fileFormat => FileFormat.json;
@@ -98,6 +95,9 @@ class VramEstimatorNotifier
   //   }
   // }
 
+  @override
+  VramEstimatorState createDefaultState() => VramEstimatorState.initial();
+
   Future<void> startEstimating({List<ModVariant>? variantsToCheck}) async {
     if (state.valueOrNull?.isScanning == true) return;
 
@@ -108,7 +108,7 @@ class VramEstimatorNotifier
       return;
     }
 
-    update((s) => s.copyWith(isScanning: true, isCancelled: false));
+    updateState((s) => s.copyWith(isScanning: true, isCancelled: false));
 
     try {
       final info = await VramChecker(
@@ -131,7 +131,7 @@ class VramEstimatorNotifier
             ...state.requireValue.modVramInfo,
             mod.info.smolId: mod
           };
-          update(
+          updateState(
             (state) => state.copyWith(
               modVramInfo: updatedModVramInfo,
               lastUpdated: DateTime.now(),
@@ -149,7 +149,7 @@ class VramEstimatorNotifier
             previousValue..[element.info.smolId] = element,
       );
 
-      update(
+      updateState(
         (state) => state.copyWith(
           modVramInfo: modVramInfo,
           isScanning: false,
@@ -159,7 +159,7 @@ class VramEstimatorNotifier
     } catch (e) {
       Fimber.w('Error scanning for VRAM usage: $e');
       // Optionally, set an error state
-      update(
+      updateState(
         (state) => state.copyWith(
           isScanning: false,
           isCancelled: false,
@@ -169,7 +169,7 @@ class VramEstimatorNotifier
   }
 
   void cancelEstimation() {
-    update((s) => s.copyWith(isCancelled: true));
+    updateState((s) => s.copyWith(isCancelled: true));
   }
 }
 

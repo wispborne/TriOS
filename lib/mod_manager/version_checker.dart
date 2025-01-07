@@ -7,6 +7,7 @@ import 'package:dart_mappable/dart_mappable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mutex/mutex.dart';
 import 'package:path/path.dart' as p;
+import 'package:trios/thirdparty/dartx/map.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/generic_settings_manager.dart';
 import 'package:trios/utils/generic_settings_notifier.dart';
@@ -23,10 +24,6 @@ part 'version_checker.mapper.dart';
 
 class VersionCheckerManager
     extends GenericAsyncSettingsManager<VersionCheckerState> {
-  @override
-  VersionCheckerState Function() get createDefaultState =>
-      () => VersionCheckerState({});
-
   @override
   FileFormat get fileFormat => FileFormat.json;
 
@@ -56,16 +53,24 @@ class VersionCheckerAsyncProvider
       VersionCheckerManager();
 
   @override
+  VersionCheckerState createDefaultState() => VersionCheckerState({});
+
+  @override
   Future<VersionCheckerState> build() async {
     await super.build();
     // Automatically refreshes whenever mods change.
     ref.watch(AppState.mods);
     await refresh(skipCache: false);
-    return VersionCheckerState(_versionCheckResultsCache);
+    // Need to do `toMap` to avoid the state being the same object as the cache.
+    // This resulted in `updateState` having the same old state as new state, since the cache was mutated before `updateState`
+    // was called, resulting in the state object also being mutated.
+    return VersionCheckerState(_versionCheckResultsCache.toMap());
   }
 
   /// Refreshes the version check results, updating the state accordingly.
-  Future<void> refresh({required bool skipCache, List<ModVariant>? specificVariantsToCheck}) async {
+  Future<void> refresh(
+      {required bool skipCache,
+      List<ModVariant>? specificVariantsToCheck}) async {
     if (specificVariantsToCheck == null) {
       await _initializeCache(skipCache);
     }
@@ -84,13 +89,14 @@ class VersionCheckerAsyncProvider
     if (shouldSkipCache) {
       await _cacheLock.protect(() async {
         _versionCheckResultsCache.clear();
-        update((s) => _updateStateWithCache(_versionCheckResultsCache));
+        updateState((s) => _updateStateWithCache(_versionCheckResultsCache));
         AppState.skipCacheOnNextVersionCheck = false;
       });
     } else if (_versionCheckResultsCache.isEmpty) {
-      await settingsManager.readSettingsFromDisk();
+      final versionResultsOnDisk =
+          await settingsManager.readSettingsFromDisk(createDefaultState());
       _versionCheckResultsCache
-          .addAll(settingsManager.state!.versionCheckResultsBySmolId);
+          .addAll(versionResultsOnDisk.versionCheckResultsBySmolId);
     }
   }
 
@@ -155,18 +161,16 @@ class VersionCheckerAsyncProvider
     }
     await _cacheLock.protect(() async {
       _versionCheckResultsCache[result.smolId!] = result;
-      await update((s) => _updateStateWithCache(_versionCheckResultsCache));
+      await updateState((s) => _updateStateWithCache(_versionCheckResultsCache));
     });
   }
 
-  /// Updates the state with the current cache.
   VersionCheckerState _updateStateWithCache(
-      Map<String, RemoteVersionCheckResult> versionCheckResultsCache) {
-    return state.valueOrNull?.copyWith(
-          versionCheckResultsBySmolId: versionCheckResultsCache,
-        ) ??
-        VersionCheckerState(versionCheckResultsCache);
-  }
+          Map<String, RemoteVersionCheckResult> versionCheckResultsCache) =>
+      state.valueOrNull?.copyWith(
+        versionCheckResultsBySmolId: versionCheckResultsCache,
+      ) ??
+      VersionCheckerState(versionCheckResultsCache);
 
   final versionCheckerCacheFile =
       File(p.join("cache", "TriOS-VersionCheckerCache.json")).normalize;
@@ -248,8 +252,7 @@ Future<RemoteVersionCheckResult> checkRemoteVersion(
           "Failed to fetch remote version info for ${modVariant.modInfo.id}: ${response.statusCode} - $body");
     }
   } catch (e, st) {
-    Fimber.w(
-        "Error fetching remote version info for ${modVariant.modInfo.id}");
+    Fimber.w("Error fetching remote version info for ${modVariant.modInfo.id}");
     Fimber.v(() => '', ex: e, stacktrace: st);
     return RemoteVersionCheckResult(null, remoteVersionUrl)
       ..smolId = modVariant.smolId

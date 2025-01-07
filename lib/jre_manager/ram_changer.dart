@@ -112,6 +112,9 @@ class _RamChangerState extends ConsumerState<RamChanger> {
       }
     }
 
-    setState(() {});
+    // Async logic prior, might not be mounted anymore
+    if (mounted) {
+      setState(() {});
+    }
   }
 }

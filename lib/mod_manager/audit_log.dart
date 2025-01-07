@@ -12,9 +12,6 @@ class AuditLogPersistenceManager
   String get fileName => 'mod_audit_log.json';
 
   @override
-  List<AuditEntry> Function() get createDefaultState => () => [];
-
-  @override
   Map<String, dynamic> Function(List<AuditEntry>) get toMap =>
       (auditEntries) => {
             'auditLog': auditEntries
@@ -42,9 +39,12 @@ class AuditLogPersistenceManager
 class AuditLog extends GenericSettingsAsyncNotifier<List<AuditEntry>> {
   static const maxAuditEntries = 100;
 
+  @override
+  List<AuditEntry> createDefaultState() => [];
+
   void addAuditEntry(String smolId, ModAction action,
       {required String reason}) {
-    update((currentState) {
+    updateState((currentState) {
       final newEntry = AuditEntry(smolId, DateTime.now(), action, reason);
       final updatedState = [
         ...currentState,

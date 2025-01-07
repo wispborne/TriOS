@@ -67,7 +67,7 @@ class ModMetadataStore extends GenericSettingsAsyncNotifier<ModsMetadata> {
         "Updated metadata in ${DateTime.now().millisecondsSinceEpoch - timestamp}ms.");
 
     if (isDirty) {
-      settingsManager.writeSettingsToDisk(settings);
+      settingsManager.scheduleWriteSettingsToDisk(settings);
     }
   }
 
@@ -88,7 +88,7 @@ class ModMetadataStore extends GenericSettingsAsyncNotifier<ModsMetadata> {
     final userMetadata = state.valueOrNull?.userMetadata.toMap() ?? {};
     userMetadata[modId] =
         metadataUpdater(userMetadata[modId] ?? ModMetadata.empty());
-    update((s) => s.copyWith(userMetadata: userMetadata));
+    updateState((s) => s.copyWith(userMetadata: userMetadata));
   }
 
   void updateModBaseMetadata(String modId,
@@ -96,7 +96,7 @@ class ModMetadataStore extends GenericSettingsAsyncNotifier<ModsMetadata> {
     final baseMetadata = state.valueOrNull?.baseMetadata.toMap() ?? {};
     baseMetadata[modId] =
         metadataUpdater(baseMetadata[modId] ?? ModMetadata.empty());
-    update((s) => s.copyWith(baseMetadata: baseMetadata));
+    updateState((s) => s.copyWith(baseMetadata: baseMetadata));
   }
 
   void updateModVariantUserMetadata(
@@ -112,7 +112,7 @@ class ModMetadataStore extends GenericSettingsAsyncNotifier<ModsMetadata> {
     userMetadata[modId]!.variantsMetadata[smolId] = metadataUpdater(
         userMetadata[modId]!.variantsMetadata[smolId] ??
             ModVariantMetadata.empty());
-    update((s) => s.copyWith(userMetadata: userMetadata));
+    updateState((s) => s.copyWith(userMetadata: userMetadata));
   }
 
   void updateModVariantBaseMetadata(
@@ -128,16 +128,16 @@ class ModMetadataStore extends GenericSettingsAsyncNotifier<ModsMetadata> {
     baseMetadata[modId]!.variantsMetadata[smolId] = metadataUpdater(
         baseMetadata[modId]!.variantsMetadata[smolId] ??
             ModVariantMetadata.empty());
-    update((s) => s.copyWith(baseMetadata: baseMetadata));
+    updateState((s) => s.copyWith(baseMetadata: baseMetadata));
   }
+
+  @override
+  ModsMetadata createDefaultState() =>
+      ModsMetadata(baseMetadata: {}, userMetadata: {});
 }
 
 /// Manager for [ModMetadataStore].
 class _ModsMetadataManager extends GenericAsyncSettingsManager<ModsMetadata> {
-  @override
-  ModsMetadata Function() get createDefaultState =>
-      () => const ModsMetadata(baseMetadata: {}, userMetadata: {});
-
   @override
   FileFormat get fileFormat => FileFormat.json;
 

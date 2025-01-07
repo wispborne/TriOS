@@ -5,11 +5,14 @@ import 'package:trios/utils/generic_settings_manager.dart';
 import 'package:trios/utils/logging.dart';
 
 abstract class GenericSettingsAsyncNotifier<T> extends AsyncNotifier<T> {
-  late GenericAsyncSettingsManager<T> settingsManager;
+  late final GenericAsyncSettingsManager<T> settingsManager;
   bool _isInitialized = false;
 
   /// Subclasses must provide the settings manager instance.
   GenericAsyncSettingsManager<T> createSettingsManager();
+
+  /// Subclasses must provide the default state.
+  T createDefaultState();
 
   GenericSettingsAsyncNotifier() {
     settingsManager = createSettingsManager();
@@ -18,12 +21,14 @@ abstract class GenericSettingsAsyncNotifier<T> extends AsyncNotifier<T> {
   @override
   Future<T> build() async {
     if (!_isInitialized) {
+      state = AsyncValue.loading();
+      Fimber.i("Building settings notifier: $runtimeType");
       try {
-        state = AsyncValue.loading();
-        Fimber.i("Building settings notifier: $runtimeType");
-        final settings = await settingsManager.readSettingsFromDisk();
+        final loadedState =
+            await settingsManager.readSettingsFromDisk(createDefaultState());
+        state = AsyncData(loadedState);
         _isInitialized = true;
-        return settings;
+        return loadedState;
       } catch (e, stackTrace) {
         state = AsyncError(e, stackTrace);
         Fimber.w("Error building settings notifier",
@@ -31,23 +36,32 @@ abstract class GenericSettingsAsyncNotifier<T> extends AsyncNotifier<T> {
         rethrow;
       }
     } else {
-      return state.value!;
+      return state.requireValue;
     }
   }
 
-  /// Updates the current state using the provided mutator function and persists the updated state to disk.
-  @override
-  Future<T> update(
+  Future<T> updateState(
     FutureOr<T> Function(T currentState) mutator, {
     FutureOr<T> Function(Object, StackTrace)? onError,
   }) async {
-    final newState = await settingsManager.update(mutator, onError: onError);
-
-    state = AsyncData(newState);
-
-    return newState;
+    final oldValue = state.valueOrNull ?? createDefaultState();
+    try {
+      final newValue = await mutator(oldValue);
+      if (newValue.hashCode != oldValue.hashCode) {
+        state = AsyncData(newValue);
+        settingsManager.scheduleWriteSettingsToDisk(newValue);
+      } else {
+        Fimber.d("No settings change detected.");
+      }
+      return newValue;
+    } catch (e, stackTrace) {
+      if (onError != null) {
+        return await onError(e, stackTrace);
+      } else {
+        Fimber.e("Error during settings update: $e",
+            ex: e, stacktrace: stackTrace);
+        rethrow;
+      }
+    }
   }
-
-  /// Provides access to the current settings state.
-  T get currentState => settingsManager.state!;
 }

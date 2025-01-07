@@ -5,6 +5,7 @@
     - Default is to need double-click (currently is single-click).
   - Debug feature to update to a specific release.
 - Fixed
+  - All mods sometimes showing as not supporting Version Checker.
   - Changelogs not shown correctly for mods using Google Drive to host the text. 
   - Double scrollbar on Mods tab.
   - WebView not working because the data folder couldn't be accessed (showed a popup warning).
@@ -12,6 +13,8 @@
     - If you logged in to the forum, you'll need to log in again.
   - Tall tooltips on Portraits Viewer.
   - App not checking correctly if game/mods folders exist in some cases.
+  - Errors sent to Sentry not including my custom messages.
+  - Mods tab: "Disable" option for disabled mods.
 
 # 1.0.2
 - Fixed

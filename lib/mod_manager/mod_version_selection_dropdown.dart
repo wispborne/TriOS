@@ -182,10 +182,11 @@ class _ModVersionSelectionDropdownState
 
     // Multiple variants tracked
     final items = [
-      const DropdownMenuItem(
-        value: null,
-        child: Text("Disable", overflow: TextOverflow.ellipsis),
-      ),
+      if (widget.mod.hasEnabledVariant)
+        const DropdownMenuItem(
+          value: null,
+          child: Text("Disable", overflow: TextOverflow.ellipsis),
+        ),
       ...(widget.mod.modVariants
           .map(
             (variant) => DropdownMenuItem(
@@ -214,6 +215,8 @@ class _ModVersionSelectionDropdownState
           items: items,
           value: widget.mod.findFirstEnabled,
           alignment: Alignment.centerLeft,
+          hint: buildDropdownButton(dropdownWidth, buttonStyle,
+              hasMultipleEnabled, warningIcon, null, textColor),
           iconStyleData: const IconStyleData(iconSize: 0),
           // Removes ugly grey line below text
           underline: Container(),
@@ -224,48 +227,56 @@ class _ModVersionSelectionDropdownState
           dropdownStyleData: DropdownStyleData(openInterval: Interval(0, 0.15)),
           selectedItemBuilder: (BuildContext context) {
             return items.map((item) {
-              return SizedBox(
-                width: dropdownWidth,
-                child: ElevatedButton(
-                  onPressed: null,
-                  style: buttonStyle,
-                  child: Stack(
-                    children: [
-                      (hasMultipleEnabled
-                          ? Align(
-                              alignment: Alignment.centerLeft,
-                              child: warningIcon)
-                          : Container()),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const SizedBox(width: 10),
-                          Expanded(
-                              child: Align(
-                            alignment: Alignment.center,
-                            child: item.value == null
-                                ? const Text("Enable")
-                                : item.child,
-                          )),
-                          SizedBox(
-                            width: 10,
-                            child: Icon(
-                              Icons.arrow_drop_down,
-                              color: textColor,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              );
+              return buildDropdownButton(dropdownWidth, buttonStyle,
+                  hasMultipleEnabled, warningIcon, item, textColor);
             }).toList();
           },
           onChanged: (ModVariant? variant) async {
             await switchToVariant(variant);
           },
+        ),
+      ),
+    );
+  }
+
+  SizedBox buildDropdownButton(
+      double dropdownWidth,
+      ButtonStyle buttonStyle,
+      bool hasMultipleEnabled,
+      Icon warningIcon,
+      DropdownMenuItem<ModVariant?>? item,
+      Color textColor) {
+    return SizedBox(
+      width: dropdownWidth,
+      child: ElevatedButton(
+        onPressed: null,
+        style: buttonStyle,
+        child: Stack(
+          children: [
+            (hasMultipleEnabled
+                ? Align(alignment: Alignment.centerLeft, child: warningIcon)
+                : Container()),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(width: 10),
+                Expanded(
+                    child: Align(
+                  alignment: Alignment.center,
+                  child:
+                      item?.value == null ? const Text("Enable") : item?.child,
+                )),
+                SizedBox(
+                  width: 10,
+                  child: Icon(
+                    Icons.arrow_drop_down,
+                    color: textColor,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

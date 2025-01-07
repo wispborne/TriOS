@@ -357,3 +357,31 @@ class SettingsFileManager {
     }
   }
 }
+
+/// Mutex, but synchronous.
+class SyncLock {
+  bool _locked = false;
+
+  void lock() {
+    if (_locked) {
+      throw StateError('Lock is already acquired');
+    }
+    _locked = true;
+  }
+
+  void unlock() {
+    if (!_locked) {
+      throw StateError('Lock is not acquired');
+    }
+    _locked = false;
+  }
+
+  T protectSync<T>(T Function() action) {
+    lock();
+    try {
+      return action();
+    } finally {
+      unlock();
+    }
+  }
+}

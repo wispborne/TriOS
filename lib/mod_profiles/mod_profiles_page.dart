@@ -251,20 +251,24 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
             Row(
               children: [
                 const Spacer(),
-                OutlinedButton(
-                  onPressed: () {
-                    if (newProfileNameController.text.isNotEmpty) {
-                      ref.read(modProfilesProvider.notifier).createModProfile(
-                          newProfileNameController.text,
-                          enabledModVariants: ref
-                              .read(AppState.enabledModVariants)
-                              .map((mod) =>
-                                  ShallowModVariant.fromModVariant(mod))
-                              .toList());
-                      newProfileNameController.clear();
-                    }
-                  },
-                  child: const Text('Create Profile'),
+                MovingTooltipWidget.text(
+                  message: "Creates a new profile using your current mods."
+                      "\nDoes not set it to active.",
+                  child: OutlinedButton(
+                    onPressed: () {
+                      if (newProfileNameController.text.isNotEmpty) {
+                        ref.read(modProfilesProvider.notifier).createModProfile(
+                            newProfileNameController.text,
+                            enabledModVariants: ref
+                                .read(AppState.enabledModVariants)
+                                .map((mod) =>
+                                    ShallowModVariant.fromModVariant(mod))
+                                .toList());
+                        newProfileNameController.clear();
+                      }
+                    },
+                    child: const Text('Create Profile'),
+                  ),
                 ),
               ],
             ),

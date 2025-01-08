@@ -157,6 +157,7 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
                     if (newGameDir == null) return;
                     setState(() {
                       textEditingController.text = newGameDir;
+                      gameDirPath = newGameDir;
                     });
                   },
                 ),

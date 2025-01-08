@@ -1,6 +1,8 @@
 # 1.0.4
 - Added
-  - New setting to override the path of the Starsector launcher.
+  - New setting to override the path of the Starsector launcher. 
+- Fixed
+  - During onboarding, selecting your game folder using the dialog didn't actually select it.
 
 # 1.0.3
 - Added

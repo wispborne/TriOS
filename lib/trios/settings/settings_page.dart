@@ -39,21 +39,22 @@ class SettingsPage extends ConsumerStatefulWidget {
 }
 
 class _SettingsPageState extends ConsumerState<SettingsPage> {
-  final gamePathTextController = TextEditingController();
-  bool gamePathExists = false;
+  final _gamePathTextController = TextEditingController();
+  final _customExecutablePathTextController = TextEditingController();
   final _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
-    gamePathTextController.text = ref.read(appSettings).gameDir?.normalize.path ?? "";
-    gamePathExists = Directory(gamePathTextController.text).existsSync();
+    _gamePathTextController.text =
+        ref.read(appSettings).gameDir?.normalize.path ?? "";
+
+    _customExecutablePathTextController.text =
+        ref.read(appSettings).customGameExePath ?? "";
   }
 
   @override
   Widget build(BuildContext context) {
-    final settings = ref.watch(appSettings);
-
     final theme = Theme.of(context);
     const leftTextOptionPadding = 4.0;
 
@@ -70,25 +71,33 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    SettingsGroup(name: "Game Location", children: [
+                    SettingsGroup(name: "Starsector", children: [
                       ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 600),
                         child: Row(
                           children: [
                             Expanded(
-                              child: TextField(
-                                controller: gamePathTextController,
-                                decoration: InputDecoration(
-                                  border: const OutlineInputBorder(),
-                                  errorText: gamePathExists
-                                      ? null
-                                      : "Path does not exist",
-                                  labelText: 'Starsector Folder',
-                                ),
-                                onChanged: (newGameDir) {
-                                  tryUpdateGamePath(newGameDir, settings);
-                                },
-                              ),
+                              child: Builder(builder: (context) {
+                                final gamePathExists =
+                                    Directory(_gamePathTextController.text)
+                                        .existsSync();
+
+                                return TextField(
+                                  controller: _gamePathTextController,
+                                  decoration: InputDecoration(
+                                    border: const OutlineInputBorder(),
+                                    labelStyle:
+                                        Theme.of(context).textTheme.labelLarge,
+                                    errorText: gamePathExists
+                                        ? null
+                                        : "Path does not exist",
+                                    labelText: 'Starsector Folder',
+                                  ),
+                                  onChanged: (newGameDir) {
+                                    tryUpdateGamePath(newGameDir);
+                                  },
+                                );
+                              }),
                             ),
                             IconButton(
                               icon: const Icon(Icons.folder),
@@ -96,23 +105,135 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                 var newGameDir = await FilePicker.platform
                                     .getDirectoryPath();
                                 if (newGameDir == null) return;
-                                tryUpdateGamePath(newGameDir, settings);
-                                gamePathTextController.text = newGameDir.toDirectory().normalize.path;
+                                tryUpdateGamePath(newGameDir);
+                                _gamePathTextController.text =
+                                    newGameDir.toDirectory().normalize.path;
                               },
                             ),
                           ],
                         ),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.only(
-                            left: leftTextOptionPadding, top: 8.0),
-                        child: SelectableText(
-                          "Mods Folder: ${ref.read(appSettings).modsDir?.normalize.path}",
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                              fontFeatures: [
-                                const FontFeature.tabularFigures()
-                              ]),
+                      // Unnecessary visual noise.
+                      if (false)
+                        Padding(
+                          padding: const EdgeInsets.only(
+                              left: leftTextOptionPadding, top: 8.0),
+                          child: SelectableText(
+                            "Mods Folder: ${ref.read(appSettings).modsDir?.normalize.path}",
+                            style: theme.textTheme.labelLarge?.copyWith(
+                                color: theme.colorScheme.onSurface
+                                    .withValues(alpha: 0.8),
+                                fontFeatures: [
+                                  const FontFeature.tabularFigures()
+                                ]),
+                          ),
                         ),
+                      const SizedBox(height: 24),
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 600),
+                        child: Builder(builder: (context) {
+                          final useCustomExecutable = ref.watch(appSettings
+                              .select((value) => value.useCustomGameExePath));
+                          final gamePath = ref
+                              .watch(
+                                  appSettings.select((value) => value.gameDir))
+                              ?.toDirectory();
+                          final currentLaunchPath = gamePath?.let((dir) =>
+                              getVanillaGameExecutable(dir).toFile().path);
+                          bool doesCustomExePathExist =
+                              currentLaunchPath?.toFile().existsSync() ?? true;
+                          if (!useCustomExecutable) {
+                            _customExecutablePathTextController.text =
+                                currentLaunchPath?.toFile().path ?? "";
+                          }
+
+                          return Row(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: MovingTooltipWidget.text(
+                                  message: "When checked, uses the custom launcher path",
+                                  child: Checkbox(
+                                    value: useCustomExecutable,
+                                    onChanged: (value) {
+                                      setState(() {
+                                        if (value == false) {
+                                          _customExecutablePathTextController
+                                              .text = currentLaunchPath ?? "";
+                                        } else if (value == true) {
+                                          _customExecutablePathTextController
+                                              .text = ref.read(
+                                                  appSettings.select((s) =>
+                                                      s.customGameExePath)) ??
+                                              "";
+                                        }
+
+                                        ref.read(appSettings.notifier).update(
+                                            (state) => state.copyWith(
+                                                useCustomGameExePath:
+                                                    value ?? false));
+                                      });
+                                    },
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                child: MovingTooltipWidget.text(
+                                  message:
+                                      "Allows you to set a custom Starsector launcher path",
+                                  child: Disable(
+                                    isEnabled: useCustomExecutable,
+                                    child: TextField(
+                                      controller:
+                                          _customExecutablePathTextController,
+                                      decoration: InputDecoration(
+                                        border: const OutlineInputBorder(),
+                                        isDense: true,
+                                        errorText:
+                                            doesCustomExePathExist ?? true
+                                                ? null
+                                                : "Path does not exist",
+                                        labelText:
+                                            "Starsector launcher path",
+                                        hintStyle: Theme.of(context)
+                                            .textTheme
+                                            .labelLarge,
+                                        labelStyle: Theme.of(context)
+                                            .textTheme
+                                            .labelLarge,
+                                      ),
+                                      onChanged: (newPath) {
+                                        tryUpdateCustomExecutablePath(newPath);
+                                      },
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Disable(
+                                isEnabled: useCustomExecutable,
+                                child: IconButton(
+                                  icon: const Icon(Icons.folder),
+                                  onPressed: () async {
+                                    var newPath =
+                                        (await FilePicker.platform.pickFiles(
+                                      dialogTitle: "Select Starsector launcher",
+                                      allowMultiple: false,
+                                      initialDirectory: ref
+                                              .read(appSettings
+                                                  .select((s) => s.gameDir))
+                                              ?.path ??
+                                          defaultGamePath().path,
+                                    ))
+                                            ?.paths
+                                            .firstOrNull;
+                                    if (newPath == null) return;
+                                    tryUpdateCustomExecutablePath(newPath);
+                                  },
+                                ),
+                              ),
+                            ],
+                          );
+                        }),
                       ),
                     ]),
                     SettingsGroup(
@@ -676,15 +797,15 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     );
   }
 
-  void tryUpdateGamePath(String newGameDir, Settings settings) {
+  void tryUpdateGamePath(String newGameDir) {
     newGameDir = newGameDir.isNullOrEmpty ? defaultGamePath().path : newGameDir;
 
     var dirExists = validateGameFolderPath(newGameDir);
 
     if (dirExists) {
       ref.read(appSettings.notifier).update((state) {
-        var newModDirPath = settings.hasCustomModsDir
-            ? settings.modsDir?.toDirectory()
+        var newModDirPath = state.hasCustomModsDir
+            ? state.modsDir?.toDirectory()
             : generateModsFolderPath(newGameDir.toDirectory());
         newModDirPath = newModDirPath?.normalize.toDirectory();
 
@@ -693,9 +814,19 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       });
     }
 
-    setState(() {
-      gamePathExists = dirExists;
-    });
+    setState(() {});
+  }
+
+  void tryUpdateCustomExecutablePath(String newPath) {
+    final exists = newPath.toFile().existsSync();
+
+    if (exists) {
+      ref.read(appSettings.notifier).update((state) => state.copyWith(
+            customGameExePath: File(newPath).normalize.path,
+          ));
+    }
+
+    setState(() {});
   }
 }
 

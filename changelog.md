@@ -1,3 +1,7 @@
+# 1.0.4
+- Added
+  - New setting to override the path of the Starsector launcher.
+
 # 1.0.3
 - Added
   - Mods tab: right-click on a version number for a menu to recheck updates.

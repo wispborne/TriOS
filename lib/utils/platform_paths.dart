@@ -39,7 +39,7 @@ File getLogPath(Directory gamePath, {TargetPlatform? platform}) {
       .normalize;
 }
 
-FileSystemEntity getGameExecutable(Directory gamePath,
+FileSystemEntity getVanillaGameExecutable(Directory gamePath,
     {TargetPlatform? platform}) {
   return switch (platform ?? currentPlatform) {
     TargetPlatform.windows => gamePath.resolve("starsector.exe"),
@@ -60,7 +60,7 @@ bool validateGameFolderPath(String newGameDir) {
           .resolve("Contents/MacOS/starsector_mac.sh")
           .existsSync();
     }
-    return getGameExecutable(newGameDir.toDirectory()).existsSync();
+    return getVanillaGameExecutable(newGameDir.toDirectory()).existsSync();
   } catch (e) {
     Fimber.w("Error validating game folder path", ex: e);
     return false;

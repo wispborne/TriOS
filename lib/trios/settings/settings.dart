@@ -77,6 +77,8 @@ class Settings with SettingsMappable {
   @MappableField(hook: SafeDecodeHook())
   final WispGridState modsGridState;
   final ModsGridState? oldModsGridState;
+  final String? customGameExePath;
+  final bool useCustomGameExePath;
 
   // Mods Page
   final bool doubleClickForModsPanel;
@@ -130,6 +132,8 @@ class Settings with SettingsMappable {
         groupingSetting:
             GroupingSetting(grouping: ModGridGroupEnum.enabledState)),
     this.oldModsGridState,
+    this.customGameExePath,
+    this.useCustomGameExePath = false,
     this.doubleClickForModsPanel = true,
     this.shouldAutoUpdateOnLaunch = false,
     this.secondsBetweenModFolderChecks = 15,

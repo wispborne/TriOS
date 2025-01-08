@@ -199,6 +199,13 @@ class SettingsMapper extends ClassMapperBase<Settings> {
   static ModsGridState? _$oldModsGridState(Settings v) => v.oldModsGridState;
   static const Field<Settings, ModsGridState> _f$oldModsGridState =
       Field('oldModsGridState', _$oldModsGridState, opt: true);
+  static String? _$customGameExePath(Settings v) => v.customGameExePath;
+  static const Field<Settings, String> _f$customGameExePath =
+      Field('customGameExePath', _$customGameExePath, opt: true);
+  static bool _$useCustomGameExePath(Settings v) => v.useCustomGameExePath;
+  static const Field<Settings, bool> _f$useCustomGameExePath = Field(
+      'useCustomGameExePath', _$useCustomGameExePath,
+      opt: true, def: false);
   static bool _$doubleClickForModsPanel(Settings v) =>
       v.doubleClickForModsPanel;
   static const Field<Settings, bool> _f$doubleClickForModsPanel = Field(
@@ -291,6 +298,8 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #isUpdatesFieldShown: _f$isUpdatesFieldShown,
     #modsGridState: _f$modsGridState,
     #oldModsGridState: _f$oldModsGridState,
+    #customGameExePath: _f$customGameExePath,
+    #useCustomGameExePath: _f$useCustomGameExePath,
     #doubleClickForModsPanel: _f$doubleClickForModsPanel,
     #shouldAutoUpdateOnLaunch: _f$shouldAutoUpdateOnLaunch,
     #secondsBetweenModFolderChecks: _f$secondsBetweenModFolderChecks,
@@ -333,6 +342,8 @@ class SettingsMapper extends ClassMapperBase<Settings> {
         isUpdatesFieldShown: data.dec(_f$isUpdatesFieldShown),
         modsGridState: data.dec(_f$modsGridState),
         oldModsGridState: data.dec(_f$oldModsGridState),
+        customGameExePath: data.dec(_f$customGameExePath),
+        useCustomGameExePath: data.dec(_f$useCustomGameExePath),
         doubleClickForModsPanel: data.dec(_f$doubleClickForModsPanel),
         shouldAutoUpdateOnLaunch: data.dec(_f$shouldAutoUpdateOnLaunch),
         secondsBetweenModFolderChecks:
@@ -428,6 +439,8 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
       bool? isUpdatesFieldShown,
       WispGridState? modsGridState,
       ModsGridState? oldModsGridState,
+      String? customGameExePath,
+      bool? useCustomGameExePath,
       bool? doubleClickForModsPanel,
       bool? shouldAutoUpdateOnLaunch,
       int? secondsBetweenModFolderChecks,
@@ -490,6 +503,8 @@ class _SettingsCopyWithImpl<$R, $Out>
           bool? isUpdatesFieldShown,
           WispGridState? modsGridState,
           Object? oldModsGridState = $none,
+          Object? customGameExePath = $none,
+          bool? useCustomGameExePath,
           bool? doubleClickForModsPanel,
           bool? shouldAutoUpdateOnLaunch,
           int? secondsBetweenModFolderChecks,
@@ -535,6 +550,9 @@ class _SettingsCopyWithImpl<$R, $Out>
           #isUpdatesFieldShown: isUpdatesFieldShown,
         if (modsGridState != null) #modsGridState: modsGridState,
         if (oldModsGridState != $none) #oldModsGridState: oldModsGridState,
+        if (customGameExePath != $none) #customGameExePath: customGameExePath,
+        if (useCustomGameExePath != null)
+          #useCustomGameExePath: useCustomGameExePath,
         if (doubleClickForModsPanel != null)
           #doubleClickForModsPanel: doubleClickForModsPanel,
         if (shouldAutoUpdateOnLaunch != null)
@@ -597,6 +615,10 @@ class _SettingsCopyWithImpl<$R, $Out>
       modsGridState: data.get(#modsGridState, or: $value.modsGridState),
       oldModsGridState:
           data.get(#oldModsGridState, or: $value.oldModsGridState),
+      customGameExePath:
+          data.get(#customGameExePath, or: $value.customGameExePath),
+      useCustomGameExePath:
+          data.get(#useCustomGameExePath, or: $value.useCustomGameExePath),
       doubleClickForModsPanel: data.get(#doubleClickForModsPanel,
           or: $value.doubleClickForModsPanel),
       shouldAutoUpdateOnLaunch: data.get(#shouldAutoUpdateOnLaunch,
@@ -615,7 +637,8 @@ class _SettingsCopyWithImpl<$R, $Out>
           data.get(#allowCrashReporting, or: $value.allowCrashReporting),
       updateToPrereleases:
           data.get(#updateToPrereleases, or: $value.updateToPrereleases),
-      autoEnableAndDisableDependencies: data.get(#autoEnableAndDisableDependencies,
+      autoEnableAndDisableDependencies: data.get(
+          #autoEnableAndDisableDependencies,
           or: $value.autoEnableAndDisableDependencies),
       enableLauncherPrecheck:
           data.get(#enableLauncherPrecheck, or: $value.enableLauncherPrecheck),
@@ -624,8 +647,7 @@ class _SettingsCopyWithImpl<$R, $Out>
       checkIfGameIsRunning:
           data.get(#checkIfGameIsRunning, or: $value.checkIfGameIsRunning),
       userId: data.get(#userId, or: $value.userId),
-      hasHiddenForumDarkModeTip: data.get(#hasHiddenForumDarkModeTip,
-          or: $value.hasHiddenForumDarkModeTip),
+      hasHiddenForumDarkModeTip: data.get(#hasHiddenForumDarkModeTip, or: $value.hasHiddenForumDarkModeTip),
       activeModProfileId: data.get(#activeModProfileId, or: $value.activeModProfileId));
 
   @override

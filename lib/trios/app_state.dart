@@ -180,6 +180,20 @@ class AppState {
   });
 
   static final gameExecutable = FutureProvider<File?>((ref) async {
+    try {
+      final useCustomGameExePath =
+          ref.watch(appSettings.select((value) => value.useCustomGameExePath));
+      if (useCustomGameExePath == true) {
+        final customGameExePath =
+            ref.watch(appSettings.select((value) => value.customGameExePath));
+        if (customGameExePath != null) {
+          return File(customGameExePath);
+        }
+      }
+    } catch (e) {
+      Fimber.e("Error getting custom game executable", ex: e);
+    }
+
     final isJre23 =
         ref.watch(jreManagerProvider).valueOrNull?.activeJre?.isCustomJre ??
             false;
@@ -193,7 +207,7 @@ class AppState {
                 ? "Miko_Rouge.bat"
                 : "Miko_Silent.bat")
             .toFile()
-        : getGameExecutable(gamePath).toFile();
+        : getVanillaGameExecutable(gamePath).toFile();
   });
 
   static final vmParamsFile = FutureProvider<File?>((ref) async {

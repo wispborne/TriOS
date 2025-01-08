@@ -249,7 +249,15 @@ class Launcher extends HookConsumerWidget {
   }
 
   static void _launchGameWithoutPrecheck(WidgetRef ref) {
-    if (ref.read(jreManagerProvider).valueOrNull?.activeJre?.isCustomJre ==
+    if (ref.read(appSettings.select((s) => s.useCustomGameExePath))) {
+      launchGameUsingLauncher(ref.read(appSettings.select((s) => s.gameDir))!,
+          customExePath:
+              File(ref.read(appSettings.select((s) => s.customGameExePath))!));
+    } else if (ref
+            .read(jreManagerProvider)
+            .valueOrNull
+            ?.activeJre
+            ?.isCustomJre ==
         true) {
       launchGameJre23(ref);
     } else {
@@ -571,8 +579,9 @@ class Launcher extends HookConsumerWidget {
     }
   }
 
-  static void launchGameUsingLauncher(Directory gamePath) {
-    final gameExe = getGameExecutable(gamePath);
+  static void launchGameUsingLauncher(Directory gamePath,
+      {FileSystemEntity? customExePath}) {
+    final gameExe = customExePath ?? getVanillaGameExecutable(gamePath);
     if (Platform.isWindows) {
       if (gameExe.existsSync()) {
         Process.start(gameExe.absolute.path, [],

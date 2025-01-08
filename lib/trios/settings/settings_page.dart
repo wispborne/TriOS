@@ -73,12 +73,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   children: [
                     SettingsGroup(name: "Starsector", children: [
                       ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 600),
+                        constraints: const BoxConstraints(maxWidth: 700),
                         child: Row(
                           children: [
                             Expanded(
                               child: Builder(builder: (context) {
-                                final gamePathExists = validateGameFolderPath(_gamePathTextController.text);
+                                final gamePathExists = validateGameFolderPath(
+                                    _gamePathTextController.text);
 
                                 return TextField(
                                   controller: _gamePathTextController,
@@ -130,12 +131,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         ),
                       const SizedBox(height: 24),
                       ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 600),
+                        constraints: const BoxConstraints(maxWidth: 700),
                         child: Builder(builder: (context) {
                           final useCustomExecutable = ref.watch(appSettings
                               .select((value) => value.useCustomGameExePath));
-                          final customGameExePath = ref.watch(appSettings
-                              .select((value) => value.customGameExePath));
                           final gamePath = ref
                               .watch(
                                   appSettings.select((value) => value.gameDir))
@@ -145,7 +144,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                           bool doesCustomExePathExist = !useCustomExecutable
                               ? (currentLaunchPath?.toFile().existsSync() ??
                                   true)
-                              : (_customExecutablePathTextController.text.toFile().existsSync() ??
+                              : (_customExecutablePathTextController.text
+                                      .toFile()
+                                      .existsSync() ??
                                   true);
 
                           // If not using override, show the vanilla path that'll be used instead.
@@ -164,23 +165,26 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                   child: Checkbox(
                                     value: useCustomExecutable,
                                     onChanged: (value) {
-                                      setState(() {
+                                      final customPath = ref.read(
+                                              appSettings.select((s) =>
+                                                  s.customGameExePath)) ??
+                                          "";
+
+                                      WidgetsBinding.instance
+                                          .addPostFrameCallback((_) {
                                         if (value == false) {
                                           _customExecutablePathTextController
                                               .text = currentLaunchPath ?? "";
                                         } else if (value == true) {
                                           _customExecutablePathTextController
-                                              .text = ref.read(
-                                                  appSettings.select((s) =>
-                                                      s.customGameExePath)) ??
-                                              "";
+                                              .text = customPath;
                                         }
-
-                                        ref.read(appSettings.notifier).update(
-                                            (state) => state.copyWith(
-                                                useCustomGameExePath:
-                                                    value ?? false));
                                       });
+
+                                      ref.read(appSettings.notifier).update(
+                                          (state) => state.copyWith(
+                                              useCustomGameExePath:
+                                                  value ?? false));
                                     },
                                   ),
                                 ),

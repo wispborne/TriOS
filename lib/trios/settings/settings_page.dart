@@ -78,9 +78,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                           children: [
                             Expanded(
                               child: Builder(builder: (context) {
-                                final gamePathExists =
-                                    Directory(_gamePathTextController.text)
-                                        .existsSync();
+                                final gamePathExists = validateGameFolderPath(_gamePathTextController.text);
 
                                 return TextField(
                                   controller: _gamePathTextController,
@@ -90,7 +88,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                         Theme.of(context).textTheme.labelLarge,
                                     errorText: gamePathExists
                                         ? null
-                                        : "Path does not exist",
+                                        : "Starsector not found",
                                     labelText: 'Starsector Folder',
                                   ),
                                   onChanged: (newGameDir) {
@@ -105,9 +103,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                 var newGameDir = await FilePicker.platform
                                     .getDirectoryPath();
                                 if (newGameDir == null) return;
-                                tryUpdateGamePath(newGameDir);
-                                _gamePathTextController.text =
-                                    newGameDir.toDirectory().normalize.path;
+                                setState(() {
+                                  _gamePathTextController.text =
+                                      newGameDir.toDirectory().normalize.path;
+                                  tryUpdateGamePath(newGameDir);
+                                });
                               },
                             ),
                           ],
@@ -134,14 +134,21 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         child: Builder(builder: (context) {
                           final useCustomExecutable = ref.watch(appSettings
                               .select((value) => value.useCustomGameExePath));
+                          final customGameExePath = ref.watch(appSettings
+                              .select((value) => value.customGameExePath));
                           final gamePath = ref
                               .watch(
                                   appSettings.select((value) => value.gameDir))
                               ?.toDirectory();
                           final currentLaunchPath = gamePath?.let((dir) =>
                               getVanillaGameExecutable(dir).toFile().path);
-                          bool doesCustomExePathExist =
-                              currentLaunchPath?.toFile().existsSync() ?? true;
+                          bool doesCustomExePathExist = !useCustomExecutable
+                              ? (currentLaunchPath?.toFile().existsSync() ??
+                                  true)
+                              : (_customExecutablePathTextController.text.toFile().existsSync() ??
+                                  true);
+
+                          // If not using override, show the vanilla path that'll be used instead.
                           if (!useCustomExecutable) {
                             _customExecutablePathTextController.text =
                                 currentLaunchPath?.toFile().path ?? "";
@@ -152,7 +159,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                               Padding(
                                 padding: const EdgeInsets.only(right: 8),
                                 child: MovingTooltipWidget.text(
-                                  message: "When checked, uses the custom launcher path",
+                                  message:
+                                      "When checked, uses the custom launcher path",
                                   child: Checkbox(
                                     value: useCustomExecutable,
                                     onChanged: (value) {
@@ -189,12 +197,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                       decoration: InputDecoration(
                                         border: const OutlineInputBorder(),
                                         isDense: true,
-                                        errorText:
-                                            doesCustomExePathExist ?? true
-                                                ? null
-                                                : "Path does not exist",
-                                        labelText:
-                                            "Starsector launcher path",
+                                        errorText: doesCustomExePathExist
+                                            ? null
+                                            : "Path does not exist",
+                                        labelText: "Starsector launcher path",
                                         hintStyle: Theme.of(context)
                                             .textTheme
                                             .labelLarge,
@@ -227,6 +233,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                             ?.paths
                                             .firstOrNull;
                                     if (newPath == null) return;
+                                    _customExecutablePathTextController.text =
+                                        newPath;
                                     tryUpdateCustomExecutablePath(newPath);
                                   },
                                 ),

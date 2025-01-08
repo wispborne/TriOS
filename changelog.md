@@ -1,8 +1,7 @@
 # 1.0.3
 - Added
   - Mods tab: right-click on a version number for a menu to recheck updates.
-  - Mods tab: option to need a double-click to open the side panel.
-    - Default is to need double-click (currently is single-click).
+  - Mods tab: side panel now opens using a button, rather than a click on the mod row
   - Debug feature to update to a specific release.
 - Fixed
   - All mods sometimes showing as not supporting Version Checker.

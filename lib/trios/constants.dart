@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:trios/utils/extensions.dart';
 
 class Constants {
-  static const version = "1.0.4";
+  static const version = "1.0.5";
 
   static const appName = "TriOS";
   static const appTitle = "$appName v$version";
@@ -59,6 +59,7 @@ class Constants {
   static const graphicsLibId = "shaderLib";
   static const changelogUrl =
       "https://raw.githubusercontent.com/wispborne/TriOS/main/changelog.md";
+  static const triosForumThread = "https://fractalsoftworks.com/forum/index.php?topic=29674.0";
   static const supportedArchiveExtensions = [
     ".zip",
     ".7z",

@@ -303,19 +303,37 @@ class _GameRunningChecker extends AsyncNotifier<bool> {
     try {
       final jpsAtHomePath =
           getAssetsPath().toFile().resolve("common/JpsAtHome.jar");
-      ProcessResult result = await Process.run(
-        'java',
-        ['-jar', jpsAtHomePath.path],
-      );
-      String output = result.stdout.toString().toLowerCase();
-      if (output.contains("com.fs.starfarer.starfarerlauncher".toLowerCase())) {
-        return true;
+      final process = await Process.start('java', ['-jar', jpsAtHomePath.path]);
+      final outputBuffer = StringBuffer();
+      process.stdout
+          .transform(systemEncoding.decoder)
+          .listen(outputBuffer.write);
+      process.stderr
+          .transform(systemEncoding.decoder)
+          .listen(outputBuffer.write);
+
+      final exitCodeFuture = process.exitCode;
+      final result = await Future.any<int>([
+        exitCodeFuture,
+        Future.delayed(const Duration(seconds: 1), () => -1),
+      ]);
+
+      if (result == -1) {
+        process.kill(ProcessSignal.sigkill);
+        Fimber.w("Killed java process after 5 seconds.");
+      } else {
+        final output = outputBuffer.toString().toLowerCase();
+        Fimber.v(() => "JPS output: $output");
+        if (output
+            .contains("com.fs.starfarer.starfarerlauncher".toLowerCase())) {
+          return true;
+        }
       }
     } catch (e) {
       // ignored, probably can't run due to no java/jdk installed
     }
 
-    // Fallback to using platform-specific commands to check process names.
+    // Fall back to using platform-specific commands to check process names.
     try {
       // Check the titles of all windows
       if (Platform.isWindows) {
@@ -326,15 +344,12 @@ class _GameRunningChecker extends AsyncNotifier<bool> {
             'Get-Process | Where-Object { \$_.MainWindowTitle } | Select-Object -ExpandProperty MainWindowTitle'
           ],
         );
-
         if (process.exitCode == 0) {
           final output = process.stdout as String;
           final windowTitles =
               output.split('\n').map((line) => line.trim()).toList();
-
           final isStarsectorRunning = windowTitles.any((title) => title.contains(
               'Starsector ${ref.watch(appSettings).lastStarsectorVersion}'));
-
           return isStarsectorRunning;
         }
       } else if (Platform.isMacOS || Platform.isLinux) {

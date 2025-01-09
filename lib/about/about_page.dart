@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:open_filex/open_filex.dart';
+import 'package:trios/trios/constants.dart';
 
 class AboutPage extends ConsumerStatefulWidget {
   const AboutPage({super.key});
@@ -26,6 +27,18 @@ class _AboutPageState extends ConsumerState<AboutPage> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
+            Text("Forum Thread",
+                style: textTheme.titleMedium
+                    ?.copyWith(fontWeight: FontWeight.bold)),
+            Linkify(
+              text: Constants.triosForumThread,
+              style: textTheme.labelLarge,
+              linkifiers: const [UrlLinkifier()],
+              onOpen: (link) {
+                OpenFilex.open(link.url);
+              },
+            ),
+            const SizedBox(height: 8),
             Text("Source Code",
                 style: textTheme.titleMedium
                     ?.copyWith(fontWeight: FontWeight.bold)),

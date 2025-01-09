@@ -1,3 +1,8 @@
+# 1.0.5
+- Fixed
+  -  TriOS creating java.exe processes that would stay open.
+    - These are used to detect whether Starsector is running.
+
 # 1.0.4
 - Added
   - New setting to override the path of the Starsector launcher. 

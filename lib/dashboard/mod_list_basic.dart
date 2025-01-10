@@ -246,7 +246,6 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                         showTrackOnHover: true,
                         child: DisableIfCannotWriteMods(
                           child: ListView.builder(
-                              shrinkWrap: true,
                               controller: _scrollController,
                               itemCount: listItems.length, // UPDATES title
                               itemBuilder: (context, index) {

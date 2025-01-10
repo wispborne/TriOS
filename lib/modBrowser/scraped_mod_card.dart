@@ -67,125 +67,125 @@ class _ScrapedModCardState extends State<ScrapedModCard> {
               color: Theme.of(context).colorScheme.surface.withOpacity(0.5),
             ),
           ),
-          child: IntrinsicHeight(
-            child: Container(
-              padding: const EdgeInsets.all(12.0),
-              child: Row(
-                children: [
-                  SizedBox(width: 80.0, child: ModImage(mod: mod)),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 16.0, right: 16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            mod.name.isNotEmpty ? mod.name : '???',
-                            style: const TextStyle(
+          child: Container(
+            padding: const EdgeInsets.all(12.0),
+            child: Row(
+              children: [
+                SizedBox(width: 80.0, child: ModImage(mod: mod)),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 16.0, right: 16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          mod.name.isNotEmpty ? mod.name : '???',
+                          style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 14.0,
-                              fontFamily: ThemeManager.orbitron
+                              fontFamily: ThemeManager.orbitron),
+                        ),
+                        if (mod.authorsList?.isNotEmpty == true)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: Text(
+                              mod.authorsList!.join(', '),
+                              style: const TextStyle(
+                                fontSize: 11.0,
+                                fontStyle: FontStyle.italic,
+                              ),
                             ),
                           ),
-                          if (mod.authorsList?.isNotEmpty == true)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 8.0),
-                              child: Text(
-                                mod.authorsList!.join(', '),
-                                style: const TextStyle(
-                                  fontSize: 11.0,
-                                  fontStyle: FontStyle.italic,
-                                ),
-                              ),
-                            ),
-                          if ((mod.summary?.isNotEmpty ?? false) ||
-                              (mod.description?.isNotEmpty ?? false))
-                            Padding(
-                              padding: const EdgeInsets.only(top: 4.0),
-                              child: Text(
-                                (mod.summary ?? mod.description)!
-                                    .split('\n')
-                                    .where((line) => line.isNotEmpty)
-                                    .take(2)
-                                    .join('\n'),
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .labelLarge
-                                    ?.copyWith(
-                                      color: Theme.of(context)
-                                          .textTheme
-                                          .labelLarge
-                                          ?.color
-                                          ?.withOpacity(0.8),
-                                    ),
-                              ),
-                            ),
-                          if ((mod.description?.isNotEmpty ?? false))
-                            Padding(
-                              padding: const EdgeInsets.only(top: 8.0),
-                              child: ConditionalWrap(
-                                condition: mod.description?.isNotEmpty == true,
-                                wrapper: (child) => MovingTooltipWidget(
-                                    tooltipWidget: TooltipFrame(
-                                        child: Text(mod.description ?? '')),
-                                    child: child),
-                                child: OutlinedButton(
-                                  onPressed: () {
-                                    _showDescriptionDialog(
-                                        context, mod.name, mod.description!);
-                                  },
-                                  child: Text(
-                                    'View Desc.',
-                                    style:
-                                        Theme.of(context).textTheme.labelLarge,
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 4.0),
+                            child: !((mod.summary?.isNotEmpty ?? false) ||
+                                    (mod.description?.isNotEmpty ?? false))
+                                ? Container()
+                                : Text(
+                                    (mod.summary ?? mod.description)!
+                                        .split('\n')
+                                        .where((line) => line.isNotEmpty)
+                                        .take(2)
+                                        .join('\n'),
+                                    overflow: TextOverflow.fade,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .labelLarge
+                                        ?.copyWith(
+                                          color: Theme.of(context)
+                                              .textTheme
+                                              .labelLarge
+                                              ?.color
+                                              ?.withOpacity(0.8),
+                                        ),
                                   ),
+                          ),
+                        ),
+                        if ((mod.description?.isNotEmpty ?? false))
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: ConditionalWrap(
+                              condition: mod.description?.isNotEmpty == true,
+                              wrapper: (child) => MovingTooltipWidget(
+                                  tooltipWidget: TooltipFrame(
+                                      child: Text(mod.description ?? '')),
+                                  child: child),
+                              child: OutlinedButton(
+                                onPressed: () {
+                                  _showDescriptionDialog(
+                                      context, mod.name, mod.description!);
+                                },
+                                child: Text(
+                                  'View Desc.',
+                                  style: Theme.of(context).textTheme.labelLarge,
                                 ),
                               ),
                             ),
-                          const Spacer(),
-                          const SizedBox(height: 8.0),
-                          Tags(mod: mod),
-                        ],
-                      ),
+                          ),
+                        // const Spacer(),
+                        const SizedBox(height: 8.0),
+                        Tags(mod: mod),
+                      ],
                     ),
                   ),
-                  Builder(builder: (context) {
-                    const size = 14.0;
-                    return Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        BrowserIcon(
-                          mod: mod,
-                          iconOpacity: isBeingHovered ? 1.0 : 0.7,
-                          linkLoader: widget.linkLoader,
-                          size: size,
-                        ),
-                        DiscordIcon(
-                          mod: mod,
-                          iconOpacity: isBeingHovered ? 1.0 : 0.7,
-                          size: size,
-                        ),
-                        NexusModsIcon(
-                          mod: mod,
-                          iconOpacity: isBeingHovered ? 1.0 : 0.7,
-                          size: size,
-                        ),
-                        DirectDownloadIcon(
-                          mod: mod,
-                          iconOpacity: isBeingHovered ? 1.0 : 0.7,
-                          size: size,
-                          linkLoader: widget.linkLoader,
-                        ),
-                        DebugIcon(
-                          mod: mod,
-                          iconOpacity: isBeingHovered ? 1.0 : 0.7,
-                          size: size,
-                        ),
-                      ],
-                    );
-                  }),
-                ],
-              ),
+                ),
+                Builder(builder: (context) {
+                  const size = 14.0;
+                  return Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      BrowserIcon(
+                        mod: mod,
+                        iconOpacity: isBeingHovered ? 1.0 : 0.7,
+                        linkLoader: widget.linkLoader,
+                        size: size,
+                      ),
+                      DiscordIcon(
+                        mod: mod,
+                        iconOpacity: isBeingHovered ? 1.0 : 0.7,
+                        size: size,
+                      ),
+                      NexusModsIcon(
+                        mod: mod,
+                        iconOpacity: isBeingHovered ? 1.0 : 0.7,
+                        size: size,
+                      ),
+                      DirectDownloadIcon(
+                        mod: mod,
+                        iconOpacity: isBeingHovered ? 1.0 : 0.7,
+                        size: size,
+                        linkLoader: widget.linkLoader,
+                      ),
+                      DebugIcon(
+                        mod: mod,
+                        iconOpacity: isBeingHovered ? 1.0 : 0.7,
+                        size: size,
+                      ),
+                    ],
+                  );
+                }),
+              ],
             ),
           ),
         ),

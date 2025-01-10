@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:trios/modBrowser/models/scraped_mod.dart';
@@ -264,11 +263,8 @@ class _ModBrowserPage extends ConsumerState<ModBrowserPage>
                               ),
                             ),
                             Expanded(
-                              child: AlignedGridView.count(
-                                crossAxisSpacing: 4,
-                                mainAxisSpacing: 4,
-                                // maxCrossAxisExtent: 800,
-                                crossAxisCount: 1,
+                              child: ListView.builder(
+                                itemExtent: 200,
                                 itemCount: displayedMods?.length,
                                 itemBuilder: (context, index) {
                                   if (displayedMods == null) {
@@ -514,7 +510,8 @@ class _ModBrowserPage extends ConsumerState<ModBrowserPage>
                                   child: switch (_webview2RequiredAndMissing) {
                                 false => InAppWebView(
                                     key: webViewKey,
-                                    webViewEnvironment: ref.watch(webViewEnvironment),
+                                    webViewEnvironment:
+                                        ref.watch(webViewEnvironment),
                                     shouldOverrideUrlLoading:
                                         (controller, navigationAction) async {
                                       if (navigationAction.request.url !=

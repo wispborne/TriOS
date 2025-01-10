@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/models/version.dart';
 import 'package:trios/utils/http_client.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 
@@ -12,10 +13,10 @@ import '../utils/extensions.dart';
 
 class TriOSChangelogViewer extends ConsumerStatefulWidget {
   final String url;
-  final bool showUnreleasedVersions;
+  final Version? lastestVersionToShow;
 
   const TriOSChangelogViewer(
-      {super.key, required this.url, required this.showUnreleasedVersions});
+      {super.key, required this.url, required this.lastestVersionToShow});
 
   @override
   ConsumerState<TriOSChangelogViewer> createState() => _TriOSChangelogViewerState();
@@ -60,10 +61,10 @@ class _TriOSChangelogViewerState extends ConsumerState<TriOSChangelogViewer> {
         } else if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));
         } else {
-          final text = widget.showUnreleasedVersions
+          final text = widget.lastestVersionToShow == null
               ? snapshot.data
               : snapshot.data
-                  ?.skipLinesWhile((line) => !line.contains(Constants.version));
+                  ?.skipLinesWhile((line) => !line.contains(widget.lastestVersionToShow!.toStringFromParts()));
 
           return Column(
             mainAxisSize: MainAxisSize.min,
@@ -101,7 +102,7 @@ class _TriOSChangelogViewerState extends ConsumerState<TriOSChangelogViewer> {
 }
 
 showTriOSChangelogDialog(BuildContext context,
-    {required bool showUnreleasedVersions}) {
+    {required Version? lastestVersionToShow}) {
   showDialog(
     context: context,
     builder: (context) {
@@ -111,7 +112,7 @@ showTriOSChangelogDialog(BuildContext context,
           height: 1200,
           child: TriOSChangelogViewer(
               url: Constants.changelogUrl,
-              showUnreleasedVersions: showUnreleasedVersions),
+              lastestVersionToShow: lastestVersionToShow),
         ),
         actions: [
           TextButton(

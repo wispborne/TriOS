@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:toastification/toastification.dart';
+import 'package:trios/models/version.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:trios/widgets/trios_app_icon.dart';
@@ -57,7 +58,7 @@ class PostUpdateToast extends ConsumerWidget {
                           padding: const EdgeInsets.all(8.0),
                           child: ElevatedButton.icon(
                               onPressed: () => showTriOSChangelogDialog(context,
-                                  showUnreleasedVersions: true),
+                                  lastestVersionToShow: Version.parse(Constants.version, sanitizeInput: false)),
                               icon: const SvgImageIcon(
                                 "assets/images/icon-bullhorn-variant.svg",
                               ),

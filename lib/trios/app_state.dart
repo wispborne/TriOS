@@ -313,14 +313,16 @@ class _GameRunningChecker extends AsyncNotifier<bool> {
           .listen(outputBuffer.write);
 
       final exitCodeFuture = process.exitCode;
+      const jpsRunMaxDuration = Duration(seconds: 1);
       final result = await Future.any<int>([
         exitCodeFuture,
-        Future.delayed(const Duration(seconds: 1), () => -1),
+        Future.delayed(jpsRunMaxDuration, () => -1),
       ]);
 
       if (result == -1) {
         process.kill(ProcessSignal.sigkill);
-        Fimber.w("Killed java process after 5 seconds.");
+        Fimber.w(
+            "Killed java process after $jpsRunMaxDuration because it has a result of -1.");
       } else {
         final output = outputBuffer.toString().toLowerCase();
         Fimber.v(() => "JPS output: $output");

@@ -1,7 +1,8 @@
 # 1.0.5
 - Fixed
-  -  TriOS creating java.exe processes that would stay open.
+  -  Spawned java.exe processes would stay open.
     - These are used to detect whether Starsector is running.
+  - TriOS changelog showing unreleased versions when it shouldn't.
 
 # 1.0.4
 - Added

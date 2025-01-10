@@ -10,6 +10,7 @@ import 'package:trios/chipper/chipper_home.dart';
 import 'package:trios/dashboard/dashboard.dart';
 import 'package:trios/modBrowser/mod_browser_page.dart';
 import 'package:trios/mod_manager/mods_grid_page.dart';
+import 'package:trios/models/version.dart';
 import 'package:trios/portraits/portraits_viewer.dart';
 import 'package:trios/rules_autofresh/rules_hotreload.dart';
 import 'package:trios/themes/theme_manager.dart';
@@ -481,7 +482,7 @@ class _AppShellState extends ConsumerState<AppShell>
                                 "assets/images/icon-bullhorn-variant.svg"),
                             color: Theme.of(context).iconTheme.color,
                             onPressed: () => showTriOSChangelogDialog(context,
-                                showUnreleasedVersions: false),
+                                lastestVersionToShow: Version.parse(Constants.version, sanitizeInput: false)),
                           ),
                         ),
                         MovingTooltipWidget.text(

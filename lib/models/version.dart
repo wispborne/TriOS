@@ -27,6 +27,9 @@ class Version with VersionMappable implements Comparable<Version> {
   String toString() =>
       raw ?? [major, minor, patch, build].nonNulls.join(".");
 
+  /// Ignores the `raw` field even if it exists.
+  String toStringFromParts() => [major, minor, patch, build].nonNulls.join(".");
+
   @override
   int compareTo(Version? other) {
     if (other == null) return -1;
@@ -64,7 +67,7 @@ class Version with VersionMappable implements Comparable<Version> {
   int get hashCode => toString().hashCode;
 
   /// - `sanitizeInput` should be true for `mod_info.json`, false for `.version`. Whether to remove all but numbers and symbols.
-  static Version parse(String versionString, {required bool sanitizeInput}) {
+  static Version parse(String versionString, {bool sanitizeInput = true}) {
     // Remove non-version characters
     final sanitizedString = sanitizeInput
         ? versionString.replaceAll(RegExp(r"[^0-9.-]"), "")

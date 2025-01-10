@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:toastification/toastification.dart';
 import 'package:trios/models/download_progress.dart';
+import 'package:trios/models/version.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/self_updater/self_updater.dart';
 import 'package:trios/widgets/disable.dart';
@@ -60,7 +61,8 @@ class SelfUpdateToast extends ConsumerWidget {
                               child: ElevatedButton.icon(
                                   onPressed: () => showTriOSChangelogDialog(
                                       context,
-                                      showUnreleasedVersions: true),
+                                      lastestVersionToShow:
+                                          Version.parse(latestRelease.tagName).copyWith(build: null)),
                                   icon: const SvgImageIcon(
                                     "assets/images/icon-log.svg",
                                   ),

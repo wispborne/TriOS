@@ -3,6 +3,7 @@ import 'package:dart_mappable/dart_mappable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/generic_settings_manager.dart';
 import 'package:trios/utils/generic_settings_notifier.dart';
@@ -12,7 +13,6 @@ import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/graph_radio_selector.dart';
 import 'package:trios/widgets/spinning_refresh_fab.dart';
 
-import '../../trios/settings/settings.dart';
 import '../models/mod_variant.dart';
 import 'charts/bar_chart.dart';
 import 'charts/pie_chart.dart';
@@ -48,7 +48,6 @@ class VramEstimatorState with VramEstimatorStateMappable {
 
 class VramEstimatorManager
     extends GenericAsyncSettingsManager<VramEstimatorState> {
-
   @override
   FileFormat get fileFormat => FileFormat.json;
 

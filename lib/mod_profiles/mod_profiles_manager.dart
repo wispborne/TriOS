@@ -10,6 +10,7 @@ import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/thirdparty/dartx/comparable.dart';
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/generic_settings_manager.dart';

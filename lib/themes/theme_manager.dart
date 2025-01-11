@@ -9,6 +9,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:palette_generator/palette_generator.dart';
 import 'package:trios/themes/theme.dart';
 import 'package:trios/thirdparty/dartx/map.dart';
+import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings.dart';
 
 import '../mod_manager/mod_manager_logic.dart';

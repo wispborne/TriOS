@@ -2,12 +2,12 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:toastification/toastification.dart';
+import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/toasts/mod_added_toast.dart';
 import 'package:trios/utils/extensions.dart';
 
 import '../app_state.dart';
 import '../download_manager/download_manager.dart';
-import '../settings/settings.dart';
 import 'mod_download_toast.dart';
 
 class ToastDisplayer extends ConsumerStatefulWidget {

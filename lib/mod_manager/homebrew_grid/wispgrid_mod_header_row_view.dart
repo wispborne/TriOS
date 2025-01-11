@@ -9,6 +9,7 @@ import 'package:multi_split_view/multi_split_view.dart';
 import 'package:trios/mod_manager/homebrew_grid/vram_checker_explanation.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
 import 'package:trios/thirdparty/dartx/map.dart';
+import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/widgets/MultiSplitViewMixin.dart';
 import 'package:trios/widgets/hoverable_widget.dart';

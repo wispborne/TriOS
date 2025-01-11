@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/jre_manager/jre_manager_logic.dart';
 import 'package:trios/trios/constants.dart';
+import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/conditional_wrap.dart';
 
 import '../themes/theme_manager.dart';
-import '../trios/settings/settings.dart';
 import '../widgets/fixed_height_grid_item.dart';
 
 class RamChanger extends ConsumerStatefulWidget {

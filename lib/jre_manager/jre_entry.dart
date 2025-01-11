@@ -8,12 +8,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:trios/models/version.dart';
 import 'package:trios/trios/constants.dart';
+import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 
 import '../libarchive/libarchive.dart';
 import '../models/download_progress.dart';
-import '../trios/settings/settings.dart';
 import '../utils/dart_mappable_utils.dart';
 import '../utils/util.dart';
 import 'jre_manager_logic.dart';

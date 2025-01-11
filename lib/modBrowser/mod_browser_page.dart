@@ -13,6 +13,7 @@ import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/download_manager/download_manager.dart';
 import 'package:trios/trios/drag_drop_handler.dart';
 import 'package:trios/trios/providers.dart';
+import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/search.dart';
@@ -24,7 +25,6 @@ import 'package:trios/widgets/tristate_icon_button.dart';
 
 import '../main.dart';
 import '../trios/download_manager/downloader.dart';
-import '../trios/settings/settings.dart';
 import '../widgets/MultiSplitViewMixin.dart';
 import '../widgets/moving_tooltip.dart';
 import 'mod_browser_manager.dart';

@@ -170,6 +170,9 @@ class ModMetadataMapper extends ClassMapperBase<ModMetadata> {
   static int? _$lastEnabled(ModMetadata v) => v.lastEnabled;
   static const Field<ModMetadata, int> _f$lastEnabled =
       Field('lastEnabled', _$lastEnabled, opt: true);
+  static bool _$areUpdatesMuted(ModMetadata v) => v.areUpdatesMuted;
+  static const Field<ModMetadata, bool> _f$areUpdatesMuted =
+      Field('areUpdatesMuted', _$areUpdatesMuted, opt: true, def: false);
 
   @override
   final MappableFields<ModMetadata> fields = const {
@@ -177,6 +180,7 @@ class ModMetadataMapper extends ClassMapperBase<ModMetadata> {
     #firstSeen: _f$firstSeen,
     #isFavorited: _f$isFavorited,
     #lastEnabled: _f$lastEnabled,
+    #areUpdatesMuted: _f$areUpdatesMuted,
   };
 
   static ModMetadata _instantiate(DecodingData data) {
@@ -184,7 +188,8 @@ class ModMetadataMapper extends ClassMapperBase<ModMetadata> {
         variantsMetadata: data.dec(_f$variantsMetadata),
         firstSeen: data.dec(_f$firstSeen),
         isFavorited: data.dec(_f$isFavorited),
-        lastEnabled: data.dec(_f$lastEnabled));
+        lastEnabled: data.dec(_f$lastEnabled),
+        areUpdatesMuted: data.dec(_f$areUpdatesMuted));
   }
 
   @override
@@ -248,7 +253,8 @@ abstract class ModMetadataCopyWith<$R, $In extends ModMetadata, $Out>
       {Map<String, ModVariantMetadata>? variantsMetadata,
       int? firstSeen,
       bool? isFavorited,
-      int? lastEnabled});
+      int? lastEnabled,
+      bool? areUpdatesMuted});
   ModMetadataCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
 
@@ -275,12 +281,14 @@ class _ModMetadataCopyWithImpl<$R, $Out>
           {Map<String, ModVariantMetadata>? variantsMetadata,
           int? firstSeen,
           bool? isFavorited,
-          Object? lastEnabled = $none}) =>
+          Object? lastEnabled = $none,
+          bool? areUpdatesMuted}) =>
       $apply(FieldCopyWithData({
         if (variantsMetadata != null) #variantsMetadata: variantsMetadata,
         if (firstSeen != null) #firstSeen: firstSeen,
         if (isFavorited != null) #isFavorited: isFavorited,
-        if (lastEnabled != $none) #lastEnabled: lastEnabled
+        if (lastEnabled != $none) #lastEnabled: lastEnabled,
+        if (areUpdatesMuted != null) #areUpdatesMuted: areUpdatesMuted
       }));
   @override
   ModMetadata $make(CopyWithData data) => ModMetadata(
@@ -288,7 +296,8 @@ class _ModMetadataCopyWithImpl<$R, $Out>
           data.get(#variantsMetadata, or: $value.variantsMetadata),
       firstSeen: data.get(#firstSeen, or: $value.firstSeen),
       isFavorited: data.get(#isFavorited, or: $value.isFavorited),
-      lastEnabled: data.get(#lastEnabled, or: $value.lastEnabled));
+      lastEnabled: data.get(#lastEnabled, or: $value.lastEnabled),
+      areUpdatesMuted: data.get(#areUpdatesMuted, or: $value.areUpdatesMuted));
 
   @override
   ModMetadataCopyWith<$R2, ModMetadata, $Out2> $chain<$R2, $Out2>(

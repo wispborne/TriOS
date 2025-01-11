@@ -6,6 +6,7 @@ import 'package:open_filex/open_filex.dart';
 import 'package:styled_text/styled_text.dart';
 import 'package:trios/jre_manager/ram_changer.dart';
 import 'package:trios/trios/constants.dart';
+import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/conditional_wrap.dart';

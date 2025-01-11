@@ -6,14 +6,13 @@ import 'package:trios/chipper/utils.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/mod_manager/mod_summary_panel.dart';
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/widgets/add_new_mods_button.dart';
-import 'package:trios/widgets/dropdown_with_icon.dart';
 import 'package:trios/widgets/refresh_mods_button.dart';
 
 import '../mod_profiles/mod_profiles_manager.dart';
 import '../mod_profiles/models/mod_profile.dart';
 import '../models/mod.dart';
-import '../trios/settings/settings.dart';
 import '../utils/search.dart';
 import '../widgets/disable.dart';
 import '../widgets/moving_tooltip.dart';

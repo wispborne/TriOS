@@ -1,9 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_color/flutter_color.dart';
-import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:trios/dashboard/changelogs.dart';
@@ -11,6 +9,7 @@ import 'package:trios/dashboard/mod_dependencies_widget.dart';
 import 'package:trios/dashboard/mod_list_basic_entry.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
+import 'package:trios/mod_manager/mod_context_menu.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/mod_manager/mod_version_selection_dropdown.dart';
@@ -18,8 +17,10 @@ import 'package:trios/models/mod.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/thirdparty/dartx/map.dart';
+import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/trios/app_state.dart';
-import 'package:trios/trios/settings/settings.dart';
+import 'package:trios/trios/mod_metadata.dart';
+import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/vram_estimator/graphics_lib_config_provider.dart';
 import 'package:trios/widgets/disable.dart';
@@ -198,7 +199,8 @@ class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
                               height,
                               isGameRunning,
                               bestVersion,
-                              state),
+                              state,
+                              metadata),
                           ModGridHeader.vramImpact => buildVramCell(
                               WispGrid.lightTextOpacity, mod, height, state),
                           ModGridHeader.gameVersion =>
@@ -397,8 +399,14 @@ class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
     });
   }
 
-  Builder _buildVersionCell(double lightTextOpacity, Mod mod, double height,
-      bool isGameRunning, ModVariant bestVersion, ModGridColumnSetting state) {
+  Builder _buildVersionCell(
+      double lightTextOpacity,
+      Mod mod,
+      double height,
+      bool isGameRunning,
+      ModVariant bestVersion,
+      ModGridColumnSetting state,
+      ModMetadata? metadata) {
     return Builder(builder: (context) {
       final theme = Theme.of(context);
       final lightTextColor =
@@ -415,6 +423,8 @@ class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
       final changelogUrl = Changelogs.getChangelogUrl(
           versionCheckComparison?.variant.versionCheckerInfo,
           versionCheckComparison?.remoteVersionCheck);
+      final areUpdatesMuted = metadata != null && metadata.areUpdatesMuted;
+
       return mod.modVariants.isEmpty
           ? const Text("")
           : _RowItemContainer(
@@ -422,17 +432,19 @@ class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
               width: state.width,
               child: ContextMenuRegion(
                 contextMenu: ContextMenu(entries: [
-                  MenuItem(
-                    label: 'Recheck',
-                    icon: Icons.refresh,
-                    onSelected: () {
-                      ref.read(AppState.versionCheckResults.notifier).refresh(
-                          skipCache: true,
-                          specificVariantsToCheck: [
-                            mod.findFirstEnabledOrHighestVersion!
-                          ]);
-                    },
-                  ),
+                  if (!areUpdatesMuted)
+                    MenuItem(
+                      label: 'Recheck',
+                      icon: Icons.refresh,
+                      onSelected: () {
+                        ref.read(AppState.versionCheckResults.notifier).refresh(
+                            skipCache: true,
+                            specificVariantsToCheck: [
+                              mod.findFirstEnabledOrHighestVersion!
+                            ]);
+                      },
+                    ),
+                  buildMenuItemToggleMuteUpdates(mod, ref),
                 ]),
                 child: Row(
                   children: [
@@ -501,58 +513,74 @@ class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
                           ),
                         ),
                       ),
-                    MovingTooltipWidget(
-                      tooltipWidget: ModListBasicEntry
-                          .buildVersionCheckTextReadoutForTooltip(
-                              null,
-                              versionCheckComparison?.comparisonInt,
-                              localVersionCheck,
-                              remoteVersionCheck),
-                      child: Disable(
-                        isEnabled: !isGameRunning,
-                        child: InkWell(
-                          onTap: () {
-                            if (remoteVersionCheck?.remoteVersion != null &&
-                                versionCheckComparison?.comparisonInt == -1) {
-                              ref
-                                  .read(downloadManager.notifier)
-                                  .downloadUpdateViaBrowser(
-                                      remoteVersionCheck!.remoteVersion!,
-                                      activateVariantOnComplete: false,
-                                      modInfo: bestVersion.modInfo);
-                            } else {
-                              showDialog(
-                                  context: context,
-                                  builder: (context) => AlertDialog(
-                                      content: ModListBasicEntry
-                                          .changeAndVersionCheckAlertDialogContent(
-                                              changelogUrl,
-                                              localVersionCheck,
-                                              remoteVersionCheck,
-                                              versionCheckComparison
-                                                  ?.comparisonInt)));
-                            }
-                          },
-                          onSecondaryTap: () => showDialog(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                  content: ModListBasicEntry
-                                      .changeAndVersionCheckAlertDialogContent(
-                                          changelogUrl,
-                                          localVersionCheck,
-                                          remoteVersionCheck,
-                                          versionCheckComparison
-                                              ?.comparisonInt))),
-                          child: Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 5.0),
-                            child: VersionCheckIcon.fromComparison(
-                                comparison: versionCheckComparison,
-                                theme: theme),
+                    (areUpdatesMuted)
+                        ? MovingTooltipWidget.text(
+                            message: "Updates muted",
+                            child: Padding(
+                              padding:
+                                  const EdgeInsets.only(left: 4.0, right: 8),
+                              child: Icon(
+                                Icons.notifications_off,
+                                size: 20.0,
+                                color: theme.colorScheme.onSurface
+                                    .withOpacity(0.5),
+                              ),
+                            ),
+                          )
+                        : MovingTooltipWidget(
+                            tooltipWidget: ModListBasicEntry
+                                .buildVersionCheckTextReadoutForTooltip(
+                                    null,
+                                    versionCheckComparison?.comparisonInt,
+                                    localVersionCheck,
+                                    remoteVersionCheck),
+                            child: Disable(
+                              isEnabled: !isGameRunning,
+                              child: InkWell(
+                                onTap: () {
+                                  if (remoteVersionCheck?.remoteVersion !=
+                                          null &&
+                                      versionCheckComparison?.comparisonInt ==
+                                          -1) {
+                                    ref
+                                        .read(downloadManager.notifier)
+                                        .downloadUpdateViaBrowser(
+                                            remoteVersionCheck!.remoteVersion!,
+                                            activateVariantOnComplete: false,
+                                            modInfo: bestVersion.modInfo);
+                                  } else {
+                                    showDialog(
+                                        context: context,
+                                        builder: (context) => AlertDialog(
+                                            content: ModListBasicEntry
+                                                .changeAndVersionCheckAlertDialogContent(
+                                                    changelogUrl,
+                                                    localVersionCheck,
+                                                    remoteVersionCheck,
+                                                    versionCheckComparison
+                                                        ?.comparisonInt)));
+                                  }
+                                },
+                                onSecondaryTap: () => showDialog(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                        content: ModListBasicEntry
+                                            .changeAndVersionCheckAlertDialogContent(
+                                                changelogUrl,
+                                                localVersionCheck,
+                                                remoteVersionCheck,
+                                                versionCheckComparison
+                                                    ?.comparisonInt))),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 5.0),
+                                  child: VersionCheckIcon.fromComparison(
+                                      comparison: versionCheckComparison,
+                                      theme: theme),
+                                ),
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                    ),
                     Expanded(
                       child: Builder(builder: (context) {
                         final variantsWithEnabledFirst = mod.modVariants.sorted(

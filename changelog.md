@@ -10,6 +10,7 @@
   - Catalog browser scrolling too fast (also fixed by updating the library).
   - Set a limit on how much RAM the JRE version check uses (min 32mb, max 128mb).
     - This is the code that scans which JREs are present in the game folder and detects their version.
+  - Linux: Show a message on the Catalog webview explaining that it's not supported.
 
 # 1.0.4
 - Added

@@ -87,9 +87,6 @@ class _ModBrowserPage extends ConsumerState<ModBrowserPage>
         useShouldOverrideUrlLoading: true,
         useOnDownloadStart: true,
         algorithmicDarkeningAllowed: true,
-        forceDark: ForceDark.ON,
-        forceDarkStrategy:
-            ForceDarkStrategy.PREFER_WEB_THEME_OVER_USER_AGENT_DARKENING,
       );
       // downloadAdBlockList();
     });
@@ -508,6 +505,9 @@ class _ModBrowserPage extends ConsumerState<ModBrowserPage>
                             Expanded(
                               child: IgnoreDropMouseRegion(
                                   child: switch (_webview2RequiredAndMissing) {
+                                null => Center(
+                                    child: const Text(
+                                        "Checking for webview support...")),
                                 false => InAppWebView(
                                     key: webViewKey,
                                     webViewEnvironment:
@@ -572,29 +572,51 @@ class _ModBrowserPage extends ConsumerState<ModBrowserPage>
                                       });
                                     },
                                   ),
-                                null => Center(
-                                    child: const Text(
-                                        "Checking for webview support...")),
-                                true => Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        "Unable to display web browser",
-                                        style: theme.textTheme.headlineSmall,
+
+                                // Webview not supported
+                                true => switch (currentPlatform) {
+                                    TargetPlatform.windows => Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            "Unable to display web browser",
+                                            style:
+                                                theme.textTheme.headlineSmall,
+                                          ),
+                                          const SizedBox(height: 16),
+                                          const Text(
+                                              "WebView2 is required but not installed."),
+                                          Linkify(
+                                            text:
+                                                "Please install it from https://developer.microsoft.com/en-us/microsoft-edge/webview2/",
+                                            onOpen: (link) =>
+                                                OpenFilex.open(link.url),
+                                          ),
+                                          const Text(
+                                              "and then restart ${Constants.appName}."),
+                                        ],
                                       ),
-                                      const SizedBox(height: 16),
-                                      const Text(
-                                          "WebView2 is required but not installed."),
-                                      Linkify(
-                                        text:
-                                            "Please install it from https://developer.microsoft.com/en-us/microsoft-edge/webview2/",
-                                        onOpen: (link) =>
-                                            OpenFilex.open(link.url),
+                                    TargetPlatform.linux => Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            "Linux is not supported",
+                                            style:
+                                                theme.textTheme.headlineSmall,
+                                          ),
+                                          const SizedBox(height: 16),
+                                          Linkify(
+                                            text:
+                                                "Use a standalone browser to find mods (maybe at https://starmodder2.pages.dev ?) instead.",
+                                            onOpen: (link) =>
+                                                OpenFilex.open(link.url),
+                                          ),
+                                        ],
                                       ),
-                                      const Text(
-                                          "and then restart ${Constants.appName}."),
-                                    ],
-                                  ),
+                                    _ => Container(),
+                                  },
                               }),
                             ),
                           ],

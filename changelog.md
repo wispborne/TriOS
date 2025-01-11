@@ -11,6 +11,7 @@
   - Set a limit on how much RAM the JRE version check uses (min 32mb, max 128mb).
     - This is the code that scans which JREs are present in the game folder and detects their version.
   - Linux: Show a message on the Catalog webview explaining that it's not supported.
+    - The mod catalog itself still works, just not the webview.
 
 # 1.0.4
 - Added

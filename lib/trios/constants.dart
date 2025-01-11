@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:trios/utils/extensions.dart';
 
 class Constants {
-  static const version = "1.0.5-RC01";
+  static const version = "1.0.5-rc01";
 
   static const appName = "TriOS";
   static const appTitle = "$appName v$version";

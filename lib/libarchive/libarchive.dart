@@ -62,10 +62,18 @@ typedef LibArchiveReadFile = ({
 
 /// Not thread-safe.
 class LibArchive {
-  static var binding = _getArchive();
+  static late final LibArchiveBinding binding;
 
-  static LibArchiveBinding _getArchive() {
-    final currentAssetsPath = getAssetsPath();
+  LibArchive() {
+    binding = _getArchive();
+  }
+
+  LibArchive.fromPath(Directory libArchivePath) {
+    binding = _getArchive(assetsPath: libArchivePath);
+  }
+
+  static LibArchiveBinding _getArchive({Directory? assetsPath}) {
+    final currentAssetsPath = assetsPath?.path ?? getAssetsPath();
 
     final libArchivePathForPlatform = switch (Platform.operatingSystem) {
       "windows" =>
@@ -370,11 +378,11 @@ class LibArchive {
   }
 
   Future<List<LibArchiveReadFile?>> readEntriesInArchive(
-      File archivePath, {
-        bool Function(LibArchiveEntry entry)? fileFilter,
-        String Function(LibArchiveEntry entry)? pathTransform,
-        bool Function(Object ex, StackTrace st)? onError,
-      }) async {
+    File archivePath, {
+    bool Function(LibArchiveEntry entry)? fileFilter,
+    String Function(LibArchiveEntry entry)? pathTransform,
+    bool Function(Object ex, StackTrace st)? onError,
+  }) async {
     final archivePtr = binding.archive_read_new();
     final entryPtrPtr = calloc<Pointer<archive_entry>>();
 
@@ -384,8 +392,8 @@ class LibArchive {
       binding.archive_read_support_format_all(archivePtr);
 
       // Open the archive file
-      final openResult = binding.archive_read_open_filename(
-          archivePtr, archivePath.absolute.path.toNativeUtf8().cast<Char>(), 10240);
+      final openResult = binding.archive_read_open_filename(archivePtr,
+          archivePath.absolute.path.toNativeUtf8().cast<Char>(), 10240);
       if (openResult != ARCHIVE_OK) {
         throw Exception(
             'Failed to open archive: ${binding.archive_error_string(archivePtr).toDartStringSafe()}');
@@ -393,7 +401,8 @@ class LibArchive {
 
       final extractedFiles = <LibArchiveReadFile>[];
 
-      while (binding.archive_read_next_header(archivePtr, entryPtrPtr) == ARCHIVE_OK) {
+      while (binding.archive_read_next_header(archivePtr, entryPtrPtr) ==
+          ARCHIVE_OK) {
         try {
           final entry = _getEntryInArchive(entryPtrPtr);
 
@@ -415,8 +424,8 @@ class LibArchive {
           final extractedContent = _readData(archivePtr);
 
           extractedFiles.add((
-          archiveFile: entry,
-          extractedContent: extractedContent,
+            archiveFile: entry,
+            extractedContent: extractedContent,
           ));
         } catch (e, st) {
           // Handle errors

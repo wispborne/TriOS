@@ -3,8 +3,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/modBrowser/models/scraped_mod.dart';
 import 'package:trios/themes/theme_manager.dart';
+import 'package:trios/trios/app_state.dart';
+import 'package:trios/trios/download_manager/download_manager.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/conditional_wrap.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
@@ -365,7 +368,7 @@ class BrowserIcon extends StatelessWidget {
             child: IconButton(
               icon: Icon(Icons.public, size: size),
               onPressed: () {
-                InAppBrowser.openWithSystemBrowser(url: WebUri(forumUrl));
+                forumUrl.openAsUriInBrowser();
               },
             ),
           ),
@@ -476,7 +479,7 @@ class NexusModsIcon extends StatelessWidget {
   }
 }
 
-class DirectDownloadIcon extends StatelessWidget {
+class DirectDownloadIcon extends ConsumerWidget {
   final ScrapedMod mod;
   final double iconOpacity;
   final void Function(String) linkLoader;
@@ -491,12 +494,12 @@ class DirectDownloadIcon extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final downloadUrl = mod.urls?[ModUrlType.DirectDownload];
 
     if (downloadUrl != null && downloadUrl.isNotEmpty) {
       return MovingTooltipWidget.text(
-        message: 'Download.\n$downloadUrl',
+        message: 'Download\n$downloadUrl',
         child: Opacity(
           opacity: iconOpacity,
           child: SizedBox(
@@ -505,7 +508,9 @@ class DirectDownloadIcon extends StatelessWidget {
             child: IconButton(
               icon: Icon(Icons.download, size: size),
               onPressed: () {
-                linkLoader(downloadUrl);
+                ref.read(downloadManager.notifier).downloadAndInstallMod(
+                    mod.name, downloadUrl,
+                    activateVariantOnComplete: false);
               },
             ),
           ),

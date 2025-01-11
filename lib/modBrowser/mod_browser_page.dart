@@ -287,9 +287,13 @@ class _ModBrowserPage extends ConsumerState<ModBrowserPage>
                                         mod: profile,
                                         linkLoader: (url) {
                                           selectedModName = profile.name;
-                                          webViewController?.loadUrl(
-                                              urlRequest:
-                                                  URLRequest(url: WebUri(url)));
+                                          if (_webViewStatus == WebViewStatus.loaded) {
+                                            webViewController?.loadUrl(
+                                                urlRequest: URLRequest(
+                                                    url: WebUri(url)));
+                                          } else {
+                                            url.openAsUriInBrowser();
+                                          }
                                           setState(() {});
                                         }),
                                   );

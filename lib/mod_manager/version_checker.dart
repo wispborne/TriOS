@@ -68,14 +68,29 @@ class VersionCheckerAsyncProvider
   }
 
   /// Refreshes the version check results, updating the state accordingly.
-  Future<void> refresh(
-      {required bool skipCache,
-      List<ModVariant>? specificVariantsToCheck}) async {
+  Future<void> refresh({
+    required bool skipCache,
+    List<ModVariant>? specificVariantsToCheck,
+    bool evenIfMuted = false,
+  }) async {
     if (specificVariantsToCheck == null) {
       await _initializeCache(skipCache);
     }
 
-    final variantsToCheck = specificVariantsToCheck ?? _getVariantsToCheck();
+    final List<ModVariant> variantsToCheck =
+        (specificVariantsToCheck ?? _getVariantsToCheck()).toList();
+    final metadata = ref.read(AppState.modsMetadata).valueOrNull;
+
+    if (metadata != null && !evenIfMuted) {
+      final mutedIds = variantsToCheck
+          .where((v) =>
+              metadata.getMergedModMetadata(v.modInfo.id)?.areUpdatesMuted ==
+              true)
+          .map((v) => v.smolId)
+          .toSet();
+      variantsToCheck.removeWhere((v) => mutedIds.contains(v.smolId));
+    }
+
     final versionCheckTasks =
         _createVersionCheckTasks(variantsToCheck, skipCache);
 
@@ -161,7 +176,8 @@ class VersionCheckerAsyncProvider
     }
     await _cacheLock.protect(() async {
       _versionCheckResultsCache[result.smolId!] = result;
-      await updateState((s) => _updateStateWithCache(_versionCheckResultsCache));
+      await updateState(
+          (s) => _updateStateWithCache(_versionCheckResultsCache));
     });
   }
 

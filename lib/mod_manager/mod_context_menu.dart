@@ -496,6 +496,14 @@ MenuItem buildMenuItemToggleMuteUpdates(Mod mod, WidgetRef ref) {
               areUpdatesMuted: !isMuted,
             ),
           );
+      if (isMuted) {
+        // Fire version check for the mod.
+        ref.read(AppState.versionCheckResults.notifier).refresh(
+              skipCache: true,
+              specificVariantsToCheck: [mod.findFirstEnabledOrHighestVersion!],
+              evenIfMuted: true,
+            );
+      }
     },
   );
 }

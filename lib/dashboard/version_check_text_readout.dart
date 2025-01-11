@@ -171,7 +171,7 @@ class _VersionCheckTextReadoutState
                 ),
               if (localVersionCheck == null)
                 Text(
-                    "This mod does not support Version Checker.\nPlease visit the mod page to manually find updates.",
+                    "This mod may not support Version Checker.\nPlease visit the mod page to manually find updates.",
                     style: theme.textTheme.labelLarge),
             ],
           )

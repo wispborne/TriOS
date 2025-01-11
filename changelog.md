@@ -4,6 +4,8 @@
     - These are used to detect whether Starsector is running.
   - TriOS changelog showing unreleased versions when it shouldn't.
   - Mod Catalog list performance improvements.
+  - .dmp files being created every launch (some WebView library bug, fixed by updating it to a beta). 
+  - Catalog browser scrolling too fast (also fixed by updating the library).
 
 # 1.0.4
 - Added

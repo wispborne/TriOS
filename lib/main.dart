@@ -15,6 +15,7 @@ import 'package:trios/onboarding/onboarding_page.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/self_updater/script_generator.dart';
 import 'package:trios/trios/self_updater/self_updater.dart';
+import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';

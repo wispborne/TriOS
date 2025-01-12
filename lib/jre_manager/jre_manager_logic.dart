@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:collection/collection.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/trios/constants.dart';
+import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
@@ -91,7 +92,7 @@ class JreManager extends AsyncNotifier<JreManagerState> {
       String? versionString;
       var cmd = javaExe.absolute.normalize.path;
       try {
-        var process = await Process.start(cmd, ["-version"]);
+        var process = await Process.start(cmd, ["-Xmx128m", "-Xms32m", "-version"]);
         var lines = await process.stderr
             .transform(utf8.decoder)
             .transform(const LineSplitter())

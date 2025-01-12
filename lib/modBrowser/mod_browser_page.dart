@@ -13,6 +13,7 @@ import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/download_manager/download_manager.dart';
 import 'package:trios/trios/drag_drop_handler.dart';
 import 'package:trios/trios/providers.dart';
+import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/search.dart';
@@ -24,7 +25,6 @@ import 'package:trios/widgets/tristate_icon_button.dart';
 
 import '../main.dart';
 import '../trios/download_manager/downloader.dart';
-import '../trios/settings/settings.dart';
 import '../widgets/MultiSplitViewMixin.dart';
 import '../widgets/moving_tooltip.dart';
 import 'mod_browser_manager.dart';
@@ -34,6 +34,14 @@ class ModBrowserPage extends ConsumerStatefulWidget {
 
   @override
   ConsumerState<ModBrowserPage> createState() => _ModBrowserPage();
+}
+
+enum WebViewStatus {
+  loading,
+  webview2Required,
+  linuxNotSupported,
+  unknownError,
+  loaded
 }
 
 class _ModBrowserPage extends ConsumerState<ModBrowserPage>
@@ -55,7 +63,7 @@ class _ModBrowserPage extends ConsumerState<ModBrowserPage>
   bool? filterDiscord;
   bool? filterIndex;
   bool? filterForumModding;
-  bool? _webview2RequiredAndMissing;
+  WebViewStatus _webViewStatus = WebViewStatus.loading;
 
   @override
   List<Area> get areas => splitPane
@@ -66,15 +74,17 @@ class _ModBrowserPage extends ConsumerState<ModBrowserPage>
   void initState() {
     super.initState();
 
-    if (currentPlatform != TargetPlatform.windows) {
-      _webview2RequiredAndMissing = false;
+    if (currentPlatform == TargetPlatform.linux) {
+      _webViewStatus = WebViewStatus.linuxNotSupported;
     } else {
       WebViewEnvironment.getAvailableVersion().then((availableVersion) {
-        Fimber.i("Available WebView2 version: $availableVersion");
+        Fimber.i("Available WebView2version: $availableVersion");
         if (availableVersion != null) {
           _enableWebView();
+        } else if (currentPlatform == TargetPlatform.windows) {
+          _webViewStatus = WebViewStatus.webview2Required;
         } else {
-          _webview2RequiredAndMissing = true;
+          _webViewStatus = WebViewStatus.unknownError;
         }
       });
     }
@@ -82,14 +92,12 @@ class _ModBrowserPage extends ConsumerState<ModBrowserPage>
 
   _enableWebView() {
     setState(() {
-      _webview2RequiredAndMissing = false;
+      _webViewStatus = WebViewStatus.loaded;
+
       webSettings = InAppWebViewSettings(
         useShouldOverrideUrlLoading: true,
         useOnDownloadStart: true,
         algorithmicDarkeningAllowed: true,
-        forceDark: ForceDark.ON,
-        forceDarkStrategy:
-            ForceDarkStrategy.PREFER_WEB_THEME_OVER_USER_AGENT_DARKENING,
       );
       // downloadAdBlockList();
     });
@@ -279,9 +287,13 @@ class _ModBrowserPage extends ConsumerState<ModBrowserPage>
                                         mod: profile,
                                         linkLoader: (url) {
                                           selectedModName = profile.name;
-                                          webViewController?.loadUrl(
-                                              urlRequest:
-                                                  URLRequest(url: WebUri(url)));
+                                          if (_webViewStatus == WebViewStatus.loaded) {
+                                            webViewController?.loadUrl(
+                                                urlRequest: URLRequest(
+                                                    url: WebUri(url)));
+                                          } else {
+                                            url.openAsUriInBrowser();
+                                          }
                                           setState(() {});
                                         }),
                                   );
@@ -507,8 +519,11 @@ class _ModBrowserPage extends ConsumerState<ModBrowserPage>
                             const SizedBox(height: 4),
                             Expanded(
                               child: IgnoreDropMouseRegion(
-                                  child: switch (_webview2RequiredAndMissing) {
-                                false => InAppWebView(
+                                  child: switch (_webViewStatus) {
+                                WebViewStatus.loading => Center(
+                                    child: const Text(
+                                        "Checking for webview support...")),
+                                WebViewStatus.loaded => InAppWebView(
                                     key: webViewKey,
                                     webViewEnvironment:
                                         ref.watch(webViewEnvironment),
@@ -572,10 +587,9 @@ class _ModBrowserPage extends ConsumerState<ModBrowserPage>
                                       });
                                     },
                                   ),
-                                null => Center(
-                                    child: const Text(
-                                        "Checking for webview support...")),
-                                true => Column(
+
+                                // Webview not supported
+                                WebViewStatus.webview2Required => Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       Text(
@@ -593,6 +607,38 @@ class _ModBrowserPage extends ConsumerState<ModBrowserPage>
                                       ),
                                       const Text(
                                           "and then restart ${Constants.appName}."),
+                                    ],
+                                  ),
+                                WebViewStatus.linuxNotSupported => Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        "Linux is not supported",
+                                        style: theme.textTheme.headlineSmall,
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Linkify(
+                                        text:
+                                            "Use a standalone browser to find mods (maybe at https://starmodder2.pages.dev ?) instead.",
+                                        onOpen: (link) =>
+                                            OpenFilex.open(link.url),
+                                      ),
+                                    ],
+                                  ),
+                                WebViewStatus.unknownError => Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        "Not supported",
+                                        style: theme.textTheme.headlineSmall,
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Linkify(
+                                        text:
+                                            "Use a standalone browser to find mods (maybe at https://starmodder2.pages.dev ?) instead.",
+                                        onOpen: (link) =>
+                                            OpenFilex.open(link.url),
+                                      ),
                                     ],
                                   ),
                               }),

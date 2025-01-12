@@ -1,4 +1,6 @@
 # 1.0.5
+- Added
+  - Mute updates option for mods.
 - Fixed
   -  Spawned java.exe processes would stay open.
     - These are used to detect whether Starsector is running.
@@ -6,6 +8,10 @@
   - Mod Catalog list performance improvements.
   - .dmp files being created every launch (some WebView library bug, fixed by updating it to a beta). 
   - Catalog browser scrolling too fast (also fixed by updating the library).
+  - Set a limit on how much RAM the JRE version check uses (min 32mb, max 128mb).
+    - This is the code that scans which JREs are present in the game folder and detects their version.
+  - Linux: Show a message on the Catalog webview explaining that it's not supported.
+    - The mod catalog itself still works, just not the webview.
 
 # 1.0.4
 - Added

@@ -5,6 +5,7 @@ import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/moving_tooltip.dart';

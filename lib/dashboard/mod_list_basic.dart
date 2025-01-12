@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/mod_manager/mods_grid_page.dart';
 import 'package:trios/models/enabled_mods.dart';
+import 'package:trios/thirdparty/dartx/iterable.dart';
+import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
+import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
@@ -145,7 +146,10 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                           const EdgeInsets.only(top: 8, bottom: 4, right: 4),
                       child: SizedBox(
                         height: 30,
-                        child: ModListBasicSearch(query),
+                        child: ModListBasicSearch(
+                            searchController: searchController,
+                            ref: ref,
+                            query: query),
                       ),
                     ),
                     Padding(
@@ -207,12 +211,16 @@ class _ModListMiniState extends ConsumerState<ModListMini>
           Expanded(
             child: modVariants.when(
               data: (_) {
-                final isUpdatesFieldShown =
-                    ref.watch(appSettings.select((s) => s.isUpdatesFieldShown));
-                var modsWithUpdates = <Mod?>[null] +
+                final dashboardGridModUpdateVisibility = ref.watch(appSettings
+                    .select((s) => s.dashboardGridModUpdateVisibility));
+                final isUpdatesFieldShown = dashboardGridModUpdateVisibility !=
+                    DashboardGridModUpdateVisibility.hideAll;
+                final modsMetadata =
+                    ref.watch(AppState.modsMetadata).valueOrNull;
+                final modsWithUpdates = <Mod?>[null] +
                     filteredModList
                         .map((e) => e as Mod?)
-                        .filter((mod) {
+                        .where((mod) {
                           return mod?.updateCheck(versionCheck)?.hasUpdate ==
                               true;
                           // final variant = mod?.findHighestVersion;
@@ -228,8 +236,25 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                         })
                         .toList()
                         .sortedByName;
+                final mutedModsWithUpdates = modsMetadata == null
+                    ? <Mod?>[]
+                    : modsWithUpdates
+                        .where((mod) =>
+                            mod != null &&
+                            modsMetadata
+                                    .getMergedModMetadata(mod.id)
+                                    ?.areUpdatesMuted ==
+                                true)
+                        .toList();
+
                 final updatesToDisplay =
-                    (isUpdatesFieldShown ? modsWithUpdates : <Mod?>[null]);
+                    switch (dashboardGridModUpdateVisibility) {
+                  DashboardGridModUpdateVisibility.allVisible =>
+                    modsWithUpdates,
+                  DashboardGridModUpdateVisibility.hideMuted =>
+                    modsWithUpdates - mutedModsWithUpdates,
+                  DashboardGridModUpdateVisibility.hideAll => <Mod?>[null],
+                };
                 final listItems = updatesToDisplay +
                     (modsWithUpdates.isEmpty ? [] : [null]) +
                     (filteredModList.sortedByName.toList());
@@ -259,59 +284,46 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                         Padding(
                                           padding:
                                               const EdgeInsets.only(right: 8),
-                                          child: Row(
-                                            children: [
-                                              Text(
-                                                  isUpdatesFieldShown
-                                                      ? "UPDATES (${modsWithUpdates.nonNulls.length})"
-                                                      : "${modsWithUpdates.nonNulls.length} hidden updates",
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .labelMedium),
-                                              IconButton(
-                                                onPressed: () => ref
-                                                    .read(appSettings.notifier)
-                                                    .update((s) => s.copyWith(
-                                                        isUpdatesFieldShown: !s
-                                                            .isUpdatesFieldShown)),
-                                                constraints:
-                                                    const BoxConstraints(),
-                                                icon: Icon(
-                                                    isUpdatesFieldShown
-                                                        ? Icons.visibility
-                                                        : Icons.visibility_off,
-                                                    size: 15,
-                                                    color: theme
-                                                        .colorScheme.onSurface),
-                                              ),
-                                              const Spacer(),
-                                              MovingTooltipWidget.text(
-                                                  message: isGameRunning
-                                                      ? "Game is running"
-                                                      : "Download all ${modsWithUpdates.nonNulls.length} updates",
-                                                  child: Disable(
+                                          child: Row(children: [
+                                            UpdatesHeader(
+                                                dashboardGridModUpdateVisibility:
+                                                    dashboardGridModUpdateVisibility,
+                                                updatesToDisplay:
+                                                    updatesToDisplay,
+                                                mutedModsWithUpdates:
+                                                    mutedModsWithUpdates,
+                                                modsWithUpdates:
+                                                    modsWithUpdates),
+                                            ChangeUpdateVisibilityEyeView(
+                                                ref: ref,
+                                                dashboardGridModUpdateVisibility:
+                                                    dashboardGridModUpdateVisibility,
+                                                theme: theme),
+                                            const Spacer(),
+                                            MovingTooltipWidget.text(
+                                                message: isGameRunning
+                                                    ? "Game is running"
+                                                    : "Download all ${modsWithUpdates.nonNulls.length} updates",
+                                                child: Disable(
                                                     isEnabled: !isGameRunning,
                                                     child: SizedBox(
-                                                      child: TextButton.icon(
-                                                          label: const Text(
-                                                              "Update All"),
-                                                          onPressed: () {
-                                                            _onClickedDownloadModUpdatesDialog(
-                                                                modsWithUpdates,
-                                                                versionCheck,
-                                                                context);
-                                                          },
-                                                          icon: Icon(
-                                                              Icons.update,
-                                                              size: 24,
-                                                              color: Theme.of(
-                                                                      context)
-                                                                  .colorScheme
-                                                                  .primary)),
-                                                    ),
-                                                  )),
-                                            ],
-                                          ),
+                                                        child: TextButton.icon(
+                                                            label: const Text(
+                                                                "Update All"),
+                                                            onPressed: () {
+                                                              _onClickedDownloadModUpdatesDialog(
+                                                                  modsWithUpdates,
+                                                                  versionCheck,
+                                                                  context);
+                                                            },
+                                                            icon: Icon(
+                                                                Icons.update,
+                                                                size: 24,
+                                                                color: Theme.of(
+                                                                        context)
+                                                                    .colorScheme
+                                                                    .primary)))))
+                                          ]),
                                         ),
                                       ]);
                                 }
@@ -341,41 +353,6 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                                   style: Theme.of(context)
                                                       .textTheme
                                                       .labelMedium),
-                                              // Screenshot doesn't work because it creates a child outside of
-                                              // the provider scope (of riverpod), and can't render.
-                                              // MovingTooltipWidget.text(
-                                              //   message:
-                                              //       "Copy screenshot to clipboard",
-                                              //   child: IconButton(
-                                              //     onPressed: () {
-                                              //       screenshotController
-                                              //           .captureFromLongWidget(
-                                              //               InheritedTheme
-                                              //                   .captureAll(
-                                              //         context,
-                                              //         Material(
-                                              //           child: Column(
-                                              //             children: filteredModList
-                                              //                 .map((mod) =>
-                                              //                     ModListBasicEntry(
-                                              //                         mod: mod))
-                                              //                 .toList(),
-                                              //           ),
-                                              //         ),
-                                              //       ))
-                                              //           .then((value) {
-                                              //         Pasteboard.writeImage(
-                                              //             value);
-                                              //       });
-                                              //     },
-                                              //     constraints:
-                                              //         const BoxConstraints(),
-                                              //     icon: Icon(Icons.photo_camera,
-                                              //         size: 15,
-                                              //         color: theme.colorScheme
-                                              //             .onSurface),
-                                              //   ),
-                                              // ),
                                             ],
                                           ),
                                         ),
@@ -407,39 +384,6 @@ class _ModListMiniState extends ConsumerState<ModListMini>
           ),
         ].animate(interval: 400.ms).fade(duration: 300.ms),
       ),
-    );
-  }
-
-  SearchAnchor ModListBasicSearch(String query) {
-    return SearchAnchor(
-      searchController: searchController,
-      builder: (BuildContext context, SearchController controller) {
-        return SearchBar(
-            controller: controller,
-            leading: const Icon(Icons.search),
-            hintText: "Filter...",
-            trailing: [
-              query.isEmpty
-                  ? Container()
-                  : IconButton(
-                      icon: const Icon(Icons.clear),
-                      constraints: const BoxConstraints(),
-                      padding: EdgeInsets.zero,
-                      onPressed: () {
-                        controller.clear();
-                        ref.read(searchQuery.notifier).state = "";
-                      },
-                    )
-            ],
-            backgroundColor: WidgetStateProperty.all(
-                Theme.of(context).colorScheme.surfaceContainer),
-            onChanged: (value) {
-              ref.read(searchQuery.notifier).state = value;
-            });
-      },
-      suggestionsBuilder: (BuildContext context, SearchController controller) {
-        return [];
-      },
     );
   }
 
@@ -488,5 +432,156 @@ class _ModListMiniState extends ConsumerState<ModListMini>
             );
           });
     }
+  }
+}
+
+class ModListBasicSearch extends ConsumerWidget {
+  const ModListBasicSearch({
+    super.key,
+    required this.searchController,
+    required this.ref,
+    required this.query,
+  });
+
+  final SearchController searchController;
+  final WidgetRef ref;
+  final String query;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return SearchAnchor(
+      searchController: searchController,
+      builder: (BuildContext context, SearchController controller) {
+        return SearchBar(
+            controller: controller,
+            leading: const Icon(Icons.search),
+            hintText: "Filter...",
+            trailing: [
+              query.isEmpty
+                  ? Container()
+                  : IconButton(
+                      icon: const Icon(Icons.clear),
+                      constraints: const BoxConstraints(),
+                      padding: EdgeInsets.zero,
+                      onPressed: () {
+                        controller.clear();
+                        ref.read(searchQuery.notifier).state = "";
+                      },
+                    )
+            ],
+            backgroundColor: WidgetStateProperty.all(
+                Theme.of(context).colorScheme.surfaceContainer),
+            onChanged: (value) {
+              ref.read(searchQuery.notifier).state = value;
+            });
+      },
+      suggestionsBuilder: (BuildContext context, SearchController controller) {
+        return [];
+      },
+    );
+  }
+}
+
+class ChangeUpdateVisibilityEyeView extends ConsumerWidget {
+  const ChangeUpdateVisibilityEyeView({
+    super.key,
+    required this.ref,
+    required this.dashboardGridModUpdateVisibility,
+    required this.theme,
+  });
+
+  final WidgetRef ref;
+  final DashboardGridModUpdateVisibility dashboardGridModUpdateVisibility;
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return IconButton(
+        onPressed: () => ref.read(appSettings.notifier).update((s) =>
+            s.copyWith(
+                dashboardGridModUpdateVisibility: switch (
+                    s.dashboardGridModUpdateVisibility) {
+              DashboardGridModUpdateVisibility.allVisible =>
+                DashboardGridModUpdateVisibility.hideMuted,
+              DashboardGridModUpdateVisibility.hideMuted =>
+                DashboardGridModUpdateVisibility.hideAll,
+              DashboardGridModUpdateVisibility.hideAll =>
+                DashboardGridModUpdateVisibility.allVisible
+            })),
+        constraints: const BoxConstraints(),
+        icon: MovingTooltipWidget.text(
+            message: switch (dashboardGridModUpdateVisibility) {
+              DashboardGridModUpdateVisibility.allVisible =>
+                "Showing all updates",
+              DashboardGridModUpdateVisibility.hideMuted =>
+                "Showing unmuted updates",
+              DashboardGridModUpdateVisibility.hideAll => "Updates hidden"
+            },
+            child: Icon(
+                switch (dashboardGridModUpdateVisibility) {
+                  DashboardGridModUpdateVisibility.allVisible =>
+                    Icons.visibility_outlined,
+                  DashboardGridModUpdateVisibility.hideMuted =>
+                    Icons.visibility,
+                  DashboardGridModUpdateVisibility.hideAll =>
+                    Icons.visibility_off
+                },
+                size: 15,
+                color: theme.colorScheme.onSurface)));
+  }
+}
+
+class UpdatesHeader extends ConsumerWidget {
+  const UpdatesHeader({
+    super.key,
+    required this.dashboardGridModUpdateVisibility,
+    required this.updatesToDisplay,
+    required this.mutedModsWithUpdates,
+    required this.modsWithUpdates,
+  });
+
+  final DashboardGridModUpdateVisibility dashboardGridModUpdateVisibility;
+  final List<Mod?> updatesToDisplay;
+  final List<Mod?> mutedModsWithUpdates;
+  final List<Mod?> modsWithUpdates;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return switch (dashboardGridModUpdateVisibility) {
+      DashboardGridModUpdateVisibility.allVisible => Text(
+          "ALL UPDATES (${updatesToDisplay.nonNulls.length})",
+          style: Theme.of(context).textTheme.labelMedium),
+      DashboardGridModUpdateVisibility.hideMuted =>
+        Row(mainAxisSize: MainAxisSize.min, children: [
+          Text("UPDATES (${updatesToDisplay.nonNulls.length}",
+              style: Theme.of(context).textTheme.labelMedium),
+          if (mutedModsWithUpdates.isNotEmpty) ...[
+            Text(" + ${mutedModsWithUpdates.nonNulls.length} ",
+                style: Theme.of(context).textTheme.labelMedium),
+            MovingTooltipWidget.text(
+              message: "Muted updates",
+              child: Icon(Icons.notifications_off,
+                  size: 14, color: Theme.of(context).iconTheme.color),
+            )
+          ],
+          Text(")", style: Theme.of(context).textTheme.labelMedium)
+        ]),
+      DashboardGridModUpdateVisibility.hideAll =>
+        Row(mainAxisSize: MainAxisSize.min, children: [
+          Text(
+              "${(modsWithUpdates - mutedModsWithUpdates).nonNulls.length} hidden updates",
+              style: Theme.of(context).textTheme.labelMedium),
+          if (mutedModsWithUpdates.isNotEmpty) ...[
+            Text(" (+ ${mutedModsWithUpdates.nonNulls.length} ",
+                style: Theme.of(context).textTheme.labelMedium),
+            MovingTooltipWidget.text(
+              message: "Muted updates",
+              child: Icon(Icons.notifications_off,
+                  size: 14, color: Theme.of(context).iconTheme.color),
+            ),
+            Text(")", style: Theme.of(context).textTheme.labelMedium)
+          ]
+        ])
+    };
   }
 }

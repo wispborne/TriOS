@@ -194,6 +194,7 @@ class ModMetadata with ModMetadataMappable {
   final Map<SmolId, ModVariantMetadata> variantsMetadata;
   final int firstSeen;
   final bool isFavorited;
+  final bool areUpdatesMuted;
 
   /// Timestamp of when the mod variant was last enabled by TriOS.
   final int? lastEnabled;
@@ -203,6 +204,7 @@ class ModMetadata with ModMetadataMappable {
     required this.firstSeen,
     this.isFavorited = false,
     this.lastEnabled,
+    this.areUpdatesMuted = false,
   });
 
   static ModMetadata empty() => ModMetadata(
@@ -226,6 +228,7 @@ class ModMetadata with ModMetadataMappable {
       firstSeen: firstSeen,
       isFavorited: isFavorited,
       lastEnabled: lastEnabled ?? base.lastEnabled,
+      areUpdatesMuted: areUpdatesMuted ?? base.areUpdatesMuted,
     );
   }
 }

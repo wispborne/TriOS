@@ -10,7 +10,7 @@ import 'package:trios/models/version.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/download_manager/download_manager.dart';
-import 'package:trios/trios/settings/settings.dart';
+import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/platform_specific.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -37,6 +37,7 @@ ContextMenu buildModContextMenu(Mod mod, WidgetRef ref, BuildContext context,
       if (ref.watch(AppState.vramEstimatorProvider).valueOrNull?.isScanning !=
           true)
         buildMenuItemCheckVram(mod, ref),
+      buildMenuItemToggleMuteUpdates(mod, ref),
       if (!isGameRunning) menuItemDeleteFolder(mod, context, ref),
       if (isModGameVersionIncorrect(
           currentStarsectorVersion, isGameRunning, modVariant))
@@ -476,6 +477,33 @@ MenuItem buildMenuItemCheckVram(Mod mod, WidgetRef ref) {
     onSelected: () {
       ref.read(AppState.vramEstimatorProvider.notifier).startEstimating(
           variantsToCheck: [mod.findFirstEnabledOrHighestVersion!]);
+    },
+  );
+}
+
+MenuItem buildMenuItemToggleMuteUpdates(Mod mod, WidgetRef ref) {
+  final modsMetadata = ref.watch(AppState.modsMetadata).valueOrNull;
+  final isMuted =
+      modsMetadata?.getMergedModMetadata(mod.id)?.areUpdatesMuted == true;
+
+  return MenuItem(
+    label: isMuted ? 'Unmute Updates' : 'Mute Updates',
+    icon: isMuted ? Icons.notifications : Icons.notifications_off,
+    onSelected: () {
+      ref.read(AppState.modsMetadata.notifier).updateModUserMetadata(
+            mod.id,
+            (oldMetadata) => oldMetadata.copyWith(
+              areUpdatesMuted: !isMuted,
+            ),
+          );
+      if (isMuted) {
+        // Fire version check for the mod.
+        ref.read(AppState.versionCheckResults.notifier).refresh(
+              skipCache: true,
+              specificVariantsToCheck: [mod.findFirstEnabledOrHighestVersion!],
+              evenIfMuted: true,
+            );
+      }
     },
   );
 }

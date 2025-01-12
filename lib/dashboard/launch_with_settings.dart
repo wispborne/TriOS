@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/jre_manager/jre_manager_logic.dart';
+import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/widgets/disable.dart';
@@ -15,7 +16,6 @@ import '../models/launch_settings.dart';
 import '../themes/theme_manager.dart';
 import '../trios/app_state.dart';
 import '../trios/constants.dart';
-import '../trios/settings/settings.dart';
 import '../utils/util.dart';
 import '../widgets/checkbox_with_label.dart';
 

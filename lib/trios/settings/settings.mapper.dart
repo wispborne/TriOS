@@ -102,6 +102,60 @@ extension ModUpdateBehaviorMapperExtension on ModUpdateBehavior {
   }
 }
 
+class DashboardGridModUpdateVisibilityMapper
+    extends EnumMapper<DashboardGridModUpdateVisibility> {
+  DashboardGridModUpdateVisibilityMapper._();
+
+  static DashboardGridModUpdateVisibilityMapper? _instance;
+  static DashboardGridModUpdateVisibilityMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals
+          .use(_instance = DashboardGridModUpdateVisibilityMapper._());
+    }
+    return _instance!;
+  }
+
+  static DashboardGridModUpdateVisibility fromValue(dynamic value) {
+    ensureInitialized();
+    return MapperContainer.globals.fromValue(value);
+  }
+
+  @override
+  DashboardGridModUpdateVisibility decode(dynamic value) {
+    switch (value) {
+      case 'allVisible':
+        return DashboardGridModUpdateVisibility.allVisible;
+      case 'hideMuted':
+        return DashboardGridModUpdateVisibility.hideMuted;
+      case 'hideAll':
+        return DashboardGridModUpdateVisibility.hideAll;
+      default:
+        throw MapperException.unknownEnumValue(value);
+    }
+  }
+
+  @override
+  dynamic encode(DashboardGridModUpdateVisibility self) {
+    switch (self) {
+      case DashboardGridModUpdateVisibility.allVisible:
+        return 'allVisible';
+      case DashboardGridModUpdateVisibility.hideMuted:
+        return 'hideMuted';
+      case DashboardGridModUpdateVisibility.hideAll:
+        return 'hideAll';
+    }
+  }
+}
+
+extension DashboardGridModUpdateVisibilityMapperExtension
+    on DashboardGridModUpdateVisibility {
+  String toValue() {
+    DashboardGridModUpdateVisibilityMapper.ensureInitialized();
+    return MapperContainer.globals
+        .toValue<DashboardGridModUpdateVisibility>(this) as String;
+  }
+}
+
 class SettingsMapper extends ClassMapperBase<Settings> {
   SettingsMapper._();
 
@@ -111,6 +165,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       MapperContainer.globals.use(_instance = SettingsMapper._());
       TriOSToolsMapper.ensureInitialized();
       LaunchSettingsMapper.ensureInitialized();
+      DashboardGridModUpdateVisibilityMapper.ensureInitialized();
       WispGridStateMapper.ensureInitialized();
       ModsGridStateMapper.ensureInitialized();
       FolderNamingSettingMapper.ensureInitialized();
@@ -185,9 +240,15 @@ class SettingsMapper extends ClassMapperBase<Settings> {
   static String? _$lastStarsectorVersion(Settings v) => v.lastStarsectorVersion;
   static const Field<Settings, String> _f$lastStarsectorVersion =
       Field('lastStarsectorVersion', _$lastStarsectorVersion, opt: true);
-  static bool _$isUpdatesFieldShown(Settings v) => v.isUpdatesFieldShown;
-  static const Field<Settings, bool> _f$isUpdatesFieldShown =
-      Field('isUpdatesFieldShown', _$isUpdatesFieldShown, opt: true, def: true);
+  static DashboardGridModUpdateVisibility _$dashboardGridModUpdateVisibility(
+          Settings v) =>
+      v.dashboardGridModUpdateVisibility;
+  static const Field<Settings, DashboardGridModUpdateVisibility>
+      _f$dashboardGridModUpdateVisibility = Field(
+          'dashboardGridModUpdateVisibility',
+          _$dashboardGridModUpdateVisibility,
+          opt: true,
+          def: DashboardGridModUpdateVisibility.hideMuted);
   static WispGridState _$modsGridState(Settings v) => v.modsGridState;
   static const Field<Settings, WispGridState> _f$modsGridState = Field(
       'modsGridState', _$modsGridState,
@@ -295,7 +356,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #enableDirectLaunch: _f$enableDirectLaunch,
     #launchSettings: _f$launchSettings,
     #lastStarsectorVersion: _f$lastStarsectorVersion,
-    #isUpdatesFieldShown: _f$isUpdatesFieldShown,
+    #dashboardGridModUpdateVisibility: _f$dashboardGridModUpdateVisibility,
     #modsGridState: _f$modsGridState,
     #oldModsGridState: _f$oldModsGridState,
     #customGameExePath: _f$customGameExePath,
@@ -339,7 +400,8 @@ class SettingsMapper extends ClassMapperBase<Settings> {
         enableDirectLaunch: data.dec(_f$enableDirectLaunch),
         launchSettings: data.dec(_f$launchSettings),
         lastStarsectorVersion: data.dec(_f$lastStarsectorVersion),
-        isUpdatesFieldShown: data.dec(_f$isUpdatesFieldShown),
+        dashboardGridModUpdateVisibility:
+            data.dec(_f$dashboardGridModUpdateVisibility),
         modsGridState: data.dec(_f$modsGridState),
         oldModsGridState: data.dec(_f$oldModsGridState),
         customGameExePath: data.dec(_f$customGameExePath),
@@ -436,7 +498,7 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
       bool? enableDirectLaunch,
       LaunchSettings? launchSettings,
       String? lastStarsectorVersion,
-      bool? isUpdatesFieldShown,
+      DashboardGridModUpdateVisibility? dashboardGridModUpdateVisibility,
       WispGridState? modsGridState,
       ModsGridState? oldModsGridState,
       String? customGameExePath,
@@ -500,7 +562,7 @@ class _SettingsCopyWithImpl<$R, $Out>
           bool? enableDirectLaunch,
           LaunchSettings? launchSettings,
           Object? lastStarsectorVersion = $none,
-          bool? isUpdatesFieldShown,
+          DashboardGridModUpdateVisibility? dashboardGridModUpdateVisibility,
           WispGridState? modsGridState,
           Object? oldModsGridState = $none,
           Object? customGameExePath = $none,
@@ -546,8 +608,8 @@ class _SettingsCopyWithImpl<$R, $Out>
         if (launchSettings != null) #launchSettings: launchSettings,
         if (lastStarsectorVersion != $none)
           #lastStarsectorVersion: lastStarsectorVersion,
-        if (isUpdatesFieldShown != null)
-          #isUpdatesFieldShown: isUpdatesFieldShown,
+        if (dashboardGridModUpdateVisibility != null)
+          #dashboardGridModUpdateVisibility: dashboardGridModUpdateVisibility,
         if (modsGridState != null) #modsGridState: modsGridState,
         if (oldModsGridState != $none) #oldModsGridState: oldModsGridState,
         if (customGameExePath != $none) #customGameExePath: customGameExePath,
@@ -610,8 +672,8 @@ class _SettingsCopyWithImpl<$R, $Out>
       launchSettings: data.get(#launchSettings, or: $value.launchSettings),
       lastStarsectorVersion:
           data.get(#lastStarsectorVersion, or: $value.lastStarsectorVersion),
-      isUpdatesFieldShown:
-          data.get(#isUpdatesFieldShown, or: $value.isUpdatesFieldShown),
+      dashboardGridModUpdateVisibility: data.get(#dashboardGridModUpdateVisibility,
+          or: $value.dashboardGridModUpdateVisibility),
       modsGridState: data.get(#modsGridState, or: $value.modsGridState),
       oldModsGridState:
           data.get(#oldModsGridState, or: $value.oldModsGridState),
@@ -637,15 +699,10 @@ class _SettingsCopyWithImpl<$R, $Out>
           data.get(#allowCrashReporting, or: $value.allowCrashReporting),
       updateToPrereleases:
           data.get(#updateToPrereleases, or: $value.updateToPrereleases),
-      autoEnableAndDisableDependencies: data.get(
-          #autoEnableAndDisableDependencies,
-          or: $value.autoEnableAndDisableDependencies),
-      enableLauncherPrecheck:
-          data.get(#enableLauncherPrecheck, or: $value.enableLauncherPrecheck),
-      modUpdateBehavior:
-          data.get(#modUpdateBehavior, or: $value.modUpdateBehavior),
-      checkIfGameIsRunning:
-          data.get(#checkIfGameIsRunning, or: $value.checkIfGameIsRunning),
+      autoEnableAndDisableDependencies: data.get(#autoEnableAndDisableDependencies, or: $value.autoEnableAndDisableDependencies),
+      enableLauncherPrecheck: data.get(#enableLauncherPrecheck, or: $value.enableLauncherPrecheck),
+      modUpdateBehavior: data.get(#modUpdateBehavior, or: $value.modUpdateBehavior),
+      checkIfGameIsRunning: data.get(#checkIfGameIsRunning, or: $value.checkIfGameIsRunning),
       userId: data.get(#userId, or: $value.userId),
       hasHiddenForumDarkModeTip: data.get(#hasHiddenForumDarkModeTip, or: $value.hasHiddenForumDarkModeTip),
       activeModProfileId: data.get(#activeModProfileId, or: $value.activeModProfileId));

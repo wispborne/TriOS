@@ -124,7 +124,9 @@ class AppState {
 
     try {
       final archive = ref.watch(archiveProvider).value;
-      final trueVersion = await getStarsectorVersionFromObf(gameCorePath, archive!);
+      if (archive == null) return null;
+
+      final trueVersion = await getStarsectorVersionFromObf(gameCorePath, archive);
       if (trueVersion != null && trueVersion.isNotEmpty) {
         ref
             .read(appSettings.notifier)

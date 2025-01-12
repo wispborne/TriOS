@@ -170,6 +170,9 @@ flutter:
     - assets/SMOL_Themes.json
     - assets/common/
     - assets/windows/7zip/
+    - assets/linux/7zip/arm64/
+    - assets/linux/7zip/x64/
+#    - assets/macos/7zip/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

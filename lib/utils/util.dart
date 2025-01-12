@@ -146,6 +146,7 @@ Future<String?> getStarsectorVersionFromObf(
       }
     }
   }
+  return null;
 }
 
 Future<String?> readStarsectorVersionFromLog(Directory gamePath) async {

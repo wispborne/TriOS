@@ -1,9 +1,11 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 import 'package:trios/compression/archive.dart'; // your interface
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/util.dart'; // your own utilities
 
 class SevenZipEntry implements ArchiveEntry {
@@ -46,12 +48,31 @@ class SevenZip implements ArchiveInterface {
   late final File sevenZipExecutable;
 
   SevenZip() {
-    if (Platform.isWindows) {
-      final assetsPath = getAssetsPath();
-      sevenZipExecutable = File("$assetsPath/windows/7zip/7z.exe").normalize;
-    } else {
-      sevenZipExecutable = File('7z');
-    }
+    final assetsPath = getAssetsPath();
+    sevenZipExecutable = switch (currentPlatform) {
+      TargetPlatform.windows =>
+        File("$assetsPath/windows/7zip/7z.exe").normalize,
+      TargetPlatform.linux => () {
+          final platform =
+              Process.runSync('uname', ['-m']).stdout.toString().trim();
+          final executable = switch (platform) {
+            "x86_64" => assetsPath.toDirectory().resolve("linux/7zip/x64/7zzs"),
+            "aarch64" =>
+              assetsPath.toDirectory().resolve("linux/7zip/arm64/7zzs"),
+            _ => throw Exception("Not supported: $platform")
+          }
+              .toFile();
+
+          final chmodResult = Process.runSync('chmod', ['+x', executable.path]);
+          final success = chmodResult.stdout.toString().trim();
+          final failure = chmodResult.stderr.toString().trim();
+          Fimber.i(
+              "Making $executable executable result: success: $success, error: $failure");
+          return executable;
+        }(),
+      _ =>
+        File('7z') // Consider throwing an exception for unsupported platforms
+    };
   }
 
   SevenZip.fromPath(this.sevenZipExecutable);

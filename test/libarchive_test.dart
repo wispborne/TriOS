@@ -26,13 +26,15 @@ void main() {
     }
   });
 
-  test("LibArchive write test", () async {
+  test("LibArchive extraction test", () async {
     configureLogging();
 
+    final time = DateTime.now();
     final libArchive = LibArchive.fromPath(assetsPath);
-    var archivePath = "F:/Downloads/MoreMilitaryMissions-0.4.1.7z";
+    var archivePath = "F:/Downloads/OpenJDK-jdk_x64_windows_hotspot_24_26-ea.zip";
     final archiveEntries = await libArchive.extractEntriesInArchive(
         File(archivePath), "F:/Downloads/extractTest");
+    print("Time taken: ${DateTime.now().difference(time)}");
 
     print("Extracting archive file: $archivePath");
     for (var element in archiveEntries) {

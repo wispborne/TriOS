@@ -69,6 +69,7 @@ class Settings with SettingsMappable {
   final bool enableLauncherPrecheck;
   final ModUpdateBehavior modUpdateBehavior;
   final bool checkIfGameIsRunning;
+  final CompressionLib compressionLib;
 
   @Deprecated("Use getSentryUserId instead.")
   final String userId; // For Sentry
@@ -119,6 +120,7 @@ class Settings with SettingsMappable {
     this.enableLauncherPrecheck = true,
     this.modUpdateBehavior = ModUpdateBehavior.switchToNewVersionIfWasEnabled,
     this.checkIfGameIsRunning = true,
+    this.compressionLib = CompressionLib.sevenZip,
     this.userId = '',
     this.hasHiddenForumDarkModeTip,
     this.activeModProfileId,
@@ -144,3 +146,6 @@ enum DashboardGridModUpdateVisibility {
   hideMuted,
   hideAll,
 }
+
+@MappableEnum()
+enum CompressionLib { sevenZip, libarchive }

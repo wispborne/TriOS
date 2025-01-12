@@ -1,8 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:collection/collection.dart';
-import 'package:trios/libarchive/libarchive.dart';
+import 'package:trios/compression/archive.dart';
 import 'package:trios/utils/extensions.dart';
 
 /// Archive or folder that user installs mods from.
@@ -11,15 +10,17 @@ abstract class ModInstallSource {
 
   /// Lists all the file paths, which may or may not exist on disk.
   /// Return absolute paths.
-  List<String> listFilePaths();
+  Future<List<String>> listFilePaths(ArchiveInterface archive);
 
   /// Give paths, gets real files. For archives, extracts the files to a temp folder to read them first.
-  Future<List<SourcedFile>> getActualFiles(List<String> filePaths);
+  Future<List<SourcedFile>> getActualFiles(
+      List<String> filePaths, ArchiveInterface archive);
 
   /// Extracts or copies the files to the destination.
   /// [fileFilter] should be given absolute paths.
   Future<List<SourcedFile>> createFilesAtDestination(
-    String destinationPath, {
+    String destinationPath,
+    ArchiveInterface archive, {
     bool Function(String path)? fileFilter,
     String Function(String path)? pathTransform,
     bool Function(Object ex, StackTrace st)? onError,
@@ -29,7 +30,6 @@ abstract class ModInstallSource {
 /// Archive that user installs mods from.
 class ArchiveModInstallSource extends ModInstallSource {
   final File _archive;
-  final _libArchive = LibArchive();
 
   ArchiveModInstallSource(this._archive);
 
@@ -37,53 +37,53 @@ class ArchiveModInstallSource extends ModInstallSource {
   FileSystemEntity get entity => _archive;
 
   @override
-  List<String> listFilePaths() {
-    return _libArchive
-        .listEntriesInArchive(_archive)
-        .map((entry) => entry.pathName)
+  Future<List<String>> listFilePaths(ArchiveInterface archive) async {
+    return (await archive.listFiles(_archive))
+        .map((entry) => entry.path)
         .toList();
   }
 
   @override
-  Future<List<SourcedFile>> getActualFiles(List<String> filePaths) async {
+  Future<List<SourcedFile>> getActualFiles(
+      List<String> filePaths, ArchiveInterface archive) async {
     // Extract specified files to a temporary folder.
     final tempFolder = await Directory.systemTemp.createTemp();
 
-    final extractedFiles = await _libArchive.extractEntriesInArchive(
+    final extractedFiles = await archive.extractEntriesInArchive(
       _archive,
       tempFolder.path,
-      fileFilter: (entry) => filePaths.contains(entry.file.path),
+      fileFilter: (entry) => filePaths.contains(entry.path),
     );
 
     return extractedFiles.nonNulls.map((extracted) {
       return SourcedFile(
-        extracted.archiveFile.file.toFile(),
+        extracted.archiveFile.path.toFile(),
         extracted.extractedFile,
-        extracted.archiveFile.pathName,
+        extracted.archiveFile.path,
       );
     }).toList();
   }
 
   @override
   Future<List<SourcedFile>> createFilesAtDestination(
-    String destinationPath, {
+    String destinationPath,
+    archive, {
     bool Function(String path)? fileFilter,
     String Function(String path)? pathTransform,
     bool Function(Object ex, StackTrace st)? onError,
   }) async {
-    return (await _libArchive.extractEntriesInArchive(_archive, destinationPath,
-            fileFilter: fileFilter != null
-                ? (entry) => fileFilter(entry.file.path)
-                : null,
+    return (await archive.extractEntriesInArchive(_archive, destinationPath,
+            fileFilter:
+                fileFilter != null ? (entry) => fileFilter(entry.path) : null,
             pathTransform: pathTransform != null
-                ? (entry) => pathTransform(entry.file.path)
+                ? (entry) => pathTransform(entry.path)
                 : null,
             onError: onError))
         .nonNulls
         .map((it) => SourcedFile(
-              it.archiveFile.file.toFile(),
+              it.archiveFile.path.toFile(),
               it.extractedFile,
-              it.archiveFile.pathName,
+              it.archiveFile.path,
             ))
         .toList();
   }
@@ -99,7 +99,7 @@ class DirectoryModInstallSource extends ModInstallSource {
   FileSystemEntity get entity => _directory;
 
   @override
-  List<String> listFilePaths() {
+  Future<List<String>> listFilePaths(ArchiveInterface archive) async {
     return _directory
         .listSync(recursive: true)
         .whereType<File>()
@@ -109,7 +109,8 @@ class DirectoryModInstallSource extends ModInstallSource {
   }
 
   @override
-  Future<List<SourcedFile>> getActualFiles(List<String> filePaths) async {
+  Future<List<SourcedFile>> getActualFiles(
+      List<String> filePaths, ArchiveInterface archive) async {
     List<SourcedFile> sourcedFiles = [];
     for (String path in filePaths) {
       File file = path.toFile();
@@ -126,7 +127,8 @@ class DirectoryModInstallSource extends ModInstallSource {
 
   @override
   Future<List<SourcedFile>> createFilesAtDestination(
-    String destinationPath, {
+    String destinationPath,
+    ArchiveInterface archive, {
     bool Function(String path)? fileFilter,
     String Function(String path)? pathTransform,
     bool Function(Object ex, StackTrace st)? onError,

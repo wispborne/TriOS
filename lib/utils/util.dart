@@ -9,7 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
-import 'package:trios/libarchive/libarchive.dart';
+import 'package:trios/compression/archive.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/platform_paths.dart';
@@ -110,16 +110,16 @@ File getVanillaRulesCsvInGameFiles(Directory gameFiles) {
   return File(getRulesCsvInModFolder(gameFiles)!.absolute.path);
 }
 
-Future<String?> getStarsectorVersionFromObf(Directory gameCorePath) async {
-  final libarchive = LibArchive();
-
-  final obfPath = p.join(gameCorePath.path, "starfarer_obf.jar").toFile();
+Future<String?> getStarsectorVersionFromObf(
+    Directory gameCorePath, ArchiveInterface archive) async {
+  final starsectorObfJar = "starfarer_obf.jar";
+  final obfPath = p.join(gameCorePath.path, starsectorObfJar).toFile();
   if (!obfPath.existsSync()) {
     throw Exception("${obfPath.path} not found.");
   }
 
-  final extractedVersionFile = (await libarchive.readEntriesInArchive(obfPath,
-          fileFilter: (entry) => entry.file.path.contains("Version.class")))
+  final extractedVersionFile = (await archive.readEntriesInArchive(obfPath,
+          fileFilter: (entry) => entry.path.contains("Version.class")))
       .firstOrNull;
   if (extractedVersionFile == null) {
     return null;
@@ -139,7 +139,10 @@ Future<String?> getStarsectorVersionFromObf(Directory gameCorePath) async {
       if (versionStart != -1) {
         final versionEnd =
             utf8String.indexOf(RegExp(r'[^a-zA-Z0-9.-]'), versionStart);
-        return utf8String.substring(versionStart, versionEnd);
+        final gameVersion =
+            utf8String.substring(versionStart, versionEnd).trim();
+        Fimber.i("Found game version in obs: $gameVersion");
+        return gameVersion;
       }
     }
   }

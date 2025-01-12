@@ -5,12 +5,13 @@ import 'package:collection/collection.dart';
 import 'package:ffi/ffi.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
-import 'package:trios/libarchive/libarchive_bindings.dart';
+import 'package:trios/compression/archive.dart';
+import 'package:trios/compression/libarchive/libarchive_bindings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/util.dart';
 
-class LibArchiveEntry {
+class LibArchiveEntry implements ArchiveEntry {
   final String pathName;
   final int unpackedSize;
   final int modifiedTime;
@@ -47,21 +48,31 @@ class LibArchiveEntry {
       ? Directory(pathName)
       : File(pathName);
 
+  @override
+  String get path => pathName;
   late bool isDirectory = fileType == AE_IFDIR;
 }
 
-typedef LibArchiveExtractedFile = ({
-  LibArchiveEntry archiveFile,
-  File extractedFile
-});
+class LibArchiveExtractedFile implements ArchiveExtractedFile<LibArchiveEntry> {
+  @override
+  final LibArchiveEntry archiveFile;
+  @override
+  final File extractedFile;
 
-typedef LibArchiveReadFile = ({
-  LibArchiveEntry archiveFile,
-  Uint8List extractedContent
-});
+  LibArchiveExtractedFile(this.archiveFile, this.extractedFile);
+}
+
+class LibArchiveReadFile implements ArchiveReadFile<LibArchiveEntry> {
+  @override
+  final LibArchiveEntry archiveFile;
+  @override
+  final Uint8List extractedContent;
+
+  LibArchiveReadFile(this.archiveFile, this.extractedContent);
+}
 
 /// Not thread-safe.
-class LibArchive {
+class LibArchive implements ArchiveInterface {
   static late final LibArchiveBinding binding;
 
   LibArchive() {
@@ -303,7 +314,7 @@ class LibArchive {
           "$outputPath");
     }
 
-    return (archiveFile: entry, extractedFile: File(outputPath));
+    return LibArchiveExtractedFile(entry, File(outputPath));
   }
 
   LibArchiveEntry _getEntryInArchive(
@@ -423,9 +434,9 @@ class LibArchive {
           // Read data into memory
           final extractedContent = _readData(archivePtr);
 
-          extractedFiles.add((
-            archiveFile: entry,
-            extractedContent: extractedContent,
+          extractedFiles.add(LibArchiveReadFile(
+            entry,
+            extractedContent,
           ));
         } catch (e, st) {
           // Handle errors
@@ -509,6 +520,26 @@ class LibArchive {
       -30 => "ARCHIVE_FATAL",
       _ => "Unknown error code $errorCode"
     };
+  }
+
+  @override
+  Future<void> extractAll(File archiveFile, Directory destination) {
+    return extractEntriesInArchive(archiveFile, destination.path);
+  }
+
+  @override
+  Future<void> extractSome(
+      File archiveFile, Directory destination, List<String> inArchivePaths) {
+    return extractEntriesInArchive(archiveFile, destination.path,
+        fileFilter: (entry) => inArchivePaths.contains(entry.path));
+  }
+
+  @override
+  Future<List<LibArchiveEntry>> listFiles(File archiveFile) {
+    return readEntriesInArchive(archiveFile).then((entries) => entries
+        .map((e) => e?.archiveFile)
+        .whereType<LibArchiveEntry>()
+        .toList());
   }
 }
 

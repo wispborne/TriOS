@@ -8,7 +8,7 @@ import 'package:open_filex/open_filex.dart';
 import 'package:path/path.dart' as p;
 import 'package:pub_semver/pub_semver.dart';
 import 'package:stringr/stringr.dart';
-import 'package:trios/libarchive/libarchive.dart';
+import 'package:trios/compression/libarchive/libarchive.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings.dart';

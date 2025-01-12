@@ -156,6 +156,52 @@ extension DashboardGridModUpdateVisibilityMapperExtension
   }
 }
 
+class CompressionLibMapper extends EnumMapper<CompressionLib> {
+  CompressionLibMapper._();
+
+  static CompressionLibMapper? _instance;
+  static CompressionLibMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(_instance = CompressionLibMapper._());
+    }
+    return _instance!;
+  }
+
+  static CompressionLib fromValue(dynamic value) {
+    ensureInitialized();
+    return MapperContainer.globals.fromValue(value);
+  }
+
+  @override
+  CompressionLib decode(dynamic value) {
+    switch (value) {
+      case 'sevenZip':
+        return CompressionLib.sevenZip;
+      case 'libarchive':
+        return CompressionLib.libarchive;
+      default:
+        throw MapperException.unknownEnumValue(value);
+    }
+  }
+
+  @override
+  dynamic encode(CompressionLib self) {
+    switch (self) {
+      case CompressionLib.sevenZip:
+        return 'sevenZip';
+      case CompressionLib.libarchive:
+        return 'libarchive';
+    }
+  }
+}
+
+extension CompressionLibMapperExtension on CompressionLib {
+  String toValue() {
+    CompressionLibMapper.ensureInitialized();
+    return MapperContainer.globals.toValue<CompressionLib>(this) as String;
+  }
+}
+
 class SettingsMapper extends ClassMapperBase<Settings> {
   SettingsMapper._();
 
@@ -170,6 +216,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       ModsGridStateMapper.ensureInitialized();
       FolderNamingSettingMapper.ensureInitialized();
       ModUpdateBehaviorMapper.ensureInitialized();
+      CompressionLibMapper.ensureInitialized();
     }
     return _instance!;
   }
@@ -323,6 +370,10 @@ class SettingsMapper extends ClassMapperBase<Settings> {
   static const Field<Settings, bool> _f$checkIfGameIsRunning = Field(
       'checkIfGameIsRunning', _$checkIfGameIsRunning,
       opt: true, def: true);
+  static CompressionLib _$compressionLib(Settings v) => v.compressionLib;
+  static const Field<Settings, CompressionLib> _f$compressionLib = Field(
+      'compressionLib', _$compressionLib,
+      opt: true, def: CompressionLib.sevenZip);
   static String _$userId(Settings v) => v.userId;
   static const Field<Settings, String> _f$userId =
       Field('userId', _$userId, opt: true, def: '');
@@ -374,6 +425,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #enableLauncherPrecheck: _f$enableLauncherPrecheck,
     #modUpdateBehavior: _f$modUpdateBehavior,
     #checkIfGameIsRunning: _f$checkIfGameIsRunning,
+    #compressionLib: _f$compressionLib,
     #userId: _f$userId,
     #hasHiddenForumDarkModeTip: _f$hasHiddenForumDarkModeTip,
     #activeModProfileId: _f$activeModProfileId,
@@ -421,6 +473,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
         enableLauncherPrecheck: data.dec(_f$enableLauncherPrecheck),
         modUpdateBehavior: data.dec(_f$modUpdateBehavior),
         checkIfGameIsRunning: data.dec(_f$checkIfGameIsRunning),
+        compressionLib: data.dec(_f$compressionLib),
         userId: data.dec(_f$userId),
         hasHiddenForumDarkModeTip: data.dec(_f$hasHiddenForumDarkModeTip),
         activeModProfileId: data.dec(_f$activeModProfileId));
@@ -516,6 +569,7 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
       bool? enableLauncherPrecheck,
       ModUpdateBehavior? modUpdateBehavior,
       bool? checkIfGameIsRunning,
+      CompressionLib? compressionLib,
       String? userId,
       bool? hasHiddenForumDarkModeTip,
       String? activeModProfileId});
@@ -580,6 +634,7 @@ class _SettingsCopyWithImpl<$R, $Out>
           bool? enableLauncherPrecheck,
           ModUpdateBehavior? modUpdateBehavior,
           bool? checkIfGameIsRunning,
+          CompressionLib? compressionLib,
           String? userId,
           Object? hasHiddenForumDarkModeTip = $none,
           Object? activeModProfileId = $none}) =>
@@ -639,6 +694,7 @@ class _SettingsCopyWithImpl<$R, $Out>
         if (modUpdateBehavior != null) #modUpdateBehavior: modUpdateBehavior,
         if (checkIfGameIsRunning != null)
           #checkIfGameIsRunning: checkIfGameIsRunning,
+        if (compressionLib != null) #compressionLib: compressionLib,
         if (userId != null) #userId: userId,
         if (hasHiddenForumDarkModeTip != $none)
           #hasHiddenForumDarkModeTip: hasHiddenForumDarkModeTip,
@@ -703,6 +759,7 @@ class _SettingsCopyWithImpl<$R, $Out>
       enableLauncherPrecheck: data.get(#enableLauncherPrecheck, or: $value.enableLauncherPrecheck),
       modUpdateBehavior: data.get(#modUpdateBehavior, or: $value.modUpdateBehavior),
       checkIfGameIsRunning: data.get(#checkIfGameIsRunning, or: $value.checkIfGameIsRunning),
+      compressionLib: data.get(#compressionLib, or: $value.compressionLib),
       userId: data.get(#userId, or: $value.userId),
       hasHiddenForumDarkModeTip: data.get(#hasHiddenForumDarkModeTip, or: $value.hasHiddenForumDarkModeTip),
       activeModProfileId: data.get(#activeModProfileId, or: $value.activeModProfileId));

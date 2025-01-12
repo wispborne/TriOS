@@ -5,7 +5,8 @@ import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:toastification/toastification.dart';
-import 'package:trios/libarchive/libarchive.dart';
+import 'package:trios/compression/archive.dart';
+import 'package:trios/compression/libarchive/libarchive.dart';
 import 'package:trios/mod_profiles/mod_profiles_manager.dart';
 import 'package:trios/models/download_progress.dart';
 import 'package:trios/onboarding/onboarding_page.dart';
@@ -302,7 +303,7 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
             icon: const Icon(Icons.developer_mode),
             onPressed: () {
               getStarsectorVersionFromObf(
-                      ref.watch(appSettings.select((s) => s.gameCoreDir))!)
+                      ref.watch(appSettings.select((s) => s.gameCoreDir))!, ref.read(archiveProvider).value!)
                   .then((value) {
                 showSnackBar(
                   context: ref.read(AppState.appContext)!,
@@ -339,9 +340,12 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
               child: ElevatedButton.icon(
                 icon: const Icon(Icons.folder_zip),
                 onPressed: () async {
+                  final time = DateTime.now();
                   final entries =
-                      LibArchive().listEntriesInArchive(path.toFile());
-                  Fimber.i("Entries: ${entries.join('\n')}");
+                      await ref.read(archiveProvider).requireValue.listFiles(path.toFile());
+                  final timeToRead = time.difference(DateTime.now());
+                  Fimber.i("Entries: ${(entries).join('\n')}"
+                      "\nTime to read archive: $timeToRead");
                 },
                 label: const Text('Read Starsector installer'),
               ),

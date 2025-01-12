@@ -18,7 +18,6 @@ import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/navigation.dart';
 import 'package:trios/trios/self_updater/self_updater.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
-import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/trios/settings/settings_page.dart';
 import 'package:trios/trios/toasts/toast_manager.dart';
 import 'package:trios/utils/extensions.dart';
@@ -35,7 +34,6 @@ import 'package:trios/widgets/self_update_toast.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:trios/widgets/tab_button.dart';
 import 'package:trios/widgets/trios_app_icon.dart';
-import 'package:url_launcher/url_launcher_string.dart';
 
 import 'about/about_page.dart';
 import 'jre_manager/jre_manager_logic.dart';
@@ -483,7 +481,9 @@ class _AppShellState extends ConsumerState<AppShell>
                                 "assets/images/icon-bullhorn-variant.svg"),
                             color: Theme.of(context).iconTheme.color,
                             onPressed: () => showTriOSChangelogDialog(context,
-                                lastestVersionToShow: Version.parse(Constants.version, sanitizeInput: false)),
+                                lastestVersionToShow: Version.parse(
+                                    Constants.version,
+                                    sanitizeInput: false)),
                           ),
                         ),
                         MovingTooltipWidget.text(

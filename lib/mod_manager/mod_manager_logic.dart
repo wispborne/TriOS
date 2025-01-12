@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:path/path.dart' as p;
+import 'package:trios/compression/archive.dart';
 import 'package:trios/mod_manager/mod_install_source.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_manager/version_checker.dart';
@@ -414,8 +415,9 @@ class ModManagerNotifier extends AsyncNotifier<void> {
       throw Exception("File does not exist: ${modInstallSource.entity.path}");
     }
     final results = <InstallModResult>[];
+    final archive = ref.read(archiveProvider).requireValue;
 
-    final archiveFileList = modInstallSource.listFilePaths();
+    final archiveFileList = await modInstallSource.listFilePaths(archive);
     final modInfoFiles = archiveFileList
         .filter((it) =>
             it.containsIgnoreCase(Constants.modInfoFileName) &&
@@ -436,6 +438,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
 
     final extractedModInfos = await modInstallSource.getActualFiles(
       modInfoFiles,
+      archive,
     );
 
     final List<ExtractedModInfo> modInfos =
@@ -700,9 +703,11 @@ class ModManagerNotifier extends AsyncNotifier<void> {
       }
 
       final errors = <(Object err, StackTrace st)>[];
+      final archive = ref.read(archiveProvider).requireValue;
 
       final extractedMod = await modInstallSource.createFilesAtDestination(
         destinationFolder.path,
+        archive,
         fileFilter: (entry) => p.isWithin(modInfoParentFolder.path, entry),
         pathTransform: (entry) => p.join(
           targetModFolderName,

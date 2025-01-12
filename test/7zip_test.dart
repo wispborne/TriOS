@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:trios/bit7z/seven_zip_cli.dart';
+import 'package:trios/compression/seven_zip/seven_zip.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 
@@ -15,7 +15,7 @@ void main() {
     configureLogging();
     final time = DateTime.now();
 
-    final sevenZ = SevenZipCLI.fromPath(sevenZipPath);
+    final sevenZ = SevenZip.fromPath(sevenZipPath);
     var archivePath = "F:/Downloads/Combat-Activators-v1.1.3.zip".toFile();
     final archiveEntries = await sevenZ.listFiles(archivePath);
     print("Time taken: ${DateTime.now().difference(time)}");
@@ -28,7 +28,7 @@ void main() {
 
   test("7zip read game test", () async {
     configureLogging();
-    final sevenZ = SevenZipCLI();
+    final sevenZ = SevenZip();
     var archivePath = "F:/Downloads/starsector_install-0.97a-RC11.exe".toFile();
     final archiveEntries = await sevenZ.listFiles(archivePath);
 
@@ -41,7 +41,7 @@ void main() {
 
   test("7zip write test", () async {
     configureLogging();
-    final sevenZ = SevenZipCLI();
+    final sevenZ = SevenZip();
     var archivePath = "F:/Downloads/MoreMilitaryMissions-0.4.1.7z";
     final archiveEntries = await sevenZ.extractAll(
         archivePath.toFile(), "F:/Downloads/extractTest".toDirectory());

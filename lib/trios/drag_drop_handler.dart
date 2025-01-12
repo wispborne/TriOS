@@ -6,11 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:super_clipboard/src/reader.dart';
 import 'package:super_drag_and_drop/super_drag_and_drop.dart';
-import 'package:trios/bit7z/seven_zip_cli.dart';
 import 'package:trios/chipper/chipper_state.dart';
 import 'package:trios/mod_manager/mod_install_source.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
-import 'package:trios/thirdparty/dartx/io/file_system_entity.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/download_manager/download_manager.dart';
 import 'package:trios/utils/extensions.dart';
@@ -136,22 +134,6 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
               });
             }
           }
-        } else if (files.length == 1 &&
-            Platform.isWindows &&
-            files.first.isFile() &&
-            files.first.name.endsWith(".exe") &&
-            files.first.name.containsIgnoreCase("starsector")) {
-          // Handle dropped Starsector installer
-          setState(() {
-            _inProgress = true;
-          });
-          try {
-            _handleDroppedStarsectorInstaller(files.first.toFile());
-          } finally {
-            setState(() {
-              _inProgress = false;
-            });
-          }
         } else {
           final firstFile = files.first;
           handleDroppedLogFile(firstFile.path).then((content) {
@@ -275,7 +257,8 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
                                                       constraints:
                                                           const BoxConstraints(
                                                               minWidth: 400),
-                                                      child: DragDropInstallModOverlay(
+                                                      child:
+                                                          DragDropInstallModOverlay(
                                                         entities: future.data
                                                             .orEmpty()
                                                             .nonNulls
@@ -357,13 +340,6 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
     }
 
     return supportedItems;
-  }
-
-  void _handleDroppedStarsectorInstaller(File installerPath) async {
-    final sevenZip = SevenZipCLI();
-    final files = await sevenZip.listFiles(installerPath);
-
-    Fimber.i("Files in installer: ${files.join('\n')}");
   }
 }
 

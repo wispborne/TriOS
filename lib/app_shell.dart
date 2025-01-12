@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:jovial_svg/jovial_svg.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:toastification/toastification.dart';
 import 'package:trios/chipper/chipper_home.dart';
@@ -268,9 +269,13 @@ class _AppShellState extends ConsumerState<AppShell>
                         text: "Mods",
                         icon: Transform.rotate(
                             angle: 0.7,
-                            child: const SvgImageIcon(
-                              "assets/images/icon-onslaught.svg",
+                            child: SizedBox(
                               height: 23,
+                              width: 23,
+                              child: ScalableImageWidget.fromSISource(
+                                si: ScalableImageSource.fromSI(DefaultAssetBundle.of(context), "assets/images/icon-onslaught.si", currentColor: Colors.red),
+                                // height: 23,
+                              ),
                             )),
                         isSelected: _currentPage == TriOSTools.modManager,
                         onPressed: () => _changeTab(TriOSTools.modManager),

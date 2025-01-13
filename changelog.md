@@ -1,6 +1,8 @@
 # 1.1.0
 - Fixed
   - Searching on the Mods tab also filtered the Dashboard mods.
+  - Mods tab performance improvement.
+    - VRAM estimate was recalculated from cached data each time it was displayed. The sum is now cached.
 - Changed
   - 7zip is now the default compression library, rather than libarchive.
     - MacOS users won't need to install compression libraries manually anymore.

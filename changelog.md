@@ -3,7 +3,7 @@
   - Searching on the Mods tab also filtered the Dashboard mods.
 - Changed
   - 7zip is now the default compression library, rather than libarchive.
-    - MacOS (not supported in dev01) users won't need to install compression libraries manually anymore.
+    - MacOS users won't need to install compression libraries manually anymore.
     - Weird Linux users (like those on Debian 12) will be able to use it (the build of libarchive in TriOS didn't support it).
     - There is an option to use libarchive if you want to, in Settings. If you need it, let me know, otherwise it'll be removed (a large amount of TriOS's filesize is libarchive).
 

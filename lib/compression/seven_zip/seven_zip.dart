@@ -70,6 +70,18 @@ class SevenZip implements ArchiveInterface {
               "Making $executable executable result: success: $success, error: $failure");
           return executable;
         }(),
+      TargetPlatform.macOS => () {
+          final executable = assetsPath
+              .toDirectory()
+              .resolve("macos/7zip/7zz")
+              .toFile();
+          final chmodResult = Process.runSync('chmod', ['+x', executable.path]);
+          final success = chmodResult.stdout.toString().trim();
+          final failure = chmodResult.stderr.toString().trim();
+          Fimber.i(
+              "Making $executable executable result: success: $success, error: $failure");
+          return executable;
+        }(),
       _ =>
         File('7z') // Consider throwing an exception for unsupported platforms
     };

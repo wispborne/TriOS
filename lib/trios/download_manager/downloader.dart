@@ -41,7 +41,7 @@ class DownloadManager {
     return _instance!;
   }
 
-  void Function(int, int) createCallback(url, int partialFileLength) =>
+  void Function(int, int) createDownloadProgressCallback(url, int partialFileLength) =>
       (int received, int total) {
         final download = DownloadedAmount(
             received + partialFileLength, total + partialFileLength);
@@ -57,9 +57,10 @@ class DownloadManager {
     late String partialFilePath;
     late File partialFile;
     final TriOSHttpClient httpClient = ref.watch(triOSHttpClient);
+    final originalUrl = url;
 
     try {
-      var task = getDownload(url);
+      var task = getDownload(originalUrl);
 
       if (task == null || task.status.value == DownloadStatus.canceled) {
         return;
@@ -115,7 +116,7 @@ class DownloadManager {
         final response = await httpClient.get(
           url,
           headers: {HttpHeaders.rangeHeader: 'bytes=$partialFileLength-'},
-          onProgress: createCallback(url, partialFileLength),
+          onProgress: createDownloadProgressCallback(originalUrl, partialFileLength),
         );
 
         if (response.statusCode == HttpStatus.partialContent ||
@@ -133,7 +134,7 @@ class DownloadManager {
       } else {
         final response = await httpClient.get(
           url,
-          onProgress: createCallback(url, 0),
+          onProgress: createDownloadProgressCallback(originalUrl, 0),
         );
         final responseData = getResponseBodyAsBytes(response.data);
 
@@ -146,7 +147,7 @@ class DownloadManager {
         }
       }
     } catch (e) {
-      final task = getDownload(url)!;
+      final task = getDownload(originalUrl)!;
       if (task.status.value != DownloadStatus.canceled &&
           task.status.value != DownloadStatus.paused) {
         task.error = e;

@@ -1,4 +1,6 @@
 # 1.1.0
+- Fixed
+  - Searching on the Mods tab also filtered the Dashboard mods.
 - Changed
   - 7zip is now the default compression library, rather than libarchive.
     - MacOS (not supported in dev01) users won't need to install compression libraries manually anymore.

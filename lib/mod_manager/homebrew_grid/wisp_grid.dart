@@ -53,8 +53,7 @@ class _WispGridState extends ConsumerState<WispGrid> {
     final vramEstState = ref.watch(AppState.vramEstimatorProvider);
 
     final gridState = ref.watch(appSettings.select((s) => s.modsGridState));
-    final groupingSetting =
-        GroupingSetting(grouping: ModGridGroupEnum.enabledState);
+    final groupingSetting = gridState.groupingSetting;
 
     final grouping =
         groupingSetting.grouping.mapToGroup(); // TODO (SL.modMetadata)

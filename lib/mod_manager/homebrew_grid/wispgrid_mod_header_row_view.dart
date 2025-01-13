@@ -3,14 +3,13 @@ import 'dart:math';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:trios/mod_manager/homebrew_grid/vram_checker_explanation.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
 import 'package:trios/thirdparty/dartx/map.dart';
+import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
-import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/widgets/MultiSplitViewMixin.dart';
 import 'package:trios/widgets/hoverable_widget.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
@@ -126,7 +125,6 @@ class _WispGridModHeaderRowViewState
                           gridState.sortedVisibleColumns.length - 1));
 
                   return Builder(builder: (context) {
-
                     final header = columnSetting.key;
                     final state = columnSetting.value;
                     final headerTextStyle = Theme.of(context)
@@ -266,6 +264,7 @@ class _WispGridModHeaderRowViewState
   }
 
   ContextMenu buildHeaderContextMenu(WispGridState gridState) {
+    final groupingSetting = gridState.groupingSetting;
     return ContextMenu(
       entries: [
         MenuItem(
@@ -276,7 +275,60 @@ class _WispGridModHeaderRowViewState
                   .read(appSettings.notifier)
                   .update((s) => s.copyWith(modsGridState: WispGridState()));
             }),
+        MenuItem.submenu(
+            label: "Group By",
+            icon: Icons.horizontal_split,
+            items: [
+              MenuItem(
+                label: "Enabled",
+                icon: groupingSetting.grouping == ModGridGroupEnum.enabledState
+                    ? Icons.check
+                    : null,
+                onSelected: () {
+                  ref.read(appSettings.notifier).update((s) => s.copyWith(
+                      modsGridState: s.modsGridState.copyWith(
+                          groupingSetting: GroupingSetting(
+                              grouping: ModGridGroupEnum.enabledState))));
+                },
+              ),
+              MenuItem(
+                label: "Mod Type",
+                icon: groupingSetting.grouping == ModGridGroupEnum.modType
+                    ? Icons.check
+                    : null,
+                onSelected: () {
+                  ref.read(appSettings.notifier).update((s) => s.copyWith(
+                      modsGridState: s.modsGridState.copyWith(
+                          groupingSetting: GroupingSetting(
+                              grouping: ModGridGroupEnum.modType))));
+                },
+              ),
+              MenuItem(
+                  label: "Game Version",
+                  icon: groupingSetting.grouping == ModGridGroupEnum.gameVersion
+                      ? Icons.check
+                      : null,
+                  onSelected: () {
+                    ref.read(appSettings.notifier).update((s) => s.copyWith(
+                        modsGridState: s.modsGridState.copyWith(
+                            groupingSetting: GroupingSetting(
+                                grouping: ModGridGroupEnum.gameVersion))));
+                  }),
+              MenuItem(
+                label: "Author",
+                icon: groupingSetting.grouping == ModGridGroupEnum.author
+                    ? Icons.check
+                    : null,
+                onSelected: () {
+                  ref.read(appSettings.notifier).update((s) => s.copyWith(
+                      modsGridState: s.modsGridState.copyWith(
+                          groupingSetting: GroupingSetting(
+                              grouping: ModGridGroupEnum.author))));
+                },
+              ),
+            ]),
         MenuDivider(),
+        MenuHeader(text: "Hide/Show Columns", disableUppercase: true),
         // Visibility toggles
         ...gridState.columnSettings.entries.map((columnSetting) {
           final header = columnSetting.key;

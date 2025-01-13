@@ -100,7 +100,9 @@ class _WispGridModRowState extends ConsumerState<WispGridModGroupRowView> {
                     ),
                   ),
                   SizedBox(width: 4),
-                  Text("${groupName ?? ""} (${modsInGroup.length})",
+                  Text("${groupName.trim()} (${modsInGroup.length})",
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             fontFamily: ThemeManager.orbitron,
                             fontWeight: FontWeight.bold,

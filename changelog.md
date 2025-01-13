@@ -1,4 +1,6 @@
 # 1.1.0
+- Added
+  - Mods tab: May now group by Enabled (default), Mod Type, Game Version, and Author.
 - Fixed
   - Searching on the Mods tab also filtered the Dashboard mods.
   - Mods tab performance improvement.

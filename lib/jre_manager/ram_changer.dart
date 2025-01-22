@@ -19,7 +19,16 @@ class RamChanger extends ConsumerStatefulWidget {
 class _RamChangerState extends ConsumerState<RamChanger> {
   bool isStandardVmparamsWritable = false;
   bool areAllCustomJresWritable = false;
-  List<String> vmParamsFilesThatCannotBeWritten = [];
+  final List<String> vmParamsFilesThatCannotBeWritten = [];
+
+  @override
+  void initState() {
+    super.initState();
+    final jreManager = ref.read(jreManagerProvider).valueOrNull;
+    if (jreManager != null) {
+      setWhetherVmParamsAreWritable(jreManager);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,10 +37,6 @@ class _RamChangerState extends ConsumerState<RamChanger> {
         ref.read(appSettings.select((value) => value.gameDir))?.toDirectory();
     if (gamePath == null) {
       return const SizedBox();
-    }
-    final jreManager = ref.watch(jreManagerProvider).valueOrNull;
-    if (jreManager != null) {
-      setWhetherVmParamsAreWritable(jreManager);
     }
 
     ref.listen(jreManagerProvider, (prev, next) async {
@@ -46,7 +51,7 @@ class _RamChangerState extends ConsumerState<RamChanger> {
             areAllCustomJresWritable == false)
         ? Text(
             "Cannot write to vmparams file:\n${vmParamsFilesThatCannotBeWritten.join("\n")}."
-            "\n\nTry running ${Constants.appName} as an administrator.",
+            "\n\nMake sure it exists or try running ${Constants.appName} as an administrator.",
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: ThemeManager.vanillaWarningColor,
                 ),

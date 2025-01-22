@@ -24,6 +24,7 @@ import 'package:trios/widgets/post_update_toast.dart';
 import 'package:trios/widgets/restartable_app.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:window_size/window_size.dart';
+import 'package:windows_single_instance/windows_single_instance.dart';
 
 import 'app_shell.dart';
 import 'trios/app_state.dart';
@@ -33,12 +34,22 @@ StateProvider<WebViewEnvironment?> webViewEnvironment =
     StateProvider<WebViewEnvironment?>((ref) => null);
 List<Future<void> Function(BuildContext)> onAppLoadedActions = [];
 
-void main() async {
+void main(List<String> args) async {
   try {
     WidgetsFlutterBinding.ensureInitialized();
   } catch (e) {
     print("Error initializing Flutter widgets.");
   }
+
+  // Windows: If another instance is already running, bring it to the foreground instead of opening a new instance.
+  // (allow one debug + one release to be able to compare)
+    await WindowsSingleInstance.ensureSingleInstance(
+        args,
+        "wisp_trios${kDebugMode ? "_dev" : ""}",
+        onSecondWindow: (args) {
+          print(args);
+        });
+
   Constants.configDataFolderPath = await getApplicationSupportDirectory();
   try {
     print("Initializing TriOS logging framework...");

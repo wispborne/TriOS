@@ -5,9 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:styled_text/styled_text.dart';
 import 'package:trios/jre_manager/ram_changer.dart';
+import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
-import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/conditional_wrap.dart';
 import 'package:trios/widgets/download_progress_indicator.dart';
@@ -115,209 +115,237 @@ class _ChangeJreWidgetState extends ConsumerState<ChangeJreWidget> {
                   for (var jre in jres
                     ..sort(
                         (a, b) => a.versionString.compareTo(b.versionString)))
-                    MovingTooltipWidget.text(
-                      warningLevel: jre is JreToDownload
-                          ? TooltipWarningLevel.warning
-                          : null,
-                      message: jre is JreToDownload
-                          ? "Run ${Constants.appName} as an administrator if installation hangs after downloading."
-                          : jre == activeJre
-                              ? "Active"
-                              : null,
-                      child: ConditionalWrap(
-                        condition: jre != activeJre,
-                        wrapper: (child) => InkWell(
-                          onTap: () async {
-                            if (jre is JreToDownload) {
-                              // confirmation dialog
-                              showDialog(
-                                  context: context,
-                                  builder: (context) {
-                                    return AlertDialog(
-                                      title: const Text("Download JRE"),
-                                      content: Text(
-                                          "Are you sure you want to download Java ${jre.versionString}?"
-                                          "\n"
-                                          "If it fails, please try running ${Constants.appName} as an administrator and trying again."),
-                                      actions: [
-                                        TextButton(
-                                            onPressed: () {
-                                              Navigator.of(context).pop();
-                                            },
-                                            child: const Text("Cancel")),
-                                        TextButton(
-                                            onPressed: () async {
-                                              Navigator.of(context).pop();
-                                              await ref
-                                                  .read(jre.downloadProvider
-                                                      .notifier)
-                                                  .installCustomJre();
-                                              ref.invalidate(
-                                                  jreManagerProvider);
-                                            },
-                                            child: const Text("Download")),
-                                      ],
-                                    );
-                                  });
-                            } else if (jre is JreEntryInstalled) {
-                              if (!jre.isSupportedByTriOS) {
-                                showDialog(
-                                    context: context,
-                                    builder: (context) => const AlertDialog(
-                                        title: Text(
-                                            "Only JRE 8 and below supported"),
-                                        content: Text(
-                                            "JRE 9+ requires custom game changes.")));
-                              } else {
-                                setState(() {
-                                  isModifyingFiles = true;
-                                });
-                                await ref
-                                    .read(jreManagerProvider.notifier)
-                                    .changeActiveJre(jre);
-                                setState(() {
-                                  isModifyingFiles = false;
-                                });
-                              }
-                            }
-                          },
-                          mouseCursor: WidgetStateMouseCursor.clickable,
-                          child: child,
-                        ),
-                        child: Opacity(
-                          opacity: jre.isSupportedByTriOS ? 1 : 0.5,
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 16.0),
-                            child: Row(
-                              children: [
-                                jre == activeJre
-                                    ? Container(
-                                        width: iconSize,
-                                        height: iconSize,
-                                        decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .primary),
-                                        child: Icon(Icons.coffee,
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .onPrimary))
-                                    : SizedBox(
-                                        width: iconSize,
-                                        height: iconSize,
-                                        child: Icon(jre is JreEntryInstalled
-                                            ? Icons.coffee
-                                            : Icons.download)),
-                                Expanded(
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(
-                                        left: 16.0, bottom: 8, top: 8),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text.rich(TextSpan(children: [
-                                          WidgetSpan(
-                                              alignment:
-                                                  PlaceholderAlignment.middle,
-                                              child: Text(
-                                                  "Java ${jre.versionInt}",
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .titleMedium
-                                                      ?.copyWith(
-                                                          color: jre ==
-                                                                  activeJre
-                                                              ? Theme.of(
-                                                                      context)
-                                                                  .colorScheme
-                                                                  .primary
-                                                              : null))),
-                                          TextSpan(
-                                              text: "  (${jre.versionString})",
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .titleMedium
-                                                  ?.copyWith(
-                                                      fontWeight:
-                                                          FontWeight.normal)),
-                                        ])),
-                                        if (jre is JreEntryInstalled)
-                                          Opacity(
-                                              opacity: 0.8,
-                                              child: Text(
-                                                  "${jre.jreAbsolutePath.name}/",
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .bodySmall)),
-                                        if (jre is JreToDownload)
-                                          Builder(builder: (context) {
-                                            final downloadState = ref
-                                                .watch(jre.downloadProvider)
-                                                .valueOrNull;
-                                            return downloadState
-                                                        ?.downloadProgress ==
-                                                    null
-                                                ? Text("Click to download",
+                    Builder(builder: (context) {
+                      var missingFilesForJre = jre is JreEntryInstalled
+                          ? jre.missingFiles()
+                          : <String>[];
+
+                      return MovingTooltipWidget.text(
+                        warningLevel: jre is JreToDownload
+                            ? TooltipWarningLevel.warning
+                            : null,
+                        message: jre is JreToDownload
+                            ? "Run ${Constants.appName} as an administrator if installation hangs after downloading."
+                            : jre == activeJre
+                                ? "Active"
+                                : null,
+                        child: ConditionalWrap(
+                          condition: jre != activeJre,
+                          wrapper: (child) => missingFilesForJre.isNotEmpty
+                              ? child
+                              : InkWell(
+                                  onTap: () async {
+                                    if (jre is JreToDownload) {
+                                      // confirmation dialog
+                                      showDialog(
+                                          context: context,
+                                          builder: (context) {
+                                            return AlertDialog(
+                                              title: const Text("Download JRE"),
+                                              content: Text(
+                                                  "Are you sure you want to download Java ${jre.versionString}?"
+                                                  "\n"
+                                                  "If it fails, please try running ${Constants.appName} as an administrator and trying again."),
+                                              actions: [
+                                                TextButton(
+                                                    onPressed: () {
+                                                      Navigator.of(context)
+                                                          .pop();
+                                                    },
+                                                    child:
+                                                        const Text("Cancel")),
+                                                TextButton(
+                                                    onPressed: () async {
+                                                      Navigator.of(context)
+                                                          .pop();
+                                                      await ref
+                                                          .read(jre
+                                                              .downloadProvider
+                                                              .notifier)
+                                                          .installCustomJre();
+                                                      ref.invalidate(
+                                                          jreManagerProvider);
+                                                    },
+                                                    child:
+                                                        const Text("Download")),
+                                              ],
+                                            );
+                                          });
+                                    } else if (jre is JreEntryInstalled) {
+                                      if (!jre.isSupportedByTriOS) {
+                                        showDialog(
+                                            context: context,
+                                            builder: (context) => const AlertDialog(
+                                                title: Text(
+                                                    "Only JRE 8 and below supported"),
+                                                content: Text(
+                                                    "JRE 9+ requires custom game changes.")));
+                                      } else {
+                                        setState(() {
+                                          isModifyingFiles = true;
+                                        });
+                                        await ref
+                                            .read(jreManagerProvider.notifier)
+                                            .changeActiveJre(jre);
+                                        setState(() {
+                                          isModifyingFiles = false;
+                                        });
+                                      }
+                                    }
+                                  },
+                                  mouseCursor: WidgetStateMouseCursor.clickable,
+                                  child: child,
+                                ),
+                          child: Opacity(
+                            opacity: jre.isSupportedByTriOS ? 1 : 0.5,
+                            child: Padding(
+                              padding: const EdgeInsets.only(left: 16.0),
+                              child: Row(
+                                children: [
+                                  jre == activeJre
+                                      ? Container(
+                                          width: iconSize,
+                                          height: iconSize,
+                                          decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .primary),
+                                          child: Icon(Icons.coffee,
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .onPrimary))
+                                      : SizedBox(
+                                          width: iconSize,
+                                          height: iconSize,
+                                          child: Icon(jre is JreEntryInstalled
+                                              ? Icons.coffee
+                                              : Icons.download)),
+                                  Expanded(
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(
+                                          left: 16.0, bottom: 8, top: 8),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text.rich(TextSpan(children: [
+                                            WidgetSpan(
+                                                alignment:
+                                                    PlaceholderAlignment.middle,
+                                                child: Text(
+                                                    "Java ${jre.versionInt}",
                                                     style: Theme.of(context)
                                                         .textTheme
-                                                        .labelLarge
+                                                        .titleMedium
                                                         ?.copyWith(
-                                                          fontStyle:
-                                                              FontStyle.italic,
-                                                        ))
-                                                : TriOSDownloadProgressIndicator(
-                                                    value: downloadState
-                                                            ?.downloadProgress ??
-                                                        TriOSDownloadProgress(
-                                                            0, 1,
-                                                            isIndeterminate:
-                                                                false),
-                                                  );
-                                          }),
-                                      ],
+                                                            color: jre ==
+                                                                    activeJre
+                                                                ? Theme.of(
+                                                                        context)
+                                                                    .colorScheme
+                                                                    .primary
+                                                                : null))),
+                                            TextSpan(
+                                                text:
+                                                    "  (${jre.versionString})",
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .titleMedium
+                                                    ?.copyWith(
+                                                        fontWeight:
+                                                            FontWeight.normal)),
+                                          ])),
+                                          if (jre is JreEntryInstalled)
+                                            Opacity(
+                                                opacity: 0.8,
+                                                child: Text(
+                                                    "${jre.jreAbsolutePath.name}/",
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .bodySmall)),
+                                          if (jre is JreToDownload)
+                                            Builder(builder: (context) {
+                                              final downloadState = ref
+                                                  .watch(jre.downloadProvider)
+                                                  .valueOrNull;
+                                              return downloadState
+                                                          ?.downloadProgress ==
+                                                      null
+                                                  ? Text("Click to download",
+                                                      style: Theme.of(context)
+                                                          .textTheme
+                                                          .labelLarge
+                                                          ?.copyWith(
+                                                            fontStyle: FontStyle
+                                                                .italic,
+                                                          ))
+                                                  : TriOSDownloadProgressIndicator(
+                                                      value: downloadState
+                                                              ?.downloadProgress ??
+                                                          TriOSDownloadProgress(
+                                                              0, 1,
+                                                              isIndeterminate:
+                                                                  false),
+                                                    );
+                                            }),
+                                        ],
+                                      ),
                                     ),
                                   ),
-                                ),
-                                if (jre is CustomJreToDownload)
-                                  Builder(builder: (context) {
-                                    return MovingTooltipWidget.text(
-                                      message: "Download links",
-                                      child: IconButton(
-                                          icon: Icon(Icons.info_outline),
-                                          onPressed: () {
-                                            showDialog(
-                                                context: context,
-                                                builder: (context) {
-                                                  return AlertDialog(
-                                                      title: const Text(
-                                                          "Download Info"),
-                                                      content: Column(
-                                                          mainAxisSize:
-                                                              MainAxisSize.min,
-                                                          children: [
-                                                            Text(
-                                                                "JRE will be downloaded from:"),
-                                                            Linkify(
-                                                                text: jre
-                                                                    .versionCheckerUrl,
-                                                                onOpen: (link) {
-                                                                  OpenFilex
-                                                                      .open(link
-                                                                          .url);
-                                                                }),
-                                                          ]));
-                                                });
-                                          }),
-                                    );
-                                  })
-                              ],
+                                  if (jre is CustomJreToDownload)
+                                    Builder(builder: (context) {
+                                      return MovingTooltipWidget.text(
+                                        message: "Download links",
+                                        child: IconButton(
+                                            icon: Icon(Icons.info_outline),
+                                            onPressed: () {
+                                              showDialog(
+                                                  context: context,
+                                                  builder: (context) {
+                                                    return AlertDialog(
+                                                        title: const Text(
+                                                            "Download Info"),
+                                                        content: Column(
+                                                            mainAxisSize:
+                                                                MainAxisSize
+                                                                    .min,
+                                                            children: [
+                                                              Text(
+                                                                  "JRE will be downloaded from:"),
+                                                              Linkify(
+                                                                  text: jre
+                                                                      .versionCheckerUrl,
+                                                                  onOpen:
+                                                                      (link) {
+                                                                    OpenFilex
+                                                                        .open(link
+                                                                            .url);
+                                                                  }),
+                                                            ]));
+                                                  });
+                                            }),
+                                      );
+                                    })
+                                  else if (jre is JreEntryInstalled &&
+                                      missingFilesForJre.isNotEmpty)
+                                    Builder(builder: (context) {
+                                      return MovingTooltipWidget.text(
+                                        message: "Broken installation!"
+                                            "\n${missingFilesForJre.map((file) => "$file is missing").join("\n")}",
+                                        child: const Icon(
+                                          Icons.error,
+                                          color: ThemeManager.vanillaErrorColor,
+                                        ),
+                                      );
+                                    })
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ),
+                      );
+                    }),
                   if (jres.countWhere((it) => it is MikohimeCustomJreEntry) > 1)
                     MovingTooltipWidget.text(
                       message:

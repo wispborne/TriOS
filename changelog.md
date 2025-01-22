@@ -3,7 +3,7 @@
   - JRE & RAM Settings dropdown error if Miko_R3.txt or Miko_R4.txt is missing.
   - Searching on the Mods tab also filtered the Dashboard mods.
 - Changed
-  - Cannot run multiple instances of TriOS anymore. Opening a second instance instead focuses the existing one (Windows only).
+  - Cannot run multiple instances of TriOS anymore. Opening a second instance instead focuses the existing one (Windows and Linux).
 
 # 1.0.5
 - Added

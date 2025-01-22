@@ -109,7 +109,11 @@ class _RamChangerState extends ConsumerState<RamChanger> {
     areAllCustomJresWritable = true;
 
     for (final customJre in newState.customInstalledJres) {
-      if (!await customJre.canWriteToVmParamsFile()) {
+      // We only care if the vmparams file exists but can't be written to.
+      // If it's missing entirely, then the JreEntry will be considered broken and unselectable.
+      // This allows users to have random JRE/JDK folders in their game folder that they
+      // don't plan to use, without breaking the RAM changer.
+      if (customJre.vmParamsFileAbsolutePath.existsSync() && !await customJre.canWriteToVmParamsFile()) {
         areAllCustomJresWritable = false;
         vmParamsFilesThatCannotBeWritten
             .add(customJre.vmParamsFileRelativePath);

@@ -19,7 +19,7 @@ import '../widgets/moving_tooltip.dart';
 import 'homebrew_grid/copy_mod_list_button.dart';
 import 'homebrew_grid/filter_mods_search_view.dart';
 
-final searchQuery = StateProvider.autoDispose<String>((ref) => "");
+final modsGridSearchQuery = StateProvider.autoDispose<String>((ref) => "");
 
 class ModsGridPage extends ConsumerStatefulWidget {
   const ModsGridPage({super.key});
@@ -188,7 +188,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                                     width: 300,
                                     child: FilterModsSearchBar(
                                         searchController: _searchController,
-                                        query: ref.watch(searchQuery),
+                                        query: ref.watch(modsGridSearchQuery),
                                         ref: ref),
                                   ),
                                   const Spacer(),

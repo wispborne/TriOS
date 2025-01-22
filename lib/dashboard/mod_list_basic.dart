@@ -26,6 +26,8 @@ import '../widgets/add_new_mods_button.dart';
 import '../widgets/refresh_mods_button.dart';
 import 'mod_list_basic_entry.dart';
 
+final _searchQuery = StateProvider.autoDispose<String>((ref) => "");
+
 class ModListMini extends ConsumerStatefulWidget {
   const ModListMini({super.key});
 
@@ -36,7 +38,7 @@ class ModListMini extends ConsumerStatefulWidget {
 class _ModListMiniState extends ConsumerState<ModListMini>
     with SingleTickerProviderStateMixin {
   final ScrollController _scrollController = ScrollController();
-  final searchController = SearchController();
+  final _searchController = SearchController();
 
   bool hideDisabled = false;
 
@@ -49,7 +51,7 @@ class _ModListMiniState extends ConsumerState<ModListMini>
         ?.filterOutMissingMods(fullModList)
         .enabledMods;
     final modVariants = ref.watch(AppState.modVariants);
-    final query = ref.watch(searchQuery);
+    final query = ref.watch(_searchQuery);
 
     List<Mod> filteredModList = fullModList
         .let((mods) => hideDisabled
@@ -147,8 +149,7 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                       child: SizedBox(
                         height: 30,
                         child: ModListBasicSearch(
-                            searchController: searchController,
-                            ref: ref,
+                            searchController: _searchController,
                             query: query),
                       ),
                     ),
@@ -295,7 +296,6 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                                 modsWithUpdates:
                                                     modsWithUpdates),
                                             ChangeUpdateVisibilityEyeView(
-                                                ref: ref,
                                                 dashboardGridModUpdateVisibility:
                                                     dashboardGridModUpdateVisibility,
                                                 theme: theme),
@@ -439,12 +439,10 @@ class ModListBasicSearch extends ConsumerWidget {
   const ModListBasicSearch({
     super.key,
     required this.searchController,
-    required this.ref,
     required this.query,
   });
 
   final SearchController searchController;
-  final WidgetRef ref;
   final String query;
 
   @override
@@ -465,14 +463,14 @@ class ModListBasicSearch extends ConsumerWidget {
                       padding: EdgeInsets.zero,
                       onPressed: () {
                         controller.clear();
-                        ref.read(searchQuery.notifier).state = "";
+                        ref.read(_searchQuery.notifier).state = "";
                       },
                     )
             ],
             backgroundColor: WidgetStateProperty.all(
                 Theme.of(context).colorScheme.surfaceContainer),
             onChanged: (value) {
-              ref.read(searchQuery.notifier).state = value;
+              ref.read(_searchQuery.notifier).state = value;
             });
       },
       suggestionsBuilder: (BuildContext context, SearchController controller) {
@@ -485,12 +483,10 @@ class ModListBasicSearch extends ConsumerWidget {
 class ChangeUpdateVisibilityEyeView extends ConsumerWidget {
   const ChangeUpdateVisibilityEyeView({
     super.key,
-    required this.ref,
     required this.dashboardGridModUpdateVisibility,
     required this.theme,
   });
 
-  final WidgetRef ref;
   final DashboardGridModUpdateVisibility dashboardGridModUpdateVisibility;
   final ThemeData theme;
 

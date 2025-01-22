@@ -32,6 +32,8 @@ All-in-one Starsector launcher, mod manager, and toolkit.
     flutter build windows
     ```
     (substitute `macos` or `linux` depending on your platform).
+   1. On Linux, you may need to install missing libs, such as `libcurl4-openssl-dev` (for building Sentry). 
+   2. Also, don't use the Snap version of Flutter, install it manually so it uses system libs.
 4. The output should tell you where it placed the compiled program.
 
 

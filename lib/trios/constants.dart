@@ -9,7 +9,6 @@ class Constants {
   static const appName = "TriOS";
   static const appTitle = "$appName v$version";
   static String appSubtitle = [
-    "Prerelease",
     "Corporate Toolkit",
     "by Wisp",
     "Hegemony Tolerated",

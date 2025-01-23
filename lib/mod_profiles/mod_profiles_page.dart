@@ -325,7 +325,7 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
     final isEditing = !isSaveGame && profile?.id == _editingProfileId;
     final activeProfileId =
         ref.watch(appSettings.select((s) => s.activeModProfileId));
-    final isActiveProfile = profile?.id == activeProfileId;
+    final isActiveProfile = activeProfileId != null && profile?.id == activeProfileId;
     final isGameRunning = ref.watch(AppState.isGameRunning).value == true;
 
     var enabledModVariants = profile?.enabledModVariants ??

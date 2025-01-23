@@ -21,33 +21,31 @@ class VramEstimatorStateMapper extends ClassMapperBase<VramEstimatorState> {
   @override
   final String id = 'VramEstimatorState';
 
-  static bool _$isScanning(VramEstimatorState v) => v.isScanning;
-  static const Field<VramEstimatorState, bool> _f$isScanning =
-      Field('isScanning', _$isScanning);
   static Map<String, VramMod> _$modVramInfo(VramEstimatorState v) =>
       v.modVramInfo;
   static const Field<VramEstimatorState, Map<String, VramMod>> _f$modVramInfo =
       Field('modVramInfo', _$modVramInfo);
-  static bool _$isCancelled(VramEstimatorState v) => v.isCancelled;
-  static const Field<VramEstimatorState, bool> _f$isCancelled =
-      Field('isCancelled', _$isCancelled);
   static DateTime? _$lastUpdated(VramEstimatorState v) => v.lastUpdated;
   static const Field<VramEstimatorState, DateTime> _f$lastUpdated =
       Field('lastUpdated', _$lastUpdated);
+  static bool _$isScanning(VramEstimatorState v) => v.isScanning;
+  static const Field<VramEstimatorState, bool> _f$isScanning =
+      Field('isScanning', _$isScanning, mode: FieldMode.member);
+  static bool _$isCancelled(VramEstimatorState v) => v.isCancelled;
+  static const Field<VramEstimatorState, bool> _f$isCancelled =
+      Field('isCancelled', _$isCancelled, mode: FieldMode.member);
 
   @override
   final MappableFields<VramEstimatorState> fields = const {
-    #isScanning: _f$isScanning,
     #modVramInfo: _f$modVramInfo,
-    #isCancelled: _f$isCancelled,
     #lastUpdated: _f$lastUpdated,
+    #isScanning: _f$isScanning,
+    #isCancelled: _f$isCancelled,
   };
 
   static VramEstimatorState _instantiate(DecodingData data) {
     return VramEstimatorState(
-        isScanning: data.dec(_f$isScanning),
         modVramInfo: data.dec(_f$modVramInfo),
-        isCancelled: data.dec(_f$isCancelled),
         lastUpdated: data.dec(_f$lastUpdated));
   }
 
@@ -108,11 +106,7 @@ abstract class VramEstimatorStateCopyWith<$R, $In extends VramEstimatorState,
     $Out> implements ClassCopyWith<$R, $In, $Out> {
   MapCopyWith<$R, String, VramMod, VramModCopyWith<$R, VramMod, VramMod>>
       get modVramInfo;
-  $R call(
-      {bool? isScanning,
-      Map<String, VramMod>? modVramInfo,
-      bool? isCancelled,
-      DateTime? lastUpdated});
+  $R call({Map<String, VramMod>? modVramInfo, DateTime? lastUpdated});
   VramEstimatorStateCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
       Then<$Out2, $R2> t);
 }
@@ -130,22 +124,14 @@ class _VramEstimatorStateCopyWithImpl<$R, $Out>
       get modVramInfo => MapCopyWith($value.modVramInfo,
           (v, t) => v.copyWith.$chain(t), (v) => call(modVramInfo: v));
   @override
-  $R call(
-          {bool? isScanning,
-          Map<String, VramMod>? modVramInfo,
-          bool? isCancelled,
-          Object? lastUpdated = $none}) =>
+  $R call({Map<String, VramMod>? modVramInfo, Object? lastUpdated = $none}) =>
       $apply(FieldCopyWithData({
-        if (isScanning != null) #isScanning: isScanning,
         if (modVramInfo != null) #modVramInfo: modVramInfo,
-        if (isCancelled != null) #isCancelled: isCancelled,
         if (lastUpdated != $none) #lastUpdated: lastUpdated
       }));
   @override
   VramEstimatorState $make(CopyWithData data) => VramEstimatorState(
-      isScanning: data.get(#isScanning, or: $value.isScanning),
       modVramInfo: data.get(#modVramInfo, or: $value.modVramInfo),
-      isCancelled: data.get(#isCancelled, or: $value.isCancelled),
       lastUpdated: data.get(#lastUpdated, or: $value.lastUpdated));
 
   @override

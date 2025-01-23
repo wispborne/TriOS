@@ -12,6 +12,13 @@
     - Weird Linux users (like those on Debian 12) will be able to use it (the build of libarchive in TriOS didn't support it).
     - There is an option to use libarchive if you want to, in Settings. If you need it, let me know, otherwise it'll be removed (a large amount of TriOS's filesize is libarchive).
 
+# 1.0.6
+- Fixed
+  - JRE & RAM Settings dropdown error if Miko_R3.txt or Miko_R4.txt is missing.
+  - Searching on the Mods tab also filtered the Dashboard mods.
+- Changed
+  - Cannot run multiple instances of TriOS anymore. Opening a second instance instead focuses the existing one (Windows and Linux).
+
 # 1.0.5
 - Added
   - Mute updates option for mods.

@@ -54,7 +54,11 @@ abstract class JreEntryInstalled extends JreEntry {
   final Directory jreRelativePath;
 
   JreEntryInstalled(super.gamePath, this.jreRelativePath, super.version) {
-    ramAmountInMb = getRamAmountFromVmparamsInMb(readVmParamsFile());
+    try {
+      ramAmountInMb = getRamAmountFromVmparamsInMb(readVmParamsFile());
+    } catch (e) {
+      Fimber.w("Error reading vmparams file: $vmParamsFileAbsolutePath", ex: e);
+    }
   }
 
   bool get isCustomJre;
@@ -74,10 +78,10 @@ abstract class JreEntryInstalled extends JreEntry {
       vmParamsFileAbsolutePath.toFile().readAsStringSync();
 
   Directory get jreAbsolutePath =>
-      gamePath.resolve(jreRelativePath.path).toDirectory();
+      gamePath.resolve(jreRelativePath.path).normalize().toDirectory();
 
   File get vmParamsFileAbsolutePath =>
-      gamePath.resolve(vmParamsFileRelativePath).toFile();
+      gamePath.resolve(vmParamsFileRelativePath).normalize().toFile();
 
   bool isActive({required List<JreEntryInstalled> activeJres}) =>
       activeJres.any((it) => it == this);
@@ -90,6 +94,9 @@ abstract class JreEntryInstalled extends JreEntry {
   /// So, if it is a standard JRE, it needs to be in the `jre` folder.
   /// If it is a custom JRE, it needs to have all files present.
   bool hasAllFilesReadyToLaunch();
+
+  /// If not empty, then entry is "broken" and cannot be used. Lists what's missing.
+  List<String> missingFiles();
 
   /// Parses the amount of RAM from the vmparams file
   String? getRamAmountFromVmparamsInMb(String vmparams) {
@@ -161,6 +168,16 @@ class StandardInstalledJreEntry extends JreEntryInstalled {
       vmParamsFileAbsolutePath.existsSync() &&
       jreRelativePath.name == Constants.gameJreFolderName &&
       jreAbsolutePath.existsSync();
+
+  @override
+  List<String> missingFiles() {
+    final missingFiles = <String>[];
+    if (!vmParamsFileAbsolutePath.existsSync()) {
+      missingFiles.add(vmParamsFileRelativePath);
+    }
+
+    return missingFiles;
+  }
 }
 
 abstract class CustomInstalledJreEntry extends JreEntryInstalled {
@@ -178,7 +195,7 @@ abstract class CustomInstalledJreEntry extends JreEntryInstalled {
 abstract class MikohimeCustomJreEntry extends CustomInstalledJreEntry {
   MikohimeCustomJreEntry(super.gamePath, super.jreRelativePath, super.version);
 
-  Directory get mikohimeFolder => gamePath.resolve("mikohime").toDirectory();
+  Directory get mikohimeFolder => gamePath.resolve("mikohime").normalize().toDirectory();
 
   @override
   bool hasAllFilesReadyToLaunch() =>
@@ -187,6 +204,22 @@ abstract class MikohimeCustomJreEntry extends CustomInstalledJreEntry {
       mikohimeFolder.existsSync();
 // Ideally would check that the mikohime folder is for this specific JRE.
 // But idk how.
+
+  @override
+  List<String> missingFiles() {
+    final missingFiles = <String>[];
+    if (!vmParamsFileAbsolutePath.existsSync()) {
+      missingFiles.add(vmParamsFileRelativePath);
+    }
+    if (!jreAbsolutePath.existsSync()) {
+      missingFiles.add(jreRelativePath.path);
+    }
+    if (!mikohimeFolder.existsSync()) {
+      missingFiles.add(mikohimeFolder.name);
+    }
+
+    return missingFiles;
+  }
 }
 
 class Jre23InstalledJreEntry extends MikohimeCustomJreEntry {

@@ -24,23 +24,19 @@ part 'vram_estimator.mapper.dart';
 
 @MappableClass()
 class VramEstimatorState with VramEstimatorStateMappable {
-  final bool isScanning;
   final Map<String, VramMod> modVramInfo;
-  final bool isCancelled;
+  bool isScanning = false;
+  bool isCancelled = false;
   final DateTime? lastUpdated;
 
   VramEstimatorState({
-    required this.isScanning,
     required this.modVramInfo,
-    required this.isCancelled,
     required this.lastUpdated,
   });
 
   factory VramEstimatorState.initial() {
     return VramEstimatorState(
-      isScanning: false,
       modVramInfo: {},
-      isCancelled: false,
       lastUpdated: null,
     );
   }
@@ -107,7 +103,9 @@ class VramEstimatorNotifier
       return;
     }
 
-    updateState((s) => s.copyWith(isScanning: true, isCancelled: false));
+    updateState((s) => s.copyWith()
+      ..isScanning = true
+      ..isCancelled = false);
 
     try {
       final info = await VramChecker(
@@ -149,26 +147,23 @@ class VramEstimatorNotifier
       );
 
       updateState(
-        (state) => state.copyWith(
-          modVramInfo: modVramInfo,
-          isScanning: false,
-          isCancelled: false,
-        ),
+        (state) => state.copyWith(modVramInfo: modVramInfo)
+          ..isScanning = false
+          ..isCancelled = false,
       );
     } catch (e) {
       Fimber.w('Error scanning for VRAM usage: $e');
       // Optionally, set an error state
       updateState(
-        (state) => state.copyWith(
-          isScanning: false,
-          isCancelled: false,
-        ),
+        (state) => state
+          ..isScanning = false
+          ..isCancelled = false,
       );
     }
   }
 
   void cancelEstimation() {
-    updateState((s) => s.copyWith(isCancelled: true));
+    updateState((s) => s..isCancelled = true);
   }
 }
 

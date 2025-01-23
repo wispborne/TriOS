@@ -45,7 +45,7 @@ void main(List<String> args) async {
   // (allow one debug + one release to be able to compare)
     await WindowsSingleInstance.ensureSingleInstance(
         args,
-        "wisp_trios${kDebugMode ? "_dev" : ""}",
+        "wisp_trios${kDebugMode ? "_dev" : ""}${Constants.version}",
         onSecondWindow: (args) {
           print(args);
         });

@@ -385,7 +385,7 @@ class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8.0),
                         child: LinearProgressIndicator(
-                          value: ratio,
+                          value: ratio.isNaN || ratio.isInfinite ? 0 : ratio,
                           backgroundColor: theme.colorScheme.surfaceContainer,
                         ),
                       ),

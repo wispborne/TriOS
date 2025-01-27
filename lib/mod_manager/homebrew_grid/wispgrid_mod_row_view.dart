@@ -1,7 +1,6 @@
 import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:trios/dashboard/changelogs.dart';
@@ -12,7 +11,6 @@ import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
 import 'package:trios/mod_manager/mod_context_menu.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
-import 'package:trios/mod_manager/mod_version_selection_dropdown.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/themes/theme_manager.dart';
@@ -25,24 +23,25 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/vram_estimator/graphics_lib_config_provider.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/hoverable_widget.dart';
-import 'package:trios/widgets/mod_type_icon.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/text_with_icon.dart';
 import 'package:trios/widgets/tooltip_frame.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../dashboard/version_check_icon.dart';
-import '../../trios/constants.dart';
-import '../../trios/download_manager/download_manager.dart';
-import '../../widgets/svg_image_icon.dart';
+import 'package:trios/dashboard/version_check_icon.dart';
+import 'package:trios/trios/download_manager/download_manager.dart';
+import 'package:trios/widgets/svg_image_icon.dart';
 
-class WispGridModRowView extends ConsumerStatefulWidget {
-  final Mod mod;
+class WispGridRowView<T extends WispGridItem> extends ConsumerStatefulWidget {
+  final T mod;
 
   // final Function(Mod? mod) onModRowSelected;
   final bool isRowChecked;
   final void Function() onTapped;
   final void Function() onDoubleTapped;
+  final List<WispGridColumn<T>> columns;
+  final Widget Function(T item, RowBuilderModifiers modifiers, Widget child)
+      rowBuilder;
 
   // final void Function({
   //   required String modId,
@@ -50,62 +49,44 @@ class WispGridModRowView extends ConsumerStatefulWidget {
   //   required bool ctrlPressed,
   // }) onRowCheck;
 
-  const WispGridModRowView({
+  const WispGridRowView({
     super.key,
     required this.mod,
     required this.onTapped,
     required this.onDoubleTapped,
     required this.isRowChecked,
+    required this.columns,
+    required this.rowBuilder,
   });
 
   @override
-  ConsumerState createState() => _WispGridModRowViewState();
+  ConsumerState createState() => _WispGridModRowViewState<T>();
 }
 
-class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
+class _WispGridModRowViewState<T extends WispGridItem>
+    extends ConsumerState<WispGridRowView<T>> {
   static const _standardRowHeight = 40.0;
 
   @override
   Widget build(BuildContext context) {
     final gridState = ref.watch(appSettings.select((s) => s.modsGridState));
     final isGameRunning = ref.watch(AppState.isGameRunning).value == true;
-    final mod = widget.mod;
+    final item = widget.mod;
     final allMods = ref.watch(AppState.mods);
     final height = _standardRowHeight;
-    final bestVersion = mod.findFirstEnabledOrHighestVersion!;
+    // final bestVersion = mod.findFirstEnabledOrHighestVersion!;
 
     return HoverableWidget(
       onTapDown: () => widget.onTapped(),
       // onDoubleTap: () => widget.onDoubleTapped(),
       child: Builder(builder: (context) {
         final isHovering = HoverData.of(context)?.isHovering ?? false;
-        final metadata = ref
-            .watch(AppState.modsMetadata)
-            .valueOrNull
-            ?.getMergedModMetadata(mod.id);
-        final theme = Theme.of(context);
-        final modMetadata =
-            ref.watch(AppState.modsMetadata).valueOrNull?.userMetadata[mod.id];
-        final isFavorited = modMetadata?.isFavorited ?? false;
 
-        final backgroundBaseColor = isFavorited
-            ? theme.colorScheme.primary.withOpacity(0.3)
-            : Colors.transparent;
-
-        // Mix in any hover/checked overlay color
-        final backgroundColor = backgroundBaseColor.mix(
-            widget.isRowChecked
-                ? theme.colorScheme.onSurface.withOpacity(0.4)
-                : isHovering
-                    ? theme.colorScheme.onInverseSurface.withOpacity(0.2)
-                    : Colors.transparent,
-            0.5);
-
-        return Container(
-          decoration: BoxDecoration(
-            color: backgroundColor,
-          ),
-          child: Column(
+        return widget.rowBuilder(
+          item,
+          RowBuilderModifiers(
+              isHovering: isHovering, isRowChecked: widget.isRowChecked),
+          Column(
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 0.0),
@@ -114,170 +95,188 @@ class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
                   spacing: WispGrid.gridRowSpacing,
                   children: [
                     SizedBox(width: WispGrid.gridRowSpacing),
-                    ...(gridState.sortedVisibleColumns.map((columnSetting) {
+                    ...(gridState
+                        .sortedVisibleColumns(widget.columns)
+                        .map((columnSetting) {
                       return Builder(builder: (context) {
                         final header = columnSetting.key;
                         final state = columnSetting.value;
+                        final gridColumn = widget.columns
+                            .firstWhereOrNull((column) => column.key == header);
 
-                        return switch (header) {
-                          ModGridHeader.favorites => _RowItemContainer(
-                              height: height,
-                              width: state.width,
-                              child: Expanded(
-                                child: FavoriteButton(
-                                  favoritesWidth: state.width,
-                                  mod: mod,
-                                  isRowHighlighted: isHovering,
-                                  isFavorited: isFavorited,
-                                ),
-                              ),
-                            ),
-                          ModGridHeader.changeVariantButton =>
-                            Builder(builder: (context) {
-                              return _RowItemContainer(
-                                height: height,
-                                width: state.width,
-                                child: Disable(
-                                  isEnabled: !isGameRunning,
-                                  child: ModVersionSelectionDropdown(
-                                    mod: mod,
-                                    width: state.width,
-                                    showTooltip: true,
-                                  ),
-                                ),
-                              );
-                            }),
-                          ModGridHeader.modIcon => Builder(builder: (context) {
-                              String? iconPath = bestVersion.iconFilePath;
-                              return _RowItemContainer(
-                                height: height,
-                                width: state.width,
-                                child: iconPath != null
-                                    ? Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.start,
-                                        children: [
-                                          Image.file(
-                                            iconPath.toFile(),
-                                            width: 32,
-                                            height: 32,
-                                          ),
-                                        ],
-                                      )
-                                    : const SizedBox(width: 32, height: 32),
-                              );
-                            }),
-                          ModGridHeader.icons => _RowItemContainer(
-                              height: height,
-                              width: state.width,
-                              child: ModTypeIcon(modVariant: bestVersion),
-                            ),
-                          ModGridHeader.name =>
-                            buildNameCell(mod, bestVersion, allMods, state),
-                          ModGridHeader.author => Builder(builder: (context) {
-                              final theme = Theme.of(context);
-                              final lightTextColor = theme.colorScheme.onSurface
-                                  .withOpacity(WispGrid.lightTextOpacity);
-                              return _RowItemContainer(
-                                height: height,
-                                width: state.width,
-                                child: Text(
-                                  bestVersion.modInfo.author
-                                          ?.toString()
-                                          .replaceAll("\n", "   ") ??
-                                      "(no author)",
-                                  maxLines: 1,
-                                  style: theme.textTheme.labelLarge
-                                      ?.copyWith(color: lightTextColor),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              );
-                            }),
-                          ModGridHeader.version => _buildVersionCell(
-                              WispGrid.lightTextOpacity,
-                              mod,
-                              height,
-                              isGameRunning,
-                              bestVersion,
-                              state,
-                              metadata),
-                          ModGridHeader.vramImpact => buildVramCell(
-                              WispGrid.lightTextOpacity, mod, height, state),
-                          ModGridHeader.gameVersion =>
-                            Builder(builder: (context) {
-                              final theme = Theme.of(context);
-                              final originalGameVersion =
-                                  bestVersion.modInfo.originalGameVersion;
+                        if (gridColumn == null) {
+                          return Container();
+                        }
+                        return _RowItemContainer(
+                            height: height,
+                            width: state.width,
+                            child: gridColumn.itemCellBuilder(
+                                item,
+                                CellBuilderModifiers(
+                                  isHovering: isHovering,
+                                  isRowChecked: widget.isRowChecked,
+                                  columnState: state,
+                                )));
 
-                              return MovingTooltipWidget.text(
-                                message: originalGameVersion != null
-                                    ? "Original game version: $originalGameVersion"
-                                    : null,
-                                child: _RowItemContainer(
-                                  height: height,
-                                  width: state.width,
-                                  child: Opacity(
-                                    opacity: WispGrid.lightTextOpacity,
-                                    child: Text(
-                                        "${bestVersion.modInfo.gameVersion ?? "(no game version)"}"
-                                        "${originalGameVersion != null ? "**" : ""}",
-                                        style: compareGameVersions(
-                                                    bestVersion
-                                                        .modInfo.gameVersion,
-                                                    ref
-                                                        .watch(appSettings)
-                                                        .lastStarsectorVersion) ==
-                                                GameCompatibility.perfectMatch
-                                            ? theme.textTheme.labelLarge
-                                            : theme.textTheme.labelLarge
-                                                ?.copyWith(
-                                                    color: ThemeManager
-                                                        .vanillaErrorColor)),
-                                  ),
-                                ),
-                              );
-                            }),
-                          ModGridHeader.firstSeen => _RowItemContainer(
-                              height: height,
-                              width: state.width,
-                              child: Opacity(
-                                opacity: WispGrid.lightTextOpacity,
-                                child: Text(
-                                    metadata?.let((m) => Constants
-                                            .dateTimeFormat
-                                            .format(DateTime
-                                                .fromMillisecondsSinceEpoch(
-                                                    m.firstSeen))) ??
-                                        "",
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: theme.textTheme.labelLarge),
-                              ),
-                            ),
-                          ModGridHeader.lastEnabled => _RowItemContainer(
-                              height: height,
-                              width: state.width,
-                              child: Opacity(
-                                opacity: WispGrid.lightTextOpacity,
-                                child: Text(
-                                    metadata?.lastEnabled?.let((lastEnabled) =>
-                                            Constants.dateTimeFormat.format(
-                                                DateTime
-                                                    .fromMillisecondsSinceEpoch(
-                                                        lastEnabled))) ??
-                                        "",
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: theme.textTheme.labelLarge),
-                              )),
-                        };
+                        // return switch (header) {
+                        //   ModGridHeader.favorites => _RowItemContainer(
+                        //       height: height,
+                        //       width: state.width,
+                        //       child: Expanded(
+                        //         child: FavoriteButton(
+                        //           mod: mod,
+                        //           isRowHighlighted: isHovering,
+                        //           isFavorited: isFavorited,
+                        //         ),
+                        //       ),
+                        //     ),
+                        //   ModGridHeader.changeVariantButton =>
+                        //     Builder(builder: (context) {
+                        //       return _RowItemContainer(
+                        //         height: height,
+                        //         width: state.width,
+                        //         child: Disable(
+                        //           isEnabled: !isGameRunning,
+                        //           child: ModVersionSelectionDropdown(
+                        //             mod: mod,
+                        //             width: state.width,
+                        //             showTooltip: true,
+                        //           ),
+                        //         ),
+                        //       );
+                        //     }),
+                        //   ModGridHeader.modIcon => Builder(builder: (context) {
+                        //       String? iconPath = bestVersion.iconFilePath;
+                        //       return _RowItemContainer(
+                        //         height: height,
+                        //         width: state.width,
+                        //         child: iconPath != null
+                        //             ? Row(
+                        //                 mainAxisAlignment:
+                        //                     MainAxisAlignment.start,
+                        //                 children: [
+                        //                   Image.file(
+                        //                     iconPath.toFile(),
+                        //                     width: 32,
+                        //                     height: 32,
+                        //                   ),
+                        //                 ],
+                        //               )
+                        //             : const SizedBox(width: 32, height: 32),
+                        //       );
+                        //     }),
+                        //   ModGridHeader.icons => _RowItemContainer(
+                        //       height: height,
+                        //       width: state.width,
+                        //       child: ModTypeIcon(modVariant: bestVersion),
+                        //     ),
+                        //   ModGridHeader.name =>
+                        //     buildNameCell(mod, bestVersion, allMods, state),
+                        //   ModGridHeader.author => Builder(builder: (context) {
+                        //       final theme = Theme.of(context);
+                        //       final lightTextColor = theme.colorScheme.onSurface
+                        //           .withOpacity(WispGrid.lightTextOpacity);
+                        //       return _RowItemContainer(
+                        //         height: height,
+                        //         width: state.width,
+                        //         child: Text(
+                        //           bestVersion.modInfo.author
+                        //                   ?.toString()
+                        //                   .replaceAll("\n", "   ") ??
+                        //               "(no author)",
+                        //           maxLines: 1,
+                        //           style: theme.textTheme.labelLarge
+                        //               ?.copyWith(color: lightTextColor),
+                        //           overflow: TextOverflow.ellipsis,
+                        //         ),
+                        //       );
+                        //     }),
+                        //   ModGridHeader.version => _buildVersionCell(
+                        //       WispGrid.lightTextOpacity,
+                        //       mod,
+                        //       height,
+                        //       isGameRunning,
+                        //       bestVersion,
+                        //       state,
+                        //       metadata),
+                        //   ModGridHeader.vramImpact => buildVramCell(
+                        //       WispGrid.lightTextOpacity, mod, height, state),
+                        //   ModGridHeader.gameVersion =>
+                        //     Builder(builder: (context) {
+                        //       final theme = Theme.of(context);
+                        //       final originalGameVersion =
+                        //           bestVersion.modInfo.originalGameVersion;
+                        //
+                        //       return MovingTooltipWidget.text(
+                        //         message: originalGameVersion != null
+                        //             ? "Original game version: $originalGameVersion"
+                        //             : null,
+                        //         child: _RowItemContainer(
+                        //           height: height,
+                        //           width: state.width,
+                        //           child: Opacity(
+                        //             opacity: WispGrid.lightTextOpacity,
+                        //             child: Text(
+                        //                 "${bestVersion.modInfo.gameVersion ?? "(no game version)"}"
+                        //                 "${originalGameVersion != null ? "**" : ""}",
+                        //                 style: compareGameVersions(
+                        //                             bestVersion
+                        //                                 .modInfo.gameVersion,
+                        //                             ref
+                        //                                 .watch(appSettings)
+                        //                                 .lastStarsectorVersion) ==
+                        //                         GameCompatibility.perfectMatch
+                        //                     ? theme.textTheme.labelLarge
+                        //                     : theme.textTheme.labelLarge
+                        //                         ?.copyWith(
+                        //                             color: ThemeManager
+                        //                                 .vanillaErrorColor)),
+                        //           ),
+                        //         ),
+                        //       );
+                        //     }),
+                        //   ModGridHeader.firstSeen => _RowItemContainer(
+                        //       height: height,
+                        //       width: state.width,
+                        //       child: Opacity(
+                        //         opacity: WispGrid.lightTextOpacity,
+                        //         child: Text(
+                        //             metadata?.let((m) => Constants
+                        //                     .dateTimeFormat
+                        //                     .format(DateTime
+                        //                         .fromMillisecondsSinceEpoch(
+                        //                             m.firstSeen))) ??
+                        //                 "",
+                        //             maxLines: 1,
+                        //             overflow: TextOverflow.ellipsis,
+                        //             style: theme.textTheme.labelLarge),
+                        //       ),
+                        //     ),
+                        //   ModGridHeader.lastEnabled => _RowItemContainer(
+                        //       height: height,
+                        //       width: state.width,
+                        //       child: Opacity(
+                        //         opacity: WispGrid.lightTextOpacity,
+                        //         child: Text(
+                        //             metadata?.lastEnabled?.let((lastEnabled) =>
+                        //                     Constants.dateTimeFormat.format(
+                        //                         DateTime
+                        //                             .fromMillisecondsSinceEpoch(
+                        //                                 lastEnabled))) ??
+                        //                 "",
+                        //             maxLines: 1,
+                        //             overflow: TextOverflow.ellipsis,
+                        //             style: theme.textTheme.labelLarge),
+                        //       )),
+                        // };
                       });
                     }).toList()),
                     SizedBox(width: WispGrid.gridRowSpacing),
                   ],
                 ),
               ),
-              buildMissingDependencyButton(mod.findFirstEnabled, allMods)
+              buildMissingDependencyButton(
+                  (item as Mod).findFirstEnabled, allMods)
             ],
           ),
         );
@@ -286,7 +285,7 @@ class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
   }
 
   Builder buildVramCell(double lightTextOpacity, Mod mod, double height,
-      ModGridColumnSetting state) {
+      WispGridColumnState state) {
     return Builder(builder: (context) {
       final theme = Theme.of(context);
       final lightTextColor =
@@ -405,7 +404,7 @@ class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
       double height,
       bool isGameRunning,
       ModVariant bestVersion,
-      ModGridColumnSetting state,
+      WispGridColumnState state,
       ModMetadata? metadata) {
     return Builder(builder: (context) {
       final theme = Theme.of(context);
@@ -633,7 +632,7 @@ class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
   }
 
   Builder buildNameCell(Mod mod, ModVariant bestVersion, List<Mod> allMods,
-      ModGridColumnSetting state) {
+      WispGridColumnState state) {
     return Builder(builder: (context) {
       final theme = Theme.of(context);
 
@@ -671,9 +670,9 @@ class _WispGridModRowViewState extends ConsumerState<WispGridModRowView> {
     if (unmetDependencies.isEmpty) return Container();
 
     final gridState = ref.watch(appSettings.select((s) => s.modsGridState));
-    final cellWidthBeforeNameColumn = gridState.columnSettings.entries
+    final cellWidthBeforeNameColumn = gridState.columnsState.entries
         .sortedBy<num>((entry) => entry.value.position)
-        .takeWhile((element) => element.key != ModGridHeader.name)
+        .takeWhile((element) => element.key != ModGridHeader.name.name)
         .map((e) => e.value.width + WispGrid.gridRowSpacing)
         .sum;
 
@@ -841,13 +840,11 @@ _buildModGridTooltip(
 class FavoriteButton extends ConsumerWidget {
   const FavoriteButton({
     super.key,
-    required this.favoritesWidth,
     required this.mod,
     required this.isRowHighlighted,
     required this.isFavorited,
   });
 
-  final double favoritesWidth;
   final Mod mod;
   final bool isRowHighlighted;
   final bool isFavorited;

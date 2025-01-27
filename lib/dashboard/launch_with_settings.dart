@@ -206,7 +206,7 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                     Padding(
                       padding: const EdgeInsets.only(top: 8.0),
                       child: CheckboxWithLabel(
-                        label: "Show JRE 23 Console Window",
+                        label: "Show Console (log output) Window",
                         value: ref.watch(appSettings.select(
                                 (value) => value.showCustomJreConsoleWindow)) ??
                             false,

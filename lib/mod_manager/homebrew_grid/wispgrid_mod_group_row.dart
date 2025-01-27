@@ -22,6 +22,7 @@ class WispGridModGroupRowView extends ConsumerStatefulWidget {
   final bool isCollapsed;
   final bool isFirstGroupShown;
   final Function(bool isCollapsed) setCollapsed;
+  final List<WispGridColumn> columns;
 
   const WispGridModGroupRowView({
     super.key,
@@ -30,6 +31,7 @@ class WispGridModGroupRowView extends ConsumerStatefulWidget {
     required this.isCollapsed,
     required this.isFirstGroupShown,
     required this.setCollapsed,
+    required this.columns,
   });
 
   @override
@@ -67,7 +69,7 @@ class _WispGridModRowState extends ConsumerState<WispGridModGroupRowView> {
 
     // Calculate the offset of the VRAM column
     final gridState = ref.watch(appSettings.select((s) => s.modsGridState));
-    final cellWidthBeforeVramColumn = gridState.sortedVisibleColumns
+    final cellWidthBeforeVramColumn = gridState.sortedVisibleColumns(widget.columns)
         .takeWhile((element) => element.key != ModGridHeader.vramImpact)
         .map((e) => e.value.width + WispGrid.gridRowSpacing)
         .sum;

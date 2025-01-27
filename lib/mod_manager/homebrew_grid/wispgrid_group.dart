@@ -1,13 +1,19 @@
-import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
 import 'package:trios/models/mod.dart';
 
-sealed class ModGridGroup {
-  String? getGroupName(Mod mod);
+abstract class WispGridGroup<T> {
+  String key;
+  String displayName;
 
-  Comparable? getGroupSortValue(Mod mod);
+  WispGridGroup(this.key, this.displayName);
+
+  String? getGroupName(T mod);
+
+  Comparable? getGroupSortValue(T mod);
 }
 
-class EnabledStateModGridGroup extends ModGridGroup {
+class EnabledStateModGridGroup extends WispGridGroup<Mod> {
+  EnabledStateModGridGroup() : super('enabledState', 'Enabled');
+
   @override
   String getGroupName(Mod mod) => mod.isEnabledOnUi ? 'Enabled' : 'Disabled';
 
@@ -30,7 +36,9 @@ class EnabledStateModGridGroup extends ModGridGroup {
 //           'zzzzzzzzzzzzzzzzzzzz';
 // }
 
-class AuthorModGridGroup extends ModGridGroup {
+class AuthorModGridGroup extends WispGridGroup<Mod> {
+  AuthorModGridGroup() : super('author', 'Author');
+
   @override
   String getGroupName(Mod mod) =>
       mod.findFirstEnabledOrHighestVersion?.modInfo?.author ?? 'No Author';
@@ -40,7 +48,9 @@ class AuthorModGridGroup extends ModGridGroup {
       mod.findFirstEnabledOrHighestVersion?.modInfo?.author?.toLowerCase();
 }
 
-class ModTypeModGridGroup extends ModGridGroup {
+class ModTypeModGridGroup extends WispGridGroup<Mod> {
+  ModTypeModGridGroup() : super('modType', 'Mod Type');
+
   @override
   String getGroupName(Mod mod) {
     final modInfo = mod.findFirstEnabledOrHighestVersion?.modInfo;
@@ -66,7 +76,9 @@ class ModTypeModGridGroup extends ModGridGroup {
   }
 }
 
-class GameVersionModGridGroup extends ModGridGroup {
+class GameVersionModGridGroup extends WispGridGroup<Mod> {
+  GameVersionModGridGroup() : super('gameVersion', 'Game Version');
+
   @override
   String getGroupName(Mod mod) =>
       mod.findFirstEnabledOrHighestVersion?.modInfo?.gameVersion ?? 'Unknown';
@@ -74,14 +86,15 @@ class GameVersionModGridGroup extends ModGridGroup {
   @override
   Comparable getGroupSortValue(Mod mod) => getGroupName(mod).toLowerCase();
 }
-
-extension ModGridGroupEnumExtension on ModGridGroupEnum {
-  ModGridGroup mapToGroup() => // TODO: ModMetadataManager modMetadataManager) =>
-  switch (this) {
-    ModGridGroupEnum.enabledState => EnabledStateModGridGroup(),
-    ModGridGroupEnum.author => AuthorModGridGroup(),
-    // ModGridGroupEnum.category => CategoryModGridGroup(modMetadataManager),
-    ModGridGroupEnum.modType => ModTypeModGridGroup(),
-    ModGridGroupEnum.gameVersion => GameVersionModGridGroup(),
-  };
-}
+//
+// extension ModGridGroupEnumExtension on ModGridGroupEnum {
+//   WispGridGroup mapToGroup() =>
+//       // TODO: ModMetadataManager modMetadataManager) =>
+//       switch (this) {
+//         ModGridGroupEnum.enabledState => EnabledStateModGridGroup(),
+//         ModGridGroupEnum.author => AuthorModGridGroup(),
+//         // ModGridGroupEnum.category => CategoryModGridGroup(modMetadataManager),
+//         ModGridGroupEnum.modType => ModTypeModGridGroup(),
+//         ModGridGroupEnum.gameVersion => GameVersionModGridGroup(),
+//       };
+// }

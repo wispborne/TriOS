@@ -1,12 +1,10 @@
 import 'dart:io';
 
 import 'package:dart_mappable/dart_mappable.dart';
+import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
+import 'package:trios/models/launch_settings.dart';
 import 'package:trios/trios/navigation.dart';
-
-import '../../mod_manager/homebrew_grid/wisp_grid_state.dart';
-import '../../mod_manager/mods_grid_state.dart';
-import '../../models/launch_settings.dart';
-import '../../utils/dart_mappable_utils.dart';
+import 'package:trios/utils/dart_mappable_utils.dart';
 
 part 'settings.mapper.dart';
 
@@ -47,7 +45,6 @@ class Settings with SettingsMappable {
   final DashboardGridModUpdateVisibility dashboardGridModUpdateVisibility;
   @MappableField(hook: SafeDecodeHook())
   final WispGridState modsGridState;
-  final ModsGridState? oldModsGridState;
   final String? customGameExePath;
   final bool useCustomGameExePath;
 
@@ -101,10 +98,8 @@ class Settings with SettingsMappable {
     this.lastStarsectorVersion,
     this.dashboardGridModUpdateVisibility =
         DashboardGridModUpdateVisibility.hideMuted,
-    this.modsGridState = const WispGridState(
-        groupingSetting:
-            GroupingSetting(grouping: ModGridGroupEnum.enabledState)),
-    this.oldModsGridState,
+    this.modsGridState =
+        const WispGridState(groupingSetting: null, columnsState: {}),
     this.customGameExePath,
     this.useCustomGameExePath = false,
     this.doubleClickForModsPanel = true,

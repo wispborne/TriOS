@@ -1,5 +1,6 @@
 import 'package:collection/collection.dart';
 import 'package:dart_mappable/dart_mappable.dart';
+import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/utils/extensions.dart';
 
@@ -8,7 +9,7 @@ import 'mod_variant.dart';
 part 'mod.mapper.dart';
 
 @MappableClass()
-class Mod with ModMappable implements Comparable<Mod> {
+class Mod with ModMappable implements Comparable<Mod>, WispGridItem {
   Mod({
     required this.id,
     required this.isEnabledInGame,
@@ -62,4 +63,7 @@ class Mod with ModMappable implements Comparable<Mod> {
       findFirstEnabledOrHighestVersion?.modInfo.nameOrId.compareTo(
           other.findFirstEnabledOrHighestVersion?.modInfo.nameOrId ?? "") ??
       0;
+
+  @override
+  String get key => id;
 }

@@ -448,12 +448,6 @@ class WispGridColumnMapper extends ClassMapperBase<WispGridColumn> {
       f<Comparable<dynamic>? Function(T)>();
   static const Field<WispGridColumn, Function> _f$getSortValue =
       Field('getSortValue', _$getSortValue, opt: true, arg: _arg$getSortValue);
-  static int _$defaultPosition(WispGridColumn v) => v.defaultPosition;
-  static const Field<WispGridColumn, int> _f$defaultPosition =
-      Field('defaultPosition', _$defaultPosition);
-  static int _$defaultWidth(WispGridColumn v) => v.defaultWidth;
-  static const Field<WispGridColumn, int> _f$defaultWidth =
-      Field('defaultWidth', _$defaultWidth);
   static Function _$headerCellBuilder(WispGridColumn v) =>
       (v as dynamic).headerCellBuilder as Function;
   static dynamic _arg$headerCellBuilder<T>(f) =>
@@ -477,8 +471,6 @@ class WispGridColumnMapper extends ClassMapperBase<WispGridColumn> {
     #name: _f$name,
     #isSortable: _f$isSortable,
     #getSortValue: _f$getSortValue,
-    #defaultPosition: _f$defaultPosition,
-    #defaultWidth: _f$defaultWidth,
     #headerCellBuilder: _f$headerCellBuilder,
     #itemCellBuilder: _f$itemCellBuilder,
     #defaultState: _f$defaultState,
@@ -490,8 +482,6 @@ class WispGridColumnMapper extends ClassMapperBase<WispGridColumn> {
         name: data.dec(_f$name),
         isSortable: data.dec(_f$isSortable),
         getSortValue: data.dec(_f$getSortValue),
-        defaultPosition: data.dec(_f$defaultPosition),
-        defaultWidth: data.dec(_f$defaultWidth),
         headerCellBuilder: data.dec(_f$headerCellBuilder),
         itemCellBuilder: data.dec(_f$itemCellBuilder),
         defaultState: data.dec(_f$defaultState));
@@ -559,8 +549,6 @@ abstract class WispGridColumnCopyWith<$R, $In extends WispGridColumn<T>, $Out,
       String? name,
       bool? isSortable,
       Comparable<dynamic>? Function(T)? getSortValue,
-      int? defaultPosition,
-      int? defaultWidth,
       Widget Function(HeaderBuilderModifiers)? headerCellBuilder,
       Widget Function(T, CellBuilderModifiers)? itemCellBuilder,
       WispGridColumnState? defaultState});
@@ -586,8 +574,6 @@ class _WispGridColumnCopyWithImpl<$R, $Out, T>
           String? name,
           bool? isSortable,
           Object? getSortValue = $none,
-          int? defaultPosition,
-          int? defaultWidth,
           Object? headerCellBuilder = $none,
           Widget Function(T, CellBuilderModifiers)? itemCellBuilder,
           WispGridColumnState? defaultState}) =>
@@ -596,8 +582,6 @@ class _WispGridColumnCopyWithImpl<$R, $Out, T>
         if (name != null) #name: name,
         if (isSortable != null) #isSortable: isSortable,
         if (getSortValue != $none) #getSortValue: getSortValue,
-        if (defaultPosition != null) #defaultPosition: defaultPosition,
-        if (defaultWidth != null) #defaultWidth: defaultWidth,
         if (headerCellBuilder != $none) #headerCellBuilder: headerCellBuilder,
         if (itemCellBuilder != null) #itemCellBuilder: itemCellBuilder,
         if (defaultState != null) #defaultState: defaultState
@@ -608,8 +592,6 @@ class _WispGridColumnCopyWithImpl<$R, $Out, T>
       name: data.get(#name, or: $value.name),
       isSortable: data.get(#isSortable, or: $value.isSortable),
       getSortValue: data.get(#getSortValue, or: $value.getSortValue),
-      defaultPosition: data.get(#defaultPosition, or: $value.defaultPosition),
-      defaultWidth: data.get(#defaultWidth, or: $value.defaultWidth),
       headerCellBuilder:
           data.get(#headerCellBuilder, or: $value.headerCellBuilder),
       itemCellBuilder: data.get(#itemCellBuilder, or: $value.itemCellBuilder),

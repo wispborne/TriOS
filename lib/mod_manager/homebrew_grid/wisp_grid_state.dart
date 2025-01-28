@@ -9,8 +9,6 @@ class WispGridColumn<T> with WispGridColumnMappable {
   final String name;
   final bool isSortable;
   final Comparable? Function(T item)? getSortValue;
-  final int defaultPosition;
-  final int defaultWidth;
   final Widget Function(HeaderBuilderModifiers modifiers)? headerCellBuilder;
   final Widget Function(T item, CellBuilderModifiers modifiers) itemCellBuilder;
   final WispGridColumnState defaultState;
@@ -20,8 +18,6 @@ class WispGridColumn<T> with WispGridColumnMappable {
     required this.name,
     required this.isSortable,
     this.getSortValue,
-    required this.defaultPosition,
-    required this.defaultWidth,
     this.headerCellBuilder,
     required this.itemCellBuilder,
     required this.defaultState,

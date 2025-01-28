@@ -352,6 +352,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                     });
                   },
                   selectedMod: selectedMod,
+                  defaultGrouping: EnabledStateModGridGroup(),
                   groups: [
                     EnabledStateModGridGroup(),
                     AuthorModGridGroup(),
@@ -409,8 +410,6 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                       key: ModGridHeader.favorites.name,
                       name: "Favorite",
                       isSortable: false,
-                      defaultPosition: 0,
-                      defaultWidth: 50,
                       headerCellBuilder: (modifiers) =>
                           buildColumnHeader(ModGridHeader.favorites, modifiers)
                               .child,
@@ -430,8 +429,6 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                       key: ModGridHeader.changeVariantButton.name,
                       name: "Version Select",
                       isSortable: false,
-                      defaultPosition: 1,
-                      defaultWidth: 130,
                       headerCellBuilder: (modifiers) => Container(),
                       itemCellBuilder: (mod, modifiers) => Disable(
                         isEnabled: !isGameRunning,
@@ -459,8 +456,6 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                                   true
                               ? "total conversion"
                               : "other",
-                      defaultPosition: 2,
-                      defaultWidth: 25,
                       headerCellBuilder: (modifiers) => Container(),
                       itemCellBuilder: (mod, modifiers) =>
                           Builder(builder: (context) {
@@ -479,14 +474,12 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                               )
                             : const SizedBox(width: 32, height: 32);
                       }),
-                      defaultState: WispGridColumnState(position: 2, width: 25),
+                      defaultState: WispGridColumnState(position: 2, width: 32),
                     ),
                     WispGridColumn<Mod>(
                       key: ModGridHeader.modIcon.name,
                       name: "Mod Icon",
                       isSortable: false,
-                      defaultPosition: 3,
-                      defaultWidth: 32,
                       headerCellBuilder: (modifiers) => Container(),
                       itemCellBuilder: (mod, modifiers) => ModTypeIcon(
                           modVariant: mod.findFirstEnabledOrHighestVersion!),
@@ -498,8 +491,6 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                       isSortable: true,
                       getSortValue: (mod) => mod
                           .findFirstEnabledOrHighestVersion?.modInfo.nameOrId,
-                      defaultPosition: 4,
-                      defaultWidth: 200,
                       headerCellBuilder: (modifiers) =>
                           buildColumnHeader(ModGridHeader.name, modifiers)
                               .child,
@@ -519,8 +510,6 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                           mod.findFirstEnabledOrHighestVersion?.modInfo.author
                               ?.toLowerCase() ??
                           "",
-                      defaultPosition: 5,
-                      defaultWidth: 200,
                       headerCellBuilder: (modifiers) =>
                           buildColumnHeader(ModGridHeader.author, modifiers)
                               .child,
@@ -551,8 +540,6 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                       isSortable: true,
                       getSortValue: (mod) =>
                           mod.findFirstEnabledOrHighestVersion?.modInfo.version,
-                      defaultPosition: 6,
-                      defaultWidth: 100,
                       itemCellBuilder: (mod, modifiers) => Builder(
                         builder: (context) {
                           final bestVersion =
@@ -581,8 +568,6 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                                   mod.findHighestEnabledVersion?.smolId]
                               ?.maxPossibleBytesForMod ??
                           0,
-                      defaultPosition: 7,
-                      defaultWidth: 110,
                       headerCellBuilder: (modifiers) =>
                           buildColumnHeader(ModGridHeader.vramImpact, modifiers)
                               .child,
@@ -602,8 +587,6 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                           .findFirstEnabledOrHighestVersion
                           ?.modInfo
                           .gameVersion,
-                      defaultPosition: 8,
-                      defaultWidth: 100,
                       headerCellBuilder: (modifiers) => buildColumnHeader(
                               ModGridHeader.gameVersion, modifiers)
                           .child,
@@ -647,8 +630,6 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                               ?.getMergedModMetadata(mod.id)
                               ?.firstSeen ??
                           0,
-                      defaultPosition: 9,
-                      defaultWidth: 150,
                       headerCellBuilder: (modifiers) =>
                           buildColumnHeader(ModGridHeader.firstSeen, modifiers)
                               .child,
@@ -676,8 +657,6 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                               ?.getMergedModMetadata(mod.id)
                               ?.lastEnabled ??
                           0,
-                      defaultPosition: 10,
-                      defaultWidth: 150,
                       headerCellBuilder: (modifiers) => buildColumnHeader(
                               ModGridHeader.lastEnabled, modifiers)
                           .child,

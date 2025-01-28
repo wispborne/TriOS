@@ -31,6 +31,7 @@ class WispGrid<T extends WispGridItem> extends ConsumerStatefulWidget {
   final int? Function(T left, T right)? preSortComparator;
   final Widget Function(T item, RowBuilderModifiers modifiers, Widget child)
       rowBuilder;
+  final WispGridGroup<T>? defaultGrouping;
 
   const WispGrid({
     super.key,
@@ -41,6 +42,7 @@ class WispGrid<T extends WispGridItem> extends ConsumerStatefulWidget {
     required this.rowBuilder,
     this.preSortComparator,
     this.selectedMod,
+    this.defaultGrouping,
   });
 
   @override
@@ -68,7 +70,7 @@ class _WispGridState<T extends WispGridItem>
     final groupingSetting = gridState.groupingSetting;
 
     final grouping = widget.groups.firstWhereOrNull(
-        (grp) => grp.key == groupingSetting?.currentGroupedByKey);
+        (grp) => grp.key == groupingSetting?.currentGroupedByKey) ?? widget.defaultGrouping;
     final activeSortField = gridState.sortedColumnKey ?? columns.first.key;
     // final metadata = ref.watch(AppState.modsMetadata.notifier);
 

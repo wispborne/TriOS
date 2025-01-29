@@ -301,6 +301,11 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       opt: true,
       def: const WispGridState(groupingSetting: null, columnsState: {}),
       hook: SafeDecodeHook());
+  static WispGridState _$weaponsGridState(Settings v) => v.weaponsGridState;
+  static const Field<Settings, WispGridState> _f$weaponsGridState = Field(
+      'weaponsGridState', _$weaponsGridState,
+      opt: true,
+      def: const WispGridState(groupingSetting: null, columnsState: {}));
   static String? _$customGameExePath(Settings v) => v.customGameExePath;
   static const Field<Settings, String> _f$customGameExePath =
       Field('customGameExePath', _$customGameExePath, opt: true);
@@ -403,6 +408,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #lastStarsectorVersion: _f$lastStarsectorVersion,
     #dashboardGridModUpdateVisibility: _f$dashboardGridModUpdateVisibility,
     #modsGridState: _f$modsGridState,
+    #weaponsGridState: _f$weaponsGridState,
     #customGameExePath: _f$customGameExePath,
     #useCustomGameExePath: _f$useCustomGameExePath,
     #doubleClickForModsPanel: _f$doubleClickForModsPanel,
@@ -448,6 +454,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
         dashboardGridModUpdateVisibility:
             data.dec(_f$dashboardGridModUpdateVisibility),
         modsGridState: data.dec(_f$modsGridState),
+        weaponsGridState: data.dec(_f$weaponsGridState),
         customGameExePath: data.dec(_f$customGameExePath),
         useCustomGameExePath: data.dec(_f$useCustomGameExePath),
         doubleClickForModsPanel: data.dec(_f$doubleClickForModsPanel),
@@ -522,6 +529,7 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
   LaunchSettingsCopyWith<$R, LaunchSettings, LaunchSettings> get launchSettings;
   WispGridStateCopyWith<$R, WispGridState, WispGridState> get modsGridState;
+  WispGridStateCopyWith<$R, WispGridState, WispGridState> get weaponsGridState;
   $R call(
       {Directory? gameDir,
       Directory? gameCoreDir,
@@ -544,6 +552,7 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
       String? lastStarsectorVersion,
       DashboardGridModUpdateVisibility? dashboardGridModUpdateVisibility,
       WispGridState? modsGridState,
+      WispGridState? weaponsGridState,
       String? customGameExePath,
       bool? useCustomGameExePath,
       bool? doubleClickForModsPanel,
@@ -582,6 +591,10 @@ class _SettingsCopyWithImpl<$R, $Out>
   WispGridStateCopyWith<$R, WispGridState, WispGridState> get modsGridState =>
       $value.modsGridState.copyWith.$chain((v) => call(modsGridState: v));
   @override
+  WispGridStateCopyWith<$R, WispGridState, WispGridState>
+      get weaponsGridState => $value.weaponsGridState.copyWith
+          .$chain((v) => call(weaponsGridState: v));
+  @override
   $R call(
           {Object? gameDir = $none,
           Object? gameCoreDir = $none,
@@ -604,6 +617,7 @@ class _SettingsCopyWithImpl<$R, $Out>
           Object? lastStarsectorVersion = $none,
           DashboardGridModUpdateVisibility? dashboardGridModUpdateVisibility,
           WispGridState? modsGridState,
+          WispGridState? weaponsGridState,
           Object? customGameExePath = $none,
           bool? useCustomGameExePath,
           bool? doubleClickForModsPanel,
@@ -651,6 +665,7 @@ class _SettingsCopyWithImpl<$R, $Out>
         if (dashboardGridModUpdateVisibility != null)
           #dashboardGridModUpdateVisibility: dashboardGridModUpdateVisibility,
         if (modsGridState != null) #modsGridState: modsGridState,
+        if (weaponsGridState != null) #weaponsGridState: weaponsGridState,
         if (customGameExePath != $none) #customGameExePath: customGameExePath,
         if (useCustomGameExePath != null)
           #useCustomGameExePath: useCustomGameExePath,
@@ -715,6 +730,8 @@ class _SettingsCopyWithImpl<$R, $Out>
       dashboardGridModUpdateVisibility: data.get(#dashboardGridModUpdateVisibility,
           or: $value.dashboardGridModUpdateVisibility),
       modsGridState: data.get(#modsGridState, or: $value.modsGridState),
+      weaponsGridState:
+          data.get(#weaponsGridState, or: $value.weaponsGridState),
       customGameExePath:
           data.get(#customGameExePath, or: $value.customGameExePath),
       useCustomGameExePath:
@@ -737,8 +754,7 @@ class _SettingsCopyWithImpl<$R, $Out>
           data.get(#allowCrashReporting, or: $value.allowCrashReporting),
       updateToPrereleases:
           data.get(#updateToPrereleases, or: $value.updateToPrereleases),
-      autoEnableAndDisableDependencies:
-          data.get(#autoEnableAndDisableDependencies, or: $value.autoEnableAndDisableDependencies),
+      autoEnableAndDisableDependencies: data.get(#autoEnableAndDisableDependencies, or: $value.autoEnableAndDisableDependencies),
       enableLauncherPrecheck: data.get(#enableLauncherPrecheck, or: $value.enableLauncherPrecheck),
       modUpdateBehavior: data.get(#modUpdateBehavior, or: $value.modUpdateBehavior),
       checkIfGameIsRunning: data.get(#checkIfGameIsRunning, or: $value.checkIfGameIsRunning),

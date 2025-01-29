@@ -79,6 +79,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
     final allMods = ref.watch(AppState.mods);
     final isGameRunning = ref.watch(AppState.isGameRunning).value == true;
     final theme = Theme.of(context);
+    final gridState = ref.watch(appSettings.select((s) => s.modsGridState));
 
     final query = _searchController.value.text;
     final modsMatchingSearch = searchMods(allMods, query) ?? [];
@@ -338,6 +339,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
               child: Padding(
                 padding: const EdgeInsets.only(top: 4),
                 child: WispGrid<Mod>(
+                  gridState: gridState,
                   onLoaded: (controller) {
                     setState(() {
                       this.controller = controller;
@@ -353,7 +355,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                       }
                     });
                   },
-                  selectedMod: selectedMod,
+                  selectedItem: selectedMod,
                   defaultGrouping: EnabledStateModGridGroup(),
                   groups: [
                     EnabledStateModGridGroup(),
@@ -399,27 +401,32 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
 
                     return Container(
                       decoration: BoxDecoration(color: backgroundColor),
-                      child: ContextMenuRegion(
-                        contextMenu: (controller!
-                                    .checkedItemIdsReadonly.length) >
-                                1
-                            ? buildModBulkActionContextMenu(
-                                (controller!.lastDisplayedItemsReadonly)
-                                    .where((mod) => controller!
-                                        .checkedItemIdsReadonly
-                                        .contains(mod.id))
-                                    .toList(),
-                                ref,
-                                context)
-                            : buildModContextMenu(mod, ref, context,
-                                showSwapToVersion: true),
-                        child: Column(
-                          children: [
-                            child,
-                            buildMissingDependencyButton(
-                                (mod).findFirstEnabled, allMods)
-                          ],
-                        ),
+                      child: Builder(
+                        builder: (context) {
+                          if (controller == null) return child;
+                          return ContextMenuRegion(
+                            contextMenu: (controller!
+                                        .checkedItemIdsReadonly.length) >
+                                    1
+                                ? buildModBulkActionContextMenu(
+                                    (controller!.lastDisplayedItemsReadonly)
+                                        .where((mod) => controller!
+                                            .checkedItemIdsReadonly
+                                            .contains(mod.id))
+                                        .toList(),
+                                    ref,
+                                    context)
+                                : buildModContextMenu(mod, ref, context,
+                                    showSwapToVersion: true),
+                            child: Column(
+                              children: [
+                                child,
+                                buildMissingDependencyButton(
+                                    (mod).findFirstEnabled, allMods)
+                              ],
+                            ),
+                          );
+                        }
                       ),
                     );
                   },

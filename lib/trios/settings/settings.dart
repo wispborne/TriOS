@@ -45,6 +45,7 @@ class Settings with SettingsMappable {
   final DashboardGridModUpdateVisibility dashboardGridModUpdateVisibility;
   @MappableField(hook: SafeDecodeHook())
   final WispGridState modsGridState;
+  final WispGridState weaponsGridState;
   final String? customGameExePath;
   final bool useCustomGameExePath;
 
@@ -99,6 +100,8 @@ class Settings with SettingsMappable {
     this.dashboardGridModUpdateVisibility =
         DashboardGridModUpdateVisibility.hideMuted,
     this.modsGridState =
+        const WispGridState(groupingSetting: null, columnsState: {}),
+    this.weaponsGridState =
         const WispGridState(groupingSetting: null, columnsState: {}),
     this.customGameExePath,
     this.useCustomGameExePath = false,

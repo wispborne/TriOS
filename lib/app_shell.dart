@@ -24,7 +24,7 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/platform_specific.dart';
 import 'package:trios/vram_estimator/vram_estimator.dart';
-import 'package:trios/weaponViewer/weaponPage.dart';
+import 'package:trios/weaponViewer/weaponPageWispGrid.dart';
 import 'package:trios/widgets/blur.dart';
 import 'package:trios/widgets/changelog_viewer.dart';
 import 'package:trios/widgets/dropdown_with_icon.dart';

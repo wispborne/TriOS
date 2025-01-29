@@ -1,16 +1,17 @@
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:flutter/material.dart';
+import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 
 part 'wisp_grid_state.mapper.dart';
 
 @MappableClass()
-class WispGridColumn<T> with WispGridColumnMappable {
+class WispGridColumn<T extends WispGridItem> with WispGridColumnMappable {
   final String key;
   final String name;
   final bool isSortable;
   final Comparable? Function(T item)? getSortValue;
   final Widget Function(HeaderBuilderModifiers modifiers)? headerCellBuilder;
-  final Widget Function(T item, CellBuilderModifiers modifiers) itemCellBuilder;
+  final Widget Function(T item, CellBuilderModifiers modifiers)? itemCellBuilder;
   final WispGridColumnState defaultState;
 
   const WispGridColumn({
@@ -19,7 +20,7 @@ class WispGridColumn<T> with WispGridColumnMappable {
     required this.isSortable,
     this.getSortValue,
     this.headerCellBuilder,
-    required this.itemCellBuilder,
+    this.itemCellBuilder,
     required this.defaultState,
   }) : assert(!isSortable || getSortValue != null);
 }

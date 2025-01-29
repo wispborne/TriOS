@@ -19,15 +19,15 @@ import 'package:trios/widgets/moving_tooltip.dart';
 
 import '../widgets/MultiSplitViewMixin.dart';
 
-class WeaponPage extends ConsumerStatefulWidget {
-  const WeaponPage({super.key});
+class WeaponPagePlutoGrid extends ConsumerStatefulWidget {
+  const WeaponPagePlutoGrid({super.key});
 
   @override
-  ConsumerState<WeaponPage> createState() => _WeaponPageState();
+  ConsumerState<WeaponPagePlutoGrid> createState() => _WeaponPagePlutoGridState();
 }
 
-class _WeaponPageState extends ConsumerState<WeaponPage>
-    with AutomaticKeepAliveClientMixin<WeaponPage>, MultiSplitViewMixin {
+class _WeaponPagePlutoGridState extends ConsumerState<WeaponPagePlutoGrid>
+    with AutomaticKeepAliveClientMixin<WeaponPagePlutoGrid>, MultiSplitViewMixin {
   @override
   bool get wantKeepAlive => true;
   final SearchController _searchController = SearchController();

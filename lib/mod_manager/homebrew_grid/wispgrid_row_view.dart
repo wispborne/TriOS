@@ -73,13 +73,14 @@ class _WispGridRowViewState<T extends WispGridItem>
                         return _RowItemContainer(
                             height: height,
                             width: state.width,
-                            child: gridColumn.itemCellBuilder(
-                                item,
-                                CellBuilderModifiers(
-                                  isHovering: isHovering,
-                                  isRowChecked: widget.isRowChecked,
-                                  columnState: state,
-                                )));
+                            child: gridColumn.itemCellBuilder?.call(
+                                    item,
+                                    CellBuilderModifiers(
+                                      isHovering: isHovering,
+                                      isRowChecked: widget.isRowChecked,
+                                      columnState: state,
+                                    )) ??
+                                Text(item.toString()));
                       });
                     }).toList()),
                     SizedBox(width: WispGrid.gridRowSpacing),

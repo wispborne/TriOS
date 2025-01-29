@@ -1,12 +1,16 @@
 // weapon.dart
 
 import 'package:dart_mappable/dart_mappable.dart';
+import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/models/mod_variant.dart';
 
 part 'weapon.mapper.dart';
 
 @MappableClass()
-class Weapon with WeaponMappable {
+class Weapon with WeaponMappable implements WispGridItem {
+  @override
+  String get key => id;
+
   final String id;
   final String? name;
   final int? tier;

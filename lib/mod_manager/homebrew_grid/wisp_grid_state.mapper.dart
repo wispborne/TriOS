@@ -424,6 +424,7 @@ class WispGridColumnMapper extends ClassMapperBase<WispGridColumn> {
   static WispGridColumnMapper? _instance;
   static WispGridColumnMapper ensureInitialized() {
     if (_instance == null) {
+      MapperBase.addType<WispGridItem>();
       MapperContainer.globals.use(_instance = WispGridColumnMapper._());
       WispGridColumnStateMapper.ensureInitialized();
     }
@@ -433,7 +434,8 @@ class WispGridColumnMapper extends ClassMapperBase<WispGridColumn> {
   @override
   final String id = 'WispGridColumn';
   @override
-  Function get typeFactory => <T>(f) => f<WispGridColumn<T>>();
+  Function get typeFactory =>
+      <T extends WispGridItem>(f) => f<WispGridColumn<T>>();
 
   static String _$key(WispGridColumn v) => v.key;
   static const Field<WispGridColumn, String> _f$key = Field('key', _$key);
@@ -444,23 +446,24 @@ class WispGridColumnMapper extends ClassMapperBase<WispGridColumn> {
       Field('isSortable', _$isSortable);
   static Function _$getSortValue(WispGridColumn v) =>
       (v as dynamic).getSortValue as Function;
-  static dynamic _arg$getSortValue<T>(f) =>
+  static dynamic _arg$getSortValue<T extends WispGridItem>(f) =>
       f<Comparable<dynamic>? Function(T)>();
   static const Field<WispGridColumn, Function> _f$getSortValue =
       Field('getSortValue', _$getSortValue, opt: true, arg: _arg$getSortValue);
   static Function _$headerCellBuilder(WispGridColumn v) =>
       (v as dynamic).headerCellBuilder as Function;
-  static dynamic _arg$headerCellBuilder<T>(f) =>
+  static dynamic _arg$headerCellBuilder<T extends WispGridItem>(f) =>
       f<Widget Function(HeaderBuilderModifiers)>();
   static const Field<WispGridColumn, Function> _f$headerCellBuilder = Field(
       'headerCellBuilder', _$headerCellBuilder,
       opt: true, arg: _arg$headerCellBuilder);
   static Function _$itemCellBuilder(WispGridColumn v) =>
       (v as dynamic).itemCellBuilder as Function;
-  static dynamic _arg$itemCellBuilder<T>(f) =>
+  static dynamic _arg$itemCellBuilder<T extends WispGridItem>(f) =>
       f<Widget Function(T, CellBuilderModifiers)>();
-  static const Field<WispGridColumn, Function> _f$itemCellBuilder =
-      Field('itemCellBuilder', _$itemCellBuilder, arg: _arg$itemCellBuilder);
+  static const Field<WispGridColumn, Function> _f$itemCellBuilder = Field(
+      'itemCellBuilder', _$itemCellBuilder,
+      opt: true, arg: _arg$itemCellBuilder);
   static WispGridColumnState _$defaultState(WispGridColumn v) => v.defaultState;
   static const Field<WispGridColumn, WispGridColumnState> _f$defaultState =
       Field('defaultState', _$defaultState);
@@ -476,7 +479,8 @@ class WispGridColumnMapper extends ClassMapperBase<WispGridColumn> {
     #defaultState: _f$defaultState,
   };
 
-  static WispGridColumn<T> _instantiate<T>(DecodingData data) {
+  static WispGridColumn<T> _instantiate<T extends WispGridItem>(
+      DecodingData data) {
     return WispGridColumn(
         key: data.dec(_f$key),
         name: data.dec(_f$name),
@@ -490,16 +494,17 @@ class WispGridColumnMapper extends ClassMapperBase<WispGridColumn> {
   @override
   final Function instantiate = _instantiate;
 
-  static WispGridColumn<T> fromMap<T>(Map<String, dynamic> map) {
+  static WispGridColumn<T> fromMap<T extends WispGridItem>(
+      Map<String, dynamic> map) {
     return ensureInitialized().decodeMap<WispGridColumn<T>>(map);
   }
 
-  static WispGridColumn<T> fromJson<T>(String json) {
+  static WispGridColumn<T> fromJson<T extends WispGridItem>(String json) {
     return ensureInitialized().decodeJson<WispGridColumn<T>>(json);
   }
 }
 
-mixin WispGridColumnMappable<T> {
+mixin WispGridColumnMappable<T extends WispGridItem> {
   String toJson() {
     return WispGridColumnMapper.ensureInitialized()
         .encodeJson<WispGridColumn<T>>(this as WispGridColumn<T>);
@@ -533,7 +538,7 @@ mixin WispGridColumnMappable<T> {
   }
 }
 
-extension WispGridColumnValueCopy<$R, $Out, T>
+extension WispGridColumnValueCopy<$R, $Out, T extends WispGridItem>
     on ObjectCopyWith<$R, WispGridColumn<T>, $Out> {
   WispGridColumnCopyWith<$R, WispGridColumn<T>, $Out, T>
       get $asWispGridColumn =>
@@ -541,7 +546,7 @@ extension WispGridColumnValueCopy<$R, $Out, T>
 }
 
 abstract class WispGridColumnCopyWith<$R, $In extends WispGridColumn<T>, $Out,
-    T> implements ClassCopyWith<$R, $In, $Out> {
+    T extends WispGridItem> implements ClassCopyWith<$R, $In, $Out> {
   WispGridColumnStateCopyWith<$R, WispGridColumnState, WispGridColumnState>
       get defaultState;
   $R call(
@@ -556,7 +561,7 @@ abstract class WispGridColumnCopyWith<$R, $In extends WispGridColumn<T>, $Out,
       Then<$Out2, $R2> t);
 }
 
-class _WispGridColumnCopyWithImpl<$R, $Out, T>
+class _WispGridColumnCopyWithImpl<$R, $Out, T extends WispGridItem>
     extends ClassCopyWithBase<$R, WispGridColumn<T>, $Out>
     implements WispGridColumnCopyWith<$R, WispGridColumn<T>, $Out, T> {
   _WispGridColumnCopyWithImpl(super.value, super.then, super.then2);
@@ -575,7 +580,7 @@ class _WispGridColumnCopyWithImpl<$R, $Out, T>
           bool? isSortable,
           Object? getSortValue = $none,
           Object? headerCellBuilder = $none,
-          Widget Function(T, CellBuilderModifiers)? itemCellBuilder,
+          Object? itemCellBuilder = $none,
           WispGridColumnState? defaultState}) =>
       $apply(FieldCopyWithData({
         if (key != null) #key: key,
@@ -583,7 +588,7 @@ class _WispGridColumnCopyWithImpl<$R, $Out, T>
         if (isSortable != null) #isSortable: isSortable,
         if (getSortValue != $none) #getSortValue: getSortValue,
         if (headerCellBuilder != $none) #headerCellBuilder: headerCellBuilder,
-        if (itemCellBuilder != null) #itemCellBuilder: itemCellBuilder,
+        if (itemCellBuilder != $none) #itemCellBuilder: itemCellBuilder,
         if (defaultState != null) #defaultState: defaultState
       }));
   @override

@@ -13,6 +13,7 @@ import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 
+// TODO use a keyfinder function instead of requiring implementing WispGridItem
 abstract class WispGridItem {
   String get key;
 }
@@ -21,8 +22,8 @@ class WispGrid<T extends WispGridItem> extends ConsumerStatefulWidget {
   static const gridRowSpacing = 8.0;
   static const lightTextOpacity = 0.8;
   final List<T?> items;
-  final Function(dynamic mod) onRowSelected;
-  final T? selectedMod;
+  final Function(T item)? onRowSelected;
+  final T? selectedItem;
   final List<WispGridColumn<T>> columns;
   final List<WispGridGroup<T>> groups;
   final int? Function(T left, T right)? preSortComparator;
@@ -30,19 +31,28 @@ class WispGrid<T extends WispGridItem> extends ConsumerStatefulWidget {
       rowBuilder;
   final WispGridGroup<T>? defaultGrouping;
   final void Function(WispGridController<T> controller)? onLoaded;
+  final WispGridState gridState;
 
   const WispGrid({
     super.key,
     required this.items,
-    required this.onRowSelected,
     required this.columns,
-    required this.groups,
-    required this.rowBuilder,
+    this.onRowSelected,
+    this.groups = const [],
+    this.rowBuilder = defaultRowBuilder,
     this.preSortComparator,
-    this.selectedMod,
+    this.selectedItem,
     this.defaultGrouping,
     this.onLoaded,
+    required this.gridState,
   });
+
+  static Widget defaultRowBuilder(
+    WispGridItem item,
+    RowBuilderModifiers modifiers,
+    Widget child,
+  ) =>
+      child;
 
   @override
   ConsumerState<WispGrid<T>> createState() => _WispGridState<T>();
@@ -72,6 +82,7 @@ class _WispGridState<T extends WispGridItem>
   final Set<String> _checkedItemIds = {};
 
   List<WispGridColumn<T>> get columns => widget.columns;
+  WispGridState get gridState => widget.gridState;
 
   /// Used for shift-clicking to select a range.
   String? _lastCheckedItemId;
@@ -89,7 +100,6 @@ class _WispGridState<T extends WispGridItem>
 
   @override
   Widget build(BuildContext context) {
-    final gridState = ref.watch(appSettings.select((s) => s.modsGridState));
     final groupingSetting = gridState.groupingSetting;
 
     final grouping = widget.groups.firstWhereOrNull(
@@ -108,11 +118,17 @@ class _WispGridState<T extends WispGridItem>
               return preSortResult;
             }
 
-            final sortResult =
-                _getSortValueForItem(left, activeSortField, columns)?.compareTo(
-                        _getSortValueForItem(
-                            right, activeSortField, columns)) ??
-                    0;
+            final leftValue =
+                _getSortValueForItem(left, activeSortField, columns);
+            final rightValue =
+                _getSortValueForItem(right, activeSortField, columns);
+
+            final sortResult = (leftValue != null && rightValue != null)
+                ? leftValue.compareTo(rightValue)
+                : (leftValue == null && rightValue == null)
+                    ? 0
+                    : (leftValue == null ? -1 : 1);
+
             return gridState.isSortDescending ? sortResult * -1 : sortResult;
           },
         )
@@ -186,8 +202,8 @@ class _WispGridState<T extends WispGridItem>
                                   ctrlPressed: true,
                                 );
                               } else {
-                                if (widget.selectedMod != null) {
-                                  widget.onRowSelected(item);
+                                if (widget.selectedItem != null) {
+                                  widget.onRowSelected?.call(item);
                                 }
                                 _onRowCheck(
                                   modId: item.key,
@@ -197,7 +213,7 @@ class _WispGridState<T extends WispGridItem>
                               }
                             },
                             onDoubleTapped: () {
-                              widget.onRowSelected(item);
+                              widget.onRowSelected?.call(item);
                             },
                             isRowChecked: _checkedItemIds.contains(item.key),
                           ))

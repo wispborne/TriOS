@@ -41,12 +41,11 @@ import 'package:url_launcher/url_launcher.dart';
 import '../mod_profiles/mod_profiles_manager.dart';
 import '../mod_profiles/models/mod_profile.dart';
 import '../utils/search.dart';
-import 'homebrew_grid/copy_mod_list_button.dart';
-import 'homebrew_grid/filter_mods_search_view.dart';
-import 'homebrew_grid/vram_checker_explanation.dart';
+import 'copy_mod_list_button.dart';
+import 'filter_mods_search_view.dart';
 import 'homebrew_grid/wispgrid_group.dart';
-import 'homebrew_grid/wispgrid_mod_header_row_view.dart';
-import 'homebrew_grid/wispgrid_mod_row_view.dart';
+import 'homebrew_grid/wispgrid_header_row_view.dart';
+import 'vram_checker_explanation.dart';
 
 final modsGridSearchQuery = StateProvider.autoDispose<String>((ref) => "");
 
@@ -65,6 +64,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
   final _searchController = SearchController();
   AnimationController? animationController;
   List<Mod> filteredMods = [];
+  WispGridController<Mod>? controller;
 
   @override
   void initState() {
@@ -80,13 +80,10 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
     final isGameRunning = ref.watch(AppState.isGameRunning).value == true;
     final theme = Theme.of(context);
 
-    // _searchController.value = TextEditingValue(text: ref.watch(searchQuery));
     final query = _searchController.value.text;
     final modsMatchingSearch = searchMods(allMods, query) ?? [];
     final modsMetadata = ref.watch(AppState.modsMetadata).valueOrNull;
     final vramEstState = ref.watch(AppState.vramEstimatorProvider);
-    final lightTextColor =
-        theme.colorScheme.onSurface.withOpacity(WispGrid.lightTextOpacity);
 
     return Stack(
       children: [
@@ -341,6 +338,11 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
               child: Padding(
                 padding: const EdgeInsets.only(top: 4),
                 child: WispGrid<Mod>(
+                  onLoaded: (controller) {
+                    setState(() {
+                      this.controller = controller;
+                    });
+                  },
                   items: modsMatchingSearch,
                   onRowSelected: (mod) {
                     setState(() {
@@ -375,11 +377,6 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                   },
                   rowBuilder: (mod, modifiers, child) {
                     final isHovering = modifiers.isHovering ?? false;
-                    final metadata = ref
-                        .watch(AppState.modsMetadata)
-                        .valueOrNull
-                        ?.getMergedModMetadata(mod.id);
-                    final theme = Theme.of(context);
                     final modMetadata = ref
                         .watch(AppState.modsMetadata)
                         .valueOrNull
@@ -402,7 +399,28 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
 
                     return Container(
                       decoration: BoxDecoration(color: backgroundColor),
-                      child: child,
+                      child: ContextMenuRegion(
+                        contextMenu: (controller!
+                                    .checkedItemIdsReadonly.length) >
+                                1
+                            ? buildModBulkActionContextMenu(
+                                (controller!.lastDisplayedItemsReadonly)
+                                    .where((mod) => controller!
+                                        .checkedItemIdsReadonly
+                                        .contains(mod.id))
+                                    .toList(),
+                                ref,
+                                context)
+                            : buildModContextMenu(mod, ref, context,
+                                showSwapToVersion: true),
+                        child: Column(
+                          children: [
+                            child,
+                            buildMissingDependencyButton(
+                                (mod).findFirstEnabled, allMods)
+                          ],
+                        ),
+                      ),
                     );
                   },
                   columns: [
@@ -1287,6 +1305,53 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
           }).toList(),
         ],
       ),
+    );
+  }
+}
+
+class FavoriteButton extends ConsumerWidget {
+  const FavoriteButton({
+    super.key,
+    required this.mod,
+    required this.isRowHighlighted,
+    required this.isFavorited,
+  });
+
+  final Mod mod;
+  final bool isRowHighlighted;
+  final bool isFavorited;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        if (isFavorited || isRowHighlighted)
+          Padding(
+            padding: const EdgeInsets.only(right: 0.0),
+            child: MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                onTap: () {
+                  ref
+                      .read(AppState.modsMetadata.notifier)
+                      .updateModUserMetadata(
+                          mod.id,
+                          (oldMetadata) => oldMetadata.copyWith(
+                                isFavorited:
+                                    !(oldMetadata.isFavorited ?? false),
+                              ));
+                },
+                child: Icon(
+                  isFavorited ? Icons.favorite : Icons.favorite_border,
+                  color: isFavorited
+                      ? Theme.of(context).colorScheme.secondary.withOpacity(0.6)
+                      : Theme.of(context).colorScheme.primary.withOpacity(0.6),
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

@@ -6,12 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ktx/collections.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_group.dart';
-import 'package:trios/mod_manager/homebrew_grid/wispgrid_mod_group_row.dart';
-import 'package:trios/mod_manager/homebrew_grid/wispgrid_mod_header_row_view.dart';
-import 'package:trios/mod_manager/homebrew_grid/wispgrid_mod_row_view.dart';
-import 'package:trios/mod_manager/mod_context_menu.dart';
-import 'package:trios/models/mod.dart';
-import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
+import 'package:trios/mod_manager/homebrew_grid/wispgrid_group_row.dart';
+import 'package:trios/mod_manager/homebrew_grid/wispgrid_header_row_view.dart';
+import 'package:trios/mod_manager/homebrew_grid/wispgrid_row_view.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
@@ -32,6 +29,7 @@ class WispGrid<T extends WispGridItem> extends ConsumerStatefulWidget {
   final Widget Function(T item, RowBuilderModifiers modifiers, Widget child)
       rowBuilder;
   final WispGridGroup<T>? defaultGrouping;
+  final void Function(WispGridController<T> controller)? onLoaded;
 
   const WispGrid({
     super.key,
@@ -43,10 +41,27 @@ class WispGrid<T extends WispGridItem> extends ConsumerStatefulWidget {
     this.preSortComparator,
     this.selectedMod,
     this.defaultGrouping,
+    this.onLoaded,
   });
 
   @override
   ConsumerState<WispGrid<T>> createState() => _WispGridState<T>();
+}
+
+/// Provides readonly access to the grid's internal state.
+class WispGridController<T extends WispGridItem> {
+  final _WispGridState<T> _wispGridState;
+
+  /// The currently checked item ids. Modifying this will do nothing.
+  Set<String> get checkedItemIdsReadonly =>
+      _wispGridState._checkedItemIds.toSet();
+
+  /// The last displayed items. Modifying this will do nothing, though modifying the items themselves will work (please don't).
+  List<T> get lastDisplayedItemsReadonly =>
+      _wispGridState._lastDisplayedItems.toList();
+
+  WispGridController(ConsumerState<WispGrid<T>> wispGridState)
+      : _wispGridState = wispGridState as _WispGridState<T>;
 }
 
 class _WispGridState<T extends WispGridItem>
@@ -63,16 +78,24 @@ class _WispGridState<T extends WispGridItem>
   List<T> _lastDisplayedItems = [];
 
   @override
-  Widget build(BuildContext context) {
-    // final vramEstState = ref.watch(AppState.vramEstimatorProvider);
+  void initState() {
+    super.initState();
+    if (widget.onLoaded == null) return;
 
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      widget.onLoaded!(WispGridController(this));
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final gridState = ref.watch(appSettings.select((s) => s.modsGridState));
     final groupingSetting = gridState.groupingSetting;
 
     final grouping = widget.groups.firstWhereOrNull(
-        (grp) => grp.key == groupingSetting?.currentGroupedByKey) ?? widget.defaultGrouping;
+            (grp) => grp.key == groupingSetting?.currentGroupedByKey) ??
+        widget.defaultGrouping;
     final activeSortField = gridState.sortedColumnKey ?? columns.first.key;
-    // final metadata = ref.watch(AppState.modsMetadata.notifier);
 
     final items = widget.items
         .whereType<T>()
@@ -101,7 +124,7 @@ class _WispGridState<T extends WispGridItem>
         .toList();
     _lastDisplayedItems = items.flatMap((entry) => entry.value).toList();
 
-    bool isFirstGroup = true; // dumb but works
+    int index = 0;
 
     final displayedMods = [
           SizedBox(
@@ -123,33 +146,61 @@ class _WispGridState<T extends WispGridItem>
               final groupSortValue = entry.key;
               final itemsInGroup = entry.value;
               final isCollapsed = collapseStates[groupSortValue] == true;
-              final groupName = grouping == null
-                  ? null
-                  : itemsInGroup.firstOrNull?.let(grouping.getGroupName) ?? "";
 
               final widgets = <Widget>[];
 
-              if (groupName != null) {
-                final header = WispGridModGroupRowView(
-                  groupName: groupName,
-                  // TODO need to generify WispGridModGroupRowView
-                  modsInGroup: itemsInGroup as List<Mod>,
+              if (grouping != null) {
+                final header = WispGridGroupRowView(
+                  grouping: grouping,
+                  itemsInGroup: itemsInGroup,
                   isCollapsed: isCollapsed,
                   setCollapsed: (isCollapsed) {
                     setState(() {
                       collapseStates[groupSortValue] = isCollapsed;
                     });
                   },
-                  isFirstGroupShown: isFirstGroup,
+                  shownIndex: index++,
                   columns: widget.columns,
                 );
                 widgets.add(header);
               }
-              isFirstGroup = false;
               final items = !isCollapsed
                   ? itemsInGroup
-                      // TODO need to generify buildWrappedRow
-                      .map((item) => buildWrappedRow(item, context))
+                      .map((item) => WispGridRowView<T>(
+                            item: item,
+                            gridState: gridState,
+                            columns: widget.columns,
+                            rowBuilder: widget.rowBuilder,
+                            onTapped: () {
+                              if (HardwareKeyboard.instance.isShiftPressed) {
+                                _onRowCheck(
+                                  modId: item.key,
+                                  shiftPressed: true,
+                                  ctrlPressed: false,
+                                );
+                              } else if (HardwareKeyboard
+                                  .instance.isControlPressed) {
+                                _onRowCheck(
+                                  modId: item.key,
+                                  shiftPressed: false,
+                                  ctrlPressed: true,
+                                );
+                              } else {
+                                if (widget.selectedMod != null) {
+                                  widget.onRowSelected(item);
+                                }
+                                _onRowCheck(
+                                  modId: item.key,
+                                  shiftPressed: false,
+                                  ctrlPressed: false,
+                                );
+                              }
+                            },
+                            onDoubleTapped: () {
+                              widget.onRowSelected(item);
+                            },
+                            isRowChecked: _checkedItemIds.contains(item.key),
+                          ))
                       .toList()
                   : <Widget>[];
               widgets.addAll(items);
@@ -190,7 +241,7 @@ class _WispGridState<T extends WispGridItem>
                   itemBuilder: (context, index) {
                     final item = displayedMods[index];
 
-                    if (item is WispGridModGroupRowView) {
+                    if (item is WispGridGroupRowView) {
                       return Row(
                         children: [
                           Padding(
@@ -217,63 +268,63 @@ class _WispGridState<T extends WispGridItem>
     );
   }
 
-  ContextMenuRegion buildWrappedRow(T item, BuildContext context) {
-    // Disabling the click for mods panel functionality because
-    // having the double-click introduces a delay on all single-clicks in the row,
-    // and single-clicking for the side panel is too annoying.
-    // TODO see if there's a way to stop the onDoubleTap from delaying single-clicks
-    // on the version dropdown popup.
-    final doubleClickForModsPanel = true;
-    // ref.watch(appSettings.select((s) => s.doubleClickForModsPanel));
-    final mod = item as Mod; // todo
-
-    return ContextMenuRegion(
-      contextMenu: _checkedItemIds.length > 1
-          ? buildModBulkActionContextMenu(
-              (_lastDisplayedItems as List<Mod>)
-                  .where((mod) => _checkedItemIds.contains(mod.id))
-                  .toList(),
-              ref,
-              context)
-          : buildModContextMenu(mod, ref, context, showSwapToVersion: true),
-      child: WispGridRowView<T>(
-        mod: item,
-        columns: widget.columns,
-        rowBuilder: widget.rowBuilder,
-        onTapped: () {
-          if (HardwareKeyboard.instance.isShiftPressed) {
-            _onRowCheck(
-              modId: mod.id,
-              shiftPressed: true,
-              ctrlPressed: false,
-            );
-          } else if (HardwareKeyboard.instance.isControlPressed) {
-            _onRowCheck(
-              modId: mod.id,
-              shiftPressed: false,
-              ctrlPressed: true,
-            );
-          } else {
-            if (!doubleClickForModsPanel || widget.selectedMod != null) {
-              widget.onRowSelected(mod);
-            }
-            _onRowCheck(
-              modId: mod.id,
-              shiftPressed: false,
-              ctrlPressed: false,
-            );
-          }
-        },
-        onDoubleTapped: () {
-          if (doubleClickForModsPanel) {
-            widget.onRowSelected(mod);
-          }
-        },
-        // onModRowSelected: widget.onModRowSelected,
-        isRowChecked: _checkedItemIds.contains(mod.id),
-      ),
-    );
-  }
+  // ContextMenuRegion buildWrappedRow(T item, BuildContext context) {
+  //   // Disabling the click for mods panel functionality because
+  //   // having the double-click introduces a delay on all single-clicks in the row,
+  //   // and single-clicking for the side panel is too annoying.
+  //   // TODO see if there's a way to stop the onDoubleTap from delaying single-clicks
+  //   // on the version dropdown popup.
+  //   final doubleClickForModsPanel = true;
+  //   // ref.watch(appSettings.select((s) => s.doubleClickForModsPanel));
+  //   final mod = item;
+  //
+  //   return ContextMenuRegion(
+  //     contextMenu: _checkedItemIds.length > 1
+  //         ? buildModBulkActionContextMenu(
+  //             (_lastDisplayedItems as List<Mod>)
+  //                 .where((mod) => _checkedItemIds.contains(mod.id))
+  //                 .toList(),
+  //             ref,
+  //             context)
+  //         : buildModContextMenu(mod, ref, context, showSwapToVersion: true),
+  //     child: WispGridRowView<T>(
+  //       mod: item,
+  //       columns: widget.columns,
+  //       rowBuilder: widget.rowBuilder,
+  //       onTapped: () {
+  //         if (HardwareKeyboard.instance.isShiftPressed) {
+  //           _onRowCheck(
+  //             modId: mod.id,
+  //             shiftPressed: true,
+  //             ctrlPressed: false,
+  //           );
+  //         } else if (HardwareKeyboard.instance.isControlPressed) {
+  //           _onRowCheck(
+  //             modId: mod.id,
+  //             shiftPressed: false,
+  //             ctrlPressed: true,
+  //           );
+  //         } else {
+  //           if (!doubleClickForModsPanel || widget.selectedMod != null) {
+  //             widget.onRowSelected(mod);
+  //           }
+  //           _onRowCheck(
+  //             modId: mod.id,
+  //             shiftPressed: false,
+  //             ctrlPressed: false,
+  //           );
+  //         }
+  //       },
+  //       onDoubleTapped: () {
+  //         if (doubleClickForModsPanel) {
+  //           widget.onRowSelected(mod);
+  //         }
+  //       },
+  //       // onModRowSelected: widget.onModRowSelected,
+  //       isRowChecked: _checkedItemIds.contains(mod.id),
+  //     ),
+  //   );
+  // }
 
   /// Handles multi-check logic for shift/control-clicking a row.
   /// Updates the set of checked mod IDs and the last checked mod ID.

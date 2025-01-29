@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:trios/widgets/code.dart';
 import 'package:trios/widgets/trios_expansion_tile.dart';
 
-import '../../trios/constants.dart';
+import '../trios/constants.dart';
 
 class VramCheckerExplanationDialog extends ConsumerStatefulWidget {
   const VramCheckerExplanationDialog({super.key});

@@ -9,7 +9,6 @@ import 'package:trios/mod_manager/homebrew_grid/wispgrid_group.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_group_row.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_header_row_view.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_row_view.dart';
-import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 
@@ -32,6 +31,8 @@ class WispGrid<T extends WispGridItem> extends ConsumerStatefulWidget {
   final WispGridGroup<T>? defaultGrouping;
   final void Function(WispGridController<T> controller)? onLoaded;
   final WispGridState gridState;
+  final Function(WispGridState Function(WispGridState)) updateGridState;
+  final double? itemExtent;
 
   const WispGrid({
     super.key,
@@ -45,6 +46,8 @@ class WispGrid<T extends WispGridItem> extends ConsumerStatefulWidget {
     this.defaultGrouping,
     this.onLoaded,
     required this.gridState,
+    required this.updateGridState,
+    this.itemExtent,
   });
 
   static Widget defaultRowBuilder(
@@ -82,6 +85,7 @@ class _WispGridState<T extends WispGridItem>
   final Set<String> _checkedItemIds = {};
 
   List<WispGridColumn<T>> get columns => widget.columns;
+
   WispGridState get gridState => widget.gridState;
 
   /// Used for shift-clicking to select a range.
@@ -143,19 +147,14 @@ class _WispGridState<T extends WispGridItem>
     int index = 0;
 
     final displayedMods = [
-          SizedBox(
-              height: 30,
-              child: WispGridHeaderRowView(
-                gridState: gridState,
-                groups: widget.groups,
-                updateGridState: (updateFunction) {
-                  ref.read(appSettings.notifier).update((state) {
-                    return state.copyWith(
-                        modsGridState: updateFunction(state.modsGridState));
-                  });
-                },
-                columns: columns,
-              )) as Widget
+          // SizedBox(
+          //     height: 30,
+          //     child: WispGridHeaderRowView(
+          //       gridState: gridState,
+          //       groups: widget.groups,
+          //       updateGridState: widget.updateGridState,
+          //       columns: columns,
+          //     )) as Widget
         ] +
         items
             .flatMap((entry) {
@@ -183,6 +182,7 @@ class _WispGridState<T extends WispGridItem>
               final items = !isCollapsed
                   ? itemsInGroup
                       .map((item) => WispGridRowView<T>(
+                            key: ValueKey(item.key),
                             item: item,
                             gridState: gridState,
                             columns: widget.columns,
@@ -232,115 +232,93 @@ class _WispGridState<T extends WispGridItem>
 
     // TODO smooth scrolling: https://github.com/dridino/smooth_list_view/blob/main/lib/smooth_list_view.dart
     return Scrollbar(
-      controller: _gridScrollControllerHorizontal,
-      scrollbarOrientation: ScrollbarOrientation.bottom,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
         controller: _gridScrollControllerHorizontal,
-        child: SizedBox(
-          width: gridState
-              .sortedVisibleColumns(widget.columns)
-              .map((e) => e.value.width + WispGrid.gridRowSpacing + 10)
-              .sum
-              .coerceAtMost(MediaQuery.of(context).size.width * 1.3),
-          child: Scrollbar(
-            controller: _gridScrollControllerVertical,
-            scrollbarOrientation: ScrollbarOrientation.left,
-            child: ScrollConfiguration(
-              behavior: ScrollConfiguration.of(context).copyWith(
-                scrollbars: false,
-              ),
-              child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: displayedMods.length,
-                  controller: _gridScrollControllerVertical,
-                  itemBuilder: (context, index) {
-                    final item = displayedMods[index];
+        scrollbarOrientation: ScrollbarOrientation.bottom,
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          controller: _gridScrollControllerHorizontal,
+          child: SizedBox(
+            width: gridState
+                .sortedVisibleColumns(widget.columns)
+                .map((e) => e.value.width + WispGrid.gridRowSpacing + 10)
+                .sum
+                .coerceAtMost(MediaQuery.of(context).size.width * 1.3),
+            child: Scrollbar(
+              controller: _gridScrollControllerVertical,
+              scrollbarOrientation: ScrollbarOrientation.left,
+              child: ScrollConfiguration(
+                behavior: ScrollConfiguration.of(context).copyWith(
+                  scrollbars: false,
+                ),
+                child: Builder(builder: (context) {
+                  final itemSliverDelegate = SliverChildBuilderDelegate(
+                    (context, index) {
+                      final item = displayedMods[index];
+                      // TODO for better perf, would could add an optional height param to rows passed in.
+                      // TODO Then, chunk the grid into SliverFixedExtentLists.
 
-                    if (item is WispGridGroupRowView) {
-                      return Row(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 4),
-                            child: SizedBox(width: totalRowWidth, child: item),
+                      // Handle group-row widgets vs normal row widgets
+                      if (item is WispGridGroupRowView) {
+                        return Row(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 4,
+                              ),
+                              child: SizedBox(
+                                width: totalRowWidth,
+                                child: item,
+                              ),
+                            ),
+                            const Spacer(),
+                          ],
+                        );
+                      }
+
+                      // Otherwise it’s a normal row widget (WispGridRowView, etc.)
+                      try {
+                        return item; // Already built widget
+                      } catch (e) {
+                        Fimber.v(() => 'Error in WispGrid: $e');
+                        return const Text("Incoherent screaming");
+                      }
+                    },
+                    childCount: displayedMods.length,
+                  );
+
+                  return CustomScrollView(
+                      controller: _gridScrollControllerVertical,
+                      slivers: [
+                        SliverPersistentHeader(
+                          pinned: true,
+                          delegate: _PinnedHeaderDelegate(
+                            minHeight: 30,
+                            maxHeight: 30,
+                            child: Container(
+                              color: Theme.of(context).colorScheme.surface,
+                              child: WispGridHeaderRowView(
+                                gridState: gridState,
+                                groups: widget.groups,
+                                updateGridState: widget.updateGridState,
+                                columns: columns,
+                              ),
+                            ),
                           ),
-                          Spacer(),
-                        ],
-                      );
-                    }
-
-                    try {
-                      return item;
-                    } catch (e) {
-                      Fimber.v(() => 'Error in WispGrid: $e');
-                      return Text("Incoherent screaming");
-                    }
-                  }),
+                        ),
+                        widget.itemExtent == null
+                            ? SliverList(delegate: itemSliverDelegate)
+                            : SliverFixedExtentList(
+                                itemExtent: widget.itemExtent!,
+                                delegate: itemSliverDelegate,
+                              ),
+                      ]);
+                }),
+              ),
             ),
           ),
-        ),
-      ),
-    );
+        ));
   }
-
-  // ContextMenuRegion buildWrappedRow(T item, BuildContext context) {
-  //   // Disabling the click for mods panel functionality because
-  //   // having the double-click introduces a delay on all single-clicks in the row,
-  //   // and single-clicking for the side panel is too annoying.
-  //   // TODO see if there's a way to stop the onDoubleTap from delaying single-clicks
-  //   // on the version dropdown popup.
-  //   final doubleClickForModsPanel = true;
-  //   // ref.watch(appSettings.select((s) => s.doubleClickForModsPanel));
-  //   final mod = item;
-  //
-  //   return ContextMenuRegion(
-  //     contextMenu: _checkedItemIds.length > 1
-  //         ? buildModBulkActionContextMenu(
-  //             (_lastDisplayedItems as List<Mod>)
-  //                 .where((mod) => _checkedItemIds.contains(mod.id))
-  //                 .toList(),
-  //             ref,
-  //             context)
-  //         : buildModContextMenu(mod, ref, context, showSwapToVersion: true),
-  //     child: WispGridRowView<T>(
-  //       mod: item,
-  //       columns: widget.columns,
-  //       rowBuilder: widget.rowBuilder,
-  //       onTapped: () {
-  //         if (HardwareKeyboard.instance.isShiftPressed) {
-  //           _onRowCheck(
-  //             modId: mod.id,
-  //             shiftPressed: true,
-  //             ctrlPressed: false,
-  //           );
-  //         } else if (HardwareKeyboard.instance.isControlPressed) {
-  //           _onRowCheck(
-  //             modId: mod.id,
-  //             shiftPressed: false,
-  //             ctrlPressed: true,
-  //           );
-  //         } else {
-  //           if (!doubleClickForModsPanel || widget.selectedMod != null) {
-  //             widget.onRowSelected(mod);
-  //           }
-  //           _onRowCheck(
-  //             modId: mod.id,
-  //             shiftPressed: false,
-  //             ctrlPressed: false,
-  //           );
-  //         }
-  //       },
-  //       onDoubleTapped: () {
-  //         if (doubleClickForModsPanel) {
-  //           widget.onRowSelected(mod);
-  //         }
-  //       },
-  //       // onModRowSelected: widget.onModRowSelected,
-  //       isRowChecked: _checkedItemIds.contains(mod.id),
-  //     ),
-  //   );
-  // }
 
   /// Handles multi-check logic for shift/control-clicking a row.
   /// Updates the set of checked mod IDs and the last checked mod ID.
@@ -404,34 +382,34 @@ class _WispGridState<T extends WispGridItem>
   }
 }
 
-// Comparable? _getSortValueForMod(
-//     Mod mod,
-//     ModMetadata? metadata,
-//     ModGridSortField sortField,
-//     AsyncValue<VramEstimatorState> vramEstimatorStateProvider) {
-//   return switch (sortField) {
-//     ModGridSortField.icons =>
-//       mod.findFirstEnabledOrHighestVersion?.modInfo.isUtility == true
-//           ? "utility"
-//           : mod.findFirstEnabledOrHighestVersion?.modInfo.isTotalConversion ==
-//                   true
-//               ? "total conversion"
-//               : "other",
-//     ModGridSortField.name =>
-//       mod.findFirstEnabledOrHighestVersion?.modInfo.nameOrId,
-//     ModGridSortField.enabledState => mod.isEnabledOnUi.toComparable(),
-//     ModGridSortField.author =>
-//       mod.findFirstEnabledOrHighestVersion?.modInfo.author?.toLowerCase() ?? "",
-//     ModGridSortField.version =>
-//       mod.findFirstEnabledOrHighestVersion?.modInfo.version,
-//     ModGridSortField.vramImpact => vramEstimatorStateProvider
-//             .valueOrNull
-//             ?.modVramInfo[mod.findHighestEnabledVersion?.smolId]
-//             ?.maxPossibleBytesForMod ??
-//         0,
-//     ModGridSortField.gameVersion =>
-//       mod.findFirstEnabledOrHighestVersion?.modInfo.gameVersion,
-//     ModGridSortField.firstSeen => metadata?.firstSeen ?? 0,
-//     ModGridSortField.lastEnabled => metadata?.lastEnabled ?? 0,
-//   };
-// }
+class _PinnedHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final double minHeight;
+  final double maxHeight;
+  final Widget child;
+
+  _PinnedHeaderDelegate({
+    required this.minHeight,
+    required this.maxHeight,
+    required this.child,
+  });
+
+  @override
+  double get minExtent => minHeight;
+
+  @override
+  double get maxExtent => maxHeight;
+
+  @override
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return SizedBox.expand(child: child);
+  }
+
+  @override
+  bool shouldRebuild(_PinnedHeaderDelegate oldDelegate) {
+    // Rebuild if the config changes.
+    return maxHeight != oldDelegate.maxHeight ||
+        minHeight != oldDelegate.minHeight ||
+        child != oldDelegate.child;
+  }
+}

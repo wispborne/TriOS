@@ -340,6 +340,12 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                 padding: const EdgeInsets.only(top: 4),
                 child: WispGrid<Mod>(
                   gridState: gridState,
+                  updateGridState: (updateFunction) {
+                    ref.read(appSettings.notifier).update((state) {
+                      return state.copyWith(
+                          modsGridState: updateFunction(state.modsGridState));
+                    });
+                  },
                   onLoaded: (controller) {
                     setState(() {
                       this.controller = controller;

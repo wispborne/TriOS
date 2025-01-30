@@ -226,8 +226,15 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
       style: theme.textTheme.labelLarge!.copyWith(fontSize: 14),
       child: WispGrid<Weapon>(
         gridState: gridState,
+        updateGridState: (updateFunction) {
+          ref.read(appSettings.notifier).update((state) {
+            return state.copyWith(
+                weaponsGridState: updateFunction(state.weaponsGridState));
+          });
+        },
         columns: columns,
         items: items,
+        itemExtent: 50,
         rowBuilder: (item, modifiers, child) =>
             SizedBox(height: 50, child: child),
         onLoaded: (WispGridController<Weapon> controller) {

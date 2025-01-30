@@ -9,6 +9,7 @@ import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_group.dart';
 import 'package:trios/thirdparty/dartx/function.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
+import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/MultiSplitViewMixin.dart';
 import 'package:trios/widgets/hoverable_widget.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
@@ -194,6 +195,7 @@ class _WispGridHeaderRowViewState extends ConsumerState<WispGridHeaderRowView>
 
   ContextMenu buildHeaderContextMenu(WispGridState gridState) {
     final groupingSetting = gridState.groupingSetting;
+    var sortedColumns = gridState.sortedColumns(columns);
     return ContextMenu(
       entries: [
         MenuItem(
@@ -218,69 +220,21 @@ class _WispGridHeaderRowViewState extends ConsumerState<WispGridHeaderRowView>
                     },
                   ))
               .toList(),
-
-          // [
-          //   MenuItem(
-          //     label: "Enabled",
-          //     icon: groupingSetting.currentGroupedByKey ==
-          //             ModGridGroupEnum.enabledState
-          //         ? Icons.check
-          //         : null,
-          //     onSelected: () {
-          //       updateGridState((WispGridState state) => state.copyWith(
-          //           groupingSetting: GroupingSetting(
-          //               currentGroupedByKey: ModGridGroupEnum.enabledState)));
-          //     },
-          //   ),
-          //   MenuItem(
-          //     label: "Mod Type",
-          //     icon:
-          //         groupingSetting.currentGroupedByKey == ModGridGroupEnum.modType
-          //             ? Icons.check
-          //             : null,
-          //     onSelected: () {
-          //       updateGridState((WispGridState state) => state.copyWith(
-          //           groupingSetting: GroupingSetting(
-          //               currentGroupedByKey: ModGridGroupEnum.modType)));
-          //     },
-          //   ),
-          //   MenuItem(
-          //       label: "Game Version",
-          //       icon: groupingSetting.currentGroupedByKey ==
-          //               ModGridGroupEnum.gameVersion
-          //           ? Icons.check
-          //           : null,
-          //       onSelected: () {
-          //         updateGridState((WispGridState state) => state.copyWith(
-          //             groupingSetting: GroupingSetting(
-          //                 currentGroupedByKey: ModGridGroupEnum.gameVersion)));
-          //       }),
-          //   MenuItem(
-          //     label: "Author",
-          //     icon: groupingSetting.currentGroupedByKey == ModGridGroupEnum.author
-          //         ? Icons.check
-          //         : null,
-          //     onSelected: () {
-          //       updateGridState((WispGridState state) => state.copyWith(
-          //           groupingSetting: GroupingSetting(
-          //               currentGroupedByKey: ModGridGroupEnum.author)));
-          //     },
-          //   ),
-          // ]
         ),
         MenuDivider(),
         MenuHeader(text: "Hide/Show Columns", disableUppercase: true),
         // Visibility toggles
-        ...gridState.columnsState.entries.map((columnSetting) {
+        ...sortedColumns.map((columnSetting) {
           final header = columnSetting.key;
           final column = columns.firstWhereOrNull((col) => col.key == header);
           final isVisible = gridState.columnsState[header]?.isVisible ?? true;
           return MenuItem(
             label: column?.name ?? "???",
             icon: isVisible ? Icons.visibility : Icons.visibility_off,
+            iconOpacity: isVisible ? null : 0.4,
             onSelected: () {
               updateGridState((WispGridState state) {
-                final columnSettings = state.columnsState;
+                final columnSettings = state.sortedColumns(columns).toMap();
                 final headerSetting = columnSettings[header]!;
                 columnSettings[header] =
                     headerSetting.copyWith(isVisible: !headerSetting.isVisible);

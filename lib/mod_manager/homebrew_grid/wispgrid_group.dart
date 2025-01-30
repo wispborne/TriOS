@@ -194,15 +194,3 @@ class GameVersionModGridGroup extends WispGridGroup<Mod> {
   @override
   Comparable getGroupSortValue(Mod mod) => getGroupName(mod).toLowerCase();
 }
-//
-// extension ModGridGroupEnumExtension on ModGridGroupEnum {
-//   WispGridGroup mapToGroup() =>
-//       // TODO: ModMetadataManager modMetadataManager) =>
-//       switch (this) {
-//         ModGridGroupEnum.enabledState => EnabledStateModGridGroup(),
-//         ModGridGroupEnum.author => AuthorModGridGroup(),
-//         // ModGridGroupEnum.category => CategoryModGridGroup(modMetadataManager),
-//         ModGridGroupEnum.modType => ModTypeModGridGroup(),
-//         ModGridGroupEnum.gameVersion => GameVersionModGridGroup(),
-//       };
-// }

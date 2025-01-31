@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
+import 'package:trios/mod_manager/homebrew_grid/wispgrid_group.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/weaponViewer/models/weapon.dart';
 import 'package:trios/weaponViewer/weaponsManager.dart';
@@ -235,6 +236,7 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
         columns: columns,
         items: items,
         itemExtent: 50,
+        alwaysShowScrollbar: true,
         rowBuilder: (item, modifiers, child) =>
             SizedBox(height: 50, child: child),
         onLoaded: (WispGridController<Weapon> controller) {
@@ -244,6 +246,10 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
             _gridStateManagerBottom = controller;
           }
         },
+        groups: [
+          UngroupedWeaponGridGroup(),
+          ModNameWeaponGridGroup(),
+        ],
       ),
     );
   }
@@ -490,4 +496,29 @@ class _WeaponImageCellState extends State<WeaponImageCell> {
       );
     }
   }
+}
+
+class UngroupedWeaponGridGroup extends WispGridGroup<Weapon> {
+  UngroupedWeaponGridGroup() : super('none', 'None');
+
+  @override
+  String getGroupName(Weapon mod) => 'All Weapons';
+
+  @override
+  Comparable getGroupSortValue(Weapon mod) => 1;
+
+  @override
+  bool get isGroupVisible => false;
+}
+
+class ModNameWeaponGridGroup extends WispGridGroup<Weapon> {
+  ModNameWeaponGridGroup() : super('modId', 'Mod');
+
+  @override
+  String getGroupName(Weapon mod) =>
+      mod.modVariant?.modInfo.nameOrId ?? 'Vanilla';
+
+  @override
+  Comparable getGroupSortValue(Weapon mod) =>
+      mod.modVariant?.modInfo.nameOrId.toLowerCase() ?? '        ';
 }

@@ -100,7 +100,7 @@ class Settings with SettingsMappable {
     this.dashboardGridModUpdateVisibility =
         DashboardGridModUpdateVisibility.hideMuted,
     this.modsGridState =
-        const WispGridState(groupingSetting: null, columnsState: {}),
+        const WispGridState(groupingSetting: null, sortedColumnKey: 'name', columnsState: {}),
     this.weaponsGridState =
         const WispGridState(groupingSetting: null, columnsState: {}),
     this.customGameExePath,

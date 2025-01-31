@@ -363,7 +363,9 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                   },
                   selectedItem: selectedMod,
                   defaultGrouping: EnabledStateModGridGroup(),
+                  defaultSortField: ModGridSortField.name.name,
                   groups: [
+                    UngroupedModGridGroup(),
                     EnabledStateModGridGroup(),
                     AuthorModGridGroup(),
                     ModTypeModGridGroup(),

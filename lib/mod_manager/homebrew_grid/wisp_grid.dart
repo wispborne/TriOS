@@ -29,10 +29,12 @@ class WispGrid<T extends WispGridItem> extends ConsumerStatefulWidget {
   final Widget Function(T item, RowBuilderModifiers modifiers, Widget child)
       rowBuilder;
   final WispGridGroup<T>? defaultGrouping;
+  final String? defaultSortField;
   final void Function(WispGridController<T> controller)? onLoaded;
   final WispGridState gridState;
   final Function(WispGridState Function(WispGridState)) updateGridState;
   final double? itemExtent;
+  final bool alwaysShowScrollbar;
 
   const WispGrid({
     super.key,
@@ -44,10 +46,12 @@ class WispGrid<T extends WispGridItem> extends ConsumerStatefulWidget {
     this.preSortComparator,
     this.selectedItem,
     this.defaultGrouping,
+    this.defaultSortField,
     this.onLoaded,
     required this.gridState,
     required this.updateGridState,
     this.itemExtent,
+    this.alwaysShowScrollbar = false,
   });
 
   static Widget defaultRowBuilder(
@@ -107,9 +111,10 @@ class _WispGridState<T extends WispGridItem>
     final groupingSetting = gridState.groupingSetting;
 
     final grouping = widget.groups.firstWhereOrNull(
-            (grp) => grp.key == groupingSetting?.currentGroupedByKey) ??
-        widget.defaultGrouping;
-    final activeSortField = gridState.sortedColumnKey ?? columns.first.key;
+            (grp) => grp.key == groupingSetting?.currentGroupedByKey);
+    final activeSortField = gridState.sortedColumnKey ??
+        widget.defaultSortField ??
+        columns.first.key;
 
     final items = widget.items
         .whereType<T>()
@@ -164,7 +169,7 @@ class _WispGridState<T extends WispGridItem>
 
               final widgets = <Widget>[];
 
-              if (grouping != null) {
+              if (grouping != null && grouping.isGroupVisible) {
                 final header = WispGridGroupRowView(
                   grouping: grouping,
                   itemsInGroup: itemsInGroup,
@@ -246,6 +251,7 @@ class _WispGridState<T extends WispGridItem>
             child: Scrollbar(
               controller: _gridScrollControllerVertical,
               scrollbarOrientation: ScrollbarOrientation.left,
+              thumbVisibility: widget.alwaysShowScrollbar,
               child: ScrollConfiguration(
                 behavior: ScrollConfiguration.of(context).copyWith(
                   scrollbars: false,
@@ -302,6 +308,7 @@ class _WispGridState<T extends WispGridItem>
                                 groups: widget.groups,
                                 updateGridState: widget.updateGridState,
                                 columns: columns,
+                                defaultGridSort: widget.defaultSortField,
                               ),
                             ),
                           ),

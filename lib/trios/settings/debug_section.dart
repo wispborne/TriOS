@@ -21,6 +21,7 @@ import 'package:trios/weaponViewer/weaponsManager.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
 import 'package:trios/widgets/download_progress_indicator.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:trios/widgets/restartable_app.dart';
 
 import '../../utils/util.dart';
 import '../../widgets/self_update_toast.dart';
@@ -248,6 +249,7 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                           ref
                               .read(appSettings.notifier)
                               .update((_) => Settings());
+                          RestartableApp.restartApp(context);
                         },
                         child: const Text('Wipe Settings'),
                       ),

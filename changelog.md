@@ -11,6 +11,10 @@
     - MacOS users won't need to install compression libraries manually anymore.
     - Weird Linux users (like those on Debian 12) will be able to use it (the build of libarchive in TriOS didn't support it).
     - There is an option to use libarchive if you want to, in Settings. If you need it, let me know, otherwise it'll be removed (a large amount of TriOS's filesize is libarchive).
+  - Weapons tab: massively decreased RAM usage.
+    - For my setup, with 4,514 weapons loaded, it went from using 820MB to using 195MB.
+    - Accomplished by switching to my own grid implementation, which is the same as on the Mods tab.
+    - Also added ability to group weapons by mod.
 
 # 1.0.6
 - Fixed

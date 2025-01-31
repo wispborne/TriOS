@@ -36,6 +36,7 @@ class WispGridHeaderRowView extends ConsumerStatefulWidget {
   final Function(WispGridState Function(WispGridState)) updateGridState;
   final List<WispGridColumn> columns;
   final List<WispGridGroup> groups;
+  final String? defaultGridSort;
 
   const WispGridHeaderRowView({
     super.key,
@@ -43,6 +44,7 @@ class WispGridHeaderRowView extends ConsumerStatefulWidget {
     required this.updateGridState,
     required this.columns,
     required this.groups,
+    this.defaultGridSort,
   });
 
   @override
@@ -159,13 +161,15 @@ class _WispGridHeaderRowViewState extends ConsumerState<WispGridHeaderRowView>
                       .firstWhere((column) => column.key == columnSetting.key);
                   Widget headerWidget =
                       column.headerCellBuilder?.invoke(HeaderBuilderModifiers(
-                    isHovering: isHovering,
-                  )) ?? Text(column.name);
+                            isHovering: isHovering,
+                          )) ??
+                          Text(column.name);
                   Widget child = headerWidget;
 
                   if (column.isSortable) {
                     child = SortableHeader(
                       columnSortField: column.key,
+                      defaultGridSort: widget.defaultGridSort,
                       gridState: gridState,
                       updateGridState: updateGridState,
                       child: child,
@@ -204,23 +208,24 @@ class _WispGridHeaderRowViewState extends ConsumerState<WispGridHeaderRowView>
             onSelected: () {
               updateGridState((WispGridState state) => state.empty());
             }),
-        MenuItem.submenu(
-          label: "Group By",
-          icon: Icons.horizontal_split,
-          items: widget.groups
-              .map((group) => MenuItem(
-                    label: group.displayName,
-                    icon: groupingSetting?.currentGroupedByKey == group.key
-                        ? Icons.check
-                        : null,
-                    onSelected: () {
-                      updateGridState((WispGridState state) => state.copyWith(
-                          groupingSetting:
-                              GroupingSetting(currentGroupedByKey: group.key)));
-                    },
-                  ))
-              .toList(),
-        ),
+        if (widget.groups.length > 1)
+          MenuItem.submenu(
+            label: "Group By",
+            icon: Icons.horizontal_split,
+            items: widget.groups
+                .map((group) => MenuItem(
+                      label: group.displayName,
+                      icon: groupingSetting?.currentGroupedByKey == group.key
+                          ? Icons.check
+                          : null,
+                      onSelected: () {
+                        updateGridState((WispGridState state) => state.copyWith(
+                            groupingSetting: GroupingSetting(
+                                currentGroupedByKey: group.key)));
+                      },
+                    ))
+                .toList(),
+          ),
         MenuDivider(),
         MenuHeader(text: "Hide/Show Columns", disableUppercase: true),
         // Visibility toggles
@@ -352,6 +357,7 @@ class DraggableHeader extends ConsumerWidget {
 
 class SortableHeader extends ConsumerStatefulWidget {
   final String columnSortField;
+  final String? defaultGridSort;
   final Function(WispGridState Function(WispGridState)) updateGridState;
   final WispGridState gridState;
   final Widget child;
@@ -359,6 +365,7 @@ class SortableHeader extends ConsumerStatefulWidget {
   const SortableHeader({
     super.key,
     required this.columnSortField,
+    this.defaultGridSort,
     required this.updateGridState,
     required this.gridState,
     required this.child,
@@ -373,7 +380,8 @@ class _SortableHeaderState extends ConsumerState<SortableHeader> {
   Widget build(BuildContext context) {
     final gridState = widget.gridState;
     final isSortDescending = gridState.isSortDescending;
-    final isActive = gridState.sortedColumnKey == widget.columnSortField;
+    final isActive = gridState.sortedColumnKey == widget.columnSortField ||
+        widget.defaultGridSort == widget.columnSortField;
 
     return InkWell(
       onTap: () {

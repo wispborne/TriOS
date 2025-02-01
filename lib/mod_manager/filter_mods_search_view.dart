@@ -33,8 +33,6 @@ class FilterModsSearchBar extends StatelessWidget {
                       onPressed: () {
                         controller.clear();
                         ref.read(modsGridSearchQuery.notifier).state = "";
-                        // allMods =
-                        //     filterMods(query);
                       },
                     )
             ],
@@ -42,10 +40,6 @@ class FilterModsSearchBar extends StatelessWidget {
                 Theme.of(context).colorScheme.surfaceContainer),
             onChanged: (value) {
               ref.read(modsGridSearchQuery.notifier).state = value;
-              // setState(() {
-              //   query = value;
-              //   allMods = filterMods(value);
-              // });
             });
       },
       suggestionsBuilder: (BuildContext context, SearchController controller) {

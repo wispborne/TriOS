@@ -3,6 +3,7 @@
   - Mods tab: May now group by Enabled (default), Mod Type, Game Version, and Author.
 - Fixed
   - Searching on the Mods tab also filtered the Dashboard mods.
+  - Search included some less relevant results and didn't include perfect matches (e.g. searching "iron shell" didn't show it, but "iron shel" did).
   - Mods tab performance improvement.
     - VRAM estimate was recalculated from cached data each time it was displayed. The sum is now cached.
   - Mod downloads not showing download progress. 

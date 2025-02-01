@@ -72,164 +72,166 @@ class ModManagerNotifier extends AsyncNotifier<void> {
                   title: const Text("Install mods"),
                   content: ConstrainedBox(
                     constraints: const BoxConstraints(minWidth: 400),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        ...modsBeingInstalled.map((it) =>
-                            Builder(builder: (context) {
-                              final isSelected =
-                                  extractedFilesToInstall.contains(it.modInfo);
-                              final gameVersion = ref.watch(appSettings
-                                  .select((s) => s.lastStarsectorVersion));
-
-                              final themeData = Theme.of(context);
-                              final iconColor =
-                                  themeData.iconTheme.color?.withOpacity(0.7);
-                              const iconSize = 20.0;
-                              const subtitleSize = 14.0;
-                              return MovingTooltipWidget.framed(
-                                tooltipWidget: ConstrainedBox(
-                                  constraints:
-                                      const BoxConstraints(maxWidth: 500),
-                                  child: Text(
-                                      it.modInfo.modInfo
-                                          .toMap()
-                                          .prettyPrintJson(),
-                                      style: const TextStyle(fontSize: 12)),
-                                ),
-                                child: CheckboxListTile(
-                                  title: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      // Mod name
-                                      Text(
-                                        "${it.modInfo.modInfo.name}",
-                                        style: const TextStyle(
-                                            fontWeight: FontWeight.w600),
-                                      ),
-
-                                      // Version and game version
-                                      TextWithIcon(
-                                        leading: Icon(
-                                          Icons.info,
-                                          size: iconSize,
-                                          color: iconColor,
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ...modsBeingInstalled.map((it) =>
+                              Builder(builder: (context) {
+                                final isSelected =
+                                    extractedFilesToInstall.contains(it.modInfo);
+                                final gameVersion = ref.watch(appSettings
+                                    .select((s) => s.lastStarsectorVersion));
+                      
+                                final themeData = Theme.of(context);
+                                final iconColor =
+                                    themeData.iconTheme.color?.withOpacity(0.7);
+                                const iconSize = 20.0;
+                                const subtitleSize = 14.0;
+                                return MovingTooltipWidget.framed(
+                                  tooltipWidget: ConstrainedBox(
+                                    constraints:
+                                        const BoxConstraints(maxWidth: 500),
+                                    child: Text(
+                                        it.modInfo.modInfo
+                                            .toMap()
+                                            .prettyPrintJson(),
+                                        style: const TextStyle(fontSize: 12)),
+                                  ),
+                                  child: CheckboxListTile(
+                                    title: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        // Mod name
+                                        Text(
+                                          "${it.modInfo.modInfo.name}",
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.w600),
                                         ),
-                                        widget: Text.rich(TextSpan(children: [
-                                          TextSpan(
-                                              text:
-                                                  "v${it.modInfo.modInfo.version}",
-                                              style: const TextStyle(
-                                                  fontSize: subtitleSize)),
-                                          // bullet separator
-                                          TextSpan(
-                                            text: " • ",
-                                            style: TextStyle(
-                                                fontSize: subtitleSize,
-                                                color: iconColor),
-                                          ),
-                                          TextSpan(
-                                              text: it
-                                                  .modInfo.modInfo.gameVersion,
-                                              style: TextStyle(
-                                                  fontSize: subtitleSize,
-                                                  color: (it.modInfo.modInfo
-                                                              .isCompatibleWithGame(
-                                                                  gameVersion)
-                                                              .getGameCompatibilityColor() ??
-                                                          themeData.colorScheme
-                                                              .onSurface)
-                                                      .withOpacity(0.9))),
-                                        ])),
-                                      ),
-
-                                      // File path
-                                      TextWithIcon(
+                      
+                                        // Version and game version
+                                        TextWithIcon(
                                           leading: Icon(
-                                            Icons.folder,
+                                            Icons.info,
                                             size: iconSize,
                                             color: iconColor,
                                           ),
-                                          text: it.modInfo.extractedFile
-                                              .relativePath,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(
-                                            fontSize: subtitleSize,
-                                          )),
-
-                                      // Description
-                                      Padding(
-                                        padding: const EdgeInsets.only(
-                                            top: 4, left: iconSize + 9),
-                                        child: TextWithIcon(
-                                            // leading: SvgImageIcon(
-                                            //   "assets/images/icon-text.svg",
-                                            //   width: iconSize,
-                                            //   color: iconColor,
-                                            // ),
-                                            text: it.modInfo.modInfo.description
-                                                    ?.takeWhile((it) =>
-                                                        it != "\n" &&
-                                                        it != ".") ??
-                                                "",
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: TextStyle(
-                                                fontSize: 12,
-                                                color: themeData
-                                                    .colorScheme.onSurface
-                                                    .withOpacity(0.9))),
-                                      ),
-                                      it.alreadyExistingVariant != null
-                                          ? Text(
-                                              isSelected
-                                                  ? "(existing mod will be replaced)"
-                                                  : "(already exists)",
+                                          widget: Text.rich(TextSpan(children: [
+                                            TextSpan(
+                                                text:
+                                                    "v${it.modInfo.modInfo.version}",
+                                                style: const TextStyle(
+                                                    fontSize: subtitleSize)),
+                                            // bullet separator
+                                            TextSpan(
+                                              text: " • ",
                                               style: TextStyle(
-                                                  color: ThemeManager
-                                                      .vanillaWarningColor,
-                                                  fontSize: 12),
-                                            )
-                                          : const SizedBox(),
-                                    ],
+                                                  fontSize: subtitleSize,
+                                                  color: iconColor),
+                                            ),
+                                            TextSpan(
+                                                text: it
+                                                    .modInfo.modInfo.gameVersion,
+                                                style: TextStyle(
+                                                    fontSize: subtitleSize,
+                                                    color: (it.modInfo.modInfo
+                                                                .isCompatibleWithGame(
+                                                                    gameVersion)
+                                                                .getGameCompatibilityColor() ??
+                                                            themeData.colorScheme
+                                                                .onSurface)
+                                                        .withOpacity(0.9))),
+                                          ])),
+                                        ),
+                      
+                                        // File path
+                                        TextWithIcon(
+                                            leading: Icon(
+                                              Icons.folder,
+                                              size: iconSize,
+                                              color: iconColor,
+                                            ),
+                                            text: it.modInfo.extractedFile
+                                                .relativePath,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                              fontSize: subtitleSize,
+                                            )),
+                      
+                                        // Description
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                              top: 4, left: iconSize + 9),
+                                          child: TextWithIcon(
+                                              // leading: SvgImageIcon(
+                                              //   "assets/images/icon-text.svg",
+                                              //   width: iconSize,
+                                              //   color: iconColor,
+                                              // ),
+                                              text: it.modInfo.modInfo.description
+                                                      ?.takeWhile((it) =>
+                                                          it != "\n" &&
+                                                          it != ".") ??
+                                                  "",
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: TextStyle(
+                                                  fontSize: 12,
+                                                  color: themeData
+                                                      .colorScheme.onSurface
+                                                      .withOpacity(0.9))),
+                                        ),
+                                        it.alreadyExistingVariant != null
+                                            ? Text(
+                                                isSelected
+                                                    ? "(existing mod will be replaced)"
+                                                    : "(already exists)",
+                                                style: TextStyle(
+                                                    color: ThemeManager
+                                                        .vanillaWarningColor,
+                                                    fontSize: 12),
+                                              )
+                                            : const SizedBox(),
+                                      ],
+                                    ),
+                                    value: isSelected,
+                                    onChanged: (value) {
+                                      if (value == false) {
+                                        setState(() {
+                                          extractedFilesToInstall
+                                              .remove(it.modInfo);
+                                        });
+                                      } else {
+                                        setState(() {
+                                          // Only allow user to select one mod with the same id and version.
+                                          extractedFilesToInstall.removeWhere(
+                                              (existing) =>
+                                                  existing.modInfo.smolId ==
+                                                  it.modInfo.modInfo.smolId);
+                                          extractedFilesToInstall.add(it.modInfo);
+                                        });
+                                      }
+                                    },
                                   ),
-                                  value: isSelected,
-                                  onChanged: (value) {
-                                    if (value == false) {
-                                      setState(() {
-                                        extractedFilesToInstall
-                                            .remove(it.modInfo);
-                                      });
-                                    } else {
-                                      setState(() {
-                                        // Only allow user to select one mod with the same id and version.
-                                        extractedFilesToInstall.removeWhere(
-                                            (existing) =>
-                                                existing.modInfo.smolId ==
-                                                it.modInfo.modInfo.smolId);
-                                        extractedFilesToInstall.add(it.modInfo);
-                                      });
-                                    }
-                                  },
-                                ),
-                              );
-                            })),
-                        const SizedBox(height: 16),
-                        if (modsBeingInstalled
-                                .distinctBy((it) => it.modInfo.modInfo.smolId)
-                                .length !=
-                            modsBeingInstalled.length)
-                          Text(
-                              "Multiple mods have the same id and version. Only one of those may be selected.",
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .labelLarge
-                                  ?.copyWith(
-                                      color: ThemeManager.vanillaWarningColor))
-                      ],
+                                );
+                              })),
+                          const SizedBox(height: 16),
+                          if (modsBeingInstalled
+                                  .distinctBy((it) => it.modInfo.modInfo.smolId)
+                                  .length !=
+                              modsBeingInstalled.length)
+                            Text(
+                                "Multiple mods have the same id and version. Only one of those may be selected.",
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .labelLarge
+                                    ?.copyWith(
+                                        color: ThemeManager.vanillaWarningColor))
+                        ],
+                      ),
                     ),
                   ),
                   actions: [

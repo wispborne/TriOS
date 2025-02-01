@@ -379,6 +379,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                     Builder(builder: (context) {
                       final lastNVersionsSetting = ref.watch(
                           appSettings.select((s) => s.keepLastNVersions));
+                      final enableMultipleVersions = lastNVersionsSetting != 1;
                       return SettingsGroup(name: "Mod Organization", children: [
                         MovingTooltipWidget.text(
                           message:
@@ -404,17 +405,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         ),
                         Padding(
                           padding: const EdgeInsets.only(left: 16),
-                          child: Tooltip(
+                          child: MovingTooltipWidget.text(
                             message:
                                 "Manual mode. TriOS will not rename folders."
                                 "\nThis may result in TriOS overwriting mods when updating or installing new versions, if the folder already exists."
                                 "\nFor example, if you have folder `LazyLib` and install a new version where the folder name is also `LazyLib`, the older one will be overwritten."
                                 "\n\nTODO: clean up this UI and use a dropdown or something :)",
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.error,
-                              borderRadius: BorderRadius.circular(
-                                  ThemeManager.cornerRadius),
-                            ),
+                            warningLevel: TooltipWarningLevel.error,
                             child: CheckboxWithLabel(
                                 value: ref.watch(appSettings.select(
                                         (s) => s.folderNamingSetting)) ==
@@ -431,137 +428,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                 label: "Manual folder naming"),
                           ),
                         ),
-                        const SizedBox(
-                          height: 8,
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(
-                              left: leftTextOptionPadding, top: 8),
-                          child: Row(
-                            children: [
-                              MovingTooltipWidget.text(
-                                message:
-                                    "If you have multiple versions of a mod, this will keep the last N versions of each mod."
-                                    "\n\nOlder versions will be automatically deleted when a new one is installed.",
-                                child: Row(
-                                  children: [
-                                    const Text("Keep last "),
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 8),
-                                      child: DropdownButton<int>(
-                                        value: lastNVersionsSetting,
-                                        items: [
-                                          for (int i = 2; i <= 10; i++)
-                                            DropdownMenuItem(
-                                                value: i, child: Text(" $i")),
-                                          const DropdownMenuItem(
-                                              value: null, child: Text(" ∞")),
-                                        ],
-                                        onChanged: (value) {
-                                          ref.read(appSettings.notifier).update(
-                                                (state) => state.copyWith(
-                                                    keepLastNVersions:
-                                                        value == -1
-                                                            ? null
-                                                            : value),
-                                              );
-                                        },
-                                        isDense: true,
-                                        // decoration: const InputDecoration(
-                                        //   border: OutlineInputBorder(),
-                                        // ),
-                                      ),
-                                    ),
-                                    Text(
-                                        " version${lastNVersionsSetting == 1 ? "" : "s"} of each mod"),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Disable(
-                          isEnabled: lastNVersionsSetting != null,
-                          child: Padding(
-                            padding: const EdgeInsets.only(top: 16),
-                            child: MovingTooltipWidget.text(
-                              message: switch (lastNVersionsSetting) {
-                                null => "",
-                                1 =>
-                                  "Remove all but the newest version of each mod.",
-                                _ =>
-                                  "Remove all but the newest $lastNVersionsSetting versions of each mod."
-                              },
-                              child: ElevatedButton.icon(
-                                  icon: const SvgImageIcon(
-                                    "assets/images/icon-shredder.svg",
-                                  ),
-                                  onPressed: () async {
-                                    final modsThatWouldBeRemoved = await ref
-                                        .read(modManager.notifier)
-                                        .cleanUpAllModVariantsBasedOnRetainSetting(
-                                          dryRun: true,
-                                        );
-
-                                    if (!mounted) return;
-                                    showDialog(
-                                        context: context,
-                                        builder: (context) {
-                                          return AlertDialog(
-                                            title: const Text("Delete mods"),
-                                            content: Column(
-                                              children: [
-                                                Text(
-                                                    "Are you sure you want to delete ${modsThatWouldBeRemoved.length} mods?"),
-                                                const SizedBox(height: 8),
-                                                if (modsThatWouldBeRemoved
-                                                    .isNotEmpty)
-                                                  Column(
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .start,
-                                                    children: modsThatWouldBeRemoved
-                                                        .map((mod) => Text(
-                                                            "- ${mod.nameOrId} ${mod.version}"))
-                                                        .toList(),
-                                                  ),
-                                              ],
-                                            ),
-                                            actions: [
-                                              TextButton(
-                                                  onPressed: () {
-                                                    Navigator.of(context).pop();
-                                                  },
-                                                  child: const Text("Cancel")),
-                                              TextButton(
-                                                  onPressed: () async {
-                                                    Navigator.of(context).pop();
-                                                    await ref
-                                                        .read(
-                                                            modManager.notifier)
-                                                        .cleanUpAllModVariantsBasedOnRetainSetting(
-                                                          dryRun: false,
-                                                        );
-                                                    ref.invalidate(
-                                                        AppState.modVariants);
-                                                  },
-                                                  child: const Text("Delete")),
-                                            ],
-                                          );
-                                        });
-                                  },
-                                  label: const Text("Clean up...")),
-                            ),
-                          ),
-                        ),
                         const SizedBox(height: 8),
                         MovingTooltipWidget.text(
                           message:
-                              "When checked, updating an enabled mod switches to the new version.",
+                          "When checked, updating an enabled mod switches to the new version.",
                           child: CheckboxWithLabel(
                             value: ref.watch(appSettings
-                                    .select((s) => s.modUpdateBehavior)) ==
+                                .select((s) => s.modUpdateBehavior)) ==
                                 ModUpdateBehavior
                                     .switchToNewVersionIfWasEnabled,
                             onChanged: (newValue) {
@@ -570,13 +443,219 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                     s.copyWith(
                                         modUpdateBehavior: newValue == true
                                             ? ModUpdateBehavior
-                                                .switchToNewVersionIfWasEnabled
+                                            .switchToNewVersionIfWasEnabled
                                             : ModUpdateBehavior.doNotChange));
                               });
                             },
                             labelWidget:
-                                const Text("Auto-swap to new versions"),
+                            const Text("Auto-swap on mod update"),
                           ),
+                        ),
+                        const SizedBox(
+                          height: 8,
+                        ),
+                        SettingsGroup.subsection(
+                          name: "Old mod versions",
+                          children: [
+                            MovingTooltipWidget.text(
+                              message:
+                                  "Installing or updating a mod will replace the previous version of it.",
+                              child: IntrinsicWidth(
+                                child: RadioListTile(
+                                  title:
+                                      const Text("Keep only one mod version"),
+                                  value: false,
+                                  contentPadding: const EdgeInsets.all(0),
+                                  groupValue: enableMultipleVersions,
+                                  onChanged: (value) => ref
+                                      .read(appSettings.notifier)
+                                      .update((state) => state.copyWith(
+                                          keepLastNVersions: 1)),
+                                ),
+                              ),
+                            ),
+                            Row(
+                              children: [
+                                IntrinsicWidth(
+                                  child: MovingTooltipWidget.text(
+                                    message: lastNVersionsSetting == null
+                                        ? "TriOS will never automatically remove mod versions."
+                                        : "Installing or updating a mod will remove all but the last $lastNVersionsSetting highest versions.",
+                                    child: RadioListTile(
+                                      title:
+                                          const Text("Keep all mod versions"),
+                                      value: true,
+                                      contentPadding: const EdgeInsets.all(0),
+                                      groupValue: enableMultipleVersions,
+                                      onChanged: (value) => ref
+                                          .read(appSettings.notifier)
+                                          .update((state) => state.copyWith(
+                                              keepLastNVersions:
+                                                  (value ?? false) ? null : 1)),
+                                    ),
+                                  ),
+                                ),
+                                Disable(
+                                  isEnabled: enableMultipleVersions,
+                                  child: Row(
+                                    children: [
+                                      const Text(" (up to "),
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 8),
+                                        child: DropdownButton<int>(
+                                          value: lastNVersionsSetting,
+                                          items: [
+                                            for (int i = 1; i <= 10; i++)
+                                              DropdownMenuItem(
+                                                  value: i, child: Text(" $i")),
+                                            const DropdownMenuItem(
+                                                value: null, child: Text(" ∞")),
+                                          ],
+                                          onChanged: (value) {
+                                            ref
+                                                .read(appSettings.notifier)
+                                                .update((state) =>
+                                                    state.copyWith(
+                                                        keepLastNVersions:
+                                                            value));
+                                          },
+                                          isDense: true,
+                                        ),
+                                      ),
+                                      const Text(")"),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            // Padding(
+                            //   padding: const EdgeInsets.only(
+                            //       left: leftTextOptionPadding, top: 8),
+                            //   child: Row(
+                            //     children: [
+                            //       MovingTooltipWidget.text(
+                            //         message:
+                            //             "If you have multiple versions of a mod, this will keep the last N versions of each mod."
+                            //             "\n\nOlder versions will be automatically deleted when a new one is installed.",
+                            //         child: Row(
+                            //           children: [
+                            //             const Text("Keep last "),
+                            //             Padding(
+                            //               padding: const EdgeInsets.symmetric(
+                            //                   horizontal: 8),
+                            //               child: DropdownButton<int>(
+                            //                 value: lastNVersionsSetting,
+                            //                 items: [
+                            //                   for (int i = 1; i <= 10; i++)
+                            //                     DropdownMenuItem(
+                            //                         value: i, child: Text(" $i")),
+                            //                   const DropdownMenuItem(
+                            //                       value: null, child: Text(" ∞")),
+                            //                 ],
+                            //                 onChanged: (value) {
+                            //                   ref.read(appSettings.notifier).update(
+                            //                         (state) => state.copyWith(
+                            //                             keepLastNVersions:
+                            //                                 value == -1
+                            //                                     ? null
+                            //                                     : value),
+                            //                       );
+                            //                 },
+                            //                 isDense: true,
+                            //                 // decoration: const InputDecoration(
+                            //                 //   border: OutlineInputBorder(),
+                            //                 // ),
+                            //               ),
+                            //             ),
+                            //             Text(
+                            //                 " version${lastNVersionsSetting == 1 ? "" : "s"} of each mod"),
+                            //           ],
+                            //         ),
+                            //       ),
+                            //     ],
+                            //   ),
+                            // ),
+                            Disable(
+                              isEnabled: lastNVersionsSetting != null,
+                              child: Padding(
+                                padding: const EdgeInsets.only(top: 16),
+                                child: MovingTooltipWidget.text(
+                                  message: switch (lastNVersionsSetting) {
+                                    null => "",
+                                    1 =>
+                                      "Remove all but the newest version of each mod.",
+                                    _ =>
+                                      "Remove all but the newest $lastNVersionsSetting versions of each mod."
+                                  },
+                                  child: ElevatedButton.icon(
+                                      icon: const SvgImageIcon(
+                                        "assets/images/icon-shredder.svg",
+                                      ),
+                                      onPressed: () async {
+                                        final modsThatWouldBeRemoved = await ref
+                                            .read(modManager.notifier)
+                                            .cleanUpAllModVariantsBasedOnRetainSetting(
+                                              dryRun: true,
+                                            );
+
+                                        if (!mounted) return;
+                                        showDialog(
+                                            context: context,
+                                            builder: (context) {
+                                              return AlertDialog(
+                                                title:
+                                                    const Text("Delete mods"),
+                                                content: Column(
+                                                  children: [
+                                                    Text(
+                                                        "Are you sure you want to delete ${modsThatWouldBeRemoved.length} mods?"),
+                                                    const SizedBox(height: 8),
+                                                    if (modsThatWouldBeRemoved
+                                                        .isNotEmpty)
+                                                      Column(
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .start,
+                                                        children: modsThatWouldBeRemoved
+                                                            .map((mod) => Text(
+                                                                "- ${mod.nameOrId} ${mod.version}"))
+                                                            .toList(),
+                                                      ),
+                                                  ],
+                                                ),
+                                                actions: [
+                                                  TextButton(
+                                                      onPressed: () {
+                                                        Navigator.of(context)
+                                                            .pop();
+                                                      },
+                                                      child:
+                                                          const Text("Cancel")),
+                                                  TextButton(
+                                                      onPressed: () async {
+                                                        Navigator.of(context)
+                                                            .pop();
+                                                        await ref
+                                                            .read(modManager
+                                                                .notifier)
+                                                            .cleanUpAllModVariantsBasedOnRetainSetting(
+                                                              dryRun: false,
+                                                            );
+                                                        ref.invalidate(AppState
+                                                            .modVariants);
+                                                      },
+                                                      child:
+                                                          const Text("Delete")),
+                                                ],
+                                              );
+                                            });
+                                      },
+                                      label: const Text("Clean up...")),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ]);
                     }),
@@ -776,7 +855,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         child: MovingTooltipWidget.text(
                           message:
                               "7zip is recommended. libarchive is the old library; use it if 7zip doesn't work."
-                                  "\n\nlibarchive support will be removed (to save disk space) if I do not hear that anybody needs it.",
+                              "\n\nlibarchive support will be removed (to save disk space) if I do not hear that anybody needs it.",
                           child: CheckboxWithLabel(
                             value: ref.watch(appSettings.select((value) =>
                                 value.compressionLib ==

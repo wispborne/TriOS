@@ -2,12 +2,34 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-/// A reusable widget that lays out [items] in a responsive, adaptive grid:
-/// - Figures out how many columns fit based on [minItemWidth].
-/// - Places [horizontalSpacing] between columns.
-/// - Each row only takes as much vertical space as its tallest child.
-/// - You can provide optional [padding].
-/// - Provide [itemBuilder] to build each cell from an item.
+/// A widget that lays out [items] in a responsive, adaptive grid.
+///
+/// Unlike a traditional [GridView], each row automatically adjusts its height
+/// to fit the tallest item in that row. This widget uses [ListView.builder] to
+/// build rows lazily, improving performance when [items] is large.
+///
+/// ### Features
+/// - Determines how many columns fit based on [minItemWidth].
+/// - Inserts [horizontalSpacing] between items in a row and [verticalSpacing]
+///   between rows.
+/// - [padding] provides outer space around the grid.
+/// - [itemBuilder] is called to build each item; you get the item and its index.
+///
+/// ### Example
+/// ```dart
+/// WispAdaptiveGridView<String>(
+///   items: List.generate(1000, (i) => 'Item $i'),
+///   minItemWidth: 200,
+///   horizontalSpacing: 8,
+///   verticalSpacing: 8,
+///   itemBuilder: (context, item, index) {
+///     return Container(
+///       color: Colors.blueGrey,
+///       child: Text(item, style: TextStyle(color: Colors.white)),
+///     );
+///   },
+/// );
+/// ```
 class WispAdaptiveGridView<T> extends StatelessWidget {
   /// The items to display in the grid.
   final List<T> items;
@@ -17,105 +39,112 @@ class WispAdaptiveGridView<T> extends StatelessWidget {
   final double minItemWidth;
 
   /// The horizontal spacing between items in a row.
-  final double? horizontalSpacing;
-  final double? verticalSpacing;
+  final double horizontalSpacing;
+
+  /// The vertical spacing between rows.
+  final double verticalSpacing;
 
   /// Padding around the entire scrollable area.
   final EdgeInsets padding;
 
-  /// Called to build each item in the grid.
+  /// Builds each item in the grid. You receive the [BuildContext], the item
+  /// itself, and the absolute index of the item in [items].
   final Widget Function(BuildContext context, T item, int index) itemBuilder;
 
   const WispAdaptiveGridView({
-    super.key,
+    Key? key,
     required this.items,
     required this.minItemWidth,
-    this.horizontalSpacing,
-    this.verticalSpacing,
+    this.horizontalSpacing = 0.0,
+    this.verticalSpacing = 0.0,
     required this.itemBuilder,
-    this.padding = const EdgeInsets.all(0),
-  });
+    this.padding = EdgeInsets.zero,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
+        // Adjust for horizontal padding to find actual available width.
         final containerWidth =
-            constraints.maxWidth - (padding.left + padding.right);
-        // In case the user gave large horizontal padding, avoid negative containerWidth.
-        final availableWidth = math.max(containerWidth, 0.0);
+            math.max(0.0, constraints.maxWidth - padding.left - padding.right);
 
-        final layout = _calculateGridLayout(
-          containerWidth: availableWidth,
+        // Compute how many columns we can fit and the item width for each column.
+        final layout = _calculateAdaptiveLayout(
+          containerWidth: containerWidth,
           minItemWidth: minItemWidth,
-          horizontalMargin: horizontalSpacing ?? 0.0,
+          horizontalSpacing: horizontalSpacing,
         );
 
-        final rows = <Widget>[];
-        for (int i = 0; i < items.length; i += layout.columns) {
-          final rowItems =
-              items.sublist(i, math.min(i + layout.columns, items.length));
+        // Determine the total number of rows needed.
+        final totalRows = (items.length + layout.columns - 1) ~/ layout.columns;
 
-          rows.add(
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                for (int r = 0; r < rowItems.length; r++) ...[
-                  SizedBox(
-                    width: layout.itemWidth,
-                    child: itemBuilder(context, rowItems[r], i + r),
-                  ),
-                  if (r < rowItems.length - 1)
-                    SizedBox(width: horizontalSpacing),
-                ],
-              ],
-            ),
-          );
-        }
-
-        return SingleChildScrollView(
+        return ListView.builder(
           padding: padding,
-          child: Column(
-            spacing: verticalSpacing ?? 0,
-            children: rows,
-          ),
+          itemCount: totalRows,
+          itemBuilder: (context, rowIndex) {
+            // The chunk of items for this particular row.
+            final startIndex = rowIndex * layout.columns;
+            final endIndex =
+                math.min(startIndex + layout.columns, items.length);
+            final rowItems = items.sublist(startIndex, endIndex);
+
+            return Container(
+              // Optional vertical spacing after each row (except the last).
+              margin: EdgeInsets.only(
+                  bottom: rowIndex < totalRows - 1 ? verticalSpacing : 0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (int i = 0; i < rowItems.length; i++) ...[
+                    SizedBox(
+                      width: layout.itemWidth,
+                      child: itemBuilder(context, rowItems[i], startIndex + i),
+                    ),
+                    if (i < rowItems.length - 1)
+                      SizedBox(width: horizontalSpacing),
+                  ],
+                ],
+              ),
+            );
+          },
         );
       },
     );
   }
 }
 
-/// Simple data class to hold the grid layout parameters.
-class _WispAdaptiveGridLayout {
+/// A private helper for storing the computed number of columns and item width.
+class _AdaptiveLayout {
   final int columns;
   final double itemWidth;
 
-  const _WispAdaptiveGridLayout(this.columns, this.itemWidth);
+  const _AdaptiveLayout(this.columns, this.itemWidth);
 }
 
-/// Computes how many columns fit and how wide each item should be
-/// so that the grid fills [containerWidth] exactly (except for
-/// small rounding) with at least [minItemWidth] per item.
-///
-/// [horizontalMargin] is the gap between items in a row.
-_WispAdaptiveGridLayout _calculateGridLayout({
+/// Determines how many columns can fit into [containerWidth] while ensuring
+/// each item has at least [minItemWidth] width. [horizontalSpacing] is inserted
+/// between columns, so each row's total width is fully utilized.
+_AdaptiveLayout _calculateAdaptiveLayout({
   required double containerWidth,
   required double minItemWidth,
-  required double horizontalMargin,
+  required double horizontalSpacing,
 }) {
-  int columns =
-      ((containerWidth + horizontalMargin) / (minItemWidth + horizontalMargin))
-          .floor();
+  // Initial guess: maximum columns
+  int columns = ((containerWidth + horizontalSpacing) /
+          (minItemWidth + horizontalSpacing))
+      .floor();
 
   while (columns > 0) {
+    // Compute the final item width if we place [columns] items plus (columns - 1) spaces.
     final itemWidth =
-        (containerWidth - (columns - 1) * horizontalMargin) / columns;
+        (containerWidth - (columns - 1) * horizontalSpacing) / columns;
     if (itemWidth >= minItemWidth) {
-      return _WispAdaptiveGridLayout(columns, itemWidth);
+      return _AdaptiveLayout(columns, itemWidth);
     }
     columns--;
   }
 
-  // fallback: 1 column
-  return _WispAdaptiveGridLayout(1, containerWidth);
+  // Fallback if even 1 column won't fit minItemWidth => single column anyway
+  return _AdaptiveLayout(1, containerWidth);
 }

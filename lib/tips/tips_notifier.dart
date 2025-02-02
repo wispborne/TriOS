@@ -29,7 +29,7 @@ class TipsNotifier extends StateNotifier<AsyncValue<List<ModTip>>> {
           }
         }
       } catch (e, st) {
-        Fimber.e('Error loading tips', ex: e, stacktrace: st);
+        Fimber.e('Error loading tips for $v', ex: e, stacktrace: st);
       }
     }
 

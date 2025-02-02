@@ -31,6 +31,8 @@ class TipMapper extends ClassMapperBase<Tip> {
     #tip: _f$tip,
   };
 
+  @override
+  final MappingHook hook = const TipHooks();
   static Tip _instantiate(DecodingData data) {
     return Tip(freq: data.dec(_f$freq), tip: data.dec(_f$tip));
   }

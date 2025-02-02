@@ -45,6 +45,8 @@ class TriOSToolsMapper extends EnumMapper<TriOSTools> {
         return TriOSTools.settings;
       case 'modBrowser':
         return TriOSTools.modBrowser;
+      case 'tips':
+        return TriOSTools.tips;
       default:
         throw MapperException.unknownEnumValue(value);
     }
@@ -73,6 +75,8 @@ class TriOSToolsMapper extends EnumMapper<TriOSTools> {
         return 'settings';
       case TriOSTools.modBrowser:
         return 'modBrowser';
+      case TriOSTools.tips:
+        return 'tips';
     }
   }
 }

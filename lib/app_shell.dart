@@ -40,6 +40,7 @@ import 'jre_manager/jre_manager_logic.dart';
 import 'launcher/launcher.dart';
 import 'main.dart';
 import 'mod_profiles/mod_profiles_page.dart';
+import 'tips/tips_page.dart';
 import 'trios/app_state.dart';
 import 'trios/drag_drop_handler.dart';
 
@@ -69,6 +70,7 @@ class _AppShellState extends ConsumerState<AppShell>
     6: TriOSTools.weapons,
     7: TriOSTools.settings,
     8: TriOSTools.modBrowser,
+    9: TriOSTools.tips,
   };
 
   void _changeTab(TriOSTools tab) {
@@ -201,6 +203,7 @@ class _AppShellState extends ConsumerState<AppShell>
         child: SettingsPage(),
       ),
       const ModBrowserPage(),
+      const TipsPage(),
     ];
     final theme = Theme.of(context);
 
@@ -355,6 +358,17 @@ class _AppShellState extends ConsumerState<AppShell>
                                   ],
                                 ),
                               )),
+                          PopupMenuItem(
+                            value: TriOSTools.tips,
+                            child: Row(
+                              children: [
+                                SvgImageIcon("assets/images/icon-target.svg"),
+                                SizedBox(width: 8),
+                                // Space between icon and text
+                                Text("Tips"),
+                              ],
+                            ),
+                          ),
                           // PopupMenuItem(
                           //     text: "Portraits",
                           //     icon: const SvgImageIcon(

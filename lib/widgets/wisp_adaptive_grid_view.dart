@@ -2,44 +2,6 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-/// Simple data class to hold the grid layout parameters.
-class GridLayout {
-  final int columns;
-  final double itemWidth;
-
-  const GridLayout(this.columns, this.itemWidth);
-
-  @override
-  String toString() => 'GridLayout(columns: $columns, itemWidth: $itemWidth)';
-}
-
-/// Computes how many columns fit and how wide each item should be
-/// so that the grid fills [containerWidth] exactly (except for
-/// small rounding) with at least [minItemWidth] per item.
-///
-/// [horizontalMargin] is the gap between items in a row.
-GridLayout calculateGridLayout({
-  required double containerWidth,
-  required double minItemWidth,
-  required double horizontalMargin,
-}) {
-  int columns =
-      ((containerWidth + horizontalMargin) / (minItemWidth + horizontalMargin))
-          .floor();
-
-  while (columns > 0) {
-    final itemWidth =
-        (containerWidth - (columns - 1) * horizontalMargin) / columns;
-    if (itemWidth >= minItemWidth) {
-      return GridLayout(columns, itemWidth);
-    }
-    columns--;
-  }
-
-  // fallback: 1 column
-  return GridLayout(1, containerWidth);
-}
-
 /// A reusable widget that lays out [items] in a responsive, adaptive grid:
 /// - Figures out how many columns fit based on [minItemWidth].
 /// - Places [horizontalSpacing] between columns.
@@ -83,7 +45,7 @@ class WispAdaptiveGridView<T> extends StatelessWidget {
         // In case the user gave large horizontal padding, avoid negative containerWidth.
         final availableWidth = math.max(containerWidth, 0.0);
 
-        final layout = calculateGridLayout(
+        final layout = _calculateGridLayout(
           containerWidth: availableWidth,
           minItemWidth: minItemWidth,
           horizontalMargin: horizontalSpacing ?? 0.0,
@@ -121,4 +83,39 @@ class WispAdaptiveGridView<T> extends StatelessWidget {
       },
     );
   }
+}
+
+/// Simple data class to hold the grid layout parameters.
+class _WispAdaptiveGridLayout {
+  final int columns;
+  final double itemWidth;
+
+  const _WispAdaptiveGridLayout(this.columns, this.itemWidth);
+}
+
+/// Computes how many columns fit and how wide each item should be
+/// so that the grid fills [containerWidth] exactly (except for
+/// small rounding) with at least [minItemWidth] per item.
+///
+/// [horizontalMargin] is the gap between items in a row.
+_WispAdaptiveGridLayout _calculateGridLayout({
+  required double containerWidth,
+  required double minItemWidth,
+  required double horizontalMargin,
+}) {
+  int columns =
+      ((containerWidth + horizontalMargin) / (minItemWidth + horizontalMargin))
+          .floor();
+
+  while (columns > 0) {
+    final itemWidth =
+        (containerWidth - (columns - 1) * horizontalMargin) / columns;
+    if (itemWidth >= minItemWidth) {
+      return _WispAdaptiveGridLayout(columns, itemWidth);
+    }
+    columns--;
+  }
+
+  // fallback: 1 column
+  return _WispAdaptiveGridLayout(1, containerWidth);
 }

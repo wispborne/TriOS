@@ -1,5 +1,7 @@
 # 1.1.0
 - Added
+  - Tips manager.
+    - View in-game tips by mod and select which ones to hide. 
   - Mods tab: May now group by Enabled (default), Mod Type, Game Version, and Author.
   - Support for MediaFire download links (thanks, AtlanticAccent & ChatGPT).
 - Fixed

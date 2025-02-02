@@ -21,7 +21,7 @@ class TipsNotifier extends StateNotifier<AsyncValue<List<ModTip>>> {
         final tipsFile = v.modFolder.resolve(Constants.tipsFileRelativePath);
         if (tipsFile.existsSync()) {
           final tipsJson = tipsFile.toFile().readAsString();
-          final loaded = TipsMapper.fromJson(await tipsJson);
+          final loaded = TipsMapper.fromJson((await tipsJson).fixJson());
           if (loaded.tips != null) {
             for (final t in loaded.tips!) {
               newTips.add(ModTip(tipObj: t, variants: [v]));

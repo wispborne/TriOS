@@ -4,12 +4,11 @@ import 'package:intl/intl.dart';
 import 'package:trios/utils/extensions.dart';
 
 class Constants {
-  static const version = "1.0.6";
+  static const version = "1.1.0-dev05";
 
   static const appName = "TriOS";
   static const appTitle = "$appName v$version";
   static String appSubtitle = [
-    "Prerelease",
     "Corporate Toolkit",
     "by Wisp",
     "Hegemony Tolerated",

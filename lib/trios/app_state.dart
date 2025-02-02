@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/compression/archive.dart';
 import 'package:trios/jre_manager/jre_entry.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
@@ -122,7 +123,10 @@ class AppState {
     final gameCorePath = generateGameCorePath(gamePath)!;
 
     try {
-      final trueVersion = await getStarsectorVersionFromObf(gameCorePath);
+      final archive = ref.watch(archiveProvider).value;
+      if (archive == null) return null;
+
+      final trueVersion = await getStarsectorVersionFromObf(gameCorePath, archive);
       if (trueVersion != null && trueVersion.isNotEmpty) {
         ref
             .read(appSettings.notifier)

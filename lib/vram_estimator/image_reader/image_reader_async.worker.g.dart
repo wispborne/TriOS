@@ -3,7 +3,7 @@
 part of 'image_reader_async.dart';
 
 // **************************************************************************
-// Generator: WorkerGenerator 6.1.1
+// Generator: WorkerGenerator 6.1.5
 // **************************************************************************
 
 /// WorkerService class for ReadImageHeaders

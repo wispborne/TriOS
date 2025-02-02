@@ -258,7 +258,7 @@ class Fimber {
 
     if (_allowSentryReporting) {
       Sentry.captureException(ex, stackTrace: stacktrace, withScope: (scope) {
-        scope.setContexts("extra-data", {"message": message});
+        scope.setContexts("extra-data", {"message": _scrubPath(message)});
       });
     }
   }
@@ -336,7 +336,7 @@ SentryFlutterOptions configureSentry(
     )
         .let((event) {
       try {
-        return scrubSensitiveData(event, hint: hint);
+        return _scrubSensitiveDataFromSentryEvent(event, hint: hint);
       } catch (e) {
         // Can't very well log it to Sentry if it's broken.
         Fimber.i("Error scrubbing sensitive data.", ex: e);
@@ -383,25 +383,14 @@ String getSentryUserId(Settings? settings) {
 }
 
 /// ChatGPT generated.
-SentryEvent scrubSensitiveData(SentryEvent event, {Hint? hint}) {
-  // Function to scrub usernames from the path
-  String scrubPath(String path) {
-    // Scrub Windows usernames
-    path = path.replaceAll(RegExp(r'\\Users\\[^\\]+'), r'\Users\redacted');
-
-    // Scrub macOS and Linux usernames
-    path = path.replaceAll(RegExp(r'/Users/[^/]+'), '/Users/<REDACTED>');
-    path = path.replaceAll(RegExp(r'/home/[^/]+'), '/home/<REDACTED>');
-
-    return path;
-  }
-
+SentryEvent _scrubSensitiveDataFromSentryEvent(SentryEvent event,
+    {Hint? hint}) {
   // Scrub sensitive data from the exception values
   final exceptions = event.exceptions?.map((exception) {
     if (exception.stackTrace != null) {
       final frames = exception.stackTrace!.frames.map((frame) {
         if (frame.fileName != null) {
-          frame = frame.copyWith(fileName: scrubPath(frame.fileName!));
+          frame = frame.copyWith(fileName: _scrubPath(frame.fileName!));
         }
         return frame;
       }).toList();
@@ -409,7 +398,7 @@ SentryEvent scrubSensitiveData(SentryEvent event, {Hint? hint}) {
           exception.copyWith(stackTrace: SentryStackTrace(frames: frames));
     }
     if (exception.value != null) {
-      exception = exception.copyWith(value: scrubPath(exception.value!));
+      exception = exception.copyWith(value: _scrubPath(exception.value!));
     }
     return exception;
   }).toList();
@@ -417,4 +406,16 @@ SentryEvent scrubSensitiveData(SentryEvent event, {Hint? hint}) {
   return event.copyWith(
     exceptions: exceptions,
   );
+}
+
+// Function to scrub usernames from the path
+String _scrubPath(String path) {
+  // Scrub Windows usernames
+  path = path.replaceAll(RegExp(r'\\Users\\[^\\]+'), r'\Users\redacted');
+
+  // Scrub macOS and Linux usernames
+  path = path.replaceAll(RegExp(r'/Users/[^/]+'), '/Users/<REDACTED>');
+  path = path.replaceAll(RegExp(r'/home/[^/]+'), '/home/<REDACTED>');
+
+  return path;
 }

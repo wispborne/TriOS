@@ -6,16 +6,17 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
+import 'package:trios/compression/archive.dart';
+import 'package:trios/compression/libarchive/libarchive.dart';
+import 'package:trios/models/download_progress.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
+import 'package:trios/utils/dart_mappable_utils.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/utils/util.dart';
 
-import '../libarchive/libarchive.dart';
-import '../models/download_progress.dart';
-import '../utils/dart_mappable_utils.dart';
-import '../utils/util.dart';
 import 'jre_manager_logic.dart';
 
 part 'jre_entry.mapper.dart';
@@ -338,7 +339,7 @@ class CustomJreNotifier extends AsyncNotifier<CustomJreDownloadState> {
       return;
     }
 
-    var libArchive = LibArchive();
+    final archive = ref.read(archiveProvider).requireValue;
     var versionChecker = customJreInfo;
     final savePath = Directory.systemTemp
         .createTempSync('trios_jre$_jreVersion-')
@@ -351,8 +352,8 @@ class CustomJreNotifier extends AsyncNotifier<CustomJreDownloadState> {
       final jdkZip = _downloadCustomJreJdkForPlatform(versionChecker, savePath);
       final configZip = _downloadCustomJreConfig(versionChecker, savePath);
       await _installCustomJREConfig(
-          libArchive, gamePath, savePath, await configZip);
-      await _installCustomJREJdk(libArchive, gamePath, await jdkZip);
+          archive, gamePath, savePath, await configZip);
+      await _installCustomJREJdk(archive, gamePath, await jdkZip);
 
       state = AsyncValue.data(state.value!.copyWith(isInstalling: false));
     } catch (e, stackTrace) {
@@ -433,8 +434,8 @@ class CustomJreNotifier extends AsyncNotifier<CustomJreDownloadState> {
   }
 
   Future<void> _installCustomJREJdk(
-      LibArchive libArchive, Directory gamePath, File jdkZip) async {
-    final filesInJdkZip = libArchive.listEntriesInArchive(jdkZip);
+      ArchiveInterface archive, Directory gamePath, File jdkZip) async {
+    final filesInJdkZip = await archive.listFiles(jdkZip);
 
     if (filesInJdkZip.isEmpty) {
       Fimber.e("No files in JRE $_jreVersion JDK zip");
@@ -442,22 +443,22 @@ class CustomJreNotifier extends AsyncNotifier<CustomJreDownloadState> {
     }
 
     final topLevelFolder = filesInJdkZip
-        .minByOrNull<num>((element) => element.pathName.length)!
-        .pathName;
+        .minByOrNull<num>((element) => element.path.length)!
+        .path;
     if (gamePath.resolve(topLevelFolder).path.toDirectory().existsSync()) {
       Fimber.i("JRE $_jreVersion JDK already exists in game folder. Aborting.");
       return;
     }
 
-    final extractedJdkFiles = await libArchive.extractEntriesInArchive(
+    final extractedJdkFiles = await archive.extractEntriesInArchive(
         jdkZip, gamePath.absolute.path);
     Fimber.i(
         "Extracted JRE $_jreVersion JDK files: ${extractedJdkFiles.joinToString(separator: ', ', transform: (it) => it?.extractedFile.path ?? "")}");
   }
 
-  Future<void> _installCustomJREConfig(LibArchive libArchive,
+  Future<void> _installCustomJREConfig(ArchiveInterface archive,
       Directory gamePath, Directory savePath, File configZip) async {
-    final filesInConfigZip = (await libArchive.extractEntriesInArchive(
+    final filesInConfigZip = (await archive.extractEntriesInArchive(
             configZip, savePath.absolute.path))
         .map((e) => e?.extractedFile.normalize)
         .whereType<File>()

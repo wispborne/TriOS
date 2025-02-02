@@ -93,7 +93,9 @@ List<ModVariant> searchModVariants(
           .map((mod) => TextSearchItem(mod, getModVariantSearchTags(mod)))
           .toList());
 
-  return (query == null || query.isEmpty || modVariants.isEmpty)
+  final threshold = 1.0;
+
+  final result = (query == null || query.isEmpty || modVariants.isEmpty)
       ? modVariants
       : query
           .split(",")
@@ -101,13 +103,13 @@ List<ModVariant> searchModVariants(
           .filter((it) => it.isNotNullOrEmpty())
           .map((queryPart) =>
               (query: queryPart, result: modSearch!.search(queryPart)))
-          .filter((e) => e.result.any((element) => element.score > 0))
           .toList()
           .let((results) {
           final positiveQueryResult = results
               .filter((queryObj) => !queryObj.query.startsWith("-"))
               .map((e) => e.result)
               .flattened
+              .filter((e) => e.score < threshold)
               .sortedBy<num>((e) => e.score)
               .map((e) => e.object);
 
@@ -115,6 +117,7 @@ List<ModVariant> searchModVariants(
               .filter((queryObj) => queryObj.query.startsWith("-"))
               .map((e) => e.result)
               .flattened
+              .filter((e) => e.score < threshold)
               .map((e) => e.object);
 
           if (positiveQueryResult.isEmpty && negativeQueryResult.isNotEmpty) {
@@ -127,6 +130,7 @@ List<ModVariant> searchModVariants(
             return <ModVariant>[];
           }
         }).toList();
+  return result;
 }
 
 // Scraped Mod search

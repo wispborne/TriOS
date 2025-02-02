@@ -6,11 +6,11 @@ import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/dotted_border.dart';
 
-class FileCard extends StatelessWidget {
+class DragDropInstallModOverlay extends StatelessWidget {
   final List<FileSystemEntity> entities;
   final List<Uri> urls;
 
-  const FileCard({super.key, required this.entities, required this.urls});
+  const DragDropInstallModOverlay({super.key, required this.entities, required this.urls});
 
   @override
   Widget build(BuildContext context) {
@@ -60,7 +60,7 @@ class FileCard extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 4.0),
-                          DroppedFileWidget(entity, theme),
+                          _buildDroppedFileWidget(entity, theme),
                           const SizedBox(height: 8.0),
                         ],
                       );
@@ -96,7 +96,7 @@ class FileCard extends StatelessWidget {
     );
   }
 
-  FutureBuilder<String> DroppedFileWidget(
+  FutureBuilder<String> _buildDroppedFileWidget(
       FileSystemEntity entity, ThemeData theme) {
     return FutureBuilder<String>(
       future: _getFileOrDirectorySize(entity),

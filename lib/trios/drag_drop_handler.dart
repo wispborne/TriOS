@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:collection/collection.dart';
+import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:super_clipboard/src/reader.dart';
@@ -127,27 +127,7 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
               _inProgress = true;
             });
             try {
-              // Install each dropped archive in turn.
-              // Log any errors and continue with the next archive.
-              for (var file in files) {
-                try {
-                  // TODO: this works fine in _pickAndInstallMods with `await`, see what the difference is.
-                  if (file.isFile()) {
-                    ref
-                        .read(modManager.notifier)
-                        .installModFromSourceWithDefaultUI(
-                            ArchiveModInstallSource(File(file.path)));
-                  } else {
-                    ref
-                        .read(modManager.notifier)
-                        .installModFromSourceWithDefaultUI(
-                            DirectoryModInstallSource(Directory(file.path)));
-                  }
-                } catch (e, st) {
-                  Fimber.e("Failed to install mod from archive",
-                      ex: e, stacktrace: st);
-                }
-              }
+              _handleDroppedModFilesAndFolders(files);
             } finally {
               setState(() {
                 _inProgress = false;
@@ -277,7 +257,8 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
                                                       constraints:
                                                           const BoxConstraints(
                                                               minWidth: 400),
-                                                      child: FileCard(
+                                                      child:
+                                                          DragDropInstallModOverlay(
                                                         entities: future.data
                                                             .orEmpty()
                                                             .nonNulls
@@ -301,6 +282,26 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
         );
       }),
     );
+  }
+
+  /// Handles dropped files and folders from the file picker.
+  void _handleDroppedModFilesAndFolders(List<FileSystemEntity> files) {
+    // Install each dropped archive in turn.
+    // Log any errors and continue with the next archive.
+    for (var file in files) {
+      try {
+        // TODO: this works fine in _pickAndInstallMods with `await`, see what the difference is.
+        if (file.isFile()) {
+          ref.read(modManager.notifier).installModFromSourceWithDefaultUI(
+              ArchiveModInstallSource(File(file.path)));
+        } else {
+          ref.read(modManager.notifier).installModFromSourceWithDefaultUI(
+              DirectoryModInstallSource(Directory(file.path)));
+        }
+      } catch (e, st) {
+        Fimber.e("Failed to install mod from archive", ex: e, stacktrace: st);
+      }
+    }
   }
 
   Future<FileSystemEntity?> getFileFromReader(DataReader reader) async {

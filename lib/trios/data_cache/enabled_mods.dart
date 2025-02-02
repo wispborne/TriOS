@@ -1,13 +1,11 @@
 // TODO make synchronous to update in memory
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mutex/mutex.dart';
 import 'package:path/path.dart' as p;
 import 'package:trios/trios/settings/app_settings_logic.dart';
-import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 
 import '../../models/enabled_mods.dart';
@@ -67,7 +65,7 @@ class EnabledModsNotifier extends AsyncNotifier<EnabledMods> {
       // Creates a new enabled_mods.json file if it doesn't exist.
       // Might be ok not to await this.
       Fimber.d("Writing enabled mods to enabled_mods.json: $enabledMods");
-      enabledModsFile.writeAsStringSync(jsonEncode(enabledMods.toJson()));
+      enabledModsFile.writeAsStringSync(enabledMods.toMap().prettyPrintJson());
       state = AsyncValue.data(enabledMods);
       Fimber.i(
         enabled
@@ -96,8 +94,7 @@ class EnabledModsNotifier extends AsyncNotifier<EnabledMods> {
         if (enabledModsFile.existsSync() == false) {
           try {
             enabledModsFile.createSync(recursive: true);
-            enabledModsFile.writeAsStringSync(
-                const EnabledMods({}).toJson().toJsonString());
+            enabledModsFile.writeAsStringSync(const EnabledMods({}).toJson());
           } catch (e, stack) {
             Fimber.e(
                 "Failed to create enabled mods file at ${enabledModsFile.path}",
@@ -136,7 +133,7 @@ class EnabledModsNotifier extends AsyncNotifier<EnabledMods> {
   /// `allMods` will filter out mods that have been removed from the mods folder since the last time the enabled mods file was written.
   Future<EnabledMods> _getEnabledMods(Directory modsFolder,
       {List<Mod>? allMods}) async {
-    return EnabledMods.fromJson(
-        (await _getEnabledModsFile(modsFolder).readAsString()).fixJsonToMap());
+    return EnabledModsMapper.fromJson(
+        (await _getEnabledModsFile(modsFolder).readAsString()).fixJson());
   }
 }

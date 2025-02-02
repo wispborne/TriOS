@@ -1,15 +1,22 @@
 import 'package:flutter/material.dart';
 
-
 class SettingsGroup extends StatelessWidget {
   final String name;
   final List<Widget> children;
+  final double padding;
 
   const SettingsGroup({
     super.key,
     required this.name,
     required this.children,
+    this.padding = 16,
   });
+
+  static SettingsGroup subsection({
+    required String name,
+    required List<Widget> children,
+  }) =>
+      SettingsGroup(name: name, padding: 4, children: children);
 
   @override
   Widget build(BuildContext context) {
@@ -24,11 +31,7 @@ class SettingsGroup extends StatelessWidget {
             children: [
               Text(
                 name,
-                style: Theme
-                    .of(context)
-                    .textTheme
-                    .labelLarge
-                    ?.copyWith(),
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(),
               ),
               Expanded(
                 child: Divider(
@@ -38,7 +41,7 @@ class SettingsGroup extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: padding),
           Padding(
             padding: const EdgeInsets.only(left: 24),
             child: Column(

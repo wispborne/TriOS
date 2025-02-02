@@ -1,21 +1,19 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:dart_mappable/dart_mappable.dart';
 import 'package:trios/models/mod.dart';
 
-part '../generated/models/enabled_mods.freezed.dart';
-part '../generated/models/enabled_mods.g.dart';
+part 'enabled_mods.mapper.dart';
 
-@freezed
-class EnabledMods with _$EnabledMods {
-  const factory EnabledMods(Set<String> enabledMods) = _EnabledMods;
+@MappableClass()
+class EnabledMods with EnabledModsMappable {
+  final Set<String> enabledMods;
 
-  factory EnabledMods.fromJson(Map<String, dynamic> json) =>
-      _$EnabledModsFromJson(json);
-}
+  const EnabledMods(this.enabledMods);
 
-extension EnabledModsExtensions on EnabledMods {
   EnabledMods filterOutMissingMods(List<Mod> mods) {
-    return EnabledMods(enabledMods
-        .where((enabledModId) => mods.any((mod) => mod.id == enabledModId))
-        .toSet());
+    return EnabledMods(
+      enabledMods
+          .where((enabledModId) => mods.any((mod) => mod.id == enabledModId))
+          .toSet(),
+    );
   }
 }

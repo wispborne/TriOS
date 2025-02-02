@@ -18,14 +18,13 @@ import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/navigation.dart';
 import 'package:trios/trios/self_updater/self_updater.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
-import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/trios/settings/settings_page.dart';
 import 'package:trios/trios/toasts/toast_manager.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/platform_specific.dart';
 import 'package:trios/vram_estimator/vram_estimator.dart';
-import 'package:trios/weaponViewer/weaponPage.dart';
+import 'package:trios/weaponViewer/weaponPageWispGrid.dart';
 import 'package:trios/widgets/blur.dart';
 import 'package:trios/widgets/changelog_viewer.dart';
 import 'package:trios/widgets/dropdown_with_icon.dart';
@@ -35,13 +34,13 @@ import 'package:trios/widgets/self_update_toast.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:trios/widgets/tab_button.dart';
 import 'package:trios/widgets/trios_app_icon.dart';
-import 'package:url_launcher/url_launcher_string.dart';
 
 import 'about/about_page.dart';
 import 'jre_manager/jre_manager_logic.dart';
 import 'launcher/launcher.dart';
 import 'main.dart';
 import 'mod_profiles/mod_profiles_page.dart';
+import 'tips/tips_page.dart';
 import 'trios/app_state.dart';
 import 'trios/drag_drop_handler.dart';
 
@@ -71,6 +70,7 @@ class _AppShellState extends ConsumerState<AppShell>
     6: TriOSTools.weapons,
     7: TriOSTools.settings,
     8: TriOSTools.modBrowser,
+    9: TriOSTools.tips,
   };
 
   void _changeTab(TriOSTools tab) {
@@ -203,6 +203,7 @@ class _AppShellState extends ConsumerState<AppShell>
         child: SettingsPage(),
       ),
       const ModBrowserPage(),
+      const TipsPage(),
     ];
     final theme = Theme.of(context);
 
@@ -357,6 +358,17 @@ class _AppShellState extends ConsumerState<AppShell>
                                   ],
                                 ),
                               )),
+                          PopupMenuItem(
+                            value: TriOSTools.tips,
+                            child: Row(
+                              children: [
+                                SvgImageIcon("assets/images/icon-target.svg"),
+                                SizedBox(width: 8),
+                                // Space between icon and text
+                                Text("Tips"),
+                              ],
+                            ),
+                          ),
                           // PopupMenuItem(
                           //     text: "Portraits",
                           //     icon: const SvgImageIcon(
@@ -483,7 +495,9 @@ class _AppShellState extends ConsumerState<AppShell>
                                 "assets/images/icon-bullhorn-variant.svg"),
                             color: Theme.of(context).iconTheme.color,
                             onPressed: () => showTriOSChangelogDialog(context,
-                                lastestVersionToShow: Version.parse(Constants.version, sanitizeInput: false)),
+                                lastestVersionToShow: Version.parse(
+                                    Constants.version,
+                                    sanitizeInput: false)),
                           ),
                         ),
                         MovingTooltipWidget.text(

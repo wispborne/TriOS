@@ -34,6 +34,7 @@ import 'menu_header.dart';
 final class MenuItem<T> extends ContextMenuItem<T> {
   final String label;
   final IconData? icon;
+  final double? iconOpacity;
   final BoxConstraints? constraints;
   final bool enabled;
   final TextStyle? textStyle;
@@ -41,6 +42,7 @@ final class MenuItem<T> extends ContextMenuItem<T> {
   const MenuItem({
     required this.label,
     this.icon,
+    this.iconOpacity,
     super.value,
     super.onSelected,
     this.constraints,
@@ -52,6 +54,7 @@ final class MenuItem<T> extends ContextMenuItem<T> {
     required this.label,
     required List<ContextMenuEntry> items,
     this.icon,
+    this.iconOpacity,
     super.onSelected,
     this.constraints,
     this.enabled = true,
@@ -65,7 +68,7 @@ final class MenuItem<T> extends ContextMenuItem<T> {
 
     final background = context.colorScheme.surface;
     final normalTextColor = Color.alphaBlend(
-      context.colorScheme.onSurface.withOpacity(0.7),
+      context.colorScheme.onSurface.withOpacity( 0.7),
       background,
     );
     final focusedTextColor = context.colorScheme.onSurface;
@@ -94,7 +97,7 @@ final class MenuItem<T> extends ContextMenuItem<T> {
                     child: Icon(
                       icon,
                       size: 16.0,
-                      color: foregroundColor,
+                      color: foregroundColor.withOpacity(iconOpacity ?? foregroundColor.a),
                     ),
                   ),
                   const SizedBox(width: 4.0),

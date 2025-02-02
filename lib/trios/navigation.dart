@@ -14,4 +14,5 @@ enum TriOSTools {
   weapons,
   settings,
   modBrowser,
+  tips,
 }

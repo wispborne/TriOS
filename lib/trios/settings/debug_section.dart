@@ -5,6 +5,8 @@ import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:toastification/toastification.dart';
+import 'package:trios/compression/archive.dart';
+import 'package:trios/compression/libarchive/libarchive.dart';
 import 'package:trios/mod_profiles/mod_profiles_manager.dart';
 import 'package:trios/models/download_progress.dart';
 import 'package:trios/onboarding/onboarding_page.dart';
@@ -19,6 +21,7 @@ import 'package:trios/weaponViewer/weaponsManager.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
 import 'package:trios/widgets/download_progress_indicator.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:trios/widgets/restartable_app.dart';
 
 import '../../utils/util.dart';
 import '../../widgets/self_update_toast.dart';
@@ -246,6 +249,7 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                           ref
                               .read(appSettings.notifier)
                               .update((_) => Settings());
+                          RestartableApp.restartApp(context);
                         },
                         child: const Text('Wipe Settings'),
                       ),
@@ -301,7 +305,7 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
             icon: const Icon(Icons.developer_mode),
             onPressed: () {
               getStarsectorVersionFromObf(
-                      ref.watch(appSettings.select((s) => s.gameCoreDir))!)
+                      ref.watch(appSettings.select((s) => s.gameCoreDir))!, ref.read(archiveProvider).value!)
                   .then((value) {
                 showSnackBar(
                   context: ref.read(AppState.appContext)!,
@@ -328,6 +332,27 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
             },
             label: const Text('Read weapons'),
           ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(top: 16),
+          child: Builder(builder: (context) {
+            final path = "F:/Downloads/starsector_install-0.97a-RC11.exe";
+            return MovingTooltipWidget.text(
+              message: "Tries to read from '$path'",
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.folder_zip),
+                onPressed: () async {
+                  final time = DateTime.now();
+                  final entries =
+                      await ref.read(archiveProvider).requireValue.listFiles(path.toFile());
+                  final timeToRead = time.difference(DateTime.now());
+                  Fimber.i("Entries: ${(entries).join('\n')}"
+                      "\nTime to read archive: $timeToRead");
+                },
+                label: const Text('Read Starsector installer'),
+              ),
+            );
+          }),
         ),
         const SizedBox(height: 16),
         Card(

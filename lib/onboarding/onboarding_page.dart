@@ -50,7 +50,10 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
         enableMultipleVersions ? settings.keepLastNVersions : null;
     allowCrashReporting = settings.allowCrashReporting ?? false;
     pages = [];
-    if (Platform.isMacOS) pages.add(() => _buildMacOSPage());
+    if (Platform.isMacOS &&
+        settings.compressionLib == CompressionLib.libarchive) {
+      pages.add(() => _buildMacOSPage());
+    }
     pages.add(() => _buildGameDirectoryAndModPreferencesPage());
     pages.add(() => _buildCrashReportingPage());
   }

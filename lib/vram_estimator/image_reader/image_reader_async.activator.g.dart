@@ -1,7 +1,7 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
 // **************************************************************************
-// Generator: WorkerGenerator 6.1.1
+// Generator: WorkerGenerator 6.1.5
 // **************************************************************************
 
 import 'image_reader_async.stub.g.dart'

@@ -41,7 +41,8 @@ class DownloadManager {
     return _instance!;
   }
 
-  void Function(int, int) createCallback(url, int partialFileLength) =>
+  void Function(int, int) createDownloadProgressCallback(
+          url, int partialFileLength) =>
       (int received, int total) {
         final download = DownloadedAmount(
             received + partialFileLength, total + partialFileLength);
@@ -57,9 +58,10 @@ class DownloadManager {
     late String partialFilePath;
     late File partialFile;
     final TriOSHttpClient httpClient = ref.watch(triOSHttpClient);
+    final originalUrl = url;
 
     try {
-      var task = getDownload(url);
+      var task = getDownload(originalUrl);
 
       if (task == null || task.status.value == DownloadStatus.canceled) {
         return;
@@ -67,10 +69,10 @@ class DownloadManager {
 
       setStatus(task, DownloadStatus.retrievingFileInfo);
 
-      url = makeDirectDownloadLink(url);
+      url = await makeDirectDownloadLink(url, httpClient);
       final finalUrlAndHeaders = await fetchFinalUrlAndHeaders(url, httpClient);
       url = finalUrlAndHeaders.url;
-      url = makeDirectDownloadLink(url);
+      url = await makeDirectDownloadLink(url, httpClient);
       final headers = finalUrlAndHeaders.headers;
       final headersMap = <String, String>{};
       headers.forEach((key, value) {
@@ -115,7 +117,8 @@ class DownloadManager {
         final response = await httpClient.get(
           url,
           headers: {HttpHeaders.rangeHeader: 'bytes=$partialFileLength-'},
-          onProgress: createCallback(url, partialFileLength),
+          onProgress:
+              createDownloadProgressCallback(originalUrl, partialFileLength),
         );
 
         if (response.statusCode == HttpStatus.partialContent ||
@@ -133,7 +136,7 @@ class DownloadManager {
       } else {
         final response = await httpClient.get(
           url,
-          onProgress: createCallback(url, 0),
+          onProgress: createDownloadProgressCallback(originalUrl, 0),
         );
         final responseData = getResponseBodyAsBytes(response.data);
 
@@ -146,7 +149,7 @@ class DownloadManager {
         }
       }
     } catch (e) {
-      final task = getDownload(url)!;
+      final task = getDownload(originalUrl)!;
       if (task.status.value != DownloadStatus.canceled &&
           task.status.value != DownloadStatus.paused) {
         task.error = e;
@@ -186,7 +189,8 @@ class DownloadManager {
   }
 
   /// Partly AI Generated
-  String makeDirectDownloadLink(String url) {
+  Future<String> makeDirectDownloadLink(
+      String url, TriOSHttpClient http) async {
     // Create a lowercase version of the URL for comparison purposes
     final urlLower = url.toLowerCase();
 
@@ -242,7 +246,61 @@ class DownloadManager {
           .replaceFirst(RegExp("/blob/", caseSensitive: false), "/");
     }
 
+    // MediaFire - Fetch the direct download link
+    else if (urlLower.contains("mediafire.com")) {
+      try {
+        url = await getMediafireDirectLink(url, http);
+      } catch (e) {
+        Fimber.w("Failed to retrieve MediaFire direct link: $e");
+      }
+    }
+
     return url;
+  }
+
+  /// Extracts and fetches the direct download link from a MediaFire URL.
+  Future<String> getMediafireDirectLink(
+      String url, TriOSHttpClient http) async {
+    try {
+      // Define regex patterns for different MediaFire link formats
+      final patterns = [
+        RegExp(r"https://www\.mediafire\.com/file/([^/]+)/?"),
+        RegExp(r"https://www\.mediafire\.com/view/([^/]+)/?"),
+        RegExp(r"https://www\.mediafire\.com/download/([^/]+)/?"),
+        RegExp(r"https://www\.mediafire\.com/\?([^/]+)/?"),
+      ];
+
+      // Check if the URL matches any MediaFire patterns
+      bool isValid = false;
+      for (var pattern in patterns) {
+        if (pattern.hasMatch(url)) {
+          isValid = true;
+          break;
+        }
+      }
+
+      if (!isValid) {
+        throw Exception("Invalid MediaFire URL.");
+      }
+
+      // Fetch the MediaFire page
+      final response = await http.get(url);
+      if (response.statusCode != 200) {
+        throw Exception(
+            "Failed to load MediaFire page, status: ${response.statusCode}");
+      }
+
+      // Extract the direct download link
+      final match = RegExp("https://download[0-9]+.mediafire.com/[^\"]+")
+          .firstMatch(response.data);
+      if (match != null) {
+        return match.group(0)!;
+      } else {
+        throw Exception("Failed to find the direct download link.");
+      }
+    } catch (e) {
+      throw Exception("Error: $e");
+    }
   }
 
   void disposeNotifiers(DownloadTask task) {
@@ -378,7 +436,8 @@ class DownloadManager {
     }
   }
 
-  ValueNotifier<DownloadedAmount> getBatchTriOSDownloadProgress(List<String> urls) {
+  ValueNotifier<DownloadedAmount> getBatchTriOSDownloadProgress(
+      List<String> urls) {
     ValueNotifier<DownloadedAmount> progress =
         ValueNotifier(DownloadedAmount(0, 0));
     var total = urls.length;

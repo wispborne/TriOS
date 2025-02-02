@@ -1,3 +1,25 @@
+# 1.1.0
+- Added
+  - Tips manager.
+    - View in-game tips by mod and select which ones to hide. 
+  - Mods tab: May now group by Enabled (default), Mod Type, Game Version, and Author.
+  - Support for MediaFire download links (thanks, AtlanticAccent & ChatGPT).
+- Fixed
+  - Searching on the Mods tab also filtered the Dashboard mods.
+  - Search included some less relevant results and didn't include perfect matches (e.g. searching "iron shell" didn't show it, but "iron shel" did).
+  - Mods tab performance improvement.
+    - VRAM estimate was recalculated from cached data each time it was displayed. The sum is now cached.
+  - Mod downloads not showing download progress. 
+- Changed
+  - 7zip is now the default compression library, rather than libarchive.
+    - MacOS users won't need to install compression libraries manually anymore.
+    - Weird Linux users (like those on Debian 12) will be able to use it (the build of libarchive in TriOS didn't support it).
+    - There is an option to use libarchive if you want to, in Settings. If you need it, let me know, otherwise it'll be removed (a large amount of TriOS's filesize is libarchive).
+  - Weapons tab: massively decreased RAM usage.
+    - For my setup, with 4,514 weapons loaded, it went from using 820MB to using 195MB.
+    - Accomplished by switching to my own grid implementation, which is the same as on the Mods tab.
+    - Also added ability to group weapons by mod.
+
 # 1.0.6
 - Fixed
   - JRE & RAM Settings dropdown error if Miko_R3.txt or Miko_R4.txt is missing.

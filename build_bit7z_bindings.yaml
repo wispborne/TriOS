@@ -1,9 +1,9 @@
-# Usage: `dart run ffigen --config build_libarchive_bindings.yaml`
+# Usage: `dart run ffigen --config build_bit7z_bindings.yaml`
 
-name: LibArchiveBinding
-output: lib/libarchive/libarchive_bindings.dart
+name: Bit7zBinding
+output: lib/bit7z/bit7z_bindings.dart
 headers:
   entry-points:
-    - assets/libarchive/windows/include/archive.h
-    - assets/libarchive/windows/include/archive_entry.h
+    - assets/windows/bit7z/include/bit7z/bitfileextractor.hpp
+    - assets/windows/bit7z/include/bit7z/bitarchivereader.hpp
 

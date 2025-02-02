@@ -7,7 +7,6 @@ import 'package:trios/models/mod_variant.dart';
 import 'package:trios/vram_estimator/models/graphics_lib_config.dart';
 import 'package:trios/vram_estimator/models/graphics_lib_info.dart';
 
-import '../../models/mod_info_json.dart';
 import '../../models/version.dart';
 
 part 'vram_checker_models.mapper.dart';
@@ -22,13 +21,25 @@ class VramMod with VramModMappable {
 
   late final maxPossibleBytesForMod = images.map((e) => e.bytesUsed).sum;
 
+  // Cache for storing results of bytesUsingGraphicsLibConfig
+  final Map<GraphicsLibConfig?, int> _cache = {};
+
   int bytesUsingGraphicsLibConfig(GraphicsLibConfig? graphicsLibConfig) {
-    return images
+    // Check if the result is already cached
+    if (_cache.containsKey(graphicsLibConfig)) {
+      return _cache[graphicsLibConfig]!;
+    }
+
+    // Compute the result and store it in the cache
+    final result = images
         .where((element) => graphicsLibConfig == null
             ? true
             : element.isUsedBasedOnGraphicsLibConfig(graphicsLibConfig))
         .map((e) => e.bytesUsed)
         .sum;
+
+    _cache[graphicsLibConfig] = result;
+    return result;
   }
 }
 

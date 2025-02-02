@@ -8,7 +8,8 @@ import 'package:open_filex/open_filex.dart';
 import 'package:path/path.dart' as p;
 import 'package:pub_semver/pub_semver.dart';
 import 'package:stringr/stringr.dart';
-import 'package:trios/libarchive/libarchive.dart';
+import 'package:trios/compression/archive.dart';
+import 'package:trios/compression/libarchive/libarchive.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings.dart';
@@ -74,7 +75,9 @@ class SelfUpdater extends AsyncNotifier<TriOSDownloadProgress?> {
     Fimber.i('Downloaded update file: ${downloadFile.path}');
     final extractedDir = updateWorkingDir;
     // Extract the downloaded update archive.
-    final extractedFiles = await LibArchive()
+    final extractedFiles = await ref
+        .read(archiveProvider)
+        .requireValue
         .extractEntriesInArchive(downloadFile, extractedDir.path);
 
     if (extractedFiles.isNotEmpty) {

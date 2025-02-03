@@ -362,10 +362,10 @@ class _AppShellState extends ConsumerState<AppShell>
                             value: TriOSTools.tips,
                             child: Row(
                               children: [
-                                SvgImageIcon("assets/images/icon-target.svg"),
+                                Icon(Icons.lightbulb),
                                 SizedBox(width: 8),
                                 // Space between icon and text
-                                Text("Tips"),
+                                Text("Tips Manager"),
                               ],
                             ),
                           ),

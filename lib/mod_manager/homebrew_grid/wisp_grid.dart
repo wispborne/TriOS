@@ -32,7 +32,7 @@ class WispGrid<T extends WispGridItem> extends ConsumerStatefulWidget {
   final String? defaultSortField;
   final void Function(WispGridController<T> controller)? onLoaded;
   final WispGridState gridState;
-  final Function(WispGridState Function(WispGridState)) updateGridState;
+  final Function(WispGridState? Function(WispGridState)) updateGridState;
   final double? itemExtent;
   final bool alwaysShowScrollbar;
 

@@ -99,8 +99,11 @@ class Settings with SettingsMappable {
     this.lastStarsectorVersion,
     this.dashboardGridModUpdateVisibility =
         DashboardGridModUpdateVisibility.hideMuted,
-    this.modsGridState =
-        const WispGridState(groupingSetting: null, sortedColumnKey: 'name', columnsState: {}),
+    this.modsGridState = const WispGridState(
+        groupingSetting: GroupingSetting(
+            currentGroupedByKey: 'enabledState', isSortDescending: false),
+        sortedColumnKey: 'name',
+        columnsState: {}),
     this.weaponsGridState =
         const WispGridState(groupingSetting: null, columnsState: {}),
     this.customGameExePath,

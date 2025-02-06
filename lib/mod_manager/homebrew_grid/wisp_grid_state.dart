@@ -123,8 +123,8 @@ class WispGridState with WispGridStateMappable {
         .toList();
   }
 
-  WispGridState empty() =>
-      const WispGridState(groupingSetting: null, columnsState: {});
+  // WispGridState empty() =>
+  //     const WispGridState(groupingSetting: null, columnsState: {});
 }
 
 @MappableClass()

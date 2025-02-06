@@ -11,9 +11,10 @@ import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/download_progress.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/themes/theme_manager.dart';
+import 'package:trios/tips/tip.dart';
+import 'package:trios/tips/tips_notifier.dart';
 import 'package:trios/trios/self_updater/self_updater.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
-import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/platform_paths.dart';
@@ -62,6 +63,10 @@ class AppState {
       );
     }).toList();
   }
+
+  /// Provides a list of [ModTip].
+  static final tipsProvider =
+      AsyncNotifierProvider<TipsNotifier, List<ModTip>>(TipsNotifier.new);
 
   /// Provides [ModMetadata]s, observable state.
   static final modsMetadata =
@@ -126,7 +131,8 @@ class AppState {
       final archive = ref.watch(archiveProvider).value;
       if (archive == null) return null;
 
-      final trueVersion = await getStarsectorVersionFromObf(gameCorePath, archive);
+      final trueVersion =
+          await getStarsectorVersionFromObf(gameCorePath, archive);
       if (trueVersion != null && trueVersion.isNotEmpty) {
         ref
             .read(appSettings.notifier)

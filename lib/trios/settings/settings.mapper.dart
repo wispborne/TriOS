@@ -300,7 +300,10 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       'modsGridState', _$modsGridState,
       opt: true,
       def: const WispGridState(
-          groupingSetting: null, sortedColumnKey: 'name', columnsState: {}),
+          groupingSetting: GroupingSetting(
+              currentGroupedByKey: 'enabledState', isSortDescending: false),
+          sortedColumnKey: 'name',
+          columnsState: {}),
       hook: SafeDecodeHook());
   static WispGridState _$weaponsGridState(Settings v) => v.weaponsGridState;
   static const Field<Settings, WispGridState> _f$weaponsGridState = Field(

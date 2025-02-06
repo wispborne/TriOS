@@ -8,33 +8,6 @@ import 'package:trios/utils/logging.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/wisp_adaptive_grid_view.dart';
 
-import 'tips_notifier.dart';
-
-/// Provide our TipsNotifier, which returns an AsyncValue<List<ModTip>>.
-/// Whenever modVariants changes, we reload the tips.
-final tipsProvider =
-    StateNotifierProvider<TipsNotifier, AsyncValue<List<ModTip>>>(
-  (ref) {
-    final notifier = TipsNotifier();
-    // Watch changes to modVariants, and reload tips.
-    final variants = ref.watch(AppState.modVariants);
-    variants.when(
-      data: (list) {
-        // Load tips from the new variants.
-        // We can do it in a Future.microtask to avoid calling loadTips multiple times.
-        Future.microtask(() => notifier.loadTips(list));
-      },
-      loading: () {
-        notifier.state = const AsyncValue.loading();
-      },
-      error: (err, st) {
-        notifier.state = AsyncValue.error(err, st);
-      },
-    );
-    return notifier;
-  },
-);
-
 /// Grouping mode, like in your Kotlin code.
 enum TipsGrouping {
   none,
@@ -57,7 +30,7 @@ class _TipsPageState extends ConsumerState<TipsPage> {
   @override
   Widget build(BuildContext context) {
     // Watch the tips.
-    final tipsAsync = ref.watch(tipsProvider);
+    final tipsAsync = ref.watch(AppState.tipsProvider);
 
     return Column(children: [
       Padding(
@@ -134,7 +107,7 @@ class _TipsPageState extends ConsumerState<TipsPage> {
 
   Widget _buildDeleteButton(BuildContext context) {
     // Calculate how many are selected.
-    final tips = ref.watch(tipsProvider).valueOrNull ?? [];
+    final tips = ref.watch(AppState.tipsProvider).valueOrNull ?? [];
     final tipsMap = {
       for (final t in tips) t.hashCode: t,
     };
@@ -152,7 +125,7 @@ class _TipsPageState extends ConsumerState<TipsPage> {
                   toRemove.add(tipsMap[hash]!);
                 }
               });
-              ref.read(tipsProvider.notifier).deleteTips(toRemove);
+              ref.read(AppState.tipsProvider.notifier).deleteTips(toRemove);
               setState(() {
                 // Clear selection of removed items.
                 for (final r in toRemove) {
@@ -173,7 +146,7 @@ class _TipsPageState extends ConsumerState<TipsPage> {
         : tips;
 
     if (filtered.isEmpty) {
-      return const Center(child: Text('No tips found.'));
+      return const Center(child: Text('No tips (or mods) found.'));
     }
 
     final theme = Theme.of(context);

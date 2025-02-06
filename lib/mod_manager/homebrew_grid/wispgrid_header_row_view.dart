@@ -33,7 +33,7 @@ typedef WispGridHeaderBuilder = WispGridHeader Function(
 
 class WispGridHeaderRowView extends ConsumerStatefulWidget {
   final WispGridState gridState;
-  final Function(WispGridState Function(WispGridState)) updateGridState;
+  final Function(WispGridState? Function(WispGridState)) updateGridState;
   final List<WispGridColumn> columns;
   final List<WispGridGroup> groups;
   final String? defaultGridSort;
@@ -59,7 +59,7 @@ class _WispGridHeaderRowViewState extends ConsumerState<WispGridHeaderRowView>
 
   List<WispGridColumn> get columns => widget.columns;
 
-  Function(WispGridState Function(WispGridState)) get updateGridState =>
+  Function(WispGridState? Function(WispGridState)) get updateGridState =>
       widget.updateGridState;
 
   WispGridState get gridState => widget.gridState;
@@ -206,7 +206,7 @@ class _WispGridHeaderRowViewState extends ConsumerState<WispGridHeaderRowView>
             label: 'Reset grid layout',
             icon: Icons.settings_backup_restore,
             onSelected: () {
-              updateGridState((WispGridState state) => state.empty());
+              updateGridState((WispGridState state) => null);
             }),
         if (widget.groups.length > 1)
           MenuItem.submenu(
@@ -259,7 +259,7 @@ class DraggableHeader extends ConsumerWidget {
   final String header;
   final bool showDragHandle;
   final WispGridState gridState;
-  final Function(WispGridState Function(WispGridState)) updateGridState;
+  final Function(WispGridState? Function(WispGridState)) updateGridState;
   final List<WispGridColumn> columns;
 
   const DraggableHeader({
@@ -294,7 +294,7 @@ class DraggableHeader extends ConsumerWidget {
                   padding: EdgeInsets.zero,
                   style: ElevatedButton.styleFrom(shape: const CircleBorder()),
                   onPressed: () {
-                    updateGridState((WispGridState state) => state.empty());
+                    updateGridState((WispGridState state) => null);
                   },
                   icon: const Icon(Icons.settings_backup_restore),
                 ),
@@ -380,8 +380,9 @@ class _SortableHeaderState extends ConsumerState<SortableHeader> {
   Widget build(BuildContext context) {
     final gridState = widget.gridState;
     final isSortDescending = gridState.isSortDescending;
-    final isActive = gridState.sortedColumnKey == widget.columnSortField ||
-        widget.defaultGridSort == widget.columnSortField;
+    final isActive = gridState.sortedColumnKey != null
+        ? gridState.sortedColumnKey == widget.columnSortField
+        : widget.defaultGridSort == widget.columnSortField;
 
     return InkWell(
       onTap: () {

@@ -26,6 +26,7 @@ import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/download_manager/download_manager.dart';
 import 'package:trios/trios/mod_metadata.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
+import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/vram_estimator/graphics_lib_config_provider.dart';
 import 'package:trios/widgets/add_new_mods_button.dart';
@@ -342,8 +343,9 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                   gridState: gridState,
                   updateGridState: (updateFunction) {
                     ref.read(appSettings.notifier).update((state) {
+                      final newState = updateFunction(state.modsGridState);
                       return state.copyWith(
-                          modsGridState: updateFunction(state.modsGridState));
+                          modsGridState: newState ?? Settings().modsGridState);
                     });
                   },
                   onLoaded: (controller) {
@@ -409,33 +411,30 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
 
                     return Container(
                       decoration: BoxDecoration(color: backgroundColor),
-                      child: Builder(
-                        builder: (context) {
-                          if (controller == null) return child;
-                          return ContextMenuRegion(
-                            contextMenu: (controller!
-                                        .checkedItemIdsReadonly.length) >
-                                    1
-                                ? buildModBulkActionContextMenu(
-                                    (controller!.lastDisplayedItemsReadonly)
-                                        .where((mod) => controller!
-                                            .checkedItemIdsReadonly
-                                            .contains(mod.id))
-                                        .toList(),
-                                    ref,
-                                    context)
-                                : buildModContextMenu(mod, ref, context,
-                                    showSwapToVersion: true),
-                            child: Column(
-                              children: [
-                                child,
-                                buildMissingDependencyButton(
-                                    (mod).findFirstEnabled, allMods)
-                              ],
-                            ),
-                          );
-                        }
-                      ),
+                      child: Builder(builder: (context) {
+                        if (controller == null) return child;
+                        return ContextMenuRegion(
+                          contextMenu:
+                              (controller!.checkedItemIdsReadonly.length) > 1
+                                  ? buildModBulkActionContextMenu(
+                                      (controller!.lastDisplayedItemsReadonly)
+                                          .where((mod) => controller!
+                                              .checkedItemIdsReadonly
+                                              .contains(mod.id))
+                                          .toList(),
+                                      ref,
+                                      context)
+                                  : buildModContextMenu(mod, ref, context,
+                                      showSwapToVersion: true),
+                          child: Column(
+                            children: [
+                              child,
+                              buildMissingDependencyButton(
+                                  (mod).findFirstEnabled, allMods)
+                            ],
+                          ),
+                        );
+                      }),
                     );
                   },
                   columns: [
@@ -711,21 +710,6 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                       defaultState:
                           WispGridColumnState(position: 10, width: 150),
                     ),
-                    // const {
-                    //   ModGridHeader.favorites: WispGridColumnState(position: 0, width: 50),
-                    //   ModGridHeader.changeVariantButton:
-                    //   WispGridColumnState(position: 1, width: 130),
-                    //   ModGridHeader.icons: WispGridColumnState(position: 2, width: 25),
-                    //   ModGridHeader.modIcon: WispGridColumnState(position: 3, width: 32),
-                    //   ModGridHeader.name: WispGridColumnState(position: 4, width: 200),
-                    //   ModGridHeader.author: WispGridColumnState(position: 5, width: 200),
-                    //   ModGridHeader.version: WispGridColumnState(position: 6, width: 100),
-                    //   ModGridHeader.vramImpact: WispGridColumnState(position: 7, width: 110),
-                    //   ModGridHeader.gameVersion: WispGridColumnState(position: 8, width: 100),
-                    //   ModGridHeader.firstSeen: WispGridColumnState(position: 9, width: 150),
-                    //   ModGridHeader.lastEnabled:
-                    //   WispGridColumnState(position: 10, width: 150),
-                    // }
                   ],
                 ),
               ),
@@ -755,9 +739,6 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
     ModGridHeader header,
     HeaderBuilderModifiers modifiers,
   ) {
-    // return (columnSetting, isHovering) {
-    //   return WispGridHeader(child: null);
-    // };
     final state = ref
             .watch(appSettings.select((s) => s.modsGridState))
             .columnsState[header.name] ??

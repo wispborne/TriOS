@@ -19,6 +19,7 @@
     - For my setup, with 4,514 weapons loaded, it went from using 820MB to using 195MB.
     - Accomplished by switching to my own grid implementation, which is the same as on the Mods tab.
     - Also added ability to group weapons by mod.
+  - Removed "more tools" dropdown, now displays the tool icons directly on the toolbar.
 
 # 1.0.6
 - Fixed

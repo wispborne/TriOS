@@ -311,75 +311,130 @@ class _AppShellState extends ConsumerState<AppShell>
                       ),
                     ),
                     const SizedBox(width: 4),
-                    MovingTooltipWidget.text(
-                      message: "More tools",
-                      child: AnimatedPopupMenuButton<TriOSTools>(
-                        icon: SvgImageIcon("assets/images/icon-toolbox.svg",
-                            color: theme.iconTheme.color),
-                        onSelected: (TriOSTools value) => _changeTab(value),
-                        menuItems: [
-                          PopupMenuItem(
-                              value: TriOSTools.vramEstimator,
+                    Row(
+                      children: [
+                        MovingTooltipWidget.text(
+                          message: "VRAM Estimator",
+                          child: IconButton(
+                            icon: SvgImageIcon("assets/images/icon-weight.svg"),
+                            selectedIcon: SvgImageIcon(
+                                "assets/images/icon-weight.svg",
+                                color: Theme.of(context).colorScheme.primary),
+                            isSelected:
+                                _currentPage == TriOSTools.vramEstimator,
+                            onPressed: () =>
+                                _changeTab(TriOSTools.vramEstimator),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        MovingTooltipWidget.text(
+                          message: "Weapon Viewer\n\nWarning: spoilers!",
+                          child: IconButton(
+                            icon: SvgImageIcon("assets/images/icon-target.svg"),
+                            selectedIcon: SvgImageIcon(
+                                "assets/images/icon-target.svg",
+                                color: Theme.of(context).colorScheme.primary),
+                            isSelected: _currentPage == TriOSTools.weapons,
+                            onPressed: () => _changeTab(TriOSTools.weapons),
+                          ),
+                        ),
+                        MovingTooltipWidget.text(
+                          message: "Portraits Viewer\n\nWarning: spoilers!",
+                          child: IconButton(
+                            icon: SvgImageIcon(
+                                "assets/images/icon-account-box-outline.svg"),
+                            selectedIcon: SvgImageIcon(
+                                "assets/images/icon-account-box-outline.svg",
+                                color: Theme.of(context).colorScheme.primary),
+                            isSelected: _currentPage == TriOSTools.portraits,
+                            onPressed: () => _changeTab(TriOSTools.portraits),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        MovingTooltipWidget.text(
+                          message: "Tips Manager",
+                          child: IconButton(
+                            icon: Icon(Icons.lightbulb),
+                            selectedIcon: Icon(Icons.lightbulb,
+                                color: Theme.of(context).colorScheme.primary),
+                            isSelected: _currentPage == TriOSTools.tips,
+                            onPressed: () => _changeTab(TriOSTools.tips),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (false)
+                      MovingTooltipWidget.text(
+                        message: "More tools",
+                        child: AnimatedPopupMenuButton<TriOSTools>(
+                          icon: SvgImageIcon("assets/images/icon-toolbox.svg",
+                              color: theme.iconTheme.color),
+                          onSelected: (TriOSTools value) => _changeTab(value),
+                          menuItems: [
+                            PopupMenuItem(
+                                value: TriOSTools.vramEstimator,
+                                child: Row(
+                                  children: [
+                                    SvgImageIcon(
+                                        "assets/images/icon-weight.svg"),
+                                    SizedBox(width: 8),
+                                    // Space between icon and text
+                                    Text("VRAM"),
+                                  ],
+                                )),
+                            PopupMenuItem(
+                                value: TriOSTools.portraits,
+                                child: MovingTooltipWidget.text(
+                                  message: "Warning: spoilers!",
+                                  warningLevel: TooltipWarningLevel.warning,
+                                  child: Row(
+                                    children: [
+                                      SvgImageIcon(
+                                          "assets/images/icon-account-box-outline.svg"),
+                                      SizedBox(width: 8),
+                                      // Space between icon and text
+                                      Text("Portraits"),
+                                    ],
+                                  ),
+                                )),
+                            PopupMenuItem(
+                                value: TriOSTools.weapons,
+                                child: MovingTooltipWidget.text(
+                                  message: "Warning: spoilers!",
+                                  warningLevel: TooltipWarningLevel.warning,
+                                  child: Row(
+                                    children: [
+                                      SvgImageIcon(
+                                          "assets/images/icon-target.svg"),
+                                      SizedBox(width: 8),
+                                      // Space between icon and text
+                                      Text("Weapons"),
+                                    ],
+                                  ),
+                                )),
+                            PopupMenuItem(
+                              value: TriOSTools.tips,
                               child: Row(
                                 children: [
-                                  SvgImageIcon("assets/images/icon-weight.svg"),
+                                  Icon(Icons.lightbulb),
                                   SizedBox(width: 8),
                                   // Space between icon and text
-                                  Text("VRAM"),
+                                  Text("Tips Manager"),
                                 ],
-                              )),
-                          PopupMenuItem(
-                              value: TriOSTools.portraits,
-                              child: MovingTooltipWidget.text(
-                                message: "Warning: spoilers!",
-                                warningLevel: TooltipWarningLevel.warning,
-                                child: Row(
-                                  children: [
-                                    SvgImageIcon(
-                                        "assets/images/icon-account-box-outline.svg"),
-                                    SizedBox(width: 8),
-                                    // Space between icon and text
-                                    Text("Portraits"),
-                                  ],
-                                ),
-                              )),
-                          PopupMenuItem(
-                              value: TriOSTools.weapons,
-                              child: MovingTooltipWidget.text(
-                                message: "Warning: spoilers!",
-                                warningLevel: TooltipWarningLevel.warning,
-                                child: Row(
-                                  children: [
-                                    SvgImageIcon(
-                                        "assets/images/icon-target.svg"),
-                                    SizedBox(width: 8),
-                                    // Space between icon and text
-                                    Text("Weapons"),
-                                  ],
-                                ),
-                              )),
-                          PopupMenuItem(
-                            value: TriOSTools.tips,
-                            child: Row(
-                              children: [
-                                Icon(Icons.lightbulb),
-                                SizedBox(width: 8),
-                                // Space between icon and text
-                                Text("Tips Manager"),
-                              ],
+                              ),
                             ),
-                          ),
-                          // PopupMenuItem(
-                          //     text: "Portraits",
-                          //     icon: const SvgImageIcon(
-                          //         "assets/images/icon-account-box-outline.svg"),
-                          //     page: TriOSTools.portraits),
-                        ],
-                      ),
-                    )
+                            // PopupMenuItem(
+                            //     text: "Portraits",
+                            //     icon: const SvgImageIcon(
+                            //         "assets/images/icon-account-box-outline.svg"),
+                            //     page: TriOSTools.portraits),
+                          ],
+                        ),
+                      )
                   ],
                 ),
               ),
+              const SizedBox(width: 4),
               SizedBox(
                 width: 1,
                 height: 24,

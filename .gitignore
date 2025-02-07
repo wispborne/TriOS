@@ -238,3 +238,5 @@ update-test/
 .idea/caches/deviceStreaming.xml
 
 cache/TriOS-VRAM_CheckerCache.json
+
+/external

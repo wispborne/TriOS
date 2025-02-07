@@ -37,6 +37,7 @@ mixin PaletteGeneratorMixin<T extends StatefulWidget> on State<T> {
     }
 
     if (!mounted) return;
+
     setState(() {});
   }
 

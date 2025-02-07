@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/models/mod_variant.dart';
@@ -205,92 +206,114 @@ class _TipsPageState extends ConsumerState<TipsPage> {
           horizontalSpacing: 8,
           verticalSpacing: 8,
           itemBuilder: (context, tip, index) {
-            return buildTipCard(tip);
+            return TipCardView(
+                tip: tip,
+                isSelected: _selectionStates[tip.hashCode] ?? false,
+                onSelected: (selected) {
+                  setState(() {
+                    _selectionStates[tip.hashCode] = selected;
+                  });
+                });
           },
         ),
       );
     }
   }
 
-  Builder buildTipCard(ModTip tip) {
-    final theme = Theme.of(context);
-    return Builder(builder: (context) {
-      final hash = tip.hashCode;
-      final isSelected = _selectionStates[hash] ?? false;
-      return GestureDetector(
-        onTap: () {
-          setState(() {
-            _selectionStates[hash] = !isSelected;
-          });
-        },
-        child: IntrinsicHeight(
-          child: DefaultTextStyle.merge(
-            style: theme.textTheme.labelLarge,
-            child: Container(
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: isSelected
-                      ? theme.colorScheme.primary
-                      : theme.colorScheme.onSurface.withOpacity(0.2),
-                  width: 1,
-                ),
-                color: isSelected
-                    ? theme.colorScheme.surfaceContainer.withOpacity(0.5)
-                    : theme.colorScheme.surfaceContainer.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
-              ),
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          tip.variants.firstOrNull?.modInfo.name ??
-                              '(unknown mod name)',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: theme.colorScheme.onSurface
-                                  .withValues(alpha: 0.8)),
-                        ),
-                      ),
-                      Checkbox(
-                        value: isSelected,
-                        onChanged: (val) {
-                          setState(() {
-                            _selectionStates[hash] = val ?? false;
-                          });
-                        },
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Expanded(child: Text(tip.tipObj.tip ?? '(No tip text)')),
-                  const SizedBox(height: 4),
-                  MovingTooltipWidget.text(
-                    message:
-                        'How likely this tip is to be shown. 1 is normal. Higher is more likely. 0 is never.',
-                    child: Text(
-                      'Freq: ${tip.tipObj.freq ?? '1'}',
-                      style: TextStyle(
-                          fontSize: 12,
-                          color: theme.colorScheme.onSurface.withOpacity(0.6)),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      );
-    });
-  }
-
   bool isVariantEnabled(ModVariant? variant) {
     // Example logic: check if the variant is enabled. Possibly watch appSettings.
     return true;
+  }
+}
+
+class TipCardView extends ConsumerStatefulWidget {
+  final ModTip tip;
+  final bool isSelected;
+  final Function onSelected;
+
+  const TipCardView(
+      {super.key,
+      required this.tip,
+      required this.isSelected,
+      required this.onSelected});
+
+  @override
+  ConsumerState createState() => _TipCardViewState();
+}
+
+class _TipCardViewState extends ConsumerState<TipCardView> {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final tip = widget.tip;
+    final isSelected = widget.isSelected;
+
+    return GestureDetector(
+      onTap: () {
+        widget.onSelected(!isSelected);
+      },
+      child: IntrinsicHeight(
+        child: DefaultTextStyle.merge(
+          style: theme.textTheme.labelLarge?.copyWith(
+            color: theme.colorScheme.onSurface,
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: isSelected
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.onSurface.withOpacity(0.2),
+                width: 1,
+              ),
+              color: isSelected
+                  ? theme.colorScheme.surfaceContainer.withOpacity(0.5)
+                  : theme.colorScheme.surfaceContainer.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+            ),
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        tip.variants.firstOrNull?.modInfo.name ??
+                            '(unknown mod name)',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.onSurface
+                                .withValues(alpha: 0.8)),
+                      ),
+                    ),
+                    Checkbox(
+                      value: isSelected,
+                      onChanged: (val) {
+                        widget.onSelected(val ?? false);
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Expanded(child: Text(tip.tipObj.tip ?? '(No tip text)')),
+                const SizedBox(height: 4),
+                MovingTooltipWidget.text(
+                  message:
+                      'How likely this tip is to be shown. 1 is normal. Higher is more likely. 0 is never.',
+                  child: Text(
+                    'Freq: ${tip.tipObj.freq ?? '1'}',
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: theme.colorScheme.onSurface.withOpacity(0.6)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 

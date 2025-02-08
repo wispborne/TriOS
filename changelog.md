@@ -20,6 +20,8 @@
     - Accomplished by switching to my own grid implementation, which is the same as on the Mods tab.
     - Also added ability to group weapons by mod.
   - Removed "more tools" dropdown, now displays the tool icons directly on the toolbar.
+  - Removed multithreading from VRAM checking, but massively sped up the process.
+    - Analyzing perf showed that it was spending a ton of time creating relative file paths. Cached them.
 
 # 1.0.6
 - Fixed

@@ -118,17 +118,25 @@ class VramChecker {
         throw Exception("Cancelled");
       }
       final startTimeForMod = DateTime.timestamp().millisecondsSinceEpoch;
+      final baseFolderPath = modInfo.modFolder;
 
       final filesInMod = modInfo.modFolder
           .toDirectory()
           .listSync(recursive: true)
-          .filter((it) => it is File)
-          .map((it) => it as File)
-          .toList();
+          .whereType<File>()
+          .map((file) {
+        // Compute the relative path once
+        final relPath = p.relative(file.path, from: baseFolderPath);
+
+        return _FileData(
+          file: file,
+          relativePath: file.relativePath(modInfo.modFolder.toDirectory()),
+        );
+      }).toList();
 
       // Look for CSVs with a header row containing certain column names
       final List<GraphicsLibInfo> graphicsLibEntries =
-          getGraphicsLibSettingsForMod(filesInMod, csvReader, progressText) ??
+          _getGraphicsLibSettingsForMod(filesInMod, csvReader, progressText) ??
               [];
 
       // final myGraphicsLibFilesToExcludeForMod = graphicsLibFilesToExcludeForMod(
@@ -146,7 +154,7 @@ class VramChecker {
       }
 
       final modImages = (await Future.wait(filesInMod.filter((it) {
-        final ext = p.extension(it.path).toLowerCase();
+        final ext = p.extension(it.file.path).toLowerCase();
         return ext.endsWith(".png") ||
             ext.endsWith(".jpg") ||
             ext.endsWith(".jpeg") ||
@@ -156,31 +164,26 @@ class VramChecker {
           throw Exception("Cancelled");
         }
         ImageType imageType;
-        if (file
-            .relativePath(modInfo.modFolder.toDirectory())
-            .contains(BACKGROUND_FOLDER_NAME)) {
+        if (file.relativePath.contains(BACKGROUND_FOLDER_NAME)) {
           imageType = ImageType.background;
-        } else if (UNUSED_INDICATOR.any((suffix) => file
-            .relativePath(modInfo.modFolder.toDirectory())
-            .contains(suffix))) {
+        } else if (UNUSED_INDICATOR
+            .any((suffix) => file.relativePath.contains(suffix))) {
           imageType = ImageType.unused;
         } else {
           imageType = ImageType.texture;
         }
 
         final graphicsLibType = graphicsLibEntries
-            .firstWhereOrNull((it) =>
-                it.relativeFilePath ==
-                file.relativePath(modInfo.modFolder.toDirectory()))
+            .firstWhereOrNull((it) => it.relativeFilePath == file.relativePath)
             ?.mapType;
 
-        if (file.nameWithExtension.endsWith(".png")) {
-          return await getModImagePng(imageHeaderReaderPool, file, imageType,
+        if (file.file.nameWithExtension.endsWith(".png")) {
+          return await _getModImagePng(imageHeaderReaderPool, file, imageType,
                   modInfo, graphicsLibType) ??
-              await getModImageGeneric(imageHeaderReaderPool, file, modInfo,
+              await _getModImageGeneric(imageHeaderReaderPool, file, modInfo,
                   imageType, graphicsLibType);
         } else {
-          return await getModImageGeneric(
+          return await _getModImageGeneric(
               imageHeaderReaderPool, file, modInfo, imageType, graphicsLibType);
         }
       })))
@@ -382,9 +385,9 @@ class VramChecker {
     return mods;
   }
 
-  Future<ModImage?> getModImagePng(
+  Future<ModImage?> _getModImagePng(
     ReadImageHeaders imageHeaderReaderPool,
-    File file,
+    _FileData file,
     ImageType imageType,
     VramCheckerMod modInfo,
     MapType? graphicsLibType,
@@ -394,14 +397,14 @@ class VramChecker {
       image =
           // await withFileHandleLimit(() => readPngFileHeaders(file.path));
           await withFileHandleLimit(
-              () => imageHeaderReaderPool.readPng(file.path));
+              () => imageHeaderReaderPool.readPng(file.file.path));
 
       if (image == null) {
         throw Exception("Image is null");
       }
 
       return ModImage(
-        file.path,
+        file.file.path,
         (image.width == 1) ? 1 : (image.width - 1).highestOneBit() * 2,
         (image.height == 1) ? 1 : (image.height - 1).highestOneBit() * 2,
         // image!.colorModel.componentSize.toList(),
@@ -412,17 +415,16 @@ class VramChecker {
     } catch (e) {
       if (showSkippedFiles) {
         progressText.appendAndPrint(
-            "Skipped non-image ${file.relativePath(modInfo.modFolder.toDirectory())} ($e)",
-            verboseOut);
+            "Skipped non-image ${file.relativePath} ($e)", verboseOut);
       }
 
       return null;
     }
   }
 
-  Future<ModImage?> getModImageGeneric(
+  Future<ModImage?> _getModImageGeneric(
     ReadImageHeaders imageHeaderReaderPool,
-    File file,
+    _FileData file,
     VramCheckerMod modInfo,
     ImageType imageType,
     MapType? graphicsLibType,
@@ -432,7 +434,7 @@ class VramChecker {
       image =
           // await withFileHandleLimit(() => readPngFileHeaders(file.path));
           await withFileHandleLimit(
-              () => imageHeaderReaderPool.readGeneric(file.path));
+              () => imageHeaderReaderPool.readGeneric(file.file.path));
 
       if (image == null) {
         throw Exception("Image is null");
@@ -441,15 +443,14 @@ class VramChecker {
     } catch (e) {
       if (showSkippedFiles) {
         progressText.appendAndPrint(
-            "Skipped non-image ${file.relativePath(modInfo.modFolder.toDirectory())} ($e)",
-            verboseOut);
+            "Skipped non-image ${file.relativePath} ($e)", verboseOut);
       }
 
       return null;
     }
 
     return ModImage(
-      file.path,
+      file.file.path,
       (image.width == 1) ? 1 : (image.width - 1).highestOneBit() * 2,
       (image.height == 1) ? 1 : (image.height - 1).highestOneBit() * 2,
       // image!.colorModel.componentSize.toList(),
@@ -459,19 +460,19 @@ class VramChecker {
     );
   }
 
-  List<GraphicsLibInfo>? getGraphicsLibSettingsForMod(
-    List<File> filesInMod,
+  List<GraphicsLibInfo>? _getGraphicsLibSettingsForMod(
+    List<_FileData> filesInMod,
     CsvToListConverter csvReader,
     StringBuffer progressText,
   ) {
     final modGraphicsLibSettingsFile = filesInMod
-        .filter((it) => it.nameWithExtension.endsWith(".csv"))
+        .filter((it) => it.file.nameWithExtension.endsWith(".csv"))
         .map((file) {
           try {
-            return csvReader.convert(file.readAsStringSync());
+            return csvReader.convert(file.file.readAsStringSync());
           } catch (e) {
             progressText.appendAndPrint(
-                "Unable to read ${file.path}: $e", verboseOut);
+                "Unable to read ${file.file.path}: $e", verboseOut);
           }
 
           return [null];
@@ -558,4 +559,14 @@ extension ModListExt on Iterable<VramMod> {
         .map((pair) => pair.item2.bytesUsed)
         .sum;
   }
+}
+
+class _FileData {
+  final File file;
+  final String relativePath;
+
+  _FileData({
+    required this.file,
+    required this.relativePath,
+  });
 }

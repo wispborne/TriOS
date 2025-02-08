@@ -178,7 +178,7 @@ class TriOSHttpClient {
     Future<TriOSHttpResponse<dynamic>> Function() requestFunction, {
     int retries = 3,
     Duration retryDelay = const Duration(seconds: 2),
-    Duration timeout = const Duration(seconds: 30),
+    Duration timeout = const Duration(milliseconds: 1),
   }) async {
     int attempt = 0;
     while (attempt < retries) {

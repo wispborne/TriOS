@@ -43,6 +43,7 @@ dependencies:
   google_fonts: ^6.2.1
   hooks_riverpod: ^2.6.1
   html: ^0.15.5
+  image: ^4.5.2
   image_size_getter: ^2.3.0+1
   flutter_inappwebview: ^6.2.0-beta.2
   intl: ^0.20.1

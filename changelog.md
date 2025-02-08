@@ -20,8 +20,10 @@
     - Accomplished by switching to my own grid implementation, which is the same as on the Mods tab.
     - Also added ability to group weapons by mod.
   - Removed "more tools" dropdown, now displays the tool icons directly on the toolbar.
-  - Removed multithreading from VRAM checking, but massively sped up the process.
+  - VRAM Estimator performance improvement.
     - Analyzing perf showed that it was spending a ton of time creating relative file paths. Cached them.
+    - Also removed multithreading.
+    - Time to check GraphicsLib went from 5000ms to ~100ms.
 
 # 1.0.6
 - Fixed

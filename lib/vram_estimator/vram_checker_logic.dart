@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:collection/collection.dart';
 import 'package:csv/csv.dart';
 import 'package:path/path.dart' as p;
-import 'package:squadron/squadron.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/extensions.dart';
 
@@ -109,13 +108,7 @@ class VramChecker {
           "\nEnabled Mods:\n${enabledModIds?.join("\n")}", verboseOut);
     }
 
-    // Squadron.setId('VRAM_CHECKER');
-    // Squadron.logLevel = SquadronLogLevel.config;
-    // Squadron.setLogger(ConsoleSquadronLogger());
-    const settings =
-        ConcurrencySettings(minWorkers: 1, maxWorkers: 4, maxParallel: 4);
-    final imageHeaderReaderPool =
-        ReadImageHeadersWorkerPool(concurrencySettings: settings);
+    final imageHeaderReaderPool = ReadImageHeaders();
 
     final mods = (await Stream.fromIterable(variantsToCheck
                 .map((it) => VramCheckerMod(it.modInfo, it.modFolder.path)))
@@ -386,13 +379,11 @@ class VramChecker {
     verboseOut(modTotals.toString());
     debugOut(summaryText.toString());
 
-    imageHeaderReaderPool.stop();
-
     return mods;
   }
 
   Future<ModImage?> getModImagePng(
-    ReadImageHeadersWorkerPool imageHeaderReaderPool,
+    ReadImageHeaders imageHeaderReaderPool,
     File file,
     ImageType imageType,
     VramCheckerMod modInfo,
@@ -430,7 +421,7 @@ class VramChecker {
   }
 
   Future<ModImage?> getModImageGeneric(
-    ReadImageHeadersWorkerPool imageHeaderReaderPool,
+    ReadImageHeaders imageHeaderReaderPool,
     File file,
     VramCheckerMod modInfo,
     ImageType imageType,

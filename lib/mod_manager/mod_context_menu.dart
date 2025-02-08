@@ -372,9 +372,10 @@ MenuItem menuItemDeleteFolder(Mod mod, BuildContext context, WidgetRef ref) {
                 onPressed: () => Navigator.of(context).pop(false),
                 child: const Text('Cancel'),
               ),
-              TextButton(
+              TextButton.icon(
                 onPressed: () => Navigator.of(context).pop(true),
-                child: const Text('Delete'),
+                label: const Text('Delete'),
+                icon: const Icon(Icons.delete),
               ),
             ],
           );

@@ -1,22 +1,15 @@
 import 'dart:io';
 
 import 'package:image/image.dart' as img;
-import 'package:squadron/squadron.dart';
 
-import 'image_reader_async.activator.g.dart';
 import 'png_chatgpt.dart';
 
-part 'image_reader_async.worker.g.dart';
-
-@SquadronService()
 class ReadImageHeaders {
-  @SquadronMethod()
   Future<ImageHeader?> readPng(String path) async {
     // Squadron.debug("Reading $path using png");
     return readPngFileHeaders(path);
   }
 
-  @SquadronMethod()
   Future<ImageHeader?> readGeneric(String path) async {
     // Squadron.debug("Reading $path using generic");
     final file = File(path);

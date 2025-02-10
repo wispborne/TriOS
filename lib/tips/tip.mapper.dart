@@ -230,15 +230,21 @@ class ModTipMapper extends ClassMapperBase<ModTip> {
   static List<ModVariant> _$variants(ModTip v) => v.variants;
   static const Field<ModTip, List<ModVariant>> _f$variants =
       Field('variants', _$variants);
+  static File _$tipFile(ModTip v) => v.tipFile;
+  static const Field<ModTip, File> _f$tipFile = Field('tipFile', _$tipFile);
 
   @override
   final MappableFields<ModTip> fields = const {
     #tipObj: _f$tipObj,
     #variants: _f$variants,
+    #tipFile: _f$tipFile,
   };
 
   static ModTip _instantiate(DecodingData data) {
-    return ModTip(tipObj: data.dec(_f$tipObj), variants: data.dec(_f$variants));
+    return ModTip(
+        tipObj: data.dec(_f$tipObj),
+        variants: data.dec(_f$variants),
+        tipFile: data.dec(_f$tipFile));
   }
 
   @override
@@ -290,7 +296,7 @@ abstract class ModTipCopyWith<$R, $In extends ModTip, $Out>
   TipCopyWith<$R, Tip, Tip> get tipObj;
   ListCopyWith<$R, ModVariant, ModVariantCopyWith<$R, ModVariant, ModVariant>>
       get variants;
-  $R call({Tip? tipObj, List<ModVariant>? variants});
+  $R call({Tip? tipObj, List<ModVariant>? variants, File? tipFile});
   ModTipCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
 
@@ -308,15 +314,17 @@ class _ModTipCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, ModTip, $Out>
       get variants => ListCopyWith($value.variants,
           (v, t) => v.copyWith.$chain(t), (v) => call(variants: v));
   @override
-  $R call({Tip? tipObj, List<ModVariant>? variants}) =>
+  $R call({Tip? tipObj, List<ModVariant>? variants, File? tipFile}) =>
       $apply(FieldCopyWithData({
         if (tipObj != null) #tipObj: tipObj,
-        if (variants != null) #variants: variants
+        if (variants != null) #variants: variants,
+        if (tipFile != null) #tipFile: tipFile
       }));
   @override
   ModTip $make(CopyWithData data) => ModTip(
       tipObj: data.get(#tipObj, or: $value.tipObj),
-      variants: data.get(#variants, or: $value.variants));
+      variants: data.get(#variants, or: $value.variants),
+      tipFile: data.get(#tipFile, or: $value.tipFile));
 
   @override
   ModTipCopyWith<$R2, ModTip, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>

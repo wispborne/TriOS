@@ -1,15 +1,20 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/models/mod_variant.dart';
+import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/tips/tip.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/generic_settings_manager.dart';
 import 'package:trios/utils/logging.dart';
 
 class TipsNotifier extends AsyncNotifier<List<ModTip>> {
+  final storageManager = _TipsStorageManager();
+
   @override
   Future<List<ModTip>> build() async {
     state =
@@ -30,18 +35,17 @@ class TipsNotifier extends AsyncNotifier<List<ModTip>> {
     final unfilteredTips = <ModTip>[];
 
     for (final mod in mods) {
-      final tipsMap = <Tip, List<ModVariant>>{};
+      final tipsMap = <Tip, List<({ModVariant variant, File tipsFile})>>{};
 
       for (final variant in mod.modVariants) {
         try {
-          final tipsFile =
-              variant.modFolder.resolve(Constants.tipsFileRelativePath);
-          if (tipsFile.existsSync()) {
-            final tipsJson = await tipsFile.toFile().readAsString();
-            final loaded = TipsMapper.fromJson(tipsJson.fixJson()).tips ?? [];
+          final tips = await _loadTipsFromFile(variant);
 
-            for (final tip in loaded) {
-              tipsMap.putIfAbsent(tip, () => []).add(variant);
+          if (tips != null) {
+            for (final tip in tips.tips.tips.orEmpty()) {
+              tipsMap.putIfAbsent(tip, () => []).add(
+                (variant: variant, tipsFile: tips.file),
+              );
             }
           }
         } catch (e, st) {
@@ -50,7 +54,10 @@ class TipsNotifier extends AsyncNotifier<List<ModTip>> {
       }
 
       final modTips = tipsMap.entries
-          .map((entry) => ModTip(tipObj: entry.key, variants: entry.value))
+          .map((entry) => ModTip(
+              tipObj: entry.key,
+              variants: entry.value.map((m) => m.variant).toList(),
+              tipFile: entry.value.first.tipsFile))
           .toList();
 
       unfilteredTips.addAll(modTips);
@@ -60,13 +67,103 @@ class TipsNotifier extends AsyncNotifier<List<ModTip>> {
     return unfilteredTips;
   }
 
-  /// Deletes tips from the current state.
-  void deleteTips(Iterable<ModTip> toRemove) {
-    final current = state.valueOrNull;
-    if (current == null || toRemove.isEmpty) return;
-
-    Fimber.i('Deleting tips...');
-    final updated = current.where((tip) => !toRemove.contains(tip)).toList();
-    state = AsyncValue.data(updated);
+  File getTipsFile(ModVariant variant) {
+    return variant.modFolder.resolve(Constants.tipsFileRelativePath).toFile();
   }
+
+  Future<({Tips tips, File file})?> _loadTipsFromFile(
+      ModVariant variant) async {
+    final tipsFile = getTipsFile(variant);
+    if (tipsFile.existsSync()) {
+      return (
+        tips: TipsMapper.fromJson(await tipsFile.toFile().readAsString()),
+        file: tipsFile
+      );
+    }
+    return null;
+  }
+
+  /// Deletes tips from the current state.
+  Future<void> deleteTips(Iterable<ModTip> tipsToRemove,
+      {bool dryRun = false, bool reloadTipsAfter = true}) async {
+    final current = state.valueOrNull;
+    if (current == null || tipsToRemove.isEmpty) return;
+
+    final tipsToRemoveByVariant = <ModVariant, List<Tip>>{};
+
+    for (var tip in tipsToRemove) {
+      for (var variant in tip.variants) {
+        tipsToRemoveByVariant.putIfAbsent(variant, () => []).add(tip.tipObj);
+      }
+    }
+
+    for (var entry in tipsToRemoveByVariant.entries) {
+      final variant = entry.key;
+      final variantTipsToRemove = entry.value;
+
+      Fimber.i(
+          "Removing from variant ${variant.smolId} tips: ${variantTipsToRemove.map((t) => "'${t.tip?.substring(0, 40)}'").toList()}");
+
+      try {
+        final tipData = await _loadTipsFromFile(variant);
+        if (tipData == null) return;
+
+        final path = getTipsFile(variant).path;
+        final allVariantTips = tipData;
+
+        final backupPath = "$path.bak";
+        final backupFile = File(backupPath);
+
+        if (!await backupFile.exists()) {
+          await File(path).copy(backupPath);
+          Fimber.i("Created backup of '$path' at '$backupPath'");
+        }
+
+        final updatedTips = allVariantTips.tips.tips
+            ?.where((t) => !variantTipsToRemove.contains(t))
+            .toList();
+
+        final filteredTipsJson =
+            Tips(tips: updatedTips).toMap().prettyPrintJson();
+
+        if (!dryRun) {
+          await File(path).writeAsString(filteredTipsJson);
+        }
+
+        Fimber.i(
+            "Removed ${variantTipsToRemove.length} tips from ${variant.smolId} tips at path '$path'.");
+      } catch (e, stacktrace) {
+        Fimber.e("Error deleting tips", ex: e, stacktrace: stacktrace);
+      }
+    }
+
+    // add the tip hashcodes to storage
+    final removedTipHashcodes =
+        tipsToRemove.map((tip) => tip.tipObj.hashCode.toString()).toSet();
+    storageManager.scheduleWriteSettingsToDisk(
+        ((await storageManager.readSettingsFromDisk({})).orEmpty() +
+                removedTipHashcodes)
+            .toSet());
+
+    if (reloadTipsAfter) {
+      state = const AsyncValue.loading();
+      state = await AsyncValue.guard(() => loadTips(ref.watch(AppState.mods)));
+    }
+  }
+}
+
+class _TipsStorageManager extends GenericAsyncSettingsManager<Set<String>> {
+  @override
+  FileFormat get fileFormat => FileFormat.json;
+
+  @override
+  String get fileName => "trios_removed_tip_hashcodes-v1.${fileFormat.name}";
+
+  @override
+  Set<String> Function(Map<String, dynamic> map) get fromMap =>
+      (map) => map.keys.toSet();
+
+  @override
+  Map<String, dynamic> Function(Set<String> obj) get toMap =>
+      (obj) => {for (var e in obj) e: true};
 }

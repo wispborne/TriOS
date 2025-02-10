@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:trios/models/mod_variant.dart';
 
@@ -22,8 +24,9 @@ class Tips with TipsMappable {
 class ModTip with ModTipMappable {
   final Tip tipObj;
   final List<ModVariant> variants;
+  final File tipFile;
 
-  const ModTip({required this.tipObj, required this.variants});
+  const ModTip({required this.tipObj, required this.variants, required this.tipFile});
 }
 
 class TipHooks extends MappingHook {

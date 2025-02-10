@@ -3,9 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/themes/theme_manager.dart';
+import 'package:trios/thirdparty/dartx/string.dart';
+import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/tips/tip.dart';
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/widgets/disable.dart';
+import 'package:trios/widgets/mod_icon.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/wisp_adaptive_grid_view.dart';
 
@@ -43,6 +48,15 @@ class _TipsPageState extends ConsumerState<TipsPage> {
               padding: const EdgeInsets.only(left: 8, right: 8),
               child: Row(
                 children: [
+                  MovingTooltipWidget.text(
+                    message: 'Reload tips',
+                    child: IconButton(
+                      icon: const Icon(Icons.refresh),
+                      onPressed: () {
+                        ref.invalidate(AppState.tipsProvider);
+                      },
+                    ),
+                  ),
                   TextButton(
                     onPressed: () {
                       setState(() => _onlyEnabled = !_onlyEnabled);
@@ -107,36 +121,31 @@ class _TipsPageState extends ConsumerState<TipsPage> {
   }
 
   Widget _buildDeleteButton(BuildContext context) {
-    // Calculate how many are selected.
-    final tips = ref.watch(AppState.tipsProvider).valueOrNull ?? [];
-    final tipsMap = {
-      for (final t in tips) t.hashCode: t,
-    };
+    return Disable(
+      isEnabled: _selectionStates.isNotEmpty,
+      child: TextButton.icon(
+        onPressed: () {
+          final tips = ref.watch(AppState.tipsProvider).valueOrNull ?? [];
+          final selectedTips = _selectionStates.entries
+              .where((entry) => entry.value)
+              .map((entry) =>
+                  tips.firstWhere((tip) => tip.hashCode == entry.key))
+              .toList();
 
-    final selectedCount = _selectionStates.entries
-        .where((entry) => entry.value && tipsMap.containsKey(entry.key))
-        .length;
-
-    return TextButton.icon(
-      onPressed: selectedCount > 0
-          ? () {
-              final toRemove = <ModTip>[];
-              _selectionStates.forEach((hash, selected) {
-                if (selected && tipsMap.containsKey(hash)) {
-                  toRemove.add(tipsMap[hash]!);
-                }
-              });
-              ref.read(AppState.tipsProvider.notifier).deleteTips(toRemove);
-              setState(() {
-                // Clear selection of removed items.
-                for (final r in toRemove) {
-                  _selectionStates.remove(r.hashCode);
-                }
-              });
-            }
-          : null,
-      icon: const Icon(Icons.delete),
-      label: const Text('Delete Selected'),
+          if (selectedTips.isNotEmpty) {
+            ref
+                .read(AppState.tipsProvider.notifier)
+                .deleteTips(selectedTips, dryRun: true);
+            setState(() {
+              for (final key in selectedTips) {
+                _selectionStates.remove(key);
+              }
+            });
+          }
+        },
+        icon: const Icon(Icons.delete),
+        label: const Text('Delete Selected'),
+      ),
     );
   }
 
@@ -248,123 +257,96 @@ class _TipCardViewState extends ConsumerState<TipCardView> {
     final tip = widget.tip;
     final isSelected = widget.isSelected;
 
-    return GestureDetector(
-      onTap: () {
-        widget.onSelected(!isSelected);
-      },
-      child: IntrinsicHeight(
-        child: DefaultTextStyle.merge(
-          style: theme.textTheme.labelLarge?.copyWith(
-            color: theme.colorScheme.onSurface,
+    final textColor = theme.colorScheme.onSurface.withValues(
+      alpha: tip.tipObj.freq?.toDoubleOrNull() == 0.0 ? 0.5 : 1,
+    );
+    return ContextMenuRegion(
+      contextMenu: ContextMenu(
+        entries: [
+          MenuItem(
+            label: 'Open Folder',
+            onSelected: () {
+              tip.tipFile.parent.path.openAsUriInBrowser();
+            },
           ),
-          child: Container(
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: isSelected
-                    ? theme.colorScheme.primary
-                    : theme.colorScheme.onSurface.withOpacity(0.2),
-                width: 1,
-              ),
-              color: isSelected
-                  ? theme.colorScheme.surfaceContainer.withOpacity(0.5)
-                  : theme.colorScheme.surfaceContainer.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+        ],
+      ),
+      child: GestureDetector(
+        onTap: () {
+          widget.onSelected(!isSelected);
+        },
+        child: IntrinsicHeight(
+          child: DefaultTextStyle.merge(
+            style: theme.textTheme.labelLarge?.copyWith(
+              color: theme.colorScheme.onSurface,
             ),
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        tip.variants.firstOrNull?.modInfo.name ??
-                            '(unknown mod name)',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: theme.colorScheme.onSurface
-                                .withValues(alpha: 0.8)),
+            child: Container(
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: isSelected
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurface.withOpacity(0.2),
+                  width: 1,
+                ),
+                color: isSelected
+                    ? theme.colorScheme.surfaceContainer.withOpacity(0.5)
+                    : theme.colorScheme.surfaceContainer.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+              ),
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ModIcon(
+                          tip.variants.firstOrNull?.iconFilePath,
+                          showFullSizeInTooltip: true,
+                          size: 24,
+                        ),
                       ),
-                    ),
-                    Checkbox(
-                      value: isSelected,
-                      onChanged: (val) {
-                        widget.onSelected(val ?? false);
-                      },
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Expanded(child: Text(tip.tipObj.tip ?? '(No tip text)')),
-                const SizedBox(height: 4),
-                MovingTooltipWidget.text(
-                  message:
-                      'How likely this tip is to be shown. 1 is normal. Higher is more likely. 0 is never.',
-                  child: Text(
-                    'Freq: ${tip.tipObj.freq ?? '1'}',
-                    style: TextStyle(
-                        fontSize: 12,
-                        color: theme.colorScheme.onSurface.withOpacity(0.6)),
+                      Expanded(
+                        child: Text(
+                          tip.variants.firstOrNull?.modInfo.name ??
+                              '(unknown mod name)',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: theme.colorScheme.onSurface
+                                  .withValues(alpha: 0.8)),
+                        ),
+                      ),
+                      Checkbox(
+                        value: isSelected,
+                        onChanged: (val) {
+                          widget.onSelected(val ?? false);
+                        },
+                      ),
+                    ],
                   ),
-                ),
-              ],
+                  const SizedBox(height: 4),
+                  Expanded(
+                      child: Text(tip.tipObj.tip ?? '(No tip text)',
+                          style: TextStyle(fontSize: 12, color: textColor))),
+                  const SizedBox(height: 4),
+                  MovingTooltipWidget.text(
+                    message:
+                        'How likely this tip is to be shown. 1 is normal. Higher is more likely. 0 is never.',
+                    child: Text(
+                      'Freq: ${tip.tipObj.freq ?? '1'}',
+                      style: TextStyle(
+                          fontSize: 12,
+                          color: theme.colorScheme.onSurface.withOpacity(0.6)),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
       ),
     );
   }
-}
-
-/// Simple data class to hold the grid layout parameters.
-class GridLayout {
-  final int columns;
-  final double itemWidth;
-
-  const GridLayout(this.columns, this.itemWidth);
-
-  @override
-  String toString() => 'GridLayout(columns: $columns, itemWidth: $itemWidth)';
-}
-
-/// Computes how many columns can fit and how wide each item should be
-/// so that the grid fills [containerWidth] exactly (except for integer
-/// rounding) and each item is at least [minItemWidth] wide.
-///
-/// - [containerWidth]: total available horizontal space for the grid.
-/// - [minItemWidth]: minimum width of each grid item.
-/// - [horizontalMargin]: horizontal spacing between items (the “gutter”).
-///
-/// Returns a [GridLayout] with the chosen number of columns and each item’s width.
-GridLayout calculateGridLayout({
-  required double containerWidth,
-  required double minItemWidth,
-  required double horizontalMargin,
-}) {
-  // 1) Compute the maximum possible columns if each item is minItemWidth wide.
-  //    The formula uses (containerWidth + margin) / (minItemWidth + margin)
-  //    so we can account for each column plus the spacing after it—except
-  //    there's no spacing after the last column, hence the + margin offset.
-  int columns =
-      ((containerWidth + horizontalMargin) / (minItemWidth + horizontalMargin))
-          .floor();
-
-  // 2) Decrease columns until we find a fit where actual itemWidth >= minItemWidth.
-  while (columns > 0) {
-    // Space taken by margins: (columns - 1) * horizontalMargin
-    // Remaining space for items: containerWidth - marginSpace
-    // So each item: itemWidth = remainingSpace / columns
-    final itemWidth =
-        (containerWidth - (columns - 1) * horizontalMargin) / columns;
-
-    if (itemWidth >= minItemWidth) {
-      return GridLayout(columns, itemWidth);
-    }
-    columns--;
-  }
-
-  // Fallback: if even 1 column doesn't meet the requirement, just force 1 column
-  // (i.e., minItemWidth is bigger than containerWidth).
-  return GridLayout(1, containerWidth);
 }

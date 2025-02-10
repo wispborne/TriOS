@@ -256,13 +256,14 @@ class MovingTooltipWidget extends StatefulWidget {
 
   static Widget framed({
     Key? key,
-    required Widget tooltipWidget,
+    required Widget? tooltipWidget,
     required Widget child,
     EdgeInsetsGeometry padding = const EdgeInsets.all(8),
     double windowEdgePadding = 10.0,
     Size offset = const Size(5, 5),
     TooltipPosition position = TooltipPosition.bottomRight,
   }) {
+    if (tooltipWidget == null) return child;
     return Builder(
       builder: (context) {
         return MovingTooltipWidget(

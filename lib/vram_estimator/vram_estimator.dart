@@ -61,34 +61,10 @@ class VramEstimatorManager
 
 class VramEstimatorNotifier
     extends GenericSettingsAsyncNotifier<VramEstimatorState> {
-  // @override
-  // VramEstimatorState build() {
-  //   readFromDisk();
-  //
-  //   return VramEstimatorState.initial();
-  // }
 
   @override
   GenericAsyncSettingsManager<VramEstimatorState> createSettingsManager() =>
       VramEstimatorManager();
-
-  // void readFromDisk() async {
-  //   await configManager.readConfig();
-  //
-  //   if (configManager.config.isNotEmpty) {
-  //     final modVramInfo =
-  //         configManager.config['modVramInfo'] as Map<String, dynamic>;
-  //     final lastUpdated = configManager.config['lastUpdated'] as String;
-  //
-  //     state = state.copyWith(
-  //       modVramInfo: modVramInfo
-  //           .map((key, value) => MapEntry(key, ModMapper.fromJson(value))),
-  //       isCancelled: false,
-  //       isScanning: false,
-  //       lastUpdated: Constants.dateTimeFormat.parse(lastUpdated),
-  //     );
-  //   }
-  // }
 
   @override
   VramEstimatorState createDefaultState() => VramEstimatorState.initial();

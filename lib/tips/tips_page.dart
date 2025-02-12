@@ -122,29 +122,34 @@ class _TipsPageState extends ConsumerState<TipsPage> {
 
   Widget _buildDeleteButton(BuildContext context) {
     return Disable(
-      isEnabled: _selectionStates.isNotEmpty,
+      isEnabled: _selectionStates.values.any((selected) => selected),
       child: TextButton.icon(
         onPressed: () {
           final tips = ref.watch(AppState.tipsProvider).valueOrNull ?? [];
           final selectedTips = _selectionStates.entries
               .where((entry) => entry.value)
               .map((entry) =>
-                  tips.firstWhere((tip) => tip.hashCode == entry.key))
+                  tips.firstWhereOrNull((tip) => tip.hashCode == entry.key))
+              .nonNulls
               .toList();
 
           if (selectedTips.isNotEmpty) {
             ref
                 .read(AppState.tipsProvider.notifier)
-                .deleteTips(selectedTips, dryRun: true);
+                .deleteTips(selectedTips, dryRun: false);
             setState(() {
               for (final key in selectedTips) {
-                _selectionStates.remove(key);
+                _selectionStates.remove(key.hashCode);
               }
             });
           }
         },
         icon: const Icon(Icons.delete),
         label: const Text('Delete Selected'),
+        style: ButtonStyle(
+          foregroundColor:
+              WidgetStateProperty.all(Theme.of(context).colorScheme.onSurface),
+        ),
       ),
     );
   }

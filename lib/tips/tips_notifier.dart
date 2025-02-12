@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/models/mod_variant.dart';
-import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/tips/tip.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
@@ -12,8 +11,10 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/generic_settings_manager.dart';
 import 'package:trios/utils/logging.dart';
 
+import '../thirdparty/dartx/map.dart';
+
 class TipsNotifier extends AsyncNotifier<List<ModTip>> {
-  final storageManager = _TipsStorageManager();
+  final deletedTipsStorageManager = _TipsStorageManager();
 
   @override
   Future<List<ModTip>> build() async {
@@ -24,7 +25,25 @@ class TipsNotifier extends AsyncNotifier<List<ModTip>> {
     if (mods.isEmpty) {
       return [];
     }
+
+    ref.listen(AppState.mods, (prev, newMods) async {
+      if (prev.hashCode == newMods.hashCode) return;
+      _removePreviouslyDeletedTips(newMods);
+    });
+    _removePreviouslyDeletedTips(mods);
+
     return await loadTips(mods);
+  }
+
+  /// Searches to see if tips that a user has previously deleted are present.
+  /// This usually happens if they update or reinstall a mod, and the new version re-adds the tip.
+  Future<void> _removePreviouslyDeletedTips(List<Mod> newMods) async {
+    final previouslyDeletedTips =
+        await _checkForModsWithPreviouslyDeletedTips(newMods);
+    Fimber.d("Found ${previouslyDeletedTips.length} previously deleted tips");
+    if (previouslyDeletedTips.isNotEmpty) {
+      deleteTips(previouslyDeletedTips.map((pair) => pair.second));
+    }
   }
 
   /// Load tips from each [Mod] in [mods] and return the list.
@@ -76,7 +95,20 @@ class TipsNotifier extends AsyncNotifier<List<ModTip>> {
     final tipsFile = getTipsFile(variant);
     if (tipsFile.existsSync()) {
       return (
-        tips: TipsMapper.fromJson(await tipsFile.toFile().readAsString()),
+        tips: TipsMapper.fromMap(
+            (await tipsFile.toFile().readAsString()).fixJsonToMap()),
+        file: tipsFile
+      );
+    }
+    return null;
+  }
+
+  ({File file, Tips tips})? _loadTipsFromFileSync(ModVariant variant) {
+    final tipsFile = getTipsFile(variant);
+    if (tipsFile.existsSync()) {
+      return (
+        tips: TipsMapper.fromMap(
+            tipsFile.toFile().readAsStringSync().fixJsonToMap()),
         file: tipsFile
       );
     }
@@ -138,18 +170,67 @@ class TipsNotifier extends AsyncNotifier<List<ModTip>> {
     }
 
     // add the tip hashcodes to storage
-    final removedTipHashcodes =
-        tipsToRemove.map((tip) => tip.tipObj.hashCode.toString()).toSet();
-    storageManager.scheduleWriteSettingsToDisk(
-        ((await storageManager.readSettingsFromDisk({})).orEmpty() +
-                removedTipHashcodes)
-            .toSet());
+    final removedTipHashcodes = tipsToRemove
+        .map((tip) => _createTipHashcode(
+            tip.variants.firstOrNull?.modInfo.id, tip.tipObj))
+        .toSet();
+    final loadedTips = state.valueOrNull
+            ?.map((tip) => _createTipHashcode(
+                tip.variants.firstOrNull?.modInfo.id, tip.tipObj))
+            .toList() ??
+        [];
+    var currentDeletedTips = <String>[];
+    try {
+      currentDeletedTips =
+          (await deletedTipsStorageManager.readSettingsFromDisk({}))
+              .orEmpty()
+              .toList();
+    } catch (e, stacktrace) {
+      Fimber.e("Error reading deleted tips from disk. Wiping.",
+          ex: e, stacktrace: stacktrace);
+    }
+    deletedTipsStorageManager.scheduleWriteSettingsToDisk(
+        (currentDeletedTips + removedTipHashcodes.toList()).toSet());
 
     if (reloadTipsAfter) {
       state = const AsyncValue.loading();
       state = await AsyncValue.guard(() => loadTips(ref.watch(AppState.mods)));
     }
   }
+
+  Future<List<Pair<String, ModTip>>> _checkForModsWithPreviouslyDeletedTips(
+      List<Mod> modsToCheck) async {
+    final removedTipHashes = await deletedTipsStorageManager
+        .readSettingsFromDisk({}, useCachedValue: true);
+    if (removedTipHashes.isEmpty) {
+      return [];
+    }
+    final allModTipHashes =
+        modsToCheck.flatMap((it) => it.modVariants).flatMap((variant) {
+      ({File file, Tips tips})? tipsFromFileSync;
+
+      try {
+        tipsFromFileSync = _loadTipsFromFileSync(variant);
+      } catch (ex, st) {
+        Fimber.w("Unable to load tips from ${variant.smolId}.",
+            ex: ex, stacktrace: st);
+      }
+      return (tipsFromFileSync?.tips.tips.orEmpty() ?? [])
+          .map<Pair<String, ModTip>>((it) => Pair(
+                _createTipHashcode(variant.modInfo.id, it),
+                ModTip(
+                    tipObj: it,
+                    variants: [variant],
+                    tipFile: tipsFromFileSync!.file),
+              ));
+    });
+
+    return allModTipHashes
+        .where((it) => removedTipHashes.contains(it.first))
+        .toList();
+  }
+
+  String _createTipHashcode(String? modId, Tip tip) => "$modId-${tip.hashCode}";
 }
 
 class _TipsStorageManager extends GenericAsyncSettingsManager<Set<String>> {

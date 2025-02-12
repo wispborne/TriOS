@@ -19,6 +19,11 @@ final Duration _debounceDuration = Duration(milliseconds: 300);
 /// Handles reading/writing settings from/to disk, and schedules those writes.
 abstract class GenericAsyncSettingsManager<T> {
   File settingsFile = File("");
+
+  /// Updated whenever the state is read from or written to file.
+  /// Readonly; modification has no effect. This is purely a cached value.
+  T? lastKnownValue;
+
   final _mutex = Mutex();
   Timer? _debounceTimer;
   Completer<void>? _writeCompleter;
@@ -40,13 +45,20 @@ abstract class GenericAsyncSettingsManager<T> {
       Future.value(Constants.configDataFolderPath);
 
   /// Reads settings from disk, or uses the provided fallback state if there's any error.
-  Future<T> readSettingsFromDisk(T fallback) async {
+  Future<T> readSettingsFromDisk(T fallback,
+      {bool useCachedValue = false}) async {
+    if (useCachedValue && lastKnownValue != null) {
+      Fimber.v(() =>"Returning cached value instead of reading from disk.");
+      return Future.value(lastKnownValue);
+    }
+
     settingsFile = await _getFile();
     if (await settingsFile.exists()) {
       try {
         final contents = await settingsFile.readAsBytes();
         final loadedState = await deserialize(contents);
         Fimber.i("$fileName successfully loaded from disk.");
+        lastKnownValue = loadedState;
         return loadedState;
       } catch (e, stacktrace) {
         Fimber.e("Error reading from disk, creating backup and then wiping: $e",
@@ -89,6 +101,7 @@ abstract class GenericAsyncSettingsManager<T> {
     await _mutex.protect(() async {
       final serializedData = await serialize(stateToWrite);
       await settingsFile.writeAsBytes(serializedData);
+      lastKnownValue = stateToWrite;
       Fimber.i("$fileName successfully written to disk.");
     });
   }

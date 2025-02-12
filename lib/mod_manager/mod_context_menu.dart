@@ -274,8 +274,7 @@ MenuItem buildMenuItemOpenFolder(Mod mod) {
             MenuItem(
                 label: variant.modInfo.version.toString(),
                 onSelected: () {
-                  launchUrl(
-                      Uri.parse("file:${variant.modFolder.absolute.path}"));
+                  variant.modFolder.absolute.path.openAsUriInBrowser();
                 }),
         ]);
   }

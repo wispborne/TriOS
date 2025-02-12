@@ -76,17 +76,25 @@ class _ModBrowserPage extends ConsumerState<ModBrowserPage>
 
     if (currentPlatform == TargetPlatform.linux) {
       _webViewStatus = WebViewStatus.linuxNotSupported;
-    } else {
-      WebViewEnvironment.getAvailableVersion().then((availableVersion) {
-        Fimber.i("Available WebView2version: $availableVersion");
-        if (availableVersion != null) {
-          _enableWebView();
-        } else if (currentPlatform == TargetPlatform.windows) {
-          _webViewStatus = WebViewStatus.webview2Required;
-        } else {
-          _webViewStatus = WebViewStatus.unknownError;
-        }
-      });
+    } else if (currentPlatform == TargetPlatform.windows) {
+      // Only required on Windows.
+      try {
+        WebViewEnvironment.getAvailableVersion().then((availableVersion) {
+          Fimber.i("Available WebView2version: $availableVersion");
+          if (availableVersion != null) {
+            _enableWebView();
+          } else if (currentPlatform == TargetPlatform.windows) {
+            _webViewStatus = WebViewStatus.webview2Required;
+          } else {
+            _webViewStatus = WebViewStatus.unknownError;
+          }
+        });
+      } catch (ex, st) {
+        Fimber.w("Failed to get webview2 version", ex: ex, stacktrace: st);
+        _webViewStatus = WebViewStatus.unknownError;
+      }
+    } else if (currentPlatform == TargetPlatform.macOS) {
+      _enableWebView();
     }
   }
 
@@ -287,7 +295,8 @@ class _ModBrowserPage extends ConsumerState<ModBrowserPage>
                                         mod: profile,
                                         linkLoader: (url) {
                                           selectedModName = profile.name;
-                                          if (_webViewStatus == WebViewStatus.loaded) {
+                                          if (_webViewStatus ==
+                                              WebViewStatus.loaded) {
                                             webViewController?.loadUrl(
                                                 urlRequest: URLRequest(
                                                     url: WebUri(url)));

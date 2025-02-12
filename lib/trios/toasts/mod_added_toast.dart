@@ -8,6 +8,7 @@ import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/trios_app_icon.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 import '../../utils/logging.dart';
@@ -127,7 +128,8 @@ class _ModAddedToastState extends ConsumerState<ModAddedToast> {
                                 style: theme.textTheme.labelMedium,
                               ),
                             if (currentVariant != null)
-                              Text("New version: ${widget.modVariant.bestVersion}",
+                              Text(
+                                  "New version: ${widget.modVariant.bestVersion}",
                                   style: theme.textTheme.labelMedium),
                             Padding(
                               padding: const EdgeInsets.only(top: 8),
@@ -137,8 +139,8 @@ class _ModAddedToastState extends ConsumerState<ModAddedToast> {
                                   ElevatedButton.icon(
                                     onPressed: () {
                                       // open folder in file explorer
-                                      launchUrlString(
-                                          widget.modVariant.modFolder.path);
+                                      launchUrl(Uri.parse(
+                                          "file:${widget.modVariant.modFolder.absolute.path}"));
                                     },
                                     icon: Icon(Icons.folder_open,
                                         color: theme.colorScheme.onSurface),

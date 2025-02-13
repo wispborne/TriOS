@@ -111,7 +111,7 @@ class _WispGridState<T extends WispGridItem>
     final groupingSetting = gridState.groupingSetting;
 
     final grouping = widget.groups.firstWhereOrNull(
-            (grp) => grp.key == groupingSetting?.currentGroupedByKey);
+        (grp) => grp.key == groupingSetting?.currentGroupedByKey);
     final activeSortField = gridState.sortedColumnKey ??
         widget.defaultSortField ??
         columns.first.key;
@@ -151,85 +151,75 @@ class _WispGridState<T extends WispGridItem>
 
     int index = 0;
 
-    final displayedMods = [
-          // SizedBox(
-          //     height: 30,
-          //     child: WispGridHeaderRowView(
-          //       gridState: gridState,
-          //       groups: widget.groups,
-          //       updateGridState: widget.updateGridState,
-          //       columns: columns,
-          //     )) as Widget
-        ] +
-        items
-            .flatMap((entry) {
-              final groupSortValue = entry.key;
-              final itemsInGroup = entry.value;
-              final isCollapsed = collapseStates[groupSortValue] == true;
+    final displayedMods = items
+        .flatMap((entry) {
+          final groupSortValue = entry.key;
+          final itemsInGroup = entry.value;
+          final isCollapsed = collapseStates[groupSortValue] == true;
 
-              final widgets = <Widget>[];
+          final widgets = <Widget>[];
 
-              if (grouping != null && grouping.isGroupVisible) {
-                final header = WispGridGroupRowView(
-                  grouping: grouping,
-                  itemsInGroup: itemsInGroup,
-                  isCollapsed: isCollapsed,
-                  setCollapsed: (isCollapsed) {
-                    setState(() {
-                      collapseStates[groupSortValue] = isCollapsed;
-                    });
-                  },
-                  shownIndex: index++,
-                  columns: widget.columns,
-                );
-                widgets.add(header);
-              }
-              final items = !isCollapsed
-                  ? itemsInGroup
-                      .map((item) => WispGridRowView<T>(
-                            key: ValueKey(item.key),
-                            item: item,
-                            gridState: gridState,
-                            columns: widget.columns,
-                            rowBuilder: widget.rowBuilder,
-                            onTapped: () {
-                              if (HardwareKeyboard.instance.isShiftPressed) {
-                                _onRowCheck(
-                                  modId: item.key,
-                                  shiftPressed: true,
-                                  ctrlPressed: false,
-                                );
-                              } else if (HardwareKeyboard
-                                  .instance.isControlPressed) {
-                                _onRowCheck(
-                                  modId: item.key,
-                                  shiftPressed: false,
-                                  ctrlPressed: true,
-                                );
-                              } else {
-                                if (widget.selectedItem != null) {
-                                  widget.onRowSelected?.call(item);
-                                }
-                                _onRowCheck(
-                                  modId: item.key,
-                                  shiftPressed: false,
-                                  ctrlPressed: false,
-                                );
-                              }
-                            },
-                            onDoubleTapped: () {
+          if (grouping != null && grouping.isGroupVisible) {
+            final header = WispGridGroupRowView(
+              grouping: grouping,
+              itemsInGroup: itemsInGroup,
+              isCollapsed: isCollapsed,
+              setCollapsed: (isCollapsed) {
+                setState(() {
+                  collapseStates[groupSortValue] = isCollapsed;
+                });
+              },
+              shownIndex: index++,
+              columns: widget.columns,
+            );
+            widgets.add(header);
+          }
+          final items = !isCollapsed
+              ? itemsInGroup
+                  .map((item) => WispGridRowView<T>(
+                        key: ValueKey(item.key),
+                        item: item,
+                        gridState: gridState,
+                        columns: widget.columns,
+                        rowBuilder: widget.rowBuilder,
+                        onTapped: () {
+                          if (HardwareKeyboard.instance.isShiftPressed) {
+                            _onRowCheck(
+                              modId: item.key,
+                              shiftPressed: true,
+                              ctrlPressed: false,
+                            );
+                          } else if (HardwareKeyboard
+                              .instance.isControlPressed) {
+                            _onRowCheck(
+                              modId: item.key,
+                              shiftPressed: false,
+                              ctrlPressed: true,
+                            );
+                          } else {
+                            if (widget.selectedItem != null) {
                               widget.onRowSelected?.call(item);
-                            },
-                            isRowChecked: _checkedItemIds.contains(item.key),
-                          ))
-                      .toList()
-                  : <Widget>[];
-              widgets.addAll(items);
+                            }
+                            _onRowCheck(
+                              modId: item.key,
+                              shiftPressed: false,
+                              ctrlPressed: false,
+                            );
+                          }
+                        },
+                        onDoubleTapped: () {
+                          widget.onRowSelected?.call(item);
+                        },
+                        isRowChecked: _checkedItemIds.contains(item.key),
+                      ))
+                  .toList()
+              : <Widget>[];
+          widgets.addAll(items);
 
-              return widgets;
-            })
-            .nonNulls
-            .toList();
+          return widgets;
+        })
+        .nonNulls
+        .toList();
     final totalRowWidth = gridState
         .sortedVisibleColumns(widget.columns)
         .map((e) => e.value.width + WispGrid.gridRowSpacing)

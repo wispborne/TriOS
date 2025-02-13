@@ -9,6 +9,7 @@ import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/vram_estimator/graphics_lib_config_provider.dart';
 import 'package:trios/vram_estimator/models/graphics_lib_config.dart';
+import 'package:trios/vram_estimator/models/vram_checker_models.dart';
 import 'package:trios/vram_estimator/vram_checker_logic.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 
@@ -164,11 +165,16 @@ Widget? _vramSummaryOverlayWidget(
         .map((e) => e.bytesUsingGraphicsLibConfig(disabledGraphicsLibConfig))
         .sum;
     final vramFromGraphicsLib = allEstimates
-        .flatMap((e) => e.images.where((e) =>
-            e.graphicsLibType != null &&
-            e.isUsedBasedOnGraphicsLibConfig(graphicsLibConfig)))
-        .map((e) => e.bytesUsed)
+        .expand((mod) => List.generate(
+              mod.images.length,
+              (i) => ModImageView(i, mod.images),
+            ))
+        .where((view) =>
+            view.graphicsLibType != null &&
+            view.isUsedBasedOnGraphicsLibConfig(graphicsLibConfig))
+        .map((view) => view.bytesUsed)
         .toList();
+
     // TODO include vanilla graphicslib usage
     final vramFromVanilla =
         shownIndex == 0 ? VramChecker.VANILLA_GAME_VRAM_USAGE_IN_BYTES : null;

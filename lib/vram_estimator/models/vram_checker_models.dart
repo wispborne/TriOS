@@ -6,43 +6,172 @@ import 'package:trios/models/mod_info.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/vram_estimator/models/graphics_lib_config.dart';
 import 'package:trios/vram_estimator/models/graphics_lib_info.dart';
-
 import '../../models/version.dart';
 
 part 'vram_checker_models.mapper.dart';
 
-@MappableClass()
-class VramMod with VramModMappable {
-  VramCheckerMod info;
-  bool isEnabled;
-  List<ModImage> images;
+/// Represents the type of an image asset.
+@MappableEnum()
+enum ImageType { texture, background, unused }
 
-  VramMod(this.info, this.isEnabled, this.images);
+/// A columnar data structure for image metadata. Instead of creating an object per image,
+/// this class uses parallel lists to store fields (file paths, dimensions, etc.) which reduces
+/// per-object overhead.
+class ModImageTable {
+  static const double vanillaBackgroundTextSizeInBytes = 12582912.0;
 
-  late final maxPossibleBytesForMod = images.map((e) => e.bytesUsed).sum;
+  final List<String> filePaths;
+  final List<int> textureHeights;
+  final List<int> textureWidths;
+  final List<int> bitsInAllChannelsSums;
+  final List<ImageType> imageTypes;
+  final List<MapType?> graphicsLibTypes;
 
-  // Cache for storing results of bytesUsingGraphicsLibConfig
-  final Map<GraphicsLibConfig?, int> _cache = {};
+  ModImageTable._(
+    this.filePaths,
+    this.textureHeights,
+    this.textureWidths,
+    this.bitsInAllChannelsSums,
+    this.imageTypes,
+    this.graphicsLibTypes,
+  );
 
-  int bytesUsingGraphicsLibConfig(GraphicsLibConfig? graphicsLibConfig) {
-    // Check if the result is already cached
-    if (_cache.containsKey(graphicsLibConfig)) {
-      return _cache[graphicsLibConfig]!;
+  /// Constructs a [ModImageTable] from a list of maps (typically parsed from JSON).
+  factory ModImageTable.fromRows(List<Map<String, dynamic>> rows) {
+    final length = rows.length;
+    final filePaths = List<String>.filled(length, '', growable: false);
+    final heights = List<int>.filled(length, 0, growable: false);
+    final widths = List<int>.filled(length, 0, growable: false);
+    final bits = List<int>.filled(length, 0, growable: false);
+    final types =
+        List<ImageType>.filled(length, ImageType.texture, growable: false);
+    final gfxTypes = List<MapType?>.filled(length, null, growable: false);
+
+    for (int i = 0; i < length; i++) {
+      final row = rows[i];
+      filePaths[i] = row['filePath'] as String;
+      heights[i] = row['textureHeight'] as int;
+      widths[i] = row['textureWidth'] as int;
+      bits[i] = row['bitsInAllChannelsSum'] as int;
+
+      // Convert string to ImageType enum; default to texture if unrecognized.
+      final imageTypeStr = row['imageType'] as String?;
+      if (imageTypeStr != null) {
+        types[i] = ImageType.values.firstWhere(
+          (e) => e.name == imageTypeStr,
+          orElse: () => ImageType.texture,
+        );
+      }
+
+      // Optional graphics library type conversion.
+      final gfxTypeStr = row['graphicsLibType'] as String?;
+      if (gfxTypeStr != null) {
+        gfxTypes[i] =
+            MapType.values.firstWhereOrNull((m) => m.name == gfxTypeStr);
+      }
     }
 
-    // Compute the result and store it in the cache
-    final result = images
-        .where((element) => graphicsLibConfig == null
-            ? true
-            : element.isUsedBasedOnGraphicsLibConfig(graphicsLibConfig))
-        .map((e) => e.bytesUsed)
-        .sum;
+    return ModImageTable._(filePaths, heights, widths, bits, types, gfxTypes);
+  }
 
-    _cache[graphicsLibConfig] = result;
-    return result;
+  /// Converts the columnar data back into a list of maps for JSON serialization.
+  List<Map<String, dynamic>> toRows() {
+    final rows = <Map<String, dynamic>>[];
+    for (int i = 0; i < filePaths.length; i++) {
+      rows.add({
+        'filePath': filePaths[i],
+        'textureHeight': textureHeights[i],
+        'textureWidth': textureWidths[i],
+        'bitsInAllChannelsSum': bitsInAllChannelsSums[i],
+        'imageType': imageTypes[i].name,
+        'graphicsLibType': graphicsLibTypes[i]?.name,
+      });
+    }
+    return rows;
+  }
+
+  int get length => filePaths.length;
+}
+
+/// A lightweight view into a single row of [ModImageTable]. This class provides the
+/// same functionality as the original [ModImage] but without storing per-image objects.
+class ModImageView {
+  final int index;
+  final ModImageTable table;
+
+  ModImageView(this.index, this.table);
+
+  String get filePath => table.filePaths[index];
+
+  int get textureHeight => table.textureHeights[index];
+
+  int get textureWidth => table.textureWidths[index];
+
+  int get bitsInAllChannelsSum => table.bitsInAllChannelsSums[index];
+
+  ImageType get imageType => table.imageTypes[index];
+
+  MapType? get graphicsLibType => table.graphicsLibTypes[index];
+
+  File get file => File(filePath);
+
+  /// Returns the memory multiplier (125% for mipmaps; 100% for backgrounds).
+  double get multiplier =>
+      (imageType == ImageType.background) ? 1.0 : (4.0 / 3.0);
+
+  /// Computes the memory usage (in bytes) of the image.
+  int get bytesUsed {
+    const vanillaBackgroundTextSizeInBytes = 12582912.0;
+    final rawSize = (textureHeight *
+            textureWidth *
+            (bitsInAllChannelsSum / 8) *
+            multiplier) -
+        ((imageType == ImageType.background)
+            ? vanillaBackgroundTextSizeInBytes
+            : 0.0);
+    return rawSize.ceil();
+  }
+
+  /// Determines if the image is used based on the provided graphics library configuration.
+  bool isUsedBasedOnGraphicsLibConfig(GraphicsLibConfig? cfg) {
+    if (cfg == null) {
+      return graphicsLibType == null;
+    }
+    switch (graphicsLibType) {
+      case null:
+        return true;
+      case MapType.Normal:
+        return cfg.areGfxLibNormalMapsEnabled;
+      case MapType.Material:
+        return cfg.areGfxLibMaterialMapsEnabled;
+      case MapType.Surface:
+        return cfg.areGfxLibSurfaceMapsEnabled;
+    }
   }
 }
 
+/// A custom mapping hook for converting between a [ModImageTable] and its JSON representation.
+class ModImageTableHook extends MappingHook {
+  const ModImageTableHook();
+
+  @override
+  dynamic beforeDecode(dynamic value) {
+    if (value is List) {
+      return ModImageTable.fromRows(value.cast<Map<String, dynamic>>());
+    }
+    throw Exception('ModImageTableHook: Invalid JSON structure: $value');
+  }
+
+  @override
+  dynamic beforeEncode(dynamic value) {
+    if (value is ModImageTable) {
+      return value.toRows();
+    }
+    throw Exception('ModImageTableHook: Invalid type: $value');
+  }
+}
+
+/// Contains basic mod metadata.
 @MappableClass()
 class VramCheckerMod with VramCheckerModMappable {
   final ModInfo modInfo;
@@ -61,47 +190,43 @@ class VramCheckerMod with VramCheckerModMappable {
   String get formattedName => "$name $version (${modInfo.id})";
 }
 
+/// Represents a mod with VRAM usage information.
+/// Instead of storing a list of [ModImage] objects, this class uses a single [ModImageTable].
 @MappableClass()
-class ModImage with ModImageMappable {
-  static const vanillaBackgroundTextSizeInBytes = 12582912.0;
-  String filePath;
-  int textureHeight;
-  int textureWidth;
-  int bitsInAllChannelsSum;
-  ImageType imageType;
-  MapType? graphicsLibType;
+class VramMod with VramModMappable {
+  final VramCheckerMod info;
+  final bool isEnabled;
 
-  ModImage(this.filePath, this.textureHeight, this.textureWidth,
-      this.bitsInAllChannelsSum, this.imageType, this.graphicsLibType);
+  @MappableField(hook: ModImageTableHook())
+  final ModImageTable images;
 
-  File get file => File(filePath);
+  VramMod(this.info, this.isEnabled, this.images);
 
-  /// Textures are mipmapped and therefore use 125% memory. Backgrounds are not.
-  late final double multiplier =
-      (imageType == ImageType.background) ? 1.0 : 4.0 / 3.0;
+  /// Computes the total bytes used by all images in the table.
+  late final int maxPossibleBytesForMod = Iterable<int>.generate(images.length)
+      .map((i) => ModImageView(i, images).bytesUsed)
+      .sum;
 
-  late int bytesUsed = ((textureHeight *
-              textureWidth *
-              (bitsInAllChannelsSum / 8) *
-              multiplier) -
-          ((imageType == ImageType.background)
-              ? vanillaBackgroundTextSizeInBytes
-              : 0.0))
-      .ceil();
+  final Map<GraphicsLibConfig?, int> _cache = {};
 
-  bool isUsedBasedOnGraphicsLibConfig(GraphicsLibConfig? graphicsLibConfig) {
-    if (graphicsLibConfig == null) {
-      return graphicsLibType == null;
+  /// Returns the total bytes used by images that satisfy the given graphics library configuration.
+  int bytesUsingGraphicsLibConfig(GraphicsLibConfig? graphicsLibConfig) {
+    if (_cache.containsKey(graphicsLibConfig)) {
+      return _cache[graphicsLibConfig]!;
     }
 
-    return switch (graphicsLibType) {
-      null => true,
-      MapType.Normal => graphicsLibConfig.areGfxLibNormalMapsEnabled,
-      MapType.Material => graphicsLibConfig.areGfxLibMaterialMapsEnabled,
-      MapType.Surface => graphicsLibConfig.areGfxLibSurfaceMapsEnabled,
-    };
+    int sum = 0;
+    for (int i = 0; i < images.length; i++) {
+      final view = ModImageView(i, images);
+      final isUsed = graphicsLibConfig == null
+          ? (view.graphicsLibType == null)
+          : view.isUsedBasedOnGraphicsLibConfig(graphicsLibConfig);
+      if (isUsed) {
+        sum += view.bytesUsed;
+      }
+    }
+
+    _cache[graphicsLibConfig] = sum;
+    return sum;
   }
 }
-
-@MappableEnum()
-enum ImageType { texture, background, unused }

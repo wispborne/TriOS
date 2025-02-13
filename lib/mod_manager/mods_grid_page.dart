@@ -29,6 +29,7 @@ import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/vram_estimator/graphics_lib_config_provider.dart';
+import 'package:trios/vram_estimator/models/vram_checker_models.dart';
 import 'package:trios/widgets/add_new_mods_button.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/mod_type_icon.dart';
@@ -863,14 +864,25 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                       0) /
                   biggestFish.toDouble();
           final vramEstimate = vramMap[bestVersion.smolId];
-          final withoutGraphicsLib = vramEstimate?.images
-              .where((e) => e.graphicsLibType == null)
-              .map((e) => e.bytesUsed)
-              .toList();
-          final fromGraphicsLib = vramEstimate?.images
-              .where((e) => e.graphicsLibType != null)
-              .map((e) => e.bytesUsed)
-              .toList();
+          final withoutGraphicsLib = vramEstimate != null
+              ? List.generate(
+                  vramEstimate.images.length,
+                  (i) => ModImageView(i, vramEstimate.images),
+                )
+                  .where((view) => view.graphicsLibType == null)
+                  .map((view) => view.bytesUsed)
+                  .toList()
+              : null;
+
+          final fromGraphicsLib = vramEstimate != null
+              ? List.generate(
+                  vramEstimate.images.length,
+                  (i) => ModImageView(i, vramEstimate.images),
+                )
+                  .where((view) => view.graphicsLibType != null)
+                  .map((view) => view.bytesUsed)
+                  .toList()
+              : null;
 
           return MovingTooltipWidget.text(
             message: vramEstimate == null

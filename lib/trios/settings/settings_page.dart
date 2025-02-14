@@ -115,21 +115,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                           ],
                         ),
                       ),
-                      // Unnecessary visual noise.
-                      if (false)
-                        Padding(
-                          padding: const EdgeInsets.only(
-                              left: leftTextOptionPadding, top: 8.0),
-                          child: SelectableText(
-                            "Mods Folder: ${ref.read(appSettings).modsDir?.normalize.path}",
-                            style: theme.textTheme.labelLarge?.copyWith(
-                                color: theme.colorScheme.onSurface
-                                    .withValues(alpha: 0.8),
-                                fontFeatures: [
-                                  const FontFeature.tabularFigures()
-                                ]),
-                          ),
-                        ),
                       const SizedBox(height: 24),
                       ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 700),
@@ -431,10 +416,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         const SizedBox(height: 8),
                         MovingTooltipWidget.text(
                           message:
-                          "When checked, updating an enabled mod switches to the new version.",
+                              "When checked, updating an enabled mod switches to the new version.",
                           child: CheckboxWithLabel(
                             value: ref.watch(appSettings
-                                .select((s) => s.modUpdateBehavior)) ==
+                                    .select((s) => s.modUpdateBehavior)) ==
                                 ModUpdateBehavior
                                     .switchToNewVersionIfWasEnabled,
                             onChanged: (newValue) {
@@ -443,12 +428,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                     s.copyWith(
                                         modUpdateBehavior: newValue == true
                                             ? ModUpdateBehavior
-                                            .switchToNewVersionIfWasEnabled
+                                                .switchToNewVersionIfWasEnabled
                                             : ModUpdateBehavior.doNotChange));
                               });
                             },
-                            labelWidget:
-                            const Text("Auto-swap on mod update"),
+                            labelWidget: const Text("Auto-swap on mod update"),
                           ),
                         ),
                         const SizedBox(
@@ -469,8 +453,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                   groupValue: enableMultipleVersions,
                                   onChanged: (value) => ref
                                       .read(appSettings.notifier)
-                                      .update((state) => state.copyWith(
-                                          keepLastNVersions: 1)),
+                                      .update((state) =>
+                                          state.copyWith(keepLastNVersions: 1)),
                                 ),
                               ),
                             ),

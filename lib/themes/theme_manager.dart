@@ -256,6 +256,17 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
       textTheme: textTheme.copyWith(
         bodyMedium: textTheme.bodyMedium?.copyWith(fontSize: 16),
       ),
+      sliderTheme: themeBase.sliderTheme.copyWith(
+        year2023: false,
+        thumbSize: WidgetStateProperty.all(Size(4, 20)),
+        tickMarkShape: RoundSliderTickMarkShape(tickMarkRadius: 0),
+        trackHeight: 4,
+      ),
+      progressIndicatorTheme: ProgressIndicatorThemeData(
+        year2023: false,
+        stopIndicatorColor: Colors.transparent,
+        trackGap: 0,
+      ),
     );
   }
 

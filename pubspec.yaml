@@ -121,7 +121,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
-  riverpod_generator: ^2.6.3
+#  riverpod_generator: ^2.6.3
   riverpod_lint: ^2.6.3
   build_runner: ^2.4.13
   #  custom_lint: ^0.6.4

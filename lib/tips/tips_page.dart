@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/themes/theme_manager.dart';
+import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/thirdparty/dartx/string.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/tips/tip.dart';
@@ -12,6 +13,7 @@ import 'package:trios/utils/logging.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/mod_icon.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:trios/widgets/toolbar_checkbox_button.dart';
 import 'package:trios/widgets/wisp_adaptive_grid_view.dart';
 
 /// Grouping mode, like in your Kotlin code.
@@ -29,7 +31,8 @@ class TipsPage extends ConsumerStatefulWidget {
 }
 
 class _TipsPageState extends ConsumerState<TipsPage> {
-  bool _onlyEnabled = false; // Example setting.
+  bool _onlyEnabled = false;
+  bool _showHidden = false;
   TipsGrouping _grouping = TipsGrouping.none;
   final Map<int, bool> _selectionStates = {};
 
@@ -37,6 +40,7 @@ class _TipsPageState extends ConsumerState<TipsPage> {
   Widget build(BuildContext context) {
     // Watch the tips.
     final tipsAsync = ref.watch(AppState.tipsProvider);
+    final textColor = Theme.of(context).colorScheme.onSurface;
 
     return Column(children: [
       Padding(
@@ -57,48 +61,67 @@ class _TipsPageState extends ConsumerState<TipsPage> {
                       },
                     ),
                   ),
-                  TextButton(
-                    onPressed: () {
-                      setState(() => _onlyEnabled = !_onlyEnabled);
-                    },
-                    child: Text(
-                      _onlyEnabled ? 'Show All' : 'Only Enabled',
-                      style: const TextStyle(color: Colors.white),
+                  TriOSToolbarCheckboxButton(
+                    onChanged: (newValue) =>
+                        setState(() => _onlyEnabled = newValue ?? true),
+                    value: _onlyEnabled,
+                    text: 'Enabled Mods Only',
+                  ),
+                  SizedBox(width: 8),
+                  TriOSToolbarItem(
+                    child: PopupMenuButton<TipsGrouping>(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Row(
+                          children: [
+                            Icon(Icons.filter_list),
+                            SizedBox(width: 4),
+                            Text("Group By"),
+                          ],
+                        ),
+                      ),
+                      onSelected: (value) => setState(() => _grouping = value),
+                      itemBuilder: (context) => [
+                        const PopupMenuItem(
+                          value: TipsGrouping.none,
+                          child: Text('No Grouping'),
+                        ),
+                        const PopupMenuItem(
+                          value: TipsGrouping.mod,
+                          child: Text('Group By Mod'),
+                        ),
+                      ],
                     ),
                   ),
-                  PopupMenuButton<TipsGrouping>(
-                    icon: const Icon(Icons.filter_list, color: Colors.white),
-                    onSelected: (value) {
-                      setState(() => _grouping = value);
-                    },
-                    itemBuilder: (context) => [
-                      const PopupMenuItem(
-                        value: TipsGrouping.none,
-                        child: Text('No Grouping'),
+                  SizedBox(width: 8),
+                  TriOSToolbarItem(
+                    child: TextButton.icon(
+                      onPressed: () {
+                        // Select or deselect all.
+                        final allSelected =
+                            _selectionStates.values.every((v) => v);
+                        setState(() {
+                          for (final key in _selectionStates.keys) {
+                            _selectionStates[key] = !allSelected;
+                          }
+                        });
+                      },
+                      icon: Icon(Icons.select_all, color: textColor),
+                      label: Text(
+                        'Select All',
+                        style: TextStyle(color: textColor),
                       ),
-                      const PopupMenuItem(
-                        value: TipsGrouping.mod,
-                        child: Text('Group By Mod'),
-                      ),
-                    ],
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      // Select or deselect all.
-                      final allSelected =
-                          _selectionStates.values.every((v) => v);
-                      setState(() {
-                        for (final key in _selectionStates.keys) {
-                          _selectionStates[key] = !allSelected;
-                        }
-                      });
-                    },
-                    child: const Text(
-                      'Select All',
-                      style: TextStyle(color: Colors.white),
                     ),
                   ),
+                  const SizedBox(width: 8),
                   _buildDeleteButton(context),
+                  const Spacer(),
+                  TriOSToolbarCheckboxButton(
+                    onChanged: (newValue) =>
+                        setState(() => _showHidden = newValue ?? true),
+                    value: _showHidden,
+                    text: 'Show Hidden',
+                  ),
                 ],
               ),
             ),
@@ -107,7 +130,9 @@ class _TipsPageState extends ConsumerState<TipsPage> {
       ),
       Expanded(
         child: tipsAsync.when(
-          data: (tips) => _buildBody(tips, context),
+          data: (tips) {
+            return _buildBody(tips, context);
+          },
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (err, st) {
             Fimber.e('Error loading tips: $err', ex: err, stacktrace: st);
@@ -121,50 +146,85 @@ class _TipsPageState extends ConsumerState<TipsPage> {
   }
 
   Widget _buildDeleteButton(BuildContext context) {
-    return Disable(
-      isEnabled: _selectionStates.values.any((selected) => selected),
-      child: TextButton.icon(
-        onPressed: () {
-          final tips = ref.watch(AppState.tipsProvider).valueOrNull ?? [];
-          final selectedTips = _selectionStates.entries
-              .where((entry) => entry.value)
-              .map((entry) =>
-                  tips.firstWhereOrNull((tip) => tip.hashCode == entry.key))
-              .nonNulls
-              .toList();
+    final allTips = ref.watch(AppState.tipsProvider).valueOrNull ?? [];
 
-          if (selectedTips.isNotEmpty) {
-            ref
-                .read(AppState.tipsProvider.notifier)
-                .deleteTips(selectedTips, dryRun: false);
-            setState(() {
-              for (final key in selectedTips) {
-                _selectionStates.remove(key.hashCode);
-              }
-            });
-          }
-        },
-        icon: const Icon(Icons.delete),
-        label: const Text('Delete Selected'),
-        style: ButtonStyle(
-          foregroundColor:
-              WidgetStateProperty.all(Theme.of(context).colorScheme.onSurface),
+    final selectedTips = _selectionStates.entries
+        .where((entry) => entry.value)
+        .map((entry) =>
+            allTips.firstWhereOrNull((tip) => tip.hashCode == entry.key))
+        .nonNulls
+        .toList();
+
+    final isEnabled = selectedTips.isNotEmpty;
+
+    final hiddenCount = selectedTips.where((t) => t.tipObj.originalFreq != null).length;
+    final notHiddenCount = selectedTips.length - hiddenCount;
+
+    final showUnhide = hiddenCount > notHiddenCount;
+
+    final buttonLabel = showUnhide ? 'Unhide Selected' : 'Hide Selected';
+    final buttonIcon = showUnhide ? Icons.visibility : Icons.delete;
+
+    return Disable(
+      isEnabled: isEnabled,
+      child: TriOSToolbarItem(
+        child: TextButton.icon(
+          onPressed: () {
+            if (showUnhide) {
+              _unhideSelectedTips(selectedTips);
+            } else {
+              _hideSelectedTips(selectedTips);
+            }
+          },
+          icon: Icon(buttonIcon),
+          label: Text(buttonLabel),
+          style: ButtonStyle(
+            foregroundColor: WidgetStateProperty.all(
+              Theme.of(context).colorScheme.onSurface,
+            ),
+            iconColor: WidgetStateProperty.all(
+              Theme.of(context).colorScheme.onSurface,
+            ),
+          ),
         ),
       ),
     );
   }
+  void _hideSelectedTips(List<ModTip> selectedTips) {
+    if (selectedTips.isNotEmpty) {
+      ref.read(AppState.tipsProvider.notifier).hideTips(selectedTips, dryRun: false);
+      setState(() {
+        for (final tip in selectedTips) {
+          _selectionStates.remove(tip.hashCode);
+        }
+      });
+    }
+  }
+
+  void _unhideSelectedTips(List<ModTip> selectedTips) {
+    if (selectedTips.isNotEmpty) {
+      ref.read(AppState.tipsProvider.notifier).unhideTips(selectedTips);
+      setState(() {
+        for (final tip in selectedTips) {
+          _selectionStates.remove(tip.hashCode);
+        }
+      });
+    }
+  }
 
   Widget _buildBody(List<ModTip> tips, BuildContext context) {
     // Filter tips if onlyEnabled is set.
-    final filtered = _onlyEnabled
+    List<ModTip> filtered = _onlyEnabled
         ? tips.where((t) => isVariantEnabled(t.variants.firstOrNull)).toList()
         : tips;
+
+    final hiddenTips =
+        ref.watch(AppState.tipsProvider.notifier).getHidden(filtered);
+    filtered = _showHidden ? tips : tips - hiddenTips;
 
     if (filtered.isEmpty) {
       return const Center(child: Text('No tips (or mods) found.'));
     }
-
-    final theme = Theme.of(context);
 
     // Ensure we have an entry in _selectionStates for each tip.
     for (final tip in filtered) {
@@ -223,6 +283,7 @@ class _TipsPageState extends ConsumerState<TipsPage> {
             return TipCardView(
                 tip: tip,
                 isSelected: _selectionStates[tip.hashCode] ?? false,
+                isHidden: hiddenTips.contains(tip),
                 onSelected: (selected) {
                   setState(() {
                     _selectionStates[tip.hashCode] = selected;
@@ -235,21 +296,23 @@ class _TipsPageState extends ConsumerState<TipsPage> {
   }
 
   bool isVariantEnabled(ModVariant? variant) {
-    // Example logic: check if the variant is enabled. Possibly watch appSettings.
-    return true;
+    return variant?.isEnabled(ref.read(AppState.mods)) ?? false;
   }
 }
 
 class TipCardView extends ConsumerStatefulWidget {
   final ModTip tip;
   final bool isSelected;
+  final bool isHidden;
   final Function onSelected;
 
-  const TipCardView(
-      {super.key,
-      required this.tip,
-      required this.isSelected,
-      required this.onSelected});
+  const TipCardView({
+    super.key,
+    required this.tip,
+    required this.isSelected,
+    required this.isHidden,
+    required this.onSelected,
+  });
 
   @override
   ConsumerState createState() => _TipCardViewState();
@@ -261,6 +324,7 @@ class _TipCardViewState extends ConsumerState<TipCardView> {
     final theme = Theme.of(context);
     final tip = widget.tip;
     final isSelected = widget.isSelected;
+    final isHidden = widget.isHidden;
 
     final textColor = theme.colorScheme.onSurface.withValues(
       alpha: tip.tipObj.freq?.toDoubleOrNull() == 0.0 ? 0.5 : 1,
@@ -295,7 +359,9 @@ class _TipCardViewState extends ConsumerState<TipCardView> {
                 ),
                 color: isSelected
                     ? theme.colorScheme.surfaceContainer.withOpacity(0.5)
-                    : theme.colorScheme.surfaceContainer.withOpacity(0.2),
+                    : isHidden
+                        ? theme.colorScheme.surfaceContainerLowest
+                        : theme.colorScheme.surfaceContainer.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
               ),
               padding: const EdgeInsets.all(8.0),
@@ -305,6 +371,11 @@ class _TipCardViewState extends ConsumerState<TipCardView> {
                 children: [
                   Row(
                     children: [
+                      if (isHidden)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: Icon(Icons.visibility_off, color: textColor),
+                        ),
                       Padding(
                         padding: const EdgeInsets.only(right: 8),
                         child: ModIcon(
@@ -340,7 +411,7 @@ class _TipCardViewState extends ConsumerState<TipCardView> {
                     message:
                         'How likely this tip is to be shown. 1 is normal. Higher is more likely. 0 is never.',
                     child: Text(
-                      'Freq: ${tip.tipObj.freq ?? '1'}',
+                      'Freq: ${widget.isHidden ? "(hidden)" : tip.tipObj.freq ?? '1'}',
                       style: TextStyle(
                           fontSize: 12,
                           color: theme.colorScheme.onSurface.withOpacity(0.6)),

@@ -278,7 +278,7 @@ class DraggableHeader extends ConsumerWidget {
     final isFirst = sortedVisibleColumns.firstOrNull?.key == header;
     final isLast = sortedVisibleColumns.lastOrNull?.key == header;
 
-    Widget draggableChild(bool isHovered) {
+    Widget draggableChild({required bool isHovered}) {
       return Stack(
         alignment: Alignment.center,
         fit: StackFit.expand,
@@ -317,17 +317,17 @@ class DraggableHeader extends ConsumerWidget {
 
     return Draggable(
       data: header,
-      feedback: const Icon(Icons.drag_indicator, size: 16),
+      feedback: Material(child: Theme(data: Theme.of(context), child: child)),
       axis: Axis.horizontal,
       dragAnchorStrategy: (draggable, context, position) => const Offset(16, 8),
       childWhenDragging: Opacity(
         opacity: 0.5,
-        child: draggableChild(false),
+        child: draggableChild(isHovered: false),
       ),
       child: DragTarget(
         builder: (context, candidateData, rejectedData) {
           final isHovered = candidateData.isNotEmpty;
-          return draggableChild(isHovered);
+          return draggableChild(isHovered: isHovered);
         },
         onWillAcceptWithDetails: (data) => data.data != header,
         onAcceptWithDetails: (data) {
@@ -400,6 +400,7 @@ class _SortableHeaderState extends ConsumerState<SortableHeader> {
         });
       },
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
           widget.child,
           if (isActive)
@@ -410,7 +411,7 @@ class _SortableHeaderState extends ConsumerState<SortableHeader> {
                       ? Icons.arrow_drop_down
                       : Icons.arrow_drop_up,
                   size: 20),
-            )
+            ),
         ],
       ),
     );

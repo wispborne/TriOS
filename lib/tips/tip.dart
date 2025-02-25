@@ -9,8 +9,20 @@ part 'tip.mapper.dart';
 class Tip with TipMappable {
   final String? freq;
   final String? tip;
+  final String? originalFreq;
 
-  const Tip({this.freq, this.tip});
+  const Tip({this.freq, this.tip, this.originalFreq});
+
+  @override
+  int get hashCode => tip?.hashCode ?? 0;
+
+  @override
+  bool operator ==(Object other) {
+    if (other is Tip) {
+      return tip == other.tip;
+    }
+    return false;
+  }
 }
 
 @MappableClass()
@@ -26,7 +38,20 @@ class ModTip with ModTipMappable {
   final List<ModVariant> variants;
   final File tipFile;
 
-  const ModTip({required this.tipObj, required this.variants, required this.tipFile});
+  const ModTip(
+      {required this.tipObj, required this.variants, required this.tipFile});
+
+  @override
+  int get hashCode =>
+      tipObj.hashCode ^ (variants.firstOrNull?.modInfo.id.hashCode ?? 0);
+
+  @override
+  bool operator ==(Object other) {
+    if (other is ModTip) {
+      return tipObj == other.tipObj && tipFile.path == other.tipFile.path;
+    }
+    return false;
+  }
 }
 
 class TipHooks extends MappingHook {

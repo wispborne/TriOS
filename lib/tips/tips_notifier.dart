@@ -11,7 +11,7 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/generic_settings_manager.dart';
 import 'package:trios/utils/logging.dart';
 
-import '../thirdparty/dartx/map.dart';
+import 'package:trios/thirdparty/dartx/map.dart';
 
 class TipsNotifier extends AsyncNotifier<List<ModTip>> {
   final deletedTipsStorageManager = _TipsStorageManager();
@@ -42,7 +42,7 @@ class TipsNotifier extends AsyncNotifier<List<ModTip>> {
         await _checkForModsWithPreviouslyDeletedTips(newMods);
     Fimber.d("Found ${previouslyDeletedTips.length} previously deleted tips");
     if (previouslyDeletedTips.isNotEmpty) {
-      deleteTips(previouslyDeletedTips.map((pair) => pair.second));
+      hideTips(previouslyDeletedTips.map((pair) => pair.second));
     }
   }
 
@@ -90,6 +90,17 @@ class TipsNotifier extends AsyncNotifier<List<ModTip>> {
     return variant.modFolder.resolve(Constants.tipsFileRelativePath).toFile();
   }
 
+  List<ModTip> getHidden(List<ModTip> tips) {
+    final hiddenTipHashes = deletedTipsStorageManager.lastKnownValue ?? {};
+
+    return tips
+        .where((tip) =>
+            tip.tipObj.freq == "0" &&
+            hiddenTipHashes.contains(_createTipHashcode(
+                tip.variants.firstOrNull?.modInfo.id, tip.tipObj)))
+        .toList();
+  }
+
   Future<({Tips tips, File file})?> _loadTipsFromFile(
       ModVariant variant) async {
     final tipsFile = getTipsFile(variant);
@@ -115,8 +126,8 @@ class TipsNotifier extends AsyncNotifier<List<ModTip>> {
     return null;
   }
 
-  /// Deletes tips from the current state.
-  Future<void> deleteTips(Iterable<ModTip> tipsToRemove,
+  /// Hides tips from the current state.
+  Future<void> hideTips(Iterable<ModTip> tipsToRemove,
       {bool dryRun = false, bool reloadTipsAfter = true}) async {
     final current = state.valueOrNull;
     if (current == null || tipsToRemove.isEmpty) return;
@@ -152,7 +163,12 @@ class TipsNotifier extends AsyncNotifier<List<ModTip>> {
         }
 
         final updatedTips = allVariantTips.tips.tips
-            ?.where((t) => !variantTipsToRemove.contains(t))
+            // This line removes the tip
+            // ?.where((t) => !variantTipsToRemove.contains(t))
+            // Switched to hiding the tip (freq 0) instead of removing it
+            ?.map((t) => variantTipsToRemove.contains(t)
+                ? t.copyWith(freq: "0", originalFreq: t.freq)
+                : t)
             .toList();
 
         final filteredTipsJson =
@@ -189,12 +205,126 @@ class TipsNotifier extends AsyncNotifier<List<ModTip>> {
       Fimber.e("Error reading deleted tips from disk. Wiping.",
           ex: e, stacktrace: stacktrace);
     }
-    deletedTipsStorageManager.scheduleWriteSettingsToDisk(
-        (currentDeletedTips + removedTipHashcodes.toList()).toSet());
+    final allRemovedHashes =
+        (currentDeletedTips + removedTipHashcodes.toList()).toSet();
+    deletedTipsStorageManager.scheduleWriteSettingsToDisk(allRemovedHashes);
 
     if (reloadTipsAfter) {
-      state = const AsyncValue.loading();
-      state = await AsyncValue.guard(() => loadTips(ref.watch(AppState.mods)));
+      final updatedList = [...?state.valueOrNull];
+
+      for (final hiddenTip in tipsToRemove) {
+        final index = updatedList.indexOf(hiddenTip);
+        if (index != -1) {
+          final oldTipObj = updatedList[index].tipObj;
+          final newTipObj =
+              oldTipObj.copyWith(freq: '0', originalFreq: oldTipObj.freq);
+          updatedList[index] = updatedList[index].copyWith(tipObj: newTipObj);
+        }
+      }
+
+      state = AsyncValue.data(updatedList);
+    }
+  }
+
+  bool isHidden(ModTip tip) {
+    final hiddenTips = getHidden(state.valueOrNull.orEmpty().toList());
+    return hiddenTips.contains(tip);
+  }
+
+  Future<void> unhideTips(Iterable<ModTip> tipsToUnhide,
+      {bool reloadTipsAfter = true}) async {
+    final current = state.valueOrNull;
+    if (current == null || tipsToUnhide.isEmpty) return;
+
+    // We'll group them by variant so we can open each tips.json only once:
+    final tipsToUnhideByVariant = <ModVariant, List<Tip>>{};
+    for (var tip in tipsToUnhide) {
+      for (var variant in tip.variants) {
+        tipsToUnhideByVariant.putIfAbsent(variant, () => []).add(tip.tipObj);
+      }
+    }
+
+    // Write back to each tips.json on disk
+    for (var entry in tipsToUnhideByVariant.entries) {
+      final variant = entry.key;
+      final variantTips = entry.value;
+
+      try {
+        final tipData = await _loadTipsFromFile(variant);
+        if (tipData == null) continue; // no file found, skip
+
+        final allVariantTips = tipData.tips.tips;
+        if (allVariantTips == null) continue;
+
+        final updatedTips = allVariantTips.map((original) {
+          if (variantTips.contains(original)) {
+            // This tip is being unhidden:
+            final restoredFreq = original.originalFreq?.isNotEmpty == true
+                ? original.originalFreq
+                : '1'; // fallback to "1"
+            return original.copyWith(
+              freq: restoredFreq,
+              originalFreq: null, // clear originalFreq after unhide
+            );
+          } else {
+            return original;
+          }
+        }).toList();
+
+        final updatedJson = Tips(tips: updatedTips).toMap().prettyPrintJson();
+        final file = getTipsFile(variant);
+        await file.writeAsString(updatedJson);
+      } catch (e, stacktrace) {
+        Fimber.e("Error un-hiding tips", ex: e, stacktrace: stacktrace);
+      }
+    }
+
+    // Remove their hash codes from the 'deleted tips' tracking file:
+    final unhiddenTipHashes = tipsToUnhide
+        .map((tip) => _createTipHashcode(
+            tip.variants.firstOrNull?.modInfo.id, tip.tipObj))
+        .toSet();
+
+    var currentDeletedTips = <String>[];
+    try {
+      currentDeletedTips =
+          (await deletedTipsStorageManager.readSettingsFromDisk({}))
+              .orEmpty()
+              .toList();
+    } catch (e, stacktrace) {
+      Fimber.e("Error reading deleted tips from disk",
+          ex: e, stacktrace: stacktrace);
+    }
+
+    // Filter out the ones we just unhid:
+    final newDeletedSet = currentDeletedTips
+        .where((hash) => !unhiddenTipHashes.contains(hash))
+        .toSet();
+    deletedTipsStorageManager.scheduleWriteSettingsToDisk(newDeletedSet);
+
+    // Finally, update in-memory state so UI immediately reflects the changes:
+    if (reloadTipsAfter) {
+      final updatedList = [...current];
+
+      for (final unhiddenTip in tipsToUnhide) {
+        final idx = updatedList.indexOf(unhiddenTip);
+        if (idx != -1) {
+          final oldTip = updatedList[idx];
+          final oldTipObj = oldTip.tipObj;
+          final restoredFreq = oldTipObj.originalFreq?.isNotEmpty == true
+              ? oldTipObj.originalFreq
+              : '1';
+
+          // Rebuild the tip with freq restored:
+          final newTipObj = oldTipObj.copyWith(
+            freq: restoredFreq,
+            originalFreq: null,
+          );
+          updatedList[idx] = oldTip.copyWith(tipObj: newTipObj);
+        }
+      }
+
+      state = AsyncValue.data(updatedList);
     }
   }
 

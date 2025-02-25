@@ -76,6 +76,7 @@ abstract class GenericAsyncSettingsManager<T> {
 
   /// Schedules a write operation to disk for the given state.
   Future<void> scheduleWriteSettingsToDisk(T newState) {
+    lastKnownValue = newState;
     _debounceTimer?.cancel();
     if (_writeCompleter == null || _writeCompleter!.isCompleted) {
       _writeCompleter = Completer<void>();

@@ -12,6 +12,7 @@ import 'package:trios/weaponViewer/models/weapon.dart';
 import 'package:trios/weaponViewer/weaponsManager.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:trios/widgets/toolbar_checkbox_button.dart';
 
 import '../widgets/MultiSplitViewMixin.dart';
 
@@ -127,20 +128,23 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
                         children: [
                           MovingTooltipWidget.text(
                             message: "Show hidden weapons",
-                            child: buildToolbarButton(
-                                theme, "Show Hidden", showHiddenWeapons,
-                                (value) {
-                              setState(() {
-                                showHiddenWeapons = value ?? false;
-                              });
-                            }),
+                            child: TriOSToolbarCheckboxButton(
+                                text: "Show Hidden",
+                                value: showHiddenWeapons,
+                                onChanged: (value) {
+                                  setState(() {
+                                    showHiddenWeapons = value ?? false;
+                                  });
+                                }),
                           ),
-                          buildToolbarButton(theme, "Compare", splitPane,
-                              (value) {
-                            splitPane = value ?? false;
-                            multiSplitController.areas = areas;
-                            setState(() {});
-                          }),
+                          TriOSToolbarCheckboxButton(
+                              text: "Compare",
+                              value: splitPane,
+                              onChanged: (value) {
+                                splitPane = value ?? false;
+                                multiSplitController.areas = areas;
+                                setState(() {});
+                              }),
                           IconButton(
                             icon: const Icon(Icons.refresh),
                             onPressed: () {
@@ -195,30 +199,6 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
     //   child: SelectableText('Error loading weapons: $error'),
     // ),
     // );
-  }
-
-  SizedBox buildToolbarButton(
-      ThemeData theme, String text, bool value, ValueChanged<bool?> onChanged) {
-    return SizedBox(
-      height: 30,
-      child: Card.outlined(
-        margin: const EdgeInsets.symmetric(),
-        child: CheckboxWithLabel(
-          labelWidget: Padding(
-            padding: const EdgeInsets.only(right: 4),
-            child: Text(text,
-                style: theme.textTheme.labelLarge!.copyWith(fontSize: 14)),
-          ),
-          textPadding: const EdgeInsets.only(left: 4),
-          checkWrapper: (child) => Padding(
-            padding: const EdgeInsets.only(left: 4),
-            child: child,
-          ),
-          value: value,
-          onChanged: onChanged,
-        ),
-      ),
-    );
   }
 
   Widget buildGrid(List<WispGridColumn<Weapon>> columns, List<Weapon> items,

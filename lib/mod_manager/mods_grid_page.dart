@@ -766,67 +766,43 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
           ?.copyWith(fontWeight: FontWeight.bold);
 
       return switch (header) {
-        ModGridHeader.favorites => SizedBox(
-            width: state.width,
-            child: Container(),
-          ),
-        ModGridHeader.changeVariantButton =>
-          SizedBox(width: state.width, child: Container()),
-        ModGridHeader.icons => SizedBox(width: state.width, child: Container()),
-        ModGridHeader.modIcon =>
-          SizedBox(width: state.width, child: Container()),
-        ModGridHeader.name => SizedBox(
-            width: state.width,
-            child: Text('Name', style: headerTextStyle),
-          ),
-        ModGridHeader.author => SizedBox(
-            width: state.width,
-            child: Text('Author', style: headerTextStyle),
-          ),
-        ModGridHeader.version => SizedBox(
-            width: state.width,
-            child: Text('Version', style: headerTextStyle),
-          ),
-        ModGridHeader.vramImpact => SizedBox(
-            width: state.width,
-            child: MovingTooltipWidget.text(
-              message:
-                  'An *estimate* of how much VRAM is used based on the images in the mod folder.'
-                  '\nThis may be inaccurate.',
-              child: Row(
-                children: [
-                  Text('VRAM Est.', style: headerTextStyle),
-                  const SizedBox(width: 4),
-                  MovingTooltipWidget.text(
-                    message: "About VRAM & VRAM Estimator",
-                    child: IconButton(
-                      onPressed: () => showDialog(
-                          context: context,
-                          builder: (context) => VramCheckerExplanationDialog()),
-                      padding: const EdgeInsets.all(2),
-                      constraints: const BoxConstraints(),
-                      icon: const Icon(
-                        Icons.info_outline,
-                        size: 20,
-                      ),
+        ModGridHeader.favorites => Container(),
+        ModGridHeader.changeVariantButton => Container(),
+        ModGridHeader.icons => Container(),
+        ModGridHeader.modIcon => Container(),
+        ModGridHeader.name => Text('Name', style: headerTextStyle),
+        ModGridHeader.author => Text('Author', style: headerTextStyle),
+        ModGridHeader.version => Text('Version', style: headerTextStyle),
+        ModGridHeader.vramImpact => MovingTooltipWidget.text(
+            message:
+                'An *estimate* of how much VRAM is used based on the images in the mod folder.'
+                '\nThis may be inaccurate.',
+            child: Row(
+              children: [
+                Text('VRAM Est.', style: headerTextStyle),
+                const SizedBox(width: 4),
+                MovingTooltipWidget.text(
+                  message: "About VRAM & VRAM Estimator",
+                  child: IconButton(
+                    onPressed: () => showDialog(
+                        context: context,
+                        builder: (context) => VramCheckerExplanationDialog()),
+                    padding: const EdgeInsets.all(2),
+                    constraints: const BoxConstraints(),
+                    icon: const Icon(
+                      Icons.info_outline,
+                      size: 20,
                     ),
-                  )
-                ],
-              ),
+                  ),
+                )
+              ],
             ),
           ),
-        ModGridHeader.gameVersion => SizedBox(
-            width: state.width,
-            child: Text('Game Version', style: headerTextStyle),
-          ),
-        ModGridHeader.firstSeen => SizedBox(
-            width: state.width,
-            child: Text('First Seen', style: headerTextStyle),
-          ),
-        ModGridHeader.lastEnabled => SizedBox(
-            width: state.width,
-            child: Text('Last Enabled', style: headerTextStyle),
-          ),
+        ModGridHeader.gameVersion =>
+          Text('Game Version', style: headerTextStyle),
+        ModGridHeader.firstSeen => Text('First Seen', style: headerTextStyle),
+        ModGridHeader.lastEnabled =>
+          Text('Last Enabled', style: headerTextStyle),
       };
     });
 
@@ -1183,20 +1159,14 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
     return Builder(builder: (context) {
       final theme = Theme.of(context);
 
-      return ConstrainedBox(
-        constraints: const BoxConstraints(
-          minWidth: 600,
+      return Text(
+        bestVersion.modInfo.name ?? "(no name)",
+        style: GoogleFonts.roboto(
+          textStyle: theme.textTheme.labelLarge
+              ?.copyWith(fontWeight: FontWeight.bold),
         ),
-        child: Text(
-          bestVersion.modInfo.name ?? "(no name)",
-          style: GoogleFonts.roboto(
-            textStyle: theme.textTheme.labelLarge
-                ?.copyWith(fontWeight: FontWeight.bold),
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        // )
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
       );
     });
   }

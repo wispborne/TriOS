@@ -135,7 +135,7 @@ class _VersionCheckTextReadoutState
                     Padding(
                       padding: const EdgeInsets.only(top: 2),
                       child: Text(
-                          "This is usually caused by the mod author. Please visit the mod page to manually find updates.",
+                          "This is usually caused by the mod author or a network error. Please visit the mod page to manually find updates.",
                           style: theme.textTheme.labelLarge?.copyWith(
                               color: ThemeManager.vanillaErrorColor)),
                     ),

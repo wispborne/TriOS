@@ -24,17 +24,24 @@ class TipMapper extends ClassMapperBase<Tip> {
   static const Field<Tip, String> _f$freq = Field('freq', _$freq, opt: true);
   static String? _$tip(Tip v) => v.tip;
   static const Field<Tip, String> _f$tip = Field('tip', _$tip, opt: true);
+  static String? _$originalFreq(Tip v) => v.originalFreq;
+  static const Field<Tip, String> _f$originalFreq =
+      Field('originalFreq', _$originalFreq, opt: true);
 
   @override
   final MappableFields<Tip> fields = const {
     #freq: _f$freq,
     #tip: _f$tip,
+    #originalFreq: _f$originalFreq,
   };
 
   @override
   final MappingHook hook = const TipHooks();
   static Tip _instantiate(DecodingData data) {
-    return Tip(freq: data.dec(_f$freq), tip: data.dec(_f$tip));
+    return Tip(
+        freq: data.dec(_f$freq),
+        tip: data.dec(_f$tip),
+        originalFreq: data.dec(_f$originalFreq));
   }
 
   @override
@@ -83,7 +90,7 @@ extension TipValueCopy<$R, $Out> on ObjectCopyWith<$R, Tip, $Out> {
 
 abstract class TipCopyWith<$R, $In extends Tip, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
-  $R call({String? freq, String? tip});
+  $R call({String? freq, String? tip, String? originalFreq});
   TipCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
 
@@ -94,13 +101,20 @@ class _TipCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Tip, $Out>
   @override
   late final ClassMapperBase<Tip> $mapper = TipMapper.ensureInitialized();
   @override
-  $R call({Object? freq = $none, Object? tip = $none}) =>
-      $apply(FieldCopyWithData(
-          {if (freq != $none) #freq: freq, if (tip != $none) #tip: tip}));
+  $R call(
+          {Object? freq = $none,
+          Object? tip = $none,
+          Object? originalFreq = $none}) =>
+      $apply(FieldCopyWithData({
+        if (freq != $none) #freq: freq,
+        if (tip != $none) #tip: tip,
+        if (originalFreq != $none) #originalFreq: originalFreq
+      }));
   @override
   Tip $make(CopyWithData data) => Tip(
       freq: data.get(#freq, or: $value.freq),
-      tip: data.get(#tip, or: $value.tip));
+      tip: data.get(#tip, or: $value.tip),
+      originalFreq: data.get(#originalFreq, or: $value.originalFreq));
 
   @override
   TipCopyWith<$R2, Tip, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>

@@ -30,3 +30,6 @@ analyzer:
   exclude: [build/**, lib/**.freezed.dart, lib/**.g.dart,lib/libarchive/libarchive_bindings.dart]
 # Additional information about this file can be found at
 # https://dart.dev/guides/language/analysis-options
+
+#formatter:
+#  page_width: 80

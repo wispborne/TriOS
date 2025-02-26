@@ -25,29 +25,35 @@ class VramPieChartState extends ConsumerState<VramPieChart> {
     final baseColor = Theme.of(context).colorScheme.primary;
 
     return widget.modVramInfo
-        .where((element) =>
-            element.bytesUsingGraphicsLibConfig(graphicsLibConfig) > 0)
+        .where(
+          (element) =>
+              element.bytesUsingGraphicsLibConfig(graphicsLibConfig) > 0,
+        )
         .map((mod) {
-      const fontSize = 12.0;
-      const radius = 50.0;
-      const shadows = [Shadow(color: Colors.black, blurRadius: 2)];
-      return PieChartSectionData(
-        color: ColorGenerator.generateFromColor(mod.info.smolId, baseColor)
-            .createMaterialColor()
-            .shade700,
-        value: mod.bytesUsingGraphicsLibConfig(graphicsLibConfig).toDouble(),
-        title:
-            "${mod.info.name} ${mod.info.version}\n${mod.bytesUsingGraphicsLibConfig(graphicsLibConfig).bytesAsReadableMB()}",
-        radius: radius,
-        titlePositionPercentageOffset: 2,
-        titleStyle: const TextStyle(
-          fontSize: fontSize,
-          fontWeight: FontWeight.bold,
-          // color: AppColors.mainTextColor1,
-          shadows: shadows,
-        ),
-      );
-    }).toList();
+          const fontSize = 12.0;
+          const radius = 50.0;
+          const shadows = [Shadow(color: Colors.black, blurRadius: 2)];
+          return PieChartSectionData(
+            color:
+                ColorGenerator.generateFromColor(
+                  mod.info.smolId,
+                  baseColor,
+                ).createMaterialColor().shade700,
+            value:
+                mod.bytesUsingGraphicsLibConfig(graphicsLibConfig).toDouble(),
+            title:
+                "${mod.info.name} ${mod.info.version}\n${mod.bytesUsingGraphicsLibConfig(graphicsLibConfig).bytesAsReadableMB()}",
+            radius: radius,
+            titlePositionPercentageOffset: 2,
+            titleStyle: const TextStyle(
+              fontSize: fontSize,
+              fontWeight: FontWeight.bold,
+              // color: AppColors.mainTextColor1,
+              shadows: shadows,
+            ),
+          );
+        })
+        .toList();
   }
 
   @override
@@ -79,9 +85,7 @@ class VramPieChartState extends ConsumerState<VramPieChart> {
                     //   });
                     // },
                     // ),
-                    borderData: FlBorderData(
-                      show: false,
-                    ),
+                    borderData: FlBorderData(show: false),
                     sectionsSpace: 1,
                     // centerSpaceRadius: 130,
                     sections: createSections(context),

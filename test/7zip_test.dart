@@ -44,9 +44,12 @@ void main() {
     configureLogging();
     final time = DateTime.now();
     final sevenZ = getSevenZip();
-    var archivePath = "F:/Downloads/OpenJDK-jdk_x64_windows_hotspot_24_26-ea.zip";
+    var archivePath =
+        "F:/Downloads/OpenJDK-jdk_x64_windows_hotspot_24_26-ea.zip";
     final archiveEntries = await sevenZ.extractAll(
-        archivePath.toFile(), "F:/Downloads/extractTest".toDirectory());
+      archivePath.toFile(),
+      "F:/Downloads/extractTest".toDirectory(),
+    );
     print("Time taken: ${DateTime.now().difference(time)}");
 
     // print("Extracting archive file: $archivePath");

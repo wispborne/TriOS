@@ -32,7 +32,9 @@ class Blur extends StatelessWidget {
           opacity: blurOpacity,
           child: ImageFiltered(
             imageFilter: ImageFilter.blur(
-                sigmaX: blurX ?? blur!, sigmaY: blurY ?? blur!),
+              sigmaX: blurX ?? blur!,
+              sigmaY: blurY ?? blur!,
+            ),
             child: Container(
               decoration: BoxDecoration(
                 color: blurColor.withOpacity(colorOpacity),

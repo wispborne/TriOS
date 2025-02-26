@@ -80,19 +80,19 @@ class TriOSTheme {
     String? onSurface,
     String? onError,
     String? hyperlink,
-  })  : primary = _parseColor(primary)!,
-        primaryVariant = _parseColor(primaryVariant),
-        secondary = _parseColor(secondary),
-        secondaryVariant = _parseColor(secondaryVariant),
-        surface = _parseColor(background),
-        surfaceContainer = _parseColor(surface),
-        error = _parseColor(error),
-        onPrimary = _parseColor(onPrimary),
-        onSecondary = _parseColor(onSecondary),
-        // onBackground = _parseColor(onBackground),
-        onSurface = _parseColor(onSurface),
-        onError = _parseColor(onError),
-        hyperlink = _parseColor(hyperlink);
+  }) : primary = _parseColor(primary)!,
+       primaryVariant = _parseColor(primaryVariant),
+       secondary = _parseColor(secondary),
+       secondaryVariant = _parseColor(secondaryVariant),
+       surface = _parseColor(background),
+       surfaceContainer = _parseColor(surface),
+       error = _parseColor(error),
+       onPrimary = _parseColor(onPrimary),
+       onSecondary = _parseColor(onSecondary),
+       // onBackground = _parseColor(onBackground),
+       onSurface = _parseColor(onSurface),
+       onError = _parseColor(onError),
+       hyperlink = _parseColor(hyperlink);
 
   static Color? _parseColor(String? hexCode) {
     if (hexCode == null) return null;

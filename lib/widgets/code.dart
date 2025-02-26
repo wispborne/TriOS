@@ -8,11 +8,7 @@ class Code extends StatelessWidget {
   final Widget child;
   final bool showCopyButton;
 
-  const Code({
-    super.key,
-    required this.child,
-    this.showCopyButton = false,
-  });
+  const Code({super.key, required this.child, this.showCopyButton = false});
 
   @override
   Widget build(BuildContext context) {
@@ -30,10 +26,7 @@ class Code extends StatelessWidget {
             IconButton(
               icon: const Icon(Icons.copy, size: 16),
               padding: const EdgeInsets.all(0),
-              constraints: const BoxConstraints(
-                minWidth: 24,
-                minHeight: 24,
-              ),
+              constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
               tooltip: 'Copy to clipboard',
               onPressed: () {
                 _copyTextToClipboard(context);
@@ -75,13 +68,13 @@ class Code extends StatelessWidget {
 
     if (textToCopy.isNotEmpty) {
       Clipboard.setData(ClipboardData(text: textToCopy));
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Copied to clipboard')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Copied to clipboard')));
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Nothing to copy')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Nothing to copy')));
     }
   }
 }

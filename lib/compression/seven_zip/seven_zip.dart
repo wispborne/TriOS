@@ -53,37 +53,41 @@ class SevenZip implements ArchiveInterface {
       TargetPlatform.windows =>
         File("$assetsPath/windows/7zip/7z.exe").normalize,
       TargetPlatform.linux => () {
-          final platform =
-              Process.runSync('uname', ['-m']).stdout.toString().trim();
-          final executable = switch (platform) {
-            "x86_64" => assetsPath.toDirectory().resolve("linux/7zip/x64/7zzs"),
-            "aarch64" =>
-              assetsPath.toDirectory().resolve("linux/7zip/arm64/7zzs"),
-            _ => throw Exception("Not supported: $platform")
-          }
-              .toFile();
+        final platform =
+            Process.runSync('uname', ['-m']).stdout.toString().trim();
+        final executable =
+            switch (platform) {
+              "x86_64" => assetsPath.toDirectory().resolve(
+                "linux/7zip/x64/7zzs",
+              ),
+              "aarch64" => assetsPath.toDirectory().resolve(
+                "linux/7zip/arm64/7zzs",
+              ),
+              _ => throw Exception("Not supported: $platform"),
+            }.toFile();
 
-          final chmodResult = Process.runSync('chmod', ['+x', executable.path]);
-          final success = chmodResult.stdout.toString().trim();
-          final failure = chmodResult.stderr.toString().trim();
-          Fimber.i(
-              "Making $executable executable result: success: $success, error: $failure");
-          return executable;
-        }(),
+        final chmodResult = Process.runSync('chmod', ['+x', executable.path]);
+        final success = chmodResult.stdout.toString().trim();
+        final failure = chmodResult.stderr.toString().trim();
+        Fimber.i(
+          "Making $executable executable result: success: $success, error: $failure",
+        );
+        return executable;
+      }(),
       TargetPlatform.macOS => () {
-          final executable = assetsPath
-              .toDirectory()
-              .resolve("macos/7zip/7zz")
-              .toFile();
-          final chmodResult = Process.runSync('chmod', ['+x', executable.path]);
-          final success = chmodResult.stdout.toString().trim();
-          final failure = chmodResult.stderr.toString().trim();
-          Fimber.i(
-              "Making $executable executable result: success: $success, error: $failure");
-          return executable;
-        }(),
-      _ =>
-        File('7z') // Consider throwing an exception for unsupported platforms
+        final executable =
+            assetsPath.toDirectory().resolve("macos/7zip/7zz").toFile();
+        final chmodResult = Process.runSync('chmod', ['+x', executable.path]);
+        final success = chmodResult.stdout.toString().trim();
+        final failure = chmodResult.stderr.toString().trim();
+        Fimber.i(
+          "Making $executable executable result: success: $success, error: $failure",
+        );
+        return executable;
+      }(),
+      _ => File(
+        '7z',
+      ), // Consider throwing an exception for unsupported platforms
     };
   }
 
@@ -100,14 +104,9 @@ class SevenZip implements ArchiveInterface {
     int maxCmdLength = 8000,
   }) async {
     // Calculate the total length if we pass them inline
-    final inlineLength = baseArgs.fold<int>(
-          0,
-          (sum, arg) => sum + arg.length + 1,
-        ) +
-        additionalArgs.fold<int>(
-          0,
-          (sum, arg) => sum + arg.length + 1,
-        );
+    final inlineLength =
+        baseArgs.fold<int>(0, (sum, arg) => sum + arg.length + 1) +
+        additionalArgs.fold<int>(0, (sum, arg) => sum + arg.length + 1);
 
     if (inlineLength <= maxCmdLength) {
       // Safely pass them inline
@@ -145,10 +144,11 @@ class SevenZip implements ArchiveInterface {
   /// Throws an [Exception] on error (non-zero exit code, etc.).
   @override
   Future<List<SevenZipEntry>> listFiles(File archiveFile) async {
-    final result = await Process.run(
-      sevenZipExecutable.path,
-      ['l', '-slt', archiveFile.path],
-    );
+    final result = await Process.run(sevenZipExecutable.path, [
+      'l',
+      '-slt',
+      archiveFile.path,
+    ]);
 
     if (result.exitCode != 0) {
       throw Exception(
@@ -178,15 +178,12 @@ class SevenZip implements ArchiveInterface {
   /// Throws [Exception] on failure.
   @override
   Future<void> extractAll(File archiveFile, Directory destination) async {
-    final result = await Process.run(
-      sevenZipExecutable.path,
-      [
-        'x',
-        archiveFile.path,
-        '-o${destination.path}',
-        '-y',
-      ],
-    );
+    final result = await Process.run(sevenZipExecutable.path, [
+      'x',
+      archiveFile.path,
+      '-o${destination.path}',
+      '-y',
+    ]);
 
     if (result.exitCode != 0) {
       throw Exception(
@@ -211,15 +208,12 @@ class SevenZip implements ArchiveInterface {
       return;
     }
 
-    final baseArgs = [
-      'x',
-      archiveFile.path,
-      '-o${destination.path}',
-      '-y',
-    ];
+    final baseArgs = ['x', archiveFile.path, '-o${destination.path}', '-y'];
 
-    final result =
-        await _run7zCommandWithPossibleFileList(baseArgs, inArchivePaths);
+    final result = await _run7zCommandWithPossibleFileList(
+      baseArgs,
+      inArchivePaths,
+    );
     if (result.exitCode != 0) {
       throw Exception(
         '7z partial extraction failed (exit code: ${result.exitCode}).\n'
@@ -246,12 +240,7 @@ class SevenZip implements ArchiveInterface {
 
     final results = <SevenZipExtractedFile?>[];
 
-    final baseArgs = [
-      'x',
-      archivePath.path,
-      '-y',
-      '-o$destinationPath',
-    ];
+    final baseArgs = ['x', archivePath.path, '-y', '-o$destinationPath'];
     final inArchivePaths = toExtract.map((e) => e.path).toList();
 
     final extractionResult = await _run7zCommandWithPossibleFileList(
@@ -289,10 +278,10 @@ class SevenZip implements ArchiveInterface {
   }
 
   Future<bool> testArchive(File archiveFile) async {
-    final result = await Process.run(
-      sevenZipExecutable.path,
-      ['t', archiveFile.path],
-    );
+    final result = await Process.run(sevenZipExecutable.path, [
+      't',
+      archiveFile.path,
+    ]);
 
     final exit = result.exitCode;
     if (exit == 0) {
@@ -320,11 +309,7 @@ class SevenZip implements ArchiveInterface {
       return;
     }
 
-    final baseArgs = [
-      'a',
-      archiveFile.path,
-      ...extraArgs,
-    ];
+    final baseArgs = ['a', archiveFile.path, ...extraArgs];
     final filePaths = filesToAdd.map((f) => f.path).toList();
 
     final result = await _run7zCommandWithPossibleFileList(baseArgs, filePaths);
@@ -341,8 +326,7 @@ class SevenZip implements ArchiveInterface {
     File archiveFile,
     List<File> filesToAdd, {
     List<String> extraArgs = const [],
-  }) =>
-      createArchive(archiveFile, filesToAdd, extraArgs: extraArgs);
+  }) => createArchive(archiveFile, filesToAdd, extraArgs: extraArgs);
 
   Future<void> deleteFromArchive(
     File archiveFile,
@@ -352,12 +336,11 @@ class SevenZip implements ArchiveInterface {
       return;
     }
 
-    final baseArgs = [
-      'd',
-      archiveFile.path,
-    ];
-    final result =
-        await _run7zCommandWithPossibleFileList(baseArgs, inArchivePaths);
+    final baseArgs = ['d', archiveFile.path];
+    final result = await _run7zCommandWithPossibleFileList(
+      baseArgs,
+      inArchivePaths,
+    );
     if (result.exitCode != 0) {
       throw Exception(
         '7z deleteFromArchive failed (exit code: ${result.exitCode}).\n'
@@ -379,11 +362,7 @@ class SevenZip implements ArchiveInterface {
       return;
     }
 
-    final baseArgs = [
-      'u',
-      archiveFile.path,
-      ...extraArgs,
-    ];
+    final baseArgs = ['u', archiveFile.path, ...extraArgs];
     final filePaths = filesToUpdate.map((f) => f.path).toList();
 
     final result = await _run7zCommandWithPossibleFileList(baseArgs, filePaths);
@@ -400,18 +379,16 @@ class SevenZip implements ArchiveInterface {
   /// @param archiveFile The archive file
   /// @param inArchivePath The path within the archive
   Future<Uint8List> _readSingleFileAsBytes(
-      File archiveFile, String inArchivePath) async {
-    final process = await Process.start(
-      sevenZipExecutable.path,
-      [
-        'x',
-        archiveFile.path,
-        '-y',
-        '-so',
-        inArchivePath,
-      ],
-      runInShell: true,
-    );
+    File archiveFile,
+    String inArchivePath,
+  ) async {
+    final process = await Process.start(sevenZipExecutable.path, [
+      'x',
+      archiveFile.path,
+      '-y',
+      '-so',
+      inArchivePath,
+    ], runInShell: true);
 
     final collectedBytes = <int>[];
     await for (final chunk in process.stdout) {

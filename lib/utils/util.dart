@@ -44,8 +44,10 @@ Directory defaultGamePath() {
   if (Platform.isWindows) {
     try {
       const registryPath = r'Software\Fractal Softworks\Starsector';
-      final key =
-          Registry.openPath(RegistryHive.currentUser, path: registryPath);
+      final key = Registry.openPath(
+        RegistryHive.currentUser,
+        path: registryPath,
+      );
       final registryGamePath = key.getValueAsString("")?.toDirectory();
       if (registryGamePath != null && registryGamePath.existsSync()) {
         return registryGamePath;
@@ -111,16 +113,20 @@ File getVanillaRulesCsvInGameFiles(Directory gameFiles) {
 }
 
 Future<String?> getStarsectorVersionFromObf(
-    Directory gameCorePath, ArchiveInterface archive) async {
+  Directory gameCorePath,
+  ArchiveInterface archive,
+) async {
   final starsectorObfJar = "starfarer_obf.jar";
   final obfPath = p.join(gameCorePath.path, starsectorObfJar).toFile();
   if (!obfPath.existsSync()) {
     throw Exception("${obfPath.path} not found.");
   }
 
-  final extractedVersionFile = (await archive.readEntriesInArchive(obfPath,
-          fileFilter: (entry) => entry.path.contains("Version.class")))
-      .firstOrNull;
+  final extractedVersionFile =
+      (await archive.readEntriesInArchive(
+        obfPath,
+        fileFilter: (entry) => entry.path.contains("Version.class"),
+      )).firstOrNull;
   if (extractedVersionFile == null) {
     return null;
   }
@@ -137,8 +143,10 @@ Future<String?> getStarsectorVersionFromObf(
       // Assuming version string appears immediately after the marker (as observed in the file).
       final versionStart = utf8String.indexOf(RegExp(r'[\d.]'), markerIndex);
       if (versionStart != -1) {
-        final versionEnd =
-            utf8String.indexOf(RegExp(r'[^a-zA-Z0-9.-]'), versionStart);
+        final versionEnd = utf8String.indexOf(
+          RegExp(r'[^a-zA-Z0-9.-]'),
+          versionStart,
+        );
         final gameVersion =
             utf8String.substring(versionStart, versionEnd).trim();
         Fimber.i("Found game version in obs: $gameVersion");
@@ -153,8 +161,10 @@ Future<String?> readStarsectorVersionFromLog(Directory gamePath) async {
   Fimber.i("Looking through log file for game version.");
   const versionContains = r"Starting Starsector";
   final versionRegex = RegExp(r"Starting Starsector (.*) launcher");
-  final logfile = utf8.decode(getLogPath(gamePath).readAsBytesSync().toList(),
-      allowMalformed: true);
+  final logfile = utf8.decode(
+    getLogPath(gamePath).readAsBytesSync().toList(),
+    allowMalformed: true,
+  );
   for (var line in logfile.split("\n")) {
     if (line.contains(versionContains)) {
       try {
@@ -200,8 +210,11 @@ class ColorGenerator {
   }
 
   // New: Generate colors based on an existing color
-  static Color generateFromColor(String text, Color baseColor,
-      {bool complementary = false}) {
+  static Color generateFromColor(
+    String text,
+    Color baseColor, {
+    bool complementary = false,
+  }) {
     final random = Random(text.hashCode);
 
     // 1. Manipulation Options
@@ -210,13 +223,13 @@ class ColorGenerator {
     } else {
       // Apply adjustments from string's hash
       int lightnessOffset = random.nextInt(70) - 35; // Range: -35 to 35
-      double newLightness =
-          (baseColor.computeLuminance() + lightnessOffset / 100)
-              .clamp(0.0, 1.0);
+      double newLightness = (baseColor.computeLuminance() +
+              lightnessOffset / 100)
+          .clamp(0.0, 1.0);
 
-      return HSLColor.fromColor(baseColor)
-          .withLightness(newLightness)
-          .toColor();
+      return HSLColor.fromColor(
+        baseColor,
+      ).withLightness(newLightness).toColor();
     }
   }
 
@@ -244,11 +257,15 @@ String getAssetsPath() {
   return currentAssetsPath;
 }
 
-typedef ProgressCallback = void Function(
-    int bytesReceived, int contentLengthBytes);
+typedef ProgressCallback =
+    void Function(int bytesReceived, int contentLengthBytes);
 
-Future<File> downloadFile(String url, Directory savePath, String? filename,
-    {ProgressCallback? onProgress}) async {
+Future<File> downloadFile(
+  String url,
+  Directory savePath,
+  String? filename, {
+  ProgressCallback? onProgress,
+}) async {
   try {
     final request = http.Request('GET', Uri.parse(url));
     final streamedResponse = await http.Client().send(request);
@@ -256,7 +273,8 @@ Future<File> downloadFile(String url, Directory savePath, String? filename,
     final contentLength = streamedResponse.contentLength ?? -1;
     int bytesReceived = 0;
 
-    var desiredFilename = filename ??
+    var desiredFilename =
+        filename ??
         request.headers['content-disposition']?.split('=')[1] ??
         url.split('/').last;
     final file = File(p.join(savePath.path, desiredFilename));
@@ -304,14 +322,18 @@ class NestedException implements Exception {
 
 TargetPlatform? get currentPlatform {
   return TargetPlatform.values.firstWhereOrNull(
-      (element) => element.name.toLowerCase() == Platform.operatingSystem);
+    (element) => element.name.toLowerCase() == Platform.operatingSystem,
+  );
 }
 
 /// CAREFUL. Make sure to close the stream controller when you're done with it.
 /// Does not return.
 /// Starts async polling every [intervalMillis] for changes in the file's last modified date.
-pollFileForModification(File file, StreamController<File?> streamController,
-    {int intervalMillis = 1000}) async {
+pollFileForModification(
+  File file,
+  StreamController<File?> streamController, {
+  int intervalMillis = 1000,
+}) async {
   var didExistLastCheck = file.existsSync();
   // If the file doesn't exist when we start, use the current time as the last modified date.
   var lastModified =

@@ -15,8 +15,7 @@ class SettingsGroup extends StatelessWidget {
   static SettingsGroup subsection({
     required String name,
     required List<Widget> children,
-  }) =>
-      SettingsGroup(name: name, padding: 4, children: children);
+  }) => SettingsGroup(name: name, padding: 4, children: children);
 
   @override
   Widget build(BuildContext context) {

@@ -13,10 +13,7 @@ import 'menu_entry_widget.dart';
 
 class ContextMenuWidget extends StatelessWidget {
   final ContextMenuState menuState;
-  const ContextMenuWidget({
-    super.key,
-    required this.menuState,
-  });
+  const ContextMenuWidget({super.key, required this.menuState});
 
   @override
   Widget build(BuildContext context) {
@@ -63,16 +60,13 @@ class ContextMenuWidget extends StatelessWidget {
           offset: const Offset(0.0, 2.0),
           blurRadius: 10,
           spreadRadius: -1,
-        )
+        ),
       ],
       borderRadius: state.borderRadius ?? BorderRadius.circular(4.0),
     );
 
     return TweenAnimationBuilder<double>(
-      tween: Tween(
-        begin: 0.8,
-        end: 1.0,
-      ),
+      tween: Tween(begin: 0.8, end: 1.0),
       duration: const Duration(milliseconds: 60),
       builder: (context, value, child) {
         return Transform.scale(
@@ -80,9 +74,7 @@ class ContextMenuWidget extends StatelessWidget {
           scale: value,
           child: Container(
             padding: state.padding,
-            constraints: BoxConstraints(
-              maxWidth: state.maxWidth,
-            ),
+            constraints: BoxConstraints(maxWidth: state.maxWidth),
             clipBehavior: state.clipBehavior,
             decoration: state.boxDecoration ?? boxDecoration,
             child: Material(
@@ -91,7 +83,7 @@ class ContextMenuWidget extends StatelessWidget {
                 child: Column(
                   children: [
                     for (final item in state.entries)
-                      MenuEntryWidget(entry: item)
+                      MenuEntryWidget(entry: item),
                   ],
                 ),
               ),

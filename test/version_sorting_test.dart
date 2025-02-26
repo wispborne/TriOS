@@ -26,14 +26,16 @@ void main() {
 
   test('sort versions', () {
     const iterations = 50;
-    final versions = _expectedList
-        .map((v) => Version.parse(v, sanitizeInput: true))
-        .toList();
+    final versions =
+        _expectedList
+            .map((v) => Version.parse(v, sanitizeInput: true))
+            .toList();
 
     for (int i = 0; i < iterations; i++) {
-      final sorted = versions.toList()
-        ..shuffle()
-        ..sort((a, b) => a.compareTo(b));
+      final sorted =
+          versions.toList()
+            ..shuffle()
+            ..sort((a, b) => a.compareTo(b));
       expect(sorted, versions);
     }
   });

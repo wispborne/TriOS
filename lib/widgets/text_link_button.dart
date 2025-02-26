@@ -29,10 +29,13 @@ class _TextLinkButtonState extends State<TextLinkButton> {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveStyle = widget.style?.copyWith(
-          color: _isHovered
-              ? (widget.style?.color ?? Theme.of(context).colorScheme.primary)
-              : widget.onPressed != null
+    final effectiveStyle =
+        widget.style?.copyWith(
+          color:
+              _isHovered
+                  ? (widget.style?.color ??
+                      Theme.of(context).colorScheme.primary)
+                  : widget.onPressed != null
                   ? widget.style?.color ?? Theme.of(context).colorScheme.primary
                   : Theme.of(context).disabledColor,
           decoration: TextDecoration.combine([
@@ -41,9 +44,10 @@ class _TextLinkButtonState extends State<TextLinkButton> {
           ]),
         ) ??
         TextStyle(
-          color: _isHovered
-              ? Theme.of(context).colorScheme.primary
-              : widget.onPressed != null
+          color:
+              _isHovered
+                  ? Theme.of(context).colorScheme.primary
+                  : widget.onPressed != null
                   ? Theme.of(context).colorScheme.primary
                   : Theme.of(context).disabledColor,
           decoration: TextDecoration.underline,
@@ -59,13 +63,13 @@ class _TextLinkButtonState extends State<TextLinkButton> {
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
-            color: _isHovered
-                ? widget.hoverColor ??
-                    Theme.of(context)
-                        .colorScheme
-                        .surfaceContainerLowest
-                        .withOpacity(0.2)
-                : Colors.transparent,
+            color:
+                _isHovered
+                    ? widget.hoverColor ??
+                        Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerLowest.withOpacity(0.2)
+                    : Colors.transparent,
             borderRadius: BorderRadius.circular(20),
           ),
           child: AnimatedDefaultTextStyle(

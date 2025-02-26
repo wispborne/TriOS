@@ -25,8 +25,10 @@ void main() {
       expect(modInfo.name, 'Knights of Ludd Normal Maps');
       expect(modInfo.author, 'Selkie & Himemi');
       expect(modInfo.version, Version.parse('1.0', sanitizeInput: false));
-      expect(modInfo.description,
-          'Adds extra graphicslib support to Knights of Ludd content!');
+      expect(
+        modInfo.description,
+        'Adds extra graphicslib support to Knights of Ludd content!',
+      );
       expect(modInfo.gameVersion, '0.97a-RC11');
       expect(modInfo.originalGameVersion, '0.96a-RC10');
       expect(modInfo.dependencies, isEmpty);
@@ -62,8 +64,10 @@ void main() {
       expect(modInfo.name, 'Hazard Mining Incorporated');
       expect(modInfo.author, 'King Alfonzo');
       expect(modInfo.version, Version.parse('0.3.7b', sanitizeInput: false));
-      expect(modInfo.description,
-          startsWith('A company created by an enterprising miner'));
+      expect(
+        modInfo.description,
+        startsWith('A company created by an enterprising miner'),
+      );
       expect(modInfo.gameVersion, '0.97a-RC8');
       expect(modInfo.dependencies.length, 2);
 
@@ -142,8 +146,10 @@ void main() {
       expect(modInfo.name, 'Iron Shell');
       expect(modInfo.author, 'Techpriest & Selkie');
       expect(modInfo.version, Version.parse('1.18.3ad', sanitizeInput: false));
-      expect(modInfo.description,
-          contains('Adds a faction dedicated to the XIV Battlegroup'));
+      expect(
+        modInfo.description,
+        contains('Adds a faction dedicated to the XIV Battlegroup'),
+      );
       expect(modInfo.gameVersion, '0.96a');
       expect(modInfo.utility, false);
       expect(modInfo.totalConversion, false);
@@ -158,9 +164,10 @@ void main() {
         gameVersion: '0.97a',
         dependencies: [
           Dependency(
-              id: 'dep1',
-              name: 'Dependency One',
-              version: Version.parse('1.2.3', sanitizeInput: false)),
+            id: 'dep1',
+            name: 'Dependency One',
+            version: Version.parse('1.2.3', sanitizeInput: false),
+          ),
           Dependency(id: 'dep2', name: 'Dependency Two'),
         ],
         utility: true,
@@ -181,8 +188,10 @@ void main() {
 
       expect(deserializedModInfo.dependencies[0].id, 'dep1');
       expect(deserializedModInfo.dependencies[0].name, 'Dependency One');
-      expect(deserializedModInfo.dependencies[0].version,
-          Version.parse('1.2.3', sanitizeInput: false));
+      expect(
+        deserializedModInfo.dependencies[0].version,
+        Version.parse('1.2.3', sanitizeInput: false),
+      );
 
       expect(deserializedModInfo.dependencies[1].id, 'dep2');
       expect(deserializedModInfo.dependencies[1].name, 'Dependency Two');

@@ -38,8 +38,8 @@ final class MenuHeader extends ContextMenuEntry {
         child: Text(
           disableUppercase ? text : text.toUpperCase(),
           style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: Theme.of(context).disabledColor.withOpacity(opacity),
-              ),
+            color: Theme.of(context).disabledColor.withOpacity(opacity),
+          ),
         ),
       ),
     );

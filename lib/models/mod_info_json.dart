@@ -79,16 +79,19 @@ class VersionObject with VersionObjectMappable {
   int compareTo(VersionObject? other) {
     if (other == null) return 0;
 
-    var result =
-        (major.toString().compareRecognizingNumbers(other.major.toString()));
+    var result = (major.toString().compareRecognizingNumbers(
+      other.major.toString(),
+    ));
     if (result != 0) return result;
 
-    result =
-        (minor.toString().compareRecognizingNumbers(other.minor.toString()));
+    result = (minor.toString().compareRecognizingNumbers(
+      other.minor.toString(),
+    ));
     if (result != 0) return result;
 
-    result =
-        (patch.toString().compareRecognizingNumbers(other.patch.toString()));
+    result = (patch.toString().compareRecognizingNumbers(
+      other.patch.toString(),
+    ));
     return result;
   }
 }

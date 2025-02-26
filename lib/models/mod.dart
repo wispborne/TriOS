@@ -61,7 +61,8 @@ class Mod with ModMappable implements Comparable<Mod>, WispGridItem {
   @override
   int compareTo(Mod other) =>
       findFirstEnabledOrHighestVersion?.modInfo.nameOrId.compareTo(
-          other.findFirstEnabledOrHighestVersion?.modInfo.nameOrId ?? "") ??
+        other.findFirstEnabledOrHighestVersion?.modInfo.nameOrId ?? "",
+      ) ??
       0;
 
   @override

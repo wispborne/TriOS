@@ -15,8 +15,9 @@ class AnimatedPopupMenuButton<T> extends StatefulWidget {
     required this.onSelected, // Callback when a menu item is selected
     this.showArrow = true,
     this.arrowColor, // Arrow color
-    this.animationDuration =
-        const Duration(milliseconds: 200), // Arrow animation duration
+    this.animationDuration = const Duration(
+      milliseconds: 200,
+    ), // Arrow animation duration
   });
 
   @override
@@ -65,14 +66,15 @@ class _AnimatedPopupMenuButtonState<T> extends State<AnimatedPopupMenuButton<T>>
           decoration: BoxDecoration(
             shape: BoxShape.rectangle,
             borderRadius: BorderRadius.circular(24),
-            color: _isOpen
-                ? Theme.of(context).colorScheme.surface
-                : Colors.transparent,
+            color:
+                _isOpen
+                    ? Theme.of(context).colorScheme.surface
+                    : Colors.transparent,
           ),
           child: Theme(
-            data: Theme.of(context).copyWith(
-              splashFactory: NoSplash.splashFactory,
-            ),
+            data: Theme.of(
+              context,
+            ).copyWith(splashFactory: NoSplash.splashFactory),
             child: PopupMenuButton<T>(
               icon: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -86,7 +88,8 @@ class _AnimatedPopupMenuButtonState<T> extends State<AnimatedPopupMenuButton<T>>
                       // Apply rotation animation to arrow
                       child: Icon(
                         Icons.arrow_drop_down, // The arrow icon
-                        color: widget.arrowColor ??
+                        color:
+                            widget.arrowColor ??
                             Theme.of(context).iconTheme.color, // Arrow color
                       ),
                     ),
@@ -108,7 +111,7 @@ class _AnimatedPopupMenuButtonState<T> extends State<AnimatedPopupMenuButton<T>>
               },
             ),
           ),
-        )
+        ),
       ],
     );
   }

@@ -40,9 +40,10 @@ class _HoverableWidgetState extends State<HoverableWidget> {
           _isHovering = false;
         });
       },
-      cursor: widget.onTap != null
-          ? SystemMouseCursors.click
-          : SystemMouseCursors.basic,
+      cursor:
+          widget.onTap != null
+              ? SystemMouseCursors.click
+              : SystemMouseCursors.basic,
       child: GestureDetector(
         onTap: () {
           if (widget.onTap != null) widget.onTap!();
@@ -56,16 +57,14 @@ class _HoverableWidgetState extends State<HoverableWidget> {
         behavior: HitTestBehavior.translucent,
         child: Container(
           decoration: BoxDecoration(
-            color: _isHovering
-                ? widget.hoverColor ?? Colors.black.withOpacity(0.2)
-                : Colors.transparent,
+            color:
+                _isHovering
+                    ? widget.hoverColor ?? Colors.black.withOpacity(0.2)
+                    : Colors.transparent,
             borderRadius: widget.borderRadius,
           ),
           padding: widget.padding,
-          child: HoverData(
-            isHovering: _isHovering,
-            child: widget.child,
-          ),
+          child: HoverData(isHovering: _isHovering, child: widget.child),
         ),
       ),
     );
@@ -75,11 +74,7 @@ class _HoverableWidgetState extends State<HoverableWidget> {
 class HoverData extends InheritedWidget {
   final bool isHovering;
 
-  const HoverData({
-    super.key,
-    required super.child,
-    required this.isHovering,
-  });
+  const HoverData({super.key, required super.child, required this.isHovering});
 
   static HoverData? of(BuildContext context) {
     return context.dependOnInheritedWidgetOfExactType<HoverData>();

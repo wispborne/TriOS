@@ -31,15 +31,14 @@ class TooltipFrame extends StatelessWidget {
               // Adjust shadow color and opacity as needed
               blurRadius: 10,
               // Adjust blur radius for the shadow effect
-              offset:
-                  const Offset(0, 4), // Adjust offset for the shadow position
+              offset: const Offset(
+                0,
+                4,
+              ), // Adjust offset for the shadow position
             ),
           ],
         ),
-        child: Padding(
-          padding: padding,
-          child: child,
-        ),
+        child: Padding(padding: padding, child: child),
       ),
     );
   }

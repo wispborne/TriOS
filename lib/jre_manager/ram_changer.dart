@@ -50,52 +50,58 @@ class _RamChangerState extends ConsumerState<RamChanger> {
     return (isStandardVmparamsWritable == false ||
             areAllCustomJresWritable == false)
         ? Text(
-            "Cannot write to vmparams file:\n${vmParamsFilesThatCannotBeWritten.join("\n")}."
-            "\n\nMake sure it exists or try running ${Constants.appName} as an administrator.",
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: ThemeManager.vanillaWarningColor,
-                ),
-          )
+          "Cannot write to vmparams file:\n${vmParamsFilesThatCannotBeWritten.join("\n")}."
+          "\n\nMake sure it exists or try running ${Constants.appName} as an administrator.",
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: ThemeManager.vanillaWarningColor,
+          ),
+        )
         : GridView.builder(
-            shrinkWrap: true,
-            itemCount: ramChoices.length,
-            gridDelegate:
-                const SliverGridDelegateWithFixedCrossAxisCountAndFixedHeight(
-              crossAxisCount: 2,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
-              height: 25,
-            ),
-            itemBuilder: (context, index) {
-              final ram = ramChoices[index];
-              return ConditionalWrap(
-                condition: currentRamInMb.value != null &&
-                    ramChoices.findClosest(
-                            double.tryParse(currentRamInMb.value!)
-                                    ?.div(mbPerGb.toDouble()) ??
-                                0) ==
-                        ram,
-                wrapper: (child) => Container(
-                  decoration: BoxDecoration(
-                    borderRadius:
-                        BorderRadius.circular(ThemeManager.cornerRadius),
-                    border: Border.all(
-                      width: 2,
-                      color: Theme.of(context).colorScheme.primaryFixedDim,
+          shrinkWrap: true,
+          itemCount: ramChoices.length,
+          gridDelegate:
+              const SliverGridDelegateWithFixedCrossAxisCountAndFixedHeight(
+                crossAxisCount: 2,
+                crossAxisSpacing: 8,
+                mainAxisSpacing: 8,
+                height: 25,
+              ),
+          itemBuilder: (context, index) {
+            final ram = ramChoices[index];
+            return ConditionalWrap(
+              condition:
+                  currentRamInMb.value != null &&
+                  ramChoices.findClosest(
+                        double.tryParse(
+                              currentRamInMb.value!,
+                            )?.div(mbPerGb.toDouble()) ??
+                            0,
+                      ) ==
+                      ram,
+              wrapper:
+                  (child) => Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(
+                        ThemeManager.cornerRadius,
+                      ),
+                      border: Border.all(
+                        width: 2,
+                        color: Theme.of(context).colorScheme.primaryFixedDim,
+                      ),
                     ),
+                    child: child,
                   ),
-                  child: child,
-                ),
-                child: ElevatedButton(
-                  onPressed: () {
-                    ref
-                        .read(jreManagerProvider.notifier)
-                        .changeRamAmount((ram * mbPerGb).toDouble());
-                  },
-                  child: Text("$ram GB"),
-                ),
-              );
-            });
+              child: ElevatedButton(
+                onPressed: () {
+                  ref
+                      .read(jreManagerProvider.notifier)
+                      .changeRamAmount((ram * mbPerGb).toDouble());
+                },
+                child: Text("$ram GB"),
+              ),
+            );
+          },
+        );
   }
 
   Future<void> setWhetherVmParamsAreWritable(JreManagerState newState) async {
@@ -103,8 +109,9 @@ class _RamChangerState extends ConsumerState<RamChanger> {
     isStandardVmparamsWritable =
         await newState.standardActiveJre?.canWriteToVmParamsFile() ?? false;
     if (!isStandardVmparamsWritable) {
-      vmParamsFilesThatCannotBeWritten
-          .add(newState.standardActiveJre?.vmParamsFileRelativePath ?? "");
+      vmParamsFilesThatCannotBeWritten.add(
+        newState.standardActiveJre?.vmParamsFileRelativePath ?? "",
+      );
     }
     areAllCustomJresWritable = true;
 
@@ -113,10 +120,12 @@ class _RamChangerState extends ConsumerState<RamChanger> {
       // If it's missing entirely, then the JreEntry will be considered broken and unselectable.
       // This allows users to have random JRE/JDK folders in their game folder that they
       // don't plan to use, without breaking the RAM changer.
-      if (customJre.vmParamsFileAbsolutePath.existsSync() && !await customJre.canWriteToVmParamsFile()) {
+      if (customJre.vmParamsFileAbsolutePath.existsSync() &&
+          !await customJre.canWriteToVmParamsFile()) {
         areAllCustomJresWritable = false;
-        vmParamsFilesThatCannotBeWritten
-            .add(customJre.vmParamsFileRelativePath);
+        vmParamsFilesThatCannotBeWritten.add(
+          customJre.vmParamsFileRelativePath,
+        );
         break;
       }
     }

@@ -27,7 +27,7 @@ class WispGrid<T extends WispGridItem> extends ConsumerStatefulWidget {
   final List<WispGridGroup<T>> groups;
   final int? Function(T left, T right)? preSortComparator;
   final Widget Function(T item, RowBuilderModifiers modifiers, Widget child)
-      rowBuilder;
+  rowBuilder;
   final WispGridGroup<T>? defaultGrouping;
   final String? defaultSortField;
   final void Function(WispGridController<T> controller)? onLoaded;
@@ -58,8 +58,7 @@ class WispGrid<T extends WispGridItem> extends ConsumerStatefulWidget {
     WispGridItem item,
     RowBuilderModifiers modifiers,
     Widget child,
-  ) =>
-      child;
+  ) => child;
 
   @override
   ConsumerState<WispGrid<T>> createState() => _WispGridState<T>();
@@ -78,7 +77,7 @@ class WispGridController<T extends WispGridItem> {
       _wispGridState._lastDisplayedItems.toList();
 
   WispGridController(ConsumerState<WispGrid<T>> wispGridState)
-      : _wispGridState = wispGridState as _WispGridState<T>;
+    : _wispGridState = wispGridState as _WispGridState<T>;
 }
 
 class _WispGridState<T extends WispGridItem>
@@ -111,210 +110,230 @@ class _WispGridState<T extends WispGridItem>
     final groupingSetting = gridState.groupingSetting;
 
     final grouping = widget.groups.firstWhereOrNull(
-        (grp) => grp.key == groupingSetting?.currentGroupedByKey);
-    final activeSortField = gridState.sortedColumnKey ??
+      (grp) => grp.key == groupingSetting?.currentGroupedByKey,
+    );
+    final activeSortField =
+        gridState.sortedColumnKey ??
         widget.defaultSortField ??
         columns.first.key;
 
-    final items = widget.items
-        .whereType<T>()
-        // Sort by favorites first, then by the active sort field
-        .sorted(
-          (left, right) {
-            final preSortResult =
-                widget.preSortComparator?.call(left, right) ?? 0;
-            if (preSortResult != 0) {
-              return preSortResult;
-            }
+    final items =
+        widget.items
+            .whereType<T>()
+            // Sort by favorites first, then by the active sort field
+            .sorted((left, right) {
+              final preSortResult =
+                  widget.preSortComparator?.call(left, right) ?? 0;
+              if (preSortResult != 0) {
+                return preSortResult;
+              }
 
-            final leftValue =
-                _getSortValueForItem(left, activeSortField, columns);
-            final rightValue =
-                _getSortValueForItem(right, activeSortField, columns);
+              final leftValue = _getSortValueForItem(
+                left,
+                activeSortField,
+                columns,
+              );
+              final rightValue = _getSortValueForItem(
+                right,
+                activeSortField,
+                columns,
+              );
 
-            final sortResult = (leftValue != null && rightValue != null)
-                ? leftValue.compareTo(rightValue)
-                : (leftValue == null && rightValue == null)
-                    ? 0
-                    : (leftValue == null ? -1 : 1);
+              final sortResult =
+                  (leftValue != null && rightValue != null)
+                      ? leftValue.compareTo(rightValue)
+                      : (leftValue == null && rightValue == null)
+                      ? 0
+                      : (leftValue == null ? -1 : 1);
 
-            return gridState.isSortDescending ? sortResult * -1 : sortResult;
-          },
-        )
-        .groupBy((item) => grouping?.getGroupSortValue(item))
-        .entries
-        .let((entries) => groupingSetting?.isSortDescending ?? false
-            ? entries.sortedByDescending((entry) => entry.key)
-            : entries.sortedByDescending((entry) => entry.key).reversed)
-        .toList();
+              return gridState.isSortDescending ? sortResult * -1 : sortResult;
+            })
+            .groupBy((item) => grouping?.getGroupSortValue(item))
+            .entries
+            .let(
+              (entries) =>
+                  groupingSetting?.isSortDescending ?? false
+                      ? entries.sortedByDescending((entry) => entry.key)
+                      : entries
+                          .sortedByDescending((entry) => entry.key)
+                          .reversed,
+            )
+            .toList();
     _lastDisplayedItems = items.flatMap((entry) => entry.value).toList();
 
     int index = 0;
 
-    final displayedMods = items
-        .flatMap((entry) {
-          final groupSortValue = entry.key;
-          final itemsInGroup = entry.value;
-          final isCollapsed = collapseStates[groupSortValue] == true;
+    final displayedMods =
+        items
+            .flatMap((entry) {
+              final groupSortValue = entry.key;
+              final itemsInGroup = entry.value;
+              final isCollapsed = collapseStates[groupSortValue] == true;
 
-          final widgets = <Widget>[];
+              final widgets = <Widget>[];
 
-          if (grouping != null && grouping.isGroupVisible) {
-            final header = WispGridGroupRowView(
-              grouping: grouping,
-              itemsInGroup: itemsInGroup,
-              isCollapsed: isCollapsed,
-              setCollapsed: (isCollapsed) {
-                setState(() {
-                  collapseStates[groupSortValue] = isCollapsed;
-                });
-              },
-              shownIndex: index++,
-              columns: widget.columns,
-            );
-            widgets.add(header);
-          }
-          final items = !isCollapsed
-              ? itemsInGroup
-                  .map((item) => WispGridRowView<T>(
-                        key: ValueKey(item.key),
-                        item: item,
-                        gridState: gridState,
-                        columns: widget.columns,
-                        rowBuilder: widget.rowBuilder,
-                        onTapped: () {
-                          if (HardwareKeyboard.instance.isShiftPressed) {
-                            _onRowCheck(
-                              modId: item.key,
-                              shiftPressed: true,
-                              ctrlPressed: false,
-                            );
-                          } else if (HardwareKeyboard
-                              .instance.isControlPressed) {
-                            _onRowCheck(
-                              modId: item.key,
-                              shiftPressed: false,
-                              ctrlPressed: true,
-                            );
-                          } else {
-                            if (widget.selectedItem != null) {
-                              widget.onRowSelected?.call(item);
-                            }
-                            _onRowCheck(
-                              modId: item.key,
-                              shiftPressed: false,
-                              ctrlPressed: false,
-                            );
-                          }
-                        },
-                        onDoubleTapped: () {
-                          widget.onRowSelected?.call(item);
-                        },
-                        isRowChecked: _checkedItemIds.contains(item.key),
-                      ))
-                  .toList()
-              : <Widget>[];
-          widgets.addAll(items);
+              if (grouping != null && grouping.isGroupVisible) {
+                final header = WispGridGroupRowView(
+                  grouping: grouping,
+                  itemsInGroup: itemsInGroup,
+                  isCollapsed: isCollapsed,
+                  setCollapsed: (isCollapsed) {
+                    setState(() {
+                      collapseStates[groupSortValue] = isCollapsed;
+                    });
+                  },
+                  shownIndex: index++,
+                  columns: widget.columns,
+                );
+                widgets.add(header);
+              }
+              final items =
+                  !isCollapsed
+                      ? itemsInGroup
+                          .map(
+                            (item) => WispGridRowView<T>(
+                              key: ValueKey(item.key),
+                              item: item,
+                              gridState: gridState,
+                              columns: widget.columns,
+                              rowBuilder: widget.rowBuilder,
+                              onTapped: () {
+                                if (HardwareKeyboard.instance.isShiftPressed) {
+                                  _onRowCheck(
+                                    modId: item.key,
+                                    shiftPressed: true,
+                                    ctrlPressed: false,
+                                  );
+                                } else if (HardwareKeyboard
+                                    .instance
+                                    .isControlPressed) {
+                                  _onRowCheck(
+                                    modId: item.key,
+                                    shiftPressed: false,
+                                    ctrlPressed: true,
+                                  );
+                                } else {
+                                  if (widget.selectedItem != null) {
+                                    widget.onRowSelected?.call(item);
+                                  }
+                                  _onRowCheck(
+                                    modId: item.key,
+                                    shiftPressed: false,
+                                    ctrlPressed: false,
+                                  );
+                                }
+                              },
+                              onDoubleTapped: () {
+                                widget.onRowSelected?.call(item);
+                              },
+                              isRowChecked: _checkedItemIds.contains(item.key),
+                            ),
+                          )
+                          .toList()
+                      : <Widget>[];
+              widgets.addAll(items);
 
-          return widgets;
-        })
-        .nonNulls
-        .toList();
-    final totalRowWidth = gridState
-        .sortedVisibleColumns(widget.columns)
-        .map((e) => e.value.width + WispGrid.gridRowSpacing)
-        .sum;
+              return widgets;
+            })
+            .nonNulls
+            .toList();
+    final totalRowWidth =
+        gridState
+            .sortedVisibleColumns(widget.columns)
+            .map((e) => e.value.width + WispGrid.gridRowSpacing)
+            .sum;
 
     // TODO smooth scrolling: https://github.com/dridino/smooth_list_view/blob/main/lib/smooth_list_view.dart
     return Scrollbar(
+      controller: _gridScrollControllerHorizontal,
+      scrollbarOrientation: ScrollbarOrientation.bottom,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
         controller: _gridScrollControllerHorizontal,
-        scrollbarOrientation: ScrollbarOrientation.bottom,
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          controller: _gridScrollControllerHorizontal,
-          child: SizedBox(
-            width: gridState
-                .sortedVisibleColumns(widget.columns)
-                .map((e) => e.value.width + WispGrid.gridRowSpacing + 10)
-                .sum
-                .coerceAtMost(MediaQuery.of(context).size.width * 1.3),
-            child: Scrollbar(
-              controller: _gridScrollControllerVertical,
-              scrollbarOrientation: ScrollbarOrientation.left,
-              thumbVisibility: widget.alwaysShowScrollbar,
-              child: ScrollConfiguration(
-                behavior: ScrollConfiguration.of(context).copyWith(
-                  scrollbars: false,
-                ),
-                child: Builder(builder: (context) {
-                  final itemSliverDelegate = SliverChildBuilderDelegate(
-                    (context, index) {
-                      final item = displayedMods[index];
-                      // TODO for better perf, would could add an optional height param to rows passed in.
-                      // TODO Then, chunk the grid into SliverFixedExtentLists.
+        child: SizedBox(
+          width: gridState
+              .sortedVisibleColumns(widget.columns)
+              .map((e) => e.value.width + WispGrid.gridRowSpacing + 10)
+              .sum
+              .coerceAtMost(MediaQuery.of(context).size.width * 1.3),
+          child: Scrollbar(
+            controller: _gridScrollControllerVertical,
+            scrollbarOrientation: ScrollbarOrientation.left,
+            thumbVisibility: widget.alwaysShowScrollbar,
+            child: ScrollConfiguration(
+              behavior: ScrollConfiguration.of(
+                context,
+              ).copyWith(scrollbars: false),
+              child: Builder(
+                builder: (context) {
+                  final itemSliverDelegate = SliverChildBuilderDelegate((
+                    context,
+                    index,
+                  ) {
+                    final item = displayedMods[index];
+                    // TODO for better perf, would could add an optional height param to rows passed in.
+                    // TODO Then, chunk the grid into SliverFixedExtentLists.
 
-                      // Handle group-row widgets vs normal row widgets
-                      if (item is WispGridGroupRowView) {
-                        return Row(
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 4,
-                              ),
-                              child: SizedBox(
-                                width: totalRowWidth,
-                                child: item,
-                              ),
+                    // Handle group-row widgets vs normal row widgets
+                    if (item is WispGridGroupRowView) {
+                      return Row(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 4,
                             ),
-                            const Spacer(),
-                          ],
-                        );
-                      }
+                            child: SizedBox(width: totalRowWidth, child: item),
+                          ),
+                          const Spacer(),
+                        ],
+                      );
+                    }
 
-                      // Otherwise it’s a normal row widget (WispGridRowView, etc.)
-                      try {
-                        return item; // Already built widget
-                      } catch (e) {
-                        Fimber.v(() => 'Error in WispGrid: $e');
-                        return const Text("Incoherent screaming");
-                      }
-                    },
-                    childCount: displayedMods.length,
-                  );
+                    // Otherwise it’s a normal row widget (WispGridRowView, etc.)
+                    try {
+                      return item; // Already built widget
+                    } catch (e) {
+                      Fimber.v(() => 'Error in WispGrid: $e');
+                      return const Text("Incoherent screaming");
+                    }
+                  }, childCount: displayedMods.length);
 
                   return CustomScrollView(
-                      controller: _gridScrollControllerVertical,
-                      slivers: [
-                        SliverPersistentHeader(
-                          pinned: true,
-                          delegate: _PinnedHeaderDelegate(
-                            minHeight: 30,
-                            maxHeight: 30,
-                            child: Container(
-                              color: Theme.of(context).colorScheme.surface,
-                              child: WispGridHeaderRowView(
-                                gridState: gridState,
-                                groups: widget.groups,
-                                updateGridState: widget.updateGridState,
-                                columns: columns,
-                                defaultGridSort: widget.defaultSortField,
-                              ),
+                    controller: _gridScrollControllerVertical,
+                    slivers: [
+                      SliverPersistentHeader(
+                        pinned: true,
+                        delegate: _PinnedHeaderDelegate(
+                          minHeight: 30,
+                          maxHeight: 30,
+                          child: Container(
+                            color: Theme.of(context).colorScheme.surface,
+                            child: WispGridHeaderRowView(
+                              gridState: gridState,
+                              groups: widget.groups,
+                              updateGridState: widget.updateGridState,
+                              columns: columns,
+                              defaultGridSort: widget.defaultSortField,
                             ),
                           ),
                         ),
-                        widget.itemExtent == null
-                            ? SliverList(delegate: itemSliverDelegate)
-                            : SliverFixedExtentList(
-                                itemExtent: widget.itemExtent!,
-                                delegate: itemSliverDelegate,
-                              ),
-                      ]);
-                }),
+                      ),
+                      widget.itemExtent == null
+                          ? SliverList(delegate: itemSliverDelegate)
+                          : SliverFixedExtentList(
+                            itemExtent: widget.itemExtent!,
+                            delegate: itemSliverDelegate,
+                          ),
+                    ],
+                  );
+                },
               ),
             ),
           ),
-        ));
+        ),
+      ),
+    );
   }
 
   /// Handles multi-check logic for shift/control-clicking a row.
@@ -369,9 +388,13 @@ class _WispGridState<T extends WispGridItem>
   }
 
   Comparable? _getSortValueForItem(
-      T mod, String sortField, List<WispGridColumn<T>> columns) {
-    final column =
-        columns.firstWhereOrNull((column) => column.key == sortField);
+    T mod,
+    String sortField,
+    List<WispGridColumn<T>> columns,
+  ) {
+    final column = columns.firstWhereOrNull(
+      (column) => column.key == sortField,
+    );
     if (column == null || !column.isSortable || column.getSortValue == null) {
       return null;
     }
@@ -398,7 +421,10 @@ class _PinnedHeaderDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   Widget build(
-      BuildContext context, double shrinkOffset, bool overlapsContent) {
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
     return SizedBox.expand(child: child);
   }
 

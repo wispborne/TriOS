@@ -8,11 +8,12 @@ class MeasurableWidget extends StatefulWidget {
   final void Function(Size size) onSized;
   final void Function(Size size) onResized;
 
-  const MeasurableWidget(
-      {super.key,
-      required this.child,
-      required this.onSized,
-      required this.onResized});
+  const MeasurableWidget({
+    super.key,
+    required this.child,
+    required this.onSized,
+    required this.onResized,
+  });
 
   @override
   State createState() => _MeasurableWidgetState();

@@ -69,41 +69,50 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             child: SingleChildScrollView(
               controller: _scrollController,
               child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SettingsGroup(name: "Starsector", children: [
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SettingsGroup(
+                    name: "Starsector",
+                    children: [
                       ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 700),
                         child: Row(
                           children: [
                             Expanded(
-                              child: Builder(builder: (context) {
-                                final gamePathExists = validateGameFolderPath(
-                                    _gamePathTextController.text);
+                              child: Builder(
+                                builder: (context) {
+                                  final gamePathExists = validateGameFolderPath(
+                                    _gamePathTextController.text,
+                                  );
 
-                                return TextField(
-                                  controller: _gamePathTextController,
-                                  decoration: InputDecoration(
-                                    border: const OutlineInputBorder(),
-                                    labelStyle:
-                                        Theme.of(context).textTheme.labelLarge,
-                                    errorText: gamePathExists
-                                        ? null
-                                        : "Starsector not found",
-                                    labelText: 'Starsector Folder',
-                                  ),
-                                  onChanged: (newGameDir) {
-                                    tryUpdateGamePath(newGameDir);
-                                  },
-                                );
-                              }),
+                                  return TextField(
+                                    controller: _gamePathTextController,
+                                    decoration: InputDecoration(
+                                      border: const OutlineInputBorder(),
+                                      labelStyle:
+                                          Theme.of(
+                                            context,
+                                          ).textTheme.labelLarge,
+                                      errorText:
+                                          gamePathExists
+                                              ? null
+                                              : "Starsector not found",
+                                      labelText: 'Starsector Folder',
+                                    ),
+                                    onChanged: (newGameDir) {
+                                      tryUpdateGamePath(newGameDir);
+                                    },
+                                  );
+                                },
+                              ),
                             ),
                             IconButton(
                               icon: const Icon(Icons.folder),
                               onPressed: () async {
-                                var newGameDir = await FilePicker.platform
-                                    .getDirectoryPath();
+                                var newGameDir =
+                                    await FilePicker.platform
+                                        .getDirectoryPath();
                                 if (newGameDir == null) return;
                                 setState(() {
                                   _gamePathTextController.text =
@@ -118,225 +127,287 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       const SizedBox(height: 24),
                       ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 700),
-                        child: Builder(builder: (context) {
-                          final useCustomExecutable = ref.watch(appSettings
-                              .select((value) => value.useCustomGameExePath));
-                          final gamePath = ref
-                              .watch(
-                                  appSettings.select((value) => value.gameDir))
-                              ?.toDirectory();
-                          final currentLaunchPath = gamePath?.let((dir) =>
-                              getVanillaGameExecutable(dir).toFile().path);
-                          bool doesCustomExePathExist = !useCustomExecutable
-                              ? (currentLaunchPath?.toFile().existsSync() ??
-                                  true)
-                              : (_customExecutablePathTextController.text
-                                      .toFile()
-                                      .existsSync() ??
-                                  true);
-
-                          // If not using override, show the vanilla path that'll be used instead.
-                          if (!useCustomExecutable) {
-                            _customExecutablePathTextController.text =
-                                currentLaunchPath?.toFile().path ?? "";
-                          }
-
-                          return Row(
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.only(right: 8),
-                                child: MovingTooltipWidget.text(
-                                  message:
-                                      "When checked, uses the custom launcher path",
-                                  child: Checkbox(
-                                    value: useCustomExecutable,
-                                    onChanged: (value) {
-                                      final customPath = ref.read(
-                                              appSettings.select((s) =>
-                                                  s.customGameExePath)) ??
-                                          "";
-
-                                      WidgetsBinding.instance
-                                          .addPostFrameCallback((_) {
-                                        if (value == false) {
-                                          _customExecutablePathTextController
-                                              .text = currentLaunchPath ?? "";
-                                        } else if (value == true) {
-                                          _customExecutablePathTextController
-                                              .text = customPath;
-                                        }
-                                      });
-
-                                      ref.read(appSettings.notifier).update(
-                                          (state) => state.copyWith(
-                                              useCustomGameExePath:
-                                                  value ?? false));
-                                    },
-                                  ),
-                                ),
+                        child: Builder(
+                          builder: (context) {
+                            final useCustomExecutable = ref.watch(
+                              appSettings.select(
+                                (value) => value.useCustomGameExePath,
                               ),
-                              Expanded(
-                                child: MovingTooltipWidget.text(
-                                  message:
-                                      "Allows you to set a custom Starsector launcher path",
-                                  child: Disable(
-                                    isEnabled: useCustomExecutable,
-                                    child: TextField(
-                                      controller:
-                                          _customExecutablePathTextController,
-                                      decoration: InputDecoration(
-                                        border: const OutlineInputBorder(),
-                                        isDense: true,
-                                        errorText: doesCustomExePathExist
-                                            ? null
-                                            : "Path does not exist",
-                                        labelText: "Starsector launcher path",
-                                        hintStyle: Theme.of(context)
-                                            .textTheme
-                                            .labelLarge,
-                                        labelStyle: Theme.of(context)
-                                            .textTheme
-                                            .labelLarge,
+                            );
+                            final gamePath =
+                                ref
+                                    .watch(
+                                      appSettings.select(
+                                        (value) => value.gameDir,
                                       ),
-                                      onChanged: (newPath) {
-                                        tryUpdateCustomExecutablePath(newPath);
+                                    )
+                                    ?.toDirectory();
+                            final currentLaunchPath = gamePath?.let(
+                              (dir) =>
+                                  getVanillaGameExecutable(dir).toFile().path,
+                            );
+                            bool doesCustomExePathExist =
+                                !useCustomExecutable
+                                    ? (currentLaunchPath
+                                            ?.toFile()
+                                            .existsSync() ??
+                                        true)
+                                    : (_customExecutablePathTextController.text
+                                            .toFile()
+                                            .existsSync() ??
+                                        true);
+
+                            // If not using override, show the vanilla path that'll be used instead.
+                            if (!useCustomExecutable) {
+                              _customExecutablePathTextController.text =
+                                  currentLaunchPath?.toFile().path ?? "";
+                            }
+
+                            return Row(
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 8),
+                                  child: MovingTooltipWidget.text(
+                                    message:
+                                        "When checked, uses the custom launcher path",
+                                    child: Checkbox(
+                                      value: useCustomExecutable,
+                                      onChanged: (value) {
+                                        final customPath =
+                                            ref.read(
+                                              appSettings.select(
+                                                (s) => s.customGameExePath,
+                                              ),
+                                            ) ??
+                                            "";
+
+                                        WidgetsBinding.instance.addPostFrameCallback((
+                                          _,
+                                        ) {
+                                          if (value == false) {
+                                            _customExecutablePathTextController
+                                                .text = currentLaunchPath ?? "";
+                                          } else if (value == true) {
+                                            _customExecutablePathTextController
+                                                .text = customPath;
+                                          }
+                                        });
+
+                                        ref
+                                            .read(appSettings.notifier)
+                                            .update(
+                                              (state) => state.copyWith(
+                                                useCustomGameExePath:
+                                                    value ?? false,
+                                              ),
+                                            );
                                       },
                                     ),
                                   ),
                                 ),
-                              ),
-                              Disable(
-                                isEnabled: useCustomExecutable,
-                                child: IconButton(
-                                  icon: const Icon(Icons.folder),
-                                  onPressed: () async {
-                                    var newPath =
-                                        (await FilePicker.platform.pickFiles(
-                                      dialogTitle: "Select Starsector launcher",
-                                      allowMultiple: false,
-                                      initialDirectory: ref
-                                              .read(appSettings
-                                                  .select((s) => s.gameDir))
-                                              ?.path ??
-                                          defaultGamePath().path,
-                                    ))
-                                            ?.paths
-                                            .firstOrNull;
-                                    if (newPath == null) return;
-                                    _customExecutablePathTextController.text =
-                                        newPath;
-                                    tryUpdateCustomExecutablePath(newPath);
-                                  },
+                                Expanded(
+                                  child: MovingTooltipWidget.text(
+                                    message:
+                                        "Allows you to set a custom Starsector launcher path",
+                                    child: Disable(
+                                      isEnabled: useCustomExecutable,
+                                      child: TextField(
+                                        controller:
+                                            _customExecutablePathTextController,
+                                        decoration: InputDecoration(
+                                          border: const OutlineInputBorder(),
+                                          isDense: true,
+                                          errorText:
+                                              doesCustomExePathExist
+                                                  ? null
+                                                  : "Path does not exist",
+                                          labelText: "Starsector launcher path",
+                                          hintStyle:
+                                              Theme.of(
+                                                context,
+                                              ).textTheme.labelLarge,
+                                          labelStyle:
+                                              Theme.of(
+                                                context,
+                                              ).textTheme.labelLarge,
+                                        ),
+                                        onChanged: (newPath) {
+                                          tryUpdateCustomExecutablePath(
+                                            newPath,
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ],
-                          );
-                        }),
+                                Disable(
+                                  isEnabled: useCustomExecutable,
+                                  child: IconButton(
+                                    icon: const Icon(Icons.folder),
+                                    onPressed: () async {
+                                      var newPath =
+                                          (await FilePicker.platform.pickFiles(
+                                            dialogTitle:
+                                                "Select Starsector launcher",
+                                            allowMultiple: false,
+                                            initialDirectory:
+                                                ref
+                                                    .read(
+                                                      appSettings.select(
+                                                        (s) => s.gameDir,
+                                                      ),
+                                                    )
+                                                    ?.path ??
+                                                defaultGamePath().path,
+                                          ))?.paths.firstOrNull;
+                                      if (newPath == null) return;
+                                      _customExecutablePathTextController.text =
+                                          newPath;
+                                      tryUpdateCustomExecutablePath(newPath);
+                                    },
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
                       ),
-                    ]),
-                    SettingsGroup(
-                      name: "${Constants.appName} Updates",
-                      children: [
-                        // CheckboxWithLabel(
-                        //   value: ref.watch(appSettings.select(
-                        //       (value) => value.shouldAutoUpdateOnLaunch)),
-                        //   onChanged: (value) {
-                        //     ref.read(appSettings.notifier).update((state) =>
-                        //         state.copyWith(
-                        //             shouldAutoUpdateOnLaunch: value ?? false));
-                        //   },
-                        //   label: "Auto-update ${Constants.appName} on launch",
-                        // ),
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: MovingTooltipWidget.text(
-                            message: "Play with fire.",
-                            child: CheckboxWithLabel(
-                              value: ref.watch(appSettings.select(
-                                  (value) => value.updateToPrereleases)),
-                              onChanged: (value) {
-                                ref.read(appSettings.notifier).update((state) =>
-                                    state.copyWith(
-                                        updateToPrereleases: value ?? false));
-                              },
-                              labelWidget: const TextWithIcon(
-                                  text:
-                                      "Update to ${Constants.appName} pre-releases",
-                                  trailing: Icon(Icons.warning_rounded)),
+                    ],
+                  ),
+                  SettingsGroup(
+                    name: "${Constants.appName} Updates",
+                    children: [
+                      // CheckboxWithLabel(
+                      //   value: ref.watch(appSettings.select(
+                      //       (value) => value.shouldAutoUpdateOnLaunch)),
+                      //   onChanged: (value) {
+                      //     ref.read(appSettings.notifier).update((state) =>
+                      //         state.copyWith(
+                      //             shouldAutoUpdateOnLaunch: value ?? false));
+                      //   },
+                      //   label: "Auto-update ${Constants.appName} on launch",
+                      // ),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: MovingTooltipWidget.text(
+                          message: "Play with fire.",
+                          child: CheckboxWithLabel(
+                            value: ref.watch(
+                              appSettings.select(
+                                (value) => value.updateToPrereleases,
+                              ),
+                            ),
+                            onChanged: (value) {
+                              ref
+                                  .read(appSettings.notifier)
+                                  .update(
+                                    (state) => state.copyWith(
+                                      updateToPrereleases: value ?? false,
+                                    ),
+                                  );
+                            },
+                            labelWidget: const TextWithIcon(
+                              text:
+                                  "Update to ${Constants.appName} pre-releases",
+                              trailing: Icon(Icons.warning_rounded),
                             ),
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        CheckForUpdatesButton(ref: ref),
-                      ],
-                    ),
-                    SettingsGroup(name: "Theme", children: [
+                      ),
+                      const SizedBox(height: 8),
+                      CheckForUpdatesButton(ref: ref),
+                    ],
+                  ),
+                  SettingsGroup(
+                    name: "Theme",
+                    children: [
                       Row(
                         children: [
                           MovingTooltipWidget.text(
-                            message: "Change up the colors."
+                            message:
+                                "Change up the colors."
                                 "\nNote: only the default theme of StarsectorTriOSTheme is fully tested.",
                             child: DropdownMenu(
-                              dropdownMenuEntries: (ref
-                                          .watch(AppState.themeData)
-                                          .valueOrNull
-                                          ?.availableThemes
-                                          .entries ??
-                                      [])
-                                  .map((theme) => (
-                                        theme.key,
-                                        theme,
-                                        ref
-                                            .read(AppState.themeData.notifier)
-                                            .convertToThemeData(theme.value)
-                                      ))
-                                  .map((obj) {
-                                    var (key, triosTheme, themeData) = obj;
-                                    return DropdownMenuEntry(
-                                      value: triosTheme.value,
-                                      style: ButtonStyle(
-                                          backgroundColor:
-                                              WidgetStateProperty.all(themeData
-                                                  .scaffoldBackgroundColor)),
-                                      labelWidget: Row(
-                                        children: [
-                                          SizedBox(
-                                              width: 40,
-                                              height: 20,
-                                              child: Container(
-                                                  color: themeData
-                                                      .colorScheme.primary,
+                              dropdownMenuEntries:
+                                  (ref
+                                              .watch(AppState.themeData)
+                                              .valueOrNull
+                                              ?.availableThemes
+                                              .entries ??
+                                          [])
+                                      .map(
+                                        (theme) => (
+                                          theme.key,
+                                          theme,
+                                          ref
+                                              .read(AppState.themeData.notifier)
+                                              .convertToThemeData(theme.value),
+                                        ),
+                                      )
+                                      .map((obj) {
+                                        var (key, triosTheme, themeData) = obj;
+                                        return DropdownMenuEntry(
+                                          value: triosTheme.value,
+                                          style: ButtonStyle(
+                                            backgroundColor:
+                                                WidgetStateProperty.all(
+                                                  themeData
+                                                      .scaffoldBackgroundColor,
+                                                ),
+                                          ),
+                                          labelWidget: Row(
+                                            children: [
+                                              SizedBox(
+                                                width: 40,
+                                                height: 20,
+                                                child: Container(
+                                                  color:
+                                                      themeData
+                                                          .colorScheme
+                                                          .primary,
                                                   child:
-                                                      const SizedBox.shrink())),
-                                          const SizedBox(width: 8),
-                                          SizedBox(
-                                              width: 20,
-                                              height: 20,
-                                              child: Container(
-                                                  color: themeData
-                                                      .colorScheme.secondary,
+                                                      const SizedBox.shrink(),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              SizedBox(
+                                                width: 20,
+                                                height: 20,
+                                                child: Container(
+                                                  color:
+                                                      themeData
+                                                          .colorScheme
+                                                          .secondary,
                                                   child:
-                                                      const SizedBox.shrink())),
-                                          const SizedBox(width: 16),
-                                          Text(triosTheme.key,
-                                              style: theme.textTheme.bodyLarge
-                                                  ?.copyWith(
-                                                color: themeData
-                                                    .colorScheme.onSurface,
-                                              )),
-                                        ],
-                                      ),
-                                      label: triosTheme.key,
-                                    );
-                                  })
-                                  .distinctBy((e) => e.value)
-                                  .toList(),
-                              onSelected: (TriOSTheme? theme) => ref
-                                  .read(AppState.themeData.notifier)
-                                  .switchThemes(theme!),
-                              initialSelection: ref
-                                  .watch(AppState.themeData.notifier)
-                                  .currentTheme,
+                                                      const SizedBox.shrink(),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 16),
+                                              Text(
+                                                triosTheme.key,
+                                                style: theme.textTheme.bodyLarge
+                                                    ?.copyWith(
+                                                      color:
+                                                          themeData
+                                                              .colorScheme
+                                                              .onSurface,
+                                                    ),
+                                              ),
+                                            ],
+                                          ),
+                                          label: triosTheme.key,
+                                        );
+                                      })
+                                      .distinctBy((e) => e.value)
+                                      .toList(),
+                              onSelected:
+                                  (TriOSTheme? theme) => ref
+                                      .read(AppState.themeData.notifier)
+                                      .switchThemes(theme!),
+                              initialSelection:
+                                  ref
+                                      .watch(AppState.themeData.notifier)
+                                      .currentTheme,
                               // borderRadius: BorderRadius.all(
                               //     Radius.circular(ThemeManager.cornerRadius)),
                               // padding: const EdgeInsets.symmetric(horizontal: 0),
@@ -345,13 +416,16 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                           MovingTooltipWidget.text(
                             message: "I'm feeling lucky",
                             child: IconButton(
-                              onPressed: () => ref
-                                  .read(AppState.themeData.notifier)
-                                  .switchThemes(ref
+                              onPressed:
+                                  () => ref
                                       .read(AppState.themeData.notifier)
-                                      .allThemes
-                                      .values
-                                      .random()),
+                                      .switchThemes(
+                                        ref
+                                            .read(AppState.themeData.notifier)
+                                            .allThemes
+                                            .values
+                                            .random(),
+                                      ),
                               icon: SvgImageIcon(
                                 "assets/images/icon-dice.svg",
                                 color: theme.colorScheme.onSurface,
@@ -360,219 +434,273 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                           ),
                         ],
                       ),
-                    ]),
-                    Builder(builder: (context) {
+                    ],
+                  ),
+                  Builder(
+                    builder: (context) {
                       final lastNVersionsSetting = ref.watch(
-                          appSettings.select((s) => s.keepLastNVersions));
+                        appSettings.select((s) => s.keepLastNVersions),
+                      );
                       final enableMultipleVersions = lastNVersionsSetting != 1;
-                      return SettingsGroup(name: "Mod Organization", children: [
-                        MovingTooltipWidget.text(
-                          message:
-                              "If enabled, TriOS will always add the version number to the folder name when installing a mod."
-                              "\nFor example; LazyLib-1.8b, LazyLib-1.8, LazyLib-1.7."
-                              "\n\nIf disabled, the latest mod won't change folder name, even when you update the mod."
-                              "\nOlder versions of a mod will still include the version number in order to tell them apart."
-                              "\nFor example; LazyLib, LazyLib-1.8, LazyLib-1.7.",
-                          child: CheckboxWithLabel(
-                              value: ref.watch(appSettings
-                                      .select((s) => s.folderNamingSetting)) ==
+                      return SettingsGroup(
+                        name: "Mod Organization",
+                        children: [
+                          MovingTooltipWidget.text(
+                            message:
+                                "If enabled, TriOS will always add the version number to the folder name when installing a mod."
+                                "\nFor example; LazyLib-1.8b, LazyLib-1.8, LazyLib-1.7."
+                                "\n\nIf disabled, the latest mod won't change folder name, even when you update the mod."
+                                "\nOlder versions of a mod will still include the version number in order to tell them apart."
+                                "\nFor example; LazyLib, LazyLib-1.8, LazyLib-1.7.",
+                            child: CheckboxWithLabel(
+                              value:
+                                  ref.watch(
+                                    appSettings.select(
+                                      (s) => s.folderNamingSetting,
+                                    ),
+                                  ) ==
                                   FolderNamingSetting.allFoldersVersioned,
                               onChanged: (value) {
-                                ref.read(appSettings.notifier).update((state) =>
-                                    state.copyWith(
-                                        folderNamingSetting: value == true
-                                            ? FolderNamingSetting
-                                                .allFoldersVersioned
-                                            : FolderNamingSetting
-                                                .doNotChangeNameForHighestVersion));
+                                ref
+                                    .read(appSettings.notifier)
+                                    .update(
+                                      (state) => state.copyWith(
+                                        folderNamingSetting:
+                                            value == true
+                                                ? FolderNamingSetting
+                                                    .allFoldersVersioned
+                                                : FolderNamingSetting
+                                                    .doNotChangeNameForHighestVersion,
+                                      ),
+                                    );
                               },
-                              label: "Rename all mod folders"),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(left: 16),
-                          child: MovingTooltipWidget.text(
-                            message:
-                                "Manual mode. TriOS will not rename folders."
-                                "\nThis may result in TriOS overwriting mods when updating or installing new versions, if the folder already exists."
-                                "\nFor example, if you have folder `LazyLib` and install a new version where the folder name is also `LazyLib`, the older one will be overwritten."
-                                "\n\nTODO: clean up this UI and use a dropdown or something :)",
-                            warningLevel: TooltipWarningLevel.error,
-                            child: CheckboxWithLabel(
-                                value: ref.watch(appSettings.select(
-                                        (s) => s.folderNamingSetting)) ==
+                              label: "Rename all mod folders",
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.only(left: 16),
+                            child: MovingTooltipWidget.text(
+                              message:
+                                  "Manual mode. TriOS will not rename folders."
+                                  "\nThis may result in TriOS overwriting mods when updating or installing new versions, if the folder already exists."
+                                  "\nFor example, if you have folder `LazyLib` and install a new version where the folder name is also `LazyLib`, the older one will be overwritten."
+                                  "\n\nTODO: clean up this UI and use a dropdown or something :)",
+                              warningLevel: TooltipWarningLevel.error,
+                              child: CheckboxWithLabel(
+                                value:
+                                    ref.watch(
+                                      appSettings.select(
+                                        (s) => s.folderNamingSetting,
+                                      ),
+                                    ) ==
                                     FolderNamingSetting.doNotChangeNamesEver,
                                 onChanged: (value) {
-                                  ref.read(appSettings.notifier).update(
-                                      (state) => state.copyWith(
-                                          folderNamingSetting: value == true
-                                              ? FolderNamingSetting
-                                                  .doNotChangeNamesEver
-                                              : FolderNamingSetting
-                                                  .doNotChangeNameForHighestVersion));
-                                },
-                                label: "Manual folder naming"),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        MovingTooltipWidget.text(
-                          message:
-                              "When checked, updating an enabled mod switches to the new version.",
-                          child: CheckboxWithLabel(
-                            value: ref.watch(appSettings
-                                    .select((s) => s.modUpdateBehavior)) ==
-                                ModUpdateBehavior
-                                    .switchToNewVersionIfWasEnabled,
-                            onChanged: (newValue) {
-                              setState(() {
-                                ref.read(appSettings.notifier).update((s) =>
-                                    s.copyWith(
-                                        modUpdateBehavior: newValue == true
-                                            ? ModUpdateBehavior
-                                                .switchToNewVersionIfWasEnabled
-                                            : ModUpdateBehavior.doNotChange));
-                              });
-                            },
-                            labelWidget: const Text("Auto-swap on mod update"),
-                          ),
-                        ),
-                        const SizedBox(
-                          height: 8,
-                        ),
-                        SettingsGroup.subsection(
-                          name: "Old mod versions",
-                          children: [
-                            MovingTooltipWidget.text(
-                              message:
-                                  "Installing or updating a mod will replace the previous version of it.",
-                              child: IntrinsicWidth(
-                                child: RadioListTile(
-                                  title:
-                                      const Text("Keep only one mod version"),
-                                  value: false,
-                                  contentPadding: const EdgeInsets.all(0),
-                                  groupValue: enableMultipleVersions,
-                                  onChanged: (value) => ref
+                                  ref
                                       .read(appSettings.notifier)
-                                      .update((state) =>
-                                          state.copyWith(keepLastNVersions: 1)),
-                                ),
+                                      .update(
+                                        (state) => state.copyWith(
+                                          folderNamingSetting:
+                                              value == true
+                                                  ? FolderNamingSetting
+                                                      .doNotChangeNamesEver
+                                                  : FolderNamingSetting
+                                                      .doNotChangeNameForHighestVersion,
+                                        ),
+                                      );
+                                },
+                                label: "Manual folder naming",
                               ),
                             ),
-                            Row(
-                              children: [
-                                IntrinsicWidth(
-                                  child: MovingTooltipWidget.text(
-                                    message: lastNVersionsSetting == null
-                                        ? "TriOS will never automatically remove mod versions."
-                                        : "Installing or updating a mod will remove all but the last $lastNVersionsSetting highest versions.",
-                                    child: RadioListTile(
-                                      title:
-                                          const Text("Keep all mod versions"),
-                                      value: true,
-                                      contentPadding: const EdgeInsets.all(0),
-                                      groupValue: enableMultipleVersions,
-                                      onChanged: (value) => ref
-                                          .read(appSettings.notifier)
-                                          .update((state) => state.copyWith(
-                                              keepLastNVersions:
-                                                  (value ?? false) ? null : 1)),
+                          ),
+                          const SizedBox(height: 8),
+                          MovingTooltipWidget.text(
+                            message:
+                                "When checked, updating an enabled mod switches to the new version.",
+                            child: CheckboxWithLabel(
+                              value:
+                                  ref.watch(
+                                    appSettings.select(
+                                      (s) => s.modUpdateBehavior,
+                                    ),
+                                  ) ==
+                                  ModUpdateBehavior
+                                      .switchToNewVersionIfWasEnabled,
+                              onChanged: (newValue) {
+                                setState(() {
+                                  ref
+                                      .read(appSettings.notifier)
+                                      .update(
+                                        (s) => s.copyWith(
+                                          modUpdateBehavior:
+                                              newValue == true
+                                                  ? ModUpdateBehavior
+                                                      .switchToNewVersionIfWasEnabled
+                                                  : ModUpdateBehavior
+                                                      .doNotChange,
+                                        ),
+                                      );
+                                });
+                              },
+                              labelWidget: const Text(
+                                "Auto-swap on mod update",
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          SettingsGroup.subsection(
+                            name: "Old mod versions",
+                            children: [
+                              MovingTooltipWidget.text(
+                                message:
+                                    "Installing or updating a mod will replace the previous version of it.",
+                                child: IntrinsicWidth(
+                                  child: RadioListTile(
+                                    title: const Text(
+                                      "Keep only one mod version",
+                                    ),
+                                    value: false,
+                                    contentPadding: const EdgeInsets.all(0),
+                                    groupValue: enableMultipleVersions,
+                                    onChanged:
+                                        (value) => ref
+                                            .read(appSettings.notifier)
+                                            .update(
+                                              (state) => state.copyWith(
+                                                keepLastNVersions: 1,
+                                              ),
+                                            ),
+                                  ),
+                                ),
+                              ),
+                              Row(
+                                children: [
+                                  IntrinsicWidth(
+                                    child: MovingTooltipWidget.text(
+                                      message:
+                                          lastNVersionsSetting == null
+                                              ? "TriOS will never automatically remove mod versions."
+                                              : "Installing or updating a mod will remove all but the last $lastNVersionsSetting highest versions.",
+                                      child: RadioListTile(
+                                        title: const Text(
+                                          "Keep all mod versions",
+                                        ),
+                                        value: true,
+                                        contentPadding: const EdgeInsets.all(0),
+                                        groupValue: enableMultipleVersions,
+                                        onChanged:
+                                            (value) => ref
+                                                .read(appSettings.notifier)
+                                                .update(
+                                                  (state) => state.copyWith(
+                                                    keepLastNVersions:
+                                                        (value ?? false)
+                                                            ? null
+                                                            : 1,
+                                                  ),
+                                                ),
+                                      ),
                                     ),
                                   ),
-                                ),
-                                Disable(
-                                  isEnabled: enableMultipleVersions,
-                                  child: Row(
-                                    children: [
-                                      const Text(" (up to "),
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 8),
-                                        child: DropdownButton<int>(
-                                          value: lastNVersionsSetting,
-                                          items: [
-                                            for (int i = 1; i <= 10; i++)
-                                              DropdownMenuItem(
-                                                  value: i, child: Text(" $i")),
-                                            const DropdownMenuItem(
-                                                value: null, child: Text(" ∞")),
-                                          ],
-                                          onChanged: (value) {
-                                            ref
-                                                .read(appSettings.notifier)
-                                                .update((state) =>
-                                                    state.copyWith(
-                                                        keepLastNVersions:
-                                                            value));
-                                          },
-                                          isDense: true,
+                                  Disable(
+                                    isEnabled: enableMultipleVersions,
+                                    child: Row(
+                                      children: [
+                                        const Text(" (up to "),
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                          ),
+                                          child: DropdownButton<int>(
+                                            value: lastNVersionsSetting,
+                                            items: [
+                                              for (int i = 1; i <= 10; i++)
+                                                DropdownMenuItem(
+                                                  value: i,
+                                                  child: Text(" $i"),
+                                                ),
+                                              const DropdownMenuItem(
+                                                value: null,
+                                                child: Text(" ∞"),
+                                              ),
+                                            ],
+                                            onChanged: (value) {
+                                              ref
+                                                  .read(appSettings.notifier)
+                                                  .update(
+                                                    (state) => state.copyWith(
+                                                      keepLastNVersions: value,
+                                                    ),
+                                                  );
+                                            },
+                                            isDense: true,
+                                          ),
                                         ),
-                                      ),
-                                      const Text(")"),
-                                    ],
+                                        const Text(")"),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
-                            // Padding(
-                            //   padding: const EdgeInsets.only(
-                            //       left: leftTextOptionPadding, top: 8),
-                            //   child: Row(
-                            //     children: [
-                            //       MovingTooltipWidget.text(
-                            //         message:
-                            //             "If you have multiple versions of a mod, this will keep the last N versions of each mod."
-                            //             "\n\nOlder versions will be automatically deleted when a new one is installed.",
-                            //         child: Row(
-                            //           children: [
-                            //             const Text("Keep last "),
-                            //             Padding(
-                            //               padding: const EdgeInsets.symmetric(
-                            //                   horizontal: 8),
-                            //               child: DropdownButton<int>(
-                            //                 value: lastNVersionsSetting,
-                            //                 items: [
-                            //                   for (int i = 1; i <= 10; i++)
-                            //                     DropdownMenuItem(
-                            //                         value: i, child: Text(" $i")),
-                            //                   const DropdownMenuItem(
-                            //                       value: null, child: Text(" ∞")),
-                            //                 ],
-                            //                 onChanged: (value) {
-                            //                   ref.read(appSettings.notifier).update(
-                            //                         (state) => state.copyWith(
-                            //                             keepLastNVersions:
-                            //                                 value == -1
-                            //                                     ? null
-                            //                                     : value),
-                            //                       );
-                            //                 },
-                            //                 isDense: true,
-                            //                 // decoration: const InputDecoration(
-                            //                 //   border: OutlineInputBorder(),
-                            //                 // ),
-                            //               ),
-                            //             ),
-                            //             Text(
-                            //                 " version${lastNVersionsSetting == 1 ? "" : "s"} of each mod"),
-                            //           ],
-                            //         ),
-                            //       ),
-                            //     ],
-                            //   ),
-                            // ),
-                            Disable(
-                              isEnabled: lastNVersionsSetting != null,
-                              child: Padding(
-                                padding: const EdgeInsets.only(top: 16),
-                                child: MovingTooltipWidget.text(
-                                  message: switch (lastNVersionsSetting) {
-                                    null => "",
-                                    1 =>
-                                      "Remove all but the newest version of each mod.",
-                                    _ =>
-                                      "Remove all but the newest $lastNVersionsSetting versions of each mod."
-                                  },
-                                  child: ElevatedButton.icon(
+                                ],
+                              ),
+                              // Padding(
+                              //   padding: const EdgeInsets.only(
+                              //       left: leftTextOptionPadding, top: 8),
+                              //   child: Row(
+                              //     children: [
+                              //       MovingTooltipWidget.text(
+                              //         message:
+                              //             "If you have multiple versions of a mod, this will keep the last N versions of each mod."
+                              //             "\n\nOlder versions will be automatically deleted when a new one is installed.",
+                              //         child: Row(
+                              //           children: [
+                              //             const Text("Keep last "),
+                              //             Padding(
+                              //               padding: const EdgeInsets.symmetric(
+                              //                   horizontal: 8),
+                              //               child: DropdownButton<int>(
+                              //                 value: lastNVersionsSetting,
+                              //                 items: [
+                              //                   for (int i = 1; i <= 10; i++)
+                              //                     DropdownMenuItem(
+                              //                         value: i, child: Text(" $i")),
+                              //                   const DropdownMenuItem(
+                              //                       value: null, child: Text(" ∞")),
+                              //                 ],
+                              //                 onChanged: (value) {
+                              //                   ref.read(appSettings.notifier).update(
+                              //                         (state) => state.copyWith(
+                              //                             keepLastNVersions:
+                              //                                 value == -1
+                              //                                     ? null
+                              //                                     : value),
+                              //                       );
+                              //                 },
+                              //                 isDense: true,
+                              //                 // decoration: const InputDecoration(
+                              //                 //   border: OutlineInputBorder(),
+                              //                 // ),
+                              //               ),
+                              //             ),
+                              //             Text(
+                              //                 " version${lastNVersionsSetting == 1 ? "" : "s"} of each mod"),
+                              //           ],
+                              //         ),
+                              //       ),
+                              //     ],
+                              //   ),
+                              // ),
+                              Disable(
+                                isEnabled: lastNVersionsSetting != null,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(top: 16),
+                                  child: MovingTooltipWidget.text(
+                                    message: switch (lastNVersionsSetting) {
+                                      null => "",
+                                      1 =>
+                                        "Remove all but the newest version of each mod.",
+                                      _ =>
+                                        "Remove all but the newest $lastNVersionsSetting versions of each mod.",
+                                    },
+                                    child: ElevatedButton.icon(
                                       icon: const SvgImageIcon(
                                         "assets/images/icon-shredder.svg",
                                       ),
@@ -585,65 +713,75 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
                                         if (!mounted) return;
                                         showDialog(
-                                            context: context,
-                                            builder: (context) {
-                                              return AlertDialog(
-                                                title:
-                                                    const Text("Delete mods"),
-                                                content: Column(
-                                                  children: [
-                                                    Text(
-                                                        "Are you sure you want to delete ${modsThatWouldBeRemoved.length} mods?"),
-                                                    const SizedBox(height: 8),
-                                                    if (modsThatWouldBeRemoved
-                                                        .isNotEmpty)
-                                                      Column(
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .start,
-                                                        children: modsThatWouldBeRemoved
-                                                            .map((mod) => Text(
-                                                                "- ${mod.nameOrId} ${mod.version}"))
-                                                            .toList(),
-                                                      ),
-                                                  ],
-                                                ),
-                                                actions: [
-                                                  TextButton(
-                                                      onPressed: () {
-                                                        Navigator.of(context)
-                                                            .pop();
-                                                      },
-                                                      child:
-                                                          const Text("Cancel")),
-                                                  TextButton(
-                                                      onPressed: () async {
-                                                        Navigator.of(context)
-                                                            .pop();
-                                                        await ref
-                                                            .read(modManager
-                                                                .notifier)
-                                                            .cleanUpAllModVariantsBasedOnRetainSetting(
-                                                              dryRun: false,
-                                                            );
-                                                        ref.invalidate(AppState
-                                                            .modVariants);
-                                                      },
-                                                      child:
-                                                          const Text("Delete")),
+                                          context: context,
+                                          builder: (context) {
+                                            return AlertDialog(
+                                              title: const Text("Delete mods"),
+                                              content: Column(
+                                                children: [
+                                                  Text(
+                                                    "Are you sure you want to delete ${modsThatWouldBeRemoved.length} mods?",
+                                                  ),
+                                                  const SizedBox(height: 8),
+                                                  if (modsThatWouldBeRemoved
+                                                      .isNotEmpty)
+                                                    Column(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
+                                                      children:
+                                                          modsThatWouldBeRemoved
+                                                              .map(
+                                                                (mod) => Text(
+                                                                  "- ${mod.nameOrId} ${mod.version}",
+                                                                ),
+                                                              )
+                                                              .toList(),
+                                                    ),
                                                 ],
-                                              );
-                                            });
+                                              ),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () {
+                                                    Navigator.of(context).pop();
+                                                  },
+                                                  child: const Text("Cancel"),
+                                                ),
+                                                TextButton(
+                                                  onPressed: () async {
+                                                    Navigator.of(context).pop();
+                                                    await ref
+                                                        .read(
+                                                          modManager.notifier,
+                                                        )
+                                                        .cleanUpAllModVariantsBasedOnRetainSetting(
+                                                          dryRun: false,
+                                                        );
+                                                    ref.invalidate(
+                                                      AppState.modVariants,
+                                                    );
+                                                  },
+                                                  child: const Text("Delete"),
+                                                ),
+                                              ],
+                                            );
+                                          },
+                                        );
                                       },
-                                      label: const Text("Clean up...")),
+                                      label: const Text("Clean up..."),
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ]);
-                    }),
-                    SettingsGroup(name: "Misc", children: [
+                            ],
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                  SettingsGroup(
+                    name: "Misc",
+                    children: [
                       // Slider for number of seconds between mod info update checks (secondsBetweenModFolderChecks in mod_manager_logic.dart).
                       ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 400),
@@ -655,15 +793,21 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                             children: [
                               Padding(
                                 padding: const EdgeInsets.only(
-                                    left: leftTextOptionPadding),
+                                  left: leftTextOptionPadding,
+                                ),
                                 child: Text(
-                                    "Rescan mod folder every: ${ref.watch(appSettings.select((value) => value.secondsBetweenModFolderChecks))} seconds",
-                                    style: theme.textTheme.bodyLarge),
+                                  "Rescan mod folder every: ${ref.watch(appSettings.select((value) => value.secondsBetweenModFolderChecks))} seconds",
+                                  style: theme.textTheme.bodyLarge,
+                                ),
                               ),
                               Slider(
                                 value: ref
-                                    .watch(appSettings.select((value) =>
-                                        value.secondsBetweenModFolderChecks))
+                                    .watch(
+                                      appSettings.select(
+                                        (value) =>
+                                            value.secondsBetweenModFolderChecks,
+                                      ),
+                                    )
                                     .toDouble()
                                     .clamp(1, 30),
                                 min: 1,
@@ -672,10 +816,14 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                 label:
                                     "${ref.watch(appSettings.select((value) => value.secondsBetweenModFolderChecks))}",
                                 onChanged: (value) {
-                                  ref.read(appSettings.notifier).update(
-                                      (state) => state.copyWith(
+                                  ref
+                                      .read(appSettings.notifier)
+                                      .update(
+                                        (state) => state.copyWith(
                                           secondsBetweenModFolderChecks:
-                                              value.toInt()));
+                                              value.toInt(),
+                                        ),
+                                      );
                                 },
                                 inactiveColor: theme.colorScheme.onSurface
                                     .withOpacity(0.5),
@@ -686,7 +834,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       ),
                       Padding(
                         padding: const EdgeInsets.only(
-                            left: leftTextOptionPadding, top: 16),
+                          left: leftTextOptionPadding,
+                          top: 16,
+                        ),
                         child: ConstrainedBox(
                           constraints: const BoxConstraints(maxWidth: 400),
                           child: MovingTooltipWidget.text(
@@ -696,12 +846,16 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                    "Notification duration: ${ref.watch(appSettings.select((value) => value.toastDurationSeconds))} seconds",
-                                    style: theme.textTheme.bodyLarge),
+                                  "Notification duration: ${ref.watch(appSettings.select((value) => value.toastDurationSeconds))} seconds",
+                                  style: theme.textTheme.bodyLarge,
+                                ),
                                 Slider(
                                   value: ref
-                                      .watch(appSettings.select((value) =>
-                                          value.toastDurationSeconds))
+                                      .watch(
+                                        appSettings.select(
+                                          (value) => value.toastDurationSeconds,
+                                        ),
+                                      )
                                       .toDouble()
                                       .clamp(1, 45),
                                   min: 1,
@@ -710,10 +864,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                   label:
                                       "${ref.watch(appSettings.select((value) => value.toastDurationSeconds))}",
                                   onChanged: (value) {
-                                    ref.read(appSettings.notifier).update(
-                                        (state) => state.copyWith(
-                                            toastDurationSeconds:
-                                                value.toInt()));
+                                    ref
+                                        .read(appSettings.notifier)
+                                        .update(
+                                          (state) => state.copyWith(
+                                            toastDurationSeconds: value.toInt(),
+                                          ),
+                                        );
                                   },
                                   inactiveColor: theme.colorScheme.onSurface
                                       .withOpacity(0.5),
@@ -725,7 +882,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       ),
                       Padding(
                         padding: const EdgeInsets.only(
-                            left: leftTextOptionPadding, top: 16),
+                          left: leftTextOptionPadding,
+                          top: 16,
+                        ),
                         child: ConstrainedBox(
                           constraints: const BoxConstraints(maxWidth: 400),
                           child: MovingTooltipWidget.text(
@@ -735,12 +894,17 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                    "Max HTTP requests at once: ${ref.watch(appSettings.select((value) => value.maxHttpRequestsAtOnce))}",
-                                    style: theme.textTheme.bodyLarge),
+                                  "Max HTTP requests at once: ${ref.watch(appSettings.select((value) => value.maxHttpRequestsAtOnce))}",
+                                  style: theme.textTheme.bodyLarge,
+                                ),
                                 Slider(
                                   value: ref
-                                      .watch(appSettings.select((value) =>
-                                          value.maxHttpRequestsAtOnce))
+                                      .watch(
+                                        appSettings.select(
+                                          (value) =>
+                                              value.maxHttpRequestsAtOnce,
+                                        ),
+                                      )
                                       .toDouble()
                                       .clamp(1, 100),
                                   min: 1,
@@ -749,10 +913,14 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                   label:
                                       "${ref.watch(appSettings.select((value) => value.maxHttpRequestsAtOnce))}",
                                   onChanged: (value) {
-                                    ref.read(appSettings.notifier).update(
-                                        (state) => state.copyWith(
+                                    ref
+                                        .read(appSettings.notifier)
+                                        .update(
+                                          (state) => state.copyWith(
                                             maxHttpRequestsAtOnce:
-                                                value.toInt()));
+                                                value.toInt(),
+                                          ),
+                                        );
                                   },
                                   inactiveColor: theme.colorScheme.onSurface
                                       .withOpacity(0.5),
@@ -770,8 +938,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                             onPressed: () {
                               showDialog(
                                 context: context,
-                                builder: (context) =>
-                                    const OnboardingCarousel(),
+                                builder:
+                                    (context) => const OnboardingCarousel(),
                                 barrierDismissible: false,
                               );
                             },
@@ -786,12 +954,19 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                           message:
                               "This allows ${Constants.appName} to send crash/error reports to get fixed.\nNo personal/identifiable data is sent.\nWill soft-restart ${Constants.appName} to apply.",
                           child: CheckboxWithLabel(
-                            value: ref.watch(appSettings.select(
-                                (value) => value.allowCrashReporting ?? false)),
+                            value: ref.watch(
+                              appSettings.select(
+                                (value) => value.allowCrashReporting ?? false,
+                              ),
+                            ),
                             onChanged: (value) {
-                              ref.read(appSettings.notifier).update((state) =>
-                                  state.copyWith(
-                                      allowCrashReporting: value ?? false));
+                              ref
+                                  .read(appSettings.notifier)
+                                  .update(
+                                    (state) => state.copyWith(
+                                      allowCrashReporting: value ?? false,
+                                    ),
+                                  );
                               RestartableApp.restartApp(context);
                             },
                             label: "Allow crash reporting",
@@ -805,12 +980,19 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                               "Whether to check for mod dependencies and prevent launching if they aren't met."
                               "\nDisable if ${Constants.appName} is getting them wrong, or you'd just like to use vanilla dependency check behavior.",
                           child: CheckboxWithLabel(
-                            value: ref.watch(appSettings.select(
-                                (value) => value.enableLauncherPrecheck)),
+                            value: ref.watch(
+                              appSettings.select(
+                                (value) => value.enableLauncherPrecheck,
+                              ),
+                            ),
                             onChanged: (value) {
-                              ref.read(appSettings.notifier).update((state) =>
-                                  state.copyWith(
-                                      enableLauncherPrecheck: value ?? false));
+                              ref
+                                  .read(appSettings.notifier)
+                                  .update(
+                                    (state) => state.copyWith(
+                                      enableLauncherPrecheck: value ?? false,
+                                    ),
+                                  );
                             },
                             label: "Enable Launch Precheck",
                           ),
@@ -823,12 +1005,19 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                               "Whether to check if the game is running and lock parts of ${Constants.appName}."
                               "\nDisable if ${Constants.appName} is detecting incorrectly.",
                           child: CheckboxWithLabel(
-                            value: ref.watch(appSettings
-                                .select((value) => value.checkIfGameIsRunning)),
+                            value: ref.watch(
+                              appSettings.select(
+                                (value) => value.checkIfGameIsRunning,
+                              ),
+                            ),
                             onChanged: (value) {
-                              ref.read(appSettings.notifier).update((state) =>
-                                  state.copyWith(
-                                      checkIfGameIsRunning: value ?? false));
+                              ref
+                                  .read(appSettings.notifier)
+                                  .update(
+                                    (state) => state.copyWith(
+                                      checkIfGameIsRunning: value ?? false,
+                                    ),
+                                  );
                             },
                             label: "Check if game is running",
                           ),
@@ -841,58 +1030,80 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                               "7zip is recommended. libarchive is the old library; use it if 7zip doesn't work."
                               "\n\nlibarchive support will be removed (to save disk space) if I do not hear that anybody needs it.",
                           child: CheckboxWithLabel(
-                            value: ref.watch(appSettings.select((value) =>
-                                value.compressionLib ==
-                                CompressionLib.sevenZip)),
-                            onChanged: (value) {
-                              ref.read(appSettings.notifier).update((state) =>
-                                  state.copyWith(
-                                      compressionLib: value!
-                                          ? CompressionLib.sevenZip
-                                          : CompressionLib.libarchive));
-                            },
-                            label: ref.watch(appSettings.select((value) =>
+                            value: ref.watch(
+                              appSettings.select(
+                                (value) =>
                                     value.compressionLib ==
-                                    CompressionLib.libarchive))
-                                ? "Using libarchive for extracting. Click to switch to 7zip."
-                                : "Using 7zip for extracting. Click to switch to libarchive.",
+                                    CompressionLib.sevenZip,
+                              ),
+                            ),
+                            onChanged: (value) {
+                              ref
+                                  .read(appSettings.notifier)
+                                  .update(
+                                    (state) => state.copyWith(
+                                      compressionLib:
+                                          value!
+                                              ? CompressionLib.sevenZip
+                                              : CompressionLib.libarchive,
+                                    ),
+                                  );
+                            },
+                            label:
+                                ref.watch(
+                                      appSettings.select(
+                                        (value) =>
+                                            value.compressionLib ==
+                                            CompressionLib.libarchive,
+                                      ),
+                                    )
+                                    ? "Using libarchive for extracting. Click to switch to 7zip."
+                                    : "Using 7zip for extracting. Click to switch to libarchive.",
                           ),
                         ),
                       ),
-                    ]),
-                    // Debugging line here
-                    SizedBox.fromSize(size: const Size.fromHeight(20)),
-                    Theme(
-                      data: theme.copyWith(dividerColor: Colors.transparent),
-                      child: TriOSExpansionTile(
-                        title: const Text("Debugging"),
-                        subtitle: const Text(
-                            "Junk drawer of developer actions and info"),
-                        leading: Icon(Icons.bug_report,
-                            color: Theme.of(context)
-                                .iconTheme
-                                .color
-                                ?.withOpacity(0.7)),
-                        expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: const [
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 8),
-                            child: SettingsDebugSection(),
-                          ),
-                        ],
+                    ],
+                  ),
+                  // Debugging line here
+                  SizedBox.fromSize(size: const Size.fromHeight(20)),
+                  Theme(
+                    data: theme.copyWith(dividerColor: Colors.transparent),
+                    child: TriOSExpansionTile(
+                      title: const Text("Debugging"),
+                      subtitle: const Text(
+                        "Junk drawer of developer actions and info",
                       ),
+                      leading: Icon(
+                        Icons.bug_report,
+                        color: Theme.of(
+                          context,
+                        ).iconTheme.color?.withOpacity(0.7),
+                      ),
+                      expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: const [
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 8),
+                          child: SettingsDebugSection(),
+                        ),
+                      ],
                     ),
-                  ]),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
         Align(
           alignment: Alignment.center,
           child: Opacity(
-              opacity: 0.7,
-              child: Text("All settings are applied immediately.",
-                  style: theme.textTheme.labelLarge
-                      ?.copyWith(fontStyle: FontStyle.italic))),
+            opacity: 0.7,
+            child: Text(
+              "All settings are applied immediately.",
+              style: theme.textTheme.labelLarge?.copyWith(
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ),
         ),
       ],
     );
@@ -905,13 +1116,16 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
     if (dirExists) {
       ref.read(appSettings.notifier).update((state) {
-        var newModDirPath = state.hasCustomModsDir
-            ? state.modsDir?.toDirectory()
-            : generateModsFolderPath(newGameDir.toDirectory());
+        var newModDirPath =
+            state.hasCustomModsDir
+                ? state.modsDir?.toDirectory()
+                : generateModsFolderPath(newGameDir.toDirectory());
         newModDirPath = newModDirPath?.normalize.toDirectory();
 
         return state.copyWith(
-            gameDir: Directory(newGameDir).normalize, modsDir: newModDirPath);
+          gameDir: Directory(newGameDir).normalize,
+          modsDir: newModDirPath,
+        );
       });
     }
 
@@ -922,9 +1136,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     final exists = newPath.toFile().existsSync();
 
     if (exists) {
-      ref.read(appSettings.notifier).update((state) => state.copyWith(
-            customGameExePath: File(newPath).normalize.path,
-          ));
+      ref
+          .read(appSettings.notifier)
+          .update(
+            (state) =>
+                state.copyWith(customGameExePath: File(newPath).normalize.path),
+          );
     }
 
     setState(() {});
@@ -932,10 +1149,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 }
 
 class CheckForUpdatesButton extends StatelessWidget {
-  const CheckForUpdatesButton({
-    super.key,
-    required this.ref,
-  });
+  const CheckForUpdatesButton({super.key, required this.ref});
 
   final WidgetRef ref;
 
@@ -943,20 +1157,22 @@ class CheckForUpdatesButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return ElevatedButton(
       onPressed: () async {
-        ref
-            .watch(AppState.selfUpdate.notifier)
-            .getLatestRelease()
-            .then((release) {
+        ref.watch(AppState.selfUpdate.notifier).getLatestRelease().then((
+          release,
+        ) {
           if (release == null) {
             showSnackBar(
-                context: context, content: const Text("No new release found"));
+              context: context,
+              content: const Text("No new release found"),
+            );
             return;
           } else if (Version.parse(release.tagName, sanitizeInput: true) <=
               Version.parse(Constants.version, sanitizeInput: true)) {
             showSnackBar(
               context: context,
               content: Text(
-                  "You are already on the latest version (current: ${Constants.version}, found: ${release.tagName}${release.prerelease ? " (prerelease)" : ""})"),
+                "You are already on the latest version (current: ${Constants.version}, found: ${release.tagName}${release.prerelease ? " (prerelease)" : ""})",
+              ),
               action: SnackBarAction(
                 label: "I don't believe you (show update prompt)",
                 backgroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -965,17 +1181,17 @@ class CheckForUpdatesButton extends StatelessWidget {
                       .watch(AppState.selfUpdate.notifier)
                       .getLatestRelease()
                       .then((release) {
-                    if (release == null) {
-                      Fimber.d("No release found");
-                      return;
-                    }
+                        if (release == null) {
+                          Fimber.d("No release found");
+                          return;
+                        }
 
-                    toastification.showCustom(
-                      context: context,
-                      builder: (context, item) =>
-                          SelfUpdateToast(release, item),
-                    );
-                  });
+                        toastification.showCustom(
+                          context: context,
+                          builder:
+                              (context, item) => SelfUpdateToast(release, item),
+                        );
+                      });
                 },
               ),
             );

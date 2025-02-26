@@ -21,8 +21,10 @@ class EnabledModsMapper extends ClassMapperBase<EnabledMods> {
   final String id = 'EnabledMods';
 
   static Set<String> _$enabledMods(EnabledMods v) => v.enabledMods;
-  static const Field<EnabledMods, Set<String>> _f$enabledMods =
-      Field('enabledMods', _$enabledMods);
+  static const Field<EnabledMods, Set<String>> _f$enabledMods = Field(
+    'enabledMods',
+    _$enabledMods,
+  );
 
   @override
   final MappableFields<EnabledMods> fields = const {
@@ -47,27 +49,32 @@ class EnabledModsMapper extends ClassMapperBase<EnabledMods> {
 
 mixin EnabledModsMappable {
   String toJson() {
-    return EnabledModsMapper.ensureInitialized()
-        .encodeJson<EnabledMods>(this as EnabledMods);
+    return EnabledModsMapper.ensureInitialized().encodeJson<EnabledMods>(
+      this as EnabledMods,
+    );
   }
 
   Map<String, dynamic> toMap() {
-    return EnabledModsMapper.ensureInitialized()
-        .encodeMap<EnabledMods>(this as EnabledMods);
+    return EnabledModsMapper.ensureInitialized().encodeMap<EnabledMods>(
+      this as EnabledMods,
+    );
   }
 
   EnabledModsCopyWith<EnabledMods, EnabledMods, EnabledMods> get copyWith =>
       _EnabledModsCopyWithImpl(this as EnabledMods, $identity, $identity);
   @override
   String toString() {
-    return EnabledModsMapper.ensureInitialized()
-        .stringifyValue(this as EnabledMods);
+    return EnabledModsMapper.ensureInitialized().stringifyValue(
+      this as EnabledMods,
+    );
   }
 
   @override
   bool operator ==(Object other) {
-    return EnabledModsMapper.ensureInitialized()
-        .equalsValue(this as EnabledMods, other);
+    return EnabledModsMapper.ensureInitialized().equalsValue(
+      this as EnabledMods,
+      other,
+    );
   }
 
   @override
@@ -98,13 +105,14 @@ class _EnabledModsCopyWithImpl<$R, $Out>
       EnabledModsMapper.ensureInitialized();
   @override
   $R call({Set<String>? enabledMods}) => $apply(
-      FieldCopyWithData({if (enabledMods != null) #enabledMods: enabledMods}));
+    FieldCopyWithData({if (enabledMods != null) #enabledMods: enabledMods}),
+  );
   @override
   EnabledMods $make(CopyWithData data) =>
       EnabledMods(data.get(#enabledMods, or: $value.enabledMods));
 
   @override
   EnabledModsCopyWith<$R2, EnabledMods, $Out2> $chain<$R2, $Out2>(
-          Then<$Out2, $R2> t) =>
-      _EnabledModsCopyWithImpl($value, $cast, t);
+    Then<$Out2, $R2> t,
+  ) => _EnabledModsCopyWithImpl($value, $cast, t);
 }

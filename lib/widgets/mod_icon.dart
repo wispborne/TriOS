@@ -24,26 +24,24 @@ class ModIcon extends ConsumerWidget {
     double size = 32,
     bool takeUpSpaceIfNoIcon = false,
     bool showFullSizeInTooltip = false,
-  }) =>
-      ModIcon(
-        mod.findFirstEnabledOrHighestVersion?.iconFilePath,
-        size: size,
-        takeUpSpaceIfNoIcon: takeUpSpaceIfNoIcon,
-        showFullSizeInTooltip: showFullSizeInTooltip,
-      );
+  }) => ModIcon(
+    mod.findFirstEnabledOrHighestVersion?.iconFilePath,
+    size: size,
+    takeUpSpaceIfNoIcon: takeUpSpaceIfNoIcon,
+    showFullSizeInTooltip: showFullSizeInTooltip,
+  );
 
   static fromVariant(
     ModVariant? variant, {
     double size = 32,
     bool takeUpSpaceIfNoIcon = false,
     bool showFullSizeInTooltip = false,
-  }) =>
-      ModIcon(
-        variant?.iconFilePath,
-        size: size,
-        takeUpSpaceIfNoIcon: takeUpSpaceIfNoIcon,
-        showFullSizeInTooltip: showFullSizeInTooltip,
-      );
+  }) => ModIcon(
+    variant?.iconFilePath,
+    size: size,
+    takeUpSpaceIfNoIcon: takeUpSpaceIfNoIcon,
+    showFullSizeInTooltip: showFullSizeInTooltip,
+  );
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -53,13 +51,13 @@ class ModIcon extends ConsumerWidget {
           : const SizedBox.shrink();
     }
     return MovingTooltipWidget.framed(
-        tooltipWidget:
-            showFullSizeInTooltip ? Image.file(path!.toFile()) : null,
-        child: Image.file(
-          path!.toFile(),
-          width: size,
-          height: size,
-          fit: BoxFit.cover,
-        ));
+      tooltipWidget: showFullSizeInTooltip ? Image.file(path!.toFile()) : null,
+      child: Image.file(
+        path!.toFile(),
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
+      ),
+    );
   }
 }

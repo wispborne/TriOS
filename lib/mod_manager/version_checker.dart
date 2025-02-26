@@ -82,17 +82,24 @@ class VersionCheckerAsyncProvider
     final metadata = ref.read(AppState.modsMetadata).valueOrNull;
 
     if (metadata != null && !evenIfMuted) {
-      final mutedIds = variantsToCheck
-          .where((v) =>
-              metadata.getMergedModMetadata(v.modInfo.id)?.areUpdatesMuted ==
-              true)
-          .map((v) => v.smolId)
-          .toSet();
+      final mutedIds =
+          variantsToCheck
+              .where(
+                (v) =>
+                    metadata
+                        .getMergedModMetadata(v.modInfo.id)
+                        ?.areUpdatesMuted ==
+                    true,
+              )
+              .map((v) => v.smolId)
+              .toSet();
       variantsToCheck.removeWhere((v) => mutedIds.contains(v.smolId));
     }
 
-    final versionCheckTasks =
-        _createVersionCheckTasks(variantsToCheck, skipCache);
+    final versionCheckTasks = _createVersionCheckTasks(
+      variantsToCheck,
+      skipCache,
+    );
 
     await _executeVersionCheckTasks(versionCheckTasks);
   }
@@ -108,10 +115,12 @@ class VersionCheckerAsyncProvider
         AppState.skipCacheOnNextVersionCheck = false;
       });
     } else if (_versionCheckResultsCache.isEmpty) {
-      final versionResultsOnDisk =
-          await settingsManager.readSettingsFromDisk(createDefaultState());
-      _versionCheckResultsCache
-          .addAll(versionResultsOnDisk.versionCheckResultsBySmolId);
+      final versionResultsOnDisk = await settingsManager.readSettingsFromDisk(
+        createDefaultState(),
+      );
+      _versionCheckResultsCache.addAll(
+        versionResultsOnDisk.versionCheckResultsBySmolId,
+      );
     }
   }
 
@@ -119,21 +128,27 @@ class VersionCheckerAsyncProvider
   List<ModVariant> _getVariantsToCheck() {
     final modsRef = ref.read(AppState.mods);
     return modsRef
-        .map((mod) => mod.modVariants.sortedDescending().firstWhereOrNull(
-            (variant) => variant.versionCheckerInfo?.seemsLegit == true))
+        .map(
+          (mod) => mod.modVariants.sortedDescending().firstWhereOrNull(
+            (variant) => variant.versionCheckerInfo?.seemsLegit == true,
+          ),
+        )
         .nonNulls
         .toList();
   }
 
   /// Creates tasks for version checking each mod variant.
   List<VersionCheckTask> _createVersionCheckTasks(
-      List<ModVariant> variantsToCheck, bool skipCache) {
+    List<ModVariant> variantsToCheck,
+    bool skipCache,
+  ) {
     final httpClient = ref.watch(triOSHttpClient);
     final currentTime = DateTime.now();
 
     return variantsToCheck.map((modVariant) {
       final cachedResult = _versionCheckResultsCache[modVariant.smolId];
-      final needsUpdate = skipCache ||
+      final needsUpdate =
+          skipCache ||
           cachedResult == null ||
           currentTime.difference(cachedResult.timestamp) > versionCheckCooldown;
 
@@ -141,29 +156,37 @@ class VersionCheckerAsyncProvider
         final future = checkRemoteVersion(modVariant, httpClient);
         return VersionCheckTask(modVariant, future, wasCached: false);
       } else {
-        return VersionCheckTask(modVariant, Future.value(cachedResult),
-            wasCached: true);
+        return VersionCheckTask(
+          modVariant,
+          Future.value(cachedResult),
+          wasCached: true,
+        );
       }
     }).toList();
   }
 
   /// Executes the version check tasks, updating the cache and state.
   Future<void> _executeVersionCheckTasks(List<VersionCheckTask> tasks) async {
-    final futures = tasks.where((task) => !task.wasCached).map((task) async {
-      try {
-        final result = await task.future;
-        Fimber.v(() =>
-            "Caching remote version info for ${task.modVariant.modInfo.id}: $result");
-        _updateCache(result);
-      } catch (e, st) {
-        Fimber.e(
-            "Error fetching remote version info for ${task.modVariant.modInfo.id}: $e\n$st");
-        final errorResult = RemoteVersionCheckResult(null, null)
-          ..smolId = task.modVariant.smolId
-          ..error = e;
-        _updateCache(errorResult);
-      }
-    }).toList();
+    final futures =
+        tasks.where((task) => !task.wasCached).map((task) async {
+          try {
+            final result = await task.future;
+            Fimber.v(
+              () =>
+                  "Caching remote version info for ${task.modVariant.modInfo.id}: $result",
+            );
+            _updateCache(result);
+          } catch (e, st) {
+            Fimber.e(
+              "Error fetching remote version info for ${task.modVariant.modInfo.id}: $e\n$st",
+            );
+            final errorResult =
+                RemoteVersionCheckResult(null, null)
+                  ..smolId = task.modVariant.smolId
+                  ..error = e;
+            _updateCache(errorResult);
+          }
+        }).toList();
 
     await Future.wait(futures);
   }
@@ -177,12 +200,14 @@ class VersionCheckerAsyncProvider
     await _cacheLock.protect(() async {
       _versionCheckResultsCache[result.smolId!] = result;
       await updateState(
-          (s) => _updateStateWithCache(_versionCheckResultsCache));
+        (s) => _updateStateWithCache(_versionCheckResultsCache),
+      );
     });
   }
 
   VersionCheckerState _updateStateWithCache(
-          Map<String, RemoteVersionCheckResult> versionCheckResultsCache) =>
+    Map<String, RemoteVersionCheckResult> versionCheckResultsCache,
+  ) =>
       state.valueOrNull?.copyWith(
         versionCheckResultsBySmolId: versionCheckResultsCache,
       ) ??
@@ -212,7 +237,7 @@ class RemoteVersionCheckResult with RemoteVersionCheckResultMappable {
   final DateTime timestamp;
 
   RemoteVersionCheckResult(this.remoteVersion, this.uri, {DateTime? timestamp})
-      : timestamp = timestamp ?? DateTime.now();
+    : timestamp = timestamp ?? DateTime.now();
 
   @override
   String toString() =>
@@ -246,9 +271,7 @@ Future<RemoteVersionCheckResult> checkRemoteVersion(
     // TODO https://bitbucket.org/niatahl/trailer-moments/downloads/trailermoments.version doesn't work
     final response = await httpClient.get(
       fixedUrl,
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: {'Content-Type': 'application/json'},
       allowSelfSignedCertificates: true,
     );
 
@@ -261,11 +284,13 @@ Future<RemoteVersionCheckResult> checkRemoteVersion(
     final String body = data;
     if (response.statusCode == 200) {
       return RemoteVersionCheckResult(
-          VersionCheckerInfoMapper.fromJson(body.fixJson()), remoteVersionUrl)
-        ..smolId = modVariant.smolId;
+        VersionCheckerInfoMapper.fromJson(body.fixJson()),
+        remoteVersionUrl,
+      )..smolId = modVariant.smolId;
     } else {
       throw Exception(
-          "Failed to fetch remote version info for ${modVariant.modInfo.id}: ${response.statusCode} - $body");
+        "Failed to fetch remote version info for ${modVariant.modInfo.id}: ${response.statusCode} - $body",
+      );
     }
   } catch (e, st) {
     Fimber.w("Error fetching remote version info for ${modVariant.modInfo.id}");
@@ -278,13 +303,15 @@ Future<RemoteVersionCheckResult> checkRemoteVersion(
 
 /// User linked to the page for their version file on GitHub instead of to the raw file.
 final _githubFilePageRegex = RegExp(
-    r"https://github.com/.+/blob/.+/assets/.+.version",
-    caseSensitive: false);
+  r"https://github.com/.+/blob/.+/assets/.+.version",
+  caseSensitive: false,
+);
 
 /// User set dl=0 instead of dl=1 when hosted on Dropbox.
 final _dropboxDlPageRegex = RegExp(
-    r"https://www.dropbox.com/s/.+/.+.version\?dl=0",
-    caseSensitive: false);
+  r"https://www.dropbox.com/s/.+/.+.version\?dl=0",
+  caseSensitive: false,
+);
 
 String fixUrl(String urlString) {
   if (_githubFilePageRegex.hasMatch(urlString)) {

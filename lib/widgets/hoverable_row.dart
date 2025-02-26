@@ -49,17 +49,19 @@ class _HoverableRowState extends State<HoverableRow> {
           _isHovering = false;
         });
       },
-      cursor: widget.onTap != null
-          ? SystemMouseCursors.click
-          : SystemMouseCursors.basic,
+      cursor:
+          widget.onTap != null
+              ? SystemMouseCursors.click
+              : SystemMouseCursors.basic,
       child: GestureDetector(
         onTap: widget.onTap,
         behavior: HitTestBehavior.translucent,
         child: Container(
           decoration: BoxDecoration(
-            color: _isHovering
-                ? widget.hoverColor ?? Colors.black.withOpacity(0.2)
-                : Colors.transparent,
+            color:
+                _isHovering
+                    ? widget.hoverColor ?? Colors.black.withOpacity(0.2)
+                    : Colors.transparent,
             borderRadius: widget.borderRadius,
           ),
           padding: widget.padding,
@@ -73,12 +75,10 @@ class _HoverableRowState extends State<HoverableRow> {
             verticalDirection:
                 widget.verticalDirection ?? VerticalDirection.down,
             spacing: widget.spacing ?? 0.0,
-            children: widget.children.map((child) {
-              return HoverData(
-                isHovering: _isHovering,
-                child: child,
-              );
-            }).toList(),
+            children:
+                widget.children.map((child) {
+                  return HoverData(isHovering: _isHovering, child: child);
+                }).toList(),
           ),
         ),
       ),

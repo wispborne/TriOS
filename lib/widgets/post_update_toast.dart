@@ -31,38 +31,47 @@ class PostUpdateToast extends ConsumerWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
             border: Border.all(
-                color:
-                    Theme.of(context).colorScheme.onSurface.withOpacity(0.15),
-                width: 1),
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.15),
+              width: 1,
+            ),
           ),
           child: Row(
             children: [
               Padding(
                 padding: const EdgeInsets.only(right: 16),
                 child: SizedBox(
-                    width: 40,
-                    height: 40,
-                    child: const TriOSAppIcon()),
+                  width: 40,
+                  height: 40,
+                  child: const TriOSAppIcon(),
+                ),
               ),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                        "${Constants.appName} was updated to ${Constants.version}!",
-                        style: Theme.of(context).textTheme.labelLarge),
+                      "${Constants.appName} was updated to ${Constants.version}!",
+                      style: Theme.of(context).textTheme.labelLarge,
+                    ),
                     Row(
                       children: [
                         Spacer(),
                         Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: ElevatedButton.icon(
-                              onPressed: () => showTriOSChangelogDialog(context,
-                                  lastestVersionToShow: Version.parse(Constants.version, sanitizeInput: false)),
-                              icon: const SvgImageIcon(
-                                "assets/images/icon-bullhorn-variant.svg",
-                              ),
-                              label: const Text("View Changelog")),
+                            onPressed:
+                                () => showTriOSChangelogDialog(
+                                  context,
+                                  lastestVersionToShow: Version.parse(
+                                    Constants.version,
+                                    sanitizeInput: false,
+                                  ),
+                                ),
+                            icon: const SvgImageIcon(
+                              "assets/images/icon-bullhorn-variant.svg",
+                            ),
+                            label: const Text("View Changelog"),
+                          ),
                         ),
                       ],
                     ),

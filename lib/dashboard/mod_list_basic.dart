@@ -45,22 +45,29 @@ class _ModListMiniState extends ConsumerState<ModListMini>
   @override
   Widget build(BuildContext context) {
     final fullModList = ref.watch(AppState.mods);
-    final enabledModIds = ref
-        .watch(AppState.enabledModsFile)
-        .valueOrNull
-        ?.filterOutMissingMods(fullModList)
-        .enabledMods;
+    final enabledModIds =
+        ref
+            .watch(AppState.enabledModsFile)
+            .valueOrNull
+            ?.filterOutMissingMods(fullModList)
+            .enabledMods;
     final modVariants = ref.watch(AppState.modVariants);
     final query = ref.watch(_searchQuery);
 
-    List<Mod> filteredModList = fullModList
-        .let((mods) => hideDisabled
-            ? mods
-                .where((mod) => !hideDisabled || mod.hasEnabledVariant)
-                .toList()
-            : mods)
-        .let((mods) => query.isEmpty ? mods : searchMods(mods, query) ?? [])
-        .sortedByName;
+    List<Mod> filteredModList =
+        fullModList
+            .let(
+              (mods) =>
+                  hideDisabled
+                      ? mods
+                          .where(
+                            (mod) => !hideDisabled || mod.hasEnabledVariant,
+                          )
+                          .toList()
+                      : mods,
+            )
+            .let((mods) => query.isEmpty ? mods : searchMods(mods, query) ?? [])
+            .sortedByName;
 
     final versionCheck = ref.watch(AppState.versionCheckResults).valueOrNull;
     final theme = Theme.of(context);
@@ -81,17 +88,18 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text("Mods",
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleLarge
-                                    ?.copyWith(fontSize: 20)),
+                            Text(
+                              "Mods",
+                              style: Theme.of(
+                                context,
+                              ).textTheme.titleLarge?.copyWith(fontSize: 20),
+                            ),
                             Padding(
                               padding: const EdgeInsets.only(left: 0),
                               child: Text(
-                                  "${enabledModIds?.length ?? 0} of ${fullModList.length} enabled",
-                                  style:
-                                      Theme.of(context).textTheme.labelMedium),
+                                "${enabledModIds?.length ?? 0} of ${fullModList.length} enabled",
+                                style: Theme.of(context).textTheme.labelMedium,
+                              ),
                             ),
                           ],
                         ),
@@ -107,8 +115,9 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                   const RefreshModsButton(
                                     iconOnly: true,
                                     isRefreshing: false,
-                                    padding:
-                                        EdgeInsets.symmetric(horizontal: 4),
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 4,
+                                    ),
                                   ),
                                   MovingTooltipWidget.text(
                                     message:
@@ -116,26 +125,32 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                     child: GestureDetector(
                                       onSecondaryTap: () {
                                         copyModListToClipboardFromMods(
-                                            fullModList, context);
+                                          fullModList,
+                                          context,
+                                        );
                                       },
                                       child: IconButton(
                                         icon: const Icon(Icons.copy),
                                         iconSize: 20,
                                         constraints: const BoxConstraints(),
                                         padding: const EdgeInsets.symmetric(
-                                            horizontal: 4),
+                                          horizontal: 4,
+                                        ),
                                         onPressed: () {
                                           copyModListToClipboardFromIds(
-                                              enabledModIds,
-                                              filteredModList,
-                                              context);
+                                            enabledModIds,
+                                            filteredModList,
+                                            context,
+                                          );
                                         },
                                       ),
                                     ),
                                   ),
                                   const AddNewModsButton(
-                                      padding:
-                                          EdgeInsets.symmetric(horizontal: 4)),
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 4,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ],
@@ -144,13 +159,17 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                       ],
                     ),
                     Padding(
-                      padding:
-                          const EdgeInsets.only(top: 8, bottom: 4, right: 4),
+                      padding: const EdgeInsets.only(
+                        top: 8,
+                        bottom: 4,
+                        right: 4,
+                      ),
                       child: SizedBox(
                         height: 30,
                         child: ModListBasicSearch(
-                            searchController: _searchController,
-                            query: query),
+                          searchController: _searchController,
+                          query: query,
+                        ),
                       ),
                     ),
                     Padding(
@@ -169,8 +188,10 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                               },
                               checkboxScale: 0.8,
                               textPadding: const EdgeInsets.all(0),
-                              labelWidget: Text("Hide Disabled",
-                                  style: theme.textTheme.labelMedium),
+                              labelWidget: Text(
+                                "Hide Disabled",
+                                style: theme.textTheme.labelMedium,
+                              ),
                             ),
                           ),
                           SizedBox(
@@ -179,25 +200,36 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                               message:
                                   "When checked, updating an enabled mod switches to the new version.",
                               child: CheckboxWithLabel(
-                                value: ref.watch(appSettings
-                                        .select((s) => s.modUpdateBehavior)) ==
+                                value:
+                                    ref.watch(
+                                      appSettings.select(
+                                        (s) => s.modUpdateBehavior,
+                                      ),
+                                    ) ==
                                     ModUpdateBehavior
                                         .switchToNewVersionIfWasEnabled,
                                 onChanged: (newValue) {
                                   setState(() {
-                                    ref.read(appSettings.notifier).update((s) =>
-                                        s.copyWith(
-                                            modUpdateBehavior: newValue == true
-                                                ? ModUpdateBehavior
-                                                    .switchToNewVersionIfWasEnabled
-                                                : ModUpdateBehavior
-                                                    .doNotChange));
+                                    ref
+                                        .read(appSettings.notifier)
+                                        .update(
+                                          (s) => s.copyWith(
+                                            modUpdateBehavior:
+                                                newValue == true
+                                                    ? ModUpdateBehavior
+                                                        .switchToNewVersionIfWasEnabled
+                                                    : ModUpdateBehavior
+                                                        .doNotChange,
+                                          ),
+                                        );
                                   });
                                 },
                                 checkboxScale: 0.8,
                                 textPadding: const EdgeInsets.all(0),
-                                labelWidget: Text("Swap on Update",
-                                    style: theme.textTheme.labelMedium),
+                                labelWidget: Text(
+                                  "Swap on Update",
+                                  style: theme.textTheme.labelMedium,
+                                ),
                               ),
                             ),
                           ),
@@ -212,13 +244,16 @@ class _ModListMiniState extends ConsumerState<ModListMini>
           Expanded(
             child: modVariants.when(
               data: (_) {
-                final dashboardGridModUpdateVisibility = ref.watch(appSettings
-                    .select((s) => s.dashboardGridModUpdateVisibility));
-                final isUpdatesFieldShown = dashboardGridModUpdateVisibility !=
+                final dashboardGridModUpdateVisibility = ref.watch(
+                  appSettings.select((s) => s.dashboardGridModUpdateVisibility),
+                );
+                final isUpdatesFieldShown =
+                    dashboardGridModUpdateVisibility !=
                     DashboardGridModUpdateVisibility.hideAll;
                 final modsMetadata =
                     ref.watch(AppState.modsMetadata).valueOrNull;
-                final modsWithUpdates = <Mod?>[null] +
+                final modsWithUpdates =
+                    <Mod?>[null] +
                     filteredModList
                         .map((e) => e as Mod?)
                         .where((mod) {
@@ -237,26 +272,30 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                         })
                         .toList()
                         .sortedByName;
-                final mutedModsWithUpdates = modsMetadata == null
-                    ? <Mod?>[]
-                    : modsWithUpdates
-                        .where((mod) =>
-                            mod != null &&
-                            modsMetadata
-                                    .getMergedModMetadata(mod.id)
-                                    ?.areUpdatesMuted ==
-                                true)
-                        .toList();
+                final mutedModsWithUpdates =
+                    modsMetadata == null
+                        ? <Mod?>[]
+                        : modsWithUpdates
+                            .where(
+                              (mod) =>
+                                  mod != null &&
+                                  modsMetadata
+                                          .getMergedModMetadata(mod.id)
+                                          ?.areUpdatesMuted ==
+                                      true,
+                            )
+                            .toList();
 
                 final updatesToDisplay =
                     switch (dashboardGridModUpdateVisibility) {
-                  DashboardGridModUpdateVisibility.allVisible =>
-                    modsWithUpdates,
-                  DashboardGridModUpdateVisibility.hideMuted =>
-                    modsWithUpdates - mutedModsWithUpdates,
-                  DashboardGridModUpdateVisibility.hideAll => <Mod?>[null],
-                };
-                final listItems = updatesToDisplay +
+                      DashboardGridModUpdateVisibility.allVisible =>
+                        modsWithUpdates,
+                      DashboardGridModUpdateVisibility.hideMuted =>
+                        modsWithUpdates - mutedModsWithUpdates,
+                      DashboardGridModUpdateVisibility.hideAll => <Mod?>[null],
+                    };
+                final listItems =
+                    updatesToDisplay +
                     (modsWithUpdates.isEmpty ? [] : [null]) +
                     (filteredModList.sortedByName.toList());
                 final isGameRunning =
@@ -272,113 +311,133 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                         showTrackOnHover: true,
                         child: DisableIfCannotWriteMods(
                           child: ListView.builder(
-                              controller: _scrollController,
-                              itemCount: listItems.length, // UPDATES title
-                              itemBuilder: (context, index) {
-                                if (index == 0 &&
-                                    modsWithUpdates.nonNulls.isNotEmpty) {
-                                  return Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        const Divider(),
-                                        Padding(
-                                          padding:
-                                              const EdgeInsets.only(right: 8),
-                                          child: Row(children: [
-                                            UpdatesHeader(
-                                                dashboardGridModUpdateVisibility:
-                                                    dashboardGridModUpdateVisibility,
-                                                updatesToDisplay:
-                                                    updatesToDisplay,
-                                                mutedModsWithUpdates:
-                                                    mutedModsWithUpdates,
-                                                modsWithUpdates:
-                                                    modsWithUpdates),
-                                            ChangeUpdateVisibilityEyeView(
-                                                dashboardGridModUpdateVisibility:
-                                                    dashboardGridModUpdateVisibility,
-                                                theme: theme),
-                                            const Spacer(),
-                                            MovingTooltipWidget.text(
-                                                message: isGameRunning
+                            controller: _scrollController,
+                            itemCount: listItems.length, // UPDATES title
+                            itemBuilder: (context, index) {
+                              if (index == 0 &&
+                                  modsWithUpdates.nonNulls.isNotEmpty) {
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Divider(),
+                                    Padding(
+                                      padding: const EdgeInsets.only(right: 8),
+                                      child: Row(
+                                        children: [
+                                          UpdatesHeader(
+                                            dashboardGridModUpdateVisibility:
+                                                dashboardGridModUpdateVisibility,
+                                            updatesToDisplay: updatesToDisplay,
+                                            mutedModsWithUpdates:
+                                                mutedModsWithUpdates,
+                                            modsWithUpdates: modsWithUpdates,
+                                          ),
+                                          ChangeUpdateVisibilityEyeView(
+                                            dashboardGridModUpdateVisibility:
+                                                dashboardGridModUpdateVisibility,
+                                            theme: theme,
+                                          ),
+                                          const Spacer(),
+                                          MovingTooltipWidget.text(
+                                            message:
+                                                isGameRunning
                                                     ? "Game is running"
                                                     : "Download all ${modsWithUpdates.nonNulls.length} updates",
-                                                child: Disable(
-                                                    isEnabled: !isGameRunning,
-                                                    child: SizedBox(
-                                                        child: TextButton.icon(
-                                                            label: const Text(
-                                                                "Update All"),
-                                                            onPressed: () {
-                                                              _onClickedDownloadModUpdatesDialog(
-                                                                  modsWithUpdates,
-                                                                  versionCheck,
-                                                                  context);
-                                                            },
-                                                            icon: Icon(
-                                                                Icons.update,
-                                                                size: 24,
-                                                                color: Theme.of(
-                                                                        context)
-                                                                    .colorScheme
-                                                                    .primary)))))
-                                          ]),
-                                        ),
-                                      ]);
-                                }
-                                final mod = listItems[index];
-
-                                // Hide the second "ALL MODS" title if there are no updates.
-                                // Definitely a hack. Proper fix would be to change `listItems`
-                                // to a container/viewmodel instead of mods.
-                                if (updatesToDisplay.nonNulls.isEmpty &&
-                                    mod == null &&
-                                    index == 1) {
-                                  return Container();
-                                }
-
-                                if (mod == null) {
-                                  return Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        const Divider(),
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                              bottom: 4.0),
-                                          child: Row(
-                                            children: [
-                                              Text("ALL MODS",
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .labelMedium),
-                                            ],
+                                            child: Disable(
+                                              isEnabled: !isGameRunning,
+                                              child: SizedBox(
+                                                child: TextButton.icon(
+                                                  label: const Text(
+                                                    "Update All",
+                                                  ),
+                                                  onPressed: () {
+                                                    _onClickedDownloadModUpdatesDialog(
+                                                      modsWithUpdates,
+                                                      versionCheck,
+                                                      context,
+                                                    );
+                                                  },
+                                                  icon: Icon(
+                                                    Icons.update,
+                                                    size: 24,
+                                                    color:
+                                                        Theme.of(
+                                                          context,
+                                                        ).colorScheme.primary,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
                                           ),
-                                        ),
-                                      ]);
-                                }
-
-                                return ContextMenuRegion(
-                                  contextMenu:
-                                      buildModContextMenu(mod, ref, context),
-                                  child: ModListBasicEntry(
-                                    mod: mod,
-                                    isDisabled: isGameRunning,
-                                  ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
                                 );
-                              }),
+                              }
+                              final mod = listItems[index];
+
+                              // Hide the second "ALL MODS" title if there are no updates.
+                              // Definitely a hack. Proper fix would be to change `listItems`
+                              // to a container/viewmodel instead of mods.
+                              if (updatesToDisplay.nonNulls.isEmpty &&
+                                  mod == null &&
+                                  index == 1) {
+                                return Container();
+                              }
+
+                              if (mod == null) {
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Divider(),
+                                    Padding(
+                                      padding: const EdgeInsets.only(
+                                        bottom: 4.0,
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Text(
+                                            "ALL MODS",
+                                            style:
+                                                Theme.of(
+                                                  context,
+                                                ).textTheme.labelMedium,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              }
+
+                              return ContextMenuRegion(
+                                contextMenu: buildModContextMenu(
+                                  mod,
+                                  ref,
+                                  context,
+                                ),
+                                child: ModListBasicEntry(
+                                  mod: mod,
+                                  isDisabled: isGameRunning,
+                                ),
+                              );
+                            },
+                          ),
                         ),
                       ),
                     ),
                   ],
                 );
               },
-              loading: () => const Center(
-                  child: SizedBox(
+              loading:
+                  () => const Center(
+                    child: SizedBox(
                       width: 48,
                       height: 48,
-                      child: CircularProgressIndicator())),
+                      child: CircularProgressIndicator(),
+                    ),
+                  ),
               error: (error, stackTrace) => Text('Error: $error'),
             ),
           ),
@@ -387,8 +446,11 @@ class _ModListMiniState extends ConsumerState<ModListMini>
     );
   }
 
-  void _onClickedDownloadModUpdatesDialog(List<Mod?> modsWithUpdates,
-      VersionCheckerState? versionCheck, BuildContext context) {
+  void _onClickedDownloadModUpdatesDialog(
+    List<Mod?> modsWithUpdates,
+    VersionCheckerState? versionCheck,
+    BuildContext context,
+  ) {
     downloadUpdates() {
       for (var mod in modsWithUpdates) {
         if (mod == null) continue;
@@ -396,7 +458,9 @@ class _ModListMiniState extends ConsumerState<ModListMini>
         final remoteVersionCheck =
             versionCheck?.versionCheckResultsBySmolId[variant.smolId];
         if (remoteVersionCheck?.remoteVersion != null) {
-          ref.read(downloadManager.notifier).downloadUpdateViaBrowser(
+          ref
+              .read(downloadManager.notifier)
+              .downloadUpdateViaBrowser(
                 remoteVersionCheck!.remoteVersion!,
                 activateVariantOnComplete: false,
                 modInfo: variant.modInfo,
@@ -410,27 +474,31 @@ class _ModListMiniState extends ConsumerState<ModListMini>
       downloadUpdates();
     } else {
       showDialog(
-          context: context,
-          builder: (context) {
-            return AlertDialog(
-              title: const Text("Are you sure?"),
-              content: Text(
-                  "Download updates for ${modsWithUpdates.whereType<Mod>().length} mods?"),
-              actions: [
-                TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: const Text("Cancel")),
-                TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      downloadUpdates();
-                    },
-                    child: const Text("Download")),
-              ],
-            );
-          });
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text("Are you sure?"),
+            content: Text(
+              "Download updates for ${modsWithUpdates.whereType<Mod>().length} mods?",
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text("Cancel"),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  downloadUpdates();
+                },
+                child: const Text("Download"),
+              ),
+            ],
+          );
+        },
+      );
     }
   }
 }
@@ -451,27 +519,29 @@ class ModListBasicSearch extends ConsumerWidget {
       searchController: searchController,
       builder: (BuildContext context, SearchController controller) {
         return SearchBar(
-            controller: controller,
-            leading: const Icon(Icons.search),
-            hintText: "Filter...",
-            trailing: [
-              query.isEmpty
-                  ? Container()
-                  : IconButton(
-                      icon: const Icon(Icons.clear),
-                      constraints: const BoxConstraints(),
-                      padding: EdgeInsets.zero,
-                      onPressed: () {
-                        controller.clear();
-                        ref.read(_searchQuery.notifier).state = "";
-                      },
-                    )
-            ],
-            backgroundColor: WidgetStateProperty.all(
-                Theme.of(context).colorScheme.surfaceContainer),
-            onChanged: (value) {
-              ref.read(_searchQuery.notifier).state = value;
-            });
+          controller: controller,
+          leading: const Icon(Icons.search),
+          hintText: "Filter...",
+          trailing: [
+            query.isEmpty
+                ? Container()
+                : IconButton(
+                  icon: const Icon(Icons.clear),
+                  constraints: const BoxConstraints(),
+                  padding: EdgeInsets.zero,
+                  onPressed: () {
+                    controller.clear();
+                    ref.read(_searchQuery.notifier).state = "";
+                  },
+                ),
+          ],
+          backgroundColor: WidgetStateProperty.all(
+            Theme.of(context).colorScheme.surfaceContainer,
+          ),
+          onChanged: (value) {
+            ref.read(_searchQuery.notifier).state = value;
+          },
+        );
       },
       suggestionsBuilder: (BuildContext context, SearchController controller) {
         return [];
@@ -493,37 +563,42 @@ class ChangeUpdateVisibilityEyeView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return IconButton(
-        onPressed: () => ref.read(appSettings.notifier).update((s) =>
-            s.copyWith(
-                dashboardGridModUpdateVisibility: switch (
-                    s.dashboardGridModUpdateVisibility) {
-              DashboardGridModUpdateVisibility.allVisible =>
-                DashboardGridModUpdateVisibility.hideMuted,
-              DashboardGridModUpdateVisibility.hideMuted =>
-                DashboardGridModUpdateVisibility.hideAll,
-              DashboardGridModUpdateVisibility.hideAll =>
-                DashboardGridModUpdateVisibility.allVisible
-            })),
-        constraints: const BoxConstraints(),
-        icon: MovingTooltipWidget.text(
-            message: switch (dashboardGridModUpdateVisibility) {
-              DashboardGridModUpdateVisibility.allVisible =>
-                "Showing all updates",
-              DashboardGridModUpdateVisibility.hideMuted =>
-                "Showing unmuted updates",
-              DashboardGridModUpdateVisibility.hideAll => "Updates hidden"
-            },
-            child: Icon(
-                switch (dashboardGridModUpdateVisibility) {
-                  DashboardGridModUpdateVisibility.allVisible =>
-                    Icons.visibility_outlined,
-                  DashboardGridModUpdateVisibility.hideMuted =>
-                    Icons.visibility,
-                  DashboardGridModUpdateVisibility.hideAll =>
-                    Icons.visibility_off
-                },
-                size: 15,
-                color: theme.colorScheme.onSurface)));
+      onPressed:
+          () => ref
+              .read(appSettings.notifier)
+              .update(
+                (s) => s.copyWith(
+                  dashboardGridModUpdateVisibility: switch (s
+                      .dashboardGridModUpdateVisibility) {
+                    DashboardGridModUpdateVisibility.allVisible =>
+                      DashboardGridModUpdateVisibility.hideMuted,
+                    DashboardGridModUpdateVisibility.hideMuted =>
+                      DashboardGridModUpdateVisibility.hideAll,
+                    DashboardGridModUpdateVisibility.hideAll =>
+                      DashboardGridModUpdateVisibility.allVisible,
+                  },
+                ),
+              ),
+      constraints: const BoxConstraints(),
+      icon: MovingTooltipWidget.text(
+        message: switch (dashboardGridModUpdateVisibility) {
+          DashboardGridModUpdateVisibility.allVisible => "Showing all updates",
+          DashboardGridModUpdateVisibility.hideMuted =>
+            "Showing unmuted updates",
+          DashboardGridModUpdateVisibility.hideAll => "Updates hidden",
+        },
+        child: Icon(
+          switch (dashboardGridModUpdateVisibility) {
+            DashboardGridModUpdateVisibility.allVisible =>
+              Icons.visibility_outlined,
+            DashboardGridModUpdateVisibility.hideMuted => Icons.visibility,
+            DashboardGridModUpdateVisibility.hideAll => Icons.visibility_off,
+          },
+          size: 15,
+          color: theme.colorScheme.onSurface,
+        ),
+      ),
+    );
   }
 }
 
@@ -545,39 +620,57 @@ class UpdatesHeader extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return switch (dashboardGridModUpdateVisibility) {
       DashboardGridModUpdateVisibility.allVisible => Text(
-          "ALL UPDATES (${updatesToDisplay.nonNulls.length})",
-          style: Theme.of(context).textTheme.labelMedium),
-      DashboardGridModUpdateVisibility.hideMuted =>
-        Row(mainAxisSize: MainAxisSize.min, children: [
-          Text("UPDATES (${updatesToDisplay.nonNulls.length}",
-              style: Theme.of(context).textTheme.labelMedium),
-          if (mutedModsWithUpdates.isNotEmpty) ...[
-            Text(" + ${mutedModsWithUpdates.nonNulls.length} ",
-                style: Theme.of(context).textTheme.labelMedium),
-            MovingTooltipWidget.text(
-              message: "Muted updates",
-              child: Icon(Icons.notifications_off,
-                  size: 14, color: Theme.of(context).iconTheme.color),
-            )
-          ],
-          Text(")", style: Theme.of(context).textTheme.labelMedium)
-        ]),
-      DashboardGridModUpdateVisibility.hideAll =>
-        Row(mainAxisSize: MainAxisSize.min, children: [
+        "ALL UPDATES (${updatesToDisplay.nonNulls.length})",
+        style: Theme.of(context).textTheme.labelMedium,
+      ),
+      DashboardGridModUpdateVisibility.hideMuted => Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
           Text(
-              "${(modsWithUpdates - mutedModsWithUpdates).nonNulls.length} hidden updates",
-              style: Theme.of(context).textTheme.labelMedium),
+            "UPDATES (${updatesToDisplay.nonNulls.length}",
+            style: Theme.of(context).textTheme.labelMedium,
+          ),
           if (mutedModsWithUpdates.isNotEmpty) ...[
-            Text(" (+ ${mutedModsWithUpdates.nonNulls.length} ",
-                style: Theme.of(context).textTheme.labelMedium),
+            Text(
+              " + ${mutedModsWithUpdates.nonNulls.length} ",
+              style: Theme.of(context).textTheme.labelMedium,
+            ),
             MovingTooltipWidget.text(
               message: "Muted updates",
-              child: Icon(Icons.notifications_off,
-                  size: 14, color: Theme.of(context).iconTheme.color),
+              child: Icon(
+                Icons.notifications_off,
+                size: 14,
+                color: Theme.of(context).iconTheme.color,
+              ),
             ),
-            Text(")", style: Theme.of(context).textTheme.labelMedium)
-          ]
-        ])
+          ],
+          Text(")", style: Theme.of(context).textTheme.labelMedium),
+        ],
+      ),
+      DashboardGridModUpdateVisibility.hideAll => Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            "${(modsWithUpdates - mutedModsWithUpdates).nonNulls.length} hidden updates",
+            style: Theme.of(context).textTheme.labelMedium,
+          ),
+          if (mutedModsWithUpdates.isNotEmpty) ...[
+            Text(
+              " (+ ${mutedModsWithUpdates.nonNulls.length} ",
+              style: Theme.of(context).textTheme.labelMedium,
+            ),
+            MovingTooltipWidget.text(
+              message: "Muted updates",
+              child: Icon(
+                Icons.notifications_off,
+                size: 14,
+                color: Theme.of(context).iconTheme.color,
+              ),
+            ),
+            Text(")", style: Theme.of(context).textTheme.labelMedium),
+          ],
+        ],
+      ),
     };
   }
 }

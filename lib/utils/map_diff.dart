@@ -8,11 +8,7 @@ class MapDiff<K, V> {
   final Map<K, V> removed;
   final Map<K, MapEntry<V, V>> modified;
 
-  MapDiff({
-    required this.added,
-    required this.removed,
-    required this.modified,
-  });
+  MapDiff({required this.added, required this.removed, required this.modified});
 
   bool get hasChanged =>
       added.isNotEmpty || removed.isNotEmpty || modified.isNotEmpty;
@@ -45,11 +41,7 @@ class MapComparer<K, V> {
       }
     });
 
-    return MapDiff(
-      added: added,
-      removed: removed,
-      modified: modified,
-    );
+    return MapDiff(added: added, removed: removed, modified: modified);
   }
 }
 
@@ -81,11 +73,7 @@ extension MapComparison<K, V> on Map<K, V> {
       }
     });
 
-    return MapDiff(
-      added: added,
-      removed: removed,
-      modified: modified,
-    );
+    return MapDiff(added: added, removed: removed, modified: modified);
   }
 }
 

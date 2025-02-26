@@ -4,11 +4,7 @@ class SimpleDataRow extends StatelessWidget {
   final String label;
   final String value;
 
-  const SimpleDataRow({
-    super.key,
-    required this.label,
-    required this.value,
-  });
+  const SimpleDataRow({super.key, required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -17,13 +13,15 @@ class SimpleDataRow extends StatelessWidget {
         style: Theme.of(context).textTheme.labelLarge,
         children: [
           TextSpan(
-              text: label, style: const TextStyle(fontWeight: FontWeight.w100)),
+            text: label,
+            style: const TextStyle(fontWeight: FontWeight.w100),
+          ),
           TextSpan(
-              text: value,
-              style: Theme.of(context)
-                  .textTheme
-                  .labelLarge
-                  ?.copyWith(fontWeight: FontWeight.bold)),
+            text: value,
+            style: Theme.of(
+              context,
+            ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
+          ),
         ],
       ),
     );

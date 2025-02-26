@@ -72,8 +72,9 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
                 child: MovingTooltipWidget.text(
                   message: "ಠ_ಠ",
                   child: IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.close)),
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close),
+                  ),
                 ),
               ),
               Column(
@@ -143,13 +144,15 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
                       labelText: 'Game Location',
                       hintText: 'Select your game directory',
                     ),
-                    validator: (value) =>
-                        value == null || !validateGameFolderPath(value)
-                            ? 'Game not found'
-                            : null,
-                    onChanged: (value) => setState(() {
-                      gameDirPath = value;
-                    }),
+                    validator:
+                        (value) =>
+                            value == null || !validateGameFolderPath(value)
+                                ? 'Game not found'
+                                : null,
+                    onChanged:
+                        (value) => setState(() {
+                          gameDirPath = value;
+                        }),
                     onSaved: (value) => gameDirPath = value,
                   ),
                 ),
@@ -182,13 +185,18 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text("2. How do you want to handle mod updates?",
-                          style: TextStyle(fontWeight: FontWeight.bold)),
                       Text(
-                          "This will only affect your mods when you update them.",
-                          style: TextStyle(fontSize: 12)),
-                      Text("No mods will be affected immediately.",
-                          style: TextStyle(fontSize: 12)),
+                        "2. How do you want to handle mod updates?",
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        "This will only affect your mods when you update them.",
+                        style: TextStyle(fontSize: 12),
+                      ),
+                      Text(
+                        "No mods will be affected immediately.",
+                        style: TextStyle(fontSize: 12),
+                      ),
                     ],
                   ),
                 ],
@@ -202,25 +210,28 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
                 title: const Text("Keep only one mod version"),
                 value: false,
                 groupValue: enableMultipleVersions,
-                onChanged: (value) => setState(() {
-                  enableMultipleVersions = value!;
-                }),
+                onChanged:
+                    (value) => setState(() {
+                      enableMultipleVersions = value!;
+                    }),
               ),
             ),
             Row(
               children: [
                 IntrinsicWidth(
                   child: MovingTooltipWidget.text(
-                    message: lastNVersionsSetting == null
-                        ? "TriOS will never automatically remove mod versions."
-                        : "Installing or updating a mod will remove all but the last $lastNVersionsSetting highest versions.",
+                    message:
+                        lastNVersionsSetting == null
+                            ? "TriOS will never automatically remove mod versions."
+                            : "Installing or updating a mod will remove all but the last $lastNVersionsSetting highest versions.",
                     child: RadioListTile(
                       title: const Text("Keep all mod versions"),
                       value: true,
                       groupValue: enableMultipleVersions,
-                      onChanged: (value) => setState(() {
-                        enableMultipleVersions = value!;
-                      }),
+                      onChanged:
+                          (value) => setState(() {
+                            enableMultipleVersions = value!;
+                          }),
                     ),
                   ),
                 ),
@@ -237,7 +248,9 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
                             for (int i = 2; i <= 10; i++)
                               DropdownMenuItem(value: i, child: Text(" $i")),
                             const DropdownMenuItem(
-                                value: null, child: Text(" ∞")),
+                              value: null,
+                              child: Text(" ∞"),
+                            ),
                           ],
                           onChanged: (value) {
                             setState(() {
@@ -330,39 +343,46 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
   Widget _buildMacOSPage() {
     return Padding(
       padding: const EdgeInsets.all(16.0),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Transform.translate(
-            offset: const Offset(-12, 0), child: Icon(Icons.apple, size: 72)),
-        Text("MacOS-only Instructions",
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-        const SizedBox(height: 8),
-        Text("Required for self-update, mod updates & mod installs.",
-            style: TextStyle(fontStyle: FontStyle.italic)),
-        const SizedBox(height: 16),
-        Text("1. Open the Terminal app."),
-        const SizedBox(height: 8),
-        Text("2. Paste into Terminal to install Homebrew: "),
-        Padding(
-          padding: const EdgeInsets.only(left: 16),
-          child: Code(
-            showCopyButton: true,
-            child: SelectableText(
-              '/bin/bash -c "\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Transform.translate(
+            offset: const Offset(-12, 0),
+            child: Icon(Icons.apple, size: 72),
+          ),
+          Text(
+            "MacOS-only Instructions",
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            "Required for self-update, mod updates & mod installs.",
+            style: TextStyle(fontStyle: FontStyle.italic),
+          ),
+          const SizedBox(height: 16),
+          Text("1. Open the Terminal app."),
+          const SizedBox(height: 8),
+          Text("2. Paste into Terminal to install Homebrew: "),
+          Padding(
+            padding: const EdgeInsets.only(left: 16),
+            child: Code(
+              showCopyButton: true,
+              child: SelectableText(
+                '/bin/bash -c "\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"',
+              ),
             ),
           ),
-        ),
-        const SizedBox(height: 8),
-        Text("3. Paste into Terminal to install compression libs: "),
-        Padding(
-          padding: const EdgeInsets.only(left: 16),
-          child: Code(
-            showCopyButton: true,
-            child: SelectableText(
-              "brew install xz zstd zlib",
+          const SizedBox(height: 8),
+          Text("3. Paste into Terminal to install compression libs: "),
+          Padding(
+            padding: const EdgeInsets.only(left: 16),
+            child: Code(
+              showCopyButton: true,
+              child: SelectableText("brew install xz zstd zlib"),
             ),
           ),
-        )
-      ]),
+        ],
+      ),
     );
   }
 
@@ -378,13 +398,11 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
                 Text(
                   "You can always change these on the Settings page later",
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        fontStyle: FontStyle.italic,
-                        color: Theme.of(context)
-                            .textTheme
-                            .labelSmall
-                            ?.color
-                            ?.withOpacity(0.7),
-                      ),
+                    fontStyle: FontStyle.italic,
+                    color: Theme.of(
+                      context,
+                    ).textTheme.labelSmall?.color?.withOpacity(0.7),
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Row(
@@ -423,31 +441,34 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
               )
             else
               const SizedBox(),
-            Builder(builder: (context) {
-              final isLast = _currentPage == totalPages - 1;
-              return SizedBox(
-                height: 8 * 5,
-                child: Disable(
-                  isEnabled: gameDirPath != null &&
-                      validateGameFolderPath(gameDirPath!),
-                  child: ElevatedButton.icon(
-                    icon: Icon(isLast ? Icons.check : Icons.arrow_forward),
-                    iconAlignment: IconAlignment.end,
-                    onPressed: () {
-                      if (!isLast) {
-                        _pageController.nextPage(
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
-                        );
-                      } else {
-                        _saveSettings(context);
-                      }
-                    },
-                    label: Text(isLast ? "Finish" : "Next"),
+            Builder(
+              builder: (context) {
+                final isLast = _currentPage == totalPages - 1;
+                return SizedBox(
+                  height: 8 * 5,
+                  child: Disable(
+                    isEnabled:
+                        gameDirPath != null &&
+                        validateGameFolderPath(gameDirPath!),
+                    child: ElevatedButton.icon(
+                      icon: Icon(isLast ? Icons.check : Icons.arrow_forward),
+                      iconAlignment: IconAlignment.end,
+                      onPressed: () {
+                        if (!isLast) {
+                          _pageController.nextPage(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOut,
+                          );
+                        } else {
+                          _saveSettings(context);
+                        }
+                      },
+                      label: Text(isLast ? "Finish" : "Next"),
+                    ),
                   ),
-                ),
-              );
-            }),
+                );
+              },
+            ),
           ],
         ),
       ],
@@ -456,13 +477,15 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
 
   void _saveSettings(BuildContext context) {
     final settings = ref.read(appSettings.notifier);
-    settings.update((state) => state.copyWith(
-          gameDir: gameDirPath != null ? Directory(gameDirPath!) : null,
-          modsDir:
-              generateModsFolderPath(gameDirPath!.toDirectory())?.toDirectory(),
-          keepLastNVersions: enableMultipleVersions ? lastNVersionsSetting : 1,
-          allowCrashReporting: allowCrashReporting,
-        ));
+    settings.update(
+      (state) => state.copyWith(
+        gameDir: gameDirPath != null ? Directory(gameDirPath!) : null,
+        modsDir:
+            generateModsFolderPath(gameDirPath!.toDirectory())?.toDirectory(),
+        keepLastNVersions: enableMultipleVersions ? lastNVersionsSetting : 1,
+        allowCrashReporting: allowCrashReporting,
+      ),
+    );
     RestartableApp.restartApp(context);
     Navigator.of(context).pop();
   }

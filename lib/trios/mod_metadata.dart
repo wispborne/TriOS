@@ -24,7 +24,8 @@ class ModMetadataStore extends GenericSettingsAsyncNotifier<ModsMetadata> {
     int timestamp = DateTime.now().millisecondsSinceEpoch;
     final settings = await super.build();
     Fimber.d(
-        "Read metadata in ${DateTime.now().millisecondsSinceEpoch - timestamp}ms.");
+      "Read metadata in ${DateTime.now().millisecondsSinceEpoch - timestamp}ms.",
+    );
     timestamp = DateTime.now().millisecondsSinceEpoch;
     bool isDirty = false;
 
@@ -45,17 +46,26 @@ class ModMetadataStore extends GenericSettingsAsyncNotifier<ModsMetadata> {
   // Create metadata for all mods and variants if they don't exist.
   // This sets the firstSeen timestamp to now.
   void _initializeMissingMetadata(
-      List<Mod> allMods, ModsMetadata settings, bool isDirty, int timestamp) {
+    List<Mod> allMods,
+    ModsMetadata settings,
+    bool isDirty,
+    int timestamp,
+  ) {
     for (final mod in allMods) {
       final baseMetadata = settings.baseMetadata[mod.id] ?? ModMetadata.empty();
-      final baseVariantMetadata = mod.modVariants
-          .map((variant) => MapEntry(
-              variant.smolId,
-              baseMetadata.variantsMetadata[variant.smolId] ??
-                  ModVariantMetadata.empty()))
-          .toMap();
-      final newModMetadata =
-          baseMetadata.copyWith(variantsMetadata: baseVariantMetadata);
+      final baseVariantMetadata =
+          mod.modVariants
+              .map(
+                (variant) => MapEntry(
+                  variant.smolId,
+                  baseMetadata.variantsMetadata[variant.smolId] ??
+                      ModVariantMetadata.empty(),
+                ),
+              )
+              .toMap();
+      final newModMetadata = baseMetadata.copyWith(
+        variantsMetadata: baseVariantMetadata,
+      );
 
       if (settings.baseMetadata[mod.id].hashCode != newModMetadata.hashCode) {
         settings.baseMetadata[mod.id] = newModMetadata;
@@ -64,7 +74,8 @@ class ModMetadataStore extends GenericSettingsAsyncNotifier<ModsMetadata> {
     }
 
     Fimber.d(
-        "Updated metadata in ${DateTime.now().millisecondsSinceEpoch - timestamp}ms.");
+      "Updated metadata in ${DateTime.now().millisecondsSinceEpoch - timestamp}ms.",
+    );
 
     if (isDirty) {
       settingsManager.scheduleWriteSettingsToDisk(settings);
@@ -83,51 +94,59 @@ class ModMetadataStore extends GenericSettingsAsyncNotifier<ModsMetadata> {
     return state.valueOrNull?.getMergedModVariantMetadata(modId, smolId);
   }
 
-  void updateModUserMetadata(String modId,
-      ModMetadata Function(ModMetadata oldMetadata) metadataUpdater) {
+  void updateModUserMetadata(
+    String modId,
+    ModMetadata Function(ModMetadata oldMetadata) metadataUpdater,
+  ) {
     final userMetadata = state.valueOrNull?.userMetadata.toMap() ?? {};
-    userMetadata[modId] =
-        metadataUpdater(userMetadata[modId] ?? ModMetadata.empty());
+    userMetadata[modId] = metadataUpdater(
+      userMetadata[modId] ?? ModMetadata.empty(),
+    );
     updateState((s) => s.copyWith(userMetadata: userMetadata));
   }
 
-  void updateModBaseMetadata(String modId,
-      ModMetadata Function(ModMetadata oldMetadata) metadataUpdater) {
+  void updateModBaseMetadata(
+    String modId,
+    ModMetadata Function(ModMetadata oldMetadata) metadataUpdater,
+  ) {
     final baseMetadata = state.valueOrNull?.baseMetadata.toMap() ?? {};
-    baseMetadata[modId] =
-        metadataUpdater(baseMetadata[modId] ?? ModMetadata.empty());
+    baseMetadata[modId] = metadataUpdater(
+      baseMetadata[modId] ?? ModMetadata.empty(),
+    );
     updateState((s) => s.copyWith(baseMetadata: baseMetadata));
   }
 
   void updateModVariantUserMetadata(
-      String modId,
-      String smolId,
-      ModVariantMetadata Function(ModVariantMetadata oldMetadata)
-          metadataUpdater) {
+    String modId,
+    String smolId,
+    ModVariantMetadata Function(ModVariantMetadata oldMetadata) metadataUpdater,
+  ) {
     final userMetadata = state.valueOrNull?.userMetadata.toMap() ?? {};
     if (userMetadata[modId] == null) {
       userMetadata[modId] = ModMetadata.empty();
     }
 
     userMetadata[modId]!.variantsMetadata[smolId] = metadataUpdater(
-        userMetadata[modId]!.variantsMetadata[smolId] ??
-            ModVariantMetadata.empty());
+      userMetadata[modId]!.variantsMetadata[smolId] ??
+          ModVariantMetadata.empty(),
+    );
     updateState((s) => s.copyWith(userMetadata: userMetadata));
   }
 
   void updateModVariantBaseMetadata(
-      String modId,
-      String smolId,
-      ModVariantMetadata Function(ModVariantMetadata oldMetadata)
-          metadataUpdater) {
+    String modId,
+    String smolId,
+    ModVariantMetadata Function(ModVariantMetadata oldMetadata) metadataUpdater,
+  ) {
     final baseMetadata = state.valueOrNull?.baseMetadata.toMap() ?? {};
     if (baseMetadata[modId] == null) {
       baseMetadata[modId] = ModMetadata.empty();
     }
 
     baseMetadata[modId]!.variantsMetadata[smolId] = metadataUpdater(
-        baseMetadata[modId]!.variantsMetadata[smolId] ??
-            ModVariantMetadata.empty());
+      baseMetadata[modId]!.variantsMetadata[smolId] ??
+          ModVariantMetadata.empty(),
+    );
     updateState((s) => s.copyWith(baseMetadata: baseMetadata));
   }
 
@@ -162,10 +181,7 @@ class ModsMetadata with ModsMetadataMappable {
   /// Filled by user, overrides base metadata
   final Map<SmolId, ModMetadata> userMetadata;
 
-  const ModsMetadata({
-    required this.baseMetadata,
-    required this.userMetadata,
-  });
+  const ModsMetadata({required this.baseMetadata, required this.userMetadata});
 
   /// Returns a mod metadata object containing user metadata first and, if not found, base metadata.
   ModMetadata? getMergedModMetadata(String modId) {
@@ -208,14 +224,16 @@ class ModMetadata with ModMetadataMappable {
   });
 
   static ModMetadata empty() => ModMetadata(
-      variantsMetadata: {}, firstSeen: DateTime.now().millisecondsSinceEpoch);
+    variantsMetadata: {},
+    firstSeen: DateTime.now().millisecondsSinceEpoch,
+  );
 
   /// Merges all fields from this (user) and [base], with user data overriding what it explicitly sets.
   ModMetadata backfillWith(ModMetadata base) {
-    final mergedVariants = {
-      ...base.variantsMetadata,
-      ...variantsMetadata,
-    }.map((key, userVariant) {
+    final mergedVariants = {...base.variantsMetadata, ...variantsMetadata}.map((
+      key,
+      userVariant,
+    ) {
       final baseVariant = base.variantsMetadata[key];
       if (baseVariant != null) {
         return MapEntry(key, userVariant.backfillWith(baseVariant));
@@ -239,17 +257,13 @@ class ModVariantMetadata with ModVariantMetadataMappable {
   /// Timestamp of when the mod variant was first seen by TriOS.
   final int firstSeen;
 
-  ModVariantMetadata({
-    required this.firstSeen,
-  });
+  ModVariantMetadata({required this.firstSeen});
 
   static ModVariantMetadata empty() =>
       ModVariantMetadata(firstSeen: DateTime.now().millisecondsSinceEpoch);
 
   /// Merges all fields from this (user) and [base], with user data overriding what it explicitly sets.
   ModVariantMetadata backfillWith(ModVariantMetadata base) {
-    return ModVariantMetadata(
-      firstSeen: firstSeen,
-    );
+    return ModVariantMetadata(firstSeen: firstSeen);
   }
 }

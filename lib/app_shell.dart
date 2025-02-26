@@ -93,16 +93,24 @@ class _AppShellState extends ConsumerState<AppShell>
         if (availableVersion != null) {
           var userDataFolder = Constants.configDataFolderPath.path;
           WebViewEnvironment.create(
-                  settings: WebViewEnvironmentSettings(
-                      userDataFolder: userDataFolder))
+                settings: WebViewEnvironmentSettings(
+                  userDataFolder: userDataFolder,
+                ),
+              )
               .then((newWebViewEnvironment) {
-            ref.read(webViewEnvironment.notifier).state = newWebViewEnvironment;
-            Fimber.i(
-                "WebView2 environment initialized. Data folder: $userDataFolder");
-          }).onError((error, stackTrace) {
-            Fimber.e("Error creating WebView2 environment: $error",
-                ex: error, stacktrace: stackTrace);
-          });
+                ref.read(webViewEnvironment.notifier).state =
+                    newWebViewEnvironment;
+                Fimber.i(
+                  "WebView2 environment initialized. Data folder: $userDataFolder",
+                );
+              })
+              .onError((error, stackTrace) {
+                Fimber.e(
+                  "Error creating WebView2 environment: $error",
+                  ex: error,
+                  stacktrace: stackTrace,
+                );
+              });
         }
       });
     }
@@ -110,7 +118,8 @@ class _AppShellState extends ConsumerState<AppShell>
     var defaultTool = TriOSTools.dashboard;
     try {
       defaultTool = ref.read(
-          appSettings.select((value) => value.defaultTool ?? defaultTool));
+        appSettings.select((value) => value.defaultTool ?? defaultTool),
+      );
     } catch (e) {
       Fimber.i("No default tool found in settings: $e");
     }
@@ -125,25 +134,26 @@ class _AppShellState extends ConsumerState<AppShell>
     // Check for updates on launch and show toast if available.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       try {
-        ref
-            .watch(AppState.selfUpdate.notifier)
-            .getLatestRelease()
-            .then((latestRelease) {
+        ref.watch(AppState.selfUpdate.notifier).getLatestRelease().then((
+          latestRelease,
+        ) {
           try {
             if (latestRelease != null) {
               final hasNewVersion = SelfUpdater.hasNewVersion(latestRelease);
               if (hasNewVersion) {
                 Fimber.i("New version available: ${latestRelease.tagName}");
                 final updateInfo = SelfUpdateInfo(
-                    version: latestRelease.tagName,
-                    url: latestRelease.assets.first.browserDownloadUrl,
-                    releaseNote: latestRelease.body);
+                  version: latestRelease.tagName,
+                  url: latestRelease.assets.first.browserDownloadUrl,
+                  releaseNote: latestRelease.body,
+                );
                 Fimber.i("Update info: $updateInfo");
 
                 toastification.showCustom(
-                    context: ref.read(AppState.appContext),
-                    builder: (context, item) =>
-                        SelfUpdateToast(latestRelease, item));
+                  context: ref.read(AppState.appContext),
+                  builder:
+                      (context, item) => SelfUpdateToast(latestRelease, item),
+                );
 
                 // if (ref.read(appSettings
                 //     .select((value) => value.shouldAutoUpdateOnLaunch))) {
@@ -168,8 +178,11 @@ class _AppShellState extends ConsumerState<AppShell>
         try {
           await action(context);
         } catch (e, stackTrace) {
-          Fimber.e("Error executing onAppLoadedActions: $e",
-              ex: e, stacktrace: stackTrace);
+          Fimber.e(
+            "Error executing onAppLoadedActions: $e",
+            ex: e,
+            stacktrace: stackTrace,
+          );
         }
       }
 
@@ -188,38 +201,34 @@ class _AppShellState extends ConsumerState<AppShell>
     });
 
     final tabChildren = [
-      const Padding(
-        padding: EdgeInsets.all(4),
-        child: Dashboard(),
-      ),
+      const Padding(padding: EdgeInsets.all(4), child: Dashboard()),
       const ModsGridPage(),
       const Padding(padding: EdgeInsets.all(8), child: ModProfilePage()),
       const Padding(padding: EdgeInsets.all(8), child: VramEstimatorPage()),
       const Padding(padding: EdgeInsets.all(8), child: ChipperApp()),
       const Padding(padding: EdgeInsets.all(8), child: ImageGridScreen()),
       const WeaponPage(),
-      const Padding(
-        padding: EdgeInsets.all(8),
-        child: SettingsPage(),
-      ),
+      const Padding(padding: EdgeInsets.all(8), child: SettingsPage()),
       const ModBrowserPage(),
       const TipsPage(),
     ];
     final theme = Theme.of(context);
 
-    var isRulesHotReloadEnabled =
-        ref.watch(appSettings.select((value) => value.isRulesHotReloadEnabled));
+    var isRulesHotReloadEnabled = ref.watch(
+      appSettings.select((value) => value.isRulesHotReloadEnabled),
+    );
 
     return Scaffold(
-        appBar: AppBar(
-          title: Row(
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(right: 16.0),
-                child: MovingTooltipWidget.text(
-                  message: Constants.appSubtitle,
-                  child: const Stack(children: [
-// if (ref.watch(AppState.isWindowFocused))
+      appBar: AppBar(
+        title: Row(
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(right: 16.0),
+              child: MovingTooltipWidget.text(
+                message: Constants.appSubtitle,
+                child: const Stack(
+                  children: [
+                    // if (ref.watch(AppState.isWindowFocused))
                     Opacity(
                       opacity: 0.8,
                       child: Blur(
@@ -229,456 +238,494 @@ class _AppShellState extends ConsumerState<AppShell>
                       ),
                     ),
                     TriOSAppIcon(),
-                  ]),
-                ),
-              ),
-              Padding(
-                  padding: const EdgeInsets.only(right: 24.0),
-                  child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(Constants.appName,
-                            style: Theme.of(context).textTheme.titleLarge),
-                        Text("v${Constants.version}",
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
-                                ?.copyWith(fontSize: 12))
-                      ])),
-              const Launcher(),
-              Padding(
-                padding: const EdgeInsets.only(left: 16, right: 0, top: 2),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Column(
-                      children: [
-                        MovingTooltipWidget.text(
-                            message: "Dashboard",
-                            child: TabButton(
-                              text: "Dash",
-                              icon: const Icon(Icons.dashboard),
-                              isSelected: _currentPage == TriOSTools.dashboard,
-                              onPressed: () => _changeTab(TriOSTools.dashboard),
-                            )),
-                      ],
-                    ),
-                    MovingTooltipWidget.text(
-                      message: "Mod Manager",
-                      child: TabButton(
-                        text: "Mods",
-                        icon: Transform.rotate(
-                            angle: 0.7,
-                            child: const SvgImageIcon(
-                              "assets/images/icon-onslaught.svg",
-                              height: 23,
-                            )),
-                        isSelected: _currentPage == TriOSTools.modManager,
-                        onPressed: () => _changeTab(TriOSTools.modManager),
-                      ),
-                    ),
-                    MovingTooltipWidget.text(
-                      message: "Mod Profiles",
-                      child: TabButton(
-                        text: "Profiles",
-                        icon: SvgImageIcon(
-                          "assets/images/icon-view-carousel.svg",
-                          height: 23,
-                        ),
-                        isSelected: _currentPage == TriOSTools.modProfiles,
-                        onPressed: () => _changeTab(TriOSTools.modProfiles),
-                      ),
-                    ),
-                    MovingTooltipWidget.text(
-                      message: "Browse online mods",
-                      child: TabButton(
-                        text: "Catalog",
-                        icon: Icon(Icons.cloud_download),
-                        isSelected: _currentPage == TriOSTools.modBrowser,
-                        onPressed: () => _changeTab(TriOSTools.modBrowser),
-                      ),
-                    ),
-                    MovingTooltipWidget.text(
-                      message: "$chipperTitle Log Viewer",
-                      child: TabButton(
-                        text: "Logs",
-                        icon: ImageIcon(
-                          AssetImage("assets/images/chipper/icon.png"),
-                          size: 22,
-                        ),
-                        isSelected: _currentPage == TriOSTools.chipper,
-                        onPressed: () => _changeTab(TriOSTools.chipper),
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Row(
-                      children: [
-                        MovingTooltipWidget.text(
-                          message: "VRAM Estimator",
-                          child: IconButton(
-                            icon: SvgImageIcon("assets/images/icon-weight.svg"),
-                            selectedIcon: SvgImageIcon(
-                                "assets/images/icon-weight.svg",
-                                color: Theme.of(context).colorScheme.primary),
-                            isSelected:
-                                _currentPage == TriOSTools.vramEstimator,
-                            onPressed: () =>
-                                _changeTab(TriOSTools.vramEstimator),
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        MovingTooltipWidget.text(
-                          message: "Weapon Viewer\n\nWarning: spoilers!",
-                          child: IconButton(
-                            icon: SvgImageIcon("assets/images/icon-target.svg"),
-                            selectedIcon: SvgImageIcon(
-                                "assets/images/icon-target.svg",
-                                color: Theme.of(context).colorScheme.primary),
-                            isSelected: _currentPage == TriOSTools.weapons,
-                            onPressed: () => _changeTab(TriOSTools.weapons),
-                          ),
-                        ),
-                        MovingTooltipWidget.text(
-                          message: "Portraits Viewer\n\nWarning: spoilers!",
-                          child: IconButton(
-                            icon: SvgImageIcon(
-                                "assets/images/icon-account-box-outline.svg"),
-                            selectedIcon: SvgImageIcon(
-                                "assets/images/icon-account-box-outline.svg",
-                                color: Theme.of(context).colorScheme.primary),
-                            isSelected: _currentPage == TriOSTools.portraits,
-                            onPressed: () => _changeTab(TriOSTools.portraits),
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        MovingTooltipWidget.text(
-                          message: "Tips Manager",
-                          child: IconButton(
-                            icon: Icon(Icons.lightbulb),
-                            selectedIcon: Icon(Icons.lightbulb,
-                                color: Theme.of(context).colorScheme.primary),
-                            isSelected: _currentPage == TriOSTools.tips,
-                            onPressed: () => _changeTab(TriOSTools.tips),
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (false)
-                      MovingTooltipWidget.text(
-                        message: "More tools",
-                        child: AnimatedPopupMenuButton<TriOSTools>(
-                          icon: SvgImageIcon("assets/images/icon-toolbox.svg",
-                              color: theme.iconTheme.color),
-                          onSelected: (TriOSTools value) => _changeTab(value),
-                          menuItems: [
-                            PopupMenuItem(
-                                value: TriOSTools.vramEstimator,
-                                child: Row(
-                                  children: [
-                                    SvgImageIcon(
-                                        "assets/images/icon-weight.svg"),
-                                    SizedBox(width: 8),
-                                    // Space between icon and text
-                                    Text("VRAM"),
-                                  ],
-                                )),
-                            PopupMenuItem(
-                                value: TriOSTools.portraits,
-                                child: MovingTooltipWidget.text(
-                                  message: "Warning: spoilers!",
-                                  warningLevel: TooltipWarningLevel.warning,
-                                  child: Row(
-                                    children: [
-                                      SvgImageIcon(
-                                          "assets/images/icon-account-box-outline.svg"),
-                                      SizedBox(width: 8),
-                                      // Space between icon and text
-                                      Text("Portraits"),
-                                    ],
-                                  ),
-                                )),
-                            PopupMenuItem(
-                                value: TriOSTools.weapons,
-                                child: MovingTooltipWidget.text(
-                                  message: "Warning: spoilers!",
-                                  warningLevel: TooltipWarningLevel.warning,
-                                  child: Row(
-                                    children: [
-                                      SvgImageIcon(
-                                          "assets/images/icon-target.svg"),
-                                      SizedBox(width: 8),
-                                      // Space between icon and text
-                                      Text("Weapons"),
-                                    ],
-                                  ),
-                                )),
-                            PopupMenuItem(
-                              value: TriOSTools.tips,
-                              child: Row(
-                                children: [
-                                  Icon(Icons.lightbulb),
-                                  SizedBox(width: 8),
-                                  // Space between icon and text
-                                  Text("Tips Manager"),
-                                ],
-                              ),
-                            ),
-                            // PopupMenuItem(
-                            //     text: "Portraits",
-                            //     icon: const SvgImageIcon(
-                            //         "assets/images/icon-account-box-outline.svg"),
-                            //     page: TriOSTools.portraits),
-                          ],
-                        ),
-                      )
                   ],
                 ),
               ),
-              const SizedBox(width: 4),
-              SizedBox(
-                width: 1,
-                height: 24,
-                child: Container(
-                  color:
-                      Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(right: 24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    Constants.appName,
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  Text(
+                    "v${Constants.version}",
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(fontSize: 12),
+                  ),
+                ],
               ),
-              const SizedBox(width: 8),
-              Builder(builder: (context) {
+            ),
+            const Launcher(),
+            Padding(
+              padding: const EdgeInsets.only(left: 16, right: 0, top: 2),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Column(
+                    children: [
+                      MovingTooltipWidget.text(
+                        message: "Dashboard",
+                        child: TabButton(
+                          text: "Dash",
+                          icon: const Icon(Icons.dashboard),
+                          isSelected: _currentPage == TriOSTools.dashboard,
+                          onPressed: () => _changeTab(TriOSTools.dashboard),
+                        ),
+                      ),
+                    ],
+                  ),
+                  MovingTooltipWidget.text(
+                    message: "Mod Manager",
+                    child: TabButton(
+                      text: "Mods",
+                      icon: Transform.rotate(
+                        angle: 0.7,
+                        child: const SvgImageIcon(
+                          "assets/images/icon-onslaught.svg",
+                          height: 23,
+                        ),
+                      ),
+                      isSelected: _currentPage == TriOSTools.modManager,
+                      onPressed: () => _changeTab(TriOSTools.modManager),
+                    ),
+                  ),
+                  MovingTooltipWidget.text(
+                    message: "Mod Profiles",
+                    child: TabButton(
+                      text: "Profiles",
+                      icon: SvgImageIcon(
+                        "assets/images/icon-view-carousel.svg",
+                        height: 23,
+                      ),
+                      isSelected: _currentPage == TriOSTools.modProfiles,
+                      onPressed: () => _changeTab(TriOSTools.modProfiles),
+                    ),
+                  ),
+                  MovingTooltipWidget.text(
+                    message: "Browse online mods",
+                    child: TabButton(
+                      text: "Catalog",
+                      icon: Icon(Icons.cloud_download),
+                      isSelected: _currentPage == TriOSTools.modBrowser,
+                      onPressed: () => _changeTab(TriOSTools.modBrowser),
+                    ),
+                  ),
+                  MovingTooltipWidget.text(
+                    message: "$chipperTitle Log Viewer",
+                    child: TabButton(
+                      text: "Logs",
+                      icon: ImageIcon(
+                        AssetImage("assets/images/chipper/icon.png"),
+                        size: 22,
+                      ),
+                      isSelected: _currentPage == TriOSTools.chipper,
+                      onPressed: () => _changeTab(TriOSTools.chipper),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Row(
+                    children: [
+                      MovingTooltipWidget.text(
+                        message: "VRAM Estimator",
+                        child: IconButton(
+                          icon: SvgImageIcon("assets/images/icon-weight.svg"),
+                          selectedIcon: SvgImageIcon(
+                            "assets/images/icon-weight.svg",
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          isSelected: _currentPage == TriOSTools.vramEstimator,
+                          onPressed: () => _changeTab(TriOSTools.vramEstimator),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      MovingTooltipWidget.text(
+                        message: "Weapon Viewer\n\nWarning: spoilers!",
+                        child: IconButton(
+                          icon: SvgImageIcon("assets/images/icon-target.svg"),
+                          selectedIcon: SvgImageIcon(
+                            "assets/images/icon-target.svg",
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          isSelected: _currentPage == TriOSTools.weapons,
+                          onPressed: () => _changeTab(TriOSTools.weapons),
+                        ),
+                      ),
+                      MovingTooltipWidget.text(
+                        message: "Portraits Viewer\n\nWarning: spoilers!",
+                        child: IconButton(
+                          icon: SvgImageIcon(
+                            "assets/images/icon-account-box-outline.svg",
+                          ),
+                          selectedIcon: SvgImageIcon(
+                            "assets/images/icon-account-box-outline.svg",
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          isSelected: _currentPage == TriOSTools.portraits,
+                          onPressed: () => _changeTab(TriOSTools.portraits),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      MovingTooltipWidget.text(
+                        message: "Tips Manager",
+                        child: IconButton(
+                          icon: Icon(Icons.lightbulb),
+                          selectedIcon: Icon(
+                            Icons.lightbulb,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          isSelected: _currentPage == TriOSTools.tips,
+                          onPressed: () => _changeTab(TriOSTools.tips),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (false)
+                    MovingTooltipWidget.text(
+                      message: "More tools",
+                      child: AnimatedPopupMenuButton<TriOSTools>(
+                        icon: SvgImageIcon(
+                          "assets/images/icon-toolbox.svg",
+                          color: theme.iconTheme.color,
+                        ),
+                        onSelected: (TriOSTools value) => _changeTab(value),
+                        menuItems: [
+                          PopupMenuItem(
+                            value: TriOSTools.vramEstimator,
+                            child: Row(
+                              children: [
+                                SvgImageIcon("assets/images/icon-weight.svg"),
+                                SizedBox(width: 8),
+                                // Space between icon and text
+                                Text("VRAM"),
+                              ],
+                            ),
+                          ),
+                          PopupMenuItem(
+                            value: TriOSTools.portraits,
+                            child: MovingTooltipWidget.text(
+                              message: "Warning: spoilers!",
+                              warningLevel: TooltipWarningLevel.warning,
+                              child: Row(
+                                children: [
+                                  SvgImageIcon(
+                                    "assets/images/icon-account-box-outline.svg",
+                                  ),
+                                  SizedBox(width: 8),
+                                  // Space between icon and text
+                                  Text("Portraits"),
+                                ],
+                              ),
+                            ),
+                          ),
+                          PopupMenuItem(
+                            value: TriOSTools.weapons,
+                            child: MovingTooltipWidget.text(
+                              message: "Warning: spoilers!",
+                              warningLevel: TooltipWarningLevel.warning,
+                              child: Row(
+                                children: [
+                                  SvgImageIcon("assets/images/icon-target.svg"),
+                                  SizedBox(width: 8),
+                                  // Space between icon and text
+                                  Text("Weapons"),
+                                ],
+                              ),
+                            ),
+                          ),
+                          PopupMenuItem(
+                            value: TriOSTools.tips,
+                            child: Row(
+                              children: [
+                                Icon(Icons.lightbulb),
+                                SizedBox(width: 8),
+                                // Space between icon and text
+                                Text("Tips Manager"),
+                              ],
+                            ),
+                          ),
+                          // PopupMenuItem(
+                          //     text: "Portraits",
+                          //     icon: const SvgImageIcon(
+                          //         "assets/images/icon-account-box-outline.svg"),
+                          //     page: TriOSTools.portraits),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 4),
+            SizedBox(
+              width: 1,
+              height: 24,
+              child: Container(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Builder(
+              builder: (context) {
                 var gameFolderPath =
                     ref.watch(AppState.gameFolder).valueOrNull?.path;
                 return gameFolderPath == null
                     ? Container()
                     : MovingTooltipWidget.text(
-                        message: "Open Starsector folder",
+                      message: "Open Starsector folder",
+                      child: IconButton(
+                        icon: const SvgImageIcon(
+                          "assets/images/icon-folder-game.svg",
+                        ),
+                        color: Theme.of(context).iconTheme.color,
+                        onPressed: () async {
+                          if (Platform.isMacOS) {
+                            // Hack for mac to reveal the Contents folder
+                            // otherwise it runs the game.
+                            try {
+                              final process = await Process.start('open', [
+                                "-R",
+                                "$gameFolderPath/Contents",
+                              ]);
+                              final result = await process.exitCode;
+                              if (result != 0) {
+                                Fimber.e("Error opening game folder: $result");
+                              }
+                            } catch (e, st) {
+                              Fimber.e(
+                                "Error opening game folder: $e",
+                                ex: e,
+                                stacktrace: st,
+                              );
+                            }
+                          } else {
+                            // Everybody else just opens the folder
+                            OpenFilex.open(gameFolderPath);
+                          }
+                        },
+                      ),
+                    );
+              },
+            ),
+            if (logFilePath != null)
+              MovingTooltipWidget.text(
+                message: "Open ${Constants.appName} log file folder",
+                child: IconButton(
+                  icon: const SvgImageIcon("assets/images/icon-file-debug.svg"),
+                  color: Theme.of(context).iconTheme.color,
+                  onPressed: () {
+                    try {
+                      logFilePath!
+                          .toFile()
+                          .normalize
+                          .parent
+                          .path
+                          .openAsUriInBrowser();
+                    } catch (e, st) {
+                      Fimber.e(
+                        "Error opening log file: $e",
+                        ex: e,
+                        stacktrace: st,
+                      );
+                    }
+                  },
+                ),
+              ),
+            MovingTooltipWidget.text(
+              message: "Settings",
+              child: IconButton(
+                // text: "Settings",
+                onPressed: () {
+                  _changeTab(TriOSTools.settings);
+                },
+                color:
+                    _currentPage == TriOSTools.settings
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(context).iconTheme.color,
+                isSelected: _currentPage == TriOSTools.settings,
+                icon: const Icon(Icons.settings),
+              ),
+            ),
+            const SizedBox(width: 4),
+            SizedBox(
+              width: 1,
+              height: 36,
+              child: Container(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Scrollbar(
+                controller: rightToolbarScrollController,
+                scrollbarOrientation: ScrollbarOrientation.top,
+                thickness: 4,
+                child: SingleChildScrollView(
+                  controller: rightToolbarScrollController,
+                  scrollDirection: Axis.horizontal,
+                  reverse: true,
+                  clipBehavior: Clip.antiAlias,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      FilePermissionShield(),
+                      const AdminPermissionShield(),
+                      // const Spacer(),
+                      MovingTooltipWidget.text(
+                        message: "${Constants.appName} Changelog",
                         child: IconButton(
                           icon: const SvgImageIcon(
-                              "assets/images/icon-folder-game.svg"),
+                            "assets/images/icon-bullhorn-variant.svg",
+                          ),
                           color: Theme.of(context).iconTheme.color,
-                          onPressed: () async {
-                            if (Platform.isMacOS) {
-                              // Hack for mac to reveal the Contents folder
-                              // otherwise it runs the game.
-                              try {
-                                final process = await Process.start(
-                                    'open', ["-R", "$gameFolderPath/Contents"]);
-                                final result = await process.exitCode;
-                                if (result != 0) {
-                                  Fimber.e(
-                                      "Error opening game folder: $result");
-                                }
-                              } catch (e, st) {
-                                Fimber.e("Error opening game folder: $e",
-                                    ex: e, stacktrace: st);
-                              }
-                            } else {
-                              // Everybody else just opens the folder
-                              OpenFilex.open(gameFolderPath);
-                            }
+                          onPressed:
+                              () => showTriOSChangelogDialog(
+                                context,
+                                lastestVersionToShow: Version.parse(
+                                  Constants.version,
+                                  sanitizeInput: false,
+                                ),
+                              ),
+                        ),
+                      ),
+                      MovingTooltipWidget.text(
+                        message: "About",
+                        child: IconButton(
+                          icon: const SvgImageIcon(
+                            "assets/images/icon-info.svg",
+                          ),
+                          color: Theme.of(context).iconTheme.color,
+                          onPressed: () {
+                            showAboutDialog(
+                              context: context,
+                              applicationIcon: const TriOSAppIcon(),
+                              applicationName: Constants.appTitle,
+                              applicationVersion:
+                                  "A Starsector toolkit\nby Wisp",
+                              children: [
+                                ConstrainedBox(
+                                  constraints: const BoxConstraints(
+                                    maxWidth: 700,
+                                  ),
+                                  child: const AboutPage(),
+                                ),
+                              ],
+                            );
                           },
                         ),
-                      );
-              }),
-              if (logFilePath != null)
-                MovingTooltipWidget.text(
-                  message: "Open ${Constants.appName} log file folder",
-                  child: IconButton(
-                    icon:
-                        const SvgImageIcon("assets/images/icon-file-debug.svg"),
-                    color: Theme.of(context).iconTheme.color,
-                    onPressed: () {
-                      try {
-                        logFilePath!
-                            .toFile()
-                            .normalize
-                            .parent
-                            .path
-                            .openAsUriInBrowser();
-                      } catch (e, st) {
-                        Fimber.e("Error opening log file: $e",
-                            ex: e, stacktrace: st);
-                      }
-                    },
-                  ),
-                ),
-              MovingTooltipWidget.text(
-                  message: "Settings",
-                  child: IconButton(
-                      // text: "Settings",
-                      onPressed: () {
-                        _changeTab(TriOSTools.settings);
-                      },
-                      color: _currentPage == TriOSTools.settings
-                          ? Theme.of(context).colorScheme.primary
-                          : Theme.of(context).iconTheme.color,
-                      isSelected: _currentPage == TriOSTools.settings,
-                      icon: const Icon(Icons.settings))),
-              const SizedBox(
-                width: 4,
-              ),
-              SizedBox(
-                width: 1,
-                height: 36,
-                child: Container(
-                  color:
-                      Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
-                ),
-              ),
-              const SizedBox(
-                width: 8,
-              ),
-              Expanded(
-                child: Scrollbar(
-                  controller: rightToolbarScrollController,
-                  scrollbarOrientation: ScrollbarOrientation.top,
-                  thickness: 4,
-                  child: SingleChildScrollView(
-                    controller: rightToolbarScrollController,
-                    scrollDirection: Axis.horizontal,
-                    reverse: true,
-                    clipBehavior: Clip.antiAlias,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        FilePermissionShield(),
-                        const AdminPermissionShield(),
-                        // const Spacer(),
-                        MovingTooltipWidget.text(
-                          message: "${Constants.appName} Changelog",
-                          child: IconButton(
-                            icon: const SvgImageIcon(
-                                "assets/images/icon-bullhorn-variant.svg"),
-                            color: Theme.of(context).iconTheme.color,
-                            onPressed: () => showTriOSChangelogDialog(context,
-                                lastestVersionToShow: Version.parse(
-                                    Constants.version,
-                                    sanitizeInput: false)),
+                      ),
+                      MovingTooltipWidget.text(
+                        message: "Show donation popup",
+                        child: IconButton(
+                          icon: const SvgImageIcon(
+                            "assets/images/icon-donate.svg",
                           ),
-                        ),
-                        MovingTooltipWidget.text(
-                          message: "About",
-                          child: IconButton(
-                            icon: const SvgImageIcon(
-                                "assets/images/icon-info.svg"),
-                            color: Theme.of(context).iconTheme.color,
-                            onPressed: () {
-                              showAboutDialog(
-                                context: context,
-                                applicationIcon: const TriOSAppIcon(),
-                                applicationName: Constants.appTitle,
-                                applicationVersion:
-                                    "A Starsector toolkit\nby Wisp",
-                                children: [
-                                  ConstrainedBox(
-                                    constraints: const BoxConstraints(
-                                      maxWidth: 700,
+                          color: Theme.of(context).iconTheme.color,
+                          onPressed: () {
+                            // donate options
+                            // Constants.patreonUrl.openAsUriInBrowser();
+                            // Constants.kofiUrl.openAsUriInBrowser();
+                            showDialog(
+                              context: context,
+                              builder: (context) {
+                                return AlertDialog(
+                                  title: const Text("Donations"),
+                                  content: DonateView(),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.of(context).pop();
+                                      },
+                                      child: const Text("Close"),
                                     ),
-                                    child: const AboutPage(),
-                                  )
-                                ],
-                              );
-                            },
-                          ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
                         ),
-                        MovingTooltipWidget.text(
-                          message: "Show donation popup",
-                          child: IconButton(
-                            icon: const SvgImageIcon(
-                                "assets/images/icon-donate.svg"),
-                            color: Theme.of(context).iconTheme.color,
-                            onPressed: () {
-                              // donate options
-                              // Constants.patreonUrl.openAsUriInBrowser();
-                              // Constants.kofiUrl.openAsUriInBrowser();
-                              showDialog(
-                                  context: context,
-                                  builder: (context) {
-                                    return AlertDialog(
-                                      title: const Text("Donations"),
-                                      content: DonateView(),
-                                      actions: [
-                                        TextButton(
-                                            onPressed: () {
-                                              Navigator.of(context).pop();
-                                            },
-                                            child: const Text("Close")),
-                                      ],
-                                    );
-                                  });
-                            },
+                      ),
+                      MovingTooltipWidget.text(
+                        message:
+                            "When enabled, modifying a mod's rules.csv will\nreload in-game rules as long as dev mode is enabled."
+                            "\n\nrules.csv hot reload is ${isRulesHotReloadEnabled ? "enabled" : "disabled"}."
+                            "\nClick to ${isRulesHotReloadEnabled ? "disable" : "enable"}.",
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(
+                            ThemeManager.cornerRadius,
                           ),
-                        ),
-                        MovingTooltipWidget.text(
-                          message:
-                              "When enabled, modifying a mod's rules.csv will\nreload in-game rules as long as dev mode is enabled."
-                              "\n\nrules.csv hot reload is ${isRulesHotReloadEnabled ? "enabled" : "disabled"}."
-                              "\nClick to ${isRulesHotReloadEnabled ? "disable" : "enable"}.",
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(
-                                ThemeManager.cornerRadius),
-                            onTap: () => ref.read(appSettings.notifier).update(
-                                (state) => state.copyWith(
-                                    isRulesHotReloadEnabled:
-                                        !isRulesHotReloadEnabled)),
-                            child: Padding(
-                              padding: const EdgeInsets.only(left: 16.0),
-                              child: RulesHotReload(
-                                  isEnabled: isRulesHotReloadEnabled),
+                          onTap:
+                              () => ref
+                                  .read(appSettings.notifier)
+                                  .update(
+                                    (state) => state.copyWith(
+                                      isRulesHotReloadEnabled:
+                                          !isRulesHotReloadEnabled,
+                                    ),
+                                  ),
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 16.0),
+                            child: RulesHotReload(
+                              isEnabled: isRulesHotReloadEnabled,
                             ),
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      body: DragDropHandler(
+        child: Container(
+          color: Theme.of(context).colorScheme.surface,
+          child: Column(
+            children: [
+              if (loggingError != null)
+                Text(
+                  loggingError.toString(),
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: ThemeManager.vanillaErrorColor,
+                  ),
+                ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(0),
+                  child: Stack(
+                    children: [
+                      LazyIndexedStack(
+                        index: tabToolMap.values.toList().indexOf(_currentPage),
+                        children: tabChildren,
+                      ),
+                      const Positioned(
+                        right: 0,
+                        bottom: 0,
+                        child: Padding(
+                          padding: EdgeInsets.all(8),
+                          child: ToastDisplayer(),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
             ],
           ),
         ),
-        body: DragDropHandler(
-          child: Container(
-            color: Theme.of(context).colorScheme.surface,
-            child: Column(
-              children: [
-                if (loggingError != null)
-                  Text(loggingError.toString(),
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            color: ThemeManager.vanillaErrorColor,
-                          )),
-                Expanded(
-                  child: Padding(
-                      padding: const EdgeInsets.all(0),
-                      child: Stack(
-                        children: [
-                          LazyIndexedStack(
-                            index: tabToolMap.values
-                                .toList()
-                                .indexOf(_currentPage),
-                            children: tabChildren,
-                          ),
-                          const Positioned(
-                            right: 0,
-                            bottom: 0,
-                            child: Padding(
-                              padding: EdgeInsets.all(8),
-                              child: ToastDisplayer(),
-                            ),
-                          )
-                        ],
-                      )),
-                ),
-              ],
-            ),
-          ),
-          onDroppedLog: (_) => _changeTab(TriOSTools.chipper),
-        ));
+        onDroppedLog: (_) => _changeTab(TriOSTools.chipper),
+      ),
+    );
   }
 }
 
 class DonateView extends StatelessWidget {
-  const DonateView({
-    super.key,
-  });
+  const DonateView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -689,16 +736,16 @@ class DonateView extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SelectableText(
-              "TriOS, like SMOL before it, is a hobby that I do because I enjoy it, and because I enjoy giving to Starsector."
-              "\nThey're the result of many hundreds of hours of coding, and I hope they have been useful (and even enjoyable) for you."
-              "\n"
-              "\nIf you feel like donating, thank you. If you can't donate but wish you were rich enough to just give money away, thank you anyway :)"
-              "\nTake care of yourself,"
-              "\n- Wisp",
-              style: Theme.of(context)
-                  .textTheme
-                  .labelLarge
-                  ?.copyWith(fontSize: 16)),
+            "TriOS, like SMOL before it, is a hobby that I do because I enjoy it, and because I enjoy giving to Starsector."
+            "\nThey're the result of many hundreds of hours of coding, and I hope they have been useful (and even enjoyable) for you."
+            "\n"
+            "\nIf you feel like donating, thank you. If you can't donate but wish you were rich enough to just give money away, thank you anyway :)"
+            "\nTake care of yourself,"
+            "\n- Wisp",
+            style: Theme.of(
+              context,
+            ).textTheme.labelLarge?.copyWith(fontSize: 16),
+          ),
           const SizedBox(height: 16),
           SizedBox(
             width: 300,
@@ -745,9 +792,7 @@ class MenuOption {
 }
 
 class FilePermissionShield extends ConsumerStatefulWidget {
-  const FilePermissionShield({
-    super.key,
-  });
+  const FilePermissionShield({super.key});
 
   @override
   ConsumerState<FilePermissionShield> createState() =>
@@ -772,7 +817,7 @@ class _FilePermissionShieldState extends ConsumerState<FilePermissionShield> {
 
     final usesCustomJre =
         ref.watch(jreManagerProvider).valueOrNull?.activeJre?.isCustomJre ??
-            false;
+        false;
 
     if (!_initialized) {
       return const SizedBox();
@@ -788,7 +833,7 @@ class _FilePermissionShieldState extends ConsumerState<FilePermissionShield> {
         (
           description: 'JRE 23 vmparams file',
           isWritable: areAllCustomJresWritable ?? false,
-          path: customVmParamsFilesThatCannotBeWritten
+          path: customVmParamsFilesThatCannotBeWritten,
         ),
     ];
 
@@ -804,26 +849,29 @@ class _FilePermissionShieldState extends ConsumerState<FilePermissionShield> {
 
     return MovingTooltipWidget.framed(
       tooltipWidget: RichText(
-          text: TextSpan(
-        children: [
-          TextSpan(
-            text: isAlreadyAdmin
-                ? "Unable to find or modify file(s)."
-                : "Right-click TriOS.exe and select 'Run as Administrator'.",
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-          TextSpan(
-              text: isAlreadyAdmin
-                  ? "\nEnsure that they exist and are not read-only.\n"
-                  : "\nTriOS may not be able to modify game files, otherwise.\n"),
-          TextSpan(
-              text: "\n${nonWritablePaths.joinToString(
-            separator: "\n",
-            transform: (path) => "❌ Unable to edit ${path.description}."
-                "\n    (${path.path ?? 'unknown path'}).",
-          )}")
-        ],
-      )),
+        text: TextSpan(
+          children: [
+            TextSpan(
+              text:
+                  isAlreadyAdmin
+                      ? "Unable to find or modify file(s)."
+                      : "Right-click TriOS.exe and select 'Run as Administrator'.",
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            TextSpan(
+              text:
+                  isAlreadyAdmin
+                      ? "\nEnsure that they exist and are not read-only.\n"
+                      : "\nTriOS may not be able to modify game files, otherwise.\n",
+            ),
+            TextSpan(
+              text:
+                  "\n${nonWritablePaths.joinToString(separator: "\n", transform: (path) => "❌ Unable to edit ${path.description}."
+                  "\n    (${path.path ?? 'unknown path'}).")}",
+            ),
+          ],
+        ),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -852,8 +900,9 @@ class _FilePermissionShieldState extends ConsumerState<FilePermissionShield> {
     for (final customJre in newState.customInstalledJres) {
       if (!await customJre.canWriteToVmParamsFile()) {
         areAllCustomJresWritable = false;
-        customVmParamsFilesThatCannotBeWritten
-            .add(customJre.vmParamsFileRelativePath);
+        customVmParamsFilesThatCannotBeWritten.add(
+          customJre.vmParamsFileRelativePath,
+        );
         break;
       }
     }
@@ -864,9 +913,7 @@ class _FilePermissionShieldState extends ConsumerState<FilePermissionShield> {
 }
 
 class AdminPermissionShield extends StatelessWidget {
-  const AdminPermissionShield({
-    super.key,
-  });
+  const AdminPermissionShield({super.key});
 
   @override
   Widget build(BuildContext context) {

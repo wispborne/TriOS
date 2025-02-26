@@ -7,8 +7,9 @@ import 'package:trios/utils/logging.dart';
 
 final isLoadingBrowseModsList = StateProvider<bool>((ref) => false);
 
-final browseModsNotifierProvider =
-    StreamProvider<ScrapedModsRepo>((ref) async* {
+final browseModsNotifierProvider = StreamProvider<ScrapedModsRepo>((
+  ref,
+) async* {
   final currentTime = DateTime.now();
   ref.watch(isLoadingBrowseModsList.notifier).state = true;
   // final cache = CacheManager(Config("trios_modrepo_cache"));
@@ -30,7 +31,8 @@ final browseModsNotifierProvider =
 
     ref.watch(isLoadingBrowseModsList.notifier).state = false;
     Fimber.i(
-        'Parsed ${scrapedMods.items.length} scraped mods in ${DateTime.now().difference(currentTime).inMilliseconds}ms');
+      'Parsed ${scrapedMods.items.length} scraped mods in ${DateTime.now().difference(currentTime).inMilliseconds}ms',
+    );
 
     yield scrapedMods;
   } catch (ex, st) {

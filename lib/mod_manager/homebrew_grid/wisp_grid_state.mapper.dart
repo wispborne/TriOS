@@ -442,28 +442,40 @@ class WispGridColumnMapper extends ClassMapperBase<WispGridColumn> {
   static String _$name(WispGridColumn v) => v.name;
   static const Field<WispGridColumn, String> _f$name = Field('name', _$name);
   static bool _$isSortable(WispGridColumn v) => v.isSortable;
-  static const Field<WispGridColumn, bool> _f$isSortable =
-      Field('isSortable', _$isSortable);
+  static const Field<WispGridColumn, bool> _f$isSortable = Field(
+    'isSortable',
+    _$isSortable,
+  );
   static Function _$getSortValue(WispGridColumn v) =>
       (v as dynamic).getSortValue as Function;
   static dynamic _arg$getSortValue<T extends WispGridItem>(f) =>
       f<Comparable<dynamic>? Function(T)>();
-  static const Field<WispGridColumn, Function> _f$getSortValue =
-      Field('getSortValue', _$getSortValue, opt: true, arg: _arg$getSortValue);
+  static const Field<WispGridColumn, Function> _f$getSortValue = Field(
+    'getSortValue',
+    _$getSortValue,
+    opt: true,
+    arg: _arg$getSortValue,
+  );
   static Function _$headerCellBuilder(WispGridColumn v) =>
       (v as dynamic).headerCellBuilder as Function;
   static dynamic _arg$headerCellBuilder<T extends WispGridItem>(f) =>
       f<Widget Function(HeaderBuilderModifiers)>();
   static const Field<WispGridColumn, Function> _f$headerCellBuilder = Field(
-      'headerCellBuilder', _$headerCellBuilder,
-      opt: true, arg: _arg$headerCellBuilder);
+    'headerCellBuilder',
+    _$headerCellBuilder,
+    opt: true,
+    arg: _arg$headerCellBuilder,
+  );
   static Function _$itemCellBuilder(WispGridColumn v) =>
       (v as dynamic).itemCellBuilder as Function;
   static dynamic _arg$itemCellBuilder<T extends WispGridItem>(f) =>
       f<Widget Function(T, CellBuilderModifiers)>();
   static const Field<WispGridColumn, Function> _f$itemCellBuilder = Field(
-      'itemCellBuilder', _$itemCellBuilder,
-      opt: true, arg: _arg$itemCellBuilder);
+    'itemCellBuilder',
+    _$itemCellBuilder,
+    opt: true,
+    arg: _arg$itemCellBuilder,
+  );
   static WispGridColumnState _$defaultState(WispGridColumn v) => v.defaultState;
   static const Field<WispGridColumn, WispGridColumnState> _f$defaultState =
       Field('defaultState', _$defaultState);
@@ -480,22 +492,25 @@ class WispGridColumnMapper extends ClassMapperBase<WispGridColumn> {
   };
 
   static WispGridColumn<T> _instantiate<T extends WispGridItem>(
-      DecodingData data) {
+    DecodingData data,
+  ) {
     return WispGridColumn(
-        key: data.dec(_f$key),
-        name: data.dec(_f$name),
-        isSortable: data.dec(_f$isSortable),
-        getSortValue: data.dec(_f$getSortValue),
-        headerCellBuilder: data.dec(_f$headerCellBuilder),
-        itemCellBuilder: data.dec(_f$itemCellBuilder),
-        defaultState: data.dec(_f$defaultState));
+      key: data.dec(_f$key),
+      name: data.dec(_f$name),
+      isSortable: data.dec(_f$isSortable),
+      getSortValue: data.dec(_f$getSortValue),
+      headerCellBuilder: data.dec(_f$headerCellBuilder),
+      itemCellBuilder: data.dec(_f$itemCellBuilder),
+      defaultState: data.dec(_f$defaultState),
+    );
   }
 
   @override
   final Function instantiate = _instantiate;
 
   static WispGridColumn<T> fromMap<T extends WispGridItem>(
-      Map<String, dynamic> map) {
+    Map<String, dynamic> map,
+  ) {
     return ensureInitialized().decodeMap<WispGridColumn<T>>(map);
   }
 
@@ -515,50 +530,68 @@ mixin WispGridColumnMappable<T extends WispGridItem> {
         .encodeMap<WispGridColumn<T>>(this as WispGridColumn<T>);
   }
 
-  WispGridColumnCopyWith<WispGridColumn<T>, WispGridColumn<T>,
-          WispGridColumn<T>, T>
-      get copyWith => _WispGridColumnCopyWithImpl(
-          this as WispGridColumn<T>, $identity, $identity);
+  WispGridColumnCopyWith<
+    WispGridColumn<T>,
+    WispGridColumn<T>,
+    WispGridColumn<T>,
+    T
+  >
+  get copyWith => _WispGridColumnCopyWithImpl(
+    this as WispGridColumn<T>,
+    $identity,
+    $identity,
+  );
   @override
   String toString() {
-    return WispGridColumnMapper.ensureInitialized()
-        .stringifyValue(this as WispGridColumn<T>);
+    return WispGridColumnMapper.ensureInitialized().stringifyValue(
+      this as WispGridColumn<T>,
+    );
   }
 
   @override
   bool operator ==(Object other) {
-    return WispGridColumnMapper.ensureInitialized()
-        .equalsValue(this as WispGridColumn<T>, other);
+    return WispGridColumnMapper.ensureInitialized().equalsValue(
+      this as WispGridColumn<T>,
+      other,
+    );
   }
 
   @override
   int get hashCode {
-    return WispGridColumnMapper.ensureInitialized()
-        .hashValue(this as WispGridColumn<T>);
+    return WispGridColumnMapper.ensureInitialized().hashValue(
+      this as WispGridColumn<T>,
+    );
   }
 }
 
 extension WispGridColumnValueCopy<$R, $Out, T extends WispGridItem>
     on ObjectCopyWith<$R, WispGridColumn<T>, $Out> {
   WispGridColumnCopyWith<$R, WispGridColumn<T>, $Out, T>
-      get $asWispGridColumn =>
-          $base.as((v, t, t2) => _WispGridColumnCopyWithImpl(v, t, t2));
+  get $asWispGridColumn =>
+      $base.as((v, t, t2) => _WispGridColumnCopyWithImpl(v, t, t2));
 }
 
-abstract class WispGridColumnCopyWith<$R, $In extends WispGridColumn<T>, $Out,
-    T extends WispGridItem> implements ClassCopyWith<$R, $In, $Out> {
+abstract class WispGridColumnCopyWith<
+  $R,
+  $In extends WispGridColumn<T>,
+  $Out,
+  T extends WispGridItem
+>
+    implements ClassCopyWith<$R, $In, $Out> {
   WispGridColumnStateCopyWith<$R, WispGridColumnState, WispGridColumnState>
-      get defaultState;
-  $R call(
-      {String? key,
-      String? name,
-      bool? isSortable,
-      Comparable<dynamic>? Function(T)? getSortValue,
-      Widget Function(HeaderBuilderModifiers)? headerCellBuilder,
-      Widget Function(T, CellBuilderModifiers)? itemCellBuilder,
-      WispGridColumnState? defaultState});
+  get defaultState;
+  $R call({
+    String? key,
+    String? name,
+    bool? isSortable,
+    Comparable<dynamic>? Function(T)? getSortValue,
+    Widget Function(HeaderBuilderModifiers)? headerCellBuilder,
+    Widget Function(T, CellBuilderModifiers)? itemCellBuilder,
+    WispGridColumnState? defaultState,
+  });
   WispGridColumnCopyWith<$R2, $In, $Out2, T> $chain<$R2, $Out2>(
-      Then<$Out2, $R2> t);
+    Then<$Out2, $R2> t,
+  );
 }
 
 class _WispGridColumnCopyWithImpl<$R, $Out, T extends WispGridItem>
@@ -571,41 +604,46 @@ class _WispGridColumnCopyWithImpl<$R, $Out, T extends WispGridItem>
       WispGridColumnMapper.ensureInitialized();
   @override
   WispGridColumnStateCopyWith<$R, WispGridColumnState, WispGridColumnState>
-      get defaultState =>
-          $value.defaultState.copyWith.$chain((v) => call(defaultState: v));
+  get defaultState =>
+      $value.defaultState.copyWith.$chain((v) => call(defaultState: v));
   @override
-  $R call(
-          {String? key,
-          String? name,
-          bool? isSortable,
-          Object? getSortValue = $none,
-          Object? headerCellBuilder = $none,
-          Object? itemCellBuilder = $none,
-          WispGridColumnState? defaultState}) =>
-      $apply(FieldCopyWithData({
-        if (key != null) #key: key,
-        if (name != null) #name: name,
-        if (isSortable != null) #isSortable: isSortable,
-        if (getSortValue != $none) #getSortValue: getSortValue,
-        if (headerCellBuilder != $none) #headerCellBuilder: headerCellBuilder,
-        if (itemCellBuilder != $none) #itemCellBuilder: itemCellBuilder,
-        if (defaultState != null) #defaultState: defaultState
-      }));
+  $R call({
+    String? key,
+    String? name,
+    bool? isSortable,
+    Object? getSortValue = $none,
+    Object? headerCellBuilder = $none,
+    Object? itemCellBuilder = $none,
+    WispGridColumnState? defaultState,
+  }) => $apply(
+    FieldCopyWithData({
+      if (key != null) #key: key,
+      if (name != null) #name: name,
+      if (isSortable != null) #isSortable: isSortable,
+      if (getSortValue != $none) #getSortValue: getSortValue,
+      if (headerCellBuilder != $none) #headerCellBuilder: headerCellBuilder,
+      if (itemCellBuilder != $none) #itemCellBuilder: itemCellBuilder,
+      if (defaultState != null) #defaultState: defaultState,
+    }),
+  );
   @override
   WispGridColumn<T> $make(CopyWithData data) => WispGridColumn(
-      key: data.get(#key, or: $value.key),
-      name: data.get(#name, or: $value.name),
-      isSortable: data.get(#isSortable, or: $value.isSortable),
-      getSortValue: data.get(#getSortValue, or: $value.getSortValue),
-      headerCellBuilder:
-          data.get(#headerCellBuilder, or: $value.headerCellBuilder),
-      itemCellBuilder: data.get(#itemCellBuilder, or: $value.itemCellBuilder),
-      defaultState: data.get(#defaultState, or: $value.defaultState));
+    key: data.get(#key, or: $value.key),
+    name: data.get(#name, or: $value.name),
+    isSortable: data.get(#isSortable, or: $value.isSortable),
+    getSortValue: data.get(#getSortValue, or: $value.getSortValue),
+    headerCellBuilder: data.get(
+      #headerCellBuilder,
+      or: $value.headerCellBuilder,
+    ),
+    itemCellBuilder: data.get(#itemCellBuilder, or: $value.itemCellBuilder),
+    defaultState: data.get(#defaultState, or: $value.defaultState),
+  );
 
   @override
   WispGridColumnCopyWith<$R2, WispGridColumn<T>, $Out2, T> $chain<$R2, $Out2>(
-          Then<$Out2, $R2> t) =>
-      _WispGridColumnCopyWithImpl($value, $cast, t);
+    Then<$Out2, $R2> t,
+  ) => _WispGridColumnCopyWithImpl($value, $cast, t);
 }
 
 class WispGridColumnStateMapper extends ClassMapperBase<WispGridColumnState> {
@@ -623,14 +661,22 @@ class WispGridColumnStateMapper extends ClassMapperBase<WispGridColumnState> {
   final String id = 'WispGridColumnState';
 
   static int _$position(WispGridColumnState v) => v.position;
-  static const Field<WispGridColumnState, int> _f$position =
-      Field('position', _$position);
+  static const Field<WispGridColumnState, int> _f$position = Field(
+    'position',
+    _$position,
+  );
   static double _$width(WispGridColumnState v) => v.width;
-  static const Field<WispGridColumnState, double> _f$width =
-      Field('width', _$width);
+  static const Field<WispGridColumnState, double> _f$width = Field(
+    'width',
+    _$width,
+  );
   static bool _$isVisible(WispGridColumnState v) => v.isVisible;
-  static const Field<WispGridColumnState, bool> _f$isVisible =
-      Field('isVisible', _$isVisible, opt: true, def: true);
+  static const Field<WispGridColumnState, bool> _f$isVisible = Field(
+    'isVisible',
+    _$isVisible,
+    opt: true,
+    def: true,
+  );
 
   @override
   final MappableFields<WispGridColumnState> fields = const {
@@ -641,9 +687,10 @@ class WispGridColumnStateMapper extends ClassMapperBase<WispGridColumnState> {
 
   static WispGridColumnState _instantiate(DecodingData data) {
     return WispGridColumnState(
-        position: data.dec(_f$position),
-        width: data.dec(_f$width),
-        isVisible: data.dec(_f$isVisible));
+      position: data.dec(_f$position),
+      width: data.dec(_f$width),
+      isVisible: data.dec(_f$isVisible),
+    );
   }
 
   @override
@@ -669,41 +716,56 @@ mixin WispGridColumnStateMappable {
         .encodeMap<WispGridColumnState>(this as WispGridColumnState);
   }
 
-  WispGridColumnStateCopyWith<WispGridColumnState, WispGridColumnState,
-          WispGridColumnState>
-      get copyWith => _WispGridColumnStateCopyWithImpl(
-          this as WispGridColumnState, $identity, $identity);
+  WispGridColumnStateCopyWith<
+    WispGridColumnState,
+    WispGridColumnState,
+    WispGridColumnState
+  >
+  get copyWith => _WispGridColumnStateCopyWithImpl(
+    this as WispGridColumnState,
+    $identity,
+    $identity,
+  );
   @override
   String toString() {
-    return WispGridColumnStateMapper.ensureInitialized()
-        .stringifyValue(this as WispGridColumnState);
+    return WispGridColumnStateMapper.ensureInitialized().stringifyValue(
+      this as WispGridColumnState,
+    );
   }
 
   @override
   bool operator ==(Object other) {
-    return WispGridColumnStateMapper.ensureInitialized()
-        .equalsValue(this as WispGridColumnState, other);
+    return WispGridColumnStateMapper.ensureInitialized().equalsValue(
+      this as WispGridColumnState,
+      other,
+    );
   }
 
   @override
   int get hashCode {
-    return WispGridColumnStateMapper.ensureInitialized()
-        .hashValue(this as WispGridColumnState);
+    return WispGridColumnStateMapper.ensureInitialized().hashValue(
+      this as WispGridColumnState,
+    );
   }
 }
 
 extension WispGridColumnStateValueCopy<$R, $Out>
     on ObjectCopyWith<$R, WispGridColumnState, $Out> {
   WispGridColumnStateCopyWith<$R, WispGridColumnState, $Out>
-      get $asWispGridColumnState =>
-          $base.as((v, t, t2) => _WispGridColumnStateCopyWithImpl(v, t, t2));
+  get $asWispGridColumnState =>
+      $base.as((v, t, t2) => _WispGridColumnStateCopyWithImpl(v, t, t2));
 }
 
-abstract class WispGridColumnStateCopyWith<$R, $In extends WispGridColumnState,
-    $Out> implements ClassCopyWith<$R, $In, $Out> {
+abstract class WispGridColumnStateCopyWith<
+  $R,
+  $In extends WispGridColumnState,
+  $Out
+>
+    implements ClassCopyWith<$R, $In, $Out> {
   $R call({int? position, double? width, bool? isVisible});
   WispGridColumnStateCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
-      Then<$Out2, $R2> t);
+    Then<$Out2, $R2> t,
+  );
 }
 
 class _WispGridColumnStateCopyWithImpl<$R, $Out>
@@ -715,22 +777,25 @@ class _WispGridColumnStateCopyWithImpl<$R, $Out>
   late final ClassMapperBase<WispGridColumnState> $mapper =
       WispGridColumnStateMapper.ensureInitialized();
   @override
-  $R call({int? position, double? width, bool? isVisible}) =>
-      $apply(FieldCopyWithData({
-        if (position != null) #position: position,
-        if (width != null) #width: width,
-        if (isVisible != null) #isVisible: isVisible
-      }));
+  $R call({int? position, double? width, bool? isVisible}) => $apply(
+    FieldCopyWithData({
+      if (position != null) #position: position,
+      if (width != null) #width: width,
+      if (isVisible != null) #isVisible: isVisible,
+    }),
+  );
   @override
   WispGridColumnState $make(CopyWithData data) => WispGridColumnState(
-      position: data.get(#position, or: $value.position),
-      width: data.get(#width, or: $value.width),
-      isVisible: data.get(#isVisible, or: $value.isVisible));
+    position: data.get(#position, or: $value.position),
+    width: data.get(#width, or: $value.width),
+    isVisible: data.get(#isVisible, or: $value.isVisible),
+  );
 
   @override
-  WispGridColumnStateCopyWith<$R2, WispGridColumnState, $Out2>
-      $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
-          _WispGridColumnStateCopyWithImpl($value, $cast, t);
+  WispGridColumnStateCopyWith<$R2, WispGridColumnState, $Out2> $chain<
+    $R2,
+    $Out2
+  >(Then<$Out2, $R2> t) => _WispGridColumnStateCopyWithImpl($value, $cast, t);
 }
 
 class HeaderBuilderModifiersMapper
@@ -749,8 +814,10 @@ class HeaderBuilderModifiersMapper
   final String id = 'HeaderBuilderModifiers';
 
   static bool _$isHovering(HeaderBuilderModifiers v) => v.isHovering;
-  static const Field<HeaderBuilderModifiers, bool> _f$isHovering =
-      Field('isHovering', _$isHovering);
+  static const Field<HeaderBuilderModifiers, bool> _f$isHovering = Field(
+    'isHovering',
+    _$isHovering,
+  );
 
   @override
   final MappableFields<HeaderBuilderModifiers> fields = const {
@@ -784,43 +851,56 @@ mixin HeaderBuilderModifiersMappable {
         .encodeMap<HeaderBuilderModifiers>(this as HeaderBuilderModifiers);
   }
 
-  HeaderBuilderModifiersCopyWith<HeaderBuilderModifiers, HeaderBuilderModifiers,
-          HeaderBuilderModifiers>
-      get copyWith => _HeaderBuilderModifiersCopyWithImpl(
-          this as HeaderBuilderModifiers, $identity, $identity);
+  HeaderBuilderModifiersCopyWith<
+    HeaderBuilderModifiers,
+    HeaderBuilderModifiers,
+    HeaderBuilderModifiers
+  >
+  get copyWith => _HeaderBuilderModifiersCopyWithImpl(
+    this as HeaderBuilderModifiers,
+    $identity,
+    $identity,
+  );
   @override
   String toString() {
-    return HeaderBuilderModifiersMapper.ensureInitialized()
-        .stringifyValue(this as HeaderBuilderModifiers);
+    return HeaderBuilderModifiersMapper.ensureInitialized().stringifyValue(
+      this as HeaderBuilderModifiers,
+    );
   }
 
   @override
   bool operator ==(Object other) {
-    return HeaderBuilderModifiersMapper.ensureInitialized()
-        .equalsValue(this as HeaderBuilderModifiers, other);
+    return HeaderBuilderModifiersMapper.ensureInitialized().equalsValue(
+      this as HeaderBuilderModifiers,
+      other,
+    );
   }
 
   @override
   int get hashCode {
-    return HeaderBuilderModifiersMapper.ensureInitialized()
-        .hashValue(this as HeaderBuilderModifiers);
+    return HeaderBuilderModifiersMapper.ensureInitialized().hashValue(
+      this as HeaderBuilderModifiers,
+    );
   }
 }
 
 extension HeaderBuilderModifiersValueCopy<$R, $Out>
     on ObjectCopyWith<$R, HeaderBuilderModifiers, $Out> {
   HeaderBuilderModifiersCopyWith<$R, HeaderBuilderModifiers, $Out>
-      get $asHeaderBuilderModifiers =>
-          $base.as((v, t, t2) => _HeaderBuilderModifiersCopyWithImpl(v, t, t2));
+  get $asHeaderBuilderModifiers =>
+      $base.as((v, t, t2) => _HeaderBuilderModifiersCopyWithImpl(v, t, t2));
 }
 
 abstract class HeaderBuilderModifiersCopyWith<
-    $R,
-    $In extends HeaderBuilderModifiers,
-    $Out> implements ClassCopyWith<$R, $In, $Out> {
+  $R,
+  $In extends HeaderBuilderModifiers,
+  $Out
+>
+    implements ClassCopyWith<$R, $In, $Out> {
   $R call({bool? isHovering});
   HeaderBuilderModifiersCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
-      Then<$Out2, $R2> t);
+    Then<$Out2, $R2> t,
+  );
 }
 
 class _HeaderBuilderModifiersCopyWithImpl<$R, $Out>
@@ -834,15 +914,17 @@ class _HeaderBuilderModifiersCopyWithImpl<$R, $Out>
       HeaderBuilderModifiersMapper.ensureInitialized();
   @override
   $R call({bool? isHovering}) => $apply(
-      FieldCopyWithData({if (isHovering != null) #isHovering: isHovering}));
+    FieldCopyWithData({if (isHovering != null) #isHovering: isHovering}),
+  );
   @override
   HeaderBuilderModifiers $make(CopyWithData data) => HeaderBuilderModifiers(
-      isHovering: data.get(#isHovering, or: $value.isHovering));
+    isHovering: data.get(#isHovering, or: $value.isHovering),
+  );
 
   @override
   HeaderBuilderModifiersCopyWith<$R2, HeaderBuilderModifiers, $Out2>
-      $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
-          _HeaderBuilderModifiersCopyWithImpl($value, $cast, t);
+  $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
+      _HeaderBuilderModifiersCopyWithImpl($value, $cast, t);
 }
 
 class CellBuilderModifiersMapper extends ClassMapperBase<CellBuilderModifiers> {
@@ -861,11 +943,15 @@ class CellBuilderModifiersMapper extends ClassMapperBase<CellBuilderModifiers> {
   final String id = 'CellBuilderModifiers';
 
   static bool _$isHovering(CellBuilderModifiers v) => v.isHovering;
-  static const Field<CellBuilderModifiers, bool> _f$isHovering =
-      Field('isHovering', _$isHovering);
+  static const Field<CellBuilderModifiers, bool> _f$isHovering = Field(
+    'isHovering',
+    _$isHovering,
+  );
   static bool _$isRowChecked(CellBuilderModifiers v) => v.isRowChecked;
-  static const Field<CellBuilderModifiers, bool> _f$isRowChecked =
-      Field('isRowChecked', _$isRowChecked);
+  static const Field<CellBuilderModifiers, bool> _f$isRowChecked = Field(
+    'isRowChecked',
+    _$isRowChecked,
+  );
   static WispGridColumnState _$columnState(CellBuilderModifiers v) =>
       v.columnState;
   static const Field<CellBuilderModifiers, WispGridColumnState> _f$columnState =
@@ -880,9 +966,10 @@ class CellBuilderModifiersMapper extends ClassMapperBase<CellBuilderModifiers> {
 
   static CellBuilderModifiers _instantiate(DecodingData data) {
     return CellBuilderModifiers(
-        isHovering: data.dec(_f$isHovering),
-        isRowChecked: data.dec(_f$isRowChecked),
-        columnState: data.dec(_f$columnState));
+      isHovering: data.dec(_f$isHovering),
+      isRowChecked: data.dec(_f$isRowChecked),
+      columnState: data.dec(_f$columnState),
+    );
   }
 
   @override
@@ -908,46 +995,62 @@ mixin CellBuilderModifiersMappable {
         .encodeMap<CellBuilderModifiers>(this as CellBuilderModifiers);
   }
 
-  CellBuilderModifiersCopyWith<CellBuilderModifiers, CellBuilderModifiers,
-          CellBuilderModifiers>
-      get copyWith => _CellBuilderModifiersCopyWithImpl(
-          this as CellBuilderModifiers, $identity, $identity);
+  CellBuilderModifiersCopyWith<
+    CellBuilderModifiers,
+    CellBuilderModifiers,
+    CellBuilderModifiers
+  >
+  get copyWith => _CellBuilderModifiersCopyWithImpl(
+    this as CellBuilderModifiers,
+    $identity,
+    $identity,
+  );
   @override
   String toString() {
-    return CellBuilderModifiersMapper.ensureInitialized()
-        .stringifyValue(this as CellBuilderModifiers);
+    return CellBuilderModifiersMapper.ensureInitialized().stringifyValue(
+      this as CellBuilderModifiers,
+    );
   }
 
   @override
   bool operator ==(Object other) {
-    return CellBuilderModifiersMapper.ensureInitialized()
-        .equalsValue(this as CellBuilderModifiers, other);
+    return CellBuilderModifiersMapper.ensureInitialized().equalsValue(
+      this as CellBuilderModifiers,
+      other,
+    );
   }
 
   @override
   int get hashCode {
-    return CellBuilderModifiersMapper.ensureInitialized()
-        .hashValue(this as CellBuilderModifiers);
+    return CellBuilderModifiersMapper.ensureInitialized().hashValue(
+      this as CellBuilderModifiers,
+    );
   }
 }
 
 extension CellBuilderModifiersValueCopy<$R, $Out>
     on ObjectCopyWith<$R, CellBuilderModifiers, $Out> {
   CellBuilderModifiersCopyWith<$R, CellBuilderModifiers, $Out>
-      get $asCellBuilderModifiers =>
-          $base.as((v, t, t2) => _CellBuilderModifiersCopyWithImpl(v, t, t2));
+  get $asCellBuilderModifiers =>
+      $base.as((v, t, t2) => _CellBuilderModifiersCopyWithImpl(v, t, t2));
 }
 
 abstract class CellBuilderModifiersCopyWith<
-    $R,
-    $In extends CellBuilderModifiers,
-    $Out> implements ClassCopyWith<$R, $In, $Out> {
+  $R,
+  $In extends CellBuilderModifiers,
+  $Out
+>
+    implements ClassCopyWith<$R, $In, $Out> {
   WispGridColumnStateCopyWith<$R, WispGridColumnState, WispGridColumnState>
-      get columnState;
-  $R call(
-      {bool? isHovering, bool? isRowChecked, WispGridColumnState? columnState});
+  get columnState;
+  $R call({
+    bool? isHovering,
+    bool? isRowChecked,
+    WispGridColumnState? columnState,
+  });
   CellBuilderModifiersCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
-      Then<$Out2, $R2> t);
+    Then<$Out2, $R2> t,
+  );
 }
 
 class _CellBuilderModifiersCopyWithImpl<$R, $Out>
@@ -960,28 +1063,32 @@ class _CellBuilderModifiersCopyWithImpl<$R, $Out>
       CellBuilderModifiersMapper.ensureInitialized();
   @override
   WispGridColumnStateCopyWith<$R, WispGridColumnState, WispGridColumnState>
-      get columnState =>
-          $value.columnState.copyWith.$chain((v) => call(columnState: v));
+  get columnState =>
+      $value.columnState.copyWith.$chain((v) => call(columnState: v));
   @override
-  $R call(
-          {bool? isHovering,
-          bool? isRowChecked,
-          WispGridColumnState? columnState}) =>
-      $apply(FieldCopyWithData({
-        if (isHovering != null) #isHovering: isHovering,
-        if (isRowChecked != null) #isRowChecked: isRowChecked,
-        if (columnState != null) #columnState: columnState
-      }));
+  $R call({
+    bool? isHovering,
+    bool? isRowChecked,
+    WispGridColumnState? columnState,
+  }) => $apply(
+    FieldCopyWithData({
+      if (isHovering != null) #isHovering: isHovering,
+      if (isRowChecked != null) #isRowChecked: isRowChecked,
+      if (columnState != null) #columnState: columnState,
+    }),
+  );
   @override
   CellBuilderModifiers $make(CopyWithData data) => CellBuilderModifiers(
-      isHovering: data.get(#isHovering, or: $value.isHovering),
-      isRowChecked: data.get(#isRowChecked, or: $value.isRowChecked),
-      columnState: data.get(#columnState, or: $value.columnState));
+    isHovering: data.get(#isHovering, or: $value.isHovering),
+    isRowChecked: data.get(#isRowChecked, or: $value.isRowChecked),
+    columnState: data.get(#columnState, or: $value.columnState),
+  );
 
   @override
-  CellBuilderModifiersCopyWith<$R2, CellBuilderModifiers, $Out2>
-      $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
-          _CellBuilderModifiersCopyWithImpl($value, $cast, t);
+  CellBuilderModifiersCopyWith<$R2, CellBuilderModifiers, $Out2> $chain<
+    $R2,
+    $Out2
+  >(Then<$Out2, $R2> t) => _CellBuilderModifiersCopyWithImpl($value, $cast, t);
 }
 
 class RowBuilderModifiersMapper extends ClassMapperBase<RowBuilderModifiers> {
@@ -999,11 +1106,15 @@ class RowBuilderModifiersMapper extends ClassMapperBase<RowBuilderModifiers> {
   final String id = 'RowBuilderModifiers';
 
   static bool _$isHovering(RowBuilderModifiers v) => v.isHovering;
-  static const Field<RowBuilderModifiers, bool> _f$isHovering =
-      Field('isHovering', _$isHovering);
+  static const Field<RowBuilderModifiers, bool> _f$isHovering = Field(
+    'isHovering',
+    _$isHovering,
+  );
   static bool _$isRowChecked(RowBuilderModifiers v) => v.isRowChecked;
-  static const Field<RowBuilderModifiers, bool> _f$isRowChecked =
-      Field('isRowChecked', _$isRowChecked);
+  static const Field<RowBuilderModifiers, bool> _f$isRowChecked = Field(
+    'isRowChecked',
+    _$isRowChecked,
+  );
 
   @override
   final MappableFields<RowBuilderModifiers> fields = const {
@@ -1013,8 +1124,9 @@ class RowBuilderModifiersMapper extends ClassMapperBase<RowBuilderModifiers> {
 
   static RowBuilderModifiers _instantiate(DecodingData data) {
     return RowBuilderModifiers(
-        isHovering: data.dec(_f$isHovering),
-        isRowChecked: data.dec(_f$isRowChecked));
+      isHovering: data.dec(_f$isHovering),
+      isRowChecked: data.dec(_f$isRowChecked),
+    );
   }
 
   @override
@@ -1040,41 +1152,56 @@ mixin RowBuilderModifiersMappable {
         .encodeMap<RowBuilderModifiers>(this as RowBuilderModifiers);
   }
 
-  RowBuilderModifiersCopyWith<RowBuilderModifiers, RowBuilderModifiers,
-          RowBuilderModifiers>
-      get copyWith => _RowBuilderModifiersCopyWithImpl(
-          this as RowBuilderModifiers, $identity, $identity);
+  RowBuilderModifiersCopyWith<
+    RowBuilderModifiers,
+    RowBuilderModifiers,
+    RowBuilderModifiers
+  >
+  get copyWith => _RowBuilderModifiersCopyWithImpl(
+    this as RowBuilderModifiers,
+    $identity,
+    $identity,
+  );
   @override
   String toString() {
-    return RowBuilderModifiersMapper.ensureInitialized()
-        .stringifyValue(this as RowBuilderModifiers);
+    return RowBuilderModifiersMapper.ensureInitialized().stringifyValue(
+      this as RowBuilderModifiers,
+    );
   }
 
   @override
   bool operator ==(Object other) {
-    return RowBuilderModifiersMapper.ensureInitialized()
-        .equalsValue(this as RowBuilderModifiers, other);
+    return RowBuilderModifiersMapper.ensureInitialized().equalsValue(
+      this as RowBuilderModifiers,
+      other,
+    );
   }
 
   @override
   int get hashCode {
-    return RowBuilderModifiersMapper.ensureInitialized()
-        .hashValue(this as RowBuilderModifiers);
+    return RowBuilderModifiersMapper.ensureInitialized().hashValue(
+      this as RowBuilderModifiers,
+    );
   }
 }
 
 extension RowBuilderModifiersValueCopy<$R, $Out>
     on ObjectCopyWith<$R, RowBuilderModifiers, $Out> {
   RowBuilderModifiersCopyWith<$R, RowBuilderModifiers, $Out>
-      get $asRowBuilderModifiers =>
-          $base.as((v, t, t2) => _RowBuilderModifiersCopyWithImpl(v, t, t2));
+  get $asRowBuilderModifiers =>
+      $base.as((v, t, t2) => _RowBuilderModifiersCopyWithImpl(v, t, t2));
 }
 
-abstract class RowBuilderModifiersCopyWith<$R, $In extends RowBuilderModifiers,
-    $Out> implements ClassCopyWith<$R, $In, $Out> {
+abstract class RowBuilderModifiersCopyWith<
+  $R,
+  $In extends RowBuilderModifiers,
+  $Out
+>
+    implements ClassCopyWith<$R, $In, $Out> {
   $R call({bool? isHovering, bool? isRowChecked});
   RowBuilderModifiersCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
-      Then<$Out2, $R2> t);
+    Then<$Out2, $R2> t,
+  );
 }
 
 class _RowBuilderModifiersCopyWithImpl<$R, $Out>
@@ -1086,19 +1213,23 @@ class _RowBuilderModifiersCopyWithImpl<$R, $Out>
   late final ClassMapperBase<RowBuilderModifiers> $mapper =
       RowBuilderModifiersMapper.ensureInitialized();
   @override
-  $R call({bool? isHovering, bool? isRowChecked}) => $apply(FieldCopyWithData({
-        if (isHovering != null) #isHovering: isHovering,
-        if (isRowChecked != null) #isRowChecked: isRowChecked
-      }));
+  $R call({bool? isHovering, bool? isRowChecked}) => $apply(
+    FieldCopyWithData({
+      if (isHovering != null) #isHovering: isHovering,
+      if (isRowChecked != null) #isRowChecked: isRowChecked,
+    }),
+  );
   @override
   RowBuilderModifiers $make(CopyWithData data) => RowBuilderModifiers(
-      isHovering: data.get(#isHovering, or: $value.isHovering),
-      isRowChecked: data.get(#isRowChecked, or: $value.isRowChecked));
+    isHovering: data.get(#isHovering, or: $value.isHovering),
+    isRowChecked: data.get(#isRowChecked, or: $value.isRowChecked),
+  );
 
   @override
-  RowBuilderModifiersCopyWith<$R2, RowBuilderModifiers, $Out2>
-      $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
-          _RowBuilderModifiersCopyWithImpl($value, $cast, t);
+  RowBuilderModifiersCopyWith<$R2, RowBuilderModifiers, $Out2> $chain<
+    $R2,
+    $Out2
+  >(Then<$Out2, $R2> t) => _RowBuilderModifiersCopyWithImpl($value, $cast, t);
 }
 
 class WispGridStateMapper extends ClassMapperBase<WispGridState> {
@@ -1118,19 +1249,28 @@ class WispGridStateMapper extends ClassMapperBase<WispGridState> {
   final String id = 'WispGridState';
 
   static String? _$sortedColumnKey(WispGridState v) => v.sortedColumnKey;
-  static const Field<WispGridState, String> _f$sortedColumnKey =
-      Field('sortedColumnKey', _$sortedColumnKey, opt: true);
+  static const Field<WispGridState, String> _f$sortedColumnKey = Field(
+    'sortedColumnKey',
+    _$sortedColumnKey,
+    opt: true,
+  );
   static bool _$isSortDescending(WispGridState v) => v.isSortDescending;
-  static const Field<WispGridState, bool> _f$isSortDescending =
-      Field('isSortDescending', _$isSortDescending, opt: true, def: false);
+  static const Field<WispGridState, bool> _f$isSortDescending = Field(
+    'isSortDescending',
+    _$isSortDescending,
+    opt: true,
+    def: false,
+  );
   static Map<String, WispGridColumnState> _$columnsState(WispGridState v) =>
       v.columnsState;
   static const Field<WispGridState, Map<String, WispGridColumnState>>
-      _f$columnsState = Field('columnsState', _$columnsState);
+  _f$columnsState = Field('columnsState', _$columnsState);
   static GroupingSetting? _$groupingSetting(WispGridState v) =>
       v.groupingSetting;
-  static const Field<WispGridState, GroupingSetting> _f$groupingSetting =
-      Field('groupingSetting', _$groupingSetting);
+  static const Field<WispGridState, GroupingSetting> _f$groupingSetting = Field(
+    'groupingSetting',
+    _$groupingSetting,
+  );
 
   @override
   final MappableFields<WispGridState> fields = const {
@@ -1142,10 +1282,11 @@ class WispGridStateMapper extends ClassMapperBase<WispGridState> {
 
   static WispGridState _instantiate(DecodingData data) {
     return WispGridState(
-        sortedColumnKey: data.dec(_f$sortedColumnKey),
-        isSortDescending: data.dec(_f$isSortDescending),
-        columnsState: data.dec(_f$columnsState),
-        groupingSetting: data.dec(_f$groupingSetting));
+      sortedColumnKey: data.dec(_f$sortedColumnKey),
+      isSortDescending: data.dec(_f$isSortDescending),
+      columnsState: data.dec(_f$columnsState),
+      groupingSetting: data.dec(_f$groupingSetting),
+    );
   }
 
   @override
@@ -1162,34 +1303,40 @@ class WispGridStateMapper extends ClassMapperBase<WispGridState> {
 
 mixin WispGridStateMappable {
   String toJson() {
-    return WispGridStateMapper.ensureInitialized()
-        .encodeJson<WispGridState>(this as WispGridState);
+    return WispGridStateMapper.ensureInitialized().encodeJson<WispGridState>(
+      this as WispGridState,
+    );
   }
 
   Map<String, dynamic> toMap() {
-    return WispGridStateMapper.ensureInitialized()
-        .encodeMap<WispGridState>(this as WispGridState);
+    return WispGridStateMapper.ensureInitialized().encodeMap<WispGridState>(
+      this as WispGridState,
+    );
   }
 
   WispGridStateCopyWith<WispGridState, WispGridState, WispGridState>
-      get copyWith => _WispGridStateCopyWithImpl(
-          this as WispGridState, $identity, $identity);
+  get copyWith =>
+      _WispGridStateCopyWithImpl(this as WispGridState, $identity, $identity);
   @override
   String toString() {
-    return WispGridStateMapper.ensureInitialized()
-        .stringifyValue(this as WispGridState);
+    return WispGridStateMapper.ensureInitialized().stringifyValue(
+      this as WispGridState,
+    );
   }
 
   @override
   bool operator ==(Object other) {
-    return WispGridStateMapper.ensureInitialized()
-        .equalsValue(this as WispGridState, other);
+    return WispGridStateMapper.ensureInitialized().equalsValue(
+      this as WispGridState,
+      other,
+    );
   }
 
   @override
   int get hashCode {
-    return WispGridStateMapper.ensureInitialized()
-        .hashValue(this as WispGridState);
+    return WispGridStateMapper.ensureInitialized().hashValue(
+      this as WispGridState,
+    );
   }
 }
 
@@ -1202,18 +1349,20 @@ extension WispGridStateValueCopy<$R, $Out>
 abstract class WispGridStateCopyWith<$R, $In extends WispGridState, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
   MapCopyWith<
-      $R,
-      String,
-      WispGridColumnState,
-      WispGridColumnStateCopyWith<$R, WispGridColumnState,
-          WispGridColumnState>> get columnsState;
+    $R,
+    String,
+    WispGridColumnState,
+    WispGridColumnStateCopyWith<$R, WispGridColumnState, WispGridColumnState>
+  >
+  get columnsState;
   GroupingSettingCopyWith<$R, GroupingSetting, GroupingSetting>?
-      get groupingSetting;
-  $R call(
-      {String? sortedColumnKey,
-      bool? isSortDescending,
-      Map<String, WispGridColumnState>? columnsState,
-      GroupingSetting? groupingSetting});
+  get groupingSetting;
+  $R call({
+    String? sortedColumnKey,
+    bool? isSortDescending,
+    Map<String, WispGridColumnState>? columnsState,
+    GroupingSetting? groupingSetting,
+  });
   WispGridStateCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
 
@@ -1227,42 +1376,46 @@ class _WispGridStateCopyWithImpl<$R, $Out>
       WispGridStateMapper.ensureInitialized();
   @override
   MapCopyWith<
-      $R,
-      String,
-      WispGridColumnState,
-      WispGridColumnStateCopyWith<$R, WispGridColumnState,
-          WispGridColumnState>> get columnsState => MapCopyWith(
-      $value.columnsState,
-      (v, t) => v.copyWith.$chain(t),
-      (v) => call(columnsState: v));
+    $R,
+    String,
+    WispGridColumnState,
+    WispGridColumnStateCopyWith<$R, WispGridColumnState, WispGridColumnState>
+  >
+  get columnsState => MapCopyWith(
+    $value.columnsState,
+    (v, t) => v.copyWith.$chain(t),
+    (v) => call(columnsState: v),
+  );
   @override
   GroupingSettingCopyWith<$R, GroupingSetting, GroupingSetting>?
-      get groupingSetting => $value.groupingSetting?.copyWith
-          .$chain((v) => call(groupingSetting: v));
+  get groupingSetting =>
+      $value.groupingSetting?.copyWith.$chain((v) => call(groupingSetting: v));
   @override
-  $R call(
-          {Object? sortedColumnKey = $none,
-          bool? isSortDescending,
-          Map<String, WispGridColumnState>? columnsState,
-          Object? groupingSetting = $none}) =>
-      $apply(FieldCopyWithData({
-        if (sortedColumnKey != $none) #sortedColumnKey: sortedColumnKey,
-        if (isSortDescending != null) #isSortDescending: isSortDescending,
-        if (columnsState != null) #columnsState: columnsState,
-        if (groupingSetting != $none) #groupingSetting: groupingSetting
-      }));
+  $R call({
+    Object? sortedColumnKey = $none,
+    bool? isSortDescending,
+    Map<String, WispGridColumnState>? columnsState,
+    Object? groupingSetting = $none,
+  }) => $apply(
+    FieldCopyWithData({
+      if (sortedColumnKey != $none) #sortedColumnKey: sortedColumnKey,
+      if (isSortDescending != null) #isSortDescending: isSortDescending,
+      if (columnsState != null) #columnsState: columnsState,
+      if (groupingSetting != $none) #groupingSetting: groupingSetting,
+    }),
+  );
   @override
   WispGridState $make(CopyWithData data) => WispGridState(
-      sortedColumnKey: data.get(#sortedColumnKey, or: $value.sortedColumnKey),
-      isSortDescending:
-          data.get(#isSortDescending, or: $value.isSortDescending),
-      columnsState: data.get(#columnsState, or: $value.columnsState),
-      groupingSetting: data.get(#groupingSetting, or: $value.groupingSetting));
+    sortedColumnKey: data.get(#sortedColumnKey, or: $value.sortedColumnKey),
+    isSortDescending: data.get(#isSortDescending, or: $value.isSortDescending),
+    columnsState: data.get(#columnsState, or: $value.columnsState),
+    groupingSetting: data.get(#groupingSetting, or: $value.groupingSetting),
+  );
 
   @override
   WispGridStateCopyWith<$R2, WispGridState, $Out2> $chain<$R2, $Out2>(
-          Then<$Out2, $R2> t) =>
-      _WispGridStateCopyWithImpl($value, $cast, t);
+    Then<$Out2, $R2> t,
+  ) => _WispGridStateCopyWithImpl($value, $cast, t);
 }
 
 class GroupingSettingMapper extends ClassMapperBase<GroupingSetting> {
@@ -1281,11 +1434,17 @@ class GroupingSettingMapper extends ClassMapperBase<GroupingSetting> {
 
   static String _$currentGroupedByKey(GroupingSetting v) =>
       v.currentGroupedByKey;
-  static const Field<GroupingSetting, String> _f$currentGroupedByKey =
-      Field('currentGroupedByKey', _$currentGroupedByKey);
+  static const Field<GroupingSetting, String> _f$currentGroupedByKey = Field(
+    'currentGroupedByKey',
+    _$currentGroupedByKey,
+  );
   static bool _$isSortDescending(GroupingSetting v) => v.isSortDescending;
-  static const Field<GroupingSetting, bool> _f$isSortDescending =
-      Field('isSortDescending', _$isSortDescending, opt: true, def: false);
+  static const Field<GroupingSetting, bool> _f$isSortDescending = Field(
+    'isSortDescending',
+    _$isSortDescending,
+    opt: true,
+    def: false,
+  );
 
   @override
   final MappableFields<GroupingSetting> fields = const {
@@ -1295,8 +1454,9 @@ class GroupingSettingMapper extends ClassMapperBase<GroupingSetting> {
 
   static GroupingSetting _instantiate(DecodingData data) {
     return GroupingSetting(
-        currentGroupedByKey: data.dec(_f$currentGroupedByKey),
-        isSortDescending: data.dec(_f$isSortDescending));
+      currentGroupedByKey: data.dec(_f$currentGroupedByKey),
+      isSortDescending: data.dec(_f$isSortDescending),
+    );
   }
 
   @override
@@ -1318,29 +1478,37 @@ mixin GroupingSettingMappable {
   }
 
   Map<String, dynamic> toMap() {
-    return GroupingSettingMapper.ensureInitialized()
-        .encodeMap<GroupingSetting>(this as GroupingSetting);
+    return GroupingSettingMapper.ensureInitialized().encodeMap<GroupingSetting>(
+      this as GroupingSetting,
+    );
   }
 
   GroupingSettingCopyWith<GroupingSetting, GroupingSetting, GroupingSetting>
-      get copyWith => _GroupingSettingCopyWithImpl(
-          this as GroupingSetting, $identity, $identity);
+  get copyWith => _GroupingSettingCopyWithImpl(
+    this as GroupingSetting,
+    $identity,
+    $identity,
+  );
   @override
   String toString() {
-    return GroupingSettingMapper.ensureInitialized()
-        .stringifyValue(this as GroupingSetting);
+    return GroupingSettingMapper.ensureInitialized().stringifyValue(
+      this as GroupingSetting,
+    );
   }
 
   @override
   bool operator ==(Object other) {
-    return GroupingSettingMapper.ensureInitialized()
-        .equalsValue(this as GroupingSetting, other);
+    return GroupingSettingMapper.ensureInitialized().equalsValue(
+      this as GroupingSetting,
+      other,
+    );
   }
 
   @override
   int get hashCode {
-    return GroupingSettingMapper.ensureInitialized()
-        .hashValue(this as GroupingSetting);
+    return GroupingSettingMapper.ensureInitialized().hashValue(
+      this as GroupingSetting,
+    );
   }
 }
 
@@ -1354,7 +1522,8 @@ abstract class GroupingSettingCopyWith<$R, $In extends GroupingSetting, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
   $R call({String? currentGroupedByKey, bool? isSortDescending});
   GroupingSettingCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
-      Then<$Out2, $R2> t);
+    Then<$Out2, $R2> t,
+  );
 }
 
 class _GroupingSettingCopyWithImpl<$R, $Out>
@@ -1366,21 +1535,24 @@ class _GroupingSettingCopyWithImpl<$R, $Out>
   late final ClassMapperBase<GroupingSetting> $mapper =
       GroupingSettingMapper.ensureInitialized();
   @override
-  $R call({String? currentGroupedByKey, bool? isSortDescending}) =>
-      $apply(FieldCopyWithData({
-        if (currentGroupedByKey != null)
-          #currentGroupedByKey: currentGroupedByKey,
-        if (isSortDescending != null) #isSortDescending: isSortDescending
-      }));
+  $R call({String? currentGroupedByKey, bool? isSortDescending}) => $apply(
+    FieldCopyWithData({
+      if (currentGroupedByKey != null)
+        #currentGroupedByKey: currentGroupedByKey,
+      if (isSortDescending != null) #isSortDescending: isSortDescending,
+    }),
+  );
   @override
   GroupingSetting $make(CopyWithData data) => GroupingSetting(
-      currentGroupedByKey:
-          data.get(#currentGroupedByKey, or: $value.currentGroupedByKey),
-      isSortDescending:
-          data.get(#isSortDescending, or: $value.isSortDescending));
+    currentGroupedByKey: data.get(
+      #currentGroupedByKey,
+      or: $value.currentGroupedByKey,
+    ),
+    isSortDescending: data.get(#isSortDescending, or: $value.isSortDescending),
+  );
 
   @override
   GroupingSettingCopyWith<$R2, GroupingSetting, $Out2> $chain<$R2, $Out2>(
-          Then<$Out2, $R2> t) =>
-      _GroupingSettingCopyWithImpl($value, $cast, t);
+    Then<$Out2, $R2> t,
+  ) => _GroupingSettingCopyWithImpl($value, $cast, t);
 }

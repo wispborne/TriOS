@@ -27,8 +27,11 @@ class ModListBasicEntry extends ConsumerStatefulWidget {
   final Mod mod;
   final bool isDisabled;
 
-  const ModListBasicEntry(
-      {super.key, required this.mod, this.isDisabled = false});
+  const ModListBasicEntry({
+    super.key,
+    required this.mod,
+    this.isDisabled = false,
+  });
 
   @override
   ConsumerState createState() => _ModListBasicEntryState();
@@ -51,35 +54,43 @@ class ModListBasicEntry extends ConsumerStatefulWidget {
                 width: 400,
                 height: 400,
                 child: TooltipFrame(
-                  child: Builder(builder: (context) {
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Changelogs(
-                            localVersionCheck,
-                            remoteVersionCheck,
+                  child: Builder(
+                    builder: (context) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Changelogs(
+                              localVersionCheck,
+                              remoteVersionCheck,
+                            ),
                           ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: Text("Right-click for more.",
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Text(
+                              "Right-click for more.",
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Theme.of(context).colorScheme.secondary,
                                 fontWeight: FontWeight.bold,
-                              )),
-                        ),
-                      ],
-                    );
-                  }),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
                 ),
               ),
             TooltipFrame(
               child: SizedBox(
                 width: 400,
-                child: VersionCheckTextReadout(versionCheckComparison,
-                    localVersionCheck, remoteVersionCheck, true),
+                child: VersionCheckTextReadout(
+                  versionCheckComparison,
+                  localVersionCheck,
+                  remoteVersionCheck,
+                  true,
+                ),
               ),
             ),
           ],
@@ -89,10 +100,11 @@ class ModListBasicEntry extends ConsumerStatefulWidget {
   }
 
   static IntrinsicHeight changeAndVersionCheckAlertDialogContent(
-      String? changelogUrl,
-      VersionCheckerInfo? localVersionCheck,
-      RemoteVersionCheckResult? remoteVersionCheck,
-      int? versionCheckComparison) {
+    String? changelogUrl,
+    VersionCheckerInfo? localVersionCheck,
+    RemoteVersionCheckResult? remoteVersionCheck,
+    int? versionCheckComparison,
+  ) {
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -102,21 +114,19 @@ class ModListBasicEntry extends ConsumerStatefulWidget {
               child: SizedBox(
                 width: 500,
                 height: 500,
-                child: Changelogs(
-                  localVersionCheck,
-                  remoteVersionCheck,
-                ),
+                child: Changelogs(localVersionCheck, remoteVersionCheck),
               ),
             ),
           if (changelogUrl.isNotNullOrEmpty())
-            const Padding(
-              padding: EdgeInsets.all(8),
-              child: VerticalDivider(),
-            ),
+            const Padding(padding: EdgeInsets.all(8), child: VerticalDivider()),
           Expanded(
             child: SelectionArea(
-              child: VersionCheckTextReadout(versionCheckComparison,
-                  localVersionCheck, remoteVersionCheck, true),
+              child: VersionCheckTextReadout(
+                versionCheckComparison,
+                localVersionCheck,
+                remoteVersionCheck,
+                true,
+              ),
             ),
           ),
         ],
@@ -141,12 +151,16 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
     final localVersionCheck =
         versionCheckComparisonResult?.variant.versionCheckerInfo;
     final remoteVersionCheck = versionCheckComparisonResult?.remoteVersionCheck;
-    final compatWithGame =
-        compareGameVersions(modInfo.gameVersion, gameVersion);
+    final compatWithGame = compareGameVersions(
+      modInfo.gameVersion,
+      gameVersion,
+    );
     final theme = Theme.of(context);
     final compatTextColor = compatWithGame.getGameCompatibilityColor();
-    final changelogUrl =
-        Changelogs.getChangelogUrl(localVersionCheck, remoteVersionCheck);
+    final changelogUrl = Changelogs.getChangelogUrl(
+      localVersionCheck,
+      remoteVersionCheck,
+    );
     final isEnabled = modVariant.isEnabled(ref.read(AppState.mods));
     final modTextOpacity =
         compatWithGame == GameCompatibility.incompatible ? 0.55 : 1.0;
@@ -181,12 +195,13 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                           height: rowHeight,
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(4),
-                            child: modVariant.iconFilePath != null
-                                ? Image.file(
-                                    (modVariant.iconFilePath ?? "").toFile(),
-                                    isAntiAlias: true,
-                                  )
-                                : Container(),
+                            child:
+                                modVariant.iconFilePath != null
+                                    ? Image.file(
+                                      (modVariant.iconFilePath ?? "").toFile(),
+                                      isAntiAlias: true,
+                                    )
+                                    : Container(),
                           ),
                         ),
                       ),
@@ -197,12 +212,14 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                               child: Text(
                                 modInfo.nameOrId,
                                 style: GoogleFonts.roboto(
-                                    textStyle:
-                                        theme.textTheme.labelLarge?.copyWith(
-                                  color: compatTextColor
-                                      ?.withOpacity(modTextOpacity),
-                                  fontWeight: FontWeight.normal,
-                                )),
+                                  textStyle: theme.textTheme.labelLarge
+                                      ?.copyWith(
+                                        color: compatTextColor?.withOpacity(
+                                          modTextOpacity,
+                                        ),
+                                        fontWeight: FontWeight.normal,
+                                      ),
+                                ),
                                 overflow: TextOverflow.fade,
                                 softWrap: false,
                                 maxLines: 1,
@@ -210,9 +227,7 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                             ),
                             const SizedBox(width: 8),
                             ConstrainedBox(
-                              constraints: const BoxConstraints(
-                                maxWidth: 75,
-                              ),
+                              constraints: const BoxConstraints(maxWidth: 75),
                               child: Text(
                                 modInfo.version.toString(),
                                 style: theme.textTheme.labelLarge?.copyWith(
@@ -229,13 +244,13 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                       ),
                       MovingTooltipWidget(
                         position: TooltipPosition.topLeft,
-                        tooltipWidget: ModListBasicEntry
-                            .buildVersionCheckTextReadoutForTooltip(
-                          changelogUrl,
-                          versionCheckComparison,
-                          localVersionCheck,
-                          remoteVersionCheck,
-                        ),
+                        tooltipWidget:
+                            ModListBasicEntry.buildVersionCheckTextReadoutForTooltip(
+                              changelogUrl,
+                              versionCheckComparison,
+                              localVersionCheck,
+                              remoteVersionCheck,
+                            ),
                         child: Disable(
                           isEnabled: !widget.isDisabled,
                           child: InkWell(
@@ -245,44 +260,57 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                                 ref
                                     .read(downloadManager.notifier)
                                     .downloadUpdateViaBrowser(
-                                        remoteVersionCheck!.remoteVersion!,
-                                        activateVariantOnComplete: false,
-                                        modInfo: modInfo);
+                                      remoteVersionCheck!.remoteVersion!,
+                                      activateVariantOnComplete: false,
+                                      modInfo: modInfo,
+                                    );
                               } else {
                                 showDialog(
-                                    context: context,
-                                    builder: (context) => AlertDialog(
-                                        content: ModListBasicEntry
-                                            .changeAndVersionCheckAlertDialogContent(
-                                                changelogUrl,
-                                                localVersionCheck,
-                                                remoteVersionCheck,
-                                                versionCheckComparison)));
+                                  context: context,
+                                  builder:
+                                      (context) => AlertDialog(
+                                        content:
+                                            ModListBasicEntry.changeAndVersionCheckAlertDialogContent(
+                                              changelogUrl,
+                                              localVersionCheck,
+                                              remoteVersionCheck,
+                                              versionCheckComparison,
+                                            ),
+                                      ),
+                                );
                               }
                             },
-                            onSecondaryTap: () => showDialog(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                    content: ModListBasicEntry
-                                        .changeAndVersionCheckAlertDialogContent(
-                                            changelogUrl,
-                                            localVersionCheck,
-                                            remoteVersionCheck,
-                                            versionCheckComparison))),
+                            onSecondaryTap:
+                                () => showDialog(
+                                  context: context,
+                                  builder:
+                                      (context) => AlertDialog(
+                                        content:
+                                            ModListBasicEntry.changeAndVersionCheckAlertDialogContent(
+                                              changelogUrl,
+                                              localVersionCheck,
+                                              remoteVersionCheck,
+                                              versionCheckComparison,
+                                            ),
+                                      ),
+                                ),
                             child: Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 5.0),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 5.0,
+                              ),
                               child: VersionCheckIcon.fromComparison(
-                                  comparison: versionCheckComparisonResult,
-                                  theme: theme),
+                                comparison: versionCheckComparisonResult,
+                                theme: theme,
+                              ),
                             ),
                           ),
                         ),
                       ),
                     ],
                   ),
-                  checkWrapper: (child) =>
-                      Disable(isEnabled: !widget.isDisabled, child: child),
+                  checkWrapper:
+                      (child) =>
+                          Disable(isEnabled: !widget.isDisabled, child: child),
                   textPadding: const EdgeInsets.only(left: 0, bottom: 2),
                   value: isEnabled,
                   expand: true,
@@ -301,7 +329,8 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                           context: context,
                           type: SnackBarType.error,
                           content: Text(
-                              "'${modInfo.name}' requires game version ${modInfo.gameVersion} but you have $gameVersion"),
+                            "'${modInfo.name}' requires game version ${modInfo.gameVersion} but you have $gameVersion",
+                          ),
                         );
                         return;
                       }
@@ -312,24 +341,30 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                           ref.read(AppState.enabledModIds).value!;
                       // Check dependencies
                       final dependencyCheck = modInfo.checkDependencies(
-                          allMods, enabledMods, gameVersion);
+                        allMods,
+                        enabledMods,
+                        gameVersion,
+                      );
 
                       // Check if any dependencies are completely missing
                       final missingDependencies = dependencyCheck.where(
-                          (element) => element.satisfiedAmount is Missing);
+                        (element) => element.satisfiedAmount is Missing,
+                      );
                       if (missingDependencies.isNotEmpty) {
                         showSnackBar(
-                            context: context,
-                            type: SnackBarType.error,
-                            content: Text(
-                              "'${modInfo.name}' is missing '${missingDependencies.joinToString(transform: (it) => it.dependency.name ?? it.dependency.id ?? "<unknown>")}'.",
-                            ));
+                          context: context,
+                          type: SnackBarType.error,
+                          content: Text(
+                            "'${modInfo.name}' is missing '${missingDependencies.joinToString(transform: (it) => it.dependency.name ?? it.dependency.id ?? "<unknown>")}'.",
+                          ),
+                        );
                         return;
                       }
                     }
 
-                    final modsFolder =
-                        ref.read(appSettings.select((value) => value.modsDir));
+                    final modsFolder = ref.read(
+                      appSettings.select((value) => value.modsDir),
+                    );
                     if (modsFolder == null) return;
 
                     try {
@@ -343,13 +378,16 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                         ref
                             .read(AppState.modVariants.notifier)
                             .changeActiveModVariant(
-                                mod, mod.findHighestVersion);
+                              mod,
+                              mod.findHighestVersion,
+                            );
                       }
                     } catch (e) {
                       showSnackBar(
-                          context: context,
-                          type: SnackBarType.error,
-                          content: Text(e.toString()));
+                        context: context,
+                        type: SnackBarType.error,
+                        content: Text(e.toString()),
+                      );
                     }
                   },
                 ),

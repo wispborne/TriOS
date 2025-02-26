@@ -12,8 +12,9 @@ abstract class GPUInfo {
 
 GPUInfo? getGPUInfo() {
   if (Platform.isWindows) {
-    var gpu = WindowsSystemInfo.graphics?.controllers
-        .maxByOrNull<num>((controller) => controller.vram);
+    var gpu = WindowsSystemInfo.graphics?.controllers.maxByOrNull<num>(
+      (controller) => controller.vram,
+    );
     if (gpu != null) {
       return WindowsGPUInfo(gpu);
     }
@@ -61,7 +62,8 @@ class MacOSGPUInfo implements GPUInfo {
     var result = process.stdout.toString();
     if (process.exitCode != 0) {
       throw Exception(
-          "'$memoryCmd' failed with code ${process.exitCode}\n${process.stderr}");
+        "'$memoryCmd' failed with code ${process.exitCode}\n${process.stderr}",
+      );
     }
 
     result = result

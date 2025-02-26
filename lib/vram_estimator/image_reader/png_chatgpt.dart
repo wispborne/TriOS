@@ -49,9 +49,11 @@ Future<ImageHeader?> readPngFileHeaders(String path) async {
     // Read IHDR content
     var ihdrContentStart = ihdrStart + 4;
     var width = _bytesToUint32(
-        flatList.sublist(ihdrContentStart, ihdrContentStart + 4));
+      flatList.sublist(ihdrContentStart, ihdrContentStart + 4),
+    );
     var height = _bytesToUint32(
-        flatList.sublist(ihdrContentStart + 4, ihdrContentStart + 8));
+      flatList.sublist(ihdrContentStart + 4, ihdrContentStart + 8),
+    );
     var bitDepth = flatList[ihdrContentStart + 8];
     var colorType = flatList[ihdrContentStart + 9];
 
@@ -61,7 +63,7 @@ Future<ImageHeader?> readPngFileHeaders(String path) async {
       2 => 3,
       4 => 2,
       6 => 4,
-      _ => throw Exception('Invalid color type: $colorType')
+      _ => throw Exception('Invalid color type: $colorType'),
     };
 
     return ImageHeader(width, height, bitDepth, numChannels);
@@ -72,6 +74,7 @@ Future<ImageHeader?> readPngFileHeaders(String path) async {
 
 // Utility function to convert 4 bytes into a uint32
 int _bytesToUint32(List<int> bytes) {
-  return ByteData.sublistView(Uint8List.fromList(bytes))
-      .getUint32(0, Endian.big);
+  return ByteData.sublistView(
+    Uint8List.fromList(bytes),
+  ).getUint32(0, Endian.big);
 }

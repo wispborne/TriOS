@@ -142,11 +142,11 @@ class IntRange extends IntProgression implements Range<int> {
 
 class IntProgression extends IterableBase<int> {
   IntProgression(int first, int endInclusive, {int step = 1})
-      : _first = first,
-        // can't initialize directly du to naming conflict with step() method
-        // ignore: prefer_initializing_formals
-        stepSize = step,
-        _last = _getProgressionLastElement(first, endInclusive, step);
+    : _first = first,
+      // can't initialize directly du to naming conflict with step() method
+      // ignore: prefer_initializing_formals
+      stepSize = step,
+      _last = _getProgressionLastElement(first, endInclusive, step);
 
   @override
   Iterator<int> get iterator => _IntRangeIterator(_first, _last, stepSize);

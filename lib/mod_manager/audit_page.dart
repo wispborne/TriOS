@@ -21,14 +21,15 @@ class AuditPage extends ConsumerStatefulWidget {
 class _AuditPageState extends ConsumerState<AuditPage> {
   @override
   Widget build(BuildContext context) {
-    final modVariantsBySmolId = (ref
-                .watch(AppState.modVariants)
-                .valueOrNull
-                ?.groupBy((ModVariant variant) => variant.smolId) ??
-            {})
-        .map((key, value) => MapEntry(key, value.first))
-        .cast<String, ModVariant>()
-        .toMap();
+    final modVariantsBySmolId =
+        (ref
+                    .watch(AppState.modVariants)
+                    .valueOrNull
+                    ?.groupBy((ModVariant variant) => variant.smolId) ??
+                {})
+            .map((key, value) => MapEntry(key, value.first))
+            .cast<String, ModVariant>()
+            .toMap();
 
     // Access persisted audit log from ModAuditNotifier
     final auditLog = groupByTime(
@@ -38,9 +39,7 @@ class _AuditPageState extends ConsumerState<AuditPage> {
     final dateFormat = DateFormat.yMMMMd(Intl.getCurrentLocale()).add_jms();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Mod Audit Log'),
-      ),
+      appBar: AppBar(title: const Text('Mod Audit Log')),
       body: ListView.separated(
         itemCount: auditLog.flatten().length,
         itemBuilder: (context, index) {
@@ -55,13 +54,11 @@ class _AuditPageState extends ConsumerState<AuditPage> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Icon(
-                    switch (entry.action) {
-                      ModAction.enable => Icons.check,
-                      ModAction.disable => Icons.close,
-                      ModAction.delete => Icons.delete,
-                    },
-                  ),
+                  Icon(switch (entry.action) {
+                    ModAction.enable => Icons.check,
+                    ModAction.disable => Icons.close,
+                    ModAction.delete => Icons.delete,
+                  }),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Column(
@@ -89,13 +86,13 @@ class _AuditPageState extends ConsumerState<AuditPage> {
                         const SizedBox(height: 4),
                         Text(
                           "$actionWord ${dateFormat.format(entry.timestamp)}\nReason: ${entry.reason}",
-                          style:
-                              Theme.of(context).textTheme.labelSmall?.copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurface
-                                        .withOpacity(0.6),
-                                  ),
+                          style: Theme.of(
+                            context,
+                          ).textTheme.labelSmall?.copyWith(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withOpacity(0.6),
+                          ),
                         ),
                       ],
                     ),
@@ -110,12 +107,7 @@ class _AuditPageState extends ConsumerState<AuditPage> {
               .map((group) => group.length - 1)
               .toList()
               .contains(index)) {
-            return SizedBox(
-              height: 2,
-              child: Container(
-                color: Colors.black,
-              ),
-            );
+            return SizedBox(height: 2, child: Container(color: Colors.black));
           } else {
             return Container();
           }

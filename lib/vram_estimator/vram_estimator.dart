@@ -29,16 +29,10 @@ class VramEstimatorState with VramEstimatorStateMappable {
   bool isCancelled = false;
   final DateTime? lastUpdated;
 
-  VramEstimatorState({
-    required this.modVramInfo,
-    required this.lastUpdated,
-  });
+  VramEstimatorState({required this.modVramInfo, required this.lastUpdated});
 
   factory VramEstimatorState.initial() {
-    return VramEstimatorState(
-      modVramInfo: {},
-      lastUpdated: null,
-    );
+    return VramEstimatorState(modVramInfo: {}, lastUpdated: null);
   }
 }
 
@@ -61,7 +55,6 @@ class VramEstimatorManager
 
 class VramEstimatorNotifier
     extends GenericSettingsAsyncNotifier<VramEstimatorState> {
-
   @override
   GenericAsyncSettingsManager<VramEstimatorState> createSettingsManager() =>
       VramEstimatorManager();
@@ -79,42 +72,48 @@ class VramEstimatorNotifier
       return;
     }
 
-    updateState((s) => s.copyWith()
-      ..isScanning = true
-      ..isCancelled = false);
+    updateState(
+      (s) =>
+          s.copyWith()
+            ..isScanning = true
+            ..isCancelled = false,
+    );
 
     try {
-      final info = await VramChecker(
-        enabledModIds: ref.read(AppState.enabledModIds).value,
-        variantsToCheck: variantsToCheck ??
-            ref
-                .read(AppState.mods)
-                .map((mod) => mod.findFirstEnabledOrHighestVersion)
-                .nonNulls
-                .toList(),
-        graphicsLibConfig:
-            ref.read(graphicsLibConfigProvider) ?? GraphicsLibConfig.disabled,
-        showCountedFiles: true,
-        showSkippedFiles: true,
-        showGfxLibDebugOutput: true,
-        showPerformance: true,
-        modProgressOut: (VramMod mod) {
-          // Update modVramInfo with each mod's progress
-          final updatedModVramInfo = {
-            ...state.requireValue.modVramInfo,
-            mod.info.smolId: mod
-          };
-          updateState(
-            (state) => state.copyWith(
-              modVramInfo: updatedModVramInfo,
-              lastUpdated: DateTime.now(),
-            ),
-          );
-        },
-        debugOut: Fimber.d,
-        verboseOut: (String message) => Fimber.v(() => message),
-        isCancelled: () => state.valueOrNull?.isCancelled ?? false,
-      ).check();
+      final info =
+          await VramChecker(
+            enabledModIds: ref.read(AppState.enabledModIds).value,
+            variantsToCheck:
+                variantsToCheck ??
+                ref
+                    .read(AppState.mods)
+                    .map((mod) => mod.findFirstEnabledOrHighestVersion)
+                    .nonNulls
+                    .toList(),
+            graphicsLibConfig:
+                ref.read(graphicsLibConfigProvider) ??
+                GraphicsLibConfig.disabled,
+            showCountedFiles: true,
+            showSkippedFiles: true,
+            showGfxLibDebugOutput: true,
+            showPerformance: true,
+            modProgressOut: (VramMod mod) {
+              // Update modVramInfo with each mod's progress
+              final updatedModVramInfo = {
+                ...state.requireValue.modVramInfo,
+                mod.info.smolId: mod,
+              };
+              updateState(
+                (state) => state.copyWith(
+                  modVramInfo: updatedModVramInfo,
+                  lastUpdated: DateTime.now(),
+                ),
+              );
+            },
+            debugOut: Fimber.d,
+            verboseOut: (String message) => Fimber.v(() => message),
+            isCancelled: () => state.valueOrNull?.isCancelled ?? false,
+          ).check();
 
       final modVramInfo = info.fold<Map<String, VramMod>>(
         state.requireValue.modVramInfo,
@@ -123,17 +122,19 @@ class VramEstimatorNotifier
       );
 
       updateState(
-        (state) => state.copyWith(modVramInfo: modVramInfo)
-          ..isScanning = false
-          ..isCancelled = false,
+        (state) =>
+            state.copyWith(modVramInfo: modVramInfo)
+              ..isScanning = false
+              ..isCancelled = false,
       );
     } catch (e) {
       Fimber.w('Error scanning for VRAM usage: $e');
       // Optionally, set an error state
       updateState(
-        (state) => state
-          ..isScanning = false
-          ..isCancelled = false,
+        (state) =>
+            state
+              ..isScanning = false
+              ..isCancelled = false,
       );
     }
   }
@@ -174,139 +175,165 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
     final modVramInfo = vramState.modVramInfo;
     final graphicsLibConfig = ref.watch(graphicsLibConfigProvider);
 
-    var modVramInfoToShow =
-        _calculateModsToShow(modVramInfo, graphicsLibConfig);
+    var modVramInfoToShow = _calculateModsToShow(
+      modVramInfo,
+      graphicsLibConfig,
+    );
     var rangeMax = _maxRange(modVramInfo, graphicsLibConfig);
 
-    var showRangeSlider = selectedSliderValues != null &&
+    var showRangeSlider =
+        selectedSliderValues != null &&
         !isScanning &&
         modVramInfoToShow.isNotEmpty;
 
-    return Column(children: <Widget>[
-      Row(
-        children: [
-          Disable(
-            isEnabled: !isScanning,
-            child: SpinningRefreshFAB(
-              onPressed: () {
-                if (!isScanning) {
-                  ref
-                      .read(AppState.vramEstimatorProvider.notifier)
-                      .startEstimating();
-                }
-              },
-              isScanning: isScanning,
-              tooltip: 'Estimate VRAM',
+    return Column(
+      children: <Widget>[
+        Row(
+          children: [
+            Disable(
+              isEnabled: !isScanning,
+              child: SpinningRefreshFAB(
+                onPressed: () {
+                  if (!isScanning) {
+                    ref
+                        .read(AppState.vramEstimatorProvider.notifier)
+                        .startEstimating();
+                  }
+                },
+                isScanning: isScanning,
+                tooltip: 'Estimate VRAM',
+              ),
             ),
-          ),
-          if (isScanning)
+            if (isScanning)
+              Padding(
+                padding: const EdgeInsets.only(left: 16.0),
+                child: OutlinedButton.icon(
+                  onPressed:
+                      () =>
+                          ref
+                              .read(AppState.vramEstimatorProvider.notifier)
+                              .cancelEstimation(),
+                  label: Text(
+                    vramState.isCancelled ? 'Canceling...' : 'Cancel',
+                  ),
+                  icon: const Icon(Icons.cancel),
+                ),
+              ),
             Padding(
               padding: const EdgeInsets.only(left: 16.0),
-              child: OutlinedButton.icon(
-                onPressed: () => ref
-                    .read(AppState.vramEstimatorProvider.notifier)
-                    .cancelEstimation(),
-                label: Text(vramState.isCancelled ? 'Canceling...' : 'Cancel'),
-                icon: const Icon(Icons.cancel),
-              ),
-            ),
-          Padding(
-            padding: const EdgeInsets.only(left: 16.0),
-            child: Disable(
-              isEnabled: modVramInfoToShow.isNotEmpty,
-              child: Text(
-                '${modVramInfo.length} mods scanned',
-                style: Theme.of(context).textTheme.labelMedium,
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(left: 32.0),
-            child: Disable(
-              isEnabled: modVramInfoToShow.isNotEmpty,
-              child: Card.outlined(
-                child: SizedBox(
-                  width: 300,
-                  child:
-                      GraphTypeSelector(onGraphTypeChanged: (GraphType type) {
-                    setState(() {
-                      graphType = type;
-                    });
-                  }),
+              child: Disable(
+                isEnabled: modVramInfoToShow.isNotEmpty,
+                child: Text(
+                  '${modVramInfo.length} mods scanned',
+                  style: Theme.of(context).textTheme.labelMedium,
                 ),
               ),
             ),
-          ),
-        ],
-      ),
-      if (modVramInfo.isNotEmpty)
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: switch (graphType) {
-              GraphType.bar => VramBarChart(modVramInfo: modVramInfoToShow),
-              GraphType.pie => VramPieChart(modVramInfo: modVramInfoToShow),
-            },
-          ),
-        ),
-      if (showRangeSlider)
-        SizedBox(
-          width: 420,
-          child: Disable(
-            isEnabled: showRangeSlider,
-            child: Row(
-              children: [
-                Text(0.bytesAsReadableMB(),
-                    style: Theme.of(context).textTheme.labelLarge),
-                Expanded(
-                  child: RangeSlider(
-                    values: selectedSliderValues?.let((it) => RangeValues(
-                            it.start.coerceAtLeast(0),
-                            it.end.coerceAtMost(rangeMax))) ??
-                        RangeValues(0, rangeMax),
-                    min: 0,
-                    max: rangeMax,
-                    divisions: 50,
-                    labels: RangeLabels(
-                      (selectedSliderValues?.start ?? 0).bytesAsReadableMB(),
-                      (selectedSliderValues?.end ?? rangeMax)
-                          .bytesAsReadableMB(),
+            Padding(
+              padding: const EdgeInsets.only(left: 32.0),
+              child: Disable(
+                isEnabled: modVramInfoToShow.isNotEmpty,
+                child: Card.outlined(
+                  child: SizedBox(
+                    width: 300,
+                    child: GraphTypeSelector(
+                      onGraphTypeChanged: (GraphType type) {
+                        setState(() {
+                          graphType = type;
+                        });
+                      },
                     ),
-                    onChanged: (RangeValues values) {
-                      setState(() {
-                        selectedSliderValues = values;
-                      });
-                    },
                   ),
                 ),
-                Text(rangeMax.bytesAsReadableMB(),
-                    style: Theme.of(context).textTheme.labelLarge),
-              ],
+              ),
+            ),
+          ],
+        ),
+        if (modVramInfo.isNotEmpty)
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: switch (graphType) {
+                GraphType.bar => VramBarChart(modVramInfo: modVramInfoToShow),
+                GraphType.pie => VramPieChart(modVramInfo: modVramInfoToShow),
+              },
             ),
           ),
-        ),
-    ]);
+        if (showRangeSlider)
+          SizedBox(
+            width: 420,
+            child: Disable(
+              isEnabled: showRangeSlider,
+              child: Row(
+                children: [
+                  Text(
+                    0.bytesAsReadableMB(),
+                    style: Theme.of(context).textTheme.labelLarge,
+                  ),
+                  Expanded(
+                    child: RangeSlider(
+                      values:
+                          selectedSliderValues?.let(
+                            (it) => RangeValues(
+                              it.start.coerceAtLeast(0),
+                              it.end.coerceAtMost(rangeMax),
+                            ),
+                          ) ??
+                          RangeValues(0, rangeMax),
+                      min: 0,
+                      max: rangeMax,
+                      divisions: 50,
+                      labels: RangeLabels(
+                        (selectedSliderValues?.start ?? 0).bytesAsReadableMB(),
+                        (selectedSliderValues?.end ?? rangeMax)
+                            .bytesAsReadableMB(),
+                      ),
+                      onChanged: (RangeValues values) {
+                        setState(() {
+                          selectedSliderValues = values;
+                        });
+                      },
+                    ),
+                  ),
+                  Text(
+                    rangeMax.bytesAsReadableMB(),
+                    style: Theme.of(context).textTheme.labelLarge,
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
+    );
   }
 
   List<VramMod> _calculateModsToShow(
-      Map<String, VramMod> modVramInfo, GraphicsLibConfig? graphicsLibConfig) {
+    Map<String, VramMod> modVramInfo,
+    GraphicsLibConfig? graphicsLibConfig,
+  ) {
     return modVramInfo.values
-        .where((mod) =>
-            mod.bytesUsingGraphicsLibConfig(graphicsLibConfig) >=
-                (selectedSliderValues?.start ?? 0) &&
-            mod.bytesUsingGraphicsLibConfig(graphicsLibConfig) <=
-                (selectedSliderValues?.end ??
-                    _maxRange(modVramInfo, graphicsLibConfig)))
+        .where(
+          (mod) =>
+              mod.bytesUsingGraphicsLibConfig(graphicsLibConfig) >=
+                  (selectedSliderValues?.start ?? 0) &&
+              mod.bytesUsingGraphicsLibConfig(graphicsLibConfig) <=
+                  (selectedSliderValues?.end ??
+                      _maxRange(modVramInfo, graphicsLibConfig)),
+        )
         .sortedByDescending<num>(
-            (mod) => mod.bytesUsingGraphicsLibConfig(graphicsLibConfig))
+          (mod) => mod.bytesUsingGraphicsLibConfig(graphicsLibConfig),
+        )
         .toList();
   }
 
   double _maxRange(
-      Map<String, VramMod> modVramInfo, GraphicsLibConfig? graphicsLibConfig) {
+    Map<String, VramMod> modVramInfo,
+    GraphicsLibConfig? graphicsLibConfig,
+  ) {
     return modVramInfo.values
             .sortedBy<num>(
-                (mod) => mod.bytesUsingGraphicsLibConfig(graphicsLibConfig))
+              (mod) => mod.bytesUsingGraphicsLibConfig(graphicsLibConfig),
+            )
             .lastOrNull
             ?.bytesUsingGraphicsLibConfig(graphicsLibConfig)
             .toDouble() ??

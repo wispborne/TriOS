@@ -54,7 +54,8 @@ class Settings with SettingsMappable {
 
   // Settings Page
   @Deprecated(
-      "Bad idea, can get stuck in crash -> downgrade -> auto-update -> crash loop.")
+    "Bad idea, can get stuck in crash -> downgrade -> auto-update -> crash loop.",
+  )
   final bool shouldAutoUpdateOnLaunch;
   final int secondsBetweenModFolderChecks;
   final int toastDurationSeconds;
@@ -100,12 +101,17 @@ class Settings with SettingsMappable {
     this.dashboardGridModUpdateVisibility =
         DashboardGridModUpdateVisibility.hideMuted,
     this.modsGridState = const WispGridState(
-        groupingSetting: GroupingSetting(
-            currentGroupedByKey: 'enabledState', isSortDescending: false),
-        sortedColumnKey: 'name',
-        columnsState: {}),
-    this.weaponsGridState =
-        const WispGridState(groupingSetting: null, columnsState: {}),
+      groupingSetting: GroupingSetting(
+        currentGroupedByKey: 'enabledState',
+        isSortDescending: false,
+      ),
+      sortedColumnKey: 'name',
+      columnsState: {},
+    ),
+    this.weaponsGridState = const WispGridState(
+      groupingSetting: null,
+      columnsState: {},
+    ),
     this.customGameExePath,
     this.useCustomGameExePath = false,
     this.doubleClickForModsPanel = true,
@@ -135,18 +141,14 @@ enum FolderNamingSetting {
   @MappableValue(1)
   allFoldersVersioned,
   @MappableValue(2)
-  doNotChangeNamesEver;
+  doNotChangeNamesEver,
 }
 
 @MappableEnum()
 enum ModUpdateBehavior { doNotChange, switchToNewVersionIfWasEnabled }
 
 @MappableEnum()
-enum DashboardGridModUpdateVisibility {
-  allVisible,
-  hideMuted,
-  hideAll,
-}
+enum DashboardGridModUpdateVisibility { allVisible, hideMuted, hideAll }
 
 @MappableEnum()
 enum CompressionLib { sevenZip, libarchive }

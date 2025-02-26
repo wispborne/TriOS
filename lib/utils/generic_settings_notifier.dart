@@ -24,15 +24,19 @@ abstract class GenericSettingsAsyncNotifier<T> extends AsyncNotifier<T> {
       state = AsyncValue.loading();
       Fimber.i("Building settings notifier: $runtimeType");
       try {
-        final loadedState =
-            await settingsManager.readSettingsFromDisk(createDefaultState());
+        final loadedState = await settingsManager.readSettingsFromDisk(
+          createDefaultState(),
+        );
         state = AsyncData(loadedState);
         _isInitialized = true;
         return loadedState;
       } catch (e, stackTrace) {
         state = AsyncError(e, stackTrace);
-        Fimber.w("Error building settings notifier",
-            ex: e, stacktrace: stackTrace);
+        Fimber.w(
+          "Error building settings notifier",
+          ex: e,
+          stacktrace: stackTrace,
+        );
         rethrow;
       }
     } else {
@@ -58,8 +62,11 @@ abstract class GenericSettingsAsyncNotifier<T> extends AsyncNotifier<T> {
       if (onError != null) {
         return await onError(e, stackTrace);
       } else {
-        Fimber.e("Error during settings update: $e",
-            ex: e, stacktrace: stackTrace);
+        Fimber.e(
+          "Error during settings update: $e",
+          ex: e,
+          stacktrace: stackTrace,
+        );
         rethrow;
       }
     }

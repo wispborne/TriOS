@@ -18,21 +18,23 @@ import '../utils/logging.dart';
 part 'theme_manager.mapper.dart';
 
 Color? getStateColorForDependencyText(
-    ModDependencySatisfiedState dependencyState) {
+  ModDependencySatisfiedState dependencyState,
+) {
   return switch (dependencyState) {
     Satisfied _ => null,
     Missing _ => ThemeManager.vanillaErrorColor,
-    Disabled _ => ThemeManager
-        .vanillaWarningColor, // Disabled means it's present, so we can just enable it.
+    Disabled _ =>
+      ThemeManager
+          .vanillaWarningColor, // Disabled means it's present, so we can just enable it.
     VersionInvalid _ => ThemeManager.vanillaErrorColor,
     VersionWarning _ => ThemeManager.vanillaWarningColor,
   };
 }
 
 @MappableClass(
-    generateMethods: GenerateMethods.copy |
-        GenerateMethods.equals |
-        GenerateMethods.stringify)
+  generateMethods:
+      GenerateMethods.copy | GenerateMethods.equals | GenerateMethods.stringify,
+)
 class ThemeState with ThemeStateMappable {
   final ThemeData themeData;
   final Map<String, TriOSTheme> availableThemes;
@@ -66,11 +68,15 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
 
     try {
       _currentTheme = allThemes.getOrElse(
-          ref.watch(appSettings.select((s) => s.themeKey ?? "")),
-          () => allThemes.values.first);
+        ref.watch(appSettings.select((s) => s.themeKey ?? "")),
+        () => allThemes.values.first,
+      );
     } catch (e, st) {
-      Fimber.w("Error loading theme from shared preferences.",
-          ex: e, stacktrace: st);
+      Fimber.w(
+        "Error loading theme from shared preferences.",
+        ex: e,
+        stacktrace: st,
+      );
       _currentTheme = allThemes.values.first;
     }
 
@@ -86,8 +92,9 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
     };
 
     try {
-      final themesJsonString =
-          await rootBundle.loadString("assets/SMOL_Themes.json");
+      final themesJsonString = await rootBundle.loadString(
+        "assets/SMOL_Themes.json",
+      );
       final themesJson = jsonDecode(themesJsonString) as Map<String, dynamic>;
       final themesMap = themesJson["themes"] as Map<String, dynamic>;
 
@@ -110,8 +117,11 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
             hyperlink: themeData["hyperlink"],
           );
         } catch (e, st) {
-          Fimber.e("Error loading theme: ${themeEntry.key}",
-              ex: e, stacktrace: st);
+          Fimber.e(
+            "Error loading theme: ${themeEntry.key}",
+            ex: e,
+            stacktrace: st,
+          );
         }
       }
 
@@ -145,7 +155,9 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
 
     var darkThemeBase = ThemeData(
       colorScheme: ColorScheme.fromSeed(
-          seedColor: seedColor, brightness: Brightness.dark),
+        seedColor: seedColor,
+        brightness: Brightness.dark,
+      ),
       useMaterial3: material3,
     );
 
@@ -169,14 +181,13 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
 
     var lightThemeBase = ThemeData(
       colorScheme: ColorScheme.fromSeed(
-          seedColor: seedColor, brightness: Brightness.light),
+        seedColor: seedColor,
+        brightness: Brightness.light,
+      ),
       useMaterial3: material3,
     );
 
-    var customTheme = _customizeTheme(
-      lightThemeBase,
-      swatch.copyWith(),
-    );
+    var customTheme = _customizeTheme(lightThemeBase, swatch.copyWith());
     return customTheme.copyWith(
       colorScheme: customTheme.colorScheme.copyWith(
         primary: swatch.primary,
@@ -191,8 +202,9 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
         bodyMedium: customTheme.textTheme.bodyMedium?.copyWith(fontSize: 16),
       ),
       iconTheme: customTheme.iconTheme.copyWith(
-        color:
-            customTheme.colorScheme.onSurfaceVariant.withOpacity(iconOpacity),
+        color: customTheme.colorScheme.onSurfaceVariant.withOpacity(
+          iconOpacity,
+        ),
       ),
       tabBarTheme: customTheme.tabBarTheme.copyWith(
         labelColor: customTheme.colorScheme.onSurface,
@@ -206,9 +218,10 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
     // Choose font here
     final textTheme = GoogleFonts.robotoTextTheme(themeBase.textTheme);
 
-    final onSurfaceVariant = swatch.surface == null
-        ? swatch.onSurface
-        : swatch.onSurface?.mix(swatch.surface!, 0.5)!;
+    final onSurfaceVariant =
+        swatch.surface == null
+            ? swatch.onSurface
+            : swatch.onSurface?.mix(swatch.surface!, 0.5)!;
     final primaryVariant = swatch.primary.mix(swatch.surfaceContainer!, 0.7)!;
 
     return themeBase.copyWith(
@@ -237,8 +250,9 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           side: BorderSide(color: primaryVariant),
-          iconColor:
-              themeBase.colorScheme.onSurface.withValues(alpha: iconButtonOpacity),
+          iconColor: themeBase.colorScheme.onSurface.withValues(
+            alpha: iconButtonOpacity,
+          ),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -295,13 +309,16 @@ extension PaletteGeneratorExt on PaletteGenerator? {
 
     Color primaryColor =
         palette.dominantColor?.color ?? Theme.of(context).colorScheme.primary;
-    Color surfaceColor = palette.darkVibrantColor?.color ??
+    Color surfaceColor =
+        palette.darkVibrantColor?.color ??
         palette.darkMutedColor?.color ??
         Theme.of(context).colorScheme.surface;
-    Color onSurfaceColor = palette.lightVibrantColor?.color ??
+    Color onSurfaceColor =
+        palette.lightVibrantColor?.color ??
         palette.lightMutedColor?.color ??
         Theme.of(context).colorScheme.onSurface;
-    Color backgroundColor = palette.darkMutedColor?.color ??
+    Color backgroundColor =
+        palette.darkMutedColor?.color ??
         palette.darkVibrantColor?.color ??
         Theme.of(context).colorScheme.surface;
     // Color buttonBackgroundColor =
@@ -314,11 +331,13 @@ extension PaletteGeneratorExt on PaletteGenerator? {
       colorScheme: ColorScheme(
         brightness: Brightness.dark,
         primary: primaryColor,
-        onPrimary: palette.darkVibrantColor?.bodyTextColor ??
+        onPrimary:
+            palette.darkVibrantColor?.bodyTextColor ??
             palette.darkMutedColor?.bodyTextColor ??
             Colors.white,
         secondary: Colors.blue,
-        onSecondary: palette.darkVibrantColor?.bodyTextColor ??
+        onSecondary:
+            palette.darkVibrantColor?.bodyTextColor ??
             palette.darkMutedColor?.bodyTextColor ??
             Colors.white,
         error: Colors.red,
@@ -350,23 +369,15 @@ extension PaletteGeneratorExt on PaletteGenerator? {
           side: BorderSide(color: onSurfaceColor), // Button outline
         ),
       ),
-      iconTheme: IconThemeData(
-        color: onSurfaceColor.withOpacity(0.8),
-      ),
+      iconTheme: IconThemeData(color: onSurfaceColor.withOpacity(0.8)),
       appBarTheme: AppBarTheme(
         backgroundColor: primaryColor,
-        iconTheme: IconThemeData(
-          color: onSurfaceColor,
-        ),
-        titleTextStyle: Theme.of(context)
-            .textTheme
-            .titleLarge
-            ?.copyWith(color: onSurfaceColor),
+        iconTheme: IconThemeData(color: onSurfaceColor),
+        titleTextStyle: Theme.of(
+          context,
+        ).textTheme.titleLarge?.copyWith(color: onSurfaceColor),
       ),
-      cardTheme: CardTheme(
-        color: surfaceColor,
-        shadowColor: Colors.black45,
-      ),
+      cardTheme: CardTheme(color: surfaceColor, shadowColor: Colors.black45),
       tooltipTheme: TooltipThemeData(
         decoration: BoxDecoration(
           color: primaryColor,
@@ -391,7 +402,9 @@ extension PaletteGeneratorExt on PaletteGenerator? {
         foregroundColor: onSurfaceColor,
       ),
       progressIndicatorTheme: ProgressIndicatorThemeData(
-          color: onSurfaceColor, linearTrackColor: backgroundColor),
+        color: onSurfaceColor,
+        linearTrackColor: backgroundColor,
+      ),
     );
   }
 }
@@ -399,9 +412,7 @@ extension PaletteGeneratorExt on PaletteGenerator? {
 extension ColorSchemeExt on ThemeData {
   lowContrastCardTheme() {
     return copyWith(
-      cardTheme: cardTheme.copyWith(
-        color: colorScheme.surface.lighter(8),
-      ),
+      cardTheme: cardTheme.copyWith(color: colorScheme.surface.lighter(8)),
     );
   }
 }
@@ -451,11 +462,7 @@ extension ModDependencySatisfiedStateExt on ModDependencySatisfiedState {
   }
 }
 
-enum SnackBarType {
-  info,
-  warn,
-  error,
-}
+enum SnackBarType { info, warn, error }
 
 showSnackBar({
   required BuildContext context,
@@ -484,36 +491,42 @@ showSnackBar({
     ScaffoldMessenger.of(context).clearSnackBars();
   }
 
-  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-    content: type != null
-        ? DefaultTextStyle.merge(
-            child: content,
-            style: const TextStyle(
-                color: Colors.white, fontWeight: FontWeight.bold))
-        : content,
-    backgroundColor: switch (type) {
-      SnackBarType.info => Colors.blue,
-      SnackBarType.warn => ThemeManager.vanillaWarningColor,
-      SnackBarType.error => ThemeManager.vanillaErrorColor,
-      null => Theme.of(context).snackBarTheme.backgroundColor
-    },
-    elevation: elevation,
-    margin: margin,
-    padding: padding,
-    width: width,
-    shape: shape,
-    hitTestBehavior: hitTestBehavior,
-    behavior: behavior,
-    action: action,
-    actionOverflowThreshold: actionOverflowThreshold,
-    showCloseIcon: showCloseIcon,
-    closeIconColor: closeIconColor,
-    duration: duration,
-    animation: animation,
-    onVisible: onVisible,
-    dismissDirection: dismissDirection,
-    clipBehavior: clipBehavior,
-  ));
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content:
+          type != null
+              ? DefaultTextStyle.merge(
+                child: content,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              )
+              : content,
+      backgroundColor: switch (type) {
+        SnackBarType.info => Colors.blue,
+        SnackBarType.warn => ThemeManager.vanillaWarningColor,
+        SnackBarType.error => ThemeManager.vanillaErrorColor,
+        null => Theme.of(context).snackBarTheme.backgroundColor,
+      },
+      elevation: elevation,
+      margin: margin,
+      padding: padding,
+      width: width,
+      shape: shape,
+      hitTestBehavior: hitTestBehavior,
+      behavior: behavior,
+      action: action,
+      actionOverflowThreshold: actionOverflowThreshold,
+      showCloseIcon: showCloseIcon,
+      closeIconColor: closeIconColor,
+      duration: duration,
+      animation: animation,
+      onVisible: onVisible,
+      dismissDirection: dismissDirection,
+      clipBehavior: clipBehavior,
+    ),
+  );
 }
 
 // class Swatch {
@@ -528,38 +541,38 @@ showSnackBar({
 
 class StarsectorTriOSTheme extends TriOSTheme {
   StarsectorTriOSTheme()
-      : super(
-          isDark: true,
-          primary: const Color.fromRGBO(73, 252, 255, 1),
-          secondary: const Color.fromRGBO(59, 203, 232, 1),
-          // tertiary: const Color.fromRGBO(0, 255, 255, 1),
-          surface: const Color.fromRGBO(14, 22, 43, 1),
-          surfaceContainer: const Color.fromRGBO(32, 41, 65, 1.0),
-        );
+    : super(
+        isDark: true,
+        primary: const Color.fromRGBO(73, 252, 255, 1),
+        secondary: const Color.fromRGBO(59, 203, 232, 1),
+        // tertiary: const Color.fromRGBO(0, 255, 255, 1),
+        surface: const Color.fromRGBO(14, 22, 43, 1),
+        surfaceContainer: const Color.fromRGBO(32, 41, 65, 1.0),
+      );
 }
 
 class HalloweenTriOSTheme extends TriOSTheme {
   HalloweenTriOSTheme()
-      : super(
-          isDark: true,
-          primary: HexColor("#FF0000"),
-          secondary: HexColor("#FF4D00").lighter(10),
-          // tertiary: HexColor("#FF4D00").lighter(20),
-          surface: HexColor("#272121"),
-          surfaceContainer: HexColor("#272121").lighter(3),
-        );
+    : super(
+        isDark: true,
+        primary: HexColor("#FF0000"),
+        secondary: HexColor("#FF4D00").lighter(10),
+        // tertiary: HexColor("#FF4D00").lighter(20),
+        surface: HexColor("#272121"),
+        surfaceContainer: HexColor("#272121").lighter(3),
+      );
 }
 
 class XmasTriOSTheme extends TriOSTheme {
   XmasTriOSTheme()
-      : super(
-          isDark: true,
-          primary: HexColor("#f23942").darker(10),
-          secondary: HexColor("#70BA7F").lighter(10),
-          // tertiary:  HexColor("#b47c4b").lighter(30),
-          surface: const Color.fromRGBO(26, 46, 31, 1.0).darker(5),
-          surfaceContainer: HexColor("#171e13").lighter(8),
-        );
+    : super(
+        isDark: true,
+        primary: HexColor("#f23942").darker(10),
+        secondary: HexColor("#70BA7F").lighter(10),
+        // tertiary:  HexColor("#b47c4b").lighter(30),
+        surface: const Color.fromRGBO(26, 46, 31, 1.0).darker(5),
+        surfaceContainer: HexColor("#171e13").lighter(8),
+      );
 }
 
 /// For use with ColorFiltered

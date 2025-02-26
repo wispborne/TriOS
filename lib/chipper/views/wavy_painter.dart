@@ -16,10 +16,11 @@ class WavyLinePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = lineColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0;
+    final paint =
+        Paint()
+          ..color = lineColor
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.0;
 
     final path = Path();
     path.moveTo(0, lineHeight);
@@ -31,7 +32,13 @@ class WavyLinePainter extends CustomPainter {
     _drawDashedLine(canvas, path, dashWidth, dashSpace, paint);
   }
 
-  void _drawDashedLine(Canvas canvas, Path path, double dashWidth, double dashSpace, Paint paint) {
+  void _drawDashedLine(
+    Canvas canvas,
+    Path path,
+    double dashWidth,
+    double dashSpace,
+    Paint paint,
+  ) {
     var pathMetrics = path.computeMetrics();
     for (var metric in pathMetrics) {
       for (double i = 0.0; i < metric.length; i += dashWidth + dashSpace) {
@@ -49,7 +56,11 @@ class WavyLineWidget extends StatelessWidget {
   final Color color;
   final double height;
 
-  const WavyLineWidget({super.key, this.color = Colors.black, this.height = 1.0});
+  const WavyLineWidget({
+    super.key,
+    this.color = Colors.black,
+    this.height = 1.0,
+  });
 
   @override
   Widget build(BuildContext context) {

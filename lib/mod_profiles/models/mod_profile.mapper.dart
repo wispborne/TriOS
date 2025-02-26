@@ -22,8 +22,10 @@ class ModProfilesMapper extends ClassMapperBase<ModProfiles> {
   final String id = 'ModProfiles';
 
   static List<ModProfile> _$modProfiles(ModProfiles v) => v.modProfiles;
-  static const Field<ModProfiles, List<ModProfile>> _f$modProfiles =
-      Field('modProfiles', _$modProfiles);
+  static const Field<ModProfiles, List<ModProfile>> _f$modProfiles = Field(
+    'modProfiles',
+    _$modProfiles,
+  );
 
   @override
   final MappableFields<ModProfiles> fields = const {
@@ -48,27 +50,32 @@ class ModProfilesMapper extends ClassMapperBase<ModProfiles> {
 
 mixin ModProfilesMappable {
   String toJson() {
-    return ModProfilesMapper.ensureInitialized()
-        .encodeJson<ModProfiles>(this as ModProfiles);
+    return ModProfilesMapper.ensureInitialized().encodeJson<ModProfiles>(
+      this as ModProfiles,
+    );
   }
 
   Map<String, dynamic> toMap() {
-    return ModProfilesMapper.ensureInitialized()
-        .encodeMap<ModProfiles>(this as ModProfiles);
+    return ModProfilesMapper.ensureInitialized().encodeMap<ModProfiles>(
+      this as ModProfiles,
+    );
   }
 
   ModProfilesCopyWith<ModProfiles, ModProfiles, ModProfiles> get copyWith =>
       _ModProfilesCopyWithImpl(this as ModProfiles, $identity, $identity);
   @override
   String toString() {
-    return ModProfilesMapper.ensureInitialized()
-        .stringifyValue(this as ModProfiles);
+    return ModProfilesMapper.ensureInitialized().stringifyValue(
+      this as ModProfiles,
+    );
   }
 
   @override
   bool operator ==(Object other) {
-    return ModProfilesMapper.ensureInitialized()
-        .equalsValue(this as ModProfiles, other);
+    return ModProfilesMapper.ensureInitialized().equalsValue(
+      this as ModProfiles,
+      other,
+    );
   }
 
   @override
@@ -86,7 +93,7 @@ extension ModProfilesValueCopy<$R, $Out>
 abstract class ModProfilesCopyWith<$R, $In extends ModProfiles, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
   ListCopyWith<$R, ModProfile, ModProfileCopyWith<$R, ModProfile, ModProfile>>
-      get modProfiles;
+  get modProfiles;
   $R call({List<ModProfile>? modProfiles});
   ModProfilesCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -101,19 +108,23 @@ class _ModProfilesCopyWithImpl<$R, $Out>
       ModProfilesMapper.ensureInitialized();
   @override
   ListCopyWith<$R, ModProfile, ModProfileCopyWith<$R, ModProfile, ModProfile>>
-      get modProfiles => ListCopyWith($value.modProfiles,
-          (v, t) => v.copyWith.$chain(t), (v) => call(modProfiles: v));
+  get modProfiles => ListCopyWith(
+    $value.modProfiles,
+    (v, t) => v.copyWith.$chain(t),
+    (v) => call(modProfiles: v),
+  );
   @override
   $R call({List<ModProfile>? modProfiles}) => $apply(
-      FieldCopyWithData({if (modProfiles != null) #modProfiles: modProfiles}));
+    FieldCopyWithData({if (modProfiles != null) #modProfiles: modProfiles}),
+  );
   @override
   ModProfiles $make(CopyWithData data) =>
       ModProfiles(modProfiles: data.get(#modProfiles, or: $value.modProfiles));
 
   @override
   ModProfilesCopyWith<$R2, ModProfiles, $Out2> $chain<$R2, $Out2>(
-          Then<$Out2, $R2> t) =>
-      _ModProfilesCopyWithImpl($value, $cast, t);
+    Then<$Out2, $R2> t,
+  ) => _ModProfilesCopyWithImpl($value, $cast, t);
 }
 
 class ModProfileMapper extends ClassMapperBase<ModProfile> {
@@ -136,21 +147,31 @@ class ModProfileMapper extends ClassMapperBase<ModProfile> {
   static String _$name(ModProfile v) => v.name;
   static const Field<ModProfile, String> _f$name = Field('name', _$name);
   static String _$description(ModProfile v) => v.description;
-  static const Field<ModProfile, String> _f$description =
-      Field('description', _$description);
+  static const Field<ModProfile, String> _f$description = Field(
+    'description',
+    _$description,
+  );
   static int _$sortOrder(ModProfile v) => v.sortOrder;
-  static const Field<ModProfile, int> _f$sortOrder =
-      Field('sortOrder', _$sortOrder);
+  static const Field<ModProfile, int> _f$sortOrder = Field(
+    'sortOrder',
+    _$sortOrder,
+  );
   static List<ShallowModVariant> _$enabledModVariants(ModProfile v) =>
       v.enabledModVariants;
   static const Field<ModProfile, List<ShallowModVariant>>
-      _f$enabledModVariants = Field('enabledModVariants', _$enabledModVariants);
+  _f$enabledModVariants = Field('enabledModVariants', _$enabledModVariants);
   static DateTime? _$dateCreated(ModProfile v) => v.dateCreated;
-  static const Field<ModProfile, DateTime> _f$dateCreated =
-      Field('dateCreated', _$dateCreated, opt: true);
+  static const Field<ModProfile, DateTime> _f$dateCreated = Field(
+    'dateCreated',
+    _$dateCreated,
+    opt: true,
+  );
   static DateTime? _$dateModified(ModProfile v) => v.dateModified;
-  static const Field<ModProfile, DateTime> _f$dateModified =
-      Field('dateModified', _$dateModified, opt: true);
+  static const Field<ModProfile, DateTime> _f$dateModified = Field(
+    'dateModified',
+    _$dateModified,
+    opt: true,
+  );
 
   @override
   final MappableFields<ModProfile> fields = const {
@@ -165,13 +186,14 @@ class ModProfileMapper extends ClassMapperBase<ModProfile> {
 
   static ModProfile _instantiate(DecodingData data) {
     return ModProfile(
-        id: data.dec(_f$id),
-        name: data.dec(_f$name),
-        description: data.dec(_f$description),
-        sortOrder: data.dec(_f$sortOrder),
-        enabledModVariants: data.dec(_f$enabledModVariants),
-        dateCreated: data.dec(_f$dateCreated),
-        dateModified: data.dec(_f$dateModified));
+      id: data.dec(_f$id),
+      name: data.dec(_f$name),
+      description: data.dec(_f$description),
+      sortOrder: data.dec(_f$sortOrder),
+      enabledModVariants: data.dec(_f$enabledModVariants),
+      dateCreated: data.dec(_f$dateCreated),
+      dateModified: data.dec(_f$dateModified),
+    );
   }
 
   @override
@@ -188,27 +210,32 @@ class ModProfileMapper extends ClassMapperBase<ModProfile> {
 
 mixin ModProfileMappable {
   String toJson() {
-    return ModProfileMapper.ensureInitialized()
-        .encodeJson<ModProfile>(this as ModProfile);
+    return ModProfileMapper.ensureInitialized().encodeJson<ModProfile>(
+      this as ModProfile,
+    );
   }
 
   Map<String, dynamic> toMap() {
-    return ModProfileMapper.ensureInitialized()
-        .encodeMap<ModProfile>(this as ModProfile);
+    return ModProfileMapper.ensureInitialized().encodeMap<ModProfile>(
+      this as ModProfile,
+    );
   }
 
   ModProfileCopyWith<ModProfile, ModProfile, ModProfile> get copyWith =>
       _ModProfileCopyWithImpl(this as ModProfile, $identity, $identity);
   @override
   String toString() {
-    return ModProfileMapper.ensureInitialized()
-        .stringifyValue(this as ModProfile);
+    return ModProfileMapper.ensureInitialized().stringifyValue(
+      this as ModProfile,
+    );
   }
 
   @override
   bool operator ==(Object other) {
-    return ModProfileMapper.ensureInitialized()
-        .equalsValue(this as ModProfile, other);
+    return ModProfileMapper.ensureInitialized().equalsValue(
+      this as ModProfile,
+      other,
+    );
   }
 
   @override
@@ -225,17 +252,21 @@ extension ModProfileValueCopy<$R, $Out>
 
 abstract class ModProfileCopyWith<$R, $In extends ModProfile, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
-  ListCopyWith<$R, ShallowModVariant,
-          ShallowModVariantCopyWith<$R, ShallowModVariant, ShallowModVariant>>
-      get enabledModVariants;
-  $R call(
-      {String? id,
-      String? name,
-      String? description,
-      int? sortOrder,
-      List<ShallowModVariant>? enabledModVariants,
-      DateTime? dateCreated,
-      DateTime? dateModified});
+  ListCopyWith<
+    $R,
+    ShallowModVariant,
+    ShallowModVariantCopyWith<$R, ShallowModVariant, ShallowModVariant>
+  >
+  get enabledModVariants;
+  $R call({
+    String? id,
+    String? name,
+    String? description,
+    int? sortOrder,
+    List<ShallowModVariant>? enabledModVariants,
+    DateTime? dateCreated,
+    DateTime? dateModified,
+  });
   ModProfileCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
 
@@ -248,43 +279,54 @@ class _ModProfileCopyWithImpl<$R, $Out>
   late final ClassMapperBase<ModProfile> $mapper =
       ModProfileMapper.ensureInitialized();
   @override
-  ListCopyWith<$R, ShallowModVariant,
-          ShallowModVariantCopyWith<$R, ShallowModVariant, ShallowModVariant>>
-      get enabledModVariants => ListCopyWith($value.enabledModVariants,
-          (v, t) => v.copyWith.$chain(t), (v) => call(enabledModVariants: v));
+  ListCopyWith<
+    $R,
+    ShallowModVariant,
+    ShallowModVariantCopyWith<$R, ShallowModVariant, ShallowModVariant>
+  >
+  get enabledModVariants => ListCopyWith(
+    $value.enabledModVariants,
+    (v, t) => v.copyWith.$chain(t),
+    (v) => call(enabledModVariants: v),
+  );
   @override
-  $R call(
-          {String? id,
-          String? name,
-          String? description,
-          int? sortOrder,
-          List<ShallowModVariant>? enabledModVariants,
-          Object? dateCreated = $none,
-          Object? dateModified = $none}) =>
-      $apply(FieldCopyWithData({
-        if (id != null) #id: id,
-        if (name != null) #name: name,
-        if (description != null) #description: description,
-        if (sortOrder != null) #sortOrder: sortOrder,
-        if (enabledModVariants != null) #enabledModVariants: enabledModVariants,
-        if (dateCreated != $none) #dateCreated: dateCreated,
-        if (dateModified != $none) #dateModified: dateModified
-      }));
+  $R call({
+    String? id,
+    String? name,
+    String? description,
+    int? sortOrder,
+    List<ShallowModVariant>? enabledModVariants,
+    Object? dateCreated = $none,
+    Object? dateModified = $none,
+  }) => $apply(
+    FieldCopyWithData({
+      if (id != null) #id: id,
+      if (name != null) #name: name,
+      if (description != null) #description: description,
+      if (sortOrder != null) #sortOrder: sortOrder,
+      if (enabledModVariants != null) #enabledModVariants: enabledModVariants,
+      if (dateCreated != $none) #dateCreated: dateCreated,
+      if (dateModified != $none) #dateModified: dateModified,
+    }),
+  );
   @override
   ModProfile $make(CopyWithData data) => ModProfile(
-      id: data.get(#id, or: $value.id),
-      name: data.get(#name, or: $value.name),
-      description: data.get(#description, or: $value.description),
-      sortOrder: data.get(#sortOrder, or: $value.sortOrder),
-      enabledModVariants:
-          data.get(#enabledModVariants, or: $value.enabledModVariants),
-      dateCreated: data.get(#dateCreated, or: $value.dateCreated),
-      dateModified: data.get(#dateModified, or: $value.dateModified));
+    id: data.get(#id, or: $value.id),
+    name: data.get(#name, or: $value.name),
+    description: data.get(#description, or: $value.description),
+    sortOrder: data.get(#sortOrder, or: $value.sortOrder),
+    enabledModVariants: data.get(
+      #enabledModVariants,
+      or: $value.enabledModVariants,
+    ),
+    dateCreated: data.get(#dateCreated, or: $value.dateCreated),
+    dateModified: data.get(#dateModified, or: $value.dateModified),
+  );
 
   @override
   ModProfileCopyWith<$R2, ModProfile, $Out2> $chain<$R2, $Out2>(
-          Then<$Out2, $R2> t) =>
-      _ModProfileCopyWithImpl($value, $cast, t);
+    Then<$Out2, $R2> t,
+  ) => _ModProfileCopyWithImpl($value, $cast, t);
 }
 
 class ShallowModVariantMapper extends ClassMapperBase<ShallowModVariant> {
@@ -303,17 +345,28 @@ class ShallowModVariantMapper extends ClassMapperBase<ShallowModVariant> {
   final String id = 'ShallowModVariant';
 
   static String _$modId(ShallowModVariant v) => v.modId;
-  static const Field<ShallowModVariant, String> _f$modId =
-      Field('modId', _$modId);
+  static const Field<ShallowModVariant, String> _f$modId = Field(
+    'modId',
+    _$modId,
+  );
   static String? _$modName(ShallowModVariant v) => v.modName;
-  static const Field<ShallowModVariant, String> _f$modName =
-      Field('modName', _$modName, opt: true);
+  static const Field<ShallowModVariant, String> _f$modName = Field(
+    'modName',
+    _$modName,
+    opt: true,
+  );
   static String _$smolVariantId(ShallowModVariant v) => v.smolVariantId;
-  static const Field<ShallowModVariant, String> _f$smolVariantId =
-      Field('smolVariantId', _$smolVariantId);
+  static const Field<ShallowModVariant, String> _f$smolVariantId = Field(
+    'smolVariantId',
+    _$smolVariantId,
+  );
   static Version? _$version(ShallowModVariant v) => v.version;
-  static const Field<ShallowModVariant, Version> _f$version =
-      Field('version', _$version, opt: true, hook: VersionHook());
+  static const Field<ShallowModVariant, Version> _f$version = Field(
+    'version',
+    _$version,
+    opt: true,
+    hook: VersionHook(),
+  );
 
   @override
   final MappableFields<ShallowModVariant> fields = const {
@@ -325,10 +378,11 @@ class ShallowModVariantMapper extends ClassMapperBase<ShallowModVariant> {
 
   static ShallowModVariant _instantiate(DecodingData data) {
     return ShallowModVariant(
-        modId: data.dec(_f$modId),
-        modName: data.dec(_f$modName),
-        smolVariantId: data.dec(_f$smolVariantId),
-        version: data.dec(_f$version));
+      modId: data.dec(_f$modId),
+      modName: data.dec(_f$modName),
+      smolVariantId: data.dec(_f$smolVariantId),
+      version: data.dec(_f$version),
+    );
   }
 
   @override
@@ -354,46 +408,62 @@ mixin ShallowModVariantMappable {
         .encodeMap<ShallowModVariant>(this as ShallowModVariant);
   }
 
-  ShallowModVariantCopyWith<ShallowModVariant, ShallowModVariant,
-          ShallowModVariant>
-      get copyWith => _ShallowModVariantCopyWithImpl(
-          this as ShallowModVariant, $identity, $identity);
+  ShallowModVariantCopyWith<
+    ShallowModVariant,
+    ShallowModVariant,
+    ShallowModVariant
+  >
+  get copyWith => _ShallowModVariantCopyWithImpl(
+    this as ShallowModVariant,
+    $identity,
+    $identity,
+  );
   @override
   String toString() {
-    return ShallowModVariantMapper.ensureInitialized()
-        .stringifyValue(this as ShallowModVariant);
+    return ShallowModVariantMapper.ensureInitialized().stringifyValue(
+      this as ShallowModVariant,
+    );
   }
 
   @override
   bool operator ==(Object other) {
-    return ShallowModVariantMapper.ensureInitialized()
-        .equalsValue(this as ShallowModVariant, other);
+    return ShallowModVariantMapper.ensureInitialized().equalsValue(
+      this as ShallowModVariant,
+      other,
+    );
   }
 
   @override
   int get hashCode {
-    return ShallowModVariantMapper.ensureInitialized()
-        .hashValue(this as ShallowModVariant);
+    return ShallowModVariantMapper.ensureInitialized().hashValue(
+      this as ShallowModVariant,
+    );
   }
 }
 
 extension ShallowModVariantValueCopy<$R, $Out>
     on ObjectCopyWith<$R, ShallowModVariant, $Out> {
   ShallowModVariantCopyWith<$R, ShallowModVariant, $Out>
-      get $asShallowModVariant =>
-          $base.as((v, t, t2) => _ShallowModVariantCopyWithImpl(v, t, t2));
+  get $asShallowModVariant =>
+      $base.as((v, t, t2) => _ShallowModVariantCopyWithImpl(v, t, t2));
 }
 
-abstract class ShallowModVariantCopyWith<$R, $In extends ShallowModVariant,
-    $Out> implements ClassCopyWith<$R, $In, $Out> {
+abstract class ShallowModVariantCopyWith<
+  $R,
+  $In extends ShallowModVariant,
+  $Out
+>
+    implements ClassCopyWith<$R, $In, $Out> {
   VersionCopyWith<$R, Version, Version>? get version;
-  $R call(
-      {String? modId,
-      String? modName,
-      String? smolVariantId,
-      Version? version});
+  $R call({
+    String? modId,
+    String? modName,
+    String? smolVariantId,
+    Version? version,
+  });
   ShallowModVariantCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
-      Then<$Out2, $R2> t);
+    Then<$Out2, $R2> t,
+  );
 }
 
 class _ShallowModVariantCopyWithImpl<$R, $Out>
@@ -408,26 +478,29 @@ class _ShallowModVariantCopyWithImpl<$R, $Out>
   VersionCopyWith<$R, Version, Version>? get version =>
       $value.version?.copyWith.$chain((v) => call(version: v));
   @override
-  $R call(
-          {String? modId,
-          Object? modName = $none,
-          String? smolVariantId,
-          Object? version = $none}) =>
-      $apply(FieldCopyWithData({
-        if (modId != null) #modId: modId,
-        if (modName != $none) #modName: modName,
-        if (smolVariantId != null) #smolVariantId: smolVariantId,
-        if (version != $none) #version: version
-      }));
+  $R call({
+    String? modId,
+    Object? modName = $none,
+    String? smolVariantId,
+    Object? version = $none,
+  }) => $apply(
+    FieldCopyWithData({
+      if (modId != null) #modId: modId,
+      if (modName != $none) #modName: modName,
+      if (smolVariantId != null) #smolVariantId: smolVariantId,
+      if (version != $none) #version: version,
+    }),
+  );
   @override
   ShallowModVariant $make(CopyWithData data) => ShallowModVariant(
-      modId: data.get(#modId, or: $value.modId),
-      modName: data.get(#modName, or: $value.modName),
-      smolVariantId: data.get(#smolVariantId, or: $value.smolVariantId),
-      version: data.get(#version, or: $value.version));
+    modId: data.get(#modId, or: $value.modId),
+    modName: data.get(#modName, or: $value.modName),
+    smolVariantId: data.get(#smolVariantId, or: $value.smolVariantId),
+    version: data.get(#version, or: $value.version),
+  );
 
   @override
   ShallowModVariantCopyWith<$R2, ShallowModVariant, $Out2> $chain<$R2, $Out2>(
-          Then<$Out2, $R2> t) =>
-      _ShallowModVariantCopyWithImpl($value, $cast, t);
+    Then<$Out2, $R2> t,
+  ) => _ShallowModVariantCopyWithImpl($value, $cast, t);
 }

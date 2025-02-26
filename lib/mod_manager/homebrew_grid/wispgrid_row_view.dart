@@ -13,7 +13,7 @@ class WispGridRowView<T extends WispGridItem> extends ConsumerStatefulWidget {
   final void Function() onDoubleTapped;
   final List<WispGridColumn<T>> columns;
   final Widget Function(T item, RowBuilderModifiers modifiers, Widget child)
-      rowBuilder;
+  rowBuilder;
   final WispGridState gridState;
 
   const WispGridRowView({
@@ -42,55 +42,67 @@ class _WispGridRowViewState<T extends WispGridItem>
 
     return HoverableWidget(
       onTapDown: () => widget.onTapped(),
-      child: Builder(builder: (context) {
-        final isHovering = HoverData.of(context)?.isHovering ?? false;
+      child: Builder(
+        builder: (context) {
+          final isHovering = HoverData.of(context)?.isHovering ?? false;
 
-        return widget.rowBuilder(
-          item,
-          RowBuilderModifiers(
-              isHovering: isHovering, isRowChecked: widget.isRowChecked),
-          Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 0.0),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  spacing: WispGrid.gridRowSpacing,
-                  children: [
-                    SizedBox(width: WispGrid.gridRowSpacing),
-                    ...(widget.gridState
-                        .sortedVisibleColumns(widget.columns)
-                        .map((columnSetting) {
-                      return Builder(builder: (context) {
-                        final header = columnSetting.key;
-                        final state = columnSetting.value;
-                        final gridColumn = widget.columns
-                            .firstWhereOrNull((column) => column.key == header);
+          return widget.rowBuilder(
+            item,
+            RowBuilderModifiers(
+              isHovering: isHovering,
+              isRowChecked: widget.isRowChecked,
+            ),
+            Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 0.0),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: WispGrid.gridRowSpacing,
+                    children: [
+                      SizedBox(width: WispGrid.gridRowSpacing),
+                      ...(widget.gridState
+                          .sortedVisibleColumns(widget.columns)
+                          .map((columnSetting) {
+                            return Builder(
+                              builder: (context) {
+                                final header = columnSetting.key;
+                                final state = columnSetting.value;
+                                final gridColumn = widget.columns
+                                    .firstWhereOrNull(
+                                      (column) => column.key == header,
+                                    );
 
-                        if (gridColumn == null) {
-                          return Container();
-                        }
-                        return _RowItemContainer(
-                            height: height,
-                            width: state.width,
-                            child: gridColumn.itemCellBuilder?.call(
-                                    item,
-                                    CellBuilderModifiers(
-                                      isHovering: isHovering,
-                                      isRowChecked: widget.isRowChecked,
-                                      columnState: state,
-                                    )) ??
-                                Text(item.toString()));
-                      });
-                    }).toList()),
-                    SizedBox(width: WispGrid.gridRowSpacing),
-                  ],
+                                if (gridColumn == null) {
+                                  return Container();
+                                }
+                                return _RowItemContainer(
+                                  height: height,
+                                  width: state.width,
+                                  child:
+                                      gridColumn.itemCellBuilder?.call(
+                                        item,
+                                        CellBuilderModifiers(
+                                          isHovering: isHovering,
+                                          isRowChecked: widget.isRowChecked,
+                                          columnState: state,
+                                        ),
+                                      ) ??
+                                      Text(item.toString()),
+                                );
+                              },
+                            );
+                          })
+                          .toList()),
+                      SizedBox(width: WispGrid.gridRowSpacing),
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-        );
-      }),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 }
@@ -100,8 +112,11 @@ class _RowItemContainer extends StatelessWidget {
   final double height;
   final double width;
 
-  const _RowItemContainer(
-      {required this.child, required this.height, required this.width});
+  const _RowItemContainer({
+    required this.child,
+    required this.height,
+    required this.width,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -114,9 +129,7 @@ class _RowItemContainer extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              child,
-            ],
+            children: [child],
           ),
         ),
       ],

@@ -38,11 +38,16 @@ class _WispGridRowState<T extends WispGridItem>
     final itemsInGroup = widget.itemsInGroup;
     final groupName =
         widget.itemsInGroup.firstOrNull?.let(widget.grouping.getGroupName) ??
-            "";
+        "";
     ;
 
     final overlayWidget = widget.grouping.overlayWidget(
-        context, widget.itemsInGroup, ref, widget.shownIndex, widget.columns);
+      context,
+      widget.itemsInGroup,
+      ref,
+      widget.shownIndex,
+      widget.columns,
+    );
     return Card(
       child: InkWell(
         onTap: () {
@@ -70,16 +75,18 @@ class _WispGridRowState<T extends WispGridItem>
                     ),
                   ),
                   SizedBox(width: 4),
-                  Text("${groupName.trim()} (${itemsInGroup.length})",
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            fontFamily: ThemeManager.orbitron,
-                            fontWeight: FontWeight.bold,
-                          )),
+                  Text(
+                    "${groupName.trim()} (${itemsInGroup.length})",
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      fontFamily: ThemeManager.orbitron,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ],
               ),
-              if (overlayWidget != null) overlayWidget
+              if (overlayWidget != null) overlayWidget,
             ],
           ),
         ),

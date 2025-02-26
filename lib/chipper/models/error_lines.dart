@@ -8,14 +8,19 @@ abstract class LogLine {
   bool shouldWrap = false;
   bool isPreviousThreadLine;
 
-  LogLine(this.lineNumber, this.fullError, {required this.isPreviousThreadLine});
+  LogLine(
+    this.lineNumber,
+    this.fullError, {
+    required this.isPreviousThreadLine,
+  });
 
   Widget createLogWidget(BuildContext context);
 }
 
 class GeneralErrorLogLine extends LogLine {
-  static final RegExp _logRegex =
-      RegExp("(?<millis>\\d*?) +(?<thread>\\[.*?\\]) +(?<level>\\w+?) +(?<namespace>.*?) +- +(?<error>.*)");
+  static final RegExp _logRegex = RegExp(
+    "(?<millis>\\d*?) +(?<thread>\\[.*?\\]) +(?<level>\\w+?) +(?<namespace>.*?) +- +(?<error>.*)",
+  );
 
   String? time;
   String? thread;
@@ -23,13 +28,21 @@ class GeneralErrorLogLine extends LogLine {
   String? namespace;
   String? error;
 
-  GeneralErrorLogLine(super.lineNumber, super.fullError, {required super.isPreviousThreadLine});
+  GeneralErrorLogLine(
+    super.lineNumber,
+    super.fullError, {
+    required super.isPreviousThreadLine,
+  });
 
   static GeneralErrorLogLine? tryCreate(int lineNumber, String fullError) {
     final match = _logRegex.firstMatch(fullError);
 
     if (match != null) {
-      final log = GeneralErrorLogLine(lineNumber, fullError, isPreviousThreadLine: false);
+      final log = GeneralErrorLogLine(
+        lineNumber,
+        fullError,
+        isPreviousThreadLine: false,
+      );
       log.time = match.namedGroup("millis");
       log.thread = match.namedGroup("thread");
       log.logLevel = match.namedGroup("level");
@@ -57,25 +70,40 @@ class GeneralErrorLogLineWidget extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Text.rich(
-        softWrap: logLine.shouldWrap,
-        TextSpan(style: TextStyle(color: theme.colorScheme.onSurface.withAlpha(240)), children: [
-          TextSpan(text: logLine.time, style: TextStyle(color: theme.colorScheme.onSurface.withAlpha(200))),
+      softWrap: logLine.shouldWrap,
+      TextSpan(
+        style: TextStyle(color: theme.colorScheme.onSurface.withAlpha(240)),
+        children: [
           TextSpan(
-              text: logLine.thread?.prepend(" "), style: TextStyle(color: theme.colorScheme.onSurface.withAlpha(140))),
+            text: logLine.time,
+            style: TextStyle(color: theme.colorScheme.onSurface.withAlpha(200)),
+          ),
           TextSpan(
-              text: logLine.logLevel?.prepend(" "),
-              style: TextStyle(color: theme.colorScheme.onSurface.withAlpha(200))),
+            text: logLine.thread?.prepend(" "),
+            style: TextStyle(color: theme.colorScheme.onSurface.withAlpha(140)),
+          ),
           TextSpan(
-              text: logLine.namespace?.prepend(" "),
-              style: TextStyle(color: theme.colorScheme.tertiary.withAlpha(200))),
+            text: logLine.logLevel?.prepend(" "),
+            style: TextStyle(color: theme.colorScheme.onSurface.withAlpha(200)),
+          ),
           TextSpan(
-              text: logLine.error?.prepend(" "), style: TextStyle(color: theme.colorScheme.onSurface.withAlpha(240))),
-        ]));
+            text: logLine.namespace?.prepend(" "),
+            style: TextStyle(color: theme.colorScheme.tertiary.withAlpha(200)),
+          ),
+          TextSpan(
+            text: logLine.error?.prepend(" "),
+            style: TextStyle(color: theme.colorScheme.onSurface.withAlpha(240)),
+          ),
+        ],
+      ),
+    );
   }
 }
 
 class StacktraceLogLine extends LogLine {
-  static final RegExp _stacktraceRegex = RegExp("(?<at>\\tat) (?<namespace>.*)\\.(?<method>.*?)\\((?<classAndLine>.*)\\)");
+  static final RegExp _stacktraceRegex = RegExp(
+    "(?<at>\\tat) (?<namespace>.*)\\.(?<method>.*?)\\((?<classAndLine>.*)\\)",
+  );
 
   String? at;
   String? namespace;
@@ -84,13 +112,21 @@ class StacktraceLogLine extends LogLine {
   /// No parentheses.
   String? classAndLine;
 
-  StacktraceLogLine(super.lineNumber, super.fullError, {required super.isPreviousThreadLine});
+  StacktraceLogLine(
+    super.lineNumber,
+    super.fullError, {
+    required super.isPreviousThreadLine,
+  });
 
   static StacktraceLogLine? tryCreate(int lineNumber, String fullError) {
     final match = _stacktraceRegex.firstMatch(fullError);
 
     if (match != null) {
-      final log = StacktraceLogLine(lineNumber, fullError, isPreviousThreadLine: false);
+      final log = StacktraceLogLine(
+        lineNumber,
+        fullError,
+        isPreviousThreadLine: false,
+      );
       log.at = match.namedGroup("at");
       log.namespace = match.namedGroup("namespace");
       log.method = match.namedGroup("method");
@@ -120,29 +156,53 @@ class StacktraceLogLineWidget extends StatelessWidget {
     var importantColor = theme.colorScheme.tertiary;
 
     return Text.rich(
-        softWrap: logLine.shouldWrap,
-        style: TextStyle(color: isObf ? obfColor : importantColor.withAlpha(240)),
-        TextSpan(children: [
+      softWrap: logLine.shouldWrap,
+      style: TextStyle(color: isObf ? obfColor : importantColor.withAlpha(240)),
+      TextSpan(
+        children: [
           TextSpan(text: "    ", style: TextStyle(color: theme.hintColor)),
           TextSpan(text: logLine.at, style: TextStyle(color: theme.hintColor)),
           TextSpan(
-              text: logLine.namespace?.prepend(" "),
-              style: TextStyle(color: isObf ? obfColor : importantColor.withAlpha(180))),
+            text: logLine.namespace?.prepend(" "),
+            style: TextStyle(
+              color: isObf ? obfColor : importantColor.withAlpha(180),
+            ),
+          ),
           TextSpan(
-              text: logLine.method?.prepend("."),
-              style: TextStyle(color: isObf ? obfColor : importantColor.withAlpha(240))),
+            text: logLine.method?.prepend("."),
+            style: TextStyle(
+              color: isObf ? obfColor : importantColor.withAlpha(240),
+            ),
+          ),
           TextSpan(
-              text: logLine.classAndLine?.prepend("(").append(")"),
-              style: TextStyle(color: isObf ? obfColor : importantColor.withAlpha(240))),
-        ]));
+            text: logLine.classAndLine?.prepend("(").append(")"),
+            style: TextStyle(
+              color: isObf ? obfColor : importantColor.withAlpha(240),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
 class UnknownLogLine extends LogLine {
-  UnknownLogLine(super.lineNumber, super.fullError, {required super.isPreviousThreadLine});
+  UnknownLogLine(
+    super.lineNumber,
+    super.fullError, {
+    required super.isPreviousThreadLine,
+  });
 
-  static UnknownLogLine? tryCreate(int lineNumber, String fullError, bool isPreviousThreadLine) {
-    return UnknownLogLine(lineNumber, fullError, isPreviousThreadLine: isPreviousThreadLine);
+  static UnknownLogLine? tryCreate(
+    int lineNumber,
+    String fullError,
+    bool isPreviousThreadLine,
+  ) {
+    return UnknownLogLine(
+      lineNumber,
+      fullError,
+      isPreviousThreadLine: isPreviousThreadLine,
+    );
   }
 
   @override
@@ -159,8 +219,11 @@ class UnknownLogLineWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text.rich(
-        softWrap: logLine.shouldWrap,
-        style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withAlpha(180)),
-        TextSpan(text: logLine.fullError, children: const []));
+      softWrap: logLine.shouldWrap,
+      style: TextStyle(
+        color: Theme.of(context).colorScheme.onSurface.withAlpha(180),
+      ),
+      TextSpan(text: logLine.fullError, children: const []),
+    );
   }
 }

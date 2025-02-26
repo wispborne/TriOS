@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 
 mixin MultiSplitViewMixin<T extends StatefulWidget> on State<T> {
-  late MultiSplitViewController multiSplitController =
-      MultiSplitViewController(areas: areas);
+  late MultiSplitViewController multiSplitController = MultiSplitViewController(
+    areas: areas,
+  );
 
   List<Area> get areas;
 

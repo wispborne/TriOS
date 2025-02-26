@@ -25,11 +25,11 @@ Map<ShortcutActivator, VoidCallback> defaultMenuShortcuts(
         menuState.selfClose?.call();
       }
     },
-    const SingleActivator(LogicalKeyboardKey.space): () =>
-        item.handleItemSelection(context),
-    const SingleActivator(LogicalKeyboardKey.enter): () =>
-        item.handleItemSelection(context),
-    const SingleActivator(LogicalKeyboardKey.numpadEnter): () =>
-        item.handleItemSelection(context),
+    const SingleActivator(LogicalKeyboardKey.space):
+        () => item.handleItemSelection(context),
+    const SingleActivator(LogicalKeyboardKey.enter):
+        () => item.handleItemSelection(context),
+    const SingleActivator(LogicalKeyboardKey.numpadEnter):
+        () => item.handleItemSelection(context),
   };
 }

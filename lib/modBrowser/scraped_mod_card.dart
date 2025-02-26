@@ -59,7 +59,10 @@ class _ScrapedModCardState extends State<ScrapedModCard> {
             widget.linkLoader(urls[ModUrlType.NexusMods]!);
           } else if (urls.containsKey(ModUrlType.DirectDownload)) {
             _showDirectDownloadDialog(
-                context, mod.name, urls[ModUrlType.DirectDownload]!);
+              context,
+              mod.name,
+              urls[ModUrlType.DirectDownload]!,
+            );
           }
         },
         child: Card(
@@ -84,9 +87,10 @@ class _ScrapedModCardState extends State<ScrapedModCard> {
                         Text(
                           mod.name.isNotEmpty ? mod.name : '???',
                           style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14.0,
-                              fontFamily: ThemeManager.orbitron),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14.0,
+                            fontFamily: ThemeManager.orbitron,
+                          ),
                         ),
                         if (mod.authorsList?.isNotEmpty == true)
                           Padding(
@@ -102,27 +106,27 @@ class _ScrapedModCardState extends State<ScrapedModCard> {
                         Expanded(
                           child: Padding(
                             padding: const EdgeInsets.only(top: 4.0),
-                            child: !((mod.summary?.isNotEmpty ?? false) ||
-                                    (mod.description?.isNotEmpty ?? false))
-                                ? Container()
-                                : Text(
-                                    (mod.summary ?? mod.description)!
-                                        .split('\n')
-                                        .where((line) => line.isNotEmpty)
-                                        .take(2)
-                                        .join('\n'),
-                                    overflow: TextOverflow.fade,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .labelLarge
-                                        ?.copyWith(
-                                          color: Theme.of(context)
-                                              .textTheme
-                                              .labelLarge
-                                              ?.color
-                                              ?.withOpacity(0.8),
-                                        ),
-                                  ),
+                            child:
+                                !((mod.summary?.isNotEmpty ?? false) ||
+                                        (mod.description?.isNotEmpty ?? false))
+                                    ? Container()
+                                    : Text(
+                                      (mod.summary ?? mod.description)!
+                                          .split('\n')
+                                          .where((line) => line.isNotEmpty)
+                                          .take(2)
+                                          .join('\n'),
+                                      overflow: TextOverflow.fade,
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.labelLarge?.copyWith(
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .labelLarge
+                                            ?.color
+                                            ?.withOpacity(0.8),
+                                      ),
+                                    ),
                           ),
                         ),
                         if ((mod.description?.isNotEmpty ?? false))
@@ -130,14 +134,20 @@ class _ScrapedModCardState extends State<ScrapedModCard> {
                             padding: const EdgeInsets.only(top: 8.0),
                             child: ConditionalWrap(
                               condition: mod.description?.isNotEmpty == true,
-                              wrapper: (child) => MovingTooltipWidget(
-                                  tooltipWidget: TooltipFrame(
-                                      child: Text(mod.description ?? '')),
-                                  child: child),
+                              wrapper:
+                                  (child) => MovingTooltipWidget(
+                                    tooltipWidget: TooltipFrame(
+                                      child: Text(mod.description ?? ''),
+                                    ),
+                                    child: child,
+                                  ),
                               child: OutlinedButton(
                                 onPressed: () {
                                   _showDescriptionDialog(
-                                      context, mod.name, mod.description!);
+                                    context,
+                                    mod.name,
+                                    mod.description!,
+                                  );
                                 },
                                 child: Text(
                                   'View Desc.',
@@ -153,41 +163,43 @@ class _ScrapedModCardState extends State<ScrapedModCard> {
                     ),
                   ),
                 ),
-                Builder(builder: (context) {
-                  const size = 14.0;
-                  return Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      BrowserIcon(
-                        mod: mod,
-                        iconOpacity: isBeingHovered ? 1.0 : 0.7,
-                        linkLoader: widget.linkLoader,
-                        size: size,
-                      ),
-                      DiscordIcon(
-                        mod: mod,
-                        iconOpacity: isBeingHovered ? 1.0 : 0.7,
-                        size: size,
-                      ),
-                      NexusModsIcon(
-                        mod: mod,
-                        iconOpacity: isBeingHovered ? 1.0 : 0.7,
-                        size: size,
-                      ),
-                      DirectDownloadIcon(
-                        mod: mod,
-                        iconOpacity: isBeingHovered ? 1.0 : 0.7,
-                        size: size,
-                        linkLoader: widget.linkLoader,
-                      ),
-                      DebugIcon(
-                        mod: mod,
-                        iconOpacity: isBeingHovered ? 1.0 : 0.7,
-                        size: size,
-                      ),
-                    ],
-                  );
-                }),
+                Builder(
+                  builder: (context) {
+                    const size = 14.0;
+                    return Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        BrowserIcon(
+                          mod: mod,
+                          iconOpacity: isBeingHovered ? 1.0 : 0.7,
+                          linkLoader: widget.linkLoader,
+                          size: size,
+                        ),
+                        DiscordIcon(
+                          mod: mod,
+                          iconOpacity: isBeingHovered ? 1.0 : 0.7,
+                          size: size,
+                        ),
+                        NexusModsIcon(
+                          mod: mod,
+                          iconOpacity: isBeingHovered ? 1.0 : 0.7,
+                          size: size,
+                        ),
+                        DirectDownloadIcon(
+                          mod: mod,
+                          iconOpacity: isBeingHovered ? 1.0 : 0.7,
+                          size: size,
+                          linkLoader: widget.linkLoader,
+                        ),
+                        DebugIcon(
+                          mod: mod,
+                          iconOpacity: isBeingHovered ? 1.0 : 0.7,
+                          size: size,
+                        ),
+                      ],
+                    );
+                  },
+                ),
               ],
             ),
           ),
@@ -197,7 +209,10 @@ class _ScrapedModCardState extends State<ScrapedModCard> {
   }
 
   void _showDirectDownloadDialog(
-      BuildContext context, String modName, String downloadUrl) {
+    BuildContext context,
+    String modName,
+    String downloadUrl,
+  ) {
     showDialog(
       context: context,
       builder: (context) {
@@ -225,7 +240,10 @@ class _ScrapedModCardState extends State<ScrapedModCard> {
   }
 
   void _showDescriptionDialog(
-      BuildContext context, String modName, String description) {
+    BuildContext context,
+    String modName,
+    String description,
+  ) {
     showDialog(
       context: context,
       builder: (context) {
@@ -322,14 +340,14 @@ class Tags extends StatelessWidget {
           const Opacity(opacity: 0.5, child: Icon(Icons.tag, size: 12.0)),
           const SizedBox(width: 6.0),
           Expanded(
-            child: Text(tags.join(', '),
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: Theme.of(context)
-                          .textTheme
-                          .labelSmall
-                          ?.color
-                          ?.withOpacity(0.6),
-                    )),
+            child: Text(
+              tags.join(', '),
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: Theme.of(
+                  context,
+                ).textTheme.labelSmall?.color?.withOpacity(0.6),
+              ),
+            ),
           ),
         ],
       );
@@ -422,10 +440,7 @@ class DiscordIcon extends StatelessWidget {
                       .replaceAll("http://", "discord://")
                       .openAsUriInBrowser();
                 },
-                icon: Icon(
-                  Icons.discord,
-                  size: size,
-                ),
+                icon: Icon(Icons.discord, size: size),
               ),
             ),
           ),
@@ -462,10 +477,7 @@ class NexusModsIcon extends StatelessWidget {
             width: size * 2,
             height: size * 2,
             child: IconButton(
-              icon: Icon(
-                Icons.extension,
-                size: size,
-              ),
+              icon: Icon(Icons.extension, size: size),
               onPressed: () {
                 // Implement opening NexusMods URL
               },
@@ -508,9 +520,13 @@ class DirectDownloadIcon extends ConsumerWidget {
             child: IconButton(
               icon: Icon(Icons.download, size: size),
               onPressed: () {
-                ref.read(downloadManager.notifier).downloadAndInstallMod(
-                    mod.name, downloadUrl,
-                    activateVariantOnComplete: false);
+                ref
+                    .read(downloadManager.notifier)
+                    .downloadAndInstallMod(
+                      mod.name,
+                      downloadUrl,
+                      activateVariantOnComplete: false,
+                    );
               },
             ),
           ),
@@ -544,10 +560,7 @@ class DebugIcon extends StatelessWidget {
           width: size * 2,
           height: size * 2,
           child: IconButton(
-            icon: Icon(
-              Icons.bug_report,
-              size: size,
-            ),
+            icon: Icon(Icons.bug_report, size: size),
             onPressed: () {
               _showDebugDialog(context, mod);
             },
@@ -563,9 +576,7 @@ class DebugIcon extends StatelessWidget {
       builder: (context) {
         return AlertDialog(
           title: Text(mod.name),
-          content: SingleChildScrollView(
-            child: SelectableText(mod.toString()),
-          ),
+          content: SingleChildScrollView(child: SelectableText(mod.toString())),
           actions: [
             TextButton(
               onPressed: () {

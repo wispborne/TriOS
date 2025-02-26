@@ -571,8 +571,7 @@ extension IterableFilterIndexedTo<E> on Iterable<E> {
   void filterIndexedTo(
     List<E> destination,
     bool Function(E element, int index) predicate,
-  ) =>
-      whereIndexedTo(destination, predicate);
+  ) => whereIndexedTo(destination, predicate);
 }
 
 extension IterableFilterNot<E> on Iterable<E> {
@@ -600,8 +599,7 @@ extension IterableFilterNotToIndexed<E> on Iterable<E> {
   void filterNotToIndexed(
     List<E> destination,
     bool Function(E element, int index) predicate,
-  ) =>
-      whereNotToIndexed(destination, predicate);
+  ) => whereNotToIndexed(destination, predicate);
 }
 
 extension IterableFilterNotNull<E> on Iterable<E?> {
@@ -1237,7 +1235,7 @@ extension IterableCached<E> on Iterable<E> {
 
 class _CachedIterable<T> extends IterableBase<T> {
   _CachedIterable(Iterable<T> iterable)
-      : _uncomputedIterator = iterable.iterator;
+    : _uncomputedIterator = iterable.iterator;
 
   final Iterator<T> _uncomputedIterator;
   final _cache = _IterableCache<T>(null);
@@ -1248,9 +1246,9 @@ class _CachedIterable<T> extends IterableBase<T> {
 
 class _CachedIterator<T> implements Iterator<T> {
   _CachedIterator(_IterableCache<T> cache, this._uncomputedIterator)
-      // ignore: prefer_initializing_formals
-      : _cache = cache,
-        _latestValidCache = cache;
+    // ignore: prefer_initializing_formals
+    : _cache = cache,
+      _latestValidCache = cache;
 
   _IterableCache<T>? _cache;
 

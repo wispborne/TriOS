@@ -32,9 +32,10 @@ class _ModTooltipFancyTitleHeaderState extends State<ModTooltipFancyTitleHeader>
       child: Container(
         padding: const EdgeInsets.only(top: 4, bottom: 4),
         decoration: BoxDecoration(
-          color: paletteGenerator != null
-              ? paletteTheme.colorScheme.surface
-              : paletteTheme.colorScheme.surfaceContainerLow,
+          color:
+              paletteGenerator != null
+                  ? paletteTheme.colorScheme.surface
+                  : paletteTheme.colorScheme.surfaceContainerLow,
           borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(ThemeManager.cornerRadius),
             topRight: Radius.circular(ThemeManager.cornerRadius),

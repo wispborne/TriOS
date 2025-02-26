@@ -35,15 +35,10 @@ abstract base class ContextMenuItem<T> extends ContextMenuEntry {
   final List<ContextMenuEntry>? items;
   final VoidCallback? onSelected;
 
-  const ContextMenuItem({
-    this.value,
-    this.onSelected,
-  }) : items = null;
+  const ContextMenuItem({this.value, this.onSelected}) : items = null;
 
-  const ContextMenuItem.submenu({
-    required this.items,
-    this.onSelected,
-  }) : value = null;
+  const ContextMenuItem.submenu({required this.items, this.onSelected})
+    : value = null;
 
   /// Indicates whether the menu item has subitems.
   ///
@@ -87,6 +82,9 @@ abstract base class ContextMenuItem<T> extends ContextMenuEntry {
   }
 
   @override
-  Widget builder(BuildContext context, ContextMenuState menuState,
-      [FocusNode focusNode]);
+  Widget builder(
+    BuildContext context,
+    ContextMenuState menuState, [
+    FocusNode focusNode,
+  ]);
 }

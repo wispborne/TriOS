@@ -9,9 +9,14 @@ class TriOSAppIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SvgPicture.asset(("assets/images/telos_faction_crest.svg"),
-        colorFilter: ColorFilter.mode(Theme.of(context).colorScheme.primary, BlendMode.srcIn),
-        width: width,
-        height: height);
+    return SvgPicture.asset(
+      ("assets/images/telos_faction_crest.svg"),
+      colorFilter: ColorFilter.mode(
+        Theme.of(context).colorScheme.primary,
+        BlendMode.srcIn,
+      ),
+      width: width,
+      height: height,
+    );
   }
 }

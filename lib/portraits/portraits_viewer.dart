@@ -22,13 +22,17 @@ class ImageListState extends StateNotifier<Map<ModVariant, List<Portrait>>> {
 
   void addImages(Map<ModVariant, List<Portrait>> images) {
     if (images.isNotEmpty) {
-      final existingHashes =
-          state.values.expand((element) => element.map((e) => e.hash));
-      images = images.map((key, value) => MapEntry(
+      final existingHashes = state.values.expand(
+        (element) => element.map((e) => e.hash),
+      );
+      images = images.map(
+        (key, value) => MapEntry(
           key,
           value
               .where((element) => !existingHashes.contains(element.hash))
-              .toList()));
+              .toList(),
+        ),
+      );
 
       state = state..addAll(images);
     }
@@ -37,10 +41,11 @@ class ImageListState extends StateNotifier<Map<ModVariant, List<Portrait>>> {
 
 // Create a provider for the ImageListState
 final imageListProvider =
-    StateNotifierProvider<ImageListState, Map<ModVariant, List<Portrait>>>(
-        (ref) {
-  return ImageListState();
-});
+    StateNotifierProvider<ImageListState, Map<ModVariant, List<Portrait>>>((
+      ref,
+    ) {
+      return ImageListState();
+    });
 
 class ImageGridScreen extends ConsumerStatefulWidget {
   const ImageGridScreen({super.key});
@@ -76,19 +81,23 @@ class _ImageGridScreenState extends ConsumerState<ImageGridScreen>
     // });
 
     final images = ref.watch(imageListProvider);
-    final List<({Portrait image, ModVariant variant})> modsAndImages = images
-        .entries
-        .expand((element) =>
-            element.value.map((e) => (variant: element.key, image: e)))
-        .toList();
+    final List<({Portrait image, ModVariant variant})> modsAndImages =
+        images.entries
+            .expand(
+              (element) =>
+                  element.value.map((e) => (variant: element.key, image: e)),
+            )
+            .toList();
 
-    final sortedImages =
-        sortModsAndImages(modsAndImages, r'graphics\\.*portraits\\');
+    final sortedImages = sortModsAndImages(
+      modsAndImages,
+      r'graphics\\.*portraits\\',
+    );
     final theme = Theme.of(context);
 
     return isLoading
         ? const Center(
-            child: Column(
+          child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               CircularProgressIndicator(),
@@ -97,68 +106,76 @@ class _ImageGridScreenState extends ConsumerState<ImageGridScreen>
                 child: Text('Loading images...'),
               ),
             ],
-          ))
+          ),
+        )
         : Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Card(
-                margin: const EdgeInsets.all(0),
-                child: Padding(
-                  padding: const EdgeInsets.all(4),
-                  child: Row(
-                    children: [
-                      TextButton.icon(
-                          onPressed: () {
-                            ref
-                                .read(imageListProvider.notifier)
-                                .setImageList({});
-                            _loadImages(
-                                ref.read(AppState.modVariants).valueOrNull ??
-                                    []);
-                          },
-                          style: ButtonStyle(
-                              foregroundColor: WidgetStateProperty.all(
-                                  theme.colorScheme.onSurface)),
-                          icon: const Icon(Icons.refresh),
-                          label: const Text('Reload')),
-                      Padding(
-                          padding: const EdgeInsets.only(left: 8),
-                          child: Text('Showing ${sortedImages.length} images',
-                              style: theme.textTheme.labelLarge)),
-                      const Spacer(),
-                      Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: Text(
-                              'Currently just a portrait viewer. Will allow portrait replacement in the future.',
-                              style: theme.textTheme.labelLarge)),
-                    ],
-                  ),
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Card(
+              margin: const EdgeInsets.all(0),
+              child: Padding(
+                padding: const EdgeInsets.all(4),
+                child: Row(
+                  children: [
+                    TextButton.icon(
+                      onPressed: () {
+                        ref.read(imageListProvider.notifier).setImageList({});
+                        _loadImages(
+                          ref.read(AppState.modVariants).valueOrNull ?? [],
+                        );
+                      },
+                      style: ButtonStyle(
+                        foregroundColor: WidgetStateProperty.all(
+                          theme.colorScheme.onSurface,
+                        ),
+                      ),
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Reload'),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 8),
+                      child: Text(
+                        'Showing ${sortedImages.length} images',
+                        style: theme.textTheme.labelLarge,
+                      ),
+                    ),
+                    const Spacer(),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: Text(
+                        'Currently just a portrait viewer. Will allow portrait replacement in the future.',
+                        style: theme.textTheme.labelLarge,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              Expanded(child: ResponsiveImageGrid(modsAndImages: sortedImages)),
-            ],
-          );
+            ),
+            Expanded(child: ResponsiveImageGrid(modsAndImages: sortedImages)),
+          ],
+        );
   }
 
   List<({Portrait image, ModVariant variant})> sortModsAndImages(
-      List<({Portrait image, ModVariant variant})> modsAndImages,
-      String regexPattern) {
+    List<({Portrait image, ModVariant variant})> modsAndImages,
+    String regexPattern,
+  ) {
     final regex = RegExp(regexPattern);
 
-    return modsAndImages
-      ..sort((a, b) {
-        final aMatches = regex.hasMatch(a.image.imageFile.path);
-        final bMatches = regex.hasMatch(b.image.imageFile.path);
+    return modsAndImages..sort((a, b) {
+      final aMatches = regex.hasMatch(a.image.imageFile.path);
+      final bMatches = regex.hasMatch(b.image.imageFile.path);
 
-        if (aMatches && !bMatches) return -1;
-        if (!aMatches && bMatches) return 1;
+      if (aMatches && !bMatches) return -1;
+      if (!aMatches && bMatches) return 1;
 
-        final variantComparison =
-            a.variant.modInfo.nameOrId.compareTo(b.variant.modInfo.nameOrId);
-        if (variantComparison != 0) return variantComparison;
+      final variantComparison = a.variant.modInfo.nameOrId.compareTo(
+        b.variant.modInfo.nameOrId,
+      );
+      if (variantComparison != 0) return variantComparison;
 
-        return a.image.imageFile.path.compareTo(b.image.imageFile.path);
-      });
+      return a.image.imageFile.path.compareTo(b.image.imageFile.path);
+    });
   }
 }
 
@@ -203,7 +220,8 @@ class ResponsiveImageGrid extends ConsumerWidget {
                 ],
               ),
               child: ContextMenuRegion(
-                  contextMenu: ContextMenu(entries: <ContextMenuEntry>[
+                contextMenu: ContextMenu(
+                  entries: <ContextMenuEntry>[
                     MenuItem(
                       label: 'Open',
                       icon: Icons.open_in_new,
@@ -212,16 +230,20 @@ class ResponsiveImageGrid extends ConsumerWidget {
                       },
                     ),
                     MenuItem(
-                        label: "Open Folder",
-                        icon: Icons.folder_open,
-                        onSelected: () {
-                          launchUrlString(portrait.imageFile.parent.path);
-                        }),
-                  ]),
-                  child: SizedBox(
-                      width: 128,
-                      height: 128,
-                      child: Image.file(portrait.imageFile))),
+                      label: "Open Folder",
+                      icon: Icons.folder_open,
+                      onSelected: () {
+                        launchUrlString(portrait.imageFile.parent.path);
+                      },
+                    ),
+                  ],
+                ),
+                child: SizedBox(
+                  width: 128,
+                  height: 128,
+                  child: Image.file(portrait.imageFile),
+                ),
+              ),
             );
           },
         );

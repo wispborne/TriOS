@@ -16,16 +16,21 @@ class ReadImageHeaders {
       throw Exception("Not an image.");
     }
 
-    final image = (await (img.Command()
-              ..decodeNamedImage(file.path, file.readAsBytesSync()))
-            .executeThread())
-        .outputImage;
+    final image =
+        (await (img.Command()
+                  ..decodeNamedImage(file.path, file.readAsBytesSync()))
+                .executeThread())
+            .outputImage;
 
     if (image == null) {
       throw Exception("Failed to read image.");
     }
 
     return ImageHeader(
-        image.width, image.height, image.bitsPerChannel, image.numChannels);
+      image.width,
+      image.height,
+      image.bitsPerChannel,
+      image.numChannels,
+    );
   }
 }

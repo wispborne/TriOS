@@ -46,12 +46,10 @@ class ContextMenuState extends ChangeNotifier {
   final VoidCallback? selfClose;
   WidgetBuilder submenuBuilder = (context) => const SizedBox.shrink();
 
-  ContextMenuState({
-    required this.menu,
-    this.parentItem,
-  })  : _parentItemRect = null,
-        _isSubmenu = false,
-        selfClose = null;
+  ContextMenuState({required this.menu, this.parentItem})
+    : _parentItemRect = null,
+      _isSubmenu = false,
+      selfClose = null;
 
   ContextMenuState.submenu({
     required this.menu,
@@ -59,9 +57,9 @@ class ContextMenuState extends ChangeNotifier {
     this.parentItem,
     AlignmentGeometry? spawnAlignmen,
     Rect? parentItemRect,
-  })  : _spawnAlignment = spawnAlignmen ?? AlignmentDirectional.topEnd,
-        _parentItemRect = parentItemRect,
-        _isSubmenu = true;
+  }) : _spawnAlignment = spawnAlignmen ?? AlignmentDirectional.topEnd,
+       _parentItemRect = parentItemRect,
+       _isSubmenu = true;
 
   List<ContextMenuEntry> get entries => menu.entries;
   Offset get position => menu.position ?? Offset.zero;
@@ -138,15 +136,14 @@ class ContextMenuState extends ChangeNotifier {
     final submenuParentRect = context.getWidgetBounds();
     if (submenuParentRect == null) return;
 
-    final submenuPosition =
-        _calculateSubmenuPosition(submenuParentRect, spawnAlignment);
+    final submenuPosition = _calculateSubmenuPosition(
+      submenuParentRect,
+      spawnAlignment,
+    );
 
     submenuBuilder = (BuildContext context) {
       final subMenuState = ContextMenuState.submenu(
-        menu: menu.copyWith(
-          entries: items,
-          position: submenuPosition,
-        ),
+        menu: menu.copyWith(entries: items, position: submenuPosition),
         spawnAlignmen: spawnAlignment,
         parentItemRect: submenuParentRect,
         selfClose: closeSubmenu,

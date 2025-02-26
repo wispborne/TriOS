@@ -43,12 +43,13 @@ void main(List<String> args) async {
 
   // Windows: If another instance is already running, bring it to the foreground instead of opening a new instance.
   // (allow one debug + one release to be able to compare)
-    await WindowsSingleInstance.ensureSingleInstance(
-        args,
-        "wisp_trios${kDebugMode ? "_dev" : ""}${Constants.version}",
-        onSecondWindow: (args) {
-          print(args);
-        });
+  await WindowsSingleInstance.ensureSingleInstance(
+    args,
+    "wisp_trios${kDebugMode ? "_dev" : ""}${Constants.version}",
+    onSecondWindow: (args) {
+      print(args);
+    },
+  );
 
   Constants.configDataFolderPath = await getApplicationSupportDirectory();
   try {
@@ -56,7 +57,8 @@ void main(List<String> args) async {
     configureLogging(printPlatformInfo: true);
     Fimber.i("${Constants.appTitle} logging started.");
     Fimber.i(
-        "Platform: ${Platform.operatingSystem} ${Platform.operatingSystemVersion}.");
+      "Platform: ${Platform.operatingSystem} ${Platform.operatingSystemVersion}.",
+    );
   } catch (ex) {
     print("Error initializing logging. $ex");
     loggingError = ex;
@@ -81,7 +83,8 @@ void main(List<String> args) async {
       await showAlertDialog(
         context,
         title: "TriOS Settings Reset",
-        content: "Your ${Constants.appName} settings have been reset."
+        content:
+            "Your ${Constants.appName} settings have been reset."
             "\nThis may be due to an update or a broken settings file."
             "\n\nPlease check your settings. Your mods have not been affected."
             "\n\n\nError: \n$e",
@@ -105,9 +108,10 @@ void main(List<String> args) async {
     if (settings?.showChangelogNextLaunch == true) {
       onAppLoadedActions.add((context) async {
         toastification.showCustom(
-            context: context,
-            autoCloseDuration: Duration(milliseconds: 8000),
-            builder: (context, item) => PostUpdateToast(item: item));
+          context: context,
+          autoCloseDuration: Duration(milliseconds: 8000),
+          builder: (context, item) => PostUpdateToast(item: item),
+        );
       });
     }
   } catch (e) {
@@ -158,8 +162,8 @@ void main(List<String> args) async {
   const minSize = Size(1050, 700);
 
   try {
-// Restore window position and size
-//     final settings = readAppSettings();
+    // Restore window position and size
+    //     final settings = readAppSettings();
     Rect windowFrame = Rect.fromLTWH(
       settings?.windowXPos ?? 0,
       settings?.windowYPos ?? 0,
@@ -172,40 +176,47 @@ void main(List<String> args) async {
     }
 
     windowManager.waitUntilReadyToShow(
-        WindowOptions(size: windowFrame.size, minimumSize: minSize), () async {
-      await windowManager.show();
-      await windowManager.focus();
-    });
+      WindowOptions(size: windowFrame.size, minimumSize: minSize),
+      () async {
+        await windowManager.show();
+        await windowManager.focus();
+      },
+    );
 
     // If the window is off screen, move it to the first display.
     final bounds = await windowManager.getBounds();
     final displays = await ScreenRetriever.instance.getAllDisplays();
-    final isOnScreen = displays.any((display) =>
-        display.size.contains(bounds.topLeft) ||
-        display.size.contains(bounds.bottomRight) ||
-        display.size.contains(bounds.bottomLeft) ||
-        display.size.contains(bounds.topRight));
+    final isOnScreen = displays.any(
+      (display) =>
+          display.size.contains(bounds.topLeft) ||
+          display.size.contains(bounds.bottomRight) ||
+          display.size.contains(bounds.bottomLeft) ||
+          display.size.contains(bounds.topRight),
+    );
 
     if (!isOnScreen && displays.isNotEmpty) {
       final primaryDisplay = displays.firstOrNull!;
       final newBounds = Rect.fromLTWH(
-          primaryDisplay.visiblePosition?.dx ?? 0,
-          primaryDisplay.visiblePosition?.dy ?? 0,
-          windowFrame.width,
-          windowFrame.height);
-      Fimber.i("Window is off screen, moving to first display."
-          "\nOld bounds: $bounds"
-          "\nNew bounds: $newBounds");
+        primaryDisplay.visiblePosition?.dx ?? 0,
+        primaryDisplay.visiblePosition?.dy ?? 0,
+        windowFrame.width,
+        windowFrame.height,
+      );
+      Fimber.i(
+        "Window is off screen, moving to first display."
+        "\nOld bounds: $bounds"
+        "\nNew bounds: $newBounds",
+      );
       await windowManager.setBounds(newBounds);
     }
   } catch (e) {
     Fimber.e("Error restoring window position and size.", ex: e);
   }
 
-// Clean up old files.
+  // Clean up old files.
   final filePatternsToClean = [
     logFileName,
-    ScriptGenerator.SELF_UPDATE_FILE_NAME
+    ScriptGenerator.SELF_UPDATE_FILE_NAME,
   ];
   try {
     currentDirectory.list().listen((file) {
@@ -225,15 +236,19 @@ void main(List<String> args) async {
     Fimber.e("Error cleaning up old files.", ex: e);
   }
 
-  runZonedGuarded(() {
-    SelfUpdater.cleanUpOldUpdateFiles();
-  }, (error, stackTrace) {
-    Fimber.w("Error cleaning up old self-update files.", ex: error);
-  });
+  runZonedGuarded(
+    () {
+      SelfUpdater.cleanUpOldUpdateFiles();
+    },
+    (error, stackTrace) {
+      Fimber.w("Error cleaning up old self-update files.", ex: error);
+    },
+  );
 }
 
-void _runTriOS() => runApp(const ProviderScope(
-    observers: [], child: RestartableApp(child: TriOSApp())));
+void _runTriOS() => runApp(
+  const ProviderScope(observers: [], child: RestartableApp(child: TriOSApp())),
+);
 
 class TriOSApp extends ConsumerStatefulWidget {
   const TriOSApp({super.key});
@@ -249,14 +264,18 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
 
     ref.listenManual(AppState.mods, (_, variants) {
       if (ref.read(
-          appSettings.select((value) => value.allowCrashReporting ?? false))) {
+        appSettings.select((value) => value.allowCrashReporting ?? false),
+      )) {
         try {
           final mods = variants.orEmpty().toList();
-          final variantInfo = mods
-              .flatMap((mod) => mod.modVariants)
-              .map((v) =>
-                  "${v.isEnabled(mods) ? "E" : "X"} ${v.modInfo.id} ${v.modInfo.version}")
-              .sorted();
+          final variantInfo =
+              mods
+                  .flatMap((mod) => mod.modVariants)
+                  .map(
+                    (v) =>
+                        "${v.isEnabled(mods) ? "E" : "X"} ${v.modInfo.id} ${v.modInfo.version}",
+                  )
+                  .sorted();
 
           Sentry.configureScope((scope) {
             scope.setContexts("mods", variantInfo);
@@ -268,7 +287,7 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
     });
 
     windowManager.addListener(this);
-// loadDefaultLog(ref);
+    // loadDefaultLog(ref);
   }
 
   @override
@@ -282,18 +301,20 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
     return MaterialApp(
       title: Constants.appTitle,
       theme: currentTheme.themeData,
-      themeMode: currentTheme.themeData.brightness == Brightness.light
-          ? ThemeMode.light
-          : ThemeMode.dark,
+      themeMode:
+          currentTheme.themeData.brightness == Brightness.light
+              ? ThemeMode.light
+              : ThemeMode.dark,
       debugShowCheckedModeBanner: false,
       darkTheme: currentTheme.themeData,
       home: const ToastificationConfigProvider(
-          config: ToastificationConfig(
-            alignment: Alignment.bottomRight,
-            animationDuration: Duration(milliseconds: 200),
-            itemWidth: 450,
-          ),
-          child: AppShell(child: VramEstimatorPage())),
+        config: ToastificationConfig(
+          alignment: Alignment.bottomRight,
+          animationDuration: Duration(milliseconds: 200),
+          itemWidth: 450,
+        ),
+        child: AppShell(child: VramEstimatorPage()),
+      ),
     );
   }
 
@@ -307,7 +328,7 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
     final windowFrame = await windowManager.getBounds();
     final isMaximized = await windowManager.isMaximized();
 
-// Don't save window size is minimized, we want to restore to the previous size.
+    // Don't save window size is minimized, we want to restore to the previous size.
     if (!await windowManager.isMinimized()) {
       ref.read(appSettings.notifier).update((state) {
         return state.copyWith(

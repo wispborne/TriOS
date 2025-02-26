@@ -31,7 +31,8 @@ class _RulesHotReloadState extends ConsumerState<RulesHotReload> {
 
   _saveVanillaRulesDotCsv(WidgetRef ref) {
     Fimber.i(
-        "Detected rules.csv change, touching vanilla rules.csv last modified date. Count: $_counter");
+      "Detected rules.csv change, touching vanilla rules.csv last modified date. Count: $_counter",
+    );
     final gameCoreDir = ref.read(appSettings.select((s) => s.gameCoreDir));
     if (gameCoreDir == null) {
       return;
@@ -55,7 +56,8 @@ class _RulesHotReloadState extends ConsumerState<RulesHotReload> {
   Widget build(BuildContext context) {
     fileChanges.close();
     final modVariants = ref.watch(AppState.modVariants).valueOrNull;
-    final modRulesDotCsvFiles = modVariants
+    final modRulesDotCsvFiles =
+        modVariants
             ?.map((variant) => getRulesCsvInModFolder(variant.modFolder))
             .nonNulls
             .toList() ??
@@ -80,46 +82,57 @@ class _RulesHotReloadState extends ConsumerState<RulesHotReload> {
     var theme = Theme.of(context);
     return Opacity(
       opacity: widget.isEnabled ? 1 : 0.5,
-      child: Column(children: [
-        // Text(
-        //   '$_counter',
-        //   style: Theme.of(context).textTheme.headlineMedium,
-        // ),
-        Stack(
-          children: [
-            if (widget.isEnabled)
-              Blur(
+      child: Column(
+        children: [
+          // Text(
+          //   '$_counter',
+          //   style: Theme.of(context).textTheme.headlineMedium,
+          // ),
+          Stack(
+            children: [
+              if (widget.isEnabled)
+                Blur(
                   blurX: 8,
                   blurY: 8,
                   child: FadingEye(
-                      shouldAnimate: false, color: theme.colorScheme.primary)),
-            FadingEye(
+                    shouldAnimate: false,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+              FadingEye(
                 shouldAnimate: false,
-                color: widget.isEnabled
-                    ? theme.colorScheme.primary
-                    : theme.colorScheme.onSurface),
-          ],
-        ),
-        Text('rules.csv',
+                color:
+                    widget.isEnabled
+                        ? theme.colorScheme.primary
+                        : theme.colorScheme.onSurface,
+              ),
+            ],
+          ),
+          Text(
+            'rules.csv',
             style: theme.textTheme.labelMedium?.copyWith(
-                color: widget.isEnabled
-                    ? theme.colorScheme.primary
-                    : theme.colorScheme.onSurface)),
-        // RichText(
-        //   textAlign: TextAlign.center,
-        //   text: TextSpan(
-        //     children: [
-        //       TextSpan(
-        //         text: '$modsBeingWatched',
-        //         style: const TextStyle(
-        //           fontWeight: FontWeight.bold,
-        //         ),
-        //       ),
-        //       const TextSpan(text: 'x rules.csv'),
-        //     ],
-        //   ),
-        // ),
-      ]),
+              color:
+                  widget.isEnabled
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurface,
+            ),
+          ),
+          // RichText(
+          //   textAlign: TextAlign.center,
+          //   text: TextSpan(
+          //     children: [
+          //       TextSpan(
+          //         text: '$modsBeingWatched',
+          //         style: const TextStyle(
+          //           fontWeight: FontWeight.bold,
+          //         ),
+          //       ),
+          //       const TextSpan(text: 'x rules.csv'),
+          //     ],
+          //   ),
+          // ),
+        ],
+      ),
     );
   }
 }

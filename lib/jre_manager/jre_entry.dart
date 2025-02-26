@@ -108,14 +108,16 @@ abstract class JreEntryInstalled extends JreEntry {
     var amountWithLowercaseChar = ramMatch.toLowerCase();
     // remove all non-numeric characters
     final replace = RegExp(r"[^\d]");
-    final valueAsDouble =
-        double.tryParse(amountWithLowercaseChar.replaceAll(replace, ""));
+    final valueAsDouble = double.tryParse(
+      amountWithLowercaseChar.replaceAll(replace, ""),
+    );
     if (valueAsDouble == null) return null;
 
-    final amountInMb = amountWithLowercaseChar.endsWith("g")
-        // Convert from GB to MB
-        ? (valueAsDouble * mbPerGb).toStringAsFixed(0)
-        : valueAsDouble.toStringAsFixed(0);
+    final amountInMb =
+        amountWithLowercaseChar.endsWith("g")
+            // Convert from GB to MB
+            ? (valueAsDouble * mbPerGb).toStringAsFixed(0)
+            : valueAsDouble.toStringAsFixed(0);
     return amountInMb;
   }
 }
@@ -132,8 +134,11 @@ class JreVersion with JreVersionMappable implements Comparable<JreVersion> {
     try {
       return versionString.startsWith("1.")
           ? int.parse(versionString.substring(2, 3))
-          : int.parse(versionString
-              .takeWhile((char) => char != '.' && char != '-' && char != '+'));
+          : int.parse(
+            versionString.takeWhile(
+              (char) => char != '.' && char != '-' && char != '+',
+            ),
+          );
     } catch (e, st) {
       Fimber.d(e.toString(), ex: e, stacktrace: st);
       return 0;
@@ -147,7 +152,10 @@ class JreVersion with JreVersionMappable implements Comparable<JreVersion> {
 
 class StandardInstalledJreEntry extends JreEntryInstalled {
   StandardInstalledJreEntry(
-      super.gamePath, super.jreRelativePath, super.version);
+    super.gamePath,
+    super.jreRelativePath,
+    super.version,
+  );
 
   @override
   bool get isCustomJre => false;
@@ -157,11 +165,11 @@ class StandardInstalledJreEntry extends JreEntryInstalled {
 
   @override
   String get vmParamsFileRelativePath => switch (currentPlatform) {
-        TargetPlatform.windows => "vmparams",
-        TargetPlatform.linux => "starsector.sh",
-        TargetPlatform.macOS => "starsector_mac.sh",
-        _ => throw UnsupportedError("Platform not supported: $currentPlatform"),
-      };
+    TargetPlatform.windows => "vmparams",
+    TargetPlatform.linux => "starsector.sh",
+    TargetPlatform.macOS => "starsector_mac.sh",
+    _ => throw UnsupportedError("Platform not supported: $currentPlatform"),
+  };
 
   @override
   bool hasAllFilesReadyToLaunch() =>
@@ -195,15 +203,16 @@ abstract class CustomInstalledJreEntry extends JreEntryInstalled {
 abstract class MikohimeCustomJreEntry extends CustomInstalledJreEntry {
   MikohimeCustomJreEntry(super.gamePath, super.jreRelativePath, super.version);
 
-  Directory get mikohimeFolder => gamePath.resolve("mikohime").normalize().toDirectory();
+  Directory get mikohimeFolder =>
+      gamePath.resolve("mikohime").normalize().toDirectory();
 
   @override
   bool hasAllFilesReadyToLaunch() =>
       vmParamsFileAbsolutePath.existsSync() &&
       jreAbsolutePath.existsSync() &&
       mikohimeFolder.existsSync();
-// Ideally would check that the mikohime folder is for this specific JRE.
-// But idk how.
+  // Ideally would check that the mikohime folder is for this specific JRE.
+  // But idk how.
 
   @override
   List<String> missingFiles() {
@@ -250,11 +259,12 @@ abstract class JreToDownload extends JreEntry {
   JreToDownload(super.gamePath, super.version) {
     downloadProvider =
         AsyncNotifierProvider<CustomJreNotifier, CustomJreDownloadState>(
-            () => _createDownloadProvider());
+          () => _createDownloadProvider(),
+        );
   }
 
   late AsyncNotifierProvider<CustomJreNotifier, CustomJreDownloadState>
-      downloadProvider;
+  downloadProvider;
 }
 
 abstract class CustomJreToDownload extends JreToDownload {
@@ -311,10 +321,12 @@ class CustomJreNotifier extends AsyncNotifier<CustomJreDownloadState> {
   }
 
   void _updateDownloadState() {
-    state = AsyncValue.data(CustomJreDownloadState.aggregate({
-      "jdk": _jdkDownloadState,
-      "mikohime": _mikohimeDownloadState,
-    }));
+    state = AsyncValue.data(
+      CustomJreDownloadState.aggregate({
+        "jdk": _jdkDownloadState,
+        "mikohime": _mikohimeDownloadState,
+      }),
+    );
   }
 
   Future<void> installCustomJre() async {
@@ -333,18 +345,22 @@ class CustomJreNotifier extends AsyncNotifier<CustomJreDownloadState> {
 
     if (customJreInfo == null) {
       Fimber.e(
-          "Custom JRE version checker file not found at $_versionCheckerUrl");
+        "Custom JRE version checker file not found at $_versionCheckerUrl",
+      );
       state = AsyncValue.error(
-          "Custom JRE version checker file not found.", StackTrace.current);
+        "Custom JRE version checker file not found.",
+        StackTrace.current,
+      );
       return;
     }
 
     final archive = ref.read(archiveProvider).requireValue;
     var versionChecker = customJreInfo;
-    final savePath = Directory.systemTemp
-        .createTempSync('trios_jre$_jreVersion-')
-        .absolute
-        .normalize;
+    final savePath =
+        Directory.systemTemp
+            .createTempSync('trios_jre$_jreVersion-')
+            .absolute
+            .normalize;
 
     state = AsyncValue.loading();
 
@@ -352,13 +368,20 @@ class CustomJreNotifier extends AsyncNotifier<CustomJreDownloadState> {
       final jdkZip = _downloadCustomJreJdkForPlatform(versionChecker, savePath);
       final configZip = _downloadCustomJreConfig(versionChecker, savePath);
       await _installCustomJREConfig(
-          archive, gamePath, savePath, await configZip);
+        archive,
+        gamePath,
+        savePath,
+        await configZip,
+      );
       await _installCustomJREJdk(archive, gamePath, await jdkZip);
 
       state = AsyncValue.data(state.value!.copyWith(isInstalling: false));
     } catch (e, stackTrace) {
-      Fimber.e("Error installing JRE $_jreVersion",
-          ex: e, stacktrace: stackTrace);
+      Fimber.e(
+        "Error installing JRE $_jreVersion",
+        ex: e,
+        stacktrace: stackTrace,
+      );
       state = AsyncValue.error(e, stackTrace);
     } finally {
       Fimber.i("Deleting temp folder $savePath");
@@ -371,8 +394,9 @@ class CustomJreNotifier extends AsyncNotifier<CustomJreDownloadState> {
 
     if (response.statusCode == 200) {
       final parsableJson = response.body.fixJson();
-      final versionChecker =
-          CustomJreVersionCheckerFileMapper.fromJson(parsableJson);
+      final versionChecker = CustomJreVersionCheckerFileMapper.fromJson(
+        parsableJson,
+      );
       // Fimber.i("Jre23VersionChecker: $versionChecker");
       return versionChecker;
     }
@@ -381,60 +405,82 @@ class CustomJreNotifier extends AsyncNotifier<CustomJreDownloadState> {
   }
 
   Future<File> _downloadCustomJreJdkForPlatform(
-      CustomJreVersionCheckerFile versionChecker, Directory savePath) async {
+    CustomJreVersionCheckerFile versionChecker,
+    Directory savePath,
+  ) async {
     final jdkUrl = switch (currentPlatform) {
       TargetPlatform.linux => versionChecker.linuxJDKDownload,
       TargetPlatform.windows => versionChecker.windowsJDKDownload,
-      _ => throw UnsupportedError(
-          "$currentPlatform not supported for JRE $_jreVersion"),
+      _ =>
+        throw UnsupportedError(
+          "$currentPlatform not supported for JRE $_jreVersion",
+        ),
     };
 
     if (jdkUrl == null) {
       Fimber.e("No JRE $_jreVersion JDK download link for $currentPlatform");
       throw UnsupportedError(
-          "No JRE $_jreVersion JDK download link for $currentPlatform");
+        "No JRE $_jreVersion JDK download link for $currentPlatform",
+      );
     }
 
-    final jdkZip = downloadFile(jdkUrl, savePath, null,
-        onProgress: (bytesReceived, contentLength) {
-      _jdkDownloadState = _jdkDownloadState.copyWith(
-        downloadProgress: TriOSDownloadProgress(bytesReceived, contentLength),
-      );
-      _updateDownloadState();
-    });
+    final jdkZip = downloadFile(
+      jdkUrl,
+      savePath,
+      null,
+      onProgress: (bytesReceived, contentLength) {
+        _jdkDownloadState = _jdkDownloadState.copyWith(
+          downloadProgress: TriOSDownloadProgress(bytesReceived, contentLength),
+        );
+        _updateDownloadState();
+      },
+    );
 
     return jdkZip;
   }
 
   Future<File> _downloadCustomJreConfig(
-      CustomJreVersionCheckerFile versionChecker, Directory savePath) async {
+    CustomJreVersionCheckerFile versionChecker,
+    Directory savePath,
+  ) async {
     final himiUrl = switch (currentPlatform) {
       TargetPlatform.linux => versionChecker.linuxConfigDownload,
       TargetPlatform.windows => versionChecker.windowsConfigDownload,
-      _ => throw UnsupportedError(
-          "$currentPlatform not supported for JRE $_jreVersion"),
+      _ =>
+        throw UnsupportedError(
+          "$currentPlatform not supported for JRE $_jreVersion",
+        ),
     };
 
     if (himiUrl == null) {
       Fimber.e(
-          "No JRE $_jreVersion Himi/config download link for $currentPlatform");
+        "No JRE $_jreVersion Himi/config download link for $currentPlatform",
+      );
       throw UnsupportedError(
-          "No JRE $_jreVersion Hime/config download link for $currentPlatform");
+        "No JRE $_jreVersion Hime/config download link for $currentPlatform",
+      );
     }
 
-    final configZip = downloadFile(himiUrl, savePath, null,
-        onProgress: (bytesReceived, contentLength) {
-      _mikohimeDownloadState = _mikohimeDownloadState.copyWith(
-        downloadProgress: TriOSDownloadProgress(bytesReceived, contentLength),
-      );
-      _updateDownloadState();
-    });
+    final configZip = downloadFile(
+      himiUrl,
+      savePath,
+      null,
+      onProgress: (bytesReceived, contentLength) {
+        _mikohimeDownloadState = _mikohimeDownloadState.copyWith(
+          downloadProgress: TriOSDownloadProgress(bytesReceived, contentLength),
+        );
+        _updateDownloadState();
+      },
+    );
 
     return configZip;
   }
 
   Future<void> _installCustomJREJdk(
-      ArchiveInterface archive, Directory gamePath, File jdkZip) async {
+    ArchiveInterface archive,
+    Directory gamePath,
+    File jdkZip,
+  ) async {
     final filesInJdkZip = await archive.listFiles(jdkZip);
 
     if (filesInJdkZip.isEmpty) {
@@ -442,51 +488,64 @@ class CustomJreNotifier extends AsyncNotifier<CustomJreDownloadState> {
       return;
     }
 
-    final topLevelFolder = filesInJdkZip
-        .minByOrNull<num>((element) => element.path.length)!
-        .path;
+    final topLevelFolder =
+        filesInJdkZip.minByOrNull<num>((element) => element.path.length)!.path;
     if (gamePath.resolve(topLevelFolder).path.toDirectory().existsSync()) {
       Fimber.i("JRE $_jreVersion JDK already exists in game folder. Aborting.");
       return;
     }
 
     final extractedJdkFiles = await archive.extractEntriesInArchive(
-        jdkZip, gamePath.absolute.path);
+      jdkZip,
+      gamePath.absolute.path,
+    );
     Fimber.i(
-        "Extracted JRE $_jreVersion JDK files: ${extractedJdkFiles.joinToString(separator: ', ', transform: (it) => it?.extractedFile.path ?? "")}");
+      "Extracted JRE $_jreVersion JDK files: ${extractedJdkFiles.joinToString(separator: ', ', transform: (it) => it?.extractedFile.path ?? "")}",
+    );
   }
 
-  Future<void> _installCustomJREConfig(ArchiveInterface archive,
-      Directory gamePath, Directory savePath, File configZip) async {
-    final filesInConfigZip = (await archive.extractEntriesInArchive(
-            configZip, savePath.absolute.path))
-        .map((e) => e?.extractedFile.normalize)
-        .whereType<File>()
-        .toList();
+  Future<void> _installCustomJREConfig(
+    ArchiveInterface archive,
+    Directory gamePath,
+    Directory savePath,
+    File configZip,
+  ) async {
+    final filesInConfigZip =
+        (await archive.extractEntriesInArchive(
+          configZip,
+          savePath.absolute.path,
+        )).map((e) => e?.extractedFile.normalize).whereType<File>().toList();
     Fimber.i(
-        "Extracted JRE $_jreVersion Himemi files: ${filesInConfigZip.joinToString(separator: ', ', transform: (it) => it.path)}");
+      "Extracted JRE $_jreVersion Himemi files: ${filesInConfigZip.joinToString(separator: ', ', transform: (it) => it.path)}",
+    );
 
-    final gameFolderFilesFolder = filesInConfigZip
-        .filter((file) =>
-            file.path.containsIgnoreCase(_gameFolderFilesFolderNamePart))
-        .rootFolder()!
-        .path
-        .toDirectory();
+    final gameFolderFilesFolder =
+        filesInConfigZip
+            .filter(
+              (file) =>
+                  file.path.containsIgnoreCase(_gameFolderFilesFolderNamePart),
+            )
+            .rootFolder()!
+            .path
+            .toDirectory();
 
     Fimber.i('Moving "$gameFolderFilesFolder" to "$gamePath"');
     await gameFolderFilesFolder.moveDirectory(gamePath, overwrite: true);
     Fimber.i('Moved "$gameFolderFilesFolder" to "$gamePath"');
 
     Fimber.i("Looking for VMParams file");
-    final vmParamsFile = filesInConfigZip
-        .filter((file) => file.path.containsIgnoreCase(_vmParamsFolderNamePart))
-        .rootFolder()!
-        .listSync()
-        .first
-        .toDirectory()
-        .listSync()
-        .first
-        .toFile();
+    final vmParamsFile =
+        filesInConfigZip
+            .filter(
+              (file) => file.path.containsIgnoreCase(_vmParamsFolderNamePart),
+            )
+            .rootFolder()!
+            .listSync()
+            .first
+            .toDirectory()
+            .listSync()
+            .first
+            .toFile();
 
     if (!vmParamsFile.existsSync()) {
       Fimber.e("VMParams file not found in '$savePath'");
@@ -538,14 +597,16 @@ class CustomJreDownloadState with CustomJreDownloadStateMappable {
       return CustomJreDownloadState();
     }
 
-    final progressList = states.values
-        .map((s) => s.downloadProgress)
-        .whereType<TriOSDownloadProgress>()
-        .toList();
+    final progressList =
+        states.values
+            .map((s) => s.downloadProgress)
+            .whereType<TriOSDownloadProgress>()
+            .toList();
 
-    final aggregatedProgress = progressList.isEmpty
-        ? null
-        : TriOSDownloadProgress.aggregate(progressList);
+    final aggregatedProgress =
+        progressList.isEmpty
+            ? null
+            : TriOSDownloadProgress.aggregate(progressList);
 
     final firstError = states.values
         .map((s) => s.errorMessage)

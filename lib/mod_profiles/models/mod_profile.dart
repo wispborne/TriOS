@@ -9,9 +9,7 @@ part 'mod_profile.mapper.dart';
 
 @MappableClass()
 class ModProfiles with ModProfilesMappable {
-  const ModProfiles({
-    required this.modProfiles,
-  });
+  const ModProfiles({required this.modProfiles});
 
   final List<ModProfile> modProfiles;
 }
@@ -22,8 +20,7 @@ class ShallowModVariant with ShallowModVariantMappable {
     required this.modId,
     this.modName,
     required this.smolVariantId,
-    @MappableField(key: 'version', hook: VersionHook())
-    this.version,
+    @MappableField(key: 'version', hook: VersionHook()) this.version,
   });
 
   factory ShallowModVariant.fromModVariant(ModVariant variant) {
@@ -62,8 +59,11 @@ class ModProfile with ModProfileMappable {
   final DateTime? dateModified;
 
   static ModProfile newProfile(
-      String name, List<ShallowModVariant> enabledModVariants,
-      {String description = '', sortOrder = 0}) {
+    String name,
+    List<ShallowModVariant> enabledModVariants, {
+    String description = '',
+    sortOrder = 0,
+  }) {
     return ModProfile(
       id: const Uuid().v4(),
       name: name,

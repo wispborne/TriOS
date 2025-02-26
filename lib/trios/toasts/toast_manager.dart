@@ -24,7 +24,7 @@ class _ToastDisplayerState extends ConsumerState<ToastDisplayer> {
   Widget build(BuildContext context) {
     final toastDurationMillis =
         ref.watch(appSettings.select((value) => value.toastDurationSeconds)) *
-            1000;
+        1000;
 
     ref.listen(AppState.modVariants, (prevMods, currMods) {
       if (prevMods == null) return;
@@ -33,10 +33,13 @@ class _ToastDisplayerState extends ConsumerState<ToastDisplayer> {
 
       final prevModsList = prevMods.valueOrNull.orEmpty().toList();
       final currModsList = currMods.valueOrNull.orEmpty().toList();
-      final addedVariants = currModsList
-          .where(
-              (element) => prevModsList.none((e) => e.smolId == element.smolId))
-          .toList();
+      final addedVariants =
+          currModsList
+              .where(
+                (element) =>
+                    prevModsList.none((e) => e.smolId == element.smolId),
+              )
+              .toList();
       // final removedVariants = prevModsList
       //     .where(
       //         (element) => currModsList.none((e) => e.smolId == element.smolId))
@@ -46,17 +49,19 @@ class _ToastDisplayerState extends ConsumerState<ToastDisplayer> {
       for (final newlyAddedVariant in addedVariants) {
         // If a download toast is already showing for this mod, don't show the mod added toast
         if (downloads.whereType<ModDownload>().any(
-            (element) => element.modInfo.smolId == newlyAddedVariant.smolId)) {
+          (element) => element.modInfo.smolId == newlyAddedVariant.smolId,
+        )) {
           continue;
         }
 
         WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
           toastification.showCustom(
-              context: context,
-              autoCloseDuration: Duration(milliseconds: toastDurationMillis),
-              builder: (context, item) {
-                return ModAddedToast(newlyAddedVariant, item);
-              });
+            context: context,
+            autoCloseDuration: Duration(milliseconds: toastDurationMillis),
+            builder: (context, item) {
+              return ModAddedToast(newlyAddedVariant, item);
+            },
+          );
         });
       }
     });
@@ -66,18 +71,19 @@ class _ToastDisplayerState extends ConsumerState<ToastDisplayer> {
         // .filter((download) => download.status.value != DownloadStatus.completed)
         .whereNot((item) => _downloadToastIdsCreated.contains(item.id))
         .forEach((download) {
-      // If the toast doesn't exist and has NEVER existed (don't re-show previously dismissed toasts)
-      // do on next frame
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        toastification.showCustom(
-            context: context,
-            autoCloseDuration: Duration(milliseconds: toastDurationMillis),
-            builder: (context, item) {
-              _downloadToastIdsCreated.add(download.id);
-              return ModDownloadToast(download, item, toastDurationMillis);
-            });
-      });
-    });
+          // If the toast doesn't exist and has NEVER existed (don't re-show previously dismissed toasts)
+          // do on next frame
+          WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+            toastification.showCustom(
+              context: context,
+              autoCloseDuration: Duration(milliseconds: toastDurationMillis),
+              builder: (context, item) {
+                _downloadToastIdsCreated.add(download.id);
+                return ModDownloadToast(download, item, toastDurationMillis);
+              },
+            );
+          });
+        });
 
     // Fimber.i("Clear all id: $clearAllId");
     //

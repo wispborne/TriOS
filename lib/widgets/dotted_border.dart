@@ -49,10 +49,7 @@ class DottedBorder extends StatelessWidget {
     return Stack(
       fit: stackFit,
       children: <Widget>[
-        Padding(
-          padding: padding,
-          child: child,
-        ),
+        Padding(padding: padding, child: child),
         Positioned.fill(
           child: IgnorePointer(
             child: CustomPaint(

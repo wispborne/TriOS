@@ -38,7 +38,10 @@ abstract class ArchiveInterface {
 
   /// Extracts only the given [inArchivePaths] from [archiveFile] into [destination].
   Future<void> extractSome(
-      File archiveFile, Directory destination, List<String> inArchivePaths);
+    File archiveFile,
+    Directory destination,
+    List<String> inArchivePaths,
+  );
 
   /// Tests the integrity of [archiveFile].
   /// Returns `true` if fully OK, `false` if warnings, otherwise throws [Exception].

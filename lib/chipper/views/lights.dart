@@ -11,7 +11,8 @@ class ChristmasLights extends StatefulWidget {
   ChristmasLightsState createState() => ChristmasLightsState();
 }
 
-class ChristmasLightsState extends State<ChristmasLights> with TickerProviderStateMixin {
+class ChristmasLightsState extends State<ChristmasLights>
+    with TickerProviderStateMixin {
   final List<Light> _lights = [];
   final int numberOfLights = 100;
 
@@ -26,25 +27,26 @@ class ChristmasLightsState extends State<ChristmasLights> with TickerProviderSta
   void _restartLight(Light light) {
     setState(() {
       _lights.remove(light);
-      _lights.add(Light(MediaQuery.of(context).size, vsync: this, onEnd: _restartLight));
+      _lights.add(
+        Light(MediaQuery.of(context).size, vsync: this, onEnd: _restartLight),
+      );
     });
   }
 
   @override
   Widget build(BuildContext context) {
     for (int i = 0; i < numberOfLights; i++) {
-      _lights.add(Light(MediaQuery.of(context).size, vsync: this, onEnd: _restartLight));
+      _lights.add(
+        Light(MediaQuery.of(context).size, vsync: this, onEnd: _restartLight),
+      );
     }
-    return CustomPaint(
-      painter: LightPainter(_lights),
-      child: Container(),
-    );
+    return CustomPaint(painter: LightPainter(_lights), child: Container());
   }
 
   @override
   void dispose() {
     // for (var light in _lights) {
-      // light.controller.dispose();
+    // light.controller.dispose();
     // }
     super.dispose();
   }
@@ -62,10 +64,15 @@ class Light {
 
   Light(Size? canvasSize, {required this.vsync, required this.onEnd}) {
     var random = Random();
-    position = Offset(random.nextDouble() * (canvasSize?.width ?? 1), random.nextDouble() * (canvasSize?.height ?? 1));
+    position = Offset(
+      random.nextDouble() * (canvasSize?.width ?? 1),
+      random.nextDouble() * (canvasSize?.height ?? 1),
+    );
     color = (random.nextBool() ? Colors.red : Colors.green);
     size = random.nextDouble() * 3 + 2; // Random size between 2.0 and 5.0
-    intensity = (random.nextDouble() * 0.1) + 0.3; // Random intensity between 0.1 and 0.6
+    intensity =
+        (random.nextDouble() * 0.1) +
+        0.3; // Random intensity between 0.1 and 0.6
 
     // controller = AnimationController(
     //   duration: Duration(milliseconds: canvasSize == null ? 1 : random.nextInt(10000) + 5000),
@@ -93,9 +100,10 @@ class LightPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     for (var light in lights) {
-      final paint = Paint()
-        ..color = light.color.withOpacity(light.intensity)
-        ..style = PaintingStyle.fill;
+      final paint =
+          Paint()
+            ..color = light.color.withOpacity(light.intensity)
+            ..style = PaintingStyle.fill;
       canvas.drawCircle(light.position, light.size, paint);
     }
   }

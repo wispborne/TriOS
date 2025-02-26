@@ -94,8 +94,10 @@ import '../utils/extensions.dart';
 
   if (isHeightExceed()) {
     if (isSubmenu && parentRect != null) {
-      y = max(safeScreenRect.top,
-          safeScreenRect.bottom - menuRect.height - menu.padding.top);
+      y = max(
+        safeScreenRect.top,
+        safeScreenRect.bottom - menuRect.height - menu.padding.top,
+      );
     } else if (!isSubmenu) {
       y = max(safeScreenRect.top, menuRect.top - menuRect.height);
     }
@@ -121,8 +123,9 @@ bool hasSameFocusNodeId(String line1, String line2) {
 }
 
 Rect getScreenRect(BuildContext context) {
-  final size = MediaQueryData.fromView(
-          WidgetsBinding.instance.platformDispatcher.views.first)
-      .size;
+  final size =
+      MediaQueryData.fromView(
+        WidgetsBinding.instance.platformDispatcher.views.first,
+      ).size;
   return Offset.zero & size;
 }

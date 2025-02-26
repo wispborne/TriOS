@@ -24,9 +24,7 @@ Future<T?> showContextMenu<T>(
     context,
     PageRouteBuilder<T>(
       pageBuilder: (context, animation, secondaryAnimation) {
-        return Stack(
-          children: [ContextMenuWidget(menuState: menuState)],
-        );
+        return Stack(children: [ContextMenuWidget(menuState: menuState)]);
       },
       settings: routeSettings ?? const RouteSettings(name: "context-menu"),
       fullscreenDialog: true,
@@ -44,6 +42,10 @@ Future<T?> showContextMenu<T>(
 }
 
 Widget _defaultTransitionsBuilder(
-    context, animation, secondaryAnimation, child) {
+  context,
+  animation,
+  secondaryAnimation,
+  child,
+) {
   return child;
 }

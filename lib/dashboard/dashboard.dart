@@ -56,120 +56,140 @@ class _DashboardState extends ConsumerState<Dashboard>
                   child: Disable(
                     isEnabled: !isGameRunning,
                     child: Card(
-                        child: Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: Column(
-                        children: [
-                          LaunchWithSettings(isGameRunning: isGameRunning),
-                          if (Platform.isWindows)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 4),
-                              child: TriOSExpansionTile(
-                                title: const Text("JRE & RAM Settings"),
-                                leading: const Icon(Icons.speed, size: 32),
-                                subtitle: Text(
-                                    "Java ${ref.watch(AppState.activeJre).valueOrNull?.version.versionString ?? "(unknown JRE)"} • ${ref.watch(currentRamAmountInMb).valueOrNull ?? "(unknown RAM)"} MB"),
-                                collapsedBackgroundColor: Theme.of(context)
-                                    .colorScheme
-                                    .surfaceContainerLow
-                                    .withOpacity(0.5),
-                                children: const [
-                                  GamePerformanceWidget(),
-                                ],
+                      child: Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: Column(
+                          children: [
+                            LaunchWithSettings(isGameRunning: isGameRunning),
+                            if (Platform.isWindows)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: TriOSExpansionTile(
+                                  title: const Text("JRE & RAM Settings"),
+                                  leading: const Icon(Icons.speed, size: 32),
+                                  subtitle: Text(
+                                    "Java ${ref.watch(AppState.activeJre).valueOrNull?.version.versionString ?? "(unknown JRE)"} • ${ref.watch(currentRamAmountInMb).valueOrNull ?? "(unknown RAM)"} MB",
+                                  ),
+                                  collapsedBackgroundColor: Theme.of(context)
+                                      .colorScheme
+                                      .surfaceContainerLow
+                                      .withOpacity(0.5),
+                                  children: const [GamePerformanceWidget()],
+                                ),
                               ),
-                            )
-                        ],
+                          ],
+                        ),
                       ),
-                    )),
+                    ),
                   ),
                 ),
                 Expanded(
                   child: Card(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: Builder(builder: (context) {
-                        final errors =
-                            ref.watch(ChipperState.logRawContents).valueOrNull;
-                        final theme = Theme.of(context);
+                      child: Builder(
+                        builder: (context) {
+                          final errors =
+                              ref
+                                  .watch(ChipperState.logRawContents)
+                                  .valueOrNull;
+                          final theme = Theme.of(context);
 
-                        return Column(
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 4),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Text("Starsector Log",
+                          return Column(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 4),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      "Starsector Log",
                                       style: Theme.of(context)
                                           .textTheme
                                           .titleLarge
-                                          ?.copyWith(fontSize: 20)),
-                                  Padding(
-                                    padding:
-                                        const EdgeInsets.only(left: 8, top: 4),
-                                    child: TextButton.icon(
+                                          ?.copyWith(fontSize: 20),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.only(
+                                        left: 8,
+                                        top: 4,
+                                      ),
+                                      child: TextButton.icon(
                                         onPressed: () {
                                           ref
-                                              .read(ChipperState
-                                                  .logRawContents.notifier)
+                                              .read(
+                                                ChipperState
+                                                    .logRawContents
+                                                    .notifier,
+                                              )
                                               .loadDefaultLog();
                                         },
-                                        icon: Icon(Icons.refresh,
-                                            color: theme.colorScheme.onSurface),
+                                        icon: Icon(
+                                          Icons.refresh,
+                                          color: theme.colorScheme.onSurface,
+                                        ),
                                         style: ButtonStyle(
-                                            foregroundColor:
-                                                WidgetStateProperty.all(
-                                                    Theme.of(context)
-                                                        .colorScheme
-                                                        .onSurface)),
-                                        label: const Text("Reload")),
-                                  ),
-                                  const Spacer(),
-                                  MovingTooltipWidget.text(
-                                    message: logfile?.path ?? "",
-                                    child: Text(
-                                      "${logfile?.nameWithExtension ?? ""} • last updated ${errors?.lastUpdated?.relativeTimestamp() ?? "unknown"}",
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .labelSmall,
+                                          foregroundColor:
+                                              WidgetStateProperty.all(
+                                                Theme.of(
+                                                  context,
+                                                ).colorScheme.onSurface,
+                                              ),
+                                        ),
+                                        label: const Text("Reload"),
+                                      ),
                                     ),
-                                  )
-                                ],
+                                    const Spacer(),
+                                    MovingTooltipWidget.text(
+                                      message: logfile?.path ?? "",
+                                      child: Text(
+                                        "${logfile?.nameWithExtension ?? ""} • last updated ${errors?.lastUpdated?.relativeTimestamp() ?? "unknown"}",
+                                        style:
+                                            Theme.of(
+                                              context,
+                                            ).textTheme.labelSmall,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                            Expanded(
-                                child: (errors != null)
-                                    ? DefaultTextStyle.merge(
-                                        child: Padding(
-                                          padding:
-                                              const EdgeInsets.only(bottom: 4),
-                                          child: ChipperLog(
-                                            errors: errors.errorBlock,
-                                            showInfoLogs: true,
+                              Expanded(
+                                child:
+                                    (errors != null)
+                                        ? DefaultTextStyle.merge(
+                                          child: Padding(
+                                            padding: const EdgeInsets.only(
+                                              bottom: 4,
+                                            ),
+                                            child: ChipperLog(
+                                              errors: errors.errorBlock,
+                                              showInfoLogs: true,
+                                            ),
+                                          ),
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyMedium
+                                              ?.copyWith(fontSize: 14),
+                                        )
+                                        : const SizedBox(
+                                          width: 350,
+                                          child: Column(
+                                            children: [Text("No log loaded")],
                                           ),
                                         ),
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodyMedium
-                                            ?.copyWith(fontSize: 14))
-                                    : const SizedBox(
-                                        width: 350,
-                                        child: Column(
-                                          children: [
-                                            Text("No log loaded"),
-                                          ],
-                                        ))),
-                          ],
-                        );
-                      }),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
                     ),
                   ),
-                )
+                ),
               ],
             ),
           ),
-          const SizedBox(width: 350, child: Card(child: ModListMini()))
+          const SizedBox(width: 350, child: Card(child: ModListMini())),
         ],
       ),
     );

@@ -20,14 +20,15 @@ class TriOSToolbarCheckboxButton extends StatelessWidget {
       child: CheckboxWithLabel(
         labelWidget: Padding(
           padding: const EdgeInsets.only(right: 4),
-          child: Text(text,
-              style: theme.textTheme.labelLarge!.copyWith(fontSize: 14)),
+          child: Text(
+            text,
+            style: theme.textTheme.labelLarge!.copyWith(fontSize: 14),
+          ),
         ),
         textPadding: const EdgeInsets.only(left: 4),
-        checkWrapper: (child) => Padding(
-          padding: const EdgeInsets.only(left: 4),
-          child: child,
-        ),
+        checkWrapper:
+            (child) =>
+                Padding(padding: const EdgeInsets.only(left: 4), child: child),
         value: value,
         onChanged: onChanged,
       ),
@@ -36,10 +37,7 @@ class TriOSToolbarCheckboxButton extends StatelessWidget {
 }
 
 class TriOSToolbarItem extends StatelessWidget {
-  const TriOSToolbarItem({
-    super.key,
-    required this.child,
-  });
+  const TriOSToolbarItem({super.key, required this.child});
 
   final Widget child;
 
@@ -49,13 +47,14 @@ class TriOSToolbarItem extends StatelessWidget {
     return SizedBox(
       height: 30,
       child: Card.outlined(
-          margin: const EdgeInsets.symmetric(),
-          child: DefaultTextStyle.merge(
-            child: child,
-            style: theme.textTheme.labelLarge?.copyWith(
-              color: theme.colorScheme.onSurface,
-            ),
-          )),
+        margin: const EdgeInsets.symmetric(),
+        child: DefaultTextStyle.merge(
+          child: child,
+          style: theme.textTheme.labelLarge?.copyWith(
+            color: theme.colorScheme.onSurface,
+          ),
+        ),
+      ),
     );
   }
 }

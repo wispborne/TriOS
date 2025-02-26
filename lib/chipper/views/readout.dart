@@ -36,121 +36,26 @@ class Readout extends StatelessWidget {
     const iconOpacity = 140;
     const showInfoLogs = true;
 
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      if (_gameVersion != null || _javaVersion != null)
-        Container(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (_gameVersion != null || _javaVersion != null)
+          Container(
             padding: const EdgeInsets.only(bottom: 10),
             child: SelectionArea(
-                child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
-                  Text("System", style: theme.textTheme.titleLarge),
-                  IconButton(
-                    tooltip: "Copy",
-                    onPressed: () {
-                      Clipboard.setData(
-                          ClipboardData(text: createSystemCopyString(_chips)));
-                    },
-                    icon: Icon(Icons.copy,
-                        color: theme.iconTheme.color?.withAlpha(iconOpacity)),
-                    iconSize: 20,
-                  ),
-                  Expanded(
-                      child: Text.rich(
-                          TextSpan(
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                  color: theme.textTheme.labelSmall?.color
-                                      ?.withAlpha(120)),
-                              children: [
-                                _chips.filepath == null
-                                    ? const TextSpan(text: "log")
-                                    : TextSpan(
-                                        text: basename(_chips.filepath!),
-                                        style: TextStyle(
-                                            color: theme
-                                                .textTheme.labelSmall?.color
-                                                ?.withAlpha(200),
-                                            fontWeight: FontWeight.w500)),
-                                TextSpan(
-                                    text:
-                                        " chipped in ${NumberFormat.decimalPattern().format(_chips.timeTaken)}ms"),
-                              ]),
-                          textAlign: TextAlign.right))
-                ]),
-                Text.rich(TextSpan(
-                    style: TextStyle(
-                        color: theme.colorScheme.onSurface.withAlpha(240)),
-                    children: [
-                      TextSpan(
-                          text: "Starsector: ",
-                          style: TextStyle(
-                              color:
-                                  theme.colorScheme.onSurface.withAlpha(190))),
-                      TextSpan(
-                          text: _gameVersion,
-                          style: TextStyle(
-                              color:
-                                  theme.colorScheme.onSurface.withAlpha(240))),
-                      TextSpan(
-                          text: "\nJRE: ",
-                          style: TextStyle(
-                              color:
-                                  theme.colorScheme.onSurface.withAlpha(190))),
-                      TextSpan(
-                          text: _javaVersion,
-                          style: TextStyle(
-                              color:
-                                  theme.colorScheme.onSurface.withAlpha(240))),
-                      TextSpan(
-                          text: "\nOS: ",
-                          style: TextStyle(
-                              color:
-                                  theme.colorScheme.onSurface.withAlpha(190))),
-                      TextSpan(
-                          text: _os,
-                          style: TextStyle(
-                              color:
-                                  theme.colorScheme.onSurface.withAlpha(240))),
-                    ]))
-              ],
-            ))),
-      if (_mods != null)
-        Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      if (!_isPerfectList && _mods.isNotEmpty == true)
-                        Tooltip(
-                            message:
-                                "This list may be incomplete.\n\"Running with the following mods\" block not found in log.",
-                            child: Padding(
-                              padding: const EdgeInsets.only(right: 8.0),
-                              child: Icon(
-                                Icons.warning_rounded,
-                                color: theme.colorScheme.primary,
-                                size: 20,
-                                shadows: [
-                                  Shadow(
-                                      blurRadius: 12.0,
-                                      color: theme.colorScheme.secondary),
-                                ],
-                              ),
-                            )),
-                      SelectionArea(
-                          child: Text("Mods (${_mods.length})",
-                              style: theme.textTheme.titleLarge)),
+                      Text("System", style: theme.textTheme.titleLarge),
                       IconButton(
                         tooltip: "Copy",
                         onPressed: () {
-                          Clipboard.setData(ClipboardData(
-                              text:
-                                  createModsCopyString(_chips, minify: false)));
+                          Clipboard.setData(
+                            ClipboardData(text: createSystemCopyString(_chips)),
+                          );
                         },
                         icon: Icon(
                           Icons.copy,
@@ -158,75 +63,228 @@ class Readout extends StatelessWidget {
                         ),
                         iconSize: 20,
                       ),
-                      IconButton(
-                        tooltip: "Copy (less info)",
-                        onPressed: () {
-                          Clipboard.setData(ClipboardData(
-                              text:
-                                  createModsCopyString(_chips, minify: true)));
-                        },
-                        icon: Icon(Icons.copy,
-                            color:
-                                theme.iconTheme.color?.withAlpha(iconOpacity)),
-                        iconSize: 14,
+                      Expanded(
+                        child: Text.rich(
+                          TextSpan(
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: theme.textTheme.labelSmall?.color
+                                  ?.withAlpha(120),
+                            ),
+                            children: [
+                              _chips.filepath == null
+                                  ? const TextSpan(text: "log")
+                                  : TextSpan(
+                                    text: basename(_chips.filepath!),
+                                    style: TextStyle(
+                                      color: theme.textTheme.labelSmall?.color
+                                          ?.withAlpha(200),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                              TextSpan(
+                                text:
+                                    " chipped in ${NumberFormat.decimalPattern().format(_chips.timeTaken)}ms",
+                              ),
+                            ],
+                          ),
+                          textAlign: TextAlign.right,
+                        ),
                       ),
-                      // IconButton(
-                      //   tooltip: "Download",
-                      //   onPressed: () {
-                      //     FileSaver.instance.saveAs("mods", Uint8List.fromList(utf8.encode(createModsCopyString(_chips))),
-                      //         "txt", MimeType.TEXT);
-                      //     // Clipboard.setData(ClipboardData(text: createModsCopyString(_chips, minify: true)));
-                      //   },
-                      //   icon: Icon(Icons.file_download, color: theme.iconTheme.color?.withAlpha(iconOpacity)),
-                      //   iconSize: 14,
-                      // ),
-                      IconButton(
-                        tooltip: "Popup",
-                        onPressed: () {
-                          showMyDialog(context, body: [ModsList(mods: _mods)]);
-                        },
-                        icon: Icon(Icons.open_in_full,
-                            color:
-                                theme.iconTheme.color?.withAlpha(iconOpacity)),
-                        iconSize: 20,
+                    ],
+                  ),
+                  Text.rich(
+                    TextSpan(
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurface.withAlpha(240),
                       ),
-                    ]),
+                      children: [
+                        TextSpan(
+                          text: "Starsector: ",
+                          style: TextStyle(
+                            color: theme.colorScheme.onSurface.withAlpha(190),
+                          ),
+                        ),
+                        TextSpan(
+                          text: _gameVersion,
+                          style: TextStyle(
+                            color: theme.colorScheme.onSurface.withAlpha(240),
+                          ),
+                        ),
+                        TextSpan(
+                          text: "\nJRE: ",
+                          style: TextStyle(
+                            color: theme.colorScheme.onSurface.withAlpha(190),
+                          ),
+                        ),
+                        TextSpan(
+                          text: _javaVersion,
+                          style: TextStyle(
+                            color: theme.colorScheme.onSurface.withAlpha(240),
+                          ),
+                        ),
+                        TextSpan(
+                          text: "\nOS: ",
+                          style: TextStyle(
+                            color: theme.colorScheme.onSurface.withAlpha(190),
+                          ),
+                        ),
+                        TextSpan(
+                          text: _os,
+                          style: TextStyle(
+                            color: theme.colorScheme.onSurface.withAlpha(240),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        if (_mods != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (!_isPerfectList && _mods.isNotEmpty == true)
+                      Tooltip(
+                        message:
+                            "This list may be incomplete.\n\"Running with the following mods\" block not found in log.",
+                        child: Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: Icon(
+                            Icons.warning_rounded,
+                            color: theme.colorScheme.primary,
+                            size: 20,
+                            shadows: [
+                              Shadow(
+                                blurRadius: 12.0,
+                                color: theme.colorScheme.secondary,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    SelectionArea(
+                      child: Text(
+                        "Mods (${_mods.length})",
+                        style: theme.textTheme.titleLarge,
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: "Copy",
+                      onPressed: () {
+                        Clipboard.setData(
+                          ClipboardData(
+                            text: createModsCopyString(_chips, minify: false),
+                          ),
+                        );
+                      },
+                      icon: Icon(
+                        Icons.copy,
+                        color: theme.iconTheme.color?.withAlpha(iconOpacity),
+                      ),
+                      iconSize: 20,
+                    ),
+                    IconButton(
+                      tooltip: "Copy (less info)",
+                      onPressed: () {
+                        Clipboard.setData(
+                          ClipboardData(
+                            text: createModsCopyString(_chips, minify: true),
+                          ),
+                        );
+                      },
+                      icon: Icon(
+                        Icons.copy,
+                        color: theme.iconTheme.color?.withAlpha(iconOpacity),
+                      ),
+                      iconSize: 14,
+                    ),
+                    // IconButton(
+                    //   tooltip: "Download",
+                    //   onPressed: () {
+                    //     FileSaver.instance.saveAs("mods", Uint8List.fromList(utf8.encode(createModsCopyString(_chips))),
+                    //         "txt", MimeType.TEXT);
+                    //     // Clipboard.setData(ClipboardData(text: createModsCopyString(_chips, minify: true)));
+                    //   },
+                    //   icon: Icon(Icons.file_download, color: theme.iconTheme.color?.withAlpha(iconOpacity)),
+                    //   iconSize: 14,
+                    // ),
+                    IconButton(
+                      tooltip: "Popup",
+                      onPressed: () {
+                        showMyDialog(context, body: [ModsList(mods: _mods)]);
+                      },
+                      icon: Icon(
+                        Icons.open_in_full,
+                        color: theme.iconTheme.color?.withAlpha(iconOpacity),
+                      ),
+                      iconSize: 20,
+                    ),
+                  ],
+                ),
                 ConstrainedBox(
                   constraints: const BoxConstraints(maxHeight: 150),
                   child: InkWell(
-                      onTap: () =>
-                          showMyDialog(context, body: [ModsList(mods: _mods)]),
-                      mouseCursor: SystemMouseCursors.click,
-                      child: ListView.builder(
-                          itemCount: _mods.length,
-                          scrollDirection: Axis.vertical,
-                          itemBuilder: (context, index) =>
-                              _mods[index].createWidget(context))),
-                )
+                    onTap:
+                        () => showMyDialog(
+                          context,
+                          body: [ModsList(mods: _mods)],
+                        ),
+                    mouseCursor: SystemMouseCursors.click,
+                    child: ListView.builder(
+                      itemCount: _mods.length,
+                      scrollDirection: Axis.vertical,
+                      itemBuilder:
+                          (context, index) =>
+                              _mods[index].createWidget(context),
+                    ),
+                  ),
+                ),
               ],
-            )),
-      if (_chips.errorBlock.isNotEmpty)
-        Expanded(
-            child:
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
-            Text("Errors", style: theme.textTheme.titleLarge),
-            IconButton(
-              tooltip: "Copy",
-              onPressed: () {
-                Clipboard.setData(
-                    ClipboardData(text: createErrorsCopyString(_chips)));
-              },
-              icon: Icon(Icons.copy,
-                  color: theme.iconTheme.color?.withAlpha(iconOpacity)),
-              iconSize: 20,
-            )
-          ]),
+            ),
+          ),
+        if (_chips.errorBlock.isNotEmpty)
           Expanded(
-              child: ChipperLog(
-                  errors: _chips.errorBlock, showInfoLogs: showInfoLogs))
-        ])),
-    ]);
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text("Errors", style: theme.textTheme.titleLarge),
+                    IconButton(
+                      tooltip: "Copy",
+                      onPressed: () {
+                        Clipboard.setData(
+                          ClipboardData(text: createErrorsCopyString(_chips)),
+                        );
+                      },
+                      icon: Icon(
+                        Icons.copy,
+                        color: theme.iconTheme.color?.withAlpha(iconOpacity),
+                      ),
+                      iconSize: 20,
+                    ),
+                  ],
+                ),
+                Expanded(
+                  child: ChipperLog(
+                    errors: _chips.errorBlock,
+                    showInfoLogs: showInfoLogs,
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
   }
 }
 
@@ -245,63 +303,76 @@ class ViewPreviousEntryButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Take a list of all lines before this one, then find the last one in the list that is specifically a "previous line" entry..
-    var thisError = _errors[index] is GeneralErrorLogLine
-        ? (_errors[index] as GeneralErrorLogLine)
-        : null;
+    var thisError =
+        _errors[index] is GeneralErrorLogLine
+            ? (_errors[index] as GeneralErrorLogLine)
+            : null;
     var prevThreadMessage = _errors
         .sublist(index + 1, _errors.length)
-        .firstWhereOrNull((element) => element is GeneralErrorLogLine
-            ? element.thread == thisError?.thread
-            : true);
+        .firstWhereOrNull(
+          (element) =>
+              element is GeneralErrorLogLine
+                  ? element.thread == thisError?.thread
+                  : true,
+        );
     if (prevThreadMessage == null) return const SizedBox(height: 15, width: 20);
 
     return Tooltip(
-        richMessage: WidgetSpan(
-            child: Container(
-                padding: const EdgeInsets.all(10),
-                color: theme.colorScheme.surface,
-                child: SelectionArea(
-                  child: SelectionTransformer.separated(
-                      child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                    "Previous line on ${thisError?.thread?.replaceFirst('[', '').replaceFirst(']', '') ?? "thread"}",
-                                    style: theme.textTheme.titleMedium),
-                                Row(children: [
-                                  lineNumber(
-                                      prevThreadMessage.lineNumber, theme),
-                                  prevThreadMessage.createLogWidget(context)
-                                ]),
-                                Opacity(
-                                    opacity: 0.4,
-                                    child: Row(children: [
-                                      lineNumber(
-                                          _errors[index].lineNumber, theme),
-                                      _errors[index].createLogWidget(context)
-                                    ]))
-                              ]))),
-                  // const Spacer(),
-                  // IconButton(
-                  //   onPressed: () => snacker.clearSnackBars(),
-                  //   icon: const Icon(Icons.close),
-                  // ),
-                ))),
-        decoration: BoxDecoration(
+      richMessage: WidgetSpan(
+        child: Container(
+          padding: const EdgeInsets.all(10),
           color: theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(4),
+          child: SelectionArea(
+            child: SelectionTransformer.separated(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Previous line on ${thisError?.thread?.replaceFirst('[', '').replaceFirst(']', '') ?? "thread"}",
+                      style: theme.textTheme.titleMedium,
+                    ),
+                    Row(
+                      children: [
+                        lineNumber(prevThreadMessage.lineNumber, theme),
+                        prevThreadMessage.createLogWidget(context),
+                      ],
+                    ),
+                    Opacity(
+                      opacity: 0.4,
+                      child: Row(
+                        children: [
+                          lineNumber(_errors[index].lineNumber, theme),
+                          _errors[index].createLogWidget(context),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            // const Spacer(),
+            // IconButton(
+            //   onPressed: () => snacker.clearSnackBars(),
+            //   icon: const Icon(Icons.close),
+            // ),
+          ),
         ),
-        preferBelow: false,
-        child: Icon(
-          Icons.info_outline_rounded,
-          color: theme.disabledColor,
-          size: 20,
-        )
-        // tooltip: "View previous entry on this thread.",
-        );
+      ),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      preferBelow: false,
+      child: Icon(
+        Icons.info_outline_rounded,
+        color: theme.disabledColor,
+        size: 20,
+      ),
+      // tooltip: "View previous entry on this thread.",
+    );
   }
 }
 
@@ -309,8 +380,9 @@ Text lineNumber(int lineNumber, ThemeData theme) {
   return Text(
     " $lineNumber  ",
     style: TextStyle(
-        color: theme.hintColor.withAlpha(40),
-        fontFeatures: const [FontFeature.tabularFigures()]),
+      color: theme.hintColor.withAlpha(40),
+      fontFeatures: const [FontFeature.tabularFigures()],
+    ),
   );
 }
 
@@ -321,11 +393,13 @@ class ModsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text("Mods (${mods?.length})",
-              style: Theme.of(context).textTheme.titleLarge),
-          ...mods!.map((e) => e.createWidget(context))
-        ],
-      );
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        "Mods (${mods?.length})",
+        style: Theme.of(context).textTheme.titleLarge,
+      ),
+      ...mods!.map((e) => e.createWidget(context)),
+    ],
+  );
 }

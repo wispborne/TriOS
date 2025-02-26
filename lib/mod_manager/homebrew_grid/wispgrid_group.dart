@@ -17,9 +17,13 @@ abstract class WispGridGroup<T extends WispGridItem> {
   String key;
   String displayName;
 
-  Widget? overlayWidget(BuildContext context, List<T> itemsInGroup,
-          WidgetRef ref, int shownIndex, List<WispGridColumn<T>> columns) =>
-      null;
+  Widget? overlayWidget(
+    BuildContext context,
+    List<T> itemsInGroup,
+    WidgetRef ref,
+    int shownIndex,
+    List<WispGridColumn<T>> columns,
+  ) => null;
 
   WispGridGroup(this.key, this.displayName);
 
@@ -53,10 +57,20 @@ class EnabledStateModGridGroup extends WispGridGroup<Mod> {
   Comparable getGroupSortValue(Mod mod) => mod.isEnabledOnUi ? 0 : 1;
 
   @override
-  Widget? overlayWidget(BuildContext context, List<Mod> itemsInGroup,
-          WidgetRef ref, int shownIndex, List<WispGridColumn<Mod>> columns) =>
-      _vramSummaryOverlayWidget(context, itemsInGroup, ref, shownIndex, columns,
-          getGroupName(itemsInGroup.first));
+  Widget? overlayWidget(
+    BuildContext context,
+    List<Mod> itemsInGroup,
+    WidgetRef ref,
+    int shownIndex,
+    List<WispGridColumn<Mod>> columns,
+  ) => _vramSummaryOverlayWidget(
+    context,
+    itemsInGroup,
+    ref,
+    shownIndex,
+    columns,
+    getGroupName(itemsInGroup.first),
+  );
 }
 
 // class CategoryModGridGroup extends ModGridGroup {
@@ -86,10 +100,20 @@ class AuthorModGridGroup extends WispGridGroup<Mod> {
       mod.findFirstEnabledOrHighestVersion?.modInfo.author?.toLowerCase();
 
   @override
-  Widget? overlayWidget(BuildContext context, List<Mod> itemsInGroup,
-          WidgetRef ref, int shownIndex, List<WispGridColumn<Mod>> columns) =>
-      _vramSummaryOverlayWidget(context, itemsInGroup, ref, shownIndex, columns,
-          getGroupName(itemsInGroup.first));
+  Widget? overlayWidget(
+    BuildContext context,
+    List<Mod> itemsInGroup,
+    WidgetRef ref,
+    int shownIndex,
+    List<WispGridColumn<Mod>> columns,
+  ) => _vramSummaryOverlayWidget(
+    context,
+    itemsInGroup,
+    ref,
+    shownIndex,
+    columns,
+    getGroupName(itemsInGroup.first),
+  );
 }
 
 class ModTypeModGridGroup extends WispGridGroup<Mod> {
@@ -120,10 +144,20 @@ class ModTypeModGridGroup extends WispGridGroup<Mod> {
   }
 
   @override
-  Widget? overlayWidget(BuildContext context, List<Mod> itemsInGroup,
-          WidgetRef ref, int shownIndex, List<WispGridColumn<Mod>> columns) =>
-      _vramSummaryOverlayWidget(context, itemsInGroup, ref, shownIndex, columns,
-          getGroupName(itemsInGroup.first));
+  Widget? overlayWidget(
+    BuildContext context,
+    List<Mod> itemsInGroup,
+    WidgetRef ref,
+    int shownIndex,
+    List<WispGridColumn<Mod>> columns,
+  ) => _vramSummaryOverlayWidget(
+    context,
+    itemsInGroup,
+    ref,
+    shownIndex,
+    columns,
+    getGroupName(itemsInGroup.first),
+  );
 }
 
 class GameVersionModGridGroup extends WispGridGroup<Mod> {
@@ -137,60 +171,84 @@ class GameVersionModGridGroup extends WispGridGroup<Mod> {
   Comparable getGroupSortValue(Mod mod) => getGroupName(mod).toLowerCase();
 
   @override
-  Widget? overlayWidget(BuildContext context, List<Mod> itemsInGroup,
-          WidgetRef ref, int shownIndex, List<WispGridColumn<Mod>> columns) =>
-      _vramSummaryOverlayWidget(context, itemsInGroup, ref, shownIndex, columns,
-          getGroupName(itemsInGroup.first));
-}
-
-Widget? _vramSummaryOverlayWidget(
+  Widget? overlayWidget(
     BuildContext context,
     List<Mod> itemsInGroup,
     WidgetRef ref,
     int shownIndex,
     List<WispGridColumn<Mod>> columns,
-    String groupName) {
-  return Builder(builder: (context) {
-    final vramProvider = ref.watch(AppState.vramEstimatorProvider);
-    final vramMap = vramProvider.valueOrNull?.modVramInfo ?? {};
-    final graphicsLibConfig = ref.watch(graphicsLibConfigProvider);
-    final smolIds = itemsInGroup.nonNulls
-        .map((e) => e.findFirstEnabledOrHighestVersion)
-        .nonNulls
-        .toList();
-    final allEstimates =
-        smolIds.map((e) => vramMap[e.smolId]).nonNulls.toList();
-    const disabledGraphicsLibConfig = GraphicsLibConfig.disabled;
-    final vramModsNoGraphicsLib = allEstimates
-        .map((e) => e.bytesUsingGraphicsLibConfig(disabledGraphicsLibConfig))
-        .sum;
-    final vramFromGraphicsLib = allEstimates
-        .expand((mod) => List.generate(
-              mod.images.length,
-              (i) => ModImageView(i, mod.images),
-            ))
-        .where((view) =>
-            view.graphicsLibType != null &&
-            view.isUsedBasedOnGraphicsLibConfig(graphicsLibConfig))
-        .map((view) => view.bytesUsed)
-        .toList();
+  ) => _vramSummaryOverlayWidget(
+    context,
+    itemsInGroup,
+    ref,
+    shownIndex,
+    columns,
+    getGroupName(itemsInGroup.first),
+  );
+}
 
-    // TODO include vanilla graphicslib usage
-    final vramFromVanilla =
-        shownIndex == 0 ? VramChecker.VANILLA_GAME_VRAM_USAGE_IN_BYTES : null;
+Widget? _vramSummaryOverlayWidget(
+  BuildContext context,
+  List<Mod> itemsInGroup,
+  WidgetRef ref,
+  int shownIndex,
+  List<WispGridColumn<Mod>> columns,
+  String groupName,
+) {
+  return Builder(
+    builder: (context) {
+      final vramProvider = ref.watch(AppState.vramEstimatorProvider);
+      final vramMap = vramProvider.valueOrNull?.modVramInfo ?? {};
+      final graphicsLibConfig = ref.watch(graphicsLibConfigProvider);
+      final smolIds =
+          itemsInGroup.nonNulls
+              .map((e) => e.findFirstEnabledOrHighestVersion)
+              .nonNulls
+              .toList();
+      final allEstimates =
+          smolIds.map((e) => vramMap[e.smolId]).nonNulls.toList();
+      const disabledGraphicsLibConfig = GraphicsLibConfig.disabled;
+      final vramModsNoGraphicsLib =
+          allEstimates
+              .map(
+                (e) => e.bytesUsingGraphicsLibConfig(disabledGraphicsLibConfig),
+              )
+              .sum;
+      final vramFromGraphicsLib =
+          allEstimates
+              .expand(
+                (mod) => List.generate(
+                  mod.images.length,
+                  (i) => ModImageView(i, mod.images),
+                ),
+              )
+              .where(
+                (view) =>
+                    view.graphicsLibType != null &&
+                    view.isUsedBasedOnGraphicsLibConfig(graphicsLibConfig),
+              )
+              .map((view) => view.bytesUsed)
+              .toList();
 
-    // Calculate the offset of the VRAM column
-    final gridState = ref.watch(appSettings.select((s) => s.modsGridState));
-    final cellWidthBeforeVramColumn = gridState
-        .sortedVisibleColumns(columns)
-        .takeWhile((element) => element.key != ModGridHeader.vramImpact.name)
-        .map((e) => e.value.width + WispGrid.gridRowSpacing)
-        .sum;
+      // TODO include vanilla graphicslib usage
+      final vramFromVanilla =
+          shownIndex == 0 ? VramChecker.VANILLA_GAME_VRAM_USAGE_IN_BYTES : null;
 
-    return Positioned(
-      // Subtract padding added to group that isn't present on the mod row
-      left: cellWidthBeforeVramColumn - 20 + WispGrid.gridRowSpacing,
-      child: Padding(
+      // Calculate the offset of the VRAM column
+      final gridState = ref.watch(appSettings.select((s) => s.modsGridState));
+      final cellWidthBeforeVramColumn =
+          gridState
+              .sortedVisibleColumns(columns)
+              .takeWhile(
+                (element) => element.key != ModGridHeader.vramImpact.name,
+              )
+              .map((e) => e.value.width + WispGrid.gridRowSpacing)
+              .sum;
+
+      return Positioned(
+        // Subtract padding added to group that isn't present on the mod row
+        left: cellWidthBeforeVramColumn - 20 + WispGrid.gridRowSpacing,
+        child: Padding(
           padding: EdgeInsets.only(right: 8, left: 0),
           child: MovingTooltipWidget.framed(
             tooltipWidget: Column(
@@ -199,35 +257,39 @@ Widget? _vramSummaryOverlayWidget(
               children: [
                 // bold
                 Text(
-                    "Estimated VRAM use by ${groupName.trim().split("\n").firstOrNull}\n",
-                    style: Theme.of(context)
-                        .textTheme
-                        .labelLarge
-                        ?.copyWith(fontWeight: FontWeight.bold)),
-                if (graphicsLibConfig != null)
-                  Text("GraphicsLib settings",
-                      style: Theme.of(context)
-                          .textTheme
-                          .labelLarge
-                          ?.copyWith(fontWeight: FontWeight.bold)),
+                  "Estimated VRAM use by ${groupName.trim().split("\n").firstOrNull}\n",
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
+                ),
                 if (graphicsLibConfig != null)
                   Text(
-                      "Enabled: ${graphicsLibConfig.areAnyEffectsEnabled ? "yes" : "no"}",
-                      style: Theme.of(context).textTheme.labelLarge),
+                    "GraphicsLib settings",
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                if (graphicsLibConfig != null)
+                  Text(
+                    "Enabled: ${graphicsLibConfig.areAnyEffectsEnabled ? "yes" : "no"}",
+                    style: Theme.of(context).textTheme.labelLarge,
+                  ),
                 if (graphicsLibConfig != null &&
                     graphicsLibConfig.areAnyEffectsEnabled)
                   Text(
-                      "Normal maps: ${graphicsLibConfig.areGfxLibNormalMapsEnabled ? "on" : "off"}"
-                      "\nMaterial maps: ${graphicsLibConfig.areGfxLibMaterialMapsEnabled ? "on" : "off"}"
-                      "\nSurface maps: ${graphicsLibConfig.areGfxLibSurfaceMapsEnabled ? "on" : "off"}",
-                      style: Theme.of(context).textTheme.labelLarge),
+                    "Normal maps: ${graphicsLibConfig.areGfxLibNormalMapsEnabled ? "on" : "off"}"
+                    "\nMaterial maps: ${graphicsLibConfig.areGfxLibMaterialMapsEnabled ? "on" : "off"}"
+                    "\nSurface maps: ${graphicsLibConfig.areGfxLibSurfaceMapsEnabled ? "on" : "off"}",
+                    style: Theme.of(context).textTheme.labelLarge,
+                  ),
                 Text(
-                    "\n${vramModsNoGraphicsLib.bytesAsReadableMB()} added by mods (${allEstimates.map((e) => e.images.length).sum} images)"
-                    "${vramFromGraphicsLib.sum() > 0 ? "\n${vramFromGraphicsLib.sum().bytesAsReadableMB()} added by your GraphicsLib settings (${vramFromGraphicsLib.length} images)" : ""}"
-                    "${vramFromVanilla != null ? "\n${vramFromVanilla.bytesAsReadableMB()} added by vanilla" : ""}"
-                    "\n---"
-                    "\n${(vramModsNoGraphicsLib + vramFromGraphicsLib.sum() + (vramFromVanilla ?? 0.0)).bytesAsReadableMB()} total",
-                    style: Theme.of(context).textTheme.labelLarge)
+                  "\n${vramModsNoGraphicsLib.bytesAsReadableMB()} added by mods (${allEstimates.map((e) => e.images.length).sum} images)"
+                  "${vramFromGraphicsLib.sum() > 0 ? "\n${vramFromGraphicsLib.sum().bytesAsReadableMB()} added by your GraphicsLib settings (${vramFromGraphicsLib.length} images)" : ""}"
+                  "${vramFromVanilla != null ? "\n${vramFromVanilla.bytesAsReadableMB()} added by vanilla" : ""}"
+                  "\n---"
+                  "\n${(vramModsNoGraphicsLib + vramFromGraphicsLib.sum() + (vramFromVanilla ?? 0.0)).bytesAsReadableMB()} total",
+                  style: Theme.of(context).textTheme.labelLarge,
+                ),
               ],
             ),
             child: Center(
@@ -239,7 +301,9 @@ Widget? _vramSummaryOverlayWidget(
                 ),
               ),
             ),
-          )),
-    );
-  });
+          ),
+        ),
+      );
+    },
+  );
 }

@@ -13,10 +13,10 @@ import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/map_diff.dart';
 import 'package:trios/utils/util.dart';
 
-
 /// Settings State Provider
-final appSettings =
-NotifierProvider<AppSettingNotifier, Settings>(() => AppSettingNotifier());
+final appSettings = NotifierProvider<AppSettingNotifier, Settings>(
+  () => AppSettingNotifier(),
+);
 
 /// Manages loading, storing, and updating the app's [Settings] while keeping the UI reactive.
 /// It uses a debounced write strategy to minimize frequent disk writes.
@@ -42,15 +42,19 @@ class AppSettingNotifier extends Notifier<Settings> {
         }
         _isInitialized = true;
       } catch (e, stackTrace) {
-        Fimber.w("Error building settings notifier",
-            ex: e, stacktrace: stackTrace);
+        Fimber.w(
+          "Error building settings notifier",
+          ex: e,
+          stacktrace: stackTrace,
+        );
         rethrow;
       }
     }
 
     final settings = state!;
     configureLogging(
-        allowSentryReporting: settings.allowCrashReporting ?? false);
+      allowSentryReporting: settings.allowCrashReporting ?? false,
+    );
     return _applyDefaultsIfNeeded(settings);
   }
 
@@ -180,14 +184,18 @@ class SettingsFileManager {
       if (_settingsFile.existsSync()) {
         try {
           final contents = _settingsFile.readAsStringSync();
-          final map = (_fileFormat == FileFormat.toml)
-              ? TomlDocument.parse(contents).toMap()
-              : jsonDecode(contents) as Map<String, dynamic>;
+          final map =
+              (_fileFormat == FileFormat.toml)
+                  ? TomlDocument.parse(contents).toMap()
+                  : jsonDecode(contents) as Map<String, dynamic>;
           Fimber.i("$_fileName successfully loaded from disk.");
           return SettingsMapper.fromMap(map);
         } catch (e, stackTrace) {
-          Fimber.e("Error reading from disk, creating backup: $e",
-              ex: e, stacktrace: stackTrace);
+          Fimber.e(
+            "Error reading from disk, creating backup: $e",
+            ex: e,
+            stacktrace: stackTrace,
+          );
           _createBackupSync();
         }
       }
@@ -199,16 +207,20 @@ class SettingsFileManager {
   void writeSync(Settings settings) {
     try {
       _lock.protectSync(() {
-        final serializedData = (_fileFormat == FileFormat.toml)
-            ? TomlDocument.fromMap(settings.toMap()).toString()
-            : settings.toMap().prettyPrintJson();
+        final serializedData =
+            (_fileFormat == FileFormat.toml)
+                ? TomlDocument.fromMap(settings.toMap()).toString()
+                : settings.toMap().prettyPrintJson();
 
         _settingsFile.writeAsStringSync(serializedData);
         Fimber.i("$_fileName successfully written to disk.");
       });
     } catch (e, stackTrace) {
-      Fimber.e("Error serializing and saving $_fileName: $e",
-          ex: e, stacktrace: stackTrace);
+      Fimber.e(
+        "Error serializing and saving $_fileName: $e",
+        ex: e,
+        stacktrace: stackTrace,
+      );
       rethrow;
     }
   }

@@ -65,10 +65,10 @@ class TriOSExpansionTile extends StatelessWidget {
     this.enabled = true,
     this.expansionAnimationStyle,
   }) : assert(
-          expandedCrossAxisAlignment != CrossAxisAlignment.baseline,
-          'CrossAxisAlignment.baseline is not supported since the expanded children '
-          'are aligned in a column, not a row. Try to use another constant.',
-        );
+         expandedCrossAxisAlignment != CrossAxisAlignment.baseline,
+         'CrossAxisAlignment.baseline is not supported since the expanded children '
+         'are aligned in a column, not a row. Try to use another constant.',
+       );
 
   @override
   Widget build(BuildContext context) {
@@ -92,11 +92,13 @@ class TriOSExpansionTile extends StatelessWidget {
       collapsedTextColor: collapsedTextColor,
       iconColor: iconColor,
       collapsedIconColor: collapsedIconColor,
-      shape: shape ??
+      shape:
+          shape ??
           RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
           ),
-      collapsedShape: collapsedShape ??
+      collapsedShape:
+          collapsedShape ??
           RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
           ),

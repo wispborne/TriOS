@@ -4,8 +4,11 @@ class CenteredWidgetWithItemAfter extends StatelessWidget {
   final Widget centeredWidget;
   final Widget itemAfter;
 
-  const CenteredWidgetWithItemAfter(
-      {super.key, required this.centeredWidget, required this.itemAfter});
+  const CenteredWidgetWithItemAfter({
+    super.key,
+    required this.centeredWidget,
+    required this.itemAfter,
+  });
 
   @override
   Widget build(BuildContext context) {

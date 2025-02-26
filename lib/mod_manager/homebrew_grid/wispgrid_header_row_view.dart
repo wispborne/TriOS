@@ -20,16 +20,14 @@ class WispGridHeader {
   final String? sortField;
   final Builder child;
 
-  const WispGridHeader({
-    this.sortField,
-    required this.child,
-  });
+  const WispGridHeader({this.sortField, required this.child});
 }
 
-typedef WispGridHeaderBuilder = WispGridHeader Function(
-  MapEntry<ModGridHeader, WispGridColumnState> columnSetting,
-  bool isHovering,
-);
+typedef WispGridHeaderBuilder =
+    WispGridHeader Function(
+      MapEntry<ModGridHeader, WispGridColumnState> columnSetting,
+      bool isHovering,
+    );
 
 class WispGridHeaderRowView extends ConsumerStatefulWidget {
   final WispGridState gridState;
@@ -65,11 +63,14 @@ class _WispGridHeaderRowViewState extends ConsumerState<WispGridHeaderRowView>
   WispGridState get gridState => widget.gridState;
 
   @override
-  List<Area> get areas => gridState
-      .sortedVisibleColumns(columns)
-      .map((entry) => Area(id: entry.key.toString(), size: entry.value.width))
-      .toList()
-    ..add(Area(id: 'endspace'));
+  List<Area> get areas =>
+      gridState
+          .sortedVisibleColumns(columns)
+          .map(
+            (entry) => Area(id: entry.key.toString(), size: entry.value.width),
+          )
+          .toList()
+        ..add(Area(id: 'endspace'));
 
   @override
   void initState() {
@@ -85,8 +86,10 @@ class _WispGridHeaderRowViewState extends ConsumerState<WispGridHeaderRowView>
     // Only update areas if the configuration has changed
     final updatedAreas = areas;
     if (multiSplitController.areas.length != updatedAreas.length ||
-        !listEquals(multiSplitController.areas.map((a) => a.size).toList(),
-            updatedAreas.map((a) => a.size).toList())) {
+        !listEquals(
+          multiSplitController.areas.map((a) => a.size).toList(),
+          updatedAreas.map((a) => a.size).toList(),
+        )) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         multiSplitController.areas = updatedAreas;
       });
@@ -109,11 +112,13 @@ class _WispGridHeaderRowViewState extends ConsumerState<WispGridHeaderRowView>
         var sortedColumns = state.sortedColumns(columns);
         final columnSettings = Map.fromEntries(sortedColumns);
         for (final area in multiSplitController.areas) {
-          final header = columns
-              .firstWhereOrNull((header) => header.key.toString() == area.id);
+          final header = columns.firstWhereOrNull(
+            (header) => header.key.toString() == area.id,
+          );
           if (header == null) continue;
-          columnSettings[header.key] =
-              columnSettings[header.key]!.copyWith(width: area.size);
+          columnSettings[header.key] = columnSettings[header.key]!.copyWith(
+            width: area.size,
+          );
         }
 
         return state.copyWith(columnsState: columnSettings);
@@ -127,73 +132,85 @@ class _WispGridHeaderRowViewState extends ConsumerState<WispGridHeaderRowView>
 
     return ContextMenuRegion(
       contextMenu: buildHeaderContextMenu(gridState),
-      child: HoverableWidget(child: Builder(builder: (context) {
-        final isHovering = HoverData.of(context)?.isHovering ?? false;
-        return MultiSplitViewTheme(
-          data: MultiSplitViewThemeData(
-            dividerThickness: WispGrid.gridRowSpacing,
-            dividerPainter: DividerPainters.grooved1(
-              color: isHovering
-                  ? theme.colorScheme.onSurface.withOpacity(_opacity)
-                  : Colors.transparent,
-              highlightedColor: theme.colorScheme.onSurface,
-              size: 20,
-              animationDuration: const Duration(milliseconds: 100),
-              highlightedSize: 20,
-            ),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-                horizontal: WispGrid.gridRowSpacing * 2),
-            // idk why multiplying by 2 works
-            child: MultiSplitView(
-                controller: multiSplitController,
-                axis: Axis.horizontal,
-                builder: (context, area) {
-                  if (area.id == 'endspace') return Container();
+      child: HoverableWidget(
+        child: Builder(
+          builder: (context) {
+            final isHovering = HoverData.of(context)?.isHovering ?? false;
+            return MultiSplitViewTheme(
+              data: MultiSplitViewThemeData(
+                dividerThickness: WispGrid.gridRowSpacing,
+                dividerPainter: DividerPainters.grooved1(
+                  color:
+                      isHovering
+                          ? theme.colorScheme.onSurface.withOpacity(_opacity)
+                          : Colors.transparent,
+                  highlightedColor: theme.colorScheme.onSurface,
+                  size: 20,
+                  animationDuration: const Duration(milliseconds: 100),
+                  highlightedSize: 20,
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: WispGrid.gridRowSpacing * 2,
+                ),
+                // idk why multiplying by 2 works
+                child: MultiSplitView(
+                  controller: multiSplitController,
+                  axis: Axis.horizontal,
+                  builder: (context, area) {
+                    if (area.id == 'endspace') return Container();
 
-                  var sortedVisibleColumns =
-                      gridState.sortedVisibleColumns(widget.columns);
-                  final columnSetting = sortedVisibleColumns.elementAt(
-                      min(area.index, sortedVisibleColumns.length - 1));
+                    var sortedVisibleColumns = gridState.sortedVisibleColumns(
+                      widget.columns,
+                    );
+                    final columnSetting = sortedVisibleColumns.elementAt(
+                      min(area.index, sortedVisibleColumns.length - 1),
+                    );
 
-                  final column = widget.columns
-                      .firstWhere((column) => column.key == columnSetting.key);
-                  Widget headerWidget =
-                      column.headerCellBuilder?.invoke(HeaderBuilderModifiers(
-                            isHovering: isHovering,
-                          )) ??
-                          Text(column.name);
-                  Widget child = headerWidget;
+                    final column = widget.columns.firstWhere(
+                      (column) => column.key == columnSetting.key,
+                    );
+                    Widget headerWidget =
+                        column.headerCellBuilder?.invoke(
+                          HeaderBuilderModifiers(isHovering: isHovering),
+                        ) ??
+                        Text(column.name);
+                    Widget child = headerWidget;
 
-                  if (column.isSortable) {
-                    child = SortableHeader(
-                      columnSortField: column.key,
-                      defaultGridSort: widget.defaultGridSort,
+                    if (column.isSortable) {
+                      child = SortableHeader(
+                        columnSortField: column.key,
+                        defaultGridSort: widget.defaultGridSort,
+                        gridState: gridState,
+                        updateGridState: updateGridState,
+                        child: child,
+                      );
+                    }
+
+                    final headerTextStyle = Theme.of(context)
+                        .textTheme
+                        .bodySmall
+                        ?.copyWith(fontWeight: FontWeight.bold);
+
+                    return DraggableHeader(
+                      columns: columns,
+                      showDragHandle: isHovering,
+                      header: columnSetting.key,
                       gridState: gridState,
                       updateGridState: updateGridState,
-                      child: child,
+                      child: DefaultTextStyle.merge(
+                        style: headerTextStyle,
+                        child: child,
+                      ),
                     );
-                  }
-
-                  final headerTextStyle = Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(fontWeight: FontWeight.bold);
-
-                  return DraggableHeader(
-                    columns: columns,
-                    showDragHandle: isHovering,
-                    header: columnSetting.key,
-                    gridState: gridState,
-                    updateGridState: updateGridState,
-                    child: DefaultTextStyle.merge(
-                        style: headerTextStyle, child: child),
-                  );
-                }),
-          ),
-        );
-      })),
+                  },
+                ),
+              ),
+            );
+          },
+        ),
+      ),
     );
   }
 
@@ -203,28 +220,37 @@ class _WispGridHeaderRowViewState extends ConsumerState<WispGridHeaderRowView>
     return ContextMenu(
       entries: [
         MenuItem(
-            label: 'Reset grid layout',
-            icon: Icons.settings_backup_restore,
-            onSelected: () {
-              updateGridState((WispGridState state) => null);
-            }),
+          label: 'Reset grid layout',
+          icon: Icons.settings_backup_restore,
+          onSelected: () {
+            updateGridState((WispGridState state) => null);
+          },
+        ),
         if (widget.groups.length > 1)
           MenuItem.submenu(
             label: "Group By",
             icon: Icons.horizontal_split,
-            items: widget.groups
-                .map((group) => MenuItem(
-                      label: group.displayName,
-                      icon: groupingSetting?.currentGroupedByKey == group.key
-                          ? Icons.check
-                          : null,
-                      onSelected: () {
-                        updateGridState((WispGridState state) => state.copyWith(
-                            groupingSetting: GroupingSetting(
-                                currentGroupedByKey: group.key)));
-                      },
-                    ))
-                .toList(),
+            items:
+                widget.groups
+                    .map(
+                      (group) => MenuItem(
+                        label: group.displayName,
+                        icon:
+                            groupingSetting?.currentGroupedByKey == group.key
+                                ? Icons.check
+                                : null,
+                        onSelected: () {
+                          updateGridState(
+                            (WispGridState state) => state.copyWith(
+                              groupingSetting: GroupingSetting(
+                                currentGroupedByKey: group.key,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    )
+                    .toList(),
           ),
         MenuDivider(),
         MenuHeader(text: "Hide/Show Columns", disableUppercase: true),
@@ -241,14 +267,15 @@ class _WispGridHeaderRowViewState extends ConsumerState<WispGridHeaderRowView>
               updateGridState((WispGridState state) {
                 final columnSettings = state.sortedColumns(columns).toMap();
                 final headerSetting = columnSettings[header]!;
-                columnSettings[header] =
-                    headerSetting.copyWith(isVisible: !headerSetting.isVisible);
+                columnSettings[header] = headerSetting.copyWith(
+                  isVisible: !headerSetting.isVisible,
+                );
 
                 return state.copyWith(columnsState: columnSettings);
               });
             },
           );
-        })
+        }),
       ],
     );
   }
@@ -336,18 +363,26 @@ class DraggableHeader extends ConsumerWidget {
             final draggedHeader = data.data;
             final draggedSetting = columnSettings.remove(draggedHeader)!;
 
-            final sorted = columnSettings.entries.toList()
-              ..sort((a, b) => a.value.position.compareTo(b.value.position));
+            final sorted =
+                columnSettings.entries.toList()..sort(
+                  (a, b) => a.value.position.compareTo(b.value.position),
+                );
 
-            final targetIndex =
-                columnSettings[header]!.position.clamp(0, sorted.length);
+            final targetIndex = columnSettings[header]!.position.clamp(
+              0,
+              sorted.length,
+            );
             sorted.insert(
-                targetIndex, MapEntry(draggedHeader as String, draggedSetting));
+              targetIndex,
+              MapEntry(draggedHeader as String, draggedSetting),
+            );
 
-            return state.copyWith(columnsState: {
-              for (int i = 0; i < sorted.length; i++)
-                sorted[i].key: sorted[i].value.copyWith(position: i),
-            });
+            return state.copyWith(
+              columnsState: {
+                for (int i = 0; i < sorted.length; i++)
+                  sorted[i].key: sorted[i].value.copyWith(position: i),
+              },
+            );
           });
         },
       ),
@@ -380,9 +415,10 @@ class _SortableHeaderState extends ConsumerState<SortableHeader> {
   Widget build(BuildContext context) {
     final gridState = widget.gridState;
     final isSortDescending = gridState.isSortDescending;
-    final isActive = gridState.sortedColumnKey != null
-        ? gridState.sortedColumnKey == widget.columnSortField
-        : widget.defaultGridSort == widget.columnSortField;
+    final isActive =
+        gridState.sortedColumnKey != null
+            ? gridState.sortedColumnKey == widget.columnSortField
+            : widget.defaultGridSort == widget.columnSortField;
 
     return InkWell(
       onTap: () {
@@ -407,10 +443,9 @@ class _SortableHeaderState extends ConsumerState<SortableHeader> {
             Padding(
               padding: const EdgeInsets.only(left: 4),
               child: Icon(
-                  isSortDescending
-                      ? Icons.arrow_drop_down
-                      : Icons.arrow_drop_up,
-                  size: 20),
+                isSortDescending ? Icons.arrow_drop_down : Icons.arrow_drop_up,
+                size: 20,
+              ),
             ),
         ],
       ),

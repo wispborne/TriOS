@@ -21,9 +21,9 @@ class VersionCheckIcon extends StatelessWidget {
     super.key,
     required VersionCheckComparison? comparison,
     required this.theme,
-  })  : localVersionCheck = comparison?.variant.versionCheckerInfo,
-        remoteVersionCheck = comparison?.remoteVersionCheck,
-        versionCheckComparison = comparison?.comparisonInt;
+  }) : localVersionCheck = comparison?.variant.versionCheckerInfo,
+       remoteVersionCheck = comparison?.remoteVersionCheck,
+       versionCheckComparison = comparison?.comparisonInt;
 
   final VersionCheckerInfo? localVersionCheck;
   final RemoteVersionCheckResult? remoteVersionCheck;
@@ -40,61 +40,86 @@ class VersionCheckIcon extends StatelessWidget {
       _ => theme.disabledColor.withOpacity(0.5),
     };
 
-    return Row(children: [
-      if (localVersionCheck?.modVersion != null &&
-          remoteVersionCheck?.remoteVersion?.modVersion != null)
-        Padding(
+    return Row(
+      children: [
+        if (localVersionCheck?.modVersion != null &&
+            remoteVersionCheck?.remoteVersion?.modVersion != null)
+          Padding(
             padding: const EdgeInsets.only(right: 6),
             child: ConditionalWrap(
-                condition: versionCheckComparison == -1,
-                wrapper: (child) =>
-                    Blur(blurX: 0, blurY: 0, blurOpacity: 0.7, child: child),
-                child: Builder(builder: (context) {
+              condition: versionCheckComparison == -1,
+              wrapper:
+                  (child) =>
+                      Blur(blurX: 0, blurY: 0, blurOpacity: 0.7, child: child),
+              child: Builder(
+                builder: (context) {
                   if (versionCheckComparison == -1 && hasDirectDownload) {
-                    return Icon(Icons.download,
-                        size: updateIconSize, color: iconColor);
+                    return Icon(
+                      Icons.download,
+                      size: updateIconSize,
+                      color: iconColor,
+                    );
                   } else if (versionCheckComparison == -1 &&
                       !hasDirectDownload) {
-                    return SvgImageIcon("assets/images/icon-update-badge.svg",
-                        width: updateIconSize,
-                        height: updateIconSize,
-                        color: iconColor);
+                    return SvgImageIcon(
+                      "assets/images/icon-update-badge.svg",
+                      width: updateIconSize,
+                      height: updateIconSize,
+                      color: iconColor,
+                    );
                   } else {
-                    return Icon(Icons.check,
-                        size: updateIconSize, color: iconColor);
+                    return Icon(
+                      Icons.check,
+                      size: updateIconSize,
+                      color: iconColor,
+                    );
                   }
-                }))),
-      if (localVersionCheck?.modVersion != null &&
-          remoteVersionCheck?.error != null)
-        Padding(
-          padding: const EdgeInsets.only(right: 6),
-          child: Icon(Icons.error_outline,
+                },
+              ),
+            ),
+          ),
+        if (localVersionCheck?.modVersion != null &&
+            remoteVersionCheck?.error != null)
+          Padding(
+            padding: const EdgeInsets.only(right: 6),
+            child: Icon(
+              Icons.error_outline,
               size: updateIconSize,
-              color: ThemeManager.vanillaWarningColor.withOpacity(0.5)),
-        ),
-      if (localVersionCheck?.modVersion == null)
-        Padding(
+              color: ThemeManager.vanillaWarningColor.withOpacity(0.5),
+            ),
+          ),
+        if (localVersionCheck?.modVersion == null)
+          Padding(
             padding: const EdgeInsets.only(right: 6),
             child: SizedBox(
               width: updateIconSize,
               child: Center(
                 child: ColorFiltered(
-                    colorFilter: greyscale,
-                    child: SvgImageIcon("assets/images/icon-help.svg",
-                        width: updateIconSize,
-                        height: updateIconSize,
-                        color: theme.disabledColor.withOpacity(0.35))),
+                  colorFilter: greyscale,
+                  child: SvgImageIcon(
+                    "assets/images/icon-help.svg",
+                    width: updateIconSize,
+                    height: updateIconSize,
+                    color: theme.disabledColor.withOpacity(0.35),
+                  ),
+                ),
               ),
-            )),
-      if (localVersionCheck != null && remoteVersionCheck == null)
-        Padding(
+            ),
+          ),
+        if (localVersionCheck != null && remoteVersionCheck == null)
+          Padding(
             padding: const EdgeInsets.only(right: 6),
             child: ColorFiltered(
               colorFilter: greyscale,
-              child: Text("…",
-                  style: theme.textTheme.labelLarge
-                      ?.copyWith(color: theme.disabledColor.withOpacity(0.35))),
-            )),
-    ]);
+              child: Text(
+                "…",
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: theme.disabledColor.withOpacity(0.35),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
   }
 }

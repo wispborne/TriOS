@@ -6,11 +6,7 @@ class DownloadRequest {
   // var cancelToken = CancelToken();
   var forceDownload = false;
 
-  DownloadRequest(
-    this.url,
-    this.directory,
-    this.filename,
-  );
+  DownloadRequest(this.url, this.directory, this.filename);
 
   @override
   bool operator ==(Object other) =>
@@ -22,5 +18,6 @@ class DownloadRequest {
           filename == other.filename;
 
   @override
-  int get hashCode => url.hashCode ^ directory.hashCode ^ (filename?.hashCode ?? 42);
+  int get hashCode =>
+      url.hashCode ^ directory.hashCode ^ (filename?.hashCode ?? 42);
 }

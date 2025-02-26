@@ -45,12 +45,15 @@ class _LazyIndexedStackState extends State<LazyIndexedStack> {
     super.initState();
     _pageController =
         widget.controller ?? PageController(initialPage: widget.index);
-    runZonedGuarded(() {
-      _isBuilt = List<bool>.filled(widget.children.length, false);
-      _isBuilt[widget.index] = true;
-    }, (error, stackTrace) {
-      Fimber.e("Error initializing LazyIndexedStack.", ex: error);
-    });
+    runZonedGuarded(
+      () {
+        _isBuilt = List<bool>.filled(widget.children.length, false);
+        _isBuilt[widget.index] = true;
+      },
+      (error, stackTrace) {
+        Fimber.e("Error initializing LazyIndexedStack.", ex: error);
+      },
+    );
   }
 
   @override

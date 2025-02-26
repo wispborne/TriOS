@@ -10,9 +10,11 @@ class NetworkUtils {
     Uri githubReleasesUrl, {
     required bool includePrereleases,
   }) async {
-    return (await getAllReleases(githubReleasesUrl,
-            includePrereleases: includePrereleases, limit: 1))
-        ?.firstOrNull;
+    return (await getAllReleases(
+      githubReleasesUrl,
+      includePrereleases: includePrereleases,
+      limit: 1,
+    ))?.firstOrNull;
   }
 
   /// Fetch **all** TriOS releases from GitHub's Releases API (with optional limit).
@@ -37,9 +39,7 @@ class NetworkUtils {
     try {
       final response = await http.get(
         githubReleasesUrl,
-        headers: {
-          'Accept': 'application/vnd.github+json',
-        },
+        headers: {'Accept': 'application/vnd.github+json'},
       );
 
       var message =
@@ -125,9 +125,10 @@ class Release {
       prerelease: json['prerelease'],
       createdAt: DateTime.parse(json['created_at']),
       publishedAt: DateTime.parse(json['published_at']),
-      assets: (json['assets'] as List)
-          .map((e) => Asset.fromJson(e as Map<String, dynamic>))
-          .toList(),
+      assets:
+          (json['assets'] as List)
+              .map((e) => Asset.fromJson(e as Map<String, dynamic>))
+              .toList(),
       body: json['body'],
     );
   }

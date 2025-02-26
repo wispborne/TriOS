@@ -26,14 +26,22 @@ class VramEstimatorStateMapper extends ClassMapperBase<VramEstimatorState> {
   static const Field<VramEstimatorState, Map<String, VramMod>> _f$modVramInfo =
       Field('modVramInfo', _$modVramInfo);
   static DateTime? _$lastUpdated(VramEstimatorState v) => v.lastUpdated;
-  static const Field<VramEstimatorState, DateTime> _f$lastUpdated =
-      Field('lastUpdated', _$lastUpdated);
+  static const Field<VramEstimatorState, DateTime> _f$lastUpdated = Field(
+    'lastUpdated',
+    _$lastUpdated,
+  );
   static bool _$isScanning(VramEstimatorState v) => v.isScanning;
-  static const Field<VramEstimatorState, bool> _f$isScanning =
-      Field('isScanning', _$isScanning, mode: FieldMode.member);
+  static const Field<VramEstimatorState, bool> _f$isScanning = Field(
+    'isScanning',
+    _$isScanning,
+    mode: FieldMode.member,
+  );
   static bool _$isCancelled(VramEstimatorState v) => v.isCancelled;
-  static const Field<VramEstimatorState, bool> _f$isCancelled =
-      Field('isCancelled', _$isCancelled, mode: FieldMode.member);
+  static const Field<VramEstimatorState, bool> _f$isCancelled = Field(
+    'isCancelled',
+    _$isCancelled,
+    mode: FieldMode.member,
+  );
 
   @override
   final MappableFields<VramEstimatorState> fields = const {
@@ -45,8 +53,9 @@ class VramEstimatorStateMapper extends ClassMapperBase<VramEstimatorState> {
 
   static VramEstimatorState _instantiate(DecodingData data) {
     return VramEstimatorState(
-        modVramInfo: data.dec(_f$modVramInfo),
-        lastUpdated: data.dec(_f$lastUpdated));
+      modVramInfo: data.dec(_f$modVramInfo),
+      lastUpdated: data.dec(_f$lastUpdated),
+    );
   }
 
   @override
@@ -72,43 +81,58 @@ mixin VramEstimatorStateMappable {
         .encodeMap<VramEstimatorState>(this as VramEstimatorState);
   }
 
-  VramEstimatorStateCopyWith<VramEstimatorState, VramEstimatorState,
-          VramEstimatorState>
-      get copyWith => _VramEstimatorStateCopyWithImpl(
-          this as VramEstimatorState, $identity, $identity);
+  VramEstimatorStateCopyWith<
+    VramEstimatorState,
+    VramEstimatorState,
+    VramEstimatorState
+  >
+  get copyWith => _VramEstimatorStateCopyWithImpl(
+    this as VramEstimatorState,
+    $identity,
+    $identity,
+  );
   @override
   String toString() {
-    return VramEstimatorStateMapper.ensureInitialized()
-        .stringifyValue(this as VramEstimatorState);
+    return VramEstimatorStateMapper.ensureInitialized().stringifyValue(
+      this as VramEstimatorState,
+    );
   }
 
   @override
   bool operator ==(Object other) {
-    return VramEstimatorStateMapper.ensureInitialized()
-        .equalsValue(this as VramEstimatorState, other);
+    return VramEstimatorStateMapper.ensureInitialized().equalsValue(
+      this as VramEstimatorState,
+      other,
+    );
   }
 
   @override
   int get hashCode {
-    return VramEstimatorStateMapper.ensureInitialized()
-        .hashValue(this as VramEstimatorState);
+    return VramEstimatorStateMapper.ensureInitialized().hashValue(
+      this as VramEstimatorState,
+    );
   }
 }
 
 extension VramEstimatorStateValueCopy<$R, $Out>
     on ObjectCopyWith<$R, VramEstimatorState, $Out> {
   VramEstimatorStateCopyWith<$R, VramEstimatorState, $Out>
-      get $asVramEstimatorState =>
-          $base.as((v, t, t2) => _VramEstimatorStateCopyWithImpl(v, t, t2));
+  get $asVramEstimatorState =>
+      $base.as((v, t, t2) => _VramEstimatorStateCopyWithImpl(v, t, t2));
 }
 
-abstract class VramEstimatorStateCopyWith<$R, $In extends VramEstimatorState,
-    $Out> implements ClassCopyWith<$R, $In, $Out> {
+abstract class VramEstimatorStateCopyWith<
+  $R,
+  $In extends VramEstimatorState,
+  $Out
+>
+    implements ClassCopyWith<$R, $In, $Out> {
   MapCopyWith<$R, String, VramMod, VramModCopyWith<$R, VramMod, VramMod>>
-      get modVramInfo;
+  get modVramInfo;
   $R call({Map<String, VramMod>? modVramInfo, DateTime? lastUpdated});
   VramEstimatorStateCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
-      Then<$Out2, $R2> t);
+    Then<$Out2, $R2> t,
+  );
 }
 
 class _VramEstimatorStateCopyWithImpl<$R, $Out>
@@ -121,21 +145,27 @@ class _VramEstimatorStateCopyWithImpl<$R, $Out>
       VramEstimatorStateMapper.ensureInitialized();
   @override
   MapCopyWith<$R, String, VramMod, VramModCopyWith<$R, VramMod, VramMod>>
-      get modVramInfo => MapCopyWith($value.modVramInfo,
-          (v, t) => v.copyWith.$chain(t), (v) => call(modVramInfo: v));
+  get modVramInfo => MapCopyWith(
+    $value.modVramInfo,
+    (v, t) => v.copyWith.$chain(t),
+    (v) => call(modVramInfo: v),
+  );
   @override
   $R call({Map<String, VramMod>? modVramInfo, Object? lastUpdated = $none}) =>
-      $apply(FieldCopyWithData({
-        if (modVramInfo != null) #modVramInfo: modVramInfo,
-        if (lastUpdated != $none) #lastUpdated: lastUpdated
-      }));
+      $apply(
+        FieldCopyWithData({
+          if (modVramInfo != null) #modVramInfo: modVramInfo,
+          if (lastUpdated != $none) #lastUpdated: lastUpdated,
+        }),
+      );
   @override
   VramEstimatorState $make(CopyWithData data) => VramEstimatorState(
-      modVramInfo: data.get(#modVramInfo, or: $value.modVramInfo),
-      lastUpdated: data.get(#lastUpdated, or: $value.lastUpdated));
+    modVramInfo: data.get(#modVramInfo, or: $value.modVramInfo),
+    lastUpdated: data.get(#lastUpdated, or: $value.lastUpdated),
+  );
 
   @override
   VramEstimatorStateCopyWith<$R2, VramEstimatorState, $Out2> $chain<$R2, $Out2>(
-          Then<$Out2, $R2> t) =>
-      _VramEstimatorStateCopyWithImpl($value, $cast, t);
+    Then<$Out2, $R2> t,
+  ) => _VramEstimatorStateCopyWithImpl($value, $cast, t);
 }

@@ -42,19 +42,26 @@ class DownloadManager {
   }
 
   void Function(int, int) createDownloadProgressCallback(
-          url, int partialFileLength) =>
-      (int received, int total) {
-        final download = DownloadedAmount(
-            received + partialFileLength, total + partialFileLength);
-        // getDownload(url)?.progressRatio.value =
-        //     (received + partialFileLength) / (total + partialFileLength);
-        getDownload(url)?.downloaded.value = download;
+    url,
+    int partialFileLength,
+  ) => (int received, int total) {
+    final download = DownloadedAmount(
+      received + partialFileLength,
+      total + partialFileLength,
+    );
+    // getDownload(url)?.progressRatio.value =
+    //     (received + partialFileLength) / (total + partialFileLength);
+    getDownload(url)?.downloaded.value = download;
 
-        if (total == -1) {}
-      };
+    if (total == -1) {}
+  };
 
-  Future<void> download(String url, String destFolder, String? filename,
-      {forceDownload = false}) async {
+  Future<void> download(
+    String url,
+    String destFolder,
+    String? filename, {
+    forceDownload = false,
+  }) async {
     late String partialFilePath;
     late File partialFile;
     final TriOSHttpClient httpClient = ref.watch(triOSHttpClient);
@@ -82,11 +89,12 @@ class DownloadManager {
       // If given a download folder, then get the file's name from the URL and put it in the folder.
       // If given an actual filename rather than a folder, then we already have the name.
       final isDirectory = await Directory(destFolder).exists();
-      final downloadFile = isDirectory
-          ? destFolder +
-              Platform.pathSeparator +
-              await fetchFileNameFromUrl(url, headers)
-          : destFolder + Platform.pathSeparator + filename!;
+      final downloadFile =
+          isDirectory
+              ? destFolder +
+                  Platform.pathSeparator +
+                  await fetchFileNameFromUrl(url, headers)
+              : destFolder + Platform.pathSeparator + filename!;
       task.file.value = File(downloadFile);
 
       setStatus(task, DownloadStatus.downloading);
@@ -96,7 +104,8 @@ class DownloadManager {
       // Ensure there's a file to download
       if (await isDownloadableFile(url, headersMap, httpClient) == false) {
         throw Exception(
-            "No file to download found at '$url'.\nPlease contact the mod author.");
+          "No file to download found at '$url'.\nPlease contact the mod author.",
+        );
       }
 
       var file = File(downloadFile.toString());
@@ -117,8 +126,10 @@ class DownloadManager {
         final response = await httpClient.get(
           url,
           headers: {HttpHeaders.rangeHeader: 'bytes=$partialFileLength-'},
-          onProgress:
-              createDownloadProgressCallback(originalUrl, partialFileLength),
+          onProgress: createDownloadProgressCallback(
+            originalUrl,
+            partialFileLength,
+          ),
         );
 
         if (response.statusCode == HttpStatus.partialContent ||
@@ -145,7 +156,8 @@ class DownloadManager {
           setStatus(task, DownloadStatus.completed);
         } else {
           throw Exception(
-              "Failed to download file: ${response.statusCode} $url");
+            "Failed to download file: ${response.statusCode} $url",
+          );
         }
       }
     } catch (e) {
@@ -184,13 +196,16 @@ class DownloadManager {
       return utf8.encode(response);
     } else {
       throw Exception(
-          'Unsupported response data type: ${response.runtimeType}');
+        'Unsupported response data type: ${response.runtimeType}',
+      );
     }
   }
 
   /// Partly AI Generated
   Future<String> makeDirectDownloadLink(
-      String url, TriOSHttpClient http) async {
+    String url,
+    TriOSHttpClient http,
+  ) async {
     // Create a lowercase version of the URL for comparison purposes
     final urlLower = url.toLowerCase();
 
@@ -198,8 +213,10 @@ class DownloadManager {
     if (isGoogleDrive(urlLower)) {
       if (!urlLower.contains("export=download")) {
         if (urlLower.contains("/file/d/")) {
-          final fileIdMatch =
-              RegExp(r'file/d/([^/]+)', caseSensitive: false).firstMatch(url);
+          final fileIdMatch = RegExp(
+            r'file/d/([^/]+)',
+            caseSensitive: false,
+          ).firstMatch(url);
           final fileId = fileIdMatch?.group(1);
           if (fileId != null) {
             url = "https://drive.google.com/uc?export=download&id=$fileId";
@@ -211,12 +228,16 @@ class DownloadManager {
       }
 
       Uri uri = Uri.parse(url);
-      url = uri.replace(queryParameters: {
-        ...uri.queryParameters,
-        'confirm': 't' // Skip Google Drive confirmation page
-      }).toString();
+      url =
+          uri
+              .replace(
+                queryParameters: {
+                  ...uri.queryParameters,
+                  'confirm': 't', // Skip Google Drive confirmation page
+                },
+              )
+              .toString();
     }
-
     // Dropbox
     else if (urlLower.contains("dropbox.com") && !urlLower.contains("dl=1")) {
       if (urlLower.contains("dl=0")) {
@@ -227,7 +248,6 @@ class DownloadManager {
         url = "$url?dl=1";
       }
     }
-
     // OneDrive
     else if (urlLower.contains("onedrive.live.com") &&
         !urlLower.contains("download=1")) {
@@ -237,15 +257,15 @@ class DownloadManager {
         url = "$url?download=1";
       }
     }
-
     // GitHub (raw file download)
     else if (urlLower.contains("github.com") && urlLower.contains("/blob/")) {
       url = url
-          .replaceFirst(RegExp("github.com", caseSensitive: false),
-              "raw.githubusercontent.com")
+          .replaceFirst(
+            RegExp("github.com", caseSensitive: false),
+            "raw.githubusercontent.com",
+          )
           .replaceFirst(RegExp("/blob/", caseSensitive: false), "/");
     }
-
     // MediaFire - Fetch the direct download link
     else if (urlLower.contains("mediafire.com")) {
       try {
@@ -260,7 +280,9 @@ class DownloadManager {
 
   /// Extracts and fetches the direct download link from a MediaFire URL.
   Future<String> getMediafireDirectLink(
-      String url, TriOSHttpClient http) async {
+    String url,
+    TriOSHttpClient http,
+  ) async {
     try {
       // Define regex patterns for different MediaFire link formats
       final patterns = [
@@ -287,12 +309,14 @@ class DownloadManager {
       final response = await http.get(url);
       if (response.statusCode != 200) {
         throw Exception(
-            "Failed to load MediaFire page, status: ${response.statusCode}");
+          "Failed to load MediaFire page, status: ${response.statusCode}",
+        );
       }
 
       // Extract the direct download link
-      final match = RegExp("https://download[0-9]+.mediafire.com/[^\"]+")
-          .firstMatch(response.data);
+      final match = RegExp(
+        "https://download[0-9]+.mediafire.com/[^\"]+",
+      ).firstMatch(response.data);
       if (match != null) {
         return match.group(0)!;
       } else {
@@ -324,7 +348,10 @@ class DownloadManager {
   ///
   /// Returns a `DownloadTask` or `null` if the URL is empty.
   Future<DownloadTask?> addDownload(
-      String url, String destFolder, String? fileName) async {
+    String url,
+    String destFolder,
+    String? fileName,
+  ) async {
     if (url.isEmpty) {
       return null;
     }
@@ -349,8 +376,13 @@ class DownloadManager {
       }
     }
 
-    _queue.add(DownloadRequest(downloadRequest.url, downloadRequest.directory,
-        downloadRequest.filename));
+    _queue.add(
+      DownloadRequest(
+        downloadRequest.url,
+        downloadRequest.directory,
+        downloadRequest.filename,
+      ),
+    );
     final task = DownloadTask(_queue.last);
 
     _cache[downloadRequest.url] = task;
@@ -392,8 +424,10 @@ class DownloadManager {
     return _cache[url];
   }
 
-  Future<DownloadStatus> whenDownloadComplete(String url,
-      {Duration timeout = const Duration(hours: 2)}) async {
+  Future<DownloadStatus> whenDownloadComplete(
+    String url, {
+    Duration timeout = const Duration(hours: 2),
+  }) async {
     DownloadTask? task = getDownload(url);
 
     if (task != null) {
@@ -437,9 +471,11 @@ class DownloadManager {
   }
 
   ValueNotifier<DownloadedAmount> getBatchTriOSDownloadProgress(
-      List<String> urls) {
-    ValueNotifier<DownloadedAmount> progress =
-        ValueNotifier(DownloadedAmount(0, 0));
+    List<String> urls,
+  ) {
+    ValueNotifier<DownloadedAmount> progress = ValueNotifier(
+      DownloadedAmount(0, 0),
+    );
     var total = urls.length;
 
     if (total == 0) {
@@ -460,15 +496,19 @@ class DownloadManager {
 
         if (task.status.value.isCompleted) {
           progressMap[url] = 1.0;
-          progress.value =
-              DownloadedAmount(progressMap.values.sum.toInt(), total);
+          progress.value = DownloadedAmount(
+            progressMap.values.sum.toInt(),
+            total,
+          );
         }
 
         Null Function() progressListener;
         progressListener = () {
           progressMap[url] = task.downloaded.value.progressRatio;
-          progress.value =
-              DownloadedAmount(progressMap.values.sum.toInt(), total);
+          progress.value = DownloadedAmount(
+            progressMap.values.sum.toInt(),
+            total,
+          );
         };
 
         task.downloaded.addListener(progressListener);
@@ -477,8 +517,10 @@ class DownloadManager {
         listener = () {
           if (task.status.value.isCompleted) {
             progressMap[url] = 1.0;
-            progress.value =
-                DownloadedAmount(progressMap.values.sum.toInt(), total);
+            progress.value = DownloadedAmount(
+              progressMap.values.sum.toInt(),
+              total,
+            );
             task.status.removeListener(listener!);
             task.downloaded.removeListener(progressListener);
           }
@@ -493,8 +535,10 @@ class DownloadManager {
     return progress;
   }
 
-  Future<List<DownloadTask?>?> whenBatchDownloadsComplete(List<String> urls,
-      {Duration timeout = const Duration(hours: 2)}) async {
+  Future<List<DownloadTask?>?> whenBatchDownloadsComplete(
+    List<String> urls, {
+    Duration timeout = const Duration(hours: 2),
+  }) async {
     var completer = Completer<List<DownloadTask?>?>();
 
     var completed = 0;
@@ -547,12 +591,18 @@ class DownloadManager {
       Fimber.d('Concurrent workers: $runningTasks');
       var currentRequest = _queue.removeFirst();
 
-      runZonedGuarded(() {
-        download(currentRequest.url, currentRequest.directory,
-            currentRequest.filename);
-      }, (e, s) {
-        Fimber.w('Error downloading: $e', ex: e, stacktrace: s);
-      });
+      runZonedGuarded(
+        () {
+          download(
+            currentRequest.url,
+            currentRequest.directory,
+            currentRequest.filename,
+          );
+        },
+        (e, s) {
+          Fimber.w('Error downloading: $e', ex: e, stacktrace: s);
+        },
+      );
 
       await Future.delayed(const Duration(milliseconds: 500), null);
     }
@@ -580,12 +630,7 @@ class DownloadManager {
       final httpClient = ref.watch(triOSHttpClient);
 
       // Send a HEAD request to the URL
-      final response = await httpClient.get(
-        url,
-        headers: {
-          'method': 'HEAD',
-        },
-      );
+      final response = await httpClient.get(url, headers: {'method': 'HEAD'});
 
       // Return headers if the request is successful
       if (response.statusCode == 200) {
@@ -602,8 +647,11 @@ class DownloadManager {
 
   /// Checks if a given URL points to a downloadable file.
   /// Uses headers to determine if the content is downloadable.
-  static Future<bool> isDownloadableFile(String url,
-      Map<String, String>? headers, TriOSHttpClient httpClient) async {
+  static Future<bool> isDownloadableFile(
+    String url,
+    Map<String, String>? headers,
+    TriOSHttpClient httpClient,
+  ) async {
     if (headers != null) {
       final contentType = headers['content-type']?.toLowerCase() ?? "";
       final contentDisposition =
@@ -628,18 +676,15 @@ class DownloadManager {
   }
 
   static Future<UrlResponse> fetchFinalUrlAndHeaders(
-      String url, TriOSHttpClient httpClient) async {
+    String url,
+    TriOSHttpClient httpClient,
+  ) async {
     const int maxRedirects = 3;
     int redirectCount = 0;
     String currentUrl = url;
     HttpHeaders currentHeaders;
     while (redirectCount < maxRedirects) {
-      final response = await httpClient.get(
-        url,
-        headers: {
-          'method': 'HEAD',
-        },
-      );
+      final response = await httpClient.get(url, headers: {'method': 'HEAD'});
 
       if (response.httpResponse.redirects.isNotEmpty) {
         currentUrl = response.httpResponse.redirects.last.location.toString();
@@ -662,9 +707,10 @@ class DownloadManager {
       }
 
       // If not an HTTP redirect, try a GET request to detect meta refresh
-      final getResponse = await httpClient.get(currentUrl, headers: {
-        'User-Agent': 'Mozilla/5.0',
-      });
+      final getResponse = await httpClient.get(
+        currentUrl,
+        headers: {'User-Agent': 'Mozilla/5.0'},
+      );
 
       // Update headers from the GET response
       currentHeaders = getResponse.headers;
@@ -677,13 +723,17 @@ class DownloadManager {
         final document = parse(getResponse.data);
         final metaRefresh = document.head
             ?.getElementsByTagName('meta')
-            .firstWhereOrNull((element) =>
-                element.attributes['http-equiv']?.toLowerCase() == 'refresh');
+            .firstWhereOrNull(
+              (element) =>
+                  element.attributes['http-equiv']?.toLowerCase() == 'refresh',
+            );
 
         if (metaRefresh != null) {
           final content = metaRefresh.attributes['content'];
-          final urlMatch = RegExp(r'url=(.*)', caseSensitive: false)
-              .firstMatch(content ?? '');
+          final urlMatch = RegExp(
+            r'url=(.*)',
+            caseSensitive: false,
+          ).firstMatch(content ?? '');
           if (urlMatch != null) {
             currentUrl =
                 Uri.parse(currentUrl).resolve(urlMatch.group(1)!).toString();
@@ -708,7 +758,9 @@ class DownloadManager {
 
   // Determines if a Google Drive link has a download (because it doesn't use proper headers).
   static Future<bool> checkGoogleDriveLink(
-      String url, TriOSHttpClient httpClient) async {
+    String url,
+    TriOSHttpClient httpClient,
+  ) async {
     try {
       if (url.contains('export=download')) {
         return true;
@@ -731,7 +783,9 @@ class DownloadManager {
 
   // Determines if a MEGA link has a download (because it doesn't use proper headers).
   static Future<bool> checkMegaLink(
-      String url, TriOSHttpClient httpClient) async {
+    String url,
+    TriOSHttpClient httpClient,
+  ) async {
     try {
       // MEGA links should be direct or use a confirmation link
       final response = await httpClient.get(url);

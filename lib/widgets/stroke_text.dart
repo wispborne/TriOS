@@ -31,57 +31,60 @@ class StrokeText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Stack(
-      children: !borderOnTop
-          ? [
-              Text(
-                text,
-                style: TextStyle(color: textColor).merge(style),
-                textDirection: textDirection,
-                textScaler: textScaler,
-                overflow: overflow,
-                maxLines: maxLines,
-              ),
-              Text(
-                text,
-                style: TextStyle(
-                  foreground: Paint()
-                    ..style = PaintingStyle.stroke
-                    ..strokeWidth = strokeWidth
-                    ..isAntiAlias = true
-                    ..color = strokeColor,
-                ).merge(style),
-                textAlign: textAlign,
-                textDirection: textDirection,
-                textScaler: textScaler,
-                overflow: overflow,
-                maxLines: maxLines,
-              ),
-            ]
-          : [
-              Text(
-                text,
-                style: TextStyle(
-                  foreground: Paint()
-                    ..style = PaintingStyle.stroke
-                    ..strokeWidth = strokeWidth
-                    ..isAntiAlias = true
-                    ..color = strokeColor,
-                ).merge(style),
-                textAlign: textAlign,
-                textDirection: textDirection,
-                textScaler: textScaler,
-                overflow: overflow,
-                maxLines: maxLines,
-              ),
-              Text(
-                text,
-                style: TextStyle(color: textColor).merge(style),
-                textDirection: textDirection,
-                textScaler: textScaler,
-                overflow: overflow,
-                maxLines: maxLines,
-              ),
-            ],
+      children:
+          !borderOnTop
+              ? [
+                Text(
+                  text,
+                  style: TextStyle(color: textColor).merge(style),
+                  textDirection: textDirection,
+                  textScaler: textScaler,
+                  overflow: overflow,
+                  maxLines: maxLines,
+                ),
+                Text(
+                  text,
+                  style: TextStyle(
+                    foreground:
+                        Paint()
+                          ..style = PaintingStyle.stroke
+                          ..strokeWidth = strokeWidth
+                          ..isAntiAlias = true
+                          ..color = strokeColor,
+                  ).merge(style),
+                  textAlign: textAlign,
+                  textDirection: textDirection,
+                  textScaler: textScaler,
+                  overflow: overflow,
+                  maxLines: maxLines,
+                ),
+              ]
+              : [
+                Text(
+                  text,
+                  style: TextStyle(
+                    foreground:
+                        Paint()
+                          ..style = PaintingStyle.stroke
+                          ..strokeWidth = strokeWidth
+                          ..isAntiAlias = true
+                          ..color = strokeColor,
+                  ).merge(style),
+                  textAlign: textAlign,
+                  textDirection: textDirection,
+                  textScaler: textScaler,
+                  overflow: overflow,
+                  maxLines: maxLines,
+                ),
+                Text(
+                  text,
+                  style: TextStyle(color: textColor).merge(style),
+                  textDirection: textDirection,
+                  textScaler: textScaler,
+                  overflow: overflow,
+                  maxLines: maxLines,
+                ),
+              ],
     );
   }
 }

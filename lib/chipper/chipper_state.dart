@@ -15,13 +15,15 @@ import 'models/user_mods.dart';
 
 class ChipperState {
   // static LoadedLog loadedLog = LoadedLog();
-  static final isLoadingLog =
-      StateProvider<bool>((ref) => ref.watch(logRawContents).isLoading);
+  static final isLoadingLog = StateProvider<bool>(
+    (ref) => ref.watch(logRawContents).isLoading,
+  );
 
   // static final logRawContents = StateProvider<LogFile?>((ref) => null);
   static final logRawContents =
       AsyncNotifierProvider<_ChipperLogParserNotifier, LogChips?>(
-          _ChipperLogParserNotifier.new);
+        _ChipperLogParserNotifier.new,
+      );
 }
 
 class _ChipperLogParserNotifier extends AsyncNotifier<LogChips?> {
@@ -74,12 +76,22 @@ class LogChips {
   final String? gameVersion;
   final String? os;
   final String? javaVersion;
-  UserMods modList =
-      UserMods(UnmodifiableListView<ModEntry>([]), isPerfectList: false);
+  UserMods modList = UserMods(
+    UnmodifiableListView<ModEntry>([]),
+    isPerfectList: false,
+  );
   UnmodifiableListView<LogLine> errorBlock = UnmodifiableListView([]);
   final int timeTaken;
   final DateTime? lastUpdated;
 
-  LogChips(this.filepath, this.gameVersion, this.os, this.javaVersion,
-      this.modList, this.errorBlock, this.timeTaken, this.lastUpdated);
+  LogChips(
+    this.filepath,
+    this.gameVersion,
+    this.os,
+    this.javaVersion,
+    this.modList,
+    this.errorBlock,
+    this.timeTaken,
+    this.lastUpdated,
+  );
 }

@@ -45,10 +45,12 @@ abstract class GenericAsyncSettingsManager<T> {
       Future.value(Constants.configDataFolderPath);
 
   /// Reads settings from disk, or uses the provided fallback state if there's any error.
-  Future<T> readSettingsFromDisk(T fallback,
-      {bool useCachedValue = false}) async {
+  Future<T> readSettingsFromDisk(
+    T fallback, {
+    bool useCachedValue = false,
+  }) async {
     if (useCachedValue && lastKnownValue != null) {
-      Fimber.v(() =>"Returning cached value instead of reading from disk.");
+      Fimber.v(() => "Returning cached value instead of reading from disk.");
       return Future.value(lastKnownValue);
     }
 
@@ -61,8 +63,11 @@ abstract class GenericAsyncSettingsManager<T> {
         lastKnownValue = loadedState;
         return loadedState;
       } catch (e, stacktrace) {
-        Fimber.e("Error reading from disk, creating backup and then wiping: $e",
-            ex: e, stacktrace: stacktrace);
+        Fimber.e(
+          "Error reading from disk, creating backup and then wiping: $e",
+          ex: e,
+          stacktrace: stacktrace,
+        );
         await _createBackup();
         await _performWriteSettingsToDisk(fallback);
         return fallback;
@@ -86,8 +91,11 @@ abstract class GenericAsyncSettingsManager<T> {
         await _performWriteSettingsToDisk(newState);
         _writeCompleter?.complete();
       } catch (e, stackTrace) {
-        Fimber.e("Error serializing and saving settings data to $fileName: $e",
-            ex: e, stacktrace: stackTrace);
+        Fimber.e(
+          "Error serializing and saving settings data to $fileName: $e",
+          ex: e,
+          stacktrace: stackTrace,
+        );
         _writeCompleter?.completeError(e, stackTrace);
         rethrow;
       } finally {
@@ -126,7 +134,8 @@ abstract class GenericAsyncSettingsManager<T> {
       return fromMap(TomlDocument.parse(utf8.decode(contents)).toMap());
     } else if (fileFormat == FileFormat.msgpack) {
       return fromMap(
-          (m2.deserialize(contents) as Map<dynamic, dynamic>).cast());
+        (m2.deserialize(contents) as Map<dynamic, dynamic>).cast(),
+      );
     } else {
       return fromMap(jsonDecode(utf8.decode(contents)) as Map<String, dynamic>);
     }

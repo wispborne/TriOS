@@ -47,10 +47,7 @@ class TabButton extends StatelessWidget {
             SizedBox(height: iconSpacing),
             Text(
               text,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-              ),
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
             ),
           ],
         ),

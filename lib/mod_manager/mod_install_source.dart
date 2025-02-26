@@ -14,7 +14,9 @@ abstract class ModInstallSource {
 
   /// Give paths, gets real files. For archives, extracts the files to a temp folder to read them first.
   Future<List<SourcedFile>> getActualFiles(
-      List<String> filePaths, ArchiveInterface archive);
+    List<String> filePaths,
+    ArchiveInterface archive,
+  );
 
   /// Extracts or copies the files to the destination.
   /// [fileFilter] should be given absolute paths.
@@ -38,14 +40,16 @@ class ArchiveModInstallSource extends ModInstallSource {
 
   @override
   Future<List<String>> listFilePaths(ArchiveInterface archive) async {
-    return (await archive.listFiles(_archive))
-        .map((entry) => entry.path)
-        .toList();
+    return (await archive.listFiles(
+      _archive,
+    )).map((entry) => entry.path).toList();
   }
 
   @override
   Future<List<SourcedFile>> getActualFiles(
-      List<String> filePaths, ArchiveInterface archive) async {
+    List<String> filePaths,
+    ArchiveInterface archive,
+  ) async {
     // Extract specified files to a temporary folder.
     final tempFolder = await Directory.systemTemp.createTemp();
 
@@ -72,19 +76,24 @@ class ArchiveModInstallSource extends ModInstallSource {
     String Function(String path)? pathTransform,
     bool Function(Object ex, StackTrace st)? onError,
   }) async {
-    return (await archive.extractEntriesInArchive(_archive, destinationPath,
-            fileFilter:
-                fileFilter != null ? (entry) => fileFilter(entry.path) : null,
-            pathTransform: pathTransform != null
-                ? (entry) => pathTransform(entry.path)
-                : null,
-            onError: onError))
-        .nonNulls
-        .map((it) => SourcedFile(
-              it.archiveFile.path.toFile(),
-              it.extractedFile,
-              it.archiveFile.path,
-            ))
+    return (await archive.extractEntriesInArchive(
+          _archive,
+          destinationPath,
+          fileFilter:
+              fileFilter != null ? (entry) => fileFilter(entry.path) : null,
+          pathTransform:
+              pathTransform != null
+                  ? (entry) => pathTransform(entry.path)
+                  : null,
+          onError: onError,
+        )).nonNulls
+        .map(
+          (it) => SourcedFile(
+            it.archiveFile.path.toFile(),
+            it.extractedFile,
+            it.archiveFile.path,
+          ),
+        )
         .toList();
   }
 }
@@ -110,16 +119,14 @@ class DirectoryModInstallSource extends ModInstallSource {
 
   @override
   Future<List<SourcedFile>> getActualFiles(
-      List<String> filePaths, ArchiveInterface archive) async {
+    List<String> filePaths,
+    ArchiveInterface archive,
+  ) async {
     List<SourcedFile> sourcedFiles = [];
     for (String path in filePaths) {
       File file = path.toFile();
       if (await file.exists()) {
-        sourcedFiles.add(SourcedFile(
-          file,
-          file,
-          path,
-        ));
+        sourcedFiles.add(SourcedFile(file, file, path));
       }
     }
     return sourcedFiles;
@@ -147,15 +154,12 @@ class DirectoryModInstallSource extends ModInstallSource {
               pathTransform != null ? pathTransform(entity.path) : relativePath;
 
           File destFile = File(
-              '$destinationPath${Platform.pathSeparator}$destRelativePath');
+            '$destinationPath${Platform.pathSeparator}$destRelativePath',
+          );
           await destFile.parent.create(recursive: true);
           await entity.copy(destFile.path);
 
-          sourcedFiles.add(SourcedFile(
-            entity,
-            destFile,
-            relativePath,
-          ));
+          sourcedFiles.add(SourcedFile(entity, destFile, relativePath));
         }
       }
     } catch (e, st) {
@@ -168,7 +172,9 @@ class DirectoryModInstallSource extends ModInstallSource {
 
   String _relativePath(String fullPath) {
     return fullPath.replaceFirst(
-        '${_directory.path}${Platform.pathSeparator}', '');
+      '${_directory.path}${Platform.pathSeparator}',
+      '',
+    );
   }
 }
 

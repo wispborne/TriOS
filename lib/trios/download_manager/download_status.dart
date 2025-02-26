@@ -5,7 +5,7 @@ enum DownloadStatus {
   completed,
   failed,
   paused,
-  canceled
+  canceled,
 }
 
 extension DownloadStatusExtension on DownloadStatus {

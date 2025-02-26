@@ -45,31 +45,36 @@ class _ModVersionSelectionDropdownState
     final mainVariant = widget.mod.findFirstEnabledOrHighestVersion;
     final hasMultipleEnabled = widget.mod.enabledVariants.length > 1;
     final modCompatibilityMap = ref.watch(AppState.modCompatibility);
-    final dependencyChecks = widget.mod.modVariants.map((v) {
-      return modCompatibilityMap[v.smolId];
-    }).toList();
+    final dependencyChecks =
+        widget.mod.modVariants.map((v) {
+          return modCompatibilityMap[v.smolId];
+        }).toList();
     final isSupportedByGameVersion =
         dependencyChecks.isCompatibleWithGameVersion;
     final mainDependencyCheck = modCompatibilityMap[mainVariant?.smolId];
     final modDependenciesSatisfied = mainDependencyCheck?.dependencyChecks;
 
     // TODO consolidate this logic with the logic in smol2.
-    var areAllDependenciesSatisfied = modDependenciesSatisfied?.every((d) =>
-        d.satisfiedAmount is Satisfied ||
-        d.satisfiedAmount is VersionWarning ||
-        d.satisfiedAmount is Disabled);
+    var areAllDependenciesSatisfied = modDependenciesSatisfied?.every(
+      (d) =>
+          d.satisfiedAmount is Satisfied ||
+          d.satisfiedAmount is VersionWarning ||
+          d.satisfiedAmount is Disabled,
+    );
     final isButtonEnabled = areAllDependenciesSatisfied == true;
     // Pseudo-disabled means it's enabled but has a warning outline.
     final isButtonPseudoDisabled = isButtonEnabled && !isSupportedByGameVersion;
 
-    final buttonColor = hasMultipleEnabled
-        ? errorColor
-        : widget.mod.isEnabledInGame
+    final buttonColor =
+        hasMultipleEnabled
+            ? errorColor
+            : widget.mod.isEnabledInGame
             ? theme.colorScheme.secondary
             : theme.colorScheme.surface;
-    var textColor = hasMultipleEnabled
-        ? theme.colorScheme.onSecondary.darker(20)
-        : widget.mod.isEnabledInGame
+    var textColor =
+        hasMultipleEnabled
+            ? theme.colorScheme.onSecondary.darker(20)
+            : widget.mod.isEnabledInGame
             ? theme.colorScheme.onSecondary
             : theme.colorScheme.onSurface;
     final buttonStyle = ElevatedButton.styleFrom(
@@ -78,16 +83,19 @@ class _ModVersionSelectionDropdownState
       backgroundColor: buttonColor,
       disabledBackgroundColor: buttonColor,
       padding: const EdgeInsets.symmetric(horizontal: 12.0),
-      textStyle:
-          const TextStyle(fontWeight: FontWeight.w900, fontFamily: "Orbitron"),
+      textStyle: const TextStyle(
+        fontWeight: FontWeight.w900,
+        fontFamily: "Orbitron",
+      ),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
         side: BorderSide(
-          color: (isButtonEnabled && !isButtonPseudoDisabled)
-              ? hasMultipleEnabled
-                  ? ThemeManager.vanillaErrorColor.darker(20)
-                  : theme.colorScheme.secondary.darker(20)
-              : ThemeManager.vanillaErrorColor.withOpacity(0.4),
+          color:
+              (isButtonEnabled && !isButtonPseudoDisabled)
+                  ? hasMultipleEnabled
+                      ? ThemeManager.vanillaErrorColor.darker(20)
+                      : theme.colorScheme.secondary.darker(20)
+                  : ThemeManager.vanillaErrorColor.withOpacity(0.4),
           // Slightly darker buttonColor
           width: 2.0,
         ),
@@ -96,37 +104,43 @@ class _ModVersionSelectionDropdownState
 
     const gameVersionMessage =
         "This mod requires a different version of the game";
-    final errorTooltip = hasMultipleEnabled
-        ? "Warning"
-            "\nYou have two or more enabled mod folders for ${mainVariant?.modInfo.nameOrId}. The game will pick one at 'random'."
-            "\nSelect one version from the dropdown."
-        : areAllDependenciesSatisfied == false
+    final errorTooltip =
+        hasMultipleEnabled
+            ? "Warning"
+                "\nYou have two or more enabled mod folders for ${mainVariant?.modInfo.nameOrId}. The game will pick one at 'random'."
+                "\nSelect one version from the dropdown."
+            : areAllDependenciesSatisfied == false
             ? "Requires ${modDependenciesSatisfied?.where((it) => !it.canBeSatisfiedWithInstalledMods).joinToString(transform: (it) => it.dependency.nameOrId)}"
             : null;
-    final warningIcon = Icon(
-      Icons.warning,
-      color: textColor,
-      size: 20,
+    final warningIcon = Icon(Icons.warning, color: textColor, size: 20);
+    final currentStarsectorVersion = ref.watch(
+      appSettings.select((s) => s.lastStarsectorVersion),
     );
-    final currentStarsectorVersion =
-        ref.watch(appSettings.select((s) => s.lastStarsectorVersion));
     final isGameRunning = ref.watch(AppState.isGameRunning).value == true;
 
     Future<void> switchToVariant(ModVariant? modVariant) async {
       if (modVariant != null &&
           isModGameVersionIncorrect(
-              currentStarsectorVersion, isGameRunning, modVariant)) {
+            currentStarsectorVersion,
+            isGameRunning,
+            modVariant,
+          )) {
         showDialog(
-            context: ref.context,
-            builder: (context) {
-              return buildForceGameVersionWarningDialog(
-                  currentStarsectorVersion!, modVariant, context, ref,
-                  onForced: () {
+          context: ref.context,
+          builder: (context) {
+            return buildForceGameVersionWarningDialog(
+              currentStarsectorVersion!,
+              modVariant,
+              context,
+              ref,
+              onForced: () {
                 ref
                     .read(AppState.modVariants.notifier)
                     .changeActiveModVariant(widget.mod, modVariant);
-              });
-            });
+              },
+            );
+          },
+        );
       } else {
         await ref
             .read(AppState.modVariants.notifier)
@@ -135,15 +149,17 @@ class _ModVersionSelectionDropdownState
     }
 
     if (isSingleVariant) {
-      final tooltipMessage = errorTooltip ??
+      final tooltipMessage =
+          errorTooltip ??
           (widget.showTooltip
               ? (!isSupportedByGameVersion ? gameVersionMessage : "")
               : null);
       return MovingTooltipWidget.text(
         message: tooltipMessage,
-        warningLevel: tooltipMessage != null
-            ? TooltipWarningLevel.warning
-            : TooltipWarningLevel.none,
+        warningLevel:
+            tooltipMessage != null
+                ? TooltipWarningLevel.warning
+                : TooltipWarningLevel.none,
         child: Disable(
           isEnabled: isButtonEnabled,
           child: SizedBox(
@@ -166,7 +182,9 @@ class _ModVersionSelectionDropdownState
                 children: [
                   (hasMultipleEnabled
                       ? Align(
-                          alignment: Alignment.centerLeft, child: warningIcon)
+                        alignment: Alignment.centerLeft,
+                        child: warningIcon,
+                      )
                       : Container()),
                   Center(
                     child: Text(
@@ -192,21 +210,25 @@ class _ModVersionSelectionDropdownState
           .map(
             (variant) => DropdownMenuItem(
               value: variant,
-              child: Text(variant.modInfo.version.toString(),
-                  style: TextStyle(
-                      color: modCompatibilityMap[variant.smolId]
-                          ?.gameCompatibility
-                          .getGameCompatibilityColor()),
-                  overflow: TextOverflow.ellipsis),
+              child: Text(
+                variant.modInfo.version.toString(),
+                style: TextStyle(
+                  color:
+                      modCompatibilityMap[variant.smolId]?.gameCompatibility
+                          .getGameCompatibilityColor(),
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
           )
           .distinctBy((item) => item.value?.smolId)
-          .sortedByDescending<ModVariant>((item) => item.value))
+          .sortedByDescending<ModVariant>((item) => item.value)),
     ];
 
     final dropdownWidth = buttonWidth;
     return MovingTooltipWidget.text(
-      message: errorTooltip ??
+      message:
+          errorTooltip ??
           (widget.showTooltip
               ? (!isSupportedByGameVersion ? gameVersionMessage : null)
               : null),
@@ -217,20 +239,33 @@ class _ModVersionSelectionDropdownState
           value: widget.mod.findFirstEnabled,
           openWithLongPress: false,
           alignment: Alignment.centerLeft,
-          hint: buildDropdownButton(dropdownWidth, buttonStyle,
-              hasMultipleEnabled, warningIcon, null, textColor),
+          hint: buildDropdownButton(
+            dropdownWidth,
+            buttonStyle,
+            hasMultipleEnabled,
+            warningIcon,
+            null,
+            textColor,
+          ),
           iconStyleData: const IconStyleData(iconSize: 0),
           // Removes ugly grey line below text
           underline: Container(),
           buttonStyleData: ButtonStyleData(
-              height: buttonHeight,
-              width: dropdownWidth,
-              overlayColor: WidgetStateColor.transparent),
+            height: buttonHeight,
+            width: dropdownWidth,
+            overlayColor: WidgetStateColor.transparent,
+          ),
           dropdownStyleData: DropdownStyleData(openInterval: Interval(0, 0.15)),
           selectedItemBuilder: (BuildContext context) {
             return items.map((item) {
-              return buildDropdownButton(dropdownWidth, buttonStyle,
-                  hasMultipleEnabled, warningIcon, item, textColor);
+              return buildDropdownButton(
+                dropdownWidth,
+                buttonStyle,
+                hasMultipleEnabled,
+                warningIcon,
+                item,
+                textColor,
+              );
             }).toList();
           },
           onChanged: (ModVariant? variant) async {
@@ -242,12 +277,13 @@ class _ModVersionSelectionDropdownState
   }
 
   SizedBox buildDropdownButton(
-      double dropdownWidth,
-      ButtonStyle buttonStyle,
-      bool hasMultipleEnabled,
-      Icon warningIcon,
-      DropdownMenuItem<ModVariant?>? item,
-      Color textColor) {
+    double dropdownWidth,
+    ButtonStyle buttonStyle,
+    bool hasMultipleEnabled,
+    Icon warningIcon,
+    DropdownMenuItem<ModVariant?>? item,
+    Color textColor,
+  ) {
     return SizedBox(
       width: dropdownWidth,
       child: ElevatedButton(
@@ -264,17 +300,17 @@ class _ModVersionSelectionDropdownState
               children: [
                 const SizedBox(width: 10),
                 Expanded(
-                    child: Align(
-                  alignment: Alignment.center,
-                  child:
-                      item?.value == null ? const Text("Enable") : item?.child,
-                )),
+                  child: Align(
+                    alignment: Alignment.center,
+                    child:
+                        item?.value == null
+                            ? const Text("Enable")
+                            : item?.child,
+                  ),
+                ),
                 SizedBox(
                   width: 10,
-                  child: Icon(
-                    Icons.arrow_drop_down,
-                    color: textColor,
-                  ),
+                  child: Icon(Icons.arrow_drop_down, color: textColor),
                 ),
               ],
             ),

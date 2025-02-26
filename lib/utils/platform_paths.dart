@@ -11,9 +11,7 @@ Directory getJreDir(Directory gamePath, {TargetPlatform? platform}) {
     TargetPlatform.linux => gamePath.resolve("jre_linux"),
     TargetPlatform.macOS => gamePath.resolve("Contents/Home"),
     _ => throw UnsupportedError("Platform not supported: $currentPlatform"),
-  }
-      .toDirectory()
-      .normalize;
+  }.toDirectory().normalize;
 }
 
 File getJavaExecutable(Directory jrePath, {TargetPlatform? platform}) {
@@ -22,33 +20,30 @@ File getJavaExecutable(Directory jrePath, {TargetPlatform? platform}) {
     TargetPlatform.linux => jrePath.resolve("bin/java"), // not sure about this
     TargetPlatform.macOS => jrePath.resolve("bin/java"), // not sure about this
     _ => throw UnsupportedError("Platform not supported: $currentPlatform"),
-  }
-      .toFile()
-      .normalize;
+  }.toFile().normalize;
 }
 
 File getLogPath(Directory gamePath, {TargetPlatform? platform}) {
   return switch (platform ?? currentPlatform) {
-    TargetPlatform.windows =>
-      generateGameCorePath(gamePath)!.resolve("starsector.log"),
+    TargetPlatform.windows => generateGameCorePath(
+      gamePath,
+    )!.resolve("starsector.log"),
     TargetPlatform.linux => gamePath.resolve("starsector.log"),
     TargetPlatform.macOS => gamePath.resolve("logs/starsector.log"),
     _ => throw UnsupportedError("Platform not supported: $platform"),
-  }
-      .toFile()
-      .normalize;
+  }.toFile().normalize;
 }
 
-FileSystemEntity getVanillaGameExecutable(Directory gamePath,
-    {TargetPlatform? platform}) {
+FileSystemEntity getVanillaGameExecutable(
+  Directory gamePath, {
+  TargetPlatform? platform,
+}) {
   return switch (platform ?? currentPlatform) {
     TargetPlatform.windows => gamePath.resolve("starsector.exe"),
     TargetPlatform.linux => gamePath.resolve("starsector.sh"),
     TargetPlatform.macOS => gamePath, // game path IS the .app
     _ => throw UnsupportedError("Platform not supported: $currentPlatform"),
-  }
-      .toFile()
-      .normalize;
+  }.toFile().normalize;
 }
 
 bool validateGameFolderPath(String newGameDir) {

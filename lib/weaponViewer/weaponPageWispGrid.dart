@@ -55,18 +55,24 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
     List<Weapon> items = weaponListAsyncValue.valueOrNull ?? [];
 
     if (!showHiddenWeapons) {
-      items = items
-          .where((weapon) => weapon.weaponType?.toLowerCase() != "decorative")
-          .toList();
+      items =
+          items
+              .where(
+                (weapon) => weapon.weaponType?.toLowerCase() != "decorative",
+              )
+              .toList();
     }
 
     final query = _searchController.value.text;
     if (query.isNotEmpty) {
-      items = items.where((weapon) {
-        return weapon.toMap().values.any((value) {
-          return value.toString().toLowerCase().contains(query.toLowerCase());
-        });
-      }).toList();
+      items =
+          items.where((weapon) {
+            return weapon.toMap().values.any((value) {
+              return value.toString().toLowerCase().contains(
+                query.toLowerCase(),
+              );
+            });
+          }).toList();
     }
 
     final columns = buildCols(theme);
@@ -74,10 +80,10 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
     final weaponCount = weaponListAsyncValue.valueOrNull?.length;
     final filteredWeaponCount =
         _gridStateManagerTop?.lastDisplayedItemsReadonly.distinctBy((row) {
-              final weapon = row;
-              return weapon.id;
-            }).length ??
-            0;
+          final weapon = row;
+          return weapon.id;
+        }).length ??
+        0;
 
     return Column(
       children: [
@@ -97,10 +103,9 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
                         children: [
                           Text(
                             '${weaponCount ?? "..."} Weapons${weaponCount != filteredWeaponCount ? " ($filteredWeaponCount shown)" : ""}',
-                            style: Theme.of(context)
-                                .textTheme
-                                .headlineSmall
-                                ?.copyWith(fontSize: 20),
+                            style: Theme.of(
+                              context,
+                            ).textTheme.headlineSmall?.copyWith(fontSize: 20),
                           ),
                           if (ref.watch(isLoadingWeaponsList))
                             const Padding(
@@ -117,9 +122,7 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
                         ],
                       ),
                     ),
-                    Center(
-                      child: buildSearchBox(),
-                    ),
+                    Center(child: buildSearchBox()),
                     Align(
                       alignment: Alignment.centerRight,
                       child: Row(
@@ -129,22 +132,24 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
                           MovingTooltipWidget.text(
                             message: "Show hidden weapons",
                             child: TriOSToolbarCheckboxButton(
-                                text: "Show Hidden",
-                                value: showHiddenWeapons,
-                                onChanged: (value) {
-                                  setState(() {
-                                    showHiddenWeapons = value ?? false;
-                                  });
-                                }),
+                              text: "Show Hidden",
+                              value: showHiddenWeapons,
+                              onChanged: (value) {
+                                setState(() {
+                                  showHiddenWeapons = value ?? false;
+                                });
+                              },
+                            ),
                           ),
                           TriOSToolbarCheckboxButton(
-                              text: "Compare",
-                              value: splitPane,
-                              onChanged: (value) {
-                                splitPane = value ?? false;
-                                multiSplitController.areas = areas;
-                                setState(() {});
-                              }),
+                            text: "Compare",
+                            value: splitPane,
+                            onChanged: (value) {
+                              splitPane = value ?? false;
+                              multiSplitController.areas = areas;
+                              setState(() {});
+                            },
+                          ),
                           IconButton(
                             icon: const Icon(Icons.refresh),
                             onPressed: () {
@@ -165,29 +170,29 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
             padding: const EdgeInsets.all(8.0),
             child: MultiSplitViewTheme(
               data: MultiSplitViewThemeData(
-                  dividerThickness: 16,
-                  dividerPainter: DividerPainters.dashed(
-                    color: theme.colorScheme.onSurface.withOpacity(0.4),
-                    highlightedColor: theme.colorScheme.onSurface,
-                    highlightedThickness: 2,
-                    gap: 1,
-                    animationDuration: const Duration(milliseconds: 100),
-                  )),
+                dividerThickness: 16,
+                dividerPainter: DividerPainters.dashed(
+                  color: theme.colorScheme.onSurface.withOpacity(0.4),
+                  highlightedColor: theme.colorScheme.onSurface,
+                  highlightedThickness: 2,
+                  gap: 1,
+                  animationDuration: const Duration(milliseconds: 100),
+                ),
+              ),
               child: MultiSplitView(
-                  controller: multiSplitController,
-                  axis: Axis.vertical,
-                  builder: (context, area) {
-                    switch (area.id) {
-                      case 'top':
-                        return buildGrid(
-                            columns, items, theme, true, gridState);
-                      case 'bottom':
-                        return buildGrid(
-                            columns, items, theme, false, gridState);
-                      default:
-                        return Container();
-                    }
-                  }),
+                controller: multiSplitController,
+                axis: Axis.vertical,
+                builder: (context, area) {
+                  switch (area.id) {
+                    case 'top':
+                      return buildGrid(columns, items, theme, true, gridState);
+                    case 'bottom':
+                      return buildGrid(columns, items, theme, false, gridState);
+                    default:
+                      return Container();
+                  }
+                },
+              ),
             ),
           ),
         ),
@@ -201,8 +206,13 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
     // );
   }
 
-  Widget buildGrid(List<WispGridColumn<Weapon>> columns, List<Weapon> items,
-      ThemeData theme, bool isTop, WispGridState gridState) {
+  Widget buildGrid(
+    List<WispGridColumn<Weapon>> columns,
+    List<Weapon> items,
+    ThemeData theme,
+    bool isTop,
+    WispGridState gridState,
+  ) {
     return DefaultTextStyle.merge(
       style: theme.textTheme.labelLarge!.copyWith(fontSize: 14),
       child: WispGrid<Weapon>(
@@ -210,15 +220,16 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
         updateGridState: (updateFunction) {
           ref.read(appSettings.notifier).update((state) {
             return state.copyWith(
-                weaponsGridState: updateFunction(state.weaponsGridState));
+              weaponsGridState: updateFunction(state.weaponsGridState),
+            );
           });
         },
         columns: columns,
         items: items,
         itemExtent: 50,
         alwaysShowScrollbar: true,
-        rowBuilder: (item, modifiers, child) =>
-            SizedBox(height: 50, child: child),
+        rowBuilder:
+            (item, modifiers, child) => SizedBox(height: 50, child: child),
         onLoaded: (WispGridController<Weapon> controller) {
           if (isTop) {
             _gridStateManagerTop = controller;
@@ -226,10 +237,7 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
             _gridStateManagerBottom = controller;
           }
         },
-        groups: [
-          UngroupedWeaponGridGroup(),
-          ModNameWeaponGridGroup(),
-        ],
+        groups: [UngroupedWeaponGridGroup(), ModNameWeaponGridGroup()],
       ),
     );
   }
@@ -241,32 +249,40 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
         isSortable: true,
         name: 'Mod',
         getSortValue: (weapon) => weapon.modVariant?.modInfo.nameOrId,
-        itemCellBuilder: (item, modifiers) => Builder(builder: (context) {
-          final modName = item.modVariant?.modInfo.nameOrId ?? "(vanilla)";
-          return Tooltip(
-            message: modName,
-            child: Text(
-              modName,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.headlineSmall!.copyWith(fontSize: 14),
+        itemCellBuilder:
+            (item, modifiers) => Builder(
+              builder: (context) {
+                final modName =
+                    item.modVariant?.modInfo.nameOrId ?? "(vanilla)";
+                return Tooltip(
+                  message: modName,
+                  child: Text(
+                    modName,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.headlineSmall!.copyWith(
+                      fontSize: 14,
+                    ),
+                  ),
+                );
+              },
             ),
-          );
-        }),
         defaultState: WispGridColumnState(position: 0, width: 100),
       ),
       WispGridColumn(
         key: 'spritePaths',
         isSortable: false,
         name: '',
-        itemCellBuilder: (item, modifiers) => WeaponImageCell(
-          imagePaths: [
-            item.hardpointGunSprite,
-            item.hardpointSprite,
-            item.turretGunSprite,
-            item.turretSprite
-          ].whereType<String>().toList(),
-        ),
+        itemCellBuilder:
+            (item, modifiers) => WeaponImageCell(
+              imagePaths:
+                  [
+                    item.hardpointGunSprite,
+                    item.hardpointSprite,
+                    item.turretGunSprite,
+                    item.turretSprite,
+                  ].whereType<String>().toList(),
+            ),
         defaultState: WispGridColumnState(position: 1, width: 40),
       ),
       WispGridColumn(
@@ -274,15 +290,16 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
         isSortable: true,
         name: 'Name',
         getSortValue: (weapon) => weapon.name ?? weapon.id,
-        itemCellBuilder: (item, modifiers) => Tooltip(
-          message: item.id,
-          child: Text(
-            item.name ?? item.id,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.headlineSmall!.copyWith(fontSize: 14),
-          ),
-        ),
+        itemCellBuilder:
+            (item, modifiers) => Tooltip(
+              message: item.id,
+              child: Text(
+                item.name ?? item.id,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.headlineSmall!.copyWith(fontSize: 14),
+              ),
+            ),
         defaultState: WispGridColumnState(position: 2, width: 150),
       ),
       WispGridColumn(
@@ -314,8 +331,8 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
         isSortable: true,
         name: 'Dmg/Shot',
         getSortValue: (weapon) => weapon.damagePerShot,
-        itemCellBuilder: (item, modifiers) =>
-            Text(item.damagePerShot?.toString() ?? ""),
+        itemCellBuilder:
+            (item, modifiers) => Text(item.damagePerShot?.toString() ?? ""),
         defaultState: WispGridColumnState(position: 6, width: 110),
       ),
       WispGridColumn(
@@ -323,8 +340,8 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
         isSortable: true,
         name: 'Range',
         getSortValue: (weapon) => weapon.range,
-        itemCellBuilder: (item, modifiers) =>
-            Text(item.range?.toString() ?? ""),
+        itemCellBuilder:
+            (item, modifiers) => Text(item.range?.toString() ?? ""),
         defaultState: WispGridColumnState(position: 7, width: 80),
       ),
       WispGridColumn(
@@ -332,8 +349,8 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
         isSortable: true,
         name: 'Dmg/Sec',
         getSortValue: (weapon) => weapon.damagePerSecond,
-        itemCellBuilder: (item, modifiers) =>
-            Text(item.damagePerSecond?.toString() ?? ""),
+        itemCellBuilder:
+            (item, modifiers) => Text(item.damagePerSecond?.toString() ?? ""),
         defaultState: WispGridColumnState(position: 8, width: 90),
       ),
       WispGridColumn(
@@ -357,8 +374,8 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
         isSortable: true,
         name: 'Turn Rate',
         getSortValue: (weapon) => weapon.turnRate,
-        itemCellBuilder: (item, modifiers) =>
-            Text(item.turnRate?.toString() ?? ""),
+        itemCellBuilder:
+            (item, modifiers) => Text(item.turnRate?.toString() ?? ""),
         defaultState: WispGridColumnState(position: 11, width: 90),
       ),
       WispGridColumn(
@@ -387,14 +404,14 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
               controller.value.text.isEmpty
                   ? Container()
                   : IconButton(
-                      icon: const Icon(Icons.clear),
-                      constraints: const BoxConstraints(),
-                      padding: EdgeInsets.zero,
-                      onPressed: () {
-                        controller.clear();
-                        setState(() {});
-                      },
-                    )
+                    icon: const Icon(Icons.clear),
+                    constraints: const BoxConstraints(),
+                    padding: EdgeInsets.zero,
+                    onPressed: () {
+                      controller.clear();
+                      setState(() {});
+                    },
+                  ),
             ],
             backgroundColor: WidgetStateProperty.all(
               Theme.of(context).colorScheme.surfaceContainer,
@@ -404,8 +421,10 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
             },
           );
         },
-        suggestionsBuilder:
-            (BuildContext context, SearchController controller) {
+        suggestionsBuilder: (
+          BuildContext context,
+          SearchController controller,
+        ) {
           return [];
         },
       ),

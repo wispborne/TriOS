@@ -238,79 +238,81 @@ void main() {
     // -------------------------- MORE RIGOROUS TESTS BELOW --------------------------
 
     test(
-        'missing variant if mod is present but variant not found in modVariants',
-        () {
-      // Both versions parse as 1.0.0, but we won't add the matching smolVariantId to modVariants
-      final version = Version.parse("1.0.0", sanitizeInput: true);
+      'missing variant if mod is present but variant not found in modVariants',
+      () {
+        // Both versions parse as 1.0.0, but we won't add the matching smolVariantId to modVariants
+        final version = Version.parse("1.0.0", sanitizeInput: true);
 
-      final allMods = [
-        Mod(
-          id: 'modA',
-          isEnabledInGame: true,
-          modVariants: [
-            // Only "modA-100" is present, but the profile variant will be "modA-101"
-            ModVariant(
-              modInfo: ModInfo(id: 'modA', version: version),
-              versionCheckerInfo: null,
-              modFolder: Directory(''),
-              hasNonBrickedModInfo: true,
+        final allMods = [
+          Mod(
+            id: 'modA',
+            isEnabledInGame: true,
+            modVariants: [
+              // Only "modA-100" is present, but the profile variant will be "modA-101"
+              ModVariant(
+                modInfo: ModInfo(id: 'modA', version: version),
+                versionCheckerInfo: null,
+                modFolder: Directory(''),
+                hasNonBrickedModInfo: true,
+              ),
+            ],
+          ),
+        ];
+
+        // Notice how the actual smolId for the variant we do have doesn't match the profile's smolId.
+        final existingSmolId = createSmolId(
+          'modA',
+          version,
+        ); // e.g. "modA-100-..."
+        final modVariants = [
+          ModVariant(
+            modInfo: ModInfo(id: 'modA', version: version),
+            versionCheckerInfo: null,
+            modFolder: Directory(''),
+            hasNonBrickedModInfo: true,
+          ),
+        ];
+
+        final currentlyEnabledVariants = [
+          ModVariant(
+            modInfo: ModInfo(id: 'modA', version: version),
+            versionCheckerInfo: null,
+            modFolder: Directory(''),
+            hasNonBrickedModInfo: true,
+          ),
+        ];
+
+        // We'll artificially create a different smolId to simulate mismatch
+        final profileVariantSmolId = existingSmolId.replaceAll("100", "101");
+
+        final profile = ModProfile(
+          id: 'profile1',
+          name: 'Profile 1',
+          description: '',
+          sortOrder: 1,
+          enabledModVariants: [
+            ShallowModVariant(
+              modId: 'modA',
+              smolVariantId: profileVariantSmolId,
+              version: version,
             ),
           ],
-        ),
-      ];
+        );
 
-      // Notice how the actual smolId for the variant we do have doesn't match the profile's smolId.
-      final existingSmolId =
-          createSmolId('modA', version); // e.g. "modA-100-..."
-      final modVariants = [
-        ModVariant(
-          modInfo: ModInfo(id: 'modA', version: version),
-          versionCheckerInfo: null,
-          modFolder: Directory(''),
-          hasNonBrickedModInfo: true,
-        )
-      ];
+        final changes = ModProfileManagerNotifier.computeModProfileChanges(
+          profile,
+          allMods,
+          modVariants,
+          currentlyEnabledVariants,
+        );
 
-      final currentlyEnabledVariants = [
-        ModVariant(
-          modInfo: ModInfo(id: 'modA', version: version),
-          versionCheckerInfo: null,
-          modFolder: Directory(''),
-          hasNonBrickedModInfo: true,
-        )
-      ];
+        expect(changes, hasLength(1));
+        expect(changes.first.changeType, ModChangeType.missingVariant);
+        expect(changes.first.modId, 'modA');
+      },
+    );
 
-      // We'll artificially create a different smolId to simulate mismatch
-      final profileVariantSmolId = existingSmolId.replaceAll("100", "101");
-
-      final profile = ModProfile(
-        id: 'profile1',
-        name: 'Profile 1',
-        description: '',
-        sortOrder: 1,
-        enabledModVariants: [
-          ShallowModVariant(
-            modId: 'modA',
-            smolVariantId: profileVariantSmolId,
-            version: version,
-          ),
-        ],
-      );
-
-      final changes = ModProfileManagerNotifier.computeModProfileChanges(
-        profile,
-        allMods,
-        modVariants,
-        currentlyEnabledVariants,
-      );
-
-      expect(changes, hasLength(1));
-      expect(changes.first.changeType, ModChangeType.missingVariant);
-      expect(changes.first.modId, 'modA');
-    });
-
-    test('handles multiple mods with mixed changes in one profile activation',
-        () {
+    test('handles multiple mods with mixed changes in one profile activation', () {
       final v100 = Version.parse("1.0.0", sanitizeInput: true);
       final v110 = Version.parse("1.1.0", sanitizeInput: true);
       final v200 = Version.parse("2.0.0", sanitizeInput: true);
@@ -378,7 +380,7 @@ void main() {
               versionCheckerInfo: null,
               modFolder: Directory(''),
               hasNonBrickedModInfo: true,
-            )
+            ),
           ],
         ),
       ];
@@ -450,11 +452,7 @@ void main() {
         sortOrder: 42,
         enabledModVariants: [
           // 1) enable modA (v1.0.0)
-          ShallowModVariant(
-            modId: 'modA',
-            smolVariantId: aSmol,
-            version: v100,
-          ),
+          ShallowModVariant(modId: 'modA', smolVariantId: aSmol, version: v100),
           // 2) modB is absent -> results in disable
           // 3) swap modC from v1.0.0 to v1.1.0
           ShallowModVariant(
@@ -492,24 +490,29 @@ void main() {
       //  - missingVariant for modE
       expect(changes, hasLength(5));
 
-      final enable =
-          changes.firstWhere((c) => c.changeType == ModChangeType.enable);
+      final enable = changes.firstWhere(
+        (c) => c.changeType == ModChangeType.enable,
+      );
       expect(enable.modId, 'modA');
 
-      final disable =
-          changes.firstWhere((c) => c.changeType == ModChangeType.disable);
+      final disable = changes.firstWhere(
+        (c) => c.changeType == ModChangeType.disable,
+      );
       expect(disable.modId, 'modB');
 
-      final swap =
-          changes.firstWhere((c) => c.changeType == ModChangeType.swap);
+      final swap = changes.firstWhere(
+        (c) => c.changeType == ModChangeType.swap,
+      );
       expect(swap.modId, 'modC');
 
-      final missingMod =
-          changes.firstWhere((c) => c.changeType == ModChangeType.missingMod);
+      final missingMod = changes.firstWhere(
+        (c) => c.changeType == ModChangeType.missingMod,
+      );
       expect(missingMod.modId, 'modD');
 
-      final missingVariant = changes
-          .firstWhere((c) => c.changeType == ModChangeType.missingVariant);
+      final missingVariant = changes.firstWhere(
+        (c) => c.changeType == ModChangeType.missingVariant,
+      );
       expect(missingVariant.modId, 'modE');
     });
   });

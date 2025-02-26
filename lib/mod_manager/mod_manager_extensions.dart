@@ -11,7 +11,9 @@ import 'mod_manager_logic.dart';
 
 extension DependencyExt on Dependency {
   ModDependencySatisfiedState isSatisfiedBy(
-      ModVariant variant, List<String> enabledModIds) {
+    ModVariant variant,
+    List<String> enabledModIds,
+  ) {
     if (id != variant.modInfo.id) {
       return Missing();
     }
@@ -21,8 +23,9 @@ extension DependencyExt on Dependency {
         return VersionInvalid(variant);
       } else if (variant.modInfo.version != null &&
           variant.modInfo.version?.minor != version!.minor &&
-          variant.modInfo.version!.minor
-                  .compareRecognizingNumbers(version!.minor) <
+          variant.modInfo.version!.minor.compareRecognizingNumbers(
+                version!.minor,
+              ) <
               0) {
         return VersionWarning(variant);
       }
@@ -46,13 +49,17 @@ extension DependencyExt on Dependency {
       return Missing();
     }
 
-    final satisfyResults = foundDependencies
-        .map((variant) => isSatisfiedBy(variant, enabledModIds))
-        .toList();
+    final satisfyResults =
+        foundDependencies
+            .map((variant) => isSatisfiedBy(variant, enabledModIds))
+            .toList();
 
     // Return the least severe state.
-    return getTopDependencySeverity(satisfyResults, gameVersion,
-        sortLeastSevere: true);
+    return getTopDependencySeverity(
+      satisfyResults,
+      gameVersion,
+      sortLeastSevere: true,
+    );
     // if (satisfyResults.contains(DependencyStateType.Satisfied)) {
     //   return DependencyStateType.Satisfied;
     // } else if (satisfyResults.contains(DependencyStateType.Disabled)) {
@@ -84,7 +91,9 @@ extension ModInfoExt on ModInfo {
   ) {
     return dependencies.map((dep) {
       return ModDependencyCheckResult(
-          dep, dep.isSatisfiedByAny(modVariants, enabledModIds, gameVersion));
+        dep,
+        dep.isSatisfiedByAny(modVariants, enabledModIds, gameVersion),
+      );
     }).toList();
   }
 }
@@ -95,9 +104,10 @@ extension ModExt on Mod {
   //   return modVariants.updateCheck(versionChecks);
   // }
 
-  VersionCheckComparison? updateCheck(
-      VersionCheckerState? versionChecks) {
-    return modVariants.updateCheck(versionChecks?.versionCheckResultsBySmolId ?? {});
+  VersionCheckComparison? updateCheck(VersionCheckerState? versionChecks) {
+    return modVariants.updateCheck(
+      versionChecks?.versionCheckResultsBySmolId ?? {},
+    );
   }
 }
 
@@ -119,17 +129,21 @@ extension ModListExtensions on List<Mod> {
   }
 
   List<Mod> get sortedByName {
-    return sortedBy((mod) =>
-        mod.findFirstEnabledOrHighestVersion?.modInfo.nameOrId ??
-        "(no variant)");
+    return sortedBy(
+      (mod) =>
+          mod.findFirstEnabledOrHighestVersion?.modInfo.nameOrId ??
+          "(no variant)",
+    );
   }
 }
 
 extension ModListExtensionsNullable on List<Mod?> {
   List<Mod?> get sortedByName {
-    return sortedBy((mod) =>
-        mod?.findFirstEnabledOrHighestVersion?.modInfo.nameOrId ??
-        "(no variant)");
+    return sortedBy(
+      (mod) =>
+          mod?.findFirstEnabledOrHighestVersion?.modInfo.nameOrId ??
+          "(no variant)",
+    );
   }
 }
 
@@ -157,16 +171,17 @@ extension ModVariantExt on ModVariant {
     List<ModVariant> modVariants,
     List<String> enabledModIds,
     String? gameVersion,
-  ) =>
-      modInfo.checkDependencies(modVariants, enabledModIds, gameVersion);
+  ) => modInfo.checkDependencies(modVariants, enabledModIds, gameVersion);
 
   GameCompatibility isCompatibleWithGameVersion(String gameVersion) {
     return modInfo.isCompatibleWithGame(gameVersion);
   }
 
-  VersionCheckComparison? updateCheck(
-      VersionCheckerState? versionChecks) {
-    return VersionCheckComparison(this, versionChecks?.versionCheckResultsBySmolId ?? {});
+  VersionCheckComparison? updateCheck(VersionCheckerState? versionChecks) {
+    return VersionCheckComparison(
+      this,
+      versionChecks?.versionCheckResultsBySmolId ?? {},
+    );
   }
 }
 
@@ -179,9 +194,11 @@ extension ModVariantsExt on List<ModVariant> {
   ///
   /// Returns `null` if no compatible variant is found.
   ModVariant? highestVersionForGameVersion(String gameVersion) {
-    return where((it) =>
-        it.isCompatibleWithGameVersion(gameVersion) !=
-        GameCompatibility.incompatible).toList().findHighestVersion;
+    return where(
+      (it) =>
+          it.isCompatibleWithGameVersion(gameVersion) !=
+          GameCompatibility.incompatible,
+    ).toList().findHighestVersion;
   }
 
   /// Prefers the highest version of the mod variant that is compatible with the specified game version,
@@ -212,7 +229,8 @@ extension ModVariantsExt on List<ModVariant> {
   ///
   /// Returns `null` if no valid comparison result is found.
   VersionCheckComparison? updateCheck(
-      Map<String, RemoteVersionCheckResult> versionCheckCache) {
+    Map<String, RemoteVersionCheckResult> versionCheckCache,
+  ) {
     for (var variant in sortedDescending()) {
       final RemoteVersionCheckResult? versionCheck =
           versionCheckCache[variant.smolId];
@@ -225,8 +243,10 @@ extension ModVariantsExt on List<ModVariant> {
           map((v) => versionCheck.compareToLocal(v)).nonNulls.toList();
       if (versionChecks.isEmpty) continue;
       // If the remote version is newer than all local versions with a VC file, we have an update.
-      final isRemoteNewerThanAllLocal = versionChecks.all((comparison) =>
-          comparison.hasUpdate || comparison.comparisonInt == null);
+      final isRemoteNewerThanAllLocal = versionChecks.all(
+        (comparison) =>
+            comparison.hasUpdate || comparison.comparisonInt == null,
+      );
 
       if (isRemoteNewerThanAllLocal) {
         // If there's an update, return the comparison for the variant that had the .version file with the update.

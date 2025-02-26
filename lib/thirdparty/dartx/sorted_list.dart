@@ -19,10 +19,7 @@ class SortedList<E> extends _DelegatingList<E> {
   final Comparator<E> _comparator;
   List<E>? _sortedResults;
 
-  SortedList(
-    this._source,
-    this._comparator,
-  );
+  SortedList(this._source, this._comparator);
 
   SortedList.withSelector(
     this._source,
@@ -199,8 +196,7 @@ abstract class _DelegatingList<E> extends _DelegatingIterable<E>
     int end,
     Iterable<E> iterable, [
     int skipCount = 0,
-  ]) =>
-      delegate.setRange(start, end, iterable, skipCount);
+  ]) => delegate.setRange(start, end, iterable, skipCount);
 
   @override
   void shuffle([Random? random]) => delegate.shuffle(random);

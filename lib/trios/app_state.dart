@@ -35,43 +35,51 @@ class AppState {
   static final isWindowFocused = StateProvider<bool>((ref) => true);
   static final selfUpdate =
       AsyncNotifierProvider<SelfUpdater, TriOSDownloadProgress?>(
-          SelfUpdater.new);
+        SelfUpdater.new,
+      );
   static final appContext = StateProvider<BuildContext?>((ref) => null);
 
   /// Master list of all mod variants found in the mods folder.
   static final modVariants =
       AsyncNotifierProvider<ModVariantsNotifier, List<ModVariant>>(
-          ModVariantsNotifier.new);
+        ModVariantsNotifier.new,
+      );
 
   /// String is the smolId
   static final versionCheckResults =
       AsyncNotifierProvider<VersionCheckerAsyncProvider, VersionCheckerState>(
-          VersionCheckerAsyncProvider.new);
+        VersionCheckerAsyncProvider.new,
+      );
 
   static var skipCacheOnNextVersionCheck = false;
 
   static List<Mod> getModsFromVariants(
-      List<ModVariant> modVariants, List<String> enabledMods) {
+    List<ModVariant> modVariants,
+    List<String> enabledMods,
+  ) {
     return modVariants
         .groupBy((ModVariant variant) => variant.modInfo.id)
         .entries
         .map((entry) {
-      return Mod(
-        id: entry.key,
-        isEnabledInGame: enabledMods.contains(entry.key),
-        modVariants: entry.value.toList(),
-      );
-    }).toList();
+          return Mod(
+            id: entry.key,
+            isEnabledInGame: enabledMods.contains(entry.key),
+            modVariants: entry.value.toList(),
+          );
+        })
+        .toList();
   }
 
   /// Provides a list of [ModTip].
-  static final tipsProvider =
-      AsyncNotifierProvider<TipsNotifier, List<ModTip>>(TipsNotifier.new);
+  static final tipsProvider = AsyncNotifierProvider<TipsNotifier, List<ModTip>>(
+    TipsNotifier.new,
+  );
 
   /// Provides [ModMetadata]s, observable state.
   static final modsMetadata =
       AsyncNotifierProvider<ModMetadataStore, ModsMetadata>(
-          ModMetadataStore.new);
+        ModMetadataStore.new,
+      );
 
   static final themeData = AsyncNotifierProvider<ThemeManager, ThemeState>(
     ThemeManager.new,
@@ -91,8 +99,9 @@ class AppState {
     return mods.map((mod) => mod.findFirstEnabled).nonNulls.toList();
   });
 
-  static final modAudit =
-      AsyncNotifierProvider<AuditLog, List<AuditEntry>>(AuditLog.new);
+  static final modAudit = AsyncNotifierProvider<AuditLog, List<AuditEntry>>(
+    AuditLog.new,
+  );
 
   static final modCompatibility = Provider<Map<SmolId, DependencyCheck>>((ref) {
     final modVariants = ref.watch(AppState.modVariants).valueOrNull ?? [];
@@ -101,25 +110,34 @@ class AppState {
     if (enabledMods == null) return {};
 
     return modVariants.map((variant) {
-      final compatibility =
-          compareGameVersions(variant.modInfo.gameVersion, gameVersion);
+      final compatibility = compareGameVersions(
+        variant.modInfo.gameVersion,
+        gameVersion,
+      );
       final dependencyCheckResult = variant.checkDependencies(
-          modVariants, enabledMods.enabledMods.toList(), gameVersion);
-      return MapEntry(variant.smolId,
-          DependencyCheck(compatibility, dependencyCheckResult));
+        modVariants,
+        enabledMods.enabledMods.toList(),
+        gameVersion,
+      );
+      return MapEntry(
+        variant.smolId,
+        DependencyCheck(compatibility, dependencyCheckResult),
+      );
     }).toMap();
   });
 
   static final vramEstimatorProvider =
       AsyncNotifierProvider<VramEstimatorNotifier, VramEstimatorState>(
-    VramEstimatorNotifier.new,
-  );
+        VramEstimatorNotifier.new,
+      );
 
   static final enabledModsFile =
       AsyncNotifierProvider<EnabledModsNotifier, EnabledMods>(
-          EnabledModsNotifier.new);
-  static final enabledModIds = FutureProvider<List<String>>((ref) async =>
-      ref.watch(enabledModsFile).value?.enabledMods.toList() ?? []);
+        EnabledModsNotifier.new,
+      );
+  static final enabledModIds = FutureProvider<List<String>>(
+    (ref) async => ref.watch(enabledModsFile).value?.enabledMods.toList() ?? [],
+  );
   static final modsState = Provider<Map<String, ModState>>((ref) => {});
   static final starsectorVersion = FutureProvider<String?>((ref) async {
     final gamePath =
@@ -131,8 +149,10 @@ class AppState {
       final archive = ref.watch(archiveProvider).value;
       if (archive == null) return null;
 
-      final trueVersion =
-          await getStarsectorVersionFromObf(gameCorePath, archive);
+      final trueVersion = await getStarsectorVersionFromObf(
+        gameCorePath,
+        archive,
+      );
       if (trueVersion != null && trueVersion.isNotEmpty) {
         ref
             .read(appSettings.notifier)
@@ -141,9 +161,10 @@ class AppState {
       }
     } catch (e, stack) {
       Fimber.w(
-          "Failed to read starsector version from obf jar, falling back to log.",
-          ex: e,
-          stacktrace: stack);
+        "Failed to read starsector version from obf jar, falling back to log.",
+        ex: e,
+        stacktrace: stack,
+      );
     }
 
     try {
@@ -154,14 +175,19 @@ class AppState {
             .update((s) => s.copyWith(lastStarsectorVersion: versionInLog));
         return versionInLog;
       } else {
-        return ref
-            .read(appSettings.select((value) => value.lastStarsectorVersion));
+        return ref.read(
+          appSettings.select((value) => value.lastStarsectorVersion),
+        );
       }
     } catch (e, stack) {
-      Fimber.w("Failed to read starsector version from log",
-          ex: e, stacktrace: stack);
-      return ref
-          .read(appSettings.select((value) => value.lastStarsectorVersion));
+      Fimber.w(
+        "Failed to read starsector version from log",
+        ex: e,
+        stacktrace: stack,
+      );
+      return ref.read(
+        appSettings.select((value) => value.lastStarsectorVersion),
+      );
     }
   });
 
@@ -181,8 +207,10 @@ class AppState {
     return true;
   });
 
-  static final gameFolder = FutureProvider<Directory?>((ref) async =>
-      ref.watch(appSettings.select((value) => value.gameDir))?.toDirectory());
+  static final gameFolder = FutureProvider<Directory?>(
+    (ref) async =>
+        ref.watch(appSettings.select((value) => value.gameDir))?.toDirectory(),
+  );
 
   static final modsFolder = FutureProvider<Directory?>((ref) async {
     final gamePath = ref.watch(gameFolder).valueOrNull;
@@ -192,11 +220,13 @@ class AppState {
 
   static final gameExecutable = FutureProvider<File?>((ref) async {
     try {
-      final useCustomGameExePath =
-          ref.watch(appSettings.select((value) => value.useCustomGameExePath));
+      final useCustomGameExePath = ref.watch(
+        appSettings.select((value) => value.useCustomGameExePath),
+      );
       if (useCustomGameExePath == true) {
-        final customGameExePath =
-            ref.watch(appSettings.select((value) => value.customGameExePath));
+        final customGameExePath = ref.watch(
+          appSettings.select((value) => value.customGameExePath),
+        );
         if (customGameExePath != null) {
           return File(customGameExePath);
         }
@@ -207,16 +237,21 @@ class AppState {
 
     final isJre23 =
         ref.watch(jreManagerProvider).valueOrNull?.activeJre?.isCustomJre ??
-            false;
+        false;
     final gamePath = ref.watch(gameFolder).value?.toDirectory();
     if (gamePath == null) return null;
 
     return isJre23
         ? gamePath
-            .resolve(ref.watch(appSettings
-                    .select((value) => value.showCustomJreConsoleWindow))
-                ? "Miko_Rouge.bat"
-                : "Miko_Silent.bat")
+            .resolve(
+              ref.watch(
+                    appSettings.select(
+                      (value) => value.showCustomJreConsoleWindow,
+                    ),
+                  )
+                  ? "Miko_Rouge.bat"
+                  : "Miko_Silent.bat",
+            )
             .toFile()
         : getVanillaGameExecutable(gamePath).toFile();
   });
@@ -250,10 +285,12 @@ class AppState {
   });
 
   static final activeJre = FutureProvider<JreEntryInstalled?>(
-      (ref) async => ref.watch(jreManagerProvider).valueOrNull?.activeJre);
+    (ref) async => ref.watch(jreManagerProvider).valueOrNull?.activeJre,
+  );
 
-  static final isGameRunning =
-      AsyncNotifierProvider<_GameRunningChecker, bool>(_GameRunningChecker.new);
+  static final isGameRunning = AsyncNotifierProvider<_GameRunningChecker, bool>(
+    _GameRunningChecker.new,
+  );
 
   static final ignoringDrop = StateProvider<bool>((ref) => false);
 }
@@ -265,8 +302,9 @@ class _GameRunningChecker extends AsyncNotifier<bool> {
 
   @override
   Future<bool> build() async {
-    final isSettingEnabled =
-        ref.watch(appSettings.select((value) => value.checkIfGameIsRunning));
+    final isSettingEnabled = ref.watch(
+      appSettings.select((value) => value.checkIfGameIsRunning),
+    );
     if (!isSettingEnabled) {
       return false;
     }
@@ -275,10 +313,11 @@ class _GameRunningChecker extends AsyncNotifier<bool> {
     _gameExecutables = [ref.watch(AppState.gameExecutable).value];
 
     // Extract executable names from file paths
-    final List<String> executableNames = _gameExecutables
-        .whereType<File>()
-        .map((file) => file.path.split(Platform.pathSeparator).last)
-        .toList();
+    final List<String> executableNames =
+        _gameExecutables
+            .whereType<File>()
+            .map((file) => file.path.split(Platform.pathSeparator).last)
+            .toList();
 
     // Perform an initial check
     bool isRunning = await _checkIfAnyProcessIsRunning(executableNames);
@@ -312,8 +351,9 @@ class _GameRunningChecker extends AsyncNotifier<bool> {
     // First try using homebrew JPS to get Java processes
     // Requires Java JDK on the host machine, or Java 23.
     try {
-      final jpsAtHomePath =
-          getAssetsPath().toFile().resolve("common/JpsAtHome.jar");
+      final jpsAtHomePath = getAssetsPath().toFile().resolve(
+        "common/JpsAtHome.jar",
+      );
       final process = await Process.start('java', ['-jar', jpsAtHomePath.path]);
       final outputBuffer = StringBuffer();
       process.stdout
@@ -333,12 +373,14 @@ class _GameRunningChecker extends AsyncNotifier<bool> {
       if (result == -1) {
         process.kill(ProcessSignal.sigkill);
         Fimber.w(
-            "Killed java process after $jpsRunMaxDuration because it has a result of -1.");
+          "Killed java process after $jpsRunMaxDuration because it has a result of -1.",
+        );
       } else {
         final output = outputBuffer.toString().toLowerCase();
         Fimber.v(() => "JPS output: $output");
-        if (output
-            .contains("com.fs.starfarer.starfarerlauncher".toLowerCase())) {
+        if (output.contains(
+          "com.fs.starfarer.starfarerlauncher".toLowerCase(),
+        )) {
           return true;
         }
       }
@@ -350,19 +392,19 @@ class _GameRunningChecker extends AsyncNotifier<bool> {
     try {
       // Check the titles of all windows
       if (Platform.isWindows) {
-        final process = await Process.run(
-          'powershell',
-          [
-            '-Command',
-            'Get-Process | Where-Object { \$_.MainWindowTitle } | Select-Object -ExpandProperty MainWindowTitle'
-          ],
-        );
+        final process = await Process.run('powershell', [
+          '-Command',
+          'Get-Process | Where-Object { \$_.MainWindowTitle } | Select-Object -ExpandProperty MainWindowTitle',
+        ]);
         if (process.exitCode == 0) {
           final output = process.stdout as String;
           final windowTitles =
               output.split('\n').map((line) => line.trim()).toList();
-          final isStarsectorRunning = windowTitles.any((title) => title.contains(
-              'Starsector ${ref.watch(appSettings).lastStarsectorVersion}'));
+          final isStarsectorRunning = windowTitles.any(
+            (title) => title.contains(
+              'Starsector ${ref.watch(appSettings).lastStarsectorVersion}',
+            ),
+          );
           return isStarsectorRunning;
         }
       } else if (Platform.isMacOS || Platform.isLinux) {
@@ -393,8 +435,10 @@ var maxFileHandles = 2000;
 
 Future<T> withFileHandleLimit<T>(Future<T> Function() function) async {
   while (currentFileHandles + 1 > maxFileHandles) {
-    Fimber.v(() =>
-        "Waiting for file handles to free up. Current file handles: $currentFileHandles");
+    Fimber.v(
+      () =>
+          "Waiting for file handles to free up. Current file handles: $currentFileHandles",
+    );
     await Future.delayed(const Duration(milliseconds: 100));
   }
   currentFileHandles++;

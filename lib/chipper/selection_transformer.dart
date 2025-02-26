@@ -60,31 +60,31 @@ class SelectionTransformer extends StatefulWidget {
       (selections) => selections.join(separator).trim();
 
   static SelectionTransform _tabularSelectionTransform(
-          int columns, String? separator) =>
-      (selections) {
-        var maxColumnWidths = List.filled(columns - 1, 0);
-        for (var (i, s) in selections.indexed) {
-          for (var j = 0; j < columns - 1; j++) {
-            if (i % columns == j && s.length > maxColumnWidths[j]) {
-              maxColumnWidths[j] = s.length;
-            }
-          }
+    int columns,
+    String? separator,
+  ) => (selections) {
+    var maxColumnWidths = List.filled(columns - 1, 0);
+    for (var (i, s) in selections.indexed) {
+      for (var j = 0; j < columns - 1; j++) {
+        if (i % columns == j && s.length > maxColumnWidths[j]) {
+          maxColumnWidths[j] = s.length;
         }
-        var buffer = StringBuffer();
-        for (var (i, s) in selections.indexed) {
-          var j = i % columns;
-          if (j < columns - 1) {
-            buffer
-                .write('${s.padRight(maxColumnWidths[j])}${separator ?? "\t"}');
-          } else {
-            buffer.write(s);
-            if (i < selections.length - 1) {
-              buffer.write('\n');
-            }
-          }
+      }
+    }
+    var buffer = StringBuffer();
+    for (var (i, s) in selections.indexed) {
+      var j = i % columns;
+      if (j < columns - 1) {
+        buffer.write('${s.padRight(maxColumnWidths[j])}${separator ?? "\t"}');
+      } else {
+        buffer.write(s);
+        if (i < selections.length - 1) {
+          buffer.write('\n');
         }
-        return buffer.toString().trim();
-      };
+      }
+    }
+    return buffer.toString().trim();
+  };
 
   final SelectionTransform transform;
   final Widget child;
@@ -108,10 +108,7 @@ class SelectionTransformerState extends State<SelectionTransformer> {
 
   @override
   Widget build(BuildContext context) {
-    return SelectionContainer(
-      delegate: delegate,
-      child: widget.child,
-    );
+    return SelectionContainer(delegate: delegate, child: widget.child);
   }
 }
 
@@ -125,9 +122,10 @@ class SeparatedSelectionContainerDelegate
   SelectedContent? getSelectedContent() {
     final List<SelectedContent> selections = <SelectedContent>[];
     for (final Selectable selectable in selectables) {
-      final allSelectedContent = getAllSelectables(selectable)
-          .map((e) => e.getSelectedContent())
-          .nonNulls;
+      final allSelectedContent =
+          getAllSelectables(
+            selectable,
+          ).map((e) => e.getSelectedContent()).nonNulls;
       selections.addAll(allSelectedContent);
     }
     if (selections.isEmpty) {
@@ -180,16 +178,21 @@ class SeparatedSelectionContainerDelegate
       final Selectable start = selectables[currentSelectionStartIndex];
       final Offset localStartEdge =
           start.value.startSelectionPoint!.localPosition +
-              Offset(0, -start.value.startSelectionPoint!.lineHeight / 2);
+          Offset(0, -start.value.startSelectionPoint!.lineHeight / 2);
       _lastStartEdgeUpdateGlobalPosition = MatrixUtils.transformPoint(
-          start.getTransformTo(null), localStartEdge);
+        start.getTransformTo(null),
+        localStartEdge,
+      );
     }
     if (currentSelectionEndIndex != -1) {
       final Selectable end = selectables[currentSelectionEndIndex];
-      final Offset localEndEdge = end.value.endSelectionPoint!.localPosition +
+      final Offset localEndEdge =
+          end.value.endSelectionPoint!.localPosition +
           Offset(0, -end.value.endSelectionPoint!.lineHeight / 2);
-      _lastEndEdgeUpdateGlobalPosition =
-          MatrixUtils.transformPoint(end.getTransformTo(null), localEndEdge);
+      _lastEndEdgeUpdateGlobalPosition = MatrixUtils.transformPoint(
+        end.getTransformTo(null),
+        localEndEdge,
+      );
     }
   }
 
@@ -254,7 +257,9 @@ class SeparatedSelectionContainerDelegate
 
   @override
   SelectionResult dispatchSelectionEventToChild(
-      Selectable selectable, SelectionEvent event) {
+    Selectable selectable,
+    SelectionEvent event,
+  ) {
     switch (event.type) {
       case SelectionEventType.startEdgeUpdate:
         _hasReceivedStartEvent.add(selectable);
@@ -284,8 +289,8 @@ class SeparatedSelectionContainerDelegate
         _hasReceivedEndEvent.add(selectable)) {
       final SelectionEdgeUpdateEvent synthesizedEvent =
           SelectionEdgeUpdateEvent.forEnd(
-        globalPosition: _lastEndEdgeUpdateGlobalPosition!,
-      );
+            globalPosition: _lastEndEdgeUpdateGlobalPosition!,
+          );
       if (currentSelectionEndIndex == -1) {
         handleSelectionEdgeUpdate(synthesizedEvent);
       }
@@ -295,8 +300,8 @@ class SeparatedSelectionContainerDelegate
         _hasReceivedStartEvent.add(selectable)) {
       final SelectionEdgeUpdateEvent synthesizedEvent =
           SelectionEdgeUpdateEvent.forStart(
-        globalPosition: _lastStartEdgeUpdateGlobalPosition!,
-      );
+            globalPosition: _lastStartEdgeUpdateGlobalPosition!,
+          );
       if (currentSelectionStartIndex == -1) {
         handleSelectionEdgeUpdate(synthesizedEvent);
       }
@@ -322,11 +327,13 @@ class SeparatedSelectionContainerDelegate
     }
     final Set<Selectable> selectableSet = selectables.toSet();
     _hasReceivedEndEvent.removeWhere(
-        (Selectable selectable) => !selectableSet.contains(selectable));
+      (Selectable selectable) => !selectableSet.contains(selectable),
+    );
     _hasReceivedStartEvent.removeWhere(
-        (Selectable selectable) => !selectableSet.contains(selectable));
+      (Selectable selectable) => !selectableSet.contains(selectable),
+    );
     super.didChangeSelectables();
   }
 
-// END: Copied from [_SelectableRegionContainerDelegate]
+  // END: Copied from [_SelectableRegionContainerDelegate]
 }

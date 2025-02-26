@@ -16,7 +16,8 @@ extension PlatformFileEntityExt on FileSystemEntity {
       _moveToTrashLinux(path, deleteIfFailed);
     } else {
       throw UnsupportedError(
-          'This platform is not supported for trash operation.');
+        'This platform is not supported for trash operation.',
+      );
     }
   }
 }
@@ -46,8 +47,13 @@ bool windowsIsAdmin() {
     }
 
     // Get token elevation information
-    if (GetTokenInformation(tokenHandle.value, TokenElevation, elevation,
-            sizeOf<TOKEN_ELEVATION>(), returnLength) ==
+    if (GetTokenInformation(
+          tokenHandle.value,
+          TokenElevation,
+          elevation,
+          sizeOf<TOKEN_ELEVATION>(),
+          returnLength,
+        ) ==
         0) {
       return false; // Failed to get token information
     }
@@ -66,12 +72,14 @@ bool windowsIsAdmin() {
 void _moveToRecycleBinWindows(String path, bool deleteIfFailed) {
   final filePath = TEXT('$path\0'); // Ensure double null-termination
 
-  final fileOpStruct = calloc<SHFILEOPSTRUCT>()
-    ..ref.wFunc = FO_DELETE
-    ..ref.pFrom = filePath.cast()
-    ..ref.fFlags = FILEOPERATION_FLAGS.FOF_ALLOWUNDO |
-        FILEOPERATION_FLAGS.FOF_NOCONFIRMATION |
-        FILEOPERATION_FLAGS.FOF_SILENT;
+  final fileOpStruct =
+      calloc<SHFILEOPSTRUCT>()
+        ..ref.wFunc = FO_DELETE
+        ..ref.pFrom = filePath.cast()
+        ..ref.fFlags =
+            FILEOPERATION_FLAGS.FOF_ALLOWUNDO |
+            FILEOPERATION_FLAGS.FOF_NOCONFIRMATION |
+            FILEOPERATION_FLAGS.FOF_SILENT;
 
   final result = SHFileOperation(fileOpStruct);
 
@@ -95,17 +103,21 @@ void _moveToRecycleBinWindows(String path, bool deleteIfFailed) {
 }
 
 // macOS's underlying API
-typedef MoveToTrashNative = Int32 Function(
-    Pointer<Utf8> path, Pointer<Pointer<Utf8>> errorMessage);
-typedef MoveToTrashDart = int Function(
-    Pointer<Utf8> path, Pointer<Pointer<Utf8>> errorMessage);
+typedef MoveToTrashNative =
+    Int32 Function(Pointer<Utf8> path, Pointer<Pointer<Utf8>> errorMessage);
+typedef MoveToTrashDart =
+    int Function(Pointer<Utf8> path, Pointer<Pointer<Utf8>> errorMessage);
 
 void _moveToTrashMacOS(String path, bool deleteIfFailed) {
   final library = DynamicLibrary.open(
-      '/System/Library/Frameworks/CoreServices.framework/Versions/A/CoreServices');
-  final MoveToTrashDart moveToTrash = library
-      .lookup<NativeFunction<MoveToTrashNative>>('FSPathMoveObjectToTrashSync')
-      .asFunction();
+    '/System/Library/Frameworks/CoreServices.framework/Versions/A/CoreServices',
+  );
+  final MoveToTrashDart moveToTrash =
+      library
+          .lookup<NativeFunction<MoveToTrashNative>>(
+            'FSPathMoveObjectToTrashSync',
+          )
+          .asFunction();
 
   final pathPtr = path.toNativeUtf8();
   final errorPtr = calloc<Pointer<Utf8>>();
@@ -114,7 +126,8 @@ void _moveToTrashMacOS(String path, bool deleteIfFailed) {
 
   if (result != 0) {
     Fimber.w(
-        "Failed to move file to Trash: ${errorPtr.value.toDartString()}. Reason: $result");
+      "Failed to move file to Trash: ${errorPtr.value.toDartString()}. Reason: $result",
+    );
 
     if (deleteIfFailed) {
       File(path).deleteSync();

@@ -23,23 +23,34 @@ class GraphicsLibConfigMapper extends ClassMapperBase<GraphicsLibConfig> {
   static bool _$areAnyEffectsEnabled(GraphicsLibConfig v) =>
       v.areAnyEffectsEnabled;
   static const Field<GraphicsLibConfig, bool> _f$areAnyEffectsEnabled = Field(
-      'areAnyEffectsEnabled', _$areAnyEffectsEnabled,
-      key: 'enableShaders');
+    'areAnyEffectsEnabled',
+    _$areAnyEffectsEnabled,
+    key: 'enableShaders',
+  );
   static bool _$areGfxLibNormalMapsEnabled(GraphicsLibConfig v) =>
       v.areGfxLibNormalMapsEnabled;
   static const Field<GraphicsLibConfig, bool> _f$areGfxLibNormalMapsEnabled =
-      Field('areGfxLibNormalMapsEnabled', _$areGfxLibNormalMapsEnabled,
-          key: 'enableNormal');
+      Field(
+        'areGfxLibNormalMapsEnabled',
+        _$areGfxLibNormalMapsEnabled,
+        key: 'enableNormal',
+      );
   static bool _$areGfxLibMaterialMapsEnabled(GraphicsLibConfig v) =>
       v.areGfxLibMaterialMapsEnabled;
   static const Field<GraphicsLibConfig, bool> _f$areGfxLibMaterialMapsEnabled =
-      Field('areGfxLibMaterialMapsEnabled', _$areGfxLibMaterialMapsEnabled,
-          key: 'loadMaterial');
+      Field(
+        'areGfxLibMaterialMapsEnabled',
+        _$areGfxLibMaterialMapsEnabled,
+        key: 'loadMaterial',
+      );
   static bool _$areGfxLibSurfaceMapsEnabled(GraphicsLibConfig v) =>
       v.areGfxLibSurfaceMapsEnabled;
   static const Field<GraphicsLibConfig, bool> _f$areGfxLibSurfaceMapsEnabled =
-      Field('areGfxLibSurfaceMapsEnabled', _$areGfxLibSurfaceMapsEnabled,
-          key: 'loadSurface');
+      Field(
+        'areGfxLibSurfaceMapsEnabled',
+        _$areGfxLibSurfaceMapsEnabled,
+        key: 'loadSurface',
+      );
 
   @override
   final MappableFields<GraphicsLibConfig> fields = const {
@@ -51,10 +62,11 @@ class GraphicsLibConfigMapper extends ClassMapperBase<GraphicsLibConfig> {
 
   static GraphicsLibConfig _instantiate(DecodingData data) {
     return GraphicsLibConfig(
-        areAnyEffectsEnabled: data.dec(_f$areAnyEffectsEnabled),
-        areGfxLibNormalMapsEnabled: data.dec(_f$areGfxLibNormalMapsEnabled),
-        areGfxLibMaterialMapsEnabled: data.dec(_f$areGfxLibMaterialMapsEnabled),
-        areGfxLibSurfaceMapsEnabled: data.dec(_f$areGfxLibSurfaceMapsEnabled));
+      areAnyEffectsEnabled: data.dec(_f$areAnyEffectsEnabled),
+      areGfxLibNormalMapsEnabled: data.dec(_f$areGfxLibNormalMapsEnabled),
+      areGfxLibMaterialMapsEnabled: data.dec(_f$areGfxLibMaterialMapsEnabled),
+      areGfxLibSurfaceMapsEnabled: data.dec(_f$areGfxLibSurfaceMapsEnabled),
+    );
   }
 
   @override
@@ -80,45 +92,61 @@ mixin GraphicsLibConfigMappable {
         .encodeMap<GraphicsLibConfig>(this as GraphicsLibConfig);
   }
 
-  GraphicsLibConfigCopyWith<GraphicsLibConfig, GraphicsLibConfig,
-          GraphicsLibConfig>
-      get copyWith => _GraphicsLibConfigCopyWithImpl(
-          this as GraphicsLibConfig, $identity, $identity);
+  GraphicsLibConfigCopyWith<
+    GraphicsLibConfig,
+    GraphicsLibConfig,
+    GraphicsLibConfig
+  >
+  get copyWith => _GraphicsLibConfigCopyWithImpl(
+    this as GraphicsLibConfig,
+    $identity,
+    $identity,
+  );
   @override
   String toString() {
-    return GraphicsLibConfigMapper.ensureInitialized()
-        .stringifyValue(this as GraphicsLibConfig);
+    return GraphicsLibConfigMapper.ensureInitialized().stringifyValue(
+      this as GraphicsLibConfig,
+    );
   }
 
   @override
   bool operator ==(Object other) {
-    return GraphicsLibConfigMapper.ensureInitialized()
-        .equalsValue(this as GraphicsLibConfig, other);
+    return GraphicsLibConfigMapper.ensureInitialized().equalsValue(
+      this as GraphicsLibConfig,
+      other,
+    );
   }
 
   @override
   int get hashCode {
-    return GraphicsLibConfigMapper.ensureInitialized()
-        .hashValue(this as GraphicsLibConfig);
+    return GraphicsLibConfigMapper.ensureInitialized().hashValue(
+      this as GraphicsLibConfig,
+    );
   }
 }
 
 extension GraphicsLibConfigValueCopy<$R, $Out>
     on ObjectCopyWith<$R, GraphicsLibConfig, $Out> {
   GraphicsLibConfigCopyWith<$R, GraphicsLibConfig, $Out>
-      get $asGraphicsLibConfig =>
-          $base.as((v, t, t2) => _GraphicsLibConfigCopyWithImpl(v, t, t2));
+  get $asGraphicsLibConfig =>
+      $base.as((v, t, t2) => _GraphicsLibConfigCopyWithImpl(v, t, t2));
 }
 
-abstract class GraphicsLibConfigCopyWith<$R, $In extends GraphicsLibConfig,
-    $Out> implements ClassCopyWith<$R, $In, $Out> {
-  $R call(
-      {bool? areAnyEffectsEnabled,
-      bool? areGfxLibNormalMapsEnabled,
-      bool? areGfxLibMaterialMapsEnabled,
-      bool? areGfxLibSurfaceMapsEnabled});
+abstract class GraphicsLibConfigCopyWith<
+  $R,
+  $In extends GraphicsLibConfig,
+  $Out
+>
+    implements ClassCopyWith<$R, $In, $Out> {
+  $R call({
+    bool? areAnyEffectsEnabled,
+    bool? areGfxLibNormalMapsEnabled,
+    bool? areGfxLibMaterialMapsEnabled,
+    bool? areGfxLibSurfaceMapsEnabled,
+  });
   GraphicsLibConfigCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
-      Then<$Out2, $R2> t);
+    Then<$Out2, $R2> t,
+  );
 }
 
 class _GraphicsLibConfigCopyWithImpl<$R, $Out>
@@ -130,34 +158,45 @@ class _GraphicsLibConfigCopyWithImpl<$R, $Out>
   late final ClassMapperBase<GraphicsLibConfig> $mapper =
       GraphicsLibConfigMapper.ensureInitialized();
   @override
-  $R call(
-          {bool? areAnyEffectsEnabled,
-          bool? areGfxLibNormalMapsEnabled,
-          bool? areGfxLibMaterialMapsEnabled,
-          bool? areGfxLibSurfaceMapsEnabled}) =>
-      $apply(FieldCopyWithData({
-        if (areAnyEffectsEnabled != null)
-          #areAnyEffectsEnabled: areAnyEffectsEnabled,
-        if (areGfxLibNormalMapsEnabled != null)
-          #areGfxLibNormalMapsEnabled: areGfxLibNormalMapsEnabled,
-        if (areGfxLibMaterialMapsEnabled != null)
-          #areGfxLibMaterialMapsEnabled: areGfxLibMaterialMapsEnabled,
-        if (areGfxLibSurfaceMapsEnabled != null)
-          #areGfxLibSurfaceMapsEnabled: areGfxLibSurfaceMapsEnabled
-      }));
+  $R call({
+    bool? areAnyEffectsEnabled,
+    bool? areGfxLibNormalMapsEnabled,
+    bool? areGfxLibMaterialMapsEnabled,
+    bool? areGfxLibSurfaceMapsEnabled,
+  }) => $apply(
+    FieldCopyWithData({
+      if (areAnyEffectsEnabled != null)
+        #areAnyEffectsEnabled: areAnyEffectsEnabled,
+      if (areGfxLibNormalMapsEnabled != null)
+        #areGfxLibNormalMapsEnabled: areGfxLibNormalMapsEnabled,
+      if (areGfxLibMaterialMapsEnabled != null)
+        #areGfxLibMaterialMapsEnabled: areGfxLibMaterialMapsEnabled,
+      if (areGfxLibSurfaceMapsEnabled != null)
+        #areGfxLibSurfaceMapsEnabled: areGfxLibSurfaceMapsEnabled,
+    }),
+  );
   @override
   GraphicsLibConfig $make(CopyWithData data) => GraphicsLibConfig(
-      areAnyEffectsEnabled:
-          data.get(#areAnyEffectsEnabled, or: $value.areAnyEffectsEnabled),
-      areGfxLibNormalMapsEnabled: data.get(#areGfxLibNormalMapsEnabled,
-          or: $value.areGfxLibNormalMapsEnabled),
-      areGfxLibMaterialMapsEnabled: data.get(#areGfxLibMaterialMapsEnabled,
-          or: $value.areGfxLibMaterialMapsEnabled),
-      areGfxLibSurfaceMapsEnabled: data.get(#areGfxLibSurfaceMapsEnabled,
-          or: $value.areGfxLibSurfaceMapsEnabled));
+    areAnyEffectsEnabled: data.get(
+      #areAnyEffectsEnabled,
+      or: $value.areAnyEffectsEnabled,
+    ),
+    areGfxLibNormalMapsEnabled: data.get(
+      #areGfxLibNormalMapsEnabled,
+      or: $value.areGfxLibNormalMapsEnabled,
+    ),
+    areGfxLibMaterialMapsEnabled: data.get(
+      #areGfxLibMaterialMapsEnabled,
+      or: $value.areGfxLibMaterialMapsEnabled,
+    ),
+    areGfxLibSurfaceMapsEnabled: data.get(
+      #areGfxLibSurfaceMapsEnabled,
+      or: $value.areGfxLibSurfaceMapsEnabled,
+    ),
+  );
 
   @override
   GraphicsLibConfigCopyWith<$R2, GraphicsLibConfig, $Out2> $chain<$R2, $Out2>(
-          Then<$Out2, $R2> t) =>
-      _GraphicsLibConfigCopyWithImpl($value, $cast, t);
+    Then<$Out2, $R2> t,
+  ) => _GraphicsLibConfigCopyWithImpl($value, $cast, t);
 }

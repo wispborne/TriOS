@@ -100,7 +100,10 @@ class _MenuEntryWidgetState<T> extends State<MenuEntryWidget<T>> {
   }
 
   void _ensureFocused(
-      ContextMenuEntry entry, ContextMenuState menuState, FocusNode focusNode) {
+    ContextMenuEntry entry,
+    ContextMenuState menuState,
+    FocusNode focusNode,
+  ) {
     menuState.focusScopeNode.requestFocus(focusNode);
     menuState.setFocusedEntry(entry);
   }

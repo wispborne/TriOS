@@ -56,8 +56,8 @@ class BoolHook extends MappingHook {
       return lower == 'true'
           ? true
           : lower == 'false'
-              ? false
-              : false;
+          ? false
+          : false;
     }
     return false;
   }

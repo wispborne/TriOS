@@ -22,12 +22,14 @@ class _DisableIfCannotWriteModsState
     final canWriteMods = ref.watch(AppState.canWriteToModsFolder).value ?? true;
 
     return ConditionalWrap(
-        condition: !canWriteMods,
-        wrapper: (child) => Tooltip(
-              message:
-                  "Cannot modify mods folder.\nTry running ${Constants.appName} as administrator and make sure that mods/enabled_mods.json exists and can be modified.",
-              child: Disable(isEnabled: false, child: child),
-            ),
-        child: widget.child);
+      condition: !canWriteMods,
+      wrapper:
+          (child) => Tooltip(
+            message:
+                "Cannot modify mods folder.\nTry running ${Constants.appName} as administrator and make sure that mods/enabled_mods.json exists and can be modified.",
+            child: Disable(isEnabled: false, child: child),
+          ),
+      child: widget.child,
+    );
   }
 }

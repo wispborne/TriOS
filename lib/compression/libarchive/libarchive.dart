@@ -26,27 +26,29 @@ class LibArchiveEntry implements ArchiveEntry {
   final int isEncrypted;
 
   LibArchiveEntry(
-      this.pathName,
-      this.unpackedSize,
-      this.modifiedTime,
-      this.birthTime,
-      this.cTime,
-      this.accessedTime,
-      this.fileType,
-      this.fflags,
-      this.gname,
-      this.sourcePath,
-      this.sizeIsSet,
-      this.isEncrypted);
+    this.pathName,
+    this.unpackedSize,
+    this.modifiedTime,
+    this.birthTime,
+    this.cTime,
+    this.accessedTime,
+    this.fileType,
+    this.fflags,
+    this.gname,
+    this.sourcePath,
+    this.sizeIsSet,
+    this.isEncrypted,
+  );
 
   @override
   String toString() {
     return "LibArchiveEntry{pathName: $pathName, unpackedSize: $unpackedSize, mTime: $modifiedTime, birthTime: $birthTime, cTime: $cTime, aTime: $accessedTime, type: $fileType, fflags: $fflags, gname: $gname, sourcePath: $sourcePath, sizeIsSet: $sizeIsSet, isEncrypted: $isEncrypted}";
   }
 
-  late FileSystemEntity file = FileSystemEntity.isDirectorySync(pathName)
-      ? Directory(pathName)
-      : File(pathName);
+  late FileSystemEntity file =
+      FileSystemEntity.isDirectorySync(pathName)
+          ? Directory(pathName)
+          : File(pathName);
 
   @override
   String get path => pathName;
@@ -86,18 +88,22 @@ class LibArchive implements ArchiveInterface {
   static LibArchiveBinding _getArchive({Directory? assetsPath}) {
     final currentAssetsPath = assetsPath?.path ?? getAssetsPath();
 
-    final libArchivePathForPlatform = switch (Platform.operatingSystem) {
-      "windows" =>
-        File("$currentAssetsPath/windows/libarchive/bin/archive.dll"),
-      "macos" =>
-        File("$currentAssetsPath/macos/libarchive/lib/libarchive.dylib"),
-      "linux" => File("$currentAssetsPath/linux/libarchive/lib/libarchive.so"),
-      _ =>
-        throw UnimplementedError('Libarchive not supported for this platform')
-    }
-        .absolute
-        .normalize
-        .toFile();
+    final libArchivePathForPlatform =
+        switch (Platform.operatingSystem) {
+          "windows" => File(
+            "$currentAssetsPath/windows/libarchive/bin/archive.dll",
+          ),
+          "macos" => File(
+            "$currentAssetsPath/macos/libarchive/lib/libarchive.dylib",
+          ),
+          "linux" => File(
+            "$currentAssetsPath/linux/libarchive/lib/libarchive.so",
+          ),
+          _ =>
+            throw UnimplementedError(
+              'Libarchive not supported for this platform',
+            ),
+        }.absolute.normalize.toFile();
 
     if (!libArchivePathForPlatform.existsSync()) {
       throw Exception("Libarchive not found at $libArchivePathForPlatform");
@@ -105,15 +111,15 @@ class LibArchive implements ArchiveInterface {
 
     final libraries = switch (currentPlatform) {
       TargetPlatform.windows => [
-          "zstd.dll",
-          "libcrypto-3-x64.dll",
-          "lz4.dll",
-          "zlib1.dll",
-          "iconv-2.dll",
-          "liblzma.dll",
-          "bz2.dll",
-          "libxml2.dll"
-        ],
+        "zstd.dll",
+        "libcrypto-3-x64.dll",
+        "lz4.dll",
+        "zlib1.dll",
+        "iconv-2.dll",
+        "liblzma.dll",
+        "bz2.dll",
+        "libxml2.dll",
+      ],
       TargetPlatform.macOS => [],
       _ => [],
     };
@@ -128,10 +134,13 @@ class LibArchive implements ArchiveInterface {
   }
 
   List<T> readArchiveAndDoOnEach<T>(
-      String archivePath,
-      T Function(Pointer<archive> archivePtr,
-              Pointer<Pointer<archive_entry>> entryPtrPtr)
-          action) {
+    String archivePath,
+    T Function(
+      Pointer<archive> archivePtr,
+      Pointer<Pointer<archive_entry>> entryPtrPtr,
+    )
+    action,
+  ) {
     if (!File(archivePath).existsSync()) {
       throw Exception("File not found at $archivePath");
     }
@@ -143,15 +152,17 @@ class LibArchive implements ArchiveInterface {
       errCode = binding.archive_read_support_filter_all(archivePtr);
       if (errCode != ARCHIVE_OK) {
         throw Exception(
-            "Failed to support all filters. Error code: ${_errorCodeToString(errCode)}. "
-            "Message: ${binding.archive_error_string(archivePtr).toDartStringSafe()}. ");
+          "Failed to support all filters. Error code: ${_errorCodeToString(errCode)}. "
+          "Message: ${binding.archive_error_string(archivePtr).toDartStringSafe()}. ",
+        );
       }
 
       errCode = binding.archive_read_support_format_all(archivePtr);
       if (errCode != ARCHIVE_OK) {
         throw Exception(
-            "Failed to support all formats. Error code: ${_errorCodeToString(errCode)}. "
-            "Message: ${binding.archive_error_string(archivePtr).toDartStringSafe()}. ");
+          "Failed to support all formats. Error code: ${_errorCodeToString(errCode)}. "
+          "Message: ${binding.archive_error_string(archivePtr).toDartStringSafe()}. ",
+        );
       }
 
       final fileBytes = File(archivePath).readAsBytesSync();
@@ -159,12 +170,16 @@ class LibArchive implements ArchiveInterface {
       buffer.asTypedList(fileBytes.length).setAll(0, fileBytes);
 
       var readPointer = binding.archive_read_open_memory(
-          archivePtr, buffer as Pointer<Void>, fileBytes.length);
+        archivePtr,
+        buffer as Pointer<Void>,
+        fileBytes.length,
+      );
 
       if (readPointer != ARCHIVE_OK) {
         throw Exception(
-            "Failed to open archive. Error code: ${_errorCodeToString(readPointer)}. "
-            "Message: ${binding.archive_error_string(archivePtr).toDartStringSafe()}. ");
+          "Failed to open archive. Error code: ${_errorCodeToString(readPointer)}. "
+          "Message: ${binding.archive_error_string(archivePtr).toDartStringSafe()}. ",
+        );
       }
 
       Pointer<archive_entry> entryPtr = binding.archive_entry_new();
@@ -181,12 +196,14 @@ class LibArchive implements ArchiveInterface {
           // ARCHIVE_WARN. Message: Pathname cannot be converted from UTF-8 to current locale.
           // [C](势力)趋光议会ApproLight 1.2.0.zip'
           throw Exception(
-              "Failed to read next header. Error code: ${_errorCodeToString(readPointer)}. "
-              "Message: ${binding.archive_error_string(archivePtr).toDartStringSafe()}. ");
+            "Failed to read next header. Error code: ${_errorCodeToString(readPointer)}. "
+            "Message: ${binding.archive_error_string(archivePtr).toDartStringSafe()}. ",
+          );
         } else if (readPointer < ARCHIVE_WARN) {
           throw Exception(
-              "Warning while reading next header. Error code: ${_errorCodeToString(readPointer)}. "
-              "Message: ${binding.archive_error_string(archivePtr).toDartStringSafe()}. ");
+            "Warning while reading next header. Error code: ${_errorCodeToString(readPointer)}. "
+            "Message: ${binding.archive_error_string(archivePtr).toDartStringSafe()}. ",
+          );
         } else {
           // Combat-Activators-v1.1.3/src/activators/examples/ToggledDriveActivator.java
           final pathName = getEntryPathnamePlatformAware(entryPtrPtr);
@@ -211,8 +228,10 @@ class LibArchive implements ArchiveInterface {
   }
 
   List<LibArchiveEntry> listEntriesInArchive(File archivePath) {
-    return readArchiveAndDoOnEach(archivePath.path,
-        (archivePtr, entryPtrPtr) => _getEntryInArchive(entryPtrPtr));
+    return readArchiveAndDoOnEach(
+      archivePath.path,
+      (archivePtr, entryPtrPtr) => _getEntryInArchive(entryPtrPtr),
+    );
   }
 
   final _ignorableErrors = [
@@ -235,7 +254,8 @@ class LibArchive implements ArchiveInterface {
   }) async {
     final writePtr = binding.archive_write_disk_new();
     try {
-      const writeFlags = ARCHIVE_EXTRACT_TIME |
+      const writeFlags =
+          ARCHIVE_EXTRACT_TIME |
           ARCHIVE_EXTRACT_PERM |
           ARCHIVE_EXTRACT_ACL |
           ARCHIVE_EXTRACT_FFLAGS;
@@ -244,16 +264,24 @@ class LibArchive implements ArchiveInterface {
       var errCode = 0;
 
       // Iterate through the archive and extract each entry
-      return readArchiveAndDoOnEach(archivePath.absolute.path,
-          (archivePtr, entryPtrPtr) {
+      return readArchiveAndDoOnEach(archivePath.absolute.path, (
+        archivePtr,
+        entryPtrPtr,
+      ) {
         final entry = _getEntryInArchive(entryPtrPtr);
         if (fileFilter != null && !fileFilter(entry)) {
           return null;
         } else {
           try {
-            return _extractSingleEntryInArchive(entryPtrPtr, destinationPath,
-                errCode, writePtr, archivePtr, entry,
-                pathTransform: pathTransform);
+            return _extractSingleEntryInArchive(
+              entryPtrPtr,
+              destinationPath,
+              errCode,
+              writePtr,
+              archivePtr,
+              entry,
+              pathTransform: pathTransform,
+            );
           } catch (e, st) {
             if (_ignorableErrors.contains(e.toString()) ||
                 _ignorableErrors.any((error) => e.toString().contains(error))) {
@@ -284,41 +312,49 @@ class LibArchive implements ArchiveInterface {
     String Function(LibArchiveEntry entry)? pathTransform,
   }) {
     // Add the destination path to the entry
-    final outputPath = p.join(destinationPath,
-        pathTransform != null ? pathTransform(entry) : entry.pathName);
+    final outputPath = p.join(
+      destinationPath,
+      pathTransform != null ? pathTransform(entry) : entry.pathName,
+    );
     binding.archive_entry_set_pathname_utf8(
-        entryPtrPtr.value, outputPath.toNativeChar());
+      entryPtrPtr.value,
+      outputPath.toNativeChar(),
+    );
 
     // Create the file header (creates the file?)
     errCode = binding.archive_write_header(
-        writePtr,
-        entryPtrPtr
-            .value); // not sure about using entryPtrPtr instead of entryPtr
+      writePtr,
+      entryPtrPtr.value,
+    ); // not sure about using entryPtrPtr instead of entryPtr
     if (errCode < ARCHIVE_OK) {
       throw Exception(
-          "Failed to write header. Error code: ${_errorCodeToString(errCode)}. $outputPath");
+        "Failed to write header. Error code: ${_errorCodeToString(errCode)}. $outputPath",
+      );
     }
 
     // Copy the data from the archive to the file
     errCode = _copyData(archivePtr, writePtr);
     if (errCode < ARCHIVE_OK) {
       throw Exception(
-          "Failed to copy data. Error code: ${_errorCodeToString(errCode)}. "
-          "Message: ${binding.archive_error_string(archivePtr).toDartStringSafe()}. "
-          "$outputPath");
+        "Failed to copy data. Error code: ${_errorCodeToString(errCode)}. "
+        "Message: ${binding.archive_error_string(archivePtr).toDartStringSafe()}. "
+        "$outputPath",
+      );
     }
     if (errCode < ARCHIVE_WARN) {
       throw Exception(
-          "Warning while copying data. Error code: ${_errorCodeToString(errCode)}. "
-          "Message: ${binding.archive_error_string(archivePtr).toDartStringSafe()}. "
-          "$outputPath");
+        "Warning while copying data. Error code: ${_errorCodeToString(errCode)}. "
+        "Message: ${binding.archive_error_string(archivePtr).toDartStringSafe()}. "
+        "$outputPath",
+      );
     }
 
     return LibArchiveExtractedFile(entry, File(outputPath));
   }
 
   LibArchiveEntry _getEntryInArchive(
-      Pointer<Pointer<archive_entry>> entryPtrPtr) {
+    Pointer<Pointer<archive_entry>> entryPtrPtr,
+  ) {
     final pathName = getEntryPathnamePlatformAware(entryPtrPtr)!;
     final unpackedSize = binding.archive_entry_size(entryPtrPtr.value);
     final mTime = binding.archive_entry_mtime(entryPtrPtr.value);
@@ -335,15 +371,28 @@ class LibArchive implements ArchiveInterface {
     final sizeIsSet = binding.archive_entry_size_is_set(entryPtrPtr.value);
     final isEncrypted = binding.archive_entry_is_encrypted(entryPtrPtr.value);
 
-    return LibArchiveEntry(pathName, unpackedSize, mTime, birthTime, cTime,
-        aTime, type, fflags, gname, sourcePath, sizeIsSet, isEncrypted);
+    return LibArchiveEntry(
+      pathName,
+      unpackedSize,
+      mTime,
+      birthTime,
+      cTime,
+      aTime,
+      type,
+      fflags,
+      gname,
+      sourcePath,
+      sizeIsSet,
+      isEncrypted,
+    );
   }
 
   /// [archive_entry_pathname_utf8] is needed on Windows to extract non-ASCII filenames, otherwise the file is skipped.
   /// However, [archive_entry_pathname_utf8] causes filenames to be empty on MacOS.
   /// MacOS works correctly using [archive_entry_pathname].
   String? getEntryPathnamePlatformAware(
-          Pointer<Pointer<archive_entry>> entryPtrPtr) =>
+    Pointer<Pointer<archive_entry>> entryPtrPtr,
+  ) =>
       Platform.isWindows
           ? binding
               .archive_entry_pathname_utf8(entryPtrPtr.value)
@@ -368,7 +417,11 @@ class LibArchive implements ArchiveInterface {
 
       while (true) {
         errCode = binding.archive_read_data_block(
-            ar, bufferPtr, sizePtr.value, offsetPtr.value);
+          ar,
+          bufferPtr,
+          sizePtr.value,
+          offsetPtr.value,
+        );
         if (errCode == ARCHIVE_EOF) {
           return ARCHIVE_OK;
         }
@@ -378,7 +431,11 @@ class LibArchive implements ArchiveInterface {
         }
 
         errCode = binding.archive_write_data_block(
-            aw, bufferPtr.value, size.value, offset.value);
+          aw,
+          bufferPtr.value,
+          size.value,
+          offset.value,
+        );
         if (errCode < ARCHIVE_OK) {
           return errCode;
         }
@@ -403,11 +460,15 @@ class LibArchive implements ArchiveInterface {
       binding.archive_read_support_format_all(archivePtr);
 
       // Open the archive file
-      final openResult = binding.archive_read_open_filename(archivePtr,
-          archivePath.absolute.path.toNativeUtf8().cast<Char>(), 10240);
+      final openResult = binding.archive_read_open_filename(
+        archivePtr,
+        archivePath.absolute.path.toNativeUtf8().cast<Char>(),
+        10240,
+      );
       if (openResult != ARCHIVE_OK) {
         throw Exception(
-            'Failed to open archive: ${binding.archive_error_string(archivePtr).toDartStringSafe()}');
+          'Failed to open archive: ${binding.archive_error_string(archivePtr).toDartStringSafe()}',
+        );
       }
 
       final extractedFiles = <LibArchiveReadFile>[];
@@ -428,16 +489,15 @@ class LibArchive implements ArchiveInterface {
           if (pathTransform != null) {
             final transformedPath = pathTransform(entry);
             binding.archive_entry_set_pathname_utf8(
-                entryPtrPtr.value, transformedPath.toNativeUtf8().cast<Char>());
+              entryPtrPtr.value,
+              transformedPath.toNativeUtf8().cast<Char>(),
+            );
           }
 
           // Read data into memory
           final extractedContent = _readData(archivePtr);
 
-          extractedFiles.add(LibArchiveReadFile(
-            entry,
-            extractedContent,
-          ));
+          extractedFiles.add(LibArchiveReadFile(entry, extractedContent));
         } catch (e, st) {
           // Handle errors
           if (onError != null && onError(e, st)) {
@@ -472,7 +532,11 @@ class LibArchive implements ArchiveInterface {
 
       while (true) {
         errCode = binding.archive_read_data_block(
-            ar, bufferPtrPtr, sizePtr, offsetPtr);
+          ar,
+          bufferPtrPtr,
+          sizePtr,
+          offsetPtr,
+        );
 
         if (errCode == ARCHIVE_EOF) {
           // End of file
@@ -518,7 +582,7 @@ class LibArchive implements ArchiveInterface {
       -20 => "ARCHIVE_WARN",
       -25 => "ARCHIVE_FAILED",
       -30 => "ARCHIVE_FATAL",
-      _ => "Unknown error code $errorCode"
+      _ => "Unknown error code $errorCode",
     };
   }
 
@@ -529,17 +593,26 @@ class LibArchive implements ArchiveInterface {
 
   @override
   Future<void> extractSome(
-      File archiveFile, Directory destination, List<String> inArchivePaths) {
-    return extractEntriesInArchive(archiveFile, destination.path,
-        fileFilter: (entry) => inArchivePaths.contains(entry.path));
+    File archiveFile,
+    Directory destination,
+    List<String> inArchivePaths,
+  ) {
+    return extractEntriesInArchive(
+      archiveFile,
+      destination.path,
+      fileFilter: (entry) => inArchivePaths.contains(entry.path),
+    );
   }
 
   @override
   Future<List<LibArchiveEntry>> listFiles(File archiveFile) {
-    return readEntriesInArchive(archiveFile).then((entries) => entries
-        .map((e) => e?.archiveFile)
-        .whereType<LibArchiveEntry>()
-        .toList());
+    return readEntriesInArchive(archiveFile).then(
+      (entries) =>
+          entries
+              .map((e) => e?.archiveFile)
+              .whereType<LibArchiveEntry>()
+              .toList(),
+    );
   }
 }
 

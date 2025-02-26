@@ -23,12 +23,12 @@ class _TooltipRenderBox extends RenderShiftedBox {
     required Size offset,
     required TooltipPosition position,
     required MediaQueryData mediaQuery,
-  })  : _mousePosition = mousePosition,
-        _windowEdgePadding = windowEdgePadding,
-        _offset = offset,
-        _position = position,
-        _mediaQuery = mediaQuery,
-        super(child);
+  }) : _mousePosition = mousePosition,
+       _windowEdgePadding = windowEdgePadding,
+       _offset = offset,
+       _position = position,
+       _mediaQuery = mediaQuery,
+       super(child);
 
   set mousePosition(Offset value) {
     if (_mousePosition != value) {
@@ -216,41 +216,40 @@ class MovingTooltipWidget extends StatefulWidget {
   }) {
     return message.isNotNullOrBlank
         ? Builder(
-            builder: (context) {
-              return MovingTooltipWidget(
-                key: key,
-                tooltipWidget: TooltipFrame(
-                  backgroundColor: backgroundColor,
-                  borderColor: switch (warningLevel) {
-                    null || TooltipWarningLevel.none => null,
-                    TooltipWarningLevel.warning ||
-                    TooltipWarningLevel.error =>
-                      Theme.of(context)
-                          .colorScheme
-                          .onSecondaryContainer
-                          .withOpacity(0.5),
-                  },
-                  child: Text(
-                    message!,
-                    style: (textStyle ?? Theme.of(context).textTheme.bodySmall)
-                        ?.copyWith(
-                            color: switch (warningLevel) {
-                      null => textStyle?.color,
-                      TooltipWarningLevel.none => null,
-                      TooltipWarningLevel.warning =>
-                        ThemeManager.vanillaWarningColor,
-                      TooltipWarningLevel.error =>
-                        ThemeManager.vanillaErrorColor,
-                    }),
-                  ),
+          builder: (context) {
+            return MovingTooltipWidget(
+              key: key,
+              tooltipWidget: TooltipFrame(
+                backgroundColor: backgroundColor,
+                borderColor: switch (warningLevel) {
+                  null || TooltipWarningLevel.none => null,
+                  TooltipWarningLevel.warning ||
+                  TooltipWarningLevel.error => Theme.of(
+                    context,
+                  ).colorScheme.onSecondaryContainer.withOpacity(0.5),
+                },
+                child: Text(
+                  message!,
+                  style: (textStyle ?? Theme.of(context).textTheme.bodySmall)
+                      ?.copyWith(
+                        color: switch (warningLevel) {
+                          null => textStyle?.color,
+                          TooltipWarningLevel.none => null,
+                          TooltipWarningLevel.warning =>
+                            ThemeManager.vanillaWarningColor,
+                          TooltipWarningLevel.error =>
+                            ThemeManager.vanillaErrorColor,
+                        },
+                      ),
                 ),
-                windowEdgePadding: windowEdgePadding,
-                offset: offset,
-                position: position,
-                child: child,
-              );
-            },
-          )
+              ),
+              windowEdgePadding: windowEdgePadding,
+              offset: offset,
+              position: position,
+              child: child,
+            );
+          },
+        )
         : child;
   }
 
@@ -317,17 +316,18 @@ class _MovingTooltipWidgetState extends State<MovingTooltipWidget> {
     _parentState?._setTooltipBlock(true); // Disable parent tooltip
 
     _overlayEntry = OverlayEntry(
-      builder: (_) => Stack(
-        children: [
-          _TooltipLayout(
-            mousePosition: _latestGlobalMousePosition!,
-            windowEdgePadding: widget.windowEdgePadding,
-            offset: widget.offset,
-            position: widget.position,
-            child: IgnorePointer(child: widget.tooltipWidget),
+      builder:
+          (_) => Stack(
+            children: [
+              _TooltipLayout(
+                mousePosition: _latestGlobalMousePosition!,
+                windowEdgePadding: widget.windowEdgePadding,
+                offset: widget.offset,
+                position: widget.position,
+                child: IgnorePointer(child: widget.tooltipWidget),
+              ),
+            ],
           ),
-        ],
-      ),
     );
 
     Overlay.of(context).insert(_overlayEntry!);

@@ -15,11 +15,15 @@ class TriOSChangelogViewer extends ConsumerStatefulWidget {
   final String url;
   final Version? lastestVersionToShow;
 
-  const TriOSChangelogViewer(
-      {super.key, required this.url, required this.lastestVersionToShow});
+  const TriOSChangelogViewer({
+    super.key,
+    required this.url,
+    required this.lastestVersionToShow,
+  });
 
   @override
-  ConsumerState<TriOSChangelogViewer> createState() => _TriOSChangelogViewerState();
+  ConsumerState<TriOSChangelogViewer> createState() =>
+      _TriOSChangelogViewerState();
 }
 
 class _TriOSChangelogViewerState extends ConsumerState<TriOSChangelogViewer> {
@@ -61,10 +65,15 @@ class _TriOSChangelogViewerState extends ConsumerState<TriOSChangelogViewer> {
         } else if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));
         } else {
-          final text = widget.lastestVersionToShow == null
-              ? snapshot.data
-              : snapshot.data
-                  ?.skipLinesWhile((line) => !line.contains(widget.lastestVersionToShow!.toStringFromParts()));
+          final text =
+              widget.lastestVersionToShow == null
+                  ? snapshot.data
+                  : snapshot.data?.skipLinesWhile(
+                    (line) =>
+                        !line.contains(
+                          widget.lastestVersionToShow!.toStringFromParts(),
+                        ),
+                  );
 
           return Column(
             mainAxisSize: MainAxisSize.min,
@@ -76,21 +85,22 @@ class _TriOSChangelogViewerState extends ConsumerState<TriOSChangelogViewer> {
                   right: 24,
                   bottom: 0,
                 ),
-                child: Row(children: [
-                  SvgImageIcon(
-                    "assets/images/icon-bullhorn-variant.svg",
-                    width: 36,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    "Changelog",
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyLarge
-                        ?.copyWith(fontSize: 24),
-                  ),
-                ]),
+                child: Row(
+                  children: [
+                    SvgImageIcon(
+                      "assets/images/icon-bullhorn-variant.svg",
+                      width: 36,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      "Changelog",
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodyLarge?.copyWith(fontSize: 24),
+                    ),
+                  ],
+                ),
               ),
               Expanded(child: Markdown(data: text ?? '')),
             ],
@@ -101,8 +111,10 @@ class _TriOSChangelogViewerState extends ConsumerState<TriOSChangelogViewer> {
   }
 }
 
-showTriOSChangelogDialog(BuildContext context,
-    {required Version? lastestVersionToShow}) {
+showTriOSChangelogDialog(
+  BuildContext context, {
+  required Version? lastestVersionToShow,
+}) {
   showDialog(
     context: context,
     builder: (context) {
@@ -111,8 +123,9 @@ showTriOSChangelogDialog(BuildContext context,
           width: 600,
           height: 1200,
           child: TriOSChangelogViewer(
-              url: Constants.changelogUrl,
-              lastestVersionToShow: lastestVersionToShow),
+            url: Constants.changelogUrl,
+            lastestVersionToShow: lastestVersionToShow,
+          ),
         ),
         actions: [
           TextButton(

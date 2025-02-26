@@ -69,8 +69,10 @@ class WispAdaptiveGridView<T> extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         // Adjust for horizontal padding to find actual available width.
-        final containerWidth =
-            math.max(0.0, constraints.maxWidth - padding.left - padding.right);
+        final containerWidth = math.max(
+          0.0,
+          constraints.maxWidth - padding.left - padding.right,
+        );
 
         // Compute how many columns we can fit and the item width for each column.
         final layout = _calculateAdaptiveLayout(
@@ -89,14 +91,17 @@ class WispAdaptiveGridView<T> extends StatelessWidget {
           itemBuilder: (context, rowIndex) {
             // The chunk of items for this particular row.
             final startIndex = rowIndex * layout.columns;
-            final endIndex =
-                math.min(startIndex + layout.columns, items.length);
+            final endIndex = math.min(
+              startIndex + layout.columns,
+              items.length,
+            );
             final rowItems = items.sublist(startIndex, endIndex);
 
             return Container(
               // Optional vertical spacing after each row (except the last).
               margin: EdgeInsets.only(
-                  bottom: rowIndex < totalRows - 1 ? verticalSpacing : 0),
+                bottom: rowIndex < totalRows - 1 ? verticalSpacing : 0,
+              ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -135,9 +140,10 @@ _AdaptiveLayout _calculateAdaptiveLayout({
   required double horizontalSpacing,
 }) {
   // Initial guess: maximum columns
-  int columns = ((containerWidth + horizontalSpacing) /
-          (minItemWidth + horizontalSpacing))
-      .floor();
+  int columns =
+      ((containerWidth + horizontalSpacing) /
+              (minItemWidth + horizontalSpacing))
+          .floor();
 
   while (columns > 0) {
     // Compute the final item width if we place [columns] items plus (columns - 1) spaces.

@@ -27,9 +27,12 @@ class _AboutPageState extends ConsumerState<AboutPage> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
-            Text("Forum Thread",
-                style: textTheme.titleMedium
-                    ?.copyWith(fontWeight: FontWeight.bold)),
+            Text(
+              "Forum Thread",
+              style: textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             Linkify(
               text: Constants.triosForumThread,
               style: textTheme.labelLarge,
@@ -39,9 +42,12 @@ class _AboutPageState extends ConsumerState<AboutPage> {
               },
             ),
             const SizedBox(height: 8),
-            Text("Source Code",
-                style: textTheme.titleMedium
-                    ?.copyWith(fontWeight: FontWeight.bold)),
+            Text(
+              "Source Code",
+              style: textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             Linkify(
               text: "https://github.com/wispborne/TriOS",
               style: textTheme.labelLarge,
@@ -51,9 +57,12 @@ class _AboutPageState extends ConsumerState<AboutPage> {
               },
             ),
             const SizedBox(height: 24),
-            Text("Privacy Policy",
-                style: textTheme.titleMedium
-                    ?.copyWith(fontWeight: FontWeight.bold)),
+            Text(
+              "Privacy Policy",
+              style: textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             Linkify(
               text:
                   "- If you choose to allow it, device information (e.g. OS and screen resolution), mod list, and TriOS errors will be collected and uploaded to servers managed by Sentry.io. The information is associated with a randomly generated id and is used to fix bugs. Example of collected data: https://i.imgur.com/k9E6zxO.png."

@@ -29,11 +29,12 @@ final weaponListNotifierProvider = StreamProvider<List<Weapon>>((ref) async* {
     throw Exception('Game folder path is not set.');
   }
 
-  final variants = ref
-      .watch(AppState.mods)
-      .map((mod) => mod.findFirstEnabledOrHighestVersion)
-      .nonNulls
-      .toList();
+  final variants =
+      ref
+          .watch(AppState.mods)
+          .map((mod) => mod.findFirstEnabledOrHighestVersion)
+          .nonNulls
+          .toList();
 
   final allErrors = <String>[]; // To store all error messages
   List<Weapon> allWeapons = <Weapon>[]; // To store all parsed weapons
@@ -70,20 +71,24 @@ final weaponListNotifierProvider = StreamProvider<List<Weapon>>((ref) async* {
 
   ref.watch(isLoadingWeaponsList.notifier).state = false;
   Fimber.i(
-      'Parsed ${allWeapons.length} weapons from ${variants.length + 1} mods and $filesProcessed files in ${DateTime.now().difference(currentTime).inMilliseconds}ms');
+    'Parsed ${allWeapons.length} weapons from ${variants.length + 1} mods and $filesProcessed files in ${DateTime.now().difference(currentTime).inMilliseconds}ms',
+  );
 
   // yield weapons;
 });
 
 Future<ParseResult> _parseWeaponsCsv(
-    Directory folder, ModVariant? modVariant) async {
+  Directory folder,
+  ModVariant? modVariant,
+) async {
   int filesProcessed = 0;
 
-  final weaponsCsvFile = p
-      .join(folder.path, 'data/weapons/weapon_data.csv')
-      .toFile()
-      .normalize
-      .toFile();
+  final weaponsCsvFile =
+      p
+          .join(folder.path, 'data/weapons/weapon_data.csv')
+          .toFile()
+          .normalize
+          .toFile();
 
   final weapons = <Weapon>[];
   final errors = <String>[];
@@ -96,11 +101,12 @@ Future<ParseResult> _parseWeaponsCsv(
 
   // Read and parse the .wpn files
   final wpnFilesDir = p.join(folder.path, 'data/weapons');
-  final wpnFiles = Directory(wpnFilesDir)
-      .listSync()
-      .whereType<File>()
-      .where((file) => file.path.endsWith('.wpn'))
-      .toList();
+  final wpnFiles =
+      Directory(wpnFilesDir)
+          .listSync()
+          .whereType<File>()
+          .where((file) => file.path.endsWith('.wpn'))
+          .toList();
 
   final wpnDataMap = <String, Map<String, dynamic>>{};
 
@@ -117,26 +123,30 @@ Future<ParseResult> _parseWeaponsCsv(
           'specClass': jsonData['specClass'],
           'type': jsonData['type'],
           'size': jsonData['size'],
-          'turretSprite': p
-              .join(folder.path, jsonData['turretSprite'])
-              .toFile()
-              .normalize
-              .path,
-          'turretGunSprite': p
-              .join(folder.path, jsonData['turretGunSprite'])
-              .toFile()
-              .normalize
-              .path,
-          'hardpointSprite': p
-              .join(folder.path, jsonData['hardpointSprite'])
-              .toFile()
-              .normalize
-              .path,
-          'hardpointGunSprite': p
-              .join(folder.path, jsonData['hardpointGunSprite'])
-              .toFile()
-              .normalize
-              .path,
+          'turretSprite':
+              p
+                  .join(folder.path, jsonData['turretSprite'])
+                  .toFile()
+                  .normalize
+                  .path,
+          'turretGunSprite':
+              p
+                  .join(folder.path, jsonData['turretGunSprite'])
+                  .toFile()
+                  .normalize
+                  .path,
+          'hardpointSprite':
+              p
+                  .join(folder.path, jsonData['hardpointSprite'])
+                  .toFile()
+                  .normalize
+                  .path,
+          'hardpointGunSprite':
+              p
+                  .join(folder.path, jsonData['hardpointGunSprite'])
+                  .toFile()
+                  .normalize
+                  .path,
         };
         wpnDataMap[weaponId] = wpnFields;
       } else {
@@ -156,8 +166,9 @@ Future<ParseResult> _parseWeaponsCsv(
     errors.add('[$modName] Failed to read file at $weaponsCsvFile: $e');
     return ParseResult(weapons, errors, filesProcessed);
   } catch (e) {
-    errors
-        .add('[$modName] Unexpected error reading file at $weaponsCsvFile: $e');
+    errors.add(
+      '[$modName] Unexpected error reading file at $weaponsCsvFile: $e',
+    );
     return ParseResult(weapons, errors, filesProcessed);
   }
 
@@ -188,7 +199,8 @@ Future<ParseResult> _parseWeaponsCsv(
     ).convert(processedContent);
   } catch (e) {
     errors.add(
-        '[$modName] Failed to parse CSV content in file $weaponsCsvFile: $e');
+      '[$modName] Failed to parse CSV content in file $weaponsCsvFile: $e',
+    );
     return ParseResult(weapons, errors, filesProcessed);
   }
 

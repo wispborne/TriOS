@@ -13,20 +13,24 @@ const int minWidth = 128;
 const int maxWidth = 256;
 
 Future<Map<ModVariant, List<Portrait>>> scanModFoldersForSquareImages(
-    List<ModVariant> modVariants) async {
+  List<ModVariant> modVariants,
+) async {
   Map<ModVariant, List<Portrait>> modImagesMap = {};
   final timer = Stopwatch()..start();
-  Fimber.i('Scanning mod folders for square images in ${modVariants.length} mods');
+  Fimber.i(
+    'Scanning mod folders for square images in ${modVariants.length} mods',
+  );
 
-  await Future.wait(modVariants.map((modVariant) async {
-    List<Portrait> squareImages = [];
-    Set<String> uniqueImageHashes = {};
+  await Future.wait(
+    modVariants.map((modVariant) async {
+      List<Portrait> squareImages = [];
+      Set<String> uniqueImageHashes = {};
 
-    if (await modVariant.modFolder.exists()) {
-      await for (var entity in modVariant.modFolder.list(recursive: true)) {
-        if (entity is File && await _isImageFile(entity)) {
-          try {
-            Uint8List imageBytes = await entity.readAsBytes();
+      if (await modVariant.modFolder.exists()) {
+        await for (var entity in modVariant.modFolder.list(recursive: true)) {
+          if (entity is File && await _isImageFile(entity)) {
+            try {
+              Uint8List imageBytes = await entity.readAsBytes();
               final (imageWidth, imageHeight) = await getImageSize(imageBytes);
 
               if (imageWidth == imageHeight &&
@@ -35,23 +39,32 @@ Future<Map<ModVariant, List<Portrait>>> scanModFoldersForSquareImages(
                 String imageHash = hashImageBytes(imageBytes);
 
                 if (!uniqueImageHashes.contains(imageHash)) {
-                uniqueImageHashes.add(imageHash);
-                squareImages.add(Portrait(
-                    modVariant.smolId, entity, imageWidth, imageHeight, imageHash));
+                  uniqueImageHashes.add(imageHash);
+                  squareImages.add(
+                    Portrait(
+                      modVariant.smolId,
+                      entity,
+                      imageWidth,
+                      imageHeight,
+                      imageHash,
+                    ),
+                  );
+                }
               }
+            } catch (e) {
+              // Handle error (optional)
+              Fimber.w('Error decoding image: ${entity.path}, $e');
             }
-          } catch (e) {
-            // Handle error (optional)
-            Fimber.w('Error decoding image: ${entity.path}, $e');
           }
         }
       }
-    }
-    modImagesMap[modVariant] = squareImages;
-  }).toList());
+      modImagesMap[modVariant] = squareImages;
+    }).toList(),
+  );
 
   Fimber.i(
-      'Scanned mod folders for square images in ${modVariants.length} mods in ${timer.elapsedMilliseconds} ms');
+    'Scanned mod folders for square images in ${modVariants.length} mods in ${timer.elapsedMilliseconds} ms',
+  );
   return modImagesMap;
 }
 

@@ -27,13 +27,13 @@ class VersionCheckerInfo with VersionCheckerInfoMappable {
   /// Whether there's a valid direct download URL.
   bool get hasDirectDownload =>
       directDownloadURL != null &&
-          directDownloadURL!.isNotEmpty &&
-          Uri.tryParse(directDownloadURL!) != null;
+      directDownloadURL!.isNotEmpty &&
+      Uri.tryParse(directDownloadURL!) != null;
 
   /// Whether the basic fields are present and ostensibly valid.
   bool get seemsLegit =>
       masterVersionFile != null &&
-          masterVersionFile!.isNotEmpty &&
-          Uri.tryParse(masterVersionFile!) != null &&
-          modVersion != null;
+      masterVersionFile!.isNotEmpty &&
+      Uri.tryParse(masterVersionFile!) != null &&
+      modVersion != null;
 }

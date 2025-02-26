@@ -8,24 +8,25 @@ class Constants {
 
   static const appName = "TriOS";
   static const appTitle = "$appName v$version";
-  static String appSubtitle = [
-    "Corporate Toolkit",
-    "by Wisp",
-    "Hegemony Tolerated",
-    "Tri-Tachyon Approved",
-    "Powered by Moloch",
-    "COMSEC Compliant",
-    "Wave to Sebestyan",
-    "Gargoyle-resistant",
-    "Unavailable on Asher",
-    "Artemisia's Choice",
-    "Persean Chronicles Died For This?",
-    "where is omega?",
-    "at com.fs.starfarer.oOOOOOOO",
-    "SMOL 2",
-    "Interesting mods...",
-    "Burn bright",
-  ].random();
+  static String appSubtitle =
+      [
+        "Corporate Toolkit",
+        "by Wisp",
+        "Hegemony Tolerated",
+        "Tri-Tachyon Approved",
+        "Powered by Moloch",
+        "COMSEC Compliant",
+        "Wave to Sebestyan",
+        "Gargoyle-resistant",
+        "Unavailable on Asher",
+        "Artemisia's Choice",
+        "Persean Chronicles Died For This?",
+        "where is omega?",
+        "at com.fs.starfarer.oOOOOOOO",
+        "SMOL 2",
+        "Interesting mods...",
+        "Burn bright",
+      ].random();
 
   static const enabledModsFilename = "enabled_mods.json";
   static const modsFolderName = "mods";
@@ -58,7 +59,8 @@ class Constants {
   static const graphicsLibId = "shaderLib";
   static const changelogUrl =
       "https://raw.githubusercontent.com/wispborne/TriOS/main/changelog.md";
-  static const triosForumThread = "https://fractalsoftworks.com/forum/index.php?topic=29674.0";
+  static const triosForumThread =
+      "https://fractalsoftworks.com/forum/index.php?topic=29674.0";
   static const supportedArchiveExtensions = [
     ".zip",
     ".7z",
@@ -76,6 +78,7 @@ class Constants {
 
   // Self-update
   static const String githubBase = "https://api.github.com";
+
   /// Hardcoded per_page.
   static const String githubLatestRelease =
       "$githubBase/repos/wispborne/trios/releases?per_page=100";
@@ -84,8 +87,9 @@ class Constants {
   /// Creating a new one each time is expensive, and hardcoding the pattern will hardcode the locale.
   static DateFormat dateTimeFormat =
       DateFormat.yMd(Intl.getCurrentLocale()).add_jm();
-  static DateFormat gameDateFormat =
-      DateFormat("'Cycle' y , 'Month' M, 'Day' d");
+  static DateFormat gameDateFormat = DateFormat(
+    "'Cycle' y , 'Month' M, 'Day' d",
+  );
 
   /// getApplicationSupportDirectory()
   static late final Directory configDataFolderPath; // Set in main

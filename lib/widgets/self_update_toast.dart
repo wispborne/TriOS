@@ -38,9 +38,9 @@ class SelfUpdateToast extends ConsumerWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
             border: Border.all(
-                color:
-                    Theme.of(context).colorScheme.onSurface.withOpacity(0.15),
-                width: 1),
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.15),
+              width: 1,
+            ),
           ),
           child: Stack(
             children: [
@@ -51,50 +51,61 @@ class SelfUpdateToast extends ConsumerWidget {
                     child: Column(
                       children: [
                         const Text("New ${Constants.appName} version"),
-                        Text("${latestRelease.tagName} is now available!",
-                            style: Theme.of(context).textTheme.labelLarge),
+                        Text(
+                          "${latestRelease.tagName} is now available!",
+                          style: Theme.of(context).textTheme.labelLarge,
+                        ),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Padding(
                               padding: const EdgeInsets.all(8.0),
                               child: ElevatedButton.icon(
-                                  onPressed: () => showTriOSChangelogDialog(
+                                onPressed:
+                                    () => showTriOSChangelogDialog(
                                       context,
-                                      lastestVersionToShow:
-                                          Version.parse(latestRelease.tagName).copyWith(build: null)),
-                                  icon: const SvgImageIcon(
-                                    "assets/images/icon-log.svg",
-                                  ),
-                                  label: const Text("View Changelog")),
+                                      lastestVersionToShow: Version.parse(
+                                        latestRelease.tagName,
+                                      ).copyWith(build: null),
+                                    ),
+                                icon: const SvgImageIcon(
+                                  "assets/images/icon-log.svg",
+                                ),
+                                label: const Text("View Changelog"),
+                              ),
                             ),
                             Padding(
                               padding: const EdgeInsets.all(8.0),
                               child: Disable(
-                                isEnabled: ref
+                                isEnabled:
+                                    ref
                                         .watch(AppState.selfUpdate)
                                         .valueOrNull ==
                                     null,
                                 child: ElevatedButton.icon(
-                                    onPressed: () {
-                                      ref
-                                          .read(AppState.selfUpdate.notifier)
-                                          .updateSelf(latestRelease);
-                                    },
-                                    icon: const Icon(Icons.download),
-                                    label: const Text("Update")),
+                                  onPressed: () {
+                                    ref
+                                        .read(AppState.selfUpdate.notifier)
+                                        .updateSelf(latestRelease);
+                                  },
+                                  icon: const Icon(Icons.download),
+                                  label: const Text("Update"),
+                                ),
                               ),
                             ),
                           ],
                         ),
                         TriOSDownloadProgressIndicator(
-                          value: ref.watch(AppState.selfUpdate).valueOrNull ??
+                          value:
+                              ref.watch(AppState.selfUpdate).valueOrNull ??
                               TriOSDownloadProgress(
-                                  0,
-                                  SelfUpdater.getAssetForPlatform(latestRelease)
-                                          ?.size ??
-                                      0,
-                                  isIndeterminate: false),
+                                0,
+                                SelfUpdater.getAssetForPlatform(
+                                      latestRelease,
+                                    )?.size ??
+                                    0,
+                                isIndeterminate: false,
+                              ),
                         ),
                       ],
                     ),

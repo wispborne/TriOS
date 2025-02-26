@@ -21,12 +21,14 @@ class _DisableIfCannotWriteGameFolderState
   Widget build(BuildContext context) {
     final canWrite = ref.watch(AppState.canWriteToModsFolder).value ?? true;
     return ConditionalWrap(
-        condition: !canWrite,
-        wrapper: (child) => Tooltip(
-              message:
-                  "Cannot modify game folder and/or vmparams.\nTry running ${Constants.appName} as administrator.",
-              child: Disable(isEnabled: false, child: child),
-            ),
-        child: widget.child);
+      condition: !canWrite,
+      wrapper:
+          (child) => Tooltip(
+            message:
+                "Cannot modify game folder and/or vmparams.\nTry running ${Constants.appName} as administrator.",
+            child: Disable(isEnabled: false, child: child),
+          ),
+      child: widget.child,
+    );
   }
 }

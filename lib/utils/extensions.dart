@@ -158,9 +158,11 @@ extension StringExt on String {
                 .map((m) => m.start)
                 .toList() +
             [str.length])
-        .zipWithNext((l, r) => str
-            .substring(l, r)
-            .filter((it) => RegExp(r"[a-zA-Z0-9]").hasMatch(it)))
+        .zipWithNext(
+          (l, r) => str
+              .substring(l, r)
+              .filter((it) => RegExp(r"[a-zA-Z0-9]").hasMatch(it)),
+        )
         .filter((p0) => p0.isNotEmpty)
         .toList();
   }
@@ -194,10 +196,12 @@ extension StringExt on String {
   String toTitleCase() {
     if (isEmpty) return this;
 
-    return split(' ').map((word) {
-      if (word.isEmpty) return '';
-      return word[0].toUpperCase() + word.substring(1).toLowerCase();
-    }).join(' ');
+    return split(' ')
+        .map((word) {
+          if (word.isEmpty) return '';
+          return word[0].toUpperCase() + word.substring(1).toLowerCase();
+        })
+        .join(' ');
   }
 
   void openAsUriInBrowser() {
@@ -235,11 +239,14 @@ extension StringMapExt on Map<String, dynamic> {
           return false; // Keep the key for now
         } else if (value is List) {
           // Process each element in the list
-          currentMap[key] = value
-              .where((item) =>
-                  item is! Map<String, dynamic> ||
-                  item.removeNullValues().isNotEmpty)
-              .toList();
+          currentMap[key] =
+              value
+                  .where(
+                    (item) =>
+                        item is! Map<String, dynamic> ||
+                        item.removeNullValues().isNotEmpty,
+                  )
+                  .toList();
           return (currentMap[key] as List).isEmpty; // Remove if list is empty
         }
         return value == null; // Remove key if value is null
@@ -258,8 +265,8 @@ extension StringMapExt on Map<String, dynamic> {
 
   String prettyPrintToml() {
     return TomlDocument.fromMap(
-            Map<String, dynamic>.from(this).removeNullValues())
-        .toString();
+      Map<String, dynamic>.from(this).removeNullValues(),
+    ).toString();
   }
 }
 
@@ -329,7 +336,8 @@ extension FileExt on File {
         await destFile.delete();
       } else {
         Fimber.i(
-            "Skipping file move (file already exists): $this to $destFile");
+          "Skipping file move (file already exists): $this to $destFile",
+        );
         return this;
       }
     }
@@ -367,8 +375,10 @@ extension DirectoryExt on Directory {
 
   String get name => p.basename(path);
 
-  Future<void> moveDirectory(Directory destDir,
-      {bool overwrite = false}) async {
+  Future<void> moveDirectory(
+    Directory destDir, {
+    bool overwrite = false,
+  }) async {
     try {
       renameSync(destDir.absolute.path);
     } catch (e) {
@@ -379,23 +389,28 @@ extension DirectoryExt on Directory {
   }
 
   /// Copied from FileUtils.java::doCopyDirectory in Apache Commons IO.
-  Future<void> copyDirectory(Directory destDir,
-      {bool overwrite = false}) async {
+  Future<void> copyDirectory(
+    Directory destDir, {
+    bool overwrite = false,
+  }) async {
     final source = normalize;
-    final srcFiles =
-        source.listSync(recursive: false).map((e) => e.path.toFile());
+    final srcFiles = source
+        .listSync(recursive: false)
+        .map((e) => e.path.toFile());
     destDir.createSync(recursive: true); // mkdirs
 
     for (var srcFile in srcFiles) {
       final destFile = destDir.resolve(srcFile.nameWithExtension);
       if (srcFile.isDirectory()) {
-        await srcFile
-            .toDirectory()
-            .copyDirectory(destFile.toDirectory(), overwrite: overwrite);
+        await srcFile.toDirectory().copyDirectory(
+          destFile.toDirectory(),
+          overwrite: overwrite,
+        );
       } else if (srcFile.isFile()) {
         if (destFile.existsSync() && !overwrite) {
           Fimber.d(
-              "Skipping file copy (file already exists): $srcFile to $destFile");
+            "Skipping file copy (file already exists): $srcFile to $destFile",
+          );
           continue;
         } else {
           await srcFile.copy(destFile.path);
@@ -430,7 +445,8 @@ extension DirectoryExt on Directory {
 
       try {
         Fimber.i(
-            "Moving existing destination folder from '${destDir.path}' to '${oldDest.path}'.");
+          "Moving existing destination folder from '${destDir.path}' to '${oldDest.path}'.",
+        );
         await destDir.moveDirectory(oldDest);
       } catch (e, st) {
         Fimber.w(
@@ -445,7 +461,8 @@ extension DirectoryExt on Directory {
     // Move the source folder to the destination folder.
     try {
       Fimber.i(
-          "Moving source folder from '${sourceDir.path}' to '${destDir.path}'.");
+        "Moving source folder from '${sourceDir.path}' to '${destDir.path}'.",
+      );
       await sourceDir.moveDirectory(destDir);
     } catch (e, st) {
       Fimber.w(
@@ -455,12 +472,16 @@ extension DirectoryExt on Directory {
       );
       if (!destDir.existsSync() && oldDest != null && oldDest.existsSync()) {
         Fimber.w(
-            "Rolling back directory change. Moving '${oldDest.path}' back to '${destDir.path}'.");
+          "Rolling back directory change. Moving '${oldDest.path}' back to '${destDir.path}'.",
+        );
         try {
           await oldDest.moveDirectory(destDir);
         } catch (e, st) {
-          Fimber.e("Failed to roll back directory change.",
-              ex: e, stacktrace: st);
+          Fimber.e(
+            "Failed to roll back directory change.",
+            ex: e,
+            stacktrace: st,
+          );
         }
       }
       return false;
@@ -471,9 +492,10 @@ extension DirectoryExt on Directory {
 }
 
 extension IterableExt<T> on Iterable<T> {
-  String joinToString(
-      {String separator = ", ",
-      required String Function(T element) transform}) {
+  String joinToString({
+    String separator = ", ",
+    required String Function(T element) transform,
+  }) {
     return map(transform).join(separator);
   }
 
@@ -516,35 +538,35 @@ extension IterableExt<T> on Iterable<T> {
     bool nullsLast = false,
   }) {
     if (isEmpty) return toList();
-    return (toList()
-          ..sort((a, b) {
-            final aValue = selector(a);
-            final bValue = selector(b);
-            if (aValue == null) {
-              return nullsLast ? 1 : -1;
-            } else if (bValue == null) {
-              return nullsLast ? -1 : 1;
-            }
-            return aValue.compareTo(bValue);
-          }))
+    return (toList()..sort((a, b) {
+          final aValue = selector(a);
+          final bValue = selector(b);
+          if (aValue == null) {
+            return nullsLast ? 1 : -1;
+          } else if (bValue == null) {
+            return nullsLast ? -1 : 1;
+          }
+          return aValue.compareTo(bValue);
+        }))
         .let((sorted) => isAscending ? sorted : sorted.reversed)
         .toList();
   }
 
-  List<T> sortedByDescending<R extends Comparable>(R? Function(T item) selector,
-      {bool nullsLast = true}) {
+  List<T> sortedByDescending<R extends Comparable>(
+    R? Function(T item) selector, {
+    bool nullsLast = true,
+  }) {
     if (isEmpty) return toList();
-    return toList()
-      ..sort((a, b) {
-        final aValue = selector(a);
-        final bValue = selector(b);
-        if (aValue == null) {
-          return nullsLast ? 1 : -1;
-        } else if (bValue == null) {
-          return nullsLast ? -1 : 1;
-        }
-        return bValue.compareTo(aValue);
-      });
+    return toList()..sort((a, b) {
+      final aValue = selector(a);
+      final bValue = selector(b);
+      if (aValue == null) {
+        return nullsLast ? 1 : -1;
+      } else if (bValue == null) {
+        return nullsLast ? -1 : 1;
+      }
+      return bValue.compareTo(aValue);
+    });
   }
 
   /// Returns a new list with all elements sorted according to descending
@@ -620,7 +642,8 @@ extension IterableExt<T> on Iterable<T> {
   }
 
   Future<Iterable<T>> whereAsync(
-      FutureOr<bool> Function(T element) test) async {
+    FutureOr<bool> Function(T element) test,
+  ) async {
     var result = <T>[];
     for (final element in this) {
       if (await test(element)) {
@@ -767,7 +790,8 @@ extension HexColor on Color {
   }
 
   /// Prefixes a hash sign if [leadingHashSign] is set to `true` (default is `true`).
-  String toHex({bool leadingHashSign = true}) => '${leadingHashSign ? '#' : ''}'
+  String toHex({bool leadingHashSign = true}) =>
+      '${leadingHashSign ? '#' : ''}'
       '${alpha.toRadixString(16).padLeft(2, '0')}'
       '${red.toRadixString(16).padLeft(2, '0')}'
       '${green.toRadixString(16).padLeft(2, '0')}'
@@ -833,8 +857,10 @@ extension EnumFromStringCaseInsensitive on Iterable {
   /// Use `enum.values.enumFromStringCaseInsensitive<String>("string")` to get the enum value.
   T? enumFromStringCaseInsensitive<T>(String value) {
     return firstWhere(
-      (e) => e.toString().split('.').last.toLowerCase() == value.toLowerCase(),
-      orElse: () => null,
-    ) as T?;
+          (e) =>
+              e.toString().split('.').last.toLowerCase() == value.toLowerCase(),
+          orElse: () => null,
+        )
+        as T?;
   }
 }

@@ -33,8 +33,9 @@ import '../models/version.dart';
 import '../themes/theme_manager.dart';
 import '../trios/settings/settings.dart';
 
-final modManager =
-    AsyncNotifierProvider<ModManagerNotifier, void>(ModManagerNotifier.new);
+final modManager = AsyncNotifierProvider<ModManagerNotifier, void>(
+  ModManagerNotifier.new,
+);
 
 class ModManagerNotifier extends AsyncNotifier<void> {
   @override
@@ -53,10 +54,11 @@ class ModManagerNotifier extends AsyncNotifier<void> {
 
     try {
       final installModsResult = await installModFromDisk(
-          modInstallSource,
-          ref.read(appSettings.select((s) => s.modsDir))!,
-          ref.read(AppState.mods), (modsBeingInstalled) {
-        return showDialog<List<ExtractedModInfo>>(
+        modInstallSource,
+        ref.read(appSettings.select((s) => s.modsDir))!,
+        ref.read(AppState.mods),
+        (modsBeingInstalled) {
+          return showDialog<List<ExtractedModInfo>>(
             context: context,
             builder: (context) {
               // Start by selecting to install variants that are not already installed.
@@ -67,191 +69,239 @@ class ModManagerNotifier extends AsyncNotifier<void> {
                       .distinctBy((it) => it.modInfo.smolId)
                       .toList();
 
-              return StatefulBuilder(builder: (context, setState) {
-                return AlertDialog(
-                  title: const Text("Install mods"),
-                  content: ConstrainedBox(
-                    constraints: const BoxConstraints(minWidth: 400),
-                    child: SingleChildScrollView(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          ...modsBeingInstalled.map((it) =>
-                              Builder(builder: (context) {
-                                final isSelected =
-                                    extractedFilesToInstall.contains(it.modInfo);
-                                final gameVersion = ref.watch(appSettings
-                                    .select((s) => s.lastStarsectorVersion));
-                      
-                                final themeData = Theme.of(context);
-                                final iconColor =
-                                    themeData.iconTheme.color?.withOpacity(0.7);
-                                const iconSize = 20.0;
-                                const subtitleSize = 14.0;
-                                return MovingTooltipWidget.framed(
-                                  tooltipWidget: ConstrainedBox(
-                                    constraints:
-                                        const BoxConstraints(maxWidth: 500),
-                                    child: Text(
+              return StatefulBuilder(
+                builder: (context, setState) {
+                  return AlertDialog(
+                    title: const Text("Install mods"),
+                    content: ConstrainedBox(
+                      constraints: const BoxConstraints(minWidth: 400),
+                      child: SingleChildScrollView(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            ...modsBeingInstalled.map(
+                              (it) => Builder(
+                                builder: (context) {
+                                  final isSelected = extractedFilesToInstall
+                                      .contains(it.modInfo);
+                                  final gameVersion = ref.watch(
+                                    appSettings.select(
+                                      (s) => s.lastStarsectorVersion,
+                                    ),
+                                  );
+
+                                  final themeData = Theme.of(context);
+                                  final iconColor = themeData.iconTheme.color
+                                      ?.withOpacity(0.7);
+                                  const iconSize = 20.0;
+                                  const subtitleSize = 14.0;
+                                  return MovingTooltipWidget.framed(
+                                    tooltipWidget: ConstrainedBox(
+                                      constraints: const BoxConstraints(
+                                        maxWidth: 500,
+                                      ),
+                                      child: Text(
                                         it.modInfo.modInfo
                                             .toMap()
                                             .prettyPrintJson(),
-                                        style: const TextStyle(fontSize: 12)),
-                                  ),
-                                  child: CheckboxListTile(
-                                    title: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        // Mod name
-                                        Text(
-                                          "${it.modInfo.modInfo.name}",
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.w600),
-                                        ),
-                      
-                                        // Version and game version
-                                        TextWithIcon(
-                                          leading: Icon(
-                                            Icons.info,
-                                            size: iconSize,
-                                            color: iconColor,
-                                          ),
-                                          widget: Text.rich(TextSpan(children: [
-                                            TextSpan(
-                                                text:
-                                                    "v${it.modInfo.modInfo.version}",
-                                                style: const TextStyle(
-                                                    fontSize: subtitleSize)),
-                                            // bullet separator
-                                            TextSpan(
-                                              text: " • ",
-                                              style: TextStyle(
-                                                  fontSize: subtitleSize,
-                                                  color: iconColor),
+                                        style: const TextStyle(fontSize: 12),
+                                      ),
+                                    ),
+                                    child: CheckboxListTile(
+                                      title: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          // Mod name
+                                          Text(
+                                            "${it.modInfo.modInfo.name}",
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w600,
                                             ),
-                                            TextSpan(
-                                                text: it
-                                                    .modInfo.modInfo.gameVersion,
-                                                style: TextStyle(
-                                                    fontSize: subtitleSize,
-                                                    color: (it.modInfo.modInfo
-                                                                .isCompatibleWithGame(
-                                                                    gameVersion)
-                                                                .getGameCompatibilityColor() ??
-                                                            themeData.colorScheme
-                                                                .onSurface)
-                                                        .withOpacity(0.9))),
-                                          ])),
-                                        ),
-                      
-                                        // File path
-                                        TextWithIcon(
+                                          ),
+
+                                          // Version and game version
+                                          TextWithIcon(
+                                            leading: Icon(
+                                              Icons.info,
+                                              size: iconSize,
+                                              color: iconColor,
+                                            ),
+                                            widget: Text.rich(
+                                              TextSpan(
+                                                children: [
+                                                  TextSpan(
+                                                    text:
+                                                        "v${it.modInfo.modInfo.version}",
+                                                    style: const TextStyle(
+                                                      fontSize: subtitleSize,
+                                                    ),
+                                                  ),
+                                                  // bullet separator
+                                                  TextSpan(
+                                                    text: " • ",
+                                                    style: TextStyle(
+                                                      fontSize: subtitleSize,
+                                                      color: iconColor,
+                                                    ),
+                                                  ),
+                                                  TextSpan(
+                                                    text:
+                                                        it
+                                                            .modInfo
+                                                            .modInfo
+                                                            .gameVersion,
+                                                    style: TextStyle(
+                                                      fontSize: subtitleSize,
+                                                      color: (it.modInfo.modInfo
+                                                                  .isCompatibleWithGame(
+                                                                    gameVersion,
+                                                                  )
+                                                                  .getGameCompatibilityColor() ??
+                                                              themeData
+                                                                  .colorScheme
+                                                                  .onSurface)
+                                                          .withOpacity(0.9),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+
+                                          // File path
+                                          TextWithIcon(
                                             leading: Icon(
                                               Icons.folder,
                                               size: iconSize,
                                               color: iconColor,
                                             ),
-                                            text: it.modInfo.extractedFile
-                                                .relativePath,
+                                            text:
+                                                it
+                                                    .modInfo
+                                                    .extractedFile
+                                                    .relativePath,
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
                                             style: const TextStyle(
                                               fontSize: subtitleSize,
-                                            )),
-                      
-                                        // Description
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                              top: 4, left: iconSize + 9),
-                                          child: TextWithIcon(
+                                            ),
+                                          ),
+
+                                          // Description
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                              top: 4,
+                                              left: iconSize + 9,
+                                            ),
+                                            child: TextWithIcon(
                                               // leading: SvgImageIcon(
                                               //   "assets/images/icon-text.svg",
                                               //   width: iconSize,
                                               //   color: iconColor,
                                               // ),
-                                              text: it.modInfo.modInfo.description
-                                                      ?.takeWhile((it) =>
-                                                          it != "\n" &&
-                                                          it != ".") ??
+                                              text:
+                                                  it.modInfo.modInfo.description
+                                                      ?.takeWhile(
+                                                        (it) =>
+                                                            it != "\n" &&
+                                                            it != ".",
+                                                      ) ??
                                                   "",
                                               maxLines: 2,
                                               overflow: TextOverflow.ellipsis,
                                               style: TextStyle(
-                                                  fontSize: 12,
-                                                  color: themeData
-                                                      .colorScheme.onSurface
-                                                      .withOpacity(0.9))),
-                                        ),
-                                        it.alreadyExistingVariant != null
-                                            ? Text(
+                                                fontSize: 12,
+                                                color: themeData
+                                                    .colorScheme
+                                                    .onSurface
+                                                    .withOpacity(0.9),
+                                              ),
+                                            ),
+                                          ),
+                                          it.alreadyExistingVariant != null
+                                              ? Text(
                                                 isSelected
                                                     ? "(existing mod will be replaced)"
                                                     : "(already exists)",
                                                 style: TextStyle(
-                                                    color: ThemeManager
-                                                        .vanillaWarningColor,
-                                                    fontSize: 12),
+                                                  color:
+                                                      ThemeManager
+                                                          .vanillaWarningColor,
+                                                  fontSize: 12,
+                                                ),
                                               )
-                                            : const SizedBox(),
-                                      ],
-                                    ),
-                                    value: isSelected,
-                                    onChanged: (value) {
-                                      if (value == false) {
-                                        setState(() {
-                                          extractedFilesToInstall
-                                              .remove(it.modInfo);
-                                        });
-                                      } else {
-                                        setState(() {
-                                          // Only allow user to select one mod with the same id and version.
-                                          extractedFilesToInstall.removeWhere(
+                                              : const SizedBox(),
+                                        ],
+                                      ),
+                                      value: isSelected,
+                                      onChanged: (value) {
+                                        if (value == false) {
+                                          setState(() {
+                                            extractedFilesToInstall.remove(
+                                              it.modInfo,
+                                            );
+                                          });
+                                        } else {
+                                          setState(() {
+                                            // Only allow user to select one mod with the same id and version.
+                                            extractedFilesToInstall.removeWhere(
                                               (existing) =>
                                                   existing.modInfo.smolId ==
-                                                  it.modInfo.modInfo.smolId);
-                                          extractedFilesToInstall.add(it.modInfo);
-                                        });
-                                      }
-                                    },
-                                  ),
-                                );
-                              })),
-                          const SizedBox(height: 16),
-                          if (modsBeingInstalled
-                                  .distinctBy((it) => it.modInfo.modInfo.smolId)
-                                  .length !=
-                              modsBeingInstalled.length)
-                            Text(
+                                                  it.modInfo.modInfo.smolId,
+                                            );
+                                            extractedFilesToInstall.add(
+                                              it.modInfo,
+                                            );
+                                          });
+                                        }
+                                      },
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            if (modsBeingInstalled
+                                    .distinctBy(
+                                      (it) => it.modInfo.modInfo.smolId,
+                                    )
+                                    .length !=
+                                modsBeingInstalled.length)
+                              Text(
                                 "Multiple mods have the same id and version. Only one of those may be selected.",
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .labelLarge
-                                    ?.copyWith(
-                                        color: ThemeManager.vanillaWarningColor))
-                        ],
+                                style: Theme.of(
+                                  context,
+                                ).textTheme.labelLarge?.copyWith(
+                                  color: ThemeManager.vanillaWarningColor,
+                                ),
+                              ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pop(<ExtractedModInfo>[]);
-                      },
-                      child: const Text("Cancel"),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pop(extractedFilesToInstall);
-                      },
-                      child: const Text("Install"),
-                    ),
-                  ],
-                );
-              });
-            });
-      });
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pop(<ExtractedModInfo>[]);
+                        },
+                        child: const Text("Cancel"),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pop(extractedFilesToInstall);
+                        },
+                        child: const Text("Install"),
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
+          );
+        },
+      );
 
       if (installModsResult.isEmpty) {
         return [];
@@ -264,14 +314,16 @@ class ModManagerNotifier extends AsyncNotifier<void> {
           ref.read(appSettings.select((s) => s.modUpdateBehavior)) ==
               ModUpdateBehavior.switchToNewVersionIfWasEnabled) {
         final mods = ref.read(AppState.mods);
-        final successfulUpdates =
-            installModsResult.where((it) => it.err == null);
+        final successfulUpdates = installModsResult.where(
+          (it) => it.err == null,
+        );
         final enabledVariants = <ModVariant>[];
 
         for (final installed in successfulUpdates) {
           // Find the variant post-install so we can activate it.
           final actualVariant = refreshedVariants.firstWhereOrNull(
-              (variant) => variant.smolId == installed.modInfo.smolId);
+            (variant) => variant.smolId == installed.modInfo.smolId,
+          );
           try {
             // If the mod existed and was enabled, switch to the newly downloaded version.
 
@@ -281,11 +333,14 @@ class ModManagerNotifier extends AsyncNotifier<void> {
               await ref
                   .read(AppState.modVariants.notifier)
                   .changeActiveModVariant(
-                      actualVariant.mod(mods)!, actualVariant);
+                    actualVariant.mod(mods)!,
+                    actualVariant,
+                  );
             }
           } catch (ex) {
             Fimber.w(
-                "Failed to activate mod ${installed.modInfo.smolId} after updating: $ex");
+              "Failed to activate mod ${installed.modInfo.smolId} after updating: $ex",
+            );
             // }
           }
         }
@@ -303,89 +358,93 @@ class ModManagerNotifier extends AsyncNotifier<void> {
       final List<InstallModResult> errors =
           installModsResult.where((it) => it.err != null).toList();
       if (errors.isNotEmpty) {
-        showAlertDialog(context, title: "Error",
-            widget: Builder(builder: (context) {
-          final theme = Theme.of(context);
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              RichText(
-                text: const TextSpan(
-                  children: [
-                    TextSpan(
-                      text:
-                          "One or more mods could not be extracted. Please install them manually.\n",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                    TextSpan(
-                      text: "Check the logs for more information.\n\n",
-                    ),
-                  ],
-                ),
-              ),
-              ...errors.map((failedMod) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
+        showAlertDialog(
+          context,
+          title: "Error",
+          widget: Builder(
+            builder: (context) {
+              final theme = Theme.of(context);
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  RichText(
+                    text: const TextSpan(
                       children: [
-                        const Icon(
-                          Icons.error_outline,
+                        TextSpan(
+                          text:
+                              "One or more mods could not be extracted. Please install them manually.\n",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
                         ),
-                        const SizedBox(width: 8),
-                        Text(
-                          "${failedMod.modInfo.name} ${failedMod.modInfo.version}",
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 16),
+                        TextSpan(
+                          text: "Check the logs for more information.\n\n",
                         ),
                       ],
                     ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      child: Row(
-                        children: [
-                          OutlinedButton(
-                            onPressed: () {
-                              OpenFilex.open(
-                                  failedMod.sourceFileEntity.parent.path);
-                            },
-                            child: const Text("Open folder"),
+                  ),
+                  ...errors.map((failedMod) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.error_outline),
+                            const SizedBox(width: 8),
+                            Text(
+                              "${failedMod.modInfo.name} ${failedMod.modInfo.version}",
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: Row(
+                            children: [
+                              OutlinedButton(
+                                onPressed: () {
+                                  OpenFilex.open(
+                                    failedMod.sourceFileEntity.parent.path,
+                                  );
+                                },
+                                child: const Text("Open folder"),
+                              ),
+                              const SizedBox(width: 8),
+                              OutlinedButton(
+                                onPressed: () {
+                                  OpenFilex.open(
+                                    failedMod.destinationFolder.path,
+                                  );
+                                },
+                                child: const Text("Open mods folder"),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 8),
-                          OutlinedButton(
-                            onPressed: () {
-                              OpenFilex.open(failedMod.destinationFolder.path);
-                            },
-                            child: const Text("Open mods folder"),
-                          ),
-                        ],
-                      ),
-                    ),
-                    SelectableText(
-                      "${failedMod.err}\n",
-                      style: theme.textTheme.bodySmall,
-                    ),
-                  ],
-                );
-              }),
-            ],
-          );
-        }));
+                        ),
+                        SelectableText(
+                          "${failedMod.err}\n",
+                          style: theme.textTheme.bodySmall,
+                        ),
+                      ],
+                    );
+                  }),
+                ],
+              );
+            },
+          ),
+        );
       }
 
       return installModsResult;
     } catch (e, st) {
       Fimber.w("Error installing mod from archive: $e", ex: e, stacktrace: st);
       if (!context.mounted) return [];
-      showAlertDialog(
-        context,
-        title: "Error installing mod",
-        content: "$e",
-      );
+      showAlertDialog(context, title: "Error installing mod", content: "$e");
       return [];
     }
   }
@@ -398,20 +457,19 @@ class ModManagerNotifier extends AsyncNotifier<void> {
   /// [destinationFolder] is the game's mods folder.
   /// [currentMods] is a list of all installed mods.
   Future<List<InstallModResult>> installModFromDisk(
-      ModInstallSource modInstallSource,
-      Directory destinationFolder,
-      List<Mod> currentMods,
-      Future<List<ExtractedModInfo>?> Function(
-              List<
-                      ({
-                        ExtractedModInfo modInfo,
-                        ModVariant? alreadyExistingVariant
-                      })>
-                  modInfosFound)
-          userInputNeededHandler,
-      {bool dryRun = false}) async {
+    ModInstallSource modInstallSource,
+    Directory destinationFolder,
+    List<Mod> currentMods,
+    Future<List<ExtractedModInfo>?> Function(
+      List<({ExtractedModInfo modInfo, ModVariant? alreadyExistingVariant})>
+      modInfosFound,
+    )
+    userInputNeededHandler, {
+    bool dryRun = false,
+  }) async {
     Fimber.i(
-        "Installing mod from ${modInstallSource.runtimeType}: ${modInstallSource.entity.path} to ${destinationFolder.path}");
+      "Installing mod from ${modInstallSource.runtimeType}: ${modInstallSource.entity.path} to ${destinationFolder.path}",
+    );
 
     if (!modInstallSource.entity.existsSync()) {
       throw Exception("File does not exist: ${modInstallSource.entity.path}");
@@ -420,58 +478,70 @@ class ModManagerNotifier extends AsyncNotifier<void> {
     final archive = ref.read(archiveProvider).requireValue;
 
     final archiveFileList = await modInstallSource.listFilePaths(archive);
-    final modInfoFiles = archiveFileList
-        .filter((it) =>
-            it.containsIgnoreCase(Constants.modInfoFileName) &&
-            !it
-                .toFile()
-                .nameWithExtension
-                // avoid doing toFile() twice for each file
-                .let((name) => name.startsWith(".") || name.startsWith("_")))
-        .toList();
+    final modInfoFiles =
+        archiveFileList
+            .filter(
+              (it) =>
+                  it.containsIgnoreCase(Constants.modInfoFileName) &&
+                  !it.toFile().nameWithExtension
+                  // avoid doing toFile() twice for each file
+                  .let((name) => name.startsWith(".") || name.startsWith("_")),
+            )
+            .toList();
 
     if (modInfoFiles.isEmpty) {
       throw Exception(
-          "No mod_info.json file found in source:\n${modInstallSource.entity.path}");
+        "No mod_info.json file found in source:\n${modInstallSource.entity.path}",
+      );
     }
 
     Fimber.i(
-        "Found mod_info.json(s) file in source: ${modInfoFiles.map((it) => it).toList()}");
+      "Found mod_info.json(s) file in source: ${modInfoFiles.map((it) => it).toList()}",
+    );
 
     final extractedModInfos = await modInstallSource.getActualFiles(
       modInfoFiles,
       archive,
     );
 
-    final List<ExtractedModInfo> modInfos =
-        await Future.wait(extractedModInfos.nonNulls.map((modInfoFile) async {
-      try {
-        ExtractedModInfo modInfo = (
-          extractedFile: modInfoFile,
-          modInfo: ModInfoMapper.fromJson(modInfoFile.extractedFile
-              .readAsStringSyncAllowingMalformed()
-              .fixJson())
-        );
-        return modInfo;
-      } catch (e, st) {
-        Fimber.e("Error reading mod_info.json files: $e",
-            ex: e, stacktrace: st);
-        return Future.error(
+    final List<ExtractedModInfo> modInfos = await Future.wait(
+      extractedModInfos.nonNulls.map((modInfoFile) async {
+        try {
+          ExtractedModInfo modInfo = (
+            extractedFile: modInfoFile,
+            modInfo: ModInfoMapper.fromJson(
+              modInfoFile.extractedFile
+                  .readAsStringSyncAllowingMalformed()
+                  .fixJson(),
+            ),
+          );
+          return modInfo;
+        } catch (e, st) {
+          Fimber.e(
+            "Error reading mod_info.json files: $e",
+            ex: e,
+            stacktrace: st,
+          );
+          return Future.error(
             Exception("Error parsing '${modInfoFile.extractedFile.path}':\n$e"),
-            st);
-      }
-    }));
+            st,
+          );
+        }
+      }),
+    );
 
     // Check for mods that are already installed.
     var allModVariants = currentMods.variants;
-    final alreadyPresentModVariants = modInfos
-        .map((it) => getModVariantForModInfo(it.modInfo, allModVariants))
-        .nonNulls
-        .toList();
+    final alreadyPresentModVariants =
+        modInfos
+            .map((it) => getModVariantForModInfo(it.modInfo, allModVariants))
+            .nonNulls
+            .toList();
 
     if (alreadyPresentModVariants.isNotEmpty) {
       Fimber.i(
-          "Mod already exists: ${alreadyPresentModVariants.map((it) => "${it.modInfo.id} ${it.modInfo.version}").toList()}");
+        "Mod already exists: ${alreadyPresentModVariants.map((it) => "${it.modInfo.id} ${it.modInfo.version}").toList()}",
+      );
     }
 
     // User can choose to install only some of the mods (if multiple were found).
@@ -481,11 +551,15 @@ class ModManagerNotifier extends AsyncNotifier<void> {
     if (alreadyPresentModVariants.isNotEmpty || modInfos.length > 1) {
       final userInput = await userInputNeededHandler(
         modInfos
-            .map((modInfo) => (
-                  modInfo: modInfo,
-                  alreadyExistingVariant: getModVariantForModInfo(
-                      modInfo.modInfo, alreadyPresentModVariants),
-                ))
+            .map(
+              (modInfo) => (
+                modInfo: modInfo,
+                alreadyExistingVariant: getModVariantForModInfo(
+                  modInfo.modInfo,
+                  alreadyPresentModVariants,
+                ),
+              ),
+            )
             .toList(),
       );
       Fimber.i("User has chosen to install mods: $userInput");
@@ -493,32 +567,42 @@ class ModManagerNotifier extends AsyncNotifier<void> {
         return [];
       }
       // Grab just the modInfos that the user wants to install.
-      modInfosToInstall = userInput
-          .map((selectedModInfoToInstall) => modInfos
-              .firstWhere((modInfo) => modInfo == selectedModInfoToInstall))
-          .toList();
+      modInfosToInstall =
+          userInput
+              .map(
+                (selectedModInfoToInstall) => modInfos.firstWhere(
+                  (modInfo) => modInfo == selectedModInfoToInstall,
+                ),
+              )
+              .toList();
 
       // Find any mods that are already installed.
-      final existingVariantsMatchingOneBeingInstalled = modInfosToInstall
-          .map((it) => getModVariantForModInfo(it.modInfo, allModVariants))
-          .nonNulls
-          .toList();
+      final existingVariantsMatchingOneBeingInstalled =
+          modInfosToInstall
+              .map((it) => getModVariantForModInfo(it.modInfo, allModVariants))
+              .nonNulls
+              .toList();
 
       // If the same mod variant is already installed, delete it first.
       for (var modToDelete in existingVariantsMatchingOneBeingInstalled) {
         if (dryRun) {
           Fimber.i(
-              "Dry run: Would delete mod folder ${modToDelete.modFolder} before reinstalling same variant.");
+            "Dry run: Would delete mod folder ${modToDelete.modFolder} before reinstalling same variant.",
+          );
           continue;
         }
 
         try {
           modToDelete.modFolder.moveToTrash(deleteIfFailed: true);
           Fimber.i(
-              "Deleted mod folder before reinstalling same variant: ${modToDelete.modFolder}");
+            "Deleted mod folder before reinstalling same variant: ${modToDelete.modFolder}",
+          );
         } catch (e, st) {
-          Fimber.e("Error deleting mod folder: ${modToDelete.modFolder}",
-              ex: e, stacktrace: st);
+          Fimber.e(
+            "Error deleting mod folder: ${modToDelete.modFolder}",
+            ex: e,
+            stacktrace: st,
+          );
           results.add((
             sourceFileEntity: modInstallSource.entity.toFile(),
             destinationFolder: destinationFolder,
@@ -529,33 +613,38 @@ class ModManagerNotifier extends AsyncNotifier<void> {
 
           // If there was an error deleting the mod folder, don't install the new version.
           modInfosToInstall.removeWhere(
-              (it) => it.modInfo.smolId == modToDelete.modInfo.smolId);
+            (it) => it.modInfo.smolId == modToDelete.modInfo.smolId,
+          );
         }
       }
     }
 
-    final shouldPersistHighestVersionFolderName =
-        ref.read(appSettings.select((s) => s.folderNamingSetting));
+    final shouldPersistHighestVersionFolderName = ref.read(
+      appSettings.select((s) => s.folderNamingSetting),
+    );
 
     // Start installing the mods one by one.
     for (final modInfoToInstall in modInfosToInstall) {
       try {
         String targetModFolderName = await setUpNewHighestModVersionFolder(
-            modInfoToInstall.modInfo,
-            modInfoToInstall.extractedFile.originalFile.parent.name,
-            shouldPersistHighestVersionFolderName,
-            currentMods,
-            destinationFolder,
-            dryRun: dryRun);
-        results.add(await installMod(
-          modInfoToInstall,
+          modInfoToInstall.modInfo,
+          modInfoToInstall.extractedFile.originalFile.parent.name,
+          shouldPersistHighestVersionFolderName,
           currentMods,
-          archiveFileList,
-          modInstallSource,
           destinationFolder,
-          targetModFolderName,
           dryRun: dryRun,
-        ));
+        );
+        results.add(
+          await installMod(
+            modInfoToInstall,
+            currentMods,
+            archiveFileList,
+            modInstallSource,
+            destinationFolder,
+            targetModFolderName,
+            dryRun: dryRun,
+          ),
+        );
       } catch (e, st) {
         Fimber.w("Error installing mod: $e", ex: e, stacktrace: st);
         continue;
@@ -586,56 +675,70 @@ class ModManagerNotifier extends AsyncNotifier<void> {
     Directory destinationFolder, {
     bool dryRun = false,
   }) async {
-    var targetModFolderName =
-        ModVariant.generateUniqueVariantFolderName(modInfo);
+    var targetModFolderName = ModVariant.generateUniqueVariantFolderName(
+      modInfo,
+    );
 
     // If we persist the highest version folder name, do some extra logic.
     if (folderSetting == FolderNamingSetting.doNotChangeNameForHighestVersion) {
-      final otherVariants = currentMods
-          .where((mod) => mod.id == modInfo.id)
-          .flatMap((mod) => mod.modVariants)
-          .toList();
+      final otherVariants =
+          currentMods
+              .where((mod) => mod.id == modInfo.id)
+              .flatMap((mod) => mod.modVariants)
+              .toList();
       if (otherVariants.isNotEmpty) {
         Fimber.i(
-            "Found other versions of ${modInfo.id}: ${otherVariants.map((it) => it.modInfo.version).toList()}");
+          "Found other versions of ${modInfo.id}: ${otherVariants.map((it) => it.modInfo.version).toList()}",
+        );
         // Check if the new version is higher than any other installed version.
-        var isHigherVersionThanAllExisting = !otherVariants.any(
-            (existingVersion) =>
-                (existingVersion.modInfo.version?.compareTo(modInfo.version) ??
-                    0) >=
-                0);
+        var isHigherVersionThanAllExisting =
+            !otherVariants.any(
+              (existingVersion) =>
+                  (existingVersion.modInfo.version?.compareTo(
+                        modInfo.version,
+                      ) ??
+                      0) >=
+                  0,
+            );
         if (isHigherVersionThanAllExisting) {
           Fimber.i("New version is higher than all existing versions.");
-          final highestVersion = otherVariants
-              .maxByOrNull((it) => it.modInfo.version ?? Version.zero())!;
+          final highestVersion =
+              otherVariants.maxByOrNull(
+                (it) => it.modInfo.version ?? Version.zero(),
+              )!;
           final highestVersionFolder = highestVersion.modFolder;
           final versionedNameForHighestVersion =
               ModVariant.generateUniqueVariantFolderName(
-                  highestVersion.modInfo);
+                highestVersion.modInfo,
+              );
 
           if (versionedNameForHighestVersion == highestVersionFolder.name) {
             Fimber.w(
-                "Wanted to avoid renaming highest version folder per user settings, but existing folder name contains mod version number, which is what we wanted to rename it to."
-                "\nExisting: ${highestVersionFolder.name}. Would rename to: $versionedNameForHighestVersion"
-                "\nUsing fallback name instead for new version ($fallbackFolderName) and leaving existing folder alone.");
+              "Wanted to avoid renaming highest version folder per user settings, but existing folder name contains mod version number, which is what we wanted to rename it to."
+              "\nExisting: ${highestVersionFolder.name}. Would rename to: $versionedNameForHighestVersion"
+              "\nUsing fallback name instead for new version ($fallbackFolderName) and leaving existing folder alone.",
+            );
             return fallbackFolderName;
           }
 
           // Move the contents of the highest version folder to the new, versioned folder.
           try {
             Fimber.i(
-                "Moving files from highest version folder ($highestVersionFolder) to new versioned folder ($versionedNameForHighestVersion).");
+              "Moving files from highest version folder ($highestVersionFolder) to new versioned folder ($versionedNameForHighestVersion).",
+            );
             for (final file in highestVersionFolder.listSync(recursive: true)) {
               if (file.isDirectory()) {
                 continue; // Directories will be created as needed.
               }
 
-              final relativePath =
-                  file.toFile().relativeTo(highestVersionFolder);
-              final newFilePath = destinationFolder
-                  .resolve(versionedNameForHighestVersion)
-                  .resolve(relativePath)
-                  .toFile();
+              final relativePath = file.toFile().relativeTo(
+                highestVersionFolder,
+              );
+              final newFilePath =
+                  destinationFolder
+                      .resolve(versionedNameForHighestVersion)
+                      .resolve(relativePath)
+                      .toFile();
 
               Fimber.d("Moving file: ${file.path} to $newFilePath");
               if (!dryRun) {
@@ -657,12 +760,14 @@ class ModManagerNotifier extends AsyncNotifier<void> {
       } else {
         final originalFolderInSource = fallbackFolderName;
         Fimber.i(
-            "No other versions of ${modInfo.id} found. Using original folder name: $originalFolderInSource.");
+          "No other versions of ${modInfo.id} found. Using original folder name: $originalFolderInSource.",
+        );
         targetModFolderName = originalFolderInSource;
       }
     } else if (folderSetting == FolderNamingSetting.doNotChangeNamesEver) {
       Fimber.i(
-          "Not changing folder names for highest version. Using original folder name: $fallbackFolderName.");
+        "Not changing folder names for highest version. Using original folder name: $fallbackFolderName.",
+      );
       targetModFolderName = fallbackFolderName;
     }
 
@@ -686,15 +791,20 @@ class ModManagerNotifier extends AsyncNotifier<void> {
       final modInfoParentFolder =
           modInfoToInstall.extractedFile.originalFile.parent;
       // TODO this is always empty because `sourceFileList` uses relative paths and `modInfoParentFolder` is an absolute path.
-      final modInfoSiblings = sourceFileList
-          .where((it) => it.toFile().parent.path == modInfoParentFolder.path)
-          .toList();
+      final modInfoSiblings =
+          sourceFileList
+              .where(
+                (it) => it.toFile().parent.path == modInfoParentFolder.path,
+              )
+              .toList();
       Fimber.d(
-          "Mod info (${modInfoToInstall.extractedFile.originalFile.path}) siblings: ${modInfoSiblings.map((it) => it).toList()}");
+        "Mod info (${modInfoToInstall.extractedFile.originalFile.path}) siblings: ${modInfoSiblings.map((it) => it).toList()}",
+      );
 
       if (dryRun) {
         Fimber.i(
-            "Dry run: Would extract mod ${modInfo.id} ${modInfo.version} to '$targetModFolderName'");
+          "Dry run: Would extract mod ${modInfo.id} ${modInfo.version} to '$targetModFolderName'",
+        );
         return (
           sourceFileEntity: modInstallSource.entity.toFile(),
           destinationFolder: destinationFolder,
@@ -711,10 +821,11 @@ class ModManagerNotifier extends AsyncNotifier<void> {
         destinationFolder.path,
         archive,
         fileFilter: (entry) => p.isWithin(modInfoParentFolder.path, entry),
-        pathTransform: (entry) => p.join(
-          targetModFolderName,
-          p.relative(entry, from: modInfoParentFolder.path),
-        ),
+        pathTransform:
+            (entry) => p.join(
+              targetModFolderName,
+              p.relative(entry, from: modInfoParentFolder.path),
+            ),
         onError: (e, st) {
           errors.add((e, st));
           Fimber.e("Error extracting file: $e", ex: e, stacktrace: st);
@@ -725,22 +836,22 @@ class ModManagerNotifier extends AsyncNotifier<void> {
       final newModFolder =
           destinationFolder.resolve(targetModFolderName).toDirectory();
       Fimber.i(
-          "Extracted ${extractedMod.length} files in mod ${modInfo.id} ${modInfo.version} to '$newModFolder'");
+        "Extracted ${extractedMod.length} files in mod ${modInfo.id} ${modInfo.version} to '$newModFolder'",
+      );
 
       // Ensure we don't end up with two enabled variants.
       if (existingMod != null && existingMod.hasEnabledVariant) {
         Fimber.i(
-            "There is already an enabled variant for ${modInfo.id}. Disabling newly installed variant ${modInfo.smolId} so both aren't enabled.");
+          "There is already an enabled variant for ${modInfo.id}. Disabling newly installed variant ${modInfo.smolId} so both aren't enabled.",
+        );
         ref
             .read(AppState.modVariants.notifier)
             .disableModInfoFile(newModFolder, modInfo.smolId);
       }
 
-      await cleanUpModVariantsBasedOnRetainSetting(
-        modInfo.id,
-        [modInfo.smolId],
-        dryRun: dryRun,
-      );
+      await cleanUpModVariantsBasedOnRetainSetting(modInfo.id, [
+        modInfo.smolId,
+      ], dryRun: dryRun);
 
       return (
         sourceFileEntity: modInstallSource.entity.toFile(),
@@ -761,12 +872,16 @@ class ModManagerNotifier extends AsyncNotifier<void> {
     }
   }
 
-  Future<List<ModInfo>> cleanUpAllModVariantsBasedOnRetainSetting(
-      {bool dryRun = false}) {
+  Future<List<ModInfo>> cleanUpAllModVariantsBasedOnRetainSetting({
+    bool dryRun = false,
+  }) {
     final mods = ref.read(AppState.mods);
-    return Future.wait(mods.map((mod) =>
-            cleanUpModVariantsBasedOnRetainSetting(mod.id, [], dryRun: dryRun)))
-        .then((it) => it.flattened.toList());
+    return Future.wait(
+      mods.map(
+        (mod) =>
+            cleanUpModVariantsBasedOnRetainSetting(mod.id, [], dryRun: dryRun),
+      ),
+    ).then((it) => it.flattened.toList());
   }
 
   Future<List<ModInfo>> cleanUpModVariantsBasedOnRetainSetting(
@@ -774,32 +889,39 @@ class ModManagerNotifier extends AsyncNotifier<void> {
     List<String> smolIdsToKeep, {
     bool dryRun = false,
   }) async {
-    final lastNVersionsSetting =
-        ref.read(appSettings.select((s) => s.keepLastNVersions));
+    final lastNVersionsSetting = ref.read(
+      appSettings.select((s) => s.keepLastNVersions),
+    );
     if (lastNVersionsSetting == null) {
       Fimber.i(
-          "keepLastNVersions setting is null (infinite). Not removing old mod variants.");
+        "keepLastNVersions setting is null (infinite). Not removing old mod variants.",
+      );
       return [];
     }
 
-    final mod =
-        ref.read(AppState.mods).firstWhereOrNull((it) => it.id == modId);
+    final mod = ref
+        .read(AppState.mods)
+        .firstWhereOrNull((it) => it.id == modId);
     if (mod == null) {
       Fimber.e("Mod not found: $modId");
       return [];
     }
 
-    final variantsSpecificallyKept = mod.modVariants
-        .where((it) => smolIdsToKeep.contains(it.modInfo.smolId))
-        .toList();
-    final theOtherVariants = mod.modVariants
-        .where((it) => !smolIdsToKeep.contains(it.modInfo.smolId))
-        .toList();
+    final variantsSpecificallyKept =
+        mod.modVariants
+            .where((it) => smolIdsToKeep.contains(it.modInfo.smolId))
+            .toList();
+    final theOtherVariants =
+        mod.modVariants
+            .where((it) => !smolIdsToKeep.contains(it.modInfo.smolId))
+            .toList();
 
-    final variantsToKeep = variantsSpecificallyKept
-      ..addAll(theOtherVariants
-          .sortedDescending()
-          .take(lastNVersionsSetting - variantsSpecificallyKept.length));
+    final variantsToKeep =
+        variantsSpecificallyKept..addAll(
+          theOtherVariants.sortedDescending().take(
+            lastNVersionsSetting - variantsSpecificallyKept.length,
+          ),
+        );
     final variantsToDelete =
         mod.modVariants.where((it) => !variantsToKeep.contains(it)).toList();
 
@@ -809,7 +931,8 @@ class ModManagerNotifier extends AsyncNotifier<void> {
     }
 
     Fimber.i(
-        "Removing ${variantsToDelete.length} old mod variants for $modId. Keeping ${variantsToKeep.length} variants.");
+      "Removing ${variantsToDelete.length} old mod variants for $modId. Keeping ${variantsToKeep.length} variants.",
+    );
     for (final variant in variantsToDelete) {
       if (dryRun) {
         Fimber.i("Dry run: Would delete mod folder ${variant.modFolder}");
@@ -819,8 +942,11 @@ class ModManagerNotifier extends AsyncNotifier<void> {
         variant.modFolder.moveToTrash(deleteIfFailed: true);
         Fimber.i("Deleted mod folder: ${variant.modFolder}");
       } catch (e, st) {
-        Fimber.e("Error deleting mod folder: ${variant.modFolder}",
-            ex: e, stacktrace: st);
+        Fimber.e(
+          "Error deleting mod folder: ${variant.modFolder}",
+          ex: e,
+          stacktrace: st,
+        );
       }
     }
 
@@ -828,8 +954,10 @@ class ModManagerNotifier extends AsyncNotifier<void> {
   }
 
   Future<void> forceChangeModGameVersion(
-      ModVariant modVariant, String newGameVersion,
-      {bool refreshModlistAfter = true}) async {
+    ModVariant modVariant,
+    String newGameVersion, {
+    bool refreshModlistAfter = true,
+  }) async {
     final modInfoFile = modVariant.modInfoFile;
     if (modInfoFile == null || !modInfoFile.existsSync()) {
       Fimber.e("Mod info file not found for ${modVariant.smolId}");
@@ -853,13 +981,14 @@ class ModManagerNotifier extends AsyncNotifier<void> {
 
 typedef ExtractedModInfo = ({SourcedFile extractedFile, ModInfo modInfo});
 
-typedef InstallModResult = ({
-  File sourceFileEntity,
-  Directory destinationFolder,
-  ModInfo modInfo,
-  Object? err,
-  StackTrace? st
-});
+typedef InstallModResult =
+    ({
+      File sourceFileEntity,
+      Directory destinationFolder,
+      ModInfo modInfo,
+      Object? err,
+      StackTrace? st,
+    });
 
 Future<List<ModVariant>> getModsVariantsInFolder(Directory modsFolder) async {
   final mods = <ModVariant?>[];
@@ -878,11 +1007,13 @@ Future<List<ModVariant>> getModsVariantsInFolder(Directory modsFolder) async {
       final modVariant = ModVariant(
         modInfo: modInfo,
         modFolder: modFolder,
-        versionCheckerInfo:
-            getVersionFile(modFolder)?.let((it) => getVersionCheckerInfo(it)),
-        hasNonBrickedModInfo: await modFolder
-            .resolve(Constants.unbrickedModInfoFileName)
-            .exists(),
+        versionCheckerInfo: getVersionFile(
+          modFolder,
+        )?.let((it) => getVersionCheckerInfo(it)),
+        hasNonBrickedModInfo:
+            await modFolder
+                .resolve(Constants.unbrickedModInfoFileName)
+                .exists(),
       );
 
       // Screenshot mode
@@ -901,11 +1032,13 @@ VersionCheckerInfo? getVersionCheckerInfo(File versionFile) {
   if (!versionFile.existsSync()) return null;
   try {
     var info = VersionCheckerInfoMapper.fromJson(
-        versionFile.readAsStringSync().fixJson());
+      versionFile.readAsStringSync().fixJson(),
+    );
 
     if (info.modThreadId != null) {
       info = info.copyWith(
-          modThreadId: info.modThreadId?.replaceAll(RegExp(r'[^0-9]'), ''));
+        modThreadId: info.modThreadId?.replaceAll(RegExp(r'[^0-9]'), ''),
+      );
 
       if (info.modThreadId!.trimStart("0").isEmpty) {
         info = info.copyWith(modThreadId: null);
@@ -915,7 +1048,8 @@ VersionCheckerInfo? getVersionCheckerInfo(File versionFile) {
     return info;
   } catch (e, st) {
     Fimber.e(
-        "Unable to read version checker json file in ${versionFile.absolute}. ($e)\n$st");
+      "Unable to read version checker json file in ${versionFile.absolute}. ($e)\n$st",
+    );
     return null;
   }
 }
@@ -925,35 +1059,45 @@ File? getVersionFile(Directory modFolder) {
   if (!csv.existsSync()) return null;
   try {
     return modFolder
-        .resolve((const CsvToListConverter(eol: "\n")
-                .convert(csv.readAsStringSync().replaceAll("\r\n", "\n"))[1][0]
-            as String))
+        .resolve(
+          (const CsvToListConverter(
+                eol: "\n",
+              ).convert(csv.readAsStringSync().replaceAll("\r\n", "\n"))[1][0]
+              as String),
+        )
         .toFile();
   } catch (e, st) {
     Fimber.e(
-        "Unable to read version checker csv file in ${modFolder.absolute}. ($e)\n$st");
+      "Unable to read version checker csv file in ${modFolder.absolute}. ($e)\n$st",
+    );
     return null;
   }
 }
 
 Future<ModInfo?> getModInfo(
-    Directory modFolder, StringBuffer progressText) async {
+  Directory modFolder,
+  StringBuffer progressText,
+) async {
   try {
-    final possibleModInfos = [
-      Constants.modInfoFileName,
-      ...Constants.modInfoFileDisabledNames
-    ].map((it) => modFolder.resolve(it).toFile()).toList();
+    final possibleModInfos =
+        [
+          Constants.modInfoFileName,
+          ...Constants.modInfoFileDisabledNames,
+        ].map((it) => modFolder.resolve(it).toFile()).toList();
 
-    return possibleModInfos
-        .firstWhereOrNull((file) => file.existsSync())
-        ?.let((modInfoFile) async {
-      var rawString =
-          await withFileHandleLimit(() => modInfoFile.readAsString());
+    return possibleModInfos.firstWhereOrNull((file) => file.existsSync())?.let((
+      modInfoFile,
+    ) async {
+      var rawString = await withFileHandleLimit(
+        () => modInfoFile.readAsString(),
+      );
       var jsonEncodedYaml = (rawString).replaceAll("\t", "  ").fixJson();
 
       // try {
       final model = ModInfo.fromJsonModel(
-          ModInfoJsonMapper.fromJson(jsonEncodedYaml), modFolder);
+        ModInfoJsonMapper.fromJson(jsonEncodedYaml),
+        modFolder,
+      );
 
       // Fimber.v(() =>"Using 0.9.5a mod_info.json format for ${modInfoFile.absolute}");
 
@@ -967,8 +1111,10 @@ Future<ModInfo?> getModInfo(
       // }
     });
   } catch (e, st) {
-    Fimber.v(() =>
-        "Unable to find or read 'mod_info.json' in ${modFolder.absolute}. ($e)\n$st");
+    Fimber.v(
+      () =>
+          "Unable to find or read 'mod_info.json' in ${modFolder.absolute}. ($e)\n$st",
+    );
     return null;
   }
 }
@@ -1024,10 +1170,14 @@ watchModsFolder(
   // Only run the mod folder check if the window is focused.
   // Checks every second to see if it's still in the background.
   while (!cancelController.isClosed) {
-    var delaySeconds = ref.read(AppState.isWindowFocused)
-        ? ref.read(
-            appSettings.select((value) => value.secondsBetweenModFolderChecks))
-        : 1;
+    var delaySeconds =
+        ref.read(AppState.isWindowFocused)
+            ? ref.read(
+              appSettings.select(
+                (value) => value.secondsBetweenModFolderChecks,
+              ),
+            )
+            : 1;
     await Future.delayed(Duration(seconds: delaySeconds));
     // TODO: re-add full manual scan, minus time-based diffing.
     // if (ref.read(AppState.isWindowFocused)) {
@@ -1136,29 +1286,39 @@ File? getModInfoFile(Directory modFolder) {
 // }
 
 void copyModListToClipboardFromIds(
-    Set<String>? modIds, List<Mod> allMods, BuildContext context) {
-  final enabledModsList = modIds
-      .orEmpty()
-      .map((id) => allMods.firstWhereOrNull((mod) => mod.id == id))
-      .nonNulls
-      .toList()
-      .sortedByName;
+  Set<String>? modIds,
+  List<Mod> allMods,
+  BuildContext context,
+) {
+  final enabledModsList =
+      modIds
+          .orEmpty()
+          .map((id) => allMods.firstWhereOrNull((mod) => mod.id == id))
+          .nonNulls
+          .toList()
+          .sortedByName;
   copyModListToClipboardFromMods(enabledModsList, context);
 }
 
 void copyModListToClipboardFromMods(List<Mod> mods, BuildContext context) {
-  Clipboard.setData(ClipboardData(
-      text: "Mods (${mods.length})\n${mods.map((mod) {
-    final variant = mod.findFirstEnabledOrHighestVersion;
-    return "${variant?.modInfo.name}  v${variant?.modInfo.version}  [${mod.id}]";
-  }).join('\n')}"));
-  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-    content: Text("Copied mod list to clipboard."),
-  ));
+  Clipboard.setData(
+    ClipboardData(
+      text:
+          "Mods (${mods.length})\n${mods.map((mod) {
+            final variant = mod.findFirstEnabledOrHighestVersion;
+            return "${variant?.modInfo.name}  v${variant?.modInfo.version}  [${mod.id}]";
+          }).join('\n')}",
+    ),
+  );
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(content: Text("Copied mod list to clipboard.")),
+  );
 }
 
 GameCompatibility compareGameVersions(
-    String? modGameVersion, String? gameVersion) {
+  String? modGameVersion,
+  String? gameVersion,
+) {
   // game is versioned like 0.95.1a-RC5 and 0.95.0a-RC5
   // they are fully compatible if the first three numbers are the same
   // they are partially compatible if the first two numbers are the same
@@ -1190,21 +1350,10 @@ ModDependencySatisfiedState getTopDependencySeverity(
   String? gameVersion, {
   required bool sortLeastSevere,
 }) {
-  final statePriority = sortLeastSevere
-      ? [
-          Satisfied,
-          Disabled,
-          VersionWarning,
-          VersionInvalid,
-          Missing,
-        ]
-      : [
-          Missing,
-          VersionInvalid,
-          VersionWarning,
-          Disabled,
-          Satisfied,
-        ];
+  final statePriority =
+      sortLeastSevere
+          ? [Satisfied, Disabled, VersionWarning, VersionInvalid, Missing]
+          : [Missing, VersionInvalid, VersionWarning, Disabled, Satisfied];
 
   // Add the most (or least) severe state(s) to a list.
   final mostOrLeastSevere = <ModDependencySatisfiedState>[];
@@ -1227,15 +1376,20 @@ ModDependencySatisfiedState getTopDependencySeverity(
       mostOrLeastSevere.firstOrNull is Disabled ||
       mostOrLeastSevere.firstOrNull is VersionWarning) {
     // Find the highest version that's compatible.
-    final possibilities = satisfyResults
-        .where(
-            (it) => it is Satisfied || it is Disabled || it is VersionWarning)
-        .prefer((it) =>
-            gameVersion != null &&
-            it.modVariant
-                    ?.isCompatibleWithGameVersion(gameVersion.toString()) !=
-                GameCompatibility.incompatible)
-        .toList();
+    final possibilities =
+        satisfyResults
+            .where(
+              (it) => it is Satisfied || it is Disabled || it is VersionWarning,
+            )
+            .prefer(
+              (it) =>
+                  gameVersion != null &&
+                  it.modVariant?.isCompatibleWithGameVersion(
+                        gameVersion.toString(),
+                      ) !=
+                      GameCompatibility.incompatible,
+            )
+            .toList();
 
     if (possibilities.isNotEmpty) {
       // Find the highest version.
@@ -1250,9 +1404,12 @@ ModDependencySatisfiedState getTopDependencySeverity(
 }
 
 ModVariant? getModVariantForModInfo(
-    ModInfo modInfo, List<ModVariant> modVariants) {
-  return modVariants
-      .firstWhereOrNull((it) => it.modInfo.smolId == modInfo.smolId);
+  ModInfo modInfo,
+  List<ModVariant> modVariants,
+) {
+  return modVariants.firstWhereOrNull(
+    (it) => it.modInfo.smolId == modInfo.smolId,
+  );
 }
 
 class VersionCheckComparison {
@@ -1261,15 +1418,21 @@ class VersionCheckComparison {
   late final int? comparisonInt;
 
   VersionCheckComparison(
-      this.variant, Map<String, RemoteVersionCheckResult> versionChecks) {
+    this.variant,
+    Map<String, RemoteVersionCheckResult> versionChecks,
+  ) {
     remoteVersionCheck = versionChecks[variant.smolId];
     comparisonInt = compareLocalAndRemoteVersions(
-        variant.versionCheckerInfo, remoteVersionCheck);
+      variant.versionCheckerInfo,
+      remoteVersionCheck,
+    );
   }
 
   VersionCheckComparison.specific(this.variant, this.remoteVersionCheck) {
     comparisonInt = compareLocalAndRemoteVersions(
-        variant.versionCheckerInfo, remoteVersionCheck);
+      variant.versionCheckerInfo,
+      remoteVersionCheck,
+    );
   }
 
   bool get hasUpdate => comparisonInt != null && comparisonInt! < 0;
@@ -1278,7 +1441,9 @@ class VersionCheckComparison {
   /// Returns 0 if the versions are the same, -1 if the remote version is newer, and 1 if the local version is newer.
   /// Usually, you should use [VersionCheckComparison] instead.
   static int? compareLocalAndRemoteVersions(
-      VersionCheckerInfo? local, RemoteVersionCheckResult? remote) {
+    VersionCheckerInfo? local,
+    RemoteVersionCheckResult? remote,
+  ) {
     if (local == null || remote == null) return null;
     return local.modVersion?.compareTo(remote.remoteVersion?.modVersion);
   }
@@ -1297,10 +1462,15 @@ class DependencyCheck {
       gameCompatibility != GameCompatibility.incompatible;
 
   ModDependencyCheckResult? mostSevereDependency(String? gameVersion) =>
-      getTopDependencySeverity(dependencyStates, gameVersion,
-              sortLeastSevere: false)
-          .let((it) => dependencyChecks
-              .firstWhereOrNull((dep) => dep.satisfiedAmount == it));
+      getTopDependencySeverity(
+        dependencyStates,
+        gameVersion,
+        sortLeastSevere: false,
+      ).let(
+        (it) => dependencyChecks.firstWhereOrNull(
+          (dep) => dep.satisfiedAmount == it,
+        ),
+      );
 
   @override
   String toString() =>

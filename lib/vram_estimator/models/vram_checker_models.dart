@@ -43,8 +43,11 @@ class ModImageTable {
     final heights = List<int>.filled(length, 0, growable: false);
     final widths = List<int>.filled(length, 0, growable: false);
     final bits = List<int>.filled(length, 0, growable: false);
-    final types =
-        List<ImageType>.filled(length, ImageType.texture, growable: false);
+    final types = List<ImageType>.filled(
+      length,
+      ImageType.texture,
+      growable: false,
+    );
     final gfxTypes = List<MapType?>.filled(length, null, growable: false);
 
     for (int i = 0; i < length; i++) {
@@ -66,8 +69,9 @@ class ModImageTable {
       // Optional graphics library type conversion.
       final gfxTypeStr = row['graphicsLibType'] as String?;
       if (gfxTypeStr != null) {
-        gfxTypes[i] =
-            MapType.values.firstWhereOrNull((m) => m.name == gfxTypeStr);
+        gfxTypes[i] = MapType.values.firstWhereOrNull(
+          (m) => m.name == gfxTypeStr,
+        );
       }
     }
 
@@ -122,7 +126,8 @@ class ModImageView {
   /// Computes the memory usage (in bytes) of the image.
   int get bytesUsed {
     const vanillaBackgroundTextSizeInBytes = 12582912.0;
-    final rawSize = (textureHeight *
+    final rawSize =
+        (textureHeight *
             textureWidth *
             (bitsInAllChannelsSum / 8) *
             multiplier) -
@@ -203,9 +208,10 @@ class VramMod with VramModMappable {
   VramMod(this.info, this.isEnabled, this.images);
 
   /// Computes the total bytes used by all images in the table.
-  late final int maxPossibleBytesForMod = Iterable<int>.generate(images.length)
-      .map((i) => ModImageView(i, images).bytesUsed)
-      .sum;
+  late final int maxPossibleBytesForMod =
+      Iterable<int>.generate(
+        images.length,
+      ).map((i) => ModImageView(i, images).bytesUsed).sum;
 
   final Map<GraphicsLibConfig?, int> _cache = {};
 
@@ -218,9 +224,10 @@ class VramMod with VramModMappable {
     int sum = 0;
     for (int i = 0; i < images.length; i++) {
       final view = ModImageView(i, images);
-      final isUsed = graphicsLibConfig == null
-          ? (view.graphicsLibType == null)
-          : view.isUsedBasedOnGraphicsLibConfig(graphicsLibConfig);
+      final isUsed =
+          graphicsLibConfig == null
+              ? (view.graphicsLibType == null)
+              : view.isUsedBasedOnGraphicsLibConfig(graphicsLibConfig);
       if (isUsed) {
         sum += view.bytesUsed;
       }

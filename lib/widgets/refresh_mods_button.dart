@@ -33,16 +33,18 @@ class _RefreshModsButtonState extends ConsumerState<RefreshModsButton> {
   @override
   Widget build(BuildContext context) {
     final modVariants = ref.watch(AppState.modVariants);
-    final isRefreshing = (modVariants.isLoading ||
-        ref.watch(AppState.versionCheckResults).isLoading ||
-        widget.isRefreshing);
+    final isRefreshing =
+        (modVariants.isLoading ||
+            ref.watch(AppState.versionCheckResults).isLoading ||
+            widget.isRefreshing);
 
     return Disable(
       isEnabled: !isRefreshing,
       child: MovingTooltipWidget.text(
-          message: "Refresh mods and recheck versions",
-          child: widget.iconOnly
-              ? IconButton(
+        message: "Refresh mods and recheck versions",
+        child:
+            widget.iconOnly
+                ? IconButton(
                   padding: const EdgeInsets.symmetric(horizontal: 4),
                   icon: _icon(isRefreshing),
                   onPressed: () {
@@ -50,53 +52,55 @@ class _RefreshModsButtonState extends ConsumerState<RefreshModsButton> {
                   },
                   constraints: const BoxConstraints(),
                 )
-              : widget.outlined
-                  ? SizedBox(
-                      height: 32,
-                      child: IconButton.outlined(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        icon: _icon(isRefreshing),
-                        onPressed: () {
-                          _refresh();
-                        },
-                        style: OutlinedButton.styleFrom(
-                          shape: const RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.all(Radius.circular(16))),
-                        ),
+                : widget.outlined
+                ? SizedBox(
+                  height: 32,
+                  child: IconButton.outlined(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    icon: _icon(isRefreshing),
+                    onPressed: () {
+                      _refresh();
+                    },
+                    style: OutlinedButton.styleFrom(
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(16)),
                       ),
-                    )
-                  : Padding(
-                      padding: widget.padding,
-                      child: OutlinedButton.icon(
-                        onPressed: () => _refresh(),
-                        label: Text(isRefreshing ? "Refreshing" : "Refresh"),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Theme.of(context)
-                              .colorScheme
-                              .onSurface
-                              .withOpacity(0.8),
-                          side: BorderSide(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurface
-                                .withOpacity(0.8),
-                          ),
-                        ),
-                        icon: _icon(isRefreshing),
+                    ),
+                  ),
+                )
+                : Padding(
+                  padding: widget.padding,
+                  child: OutlinedButton.icon(
+                    onPressed: () => _refresh(),
+                    label: Text(isRefreshing ? "Refreshing" : "Refresh"),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.8),
+                      side: BorderSide(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.8),
                       ),
-                    )),
+                    ),
+                    icon: _icon(isRefreshing),
+                  ),
+                ),
+      ),
     );
   }
 
   ConditionalWrap _icon(bool isRefreshing) {
     return ConditionalWrap(
-        condition: isRefreshing,
-        wrapper: (child) => Animate(
+      condition: isRefreshing,
+      wrapper:
+          (child) => Animate(
             onComplete: (c) => c.repeat(),
             effects: [RotateEffect(duration: 2000.ms)],
-            child: child),
-        child: const Icon(Icons.refresh));
+            child: child,
+          ),
+      child: const Icon(Icons.refresh),
+    );
   }
 
   void _refresh() {

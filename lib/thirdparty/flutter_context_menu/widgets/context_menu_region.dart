@@ -33,8 +33,9 @@ class ContextMenuRegion extends StatelessWidget {
   }
 
   void _showMenu(BuildContext context, Offset mousePosition) async {
-    final menu =
-        contextMenu.copyWith(position: contextMenu.position ?? mousePosition);
+    final menu = contextMenu.copyWith(
+      position: contextMenu.position ?? mousePosition,
+    );
     final value = await showContextMenu(context, contextMenu: menu);
     onItemSelected?.call(value);
   }

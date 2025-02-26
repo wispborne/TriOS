@@ -58,8 +58,9 @@ class PrettyPrinterCustom extends LogPrinter {
   /// For example:
   /// * dart:sdk_internal
   /// * package:logger/src/logger.dart
-  static final _browserStackTraceRegex =
-      RegExp(r'^(?:package:)?(dart:\S+|\S+)');
+  static final _browserStackTraceRegex = RegExp(
+    r'^(?:package:)?(dart:\S+|\S+)',
+  );
 
   static DateTime? _startTime;
 
@@ -318,7 +319,10 @@ class PrettyPrinterCustom extends LogPrinter {
   }
 
   String? formatStackTrace(
-      StackTrace? stackTrace, int? methodCount, int? stackTraceMaxLines) {
+    StackTrace? stackTrace,
+    int? methodCount,
+    int? stackTraceMaxLines,
+  ) {
     List<String> lines =
         (stackTrace == null ? "" : filterStacktrace(stackTrace))
             .toString()
@@ -336,9 +340,11 @@ class PrettyPrinterCustom extends LogPrinter {
     int stackTraceLength =
         (methodCount != null ? min(lines.length, methodCount) : lines.length);
 
-    for (int count = 0;
-        count < stackTraceLength && count < (stackTraceMaxLines ?? 1000);
-        count++) {
+    for (
+      int count = 0;
+      count < stackTraceLength && count < (stackTraceMaxLines ?? 1000);
+      count++
+    ) {
       var line = lines[count];
       if (count < stackTraceBeginIndex) {
         continue;

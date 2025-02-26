@@ -48,10 +48,11 @@ class DashedPainter extends CustomPainter {
       );
     }
 
-    Paint paint = Paint()
-      ..strokeWidth = strokeWidth
-      ..strokeCap = strokeCap
-      ..style = PaintingStyle.stroke;
+    Paint paint =
+        Paint()
+          ..strokeWidth = strokeWidth
+          ..strokeCap = strokeCap
+          ..style = PaintingStyle.stroke;
 
     if (gradient != null) {
       final rect = Offset.zero & size;
@@ -100,60 +101,32 @@ class DashedPainter extends CustomPainter {
     double h = size.height;
     double s = size.shortestSide;
 
-    return Path()
-      ..addRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromLTWH(
-            w > s ? (w - s) / 2 : 0,
-            h > s ? (h - s) / 2 : 0,
-            s,
-            s,
-          ),
-          Radius.circular(s / 2),
-        ),
-      );
+    return Path()..addRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(w > s ? (w - s) / 2 : 0, h > s ? (h - s) / 2 : 0, s, s),
+        Radius.circular(s / 2),
+      ),
+    );
   }
 
   /// Returns a Rounded Rectangular Path with [radius] of [size]
   Path _getRRectPath(Size size, Radius radius) {
-    return Path()
-      ..addRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromLTWH(
-            0,
-            0,
-            size.width,
-            size.height,
-          ),
-          radius,
-        ),
-      );
+    return Path()..addRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(0, 0, size.width, size.height),
+        radius,
+      ),
+    );
   }
 
   /// Returns a path of [size]
   Path _getRectPath(Size size) {
-    return Path()
-      ..addRect(
-        Rect.fromLTWH(
-          0,
-          0,
-          size.width,
-          size.height,
-        ),
-      );
+    return Path()..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
   }
 
   /// Return an oval path of [size]
   Path _getOvalPath(Size size) {
-    return Path()
-      ..addOval(
-        Rect.fromLTWH(
-          0,
-          0,
-          size.width,
-          size.height,
-        ),
-      );
+    return Path()..addOval(Rect.fromLTWH(0, 0, size.width, size.height));
   }
 
   @override

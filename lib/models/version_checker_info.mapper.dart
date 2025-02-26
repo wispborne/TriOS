@@ -22,28 +22,49 @@ class VersionCheckerInfoMapper extends ClassMapperBase<VersionCheckerInfo> {
   final String id = 'VersionCheckerInfo';
 
   static String? _$modName(VersionCheckerInfo v) => v.modName;
-  static const Field<VersionCheckerInfo, String> _f$modName =
-      Field('modName', _$modName, opt: true);
+  static const Field<VersionCheckerInfo, String> _f$modName = Field(
+    'modName',
+    _$modName,
+    opt: true,
+  );
   static String? _$masterVersionFile(VersionCheckerInfo v) =>
       v.masterVersionFile;
-  static const Field<VersionCheckerInfo, String> _f$masterVersionFile =
-      Field('masterVersionFile', _$masterVersionFile, opt: true);
+  static const Field<VersionCheckerInfo, String> _f$masterVersionFile = Field(
+    'masterVersionFile',
+    _$masterVersionFile,
+    opt: true,
+  );
   static String? _$modNexusId(VersionCheckerInfo v) => v.modNexusId;
-  static const Field<VersionCheckerInfo, String> _f$modNexusId =
-      Field('modNexusId', _$modNexusId, opt: true);
+  static const Field<VersionCheckerInfo, String> _f$modNexusId = Field(
+    'modNexusId',
+    _$modNexusId,
+    opt: true,
+  );
   static String? _$modThreadId(VersionCheckerInfo v) => v.modThreadId;
-  static const Field<VersionCheckerInfo, String> _f$modThreadId =
-      Field('modThreadId', _$modThreadId, opt: true);
+  static const Field<VersionCheckerInfo, String> _f$modThreadId = Field(
+    'modThreadId',
+    _$modThreadId,
+    opt: true,
+  );
   static VersionObject? _$modVersion(VersionCheckerInfo v) => v.modVersion;
-  static const Field<VersionCheckerInfo, VersionObject> _f$modVersion =
-      Field('modVersion', _$modVersion, opt: true);
+  static const Field<VersionCheckerInfo, VersionObject> _f$modVersion = Field(
+    'modVersion',
+    _$modVersion,
+    opt: true,
+  );
   static String? _$directDownloadURL(VersionCheckerInfo v) =>
       v.directDownloadURL;
-  static const Field<VersionCheckerInfo, String> _f$directDownloadURL =
-      Field('directDownloadURL', _$directDownloadURL, opt: true);
+  static const Field<VersionCheckerInfo, String> _f$directDownloadURL = Field(
+    'directDownloadURL',
+    _$directDownloadURL,
+    opt: true,
+  );
   static String? _$changelogURL(VersionCheckerInfo v) => v.changelogURL;
-  static const Field<VersionCheckerInfo, String> _f$changelogURL =
-      Field('changelogURL', _$changelogURL, opt: true);
+  static const Field<VersionCheckerInfo, String> _f$changelogURL = Field(
+    'changelogURL',
+    _$changelogURL,
+    opt: true,
+  );
 
   @override
   final MappableFields<VersionCheckerInfo> fields = const {
@@ -58,13 +79,14 @@ class VersionCheckerInfoMapper extends ClassMapperBase<VersionCheckerInfo> {
 
   static VersionCheckerInfo _instantiate(DecodingData data) {
     return VersionCheckerInfo(
-        modName: data.dec(_f$modName),
-        masterVersionFile: data.dec(_f$masterVersionFile),
-        modNexusId: data.dec(_f$modNexusId),
-        modThreadId: data.dec(_f$modThreadId),
-        modVersion: data.dec(_f$modVersion),
-        directDownloadURL: data.dec(_f$directDownloadURL),
-        changelogURL: data.dec(_f$changelogURL));
+      modName: data.dec(_f$modName),
+      masterVersionFile: data.dec(_f$masterVersionFile),
+      modNexusId: data.dec(_f$modNexusId),
+      modThreadId: data.dec(_f$modThreadId),
+      modVersion: data.dec(_f$modVersion),
+      directDownloadURL: data.dec(_f$directDownloadURL),
+      changelogURL: data.dec(_f$changelogURL),
+    );
   }
 
   @override
@@ -90,49 +112,65 @@ mixin VersionCheckerInfoMappable {
         .encodeMap<VersionCheckerInfo>(this as VersionCheckerInfo);
   }
 
-  VersionCheckerInfoCopyWith<VersionCheckerInfo, VersionCheckerInfo,
-          VersionCheckerInfo>
-      get copyWith => _VersionCheckerInfoCopyWithImpl(
-          this as VersionCheckerInfo, $identity, $identity);
+  VersionCheckerInfoCopyWith<
+    VersionCheckerInfo,
+    VersionCheckerInfo,
+    VersionCheckerInfo
+  >
+  get copyWith => _VersionCheckerInfoCopyWithImpl(
+    this as VersionCheckerInfo,
+    $identity,
+    $identity,
+  );
   @override
   String toString() {
-    return VersionCheckerInfoMapper.ensureInitialized()
-        .stringifyValue(this as VersionCheckerInfo);
+    return VersionCheckerInfoMapper.ensureInitialized().stringifyValue(
+      this as VersionCheckerInfo,
+    );
   }
 
   @override
   bool operator ==(Object other) {
-    return VersionCheckerInfoMapper.ensureInitialized()
-        .equalsValue(this as VersionCheckerInfo, other);
+    return VersionCheckerInfoMapper.ensureInitialized().equalsValue(
+      this as VersionCheckerInfo,
+      other,
+    );
   }
 
   @override
   int get hashCode {
-    return VersionCheckerInfoMapper.ensureInitialized()
-        .hashValue(this as VersionCheckerInfo);
+    return VersionCheckerInfoMapper.ensureInitialized().hashValue(
+      this as VersionCheckerInfo,
+    );
   }
 }
 
 extension VersionCheckerInfoValueCopy<$R, $Out>
     on ObjectCopyWith<$R, VersionCheckerInfo, $Out> {
   VersionCheckerInfoCopyWith<$R, VersionCheckerInfo, $Out>
-      get $asVersionCheckerInfo =>
-          $base.as((v, t, t2) => _VersionCheckerInfoCopyWithImpl(v, t, t2));
+  get $asVersionCheckerInfo =>
+      $base.as((v, t, t2) => _VersionCheckerInfoCopyWithImpl(v, t, t2));
 }
 
-abstract class VersionCheckerInfoCopyWith<$R, $In extends VersionCheckerInfo,
-    $Out> implements ClassCopyWith<$R, $In, $Out> {
+abstract class VersionCheckerInfoCopyWith<
+  $R,
+  $In extends VersionCheckerInfo,
+  $Out
+>
+    implements ClassCopyWith<$R, $In, $Out> {
   VersionObjectCopyWith<$R, VersionObject, VersionObject>? get modVersion;
-  $R call(
-      {String? modName,
-      String? masterVersionFile,
-      String? modNexusId,
-      String? modThreadId,
-      VersionObject? modVersion,
-      String? directDownloadURL,
-      String? changelogURL});
+  $R call({
+    String? modName,
+    String? masterVersionFile,
+    String? modNexusId,
+    String? modThreadId,
+    VersionObject? modVersion,
+    String? directDownloadURL,
+    String? changelogURL,
+  });
   VersionCheckerInfoCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
-      Then<$Out2, $R2> t);
+    Then<$Out2, $R2> t,
+  );
 }
 
 class _VersionCheckerInfoCopyWithImpl<$R, $Out>
@@ -147,37 +185,44 @@ class _VersionCheckerInfoCopyWithImpl<$R, $Out>
   VersionObjectCopyWith<$R, VersionObject, VersionObject>? get modVersion =>
       $value.modVersion?.copyWith.$chain((v) => call(modVersion: v));
   @override
-  $R call(
-          {Object? modName = $none,
-          Object? masterVersionFile = $none,
-          Object? modNexusId = $none,
-          Object? modThreadId = $none,
-          Object? modVersion = $none,
-          Object? directDownloadURL = $none,
-          Object? changelogURL = $none}) =>
-      $apply(FieldCopyWithData({
-        if (modName != $none) #modName: modName,
-        if (masterVersionFile != $none) #masterVersionFile: masterVersionFile,
-        if (modNexusId != $none) #modNexusId: modNexusId,
-        if (modThreadId != $none) #modThreadId: modThreadId,
-        if (modVersion != $none) #modVersion: modVersion,
-        if (directDownloadURL != $none) #directDownloadURL: directDownloadURL,
-        if (changelogURL != $none) #changelogURL: changelogURL
-      }));
+  $R call({
+    Object? modName = $none,
+    Object? masterVersionFile = $none,
+    Object? modNexusId = $none,
+    Object? modThreadId = $none,
+    Object? modVersion = $none,
+    Object? directDownloadURL = $none,
+    Object? changelogURL = $none,
+  }) => $apply(
+    FieldCopyWithData({
+      if (modName != $none) #modName: modName,
+      if (masterVersionFile != $none) #masterVersionFile: masterVersionFile,
+      if (modNexusId != $none) #modNexusId: modNexusId,
+      if (modThreadId != $none) #modThreadId: modThreadId,
+      if (modVersion != $none) #modVersion: modVersion,
+      if (directDownloadURL != $none) #directDownloadURL: directDownloadURL,
+      if (changelogURL != $none) #changelogURL: changelogURL,
+    }),
+  );
   @override
   VersionCheckerInfo $make(CopyWithData data) => VersionCheckerInfo(
-      modName: data.get(#modName, or: $value.modName),
-      masterVersionFile:
-          data.get(#masterVersionFile, or: $value.masterVersionFile),
-      modNexusId: data.get(#modNexusId, or: $value.modNexusId),
-      modThreadId: data.get(#modThreadId, or: $value.modThreadId),
-      modVersion: data.get(#modVersion, or: $value.modVersion),
-      directDownloadURL:
-          data.get(#directDownloadURL, or: $value.directDownloadURL),
-      changelogURL: data.get(#changelogURL, or: $value.changelogURL));
+    modName: data.get(#modName, or: $value.modName),
+    masterVersionFile: data.get(
+      #masterVersionFile,
+      or: $value.masterVersionFile,
+    ),
+    modNexusId: data.get(#modNexusId, or: $value.modNexusId),
+    modThreadId: data.get(#modThreadId, or: $value.modThreadId),
+    modVersion: data.get(#modVersion, or: $value.modVersion),
+    directDownloadURL: data.get(
+      #directDownloadURL,
+      or: $value.directDownloadURL,
+    ),
+    changelogURL: data.get(#changelogURL, or: $value.changelogURL),
+  );
 
   @override
   VersionCheckerInfoCopyWith<$R2, VersionCheckerInfo, $Out2> $chain<$R2, $Out2>(
-          Then<$Out2, $R2> t) =>
-      _VersionCheckerInfoCopyWithImpl($value, $cast, t);
+    Then<$Out2, $R2> t,
+  ) => _VersionCheckerInfoCopyWithImpl($value, $cast, t);
 }

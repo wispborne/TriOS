@@ -53,12 +53,14 @@ class EnabledModsNotifier extends AsyncNotifier<EnabledMods> {
 
       if (enabled) {
         enabledMods = enabledMods.copyWith(
-            enabledMods: enabledMods.enabledMods.toSet()..add(modId));
+          enabledMods: enabledMods.enabledMods.toSet()..add(modId),
+        );
         // enabledMods = enabledMods.copyWith()..enabledMods.add(modId);
       } else {
         enabledMods = enabledMods.copyWith(
-            enabledMods:
-                enabledMods.enabledMods.where((id) => id != modId).toSet());
+          enabledMods:
+              enabledMods.enabledMods.where((id) => id != modId).toSet(),
+        );
         // enabledMods = enabledMods.copyWith()..enabledMods.remove(modId);
       }
 
@@ -84,8 +86,9 @@ class EnabledModsNotifier extends AsyncNotifier<EnabledMods> {
   /// `allMods` is an optional parameter that filters out mods that don't exist.
   Future<void> refreshEnabledMods() async {
     fileLock.protect(() async {
-      final modsFolder =
-          ref.watch(appSettings.select((value) => value.modsDir));
+      final modsFolder = ref.watch(
+        appSettings.select((value) => value.modsDir),
+      );
 
       if (modsFolder == null || !modsFolder.existsSync()) {
         state = const AsyncValue.data(EnabledMods({}));
@@ -97,9 +100,10 @@ class EnabledModsNotifier extends AsyncNotifier<EnabledMods> {
             enabledModsFile.writeAsStringSync(const EnabledMods({}).toJson());
           } catch (e, stack) {
             Fimber.e(
-                "Failed to create enabled mods file at ${enabledModsFile.path}",
-                ex: e,
-                stacktrace: stack);
+              "Failed to create enabled mods file at ${enabledModsFile.path}",
+              ex: e,
+              stacktrace: stack,
+            );
           }
         }
 
@@ -120,8 +124,11 @@ class EnabledModsNotifier extends AsyncNotifier<EnabledMods> {
             refreshEnabledMods();
           });
 
-          pollFileForModification(enabledModsFile, _enabledModsWatcher!,
-              intervalMillis: 1500);
+          pollFileForModification(
+            enabledModsFile,
+            _enabledModsWatcher!,
+            intervalMillis: 1500,
+          );
         }
 
         var enabledMods = await _getEnabledMods(modsFolder);
@@ -131,9 +138,12 @@ class EnabledModsNotifier extends AsyncNotifier<EnabledMods> {
   }
 
   /// `allMods` will filter out mods that have been removed from the mods folder since the last time the enabled mods file was written.
-  Future<EnabledMods> _getEnabledMods(Directory modsFolder,
-      {List<Mod>? allMods}) async {
+  Future<EnabledMods> _getEnabledMods(
+    Directory modsFolder, {
+    List<Mod>? allMods,
+  }) async {
     return EnabledModsMapper.fromJson(
-        (await _getEnabledModsFile(modsFolder).readAsString()).fixJson());
+      (await _getEnabledModsFile(modsFolder).readAsString()).fixJson(),
+    );
   }
 }

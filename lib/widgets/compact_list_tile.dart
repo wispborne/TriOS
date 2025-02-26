@@ -31,12 +31,17 @@ class CompactListTile extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 8.0), // Very minimal padding
+        padding: const EdgeInsets.symmetric(
+          vertical: 2.0,
+          horizontal: 8.0,
+        ), // Very minimal padding
         child: Row(
           children: [
             if (leading != null)
               Padding(
-                padding: const EdgeInsets.only(right: 6.0), // Tighter space between leading and title
+                padding: const EdgeInsets.only(
+                  right: 6.0,
+                ), // Tighter space between leading and title
                 child: SizedBox(
                   width: 28, // Smaller leading icon size
                   height: 28, // Smaller leading icon size
@@ -53,7 +58,9 @@ class CompactListTile extends StatelessWidget {
                   ),
                   if (subtitle != null)
                     Padding(
-                      padding: const EdgeInsets.only(top: 1.0), // Minimal spacing between title and subtitle
+                      padding: const EdgeInsets.only(
+                        top: 1.0,
+                      ), // Minimal spacing between title and subtitle
                       child: DefaultTextStyle(
                         style: subtitleStyle!,
                         child: subtitle!,
@@ -64,7 +71,9 @@ class CompactListTile extends StatelessWidget {
             ),
             if (trailing != null)
               Padding(
-                padding: const EdgeInsets.only(left: 6.0), // Tighter space between title and trailing
+                padding: const EdgeInsets.only(
+                  left: 6.0,
+                ), // Tighter space between title and trailing
                 child: SizedBox(
                   width: 28, // Smaller trailing icon size
                   height: 28, // Smaller trailing icon size

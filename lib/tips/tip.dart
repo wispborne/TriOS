@@ -38,8 +38,11 @@ class ModTip with ModTipMappable {
   final List<ModVariant> variants;
   final File tipFile;
 
-  const ModTip(
-      {required this.tipObj, required this.variants, required this.tipFile});
+  const ModTip({
+    required this.tipObj,
+    required this.variants,
+    required this.tipFile,
+  });
 
   @override
   int get hashCode =>
@@ -61,10 +64,7 @@ class TipHooks extends MappingHook {
   dynamic beforeDecode(dynamic value) {
     // If the JSON item is just a string => short format (freq = "1", tip = string)
     if (value is String) {
-      return {
-        'freq': '1',
-        'tip': value,
-      };
+      return {'freq': '1', 'tip': value};
     }
 
     // If it's a map => e.g. {"freq":0.75,"tip":"some text"} or missing freq
@@ -72,10 +72,7 @@ class TipHooks extends MappingHook {
       final rawFreq = value['freq'];
       final freqStr = rawFreq == null ? '1' : rawFreq.toString();
       final tipStr = value['tip']?.toString();
-      return {
-        'freq': freqStr,
-        'tip': tipStr,
-      };
+      return {'freq': freqStr, 'tip': tipStr};
     }
 
     // Otherwise pass through

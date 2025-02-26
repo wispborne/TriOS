@@ -54,16 +54,7 @@ class PngFullDecoder extends BaseDecoder with SimpleTypeValidator {
 }
 
 class _PngHeaders with SimpleFileHeaderAndFooter {
-  static const sig = [
-    0x89,
-    0x50,
-    0x4E,
-    0x47,
-    0x0D,
-    0x0A,
-    0x1A,
-    0x0A,
-  ];
+  static const sig = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
 
   static const iend = [
     0x00,
@@ -77,7 +68,7 @@ class _PngHeaders with SimpleFileHeaderAndFooter {
     0xAE,
     0x42,
     0x60,
-    0x82
+    0x82,
   ];
 
   @override

@@ -29,7 +29,8 @@ class LogParser {
 
   Future<LogChips?> parse(String stream) async {
     configureLogging(
-        consoleOnly: true); // Needed because isolate has its own memory.
+      consoleOnly: true,
+    ); // Needed because isolate has its own memory.
     String? gameVersion;
     String? os;
     String? javaVersion;
@@ -42,8 +43,8 @@ class LogParser {
       final logLines = splitter.convert(stream);
 
       logLines
-          // .transform(splitter)
-          .forEachIndexed((index, line) {
+      // .transform(splitter)
+      .forEachIndexed((index, line) {
         Fimber.v(() => "Parsing line $index: $line");
 
         // Do `.contains` checks as a rough filter before doing a full regex match because contains is much faster.
@@ -91,8 +92,9 @@ class LogParser {
             // Only look max 10 lines up for perf (edit: removed).  `&& i > (index - 10)`
             // Edit: It didn't affect perf much, but it did cause some INFO lines to be missed.
             for (var i = (index - 1); i >= 0; i--) {
-              final isLineAlreadyAdded =
-                  errorBlock.any((err) => err.lineNumber == (i + 1));
+              final isLineAlreadyAdded = errorBlock.any(
+                (err) => err.lineNumber == (i + 1),
+              );
               if (isLineAlreadyAdded) {
                 break; // If the line's already added, it's an error line, so don't keep looking for an info.
               }
@@ -101,10 +103,14 @@ class LogParser {
                 // Create a new logline (which is the prev message on the thread).
                 // Try to parse it as a regular error line, and if that fails, make it an "unknown" one.
                 errorBlock.add(
-                    (GeneralErrorLogLine.tryCreate(i + 1, logLines[i])
-                          ?..isPreviousThreadLine = true) ??
-                        UnknownLogLine(i + 1, logLines[i],
-                            isPreviousThreadLine: true));
+                  (GeneralErrorLogLine.tryCreate(i + 1, logLines[i])
+                        ?..isPreviousThreadLine = true) ??
+                      UnknownLogLine(
+                        i + 1,
+                        logLines[i],
+                        isPreviousThreadLine: true,
+                      ),
+                );
                 break;
               }
             }
@@ -118,7 +124,10 @@ class LogParser {
         // If there's no "enabled mods" block that is found right after app launch, add mod names that are found elsewhere.
         if (modList.isEmpty && line.contains(poorMansModListContains)) {
           final modEntry = ModEntry(
-              poorMansModListRegex.firstMatch(line)?.group(1), null, null);
+            poorMansModListRegex.firstMatch(line)?.group(1),
+            null,
+            null,
+          );
           if (modEntry.modName != null &&
               poorMansModList.none((it) => it.modName == modEntry.modName)) {
             poorMansModList.add(modEntry);
@@ -135,7 +144,8 @@ class LogParser {
               errorBlock.add(err);
             } else {
               errorBlock.add(
-                  UnknownLogLine(index + 1, line, isPreviousThreadLine: false));
+                UnknownLogLine(index + 1, line, isPreviousThreadLine: false),
+              );
             }
           }
         }
@@ -143,28 +153,37 @@ class LogParser {
 
       // javaVersion ??= "(no java version in log)";
 
-      final userMods = modList.isNotEmpty
-          ? UserMods(UnmodifiableListView(modList), isPerfectList: true)
-          : UserMods(
-              UnmodifiableListView(
-                  poorMansModList..sortBy((element) => element.modName!)),
-              isPerfectList: false);
+      final userMods =
+          modList.isNotEmpty
+              ? UserMods(UnmodifiableListView(modList), isPerfectList: true)
+              : UserMods(
+                UnmodifiableListView(
+                  poorMansModList..sortBy((element) => element.modName!),
+                ),
+                isPerfectList: false,
+              );
 
       final elapsedMilliseconds = stopwatch.elapsedMilliseconds;
       final chips = LogChips(
-          null,
-          gameVersion,
-          os,
-          javaVersion,
-          userMods,
-          UnmodifiableListView(errorBlock),
-          elapsedMilliseconds,
-          DateTime.now());
+        null,
+        gameVersion,
+        os,
+        javaVersion,
+        userMods,
+        UnmodifiableListView(errorBlock),
+        elapsedMilliseconds,
+        DateTime.now(),
+      );
       Fimber.i("Parsing took $elapsedMilliseconds ms");
-      Fimber.v(() => chips.errorBlock
-          .map((element) => "\n${element.lineNumber}-${element.fullError}")
-          .toList()
-          .toString());
+      Fimber.v(
+        () =>
+            chips.errorBlock
+                .map(
+                  (element) => "\n${element.lineNumber}-${element.fullError}",
+                )
+                .toList()
+                .toString(),
+      );
       return chips;
     } catch (e, stacktrace) {
       Fimber.e("Parsing failed.", ex: e, stacktrace: stacktrace);

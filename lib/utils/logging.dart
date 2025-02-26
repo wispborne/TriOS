@@ -37,7 +37,8 @@ configureLogging({
 }) async {
   _allowSentryReporting = allowSentryReporting;
   Fimber.i(
-      "Crash reporting is ${allowSentryReporting ? "enabled" : "disabled"}.");
+    "Crash reporting is ${allowSentryReporting ? "enabled" : "disabled"}.",
+  );
   try {
     WidgetsFlutterBinding.ensureInitialized();
     logFolderName = (Constants.configDataFolderPath).absolute.path;
@@ -64,8 +65,11 @@ configureLogging({
 
     // Handle errors in Flutter.
     FlutterError.onError = (FlutterErrorDetails details) {
-      Fimber.e("Error :  ${details.exception}",
-          ex: details.exception, stacktrace: details.stack);
+      Fimber.e(
+        "Error :  ${details.exception}",
+        ex: details.exception,
+        stacktrace: details.stack,
+      );
       // if (details.stack != null) {
       //   Fimber.e();
       // }
@@ -118,23 +122,30 @@ configureLogging({
             logFolderName
                 ?.toDirectory()
                 .listSync()
-                .where((file) =>
-                    file is File &&
-                    file.extension == ".log" &&
-                    file.nameWithExtension != logFileName)
-                .forEach((FileSystemEntity file) =>
-                    file.moveToTrash(deleteIfFailed: true));
+                .where(
+                  (file) =>
+                      file is File &&
+                      file.extension == ".log" &&
+                      file.nameWithExtension != logFileName,
+                )
+                .forEach(
+                  (FileSystemEntity file) =>
+                      file.moveToTrash(deleteIfFailed: true),
+                );
           } catch (e) {
             Fimber.e("Error cleaning up old log files.", ex: e);
           }
         }
       } catch (e) {
-        Fimber.e("Error setting up file logging. Falling back to console only.",
-            ex: e);
+        Fimber.e(
+          "Error setting up file logging. Falling back to console only.",
+          ex: e,
+        );
         configureLogging(
-            printPlatformInfo: printPlatformInfo,
-            allowSentryReporting: allowSentryReporting,
-            consoleOnly: true);
+          printPlatformInfo: printPlatformInfo,
+          allowSentryReporting: allowSentryReporting,
+          consoleOnly: true,
+        );
         return;
       }
     }
@@ -169,7 +180,7 @@ void printLoggingStartedInfo() {
     //   return "Env vars:\n${env.entries.map((e) => "${e.key}: ${e.value}").join('\n')}";
     // },
     () => "Startup timestamp: ${DateTime.now().millisecondsSinceEpoch}",
-    () => "Memory (RSS): ${ProcessInfo.currentRss.bytesAsReadableMB()}"
+    () => "Memory (RSS): ${ProcessInfo.currentRss.bytesAsReadableMB()}",
   ]) {
     try {
       b.writeln(info());
@@ -185,8 +196,11 @@ class Fimber {
   /// Logs a verbose message.
   /// [message] is a function that returns the message to log.
   /// Verbose logging is expected to be super spammy, so don't build the message unless we're actually going to log it.
-  static void v(String Function() message,
-      {Object? ex, StackTrace? stacktrace}) {
+  static void v(
+    String Function() message, {
+    Object? ex,
+    StackTrace? stacktrace,
+  }) {
     if (!didLoggingInitializeSuccessfully) {
       print(message());
       return;
@@ -257,9 +271,13 @@ class Fimber {
     }
 
     if (_allowSentryReporting) {
-      Sentry.captureException(ex, stackTrace: stacktrace, withScope: (scope) {
-        scope.setContexts("extra-data", {"message": _scrubPath(message)});
-      });
+      Sentry.captureException(
+        ex,
+        stackTrace: stacktrace,
+        withScope: (scope) {
+          scope.setContexts("extra-data", {"message": _scrubPath(message)});
+        },
+      );
     }
   }
 }
@@ -267,10 +285,15 @@ class Fimber {
 final lastErrorMessagesAndTimestamps = <String, DateTime>{};
 
 SentryFlutterOptions configureSentry(
-    SentryFlutterOptions options, Settings? settings) {
+  SentryFlutterOptions options,
+  Settings? settings,
+) {
   // I'm lazy, please don't steal.
-  options.dsn = utf8.decode(base64Decode(
-      'aHR0cHM6Ly80OTAzMjgyNjBkZWVjMTYzMmQzODMzYTdiNTQzOWRkNUBvNDUwNzU3OTU3MzYwMDI1Ni5pbmdlc3QudXMuc2VudHJ5LmlvLzQ1MDc1Nzk1NzQ2NDg4MzI='));
+  options.dsn = utf8.decode(
+    base64Decode(
+      'aHR0cHM6Ly80OTAzMjgyNjBkZWVjMTYzMmQzODMzYTdiNTQzOWRkNUBvNDUwNzU3OTU3MzYwMDI1Ni5pbmdlc3QudXMuc2VudHJ5LmlvLzQ1MDc1Nzk1NzQ2NDg4MzI=',
+    ),
+  );
 
   final userId = getSentryUserId(settings);
 
@@ -305,44 +328,45 @@ SentryFlutterOptions configureSentry(
         if (lastTime != null &&
             DateTime.now().difference(lastTime).inMinutes < debounceMins) {
           Fimber.d(
-              "Suppressing error message already sent in the last $debounceMins mins: $message");
+            "Suppressing error message already sent in the last $debounceMins mins: $message",
+          );
           return null;
         }
       }
 
       lastErrorMessagesAndTimestamps[message] = DateTime.now();
       // Remove old error messages.
-      lastErrorMessagesAndTimestamps.removeWhere((key, value) =>
-          DateTime.now().difference(value).inMinutes > (debounceMins + 1));
+      lastErrorMessagesAndTimestamps.removeWhere(
+        (key, value) =>
+            DateTime.now().difference(value).inMinutes > (debounceMins + 1),
+      );
     }
 
     // Strip out PII as much as possible.
     return event
         .copyWith(
-      serverName: "",
-      release: Constants.version,
-      dist: Constants.version,
-      platform: Platform.operatingSystemVersion,
-      user: event.user?.copyWith(id: userId, ipAddress: "127.0.0.1"),
-      contexts: event.contexts.copyWith(
-        device: event.contexts.device?.copyWith(
-          name: "redacted",
-        ),
-        culture: event.contexts.culture?.copyWith(
-          timezone: "redacted",
-          locale: "redacted",
-        ),
-      ),
-    )
+          serverName: "",
+          release: Constants.version,
+          dist: Constants.version,
+          platform: Platform.operatingSystemVersion,
+          user: event.user?.copyWith(id: userId, ipAddress: "127.0.0.1"),
+          contexts: event.contexts.copyWith(
+            device: event.contexts.device?.copyWith(name: "redacted"),
+            culture: event.contexts.culture?.copyWith(
+              timezone: "redacted",
+              locale: "redacted",
+            ),
+          ),
+        )
         .let((event) {
-      try {
-        return _scrubSensitiveDataFromSentryEvent(event, hint: hint);
-      } catch (e) {
-        // Can't very well log it to Sentry if it's broken.
-        Fimber.i("Error scrubbing sensitive data.", ex: e);
-        return event;
-      }
-    });
+          try {
+            return _scrubSensitiveDataFromSentryEvent(event, hint: hint);
+          } catch (e) {
+            // Can't very well log it to Sentry if it's broken.
+            Fimber.i("Error scrubbing sensitive data.", ex: e);
+            return event;
+          }
+        });
   };
 
   return options;
@@ -383,29 +407,32 @@ String getSentryUserId(Settings? settings) {
 }
 
 /// ChatGPT generated.
-SentryEvent _scrubSensitiveDataFromSentryEvent(SentryEvent event,
-    {Hint? hint}) {
+SentryEvent _scrubSensitiveDataFromSentryEvent(
+  SentryEvent event, {
+  Hint? hint,
+}) {
   // Scrub sensitive data from the exception values
-  final exceptions = event.exceptions?.map((exception) {
-    if (exception.stackTrace != null) {
-      final frames = exception.stackTrace!.frames.map((frame) {
-        if (frame.fileName != null) {
-          frame = frame.copyWith(fileName: _scrubPath(frame.fileName!));
+  final exceptions =
+      event.exceptions?.map((exception) {
+        if (exception.stackTrace != null) {
+          final frames =
+              exception.stackTrace!.frames.map((frame) {
+                if (frame.fileName != null) {
+                  frame = frame.copyWith(fileName: _scrubPath(frame.fileName!));
+                }
+                return frame;
+              }).toList();
+          exception = exception.copyWith(
+            stackTrace: SentryStackTrace(frames: frames),
+          );
         }
-        return frame;
+        if (exception.value != null) {
+          exception = exception.copyWith(value: _scrubPath(exception.value!));
+        }
+        return exception;
       }).toList();
-      exception =
-          exception.copyWith(stackTrace: SentryStackTrace(frames: frames));
-    }
-    if (exception.value != null) {
-      exception = exception.copyWith(value: _scrubPath(exception.value!));
-    }
-    return exception;
-  }).toList();
 
-  return event.copyWith(
-    exceptions: exceptions,
-  );
+  return event.copyWith(exceptions: exceptions);
 }
 
 // Function to scrub usernames from the path

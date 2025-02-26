@@ -34,10 +34,10 @@ final class MenuDivider extends ContextMenuEntry {
     this.indent,
     this.endIndent,
     this.color,
-  })  : assert(height == null || height >= 0.0),
-        assert(thickness == null || thickness >= 0.0),
-        assert(indent == null || indent >= 0.0),
-        assert(endIndent == null || endIndent >= 0.0);
+  }) : assert(height == null || height >= 0.0),
+       assert(thickness == null || thickness >= 0.0),
+       assert(indent == null || indent >= 0.0),
+       assert(endIndent == null || endIndent >= 0.0);
 
   @override
   Widget builder(BuildContext context, ContextMenuState menuState) {

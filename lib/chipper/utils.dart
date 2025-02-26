@@ -16,18 +16,18 @@ extension ListExt<T> on List<T> {
   }
 }
 
-Future<void> showMyDialog(BuildContext context,
-    {Widget? title, List<Widget>? body}) async {
+Future<void> showMyDialog(
+  BuildContext context, {
+  Widget? title,
+  List<Widget>? body,
+}) async {
   return showDialog<void>(
     context: context,
     builder: (BuildContext context) {
       return AlertDialog(
         title: title,
         content: SingleChildScrollView(
-          child: SelectionArea(
-              child: ListBody(
-            children: body ?? [],
-          )),
+          child: SelectionArea(child: ListBody(children: body ?? [])),
         ),
         actions: <Widget>[
           TextButton(
@@ -42,8 +42,12 @@ Future<void> showMyDialog(BuildContext context,
   );
 }
 
-Future<void> showAlertDialog(BuildContext context,
-    {String? title, String? content, Widget? widget}) async {
+Future<void> showAlertDialog(
+  BuildContext context, {
+  String? title,
+  String? content,
+  Widget? widget,
+}) async {
   assert(content != null || widget != null);
   return showDialog<void>(
     context: context,
@@ -52,16 +56,18 @@ Future<void> showAlertDialog(BuildContext context,
         title: title != null ? Text(title) : null,
         content: SingleChildScrollView(
           child: SelectionArea(
-              child: ListBody(
-            children: [
-              widget ?? Linkify(
-                text: content ?? "",
-                onOpen: (link) {
-                  OpenFilex.open(link.url);
-                },
-              )
-            ],
-          )),
+            child: ListBody(
+              children: [
+                widget ??
+                    Linkify(
+                      text: content ?? "",
+                      onOpen: (link) {
+                        OpenFilex.open(link.url);
+                      },
+                    ),
+              ],
+            ),
+          ),
         ),
         actions: <Widget>[
           TextButton(

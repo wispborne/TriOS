@@ -8,19 +8,20 @@ import 'download_status.dart';
 
 class DownloadTask {
   final DownloadRequest request;
-  final ValueNotifier<DownloadStatus> status =
-      ValueNotifier(DownloadStatus.queued);
-  final ValueNotifier<DownloadedAmount> downloaded =
-      ValueNotifier(DownloadedAmount(0, 0));
+  final ValueNotifier<DownloadStatus> status = ValueNotifier(
+    DownloadStatus.queued,
+  );
+  final ValueNotifier<DownloadedAmount> downloaded = ValueNotifier(
+    DownloadedAmount(0, 0),
+  );
   final ValueNotifier<File?> file = ValueNotifier(null);
   Object? error;
 
-  DownloadTask(
-    this.request,
-  );
+  DownloadTask(this.request);
 
-  Future<DownloadStatus> whenDownloadComplete(
-      {Duration timeout = const Duration(hours: 2)}) async {
+  Future<DownloadStatus> whenDownloadComplete({
+    Duration timeout = const Duration(hours: 2),
+  }) async {
     var completer = Completer<DownloadStatus>();
 
     if (status.value.isCompleted) {

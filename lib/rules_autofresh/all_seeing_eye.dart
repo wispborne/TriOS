@@ -65,16 +65,14 @@ class FadingEyeState extends State<FadingEye>
   Widget build(BuildContext context) {
     return widget.shouldAnimate && _controller != null
         ? FadeTransition(
-            opacity: _animation,
-            child: Icon(Icons.visibility,
-                size: widget.size,
-                color: widget.color),
-          )
+          opacity: _animation,
+          child: Icon(Icons.visibility, size: widget.size, color: widget.color),
+        )
         : Icon(
-            Icons.visibility,
-            size: widget.size,
-            // set color to null if we're doing animations
-            color: widget.color,
-          );
+          Icons.visibility,
+          size: widget.size,
+          // set color to null if we're doing animations
+          color: widget.color,
+        );
   }
 }

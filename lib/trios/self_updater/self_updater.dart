@@ -25,8 +25,11 @@ class SelfUpdateInfo {
   final String url;
   final String releaseNote;
 
-  SelfUpdateInfo(
-      {required this.version, required this.url, required this.releaseNote});
+  SelfUpdateInfo({
+    required this.version,
+    required this.url,
+    required this.releaseNote,
+  });
 
   factory SelfUpdateInfo.fromJson(Map<String, dynamic> json) {
     return SelfUpdateInfo(
@@ -50,8 +53,10 @@ class SelfUpdater extends AsyncNotifier<TriOSDownloadProgress?> {
     return null;
   }
 
-  static bool hasNewVersion(Release latestRelease,
-      {String currentVersion = Constants.version}) {
+  static bool hasNewVersion(
+    Release latestRelease, {
+    String currentVersion = Constants.version,
+  }) {
     try {
       final latestVersion = Version.parse(latestRelease.tagName);
       return Version.parse(currentVersion).compareTo(latestVersion) < 0;
@@ -67,10 +72,7 @@ class SelfUpdater extends AsyncNotifier<TriOSDownloadProgress?> {
         Directory.systemTemp.createTempSync('trios_update').absolute.normalize;
 
     // Download the release asset.
-    final downloadFile = await downloadRelease(
-      release,
-      updateWorkingDir,
-    );
+    final downloadFile = await downloadRelease(release, updateWorkingDir);
 
     Fimber.i('Downloaded update file: ${downloadFile.path}');
     final extractedDir = updateWorkingDir;
@@ -84,7 +86,8 @@ class SelfUpdater extends AsyncNotifier<TriOSDownloadProgress?> {
       downloadFile
           .deleteSync(); // Clean up the .zip file, we don't want to end up moving it in as part of the update.
       Fimber.i(
-          'Extracted ${extractedFiles.length} files in the ${release.tagName} release to ${extractedDir.path}');
+        'Extracted ${extractedFiles.length} files in the ${release.tagName} release to ${extractedDir.path}',
+      );
       // If there's a subfolder, use the contents of the subfolder as the files to update (added in 0.0.48).
       final directoryWithNewVersionFiles =
           updateWorkingDir.listSync().length == 1
@@ -127,7 +130,8 @@ class SelfUpdater extends AsyncNotifier<TriOSDownloadProgress?> {
       if (exitSelfAfter) {
         await Future.delayed(const Duration(milliseconds: 500));
         Fimber.i(
-            'Exiting old version of self, new should have already started.');
+          'Exiting old version of self, new should have already started.',
+        );
         exit(0);
       }
     }
@@ -136,21 +140,30 @@ class SelfUpdater extends AsyncNotifier<TriOSDownloadProgress?> {
   /// Replaces all files in the current working directory with files that have the same relative path
   /// in the given source directory.
   Future<void> replaceSelf(Directory sourceDirectory) async {
-    final allNewFiles =
-        sourceDirectory.listSync(recursive: true, followLinks: true);
-    final currentDir = currentPlatform != TargetPlatform.macOS
-        ? currentDirectory
-        : currentMacOSAppPath;
+    final allNewFiles = sourceDirectory.listSync(
+      recursive: true,
+      followLinks: true,
+    );
+    final currentDir =
+        currentPlatform != TargetPlatform.macOS
+            ? currentDirectory
+            : currentMacOSAppPath;
     final jobs = <Future<void>>[];
 
     for (final newFile in allNewFiles) {
       if (newFile.isFile()) {
         final newFileRelative =
             newFile.toFile().relativeTo(sourceDirectory).toFile();
-        final fileToReplace =
-            File(p.join(currentDir.path, newFileRelative.path));
-        jobs.add(updateLockedFileInPlace(
-            newFile.toFile(), fileToReplace, oldFileSuffix));
+        final fileToReplace = File(
+          p.join(currentDir.path, newFileRelative.path),
+        );
+        jobs.add(
+          updateLockedFileInPlace(
+            newFile.toFile(),
+            fileToReplace,
+            oldFileSuffix,
+          ),
+        );
       }
     }
 
@@ -192,14 +205,17 @@ class SelfUpdater extends AsyncNotifier<TriOSDownloadProgress?> {
         sourceExt == ".so") {
       // Can't rename .so files on Windows, but we can replace their content.
       Fimber.d(
-          "Replacing contents of .so file: ${destFile.path} with that of ${sourceFile.path}");
+        "Replacing contents of .so file: ${destFile.path} with that of ${sourceFile.path}",
+      );
       await destFile.writeAsBytes(await sourceFile.readAsBytes());
     } else {
       // Can't replace content of other locked files, but can rename them.
       // Can always rename on Linux.
       var oldFile = File(destFile.path + oldFileSuffix);
-      Fimber.d("Renaming locked file: ${destFile.path} to ${oldFile.path}, "
-          "and copying new file: ${sourceFile.path} to ${destFile.path}");
+      Fimber.d(
+        "Renaming locked file: ${destFile.path} to ${oldFile.path}, "
+        "and copying new file: ${sourceFile.path} to ${destFile.path}",
+      );
       if (oldFile.existsSync()) {
         if (await oldFile.isWritable()) {
           Fimber.d("Old file already exists, deleting: ${oldFile.path}");
@@ -213,10 +229,11 @@ class SelfUpdater extends AsyncNotifier<TriOSDownloadProgress?> {
   }
 
   static Future<void> cleanUpOldUpdateFiles() async {
-    final filesInCurrentDir = currentDirectory
-        .listSync(recursive: true)
-        .where((element) => element.path.endsWith(oldFileSuffix))
-        .toList();
+    final filesInCurrentDir =
+        currentDirectory
+            .listSync(recursive: true)
+            .where((element) => element.path.endsWith(oldFileSuffix))
+            .toList();
     for (final file in filesInCurrentDir) {
       if (file is File) {
         try {
@@ -233,28 +250,47 @@ class SelfUpdater extends AsyncNotifier<TriOSDownloadProgress?> {
   Future<void> runSelfUpdateScript(File updateScriptFile) async {
     // Run the update script.
     // Do NOT wait for it. We want to exit immediately after starting the update script.
-    runZonedGuarded(() async {
-      if (currentPlatform == TargetPlatform.linux) {
-        Fimber.i("Making ${updateScriptFile.path} executable first.");
-        Process.runSync(
-            'chmod', ['+x', updateScriptFile.absolute.normalize.path],
-            runInShell: true);
-        Fimber.i(
-            'Running update script: ${updateScriptFile.absolute.path} (exists? ${updateScriptFile.existsSync()})');
-        await OpenFilex.open(updateScriptFile.parent.path,
-            linuxDesktopName: getLinuxDesktopEnvironment().lowerCase());
-        await Process.start(updateScriptFile.absolute.normalize.path, ["&"],
-            runInShell: true, mode: ProcessStartMode.detached);
-      } else {
-        Fimber.i(
-            'Running update script: ${updateScriptFile.absolute.path} (exists? ${updateScriptFile.existsSync()})');
-        await Process.start('', [updateScriptFile.absolute.normalize.path, "&"],
-            runInShell: true, mode: ProcessStartMode.detached);
-      }
-    }, (error, stackTrace) {
-      Fimber.w('Error running update script.',
-          ex: error, stacktrace: stackTrace);
-    });
+    runZonedGuarded(
+      () async {
+        if (currentPlatform == TargetPlatform.linux) {
+          Fimber.i("Making ${updateScriptFile.path} executable first.");
+          Process.runSync('chmod', [
+            '+x',
+            updateScriptFile.absolute.normalize.path,
+          ], runInShell: true);
+          Fimber.i(
+            'Running update script: ${updateScriptFile.absolute.path} (exists? ${updateScriptFile.existsSync()})',
+          );
+          await OpenFilex.open(
+            updateScriptFile.parent.path,
+            linuxDesktopName: getLinuxDesktopEnvironment().lowerCase(),
+          );
+          await Process.start(
+            updateScriptFile.absolute.normalize.path,
+            ["&"],
+            runInShell: true,
+            mode: ProcessStartMode.detached,
+          );
+        } else {
+          Fimber.i(
+            'Running update script: ${updateScriptFile.absolute.path} (exists? ${updateScriptFile.existsSync()})',
+          );
+          await Process.start(
+            '',
+            [updateScriptFile.absolute.normalize.path, "&"],
+            runInShell: true,
+            mode: ProcessStartMode.detached,
+          );
+        }
+      },
+      (error, stackTrace) {
+        Fimber.w(
+          'Error running update script.',
+          ex: error,
+          stacktrace: stackTrace,
+        );
+      },
+    );
   }
 
   String getLinuxDesktopEnvironment() {
@@ -275,19 +311,24 @@ class SelfUpdater extends AsyncNotifier<TriOSDownloadProgress?> {
   /// Fetches the latest release from the GitHub API.
   /// If [includePrereleases] is true, it will include prereleases. If null, uses the user's setting.
   Future<Release?> getLatestRelease({bool? includePrereleases}) async {
-    final includePrereleasesToUse = includePrereleases ??
+    final includePrereleasesToUse =
+        includePrereleases ??
         ref.read(appSettings.select((s) => s.updateToPrereleases)) ??
         false;
     return await NetworkUtils.getRelease(
-        Uri.parse(Constants.githubLatestRelease),
-        includePrereleases: includePrereleasesToUse);
+      Uri.parse(Constants.githubLatestRelease),
+      includePrereleases: includePrereleasesToUse,
+    );
   }
 
   /// Downloads the release asset for the given platform.
   /// If [platform] is not provided, it will use the current platform.
   /// Returns the path of the downloaded file.
-  Future<File> downloadRelease(Release release, Directory destDir,
-      {String? platform}) async {
+  Future<File> downloadRelease(
+    Release release,
+    Directory destDir, {
+    String? platform,
+  }) async {
     final downloadLink =
         getAssetForPlatform(release, platform: platform)?.browserDownloadUrl;
 
@@ -297,13 +338,24 @@ class SelfUpdater extends AsyncNotifier<TriOSDownloadProgress?> {
 
     Fimber.i("Download link: $downloadLink");
 
-    final downloadResult = await downloadFile(downloadLink, destDir, null,
-        onProgress: (bytesReceived, contentLength) {
-      Fimber.v(() =>
-          "Downloaded: ${bytesReceived.bytesAsReadableMB()} / ${contentLength.bytesAsReadableMB()}");
-      state = AsyncData(TriOSDownloadProgress(bytesReceived, contentLength,
-          isIndeterminate: false));
-    });
+    final downloadResult = await downloadFile(
+      downloadLink,
+      destDir,
+      null,
+      onProgress: (bytesReceived, contentLength) {
+        Fimber.v(
+          () =>
+              "Downloaded: ${bytesReceived.bytesAsReadableMB()} / ${contentLength.bytesAsReadableMB()}",
+        );
+        state = AsyncData(
+          TriOSDownloadProgress(
+            bytesReceived,
+            contentLength,
+            isIndeterminate: false,
+          ),
+        );
+      },
+    );
 
     return downloadResult;
   }
@@ -320,6 +372,7 @@ class SelfUpdater extends AsyncNotifier<TriOSDownloadProgress?> {
     };
 
     return release.assets.firstWhereOrNull(
-        (element) => element.name.toLowerCase().contains(assetNameForPlatform));
+      (element) => element.name.toLowerCase().contains(assetNameForPlatform),
+    );
   }
 }

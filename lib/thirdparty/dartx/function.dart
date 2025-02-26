@@ -78,8 +78,9 @@ extension Function4InvokeExtension<R, A, B, C, D> on Function4<A, B, C, D, R> {
 
 extension Function4CurryExtension<R, A, B, C, D> on Function4<A, B, C, D, R> {
   Function1<A, Function1<B, Function1<C, Function1<D, R>>>> curry() =>
-      (A first) => (B second) =>
-          (C third) => (D fourth) => this(first, second, third, fourth);
+      (A first) =>
+          (B second) =>
+              (C third) => (D fourth) => this(first, second, third, fourth);
 }
 
 extension Function4PartialExtension<R, A, B, C, D> on Function4<A, B, C, D, R> {

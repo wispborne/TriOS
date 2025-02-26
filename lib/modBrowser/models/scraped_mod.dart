@@ -7,10 +7,7 @@ class ScrapedModsRepo with ScrapedModsRepoMappable {
   final List<ScrapedMod> items;
   final String lastUpdated;
 
-  ScrapedModsRepo({
-    required this.items,
-    required this.lastUpdated,
-  });
+  ScrapedModsRepo({required this.items, required this.lastUpdated});
 }
 
 @MappableClass()
@@ -45,11 +42,12 @@ class ScrapedMod with ScrapedModMappable {
 
   List<String> getAuthors() => authorsList ?? [];
 
-  List<String> getAuthorsWithAliases() => getAuthors()
-      .map((author) => ModRepoUtils.getOtherMatchingAliases(author))
-      .expand((aliases) => aliases)
-      .toSet()
-      .toList();
+  List<String> getAuthorsWithAliases() =>
+      getAuthors()
+          .map((author) => ModRepoUtils.getOtherMatchingAliases(author))
+          .expand((aliases) => aliases)
+          .toSet()
+          .toList();
 
   List<String> getCategories() => categories ?? [];
 
@@ -61,21 +59,10 @@ class ScrapedMod with ScrapedModMappable {
 }
 
 @MappableEnum()
-enum ModSource {
-  Index,
-  ModdingSubforum,
-  Discord,
-  NexusMods,
-}
+enum ModSource { Index, ModdingSubforum, Discord, NexusMods }
 
 @MappableEnum()
-enum ModUrlType {
-  Forum,
-  Discord,
-  NexusMods,
-  DirectDownload,
-  DownloadPage,
-}
+enum ModUrlType { Forum, Discord, NexusMods, DirectDownload, DownloadPage }
 
 @MappableClass()
 class ScrapedModImage with ScrapedModImageMappable {

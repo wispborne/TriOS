@@ -38,8 +38,9 @@ class ModsMetadataMapper extends ClassMapperBase<ModsMetadata> {
 
   static ModsMetadata _instantiate(DecodingData data) {
     return ModsMetadata(
-        baseMetadata: data.dec(_f$baseMetadata),
-        userMetadata: data.dec(_f$userMetadata));
+      baseMetadata: data.dec(_f$baseMetadata),
+      userMetadata: data.dec(_f$userMetadata),
+    );
   }
 
   @override
@@ -56,33 +57,39 @@ class ModsMetadataMapper extends ClassMapperBase<ModsMetadata> {
 
 mixin ModsMetadataMappable {
   String toJson() {
-    return ModsMetadataMapper.ensureInitialized()
-        .encodeJson<ModsMetadata>(this as ModsMetadata);
+    return ModsMetadataMapper.ensureInitialized().encodeJson<ModsMetadata>(
+      this as ModsMetadata,
+    );
   }
 
   Map<String, dynamic> toMap() {
-    return ModsMetadataMapper.ensureInitialized()
-        .encodeMap<ModsMetadata>(this as ModsMetadata);
+    return ModsMetadataMapper.ensureInitialized().encodeMap<ModsMetadata>(
+      this as ModsMetadata,
+    );
   }
 
   ModsMetadataCopyWith<ModsMetadata, ModsMetadata, ModsMetadata> get copyWith =>
       _ModsMetadataCopyWithImpl(this as ModsMetadata, $identity, $identity);
   @override
   String toString() {
-    return ModsMetadataMapper.ensureInitialized()
-        .stringifyValue(this as ModsMetadata);
+    return ModsMetadataMapper.ensureInitialized().stringifyValue(
+      this as ModsMetadata,
+    );
   }
 
   @override
   bool operator ==(Object other) {
-    return ModsMetadataMapper.ensureInitialized()
-        .equalsValue(this as ModsMetadata, other);
+    return ModsMetadataMapper.ensureInitialized().equalsValue(
+      this as ModsMetadata,
+      other,
+    );
   }
 
   @override
   int get hashCode {
-    return ModsMetadataMapper.ensureInitialized()
-        .hashValue(this as ModsMetadata);
+    return ModsMetadataMapper.ensureInitialized().hashValue(
+      this as ModsMetadata,
+    );
   }
 }
 
@@ -94,13 +101,24 @@ extension ModsMetadataValueCopy<$R, $Out>
 
 abstract class ModsMetadataCopyWith<$R, $In extends ModsMetadata, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
-  MapCopyWith<$R, String, ModMetadata,
-      ModMetadataCopyWith<$R, ModMetadata, ModMetadata>> get baseMetadata;
-  MapCopyWith<$R, String, ModMetadata,
-      ModMetadataCopyWith<$R, ModMetadata, ModMetadata>> get userMetadata;
-  $R call(
-      {Map<String, ModMetadata>? baseMetadata,
-      Map<String, ModMetadata>? userMetadata});
+  MapCopyWith<
+    $R,
+    String,
+    ModMetadata,
+    ModMetadataCopyWith<$R, ModMetadata, ModMetadata>
+  >
+  get baseMetadata;
+  MapCopyWith<
+    $R,
+    String,
+    ModMetadata,
+    ModMetadataCopyWith<$R, ModMetadata, ModMetadata>
+  >
+  get userMetadata;
+  $R call({
+    Map<String, ModMetadata>? baseMetadata,
+    Map<String, ModMetadata>? userMetadata,
+  });
   ModsMetadataCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
 
@@ -113,32 +131,49 @@ class _ModsMetadataCopyWithImpl<$R, $Out>
   late final ClassMapperBase<ModsMetadata> $mapper =
       ModsMetadataMapper.ensureInitialized();
   @override
-  MapCopyWith<$R, String, ModMetadata,
-          ModMetadataCopyWith<$R, ModMetadata, ModMetadata>>
-      get baseMetadata => MapCopyWith($value.baseMetadata,
-          (v, t) => v.copyWith.$chain(t), (v) => call(baseMetadata: v));
+  MapCopyWith<
+    $R,
+    String,
+    ModMetadata,
+    ModMetadataCopyWith<$R, ModMetadata, ModMetadata>
+  >
+  get baseMetadata => MapCopyWith(
+    $value.baseMetadata,
+    (v, t) => v.copyWith.$chain(t),
+    (v) => call(baseMetadata: v),
+  );
   @override
-  MapCopyWith<$R, String, ModMetadata,
-          ModMetadataCopyWith<$R, ModMetadata, ModMetadata>>
-      get userMetadata => MapCopyWith($value.userMetadata,
-          (v, t) => v.copyWith.$chain(t), (v) => call(userMetadata: v));
+  MapCopyWith<
+    $R,
+    String,
+    ModMetadata,
+    ModMetadataCopyWith<$R, ModMetadata, ModMetadata>
+  >
+  get userMetadata => MapCopyWith(
+    $value.userMetadata,
+    (v, t) => v.copyWith.$chain(t),
+    (v) => call(userMetadata: v),
+  );
   @override
-  $R call(
-          {Map<String, ModMetadata>? baseMetadata,
-          Map<String, ModMetadata>? userMetadata}) =>
-      $apply(FieldCopyWithData({
-        if (baseMetadata != null) #baseMetadata: baseMetadata,
-        if (userMetadata != null) #userMetadata: userMetadata
-      }));
+  $R call({
+    Map<String, ModMetadata>? baseMetadata,
+    Map<String, ModMetadata>? userMetadata,
+  }) => $apply(
+    FieldCopyWithData({
+      if (baseMetadata != null) #baseMetadata: baseMetadata,
+      if (userMetadata != null) #userMetadata: userMetadata,
+    }),
+  );
   @override
   ModsMetadata $make(CopyWithData data) => ModsMetadata(
-      baseMetadata: data.get(#baseMetadata, or: $value.baseMetadata),
-      userMetadata: data.get(#userMetadata, or: $value.userMetadata));
+    baseMetadata: data.get(#baseMetadata, or: $value.baseMetadata),
+    userMetadata: data.get(#userMetadata, or: $value.userMetadata),
+  );
 
   @override
   ModsMetadataCopyWith<$R2, ModsMetadata, $Out2> $chain<$R2, $Out2>(
-          Then<$Out2, $R2> t) =>
-      _ModsMetadataCopyWithImpl($value, $cast, t);
+    Then<$Out2, $R2> t,
+  ) => _ModsMetadataCopyWithImpl($value, $cast, t);
 }
 
 class ModMetadataMapper extends ClassMapperBase<ModMetadata> {
@@ -159,20 +194,37 @@ class ModMetadataMapper extends ClassMapperBase<ModMetadata> {
   static Map<String, ModVariantMetadata> _$variantsMetadata(ModMetadata v) =>
       v.variantsMetadata;
   static const Field<ModMetadata, Map<String, ModVariantMetadata>>
-      _f$variantsMetadata =
-      Field('variantsMetadata', _$variantsMetadata, opt: true, def: const {});
+  _f$variantsMetadata = Field(
+    'variantsMetadata',
+    _$variantsMetadata,
+    opt: true,
+    def: const {},
+  );
   static int _$firstSeen(ModMetadata v) => v.firstSeen;
-  static const Field<ModMetadata, int> _f$firstSeen =
-      Field('firstSeen', _$firstSeen);
+  static const Field<ModMetadata, int> _f$firstSeen = Field(
+    'firstSeen',
+    _$firstSeen,
+  );
   static bool _$isFavorited(ModMetadata v) => v.isFavorited;
-  static const Field<ModMetadata, bool> _f$isFavorited =
-      Field('isFavorited', _$isFavorited, opt: true, def: false);
+  static const Field<ModMetadata, bool> _f$isFavorited = Field(
+    'isFavorited',
+    _$isFavorited,
+    opt: true,
+    def: false,
+  );
   static int? _$lastEnabled(ModMetadata v) => v.lastEnabled;
-  static const Field<ModMetadata, int> _f$lastEnabled =
-      Field('lastEnabled', _$lastEnabled, opt: true);
+  static const Field<ModMetadata, int> _f$lastEnabled = Field(
+    'lastEnabled',
+    _$lastEnabled,
+    opt: true,
+  );
   static bool _$areUpdatesMuted(ModMetadata v) => v.areUpdatesMuted;
-  static const Field<ModMetadata, bool> _f$areUpdatesMuted =
-      Field('areUpdatesMuted', _$areUpdatesMuted, opt: true, def: false);
+  static const Field<ModMetadata, bool> _f$areUpdatesMuted = Field(
+    'areUpdatesMuted',
+    _$areUpdatesMuted,
+    opt: true,
+    def: false,
+  );
 
   @override
   final MappableFields<ModMetadata> fields = const {
@@ -185,11 +237,12 @@ class ModMetadataMapper extends ClassMapperBase<ModMetadata> {
 
   static ModMetadata _instantiate(DecodingData data) {
     return ModMetadata(
-        variantsMetadata: data.dec(_f$variantsMetadata),
-        firstSeen: data.dec(_f$firstSeen),
-        isFavorited: data.dec(_f$isFavorited),
-        lastEnabled: data.dec(_f$lastEnabled),
-        areUpdatesMuted: data.dec(_f$areUpdatesMuted));
+      variantsMetadata: data.dec(_f$variantsMetadata),
+      firstSeen: data.dec(_f$firstSeen),
+      isFavorited: data.dec(_f$isFavorited),
+      lastEnabled: data.dec(_f$lastEnabled),
+      areUpdatesMuted: data.dec(_f$areUpdatesMuted),
+    );
   }
 
   @override
@@ -206,27 +259,32 @@ class ModMetadataMapper extends ClassMapperBase<ModMetadata> {
 
 mixin ModMetadataMappable {
   String toJson() {
-    return ModMetadataMapper.ensureInitialized()
-        .encodeJson<ModMetadata>(this as ModMetadata);
+    return ModMetadataMapper.ensureInitialized().encodeJson<ModMetadata>(
+      this as ModMetadata,
+    );
   }
 
   Map<String, dynamic> toMap() {
-    return ModMetadataMapper.ensureInitialized()
-        .encodeMap<ModMetadata>(this as ModMetadata);
+    return ModMetadataMapper.ensureInitialized().encodeMap<ModMetadata>(
+      this as ModMetadata,
+    );
   }
 
   ModMetadataCopyWith<ModMetadata, ModMetadata, ModMetadata> get copyWith =>
       _ModMetadataCopyWithImpl(this as ModMetadata, $identity, $identity);
   @override
   String toString() {
-    return ModMetadataMapper.ensureInitialized()
-        .stringifyValue(this as ModMetadata);
+    return ModMetadataMapper.ensureInitialized().stringifyValue(
+      this as ModMetadata,
+    );
   }
 
   @override
   bool operator ==(Object other) {
-    return ModMetadataMapper.ensureInitialized()
-        .equalsValue(this as ModMetadata, other);
+    return ModMetadataMapper.ensureInitialized().equalsValue(
+      this as ModMetadata,
+      other,
+    );
   }
 
   @override
@@ -244,17 +302,19 @@ extension ModMetadataValueCopy<$R, $Out>
 abstract class ModMetadataCopyWith<$R, $In extends ModMetadata, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
   MapCopyWith<
-      $R,
-      String,
-      ModVariantMetadata,
-      ModVariantMetadataCopyWith<$R, ModVariantMetadata,
-          ModVariantMetadata>> get variantsMetadata;
-  $R call(
-      {Map<String, ModVariantMetadata>? variantsMetadata,
-      int? firstSeen,
-      bool? isFavorited,
-      int? lastEnabled,
-      bool? areUpdatesMuted});
+    $R,
+    String,
+    ModVariantMetadata,
+    ModVariantMetadataCopyWith<$R, ModVariantMetadata, ModVariantMetadata>
+  >
+  get variantsMetadata;
+  $R call({
+    Map<String, ModVariantMetadata>? variantsMetadata,
+    int? firstSeen,
+    bool? isFavorited,
+    int? lastEnabled,
+    bool? areUpdatesMuted,
+  });
   ModMetadataCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
 
@@ -268,41 +328,45 @@ class _ModMetadataCopyWithImpl<$R, $Out>
       ModMetadataMapper.ensureInitialized();
   @override
   MapCopyWith<
-      $R,
-      String,
-      ModVariantMetadata,
-      ModVariantMetadataCopyWith<$R, ModVariantMetadata,
-          ModVariantMetadata>> get variantsMetadata => MapCopyWith(
-      $value.variantsMetadata,
-      (v, t) => v.copyWith.$chain(t),
-      (v) => call(variantsMetadata: v));
+    $R,
+    String,
+    ModVariantMetadata,
+    ModVariantMetadataCopyWith<$R, ModVariantMetadata, ModVariantMetadata>
+  >
+  get variantsMetadata => MapCopyWith(
+    $value.variantsMetadata,
+    (v, t) => v.copyWith.$chain(t),
+    (v) => call(variantsMetadata: v),
+  );
   @override
-  $R call(
-          {Map<String, ModVariantMetadata>? variantsMetadata,
-          int? firstSeen,
-          bool? isFavorited,
-          Object? lastEnabled = $none,
-          bool? areUpdatesMuted}) =>
-      $apply(FieldCopyWithData({
-        if (variantsMetadata != null) #variantsMetadata: variantsMetadata,
-        if (firstSeen != null) #firstSeen: firstSeen,
-        if (isFavorited != null) #isFavorited: isFavorited,
-        if (lastEnabled != $none) #lastEnabled: lastEnabled,
-        if (areUpdatesMuted != null) #areUpdatesMuted: areUpdatesMuted
-      }));
+  $R call({
+    Map<String, ModVariantMetadata>? variantsMetadata,
+    int? firstSeen,
+    bool? isFavorited,
+    Object? lastEnabled = $none,
+    bool? areUpdatesMuted,
+  }) => $apply(
+    FieldCopyWithData({
+      if (variantsMetadata != null) #variantsMetadata: variantsMetadata,
+      if (firstSeen != null) #firstSeen: firstSeen,
+      if (isFavorited != null) #isFavorited: isFavorited,
+      if (lastEnabled != $none) #lastEnabled: lastEnabled,
+      if (areUpdatesMuted != null) #areUpdatesMuted: areUpdatesMuted,
+    }),
+  );
   @override
   ModMetadata $make(CopyWithData data) => ModMetadata(
-      variantsMetadata:
-          data.get(#variantsMetadata, or: $value.variantsMetadata),
-      firstSeen: data.get(#firstSeen, or: $value.firstSeen),
-      isFavorited: data.get(#isFavorited, or: $value.isFavorited),
-      lastEnabled: data.get(#lastEnabled, or: $value.lastEnabled),
-      areUpdatesMuted: data.get(#areUpdatesMuted, or: $value.areUpdatesMuted));
+    variantsMetadata: data.get(#variantsMetadata, or: $value.variantsMetadata),
+    firstSeen: data.get(#firstSeen, or: $value.firstSeen),
+    isFavorited: data.get(#isFavorited, or: $value.isFavorited),
+    lastEnabled: data.get(#lastEnabled, or: $value.lastEnabled),
+    areUpdatesMuted: data.get(#areUpdatesMuted, or: $value.areUpdatesMuted),
+  );
 
   @override
   ModMetadataCopyWith<$R2, ModMetadata, $Out2> $chain<$R2, $Out2>(
-          Then<$Out2, $R2> t) =>
-      _ModMetadataCopyWithImpl($value, $cast, t);
+    Then<$Out2, $R2> t,
+  ) => _ModMetadataCopyWithImpl($value, $cast, t);
 }
 
 class ModVariantMetadataMapper extends ClassMapperBase<ModVariantMetadata> {
@@ -320,8 +384,10 @@ class ModVariantMetadataMapper extends ClassMapperBase<ModVariantMetadata> {
   final String id = 'ModVariantMetadata';
 
   static int _$firstSeen(ModVariantMetadata v) => v.firstSeen;
-  static const Field<ModVariantMetadata, int> _f$firstSeen =
-      Field('firstSeen', _$firstSeen);
+  static const Field<ModVariantMetadata, int> _f$firstSeen = Field(
+    'firstSeen',
+    _$firstSeen,
+  );
 
   @override
   final MappableFields<ModVariantMetadata> fields = const {
@@ -355,41 +421,56 @@ mixin ModVariantMetadataMappable {
         .encodeMap<ModVariantMetadata>(this as ModVariantMetadata);
   }
 
-  ModVariantMetadataCopyWith<ModVariantMetadata, ModVariantMetadata,
-          ModVariantMetadata>
-      get copyWith => _ModVariantMetadataCopyWithImpl(
-          this as ModVariantMetadata, $identity, $identity);
+  ModVariantMetadataCopyWith<
+    ModVariantMetadata,
+    ModVariantMetadata,
+    ModVariantMetadata
+  >
+  get copyWith => _ModVariantMetadataCopyWithImpl(
+    this as ModVariantMetadata,
+    $identity,
+    $identity,
+  );
   @override
   String toString() {
-    return ModVariantMetadataMapper.ensureInitialized()
-        .stringifyValue(this as ModVariantMetadata);
+    return ModVariantMetadataMapper.ensureInitialized().stringifyValue(
+      this as ModVariantMetadata,
+    );
   }
 
   @override
   bool operator ==(Object other) {
-    return ModVariantMetadataMapper.ensureInitialized()
-        .equalsValue(this as ModVariantMetadata, other);
+    return ModVariantMetadataMapper.ensureInitialized().equalsValue(
+      this as ModVariantMetadata,
+      other,
+    );
   }
 
   @override
   int get hashCode {
-    return ModVariantMetadataMapper.ensureInitialized()
-        .hashValue(this as ModVariantMetadata);
+    return ModVariantMetadataMapper.ensureInitialized().hashValue(
+      this as ModVariantMetadata,
+    );
   }
 }
 
 extension ModVariantMetadataValueCopy<$R, $Out>
     on ObjectCopyWith<$R, ModVariantMetadata, $Out> {
   ModVariantMetadataCopyWith<$R, ModVariantMetadata, $Out>
-      get $asModVariantMetadata =>
-          $base.as((v, t, t2) => _ModVariantMetadataCopyWithImpl(v, t, t2));
+  get $asModVariantMetadata =>
+      $base.as((v, t, t2) => _ModVariantMetadataCopyWithImpl(v, t, t2));
 }
 
-abstract class ModVariantMetadataCopyWith<$R, $In extends ModVariantMetadata,
-    $Out> implements ClassCopyWith<$R, $In, $Out> {
+abstract class ModVariantMetadataCopyWith<
+  $R,
+  $In extends ModVariantMetadata,
+  $Out
+>
+    implements ClassCopyWith<$R, $In, $Out> {
   $R call({int? firstSeen});
   ModVariantMetadataCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
-      Then<$Out2, $R2> t);
+    Then<$Out2, $R2> t,
+  );
 }
 
 class _ModVariantMetadataCopyWithImpl<$R, $Out>
@@ -409,6 +490,6 @@ class _ModVariantMetadataCopyWithImpl<$R, $Out>
 
   @override
   ModVariantMetadataCopyWith<$R2, ModVariantMetadata, $Out2> $chain<$R2, $Out2>(
-          Then<$Out2, $R2> t) =>
-      _ModVariantMetadataCopyWithImpl($value, $cast, t);
+    Then<$Out2, $R2> t,
+  ) => _ModVariantMetadataCopyWithImpl($value, $cast, t);
 }

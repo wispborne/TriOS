@@ -33,7 +33,7 @@ class LaunchPrecheckError {
   final ModVariant? requiringModVariant;
   final String? fixActionName;
   final Future<void> Function()?
-      doFix; // Assuming the fix action might be asynchronous
+  doFix; // Assuming the fix action might be asynchronous
 
   LaunchPrecheckError({
     required this.message,
@@ -50,9 +50,10 @@ class Launcher extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     var theme = Theme.of(context);
     final isGameRunning = ref.watch(AppState.isGameRunning).valueOrNull == true;
-    final buttonBackgroundColor = isGameRunning
-        ? theme.disabledColor
-        : theme.colorScheme.surfaceContainer;
+    final buttonBackgroundColor =
+        isGameRunning
+            ? theme.disabledColor
+            : theme.colorScheme.surfaceContainer;
 
     // Animation controllers for hover and tap effects
     final hoverController = useAnimationController(
@@ -66,9 +67,10 @@ class Launcher extends HookConsumerWidget {
       CurvedAnimation(parent: hoverController, curve: Curves.easeInOut),
     );
 
-    final tapScaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
-      CurvedAnimation(parent: tapController, curve: Curves.easeOut),
-    );
+    final tapScaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.95,
+    ).animate(CurvedAnimation(parent: tapController, curve: Curves.easeOut));
 
     final colorAnimation = ColorTween(
       begin: buttonBackgroundColor,
@@ -82,45 +84,45 @@ class Launcher extends HookConsumerWidget {
     return MovingTooltipWidget.framed(
       tooltipWidget: DefaultTextStyle.merge(
         style: theme.textTheme.labelLarge,
-        child: isGameRunning
-            ? const Text("Game is running")
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Launch ${ref.watch(AppState.starsectorVersion).valueOrNull}',
-                    style: theme.textTheme.labelLarge
-                        ?.copyWith(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  Text.rich(
-                    TextSpan(
-                      children: [
-                        const TextSpan(
-                          text: "Java: ",
-                        ),
-                        TextSpan(
-                          text: ref
-                                  .watch(AppState.activeJre)
-                                  .valueOrNull
-                                  ?.version
-                                  .versionString ??
-                              "(unknown JRE)",
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        const TextSpan(
-                          text: "\nRAM: ",
-                        ),
-                        TextSpan(
-                          text:
-                              "${ref.watch(currentRamAmountInMb).valueOrNull ?? "(unknown RAM)"} MB",
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ],
+        child:
+            isGameRunning
+                ? const Text("Game is running")
+                : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Launch ${ref.watch(AppState.starsectorVersion).valueOrNull}',
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                    Text.rich(
+                      TextSpan(
+                        children: [
+                          const TextSpan(text: "Java: "),
+                          TextSpan(
+                            text:
+                                ref
+                                    .watch(AppState.activeJre)
+                                    .valueOrNull
+                                    ?.version
+                                    .versionString ??
+                                "(unknown JRE)",
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          const TextSpan(text: "\nRAM: "),
+                          TextSpan(
+                            text:
+                                "${ref.watch(currentRamAmountInMb).valueOrNull ?? "(unknown RAM)"} MB",
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
       ),
       child: Disable(
         isEnabled: !isGameRunning,
@@ -146,8 +148,9 @@ class Launcher extends HookConsumerWidget {
                   child: Container(
                     decoration: BoxDecoration(
                       color: colorAnimation.value,
-                      borderRadius:
-                          BorderRadius.circular(ThemeManager.cornerRadius),
+                      borderRadius: BorderRadius.circular(
+                        ThemeManager.cornerRadius,
+                      ),
                       border: Border.all(
                         color: theme.colorScheme.primary.darker(15),
                         strokeAlign: BorderSide.strokeAlignOutside,
@@ -181,8 +184,9 @@ class Launcher extends HookConsumerWidget {
                             'S',
                             strokeWidth: 3,
                             borderOnTop: true,
-                            strokeColor:
-                                theme.colorScheme.surfaceTint.darker(70),
+                            strokeColor: theme.colorScheme.surfaceTint.darker(
+                              70,
+                            ),
                             style: TextStyle(
                               fontWeight: FontWeight.w900,
                               fontFamily: "Orbitron",
@@ -206,44 +210,56 @@ class Launcher extends HookConsumerWidget {
   /// Can throw exception
   static launchGame(WidgetRef ref, BuildContext context) async {
     final launchPrecheckFailures = performLaunchPrecheck(ref);
-    final enableLauncherPrecheck =
-        ref.read(appSettings.select((value) => value.enableLauncherPrecheck));
+    final enableLauncherPrecheck = ref.read(
+      appSettings.select((value) => value.enableLauncherPrecheck),
+    );
 
     if (launchPrecheckFailures.isNotEmpty && enableLauncherPrecheck) {
       showDialog(
-          context: context,
-          builder: (context) {
-            return AlertDialog(
-              title: const Text('Launch precheck failed'),
-              content: Column(mainAxisSize: MainAxisSize.min, children: [
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('Launch precheck failed'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
                 ...launchPrecheckFailures
-                    // .distinctBy((it) => it.message)
-                    .map((failure) {
+                // .distinctBy((it) => it.message)
+                .map((failure) {
                   return ListTile(
                     title: Text(failure.message),
-                    subtitle: failure.requiringModVariant != null
-                        ? Text(failure
-                            .requiringModVariant!.modInfo.formattedNameVersion)
-                        : null,
-                    trailing: failure.fixActionName != null
-                        ? OutlinedButton(
-                            onPressed: () async {
-                              await failure.doFix!();
-                              Navigator.of(context).pop();
-                            },
-                            child: Text(failure.fixActionName!),
-                          )
-                        : null,
+                    subtitle:
+                        failure.requiringModVariant != null
+                            ? Text(
+                              failure
+                                  .requiringModVariant!
+                                  .modInfo
+                                  .formattedNameVersion,
+                            )
+                            : null,
+                    trailing:
+                        failure.fixActionName != null
+                            ? OutlinedButton(
+                              onPressed: () async {
+                                await failure.doFix!();
+                                Navigator.of(context).pop();
+                              },
+                              child: Text(failure.fixActionName!),
+                            )
+                            : null,
                   );
                 }),
                 const SizedBox(height: 16),
                 ElevatedButton.icon(
-                    onPressed: () => _launchGameWithoutPrecheck(ref),
-                    icon: const SvgImageIcon("assets/images/icon-skip.svg"),
-                    label: const Text('Launch anyway')),
-              ]),
-            );
-          });
+                  onPressed: () => _launchGameWithoutPrecheck(ref),
+                  icon: const SvgImageIcon("assets/images/icon-skip.svg"),
+                  label: const Text('Launch anyway'),
+                ),
+              ],
+            ),
+          );
+        },
+      );
     } else {
       _launchGameWithoutPrecheck(ref);
     }
@@ -251,9 +267,12 @@ class Launcher extends HookConsumerWidget {
 
   static void _launchGameWithoutPrecheck(WidgetRef ref) {
     if (ref.read(appSettings.select((s) => s.useCustomGameExePath))) {
-      launchGameUsingLauncher(ref.read(appSettings.select((s) => s.gameDir))!,
-          customExePath:
-              File(ref.read(appSettings.select((s) => s.customGameExePath))!));
+      launchGameUsingLauncher(
+        ref.read(appSettings.select((s) => s.gameDir))!,
+        customExePath: File(
+          ref.read(appSettings.select((s) => s.customGameExePath))!,
+        ),
+      );
     } else if (ref
             .read(jreManagerProvider)
             .valueOrNull
@@ -270,17 +289,19 @@ class Launcher extends HookConsumerWidget {
     final launchPrecheckFailures = <LaunchPrecheckError?>[];
     final mods = ref.read(AppState.mods);
     final modsFolder = ref.read(appSettings.select((it) => it.modsDir));
-    final enabledMods = ref
-        .read(AppState.enabledModsFile)
-        .valueOrNull
-        ?.filterOutMissingMods(mods)
-        .enabledMods
-        .toList();
+    final enabledMods =
+        ref
+            .read(AppState.enabledModsFile)
+            .valueOrNull
+            ?.filterOutMissingMods(mods)
+            .enabledMods
+            .toList();
     final enabledVariants =
         (mods.map((mod) => mod.findFirstEnabled)).nonNulls.toList();
     final modCompatibility = ref.read(AppState.modCompatibility);
-    final currentGameVersion =
-        ref.read(appSettings.select((s) => s.lastStarsectorVersion));
+    final currentGameVersion = ref.read(
+      appSettings.select((s) => s.lastStarsectorVersion),
+    );
 
     if (enabledMods == null || enabledMods.isEmpty || modsFolder == null) {
       return [];
@@ -310,56 +331,55 @@ class Launcher extends HookConsumerWidget {
       for (final dependency in dependencies) {
         final satisfaction = dependency.satisfiedAmount;
 
-        launchPrecheckFailures.add(
-          switch (satisfaction) {
-            Missing _ => LaunchPrecheckError(
-                message:
-                    'Dependency ${dependency.dependency.name ?? dependency.dependency.id} is missing',
-                requiringModVariant: variant,
-                fixActionName: null,
-                doFix: null,
-              ),
-            Disabled disabled => LaunchPrecheckError(
-                message:
-                    'Dependency ${dependency.dependency.name ?? dependency.dependency.id} is disabled',
-                requiringModVariant: variant,
-                fixActionName: "Enable",
-                doFix: () async {
-                  final mod = mods.firstWhereOrNull(
-                      (mod) => mod.id == dependency.dependency.id);
-                  if (mod != null) {
-                    ref
-                        .read(AppState.modVariants.notifier)
-                        .changeActiveModVariant(mod, disabled.modVariant);
-                  }
-                },
-              ),
-            VersionInvalid _ => LaunchPrecheckError(
-                message:
-                    'Dependency ${dependency.dependency.name ?? dependency.dependency.id} has wrong version',
-                requiringModVariant: variant,
-                fixActionName: null,
-                doFix: null,
-              ),
-            VersionWarning versionWarning => null,
-            // LaunchPrecheckError(
-            //       message:
-            //           'Dependency ${dependency.dependency.name ?? dependency.dependency.id} has a different version, but may work.',
-            //       requiringModVariant: variant,
-            //       fixActionName: "Enable",
-            //       doFix: () async {
-            //         final mod = mods.firstWhereOrNull(
-            //             (mod) => mod.id == dependency.dependency.id);
-            //         if (mod != null) {
-            //           ref
-            //               .read(AppState.modVariants.notifier)
-            //               .changeActiveModVariant(mod, versionWarning.modVariant);
-            //         }
-            //       },
-            //     ),
-            Satisfied _ => null,
-          },
-        );
+        launchPrecheckFailures.add(switch (satisfaction) {
+          Missing _ => LaunchPrecheckError(
+            message:
+                'Dependency ${dependency.dependency.name ?? dependency.dependency.id} is missing',
+            requiringModVariant: variant,
+            fixActionName: null,
+            doFix: null,
+          ),
+          Disabled disabled => LaunchPrecheckError(
+            message:
+                'Dependency ${dependency.dependency.name ?? dependency.dependency.id} is disabled',
+            requiringModVariant: variant,
+            fixActionName: "Enable",
+            doFix: () async {
+              final mod = mods.firstWhereOrNull(
+                (mod) => mod.id == dependency.dependency.id,
+              );
+              if (mod != null) {
+                ref
+                    .read(AppState.modVariants.notifier)
+                    .changeActiveModVariant(mod, disabled.modVariant);
+              }
+            },
+          ),
+          VersionInvalid _ => LaunchPrecheckError(
+            message:
+                'Dependency ${dependency.dependency.name ?? dependency.dependency.id} has wrong version',
+            requiringModVariant: variant,
+            fixActionName: null,
+            doFix: null,
+          ),
+          VersionWarning versionWarning => null,
+          // LaunchPrecheckError(
+          //       message:
+          //           'Dependency ${dependency.dependency.name ?? dependency.dependency.id} has a different version, but may work.',
+          //       requiringModVariant: variant,
+          //       fixActionName: "Enable",
+          //       doFix: () async {
+          //         final mod = mods.firstWhereOrNull(
+          //             (mod) => mod.id == dependency.dependency.id);
+          //         if (mod != null) {
+          //           ref
+          //               .read(AppState.modVariants.notifier)
+          //               .changeActiveModVariant(mod, versionWarning.modVariant);
+          //         }
+          //       },
+          //     ),
+          Satisfied _ => null,
+        });
       }
     }
 
@@ -415,14 +435,17 @@ class Launcher extends HookConsumerWidget {
     // /Users/username/Library/Preferences/com.fs.starfarer.plist
     try {
       final prefsFile = File(
-          '${Platform.environment['HOME']}/Library/Preferences/com.fs.starfarer.plist');
+        '${Platform.environment['HOME']}/Library/Preferences/com.fs.starfarer.plist',
+      );
       if (prefsFile.existsSync()) {
-        final result = PlistParser()
-            .parseFileSync(prefsFile.absolute.path)["/com/fs/starfarer/"];
+        final result =
+            PlistParser().parseFileSync(
+              prefsFile.absolute.path,
+            )["/com/fs/starfarer/"];
         return StarsectorVanillaLaunchPreferences(
           isFullscreen:
               (result['fullscreen'] as String?)?.equalsIgnoreCase("true") ??
-                  false,
+              false,
           resolution: (result['resolution'] as String?) ?? '1920x1080',
           hasSound:
               (result['sound'] as String?)?.equalsIgnoreCase("true") ?? true,
@@ -444,10 +467,12 @@ class Launcher extends HookConsumerWidget {
     // Starsector folder
     final gameDir =
         ref.read(appSettings.select((value) => value.gameDir))?.toDirectory();
-    final command = ref.read(
-            appSettings.select((value) => value.showCustomJreConsoleWindow))
-        ? "start Miko_Rouge.bat"
-        : "Miko_Silent.bat";
+    final command =
+        ref.read(
+              appSettings.select((value) => value.showCustomJreConsoleWindow),
+            )
+            ? "start Miko_Rouge.bat"
+            : "Miko_Silent.bat";
 
     Fimber.d("gameDir: $gameDir");
     final process = await Process.start(
@@ -472,17 +497,19 @@ class Launcher extends HookConsumerWidget {
     // Starsector folder
     var gamePath =
         ref.read(appSettings.select((value) => value.gameDir))?.toDirectory();
-    final gameCorePath = ref
-        .read(appSettings.select((value) => value.gameCoreDir))
-        ?.toDirectory();
+    final gameCorePath =
+        ref
+            .read(appSettings.select((value) => value.gameCoreDir))
+            ?.toDirectory();
 
     if (gamePath == null || gameCorePath == null) {
       Fimber.e('Game path or game core path not set');
       return;
     }
 
-    final useDirectLaunch =
-        ref.read(appSettings.select((value) => value.enableDirectLaunch));
+    final useDirectLaunch = ref.read(
+      appSettings.select((value) => value.enableDirectLaunch),
+    );
 
     if (!useDirectLaunch) {
       launchGameUsingLauncher(gamePath);
@@ -502,41 +529,53 @@ class Launcher extends HookConsumerWidget {
       return;
     }
 
-    var vmParamsContent = vmParams
-        .readAsStringSync()
-        .let((it) {
-          if (Platform.isWindows) {
-            return it.removePrefix("java.exe").split(' ');
-          } else {
-            return it.removePrefix("java").split('\n');
-          }
-        })
-        .where((element) => element.isNotEmpty)
-        .toList();
+    var vmParamsContent =
+        vmParams
+            .readAsStringSync()
+            .let((it) {
+              if (Platform.isWindows) {
+                return it.removePrefix("java.exe").split(' ');
+              } else {
+                return it.removePrefix("java").split('\n');
+              }
+            })
+            .where((element) => element.isNotEmpty)
+            .toList();
 
     LaunchSettings? launchPreferences;
-    final customLaunchPrefs =
-        ref.read(appSettings.select((value) => value.launchSettings));
+    final customLaunchPrefs = ref.read(
+      appSettings.select((value) => value.launchSettings),
+    );
     var vanillaPrefs = Launcher.getStarsectorLaunchPrefs()!.toLaunchSettings();
     launchPreferences = vanillaPrefs.overrideWith(customLaunchPrefs);
     final overrideArgs = _generateVmparamOverrides(
-        launchPreferences, gameCorePath, vmParamsContent);
+      launchPreferences,
+      gameCorePath,
+      vmParamsContent,
+    );
 
     if (Platform.isWindows) {
-      List<String> finalVmparams = overrideArgs.entries
+      List<String> finalVmparams =
+          overrideArgs.entries
               .map((entry) => '${entry.key}=${entry.value}')
               .toList() +
           vmParamsContent
               // Remove any vanilla params that we're overriding.
-              .filter((vanillaParam) => overrideArgs.entries
-                  .none((entry) => vanillaParam.startsWith(entry.key)))
+              .filter(
+                (vanillaParam) => overrideArgs.entries.none(
+                  (entry) => vanillaParam.startsWith(entry.key),
+                ),
+              )
               .toList();
 
       Fimber.d('Final vmparams: $finalVmparams');
-      Process.start(javaExe.absolute.path, finalVmparams,
-          workingDirectory: gameCorePath.path,
-          mode: ProcessStartMode.detached,
-          includeParentEnvironment: true);
+      Process.start(
+        javaExe.absolute.path,
+        finalVmparams,
+        workingDirectory: gameCorePath.path,
+        mode: ProcessStartMode.detached,
+        includeParentEnvironment: true,
+      );
     } else if (Platform.isMacOS) {
       final vmparamsInFile = vmParams
           .readAsStringSync()
@@ -546,49 +585,64 @@ class Launcher extends HookConsumerWidget {
           .takeWhile((it) => !it.contains('"\$@"'))
           .join("\n");
       // Replace ${EXTRAARGS} (part of vanilla script) with the custom args.
-      final launchScript = vmparamsInFile
-          .replaceAll("-cp",
-              "-cp\n") // -cp needs to be a separate argument from its value
-          // Otherwise the application will be called "Starsector" (with quotes)
-          .replaceAll('"', "")
-          .replaceAll(
-              // Replace ${EXTRAARGS} with our Direct Launch args
-              "\${EXTRAARGS}",
-              overrideArgs.entries
-                  .map((entry) => '${entry.key}=${entry.value}')
-                  .join('\\ \n'))
-          .split("\n")
-          .map((e) => e.trim().trimEnd("\\").trim())
-          .filter((it) => it.isNotNullOrEmpty())
-          .toList();
+      final launchScript =
+          vmparamsInFile
+              .replaceAll(
+                "-cp",
+                "-cp\n",
+              ) // -cp needs to be a separate argument from its value
+              // Otherwise the application will be called "Starsector" (with quotes)
+              .replaceAll('"', "")
+              .replaceAll(
+                // Replace ${EXTRAARGS} with our Direct Launch args
+                "\${EXTRAARGS}",
+                overrideArgs.entries
+                    .map((entry) => '${entry.key}=${entry.value}')
+                    .join('\\ \n'),
+              )
+              .split("\n")
+              .map((e) => e.trim().trimEnd("\\").trim())
+              .filter((it) => it.isNotNullOrEmpty())
+              .toList();
 
       Fimber.i('Launching game using command: $launchScript');
-      final process = await Process.start(javaExe.path, launchScript,
-          workingDirectory: gameCorePath.absolute.path,
-          mode: ProcessStartMode.detachedWithStdio,
-          includeParentEnvironment: true,
-          runInShell: true);
+      final process = await Process.start(
+        javaExe.path,
+        launchScript,
+        workingDirectory: gameCorePath.absolute.path,
+        mode: ProcessStartMode.detachedWithStdio,
+        includeParentEnvironment: true,
+        runInShell: true,
+      );
       Fimber.d(
-          "Stdout: ${await process.stdout.transform(utf8.decoder).join()}");
+        "Stdout: ${await process.stdout.transform(utf8.decoder).join()}",
+      );
       Fimber.w(
-          "Stderr: ${await process.stderr.transform(utf8.decoder).join()}");
+        "Stderr: ${await process.stderr.transform(utf8.decoder).join()}",
+      );
     } else {
       Fimber.w(
-          'Platform not yet supported for direct launch, using normal launch');
+        'Platform not yet supported for direct launch, using normal launch',
+      );
       launchGameUsingLauncher(gamePath);
       return;
     }
   }
 
-  static void launchGameUsingLauncher(Directory gamePath,
-      {FileSystemEntity? customExePath}) {
+  static void launchGameUsingLauncher(
+    Directory gamePath, {
+    FileSystemEntity? customExePath,
+  }) {
     final gameExe = customExePath ?? getVanillaGameExecutable(gamePath);
     if (Platform.isWindows) {
       if (gameExe.existsSync()) {
-        Process.start(gameExe.absolute.path, [],
-            workingDirectory: gamePath.path,
-            mode: ProcessStartMode.detached,
-            includeParentEnvironment: true);
+        Process.start(
+          gameExe.absolute.path,
+          [],
+          workingDirectory: gamePath.path,
+          mode: ProcessStartMode.detached,
+          includeParentEnvironment: true,
+        );
       } else {
         Fimber.e('Game executable not found at $gameExe');
       }
@@ -596,10 +650,13 @@ class Launcher extends HookConsumerWidget {
       // Use this way of checking if it exists because the MacOS one is actually a folder, not a file.
       if (FileSystemEntity.typeSync(gameExe.path) !=
           FileSystemEntityType.notFound) {
-        Process.start("open", [gameExe.absolute.path],
-            workingDirectory: gamePath.path,
-            mode: ProcessStartMode.detached,
-            includeParentEnvironment: true);
+        Process.start(
+          "open",
+          [gameExe.absolute.path],
+          workingDirectory: gamePath.path,
+          mode: ProcessStartMode.detached,
+          includeParentEnvironment: true,
+        );
       } else {
         Fimber.e('Game executable not found at $gameExe');
       }
@@ -644,8 +701,9 @@ class Launcher extends HookConsumerWidget {
     for (var key in vmparamsKeysToAbsolutize) {
       // Look through vmparams for the matching key, grab the value of it, and treat it as a relative path
       // to return an absolute one.
-      final pair = vanillaVmparams
-          .firstWhereOrNull((element) => element.startsWith('$key='));
+      final pair = vanillaVmparams.firstWhereOrNull(
+        (element) => element.startsWith('$key='),
+      );
       if (pair != null) {
         var value = pair.split('=').getOrNull(1);
         if (value != null) {

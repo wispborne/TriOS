@@ -10,8 +10,8 @@ import 'package:xml/xml.dart';
 
 final saveFileProvider =
     AsyncNotifierProvider<SaveFileNotifier, List<SaveFile>>(
-  SaveFileNotifier.new,
-);
+      SaveFileNotifier.new,
+    );
 
 class SaveFileNotifier extends AsyncNotifier<List<SaveFile>> {
   final String _descriptorFileName = "descriptor.xml";
@@ -41,20 +41,23 @@ class SaveFileNotifier extends AsyncNotifier<List<SaveFile>> {
       return [];
     }
 
-    final saveFolders = saveDir
-        .listSync()
-        .whereType<Directory>()
-        .where((d) => d.name.startsWith("save"))
-        .toList();
+    final saveFolders =
+        saveDir
+            .listSync()
+            .whereType<Directory>()
+            .where((d) => d.name.startsWith("save"))
+            .toList();
 
-    final newSaves = await Future.wait(saveFolders.map((folder) async {
-      try {
-        return await readSave(folder);
-      } catch (e) {
-        Fimber.w("Failed to read save folder ${folder.path}: $e");
-        return null;
-      }
-    }));
+    final newSaves = await Future.wait(
+      saveFolders.map((folder) async {
+        try {
+          return await readSave(folder);
+        } catch (e) {
+          Fimber.w("Failed to read save folder ${folder.path}: $e");
+          return null;
+        }
+      }),
+    );
 
     return newSaves.nonNulls.toList();
   }
@@ -69,8 +72,10 @@ class SaveFileNotifier extends AsyncNotifier<List<SaveFile>> {
         rootElement?.getElement('portraitName')?.innerText ?? "";
     final characterName =
         rootElement?.getElement('characterName')?.innerText ?? "";
-    final characterLevel = int.tryParse(
-            rootElement?.getElement('characterLevel')?.innerText ?? '0') ??
+    final characterLevel =
+        int.tryParse(
+          rootElement?.getElement('characterLevel')?.innerText ?? '0',
+        ) ??
         0;
     final saveFileVersion =
         rootElement?.getElement('saveFileVersion')?.innerText ?? "";
@@ -79,8 +84,8 @@ class SaveFileNotifier extends AsyncNotifier<List<SaveFile>> {
     DateTime saveDate = DateTime.now();
     try {
       saveDate = DateFormat("yyyy-MM-dd HH:mm:ss.SS")
-          // Save file dates are always in UTC
-          .parse(saveDateString.replaceAll(' UTC', ''), true);
+      // Save file dates are always in UTC
+      .parse(saveDateString.replaceAll(' UTC', ''), true);
     } catch (e) {
       Fimber.e('Error parsing save date: $e');
     }
@@ -93,12 +98,15 @@ class SaveFileNotifier extends AsyncNotifier<List<SaveFile>> {
         rootElement?.getElement('difficulty')?.innerText ?? "normal";
 
     final gameDateElement = rootElement?.getElement('gameDate');
-    final secondsPerDay = double.tryParse(
-            gameDateElement?.getElement('secondsPerDay')?.innerText ??
-                '10.0') ??
+    final secondsPerDay =
+        double.tryParse(
+          gameDateElement?.getElement('secondsPerDay')?.innerText ?? '10.0',
+        ) ??
         10.0;
-    final timestamp = int.tryParse(
-            gameDateElement?.getElement('timestamp')?.innerText ?? '0') ??
+    final timestamp =
+        int.tryParse(
+          gameDateElement?.getElement('timestamp')?.innerText ?? '0',
+        ) ??
         0;
 
     // Reading mods
@@ -121,8 +129,11 @@ class SaveFileNotifier extends AsyncNotifier<List<SaveFile>> {
 
           final zAttribute = int.tryParse(spec.getAttribute('z') ?? '');
           if (zAttribute != null) {
-            modsMap[zAttribute] =
-                SaveFileMod(id: id, name: name, version: version);
+            modsMap[zAttribute] = SaveFileMod(
+              id: id,
+              name: name,
+              version: version,
+            );
           }
         }
       });
@@ -198,9 +209,5 @@ class SaveFileMod {
   final String name;
   final Version version;
 
-  SaveFileMod({
-    required this.id,
-    required this.name,
-    required this.version,
-  });
+  SaveFileMod({required this.id, required this.name, required this.version});
 }

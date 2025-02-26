@@ -10,7 +10,11 @@ class DragDropInstallModOverlay extends StatelessWidget {
   final List<FileSystemEntity> entities;
   final List<Uri> urls;
 
-  const DragDropInstallModOverlay({super.key, required this.entities, required this.urls});
+  const DragDropInstallModOverlay({
+    super.key,
+    required this.entities,
+    required this.urls,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -37,14 +41,18 @@ class DragDropInstallModOverlay extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.create_new_folder_rounded,
-                        size: 64,
-                        color: theme.iconTheme.color?.withOpacity(0.9)),
+                    Icon(
+                      Icons.create_new_folder_rounded,
+                      size: 64,
+                      color: theme.iconTheme.color?.withOpacity(0.9),
+                    ),
                     const SizedBox(height: 8.0),
                     const Text(
                       'Add to Starsector',
                       style: TextStyle(
-                          fontSize: 16.0, fontFamily: ThemeManager.orbitron),
+                        fontSize: 16.0,
+                        fontFamily: ThemeManager.orbitron,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     ...entities.map((entity) {
@@ -77,11 +85,13 @@ class DragDropInstallModOverlay extends StatelessWidget {
                               fontSize: 16.0,
                             ),
                           ),
-                          Text("Drop to download",
-                              style: TextStyle(
-                                color: theme.colorScheme.onSurface,
-                                fontStyle: FontStyle.italic,
-                              )),
+                          Text(
+                            "Drop to download",
+                            style: TextStyle(
+                              color: theme.colorScheme.onSurface,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
                           const SizedBox(height: 8.0),
                         ],
                       );
@@ -97,7 +107,9 @@ class DragDropInstallModOverlay extends StatelessWidget {
   }
 
   FutureBuilder<String> _buildDroppedFileWidget(
-      FileSystemEntity entity, ThemeData theme) {
+    FileSystemEntity entity,
+    ThemeData theme,
+  ) {
     return FutureBuilder<String>(
       future: _getFileOrDirectorySize(entity),
       builder: (context, snapshot) {
@@ -134,8 +146,10 @@ class DragDropInstallModOverlay extends StatelessWidget {
 
   Future<int> _getDirectorySize(Directory directory) async {
     int totalSize = 0;
-    await for (final entity
-        in directory.list(recursive: true, followLinks: true)) {
+    await for (final entity in directory.list(
+      recursive: true,
+      followLinks: true,
+    )) {
       if (entity is File) {
         totalSize += await entity.length();
       }

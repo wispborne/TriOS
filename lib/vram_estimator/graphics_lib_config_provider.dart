@@ -8,9 +8,10 @@ import 'package:trios/vram_estimator/models/graphics_lib_config.dart';
 
 final graphicsLibConfigProvider = Provider<GraphicsLibConfig?>((ref) {
   final mods = ref.watch(AppState.mods);
-  final graphicsLib = mods
-      .firstWhereOrNull((element) => element.id == Constants.graphicsLibId)
-      ?.findFirstEnabled;
+  final graphicsLib =
+      mods
+          .firstWhereOrNull((element) => element.id == Constants.graphicsLibId)
+          ?.findFirstEnabled;
 
   if (graphicsLib == null) {
     return null;
@@ -23,8 +24,9 @@ final graphicsLibConfigProvider = Provider<GraphicsLibConfig?>((ref) {
     return null;
   }
 
-  final config =
-      GraphicsLibConfigMapper.fromJson(configFile.readAsStringSync().fixJson());
+  final config = GraphicsLibConfigMapper.fromJson(
+    configFile.readAsStringSync().fixJson(),
+  );
   Fimber.d("Graphics lib config: $config");
   if (!config.areAnyEffectsEnabled) {
     return GraphicsLibConfig.disabled;

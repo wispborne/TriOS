@@ -37,11 +37,9 @@ class TriOSHttpClient {
   final ApiClientConfig config;
   int _activeRequests = 0;
 
-  TriOSHttpClient({
-    required this.config,
-    this.maxConcurrentRequests = 10,
-  })  : _defaultHttpClient = HttpClient(),
-        _selfSignedHttpClient = HttpClient() {
+  TriOSHttpClient({required this.config, this.maxConcurrentRequests = 10})
+    : _defaultHttpClient = HttpClient(),
+      _selfSignedHttpClient = HttpClient() {
     // Set up the client that allows self-signed certificates
     _selfSignedHttpClient.badCertificateCallback =
         (X509Certificate cert, String host, int port) => true;
@@ -68,9 +66,10 @@ class TriOSHttpClient {
         return Future.error(Exception('Invalid URL: $url'));
       }
 
-      final client = allowSelfSignedCertificates
-          ? _selfSignedHttpClient
-          : _defaultHttpClient;
+      final client =
+          allowSelfSignedCertificates
+              ? _selfSignedHttpClient
+              : _defaultHttpClient;
       return _retry(
         () => _createRequest(
           () => client.getUrl(url),
@@ -93,7 +92,8 @@ class TriOSHttpClient {
 
   /// Enqueues the request and ensures concurrency limit.
   Future<TriOSHttpResponse<dynamic>> _enqueueRequest(
-      Future<TriOSHttpResponse<dynamic>> Function() requestFactory) {
+    Future<TriOSHttpResponse<dynamic>> Function() requestFactory,
+  ) {
     final completer = Completer<TriOSHttpResponse<dynamic>>();
     final requestItem = _RequestItem(requestFactory, completer);
     _requestQueue.add(requestItem);
@@ -110,14 +110,18 @@ class TriOSHttpClient {
     _activeRequests++;
     final requestItem = _requestQueue.removeFirst();
 
-    requestItem.requestFactory().then((response) {
-      requestItem.completer.complete(response);
-    }).catchError((error) {
-      requestItem.completer.completeError(error);
-    }).whenComplete(() {
-      _activeRequests--;
-      _tryExecuteNext();
-    });
+    requestItem
+        .requestFactory()
+        .then((response) {
+          requestItem.completer.complete(response);
+        })
+        .catchError((error) {
+          requestItem.completer.completeError(error);
+        })
+        .whenComplete(() {
+          _activeRequests--;
+          _tryExecuteNext();
+        });
   }
 
   /// Creates an HTTP request with optional headers and returns the full response.
@@ -186,10 +190,14 @@ class TriOSHttpClient {
         return await requestFunction().timeout(timeout);
       } on TimeoutException catch (e) {
         Fimber.w(
-            'Request timed out on attempt ${attempt + 1}: ${e.toString()}');
+          'Request timed out on attempt ${attempt + 1}: ${e.toString()}',
+        );
       } catch (e, stacktrace) {
-        Fimber.e('Request failed on attempt ${attempt + 1}: ${e.toString()}',
-            ex: e, stacktrace: stacktrace);
+        Fimber.e(
+          'Request failed on attempt ${attempt + 1}: ${e.toString()}',
+          ex: e,
+          stacktrace: stacktrace,
+        );
       }
       attempt++;
       if (attempt < retries) {
@@ -202,13 +210,17 @@ class TriOSHttpClient {
   }
 
   void _logRequest(HttpClientRequest request) {
-    Fimber.v(() =>
-        'Request: ${request.method} ${request.uri}\nHeaders:${request.headers}');
+    Fimber.v(
+      () =>
+          'Request: ${request.method} ${request.uri}\nHeaders:${request.headers}',
+    );
   }
 
   void _logResponse(HttpClientRequest request, HttpClientResponse response) {
-    Fimber.v(() =>
-        'Response:${request.method} ${request.uri}:  ${response.statusCode}');
+    Fimber.v(
+      () =>
+          'Response:${request.method} ${request.uri}:  ${response.statusCode}',
+    );
     Fimber.v(() => 'Headers: ${response.headers}');
   }
 

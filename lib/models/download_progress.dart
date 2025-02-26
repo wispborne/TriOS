@@ -26,13 +26,21 @@ class TriOSDownloadProgress with TriOSDownloadProgressMappable {
   ///   - Combine them,
   ///   - Or omit it.
   ///   Adjust to your needs.
-  static TriOSDownloadProgress? aggregate(Iterable<TriOSDownloadProgress> progressList) {
+  static TriOSDownloadProgress? aggregate(
+    Iterable<TriOSDownloadProgress> progressList,
+  ) {
     if (progressList.isEmpty) {
       return null;
     }
 
-    final totalReceived = progressList.fold<int>(0, (sum, p) => sum + p.bytesReceived);
-    final totalBytes = progressList.fold<int>(0, (sum, p) => sum + p.bytesTotal);
+    final totalReceived = progressList.fold<int>(
+      0,
+      (sum, p) => sum + p.bytesReceived,
+    );
+    final totalBytes = progressList.fold<int>(
+      0,
+      (sum, p) => sum + p.bytesTotal,
+    );
     final anyIndeterminate = progressList.any((p) => p.isIndeterminate);
 
     // Show first non-null custom status

@@ -68,7 +68,8 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
           child: Row(
             children: [
               DropdownMenu<Release?>(
-                dropdownMenuEntries: _releases?.map((release) {
+                dropdownMenuEntries:
+                    _releases?.map((release) {
                       return DropdownMenuEntry(
                         value: release,
                         label: release.tagName,
@@ -82,23 +83,28 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                 },
               ),
               MovingTooltipWidget.text(
-                message: "CAUTION: May mess up TriOS's settings (not mods)."
+                message:
+                    "CAUTION: May mess up TriOS's settings (not mods)."
                     "\nGoing back in time is not tested. Recommend backing up your settings first (click Log File button to open folder).",
                 warningLevel: TooltipWarningLevel.error,
                 child: ElevatedButton.icon(
-                    icon: _selectedRelease != null
-                        ? const Icon(Icons.settings_backup_restore, size: 20)
-                        : null,
-                    onPressed: () {
-                      if (_selectedRelease != null) {
-                        ref
-                            .watch(AppState.selfUpdate.notifier)
-                            .updateSelf(_selectedRelease!);
-                      }
-                    },
-                    label: Text(_selectedRelease == null
+                  icon:
+                      _selectedRelease != null
+                          ? const Icon(Icons.settings_backup_restore, size: 20)
+                          : null,
+                  onPressed: () {
+                    if (_selectedRelease != null) {
+                      ref
+                          .watch(AppState.selfUpdate.notifier)
+                          .updateSelf(_selectedRelease!);
+                    }
+                  },
+                  label: Text(
+                    _selectedRelease == null
                         ? "<- Select a release"
-                        : 'Update to ${_selectedRelease?.tagName}')),
+                        : 'Update to ${_selectedRelease?.tagName}',
+                  ),
+                ),
               ),
               CheckboxWithLabel(
                 value: _includePrereleases,
@@ -118,10 +124,9 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
           child: ElevatedButton.icon(
             icon: const Icon(Icons.security_update_good),
             onPressed: () async {
-              ref
-                  .watch(AppState.selfUpdate.notifier)
-                  .getLatestRelease()
-                  .then((release) {
+              ref.watch(AppState.selfUpdate.notifier).getLatestRelease().then((
+                release,
+              ) {
                 if (release == null) {
                   Fimber.d("No release found");
                   return;
@@ -167,17 +172,23 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
             icon: const Icon(Icons.play_arrow),
             onPressed: () async {
               // hardcoded name
-              runZonedGuarded(() {
-                ref.read(AppState.selfUpdate.notifier).runSelfUpdateScript(File(
-                    "${Platform.resolvedExecutable.toFile().parent.path}/update-trios/${ScriptGenerator.scriptName()}"));
-              }, (error, stackTrace) {
-                showSnackBar(
-                  context: context,
-                  content: Text(
-                    "Error running self-update script: $error",
-                  ),
-                );
-              });
+              runZonedGuarded(
+                () {
+                  ref
+                      .read(AppState.selfUpdate.notifier)
+                      .runSelfUpdateScript(
+                        File(
+                          "${Platform.resolvedExecutable.toFile().parent.path}/update-trios/${ScriptGenerator.scriptName()}",
+                        ),
+                      );
+                },
+                (error, stackTrace) {
+                  showSnackBar(
+                    context: context,
+                    content: Text("Error running self-update script: $error"),
+                  );
+                },
+              );
             },
             label: const Text('Run existing self-update script if exists'),
           ),
@@ -191,9 +202,13 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                   .read(AppState.modVariants)
                   .valueOrNull
                   .orEmpty()
-                  .firstWhere((variant) =>
-                      variant.modInfo.id.equalsIgnoreCase("magiclib"));
-              ref.read(downloadManager.notifier).addDownload(
+                  .firstWhere(
+                    (variant) =>
+                        variant.modInfo.id.equalsIgnoreCase("magiclib"),
+                  );
+              ref
+                  .read(downloadManager.notifier)
+                  .addDownload(
                     "${testMod.modInfo.nameOrId} ${testMod.bestVersion}",
                     testMod.versionCheckerInfo!.directDownloadURL!,
                     Directory.systemTemp,
@@ -212,8 +227,10 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                   .read(AppState.modVariants)
                   .valueOrNull
                   .orEmpty()
-                  .firstWhere((variant) =>
-                      variant.modInfo.id.equalsIgnoreCase("magiclib"));
+                  .firstWhere(
+                    (variant) =>
+                        variant.modInfo.id.equalsIgnoreCase("magiclib"),
+                  );
               toastification.showCustom(
                 context: context,
                 builder: (context, item) => ModAddedToast(testMod, item),
@@ -281,9 +298,10 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                 child: ElevatedButton.icon(
                   icon: const Icon(Icons.system_security_update_warning),
                   onPressed: () async {
-                    final latestRelease = await ref
-                        .watch(AppState.selfUpdate.notifier)
-                        .getLatestRelease();
+                    final latestRelease =
+                        await ref
+                            .watch(AppState.selfUpdate.notifier)
+                            .getLatestRelease();
                     ref
                         .read(AppState.selfUpdate.notifier)
                         .updateSelf(latestRelease!);
@@ -293,7 +311,8 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
               ),
               const SizedBox(height: 4),
               TriOSDownloadProgressIndicator(
-                value: ref.watch(AppState.selfUpdate).valueOrNull ??
+                value:
+                    ref.watch(AppState.selfUpdate).valueOrNull ??
                     const TriOSDownloadProgress(0, 1, isIndeterminate: false),
               ),
             ],
@@ -305,8 +324,9 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
             icon: const Icon(Icons.developer_mode),
             onPressed: () {
               getStarsectorVersionFromObf(
-                      ref.watch(appSettings.select((s) => s.gameCoreDir))!, ref.read(archiveProvider).value!)
-                  .then((value) {
+                ref.watch(appSettings.select((s) => s.gameCoreDir))!,
+                ref.read(archiveProvider).value!,
+              ).then((value) {
                 showSnackBar(
                   context: ref.read(AppState.appContext)!,
                   content: Text("Game version: $value"),
@@ -323,11 +343,13 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
             onPressed: () {
               showSnackBar(
                 context: ref.read(AppState.appContext)!,
-                content: Text(ref
-                        .refresh(weaponListNotifierProvider)
-                        .valueOrNull
-                        ?.toString() ??
-                    "weh"),
+                content: Text(
+                  ref
+                          .refresh(weaponListNotifierProvider)
+                          .valueOrNull
+                          ?.toString() ??
+                      "weh",
+                ),
               );
             },
             label: const Text('Read weapons'),
@@ -335,24 +357,30 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
         ),
         Padding(
           padding: const EdgeInsets.only(top: 16),
-          child: Builder(builder: (context) {
-            final path = "F:/Downloads/starsector_install-0.97a-RC11.exe";
-            return MovingTooltipWidget.text(
-              message: "Tries to read from '$path'",
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.folder_zip),
-                onPressed: () async {
-                  final time = DateTime.now();
-                  final entries =
-                      await ref.read(archiveProvider).requireValue.listFiles(path.toFile());
-                  final timeToRead = time.difference(DateTime.now());
-                  Fimber.i("Entries: ${(entries).join('\n')}"
-                      "\nTime to read archive: $timeToRead");
-                },
-                label: const Text('Read Starsector installer'),
-              ),
-            );
-          }),
+          child: Builder(
+            builder: (context) {
+              final path = "F:/Downloads/starsector_install-0.97a-RC11.exe";
+              return MovingTooltipWidget.text(
+                message: "Tries to read from '$path'",
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.folder_zip),
+                  onPressed: () async {
+                    final time = DateTime.now();
+                    final entries = await ref
+                        .read(archiveProvider)
+                        .requireValue
+                        .listFiles(path.toFile());
+                    final timeToRead = time.difference(DateTime.now());
+                    Fimber.i(
+                      "Entries: ${(entries).join('\n')}"
+                      "\nTime to read archive: $timeToRead",
+                    );
+                  },
+                  label: const Text('Read Starsector installer'),
+                ),
+              );
+            },
+          ),
         ),
         const SizedBox(height: 16),
         Card(
@@ -367,17 +395,19 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                     child: Text(
                       "Note: the below information is not collected by TriOS.\nThis is here in case TriOS is misbehaving, to hopefully see if anything looks wrong.",
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                      "Current directory (env variable): ${Directory.current.path}"),
+                    "Current directory (env variable): ${Directory.current.path}",
+                  ),
                   const SizedBox(height: 8),
                   Text(
-                      "Current directory based on executable: ${Platform.resolvedExecutable.toFile().parent}"),
+                    "Current directory based on executable: ${Platform.resolvedExecutable.toFile().parent}",
+                  ),
                   const SizedBox(height: 8),
                   Text("Current executable: ${Platform.resolvedExecutable}"),
                   const SizedBox(height: 8),
@@ -386,10 +416,12 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                   Text("Locale: ${Platform.localeName}"),
                   const SizedBox(height: 8),
                   Text(
-                      "RAM usage: ${ProcessInfo.currentRss.bytesAsReadableMB()}"),
+                    "RAM usage: ${ProcessInfo.currentRss.bytesAsReadableMB()}",
+                  ),
                   const SizedBox(height: 8),
                   Text(
-                      "Max RAM usage: ${ProcessInfo.maxRss.bytesAsReadableMB()}"),
+                    "Max RAM usage: ${ProcessInfo.maxRss.bytesAsReadableMB()}",
+                  ),
                   const SizedBox(height: 8),
                   ElevatedButton.icon(
                     icon: const Icon(Icons.settings),
@@ -401,10 +433,12 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                           return AlertDialog(
                             title: const Text("Settings"),
                             content: SingleChildScrollView(
-                              child: SelectableText(ref
-                                  .watch(appSettings)
-                                  .toMap()
-                                  .prettyPrintToml()),
+                              child: SelectableText(
+                                ref
+                                    .watch(appSettings)
+                                    .toMap()
+                                    .prettyPrintToml(),
+                              ),
                             ),
                           );
                         },
@@ -422,12 +456,14 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                           return AlertDialog(
                             title: const Text("Mod Profiles"),
                             content: SingleChildScrollView(
-                              child: SelectableText(ref
-                                      .watch(modProfilesProvider)
-                                      .valueOrNull
-                                      ?.toMap()
-                                      .prettyPrintToml() ??
-                                  ""),
+                              child: SelectableText(
+                                ref
+                                        .watch(modProfilesProvider)
+                                        .valueOrNull
+                                        ?.toMap()
+                                        .prettyPrintToml() ??
+                                    "",
+                              ),
                             ),
                           );
                         },
@@ -446,7 +482,8 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                             title: const Text("Environment Variables"),
                             content: SingleChildScrollView(
                               child: SelectableText(
-                                  Platform.environment.prettyPrintToml() ?? ""),
+                                Platform.environment.prettyPrintToml() ?? "",
+                              ),
                             ),
                           );
                         },
@@ -482,12 +519,14 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                           return AlertDialog(
                             title: const Text("Version Checker Cache"),
                             content: SingleChildScrollView(
-                              child: SelectableText(ref
-                                      .watch(AppState.versionCheckResults)
-                                      .valueOrNull
-                                      ?.toMap()
-                                      .prettyPrintJson() ??
-                                  ""),
+                              child: SelectableText(
+                                ref
+                                        .watch(AppState.versionCheckResults)
+                                        .valueOrNull
+                                        ?.toMap()
+                                        .prettyPrintJson() ??
+                                    "",
+                              ),
                             ),
                           );
                         },
@@ -536,64 +575,73 @@ class _ModCompatibilityFilterWidgetState
 
   @override
   Widget build(BuildContext context) {
-    return Builder(builder: (context) {
-      final allSmolIds = ref
-              .watch(AppState.modVariants)
-              .valueOrNull
-              ?.map((variant) => variant.smolId)
-              .toList() ??
-          [];
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text("Mod Compatibility"),
-          SearchAnchor(
-            searchController: _searchController,
-            builder: (BuildContext context, SearchController controller) {
-              return SearchBar(
-                controller: controller,
-                leading: const Icon(Icons.search),
-                hintText: "Filter by variant id",
-                backgroundColor: WidgetStateProperty.all(
-                  Theme.of(context).colorScheme.surfaceContainer,
-                ),
-                onChanged: (value) {
-                  controller.openView();
-                },
-                onTap: () {
-                  controller.openView();
-                },
-              );
-            },
-            suggestionsBuilder:
-                (BuildContext context, SearchController controller) {
-              return allSmolIds
-                  .where((id) => id.contains(controller.text))
-                  .map((id) => ListTile(
+    return Builder(
+      builder: (context) {
+        final allSmolIds =
+            ref
+                .watch(AppState.modVariants)
+                .valueOrNull
+                ?.map((variant) => variant.smolId)
+                .toList() ??
+            [];
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("Mod Compatibility"),
+            SearchAnchor(
+              searchController: _searchController,
+              builder: (BuildContext context, SearchController controller) {
+                return SearchBar(
+                  controller: controller,
+                  leading: const Icon(Icons.search),
+                  hintText: "Filter by variant id",
+                  backgroundColor: WidgetStateProperty.all(
+                    Theme.of(context).colorScheme.surfaceContainer,
+                  ),
+                  onChanged: (value) {
+                    controller.openView();
+                  },
+                  onTap: () {
+                    controller.openView();
+                  },
+                );
+              },
+              suggestionsBuilder: (
+                BuildContext context,
+                SearchController controller,
+              ) {
+                return allSmolIds
+                    .where((id) => id.contains(controller.text))
+                    .map(
+                      (id) => ListTile(
                         title: Text(id),
                         onTap: () {
                           setState(() {
                             controller.closeView(id);
                           });
                         },
-                      ))
-                  .toList();
-            },
-          ),
-          SelectableText(
-            "${_searchController.text.ifBlank("(no search)")}:\n${ref.watch(AppState.modCompatibility)[_searchController.text]?.toString() ?? "(id not found)"}",
-          ),
-          const SizedBox(height: 24),
-          Text("ALL Mods",
-              style: Theme.of(context)
-                  .textTheme
-                  .labelLarge
-                  ?.copyWith(fontSize: 16, fontWeight: FontWeight.bold)),
-          SelectableText(
-            ref.watch(AppState.modCompatibility).entries.toList().join('\n'),
-          ),
-        ],
-      );
-    });
+                      ),
+                    )
+                    .toList();
+              },
+            ),
+            SelectableText(
+              "${_searchController.text.ifBlank("(no search)")}:\n${ref.watch(AppState.modCompatibility)[_searchController.text]?.toString() ?? "(id not found)"}",
+            ),
+            const SizedBox(height: 24),
+            Text(
+              "ALL Mods",
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SelectableText(
+              ref.watch(AppState.modCompatibility).entries.toList().join('\n'),
+            ),
+          ],
+        );
+      },
+    );
   }
 }

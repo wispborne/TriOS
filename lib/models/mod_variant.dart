@@ -38,26 +38,32 @@ class ModVariant with ModVariantMappable implements Comparable<ModVariant> {
 
   String? get iconFilePath {
     return iconCache.putIfAbsent(modInfo.id, () {
-      var path = modIconFilePaths
-          .map((path) => modFolder.resolve(path))
-          .firstWhereOrNull((file) => file.existsSync())
-          ?.path;
+      var path =
+          modIconFilePaths
+              .map((path) => modFolder.resolve(path))
+              .firstWhereOrNull((file) => file.existsSync())
+              ?.path;
 
       if (path == null) {
         final lunaSettings =
             modFolder.resolve("data/config/LunaSettingsConfig.json").toFile();
         if (lunaSettings.existsSync()) {
           try {
-            final lunaSettingsIconPath = (lunaSettings
-                    .readAsStringSyncAllowingMalformed()
-                    .fixJsonToMap()
+            final lunaSettingsIconPath =
+                (lunaSettings
+                            .readAsStringSyncAllowingMalformed()
+                            .fixJsonToMap()
+                            .entries
+                            .first
+                            .value
+                        as Map<String, dynamic>)
                     .entries
-                    .first
-                    .value as Map<String, dynamic>)
-                .entries
-                .firstWhereOrNull((entry) =>
-                    entry.key.toLowerCase().containsIgnoreCase("iconPath"))
-                ?.value;
+                    .firstWhereOrNull(
+                      (entry) => entry.key.toLowerCase().containsIgnoreCase(
+                        "iconPath",
+                      ),
+                    )
+                    ?.value;
             if (lunaSettingsIconPath is String) {
               final icon = modFolder.resolve(lunaSettingsIconPath).toFile();
               if (icon.existsSync()) {
@@ -118,9 +124,9 @@ class ModVariant with ModVariantMappable implements Comparable<ModVariant> {
       return result;
     }
 
-    return modInfo.version
-        .toString()
-        .compareTo(other.modInfo.version.toString());
+    return modInfo.version.toString().compareTo(
+      other.modInfo.version.toString(),
+    );
   }
 
   @override
@@ -137,7 +143,7 @@ const modIconFilePaths = [
   "icon.png",
   "icon.jpg",
   "icon.jpeg",
-  "icon.gif"
+  "icon.gif",
 ];
 
 final smolIdAllowedChars = RegExp(r'[^0-9a-zA-Z\\.\-_]');

@@ -19,7 +19,8 @@ import 'downloader.dart';
 
 final downloadManager =
     AsyncNotifierProvider<TriOSDownloadManager, List<Download>>(
-        TriOSDownloadManager.new);
+      TriOSDownloadManager.new,
+    );
 
 class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
   static late DownloadManager _downloadManager;
@@ -41,17 +42,18 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
     Directory destination, {
     ModInfo? modInfo,
   }) async {
-    return _downloadManager
-        .addDownload(uri, destination.path, null)
-        .then((value) {
+    return _downloadManager.addDownload(uri, destination.path, null).then((
+      value,
+    ) {
       if (value == null) {
         return null;
       }
       // generate guid for id
       final id = const Uuid().v4();
-      final download = modInfo == null
-          ? Download(id, displayName, value)
-          : ModDownload(id, displayName, value, modInfo);
+      final download =
+          modInfo == null
+              ? Download(id, displayName, value)
+              : ModDownload(id, displayName, value, modInfo);
       _downloads.add(download);
       state = AsyncValue.data(_downloads);
 
@@ -86,19 +88,25 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
     });
   }
 
-  downloadUpdateViaBrowser(VersionCheckerInfo remoteVersion,
-      {required bool activateVariantOnComplete, ModInfo? modInfo}) {
+  downloadUpdateViaBrowser(
+    VersionCheckerInfo remoteVersion, {
+    required bool activateVariantOnComplete,
+    ModInfo? modInfo,
+  }) {
     if (remoteVersion.directDownloadURL != null) {
       downloadAndInstallMod(
-          "${remoteVersion.modName ?? "(no name"} ${remoteVersion.modVersion}",
-          remoteVersion.directDownloadURL!.fixModDownloadUrl(),
-          activateVariantOnComplete: activateVariantOnComplete);
+        "${remoteVersion.modName ?? "(no name"} ${remoteVersion.modVersion}",
+        remoteVersion.directDownloadURL!.fixModDownloadUrl(),
+        activateVariantOnComplete: activateVariantOnComplete,
+      );
     } else if (remoteVersion.modThreadId != null) {
-      launchUrl(Uri.parse(
-          "${Constants.forumModPageUrl}${remoteVersion.modThreadId}"));
+      launchUrl(
+        Uri.parse("${Constants.forumModPageUrl}${remoteVersion.modThreadId}"),
+      );
     } else if (remoteVersion.modNexusId != null) {
-      launchUrl(Uri.parse(
-          "${Constants.nexusModsPageUrl}${remoteVersion.modNexusId}"));
+      launchUrl(
+        Uri.parse("${Constants.nexusModsPageUrl}${remoteVersion.modNexusId}"),
+      );
     }
   }
 
@@ -110,16 +118,12 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
   }) {
     var tempFolder = Directory.systemTemp.createTempSync();
 
-    addDownload(
-      displayName,
-      uri,
-      tempFolder,
-      modInfo: modInfo,
-    ).then((value) {
+    addDownload(displayName, uri, tempFolder, modInfo: modInfo).then((value) {
       value?.task.whenDownloadComplete().then((status) {
         if (status == DownloadStatus.completed) {
           Fimber.d(
-              "Downloaded ${value.task.request.url} to ${tempFolder.path}. Installing...");
+            "Downloaded ${value.task.request.url} to ${tempFolder.path}. Installing...",
+          );
           try {
             ref
                 .read(modManager.notifier)
@@ -127,30 +131,30 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
                   ArchiveModInstallSource(tempFolder.listSync().first.toFile()),
                 )
                 .then((installedVariants) {
-              if (activateVariantOnComplete) {
-                // final variants =
-                //     ref.read(AppState.modVariants).valueOrNull ?? [];
+                  if (activateVariantOnComplete) {
+                    // final variants =
+                    //     ref.read(AppState.modVariants).valueOrNull ?? [];
 
-                // for (final installed in installedVariants) {
-                // Find the variant post-install so we can activate it.
-                // final actualVariant = variants.firstWhereOrNull(
-                //     (variant) => variant.smolId == installed.modInfo.smolId);
-                // try {
-                // If the mod existed and was enabled, switch to the newly downloaded version.
-                // Edit: changed my mind, see https://github.com/wispborne/TriOS/issues/28
+                    // for (final installed in installedVariants) {
+                    // Find the variant post-install so we can activate it.
+                    // final actualVariant = variants.firstWhereOrNull(
+                    //     (variant) => variant.smolId == installed.modInfo.smolId);
+                    // try {
+                    // If the mod existed and was enabled, switch to the newly downloaded version.
+                    // Edit: changed my mind, see https://github.com/wispborne/TriOS/issues/28
 
-                // if (actualVariant != null &&
-                //     actualVariant.mod(mods)?.isEnabledInGame == true) {
-                //   changeActiveModVariant(
-                //       actualVariant.mod(mods)!, actualVariant, ref);
-                // }
-                // } catch (ex) {
-                //   Fimber.w(
-                //       "Failed to activate mod ${installed.modInfo.smolId} after updating: $ex");
-                // }
-                // }
-              }
-            });
+                    // if (actualVariant != null &&
+                    //     actualVariant.mod(mods)?.isEnabledInGame == true) {
+                    //   changeActiveModVariant(
+                    //       actualVariant.mod(mods)!, actualVariant, ref);
+                    // }
+                    // } catch (ex) {
+                    //   Fimber.w(
+                    //       "Failed to activate mod ${installed.modInfo.smolId} after updating: $ex");
+                    // }
+                    // }
+                  }
+                });
           } catch (e) {
             Fimber.e("Error installing mod from archive", ex: e);
           }

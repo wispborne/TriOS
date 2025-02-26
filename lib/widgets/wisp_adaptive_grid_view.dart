@@ -47,19 +47,22 @@ class WispAdaptiveGridView<T> extends StatelessWidget {
   /// Padding around the entire scrollable area.
   final EdgeInsets padding;
 
+  final bool shrinkWrap;
+
   /// Builds each item in the grid. You receive the [BuildContext], the item
   /// itself, and the absolute index of the item in [items].
   final Widget Function(BuildContext context, T item, int index) itemBuilder;
 
   const WispAdaptiveGridView({
-    Key? key,
+    super.key,
     required this.items,
     required this.minItemWidth,
     this.horizontalSpacing = 0.0,
     this.verticalSpacing = 0.0,
     required this.itemBuilder,
     this.padding = EdgeInsets.zero,
-  }) : super(key: key);
+    this.shrinkWrap = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -82,6 +85,7 @@ class WispAdaptiveGridView<T> extends StatelessWidget {
         return ListView.builder(
           padding: padding,
           itemCount: totalRows,
+          shrinkWrap: shrinkWrap,
           itemBuilder: (context, rowIndex) {
             // The chunk of items for this particular row.
             final startIndex = rowIndex * layout.columns;

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/models/mod.dart';
+import 'package:trios/models/mod_variant.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 
@@ -16,6 +18,32 @@ class ModIcon extends ConsumerWidget {
     this.takeUpSpaceIfNoIcon = false,
     this.showFullSizeInTooltip = false,
   });
+
+  static fromMod(
+    Mod mod, {
+    double size = 32,
+    bool takeUpSpaceIfNoIcon = false,
+    bool showFullSizeInTooltip = false,
+  }) =>
+      ModIcon(
+        mod.findFirstEnabledOrHighestVersion?.iconFilePath,
+        size: size,
+        takeUpSpaceIfNoIcon: takeUpSpaceIfNoIcon,
+        showFullSizeInTooltip: showFullSizeInTooltip,
+      );
+
+  static fromVariant(
+    ModVariant? variant, {
+    double size = 32,
+    bool takeUpSpaceIfNoIcon = false,
+    bool showFullSizeInTooltip = false,
+  }) =>
+      ModIcon(
+        variant?.iconFilePath,
+        size: size,
+        takeUpSpaceIfNoIcon: takeUpSpaceIfNoIcon,
+        showFullSizeInTooltip: showFullSizeInTooltip,
+      );
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

@@ -1,6 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/models/mod.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/thirdparty/dartx/iterable.dart';
@@ -10,6 +11,7 @@ import 'package:trios/tips/tip.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/widgets/dense_button.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/mod_icon.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
@@ -30,136 +32,141 @@ class TipsPage extends ConsumerStatefulWidget {
   ConsumerState<ConsumerStatefulWidget> createState() => _TipsPageState();
 }
 
-class _TipsPageState extends ConsumerState<TipsPage> {
+class _TipsPageState extends ConsumerState<TipsPage>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
   bool _onlyEnabled = false;
   bool _showHidden = false;
   TipsGrouping _grouping = TipsGrouping.none;
-  final Map<int, bool> _selectionStates = {};
+  final Map<ModTip, bool> _selectionStates = {};
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     // Watch the tips.
     final tipsAsync = ref.watch(AppState.tipsProvider);
     final textColor = Theme.of(context).colorScheme.onSurface;
 
-    return Column(children: [
-      Padding(
-        padding: const EdgeInsets.all(4),
-        child: SizedBox(
-          height: 50,
-          child: Card(
-            child: Padding(
-              padding: const EdgeInsets.only(left: 8, right: 8),
-              child: Row(
-                children: [
-                  MovingTooltipWidget.text(
-                    message: 'Reload tips',
-                    child: IconButton(
-                      icon: const Icon(Icons.refresh),
-                      onPressed: () {
-                        ref.invalidate(AppState.tipsProvider);
-                      },
-                    ),
-                  ),
-                  TriOSToolbarCheckboxButton(
-                    onChanged: (newValue) =>
-                        setState(() => _onlyEnabled = newValue ?? true),
-                    value: _onlyEnabled,
-                    text: 'Enabled Mods Only',
-                  ),
-                  SizedBox(width: 8),
-                  TriOSToolbarItem(
-                    child: PopupMenuButton<TipsGrouping>(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        child: Row(
-                          children: [
-                            Icon(Icons.filter_list),
-                            SizedBox(width: 4),
-                            Text("Group By"),
-                          ],
-                        ),
-                      ),
-                      onSelected: (value) => setState(() => _grouping = value),
-                      itemBuilder: (context) => [
-                        const PopupMenuItem(
-                          value: TipsGrouping.none,
-                          child: Text('No Grouping'),
-                        ),
-                        const PopupMenuItem(
-                          value: TipsGrouping.mod,
-                          child: Text('Group By Mod'),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(width: 8),
-                  TriOSToolbarItem(
-                    child: TextButton.icon(
-                      onPressed: () {
-                        // Select or deselect all.
-                        final allSelected =
-                            _selectionStates.values.every((v) => v);
-                        setState(() {
-                          for (final key in _selectionStates.keys) {
-                            _selectionStates[key] = !allSelected;
-                          }
-                        });
-                      },
-                      icon: Icon(Icons.select_all, color: textColor),
-                      label: Text(
-                        'Select All',
-                        style: TextStyle(color: textColor),
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(4),
+          child: SizedBox(
+            height: 50,
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.only(left: 8, right: 8),
+                child: Row(
+                  children: [
+                    MovingTooltipWidget.text(
+                      message: 'Reload tips',
+                      child: IconButton(
+                        icon: const Icon(Icons.refresh),
+                        onPressed: () {
+                          ref.invalidate(AppState.tipsProvider);
+                        },
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  _buildDeleteButton(context),
-                  const Spacer(),
-                  TriOSToolbarCheckboxButton(
-                    onChanged: (newValue) =>
-                        setState(() => _showHidden = newValue ?? true),
-                    value: _showHidden,
-                    text: 'Show Hidden',
-                  ),
-                ],
+                    TriOSToolbarCheckboxButton(
+                      onChanged: (newValue) =>
+                          setState(() => _onlyEnabled = newValue ?? true),
+                      value: _onlyEnabled,
+                      text: 'Enabled Mods Only',
+                    ),
+                    const SizedBox(width: 8),
+                    TriOSToolbarItem(
+                      child: PopupMenuButton<TipsGrouping>(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.filter_list),
+                              const SizedBox(width: 4),
+                              Text(_grouping == TipsGrouping.none
+                                  ? 'No Grouping'
+                                  : 'Group By Mod'),
+                            ],
+                          ),
+                        ),
+                        onSelected: (value) =>
+                            setState(() => _grouping = value),
+                        itemBuilder: (context) => const [
+                          PopupMenuItem(
+                            value: TipsGrouping.none,
+                            child: Text('No Grouping'),
+                          ),
+                          PopupMenuItem(
+                            value: TipsGrouping.mod,
+                            child: Text('Group By Mod'),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    TriOSToolbarItem(
+                      child: TextButton.icon(
+                        onPressed: () {
+                          // Select or deselect all.
+                          final allSelected =
+                              _selectionStates.values.every((v) => v);
+                          setState(() {
+                            for (final key in _selectionStates.keys) {
+                              _selectionStates[key] = !allSelected;
+                            }
+                          });
+                        },
+                        icon: Icon(Icons.select_all, color: textColor),
+                        label: Text(
+                          'Select All',
+                          style: TextStyle(color: textColor),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    _buildDeleteButton(context),
+                    const Spacer(),
+                    TriOSToolbarCheckboxButton(
+                      onChanged: (newValue) =>
+                          setState(() => _showHidden = newValue ?? true),
+                      value: _showHidden,
+                      text: 'Show Hidden',
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
         ),
-      ),
-      Expanded(
-        child: tipsAsync.when(
-          data: (tips) {
-            return _buildBody(tips, context);
-          },
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, st) {
-            Fimber.e('Error loading tips: $err', ex: err, stacktrace: st);
-            return Center(
-              child: Text('Error: $err'),
-            );
-          },
+        Expanded(
+          child: tipsAsync.when(
+            data: (tips) {
+              return _buildBody(tips, context);
+            },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (err, st) {
+              Fimber.e('Error loading tips: $err', ex: err, stacktrace: st);
+              return Center(child: Text('Error: $err'));
+            },
+          ),
         ),
-      ),
-    ]);
+      ],
+    );
   }
 
   Widget _buildDeleteButton(BuildContext context) {
-    final allTips = ref.watch(AppState.tipsProvider).valueOrNull ?? [];
-
     final selectedTips = _selectionStates.entries
         .where((entry) => entry.value)
-        .map((entry) =>
-            allTips.firstWhereOrNull((tip) => tip.hashCode == entry.key))
-        .nonNulls
+        .map((entry) => entry.key)
         .toList();
 
     final isEnabled = selectedTips.isNotEmpty;
 
-    final hiddenCount = selectedTips.where((t) => t.tipObj.originalFreq != null).length;
+    final hiddenCount = selectedTips
+        .where((t) => ref.read(AppState.tipsProvider.notifier).isHidden(t))
+        .length;
     final notHiddenCount = selectedTips.length - hiddenCount;
-
     final showUnhide = hiddenCount > notHiddenCount;
 
     final buttonLabel = showUnhide ? 'Unhide Selected' : 'Hide Selected';
@@ -190,12 +197,15 @@ class _TipsPageState extends ConsumerState<TipsPage> {
       ),
     );
   }
+
   void _hideSelectedTips(List<ModTip> selectedTips) {
     if (selectedTips.isNotEmpty) {
-      ref.read(AppState.tipsProvider.notifier).hideTips(selectedTips, dryRun: false);
+      ref
+          .read(AppState.tipsProvider.notifier)
+          .hideTips(selectedTips, dryRun: false);
       setState(() {
         for (final tip in selectedTips) {
-          _selectionStates.remove(tip.hashCode);
+          _selectionStates.remove(tip);
         }
       });
     }
@@ -206,7 +216,7 @@ class _TipsPageState extends ConsumerState<TipsPage> {
       ref.read(AppState.tipsProvider.notifier).unhideTips(selectedTips);
       setState(() {
         for (final tip in selectedTips) {
-          _selectionStates.remove(tip.hashCode);
+          _selectionStates.remove(tip);
         }
       });
     }
@@ -228,47 +238,102 @@ class _TipsPageState extends ConsumerState<TipsPage> {
 
     // Ensure we have an entry in _selectionStates for each tip.
     for (final tip in filtered) {
-      _selectionStates.putIfAbsent(tip.hashCode, () => false);
+      _selectionStates.putIfAbsent(tip, () => false);
     }
 
     if (_grouping == TipsGrouping.mod) {
-      // Group tips by mod name.
-      final groups = <String, List<ModTip>>{};
+      final allMods = ref.read(AppState.mods);
+      // Group tips by mod.
+      final Map<Mod, List<ModTip>> grouped = {};
       for (final t in filtered) {
-        final modName = t.variants.firstOrNull?.modInfo.name ?? '(unknown)';
-        groups.putIfAbsent(modName, () => []).add(t);
+        final mod = t.variants.firstOrNull?.mod(allMods);
+        if (mod == null) {
+          continue;
+        }
+        grouped.putIfAbsent(mod, () => []).add(t);
       }
-      final sortedKeys = groups.keys.toList()..sort();
+      final List<Mod> sortedKeys = grouped.keys.toList()..sort();
 
-      return ListView.builder(
-        itemCount: sortedKeys.length,
-        itemBuilder: (context, idx) {
-          final modName = sortedKeys[idx];
-          final modTips = groups[modName]!;
-          return ExpansionTile(
-            title: Text('$modName (${modTips.length})'),
-            children: modTips.map((t) {
-              final hash = t.hashCode;
-              final selected = _selectionStates[hash] ?? false;
-              return ListTile(
-                leading: Checkbox(
-                  value: selected,
-                  onChanged: (val) {
-                    setState(() {
-                      _selectionStates[hash] = val ?? false;
-                    });
-                  },
+      return SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.only(left: 8, right: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (final mod in sortedKeys) ...[
+                Padding(
+                  padding: const EdgeInsets.only(top: 16, bottom: 8),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: ModIcon.fromMod(mod)),
+                      Text(
+                        '${mod.findFirstEnabledOrHighestVersion?.modInfo.nameOrId} (${grouped[mod]?.length ?? 0})',
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                      ),
+                      const SizedBox(width: 16),
+                      DenseButton(
+                        density: DenseButtonStyle.compact,
+                        child: OutlinedButton(
+                          style: ButtonStyle(
+                            foregroundColor: WidgetStateProperty.all(
+                              Theme.of(context).colorScheme.onSurface,
+                            ),
+                          ),
+                          onPressed: () {
+                            final areAllSelected = grouped[mod]!
+                                .every((t) => _selectionStates[t] ?? false);
+                            setState(() {
+                              for (final tip in grouped[mod]!) {
+                                _selectionStates[tip] = !areAllSelected;
+                              }
+                            });
+                          },
+                          child: Text('Select'),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                title: Text(t.tipObj.tip ?? '(No tip text)'),
-                subtitle: Text('Freq: ${t.tipObj.freq ?? '1'}'),
-              );
-            }).toList(),
-          );
-        },
+                Builder(builder: (context) {
+                  final List<ModTip> modTips = grouped[mod]!
+                    ..sort((a, b) =>
+                        (b.tipObj.tip?.length ?? 0) -
+                        (a.tipObj.tip?.length ?? 0));
+                  return WispAdaptiveGridView<ModTip>(
+                    items: modTips,
+                    minItemWidth: 350,
+                    shrinkWrap: true,
+                    horizontalSpacing: 8,
+                    verticalSpacing: 8,
+                    itemBuilder: (context, tip, index) {
+                      return TipCardView(
+                        tip: tip,
+                        isSelected: _selectionStates[tip] ?? false,
+                        isHidden: hiddenTips.contains(tip),
+                        showMod: false,
+                        onSelected: (selected) {
+                          setState(() {
+                            _selectionStates[tip] = selected;
+                          });
+                        },
+                      );
+                    },
+                  );
+                }),
+              ],
+            ],
+          ),
+        ),
       );
     } else {
-      // No grouping: show a grid.
-      final modTips = filtered
+      // No grouping: show a grid sorted by tip text length (descending).
+      final List<ModTip> modTips = filtered
         ..sort((a, b) =>
             (b.tipObj.tip?.length ?? 0) - (a.tipObj.tip?.length ?? 0));
 
@@ -281,14 +346,15 @@ class _TipsPageState extends ConsumerState<TipsPage> {
           verticalSpacing: 8,
           itemBuilder: (context, tip, index) {
             return TipCardView(
-                tip: tip,
-                isSelected: _selectionStates[tip.hashCode] ?? false,
-                isHidden: hiddenTips.contains(tip),
-                onSelected: (selected) {
-                  setState(() {
-                    _selectionStates[tip.hashCode] = selected;
-                  });
+              tip: tip,
+              isSelected: _selectionStates[tip] ?? false,
+              isHidden: hiddenTips.contains(tip),
+              onSelected: (selected) {
+                setState(() {
+                  _selectionStates[tip] = selected;
                 });
+              },
+            );
           },
         ),
       );
@@ -305,6 +371,7 @@ class TipCardView extends ConsumerStatefulWidget {
   final bool isSelected;
   final bool isHidden;
   final Function onSelected;
+  final bool showMod;
 
   const TipCardView({
     super.key,
@@ -312,6 +379,7 @@ class TipCardView extends ConsumerStatefulWidget {
     required this.isSelected,
     required this.isHidden,
     required this.onSelected,
+    this.showMod = true,
   });
 
   @override
@@ -325,13 +393,24 @@ class _TipCardViewState extends ConsumerState<TipCardView> {
     final tip = widget.tip;
     final isSelected = widget.isSelected;
     final isHidden = widget.isHidden;
-
     final textColor = theme.colorScheme.onSurface.withValues(
       alpha: tip.tipObj.freq?.toDoubleOrNull() == 0.0 ? 0.5 : 1,
     );
+
     return ContextMenuRegion(
       contextMenu: ContextMenu(
         entries: [
+          MenuItem(
+              label: isHidden ? 'Unhide' : 'Hide',
+              onSelected: () {
+                if (isHidden) {
+                  ref.read(AppState.tipsProvider.notifier).unhideTips([tip]);
+                } else {
+                  ref
+                      .read(AppState.tipsProvider.notifier)
+                      .hideTips([tip], dryRun: false);
+                }
+              }),
           MenuItem(
             label: 'Open Folder',
             onSelected: () {
@@ -376,36 +455,63 @@ class _TipCardViewState extends ConsumerState<TipCardView> {
                           padding: const EdgeInsets.only(right: 8),
                           child: Icon(Icons.visibility_off, color: textColor),
                         ),
-                      Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: ModIcon(
-                          tip.variants.firstOrNull?.iconFilePath,
-                          showFullSizeInTooltip: true,
-                          size: 24,
+                      if (widget.showMod)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: ModIcon.fromVariant(
+                            tip.variants.firstOrNull,
+                            showFullSizeInTooltip: true,
+                            size: 24,
+                          ),
                         ),
-                      ),
-                      Expanded(
-                        child: Text(
-                          tip.variants.firstOrNull?.modInfo.name ??
-                              '(unknown mod name)',
-                          style: TextStyle(
+                      if (widget.showMod)
+                        Expanded(
+                          child: Text(
+                            tip.variants.firstOrNull?.modInfo.name ??
+                                '(unknown mod name)',
+                            style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: theme.colorScheme.onSurface
-                                  .withValues(alpha: 0.8)),
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.8,
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
-                      Checkbox(
-                        value: isSelected,
-                        onChanged: (val) {
-                          widget.onSelected(val ?? false);
-                        },
-                      ),
+                      if (widget.showMod)
+                        Checkbox(
+                          value: isSelected,
+                          onChanged: (val) {
+                            widget.onSelected(val ?? false);
+                          },
+                        ),
                     ],
                   ),
-                  const SizedBox(height: 4),
-                  Expanded(
-                      child: Text(tip.tipObj.tip ?? '(No tip text)',
-                          style: TextStyle(fontSize: 12, color: textColor))),
+                  if (widget.showMod) const SizedBox(height: 4),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          tip.tipObj.tip ?? '(No tip text)',
+                          style: TextStyle(fontSize: 13, color: textColor),
+                        ),
+                      ),
+                      if (!widget.showMod)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 4),
+                          child: SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: Checkbox(
+                              value: isSelected,
+                              onChanged: (val) {
+                                widget.onSelected(val ?? false);
+                              },
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
                   const SizedBox(height: 4),
                   MovingTooltipWidget.text(
                     message:
@@ -413,8 +519,9 @@ class _TipCardViewState extends ConsumerState<TipCardView> {
                     child: Text(
                       'Freq: ${widget.isHidden ? "(hidden)" : tip.tipObj.freq ?? '1'}',
                       style: TextStyle(
-                          fontSize: 12,
-                          color: theme.colorScheme.onSurface.withOpacity(0.6)),
+                        fontSize: 12,
+                        color: theme.colorScheme.onSurface.withOpacity(0.6),
+                      ),
                     ),
                   ),
                 ],

@@ -42,7 +42,7 @@ class ThemeState with ThemeStateMappable {
 }
 
 class ThemeManager extends AsyncNotifier<ThemeState> {
-  static const double cornerRadius = 8;
+  static const double cornerRadius = 6;
   static const Color vanillaErrorColor = Color.fromARGB(255, 252, 99, 0);
   static const Color vanillaWarningColor = Color.fromARGB(255, 253, 212, 24);
   static const String orbitron = "Orbitron";

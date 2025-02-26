@@ -145,7 +145,7 @@ class TipsNotifier extends AsyncNotifier<List<ModTip>> {
       final variantTipsToRemove = entry.value;
 
       Fimber.i(
-          "Removing from variant ${variant.smolId} tips: ${variantTipsToRemove.map((t) => "'${t.tip?.substring(0, 40)}'").toList()}");
+          "Removing from variant ${variant.smolId} tips: ${variantTipsToRemove.map((t) => "'${t.tip?.truncate(40)}'").toList()}");
 
       try {
         final tipData = await _loadTipsFromFile(variant);

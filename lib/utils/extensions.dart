@@ -203,6 +203,17 @@ extension StringExt on String {
   void openAsUriInBrowser() {
     OpenFilex.open(this);
   }
+
+  String truncate(int maxLength, {String ellipsis = '…'}) {
+    if (length <= maxLength) return this;
+    return substring(0, maxLength) + ellipsis;
+  }
+
+  String substringSafe(int startIndex, int endIndex) {
+    if (startIndex < 0) startIndex = 0;
+    if (endIndex > length) endIndex = length;
+    return substring(startIndex, endIndex);
+  }
 }
 
 extension StringMapExt on Map<String, dynamic> {

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/models/mod_variant.dart';
@@ -8,12 +9,14 @@ import 'package:trios/thirdparty/dartx/map.dart';
 import 'package:trios/tips/tip.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
+import 'package:trios/utils/debouncer.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/generic_settings_manager.dart';
 import 'package:trios/utils/logging.dart';
 
 class TipsNotifier extends AsyncNotifier<List<ModTip>> {
   final deletedTipsStorageManager = _TipsStorageManager();
+  final Debouncer _loadDebouncer = Debouncer(duration: const Duration(milliseconds: 1000));
 
   @override
   Future<List<ModTip>> build() async {
@@ -26,12 +29,12 @@ class TipsNotifier extends AsyncNotifier<List<ModTip>> {
     }
 
     ref.listen(AppState.mods, (prev, newMods) async {
-      if (prev.hashCode == newMods.hashCode) return;
+      if (!listEquals(prev, newMods)) return;
       _removePreviouslyDeletedTips(newMods);
     });
     _removePreviouslyDeletedTips(mods);
 
-    return await loadTips(mods);
+    return _loadDebouncer.debounce(() => loadTips(mods));
   }
 
   /// Searches to see if tips that a user has previously deleted are present.

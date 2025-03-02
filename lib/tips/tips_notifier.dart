@@ -4,14 +4,13 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/models/mod_variant.dart';
+import 'package:trios/thirdparty/dartx/map.dart';
 import 'package:trios/tips/tip.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/generic_settings_manager.dart';
 import 'package:trios/utils/logging.dart';
-
-import 'package:trios/thirdparty/dartx/map.dart';
 
 class TipsNotifier extends AsyncNotifier<List<ModTip>> {
   final deletedTipsStorageManager = _TipsStorageManager();
@@ -149,6 +148,7 @@ class TipsNotifier extends AsyncNotifier<List<ModTip>> {
   }) async {
     final current = state.valueOrNull;
     if (current == null || tipsToRemove.isEmpty) return;
+    tipsToRemove = tipsToRemove.toSet().toList();
 
     final tipsToRemoveByVariant = <ModVariant, List<Tip>>{};
 
@@ -276,6 +276,7 @@ class TipsNotifier extends AsyncNotifier<List<ModTip>> {
   }) async {
     final current = state.valueOrNull;
     if (current == null || tipsToUnhide.isEmpty) return;
+    tipsToUnhide = tipsToUnhide.toSet().toList();
 
     // We'll group them by variant so we can open each tips.json only once:
     final tipsToUnhideByVariant = <ModVariant, List<Tip>>{};
@@ -356,28 +357,36 @@ class TipsNotifier extends AsyncNotifier<List<ModTip>> {
 
     // Finally, update in-memory state so UI immediately reflects the changes:
     if (reloadTipsAfter) {
-      final updatedList = [...current];
-
-      for (final unhiddenTip in tipsToUnhide) {
-        final idx = updatedList.indexOf(unhiddenTip);
-        if (idx != -1) {
-          final oldTip = updatedList[idx];
-          final oldTipObj = oldTip.tipObj;
-          final restoredFreq =
-              oldTipObj.originalFreq?.isNotEmpty == true
-                  ? oldTipObj.originalFreq
-                  : '1';
-
-          // Rebuild the tip with freq restored:
-          final newTipObj = oldTipObj.copyWith(
-            freq: restoredFreq,
-            originalFreq: null,
+      final unhiddenHashes =
+          tipsToUnhide
+              .map(
+                (tip) => _createTipHashcode(
+                  tip.variants.firstOrNull?.modInfo.id,
+                  tip.tipObj,
+                ),
+              )
+              .toSet();
+      state = AsyncValue.data(
+        current.map((tip) {
+          final tipHash = _createTipHashcode(
+            tip.variants.firstOrNull?.modInfo.id,
+            tip.tipObj,
           );
-          updatedList[idx] = oldTip.copyWith(tipObj: newTipObj);
-        }
-      }
-
-      state = AsyncValue.data(updatedList);
+          if (unhiddenHashes.contains(tipHash)) {
+            final oldTipObj = tip.tipObj;
+            return tip.copyWith(
+              tipObj: oldTipObj.copyWith(
+                freq:
+                    oldTipObj.originalFreq?.isNotEmpty == true
+                        ? oldTipObj.originalFreq
+                        : '1',
+                originalFreq: null,
+              ),
+            );
+          }
+          return tip;
+        }).toList(),
+      );
     }
   }
 

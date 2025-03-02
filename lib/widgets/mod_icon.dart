@@ -8,6 +8,7 @@ import 'package:trios/widgets/moving_tooltip.dart';
 class ModIcon extends ConsumerWidget {
   final String? path;
   final double size;
+  final EdgeInsets? padding;
   final bool takeUpSpaceIfNoIcon;
   final bool showFullSizeInTooltip;
 
@@ -15,6 +16,7 @@ class ModIcon extends ConsumerWidget {
     this.path, {
     super.key,
     this.size = 32,
+    this.padding,
     this.takeUpSpaceIfNoIcon = false,
     this.showFullSizeInTooltip = false,
   });
@@ -22,11 +24,13 @@ class ModIcon extends ConsumerWidget {
   static fromMod(
     Mod mod, {
     double size = 32,
+    EdgeInsets? padding,
     bool takeUpSpaceIfNoIcon = false,
     bool showFullSizeInTooltip = false,
   }) => ModIcon(
     mod.findFirstEnabledOrHighestVersion?.iconFilePath,
     size: size,
+    padding: padding,
     takeUpSpaceIfNoIcon: takeUpSpaceIfNoIcon,
     showFullSizeInTooltip: showFullSizeInTooltip,
   );
@@ -34,11 +38,13 @@ class ModIcon extends ConsumerWidget {
   static fromVariant(
     ModVariant? variant, {
     double size = 32,
+    EdgeInsets? padding,
     bool takeUpSpaceIfNoIcon = false,
     bool showFullSizeInTooltip = false,
   }) => ModIcon(
     variant?.iconFilePath,
     size: size,
+    padding: padding,
     takeUpSpaceIfNoIcon: takeUpSpaceIfNoIcon,
     showFullSizeInTooltip: showFullSizeInTooltip,
   );
@@ -47,16 +53,27 @@ class ModIcon extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     if (path == null) {
       return takeUpSpaceIfNoIcon
-          ? SizedBox(width: size, height: size)
+          ? Padding(
+            padding: padding ?? EdgeInsets.zero,
+            child: SizedBox(width: size, height: size),
+          )
           : const SizedBox.shrink();
     }
     return MovingTooltipWidget.framed(
       tooltipWidget: showFullSizeInTooltip ? Image.file(path!.toFile()) : null,
-      child: Image.file(
-        path!.toFile(),
-        width: size,
-        height: size,
-        fit: BoxFit.cover,
+      child: Padding(
+        padding: padding ?? EdgeInsets.zero,
+        child: Image.file(
+          path!.toFile(),
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return takeUpSpaceIfNoIcon
+                ? SizedBox(width: size, height: size)
+                : const SizedBox.shrink();
+          },
+        ),
       ),
     );
   }

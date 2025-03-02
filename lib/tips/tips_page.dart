@@ -2,7 +2,6 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/models/mod.dart';
-import 'package:trios/models/mod_variant.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/thirdparty/dartx/string.dart';
@@ -57,6 +56,50 @@ class _TipsPageState extends ConsumerState<TipsPage>
                 padding: const EdgeInsets.only(left: 8, right: 8),
                 child: Row(
                   children: [
+                    const SizedBox(width: 4),
+                    Text(
+                      'Tips',
+                      style: Theme.of(
+                        context,
+                      ).textTheme.headlineSmall?.copyWith(fontSize: 20),
+                    ),
+                    const SizedBox(width: 4),
+                    MovingTooltipWidget.text(
+                      message: 'About Tips Hider',
+                      child: IconButton(
+                        icon: const Icon(Icons.info),
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (context) {
+                              return AlertDialog(
+                                title: const Text('Tips Hider'),
+                                icon: const Icon(Icons.lightbulb),
+                                iconColor:
+                                    Theme.of(context).colorScheme.onSurface,
+                                content: ConstrainedBox(
+                                  constraints: const BoxConstraints(
+                                    maxWidth: 900,
+                                  ),
+                                  child: const Text(
+                                    "Shows all loading screen tips, which mod adds them, and how often they appear (freq)."
+                                    "\nYou may hide a tip to stop it from showing ingame. TriOS will automatically re-apply your changes if a mod is updated.",
+                                  ),
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                    child: const Text('Close'),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ),
                     MovingTooltipWidget.text(
                       message: 'Reload tips',
                       child: IconButton(
@@ -66,6 +109,7 @@ class _TipsPageState extends ConsumerState<TipsPage>
                         },
                       ),
                     ),
+                    const SizedBox(width: 4),
                     TriOSToolbarCheckboxButton(
                       onChanged:
                           (newValue) =>
@@ -129,12 +173,15 @@ class _TipsPageState extends ConsumerState<TipsPage>
                     const SizedBox(width: 8),
                     _buildDeleteButton(context),
                     const Spacer(),
-                    TriOSToolbarCheckboxButton(
-                      onChanged:
-                          (newValue) =>
-                              setState(() => _showHidden = newValue ?? true),
-                      value: _showHidden,
-                      text: 'Show Hidden',
+                    MovingTooltipWidget.text(
+                      message: 'Whether hidden tips are shown',
+                      child: TriOSToolbarCheckboxButton(
+                        onChanged:
+                            (newValue) =>
+                                setState(() => _showHidden = newValue ?? true),
+                        value: _showHidden,
+                        text: 'Show Hidden',
+                      ),
                     ),
                   ],
                 ),
@@ -183,9 +230,9 @@ class _TipsPageState extends ConsumerState<TipsPage>
         child: TextButton.icon(
           onPressed: () {
             if (showUnhide) {
-              _unhideSelectedTips(selectedTips);
+              _unhideTips(selectedTips);
             } else {
-              _hideSelectedTips(selectedTips);
+              _hideTips(selectedTips);
             }
           },
           icon: Icon(buttonIcon),
@@ -203,7 +250,7 @@ class _TipsPageState extends ConsumerState<TipsPage>
     );
   }
 
-  void _hideSelectedTips(List<ModTip> selectedTips) {
+  void _hideTips(List<ModTip> selectedTips) {
     if (selectedTips.isNotEmpty) {
       ref
           .read(AppState.tipsProvider.notifier)
@@ -216,7 +263,7 @@ class _TipsPageState extends ConsumerState<TipsPage>
     }
   }
 
-  void _unhideSelectedTips(List<ModTip> selectedTips) {
+  void _unhideTips(List<ModTip> selectedTips) {
     if (selectedTips.isNotEmpty) {
       ref.read(AppState.tipsProvider.notifier).unhideTips(selectedTips);
       setState(() {
@@ -228,18 +275,23 @@ class _TipsPageState extends ConsumerState<TipsPage>
   }
 
   Widget _buildBody(List<ModTip> tips, BuildContext context) {
+    final allMods = ref.read(AppState.mods);
     // Filter tips if onlyEnabled is set.
     List<ModTip> filtered =
         _onlyEnabled
             ? tips
-                .where((t) => isVariantEnabled(t.variants.firstOrNull))
+                .where(
+                  (tip) => tip.variants.any(
+                    (variant) => variant.isEnabled(allMods) == true,
+                  ),
+                )
                 .toList()
             : tips;
 
     final hiddenTips = ref
         .watch(AppState.tipsProvider.notifier)
         .getHidden(filtered);
-    filtered = _showHidden ? tips : tips - hiddenTips;
+    filtered = _showHidden ? filtered : filtered - hiddenTips;
 
     if (filtered.isEmpty) {
       return const Center(child: Text('No tips (or mods) found.'));
@@ -251,7 +303,6 @@ class _TipsPageState extends ConsumerState<TipsPage>
     }
 
     if (_grouping == TipsGrouping.mod) {
-      final allMods = ref.read(AppState.mods);
       // Group tips by mod.
       final Map<Mod, List<ModTip>> grouped = {};
       for (final t in filtered) {
@@ -277,7 +328,10 @@ class _TipsPageState extends ConsumerState<TipsPage>
                     children: [
                       Padding(
                         padding: const EdgeInsets.only(right: 8),
-                        child: ModIcon.fromMod(mod),
+                        child: ModIcon.fromMod(
+                          mod,
+                          padding: const EdgeInsets.only(left: 4),
+                        ),
                       ),
                       Text(
                         '${mod.findFirstEnabledOrHighestVersion?.modInfo.nameOrId} (${grouped[mod]?.length ?? 0})',
@@ -323,6 +377,7 @@ class _TipsPageState extends ConsumerState<TipsPage>
                       shrinkWrap: true,
                       horizontalSpacing: 8,
                       verticalSpacing: 8,
+                      padding: const EdgeInsets.only(bottom: 8),
                       itemBuilder: (context, tip, index) {
                         return TipCardView(
                           tip: tip,
@@ -334,6 +389,8 @@ class _TipsPageState extends ConsumerState<TipsPage>
                               _selectionStates[tip] = selected;
                             });
                           },
+                          hideTips: () => _hideSelectedAndClickedTip(tip),
+                          unhideTips: () => _unhideSelectedAndClickedTip(tip),
                         );
                       },
                     );
@@ -358,6 +415,7 @@ class _TipsPageState extends ConsumerState<TipsPage>
           minItemWidth: 350,
           horizontalSpacing: 8,
           verticalSpacing: 8,
+          padding: const EdgeInsets.only(bottom: 8),
           itemBuilder: (context, tip, index) {
             return TipCardView(
               tip: tip,
@@ -368,6 +426,8 @@ class _TipsPageState extends ConsumerState<TipsPage>
                   _selectionStates[tip] = selected;
                 });
               },
+              hideTips: () => _hideSelectedAndClickedTip(tip),
+              unhideTips: () => _unhideSelectedAndClickedTip(tip),
             );
           },
         ),
@@ -375,8 +435,19 @@ class _TipsPageState extends ConsumerState<TipsPage>
     }
   }
 
-  bool isVariantEnabled(ModVariant? variant) {
-    return variant?.isEnabled(ref.read(AppState.mods)) ?? false;
+  List<ModTip> _getSelectedTips() {
+    return _selectionStates.entries
+        .where((entry) => entry.value)
+        .map((entry) => entry.key)
+        .toList();
+  }
+
+  void _unhideSelectedAndClickedTip(ModTip tip) {
+    _unhideTips(_getSelectedTips() + [tip]);
+  }
+
+  void _hideSelectedAndClickedTip(ModTip tip) {
+    _hideTips(_getSelectedTips() + [tip]);
   }
 }
 
@@ -385,6 +456,8 @@ class TipCardView extends ConsumerStatefulWidget {
   final bool isSelected;
   final bool isHidden;
   final Function onSelected;
+  final Function hideTips;
+  final Function unhideTips;
   final bool showMod;
 
   const TipCardView({
@@ -393,6 +466,8 @@ class TipCardView extends ConsumerStatefulWidget {
     required this.isSelected,
     required this.isHidden,
     required this.onSelected,
+    required this.hideTips,
+    required this.unhideTips,
     this.showMod = true,
   });
 
@@ -411,6 +486,8 @@ class _TipCardViewState extends ConsumerState<TipCardView> {
       alpha: tip.tipObj.freq?.toDoubleOrNull() == 0.0 ? 0.5 : 1,
     );
 
+    final modName =
+        tip.variants.firstOrNull?.modInfo.name ?? '(unknown mod name)';
     return ContextMenuRegion(
       contextMenu: ContextMenu(
         entries: [
@@ -418,11 +495,9 @@ class _TipCardViewState extends ConsumerState<TipCardView> {
             label: isHidden ? 'Unhide' : 'Hide',
             onSelected: () {
               if (isHidden) {
-                ref.read(AppState.tipsProvider.notifier).unhideTips([tip]);
+                widget.unhideTips();
               } else {
-                ref.read(AppState.tipsProvider.notifier).hideTips([
-                  tip,
-                ], dryRun: false);
+                widget.hideTips();
               }
             },
           ),
@@ -473,19 +548,15 @@ class _TipCardViewState extends ConsumerState<TipCardView> {
                           child: Icon(Icons.visibility_off, color: textColor),
                         ),
                       if (widget.showMod)
-                        Padding(
+                        ModIcon.fromVariant(
+                          tip.variants.firstOrNull,
                           padding: const EdgeInsets.only(right: 8),
-                          child: ModIcon.fromVariant(
-                            tip.variants.firstOrNull,
-                            showFullSizeInTooltip: true,
-                            size: 24,
-                          ),
+                          size: 24,
                         ),
                       if (widget.showMod)
                         Expanded(
                           child: Text(
-                            tip.variants.firstOrNull?.modInfo.name ??
-                                '(unknown mod name)',
+                            modName,
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               color: theme.colorScheme.onSurface.withValues(
@@ -530,16 +601,32 @@ class _TipCardViewState extends ConsumerState<TipCardView> {
                     ],
                   ),
                   const SizedBox(height: 4),
-                  MovingTooltipWidget.text(
-                    message:
-                        'How likely this tip is to be shown. 1 is normal. Higher is more likely. 0 is never.',
-                    child: Text(
-                      'Freq: ${widget.isHidden ? "(hidden)" : tip.tipObj.freq ?? '1'}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: theme.colorScheme.onSurface.withOpacity(0.6),
+                  Row(
+                    children: [
+                      MovingTooltipWidget.text(
+                        message:
+                            'How likely this tip is to be shown. 1 is normal. Higher is more likely. 0 is never.',
+                        child: Text(
+                          'Freq: ${widget.isHidden ? "(hidden)" : tip.tipObj.freq ?? '1'}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: theme.colorScheme.onSurface.withOpacity(0.6),
+                          ),
+                        ),
                       ),
-                    ),
+                      const Spacer(),
+                      MovingTooltipWidget.text(
+                        message:
+                            'Tip added by ${tip.variants.firstOrNull?.modInfo.nameOrId},'
+                            '\nversion(s): '
+                            '${tip.variants.joinToString(transform: (v) => v.modInfo.version.toString())}',
+                        child: Icon(
+                          Icons.info_outline,
+                          size: 16,
+                          color: textColor.withValues(alpha: 0.6),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

@@ -10,7 +10,6 @@ import 'package:trios/mod_manager/homebrew_grid/wispgrid_group.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/weaponViewer/models/weapon.dart';
 import 'package:trios/weaponViewer/weaponsManager.dart';
-import 'package:trios/widgets/checkbox_with_label.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/toolbar_checkbox_button.dart';
 
@@ -229,7 +228,8 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
         itemExtent: 50,
         alwaysShowScrollbar: true,
         rowBuilder:
-            (item, modifiers, child) => SizedBox(height: 50, child: child),
+            ({required item, required modifiers, required child}) =>
+                SizedBox(height: 50, child: child),
         onLoaded: (WispGridController<Weapon> controller) {
           if (isTop) {
             _gridStateManagerTop = controller;

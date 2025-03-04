@@ -26,6 +26,8 @@
     - Analyzing perf showed that it was spending a ton of time creating relative file paths. Cached them.
     - Also removed multithreading.
     - Time to check GraphicsLib went from 5000ms to ~100ms.
+  - Reduced chance of double-clicking "Update" of TriOS. 
+  - Added quick button to estimate VRAM for a group of mods (e.g. all enabled).
 
 # 1.0.6
 - Fixed

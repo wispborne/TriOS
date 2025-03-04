@@ -436,13 +436,17 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
 
                     return null;
                   },
-                  rowBuilder: (mod, modifiers, child) {
+                  rowBuilder: ({
+                    required item,
+                    required modifiers,
+                    required child,
+                  }) {
                     final isHovering = modifiers.isHovering ?? false;
                     final modMetadata =
                         ref
                             .watch(AppState.modsMetadata)
                             .valueOrNull
-                            ?.userMetadata[mod.id];
+                            ?.userMetadata[item.id];
                     final isFavorited = modMetadata?.isFavorited ?? false;
 
                     final backgroundBaseColor =
@@ -480,19 +484,24 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                                       context,
                                     )
                                     : buildModContextMenu(
-                                      mod,
+                                      item,
                                       ref,
                                       context,
                                       showSwapToVersion: true,
                                     ),
-                            child: Column(
-                              children: [
-                                child,
-                                buildMissingDependencyButton(
-                                  (mod).findFirstEnabled,
-                                  allMods,
-                                ),
-                              ],
+                            child: Container(
+                              // This container is so that the context menu gets hit detection.
+                              // Without it, right-clicking empty space doesn't show the context menu.
+                              color: Colors.transparent,
+                              child: Column(
+                                children: [
+                                  child,
+                                  buildMissingDependencyButton(
+                                    (item).findFirstEnabled,
+                                    allMods,
+                                  ),
+                                ],
+                              ),
                             ),
                           );
                         },
@@ -1038,16 +1047,25 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                           .toList()
                       : null;
 
+              final isIllustratedEntities =
+                  mod.findFirstEnabledOrHighestVersion?.modInfo.id ==
+                  "illustrated_entities";
+
               return MovingTooltipWidget.text(
                 message:
                     vramEstimate == null
                         ? ""
                         : "Version ${vramEstimate.info.version}"
-                            "\n"
-                            "\n${withoutGraphicsLib?.sum().bytesAsReadableMB()} from mod (${withoutGraphicsLib?.length} images)"
+                            "\n\n${withoutGraphicsLib?.sum().bytesAsReadableMB()} from mod (${withoutGraphicsLib?.length} images)"
                             "\n${fromGraphicsLib?.sum().bytesAsReadableMB()} added by your GraphicsLib settings (${fromGraphicsLib?.length} images)"
                             "\n---"
-                            "\n${vramEstimate.bytesUsingGraphicsLibConfig(graphicsLibConfig).bytesAsReadableMB()} total",
+                            "\n${vramEstimate.bytesUsingGraphicsLibConfig(graphicsLibConfig).bytesAsReadableMB()} total"
+                            "${isIllustratedEntities ? ""
+                                    ""
+                                    "\n\nNOTE"
+                                    "\nIllustrated Entities dynamically loads in images, so it uses much less VRAM than ${Constants.appName} estimates." : ""}",
+                warningLevel:
+                    isIllustratedEntities ? TooltipWarningLevel.warning : null,
                 child: Stack(
                   children: [
                     Align(

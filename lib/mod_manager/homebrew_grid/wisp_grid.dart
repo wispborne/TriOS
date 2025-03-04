@@ -26,7 +26,7 @@ class WispGrid<T extends WispGridItem> extends ConsumerStatefulWidget {
   final List<WispGridColumn<T>> columns;
   final List<WispGridGroup<T>> groups;
   final int? Function(T left, T right)? preSortComparator;
-  final Widget Function(T item, RowBuilderModifiers modifiers, Widget child)
+  final Widget Function({required T item, required RowBuilderModifiers modifiers, required Widget child})
   rowBuilder;
   final WispGridGroup<T>? defaultGrouping;
   final String? defaultSortField;
@@ -54,11 +54,11 @@ class WispGrid<T extends WispGridItem> extends ConsumerStatefulWidget {
     this.alwaysShowScrollbar = false,
   });
 
-  static Widget defaultRowBuilder(
-    WispGridItem item,
-    RowBuilderModifiers modifiers,
-    Widget child,
-  ) => child;
+  static Widget defaultRowBuilder({
+    required WispGridItem item,
+    required RowBuilderModifiers modifiers,
+    required Widget child,
+  }) => child;
 
   @override
   ConsumerState<WispGrid<T>> createState() => _WispGridState<T>();

@@ -12,7 +12,11 @@ class WispGridRowView<T extends WispGridItem> extends ConsumerStatefulWidget {
   final void Function() onTapped;
   final void Function() onDoubleTapped;
   final List<WispGridColumn<T>> columns;
-  final Widget Function(T item, RowBuilderModifiers modifiers, Widget child)
+  final Widget Function({
+    required T item,
+    required RowBuilderModifiers modifiers,
+    required Widget child,
+  })
   rowBuilder;
   final WispGridState gridState;
 
@@ -47,12 +51,12 @@ class _WispGridRowViewState<T extends WispGridItem>
           final isHovering = HoverData.of(context)?.isHovering ?? false;
 
           return widget.rowBuilder(
-            item,
-            RowBuilderModifiers(
+            item: item,
+            modifiers: RowBuilderModifiers(
               isHovering: isHovering,
               isRowChecked: widget.isRowChecked,
             ),
-            Column(
+            child: Column(
               children: [
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 0.0),

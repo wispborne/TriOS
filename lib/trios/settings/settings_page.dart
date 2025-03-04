@@ -152,15 +152,19 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                             ?.toFile()
                                             .existsSync() ??
                                         true)
-                                    : (_customExecutablePathTextController.text
+                                    : (_customExecutablePathTextController
+                                            .text
+                                            .isNotEmpty &&
+                                        _customExecutablePathTextController.text
                                             .toFile()
-                                            .existsSync() ??
-                                        true);
+                                            .existsSync());
 
                             // If not using override, show the vanilla path that'll be used instead.
                             if (!useCustomExecutable) {
                               _customExecutablePathTextController.text =
-                                  currentLaunchPath?.toFile().path ?? "";
+                                  (currentLaunchPath?.isNotEmpty == true)
+                                      ? File(currentLaunchPath!).path
+                                      : "";
                             }
 
                             return Row(

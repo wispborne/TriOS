@@ -79,9 +79,10 @@ class SelfUpdateToast extends ConsumerWidget {
                               child: Disable(
                                 isEnabled:
                                     ref
-                                        .watch(AppState.selfUpdate)
-                                        .valueOrNull ==
-                                    null,
+                                            .watch(AppState.selfUpdate)
+                                            .valueOrNull ==
+                                        null ||
+                                    ref.watch(AppState.selfUpdate).isLoading,
                                 child: ElevatedButton.icon(
                                   onPressed: () {
                                     ref

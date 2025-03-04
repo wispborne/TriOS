@@ -200,13 +200,15 @@ Widget? _vramSummaryOverlayWidget(
       final vramProvider = ref.watch(AppState.vramEstimatorProvider);
       final vramMap = vramProvider.valueOrNull?.modVramInfo ?? {};
       final graphicsLibConfig = ref.watch(graphicsLibConfigProvider);
-      final smolIds =
+      final variantsInGroup =
           itemsInGroup.nonNulls
               .map((e) => e.findFirstEnabledOrHighestVersion)
               .nonNulls
               .toList();
-      final allEstimates =
-          smolIds.map((e) => vramMap[e.smolId]).nonNulls.toList();
+      final allEstimatesIncludingMissing = variantsInGroup.map(
+        (e) => vramMap[e.smolId],
+      );
+      final allEstimates = allEstimatesIncludingMissing.nonNulls.toList();
       const disabledGraphicsLibConfig = GraphicsLibConfig.disabled;
       final vramModsNoGraphicsLib =
           allEstimates
@@ -295,9 +297,40 @@ Widget? _vramSummaryOverlayWidget(
             child: Center(
               child: Opacity(
                 opacity: WispGrid.lightTextOpacity,
-                child: Text(
-                  "∑ ${(vramModsNoGraphicsLib + vramFromGraphicsLib.sum() + (vramFromVanilla ?? 0.0)).bytesAsReadableMB()}",
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(),
+                child: Row(
+                  children: [
+                    Text(
+                      "∑ ${(vramModsNoGraphicsLib + vramFromGraphicsLib.sum() + (vramFromVanilla ?? 0.0)).bytesAsReadableMB()}",
+                      style:
+                          Theme.of(context).textTheme.labelMedium?.copyWith(),
+                    ),
+                    if (allEstimatesIncludingMissing.contains(null))
+                      Builder(
+                        builder: (context) {
+                          final variantsToCheck =
+                              variantsInGroup
+                                  .where((e) => vramMap[e.smolId] == null)
+                                  .toList();
+                          return MovingTooltipWidget.text(
+                            message:
+                                "Estimate VRAM usage for ${variantsToCheck.length} unscanned mods",
+                            child: IconButton(
+                              icon: const Icon(Icons.memory),
+                              iconSize: 24,
+                              onPressed: () {
+                                ref
+                                    .read(
+                                      AppState.vramEstimatorProvider.notifier,
+                                    )
+                                    .startEstimating(
+                                      variantsToCheck: variantsToCheck,
+                                    );
+                              },
+                            ),
+                          );
+                        },
+                      ),
+                  ],
                 ),
               ),
             ),

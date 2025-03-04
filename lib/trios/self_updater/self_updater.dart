@@ -9,10 +9,8 @@ import 'package:path/path.dart' as p;
 import 'package:pub_semver/pub_semver.dart';
 import 'package:stringr/stringr.dart';
 import 'package:trios/compression/archive.dart';
-import 'package:trios/compression/libarchive/libarchive.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
-import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/network_util.dart';
@@ -47,9 +45,11 @@ class SelfUpdateInfo {
 
 class SelfUpdater extends AsyncNotifier<TriOSDownloadProgress?> {
   static const String oldFileSuffix = ".delete-me";
+  ArchiveInterface? _archiver;
 
   @override
   Future<TriOSDownloadProgress?> build() async {
+    _archiver = ref.watch(archiveProvider).valueOrNull;
     return null;
   }
 
@@ -68,6 +68,8 @@ class SelfUpdater extends AsyncNotifier<TriOSDownloadProgress?> {
   }
 
   Future<void> updateSelf(Release release, {bool exitSelfAfter = true}) async {
+    state = const AsyncValue.loading();
+
     final updateWorkingDir =
         Directory.systemTemp.createTempSync('trios_update').absolute.normalize;
 
@@ -77,14 +79,21 @@ class SelfUpdater extends AsyncNotifier<TriOSDownloadProgress?> {
     Fimber.i('Downloaded update file: ${downloadFile.path}');
     final extractedDir = updateWorkingDir;
     // Extract the downloaded update archive.
-    final extractedFiles = await ref
-        .read(archiveProvider)
-        .requireValue
-        .extractEntriesInArchive(downloadFile, extractedDir.path);
+    final extractedFiles = await _archiver?.extractEntriesInArchive(
+      downloadFile,
+      extractedDir.path,
+    );
+    if (extractedFiles == null) {
+      Fimber.e(
+        'Error extracting files from the ${release.tagName} release: archiveProvider had no value.',
+      );
+      state = AsyncValue.data(null);
+      return;
+    }
 
     if (extractedFiles.isNotEmpty) {
-      downloadFile
-          .deleteSync(); // Clean up the .zip file, we don't want to end up moving it in as part of the update.
+      // Clean up the .zip file, we don't want to end up moving it in as part of the update.
+      downloadFile.deleteSync();
       Fimber.i(
         'Extracted ${extractedFiles.length} files in the ${release.tagName} release to ${extractedDir.path}',
       );

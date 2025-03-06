@@ -23,7 +23,7 @@ import 'package:trios/trios/toasts/toast_manager.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/platform_specific.dart';
-import 'package:trios/vram_estimator/vram_estimator.dart';
+import 'package:trios/vram_estimator/vram_estimator_page.dart';
 import 'package:trios/weaponViewer/weaponPageWispGrid.dart';
 import 'package:trios/widgets/blur.dart';
 import 'package:trios/widgets/changelog_viewer.dart';

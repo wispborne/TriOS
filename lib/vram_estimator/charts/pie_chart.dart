@@ -1,9 +1,14 @@
+import 'package:collection/collection.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/vram_estimator/graphics_lib_config_provider.dart';
 import 'package:trios/vram_estimator/models/graphics_lib_config.dart';
+import 'package:trios/vram_estimator/vram_estimator_page.dart';
+import 'package:trios/widgets/mod_icon.dart';
+import 'package:trios/widgets/moving_tooltip.dart';
 
 import '../../../utils/util.dart';
 import '../models/vram_checker_models.dart';
@@ -23,6 +28,8 @@ class VramPieChartState extends ConsumerState<VramPieChart> {
 
   List<PieChartSectionData> createSections(BuildContext context) {
     final baseColor = Theme.of(context).colorScheme.primary;
+    final theme = Theme.of(context);
+    final realMods = ref.watch(AppState.mods);
 
     return widget.modVramInfo
         .where(
@@ -33,12 +40,19 @@ class VramPieChartState extends ConsumerState<VramPieChart> {
           const fontSize = 12.0;
           const radius = 50.0;
           const shadows = [Shadow(color: Colors.black, blurRadius: 2)];
+          final materialColor =
+              ColorGenerator.generateFromColor(
+                mod.info.smolId,
+                baseColor,
+              ).createMaterialColor();
+          final realMod = realMods.firstWhereOrNull(
+            (vramMod) => vramMod.id == mod.info.modInfo.id,
+          );
+          final iconFilePath =
+              realMod?.findFirstEnabledOrHighestVersion?.iconFilePath;
+
           return PieChartSectionData(
-            color:
-                ColorGenerator.generateFromColor(
-                  mod.info.smolId,
-                  baseColor,
-                ).createMaterialColor().shade700,
+            color: materialColor.shade700,
             value:
                 mod.bytesUsingGraphicsLibConfig(graphicsLibConfig).toDouble(),
             title:
@@ -50,6 +64,24 @@ class VramPieChartState extends ConsumerState<VramPieChart> {
               fontWeight: FontWeight.bold,
               // color: AppColors.mainTextColor1,
               shadows: shadows,
+            ),
+            badgeWidget: MovingTooltipWidget.framed(
+              tooltipWidget: VramEstimatorPage.buildVramTopFilesTableWidget(
+                theme,
+                mod,
+                graphicsLibConfig,
+              ),
+              child:
+                  iconFilePath != null
+                      ? ModIcon(iconFilePath)
+                      : Container(
+                        height: 32,
+                        width: 32,
+                        decoration: BoxDecoration(
+                          color: materialColor.shade900,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
             ),
           );
         })

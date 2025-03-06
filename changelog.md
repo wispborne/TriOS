@@ -4,6 +4,7 @@
     - View in-game tips by mod and select which ones to hide. 
   - Mods tab: May now group by Enabled (default), Mod Type, Game Version, and Author.
   - Support for MediaFire download links (thanks, AtlanticAccent & ChatGPT).
+  - VRAM Estimator now shows the top 10 most "expensive" images per mod.
 - Fixed
   - Searching on the Mods tab also filtered the Dashboard mods.
   - Search included some less relevant results and didn't include perfect matches (e.g. searching "iron shell" didn't show it, but "iron shel" did).
@@ -34,7 +35,7 @@
   - JRE & RAM Settings dropdown error if Miko_R3.txt or Miko_R4.txt is missing.
   - Searching on the Mods tab also filtered the Dashboard mods.
 - Changed
-  - Cannot run multiple instances of TriOS anymore. Opening a second instance instead focuses the existing one (Windows and Linux).
+  - [Removed in 1.1.0 due to bugs] Cannot run multiple instances of TriOS anymore. Opening a second instance instead focuses the existing one (Windows and Linux).
 
 # 1.0.5
 - Added

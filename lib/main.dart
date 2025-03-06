@@ -19,12 +19,11 @@ import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
-import 'package:trios/vram_estimator/vram_estimator.dart';
+import 'package:trios/vram_estimator/vram_estimator_page.dart';
 import 'package:trios/widgets/post_update_toast.dart';
 import 'package:trios/widgets/restartable_app.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:window_size/window_size.dart';
-import 'package:windows_single_instance/windows_single_instance.dart';
 
 import 'app_shell.dart';
 import 'trios/app_state.dart';
@@ -41,15 +40,16 @@ void main(List<String> args) async {
     print("Error initializing Flutter widgets.");
   }
 
+  // REMOVED because it was causing a bunch of instances to appear for some people when they updated.
   // Windows: If another instance is already running, bring it to the foreground instead of opening a new instance.
   // (allow one debug + one release to be able to compare)
-  await WindowsSingleInstance.ensureSingleInstance(
-    args,
-    "wisp_trios${kDebugMode ? "_dev" : ""}${Constants.version}",
-    onSecondWindow: (args) {
-      print(args);
-    },
-  );
+  // await WindowsSingleInstance.ensureSingleInstance(
+  //   args,
+  //   "wisp_trios${kDebugMode ? "_dev" : ""}${Constants.version}",
+  //   onSecondWindow: (args) {
+  //     print(args);
+  //   },
+  // );
 
   Constants.configDataFolderPath = await getApplicationSupportDirectory();
   try {

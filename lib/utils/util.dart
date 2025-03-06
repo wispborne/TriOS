@@ -192,24 +192,9 @@ class HexColor extends Color {
 }
 
 class ColorGenerator {
-  /// https://stackoverflow.com/a/16348977/1622788
-  Color stringToColor(String str) {
-    var hash = 0;
-    for (var i = 0; i < str.length; i++) {
-      hash = str.codeUnitAt(i) + ((hash << 5) - hash);
-    }
-
-    var colour = '#';
-
-    for (var i = 0; i < 3; i++) {
-      var value = (hash >> (i * 8)) & 0xFF;
-      colour += (value.toRadixString(16)).padLeft(2, '0');
-    }
-
-    return HexColor.fromHex(colour);
-  }
-
-  // New: Generate colors based on an existing color
+  /// Generates a color based on [baseColor], varying hue/saturation/lightness
+  /// using the hash of [text].
+  /// If [complementary] is true, it returns the direct complementary color.
   static Color generateFromColor(
     String text,
     Color baseColor, {
@@ -217,28 +202,42 @@ class ColorGenerator {
   }) {
     final random = Random(text.hashCode);
 
-    // 1. Manipulation Options
     if (complementary) {
-      return ColorGenerator.complementary(baseColor);
+      return complementaryColor(baseColor);
     } else {
-      // Apply adjustments from string's hash
-      int lightnessOffset = random.nextInt(70) - 35; // Range: -35 to 35
-      double newLightness = (baseColor.computeLuminance() +
-              lightnessOffset / 100)
-          .clamp(0.0, 1.0);
+      final hslBase = HSLColor.fromColor(baseColor);
 
-      return HSLColor.fromColor(
-        baseColor,
-      ).withLightness(newLightness).toColor();
+      // Random hue offset (±30°):
+      final hueOffset = (random.nextDouble() * 60) - 30;
+      final newHue = (hslBase.hue + hueOffset) % 360.0;
+
+      // Random saturation offset (±0.15), clamped to [0..1]:
+      final satOffset = (random.nextDouble() * 0.3) - 0.15;
+      final newSaturation = (hslBase.saturation + satOffset).clamp(0.0, 1.0);
+
+      // Random lightness offset (±0.2), clamped to [0..1]:
+      final lightnessOffset = (random.nextDouble() * 0.4) - 0.2;
+      final newLightness = (hslBase.lightness + lightnessOffset).clamp(
+        0.0,
+        1.0,
+      );
+
+      final generated = HSLColor.fromAHSL(
+        1.0,
+        newHue,
+        newSaturation,
+        newLightness,
+      );
+      return generated.toColor();
     }
   }
 
-  // Helper for finding complementary color
-  static Color complementary(Color color) {
+  /// Returns the direct complementary color of the given [color].
+  static Color complementaryColor(Color color) {
     return Color.fromRGBO(
-      255 - color.red,
-      255 - color.green,
-      255 - color.blue,
+      (255 - color.r).toInt(),
+      (255 - color.g).toInt(),
+      (255 - color.b).toInt(),
       1.0,
     );
   }

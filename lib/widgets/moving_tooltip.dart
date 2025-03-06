@@ -256,6 +256,7 @@ class MovingTooltipWidget extends StatefulWidget {
   static Widget framed({
     Key? key,
     required Widget? tooltipWidget,
+    TooltipWarningLevel? warningLevel,
     required Widget child,
     EdgeInsetsGeometry padding = const EdgeInsets.all(8),
     double windowEdgePadding = 10.0,
@@ -267,7 +268,17 @@ class MovingTooltipWidget extends StatefulWidget {
       builder: (context) {
         return MovingTooltipWidget(
           key: key,
-          tooltipWidget: TooltipFrame(padding: padding, child: tooltipWidget),
+          tooltipWidget: TooltipFrame(
+            padding: padding,
+            borderColor: switch (warningLevel) {
+              null || TooltipWarningLevel.none => null,
+              TooltipWarningLevel.warning ||
+              TooltipWarningLevel.error => Theme.of(
+                context,
+              ).colorScheme.onSecondaryContainer.withOpacity(0.5),
+            },
+            child: tooltipWidget,
+          ),
           windowEdgePadding: windowEdgePadding,
           offset: offset,
           position: position,

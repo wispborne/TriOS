@@ -30,6 +30,7 @@ import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/vram_estimator/graphics_lib_config_provider.dart';
 import 'package:trios/vram_estimator/models/vram_checker_models.dart';
+import 'package:trios/vram_estimator/vram_estimator_page.dart';
 import 'package:trios/widgets/add_new_mods_button.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/mod_type_icon.dart';
@@ -1051,19 +1052,52 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                   mod.findFirstEnabledOrHighestVersion?.modInfo.id ==
                   "illustrated_entities";
 
-              return MovingTooltipWidget.text(
-                message:
+              return MovingTooltipWidget.framed(
+                tooltipWidget:
                     vramEstimate == null
-                        ? ""
-                        : "Version ${vramEstimate.info.version}"
-                            "\n\n${withoutGraphicsLib?.sum().bytesAsReadableMB()} from mod (${withoutGraphicsLib?.length} images)"
-                            "\n${fromGraphicsLib?.sum().bytesAsReadableMB()} added by your GraphicsLib settings (${fromGraphicsLib?.length} images)"
-                            "\n---"
-                            "\n${vramEstimate.bytesUsingGraphicsLibConfig(graphicsLibConfig).bytesAsReadableMB()} total"
-                            "${isIllustratedEntities ? ""
-                                    ""
-                                    "\n\nNOTE"
-                                    "\nIllustrated Entities dynamically loads in images, so it uses much less VRAM than ${Constants.appName} estimates." : ""}",
+                        ? null
+                        : IntrinsicWidth(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                "VRAM Estimate",
+                                style: theme.textTheme.labelLarge?.copyWith(
+                                  fontSize: 14,
+                                ),
+                              ),
+                              Text(
+                                "${mod.findFirstEnabledOrHighestVersion?.modInfo.nameOrId} v${vramEstimate.info.version}"
+                                "\n\n${withoutGraphicsLib?.sum().bytesAsReadableMB()} from mod (${withoutGraphicsLib?.length} images)"
+                                "\n${fromGraphicsLib?.sum().bytesAsReadableMB()} added by your GraphicsLib settings (${fromGraphicsLib?.length} images)"
+                                "\n---"
+                                "\n${vramEstimate.bytesUsingGraphicsLibConfig(graphicsLibConfig).bytesAsReadableMB()} total"
+                                "${isIllustratedEntities ? ""
+                                        ""
+                                        "\n\nNOTE"
+                                        "\nIllustrated Entities dynamically loads in images, so it uses much less VRAM than ${Constants.appName} estimates." : ""}",
+                                style: theme.textTheme.labelLarge,
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 8,
+                                ),
+                                child: Divider(
+                                  color: theme.colorScheme.onSurface.withValues(
+                                    alpha: .5,
+                                  ),
+                                ),
+                              ),
+                              VramEstimatorPage.buildVramTopFilesTableWidget(
+                                theme,
+                                vramEstimate,
+                                graphicsLibConfig,
+                              ),
+                            ],
+                          ),
+                        ),
                 warningLevel:
                     isIllustratedEntities ? TooltipWarningLevel.warning : null,
                 child: Stack(

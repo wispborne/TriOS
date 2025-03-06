@@ -6,6 +6,7 @@ import 'package:trios/models/mod_info.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/vram_estimator/models/graphics_lib_config.dart';
 import 'package:trios/vram_estimator/models/graphics_lib_info.dart';
+
 import '../../models/version.dart';
 
 part 'vram_checker_models.mapper.dart';
@@ -153,6 +154,11 @@ class ModImageView {
         return cfg.areGfxLibSurfaceMapsEnabled;
     }
   }
+
+  @override
+  String toString() {
+    return 'ModImageView{index: $index, filePath: $filePath, textureHeight: $textureHeight, textureWidth: $textureWidth, bitsInAllChannelsSum: $bitsInAllChannelsSum, imageType: $imageType, graphicsLibType: $graphicsLibType}';
+  }
 }
 
 /// A custom mapping hook for converting between a [ModImageTable] and its JSON representation.
@@ -212,6 +218,8 @@ class VramMod with VramModMappable {
       Iterable<int>.generate(
         images.length,
       ).map((i) => ModImageView(i, images).bytesUsed).sum;
+
+  ModImageView getModViewForIndex(int index) => ModImageView(index, images);
 
   final Map<GraphicsLibConfig?, int> _cache = {};
 

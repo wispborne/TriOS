@@ -1,4 +1,5 @@
-# 1.1.0
+# 1.1.0 
+- TriOS settings may be reset (sorry). Profiles are safe.
 - Added
   - Tips manager.
     - View in-game tips by mod and select which ones to hide. 

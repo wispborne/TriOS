@@ -148,16 +148,16 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                             );
                             bool doesCustomExePathExist =
                                 !useCustomExecutable
-                                    ? (currentLaunchPath
-                                            ?.toFile()
-                                            .existsSync() ??
-                                        true)
+                                    ? validateGameFolderPath(
+                                      _gamePathTextController.text,
+                                    )
                                     : (_customExecutablePathTextController
                                             .text
                                             .isNotEmpty &&
-                                        _customExecutablePathTextController.text
-                                            .toFile()
-                                            .existsSync());
+                                        validateIsProbablyAProgram(
+                                          _customExecutablePathTextController
+                                              .text,
+                                        ));
 
                             // If not using override, show the vanilla path that'll be used instead.
                             if (!useCustomExecutable) {
@@ -168,44 +168,51 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                             }
 
                             return Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Padding(
                                   padding: const EdgeInsets.only(right: 8),
                                   child: MovingTooltipWidget.text(
                                     message:
                                         "When checked, uses the custom launcher path",
-                                    child: Checkbox(
-                                      value: useCustomExecutable,
-                                      onChanged: (value) {
-                                        final customPath =
-                                            ref.read(
-                                              appSettings.select(
-                                                (s) => s.customGameExePath,
-                                              ),
-                                            ) ??
-                                            "";
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(top: 4),
+                                      child: Checkbox(
+                                        value: useCustomExecutable,
+                                        onChanged: (value) {
+                                          final customPath =
+                                              ref.read(
+                                                appSettings.select(
+                                                  (s) => s.customGameExePath,
+                                                ),
+                                              ) ??
+                                              "";
 
-                                        WidgetsBinding.instance.addPostFrameCallback((
-                                          _,
-                                        ) {
-                                          if (value == false) {
-                                            _customExecutablePathTextController
-                                                .text = currentLaunchPath ?? "";
-                                          } else if (value == true) {
-                                            _customExecutablePathTextController
-                                                .text = customPath;
-                                          }
-                                        });
+                                          WidgetsBinding.instance.addPostFrameCallback((
+                                            _,
+                                          ) {
+                                            setState(() {
+                                              if (value == false) {
+                                                _customExecutablePathTextController
+                                                        .text =
+                                                    currentLaunchPath ?? "";
+                                              } else if (value == true) {
+                                                _customExecutablePathTextController
+                                                    .text = customPath;
+                                              }
+                                            });
+                                          });
 
-                                        ref
-                                            .read(appSettings.notifier)
-                                            .update(
-                                              (state) => state.copyWith(
-                                                useCustomGameExePath:
-                                                    value ?? false,
-                                              ),
-                                            );
-                                      },
+                                          ref
+                                              .read(appSettings.notifier)
+                                              .update(
+                                                (state) => state.copyWith(
+                                                  useCustomGameExePath:
+                                                      value ?? false,
+                                                ),
+                                              );
+                                        },
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -1137,7 +1144,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   }
 
   void tryUpdateCustomExecutablePath(String newPath) {
-    final exists = newPath.toFile().existsSync();
+    final exists = validateIsProbablyAProgram(newPath);
 
     if (exists) {
       ref

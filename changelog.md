@@ -13,6 +13,7 @@
   - Mod downloads not showing download progress. 
   - MacOS: Catalog WebView breaking everything and not loading. Now loads.
   - MacOS: 'New Mod' notification's Open button not working.
+  - MacOS: Custom game executable not working right.
 - Changed
   - 7zip is now the default compression library, rather than libarchive.
     - MacOS users won't need to install compression libraries manually anymore.

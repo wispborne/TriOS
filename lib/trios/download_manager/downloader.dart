@@ -717,7 +717,7 @@ class DownloadManager {
     Fimber.d("Fetching headers efficiently for URL: $url, HostType: $hostType");
 
     // Try quick empty GET request that returns headers
-    if (hostType != HostType.googleDrive) {
+    if (hostType != HostType.googleDrive && hostType != HostType.dropbox) {
       try {
         final timestamp = DateTime.now().millisecondsSinceEpoch;
         final getResponse = await httpClient.get(

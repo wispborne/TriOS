@@ -1,3 +1,8 @@
+# 1.1.1
+- Fixed
+  - Some downloads very slow to start.
+    - Fixed for certain sites (e.g. github) that don't require a slower method of getting file download info.
+
 # 1.1.0 
 - TriOS settings may be reset (sorry). Profiles are safe.
 - Added

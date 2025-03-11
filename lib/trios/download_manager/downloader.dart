@@ -66,9 +66,16 @@ class DownloadManager {
     late File partialFile;
     final TriOSHttpClient httpClient = ref.watch(triOSHttpClient);
     final originalUrl = url;
+    final startTime = DateTime.now().millisecondsSinceEpoch;
+    Fimber.d(
+      "Download T=${DateTime.now().millisecondsSinceEpoch - startTime}: Starting download of '$url' to '$destFolder/$filename'",
+    );
 
     try {
-      var task = getDownload(originalUrl);
+      final task = getDownload(originalUrl);
+      Fimber.d(
+        "Download T=${DateTime.now().millisecondsSinceEpoch - startTime}: Task $task",
+      );
 
       if (task == null || task.status.value == DownloadStatus.canceled) {
         return;
@@ -77,14 +84,23 @@ class DownloadManager {
       setStatus(task, DownloadStatus.retrievingFileInfo);
 
       url = await makeDirectDownloadLink(url, httpClient);
-      final finalUrlAndHeaders = await fetchFinalUrlAndHeaders(url, httpClient);
+      Fimber.d(
+        "Download T=${DateTime.now().millisecondsSinceEpoch - startTime}: Direct download link: '$url'",
+      );
+      final finalUrlAndHeaders = await fetchFinalUrlAndHeaders(
+        url,
+        httpClient,
+        hostType: _determineHostType(url),
+      );
+      Fimber.d(
+        "Download T=${DateTime.now().millisecondsSinceEpoch - startTime}: Final URL: '${finalUrlAndHeaders.url}' with headers: '${finalUrlAndHeaders.headersMap}'",
+      );
       url = finalUrlAndHeaders.url;
       url = await makeDirectDownloadLink(url, httpClient);
-      final headers = finalUrlAndHeaders.headers;
-      final headersMap = <String, String>{};
-      headers.forEach((key, value) {
-        headersMap[key] = value.join(',');
-      });
+      Fimber.d(
+        "Download T=${DateTime.now().millisecondsSinceEpoch - startTime}: Final direct download link: '$url'",
+      );
+      Map<String, String> headersMap = finalUrlAndHeaders.headersMap;
 
       // If given a download folder, then get the file's name from the URL and put it in the folder.
       // If given an actual filename rather than a folder, then we already have the name.
@@ -93,7 +109,7 @@ class DownloadManager {
           isDirectory
               ? destFolder +
                   Platform.pathSeparator +
-                  await fetchFileNameFromUrl(url, headers)
+                  await fetchFileNameFromUrl(url, headersMap)
               : destFolder + Platform.pathSeparator + filename!;
       task.file.value = File(downloadFile);
 
@@ -107,8 +123,11 @@ class DownloadManager {
           "No file to download found at '$url'.\nPlease contact the mod author.",
         );
       }
+      Fimber.d(
+        "Download T=${DateTime.now().millisecondsSinceEpoch - startTime}: File is downloadable.",
+      );
 
-      var file = File(downloadFile.toString());
+      final file = File(downloadFile.toString());
       partialFilePath = downloadFile + partialExtension;
       partialFile = File(partialFilePath);
 
@@ -116,10 +135,10 @@ class DownloadManager {
       var partialFileExist = await partialFile.exists();
 
       if (fileExist) {
-        Fimber.d("File Exists: $downloadFile");
+        Fimber.d("File already eists: $downloadFile");
         setStatus(task, DownloadStatus.completed);
       } else if (partialFileExist) {
-        Fimber.d("Partial File Exists: $partialFilePath");
+        Fimber.d("Partial file already exists: $partialFilePath");
 
         final partialFileLength = await partialFile.length();
 
@@ -150,6 +169,7 @@ class DownloadManager {
           onProgress: createDownloadProgressCallback(originalUrl, 0),
         );
         final responseData = getResponseBodyAsBytes(response.data);
+        Fimber.d('Got response with data length: ${responseData.length}');
 
         if ((response.statusCode) <= 299) {
           await File(downloadFile).writeAsBytes(responseData);
@@ -187,6 +207,14 @@ class DownloadManager {
     if (_queue.isNotEmpty) {
       _startExecution();
     }
+  }
+
+  static Map<String, String> _headersToMap(HttpHeaders headers) {
+    final headersMap = <String, String>{};
+    headers.forEach((key, value) {
+      headersMap[key] = value.join(',');
+    });
+    return headersMap;
   }
 
   List<int> getResponseBodyAsBytes(dynamic response) {
@@ -609,11 +637,14 @@ class DownloadManager {
   }
 
   /// This function is used for get file name with extension from url
-  Future<String> fetchFileNameFromUrl(String url, HttpHeaders? headers) async {
+  Future<String> fetchFileNameFromUrl(
+    String url,
+    Map<String, String>? headers,
+  ) async {
     try {
       Fimber.d("Getting filename from url: $url");
       Fimber.d("Url $url has headers:\n$headers");
-      final contentDisposition = headers?.value('Content-Disposition');
+      final contentDisposition = headers?['Content-Disposition'];
 
       return contentDisposition?.fixFilenameForFileSystem() ??
           Uri.parse(url).pathSegments.last.fixFilenameForFileSystem();
@@ -675,15 +706,95 @@ class DownloadManager {
     return false;
   }
 
-  static Future<UrlResponse> fetchFinalUrlAndHeaders(
+  /// Efficiently fetch headers.
+  /// - **Uses a fast "Range: bytes=0-0" GET request instead of HEAD, first.**
+  /// - **Falls back to HEAD request if needed.**
+  static Future<Map<String, String>> fetchHeadersEfficiently(
     String url,
     TriOSHttpClient httpClient,
+    HostType hostType,
   ) async {
+    Fimber.d("Fetching headers efficiently for URL: $url, HostType: $hostType");
+
+    // Try quick empty GET request that returns headers
+    if (hostType != HostType.googleDrive) {
+      try {
+        final timestamp = DateTime.now().millisecondsSinceEpoch;
+        final getResponse = await httpClient.get(
+          url,
+          headers: {'Range': 'bytes=0-0'},
+        );
+        Fimber.d(
+          "Partial GET request took ${DateTime.now().millisecondsSinceEpoch - timestamp} ms for URL: $url",
+        );
+        final headers = _headersToMap(getResponse.headers);
+
+        if (await isDownloadableFile(url, headers, httpClient)) {
+          return headers;
+        } else {
+          Fimber.d(
+            "No downloadable file found from efficient GET request, falling back to normal HEAD request.",
+          );
+        }
+      } catch (e) {
+        Fimber.d(
+          "Partial GET request failed for URL: $url, falling back to normal GET request. Error: $e",
+        );
+      }
+    }
+
+    // Slower fallback (4+ seconds)
+    try {
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final headResponse = await httpClient.get(
+        url,
+        headers: {'method': 'HEAD'},
+      );
+      Fimber.d(
+        "HEAD request took ${DateTime.now().millisecondsSinceEpoch - timestamp} ms for URL: $url",
+      );
+      return _headersToMap(headResponse.headers);
+    } catch (e) {
+      Fimber.w(
+        "HEAD request failed for URL: $url, falling back to empty headers. Error: $e",
+      );
+      return {};
+    }
+  }
+
+  static Future<UrlResponse> fetchFinalUrlAndHeaders(
+    String url,
+    TriOSHttpClient httpClient, {
+    HostType hostType = HostType.unknown,
+  }) async {
     const int maxRedirects = 3;
     int redirectCount = 0;
     String currentUrl = url;
-    HttpHeaders currentHeaders;
+
+    Map<String, String> currentHeaders = await fetchHeadersEfficiently(
+      url,
+      httpClient,
+      hostType,
+    );
+
+    switch (hostType) {
+      case HostType.github:
+      case HostType.dropbox:
+        {
+          if (currentHeaders.isNotEmpty &&
+              await isDownloadableFile(url, currentHeaders, httpClient)) {
+            Fimber.d(
+              "Skipping additional GET request for URL: $url, headers found: $currentHeaders",
+            );
+            return UrlResponse(url, currentHeaders);
+          }
+        }
+
+      case _:
+    }
+
     while (redirectCount < maxRedirects) {
+      Fimber.d("Redirect count: $redirectCount, Current URL: $currentUrl");
       final response = await httpClient.get(url, headers: {'method': 'HEAD'});
 
       if (response.httpResponse.redirects.isNotEmpty) {
@@ -692,7 +803,7 @@ class DownloadManager {
       }
 
       // Store headers from the latest response
-      currentHeaders = response.headers;
+      currentHeaders = _headersToMap(response.headers);
 
       // Check for HTTP redirect
       if (response.httpResponse.isRedirect ||
@@ -713,7 +824,7 @@ class DownloadManager {
       );
 
       // Update headers from the GET response
-      currentHeaders = getResponse.headers;
+      currentHeaders = _headersToMap(getResponse.headers);
 
       if (getResponse.headers['content-type']
               ?.join(';')
@@ -801,16 +912,52 @@ class DownloadManager {
       return false;
     }
   }
+
+  HostType _determineHostType(String url) {
+    try {
+      final urlLower = url.toLowerCase();
+      final uri = Uri.parse(urlLower);
+      final host = uri.host;
+
+      if (host.contains('github.com') ||
+          host.contains('raw.githubusercontent.com')) {
+        return HostType.github;
+      } else if (host.contains('drive.google.com') ||
+          host.contains('drive.usercontent.google.com')) {
+        return HostType.googleDrive;
+      } else if (host.contains('dropbox.com')) {
+        return HostType.dropbox;
+      } else if (host.contains('onedrive.live.com')) {
+        return HostType.oneDrive;
+      } else if (host.contains('mediafire.com')) {
+        return HostType.mediaFire;
+      } else if (host.contains('gitlab.com')) {
+        return HostType.gitLab;
+      } else if (host.contains('gitgud.io')) {
+        return HostType.gitGud;
+      }
+    } catch (e) {
+      Fimber.d("Error determining host type: $e");
+    }
+
+    return HostType.unknown;
+  }
+}
+
+enum HostType {
+  github,
+  googleDrive,
+  dropbox,
+  oneDrive,
+  mediaFire,
+  gitLab,
+  gitGud,
+  unknown,
 }
 
 class UrlResponse {
   final String url;
-  final HttpHeaders headers;
-  final Map<String, String> headersMap = <String, String>{};
+  final Map<String, String> headersMap;
 
-  UrlResponse(this.url, this.headers) {
-    headers.forEach((key, value) {
-      headersMap[key] = value.join(',');
-    });
-  }
+  UrlResponse(this.url, this.headersMap);
 }

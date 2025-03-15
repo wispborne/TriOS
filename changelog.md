@@ -1,3 +1,10 @@
+# 1.1.3
+_A mini feature drop_
+- Added
+  - VRAM Estimator can can now filter to only enabled mods.
+- Changed
+  - A bit of UI polish to the VRAM Estimator page to bring it more in line with other pages.
+
 # 1.1.2
 - Fixed
   - Multiple versions of same mod showing in VRAM Estimator (since 1.1.0).

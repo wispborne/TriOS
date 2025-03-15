@@ -80,7 +80,7 @@ class CheckboxWithLabel extends StatelessWidget {
           onChanged(!value!);
         }
       },
-      borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+      borderRadius: BorderRadius.circular(14),
       child: Padding(
         padding: const EdgeInsets.only(right: 7),
         child: Row(

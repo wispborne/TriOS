@@ -2,13 +2,16 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/mod_manager/vram_checker_explanation.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/graph_radio_selector.dart';
-import 'package:trios/widgets/spinning_refresh_fab.dart';
+import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:trios/widgets/spinning_refresh_button.dart';
+import 'package:trios/widgets/toolbar_checkbox_button.dart';
 
 import 'charts/bar_chart.dart';
 import 'charts/pie_chart.dart';
@@ -130,6 +133,7 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
 
   GraphType graphType = GraphType.bar;
   RangeValues? selectedSliderValues;
+  bool _onlyEnabled = false;
 
   @override
   Widget build(BuildContext context) {
@@ -141,10 +145,22 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
     }
     final vramState = vramStateProvider.requireValue;
     final isScanning = vramState.isScanning;
+    final enabledSmolIds =
+        ref
+            .watch(AppState.enabledModVariants)
+            .map((mod) => mod.smolId)
+            .toList();
 
     // Display only the highest version of each mod.
     final groupedModVramInfo =
         vramState.modVramInfo.values
+            .where(
+              (mod) =>
+                  // If only showing enabled, filter to only the enabled *variants*.
+                  _onlyEnabled
+                      ? enabledSmolIds.contains(mod.info.smolId)
+                      : true,
+            )
             .groupBy((mod) => mod.info.modInfo.id)
             .values
             .map(
@@ -173,71 +189,112 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
 
     return Column(
       children: <Widget>[
-        Row(
-          children: [
-            Disable(
-              isEnabled: !isScanning,
-              child: SpinningRefreshFAB(
-                onPressed: () {
-                  if (!isScanning) {
-                    ref
-                        .read(AppState.vramEstimatorProvider.notifier)
-                        .startEstimating();
-                  }
-                },
-                isScanning: isScanning,
-                tooltip: 'Estimate VRAM',
-              ),
-            ),
-            if (isScanning)
-              Padding(
-                padding: const EdgeInsets.only(left: 16.0),
-                child: OutlinedButton.icon(
-                  onPressed:
-                      () =>
-                          ref
-                              .read(AppState.vramEstimatorProvider.notifier)
-                              .cancelEstimation(),
-                  label: Text(
-                    vramState.isCancelled ? 'Canceling...' : 'Cancel',
-                  ),
-                  icon: const Icon(Icons.cancel),
-                ),
-              ),
-            Padding(
-              padding: const EdgeInsets.only(left: 16.0),
-              child: Disable(
-                isEnabled: modVramInfoToShow.isNotEmpty,
-                child: Text(
-                  '${modVramInfo.length} mods scanned',
-                  style: Theme.of(context).textTheme.labelMedium,
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(left: 32.0),
-              child: Disable(
-                isEnabled: modVramInfoToShow.isNotEmpty,
-                child: Card.outlined(
-                  child: SizedBox(
-                    width: 300,
-                    child: GraphTypeSelector(
-                      onGraphTypeChanged: (GraphType type) {
-                        setState(() {
-                          graphType = type;
-                        });
-                      },
+        Padding(
+          padding: const EdgeInsets.all(4),
+          child: SizedBox(
+            height: 50,
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.only(left: 8, right: 8),
+                child: Row(
+                  children: [
+                    const SizedBox(width: 4),
+                    Text(
+                      'VRAM Estimator',
+                      style: Theme.of(
+                        context,
+                      ).textTheme.headlineSmall?.copyWith(fontSize: 20),
                     ),
-                  ),
+                    const SizedBox(width: 8),
+                    MovingTooltipWidget.text(
+                      message: "About VRAM & VRAM Estimator",
+                      child: IconButton(
+                        icon: const Icon(Icons.info),
+                        onPressed:
+                            () => showDialog(
+                              context: context,
+                              builder:
+                                  (context) => VramCheckerExplanationDialog(),
+                            ),
+                      ),
+                    ),
+                    Disable(
+                      isEnabled: !isScanning,
+                      child: SpinningRefreshButton(
+                        onPressed: () {
+                          if (!isScanning) {
+                            ref
+                                .read(AppState.vramEstimatorProvider.notifier)
+                                .startEstimating();
+                          }
+                        },
+                        isScanning: isScanning,
+                        tooltip: 'Estimate VRAM',
+                      ),
+                    ),
+                    if (isScanning)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 8.0),
+                        child: OutlinedButton.icon(
+                          onPressed:
+                              () =>
+                                  ref
+                                      .read(
+                                        AppState.vramEstimatorProvider.notifier,
+                                      )
+                                      .cancelEstimation(),
+                          label: Text(
+                            vramState.isCancelled ? 'Canceling...' : 'Cancel',
+                          ),
+                          icon: const Icon(Icons.cancel),
+                        ),
+                      ),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 8.0),
+                      child: Disable(
+                        isEnabled: modVramInfoToShow.isNotEmpty,
+                        child: Text(
+                          '${modVramInfo.length} mods scanned',
+                          style: Theme.of(context).textTheme.labelMedium,
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 32.0),
+                      child: Disable(
+                        isEnabled: modVramInfoToShow.isNotEmpty,
+                        child: Card.outlined(
+                          child: SizedBox(
+                            width: 300,
+                            child: GraphTypeSelector(
+                              onGraphTypeChanged: (GraphType type) {
+                                setState(() {
+                                  graphType = type;
+                                });
+                              },
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Spacer(),
+                    TriOSToolbarCheckboxButton(
+                      onChanged:
+                          (newValue) =>
+                              setState(() => _onlyEnabled = newValue ?? true),
+                      value: _onlyEnabled,
+                      text: 'Enabled Mods Only',
+                    ),
+                  ],
                 ),
               ),
             ),
-          ],
+          ),
         ),
         if (modVramInfo.isNotEmpty)
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(8.0),
               child: switch (graphType) {
                 GraphType.bar => VramBarChart(modVramInfo: modVramInfoToShow),
                 GraphType.pie => VramPieChart(modVramInfo: modVramInfoToShow),

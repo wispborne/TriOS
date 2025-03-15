@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/vram_estimator/graphics_lib_config_provider.dart';
-import 'package:trios/vram_estimator/models/gpu_info.dart';
 import 'package:trios/vram_estimator/models/graphics_lib_config.dart';
 import 'package:trios/vram_estimator/vram_estimator_page.dart';
 import 'package:trios/widgets/mod_icon.dart';
@@ -39,11 +38,20 @@ class VramBarChartState extends ConsumerState<VramBarChart> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Padding(
+        //   padding: const EdgeInsets.only(bottom: 8.0),
+        //   child: Text(
+        //     "Total System VRAM: ${getGPUInfo()?.freeVRAM.bytesAsReadableMB() ?? "unknown"}",
+        //     style: theme.textTheme.labelLarge,
+        //   ),
+        // ),
         Padding(
-          padding: const EdgeInsets.only(bottom: 8.0),
+          padding: const EdgeInsets.only(left: 8.0, bottom: 8.0),
           child: Text(
-            "Total System VRAM: ${getGPUInfo()?.freeVRAM.bytesAsReadableMB() ?? "unknown"}",
-            style: theme.textTheme.labelLarge,
+            "For VRAM totals, see the Mods tab.",
+            style: theme.textTheme.labelMedium?.copyWith(
+              fontStyle: FontStyle.italic,
+            ),
           ),
         ),
         Expanded(

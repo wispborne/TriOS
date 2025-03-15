@@ -204,7 +204,7 @@ class _AppShellState extends ConsumerState<AppShell>
       const Padding(padding: EdgeInsets.all(4), child: Dashboard()),
       const ModsGridPage(),
       const Padding(padding: EdgeInsets.all(8), child: ModProfilePage()),
-      const Padding(padding: EdgeInsets.all(8), child: VramEstimatorPage()),
+      const VramEstimatorPage(),
       const Padding(padding: EdgeInsets.all(8), child: ChipperApp()),
       const Padding(padding: EdgeInsets.all(8), child: ImageGridScreen()),
       const WeaponPage(),

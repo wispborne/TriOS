@@ -714,7 +714,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                     WispGridColumn<Mod>(
                       key: ModGridHeader.vramImpact.name,
                       name: "VRAM Est.",
-                      isSortable: false,
+                      isSortable: true,
                       getSortValue:
                           (mod) =>
                               vramEstState
@@ -738,7 +738,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                           ),
                       defaultState: WispGridColumnState(
                         position: 7,
-                        width: 110,
+                        width: 128,
                       ),
                     ),
                     WispGridColumn<Mod>(

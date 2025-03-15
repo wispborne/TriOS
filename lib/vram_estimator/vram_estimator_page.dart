@@ -1,8 +1,9 @@
 import 'dart:math';
 
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/models/version.dart';
+import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/disable.dart';
@@ -87,7 +88,9 @@ class VramEstimatorPage extends ConsumerStatefulWidget {
       children: [
         Text(
           'Images Estimated to Use the Most VRAM ',
-          style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w500),
+          style: theme.textTheme.labelLarge?.copyWith(
+            fontWeight: FontWeight.w500,
+          ),
         ),
         Text(
           "Note: Image dimensions in VRAM are usually bigger than actual.",
@@ -138,7 +141,23 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
     }
     final vramState = vramStateProvider.requireValue;
     final isScanning = vramState.isScanning;
-    final modVramInfo = vramState.modVramInfo;
+
+    // Display only the highest version of each mod.
+    final groupedModVramInfo =
+        vramState.modVramInfo.values
+            .groupBy((mod) => mod.info.modInfo.id)
+            .values
+            .map(
+              (group) => group.maxWith(
+                (a, b) => (a.info.version ?? Version.zero()).compareTo(
+                  b.info.version,
+                ),
+              ),
+            )
+            .nonNulls
+            .toList();
+    final modVramInfo =
+        groupedModVramInfo.map((mod) => MapEntry(mod.info.smolId, mod)).toMap();
     final graphicsLibConfig = ref.watch(graphicsLibConfigProvider);
 
     var modVramInfoToShow = _calculateModsToShow(
@@ -297,7 +316,7 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
     GraphicsLibConfig? graphicsLibConfig,
   ) {
     return modVramInfo.values
-            .sortedBy<num>(
+            .sortedByButBetter<num>(
               (mod) => mod.bytesUsingGraphicsLibConfig(graphicsLibConfig),
             )
             .lastOrNull

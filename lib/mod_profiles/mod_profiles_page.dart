@@ -11,7 +11,6 @@ import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
-import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
@@ -682,16 +681,25 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                             ),
                           ),
                         if (isSaveGame)
-                          OutlinedButton(
-                            onPressed: () {
-                              ref
-                                  .read(modProfilesProvider.notifier)
-                                  .createModProfile(
-                                    save!.characterName,
-                                    enabledModVariants: enabledModVariants,
-                                  );
-                            },
-                            child: const Text("Create Profile"),
+                          MovingTooltipWidget.text(
+                            message:
+                                "Warning!"
+                                "\nThis create a profile from the mods & versions from when you FIRST STARTED this save/campaign."
+                                "\nIf you updated or changed mods during the run, those changes won't be in the profile."
+                                "\n\nThis is due to how Starsector saves work, and should be fixed in 0.98a.",
+                            warningLevel: TooltipWarningLevel.warning,
+
+                            child: OutlinedButton(
+                              onPressed: () {
+                                ref
+                                    .read(modProfilesProvider.notifier)
+                                    .createModProfile(
+                                      save!.characterName,
+                                      enabledModVariants: enabledModVariants,
+                                    );
+                              },
+                              child: const Text("Create Profile"),
+                            ),
                           ),
                       ],
                     ),

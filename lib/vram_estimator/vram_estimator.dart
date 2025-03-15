@@ -16,6 +16,7 @@ part 'vram_estimator.mapper.dart';
 
 @MappableClass()
 class VramEstimatorState with VramEstimatorStateMappable {
+  /// SmolId to [VramMod] mapping.
   final Map<String, VramMod> modVramInfo;
   bool isScanning = false;
   bool isCancelled = false;

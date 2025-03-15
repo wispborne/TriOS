@@ -33,7 +33,7 @@ StateProvider<WebViewEnvironment?> webViewEnvironment =
     StateProvider<WebViewEnvironment?>((ref) => null);
 List<Future<void> Function(BuildContext)> onAppLoadedActions = [];
 
-void main(List<String> args) async {
+void main() async {
   try {
     WidgetsFlutterBinding.ensureInitialized();
   } catch (e) {

@@ -1,3 +1,8 @@
+# 1.1.2
+- Fixed
+  - Multiple versions of same mod showing in VRAM Estimator (since 1.1.0).
+  - Unable to sort by VRAM on mods tab (since 1.0.0).
+
 # 1.1.1
 - Fixed
   - Some downloads very slow to start.

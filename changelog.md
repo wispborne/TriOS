@@ -1,6 +1,6 @@
 # 1.1.4
 - Added
-  - Catalog now shows required game version of a downloadable mod.
+  - Catalog now shows the game version of a downloadable mod.
 
 # 1.1.3
 - Added

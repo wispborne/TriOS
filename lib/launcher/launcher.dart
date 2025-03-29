@@ -10,13 +10,11 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:plist_parser/plist_parser.dart';
 import 'package:trios/jre_manager/jre_manager_logic.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
-import 'package:trios/models/enabled_mods.dart';
 import 'package:trios/models/launch_settings.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/thirdparty/dartx/io/file_system_entity.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
-import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/platform_paths.dart';
@@ -145,58 +143,9 @@ class Launcher extends HookConsumerWidget {
               builder: (context, child) {
                 return Transform.scale(
                   scale: scaleAnimation.value * tapScaleAnimation.value,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: colorAnimation.value,
-                      borderRadius: BorderRadius.circular(
-                        ThemeManager.cornerRadius,
-                      ),
-                      border: Border.all(
-                        color: theme.colorScheme.primary.darker(15),
-                        strokeAlign: BorderSide.strokeAlignOutside,
-                        width: 2,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          blurRadius: boxShadowAnimation.value,
-                          blurStyle: BlurStyle.normal,
-                          color: theme.colorScheme.primary.withOpacity(0.25),
-                          offset: Offset.zero,
-                          spreadRadius: 2,
-                        ),
-                        BoxShadow(
-                          blurRadius: 4,
-                          blurStyle: BlurStyle.normal,
-                          color:
-                              Colors.black.mix(theme.colorScheme.primary, 0.5)!,
-                          offset: Offset.zero,
-                          spreadRadius: 1,
-                        ),
-                      ],
-                    ),
-                    child: SizedBox(
-                      height: 38,
-                      width: 42,
-                      child: Transform.translate(
-                        offset: const Offset(0, -1),
-                        child: Center(
-                          child: StrokeText(
-                            'S',
-                            strokeWidth: 3,
-                            borderOnTop: true,
-                            strokeColor: theme.colorScheme.surfaceTint.darker(
-                              70,
-                            ),
-                            style: TextStyle(
-                              fontWeight: FontWeight.w900,
-                              fontFamily: "Orbitron",
-                              fontSize: 30,
-                              color: theme.colorScheme.primary.darker(5),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
+                  child: StarsectorIcon(
+                    colorAnimation: colorAnimation.value,
+                    boxShadowAnimation: boxShadowAnimation.value,
                   ),
                 );
               },
@@ -714,6 +663,70 @@ class Launcher extends HookConsumerWidget {
     }
 
     return overrideArgs;
+  }
+}
+
+class StarsectorIcon extends StatelessWidget {
+  const StarsectorIcon({
+    super.key,
+    this.colorAnimation,
+    this.boxShadowAnimation = 2,
+  });
+
+  final Color? colorAnimation;
+  final double boxShadowAnimation;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      decoration: BoxDecoration(
+        color: colorAnimation ?? theme.colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+        border: Border.all(
+          color: theme.colorScheme.primary.darker(15),
+          strokeAlign: BorderSide.strokeAlignOutside,
+          width: 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            blurRadius: boxShadowAnimation,
+            blurStyle: BlurStyle.normal,
+            color: theme.colorScheme.primary.withOpacity(0.25),
+            offset: Offset.zero,
+            spreadRadius: 2,
+          ),
+          BoxShadow(
+            blurRadius: 4,
+            blurStyle: BlurStyle.normal,
+            color: Colors.black.mix(theme.colorScheme.primary, 0.5)!,
+            offset: Offset.zero,
+            spreadRadius: 1,
+          ),
+        ],
+      ),
+      child: SizedBox(
+        height: 38,
+        width: 42,
+        child: Transform.translate(
+          offset: const Offset(0, -1),
+          child: Center(
+            child: StrokeText(
+              'S',
+              strokeWidth: 3,
+              borderOnTop: true,
+              strokeColor: theme.colorScheme.surfaceTint.darker(70),
+              style: TextStyle(
+                fontWeight: FontWeight.w900,
+                fontFamily: "Orbitron",
+                fontSize: 30,
+                color: theme.colorScheme.primary.darker(5),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 

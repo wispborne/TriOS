@@ -2,15 +2,15 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/modBrowser/models/scraped_mod.dart';
 import 'package:trios/themes/theme_manager.dart';
-import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/download_manager/download_manager.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/conditional_wrap.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:trios/widgets/stroke_text.dart';
 import 'package:trios/widgets/tooltip_frame.dart';
 
 class ScrapedModCard extends StatefulWidget {
@@ -36,6 +36,7 @@ class _ScrapedModCardState extends State<ScrapedModCard> {
     final urls = mod.urls;
     const markdownWidth = 800.0;
 
+    final theme = Theme.of(context);
     return MouseRegion(
       onEnter: (_) {
         setState(() {
@@ -69,15 +70,32 @@ class _ScrapedModCardState extends State<ScrapedModCard> {
           margin: const EdgeInsets.all(0),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8.0),
-            side: BorderSide(
-              color: Theme.of(context).colorScheme.surface.withOpacity(0.5),
-            ),
+            side: BorderSide(color: theme.colorScheme.surface.withOpacity(0.5)),
           ),
           child: Container(
             padding: const EdgeInsets.all(12.0),
             child: Row(
               children: [
-                SizedBox(width: 80.0, child: ModImage(mod: mod)),
+                SizedBox(
+                  width: 80.0,
+                  child: Column(
+                    children: [
+                      if (mod.gameVersionReq?.isNotEmpty == true)
+                        _ScrapedModGameVersionReq(theme: theme, mod: mod),
+                      Expanded(
+                        child: Center(
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: FittedBox(
+                              fit: BoxFit.fitWidth,
+                              child: ModImage(mod: mod),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.only(left: 16.0, right: 16.0),
@@ -94,7 +112,7 @@ class _ScrapedModCardState extends State<ScrapedModCard> {
                         ),
                         if (mod.authorsList?.isNotEmpty == true)
                           Padding(
-                            padding: const EdgeInsets.only(top: 8.0),
+                            padding: const EdgeInsets.only(top: 0.0),
                             child: Text(
                               mod.authorsList!.join(', '),
                               style: const TextStyle(
@@ -120,10 +138,7 @@ class _ScrapedModCardState extends State<ScrapedModCard> {
                                       style: Theme.of(
                                         context,
                                       ).textTheme.labelLarge?.copyWith(
-                                        color: Theme.of(context)
-                                            .textTheme
-                                            .labelLarge
-                                            ?.color
+                                        color: theme.textTheme.labelLarge?.color
                                             ?.withOpacity(0.8),
                                       ),
                                     ),
@@ -151,7 +166,7 @@ class _ScrapedModCardState extends State<ScrapedModCard> {
                                 },
                                 child: Text(
                                   'View Desc.',
-                                  style: Theme.of(context).textTheme.labelLarge,
+                                  style: theme.textTheme.labelLarge,
                                 ),
                               ),
                             ),
@@ -264,6 +279,75 @@ class _ScrapedModCardState extends State<ScrapedModCard> {
           ],
         );
       },
+    );
+  }
+}
+
+class _ScrapedModGameVersionReq extends StatelessWidget {
+  const _ScrapedModGameVersionReq({
+    super.key,
+    required this.theme,
+    required this.mod,
+  });
+
+  final ThemeData theme;
+  final ScrapedMod mod;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 2, bottom: 2),
+      child: MovingTooltipWidget.text(
+        message: "Game version required: ${mod.gameVersionReq}",
+        child: Row(
+          spacing: 6,
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainer,
+                borderRadius: BorderRadius.circular(3),
+                border: Border.all(
+                  color: theme.colorScheme.onSurface.darker(15),
+                  strokeAlign: BorderSide.strokeAlignOutside,
+                  width: 1,
+                ),
+              ),
+              child: SizedBox(
+                width: 14,
+                height: 14,
+                child: Transform.translate(
+                  offset: const Offset(2.0, -1.0),
+                  child: StrokeText(
+                    'S',
+                    strokeWidth: 1,
+                    borderOnTop: true,
+                    strokeColor: theme.colorScheme.surfaceTint.darker(70),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontFamily: "Orbitron",
+                      fontSize: 11,
+                      color: theme.colorScheme.onSurface.darker(5),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Expanded(
+              child: Text(
+                mod.gameVersionReq ?? "",
+                maxLines: 1,
+                softWrap: false,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 11.0,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).textTheme.labelLarge?.color,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

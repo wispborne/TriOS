@@ -1,3 +1,7 @@
+# 1.1.4
+- Added
+  - Catalog now shows required game version of a downloadable mod.
+
 # 1.1.3
 - Added
   - VRAM Estimator can can now filter to only enabled mods.

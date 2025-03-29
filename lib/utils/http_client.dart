@@ -75,8 +75,8 @@ class TriOSHttpClient {
           () => client.getUrl(url),
           headers: headers,
           onProgress: onProgress,
+          inactivityTimeout: timeout,
         ),
-        timeout: timeout,
         retries: tries,
       );
     });
@@ -129,6 +129,7 @@ class TriOSHttpClient {
     Future<HttpClientRequest> Function() requestFactory, {
     Map<String, String>? headers,
     void Function(int receivedBytes, int totalBytes)? onProgress,
+    Duration inactivityTimeout = const Duration(seconds: 30),
   }) async {
     final request = await requestFactory();
     _logRequest(request);
@@ -143,32 +144,27 @@ class TriOSHttpClient {
     final contentType = response.headers.contentType?.mimeType;
     final statusCode = response.statusCode;
     final headersMap = response.headers;
+    final totalBytes = response.contentLength; // May be -1 if unknown
 
-    // Handle the response based on content type
+    // Read the raw bytes with an inactivity (stall) timeout:
+    final rawBytes = await readStreamWithIdleTimeout(
+      response,
+      inactivityTimeout,
+      onProgress: onProgress,
+      totalBytes: totalBytes,
+    );
+
+    // Convert the bytes based on the MIME type
     dynamic responseBody;
     if (contentType == 'application/json') {
-      final rawBody = await response.transform(utf8.decoder).join();
-      responseBody = jsonDecode(rawBody);
+      responseBody = jsonDecode(utf8.decode(rawBytes));
     } else if (contentType != null && contentType.startsWith('text/')) {
-      responseBody = await response.transform(utf8.decoder).join();
+      responseBody = utf8.decode(rawBytes);
     } else {
       // Binary response (e.g., for file downloads)
-      responseBody = await response.fold<List<int>>([], (buffer, bytes) {
-        buffer.addAll(bytes);
-
-        if (onProgress != null) {
-          onProgress(buffer.length, response.contentLength);
-        }
-
-        return buffer;
-      });
+      responseBody = rawBytes;
     }
 
-    if (onProgress != null) {
-      onProgress(response.contentLength, response.contentLength);
-    }
-
-    // Return the full response encapsulated in TriOSHttpResponse
     return TriOSHttpResponse(
       data: responseBody,
       statusCode: statusCode,
@@ -182,12 +178,11 @@ class TriOSHttpClient {
     Future<TriOSHttpResponse<dynamic>> Function() requestFunction, {
     int retries = 3,
     Duration retryDelay = const Duration(seconds: 2),
-    Duration timeout = const Duration(seconds: 30),
   }) async {
     int attempt = 0;
     while (attempt < retries) {
       try {
-        return await requestFunction().timeout(timeout);
+        return await requestFunction();
       } on TimeoutException catch (e) {
         Fimber.w(
           'Request timed out on attempt ${attempt + 1}: ${e.toString()}',
@@ -207,6 +202,61 @@ class TriOSHttpClient {
 
     // If all retries fail, throw an exception.
     throw Exception('Request failed after $retries attempts');
+  }
+
+  Future<List<int>> readStreamWithIdleTimeout(
+    Stream<List<int>> stream,
+    Duration inactivityTimeout, {
+    void Function(int receivedBytes, int totalBytes)? onProgress,
+    int totalBytes = -1,
+  }) {
+    final completer = Completer<List<int>>();
+    final buffer = <int>[];
+
+    Timer? inactivityTimer;
+    var receivedBytesCount = 0;
+
+    void resetTimer() {
+      inactivityTimer?.cancel();
+      inactivityTimer = Timer(inactivityTimeout, () {
+        if (!completer.isCompleted) {
+          completer.completeError(
+            TimeoutException('No data received for $inactivityTimeout'),
+          );
+        }
+      });
+    }
+
+    // Start the timer as soon as we begin reading
+    resetTimer();
+
+    stream.listen(
+      (chunk) {
+        buffer.addAll(chunk);
+        receivedBytesCount += chunk.length;
+
+        // We got data, so reset the "stall" timer
+        resetTimer();
+
+        // Progress callback, if any
+        onProgress?.call(receivedBytesCount, totalBytes);
+      },
+      onDone: () {
+        inactivityTimer?.cancel();
+        if (!completer.isCompleted) {
+          completer.complete(buffer);
+        }
+      },
+      onError: (error, stackTrace) {
+        inactivityTimer?.cancel();
+        if (!completer.isCompleted) {
+          completer.completeError(error, stackTrace);
+        }
+      },
+      cancelOnError: true,
+    );
+
+    return completer.future;
   }
 
   void _logRequest(HttpClientRequest request) {

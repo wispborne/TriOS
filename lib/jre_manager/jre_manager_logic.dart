@@ -6,7 +6,6 @@ import 'package:collection/collection.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
-import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 
@@ -46,7 +45,6 @@ final jreManagerProvider = AsyncNotifierProvider<JreManager, JreManagerState>(
 );
 
 class JreManager extends AsyncNotifier<JreManagerState> {
-  static const supportedJreVersions = [7, 8, 23, 24];
   StreamSubscription? _jreWatcherSubscription;
 
   @override

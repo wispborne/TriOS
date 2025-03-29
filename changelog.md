@@ -1,7 +1,10 @@
 # 1.1.3
-_A mini feature drop_
 - Added
   - VRAM Estimator can can now filter to only enabled mods.
+- Fixed
+  - Disabled JRE 23/24 for Starsector 0.98a.
+    - Mikohime is not updated for it, breaks it, and is not needed because vanilla uses Java 17 now.
+  - Downloads taking more than 30 seconds were getting messed up.
 - Changed
   - A bit of UI polish to the VRAM Estimator page to bring it more in line with other pages.
 

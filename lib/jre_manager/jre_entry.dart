@@ -7,7 +7,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:trios/compression/archive.dart';
-import 'package:trios/compression/libarchive/libarchive.dart';
 import 'package:trios/models/download_progress.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/trios/constants.dart';
@@ -45,8 +44,18 @@ abstract class JreEntry implements Comparable<JreEntry> {
   bool operator ==(Object other) =>
       other is JreEntry && version == other.version;
 
-  bool get isSupportedByTriOS =>
-      JreManager.supportedJreVersions.contains(version.version);
+  bool isGameVersionSupported(String gameVersion) {
+    return _supportedJresForGameVersion(gameVersion).contains(version.version);
+  }
+
+  static List<int> _supportedJresForGameVersion(String gameVersion) {
+    final version = Version.parse(gameVersion);
+    if (version.major == "0" && (version.minor.toIntOrNull() ?? 0) <= 97) {
+      return [7, 8, 23, 24];
+    } else {
+      return [17];
+    }
+  }
 }
 
 abstract class JreEntryInstalled extends JreEntry {
@@ -211,6 +220,7 @@ abstract class MikohimeCustomJreEntry extends CustomInstalledJreEntry {
       vmParamsFileAbsolutePath.existsSync() &&
       jreAbsolutePath.existsSync() &&
       mikohimeFolder.existsSync();
+
   // Ideally would check that the mikohime folder is for this specific JRE.
   // But idk how.
 

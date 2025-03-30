@@ -1,6 +1,9 @@
 # 1.1.4
 - Added
   - Catalog now shows the game version of a downloadable mod.
+- Fixed
+  - "File is being used by another process" error when installing mods sometimes.
+  - Game version not being read correctly. (please let me know if this still happens)
 
 # 1.1.3
 - Added

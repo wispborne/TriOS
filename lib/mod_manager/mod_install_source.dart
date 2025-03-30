@@ -68,6 +68,8 @@ class ArchiveModInstallSource extends ModInstallSource {
     }).toList();
   }
 
+  // TODO: Problem: if installing an archive with a subfolder of LazyLib, and the mods folder already has a folder called LazyLib,
+  // then it replaces the existing one, then moves the new one's files to a new folder, leaving the old LazyLib folder broken.
   @override
   Future<List<SourcedFile>> createFilesAtDestination(
     String destinationPath,

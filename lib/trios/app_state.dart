@@ -160,7 +160,7 @@ class AppState {
         return trueVersion;
       }
     } catch (e, stack) {
-      Fimber.w(
+      Fimber.e(
         "Failed to read starsector version from obf jar, falling back to log.",
         ex: e,
         stacktrace: stack,

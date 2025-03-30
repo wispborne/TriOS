@@ -233,6 +233,9 @@ class SevenZip implements ArchiveInterface {
     String Function(SevenZipEntry entry)? pathTransform,
     bool Function(Object ex, StackTrace st)? onError,
   }) async {
+    final maxRenameRetries = 3;
+    final renameRetryDelay = Duration(milliseconds: 200);
+
     final allEntries = await listFiles(archivePath);
     final toExtract =
         allEntries.where((e) => fileFilter == null || fileFilter(e)).toList();
@@ -263,7 +266,24 @@ class SevenZip implements ArchiveInterface {
         final newFile = File('$destinationPath/$transformed');
         if (oldFile.path != newFile.path && oldFile.existsSync()) {
           await newFile.parent.create(recursive: true);
-          await oldFile.rename(newFile.path);
+
+          bool renamed = false;
+          for (var i = 0; i < maxRenameRetries && !renamed; i++) {
+            try {
+              await oldFile.rename(newFile.path);
+              renamed = true;
+            } on FileSystemException catch (e) {
+              // Possibly locked by AV, or 7z hasn't released it yet, etc.
+              if (i < maxRenameRetries - 1) {
+                // Log a warning, then wait briefly before trying again
+                Fimber.w('Rename attempt ${i + 1} failed. Retrying...', ex: e);
+                await Future.delayed(renameRetryDelay);
+              } else {
+                // After the last attempt, rethrow
+                rethrow;
+              }
+            }
+          }
         }
         results.add(SevenZipExtractedFile(entry, newFile));
       } catch (ex, st) {
@@ -388,7 +408,7 @@ class SevenZip implements ArchiveInterface {
       '-y',
       '-so',
       inArchivePath,
-    ], runInShell: true);
+    ]);
 
     final collectedBytes = <int>[];
     await for (final chunk in process.stdout) {

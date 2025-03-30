@@ -137,8 +137,6 @@ class ModProfileManagerNotifier
         dateModified: DateTime.now(),
       );
       updateModProfile(updatedProfile);
-    } else {
-      Fimber.w("No current mod profile to update.");
     }
   }
 
@@ -507,7 +505,7 @@ class ModProfileManagerNotifier
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text("This will not change which mods are enabled."),
+                      Text("The new profile will be activated and is identical to your current profile."),
                     ],
                   )
                   : SingleChildScrollView(

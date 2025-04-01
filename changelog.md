@@ -1,3 +1,8 @@
+# 1.1.5
+- Changed
+  - Launcher icon now shows a warning if you have an unsupported JRE selected.
+    - For example, if you have JRE 23/24 selected for Starsector 0.98a.
+
 # 1.1.4
 - Added
   - Catalog now shows the game version of a downloadable mod.

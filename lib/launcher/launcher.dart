@@ -48,6 +48,12 @@ class Launcher extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     var theme = Theme.of(context);
     final isGameRunning = ref.watch(AppState.isGameRunning).valueOrNull == true;
+
+    final currentJre = ref.watch(jreManagerProvider).valueOrNull?.activeJre;
+    final gameVersion = ref.watch(AppState.starsectorVersion).valueOrNull ?? "";
+    final isCurrentJreValid =
+        currentJre?.isGameVersionSupported(gameVersion) ?? false;
+
     final buttonBackgroundColor =
         isGameRunning
             ? theme.disabledColor
@@ -80,10 +86,21 @@ class Launcher extends HookConsumerWidget {
     );
 
     return MovingTooltipWidget.framed(
+      warningLevel:
+          isCurrentJreValid
+              ? TooltipWarningLevel.none
+              : TooltipWarningLevel.error,
       tooltipWidget: DefaultTextStyle.merge(
-        style: theme.textTheme.labelLarge,
+        style: theme.textTheme.labelLarge?.copyWith(
+          color: isCurrentJreValid ? null : ThemeManager.vanillaWarningColor,
+        ),
         child:
-            isGameRunning
+            !isCurrentJreValid
+                ? Text(
+                  "Current JRE may not work with $gameVersion!\n"
+                  "Change JRE if there are issues.",
+                )
+                : isGameRunning
                 ? const Text("Game is running")
                 : Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

@@ -726,14 +726,16 @@ class ModManagerNotifier extends AsyncNotifier<void> {
             Fimber.i(
               "Moving files from highest version folder ($highestVersionFolder) to new versioned folder ($versionedNameForHighestVersion).",
             );
-            for (final file in highestVersionFolder.listSync(recursive: true)) {
-              if (file.isDirectory()) {
+            for (final folderItem in highestVersionFolder.listSync(
+              recursive: true,
+            )) {
+              if (folderItem.isDirectory()) {
                 continue; // Directories will be created as needed.
               }
 
-              final relativePath = file.toFile().relativeTo(
-                highestVersionFolder,
-              );
+              final file = folderItem.toFile();
+
+              final relativePath = file.relativeTo(highestVersionFolder);
               final newFilePath =
                   destinationFolder
                       .resolve(versionedNameForHighestVersion)
@@ -743,7 +745,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
               Fimber.d("Moving file: ${file.path} to $newFilePath");
               if (!dryRun) {
                 newFilePath.toFile().parent.createSync(recursive: true);
-                await file.rename(newFilePath.path);
+                await file.renameSafely(newFilePath.path);
               }
             }
           } catch (e, st) {
@@ -802,7 +804,6 @@ class ModManagerNotifier extends AsyncNotifier<void> {
       Fimber.d(
         "Mod info (${modInfoToInstall.extractedFile.originalFile.path}) siblings: ${modInfoSiblings.map((it) => it).toList()}",
       );
-
 
       // STEP 2: Extract the mod, transforming the extracted paths go to targetModFolderName.
       if (dryRun) {

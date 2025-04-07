@@ -4,6 +4,7 @@
 - Fixed
   - Mods could sometimes be partially installed or split across two folders.
   - Empty folders left in `mods` folder (same root cause as partial install bug).
+  - Mods unable to be installed if Starsector not on C: drive (or same as temp folder).
 - Changed
   - Downloaded mod archives (zip/7z/rar) are now cleaned out of the OS's temp folder after being installed.
 

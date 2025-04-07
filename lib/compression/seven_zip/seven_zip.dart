@@ -252,13 +252,9 @@ class SevenZip implements ArchiveInterface {
       "${Constants.appName}-${archivePath.hashCode}",
     )).normalize.path;
 
-    if (tempFolder.toDirectory().existsSync()) {
-      tempFolder.toDirectory().deleteSync(recursive: true);
-    }
-
     final results = <SevenZipExtractedFile?>[];
 
-    final baseArgs = ['x', archivePath.path, '-y', '-o${tempFolder}'];
+    final baseArgs = ['x', archivePath.path, '-y', '-o$tempFolder'];
     final inArchivePaths = toExtract.map((e) => e.path).toList();
 
     final extractionResult = await _run7zCommandWithPossibleFileList(
@@ -287,7 +283,7 @@ class SevenZip implements ArchiveInterface {
             bool renamed = false;
             for (var i = 0; i < maxRenameRetries && !renamed; i++) {
               try {
-                await oldFile.rename(newFile.path);
+                await oldFile.renameSafely(newFile.path);
                 renamed = true;
               } on FileSystemException catch (e) {
                 // Possibly locked by AV, or 7z hasn't released it yet, etc.

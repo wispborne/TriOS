@@ -159,7 +159,7 @@ class DownloadManager {
           ioSink.add(getResponseBodyAsBytes(response.data));
 
           await ioSink.close();
-          await partialFile.rename(downloadFile);
+          await partialFile.renameSafely(downloadFile);
 
           setStatus(task, DownloadStatus.completed);
         }

@@ -341,7 +341,7 @@ extension FileExt on File {
         return this;
       }
     }
-    return (await rename(destFile.path)).normalize;
+    return (await renameSafely(destFile.path)).normalize;
   }
 
   String readAsStringSyncAllowingMalformed() {
@@ -367,6 +367,123 @@ extension FileExt on File {
 
   Future<bool> isNotWritable() async {
     return !(await isWritable());
+  }
+
+  /// Asynchronously renames this file to [newPath].
+  ///
+  /// Attempts an atomic [rename] first. If that fails with a [FileSystemException]
+  /// (commonly seen when moving across different file systems or devices),
+  /// it falls back to performing a [copy] to the [newPath] followed by a
+  /// [delete] of the original file.
+  ///
+  /// Creates parent directories of [newPath] recursively if they do not exist
+  /// before attempting the move/copy.
+  ///
+  /// This method is intended for moving *files*. Behavior for directories is undefined.
+  ///
+  /// If a file already exists at [newPath], it will be overwritten by both
+  /// the `rename` and `copy` operations.
+  ///
+  /// Throws a [FileSystemException] if the operation fails at any stage (initial
+  /// existence check, rename, copy, or delete). Note that the copy-then-delete
+  /// fallback is *not atomic*; if the application terminates after copying but
+  /// before deleting, both the original file and the copy might exist temporarily.
+  /// Throws a [FileSystemException] if this [File] does not exist when the
+  /// operation starts.
+  ///
+  /// Returns a [File] instance representing the file at the successfully moved
+  /// location ([newPath]).
+  Future<File> renameSafely(String newPath) async {
+    // 1. Check if the source file exists.
+    if (!await exists()) {
+      throw FileSystemException("Source file does not exist.", path);
+    }
+
+    final File newFile = newPath.toFile();
+
+    // 2. Check if source and destination are the same file.
+    if (absolute.normalize.path == newFile.absolute.normalize.path) {
+      return newFile;
+    }
+
+    // 3. Ensure the destination directory exists.
+    await newFile.parent.create(recursive: true);
+
+    try {
+      // 4. Try the standard rename first (atomic if on the same filesystem).
+      return await rename(newPath);
+    } on FileSystemException catch (_) {
+      // 5. If rename fails (e.g., cross-device error), fallback to copy+delete.
+      try {
+        await copy(newPath);
+        await delete();
+        return newFile;
+      } catch (fallbackException) {
+        // If copy or delete fails during fallback, rethrow that specific error.
+        Fimber.w(
+          'Original rename failed, and fallback copy/delete failed too: $fallbackException',
+        );
+        rethrow;
+      }
+    }
+  }
+
+  /// Synchronously renames this file to [newPath].
+  ///
+  /// Attempts an atomic [renameSync] first. If that fails with a [FileSystemException]
+  /// (commonly seen when moving across different file systems or devices),
+  /// it falls back to performing a [copySync] to the [newPath] followed by a
+  /// [deleteSync] of the original file.
+  ///
+  /// Creates parent directories of [newPath] recursively if they do not exist
+  /// before attempting the move/copy.
+  ///
+  /// This method is intended for moving *files*. Behavior for directories is undefined.
+  ///
+  /// If a file already exists at [newPath], it will be overwritten by both
+  /// the `renameSync` and `copySync` operations.
+  ///
+  /// Throws a [FileSystemException] if the operation fails at any stage (initial
+  /// existence check, rename, copy, or delete). Note that the copy-then-delete
+  /// fallback is *not atomic*.
+  /// Throws a [FileSystemException] if this [File] does not exist when the
+  /// operation starts.
+  ///
+  /// Returns a [File] instance representing the file at the successfully moved
+  /// location ([newPath]).
+  File renameSafelySync(String newPath) {
+    // 1. Check if the source file exists.
+    if (!existsSync()) {
+      throw FileSystemException("Source file does not exist.", path);
+    }
+
+    final File newFile = newPath.toFile();
+
+    // 2. Check if source and destination are the same file.
+    if (absolute.normalize.path == newFile.absolute.normalize.path) {
+      return newFile;
+    }
+
+    // 3. Ensure the destination directory exists.
+    newFile.parent.createSync(recursive: true);
+
+    try {
+      // 4. Try the standard rename first.
+      return renameSync(newPath);
+    } on FileSystemException catch (_) {
+      // 5. If rename fails, fallback to copy+delete.
+      try {
+        copySync(newPath);
+        deleteSync();
+        return newFile;
+      } catch (fallbackException) {
+        // If copy or delete fails during fallback, rethrow that specific error.
+        Fimber.i(
+          'Original sync rename failed, and sync fallback failed too: $fallbackException',
+        );
+        rethrow;
+      }
+    }
   }
 }
 

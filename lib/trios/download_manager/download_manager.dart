@@ -131,6 +131,12 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
                   ArchiveModInstallSource(tempFolder.listSync().first.toFile()),
                 )
                 .then((installedVariants) {
+                  // todo add a setting for this.
+                  if (tempFolder.existsSync()) {
+                    tempFolder.deleteSync(recursive: true);
+                    Fimber.i("Cleaned up downloaded file ${tempFolder.name} at ${tempFolder.path}");
+                  }
+
                   if (activateVariantOnComplete) {
                     // final variants =
                     //     ref.read(AppState.modVariants).valueOrNull ?? [];

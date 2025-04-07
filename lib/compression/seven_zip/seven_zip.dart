@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 import 'package:trios/compression/archive.dart'; // your interface
+import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/util.dart'; // your own utilities
@@ -225,6 +226,9 @@ class SevenZip implements ArchiveInterface {
 
   /// Extracts entries from [archivePath] to [destinationPath] in a single call.
   /// If the number of in-archive paths is huge, we fallback to a file-based approach.
+  /// Creates a new temp folder each time it's called, so avoid spamming this call.
+  /// The temp folder is needed because 7zip cannot transform a file's path during extraction,
+  /// and we don't want to extract to a folder (the folder name inside the archive, not the transformed path) that already exists.
   @override
   Future<List<SevenZipExtractedFile?>> extractEntriesInArchive(
     File archivePath,
@@ -233,7 +237,7 @@ class SevenZip implements ArchiveInterface {
     String Function(SevenZipEntry entry)? pathTransform,
     bool Function(Object ex, StackTrace st)? onError,
   }) async {
-    final maxRenameRetries = 3;
+    final maxRenameRetries = 10;
     final renameRetryDelay = Duration(milliseconds: 200);
 
     final allEntries = await listFiles(archivePath);
@@ -241,9 +245,20 @@ class SevenZip implements ArchiveInterface {
         allEntries.where((e) => fileFilter == null || fileFilter(e)).toList();
     if (toExtract.isEmpty) return [];
 
+    // Unlike libarchive, 7zip cannot transform a file's path during extraction.
+    // Create a temporary folder to extract to, preventing any folder name collisions
+    // e.g. if "LazyLib" already exists in the mod folder, we don't want to extract to it.
+    final tempFolder = (await Directory.systemTemp.createTemp(
+      "${Constants.appName}-${archivePath.hashCode}",
+    )).normalize.path;
+
+    if (tempFolder.toDirectory().existsSync()) {
+      tempFolder.toDirectory().deleteSync(recursive: true);
+    }
+
     final results = <SevenZipExtractedFile?>[];
 
-    final baseArgs = ['x', archivePath.path, '-y', '-o$destinationPath'];
+    final baseArgs = ['x', archivePath.path, '-y', '-o${tempFolder}'];
     final inArchivePaths = toExtract.map((e) => e.path).toList();
 
     final extractionResult = await _run7zCommandWithPossibleFileList(
@@ -251,46 +266,68 @@ class SevenZip implements ArchiveInterface {
       inArchivePaths,
     );
 
-    if (extractionResult.exitCode != 0) {
-      throw Exception(
-        '7z extraction failed (exit code: ${extractionResult.exitCode}).\n'
-        'stdout: ${extractionResult.stdout}\n'
-        'stderr: ${extractionResult.stderr}',
-      );
-    }
+    try {
+      if (extractionResult.exitCode != 0) {
+        throw Exception(
+          '7z extraction failed (exit code: ${extractionResult.exitCode}).\n'
+          'stdout: ${extractionResult.stdout}\n'
+          'stderr: ${extractionResult.stderr}',
+        );
+      }
 
-    for (final entry in toExtract) {
-      try {
-        final oldFile = File('$destinationPath/${entry.path}');
-        final transformed = pathTransform?.call(entry) ?? entry.path;
-        final newFile = File('$destinationPath/$transformed');
-        if (oldFile.path != newFile.path && oldFile.existsSync()) {
-          await newFile.parent.create(recursive: true);
+      for (final entry in toExtract) {
+        try {
+          final oldFile = File('$tempFolder/${entry.path}');
+          final transformed = pathTransform?.call(entry) ?? entry.path;
+          final newFile = File('$destinationPath/$transformed');
 
-          bool renamed = false;
-          for (var i = 0; i < maxRenameRetries && !renamed; i++) {
-            try {
-              await oldFile.rename(newFile.path);
-              renamed = true;
-            } on FileSystemException catch (e) {
-              // Possibly locked by AV, or 7z hasn't released it yet, etc.
-              if (i < maxRenameRetries - 1) {
-                // Log a warning, then wait briefly before trying again
-                Fimber.w('Rename attempt ${i + 1} failed. Retrying...', ex: e);
-                await Future.delayed(renameRetryDelay);
-              } else {
-                // After the last attempt, rethrow
-                rethrow;
+          if (oldFile.path != newFile.path && oldFile.existsSync()) {
+            await newFile.parent.create(recursive: true);
+
+            bool renamed = false;
+            for (var i = 0; i < maxRenameRetries && !renamed; i++) {
+              try {
+                await oldFile.rename(newFile.path);
+                renamed = true;
+              } on FileSystemException catch (e) {
+                // Possibly locked by AV, or 7z hasn't released it yet, etc.
+                if (i < maxRenameRetries - 1) {
+                  // Log a warning, then wait briefly before trying again
+                  Fimber.w(
+                    'Rename attempt ${i + 1} failed. Retrying...',
+                    ex: e,
+                  );
+                  await Future.delayed(renameRetryDelay);
+                } else {
+                  // After the last attempt, rethrow
+                  rethrow;
+                }
               }
             }
+          } else if (!oldFile.isDirectory()) {
+            Fimber.i(
+              "${oldFile.path} did not exist or was already in place (same as transformed path). Skipped.",
+            );
           }
+          results.add(SevenZipExtractedFile(entry, newFile));
+        } catch (ex, st) {
+          if (onError != null && onError(ex, st) == true) {
+            continue;
+          }
+          rethrow;
         }
-        results.add(SevenZipExtractedFile(entry, newFile));
+      }
+    } finally {
+      try {
+        if (tempFolder.toDirectory().existsSync()) {
+          tempFolder.toDirectory().deleteSync(recursive: true);
+        }
       } catch (ex, st) {
-        if (onError != null && onError(ex, st) == true) {
-          continue;
-        }
-        rethrow;
+        Fimber.e(
+          "Error deleting temporary folder: $tempFolder",
+          ex: ex,
+          stacktrace: st,
+        );
       }
     }
 

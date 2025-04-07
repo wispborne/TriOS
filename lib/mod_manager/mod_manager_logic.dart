@@ -787,7 +787,9 @@ class ModManagerNotifier extends AsyncNotifier<void> {
     var existingMod = currentMods.firstWhereOrNull((it) => it.id == modInfo.id);
 
     try {
-      // We need to handle both when mod_info.json is at / and when at /mod/mod/mod/mod_info.json.
+      // STEP 1: Find the mod_info.json file to determine the mod root folder.
+      // This handles zips where there is no top-level folder, or multiple nested ones.
+      // e.g. `/mod_info.json` or `/mod-name/mod_info.json` or `/mod/mod/mod/mod_info.json`.
       final modInfoParentFolder =
           modInfoToInstall.extractedFile.originalFile.parent;
       // TODO this is always empty because `sourceFileList` uses relative paths and `modInfoParentFolder` is an absolute path.
@@ -801,6 +803,8 @@ class ModManagerNotifier extends AsyncNotifier<void> {
         "Mod info (${modInfoToInstall.extractedFile.originalFile.path}) siblings: ${modInfoSiblings.map((it) => it).toList()}",
       );
 
+
+      // STEP 2: Extract the mod, transforming the extracted paths go to targetModFolderName.
       if (dryRun) {
         Fimber.i(
           "Dry run: Would extract mod ${modInfo.id} ${modInfo.version} to '$targetModFolderName'",

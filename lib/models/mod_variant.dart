@@ -143,6 +143,7 @@ const modIconFilePaths = [
   "icon.png",
   "icon.jpg",
   "icon.jpeg",
+  "icon.webp",
   "icon.gif",
 ];
 

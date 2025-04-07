@@ -1,3 +1,12 @@
+# 1.1.6
+- Added
+  - .webp icon support for mod icons.
+- Fixed
+  - Mods could sometimes be partially installed or split across two folders.
+  - Empty folders left in `mods` folder (same root cause as partial install bug).
+- Changed
+  - Downloaded mod archives (zip/7z/rar) are now cleaned out of the OS's temp folder after being installed.
+
 # 1.1.5
 - Changed
   - Launcher icon now shows a warning if you have an unsupported JRE selected.

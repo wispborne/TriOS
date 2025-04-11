@@ -376,3 +376,85 @@ T time<T>(T Function() function, {bool ignoreZero = true}) {
   }
   return result;
 }
+
+/// Checks a list of [files] to see if they are accessible (not locked).
+///
+/// It repeatedly tries to open each file in append mode and immediately close it.
+/// If any file fails this check (throws a FileSystemException, likely due to locking),
+/// it waits for [checkInterval] and retries, until [timeout] is reached.
+///
+/// Args:
+///   files: The list of files to check.
+///   timeout: The maximum duration to wait for all files to become accessible.
+///   checkInterval: The duration to wait between checks.
+///
+/// Returns:
+///   `Future<bool>`: `true` if all files become accessible within the [timeout],
+///   `false` otherwise.
+Future<bool> waitForFilesToBeAccessible(
+  List<File> files, {
+  Duration timeout = const Duration(seconds: 5),
+  Duration checkInterval = const Duration(milliseconds: 250),
+}) async {
+  if (files.isEmpty) {
+    return true;
+  }
+
+  final stopwatch = Stopwatch()..start();
+  File? lockedFile; // Keep track of which file failed
+
+  while (stopwatch.elapsed < timeout) {
+    bool allFilesFree = true;
+
+    for (final file in files) {
+      try {
+        if (await file.exists()) {
+          // Try to open the file for appending. This often requires exclusive access
+          // or at least checks if another process has a conflicting lock.
+          RandomAccessFile raf = await file.open(mode: FileMode.append);
+          await raf.close(); // Immediately close it if successful
+        }
+      } on FileSystemException catch (e) {
+        Fimber.v(
+          () =>
+              "File accessibility check failed for ${file.path} (elapsed: ${stopwatch.elapsed}): ${e.message}",
+        );
+        allFilesFree = false;
+        lockedFile = file;
+        break;
+      } catch (e, s) {
+        Fimber.e(
+          "Unexpected error checking file accessibility for ${file.path}",
+          ex: e,
+          stacktrace: s,
+        );
+        allFilesFree = false;
+        lockedFile = file; // Treat unexpected errors as inaccessible too
+        break;
+      }
+    }
+
+    if (allFilesFree) {
+      Fimber.i(
+        "All ${files.length} files became accessible within ${stopwatch.elapsed}.",
+      );
+      stopwatch.stop();
+      return true;
+    }
+
+    // If not all files were free, wait before the next check, unless timeout is near
+    if (stopwatch.elapsed + checkInterval < timeout) {
+      await Future.delayed(checkInterval);
+    } else {
+      // Don't delay if the next check would exceed the timeout anyway
+      // Let the loop condition handle the exit.
+    }
+  }
+
+  // Loop finished without success
+  stopwatch.stop();
+  Fimber.w(
+    "Timeout ($timeout) reached while waiting for files to become accessible. Last locked file detected: ${lockedFile?.path ?? 'N/A'}",
+  );
+  return false;
+}

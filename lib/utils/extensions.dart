@@ -8,6 +8,7 @@ import 'package:open_filex/open_filex.dart';
 import 'package:path/path.dart' as p;
 import 'package:toml/toml.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/utils/util.dart';
 import 'package:yaml/yaml.dart';
 
 extension DoubleExt on double {
@@ -484,6 +485,19 @@ extension FileExt on File {
         rethrow;
       }
     }
+  }
+}
+
+extension FileListExt on List<File> {
+  Future<bool> waitToBeAccessible({
+    Duration timeout = const Duration(seconds: 5),
+    Duration checkInterval = const Duration(milliseconds: 250),
+  }) async {
+    return waitForFilesToBeAccessible(
+      this,
+      timeout: timeout,
+      checkInterval: checkInterval,
+    );
   }
 }
 

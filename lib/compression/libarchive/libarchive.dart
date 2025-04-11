@@ -245,6 +245,7 @@ class LibArchive implements ArchiveInterface {
   /// - `fileFilter` is a function that filters the files to be extracted. If it returns `false`, the file will not be extracted.
   /// - `pathTransform` is a function that transforms the path of the extracted file. If it is not provided, the path will be the same as the path in the archive.
   /// - `onError` is a function that is called when an error occurs. If it returns `true`, the error will be ignored and the extraction will continue. If it returns `false`, the error will be thrown.
+  @override
   Future<List<LibArchiveExtractedFile?>> extractEntriesInArchive(
     File archivePath,
     String destinationPath, {

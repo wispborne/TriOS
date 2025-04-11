@@ -49,7 +49,7 @@ ContextMenu buildModContextMenu(
         isGameRunning,
         modVariant,
       ))
-        buildMenuItemForceChangeModGameVesion(
+        buildMenuItemForceChangeModGameVersion(
           currentStarsectorVersion!,
           ref,
           modVariant,
@@ -224,22 +224,7 @@ ContextMenu buildModBulkActionContextMenu(
   );
 }
 
-bool isModGameVersionIncorrect(
-  String? currentStarsectorVersion,
-  bool isGameRunning,
-  ModVariant modVariant,
-) {
-  return currentStarsectorVersion != null &&
-      !isGameRunning &&
-      !Version.parse(
-        modVariant.modInfo.gameVersion ?? "0.0.0",
-        sanitizeInput: true,
-      ).equalsSymbolic(
-        Version.parse(currentStarsectorVersion, sanitizeInput: true),
-      );
-}
-
-MenuItem<dynamic> buildMenuItemForceChangeModGameVesion(
+MenuItem<dynamic> buildMenuItemForceChangeModGameVersion(
   String currentStarsectorVersion,
   WidgetRef ref,
   ModVariant modVariant,
@@ -269,6 +254,7 @@ AlertDialog buildForceGameVersionWarningDialog(
   BuildContext context,
   WidgetRef ref, {
   Function()? onForced,
+  bool refreshModlistAfter = true,
 }) {
   return AlertDialog(
     title: Text("Force to $currentStarsectorVersion?"),
@@ -292,7 +278,7 @@ AlertDialog buildForceGameVersionWarningDialog(
           Navigator.of(context).pop();
           ref
               .read(modManager.notifier)
-              .forceChangeModGameVersion(modVariant, currentStarsectorVersion);
+              .forceChangeModGameVersion(modVariant, currentStarsectorVersion, refreshModlistAfter: refreshModlistAfter);
           ref.invalidate(AppState.modVariants);
           onForced?.call();
         },

@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:path/path.dart' as p;
 import 'package:trios/compression/archive.dart';
+import 'package:trios/mod_manager/mod_context_menu.dart';
 import 'package:trios/mod_manager/mod_install_source.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_manager/version_checker.dart';
@@ -982,6 +983,64 @@ class ModManagerNotifier extends AsyncNotifier<void> {
           .reloadModVariants(onlyVariants: [modVariant]);
     }
   }
+
+  Future<void> changeActiveModVariantWithForceModGameVersionDialogIfNeeded(
+    Mod mod,
+    ModVariant? modVariant,
+    WidgetRef widgetRef, {
+    bool validateDependencies = true,
+    bool refreshModlistAfter = true,
+    Function()? onForced,
+  }) async {
+    final currentStarsectorVersion = ref.read(
+      appSettings.select((s) => s.lastStarsectorVersion),
+    );
+    final isGameRunning = ref.watch(AppState.isGameRunning).value == true;
+
+    if (modVariant != null &&
+        isModGameVersionIncorrect(
+          currentStarsectorVersion,
+          isGameRunning,
+          modVariant,
+        )) {
+      showDialog(
+        context: ref.read(AppState.appContext)!,
+        builder: (context) {
+          return buildForceGameVersionWarningDialog(
+            currentStarsectorVersion!,
+            modVariant,
+            context,
+            widgetRef,
+            onForced: onForced,
+            refreshModlistAfter: refreshModlistAfter,
+          );
+        },
+      );
+    } else {
+      await ref
+          .read(AppState.modVariants.notifier)
+          .changeActiveModVariant(
+            mod,
+            modVariant,
+            validateDependencies: validateDependencies,
+          );
+    }
+  }
+}
+
+bool isModGameVersionIncorrect(
+  String? currentStarsectorVersion,
+  bool isGameRunning,
+  ModVariant modVariant,
+) {
+  return currentStarsectorVersion != null &&
+      !isGameRunning &&
+      !Version.parse(
+        modVariant.modInfo.gameVersion ?? "0.0.0",
+        sanitizeInput: true,
+      ).equalsSymbolic(
+        Version.parse(currentStarsectorVersion, sanitizeInput: true),
+      );
 }
 
 typedef ExtractedModInfo = ({SourcedFile extractedFile, ModInfo modInfo});

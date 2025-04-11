@@ -248,9 +248,10 @@ class SevenZip implements ArchiveInterface {
     // Unlike libarchive, 7zip cannot transform a file's path during extraction.
     // Create a temporary folder to extract to, preventing any folder name collisions
     // e.g. if "LazyLib" already exists in the mod folder, we don't want to extract to it.
-    final tempFolder = (await Directory.systemTemp.createTemp(
-      "${Constants.appName}-${archivePath.hashCode}",
-    )).normalize.path;
+    final tempFolder =
+        (await Directory.systemTemp.createTemp(
+          "${Constants.appName}-${archivePath.hashCode}",
+        )).normalize.path;
 
     final results = <SevenZipExtractedFile?>[];
 
@@ -270,6 +271,9 @@ class SevenZip implements ArchiveInterface {
           'stderr: ${extractionResult.stderr}',
         );
       }
+      final oldFiles =
+          toExtract.map((entry) => File('$tempFolder/${entry.path}')).toList();
+      await oldFiles.waitToBeAccessible();
 
       for (final entry in toExtract) {
         try {
@@ -325,6 +329,21 @@ class SevenZip implements ArchiveInterface {
           stacktrace: st,
         );
       }
+    }
+
+    try {
+      // Wait for all files to be accessible before returning.
+      await results
+          .map((it) => it?.extractedFile)
+          .whereType<File>()
+          .toList()
+          .waitToBeAccessible();
+    } catch (e, st) {
+      Fimber.w(
+        "Error waiting for files to be accessible after extraction.",
+        ex: e,
+        stacktrace: st,
+      );
     }
 
     return results;

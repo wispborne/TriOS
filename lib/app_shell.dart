@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:open_filex/open_filex.dart';
+import 'package:scaled_app/scaled_app.dart';
 import 'package:toastification/toastification.dart';
 import 'package:trios/chipper/chipper_home.dart';
 import 'package:trios/dashboard/dashboard.dart';
@@ -198,6 +199,11 @@ class _AppShellState extends ConsumerState<AppShell>
           ref.read(AppState.appContext)?.mounted == false) {
         ref.read(AppState.appContext.notifier).state = context;
       }
+    });
+
+    ref.listen(appSettings.select((s) => s.windowScaleFactor), (_, newValue) {
+      ScaledWidgetsFlutterBinding.instance.scaleFactor = (_) => newValue;
+      Fimber.i("Scale factor changed to $newValue");
     });
 
     final tabChildren = [

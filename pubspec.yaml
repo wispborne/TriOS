@@ -70,6 +70,7 @@ dependencies:
   flutter_riverpod: ^2.6.1
   riverpod_annotation: ^2.6.1
   rxdart: ^0.28.0
+  scaled_app: ^2.3.0
   screen_retriever: ^0.2.0
 #  screenshot: ^3.0.0
   sentry_flutter: 8.13.0

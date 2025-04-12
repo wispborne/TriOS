@@ -24,15 +24,11 @@ class ModMapper extends ClassMapperBase<Mod> {
   static String _$id(Mod v) => v.id;
   static const Field<Mod, String> _f$id = Field('id', _$id);
   static bool _$isEnabledInGame(Mod v) => v.isEnabledInGame;
-  static const Field<Mod, bool> _f$isEnabledInGame = Field(
-    'isEnabledInGame',
-    _$isEnabledInGame,
-  );
+  static const Field<Mod, bool> _f$isEnabledInGame =
+      Field('isEnabledInGame', _$isEnabledInGame);
   static List<ModVariant> _$modVariants(Mod v) => v.modVariants;
-  static const Field<Mod, List<ModVariant>> _f$modVariants = Field(
-    'modVariants',
-    _$modVariants,
-  );
+  static const Field<Mod, List<ModVariant>> _f$modVariants =
+      Field('modVariants', _$modVariants);
 
   @override
   final MappableFields<Mod> fields = const {
@@ -43,10 +39,9 @@ class ModMapper extends ClassMapperBase<Mod> {
 
   static Mod _instantiate(DecodingData data) {
     return Mod(
-      id: data.dec(_f$id),
-      isEnabledInGame: data.dec(_f$isEnabledInGame),
-      modVariants: data.dec(_f$modVariants),
-    );
+        id: data.dec(_f$id),
+        isEnabledInGame: data.dec(_f$isEnabledInGame),
+        modVariants: data.dec(_f$modVariants));
   }
 
   @override
@@ -96,7 +91,7 @@ extension ModValueCopy<$R, $Out> on ObjectCopyWith<$R, Mod, $Out> {
 abstract class ModCopyWith<$R, $In extends Mod, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
   ListCopyWith<$R, ModVariant, ModVariantCopyWith<$R, ModVariant, ModVariant>>
-  get modVariants;
+      get modVariants;
   $R call({String? id, bool? isEnabledInGame, List<ModVariant>? modVariants});
   ModCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -109,26 +104,20 @@ class _ModCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Mod, $Out>
   late final ClassMapperBase<Mod> $mapper = ModMapper.ensureInitialized();
   @override
   ListCopyWith<$R, ModVariant, ModVariantCopyWith<$R, ModVariant, ModVariant>>
-  get modVariants => ListCopyWith(
-    $value.modVariants,
-    (v, t) => v.copyWith.$chain(t),
-    (v) => call(modVariants: v),
-  );
+      get modVariants => ListCopyWith($value.modVariants,
+          (v, t) => v.copyWith.$chain(t), (v) => call(modVariants: v));
   @override
   $R call({String? id, bool? isEnabledInGame, List<ModVariant>? modVariants}) =>
-      $apply(
-        FieldCopyWithData({
-          if (id != null) #id: id,
-          if (isEnabledInGame != null) #isEnabledInGame: isEnabledInGame,
-          if (modVariants != null) #modVariants: modVariants,
-        }),
-      );
+      $apply(FieldCopyWithData({
+        if (id != null) #id: id,
+        if (isEnabledInGame != null) #isEnabledInGame: isEnabledInGame,
+        if (modVariants != null) #modVariants: modVariants
+      }));
   @override
   Mod $make(CopyWithData data) => Mod(
-    id: data.get(#id, or: $value.id),
-    isEnabledInGame: data.get(#isEnabledInGame, or: $value.isEnabledInGame),
-    modVariants: data.get(#modVariants, or: $value.modVariants),
-  );
+      id: data.get(#id, or: $value.id),
+      isEnabledInGame: data.get(#isEnabledInGame, or: $value.isEnabledInGame),
+      modVariants: data.get(#modVariants, or: $value.modVariants));
 
   @override
   ModCopyWith<$R2, Mod, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>

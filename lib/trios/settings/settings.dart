@@ -69,6 +69,7 @@ class Settings with SettingsMappable {
   final ModUpdateBehavior modUpdateBehavior;
   final bool checkIfGameIsRunning;
   final CompressionLib compressionLib;
+  final double windowScaleFactor;
 
   @Deprecated("Use getSentryUserId instead.")
   final String userId; // For Sentry
@@ -128,6 +129,7 @@ class Settings with SettingsMappable {
     this.modUpdateBehavior = ModUpdateBehavior.switchToNewVersionIfWasEnabled,
     this.checkIfGameIsRunning = true,
     this.compressionLib = CompressionLib.sevenZip,
+    this.windowScaleFactor = 1.0,
     this.userId = '',
     this.hasHiddenForumDarkModeTip,
     this.activeModProfileId,

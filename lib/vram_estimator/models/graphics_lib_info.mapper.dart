@@ -72,15 +72,11 @@ class GraphicsLibInfoMapper extends ClassMapperBase<GraphicsLibInfo> {
   final String id = 'GraphicsLibInfo';
 
   static MapType _$mapType(GraphicsLibInfo v) => v.mapType;
-  static const Field<GraphicsLibInfo, MapType> _f$mapType = Field(
-    'mapType',
-    _$mapType,
-  );
+  static const Field<GraphicsLibInfo, MapType> _f$mapType =
+      Field('mapType', _$mapType);
   static String _$relativeFilePath(GraphicsLibInfo v) => v.relativeFilePath;
-  static const Field<GraphicsLibInfo, String> _f$relativeFilePath = Field(
-    'relativeFilePath',
-    _$relativeFilePath,
-  );
+  static const Field<GraphicsLibInfo, String> _f$relativeFilePath =
+      Field('relativeFilePath', _$relativeFilePath);
 
   @override
   final MappableFields<GraphicsLibInfo> fields = const {
@@ -111,37 +107,29 @@ mixin GraphicsLibInfoMappable {
   }
 
   Map<String, dynamic> toMap() {
-    return GraphicsLibInfoMapper.ensureInitialized().encodeMap<GraphicsLibInfo>(
-      this as GraphicsLibInfo,
-    );
+    return GraphicsLibInfoMapper.ensureInitialized()
+        .encodeMap<GraphicsLibInfo>(this as GraphicsLibInfo);
   }
 
   GraphicsLibInfoCopyWith<GraphicsLibInfo, GraphicsLibInfo, GraphicsLibInfo>
-  get copyWith => _GraphicsLibInfoCopyWithImpl(
-    this as GraphicsLibInfo,
-    $identity,
-    $identity,
-  );
+      get copyWith => _GraphicsLibInfoCopyWithImpl(
+          this as GraphicsLibInfo, $identity, $identity);
   @override
   String toString() {
-    return GraphicsLibInfoMapper.ensureInitialized().stringifyValue(
-      this as GraphicsLibInfo,
-    );
+    return GraphicsLibInfoMapper.ensureInitialized()
+        .stringifyValue(this as GraphicsLibInfo);
   }
 
   @override
   bool operator ==(Object other) {
-    return GraphicsLibInfoMapper.ensureInitialized().equalsValue(
-      this as GraphicsLibInfo,
-      other,
-    );
+    return GraphicsLibInfoMapper.ensureInitialized()
+        .equalsValue(this as GraphicsLibInfo, other);
   }
 
   @override
   int get hashCode {
-    return GraphicsLibInfoMapper.ensureInitialized().hashValue(
-      this as GraphicsLibInfo,
-    );
+    return GraphicsLibInfoMapper.ensureInitialized()
+        .hashValue(this as GraphicsLibInfo);
   }
 }
 
@@ -155,8 +143,7 @@ abstract class GraphicsLibInfoCopyWith<$R, $In extends GraphicsLibInfo, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
   $R call({MapType? mapType, String? relativeFilePath});
   GraphicsLibInfoCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
-    Then<$Out2, $R2> t,
-  );
+      Then<$Out2, $R2> t);
 }
 
 class _GraphicsLibInfoCopyWithImpl<$R, $Out>
@@ -168,20 +155,18 @@ class _GraphicsLibInfoCopyWithImpl<$R, $Out>
   late final ClassMapperBase<GraphicsLibInfo> $mapper =
       GraphicsLibInfoMapper.ensureInitialized();
   @override
-  $R call({MapType? mapType, String? relativeFilePath}) => $apply(
-    FieldCopyWithData({
-      if (mapType != null) #mapType: mapType,
-      if (relativeFilePath != null) #relativeFilePath: relativeFilePath,
-    }),
-  );
+  $R call({MapType? mapType, String? relativeFilePath}) =>
+      $apply(FieldCopyWithData({
+        if (mapType != null) #mapType: mapType,
+        if (relativeFilePath != null) #relativeFilePath: relativeFilePath
+      }));
   @override
   GraphicsLibInfo $make(CopyWithData data) => GraphicsLibInfo(
-    data.get(#mapType, or: $value.mapType),
-    data.get(#relativeFilePath, or: $value.relativeFilePath),
-  );
+      data.get(#mapType, or: $value.mapType),
+      data.get(#relativeFilePath, or: $value.relativeFilePath));
 
   @override
   GraphicsLibInfoCopyWith<$R2, GraphicsLibInfo, $Out2> $chain<$R2, $Out2>(
-    Then<$Out2, $R2> t,
-  ) => _GraphicsLibInfoCopyWithImpl($value, $cast, t);
+          Then<$Out2, $R2> t) =>
+      _GraphicsLibInfoCopyWithImpl($value, $cast, t);
 }

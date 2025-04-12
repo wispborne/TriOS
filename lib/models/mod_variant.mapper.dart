@@ -23,24 +23,18 @@ class ModVariantMapper extends ClassMapperBase<ModVariant> {
   final String id = 'ModVariant';
 
   static ModInfo _$modInfo(ModVariant v) => v.modInfo;
-  static const Field<ModVariant, ModInfo> _f$modInfo = Field(
-    'modInfo',
-    _$modInfo,
-  );
+  static const Field<ModVariant, ModInfo> _f$modInfo =
+      Field('modInfo', _$modInfo);
   static VersionCheckerInfo? _$versionCheckerInfo(ModVariant v) =>
       v.versionCheckerInfo;
   static const Field<ModVariant, VersionCheckerInfo> _f$versionCheckerInfo =
       Field('versionCheckerInfo', _$versionCheckerInfo);
   static Directory _$modFolder(ModVariant v) => v.modFolder;
-  static const Field<ModVariant, Directory> _f$modFolder = Field(
-    'modFolder',
-    _$modFolder,
-  );
+  static const Field<ModVariant, Directory> _f$modFolder =
+      Field('modFolder', _$modFolder);
   static bool _$hasNonBrickedModInfo(ModVariant v) => v.hasNonBrickedModInfo;
-  static const Field<ModVariant, bool> _f$hasNonBrickedModInfo = Field(
-    'hasNonBrickedModInfo',
-    _$hasNonBrickedModInfo,
-  );
+  static const Field<ModVariant, bool> _f$hasNonBrickedModInfo =
+      Field('hasNonBrickedModInfo', _$hasNonBrickedModInfo);
 
   @override
   final MappableFields<ModVariant> fields = const {
@@ -52,11 +46,10 @@ class ModVariantMapper extends ClassMapperBase<ModVariant> {
 
   static ModVariant _instantiate(DecodingData data) {
     return ModVariant(
-      modInfo: data.dec(_f$modInfo),
-      versionCheckerInfo: data.dec(_f$versionCheckerInfo),
-      modFolder: data.dec(_f$modFolder),
-      hasNonBrickedModInfo: data.dec(_f$hasNonBrickedModInfo),
-    );
+        modInfo: data.dec(_f$modInfo),
+        versionCheckerInfo: data.dec(_f$versionCheckerInfo),
+        modFolder: data.dec(_f$modFolder),
+        hasNonBrickedModInfo: data.dec(_f$hasNonBrickedModInfo));
   }
 
   @override
@@ -73,32 +66,27 @@ class ModVariantMapper extends ClassMapperBase<ModVariant> {
 
 mixin ModVariantMappable {
   String toJson() {
-    return ModVariantMapper.ensureInitialized().encodeJson<ModVariant>(
-      this as ModVariant,
-    );
+    return ModVariantMapper.ensureInitialized()
+        .encodeJson<ModVariant>(this as ModVariant);
   }
 
   Map<String, dynamic> toMap() {
-    return ModVariantMapper.ensureInitialized().encodeMap<ModVariant>(
-      this as ModVariant,
-    );
+    return ModVariantMapper.ensureInitialized()
+        .encodeMap<ModVariant>(this as ModVariant);
   }
 
   ModVariantCopyWith<ModVariant, ModVariant, ModVariant> get copyWith =>
       _ModVariantCopyWithImpl(this as ModVariant, $identity, $identity);
   @override
   String toString() {
-    return ModVariantMapper.ensureInitialized().stringifyValue(
-      this as ModVariant,
-    );
+    return ModVariantMapper.ensureInitialized()
+        .stringifyValue(this as ModVariant);
   }
 
   @override
   bool operator ==(Object other) {
-    return ModVariantMapper.ensureInitialized().equalsValue(
-      this as ModVariant,
-      other,
-    );
+    return ModVariantMapper.ensureInitialized()
+        .equalsValue(this as ModVariant, other);
   }
 
   @override
@@ -117,13 +105,12 @@ abstract class ModVariantCopyWith<$R, $In extends ModVariant, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
   ModInfoCopyWith<$R, ModInfo, ModInfo> get modInfo;
   VersionCheckerInfoCopyWith<$R, VersionCheckerInfo, VersionCheckerInfo>?
-  get versionCheckerInfo;
-  $R call({
-    ModInfo? modInfo,
-    VersionCheckerInfo? versionCheckerInfo,
-    Directory? modFolder,
-    bool? hasNonBrickedModInfo,
-  });
+      get versionCheckerInfo;
+  $R call(
+      {ModInfo? modInfo,
+      VersionCheckerInfo? versionCheckerInfo,
+      Directory? modFolder,
+      bool? hasNonBrickedModInfo});
   ModVariantCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
 
@@ -140,40 +127,33 @@ class _ModVariantCopyWithImpl<$R, $Out>
       $value.modInfo.copyWith.$chain((v) => call(modInfo: v));
   @override
   VersionCheckerInfoCopyWith<$R, VersionCheckerInfo, VersionCheckerInfo>?
-  get versionCheckerInfo => $value.versionCheckerInfo?.copyWith.$chain(
-    (v) => call(versionCheckerInfo: v),
-  );
+      get versionCheckerInfo => $value.versionCheckerInfo?.copyWith
+          .$chain((v) => call(versionCheckerInfo: v));
   @override
-  $R call({
-    ModInfo? modInfo,
-    Object? versionCheckerInfo = $none,
-    Directory? modFolder,
-    bool? hasNonBrickedModInfo,
-  }) => $apply(
-    FieldCopyWithData({
-      if (modInfo != null) #modInfo: modInfo,
-      if (versionCheckerInfo != $none) #versionCheckerInfo: versionCheckerInfo,
-      if (modFolder != null) #modFolder: modFolder,
-      if (hasNonBrickedModInfo != null)
-        #hasNonBrickedModInfo: hasNonBrickedModInfo,
-    }),
-  );
+  $R call(
+          {ModInfo? modInfo,
+          Object? versionCheckerInfo = $none,
+          Directory? modFolder,
+          bool? hasNonBrickedModInfo}) =>
+      $apply(FieldCopyWithData({
+        if (modInfo != null) #modInfo: modInfo,
+        if (versionCheckerInfo != $none)
+          #versionCheckerInfo: versionCheckerInfo,
+        if (modFolder != null) #modFolder: modFolder,
+        if (hasNonBrickedModInfo != null)
+          #hasNonBrickedModInfo: hasNonBrickedModInfo
+      }));
   @override
   ModVariant $make(CopyWithData data) => ModVariant(
-    modInfo: data.get(#modInfo, or: $value.modInfo),
-    versionCheckerInfo: data.get(
-      #versionCheckerInfo,
-      or: $value.versionCheckerInfo,
-    ),
-    modFolder: data.get(#modFolder, or: $value.modFolder),
-    hasNonBrickedModInfo: data.get(
-      #hasNonBrickedModInfo,
-      or: $value.hasNonBrickedModInfo,
-    ),
-  );
+      modInfo: data.get(#modInfo, or: $value.modInfo),
+      versionCheckerInfo:
+          data.get(#versionCheckerInfo, or: $value.versionCheckerInfo),
+      modFolder: data.get(#modFolder, or: $value.modFolder),
+      hasNonBrickedModInfo:
+          data.get(#hasNonBrickedModInfo, or: $value.hasNonBrickedModInfo));
 
   @override
   ModVariantCopyWith<$R2, ModVariant, $Out2> $chain<$R2, $Out2>(
-    Then<$Out2, $R2> t,
-  ) => _ModVariantCopyWithImpl($value, $cast, t);
+          Then<$Out2, $R2> t) =>
+      _ModVariantCopyWithImpl($value, $cast, t);
 }

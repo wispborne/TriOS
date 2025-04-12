@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:scaled_app/scaled_app.dart';
 import 'package:screen_retriever/screen_retriever.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:toastification/toastification.dart';
@@ -34,8 +35,14 @@ StateProvider<WebViewEnvironment?> webViewEnvironment =
 List<Future<void> Function(BuildContext)> onAppLoadedActions = [];
 
 void main() async {
+
+  double scaleFactorCallback(Size deviceSize) {
+    return 1;
+  }
+
   try {
-    WidgetsFlutterBinding.ensureInitialized();
+    ScaledWidgetsFlutterBinding.ensureInitialized(
+      scaleFactor: scaleFactorCallback,);
   } catch (e) {
     print("Error initializing Flutter widgets.");
   }

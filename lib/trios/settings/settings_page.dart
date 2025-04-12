@@ -42,7 +42,9 @@ class SettingsPage extends ConsumerStatefulWidget {
 class _SettingsPageState extends ConsumerState<SettingsPage> {
   final _gamePathTextController = TextEditingController();
   final _customExecutablePathTextController = TextEditingController();
+  final _windowScaleTextController = TextEditingController();
   final _scrollController = ScrollController();
+  double newWindowScaleDouble = 1.0;
 
   @override
   void initState() {
@@ -52,6 +54,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
     _customExecutablePathTextController.text =
         ref.read(appSettings).customGameExePath ?? "";
+
+    newWindowScaleDouble = ref.read(appSettings).windowScaleFactor;
+    _windowScaleTextController.text = (newWindowScaleDouble * 100.0).toString();
   }
 
   @override
@@ -1071,6 +1076,66 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                     ? "Using libarchive for extracting. Click to switch to 7zip."
                                     : "Using 7zip for extracting. Click to switch to libarchive.",
                           ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 24),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            MovingTooltipWidget.text(
+                              message:
+                                  "Makes the UI larger or smaller."
+                                  "\nMin 25%, max 300%.",
+                              child: SizedBox(
+                                width: 90,
+                                child: TextField(
+                                  controller: _windowScaleTextController,
+                                  decoration: InputDecoration(
+                                    border: const OutlineInputBorder(),
+                                    isDense: true,
+                                    labelText: "${Constants.appName} scaling",
+                                    hintStyle:
+                                        Theme.of(context).textTheme.labelLarge,
+                                    labelStyle:
+                                        Theme.of(context).textTheme.labelLarge,
+                                  ),
+                                  onChanged: (newPath) {
+                                    final newScale =
+                                        double.parse(newPath) / 100.0;
+                                    newWindowScaleDouble = newScale;
+                                  },
+                                ),
+                              ),
+                            ),
+                            const Text("%"),
+                            const SizedBox(width: 8),
+                            MovingTooltipWidget.text(
+                              warningLevel: TooltipWarningLevel.warning,
+                              message:
+                                  "Make small changes at a time."
+                                  "\nTri-Tachyon is not responsible if you set it to 300% and it's so big you can't get to the setting to fix it.",
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  if (newWindowScaleDouble >= 0.50 &&
+                                      newWindowScaleDouble <= 3.0) {
+                                    Fimber.i(
+                                      "Setting window scale to $newWindowScaleDouble",
+                                    );
+                                    ref.read(appSettings.notifier).update((
+                                      state,
+                                    ) {
+                                      return state.copyWith(
+                                        windowScaleFactor: newWindowScaleDouble,
+                                      );
+                                    });
+                                  }
+                                  // RestartableApp.restartApp(context);
+                                },
+                                child: const Text("Apply"),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],

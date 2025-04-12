@@ -13,9 +13,8 @@ class RemoteVersionCheckResultMapper
   static RemoteVersionCheckResultMapper? _instance;
   static RemoteVersionCheckResultMapper ensureInitialized() {
     if (_instance == null) {
-      MapperContainer.globals.use(
-        _instance = RemoteVersionCheckResultMapper._(),
-      );
+      MapperContainer.globals
+          .use(_instance = RemoteVersionCheckResultMapper._());
       VersionCheckerInfoMapper.ensureInitialized();
     }
     return _instance!;
@@ -27,30 +26,19 @@ class RemoteVersionCheckResultMapper
   static VersionCheckerInfo? _$remoteVersion(RemoteVersionCheckResult v) =>
       v.remoteVersion;
   static const Field<RemoteVersionCheckResult, VersionCheckerInfo>
-  _f$remoteVersion = Field('remoteVersion', _$remoteVersion);
+      _f$remoteVersion = Field('remoteVersion', _$remoteVersion);
   static String? _$uri(RemoteVersionCheckResult v) => v.uri;
-  static const Field<RemoteVersionCheckResult, String> _f$uri = Field(
-    'uri',
-    _$uri,
-  );
+  static const Field<RemoteVersionCheckResult, String> _f$uri =
+      Field('uri', _$uri);
   static DateTime _$timestamp(RemoteVersionCheckResult v) => v.timestamp;
-  static const Field<RemoteVersionCheckResult, DateTime> _f$timestamp = Field(
-    'timestamp',
-    _$timestamp,
-    opt: true,
-  );
+  static const Field<RemoteVersionCheckResult, DateTime> _f$timestamp =
+      Field('timestamp', _$timestamp, opt: true);
   static String? _$smolId(RemoteVersionCheckResult v) => v.smolId;
-  static const Field<RemoteVersionCheckResult, String> _f$smolId = Field(
-    'smolId',
-    _$smolId,
-    mode: FieldMode.member,
-  );
+  static const Field<RemoteVersionCheckResult, String> _f$smolId =
+      Field('smolId', _$smolId, mode: FieldMode.member);
   static Object? _$error(RemoteVersionCheckResult v) => v.error;
-  static const Field<RemoteVersionCheckResult, Object> _f$error = Field(
-    'error',
-    _$error,
-    mode: FieldMode.member,
-  );
+  static const Field<RemoteVersionCheckResult, Object> _f$error =
+      Field('error', _$error, mode: FieldMode.member);
 
   @override
   final MappableFields<RemoteVersionCheckResult> fields = const {
@@ -63,10 +51,8 @@ class RemoteVersionCheckResultMapper
 
   static RemoteVersionCheckResult _instantiate(DecodingData data) {
     return RemoteVersionCheckResult(
-      data.dec(_f$remoteVersion),
-      data.dec(_f$uri),
-      timestamp: data.dec(_f$timestamp),
-    );
+        data.dec(_f$remoteVersion), data.dec(_f$uri),
+        timestamp: data.dec(_f$timestamp));
   }
 
   @override
@@ -92,62 +78,46 @@ mixin RemoteVersionCheckResultMappable {
         .encodeMap<RemoteVersionCheckResult>(this as RemoteVersionCheckResult);
   }
 
-  RemoteVersionCheckResultCopyWith<
-    RemoteVersionCheckResult,
-    RemoteVersionCheckResult,
-    RemoteVersionCheckResult
-  >
-  get copyWith => _RemoteVersionCheckResultCopyWithImpl(
-    this as RemoteVersionCheckResult,
-    $identity,
-    $identity,
-  );
+  RemoteVersionCheckResultCopyWith<RemoteVersionCheckResult,
+          RemoteVersionCheckResult, RemoteVersionCheckResult>
+      get copyWith => _RemoteVersionCheckResultCopyWithImpl(
+          this as RemoteVersionCheckResult, $identity, $identity);
   @override
   String toString() {
-    return RemoteVersionCheckResultMapper.ensureInitialized().stringifyValue(
-      this as RemoteVersionCheckResult,
-    );
+    return RemoteVersionCheckResultMapper.ensureInitialized()
+        .stringifyValue(this as RemoteVersionCheckResult);
   }
 
   @override
   bool operator ==(Object other) {
-    return RemoteVersionCheckResultMapper.ensureInitialized().equalsValue(
-      this as RemoteVersionCheckResult,
-      other,
-    );
+    return RemoteVersionCheckResultMapper.ensureInitialized()
+        .equalsValue(this as RemoteVersionCheckResult, other);
   }
 
   @override
   int get hashCode {
-    return RemoteVersionCheckResultMapper.ensureInitialized().hashValue(
-      this as RemoteVersionCheckResult,
-    );
+    return RemoteVersionCheckResultMapper.ensureInitialized()
+        .hashValue(this as RemoteVersionCheckResult);
   }
 }
 
 extension RemoteVersionCheckResultValueCopy<$R, $Out>
     on ObjectCopyWith<$R, RemoteVersionCheckResult, $Out> {
   RemoteVersionCheckResultCopyWith<$R, RemoteVersionCheckResult, $Out>
-  get $asRemoteVersionCheckResult =>
-      $base.as((v, t, t2) => _RemoteVersionCheckResultCopyWithImpl(v, t, t2));
+      get $asRemoteVersionCheckResult => $base
+          .as((v, t, t2) => _RemoteVersionCheckResultCopyWithImpl(v, t, t2));
 }
 
 abstract class RemoteVersionCheckResultCopyWith<
-  $R,
-  $In extends RemoteVersionCheckResult,
-  $Out
->
-    implements ClassCopyWith<$R, $In, $Out> {
+    $R,
+    $In extends RemoteVersionCheckResult,
+    $Out> implements ClassCopyWith<$R, $In, $Out> {
   VersionCheckerInfoCopyWith<$R, VersionCheckerInfo, VersionCheckerInfo>?
-  get remoteVersion;
-  $R call({
-    VersionCheckerInfo? remoteVersion,
-    String? uri,
-    DateTime? timestamp,
-  });
+      get remoteVersion;
+  $R call(
+      {VersionCheckerInfo? remoteVersion, String? uri, DateTime? timestamp});
   RemoteVersionCheckResultCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
-    Then<$Out2, $R2> t,
-  );
+      Then<$Out2, $R2> t);
 }
 
 class _RemoteVersionCheckResultCopyWithImpl<$R, $Out>
@@ -161,31 +131,28 @@ class _RemoteVersionCheckResultCopyWithImpl<$R, $Out>
       RemoteVersionCheckResultMapper.ensureInitialized();
   @override
   VersionCheckerInfoCopyWith<$R, VersionCheckerInfo, VersionCheckerInfo>?
-  get remoteVersion =>
-      $value.remoteVersion?.copyWith.$chain((v) => call(remoteVersion: v));
+      get remoteVersion =>
+          $value.remoteVersion?.copyWith.$chain((v) => call(remoteVersion: v));
   @override
-  $R call({
-    Object? remoteVersion = $none,
-    Object? uri = $none,
-    Object? timestamp = $none,
-  }) => $apply(
-    FieldCopyWithData({
-      if (remoteVersion != $none) #remoteVersion: remoteVersion,
-      if (uri != $none) #uri: uri,
-      if (timestamp != $none) #timestamp: timestamp,
-    }),
-  );
+  $R call(
+          {Object? remoteVersion = $none,
+          Object? uri = $none,
+          Object? timestamp = $none}) =>
+      $apply(FieldCopyWithData({
+        if (remoteVersion != $none) #remoteVersion: remoteVersion,
+        if (uri != $none) #uri: uri,
+        if (timestamp != $none) #timestamp: timestamp
+      }));
   @override
   RemoteVersionCheckResult $make(CopyWithData data) => RemoteVersionCheckResult(
-    data.get(#remoteVersion, or: $value.remoteVersion),
-    data.get(#uri, or: $value.uri),
-    timestamp: data.get(#timestamp, or: $value.timestamp),
-  );
+      data.get(#remoteVersion, or: $value.remoteVersion),
+      data.get(#uri, or: $value.uri),
+      timestamp: data.get(#timestamp, or: $value.timestamp));
 
   @override
   RemoteVersionCheckResultCopyWith<$R2, RemoteVersionCheckResult, $Out2>
-  $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
-      _RemoteVersionCheckResultCopyWithImpl($value, $cast, t);
+      $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
+          _RemoteVersionCheckResultCopyWithImpl($value, $cast, t);
 }
 
 class VersionCheckerStateMapper extends ClassMapperBase<VersionCheckerState> {
@@ -204,13 +171,11 @@ class VersionCheckerStateMapper extends ClassMapperBase<VersionCheckerState> {
   final String id = 'VersionCheckerState';
 
   static Map<String, RemoteVersionCheckResult> _$versionCheckResultsBySmolId(
-    VersionCheckerState v,
-  ) => v.versionCheckResultsBySmolId;
+          VersionCheckerState v) =>
+      v.versionCheckResultsBySmolId;
   static const Field<VersionCheckerState, Map<String, RemoteVersionCheckResult>>
-  _f$versionCheckResultsBySmolId = Field(
-    'versionCheckResultsBySmolId',
-    _$versionCheckResultsBySmolId,
-  );
+      _f$versionCheckResultsBySmolId =
+      Field('versionCheckResultsBySmolId', _$versionCheckResultsBySmolId);
 
   @override
   final MappableFields<VersionCheckerState> fields = const {
@@ -244,67 +209,47 @@ mixin VersionCheckerStateMappable {
         .encodeMap<VersionCheckerState>(this as VersionCheckerState);
   }
 
-  VersionCheckerStateCopyWith<
-    VersionCheckerState,
-    VersionCheckerState,
-    VersionCheckerState
-  >
-  get copyWith => _VersionCheckerStateCopyWithImpl(
-    this as VersionCheckerState,
-    $identity,
-    $identity,
-  );
+  VersionCheckerStateCopyWith<VersionCheckerState, VersionCheckerState,
+          VersionCheckerState>
+      get copyWith => _VersionCheckerStateCopyWithImpl(
+          this as VersionCheckerState, $identity, $identity);
   @override
   String toString() {
-    return VersionCheckerStateMapper.ensureInitialized().stringifyValue(
-      this as VersionCheckerState,
-    );
+    return VersionCheckerStateMapper.ensureInitialized()
+        .stringifyValue(this as VersionCheckerState);
   }
 
   @override
   bool operator ==(Object other) {
-    return VersionCheckerStateMapper.ensureInitialized().equalsValue(
-      this as VersionCheckerState,
-      other,
-    );
+    return VersionCheckerStateMapper.ensureInitialized()
+        .equalsValue(this as VersionCheckerState, other);
   }
 
   @override
   int get hashCode {
-    return VersionCheckerStateMapper.ensureInitialized().hashValue(
-      this as VersionCheckerState,
-    );
+    return VersionCheckerStateMapper.ensureInitialized()
+        .hashValue(this as VersionCheckerState);
   }
 }
 
 extension VersionCheckerStateValueCopy<$R, $Out>
     on ObjectCopyWith<$R, VersionCheckerState, $Out> {
   VersionCheckerStateCopyWith<$R, VersionCheckerState, $Out>
-  get $asVersionCheckerState =>
-      $base.as((v, t, t2) => _VersionCheckerStateCopyWithImpl(v, t, t2));
+      get $asVersionCheckerState =>
+          $base.as((v, t, t2) => _VersionCheckerStateCopyWithImpl(v, t, t2));
 }
 
-abstract class VersionCheckerStateCopyWith<
-  $R,
-  $In extends VersionCheckerState,
-  $Out
->
-    implements ClassCopyWith<$R, $In, $Out> {
+abstract class VersionCheckerStateCopyWith<$R, $In extends VersionCheckerState,
+    $Out> implements ClassCopyWith<$R, $In, $Out> {
   MapCopyWith<
-    $R,
-    String,
-    RemoteVersionCheckResult,
-    RemoteVersionCheckResultCopyWith<
       $R,
+      String,
       RemoteVersionCheckResult,
-      RemoteVersionCheckResult
-    >
-  >
-  get versionCheckResultsBySmolId;
+      RemoteVersionCheckResultCopyWith<$R, RemoteVersionCheckResult,
+          RemoteVersionCheckResult>> get versionCheckResultsBySmolId;
   $R call({Map<String, RemoteVersionCheckResult>? versionCheckResultsBySmolId});
   VersionCheckerStateCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
-    Then<$Out2, $R2> t,
-  );
+      Then<$Out2, $R2> t);
 }
 
 class _VersionCheckerStateCopyWithImpl<$R, $Out>
@@ -317,40 +262,30 @@ class _VersionCheckerStateCopyWithImpl<$R, $Out>
       VersionCheckerStateMapper.ensureInitialized();
   @override
   MapCopyWith<
-    $R,
-    String,
-    RemoteVersionCheckResult,
-    RemoteVersionCheckResultCopyWith<
       $R,
+      String,
       RemoteVersionCheckResult,
-      RemoteVersionCheckResult
-    >
-  >
-  get versionCheckResultsBySmolId => MapCopyWith(
-    $value.versionCheckResultsBySmolId,
-    (v, t) => v.copyWith.$chain(t),
-    (v) => call(versionCheckResultsBySmolId: v),
-  );
+      RemoteVersionCheckResultCopyWith<$R, RemoteVersionCheckResult,
+          RemoteVersionCheckResult>> get versionCheckResultsBySmolId =>
+      MapCopyWith(
+          $value.versionCheckResultsBySmolId,
+          (v, t) => v.copyWith.$chain(t),
+          (v) => call(versionCheckResultsBySmolId: v));
   @override
-  $R call({
-    Map<String, RemoteVersionCheckResult>? versionCheckResultsBySmolId,
-  }) => $apply(
-    FieldCopyWithData({
-      if (versionCheckResultsBySmolId != null)
-        #versionCheckResultsBySmolId: versionCheckResultsBySmolId,
-    }),
-  );
+  $R call(
+          {Map<String, RemoteVersionCheckResult>?
+              versionCheckResultsBySmolId}) =>
+      $apply(FieldCopyWithData({
+        if (versionCheckResultsBySmolId != null)
+          #versionCheckResultsBySmolId: versionCheckResultsBySmolId
+      }));
   @override
-  VersionCheckerState $make(CopyWithData data) => VersionCheckerState(
-    data.get(
-      #versionCheckResultsBySmolId,
-      or: $value.versionCheckResultsBySmolId,
-    ),
-  );
+  VersionCheckerState $make(CopyWithData data) =>
+      VersionCheckerState(data.get(#versionCheckResultsBySmolId,
+          or: $value.versionCheckResultsBySmolId));
 
   @override
-  VersionCheckerStateCopyWith<$R2, VersionCheckerState, $Out2> $chain<
-    $R2,
-    $Out2
-  >(Then<$Out2, $R2> t) => _VersionCheckerStateCopyWithImpl($value, $cast, t);
+  VersionCheckerStateCopyWith<$R2, VersionCheckerState, $Out2>
+      $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
+          _VersionCheckerStateCopyWithImpl($value, $cast, t);
 }

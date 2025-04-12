@@ -21,19 +21,15 @@ class ThemeStateMapper extends ClassMapperBase<ThemeState> {
   final String id = 'ThemeState';
 
   static ThemeData _$themeData(ThemeState v) => v.themeData;
-  static const Field<ThemeState, ThemeData> _f$themeData = Field(
-    'themeData',
-    _$themeData,
-  );
+  static const Field<ThemeState, ThemeData> _f$themeData =
+      Field('themeData', _$themeData);
   static Map<String, TriOSTheme> _$availableThemes(ThemeState v) =>
       v.availableThemes;
   static const Field<ThemeState, Map<String, TriOSTheme>> _f$availableThemes =
       Field('availableThemes', _$availableThemes);
   static TriOSTheme _$currentTheme(ThemeState v) => v.currentTheme;
-  static const Field<ThemeState, TriOSTheme> _f$currentTheme = Field(
-    'currentTheme',
-    _$currentTheme,
-  );
+  static const Field<ThemeState, TriOSTheme> _f$currentTheme =
+      Field('currentTheme', _$currentTheme);
 
   @override
   final MappableFields<ThemeState> fields = const {
@@ -43,11 +39,8 @@ class ThemeStateMapper extends ClassMapperBase<ThemeState> {
   };
 
   static ThemeState _instantiate(DecodingData data) {
-    return ThemeState(
-      data.dec(_f$themeData),
-      data.dec(_f$availableThemes),
-      data.dec(_f$currentTheme),
-    );
+    return ThemeState(data.dec(_f$themeData), data.dec(_f$availableThemes),
+        data.dec(_f$currentTheme));
   }
 
   @override
@@ -59,17 +52,14 @@ mixin ThemeStateMappable {
       _ThemeStateCopyWithImpl(this as ThemeState, $identity, $identity);
   @override
   String toString() {
-    return ThemeStateMapper.ensureInitialized().stringifyValue(
-      this as ThemeState,
-    );
+    return ThemeStateMapper.ensureInitialized()
+        .stringifyValue(this as ThemeState);
   }
 
   @override
   bool operator ==(Object other) {
-    return ThemeStateMapper.ensureInitialized().equalsValue(
-      this as ThemeState,
-      other,
-    );
+    return ThemeStateMapper.ensureInitialized()
+        .equalsValue(this as ThemeState, other);
   }
 
   @override
@@ -86,18 +76,12 @@ extension ThemeStateValueCopy<$R, $Out>
 
 abstract class ThemeStateCopyWith<$R, $In extends ThemeState, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
-  MapCopyWith<
-    $R,
-    String,
-    TriOSTheme,
-    ObjectCopyWith<$R, TriOSTheme, TriOSTheme>
-  >
-  get availableThemes;
-  $R call({
-    ThemeData? themeData,
-    Map<String, TriOSTheme>? availableThemes,
-    TriOSTheme? currentTheme,
-  });
+  MapCopyWith<$R, String, TriOSTheme,
+      ObjectCopyWith<$R, TriOSTheme, TriOSTheme>> get availableThemes;
+  $R call(
+      {ThemeData? themeData,
+      Map<String, TriOSTheme>? availableThemes,
+      TriOSTheme? currentTheme});
   ThemeStateCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
 
@@ -110,38 +94,30 @@ class _ThemeStateCopyWithImpl<$R, $Out>
   late final ClassMapperBase<ThemeState> $mapper =
       ThemeStateMapper.ensureInitialized();
   @override
-  MapCopyWith<
-    $R,
-    String,
-    TriOSTheme,
-    ObjectCopyWith<$R, TriOSTheme, TriOSTheme>
-  >
-  get availableThemes => MapCopyWith(
-    $value.availableThemes,
-    (v, t) => ObjectCopyWith(v, $identity, t),
-    (v) => call(availableThemes: v),
-  );
+  MapCopyWith<$R, String, TriOSTheme,
+          ObjectCopyWith<$R, TriOSTheme, TriOSTheme>>
+      get availableThemes => MapCopyWith(
+          $value.availableThemes,
+          (v, t) => ObjectCopyWith(v, $identity, t),
+          (v) => call(availableThemes: v));
   @override
-  $R call({
-    ThemeData? themeData,
-    Map<String, TriOSTheme>? availableThemes,
-    TriOSTheme? currentTheme,
-  }) => $apply(
-    FieldCopyWithData({
-      if (themeData != null) #themeData: themeData,
-      if (availableThemes != null) #availableThemes: availableThemes,
-      if (currentTheme != null) #currentTheme: currentTheme,
-    }),
-  );
+  $R call(
+          {ThemeData? themeData,
+          Map<String, TriOSTheme>? availableThemes,
+          TriOSTheme? currentTheme}) =>
+      $apply(FieldCopyWithData({
+        if (themeData != null) #themeData: themeData,
+        if (availableThemes != null) #availableThemes: availableThemes,
+        if (currentTheme != null) #currentTheme: currentTheme
+      }));
   @override
   ThemeState $make(CopyWithData data) => ThemeState(
-    data.get(#themeData, or: $value.themeData),
-    data.get(#availableThemes, or: $value.availableThemes),
-    data.get(#currentTheme, or: $value.currentTheme),
-  );
+      data.get(#themeData, or: $value.themeData),
+      data.get(#availableThemes, or: $value.availableThemes),
+      data.get(#currentTheme, or: $value.currentTheme));
 
   @override
   ThemeStateCopyWith<$R2, ThemeState, $Out2> $chain<$R2, $Out2>(
-    Then<$Out2, $R2> t,
-  ) => _ThemeStateCopyWithImpl($value, $cast, t);
+          Then<$Out2, $R2> t) =>
+      _ThemeStateCopyWithImpl($value, $cast, t);
 }

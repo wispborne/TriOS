@@ -1,8 +1,9 @@
 # 1.1.7
+- Added
+  - Setting to scale TriOS larger or smaller.
 - Fixed
   - Mods not switching to enabled or being deleted after installing a new version.
     - Only affected 7zip, not libarchive.
-  - "Enable" button on notification after installing a mod did not prompt you to force-update the game version.
 
 # 1.1.6
 - Added

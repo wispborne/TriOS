@@ -271,7 +271,8 @@ Future<RemoteVersionCheckResult> checkRemoteVersion(
     // TODO https://bitbucket.org/niatahl/trailer-moments/downloads/trailermoments.version doesn't work
     final response = await httpClient.get(
       fixedUrl,
-      headers: {'Content-Type': 'application/json'},
+      // Having this header causes Version Checker to fail for Bitbucket repos. Didn't see any issues with any of my 0.97a mods.
+      // headers: {'Content-Type': 'application/json'},
       allowSelfSignedCertificates: true,
     );
 

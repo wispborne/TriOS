@@ -1,3 +1,7 @@
+# 1.1.8
+- Fixed
+  - Version Checker error for mods on Bitbucket, such as GraphicsLib and other Dark.Revenant mods.
+
 # 1.1.7
 - Added
   - Setting to scale TriOS larger or smaller.

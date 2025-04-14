@@ -27,14 +27,15 @@ All-in-one Starsector launcher, mod manager, and toolkit.
 
 1. [Download and install/extract Flutter SDK](https://flutter-ko.dev/get-started/install) so that it's on your path.
 2. Follow the instructions for your platform so that InAppWebView can build: https://inappwebview.dev/docs/intro/#setup-windows.
-3. Download the TriOS source code, navigate to it, and run
+3. Linux: Install `libcurl4-openssl-dev`.
+4. Download the TriOS source code, navigate to it, and run
     ```
     flutter build windows
     ```
     (substitute `macos` or `linux` depending on your platform).
    1. On Linux, you may need to install missing libs, such as `libcurl4-openssl-dev` (for building Sentry). 
    2. Also, don't use the Snap version of Flutter, install it manually so it uses system libs.
-4. The output should tell you where it placed the compiled program.
+5. The output should tell you where it placed the compiled program.
 
 
 ## Modifying TriOS

@@ -77,6 +77,9 @@ final weaponListNotifierProvider = StreamProvider<List<Weapon>>((ref) async* {
   // yield weapons;
 });
 
+/// Takes fields from the weapon_data.csv and all .wpn files,
+/// dumps them into a 2d map (all weapon key-value pairs, grouped by id),
+/// then iterates over the map and creates a Weapon object for each entry.
 Future<ParseResult> _parseWeaponsCsv(
   Directory folder,
   ModVariant? modVariant,

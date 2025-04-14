@@ -10,6 +10,7 @@ import 'package:trios/compression/libarchive/libarchive.dart';
 import 'package:trios/mod_profiles/mod_profiles_manager.dart';
 import 'package:trios/models/download_progress.dart';
 import 'package:trios/onboarding/onboarding_page.dart';
+import 'package:trios/shipViewer/shipManager.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
@@ -353,6 +354,32 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
               );
             },
             label: const Text('Read weapons'),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(top: 16),
+          child: Builder(
+            builder: (context) {
+              return MovingTooltipWidget.text(
+                message: "Read ships from csv and json files",
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.rocket),
+                  onPressed: () async {
+                    showSnackBar(
+                      context: ref.read(AppState.appContext)!,
+                      content: Text(
+                        ref
+                            .refresh(shipListNotifierProvider)
+                            .valueOrNull
+                            ?.toString() ??
+                            "weh",
+                      ),
+                    );
+                  },
+                  label: const Text('Read ships'),
+                ),
+              );
+            },
           ),
         ),
         Padding(

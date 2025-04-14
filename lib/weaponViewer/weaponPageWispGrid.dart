@@ -8,6 +8,7 @@ import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_group.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
+import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/weaponViewer/models/weapon.dart';
 import 'package:trios/weaponViewer/weaponsManager.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
@@ -219,7 +220,7 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
         updateGridState: (updateFunction) {
           ref.read(appSettings.notifier).update((state) {
             return state.copyWith(
-              weaponsGridState: updateFunction(state.weaponsGridState),
+              weaponsGridState: updateFunction(state.weaponsGridState) ?? Settings().weaponsGridState,
             );
           });
         },

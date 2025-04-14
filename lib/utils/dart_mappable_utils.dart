@@ -106,3 +106,25 @@ class SafeDecodeHook<T> extends MappingHook {
     }
   }
 }
+
+/// Json: "one,tag, three"
+/// Dart: ["one", "tag", "three"]
+class StringArrayHook extends MappingHook {
+  const StringArrayHook();
+
+  @override
+  List<String>? beforeDecode(dynamic value) {
+    if (value is String) {
+      return value.split(',').map((e) => e.trim()).toList();
+    }
+    return null;
+  }
+
+  @override
+  dynamic beforeEncode(dynamic value) {
+    if (value is List<String>) {
+      return value.join(',');
+    }
+    return value;
+  }
+}

@@ -46,6 +46,7 @@ class Settings with SettingsMappable {
   @MappableField(hook: SafeDecodeHook())
   final WispGridState modsGridState;
   final WispGridState weaponsGridState;
+  final WispGridState shipsGridState;
   final String? customGameExePath;
   final bool useCustomGameExePath;
 
@@ -110,6 +111,10 @@ class Settings with SettingsMappable {
       columnsState: {},
     ),
     this.weaponsGridState = const WispGridState(
+      groupingSetting: null,
+      columnsState: {},
+    ),
+    this.shipsGridState = const WispGridState(
       groupingSetting: null,
       columnsState: {},
     ),

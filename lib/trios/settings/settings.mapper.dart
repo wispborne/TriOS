@@ -310,6 +310,11 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       'weaponsGridState', _$weaponsGridState,
       opt: true,
       def: const WispGridState(groupingSetting: null, columnsState: {}));
+  static WispGridState _$shipsGridState(Settings v) => v.shipsGridState;
+  static const Field<Settings, WispGridState> _f$shipsGridState = Field(
+      'shipsGridState', _$shipsGridState,
+      opt: true,
+      def: const WispGridState(groupingSetting: null, columnsState: {}));
   static String? _$customGameExePath(Settings v) => v.customGameExePath;
   static const Field<Settings, String> _f$customGameExePath =
       Field('customGameExePath', _$customGameExePath, opt: true);
@@ -416,6 +421,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #dashboardGridModUpdateVisibility: _f$dashboardGridModUpdateVisibility,
     #modsGridState: _f$modsGridState,
     #weaponsGridState: _f$weaponsGridState,
+    #shipsGridState: _f$shipsGridState,
     #customGameExePath: _f$customGameExePath,
     #useCustomGameExePath: _f$useCustomGameExePath,
     #doubleClickForModsPanel: _f$doubleClickForModsPanel,
@@ -463,6 +469,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
             data.dec(_f$dashboardGridModUpdateVisibility),
         modsGridState: data.dec(_f$modsGridState),
         weaponsGridState: data.dec(_f$weaponsGridState),
+        shipsGridState: data.dec(_f$shipsGridState),
         customGameExePath: data.dec(_f$customGameExePath),
         useCustomGameExePath: data.dec(_f$useCustomGameExePath),
         doubleClickForModsPanel: data.dec(_f$doubleClickForModsPanel),
@@ -539,6 +546,7 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
   LaunchSettingsCopyWith<$R, LaunchSettings, LaunchSettings> get launchSettings;
   WispGridStateCopyWith<$R, WispGridState, WispGridState> get modsGridState;
   WispGridStateCopyWith<$R, WispGridState, WispGridState> get weaponsGridState;
+  WispGridStateCopyWith<$R, WispGridState, WispGridState> get shipsGridState;
   $R call(
       {Directory? gameDir,
       Directory? gameCoreDir,
@@ -562,6 +570,7 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
       DashboardGridModUpdateVisibility? dashboardGridModUpdateVisibility,
       WispGridState? modsGridState,
       WispGridState? weaponsGridState,
+      WispGridState? shipsGridState,
       String? customGameExePath,
       bool? useCustomGameExePath,
       bool? doubleClickForModsPanel,
@@ -605,6 +614,9 @@ class _SettingsCopyWithImpl<$R, $Out>
       get weaponsGridState => $value.weaponsGridState.copyWith
           .$chain((v) => call(weaponsGridState: v));
   @override
+  WispGridStateCopyWith<$R, WispGridState, WispGridState> get shipsGridState =>
+      $value.shipsGridState.copyWith.$chain((v) => call(shipsGridState: v));
+  @override
   $R call(
           {Object? gameDir = $none,
           Object? gameCoreDir = $none,
@@ -628,6 +640,7 @@ class _SettingsCopyWithImpl<$R, $Out>
           DashboardGridModUpdateVisibility? dashboardGridModUpdateVisibility,
           WispGridState? modsGridState,
           WispGridState? weaponsGridState,
+          WispGridState? shipsGridState,
           Object? customGameExePath = $none,
           bool? useCustomGameExePath,
           bool? doubleClickForModsPanel,
@@ -677,6 +690,7 @@ class _SettingsCopyWithImpl<$R, $Out>
           #dashboardGridModUpdateVisibility: dashboardGridModUpdateVisibility,
         if (modsGridState != null) #modsGridState: modsGridState,
         if (weaponsGridState != null) #weaponsGridState: weaponsGridState,
+        if (shipsGridState != null) #shipsGridState: shipsGridState,
         if (customGameExePath != $none) #customGameExePath: customGameExePath,
         if (useCustomGameExePath != null)
           #useCustomGameExePath: useCustomGameExePath,
@@ -744,6 +758,7 @@ class _SettingsCopyWithImpl<$R, $Out>
       modsGridState: data.get(#modsGridState, or: $value.modsGridState),
       weaponsGridState:
           data.get(#weaponsGridState, or: $value.weaponsGridState),
+      shipsGridState: data.get(#shipsGridState, or: $value.shipsGridState),
       customGameExePath:
           data.get(#customGameExePath, or: $value.customGameExePath),
       useCustomGameExePath:

@@ -12,6 +12,7 @@ enum TriOSTools {
   jreManager,
   portraits,
   weapons,
+  ships,
   settings,
   modBrowser,
   tips,

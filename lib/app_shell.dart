@@ -14,6 +14,7 @@ import 'package:trios/mod_manager/mods_grid_page.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/portraits/portraits_viewer.dart';
 import 'package:trios/rules_autofresh/rules_hotreload.dart';
+import 'package:trios/shipViewer/shipsPage.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/navigation.dart';
@@ -69,9 +70,10 @@ class _AppShellState extends ConsumerState<AppShell>
     // 5: TriOSTools.jreManager,
     5: TriOSTools.portraits,
     6: TriOSTools.weapons,
-    7: TriOSTools.settings,
-    8: TriOSTools.modBrowser,
-    9: TriOSTools.tips,
+    7: TriOSTools.ships,
+    8: TriOSTools.settings,
+    9: TriOSTools.modBrowser,
+    10: TriOSTools.tips,
   };
 
   void _changeTab(TriOSTools tab) {
@@ -214,6 +216,7 @@ class _AppShellState extends ConsumerState<AppShell>
       const Padding(padding: EdgeInsets.all(8), child: ChipperApp()),
       const Padding(padding: EdgeInsets.all(8), child: ImageGridScreen()),
       const WeaponPage(),
+      const ShipPage(),
       const Padding(padding: EdgeInsets.all(8), child: SettingsPage()),
       const ModBrowserPage(),
       const TipsPage(),
@@ -359,6 +362,24 @@ class _AppShellState extends ConsumerState<AppShell>
                           ),
                           isSelected: _currentPage == TriOSTools.weapons,
                           onPressed: () => _changeTab(TriOSTools.weapons),
+                        ),
+                      ),
+                      MovingTooltipWidget.text(
+                        message: "Ship Viewer\n\nWarning: spoilers!",
+                        child: IconButton(
+                          icon: SvgImageIcon(
+                            "assets/images/icon-onslaught.svg",
+                            height: 24,
+                            width: 24,
+                          ),
+                          selectedIcon: SvgImageIcon(
+                            "assets/images/icon-onslaught.svg",
+                            color: Theme.of(context).colorScheme.primary,
+                            height: 24,
+                            width: 24,
+                          ),
+                          isSelected: _currentPage == TriOSTools.ships,
+                          onPressed: () => _changeTab(TriOSTools.ships),
                         ),
                       ),
                       MovingTooltipWidget.text(

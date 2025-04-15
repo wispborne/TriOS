@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/utils/shortcuts/menu_shortcuts.dart';
 import 'context_menu_provider.dart';
 import 'context_menu_state.dart';
 import 'menu_entry_widget.dart';
@@ -13,6 +14,7 @@ import 'menu_entry_widget.dart';
 
 class ContextMenuWidget extends StatelessWidget {
   final ContextMenuState menuState;
+
   const ContextMenuWidget({super.key, required this.menuState});
 
   @override
@@ -25,17 +27,22 @@ class ContextMenuWidget extends StatelessWidget {
           state.verifyPosition(context);
 
           return Positioned(
+            key: state.key,
             left: state.position.dx,
             top: state.position.dy,
             child: OverlayPortal(
               controller: state.overlayController,
               overlayChildBuilder: state.submenuBuilder,
-              child: FocusScope(
-                autofocus: true,
-                node: state.focusScopeNode,
-                child: Opacity(
-                  opacity: state.isPositionVerified ? 1.0 : 0.0,
-                  child: _buildMenuView(context, state),
+              child: CallbackShortcuts(
+                bindings: defaultMenuShortcuts(context, state)
+                  ..addAll(state.shortcuts),
+                child: FocusScope(
+                  autofocus: true,
+                  node: state.focusScopeNode,
+                  child: Opacity(
+                    opacity: state.isPositionVerified ? 1.0 : 0.0,
+                    child: _buildMenuView(context, state),
+                  ),
                 ),
               ),
             ),
@@ -56,7 +63,7 @@ class ContextMenuWidget extends StatelessWidget {
       color: Theme.of(context).colorScheme.surface,
       boxShadow: [
         BoxShadow(
-          color: Theme.of(context).shadowColor.withOpacity(0.5),
+          color: Theme.of(context).shadowColor.withValues(alpha: 0.5),
           offset: const Offset(0.0, 2.0),
           blurRadius: 10,
           spreadRadius: -1,
@@ -67,29 +74,31 @@ class ContextMenuWidget extends StatelessWidget {
 
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.8, end: 1.0),
-      duration: const Duration(milliseconds: 60),
+      duration: const Duration(milliseconds: 30),
       builder: (context, value, child) {
-        return Transform.scale(
-          alignment: state.spawnAlignment,
-          scale: value,
-          child: Container(
-            padding: state.padding,
-            constraints: BoxConstraints(maxWidth: state.maxWidth),
-            clipBehavior: state.clipBehavior,
-            decoration: state.boxDecoration ?? boxDecoration,
-            child: Material(
-              type: MaterialType.transparency,
-              child: IntrinsicWidth(
-                child: Column(
-                  children: [
-                    for (final item in state.entries)
-                      MenuEntryWidget(entry: item),
-                  ],
-                ),
+        final menu = Container(
+          padding: state.padding,
+          constraints: BoxConstraints(maxWidth: state.maxWidth),
+          clipBehavior: state.clipBehavior,
+          decoration: state.boxDecoration ?? boxDecoration,
+          child: Material(
+            type: MaterialType.transparency,
+            child: IntrinsicWidth(
+              child: Column(
+                children: [
+                  for (final item in state.entries)
+                    MenuEntryWidget(entry: item),
+                ],
               ),
             ),
           ),
         );
+        return menu;
+        // return Transform.scale(
+        //   alignment: state.spawnAnchor,
+        //   scale: value,
+        //   child: menu,
+        // );
       },
     );
   }

@@ -253,7 +253,7 @@ class _ShipPageState extends ConsumerState<ShipPage>
         name: name,
         getSortValue: getValue,
         itemCellBuilder:
-            (item, _) => TextTriOs(
+            (item, _) => TextTriOS(
               getValue(item) ?? '',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -269,7 +269,7 @@ class _ShipPageState extends ConsumerState<ShipPage>
         name: 'Mod',
         getSortValue: (ship) => ship.modVariant?.modInfo.nameOrId,
         itemCellBuilder:
-            (item, _) => TextTriOs(
+            (item, _) => TextTriOS(
               item.modVariant?.modInfo.nameOrId ?? "Vanilla",
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

@@ -33,10 +33,12 @@ import 'package:trios/vram_estimator/models/vram_checker_models.dart';
 import 'package:trios/vram_estimator/vram_estimator_page.dart';
 import 'package:trios/widgets/add_new_mods_button.dart';
 import 'package:trios/widgets/disable.dart';
+import 'package:trios/widgets/mod_icon.dart';
 import 'package:trios/widgets/mod_type_icon.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/refresh_mods_button.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
+import 'package:trios/widgets/text_trios.dart';
 import 'package:trios/widgets/text_with_icon.dart';
 import 'package:trios/widgets/tooltip_frame.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -583,16 +585,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                                       .findFirstEnabledOrHighestVersion
                                       ?.iconFilePath;
                               return iconPath != null
-                                  ? Row(
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    children: [
-                                      Image.file(
-                                        iconPath.toFile(),
-                                        width: 32,
-                                        height: 32,
-                                      ),
-                                    ],
-                                  )
+                                  ? ModIcon(iconPath, size: 32)
                                   : const SizedBox(width: 32, height: 32);
                             },
                           ),
@@ -660,10 +653,10 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                             builder: (context) {
                               final theme = Theme.of(context);
                               final lightTextColor = theme.colorScheme.onSurface
-                                  .withOpacity(WispGrid.lightTextOpacity);
+                                  .withValues(alpha: WispGrid.lightTextOpacity);
                               final bestVersion =
                                   mod.findFirstEnabledOrHighestVersion!;
-                              return Text(
+                              return TextTriOS(
                                 bestVersion.modInfo.author
                                         ?.toString()
                                         .replaceAll("\n", "   ") ??
@@ -1298,7 +1291,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                         },
                         child: SvgImageIcon(
                           "assets/images/icon-bullhorn-variant.svg",
-                          color: theme.iconTheme.color?.withOpacity(0.7),
+                          color: theme.iconTheme.color?.withValues(alpha: 0.7),
                           width: 20,
                           height: 20,
                         ),
@@ -1312,7 +1305,9 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                           child: Icon(
                             Icons.notifications_off,
                             size: 20.0,
-                            color: theme.colorScheme.onSurface.withOpacity(0.5),
+                            color: theme.colorScheme.onSurface.withValues(
+                              alpha: 0.5,
+                            ),
                           ),
                         ),
                       )
@@ -1452,7 +1447,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
       builder: (context) {
         final theme = Theme.of(context);
 
-        return Text(
+        return TextTriOS(
           bestVersion.modInfo.name ?? "(no name)",
           style: GoogleFonts.roboto(
             textStyle: theme.textTheme.labelLarge?.copyWith(

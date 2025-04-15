@@ -1,3 +1,11 @@
+# 1.2.0 (in dev)
+- Added
+  - Weapons Viewer
+- Fixed
+  - 
+- Changed
+  - Mods Grid: Cut-off text now has a tooltip on hover.
+
 # 1.1.8
 - Fixed
   - Version Checker error for mods on Bitbucket, such as GraphicsLib and other Dark.Revenant mods.

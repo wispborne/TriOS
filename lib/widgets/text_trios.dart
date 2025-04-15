@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 
 /// Shows a tooltip if the text is too long to fit in the available space.
-class TextTriOs extends StatelessWidget {
+class TextTriOS extends StatelessWidget {
   final String text;
   final TextStyle? style;
   final TextAlign? textAlign;
   final int maxLines;
   final TextOverflow overflow;
 
-  const TextTriOs(
+  const TextTriOS(
     this.text, {
     super.key,
     this.style,

@@ -26,7 +26,11 @@ class WispGrid<T extends WispGridItem> extends ConsumerStatefulWidget {
   final List<WispGridColumn<T>> columns;
   final List<WispGridGroup<T>> groups;
   final int? Function(T left, T right)? preSortComparator;
-  final Widget Function({required T item, required RowBuilderModifiers modifiers, required Widget child})
+  final Widget Function({
+    required T item,
+    required RowBuilderModifiers modifiers,
+    required Widget child,
+  })
   rowBuilder;
   final WispGridGroup<T>? defaultGrouping;
   final String? defaultSortField;
@@ -35,6 +39,8 @@ class WispGrid<T extends WispGridItem> extends ConsumerStatefulWidget {
   final Function(WispGridState? Function(WispGridState)) updateGridState;
   final double? itemExtent;
   final bool alwaysShowScrollbar;
+  final double topPadding;
+  final double bottomPadding;
 
   const WispGrid({
     super.key,
@@ -52,6 +58,8 @@ class WispGrid<T extends WispGridItem> extends ConsumerStatefulWidget {
     required this.updateGridState,
     this.itemExtent,
     this.alwaysShowScrollbar = false,
+    this.topPadding = 0,
+    this.bottomPadding = 8,
   });
 
   static Widget defaultRowBuilder({
@@ -251,11 +259,12 @@ class _WispGridState<T extends WispGridItem>
         scrollDirection: Axis.horizontal,
         controller: _gridScrollControllerHorizontal,
         child: SizedBox(
-          width: gridState
-              .sortedVisibleColumns(widget.columns)
-              .map((e) => e.value.width + WispGrid.gridRowSpacing + 10)
-              .sum
-              .coerceAtMost(MediaQuery.of(context).size.width * 1.3),
+          width:
+              gridState
+                  .sortedVisibleColumns(widget.columns)
+                  .map((e) => e.value.width + WispGrid.gridRowSpacing + 10)
+                  .sum,
+          // .coerceAtMost(MediaQuery.of(context).size.width * 1.3),
           child: Scrollbar(
             controller: _gridScrollControllerVertical,
             scrollbarOrientation: ScrollbarOrientation.left,
@@ -302,6 +311,9 @@ class _WispGridState<T extends WispGridItem>
                   return CustomScrollView(
                     controller: _gridScrollControllerVertical,
                     slivers: [
+                      SliverPadding(
+                        padding: EdgeInsets.only(top: widget.topPadding),
+                      ),
                       SliverPersistentHeader(
                         pinned: true,
                         delegate: _PinnedHeaderDelegate(
@@ -325,6 +337,9 @@ class _WispGridState<T extends WispGridItem>
                             itemExtent: widget.itemExtent!,
                             delegate: itemSliverDelegate,
                           ),
+                      SliverPadding(
+                        padding: EdgeInsets.only(bottom: widget.bottomPadding),
+                      ),
                     ],
                   );
                 },

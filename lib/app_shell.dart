@@ -67,7 +67,6 @@ class _AppShellState extends ConsumerState<AppShell>
     2: TriOSTools.modProfiles,
     3: TriOSTools.vramEstimator,
     4: TriOSTools.chipper,
-    // 5: TriOSTools.jreManager,
     5: TriOSTools.portraits,
     6: TriOSTools.weapons,
     7: TriOSTools.ships,
@@ -365,7 +364,7 @@ class _AppShellState extends ConsumerState<AppShell>
                         ),
                       ),
                       MovingTooltipWidget.text(
-                        message: "Ship Viewer\n\nWarning: spoilers!",
+                        message: "Ship Viewer",
                         child: IconButton(
                           icon: SvgImageIcon(
                             "assets/images/icon-onslaught.svg",

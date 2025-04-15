@@ -11,6 +11,7 @@ import 'package:trios/shipViewer/models/shipGpt.dart';
 import 'package:trios/shipViewer/models/ship_weapon_slot.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
+import 'package:trios/utils/csv_parse_utils.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 
@@ -104,7 +105,7 @@ Future<ShipParseResult> _parseShips(
     filesProcessed++;
     try {
       final raw = await shipFile.readAsString(encoding: utf8);
-      final cleaned = _removeCommentsFromJson(raw);
+      final cleaned = raw.removeJsonComments();
       final map = cleaned.fixJsonToMap();
       final id = map['hullId'] as String?;
       if (id != null) {
@@ -131,7 +132,7 @@ Future<ShipParseResult> _parseShips(
   final lineNumberMap = <int>[];
 
   for (int i = 0; i < lines.length; i++) {
-    final line = _removeCommentOutsideQuotes(lines[i]);
+    final line = lines[i].removeCsvLineComments();
     if (line.trim().isEmpty) continue;
     processedLines.add(line);
     lineNumberMap.add(i + 1);
@@ -213,23 +214,6 @@ Future<ShipParseResult> _parseShips(
   }
 
   return ShipParseResult(ships, errors, filesProcessed);
-}
-
-String _removeCommentOutsideQuotes(String line) {
-  bool inQuotes = false;
-  String result = '';
-  for (int i = 0; i < line.length; i++) {
-    final char = line[i];
-    if (char == '"') inQuotes = !inQuotes;
-    if (!inQuotes && char == '#') break;
-    result += char;
-  }
-  return result.trimRight();
-}
-
-String _removeCommentsFromJson(String json) {
-  final lines = LineSplitter.split(json);
-  return lines.map((l) => l.split('#').first).join('\n');
 }
 
 class ShipParseResult {

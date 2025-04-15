@@ -2,18 +2,17 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:collection/collection.dart';
 import 'package:csv/csv.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:trios/models/mod_variant.dart';
-import 'package:trios/weaponViewer/models/weapon.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
-import 'package:trios/trios/settings/settings.dart';
+import 'package:trios/utils/csv_parse_utils.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/weaponViewer/models/weapon.dart';
 
 final isLoadingWeaponsList = StateProvider<bool>((ref) => false);
 final weaponListNotifierProvider = StreamProvider<List<Weapon>>((ref) async* {
@@ -117,7 +116,7 @@ Future<ParseResult> _parseWeaponsCsv(
     filesProcessed++;
     try {
       final wpnContent = await wpnFile.readAsString(encoding: utf8);
-      final cleanedContent = _removeCommentsFromJson(wpnContent);
+      final cleanedContent = wpnContent.removeJsonComments();
       final jsonData = cleanedContent.fixJsonToMap();
       final weaponId = jsonData['id'] as String?;
       if (weaponId != null) {
@@ -182,7 +181,7 @@ Future<ParseResult> _parseWeaponsCsv(
 
   for (int index = 0; index < lines.length; index++) {
     String line = lines[index];
-    String processedLine = _removeCommentOutsideQuotes(line);
+    String processedLine = line.removeCsvLineComments();
 
     if (processedLine.trim().isEmpty) {
       continue;
@@ -266,37 +265,6 @@ Future<ParseResult> _parseWeaponsCsv(
   }
 
   return ParseResult(weapons, errors, filesProcessed);
-}
-
-// Helper function to remove comments starting with '#' outside of quotes
-String _removeCommentOutsideQuotes(String line) {
-  bool inQuotes = false;
-  String result = '';
-  for (int i = 0; i < line.length; i++) {
-    final char = line[i];
-    if (char == '"') {
-      inQuotes = !inQuotes;
-    }
-    if (!inQuotes && char == '#') {
-      break;
-    }
-    result += char;
-  }
-  return result.trimRight();
-}
-
-// Helper function to remove comments from JSON content
-String _removeCommentsFromJson(String jsonContent) {
-  final lines = LineSplitter.split(jsonContent);
-  final nonCommentLines = lines.map((line) {
-    final index = line.indexOf('#');
-    if (index >= 0) {
-      return line.substring(0, index);
-    } else {
-      return line;
-    }
-  });
-  return nonCommentLines.join('\n');
 }
 
 // Helper class to hold parsing results

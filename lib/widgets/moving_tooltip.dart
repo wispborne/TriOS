@@ -373,8 +373,17 @@ class _MovingTooltipWidgetState extends State<MovingTooltipWidget> {
 
   // Set the flag to disable this widget's tooltip
   void _setTooltipBlock(bool block) {
-    setState(() {
-      _blockTooltip = block;
+    // Ensure the widget is still mounted before scheduling the callback
+    if (!mounted) return;
+
+    // Schedule the setState call to run after the current frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Double-check if the widget is still mounted when the callback executes,
+      // as it might have been disposed in the meantime.
+      if (!mounted) return;
+      setState(() {
+        _blockTooltip = block;
+      });
     });
   }
 }

@@ -12,6 +12,7 @@ import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:trios/widgets/text_trios.dart';
 import 'package:trios/widgets/toolbar_checkbox_button.dart';
 
 import '../widgets/MultiSplitViewMixin.dart';
@@ -237,6 +238,30 @@ class _ShipPageState extends ConsumerState<ShipPage>
     final vanillaBasePath = File(
       ref.watch(appSettings.select((s) => s.gameCoreDir))?.path ?? '',
     );
+    int position = 0;
+
+    // Reusable helper
+    WispGridColumn<Ship> col(
+      String key,
+      String name,
+      String? Function(Ship) getValue, {
+      double width = 100,
+    }) {
+      return WispGridColumn<Ship>(
+        key: key,
+        isSortable: true,
+        name: name,
+        getSortValue: getValue,
+        itemCellBuilder:
+            (item, _) => TextTriOs(
+              getValue(item) ?? '',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+        defaultState: WispGridColumnState(position: position++, width: width),
+      );
+    }
+
     return [
       WispGridColumn(
         key: 'modVariant',
@@ -244,16 +269,13 @@ class _ShipPageState extends ConsumerState<ShipPage>
         name: 'Mod',
         getSortValue: (ship) => ship.modVariant?.modInfo.nameOrId,
         itemCellBuilder:
-            (item, _) => Tooltip(
-              message: item.modVariant?.modInfo.nameOrId ?? "Vanilla",
-              child: Text(
-                item.modVariant?.modInfo.nameOrId ?? "Vanilla",
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.bodyMedium,
-              ),
+            (item, _) => TextTriOs(
+              item.modVariant?.modInfo.nameOrId ?? "Vanilla",
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodyMedium,
             ),
-        defaultState: const WispGridColumnState(position: 0, width: 120),
+        defaultState: WispGridColumnState(position: position++, width: 120),
       ),
       WispGridColumn(
         key: 'sprite',
@@ -268,40 +290,53 @@ class _ShipPageState extends ConsumerState<ShipPage>
                       .resolve(item.spriteName ?? "")
                       .path,
             ),
-        defaultState: const WispGridColumnState(position: 1, width: 50),
+        defaultState: WispGridColumnState(position: position++, width: 50),
       ),
-      WispGridColumn(
-        key: 'hullName',
-        isSortable: true,
-        name: 'Name',
-        getSortValue: (ship) => ship.hullName,
-        itemCellBuilder: (item, _) => Text(item.hullName ?? "(unknown)"),
-        defaultState: const WispGridColumnState(position: 2, width: 200),
-      ),
-      WispGridColumn(
-        key: 'hullSize',
-        isSortable: true,
-        name: 'Size',
-        getSortValue: (ship) => ship.hullSize,
-        itemCellBuilder: (item, _) => Text(item.hullSizeForDisplay()),
-        defaultState: const WispGridColumnState(position: 3, width: 80),
-      ),
+      col('hullName', 'Name', (s) => s.hullName, width: 200),
+      col('hullSize', 'Hull', (s) => s.hullSizeForDisplay(), width: 80),
       WispGridColumn(
         key: 'weaponSlotCount',
         name: 'Wpns',
         isSortable: true,
         getSortValue: (ship) => ship.weaponSlots?.length ?? 0,
         itemCellBuilder: (item, _) => Text('${item.weaponSlots?.length ?? 0}'),
-        defaultState: const WispGridColumnState(position: 4, width: 120),
+        defaultState: WispGridColumnState(position: position++, width: 120),
       ),
-      WispGridColumn(
-        key: 'techManufacturer',
-        isSortable: true,
-        name: 'Tech',
-        getSortValue: (ship) => ship.techManufacturer,
-        itemCellBuilder: (item, _) => Text(item.techManufacturer ?? ''),
-        defaultState: const WispGridColumnState(position: 5, width: 220),
-      ),
+      col('techManufacturer', 'Tech', (s) => s.techManufacturer, width: 220),
+      ...[
+        col('designation', 'Designation', (s) => s.designation),
+        col('systemId', 'System ID', (s) => s.systemId),
+        col('fleetPts', 'Fleet Pts', (s) => s.fleetPts),
+        col('hitpoints', 'Hitpoints', (s) => s.hitpoints),
+        col('armorRating', 'Armor', (s) => s.armorRating),
+        col('maxFlux', 'Max Flux', (s) => s.maxFlux),
+        col('fluxDissipation', 'Flux Diss', (s) => s.fluxDissipation),
+        col('ordnancePoints', 'Ordnance', (s) => s.ordnancePoints),
+        col('fighterBays', 'Fighter Bays', (s) => s.fighterBays),
+        col('maxSpeed', 'Max Speed', (s) => s.maxSpeed),
+        col('acceleration', 'Accel', (s) => s.acceleration),
+        col('maxTurnRate', 'Turn Rate', (s) => s.maxTurnRate),
+        col('turnAcceleration', 'Turn Accel', (s) => s.turnAcceleration),
+        col('mass', 'Mass', (s) => s.mass),
+        col('shieldType', 'Shield Type', (s) => s.shieldType),
+        col('defenseId', 'Defense ID', (s) => s.defenseId),
+        col('shieldArc', 'Shield Arc', (s) => s.shieldArc),
+        col('shieldUpkeep', 'Shield Upkeep', (s) => s.shieldUpkeep),
+        col('shieldEfficiency', 'Shield Eff.', (s) => s.shieldEfficiency),
+        col('phaseCost', 'Phase Cost', (s) => s.phaseCost),
+        col('phaseUpkeep', 'Phase Upkeep', (s) => s.phaseUpkeep),
+        col('minCrew', 'Min Crew', (s) => s.minCrew),
+        col('maxCrew', 'Max Crew', (s) => s.maxCrew),
+        col('cargo', 'Cargo', (s) => s.cargo),
+        col('fuel', 'Fuel', (s) => s.fuel),
+        col('fuelPerLY', 'Fuel/LY', (s) => s.fuelPerLY),
+        col('range', 'Range', (s) => s.range),
+        col('maxBurn', 'Max Burn', (s) => s.maxBurn),
+        col('baseValue', 'Base \$', (s) => s.baseValue),
+        col('crPercentPerDay', 'CR%/Day', (s) => s.crPercentPerDay),
+        col('crToDeploy', 'CR to Deploy', (s) => s.crToDeploy),
+        col('peakCrSec', 'Peak CR (s)', (s) => s.peakCrSec),
+      ],
     ];
   }
 

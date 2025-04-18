@@ -202,6 +202,69 @@ extension CompressionLibMapperExtension on CompressionLib {
   }
 }
 
+class DashboardModListSortMapper extends EnumMapper<DashboardModListSort> {
+  DashboardModListSortMapper._();
+
+  static DashboardModListSortMapper? _instance;
+  static DashboardModListSortMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(_instance = DashboardModListSortMapper._());
+    }
+    return _instance!;
+  }
+
+  static DashboardModListSort fromValue(dynamic value) {
+    ensureInitialized();
+    return MapperContainer.globals.fromValue(value);
+  }
+
+  @override
+  DashboardModListSort decode(dynamic value) {
+    switch (value) {
+      case 'Name':
+        return DashboardModListSort.Name;
+      case 'Author':
+        return DashboardModListSort.Author;
+      case 'Version':
+        return DashboardModListSort.Version;
+      case 'VRAM':
+        return DashboardModListSort.VRAM;
+      case 'GameVersion':
+        return DashboardModListSort.GameVersion;
+      case 'Enabled':
+        return DashboardModListSort.Enabled;
+      default:
+        throw MapperException.unknownEnumValue(value);
+    }
+  }
+
+  @override
+  dynamic encode(DashboardModListSort self) {
+    switch (self) {
+      case DashboardModListSort.Name:
+        return 'Name';
+      case DashboardModListSort.Author:
+        return 'Author';
+      case DashboardModListSort.Version:
+        return 'Version';
+      case DashboardModListSort.VRAM:
+        return 'VRAM';
+      case DashboardModListSort.GameVersion:
+        return 'GameVersion';
+      case DashboardModListSort.Enabled:
+        return 'Enabled';
+    }
+  }
+}
+
+extension DashboardModListSortMapperExtension on DashboardModListSort {
+  String toValue() {
+    DashboardModListSortMapper.ensureInitialized();
+    return MapperContainer.globals.toValue<DashboardModListSort>(this)
+        as String;
+  }
+}
+
 class SettingsMapper extends ClassMapperBase<Settings> {
   SettingsMapper._();
 
@@ -215,6 +278,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       WispGridStateMapper.ensureInitialized();
       FolderNamingSettingMapper.ensureInitialized();
       ModUpdateBehaviorMapper.ensureInitialized();
+      DashboardModListSortMapper.ensureInitialized();
       CompressionLibMapper.ensureInitialized();
     }
     return _instance!;
@@ -374,6 +438,11 @@ class SettingsMapper extends ClassMapperBase<Settings> {
   static const Field<Settings, ModUpdateBehavior> _f$modUpdateBehavior = Field(
       'modUpdateBehavior', _$modUpdateBehavior,
       opt: true, def: ModUpdateBehavior.switchToNewVersionIfWasEnabled);
+  static DashboardModListSort _$dashboardModListSort(Settings v) =>
+      v.dashboardModListSort;
+  static const Field<Settings, DashboardModListSort> _f$dashboardModListSort =
+      Field('dashboardModListSort', _$dashboardModListSort,
+          opt: true, def: DashboardModListSort.Name);
   static bool _$checkIfGameIsRunning(Settings v) => v.checkIfGameIsRunning;
   static const Field<Settings, bool> _f$checkIfGameIsRunning = Field(
       'checkIfGameIsRunning', _$checkIfGameIsRunning,
@@ -436,6 +505,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #autoEnableAndDisableDependencies: _f$autoEnableAndDisableDependencies,
     #enableLauncherPrecheck: _f$enableLauncherPrecheck,
     #modUpdateBehavior: _f$modUpdateBehavior,
+    #dashboardModListSort: _f$dashboardModListSort,
     #checkIfGameIsRunning: _f$checkIfGameIsRunning,
     #compressionLib: _f$compressionLib,
     #windowScaleFactor: _f$windowScaleFactor,
@@ -486,6 +556,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
             data.dec(_f$autoEnableAndDisableDependencies),
         enableLauncherPrecheck: data.dec(_f$enableLauncherPrecheck),
         modUpdateBehavior: data.dec(_f$modUpdateBehavior),
+        dashboardModListSort: data.dec(_f$dashboardModListSort),
         checkIfGameIsRunning: data.dec(_f$checkIfGameIsRunning),
         compressionLib: data.dec(_f$compressionLib),
         windowScaleFactor: data.dec(_f$windowScaleFactor),
@@ -585,6 +656,7 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
       bool? autoEnableAndDisableDependencies,
       bool? enableLauncherPrecheck,
       ModUpdateBehavior? modUpdateBehavior,
+      DashboardModListSort? dashboardModListSort,
       bool? checkIfGameIsRunning,
       CompressionLib? compressionLib,
       double? windowScaleFactor,
@@ -655,6 +727,7 @@ class _SettingsCopyWithImpl<$R, $Out>
           bool? autoEnableAndDisableDependencies,
           bool? enableLauncherPrecheck,
           ModUpdateBehavior? modUpdateBehavior,
+          DashboardModListSort? dashboardModListSort,
           bool? checkIfGameIsRunning,
           CompressionLib? compressionLib,
           double? windowScaleFactor,
@@ -716,6 +789,8 @@ class _SettingsCopyWithImpl<$R, $Out>
         if (enableLauncherPrecheck != null)
           #enableLauncherPrecheck: enableLauncherPrecheck,
         if (modUpdateBehavior != null) #modUpdateBehavior: modUpdateBehavior,
+        if (dashboardModListSort != null)
+          #dashboardModListSort: dashboardModListSort,
         if (checkIfGameIsRunning != null)
           #checkIfGameIsRunning: checkIfGameIsRunning,
         if (compressionLib != null) #compressionLib: compressionLib,
@@ -784,6 +859,7 @@ class _SettingsCopyWithImpl<$R, $Out>
       autoEnableAndDisableDependencies: data.get(#autoEnableAndDisableDependencies, or: $value.autoEnableAndDisableDependencies),
       enableLauncherPrecheck: data.get(#enableLauncherPrecheck, or: $value.enableLauncherPrecheck),
       modUpdateBehavior: data.get(#modUpdateBehavior, or: $value.modUpdateBehavior),
+      dashboardModListSort: data.get(#dashboardModListSort, or: $value.dashboardModListSort),
       checkIfGameIsRunning: data.get(#checkIfGameIsRunning, or: $value.checkIfGameIsRunning),
       compressionLib: data.get(#compressionLib, or: $value.compressionLib),
       windowScaleFactor: data.get(#windowScaleFactor, or: $value.windowScaleFactor),

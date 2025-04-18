@@ -3,8 +3,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
-import 'package:trios/mod_manager/mods_grid_page.dart';
-import 'package:trios/models/enabled_mods.dart';
 import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
@@ -194,44 +192,77 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                               ),
                             ),
                           ),
-                          SizedBox(
-                            height: 20,
-                            child: MovingTooltipWidget.text(
-                              message:
-                                  "When checked, updating an enabled mod switches to the new version.",
-                              child: CheckboxWithLabel(
-                                value:
-                                    ref.watch(
-                                      appSettings.select(
-                                        (s) => s.modUpdateBehavior,
-                                      ),
-                                    ) ==
-                                    ModUpdateBehavior
-                                        .switchToNewVersionIfWasEnabled,
-                                onChanged: (newValue) {
-                                  setState(() {
-                                    ref
-                                        .read(appSettings.notifier)
-                                        .update(
-                                          (s) => s.copyWith(
-                                            modUpdateBehavior:
-                                                newValue == true
-                                                    ? ModUpdateBehavior
-                                                        .switchToNewVersionIfWasEnabled
-                                                    : ModUpdateBehavior
-                                                        .doNotChange,
+                          SizedBox(width: 8),
+                          MovingTooltipWidget.text(
+                            message: "Sort By",
+                            child: PopupMenuButton<String>(
+                              icon: Icon(Icons.sort, size: 20),
+                              tooltip: "",
+                              itemBuilder:
+                                  (context) => [
+                                    PopupMenuItem(
+                                      value: "name",
+                                      onTap: () {
+                                        // todo
+                                        ref.watch(
+                                          appSettings.select(
+                                            (s) => s.dashboardModListSort,
                                           ),
                                         );
-                                  });
-                                },
-                                checkboxScale: 0.8,
-                                textPadding: const EdgeInsets.all(0),
-                                labelWidget: Text(
-                                  "Swap on Update",
-                                  style: theme.textTheme.labelMedium,
-                                ),
-                              ),
+                                      },
+                                      child: Text("Sort by Name (todo)"),
+                                    ),
+                                  ],
                             ),
+                          ),
+                          const Spacer(),
+                          PopupMenuButton<String>(
+                            icon: Icon(Icons.settings, size: 20),
+                            tooltip: "",
+                            itemBuilder:
+                                (context) => [
+                                  PopupMenuItem(
+                                    child: SizedBox(
+                                      height: 20,
+                                      child: MovingTooltipWidget.text(
+                                        message:
+                                            "When checked, updating an enabled mod switches to the new version.",
+                                        child: CheckboxWithLabel(
+                                          value:
+                                              ref.watch(
+                                                appSettings.select(
+                                                  (s) => s.modUpdateBehavior,
+                                                ),
+                                              ) ==
+                                              ModUpdateBehavior
+                                                  .switchToNewVersionIfWasEnabled,
+                                          onChanged: (newValue) {
+                                            setState(() {
+                                              ref
+                                                  .read(appSettings.notifier)
+                                                  .update(
+                                                    (s) => s.copyWith(
+                                                      modUpdateBehavior:
+                                                          newValue == true
+                                                              ? ModUpdateBehavior
+                                                                  .switchToNewVersionIfWasEnabled
+                                                              : ModUpdateBehavior
+                                                                  .doNotChange,
+                                                    ),
+                                                  );
+                                            });
+                                          },
+                                          checkboxScale: 0.8,
+                                          textPadding: const EdgeInsets.all(0),
+                                          labelWidget: Text(
+                                            "Swap on Update",
+                                            style: theme.textTheme.labelMedium,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                           ),
                         ],
                       ),

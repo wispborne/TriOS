@@ -3,6 +3,9 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:open_filex/open_filex.dart';
+import 'package:trios/about/about_page.dart';
+import 'package:trios/trios/constants.dart';
+import 'package:trios/widgets/trios_app_icon.dart';
 
 extension Append on String {
   String prepend(String text) => text + this;
@@ -80,4 +83,23 @@ Future<void> showAlertDialog(
       );
     },
   );
+}
+
+Future<void> showTriOSAboutDialog(BuildContext context) async {
+  return
+    showAboutDialog(
+      context: context,
+      applicationIcon: const TriOSAppIcon(),
+      applicationName: Constants.appTitle,
+      applicationVersion:
+      "A Starsector toolkit\nby Wisp",
+      children: [
+        ConstrainedBox(
+          constraints: const BoxConstraints(
+            maxWidth: 700,
+          ),
+          child: const AboutPage(),
+        ),
+      ],
+    );
 }

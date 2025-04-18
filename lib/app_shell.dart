@@ -2,12 +2,14 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart'
+    show WebViewEnvironment, WebViewEnvironmentSettings;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:scaled_app/scaled_app.dart';
 import 'package:toastification/toastification.dart';
 import 'package:trios/chipper/chipper_home.dart';
+import 'package:trios/chipper/utils.dart';
 import 'package:trios/dashboard/dashboard.dart';
 import 'package:trios/modBrowser/mod_browser_page.dart';
 import 'package:trios/mod_manager/mods_grid_page.dart';
@@ -37,7 +39,6 @@ import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:trios/widgets/tab_button.dart';
 import 'package:trios/widgets/trios_app_icon.dart';
 
-import 'about/about_page.dart';
 import 'jre_manager/jre_manager_logic.dart';
 import 'launcher/launcher.dart';
 import 'main.dart';
@@ -234,10 +235,10 @@ class _AppShellState extends ConsumerState<AppShell>
               padding: const EdgeInsets.only(right: 16.0),
               child: MovingTooltipWidget.text(
                 message: Constants.appSubtitle,
-                child: const Stack(
+                child: Stack(
                   children: [
                     // if (ref.watch(AppState.isWindowFocused))
-                    Opacity(
+                    const Opacity(
                       opacity: 0.8,
                       child: Blur(
                         blurX: 10, // 8 for animation
@@ -245,7 +246,25 @@ class _AppShellState extends ConsumerState<AppShell>
                         child: TriOSAppIcon(),
                       ),
                     ),
-                    TriOSAppIcon(),
+                    // ContextMenuRegion(
+                    //   contextMenu: ContextMenu(
+                    //     entries: [
+                    //       MenuItem(
+                    //         label: "About",
+                    //         icon: Icons.info,
+                    //         onSelected: () => showTriOSAboutDialog(context),
+                    //       ),
+                    //     ],
+                    //   ),
+                    //   child: const TriOSAppIcon(),
+                    // ),
+                    GestureDetector(
+                      onTap: () => showTriOSAboutDialog(context),
+                      child: MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        child: const TriOSAppIcon(),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -625,21 +644,7 @@ class _AppShellState extends ConsumerState<AppShell>
                           ),
                           color: Theme.of(context).iconTheme.color,
                           onPressed: () {
-                            showAboutDialog(
-                              context: context,
-                              applicationIcon: const TriOSAppIcon(),
-                              applicationName: Constants.appTitle,
-                              applicationVersion:
-                                  "A Starsector toolkit\nby Wisp",
-                              children: [
-                                ConstrainedBox(
-                                  constraints: const BoxConstraints(
-                                    maxWidth: 700,
-                                  ),
-                                  child: const AboutPage(),
-                                ),
-                              ],
-                            );
+                            showTriOSAboutDialog(context);
                           },
                         ),
                       ),

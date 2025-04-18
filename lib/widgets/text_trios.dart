@@ -6,7 +6,7 @@ class TextTriOS extends StatelessWidget {
   final String text;
   final TextStyle? style;
   final TextAlign? textAlign;
-  final int maxLines;
+  final int? maxLines;
   final TextOverflow overflow;
 
   const TextTriOS(
@@ -14,7 +14,7 @@ class TextTriOS extends StatelessWidget {
     super.key,
     this.style,
     this.textAlign,
-    this.maxLines = 1,
+    this.maxLines,
     this.overflow = TextOverflow.ellipsis,
   });
 

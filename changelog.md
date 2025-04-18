@@ -1,6 +1,7 @@
 # 1.2.0 (in dev)
 - Added
   - Weapons Viewer
+  - Editor for game FPS limit and vsync toggle.
 - Fixed
   - 
 - Changed

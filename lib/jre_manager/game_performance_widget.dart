@@ -4,16 +4,20 @@ import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:styled_text/styled_text.dart';
+import 'package:toastification/toastification.dart';
+import 'package:trios/dashboard/game_settings_manager.dart';
 import 'package:trios/jre_manager/ram_changer.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/widgets/checkbox_with_label.dart';
 import 'package:trios/widgets/conditional_wrap.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/download_progress_indicator.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:trios/widgets/text_trios.dart';
 
 import '../models/download_progress.dart';
 import '../widgets/disable_if_cannot_write_game_folder.dart';
@@ -46,7 +50,14 @@ class _GamePerformanceWidgetState extends ConsumerState<GamePerformanceWidget>
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(width: 350, child: ChangeJreWidget()),
+          SingleChildScrollView(
+            child: SizedBox(
+              width: 350,
+              child: Column(
+                children: [ChangeSettingsWidget(), ChangeJreWidget()],
+              ),
+            ),
+          ),
           SizedBox(
             width: 350,
             child: ChangeRamWidget(
@@ -100,7 +111,7 @@ class _ChangeJreWidgetState extends ConsumerState<ChangeJreWidget> {
                         children: [
                           Center(
                             child: Text(
-                              "Change JRE",
+                              "JRE",
                               style: Theme.of(context).textTheme.titleLarge,
                             ),
                           ),
@@ -495,10 +506,7 @@ class ChangeRamWidget extends StatelessWidget {
           child: SingleChildScrollView(
             child: Column(
               children: [
-                Text(
-                  "Change RAM",
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
+                Text("RAM", style: Theme.of(context).textTheme.titleLarge),
                 StyledText(
                   text:
                       currentRamAmountInMb == null
@@ -536,6 +544,163 @@ class ChangeRamWidget extends StatelessWidget {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class ChangeSettingsWidget extends ConsumerStatefulWidget {
+  const ChangeSettingsWidget({super.key});
+
+  @override
+  ConsumerState createState() => _ChangeSettingsWidgetState();
+}
+
+class _ChangeSettingsWidgetState extends ConsumerState<ChangeSettingsWidget> {
+  int fpsSliderValue = 60;
+
+  @override
+  void initState() {
+    super.initState();
+    fpsSliderValue = ref.read(gameSettingsProvider).value?.fps ?? 60;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Builder(
+          builder: (context) {
+            final gameSettingsPvdr = ref.watch(gameSettingsProvider);
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(
+                    "Game Settings",
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                ),
+                gameSettingsPvdr.when(
+                  data:
+                      (gameSettings) => Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "FPS Limit",
+                            style: Theme.of(context).textTheme.titleSmall,
+                          ),
+                          gameSettings.fps == null
+                              ? TextTriOS(
+                                "Unable to read FPS Limit from settings.json",
+                                style: Theme.of(
+                                  context,
+                                ).textTheme.labelLarge?.copyWith(
+                                  fontStyle: FontStyle.italic,
+                                  color: warningColor,
+                                ),
+                              )
+                              : Row(
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                      left: 8,
+                                      right: 8,
+                                    ),
+                                    child: Text(
+                                      "$fpsSliderValue",
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.labelMedium?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Slider(
+                                      value: fpsSliderValue.toDouble(),
+                                      min: 30,
+                                      max: 144,
+                                      divisions: 114,
+                                      padding: EdgeInsets.zero,
+                                      onChangeEnd: (value) {
+                                        ref
+                                            .read(gameSettingsProvider.notifier)
+                                            .setFps(value.toInt());
+                                        fpsSliderValue = value.toInt();
+                                      },
+                                      onChanged: (value) {
+                                        setState(() {
+                                          fpsSliderValue = value.toInt();
+                                        });
+                                      },
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.only(left: 8),
+                                    child: MovingTooltipWidget.text(
+                                      message: "Reset to 60 FPS",
+                                      child: IconButton(
+                                        padding: EdgeInsets.zero,
+                                        visualDensity: VisualDensity.compact,
+                                        onPressed: () {
+                                          ref
+                                              .read(
+                                                gameSettingsProvider.notifier,
+                                              )
+                                              .setFps(60);
+                                          setState(() {
+                                            fpsSliderValue = 60;
+                                          });
+                                        },
+                                        icon: Icon(Icons.restart_alt),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                          gameSettings.vsync == null
+                              ? TextTriOS(
+                                "Unable to read Vsync from settings.json",
+                                style: Theme.of(
+                                  context,
+                                ).textTheme.labelLarge?.copyWith(
+                                  fontStyle: FontStyle.italic,
+                                  color: warningColor,
+                                ),
+                              )
+                              : MovingTooltipWidget.text(
+                                message:
+                                    "Vsync reduces screen tearing but introduces a tiny input delay.",
+                                child: Transform.translate(
+                                  offset: Offset(0, 0),
+                                  child: CheckboxWithLabel(
+                                    label: "Use Vsync",
+                                    value: gameSettings.vsync!,
+                                    labelStyle:
+                                        Theme.of(context).textTheme.labelLarge,
+                                    onChanged: (value) {
+                                      ref
+                                          .read(gameSettingsProvider.notifier)
+                                          .setVsync(value == true);
+                                    },
+                                  ),
+                                ),
+                              ),
+                        ],
+                      ),
+                  error:
+                      (err, stack) => TextTriOS(
+                        "Error: $err",
+                        style: Theme.of(context).textTheme.labelLarge,
+                      ),
+                  loading: () => CircularProgressIndicator(),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );

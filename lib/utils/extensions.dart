@@ -995,3 +995,14 @@ extension EnumFromStringCaseInsensitive on Iterable {
         as T?;
   }
 }
+
+// Workaround for freezes on certain Linux distributions, see https://github.com/flutter/flutter/issues/153560
+extension LinuxTextInputFreezeWorkaround on Widget {
+  Widget linuxTextInputFreezeWorkaround() {
+    if (Platform.isLinux) {
+      return ExcludeSemantics(child: this);
+    } else {
+      return this;
+    }
+  }
+}

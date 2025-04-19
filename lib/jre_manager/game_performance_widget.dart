@@ -558,16 +558,18 @@ class ChangeSettingsWidget extends ConsumerStatefulWidget {
 }
 
 class _ChangeSettingsWidgetState extends ConsumerState<ChangeSettingsWidget> {
-  int fpsSliderValue = 60;
-
-  @override
-  void initState() {
-    super.initState();
-    fpsSliderValue = ref.read(gameSettingsProvider).value?.fps ?? 60;
-  }
+  int? fpsSliderValue;
 
   @override
   Widget build(BuildContext context) {
+    final fpsInSettings = ref.watch(gameSettingsProvider).value?.fps;
+
+    if (fpsSliderValue == null && fpsInSettings != null) {
+      setState(() {
+        fpsSliderValue = fpsInSettings;
+      });
+    }
+
     return Card(
       child: Padding(
         padding: EdgeInsets.all(16),
@@ -620,7 +622,7 @@ class _ChangeSettingsWidgetState extends ConsumerState<ChangeSettingsWidget> {
                                   ),
                                   Expanded(
                                     child: Slider(
-                                      value: fpsSliderValue.toDouble(),
+                                      value: fpsSliderValue!.toDouble(),
                                       min: 30,
                                       max: 144,
                                       divisions: 114,

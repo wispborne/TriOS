@@ -3,7 +3,9 @@
   - Weapons Viewer
   - Editor for game FPS limit and vsync toggle.
 - Fixed
-  - Disabled semantics for Linux builds to prevent text input field freezes 
+  - Disabled semantics for Linux builds to prevent text input field freezes.
+  - Restoring window position did not respect scaling.
+  - Restoring window position did not remember your monitor.
 - Changed
   - Mods Grid: Cut-off text now has a tooltip on hover.
 

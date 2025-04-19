@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
@@ -32,7 +33,48 @@ import 'trios/app_state.dart';
 Object? loggingError;
 StateProvider<WebViewEnvironment?> webViewEnvironment =
     StateProvider<WebViewEnvironment?>((ref) => null);
+
 List<Future<void> Function(BuildContext)> onAppLoadedActions = [];
+
+Future<Rect> _convertLogicalToPhysicalPixels(Rect r) async {
+  final p = await ScreenRetriever.instance.getPrimaryDisplay();
+  final d = (await ScreenRetriever.instance.getAllDisplays()).firstWhere(
+    (d) => (((d.visiblePosition ?? Offset.zero) & (d.visibleSize ?? d.size))
+        .contains(r.center)),
+    orElse: () => p,
+  );
+  final s = (d.scaleFactor ?? 1).toDouble();
+  return Rect.fromLTWH(r.left * s, r.top * s, r.width * s, r.height * s);
+}
+
+Future<void> _ensureWindowIsVisible() async {
+  Rect vis(Display d) {
+    final o = d.visiblePosition ?? Offset.zero, s = d.visibleSize ?? d.size;
+    return Rect.fromLTWH(o.dx, o.dy, s.width, s.height);
+  }
+
+  final display = await ScreenRetriever.instance.getAllDisplays();
+  if (display.isEmpty) return;
+
+  final bounds = await windowManager.getBounds();
+  if (display.any((d) {
+    final r = vis(d);
+    return r.overlaps(bounds) || r.contains(bounds.center);
+  })) {
+    return;
+  }
+
+  final t = await ScreenRetriever.instance.getPrimaryDisplay();
+  final r = vis(t), s = (t.scaleFactor ?? 1).toDouble();
+  await windowManager.setBounds(
+    Rect.fromLTWH(
+      r.left * s,
+      r.top * s,
+      math.min(bounds.width, r.width) * s,
+      math.min(bounds.height, r.height) * s,
+    ),
+  );
+}
 
 void main() async {
   double scaleFactorCallback(Size deviceSize) {
@@ -177,7 +219,7 @@ void main() async {
       settings?.windowWidth ?? 1050,
       settings?.windowHeight ?? 800,
     );
-    setWindowFrame(windowFrame);
+    setWindowFrame(await _convertLogicalToPhysicalPixels(windowFrame));
     if (settings?.isMaximized ?? false) {
       windowManager.maximize();
     }
@@ -191,31 +233,7 @@ void main() async {
     );
 
     // If the window is off screen, move it to the first display.
-    final bounds = await windowManager.getBounds();
-    final displays = await ScreenRetriever.instance.getAllDisplays();
-    final isOnScreen = displays.any(
-      (display) =>
-          display.size.contains(bounds.topLeft) ||
-          display.size.contains(bounds.bottomRight) ||
-          display.size.contains(bounds.bottomLeft) ||
-          display.size.contains(bounds.topRight),
-    );
-
-    if (!isOnScreen && displays.isNotEmpty) {
-      final primaryDisplay = displays.firstOrNull!;
-      final newBounds = Rect.fromLTWH(
-        primaryDisplay.visiblePosition?.dx ?? 0,
-        primaryDisplay.visiblePosition?.dy ?? 0,
-        windowFrame.width,
-        windowFrame.height,
-      );
-      Fimber.i(
-        "Window is off screen, moving to first display."
-        "\nOld bounds: $bounds"
-        "\nNew bounds: $newBounds",
-      );
-      await windowManager.setBounds(newBounds);
-    }
+    await _ensureWindowIsVisible();
   } catch (e) {
     Fimber.e("Error restoring window position and size.", ex: e);
   }

@@ -3,6 +3,7 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+  charset_converter
   desktop_drop
   flutter_inappwebview_windows
   irondash_engine_context

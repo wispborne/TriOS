@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:charset_converter/charset_converter.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 import 'package:trios/compression/archive.dart'; // your interface
@@ -149,7 +150,7 @@ class SevenZip implements ArchiveInterface {
       'l',
       '-slt',
       archiveFile.path,
-    ]);
+    ], stdoutEncoding: null);
 
     if (result.exitCode != 0) {
       throw Exception(
@@ -159,7 +160,11 @@ class SevenZip implements ArchiveInterface {
       );
     }
 
-    final lines = (result.stdout as String).split('\n');
+    final charsets = await CharsetConverter.availableCharsets();
+
+    final str = Uint8List.fromList(result.stdout);
+    final test = await CharsetConverter.decode("windows1252", str);
+    final lines = test.split('\n');
     final files = <SevenZipEntry>[];
     for (final line in lines) {
       final trimmed = line.trimRight();

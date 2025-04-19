@@ -72,6 +72,7 @@ class Settings with SettingsMappable {
   final bool checkIfGameIsRunning;
   final CompressionLib compressionLib;
   final double windowScaleFactor;
+  final bool enableAccessibilitySemanticsOnLinux;
 
   @Deprecated("Use getSentryUserId instead.")
   final String userId; // For Sentry
@@ -137,6 +138,7 @@ class Settings with SettingsMappable {
     this.checkIfGameIsRunning = true,
     this.compressionLib = CompressionLib.sevenZip,
     this.windowScaleFactor = 1.0,
+    this.enableAccessibilitySemanticsOnLinux = false,
     this.userId = '',
     this.hasHiddenForumDarkModeTip,
     this.activeModProfileId,

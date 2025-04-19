@@ -1138,6 +1138,39 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                           ],
                         ),
                       ),
+                      if (Platform.isLinux)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 16),
+                          child: MovingTooltipWidget.text(
+                            message:
+                                "The Flutter framework (what ${Constants.appName} uses) has a bug that causes freezes related to text fields on some Linux distros."
+                                "\nDisabling accessibility semantics fixes those freezes."
+                                "\nYou may need to fully restart ${Constants.appName} to apply the changes.",
+                            child: CheckboxWithLabel(
+                              value: ref.watch(
+                                appSettings.select(
+                                  (value) =>
+                                      value
+                                          .enableAccessibilitySemanticsOnLinux ==
+                                      true,
+                                ),
+                              ),
+                              onChanged: (value) {
+                                ref
+                                    .read(appSettings.notifier)
+                                    .update(
+                                      (state) => state.copyWith(
+                                        enableAccessibilitySemanticsOnLinux:
+                                            value,
+                                      ),
+                                    );
+                                RestartableApp.restartApp(context);
+                              },
+                              label:
+                                  "Enable Accessibility Semantics (may cause freezes)",
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                   // Debugging line here

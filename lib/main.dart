@@ -150,15 +150,15 @@ void main() async {
         },
         appRunner: () {
           Fimber.i("Sentry initialized.");
-          _runTriOS();
+          _runTriOS(settings);
         },
       );
     } catch (e) {
       Fimber.e("Error initializing Sentry.", ex: e);
-      _runTriOS();
+      _runTriOS(settings);
     }
   } else {
-    _runTriOS();
+    _runTriOS(settings);
   }
 
   try {
@@ -253,11 +253,19 @@ void main() async {
   );
 }
 
-void _runTriOS() => runApp(
-  const ProviderScope(
+// ignore: missing_provider_scope
+void _runTriOS(Settings? appSettings) => runApp(
+  ProviderScope(
     observers: [],
-    child: RestartableApp(child: TriOSApp()),
-  ).linuxTextInputFreezeWorkaround(),
+    child: RestartableApp(
+      child: ExcludeSemantics(
+        excluding:
+            Platform.isLinux &&
+            appSettings?.enableAccessibilitySemanticsOnLinux != true,
+        child: TriOSApp(),
+      ),
+    ),
+  ),
 );
 
 class TriOSApp extends ConsumerStatefulWidget {

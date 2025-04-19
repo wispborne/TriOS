@@ -454,6 +454,12 @@ class SettingsMapper extends ClassMapperBase<Settings> {
   static double _$windowScaleFactor(Settings v) => v.windowScaleFactor;
   static const Field<Settings, double> _f$windowScaleFactor =
       Field('windowScaleFactor', _$windowScaleFactor, opt: true, def: 1.0);
+  static bool _$enableAccessibilitySemanticsOnLinux(Settings v) =>
+      v.enableAccessibilitySemanticsOnLinux;
+  static const Field<Settings, bool> _f$enableAccessibilitySemanticsOnLinux =
+      Field('enableAccessibilitySemanticsOnLinux',
+          _$enableAccessibilitySemanticsOnLinux,
+          opt: true, def: false);
   static String _$userId(Settings v) => v.userId;
   static const Field<Settings, String> _f$userId =
       Field('userId', _$userId, opt: true, def: '');
@@ -509,6 +515,8 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #checkIfGameIsRunning: _f$checkIfGameIsRunning,
     #compressionLib: _f$compressionLib,
     #windowScaleFactor: _f$windowScaleFactor,
+    #enableAccessibilitySemanticsOnLinux:
+        _f$enableAccessibilitySemanticsOnLinux,
     #userId: _f$userId,
     #hasHiddenForumDarkModeTip: _f$hasHiddenForumDarkModeTip,
     #activeModProfileId: _f$activeModProfileId,
@@ -560,6 +568,8 @@ class SettingsMapper extends ClassMapperBase<Settings> {
         checkIfGameIsRunning: data.dec(_f$checkIfGameIsRunning),
         compressionLib: data.dec(_f$compressionLib),
         windowScaleFactor: data.dec(_f$windowScaleFactor),
+        enableAccessibilitySemanticsOnLinux:
+            data.dec(_f$enableAccessibilitySemanticsOnLinux),
         userId: data.dec(_f$userId),
         hasHiddenForumDarkModeTip: data.dec(_f$hasHiddenForumDarkModeTip),
         activeModProfileId: data.dec(_f$activeModProfileId));
@@ -660,6 +670,7 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
       bool? checkIfGameIsRunning,
       CompressionLib? compressionLib,
       double? windowScaleFactor,
+      bool? enableAccessibilitySemanticsOnLinux,
       String? userId,
       bool? hasHiddenForumDarkModeTip,
       String? activeModProfileId});
@@ -731,6 +742,7 @@ class _SettingsCopyWithImpl<$R, $Out>
           bool? checkIfGameIsRunning,
           CompressionLib? compressionLib,
           double? windowScaleFactor,
+          bool? enableAccessibilitySemanticsOnLinux,
           String? userId,
           Object? hasHiddenForumDarkModeTip = $none,
           Object? activeModProfileId = $none}) =>
@@ -795,6 +807,9 @@ class _SettingsCopyWithImpl<$R, $Out>
           #checkIfGameIsRunning: checkIfGameIsRunning,
         if (compressionLib != null) #compressionLib: compressionLib,
         if (windowScaleFactor != null) #windowScaleFactor: windowScaleFactor,
+        if (enableAccessibilitySemanticsOnLinux != null)
+          #enableAccessibilitySemanticsOnLinux:
+              enableAccessibilitySemanticsOnLinux,
         if (userId != null) #userId: userId,
         if (hasHiddenForumDarkModeTip != $none)
           #hasHiddenForumDarkModeTip: hasHiddenForumDarkModeTip,
@@ -863,6 +878,7 @@ class _SettingsCopyWithImpl<$R, $Out>
       checkIfGameIsRunning: data.get(#checkIfGameIsRunning, or: $value.checkIfGameIsRunning),
       compressionLib: data.get(#compressionLib, or: $value.compressionLib),
       windowScaleFactor: data.get(#windowScaleFactor, or: $value.windowScaleFactor),
+      enableAccessibilitySemanticsOnLinux: data.get(#enableAccessibilitySemanticsOnLinux, or: $value.enableAccessibilitySemanticsOnLinux),
       userId: data.get(#userId, or: $value.userId),
       hasHiddenForumDarkModeTip: data.get(#hasHiddenForumDarkModeTip, or: $value.hasHiddenForumDarkModeTip),
       activeModProfileId: data.get(#activeModProfileId, or: $value.activeModProfileId));

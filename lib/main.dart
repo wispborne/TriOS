@@ -35,14 +35,14 @@ StateProvider<WebViewEnvironment?> webViewEnvironment =
 List<Future<void> Function(BuildContext)> onAppLoadedActions = [];
 
 void main() async {
-
   double scaleFactorCallback(Size deviceSize) {
     return 1;
   }
 
   try {
     ScaledWidgetsFlutterBinding.ensureInitialized(
-      scaleFactor: scaleFactorCallback,);
+      scaleFactor: scaleFactorCallback,
+    );
   } catch (e) {
     print("Error initializing Flutter widgets.");
   }
@@ -254,7 +254,10 @@ void main() async {
 }
 
 void _runTriOS() => runApp(
-  const ProviderScope(observers: [], child: RestartableApp(child: TriOSApp())),
+  const ProviderScope(
+    observers: [],
+    child: RestartableApp(child: TriOSApp()),
+  ).linuxTextInputFreezeWorkaround(),
 );
 
 class TriOSApp extends ConsumerStatefulWidget {

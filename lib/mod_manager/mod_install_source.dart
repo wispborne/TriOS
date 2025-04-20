@@ -20,12 +20,13 @@ abstract class ModInstallSource {
 
   /// Extracts or copies the files to the destination.
   /// [fileFilter] should be given absolute paths.
+  /// [onError] is called to determine whether to continue on error or throw.
   Future<List<SourcedFile>> createFilesAtDestination(
     String destinationPath,
     ArchiveInterface archive, {
     bool Function(String path)? fileFilter,
     String Function(String path)? pathTransform,
-    bool Function(Object ex, StackTrace st)? onError,
+    bool Function(Object ex, StackTrace? st)? onError,
   });
 }
 
@@ -68,35 +69,72 @@ class ArchiveModInstallSource extends ModInstallSource {
     }).toList();
   }
 
-  // TODO: Problem: if installing an archive with a subfolder of LazyLib, and the mods folder already has a folder called LazyLib,
-  // then it replaces the existing one, then moves the new one's files to a new folder, leaving the old LazyLib folder broken.
   @override
   Future<List<SourcedFile>> createFilesAtDestination(
     String destinationPath,
     archive, {
     bool Function(String path)? fileFilter,
     String Function(String path)? pathTransform,
-    bool Function(Object ex, StackTrace st)? onError,
+    bool Function(Object ex, StackTrace? st)? onError,
   }) async {
-    return (await archive.extractEntriesInArchive(
+    final fileList =
+        (await archive.listFiles(
           _archive,
-          destinationPath,
-          fileFilter:
-              fileFilter != null ? (entry) => fileFilter(entry.path) : null,
-          pathTransform:
-              pathTransform != null
-                  ? (entry) => pathTransform(entry.path)
-                  : null,
-          onError: onError,
-        )).nonNulls
-        .map(
-          (it) => SourcedFile(
-            it.archiveFile.path.toFile(),
-            it.extractedFile,
-            it.archiveFile.path,
+        )).where((e) => fileFilter == null || fileFilter(e.path)).toList();
+
+    final extractResult =
+        (await archive.extractEntriesInArchive(
+              _archive,
+              destinationPath,
+              fileFilter:
+                  fileFilter != null ? (entry) => fileFilter(entry.path) : null,
+              pathTransform:
+                  pathTransform != null
+                      ? (entry) => pathTransform(entry.path)
+                      : null,
+              onError: onError,
+            )).nonNulls
+            .map(
+              (it) => SourcedFile(
+                it.archiveFile.path.toFile(),
+                it.extractedFile,
+                it.archiveFile.path,
+              ),
+            )
+            .toList();
+
+    final extractedPaths = extractResult.map((e) => e.relativePath).toList();
+    final missingFiles =
+        fileList
+            .map((e) => e.path)
+            .where((expected) => !extractedPaths.contains(expected))
+            .toList();
+
+    if (missingFiles.isNotEmpty) {
+      final errMessage =
+          "${missingFiles.length} files where not installed as expected. Please install this mod manually.";
+      if (onError != null) {
+        onError(
+          ModInstallValidationException(
+            missingFiles.map((f) => File(f)).toList(),
           ),
-        )
-        .toList();
+          null,
+        );
+      }
+    }
+
+    return extractResult;
+  }
+}
+
+class ModInstallValidationException implements Exception {
+  final List<File> missingFiles;
+
+  ModInstallValidationException(this.missingFiles);
+
+  @override
+  String toString() {
+    return "Missing files:\n${missingFiles.map((f) => f.path).join("\n")}";
   }
 }
 

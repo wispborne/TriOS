@@ -165,7 +165,7 @@ class SevenZip implements ArchiveInterface {
       final trimmed = line.trimRight();
       if (trimmed.startsWith('Path = ')) {
         final filePath = trimmed.substring('Path = '.length);
-        if (filePath.isNotEmpty) {
+        if (filePath.isNotEmpty && filePath != archiveFile.path) {
           files.add(SevenZipEntry(filePath));
         }
       }
@@ -309,7 +309,11 @@ class SevenZip implements ArchiveInterface {
               "${oldFile.path} did not exist or was already in place (same as transformed path). Skipped.",
             );
           }
-          results.add(SevenZipExtractedFile(entry, newFile));
+
+          // Check that the file was extracted correctly. Directories are created automatically and don't show up here.
+          if (oldFile.isDirectory() || await newFile.exists()) {
+            results.add(SevenZipExtractedFile(entry, newFile));
+          }
         } catch (ex, st) {
           if (onError != null && onError(ex, st) == true) {
             continue;

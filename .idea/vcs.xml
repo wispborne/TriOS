@@ -2,9 +2,5 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/external/breakpad" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/external/crashpad" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/external/libunwindstack-ndk" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/external/third_party/lss" vcs="Git" />
   </component>
 </project>

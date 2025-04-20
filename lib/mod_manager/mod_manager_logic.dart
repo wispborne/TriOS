@@ -373,14 +373,14 @@ class ModManagerNotifier extends AsyncNotifier<void> {
                       children: [
                         TextSpan(
                           text:
-                              "One or more mods could not be extracted. Please install them manually.\n",
+                              "One or more mods had an error while installing. Please install them manually.\n",
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
                           ),
                         ),
                         TextSpan(
-                          text: "Check the logs for more information.\n\n",
+                          text: "Check the ${Constants.appName} logs for more information.\n\n",
                         ),
                       ],
                     ),
@@ -598,7 +598,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
           Fimber.i(
             "Deleted mod folder before reinstalling same variant: ${modToDelete.modFolder}",
           );
-        } catch (e, st) {
+        } on Exception catch (e, st) {
           Fimber.e(
             "Error deleting mod folder: ${modToDelete.modFolder}",
             ex: e,
@@ -820,7 +820,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
         );
       }
 
-      final errors = <(Object err, StackTrace st)>[];
+      final errors = <(Object err, StackTrace? st)>[];
       final archive = ref.read(archiveProvider).requireValue;
 
       final extractedMod = await modInstallSource.createFilesAtDestination(
@@ -834,7 +834,11 @@ class ModManagerNotifier extends AsyncNotifier<void> {
             ),
         onError: (e, st) {
           errors.add((e, st));
-          Fimber.e("Error extracting file: $e", ex: e, stacktrace: st);
+          Fimber.e(
+            "Error extracting file: ${modInstallSource.entity.path}",
+            ex: e,
+            stacktrace: st,
+          );
           return false;
         },
       );
@@ -859,6 +863,15 @@ class ModManagerNotifier extends AsyncNotifier<void> {
         modInfo.smolId,
       ], dryRun: dryRun);
 
+      final missingFilesError =
+          errors
+              .map((record) => record.$1)
+              .whereType<ModInstallValidationException>()
+              .toList();
+      if (missingFilesError.isNotEmpty) {
+        throw missingFilesError.first;
+      }
+
       return (
         sourceFileEntity: modInstallSource.entity.toFile(),
         destinationFolder: destinationFolder,
@@ -866,7 +879,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
         err: null,
         st: null,
       );
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       Fimber.e("Error installing mod: $e", ex: e, stacktrace: st);
       return (
         sourceFileEntity: modInstallSource.entity.toFile(),
@@ -1050,7 +1063,7 @@ typedef InstallModResult =
       File sourceFileEntity,
       Directory destinationFolder,
       ModInfo modInfo,
-      Object? err,
+      Exception? err,
       StackTrace? st,
     });
 

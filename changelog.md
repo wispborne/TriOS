@@ -2,6 +2,7 @@
 - Added
   - Weapons Viewer
   - Editor for game FPS limit and vsync toggle.
+  - Post-install validation to check that mod files were installed as expected.
 - Fixed
   - Disabled semantics for Linux builds to prevent text input field freezes.
   - Restoring window position did not respect scaling.

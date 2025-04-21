@@ -590,9 +590,25 @@ class _ChangeSettingsWidgetState extends ConsumerState<ChangeSettingsWidget> {
                       (gameSettings) => Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            "FPS Limit",
-                            style: Theme.of(context).textTheme.titleSmall,
+                          Row(
+                            children: [
+                              Text(
+                                "FPS Limit",
+                                style: Theme.of(context).textTheme.titleSmall,
+                              ),
+                              SizedBox(width: 8),
+                              MovingTooltipWidget.text(
+                                message:
+                                    "Recommended: Set your max FPS to your monitor's refresh rate or lower.",
+                                child: Icon(
+                                  Icons.info_outlined,
+                                  size: 20,
+                                  color: Theme.of(
+                                    context,
+                                  ).iconTheme.color?.withValues(alpha: 0.8),
+                                ),
+                              ),
+                            ],
                           ),
                           gameSettings.fps == null
                               ? TextTriOS(
@@ -624,8 +640,8 @@ class _ChangeSettingsWidgetState extends ConsumerState<ChangeSettingsWidget> {
                                     child: Slider(
                                       value: fpsSliderValue!.toDouble(),
                                       min: 30,
-                                      max: 144,
-                                      divisions: 114,
+                                      max: 240,
+                                      divisions: 240,
                                       padding: EdgeInsets.zero,
                                       onChangeEnd: (value) {
                                         ref

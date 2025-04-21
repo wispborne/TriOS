@@ -4,9 +4,9 @@ import 'dart:io';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as p;
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/mod_variant.dart';
-import 'package:trios/models/version.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/download_manager/download_manager.dart';
@@ -278,7 +278,11 @@ AlertDialog buildForceGameVersionWarningDialog(
           Navigator.of(context).pop();
           ref
               .read(modManager.notifier)
-              .forceChangeModGameVersion(modVariant, currentStarsectorVersion, refreshModlistAfter: refreshModlistAfter);
+              .forceChangeModGameVersion(
+                modVariant,
+                currentStarsectorVersion,
+                refreshModlistAfter: refreshModlistAfter,
+              );
           ref.invalidate(AppState.modVariants);
           onForced?.call();
         },
@@ -415,6 +419,18 @@ MenuItem buildMenuItemOpenModInfoFile(Mod mod) {
 MenuItem menuItemDeleteFolder(Mod mod, BuildContext context, WidgetRef ref) {
   Future<void> deleteFolder(String folderPath) async {
     final directory = Directory(folderPath);
+    final modsDir = ref.read(appSettings.select((s) => s.modsDir))!.path;
+
+    if (p.equals(folderPath, modsDir)) {
+      Fimber.e("Refusing to delete the mods root folder");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Did you just try to delete your mods folder? No!"),
+        ),
+      );
+      return;
+    }
+
     if (await directory.exists()) {
       directory.moveToTrash(deleteIfFailed: true);
     }

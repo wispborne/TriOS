@@ -380,7 +380,8 @@ class ModManagerNotifier extends AsyncNotifier<void> {
                           ),
                         ),
                         TextSpan(
-                          text: "Check the ${Constants.appName} logs for more information.\n\n",
+                          text:
+                              "Check the ${Constants.appName} logs for more information.\n\n",
                         ),
                       ],
                     ),
@@ -1070,8 +1071,7 @@ typedef InstallModResult =
 Future<List<ModVariant>> getModsVariantsInFolder(Directory modsFolder) async {
   final mods = <ModVariant?>[];
   if (!modsFolder.existsSync()) return [];
-  final folders =
-      [modsFolder] + [...modsFolder.listSync().whereType<Directory>()];
+  final folders = modsFolder.listSync().whereType<Directory>();
 
   for (final modFolder in folders) {
     try {

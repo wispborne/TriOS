@@ -3,8 +3,11 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
+import 'package:trios/models/version.dart';
+import 'package:trios/thirdparty/dartx/comparable.dart';
 import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
+import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
@@ -193,28 +196,30 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                             ),
                           ),
                           SizedBox(width: 8),
-                          MovingTooltipWidget.text(
-                            message: "Sort By",
-                            child: PopupMenuButton<String>(
-                              icon: Icon(Icons.sort, size: 20),
-                              tooltip: "",
-                              itemBuilder:
-                                  (context) => [
-                                    PopupMenuItem(
-                                      value: "name",
-                                      onTap: () {
-                                        // todo
-                                        ref.watch(
-                                          appSettings.select(
-                                            (s) => s.dashboardModListSort,
-                                          ),
-                                        );
-                                      },
-                                      child: Text("Sort by Name (todo)"),
-                                    ),
-                                  ],
+                          if (Constants.currentVersion >=
+                              Version.parse("1.2.0"))
+                            MovingTooltipWidget.text(
+                              message: "Sort By",
+                              child: PopupMenuButton<String>(
+                                icon: Icon(Icons.sort, size: 20),
+                                tooltip: "",
+                                itemBuilder:
+                                    (context) => [
+                                      PopupMenuItem(
+                                        value: "name",
+                                        onTap: () {
+                                          // todo
+                                          ref.watch(
+                                            appSettings.select(
+                                              (s) => s.dashboardModListSort,
+                                            ),
+                                          );
+                                        },
+                                        child: Text("Sort by Name (todo)"),
+                                      ),
+                                    ],
+                              ),
                             ),
-                          ),
                           const Spacer(),
                           PopupMenuButton<String>(
                             icon: Icon(Icons.settings, size: 20),

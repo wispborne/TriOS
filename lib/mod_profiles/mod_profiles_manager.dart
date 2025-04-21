@@ -411,13 +411,13 @@ class ModProfileManagerNotifier
         );
       }
 
-      Fimber.i("here1.");
+      // Fimber.i("here1.");
       await modVariantsNotifier.validateModDependencies();
-      Fimber.i("here2.");
+      // Fimber.i("here2.");
       ref
           .read(appSettings.notifier)
           .update((s) => s.copyWith(activeModProfileId: modProfileId));
-      Fimber.i("here3.");
+      // Fimber.i("here3.");
       Fimber.i("Finished activating mod profile $modProfileId.");
     } catch (e, stack) {
       Fimber.e(
@@ -426,7 +426,7 @@ class ModProfileManagerNotifier
         stacktrace: stack,
       );
     } finally {
-      Fimber.i("here4.");
+      // Fimber.i("here4.");
       _pauseAutomaticProfileUpdates = false;
       modVariantsNotifier.shouldAutomaticallyReloadOnFilesChanged = true;
       isChangingModProfileProvider = false;

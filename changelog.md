@@ -1,12 +1,17 @@
 # 1.2.0 (in dev)
 - Added
   - Weapons Viewer
+
+# 1.1.9
+- Added
   - Editor for game FPS limit and vsync toggle.
   - Post-install validation to check that mod files were installed as expected.
 - Fixed
   - Disabled semantics for Linux builds to prevent text input field freezes.
   - Restoring window position did not respect scaling.
   - Restoring window position did not remember your monitor.
+  - Edge case where mods folder could be deleted.
+    - A `mods/mod_info.json` file (directly in the mods folder) would be read as a mod. Deleting it would delete its parent folder, which would be `mods`.
 - Changed
   - Mods Grid: Cut-off text now has a tooltip on hover.
 

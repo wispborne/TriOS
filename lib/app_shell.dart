@@ -18,6 +18,7 @@ import 'package:trios/portraits/portraits_viewer.dart';
 import 'package:trios/rules_autofresh/rules_hotreload.dart';
 import 'package:trios/shipViewer/shipsPage.dart';
 import 'package:trios/themes/theme_manager.dart';
+import 'package:trios/thirdparty/dartx/comparable.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/navigation.dart';
 import 'package:trios/trios/self_updater/self_updater.dart';
@@ -382,24 +383,25 @@ class _AppShellState extends ConsumerState<AppShell>
                           onPressed: () => _changeTab(TriOSTools.weapons),
                         ),
                       ),
-                      MovingTooltipWidget.text(
-                        message: "Ship Viewer",
-                        child: IconButton(
-                          icon: SvgImageIcon(
-                            "assets/images/icon-onslaught.svg",
-                            height: 24,
-                            width: 24,
+                      if (Constants.currentVersion >= Version.parse("1.2.0"))
+                        MovingTooltipWidget.text(
+                          message: "Ship Viewer",
+                          child: IconButton(
+                            icon: SvgImageIcon(
+                              "assets/images/icon-onslaught.svg",
+                              height: 24,
+                              width: 24,
+                            ),
+                            selectedIcon: SvgImageIcon(
+                              "assets/images/icon-onslaught.svg",
+                              color: Theme.of(context).colorScheme.primary,
+                              height: 24,
+                              width: 24,
+                            ),
+                            isSelected: _currentPage == TriOSTools.ships,
+                            onPressed: () => _changeTab(TriOSTools.ships),
                           ),
-                          selectedIcon: SvgImageIcon(
-                            "assets/images/icon-onslaught.svg",
-                            color: Theme.of(context).colorScheme.primary,
-                            height: 24,
-                            width: 24,
-                          ),
-                          isSelected: _currentPage == TriOSTools.ships,
-                          onPressed: () => _changeTab(TriOSTools.ships),
                         ),
-                      ),
                       MovingTooltipWidget.text(
                         message: "Portraits Viewer\n\nWarning: spoilers!",
                         child: IconButton(

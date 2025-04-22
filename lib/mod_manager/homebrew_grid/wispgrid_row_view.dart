@@ -55,6 +55,7 @@ class _WispGridRowViewState<T extends WispGridItem>
             modifiers: RowBuilderModifiers(
               isHovering: isHovering,
               isRowChecked: widget.isRowChecked,
+              columns: widget.columns,
             ),
             child: Column(
               children: [

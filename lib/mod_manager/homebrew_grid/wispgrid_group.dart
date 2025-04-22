@@ -238,14 +238,10 @@ Widget? _vramSummaryOverlayWidget(
 
       // Calculate the offset of the VRAM column
       final gridState = ref.watch(appSettings.select((s) => s.modsGridState));
-      final cellWidthBeforeVramColumn =
-          gridState
-              .sortedVisibleColumns(columns)
-              .takeWhile(
-                (element) => element.key != ModGridHeader.vramImpact.name,
-              )
-              .map((e) => e.value.width + WispGrid.gridRowSpacing)
-              .sum;
+      final cellWidthBeforeVramColumn = gridState.getWidthUpToColumn(
+        ModGridHeader.vramImpact.name,
+        columns,
+      );
 
       return Positioned(
         // Subtract padding added to group that isn't present on the mod row

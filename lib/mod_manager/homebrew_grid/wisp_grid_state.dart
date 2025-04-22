@@ -1,6 +1,7 @@
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:flutter/material.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
+import 'package:trios/models/mod.dart';
 
 part 'wisp_grid_state.mapper.dart';
 
@@ -50,10 +51,12 @@ class CellBuilderModifiers with CellBuilderModifiersMappable {
 class RowBuilderModifiers with RowBuilderModifiersMappable {
   final bool isHovering;
   final bool isRowChecked;
+  final List<WispGridColumn> columns;
 
   const RowBuilderModifiers({
     required this.isHovering,
     required this.isRowChecked,
+    required this.columns,
   });
 }
 

@@ -499,9 +499,19 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                               child: Column(
                                 children: [
                                   child,
-                                  buildMissingDependencyButton(
-                                    (item).findFirstEnabled,
-                                    allMods,
+                                  Padding(
+                                    padding: EdgeInsets.only(
+                                      left:
+                                          12 +
+                                          gridState.getWidthUpToColumn(
+                                            ModGridHeader.name.name,
+                                            modifiers.columns,
+                                          ),
+                                    ),
+                                    child: buildMissingDependencyButtons(
+                                      (item).findFirstEnabled,
+                                      allMods,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -1461,7 +1471,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
     );
   }
 
-  Widget buildMissingDependencyButton(
+  Widget buildMissingDependencyButtons(
     ModVariant? enabledVersion,
     List<Mod> allMods,
   ) {
@@ -1490,102 +1500,123 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ...unmetDependencies.map((checkResult) {
-            final buttonStyle = OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              minimumSize: const Size(60, 34),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(
-                  ThemeManager.cornerRadius,
-                ), // Rounded corners
-              ),
+            return MissingDependencyButton(
+              enabledVersion: enabledVersion,
+              checkResult: checkResult,
+              allMods: allMods,
             );
-
-            return Padding(
-              padding: const EdgeInsets.only(right: 4),
-              child: MovingTooltipWidget.text(
-                message:
-                    "${enabledVersion?.modInfo.nameOrId} requires ${checkResult.dependency.formattedNameVersion}",
-                child: Row(
-                  children: [
-                    // if (checkResult.satisfiedAmount is Disabled)
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: Builder(
-                        builder: (context) {
-                          if (checkResult.satisfiedAmount is Disabled) {
-                            final disabledVariant =
-                                (checkResult.satisfiedAmount as Disabled)
-                                    .modVariant;
-                            return OutlinedButton(
-                              onPressed: () {
-                                ref
-                                    .read(AppState.modVariants.notifier)
-                                    .changeActiveModVariant(
-                                      disabledVariant!.mod(allMods)!,
-                                      disabledVariant,
-                                    );
-                              },
-                              style: buttonStyle,
-                              child: TextWithIcon(
-                                text:
-                                    "Enable ${disabledVariant?.modInfo.formattedNameVersion}",
-                                leading:
-                                    disabledVariant?.iconFilePath == null
-                                        ? null
-                                        : Image.file(
-                                          (disabledVariant?.iconFilePath ?? "")
-                                              .toFile(),
-                                          height: 20,
-                                          isAntiAlias: true,
-                                        ),
-                                leadingPadding: const EdgeInsets.only(right: 4),
-                              ),
-                            );
-                          } else {
-                            final missingDependency = checkResult.dependency;
-
-                            return OutlinedButton(
-                              onPressed: () async {
-                                final modName =
-                                    missingDependency.formattedNameVersionId;
-                                // Advanced search
-                                final url = Uri.parse(
-                                  'https://www.google.com/search?q=starsector+$modName+download',
-                                );
-
-                                if (await canLaunchUrl(url)) {
-                                  await launchUrl(url);
-                                } else {
-                                  showSnackBar(
-                                    context: context,
-                                    content: const Text(
-                                      "Couldn't open browser. Google recommends Chrome for a faster experience!",
-                                    ),
-                                  );
-                                }
-                              },
-                              style: buttonStyle,
-                              child: TextWithIcon(
-                                text:
-                                    "Search ${missingDependency.formattedNameVersionId}",
-                                leading: const SvgImageIcon(
-                                  "assets/images/icon-search.svg",
-                                  width: 20,
-                                  height: 20,
-                                ),
-                                leadingPadding: const EdgeInsets.only(right: 4),
-                              ),
-                            );
-                          }
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }).toList(),
+          }),
         ],
+      ),
+    );
+  }
+}
+
+class MissingDependencyButton extends ConsumerWidget {
+  const MissingDependencyButton({
+    super.key,
+    required this.enabledVersion,
+    required this.checkResult,
+    required this.allMods,
+  });
+
+  final ModVariant? enabledVersion;
+  final ModDependencyCheckResult checkResult;
+  final List<Mod> allMods;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final buttonStyle = OutlinedButton.styleFrom(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      minimumSize: const Size(60, 34),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(
+          ThemeManager.cornerRadius,
+        ), // Rounded corners
+      ),
+    );
+
+    return Padding(
+      padding: const EdgeInsets.only(right: 4),
+      child: MovingTooltipWidget.text(
+        message:
+            "${enabledVersion?.modInfo.nameOrId} requires ${checkResult.dependency.formattedNameVersion}",
+        child: Row(
+          children: [
+            // if (checkResult.satisfiedAmount is Disabled)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: Builder(
+                builder: (context) {
+                  if (checkResult.satisfiedAmount is Disabled) {
+                    final disabledVariant =
+                        (checkResult.satisfiedAmount as Disabled).modVariant;
+                    return OutlinedButton(
+                      onPressed: () {
+                        ref
+                            .read(AppState.modVariants.notifier)
+                            .changeActiveModVariant(
+                              disabledVariant!.mod(allMods)!,
+                              disabledVariant,
+                            );
+                      },
+                      style: buttonStyle,
+                      child: TextWithIcon(
+                        text:
+                            "Enable ${disabledVariant?.modInfo.formattedNameVersion}",
+                        leading:
+                            disabledVariant?.iconFilePath == null
+                                ? null
+                                : Image.file(
+                                  (disabledVariant?.iconFilePath ?? "")
+                                      .toFile(),
+                                  height: 20,
+                                  isAntiAlias: true,
+                                ),
+                        leadingPadding: const EdgeInsets.only(right: 4),
+                      ),
+                    );
+                  } else {
+                    final missingDependency = checkResult.dependency;
+
+                    return OutlinedButton(
+                      onPressed: () async {
+                        final modName =
+                            missingDependency.formattedNameVersionId;
+                        // Advanced search
+                        final url = Uri.parse(
+                          'https://www.google.com/search?q=starsector+$modName+download',
+                        );
+
+                        if (await canLaunchUrl(url)) {
+                          await launchUrl(url);
+                        } else {
+                          showSnackBar(
+                            context: context,
+                            content: const Text(
+                              "Couldn't open browser. Google recommends Chrome for a faster experience!",
+                            ),
+                          );
+                        }
+                      },
+                      style: buttonStyle,
+                      child: TextWithIcon(
+                        text:
+                            "Search ${missingDependency.formattedNameVersionId}",
+                        leading: const SvgImageIcon(
+                          "assets/images/icon-search.svg",
+                          width: 20,
+                          height: 20,
+                        ),
+                        leadingPadding: const EdgeInsets.only(right: 4),
+                      ),
+                    );
+                  }
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -88,6 +88,14 @@ class WispGridController<T extends WispGridItem> {
     : _wispGridState = wispGridState as _WispGridState<T>;
 }
 
+extension WispGridColumnsExtension on WispGridState {
+  double getWidthUpToColumn(String columnKey, List<WispGridColumn> columns) =>
+      sortedVisibleColumns(columns)
+          .takeWhile((element) => element.key != columnKey)
+          .map((e) => e.value.width + WispGrid.gridRowSpacing)
+          .sum;
+}
+
 class _WispGridState<T extends WispGridItem>
     extends ConsumerState<WispGrid<T>> {
   final ScrollController _gridScrollControllerVertical = ScrollController();

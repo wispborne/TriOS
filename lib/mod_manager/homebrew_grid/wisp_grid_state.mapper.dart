@@ -991,6 +991,7 @@ class RowBuilderModifiersMapper extends ClassMapperBase<RowBuilderModifiers> {
   static RowBuilderModifiersMapper ensureInitialized() {
     if (_instance == null) {
       MapperContainer.globals.use(_instance = RowBuilderModifiersMapper._());
+      WispGridColumnMapper.ensureInitialized();
     }
     return _instance!;
   }
@@ -1004,17 +1005,23 @@ class RowBuilderModifiersMapper extends ClassMapperBase<RowBuilderModifiers> {
   static bool _$isRowChecked(RowBuilderModifiers v) => v.isRowChecked;
   static const Field<RowBuilderModifiers, bool> _f$isRowChecked =
       Field('isRowChecked', _$isRowChecked);
+  static List<WispGridColumn<WispGridItem>> _$columns(RowBuilderModifiers v) =>
+      v.columns;
+  static const Field<RowBuilderModifiers, List<WispGridColumn<WispGridItem>>>
+      _f$columns = Field('columns', _$columns);
 
   @override
   final MappableFields<RowBuilderModifiers> fields = const {
     #isHovering: _f$isHovering,
     #isRowChecked: _f$isRowChecked,
+    #columns: _f$columns,
   };
 
   static RowBuilderModifiers _instantiate(DecodingData data) {
     return RowBuilderModifiers(
         isHovering: data.dec(_f$isHovering),
-        isRowChecked: data.dec(_f$isRowChecked));
+        isRowChecked: data.dec(_f$isRowChecked),
+        columns: data.dec(_f$columns));
   }
 
   @override
@@ -1072,7 +1079,15 @@ extension RowBuilderModifiersValueCopy<$R, $Out>
 
 abstract class RowBuilderModifiersCopyWith<$R, $In extends RowBuilderModifiers,
     $Out> implements ClassCopyWith<$R, $In, $Out> {
-  $R call({bool? isHovering, bool? isRowChecked});
+  ListCopyWith<
+      $R,
+      WispGridColumn<WispGridItem>,
+      WispGridColumnCopyWith<$R, WispGridColumn<WispGridItem>,
+          WispGridColumn<WispGridItem>, WispGridItem>> get columns;
+  $R call(
+      {bool? isHovering,
+      bool? isRowChecked,
+      List<WispGridColumn<WispGridItem>>? columns});
   RowBuilderModifiersCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
       Then<$Out2, $R2> t);
 }
@@ -1086,14 +1101,30 @@ class _RowBuilderModifiersCopyWithImpl<$R, $Out>
   late final ClassMapperBase<RowBuilderModifiers> $mapper =
       RowBuilderModifiersMapper.ensureInitialized();
   @override
-  $R call({bool? isHovering, bool? isRowChecked}) => $apply(FieldCopyWithData({
+  ListCopyWith<
+      $R,
+      WispGridColumn<WispGridItem>,
+      WispGridColumnCopyWith<
+          $R,
+          WispGridColumn<WispGridItem>,
+          WispGridColumn<WispGridItem>,
+          WispGridItem>> get columns => ListCopyWith(
+      $value.columns, (v, t) => v.copyWith.$chain(t), (v) => call(columns: v));
+  @override
+  $R call(
+          {bool? isHovering,
+          bool? isRowChecked,
+          List<WispGridColumn<WispGridItem>>? columns}) =>
+      $apply(FieldCopyWithData({
         if (isHovering != null) #isHovering: isHovering,
-        if (isRowChecked != null) #isRowChecked: isRowChecked
+        if (isRowChecked != null) #isRowChecked: isRowChecked,
+        if (columns != null) #columns: columns
       }));
   @override
   RowBuilderModifiers $make(CopyWithData data) => RowBuilderModifiers(
       isHovering: data.get(#isHovering, or: $value.isHovering),
-      isRowChecked: data.get(#isRowChecked, or: $value.isRowChecked));
+      isRowChecked: data.get(#isRowChecked, or: $value.isRowChecked),
+      columns: data.get(#columns, or: $value.columns));
 
   @override
   RowBuilderModifiersCopyWith<$R2, RowBuilderModifiers, $Out2>

@@ -1,6 +1,9 @@
 # 1.2.0 (in dev)
 - Added
   - Weapons Viewer
+- Fixed
+  - Unreadable font color on "change version" button if multiple mods were enabled and lowest one was for wrong game version (thanks, SirHartley...) 
+  - Alignment of mod dependency buttons (thanks SirHartley!)
 
 # 1.1.9
 - Added

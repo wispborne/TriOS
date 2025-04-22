@@ -8,7 +8,6 @@ import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
-import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
@@ -18,6 +17,7 @@ import '../models/mod_variant.dart';
 import '../utils/logging.dart';
 import 'mod_context_menu.dart';
 
+/// Button that lets user Enable/Disable a mod or swap to a different version
 class ModVersionSelectionDropdown extends ConsumerStatefulWidget {
   final Mod mod;
   final double width;
@@ -65,18 +65,40 @@ class _ModVersionSelectionDropdownState
     // Pseudo-disabled means it's enabled but has a warning outline.
     final isButtonPseudoDisabled = isButtonEnabled && !isSupportedByGameVersion;
 
-    final buttonColor =
-        hasMultipleEnabled
-            ? errorColor
-            : widget.mod.isEnabledInGame
-            ? theme.colorScheme.secondary
-            : theme.colorScheme.surface;
-    var textColor =
-        hasMultipleEnabled
-            ? theme.colorScheme.onSecondary.darker(20)
-            : widget.mod.isEnabledInGame
-            ? theme.colorScheme.onSecondary
-            : theme.colorScheme.onSurface;
+    // Button color logic
+    final buttonColor = switch ((
+      hasMultipleEnabled,
+      widget.mod.isEnabledInGame,
+    )) {
+      (true, _) => errorColor,
+      (false, true) => theme.colorScheme.secondary,
+      _ => theme.colorScheme.surface,
+    };
+
+    final textColor = switch ((
+      hasMultipleEnabled,
+      widget.mod.isEnabledInGame,
+    )) {
+      (true, _) => theme.colorScheme.onSecondary.darker(20),
+      (false, true) => theme.colorScheme.onSecondary,
+      _ => theme.colorScheme.onSurface,
+    };
+
+    final borderColor =
+        (isButtonEnabled && !isButtonPseudoDisabled)
+            ? (hasMultipleEnabled
+                ? ThemeManager.vanillaErrorColor.darker(20)
+                : theme.colorScheme.secondary.darker(20))
+            : ThemeManager.vanillaErrorColor.withOpacity(0.4);
+
+    Color? getGameCompatibilityTextColor(ModVariant variant) {
+      // Special handling if background color is errorColor. GameCompat color is orange/red, which is too hard to see.
+      return buttonColor == errorColor
+          ? null
+          : modCompatibilityMap[variant.smolId]?.gameCompatibility
+              .getGameCompatibilityColor();
+    }
+
     final buttonStyle = ElevatedButton.styleFrom(
       foregroundColor: textColor,
       disabledForegroundColor: textColor,
@@ -90,12 +112,7 @@ class _ModVersionSelectionDropdownState
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
         side: BorderSide(
-          color:
-              (isButtonEnabled && !isButtonPseudoDisabled)
-                  ? hasMultipleEnabled
-                      ? ThemeManager.vanillaErrorColor.darker(20)
-                      : theme.colorScheme.secondary.darker(20)
-                  : ThemeManager.vanillaErrorColor.withOpacity(0.4),
+          color: borderColor,
           // Slightly darker buttonColor
           width: 2.0,
         ),
@@ -148,6 +165,7 @@ class _ModVersionSelectionDropdownState
       }
     }
 
+    //////// Single variant button
     if (isSingleVariant) {
       final tooltipMessage =
           errorTooltip ??
@@ -199,7 +217,7 @@ class _ModVersionSelectionDropdownState
       );
     }
 
-    // Multiple variants tracked
+    //////// Multiple variants button
     final items = [
       if (widget.mod.hasEnabledVariant)
         const DropdownMenuItem(
@@ -212,11 +230,7 @@ class _ModVersionSelectionDropdownState
               value: variant,
               child: Text(
                 variant.modInfo.version.toString(),
-                style: TextStyle(
-                  color:
-                      modCompatibilityMap[variant.smolId]?.gameCompatibility
-                          .getGameCompatibilityColor(),
-                ),
+                style: TextStyle(color: getGameCompatibilityTextColor(variant)),
                 overflow: TextOverflow.ellipsis,
               ),
             ),

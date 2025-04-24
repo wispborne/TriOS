@@ -44,7 +44,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   final _customExecutablePathTextController = TextEditingController();
   final _windowScaleTextController = TextEditingController();
   final _scrollController = ScrollController();
-  double newWindowScaleDouble = 1.0;
+  int newWindowScale = 1;
 
   @override
   void initState() {
@@ -55,8 +55,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     _customExecutablePathTextController.text =
         ref.read(appSettings).customGameExePath ?? "";
 
-    newWindowScaleDouble = ref.read(appSettings).windowScaleFactor;
-    _windowScaleTextController.text = (newWindowScaleDouble * 100.0).toString();
+    newWindowScale = ref.read(appSettings).windowScaleFactor.toInt();
+    _windowScaleTextController.text = (newWindowScale * 100.0).toStringAsFixed(
+      0,
+    );
   }
 
   @override
@@ -1103,11 +1105,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                   onChanged: (newPath) {
                                     final newScale =
                                         double.parse(newPath) / 100.0;
-                                    newWindowScaleDouble = newScale;
+                                    newWindowScale = newScale.toInt();
                                   },
                                 ),
                               ),
                             ),
+                            const SizedBox(width: 4),
                             const Text("%"),
                             const SizedBox(width: 8),
                             MovingTooltipWidget.text(
@@ -1117,22 +1120,23 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                   "\nTri-Tachyon is not responsible if you set it to 300% and it's so big you can't get to the setting to fix it.",
                               child: ElevatedButton(
                                 onPressed: () {
-                                  if (newWindowScaleDouble >= 0.50 &&
-                                      newWindowScaleDouble <= 3.0) {
+                                  if (newWindowScale >= 0.50 &&
+                                      newWindowScale <= 3.0) {
                                     Fimber.i(
-                                      "Setting window scale to $newWindowScaleDouble",
+                                      "Setting window scale to $newWindowScale",
                                     );
                                     ref.read(appSettings.notifier).update((
                                       state,
                                     ) {
                                       return state.copyWith(
-                                        windowScaleFactor: newWindowScaleDouble,
+                                        windowScaleFactor:
+                                            newWindowScale.toDouble(),
                                       );
                                     });
                                   }
                                   // RestartableApp.restartApp(context);
                                 },
-                                child: const Text("Apply"),
+                                child: const Text("Apply UI Scaling"),
                               ),
                             ),
                           ],

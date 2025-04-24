@@ -4,6 +4,7 @@
 - Fixed
   - Unreadable font color on "change version" button if multiple mods were enabled and lowest one was for wrong game version (thanks, SirHartley...) 
   - Alignment of mod dependency buttons (thanks SirHartley!)
+  - Window scaling not applying on load.
 
 # 1.1.9
 - Added

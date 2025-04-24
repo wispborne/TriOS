@@ -209,6 +209,10 @@ class _AppShellState extends ConsumerState<AppShell>
       Fimber.i("Scale factor changed to $newValue");
     });
 
+    final savedScaleFactor = ref.read(appSettings).windowScaleFactor;
+    ScaledWidgetsFlutterBinding.instance.scaleFactor = (_) => savedScaleFactor;
+    Fimber.i("Scale factor changed to $savedScaleFactor");
+
     final tabChildren = [
       const Padding(padding: EdgeInsets.all(4), child: Dashboard()),
       const ModsGridPage(),

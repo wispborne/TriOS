@@ -44,7 +44,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   final _customExecutablePathTextController = TextEditingController();
   final _windowScaleTextController = TextEditingController();
   final _scrollController = ScrollController();
-  int newWindowScale = 1;
+
+  // 1.0 is 100%, 1.25 is 125%
+  double newWindowScaleDouble = 1.0;
 
   @override
   void initState() {
@@ -55,10 +57,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     _customExecutablePathTextController.text =
         ref.read(appSettings).customGameExePath ?? "";
 
-    newWindowScale = ref.read(appSettings).windowScaleFactor.toInt();
-    _windowScaleTextController.text = (newWindowScale * 100.0).toStringAsFixed(
-      0,
-    );
+    newWindowScaleDouble = ref.read(appSettings).windowScaleFactor;
+    _windowScaleTextController.text = (newWindowScaleDouble * 100.0)
+        .toStringAsFixed(1);
   }
 
   @override
@@ -1105,7 +1106,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                   onChanged: (newPath) {
                                     final newScale =
                                         double.parse(newPath) / 100.0;
-                                    newWindowScale = newScale.toInt();
+                                    newWindowScaleDouble = newScale;
                                   },
                                 ),
                               ),
@@ -1120,17 +1121,16 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                   "\nTri-Tachyon is not responsible if you set it to 300% and it's so big you can't get to the setting to fix it.",
                               child: ElevatedButton(
                                 onPressed: () {
-                                  if (newWindowScale >= 0.50 &&
-                                      newWindowScale <= 3.0) {
+                                  if (newWindowScaleDouble >= 0.50 &&
+                                      newWindowScaleDouble <= 3.0) {
                                     Fimber.i(
-                                      "Setting window scale to $newWindowScale",
+                                      "Setting window scale to $newWindowScaleDouble",
                                     );
                                     ref.read(appSettings.notifier).update((
                                       state,
                                     ) {
                                       return state.copyWith(
-                                        windowScaleFactor:
-                                            newWindowScale.toDouble(),
+                                        windowScaleFactor: newWindowScaleDouble,
                                       );
                                     });
                                   }

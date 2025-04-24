@@ -1114,7 +1114,7 @@ VersionCheckerInfo? getVersionCheckerInfo(File versionFile) {
 
     if (info.modThreadId != null) {
       info = info.copyWith(
-        modThreadId: info.modThreadId?.replaceAll(RegExp(r'[^0-9]'), ''),
+        modThreadId: info.modThreadId?.replaceAll(RegExp(r'[^0-9.]'), ''),
       );
 
       if (info.modThreadId!.trimStart("0").isEmpty) {

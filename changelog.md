@@ -5,6 +5,7 @@
   - Unreadable font color on "change version" button if multiple mods were enabled and lowest one was for wrong game version (thanks, SirHartley...) 
   - Alignment of mod dependency buttons (thanks SirHartley!)
   - Window scaling not applying on load.
+  - Mods with a Version Checker `modThreadId` in the format of `1234.0` were being read as `12340` (e.g. Detailed Combat Results).
 
 # 1.1.9
 - Added

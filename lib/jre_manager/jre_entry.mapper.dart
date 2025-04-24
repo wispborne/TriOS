@@ -279,8 +279,8 @@ class CustomJreVersionCheckerFileMapper
   static String _$modName(CustomJreVersionCheckerFile v) => v.modName;
   static const Field<CustomJreVersionCheckerFile, String> _f$modName =
       Field('modName', _$modName);
-  static int? _$modThreadId(CustomJreVersionCheckerFile v) => v.modThreadId;
-  static const Field<CustomJreVersionCheckerFile, int> _f$modThreadId =
+  static double? _$modThreadId(CustomJreVersionCheckerFile v) => v.modThreadId;
+  static const Field<CustomJreVersionCheckerFile, double> _f$modThreadId =
       Field('modThreadId', _$modThreadId, opt: true);
   static Version _$modVersion(CustomJreVersionCheckerFile v) => v.modVersion;
   static const Field<CustomJreVersionCheckerFile, Version> _f$modVersion =
@@ -398,7 +398,7 @@ abstract class CustomJreVersionCheckerFileCopyWith<
   $R call(
       {String? masterVersionFile,
       String? modName,
-      int? modThreadId,
+      double? modThreadId,
       Version? modVersion,
       String? starsectorVersion,
       String? windowsJDKDownload,

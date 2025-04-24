@@ -636,7 +636,7 @@ class CustomJreDownloadState with CustomJreDownloadStateMappable {
 class CustomJreVersionCheckerFile with CustomJreVersionCheckerFileMappable {
   final String masterVersionFile;
   final String modName;
-  final int? modThreadId;
+  final double? modThreadId;
 
   @MappableField(hook: VersionHook())
   final Version modVersion;

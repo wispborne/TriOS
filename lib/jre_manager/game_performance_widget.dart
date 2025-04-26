@@ -17,6 +17,7 @@ import 'package:trios/widgets/conditional_wrap.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/download_progress_indicator.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:trios/widgets/text_trios.dart';
 
 import '../models/download_progress.dart';
@@ -125,6 +126,7 @@ class _ChangeJreWidgetState extends ConsumerState<ChangeJreWidget> {
                                     () => ref.invalidate(jreManagerProvider),
                                 icon: const Icon(Icons.refresh),
                                 padding: EdgeInsets.zero,
+                                color: Theme.of(context).iconTheme.color,
                               ),
                             ),
                           ),
@@ -580,9 +582,40 @@ class _ChangeSettingsWidgetState extends ConsumerState<ChangeSettingsWidget> {
               children: [
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),
-                  child: Text(
-                    "Game Settings",
-                    style: Theme.of(context).textTheme.titleLarge,
+                  child: Stack(
+                    children: [
+                      Center(
+                        child: Text(
+                          "Game Settings",
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                      ),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: MovingTooltipWidget.text(
+                          message:
+                              "Open config.json in your default text editor",
+                          child: SizedBox(
+                            height: 32,
+                            width: 32,
+                            child: IconButton(
+                              onPressed:
+                                  () =>
+                                      ref
+                                          .read(gameSettingsProvider.notifier)
+                                          .settingsFile
+                                          .path
+                                          .openAsUriInBrowser(),
+                              icon: SvgImageIcon(
+                                "assets/images/icon-file-settings.svg",
+                              ),
+                              padding: EdgeInsets.zero,
+                              color: Theme.of(context).iconTheme.color,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 gameSettingsPvdr.when(

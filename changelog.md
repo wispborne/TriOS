@@ -1,11 +1,14 @@
 # 1.2.0 (in dev)
 - Added
-  - Weapons Viewer
+  - Ships Viewer
 - Fixed
   - Unreadable font color on "change version" button if multiple mods were enabled and lowest one was for wrong game version (thanks, SirHartley...) 
   - Alignment of mod dependency buttons (thanks SirHartley!)
   - Window scaling not applying on load.
   - Mods with a Version Checker `modThreadId` in the format of `1234.0` were being read as `12340` (e.g. Detailed Combat Results).
+- Changed
+  - Added shortcut to open settings.json to Game Settings.
+  - Added tooltip on how to read logfile and switched around that UI a little.
 
 # 1.1.9
 - Added

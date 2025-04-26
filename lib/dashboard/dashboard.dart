@@ -65,7 +65,9 @@ class _DashboardState extends ConsumerState<Dashboard>
                               Padding(
                                 padding: const EdgeInsets.only(top: 4),
                                 child: TriOSExpansionTile(
-                                  title: const Text("JRE, RAM, and Game Settings"),
+                                  title: const Text(
+                                    "JRE, RAM, and Game Settings",
+                                  ),
                                   leading: const Icon(Icons.speed, size: 32),
                                   subtitle: Text(
                                     "Java ${ref.watch(AppState.activeJre).valueOrNull?.version.versionString ?? "(unknown JRE)"} • ${ref.watch(currentRamAmountInMb).valueOrNull ?? "(unknown RAM)"} MB",
@@ -94,7 +96,6 @@ class _DashboardState extends ConsumerState<Dashboard>
                                   .watch(ChipperState.logRawContents)
                                   .valueOrNull;
                           final theme = Theme.of(context);
-
                           return Column(
                             children: [
                               Padding(
@@ -103,16 +104,54 @@ class _DashboardState extends ConsumerState<Dashboard>
                                   mainAxisAlignment: MainAxisAlignment.start,
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
-                                    Text(
-                                      "Starsector Log",
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleLarge
-                                          ?.copyWith(fontSize: 20),
+                                    MovingTooltipWidget.text(
+                                      message: "Errors are normal. You can ignore them unless Starsector is misbehaving."
+                                          "\n"
+                                          "\nIf there is a crash, look at the bottom of the log for a bunch of lines starting with 'at'. Hopefully, one of them will mention the problematic mod's id, name, or prefix."
+                                          "\nFor example, 'at data.scripts.campaign.II_IGFleetInflater.inflate(II_IGFleetInflater.java:59)' shows 'II_', which is Interstellar Imperium."
+                                          "\n"
+                                          "\nMake sure your mods are up to date and report bugs to the mod makers!",
+                                      child: Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            "Starsector Log",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .titleLarge
+                                                ?.copyWith(fontSize: 20),
+                                          ),
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                              left: 8,
+                                              top: 4,
+                                            ),
+                                            child: Icon(
+                                              Icons.info_outline,
+                                              size: 18,
+                                              color: theme.iconTheme.color
+                                                  ?.withValues(alpha: 0.8),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
+                                    const Spacer(),
+                                    MovingTooltipWidget.text(
+                                      message: logfile?.path ?? "",
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(top: 4),
+                                        child: Text(
+                                          "${logfile?.nameWithExtension ?? ""} • last updated ${errors?.lastUpdated?.relativeTimestamp() ?? "unknown"}",
+                                          style: theme.textTheme.labelSmall,
+                                        ),
+                                      ),
+                                    ),
+                                    const Spacer(),
                                     Padding(
                                       padding: const EdgeInsets.only(
-                                        left: 8,
+                                        left: 16,
                                         top: 4,
                                       ),
                                       child: TextButton.icon(
@@ -132,23 +171,10 @@ class _DashboardState extends ConsumerState<Dashboard>
                                         style: ButtonStyle(
                                           foregroundColor:
                                               WidgetStateProperty.all(
-                                                Theme.of(
-                                                  context,
-                                                ).colorScheme.onSurface,
+                                                theme.colorScheme.onSurface,
                                               ),
                                         ),
                                         label: const Text("Reload"),
-                                      ),
-                                    ),
-                                    const Spacer(),
-                                    MovingTooltipWidget.text(
-                                      message: logfile?.path ?? "",
-                                      child: Text(
-                                        "${logfile?.nameWithExtension ?? ""} • last updated ${errors?.lastUpdated?.relativeTimestamp() ?? "unknown"}",
-                                        style:
-                                            Theme.of(
-                                              context,
-                                            ).textTheme.labelSmall,
                                       ),
                                     ),
                                   ],

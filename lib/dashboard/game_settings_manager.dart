@@ -29,7 +29,7 @@ class GameSettingsNotifier extends StateNotifier<AsyncValue<GameSettings>> {
   }
 
   final Ref ref;
-  late final File _settingsFile;
+  late final File settingsFile;
 
   static final RegExp _vsyncRegex = RegExp(
     r'("vsync"\s*:\s*)(true|false)',
@@ -62,7 +62,7 @@ class GameSettingsNotifier extends StateNotifier<AsyncValue<GameSettings>> {
         return;
       }
 
-      _settingsFile =
+      settingsFile =
           gameCoreDir
               .resolve(p.join('data', 'config', 'settings.json'))
               .toFile();
@@ -75,7 +75,7 @@ class GameSettingsNotifier extends StateNotifier<AsyncValue<GameSettings>> {
   }
 
   Future<GameSettings> _readSettings() async {
-    final content = await _settingsFile.readAsString();
+    final content = await settingsFile.readAsString();
 
     final vsyncMatch = _vsyncRegex.firstMatch(content);
     final fpsMatch = _fpsRegex.firstMatch(content);
@@ -113,7 +113,7 @@ class GameSettingsNotifier extends StateNotifier<AsyncValue<GameSettings>> {
   }
 
   Future<void> _updateSetting(RegExp pattern, String newValue) async {
-    final original = await _settingsFile.readAsString();
+    final original = await settingsFile.readAsString();
 
     // Replace only the captured value, preserving comments, commas, and spacing.
     final updated = original.replaceFirstMapped(pattern, (match) {
@@ -128,13 +128,13 @@ class GameSettingsNotifier extends StateNotifier<AsyncValue<GameSettings>> {
 
     // Backup before writing.
     await _backupFile();
-    await _settingsFile.writeAsString(updated);
+    await settingsFile.writeAsString(updated);
   }
 
   Future<void> _backupFile() async {
-    final backupPath = '${_settingsFile.path}.bak';
+    final backupPath = '${settingsFile.path}.bak';
     try {
-      await _settingsFile.copy(backupPath);
+      await settingsFile.copy(backupPath);
     } on Exception catch (e, st) {
       Fimber.w('Could not create backup: $backupPath', ex: e, stacktrace: st);
     }

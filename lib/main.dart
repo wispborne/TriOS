@@ -220,20 +220,20 @@ void main() async {
       settings?.windowHeight ?? 800,
     );
     setWindowFrame(await _convertLogicalToPhysicalPixels(windowFrame));
-    if (settings?.isMaximized ?? false) {
-      windowManager.maximize();
-    }
+
+    // If the window is off screen, move it to the first display.
+    await _ensureWindowIsVisible();
 
     windowManager.waitUntilReadyToShow(
       WindowOptions(size: windowFrame.size, minimumSize: minSize),
       () async {
         await windowManager.show();
         await windowManager.focus();
+        if (settings?.isMaximized ?? false) {
+          windowManager.maximize();
+        }
       },
     );
-
-    // If the window is off screen, move it to the first display.
-    await _ensureWindowIsVisible();
   } catch (e) {
     Fimber.e("Error restoring window position and size.", ex: e);
   }
@@ -367,13 +367,19 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
     // Don't save window size is minimized, we want to restore to the previous size.
     if (!await windowManager.isMinimized()) {
       ref.read(appSettings.notifier).update((state) {
-        return state.copyWith(
-          windowXPos: windowFrame.left,
-          windowYPos: windowFrame.top,
-          windowWidth: windowFrame.width,
-          windowHeight: windowFrame.height,
-          isMaximized: isMaximized,
-        );
+        if (isMaximized) {
+          // If maximizing/maximized, we want to keep the non-maximized size the same
+          // so that un-maximizing it doesn't result in a screen-sized window.
+          return state.copyWith(isMaximized: isMaximized);
+        } else {
+          return state.copyWith(
+            windowXPos: windowFrame.left,
+            windowYPos: windowFrame.top,
+            windowWidth: windowFrame.width,
+            windowHeight: windowFrame.height,
+            isMaximized: isMaximized,
+          );
+        }
       });
     }
 

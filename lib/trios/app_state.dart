@@ -31,7 +31,6 @@ import 'mod_metadata.dart';
 import 'mod_variants.dart';
 
 class AppState {
-  // static ThemeManager theme = ThemeManager();
   static final isWindowFocused = StateProvider<bool>((ref) => true);
   static final selfUpdate =
       AsyncNotifierProvider<SelfUpdater, TriOSDownloadProgress?>(
@@ -355,6 +354,7 @@ class _GameRunningChecker extends AsyncNotifier<bool> {
         "common/JpsAtHome.jar",
       );
       final process = await Process.start('java', ['-jar', jpsAtHomePath.path]);
+
       final outputBuffer = StringBuffer();
       process.stdout
           .transform(systemEncoding.decoder)
@@ -364,7 +364,7 @@ class _GameRunningChecker extends AsyncNotifier<bool> {
           .listen(outputBuffer.write);
 
       final exitCodeFuture = process.exitCode;
-      const jpsRunMaxDuration = Duration(seconds: 1);
+      const jpsRunMaxDuration = Duration(milliseconds: 750);
       final result = await Future.any<int>([
         exitCodeFuture,
         Future.delayed(jpsRunMaxDuration, () => -1),

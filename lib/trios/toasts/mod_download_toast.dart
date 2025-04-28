@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:palette_generator/palette_generator.dart';
 import 'package:toastification/toastification.dart';
+import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/download_progress.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/themes/theme_manager.dart';
@@ -283,14 +284,11 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                                                     return;
                                                   }
                                                   await ref
-                                                      .read(
-                                                        AppState
-                                                            .modVariants
-                                                            .notifier,
-                                                      )
-                                                      .changeActiveModVariant(
+                                                      .read(modManager.notifier)
+                                                      .changeActiveModVariantWithForceModGameVersionDialogIfNeeded(
                                                         mod,
                                                         installedMod,
+                                                        ref,
                                                       );
                                                   toastification.dismiss(item);
                                                 },

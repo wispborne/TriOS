@@ -6,9 +6,11 @@
   - Alignment of mod dependency buttons (thanks SirHartley!)
   - Window scaling not applying on load.
   - Mods with a Version Checker `modThreadId` in the format of `1234.0` were being read as `12340` (e.g. Detailed Combat Results).
+  - Added game compatibility checks to more places that you can enable mods from.
 - Changed
   - Added shortcut to open settings.json to Game Settings.
   - Added tooltip on how to read logfile and switched around that UI a little.
+  - Clearer popup when there is an error installing a mod (usually happens when there is a Unicode character in the path).
 
 # 1.1.9
 - Added

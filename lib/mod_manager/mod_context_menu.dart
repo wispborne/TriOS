@@ -83,18 +83,21 @@ ContextMenu buildModBulkActionContextMenu(
               selectedMods.length - 1,
             )) {
               await ref
-                  .read(AppState.modVariants.notifier)
-                  .changeActiveModVariant(
+                  .read(modManager.notifier)
+                  .changeActiveModVariantWithForceModGameVersionDialogIfNeeded(
                     mod,
                     mod.findHighestVersion,
+                    ref,
                     validateDependencies: false,
                   );
             }
+            // Validate dependencies only at the end.
             await ref
-                .read(AppState.modVariants.notifier)
-                .changeActiveModVariant(
+                .read(modManager.notifier)
+                .changeActiveModVariantWithForceModGameVersionDialogIfNeeded(
                   selectedMods.last,
                   selectedMods.last.findHighestVersion,
+                  ref,
                   validateDependencies: true,
                 );
             ref.invalidate(AppState.modVariants);
@@ -110,16 +113,18 @@ ContextMenu buildModBulkActionContextMenu(
               0,
               selectedMods.length - 1,
             )) {
+              // Don't need to use changeActiveModVariantWithForceModGameVersionDialogIfNeeded because we're disabling the mod.
               await ref
-                  .read(AppState.modVariants.notifier)
+                  .read(modManager.notifier)
                   .changeActiveModVariant(
                     mod,
                     null,
                     validateDependencies: false,
                   );
             }
+            // Validate dependencies only at the end.
             await ref
-                .read(AppState.modVariants.notifier)
+                .read(modManager.notifier)
                 .changeActiveModVariant(
                   selectedMods.last,
                   null,
@@ -258,13 +263,26 @@ AlertDialog buildForceGameVersionWarningDialog(
 }) {
   return AlertDialog(
     title: Text("Force to $currentStarsectorVersion?"),
-    content: Text(
-      "Simple mods like portrait packs should be fine. "
-      "Game updates usually don't break mods, "
-      "but it depends on the mod and the game version"
-      "\n\n"
-      "Are you sure you want to modify the mod_info.json file "
-      "to allow ${modVariant.modInfo.nameOrId} to run on $currentStarsectorVersion?",
+    content: RichText(
+      text: TextSpan(
+        children: [
+          TextSpan(
+            text:
+                "'${modVariant.modInfo.nameOrId}' was made for Starsector ${modVariant.modInfo.gameVersion}, but you can try running it in $currentStarsectorVersion."
+                "\n"
+                "Simple mods like portrait packs should be fine. "
+                "Game updates usually don't break mods, "
+                "but it depends on the mod and the game version."
+                "\n\n",
+          ),
+          TextSpan(
+            text:
+                "Are you sure you want to modify the mod_info.json file "
+                "to allow '${modVariant.modInfo.nameOrId}' to run on $currentStarsectorVersion?",
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
     ),
     actions: [
       TextButton(
@@ -364,13 +382,16 @@ MenuItem buildMenuItemChangeVersion(Mod mod, WidgetRef ref) {
     icon: Icons.toggle_on,
     onSelected: () {
       if (isEnabled) {
-        ref
-            .watch(AppState.modVariants.notifier)
-            .changeActiveModVariant(mod, null);
+        // Don't need changeActiveModVariantWithForceModGameVersionDialogIfNeeded because we're disabling the mod.
+        ref.watch(modManager.notifier).changeActiveModVariant(mod, null);
       } else {
         ref
-            .watch(AppState.modVariants.notifier)
-            .changeActiveModVariant(mod, mod.findHighestVersion);
+            .watch(modManager.notifier)
+            .changeActiveModVariantWithForceModGameVersionDialogIfNeeded(
+              mod,
+              mod.findHighestVersion,
+              ref,
+            );
       }
     },
     items: [
@@ -379,9 +400,7 @@ MenuItem buildMenuItemChangeVersion(Mod mod, WidgetRef ref) {
           label: "Disable",
           icon: Icons.close,
           onSelected: () {
-            ref
-                .watch(AppState.modVariants.notifier)
-                .changeActiveModVariant(mod, null);
+            ref.watch(modManager.notifier).changeActiveModVariant(mod, null);
           },
         ),
       for (var variant in mod.modVariants.sortedDescending())
@@ -392,9 +411,7 @@ MenuItem buildMenuItemChangeVersion(Mod mod, WidgetRef ref) {
               variant.modInfo.version.toString() +
               (variant.smolId == enabledSmolId ? " (enabled)" : ""),
           onSelected: () {
-            ref
-                .watch(AppState.modVariants.notifier)
-                .changeActiveModVariant(mod, variant);
+            ref.watch(modManager.notifier).changeActiveModVariantWithForceModGameVersionDialogIfNeeded(mod, variant, ref);
           },
         ),
     ],

@@ -7,11 +7,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
+import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/thirdparty/dartx/comparable.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
-import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/generic_settings_manager.dart';
 import 'package:trios/utils/logging.dart';
@@ -352,7 +352,8 @@ class ModProfileManagerNotifier
 
   Future<void> activateModProfile(String modProfileId) async {
     Fimber.i("Activating mod profile $modProfileId.");
-    var modVariantsNotifier = ref.read(AppState.modVariants.notifier);
+    final modVariantsNotifier = ref.read(AppState.modVariants.notifier);
+    final modManagerNotifier = ref.read(modManager.notifier);
 
     try {
       final profile = state.valueOrNull?.modProfiles.firstWhereOrNull(
@@ -404,7 +405,8 @@ class ModProfileManagerNotifier
         Fimber.d(
           "Changing active mod variant for ${mod.id} to ${change.toVariant?.smolId}.",
         );
-        await modVariantsNotifier.changeActiveModVariant(
+        // Should check for game version, but we don't have a WidgetRef here.
+        await modManagerNotifier.changeActiveModVariant(
           mod,
           change.toVariant,
           validateDependencies: false,
@@ -412,7 +414,7 @@ class ModProfileManagerNotifier
       }
 
       // Fimber.i("here1.");
-      await modVariantsNotifier.validateModDependencies();
+      await modManagerNotifier.validateModDependencies();
       // Fimber.i("here2.");
       ref
           .read(appSettings.notifier)
@@ -505,7 +507,9 @@ class ModProfileManagerNotifier
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text("The new profile will be activated and is identical to your current profile."),
+                      Text(
+                        "The new profile will be activated and is identical to your current profile.",
+                      ),
                     ],
                   )
                   : SingleChildScrollView(

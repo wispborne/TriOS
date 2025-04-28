@@ -1554,10 +1554,11 @@ class MissingDependencyButton extends ConsumerWidget {
                     return OutlinedButton(
                       onPressed: () {
                         ref
-                            .read(AppState.modVariants.notifier)
-                            .changeActiveModVariant(
+                            .read(modManager.notifier)
+                            .changeActiveModVariantWithForceModGameVersionDialogIfNeeded(
                               disabledVariant!.mod(allMods)!,
                               disabledVariant,
+                              ref,
                             );
                       },
                       style: buttonStyle,

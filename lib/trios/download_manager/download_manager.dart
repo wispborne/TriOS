@@ -132,9 +132,12 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
                 )
                 .then((installedVariants) {
                   // todo add a setting for this.
-                  if (tempFolder.existsSync()) {
+                  if (tempFolder.existsSync() &&
+                      !installedVariants.any((it) => it.err != null)) {
                     tempFolder.deleteSync(recursive: true);
-                    Fimber.i("Cleaned up downloaded file ${tempFolder.name} at ${tempFolder.path}");
+                    Fimber.i(
+                      "Cleaned up downloaded file ${tempFolder.name} at ${tempFolder.path}",
+                    );
                   }
 
                   if (activateVariantOnComplete) {

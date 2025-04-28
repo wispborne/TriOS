@@ -185,7 +185,6 @@ class _ModAddedToastState extends ConsumerState<ModAddedToast> {
                                                     )!,
                                                     widget.modVariant,
                                                     ref,
-                                                    onForced: () async {},
                                                   );
                                               toastification.dismiss(
                                                 widget.item,

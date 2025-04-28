@@ -15,7 +15,6 @@ import 'package:trios/widgets/moving_tooltip.dart';
 import '../models/mod.dart';
 import '../models/mod_variant.dart';
 import '../utils/logging.dart';
-import 'mod_context_menu.dart';
 
 /// Button that lets user Enable/Disable a mod or swap to a different version
 class ModVersionSelectionDropdown extends ConsumerStatefulWidget {
@@ -136,33 +135,13 @@ class _ModVersionSelectionDropdownState
     final isGameRunning = ref.watch(AppState.isGameRunning).value == true;
 
     Future<void> switchToVariant(ModVariant? modVariant) async {
-      if (modVariant != null &&
-          isModGameVersionIncorrect(
-            currentStarsectorVersion,
-            isGameRunning,
+      ref
+          .read(modManager.notifier)
+          .changeActiveModVariantWithForceModGameVersionDialogIfNeeded(
+            widget.mod,
             modVariant,
-          )) {
-        showDialog(
-          context: ref.context,
-          builder: (context) {
-            return buildForceGameVersionWarningDialog(
-              currentStarsectorVersion!,
-              modVariant,
-              context,
-              ref,
-              onForced: () {
-                ref
-                    .read(AppState.modVariants.notifier)
-                    .changeActiveModVariant(widget.mod, modVariant);
-              },
-            );
-          },
-        );
-      } else {
-        await ref
-            .read(AppState.modVariants.notifier)
-            .changeActiveModVariant(widget.mod, modVariant);
-      }
+            ref,
+          );
     }
 
     //////// Single variant button

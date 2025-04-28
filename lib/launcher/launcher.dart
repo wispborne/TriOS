@@ -315,8 +315,9 @@ class Launcher extends HookConsumerWidget {
                 (mod) => mod.id == dependency.dependency.id,
               );
               if (mod != null) {
+                // Don't use changeActiveModVariantWithForceModGameVersionDialogIfNeeded here, we handle it above.
                 ref
-                    .read(AppState.modVariants.notifier)
+                    .read(modManager.notifier)
                     .changeActiveModVariant(mod, disabled.modVariant);
               }
             },

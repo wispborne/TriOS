@@ -320,21 +320,7 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                     }
                     final isCurrentlyEnabled = isEnabled;
 
-                    // We can disable mods without checking compatibility, but we can't enable them without checking.
                     if (!isCurrentlyEnabled) {
-                      // Check game version compatibility
-                      final compatResult = compatWithGame;
-                      if (compatResult == GameCompatibility.incompatible) {
-                        showSnackBar(
-                          context: context,
-                          type: SnackBarType.error,
-                          content: Text(
-                            "'${modInfo.name}' requires game version ${modInfo.gameVersion} but you have $gameVersion",
-                          ),
-                        );
-                        return;
-                      }
-
                       final allMods =
                           ref.read(AppState.modVariants).value ?? [];
                       final enabledMods =
@@ -371,15 +357,20 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                       if (isCurrentlyEnabled) {
                         // Disable
                         ref
-                            .read(AppState.modVariants.notifier)
-                            .changeActiveModVariant(mod, null);
+                            .read(modManager.notifier)
+                            .changeActiveModVariantWithForceModGameVersionDialogIfNeeded(
+                              mod,
+                              null,
+                              ref,
+                            );
                       } else {
                         // Enable highest version
                         ref
-                            .read(AppState.modVariants.notifier)
-                            .changeActiveModVariant(
+                            .read(modManager.notifier)
+                            .changeActiveModVariantWithForceModGameVersionDialogIfNeeded(
                               mod,
                               mod.findHighestVersion,
+                              ref,
                             );
                       }
                     } catch (e) {

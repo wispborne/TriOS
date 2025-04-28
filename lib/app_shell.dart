@@ -211,7 +211,7 @@ class _AppShellState extends ConsumerState<AppShell>
 
     final savedScaleFactor = ref.read(appSettings).windowScaleFactor;
     ScaledWidgetsFlutterBinding.instance.scaleFactor = (_) => savedScaleFactor;
-    Fimber.i("Scale factor changed to $savedScaleFactor");
+    Fimber.i("Scale factor set to $savedScaleFactor");
 
     final tabChildren = [
       const Padding(padding: EdgeInsets.all(4), child: Dashboard()),

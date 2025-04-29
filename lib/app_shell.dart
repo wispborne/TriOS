@@ -11,7 +11,7 @@ import 'package:toastification/toastification.dart';
 import 'package:trios/chipper/chipper_home.dart';
 import 'package:trios/chipper/utils.dart';
 import 'package:trios/dashboard/dashboard.dart';
-import 'package:trios/modBrowser/mod_browser_page.dart';
+import 'package:trios/catalog/mod_browser_page.dart';
 import 'package:trios/mod_manager/mods_grid_page.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/portraits/portraits_viewer.dart';
@@ -73,7 +73,7 @@ class _AppShellState extends ConsumerState<AppShell>
     6: TriOSTools.weapons,
     7: TriOSTools.ships,
     8: TriOSTools.settings,
-    9: TriOSTools.modBrowser,
+    9: TriOSTools.catalog,
     10: TriOSTools.tips,
   };
 
@@ -223,7 +223,7 @@ class _AppShellState extends ConsumerState<AppShell>
       const WeaponPage(),
       const ShipPage(),
       const Padding(padding: EdgeInsets.all(8), child: SettingsPage()),
-      const ModBrowserPage(),
+      const CatalogPage(),
       const TipsPage(),
     ];
     final theme = Theme.of(context);
@@ -343,8 +343,8 @@ class _AppShellState extends ConsumerState<AppShell>
                     child: TabButton(
                       text: "Catalog",
                       icon: Icon(Icons.cloud_download),
-                      isSelected: _currentPage == TriOSTools.modBrowser,
-                      onPressed: () => _changeTab(TriOSTools.modBrowser),
+                      isSelected: _currentPage == TriOSTools.catalog,
+                      onPressed: () => _changeTab(TriOSTools.catalog),
                     ),
                   ),
                   MovingTooltipWidget.text(

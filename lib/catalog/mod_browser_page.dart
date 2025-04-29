@@ -6,8 +6,8 @@ import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:open_filex/open_filex.dart';
-import 'package:trios/modBrowser/models/scraped_mod.dart';
-import 'package:trios/modBrowser/scraped_mod_card.dart';
+import 'package:trios/catalog/models/scraped_mod.dart';
+import 'package:trios/catalog/scraped_mod_card.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/download_manager/download_manager.dart';
@@ -29,11 +29,11 @@ import '../widgets/MultiSplitViewMixin.dart';
 import '../widgets/moving_tooltip.dart';
 import 'mod_browser_manager.dart';
 
-class ModBrowserPage extends ConsumerStatefulWidget {
-  const ModBrowserPage({super.key});
+class CatalogPage extends ConsumerStatefulWidget {
+  const CatalogPage({super.key});
 
   @override
-  ConsumerState<ModBrowserPage> createState() => _ModBrowserPage();
+  ConsumerState<CatalogPage> createState() => _CatalogPageState();
 }
 
 enum WebViewStatus {
@@ -44,8 +44,8 @@ enum WebViewStatus {
   loaded,
 }
 
-class _ModBrowserPage extends ConsumerState<ModBrowserPage>
-    with AutomaticKeepAliveClientMixin<ModBrowserPage>, MultiSplitViewMixin {
+class _CatalogPageState extends ConsumerState<CatalogPage>
+    with AutomaticKeepAliveClientMixin<CatalogPage>, MultiSplitViewMixin {
   @override
   bool get wantKeepAlive => true;
   final SearchController _searchController = SearchController();

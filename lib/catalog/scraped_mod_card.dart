@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:trios/modBrowser/models/scraped_mod.dart';
+import 'package:trios/catalog/models/scraped_mod.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/download_manager/download_manager.dart';
 import 'package:trios/utils/extensions.dart';

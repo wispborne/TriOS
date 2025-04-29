@@ -142,7 +142,7 @@ class GroupingSetting with GroupingSettingMappable {
 }
 
 ///////// Things specific to the Mods tab
-@MappableEnum()
+@MappableEnum(defaultValue: ModGridHeader.name)
 enum ModGridHeader {
   favorites,
   changeVariantButton,
@@ -167,7 +167,7 @@ enum ModGridGroupEnum {
   gameVersion,
 }
 
-@MappableEnum()
+@MappableEnum(defaultValue: ModGridSortField.name)
 enum ModGridSortField {
   enabledState,
   icons,
@@ -182,7 +182,7 @@ enum ModGridSortField {
 }
 
 ///////// Things specific to the Weapons tab
-@MappableEnum()
+@MappableEnum(defaultValue: WeaponGridHeader.weaponType)
 enum WeaponGridHeader {
   weaponType,
   size,

@@ -48,7 +48,7 @@ class ModGridHeaderMapper extends EnumMapper<ModGridHeader> {
       case 'lastEnabled':
         return ModGridHeader.lastEnabled;
       default:
-        throw MapperException.unknownEnumValue(value);
+        return ModGridHeader.values[4];
     }
   }
 
@@ -180,7 +180,7 @@ class ModGridSortFieldMapper extends EnumMapper<ModGridSortField> {
       case 'lastEnabled':
         return ModGridSortField.lastEnabled;
       default:
-        throw MapperException.unknownEnumValue(value);
+        return ModGridSortField.values[2];
     }
   }
 
@@ -318,7 +318,7 @@ class WeaponGridHeaderMapper extends EnumMapper<WeaponGridHeader> {
       case 'specClass':
         return WeaponGridHeader.specClass;
       default:
-        throw MapperException.unknownEnumValue(value);
+        return WeaponGridHeader.values[0];
     }
   }
 

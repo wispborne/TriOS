@@ -32,7 +32,7 @@ class FolderNamingSettingMapper extends EnumMapper<FolderNamingSetting> {
       case 2:
         return FolderNamingSetting.doNotChangeNamesEver;
       default:
-        throw MapperException.unknownEnumValue(value);
+        return FolderNamingSetting.values[1];
     }
   }
 
@@ -80,7 +80,7 @@ class ModUpdateBehaviorMapper extends EnumMapper<ModUpdateBehavior> {
       case 'switchToNewVersionIfWasEnabled':
         return ModUpdateBehavior.switchToNewVersionIfWasEnabled;
       default:
-        throw MapperException.unknownEnumValue(value);
+        return ModUpdateBehavior.values[1];
     }
   }
 
@@ -130,7 +130,7 @@ class DashboardGridModUpdateVisibilityMapper
       case 'hideAll':
         return DashboardGridModUpdateVisibility.hideAll;
       default:
-        throw MapperException.unknownEnumValue(value);
+        return DashboardGridModUpdateVisibility.values[1];
     }
   }
 
@@ -180,7 +180,7 @@ class CompressionLibMapper extends EnumMapper<CompressionLib> {
       case 'libarchive':
         return CompressionLib.libarchive;
       default:
-        throw MapperException.unknownEnumValue(value);
+        return CompressionLib.values[0];
     }
   }
 
@@ -221,38 +221,38 @@ class DashboardModListSortMapper extends EnumMapper<DashboardModListSort> {
   @override
   DashboardModListSort decode(dynamic value) {
     switch (value) {
-      case 'Name':
-        return DashboardModListSort.Name;
-      case 'Author':
-        return DashboardModListSort.Author;
-      case 'Version':
-        return DashboardModListSort.Version;
-      case 'VRAM':
-        return DashboardModListSort.VRAM;
-      case 'GameVersion':
-        return DashboardModListSort.GameVersion;
-      case 'Enabled':
-        return DashboardModListSort.Enabled;
+      case 'name':
+        return DashboardModListSort.name;
+      case 'author':
+        return DashboardModListSort.author;
+      case 'version':
+        return DashboardModListSort.version;
+      case 'vram':
+        return DashboardModListSort.vram;
+      case 'gameVersion':
+        return DashboardModListSort.gameVersion;
+      case 'enabled':
+        return DashboardModListSort.enabled;
       default:
-        throw MapperException.unknownEnumValue(value);
+        return DashboardModListSort.values[0];
     }
   }
 
   @override
   dynamic encode(DashboardModListSort self) {
     switch (self) {
-      case DashboardModListSort.Name:
-        return 'Name';
-      case DashboardModListSort.Author:
-        return 'Author';
-      case DashboardModListSort.Version:
-        return 'Version';
-      case DashboardModListSort.VRAM:
-        return 'VRAM';
-      case DashboardModListSort.GameVersion:
-        return 'GameVersion';
-      case DashboardModListSort.Enabled:
-        return 'Enabled';
+      case DashboardModListSort.name:
+        return 'name';
+      case DashboardModListSort.author:
+        return 'author';
+      case DashboardModListSort.version:
+        return 'version';
+      case DashboardModListSort.vram:
+        return 'vram';
+      case DashboardModListSort.gameVersion:
+        return 'gameVersion';
+      case DashboardModListSort.enabled:
+        return 'enabled';
     }
   }
 }
@@ -322,9 +322,9 @@ class SettingsMapper extends ClassMapperBase<Settings> {
   static bool? _$isMinimized(Settings v) => v.isMinimized;
   static const Field<Settings, bool> _f$isMinimized =
       Field('isMinimized', _$isMinimized, opt: true);
-  static TriOSTools? _$defaultTool(Settings v) => v.defaultTool;
+  static TriOSTools _$defaultTool(Settings v) => v.defaultTool;
   static const Field<Settings, TriOSTools> _f$defaultTool =
-      Field('defaultTool', _$defaultTool, opt: true);
+      Field('defaultTool', _$defaultTool, opt: true, def: TriOSTools.dashboard);
   static String? _$lastActiveJreVersion(Settings v) => v.lastActiveJreVersion;
   static const Field<Settings, String> _f$lastActiveJreVersion =
       Field('lastActiveJreVersion', _$lastActiveJreVersion, opt: true);
@@ -442,7 +442,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       v.dashboardModListSort;
   static const Field<Settings, DashboardModListSort> _f$dashboardModListSort =
       Field('dashboardModListSort', _$dashboardModListSort,
-          opt: true, def: DashboardModListSort.Name);
+          opt: true, def: DashboardModListSort.name);
   static bool _$checkIfGameIsRunning(Settings v) => v.checkIfGameIsRunning;
   static const Field<Settings, bool> _f$checkIfGameIsRunning = Field(
       'checkIfGameIsRunning', _$checkIfGameIsRunning,
@@ -521,6 +521,8 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #hasHiddenForumDarkModeTip: _f$hasHiddenForumDarkModeTip,
     #activeModProfileId: _f$activeModProfileId,
   };
+  @override
+  final bool ignoreNull = true;
 
   static Settings _instantiate(DecodingData data) {
     return Settings(
@@ -712,7 +714,7 @@ class _SettingsCopyWithImpl<$R, $Out>
           Object? windowHeight = $none,
           Object? isMaximized = $none,
           Object? isMinimized = $none,
-          Object? defaultTool = $none,
+          TriOSTools? defaultTool,
           Object? lastActiveJreVersion = $none,
           bool? showCustomJreConsoleWindow,
           Object? themeKey = $none,
@@ -759,7 +761,7 @@ class _SettingsCopyWithImpl<$R, $Out>
         if (windowHeight != $none) #windowHeight: windowHeight,
         if (isMaximized != $none) #isMaximized: isMaximized,
         if (isMinimized != $none) #isMinimized: isMinimized,
-        if (defaultTool != $none) #defaultTool: defaultTool,
+        if (defaultTool != null) #defaultTool: defaultTool,
         if (lastActiveJreVersion != $none)
           #lastActiveJreVersion: lastActiveJreVersion,
         if (showCustomJreConsoleWindow != null)

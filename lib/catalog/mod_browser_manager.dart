@@ -1,7 +1,7 @@
 // import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
-import 'package:trios/modBrowser/models/scraped_mod.dart';
+import 'package:trios/catalog/models/scraped_mod.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/logging.dart';
 

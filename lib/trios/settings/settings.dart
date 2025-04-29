@@ -13,7 +13,7 @@ const sharedPrefsSettingsKey = "settings";
 /// MacOs: /Users/<user>/Library/Preferences/org.wisp.TriOS.plist
 
 /// Settings object model
-@MappableClass()
+@MappableClass(ignoreNull: true)
 class Settings with SettingsMappable {
   @MappableField(hook: DirectoryHook())
   final Directory? gameDir;
@@ -31,7 +31,7 @@ class Settings with SettingsMappable {
   final double? windowHeight;
   final bool? isMaximized;
   final bool? isMinimized;
-  final TriOSTools? defaultTool;
+  final TriOSTools defaultTool;
 
   final String? lastActiveJreVersion;
   final bool showCustomJreConsoleWindow;
@@ -94,7 +94,7 @@ class Settings with SettingsMappable {
     this.windowHeight,
     this.isMaximized,
     this.isMinimized,
-    this.defaultTool,
+    this.defaultTool = TriOSTools.dashboard,
     this.lastActiveJreVersion,
     this.showCustomJreConsoleWindow = true,
     this.themeKey,
@@ -134,7 +134,7 @@ class Settings with SettingsMappable {
     this.autoEnableAndDisableDependencies = false,
     this.enableLauncherPrecheck = true,
     this.modUpdateBehavior = ModUpdateBehavior.switchToNewVersionIfWasEnabled,
-    this.dashboardModListSort = DashboardModListSort.Name,
+    this.dashboardModListSort = DashboardModListSort.name,
     this.checkIfGameIsRunning = true,
     this.compressionLib = CompressionLib.sevenZip,
     this.windowScaleFactor = 1.0,
@@ -145,7 +145,7 @@ class Settings with SettingsMappable {
   });
 }
 
-@MappableEnum()
+@MappableEnum(defaultValue: FolderNamingSetting.allFoldersVersioned)
 enum FolderNamingSetting {
   @MappableValue(0)
   doNotChangeNameForHighestVersion,
@@ -155,14 +155,14 @@ enum FolderNamingSetting {
   doNotChangeNamesEver,
 }
 
-@MappableEnum()
+@MappableEnum(defaultValue: ModUpdateBehavior.switchToNewVersionIfWasEnabled)
 enum ModUpdateBehavior { doNotChange, switchToNewVersionIfWasEnabled }
 
-@MappableEnum()
+@MappableEnum(defaultValue: DashboardGridModUpdateVisibility.hideMuted)
 enum DashboardGridModUpdateVisibility { allVisible, hideMuted, hideAll }
 
-@MappableEnum()
+@MappableEnum(defaultValue: CompressionLib.sevenZip)
 enum CompressionLib { sevenZip, libarchive }
 
-@MappableEnum()
-enum DashboardModListSort { Name, Author, Version, VRAM, GameVersion, Enabled }
+@MappableEnum(defaultValue: DashboardModListSort.name)
+enum DashboardModListSort { name, author, version, vram, gameVersion, enabled }

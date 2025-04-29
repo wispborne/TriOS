@@ -4,7 +4,7 @@ import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:stringr/stringr.dart';
 import 'package:text_search/text_search.dart';
-import 'package:trios/modBrowser/models/scraped_mod.dart';
+import 'package:trios/catalog/models/scraped_mod.dart';
 
 import '../models/mod.dart';
 import '../models/mod_info.dart';

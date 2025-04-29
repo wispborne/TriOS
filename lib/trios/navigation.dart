@@ -2,7 +2,7 @@ import 'package:dart_mappable/dart_mappable.dart';
 
 part 'navigation.mapper.dart';
 
-@MappableEnum()
+@MappableEnum(defaultValue: TriOSTools.dashboard)
 enum TriOSTools {
   dashboard,
   modManager,
@@ -14,6 +14,6 @@ enum TriOSTools {
   weapons,
   ships,
   settings,
-  modBrowser,
+  catalog,
   tips,
 }

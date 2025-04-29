@@ -8,10 +8,12 @@
   - Mods with a Version Checker `modThreadId` in the format of `1234.0` were being read as `12340` (e.g. Detailed Combat Results).
   - Added game compatibility checks to more places that you can enable mods from.
   - If app was maximized on close, it would not be properly maximized when reopened.
+  - Catalog didn't show loading indicator when the mod list was loading.
 - Changed
   - Added shortcut to open settings.json to Game Settings.
   - Added tooltip on how to read logfile and switched around that UI a little.
   - Clearer popup when there is an error installing a mod (usually happens when there is a Unicode character in the path).
+  - Catalog items now indicate better that they may be clicked.
 
 # 1.1.9
 - Added

@@ -48,30 +48,30 @@ class _ScrapedModCardState extends State<ScrapedModCard> {
           isBeingHovered = false;
         });
       },
-      child: GestureDetector(
-        onTap: () {
-          if (urls == null) {
-            return;
-          }
+      child: Card(
+        margin: const EdgeInsets.all(0),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8.0),
+          side: BorderSide(color: theme.colorScheme.surface.withOpacity(0.5)),
+        ),
+        child: InkWell(
+          onTap: () {
+            if (urls == null) {
+              return;
+            }
 
-          if (urls.containsKey(ModUrlType.Forum)) {
-            widget.linkLoader(urls[ModUrlType.Forum]!);
-          } else if (urls.containsKey(ModUrlType.NexusMods)) {
-            widget.linkLoader(urls[ModUrlType.NexusMods]!);
-          } else if (urls.containsKey(ModUrlType.DirectDownload)) {
-            _showDirectDownloadDialog(
-              context,
-              mod.name,
-              urls[ModUrlType.DirectDownload]!,
-            );
-          }
-        },
-        child: Card(
-          margin: const EdgeInsets.all(0),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8.0),
-            side: BorderSide(color: theme.colorScheme.surface.withOpacity(0.5)),
-          ),
+            if (urls.containsKey(ModUrlType.Forum)) {
+              widget.linkLoader(urls[ModUrlType.Forum]!);
+            } else if (urls.containsKey(ModUrlType.NexusMods)) {
+              widget.linkLoader(urls[ModUrlType.NexusMods]!);
+            } else if (urls.containsKey(ModUrlType.DirectDownload)) {
+              _showDirectDownloadDialog(
+                context,
+                mod.name,
+                urls[ModUrlType.DirectDownload]!,
+              );
+            }
+          },
           child: Container(
             padding: const EdgeInsets.all(12.0),
             child: Row(

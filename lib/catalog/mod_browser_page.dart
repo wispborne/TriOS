@@ -18,7 +18,6 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/search.dart';
 import 'package:trios/utils/util.dart';
-import 'package:trios/weaponViewer/weaponsManager.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:trios/widgets/tristate_icon_button.dart';
@@ -167,27 +166,6 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                                 child: Row(
                                   children: [
                                     const SizedBox(width: 4),
-                                    Align(
-                                      alignment: Alignment.centerLeft,
-                                      child: Row(
-                                        children: [
-                                          if (ref.watch(isLoadingWeaponsList))
-                                            const Padding(
-                                              padding: EdgeInsets.only(left: 8),
-                                              child: SizedBox(
-                                                width: 12,
-                                                height: 12,
-                                                child:
-                                                    CircularProgressIndicator(
-                                                      strokeWidth: 2,
-                                                      strokeCap:
-                                                          StrokeCap.round,
-                                                    ),
-                                              ),
-                                            ),
-                                        ],
-                                      ),
-                                    ),
                                     Text(
                                       "Filters  ",
                                       style: theme.textTheme.labelLarge,
@@ -299,41 +277,53 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                             ),
                           ),
                           Expanded(
-                            child: ListView.builder(
-                              itemExtent: 200,
-                              itemCount: displayedMods?.length,
-                              itemBuilder: (context, index) {
-                                if (displayedMods == null) {
-                                  return const SizedBox();
-                                }
-                                final profile = displayedMods![index];
+                            child:
+                                ref.watch(isLoadingCatalog)
+                                    ? Center(
+                                      child: SizedBox(
+                                        width: 64,
+                                        height: 64,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          strokeCap: StrokeCap.round,
+                                        ),
+                                      ),
+                                    )
+                                    : ListView.builder(
+                                      itemExtent: 200,
+                                      itemCount: displayedMods?.length,
+                                      itemBuilder: (context, index) {
+                                        if (displayedMods == null) {
+                                          return const SizedBox();
+                                        }
+                                        final profile = displayedMods![index];
 
-                                return Padding(
-                                  padding: const EdgeInsets.only(
-                                    left: 4,
-                                    top: 4,
-                                    bottom: 4,
-                                  ),
-                                  child: ScrapedModCard(
-                                    mod: profile,
-                                    linkLoader: (url) {
-                                      selectedModName = profile.name;
-                                      if (_webViewStatus ==
-                                          WebViewStatus.loaded) {
-                                        webViewController?.loadUrl(
-                                          urlRequest: URLRequest(
-                                            url: WebUri(url),
+                                        return Padding(
+                                          padding: const EdgeInsets.only(
+                                            left: 4,
+                                            top: 4,
+                                            bottom: 4,
+                                          ),
+                                          child: ScrapedModCard(
+                                            mod: profile,
+                                            linkLoader: (url) {
+                                              selectedModName = profile.name;
+                                              if (_webViewStatus ==
+                                                  WebViewStatus.loaded) {
+                                                webViewController?.loadUrl(
+                                                  urlRequest: URLRequest(
+                                                    url: WebUri(url),
+                                                  ),
+                                                );
+                                              } else {
+                                                url.openAsUriInBrowser();
+                                              }
+                                              setState(() {});
+                                            },
                                           ),
                                         );
-                                      } else {
-                                        url.openAsUriInBrowser();
-                                      }
-                                      setState(() {});
-                                    },
-                                  ),
-                                );
-                              },
-                            ),
+                                      },
+                                    ),
                           ),
                         ],
                       );
@@ -418,22 +408,50 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                                           webViewController?.getUrl() ??
                                           Future.value(null),
                                       builder: (context, snapshot) {
-                                        return Disable(
-                                          isEnabled:
-                                              snapshot.hasData &&
-                                              snapshot.data != null,
-                                          child: MovingTooltipWidget.text(
-                                            message: "Reload",
-                                            child: IconButton(
-                                              onPressed: () async {
-                                                await webViewController
-                                                    ?.reload();
-                                                setState(() {});
-                                              },
-                                              icon: const Icon(Icons.refresh),
-                                            ),
-                                          ),
-                                        );
+                                        return (webLoadingProgress != null)
+                                            ? Padding(
+                                              padding: const EdgeInsets.only(
+                                                left: 8,
+                                                right: 8,
+                                              ),
+                                              child: SizedBox(
+                                                width: 24,
+                                                height: 24,
+                                                child: Transform.flip(
+                                                  // Trick to have indeterminate progress go CCW, then loading progress goes CW as normal.
+                                                  flipX:
+                                                      webLoadingProgress == 0,
+                                                  child: CircularProgressIndicator(
+                                                    strokeWidth: 2,
+                                                    value:
+                                                        webLoadingProgress == 0
+                                                            ? null
+                                                            : webLoadingProgress,
+                                                    color:
+                                                        theme.iconTheme.color,
+                                                    strokeCap: StrokeCap.round,
+                                                  ),
+                                                ),
+                                              ),
+                                            )
+                                            : Disable(
+                                              isEnabled:
+                                                  snapshot.hasData &&
+                                                  snapshot.data != null,
+                                              child: MovingTooltipWidget.text(
+                                                message: "Reload",
+                                                child: IconButton(
+                                                  onPressed: () async {
+                                                    await webViewController
+                                                        ?.reload();
+                                                    setState(() {});
+                                                  },
+                                                  icon: const Icon(
+                                                    Icons.refresh,
+                                                  ),
+                                                ),
+                                              ),
+                                            );
                                       },
                                     ),
                                     MovingTooltipWidget.text(
@@ -493,22 +511,6 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                                         },
                                       ),
                                     ),
-                                    if (webLoadingProgress != null)
-                                      Padding(
-                                        padding: const EdgeInsets.only(
-                                          left: 8,
-                                          right: 8,
-                                        ),
-                                        child: SizedBox(
-                                          width: 12,
-                                          height: 12,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            value: webLoadingProgress,
-                                            strokeCap: StrokeCap.round,
-                                          ),
-                                        ),
-                                      ),
                                     Builder(
                                       builder: (context) {
                                         onPressedDarkTheme() {

@@ -5,13 +5,13 @@ import 'package:trios/catalog/models/scraped_mod.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/logging.dart';
 
-final isLoadingBrowseModsList = StateProvider<bool>((ref) => false);
+final isLoadingCatalog = StateProvider<bool>((ref) => false);
 
 final browseModsNotifierProvider = StreamProvider<ScrapedModsRepo>((
   ref,
 ) async* {
   final currentTime = DateTime.now();
-  ref.watch(isLoadingBrowseModsList.notifier).state = true;
+  ref.watch(isLoadingCatalog.notifier).state = true;
   // final cache = CacheManager(Config("trios_modrepo_cache"));
   String modRepo;
 
@@ -21,7 +21,7 @@ final browseModsNotifierProvider = StreamProvider<ScrapedModsRepo>((
     // (await cache.getSingleFile(Constants.modRepoUrl)).readAsStringSync();
   } catch (ex, st) {
     Fimber.w('Failed to fetch mod repo', ex: ex, stacktrace: st);
-    ref.watch(isLoadingBrowseModsList.notifier).state = false;
+    ref.watch(isLoadingCatalog.notifier).state = false;
     // cache.emptyCache();
     return;
   }
@@ -29,7 +29,7 @@ final browseModsNotifierProvider = StreamProvider<ScrapedModsRepo>((
   try {
     final scrapedMods = ScrapedModsRepoMapper.fromJson((modRepo).toString());
 
-    ref.watch(isLoadingBrowseModsList.notifier).state = false;
+    ref.watch(isLoadingCatalog.notifier).state = false;
     Fimber.i(
       'Parsed ${scrapedMods.items.length} scraped mods in ${DateTime.now().difference(currentTime).inMilliseconds}ms',
     );
@@ -37,7 +37,7 @@ final browseModsNotifierProvider = StreamProvider<ScrapedModsRepo>((
     yield scrapedMods;
   } catch (ex, st) {
     Fimber.w('Failed to parse mod repo', ex: ex, stacktrace: st);
-    ref.watch(isLoadingBrowseModsList.notifier).state = false;
+    ref.watch(isLoadingCatalog.notifier).state = false;
     return;
   }
 });

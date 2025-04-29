@@ -16,11 +16,13 @@ import 'package:trios/widgets/tooltip_frame.dart';
 class ScrapedModCard extends StatefulWidget {
   final ScrapedMod mod;
   final void Function(String) linkLoader;
+  final bool isSelected;
 
   const ScrapedModCard({
     super.key,
     required this.mod,
     required this.linkLoader,
+    this.isSelected = false,
   });
 
   @override
@@ -48,177 +50,200 @@ class _ScrapedModCardState extends State<ScrapedModCard> {
           isBeingHovered = false;
         });
       },
-      child: Card(
-        margin: const EdgeInsets.all(0),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8.0),
-          side: BorderSide(color: theme.colorScheme.surface.withOpacity(0.5)),
-        ),
-        child: InkWell(
-          onTap: () {
-            if (urls == null) {
-              return;
-            }
+      child: Builder(
+        builder: (context) {
+          final websiteUrl = mod.getBestWebsiteUrl();
+          final hasClickableLink =
+              websiteUrl != null ||
+              urls?.containsKey(ModUrlType.DirectDownload) == true;
 
-            if (urls.containsKey(ModUrlType.Forum)) {
-              widget.linkLoader(urls[ModUrlType.Forum]!);
-            } else if (urls.containsKey(ModUrlType.NexusMods)) {
-              widget.linkLoader(urls[ModUrlType.NexusMods]!);
-            } else if (urls.containsKey(ModUrlType.DirectDownload)) {
-              _showDirectDownloadDialog(
-                context,
-                mod.name,
-                urls[ModUrlType.DirectDownload]!,
-              );
-            }
-          },
-          child: Container(
-            padding: const EdgeInsets.all(12.0),
-            child: Row(
-              children: [
-                SizedBox(
-                  width: 80.0,
-                  child: Column(
-                    children: [
-                      if (mod.gameVersionReq?.isNotEmpty == true)
-                        _ScrapedModGameVersionReq(theme: theme, mod: mod),
-                      Expanded(
-                        child: Center(
-                          child: SizedBox(
-                            width: double.infinity,
-                            child: FittedBox(
-                              fit: BoxFit.fitWidth,
-                              child: ModImage(mod: mod),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+          return Card(
+            margin: const EdgeInsets.all(0),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8.0),
+              side: BorderSide(
+                color: theme.colorScheme.surface.withOpacity(0.5),
+              ),
+            ),
+            child: ConditionalWrap(
+              condition: hasClickableLink,
+              wrapper:
+                  (child) => InkWell(
+                    onTap: () {
+                      if (urls == null) {
+                        return;
+                      }
+
+                      if (websiteUrl != null) {
+                        widget.linkLoader(websiteUrl);
+                      } else if (urls.containsKey(ModUrlType.DirectDownload)) {
+                        _showDirectDownloadDialog(
+                          context,
+                          mod.name,
+                          urls[ModUrlType.DirectDownload]!,
+                        );
+                      }
+                    },
+                    child: child,
                   ),
+              child: Container(
+                padding: const EdgeInsets.all(12.0),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8.0),
+                  color: widget.isSelected ? theme.cardColor.lighter(5) : null,
                 ),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 16.0, right: 16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          mod.name.isNotEmpty ? mod.name : '???',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14.0,
-                            fontFamily: ThemeManager.orbitron,
-                          ),
-                        ),
-                        if (mod.authorsList?.isNotEmpty == true)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 0.0),
-                            child: Text(
-                              mod.authorsList!.join(', '),
-                              style: const TextStyle(
-                                fontSize: 11.0,
-                                fontStyle: FontStyle.italic,
-                              ),
-                            ),
-                          ),
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.only(top: 4.0),
-                            child:
-                                !((mod.summary?.isNotEmpty ?? false) ||
-                                        (mod.description?.isNotEmpty ?? false))
-                                    ? Container()
-                                    : Text(
-                                      (mod.summary ?? mod.description)!
-                                          .split('\n')
-                                          .where((line) => line.isNotEmpty)
-                                          .take(2)
-                                          .join('\n'),
-                                      overflow: TextOverflow.fade,
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.labelLarge?.copyWith(
-                                        color: theme.textTheme.labelLarge?.color
-                                            ?.withOpacity(0.8),
-                                      ),
-                                    ),
-                          ),
-                        ),
-                        if ((mod.description?.isNotEmpty ?? false))
-                          Padding(
-                            padding: const EdgeInsets.only(top: 8.0),
-                            child: ConditionalWrap(
-                              condition: mod.description?.isNotEmpty == true,
-                              wrapper:
-                                  (child) => MovingTooltipWidget(
-                                    tooltipWidget: TooltipFrame(
-                                      child: Text(mod.description ?? ''),
-                                    ),
-                                    child: child,
-                                  ),
-                              child: OutlinedButton(
-                                onPressed: () {
-                                  _showDescriptionDialog(
-                                    context,
-                                    mod.name,
-                                    mod.description!,
-                                  );
-                                },
-                                child: Text(
-                                  'View Desc.',
-                                  style: theme.textTheme.labelLarge,
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 80.0,
+                      child: Column(
+                        children: [
+                          if (mod.gameVersionReq?.isNotEmpty == true)
+                            _ScrapedModGameVersionReq(theme: theme, mod: mod),
+                          Expanded(
+                            child: Center(
+                              child: SizedBox(
+                                width: double.infinity,
+                                child: FittedBox(
+                                  fit: BoxFit.fitWidth,
+                                  child: ModImage(mod: mod),
                                 ),
                               ),
                             ),
                           ),
-                        // const Spacer(),
-                        const SizedBox(height: 8.0),
-                        Tags(mod: mod),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 16.0, right: 16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              mod.name.isNotEmpty ? mod.name : '???',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14.0,
+                                fontFamily: ThemeManager.orbitron,
+                              ),
+                            ),
+                            if (mod.authorsList?.isNotEmpty == true)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 0.0),
+                                child: Text(
+                                  mod.authorsList!.join(', '),
+                                  style: const TextStyle(
+                                    fontSize: 11.0,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                              ),
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.only(top: 4.0),
+                                child:
+                                    !((mod.summary?.isNotEmpty ?? false) ||
+                                            (mod.description?.isNotEmpty ??
+                                                false))
+                                        ? Container()
+                                        : Text(
+                                          (mod.summary ?? mod.description)!
+                                              .split('\n')
+                                              .where((line) => line.isNotEmpty)
+                                              .take(2)
+                                              .join('\n'),
+                                          overflow: TextOverflow.fade,
+                                          style: Theme.of(
+                                            context,
+                                          ).textTheme.labelLarge?.copyWith(
+                                            color: theme
+                                                .textTheme
+                                                .labelLarge
+                                                ?.color
+                                                ?.withOpacity(0.8),
+                                          ),
+                                        ),
+                              ),
+                            ),
+                            if ((mod.description?.isNotEmpty ?? false))
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8.0),
+                                child: ConditionalWrap(
+                                  condition:
+                                      mod.description?.isNotEmpty == true,
+                                  wrapper:
+                                      (child) => MovingTooltipWidget(
+                                        tooltipWidget: TooltipFrame(
+                                          child: Text(mod.description ?? ''),
+                                        ),
+                                        child: child,
+                                      ),
+                                  child: OutlinedButton(
+                                    onPressed: () {
+                                      _showDescriptionDialog(
+                                        context,
+                                        mod.name,
+                                        mod.description!,
+                                      );
+                                    },
+                                    child: Text(
+                                      'View Desc.',
+                                      style: theme.textTheme.labelLarge,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            // const Spacer(),
+                            const SizedBox(height: 8.0),
+                            Tags(mod: mod),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Builder(
+                      builder: (context) {
+                        const size = 14.0;
+                        return Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            BrowserIcon(
+                              mod: mod,
+                              iconOpacity: isBeingHovered ? 1.0 : 0.7,
+                              linkLoader: widget.linkLoader,
+                              size: size,
+                            ),
+                            DiscordIcon(
+                              mod: mod,
+                              iconOpacity: isBeingHovered ? 1.0 : 0.7,
+                              size: size,
+                            ),
+                            NexusModsIcon(
+                              mod: mod,
+                              iconOpacity: isBeingHovered ? 1.0 : 0.7,
+                              size: size,
+                            ),
+                            DirectDownloadIcon(
+                              mod: mod,
+                              iconOpacity: isBeingHovered ? 1.0 : 0.7,
+                              size: size,
+                              linkLoader: widget.linkLoader,
+                            ),
+                            DebugIcon(
+                              mod: mod,
+                              iconOpacity: isBeingHovered ? 1.0 : 0.7,
+                              size: size,
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ],
                 ),
-                Builder(
-                  builder: (context) {
-                    const size = 14.0;
-                    return Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        BrowserIcon(
-                          mod: mod,
-                          iconOpacity: isBeingHovered ? 1.0 : 0.7,
-                          linkLoader: widget.linkLoader,
-                          size: size,
-                        ),
-                        DiscordIcon(
-                          mod: mod,
-                          iconOpacity: isBeingHovered ? 1.0 : 0.7,
-                          size: size,
-                        ),
-                        NexusModsIcon(
-                          mod: mod,
-                          iconOpacity: isBeingHovered ? 1.0 : 0.7,
-                          size: size,
-                        ),
-                        DirectDownloadIcon(
-                          mod: mod,
-                          iconOpacity: isBeingHovered ? 1.0 : 0.7,
-                          size: size,
-                          linkLoader: widget.linkLoader,
-                        ),
-                        DebugIcon(
-                          mod: mod,
-                          iconOpacity: isBeingHovered ? 1.0 : 0.7,
-                          size: size,
-                        ),
-                      ],
-                    );
-                  },
-                ),
-              ],
+              ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }

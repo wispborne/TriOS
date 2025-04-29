@@ -56,6 +56,17 @@ class ScrapedMod with ScrapedModMappable {
   Map<String, ScrapedModImage> getImages() => images ?? {};
 
   Map<ModUrlType, String> getUrls() => urls ?? {};
+
+  String? getBestWebsiteUrl() {
+    if (urls == null) {
+      return null;
+    } else if (urls!.containsKey(ModUrlType.Forum)) {
+      return urls![ModUrlType.Forum]!;
+    } else if (urls!.containsKey(ModUrlType.NexusMods)) {
+      return urls![ModUrlType.NexusMods]!;
+    }
+    return null;
+  }
 }
 
 @MappableEnum()

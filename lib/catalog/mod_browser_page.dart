@@ -63,6 +63,7 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
   bool? filterIndex;
   bool? filterForumModding;
   WebViewStatus _webViewStatus = WebViewStatus.loading;
+  String? currentUrl;
 
   @override
   List<Area> get areas =>
@@ -320,6 +321,9 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                                               }
                                               setState(() {});
                                             },
+                                            isSelected:
+                                                currentUrl ==
+                                                profile.getBestWebsiteUrl(),
                                           ),
                                         );
                                       },
@@ -664,6 +668,7 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                                   onLoadStop: (controller, url) {
                                     setState(() {
                                       urlController.text = url.toString();
+                                      currentUrl = url.toString();
                                     });
                                   },
                                 ),

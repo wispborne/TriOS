@@ -231,7 +231,7 @@ extension ModVariantsExt on List<ModVariant> {
   VersionCheckComparison? updateCheck(
     Map<String, RemoteVersionCheckResult> versionCheckCache,
   ) {
-    for (var variant in sortedDescending()) {
+    for (final variant in sortedDescending()) {
       final RemoteVersionCheckResult? versionCheck =
           versionCheckCache[variant.smolId];
       if (versionCheck == null || variant.versionCheckerInfo == null) continue;

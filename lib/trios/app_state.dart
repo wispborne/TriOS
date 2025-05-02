@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/changelogs/mod_changelogs_manager.dart';
 import 'package:trios/compression/archive.dart';
 import 'package:trios/jre_manager/jre_entry.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
@@ -73,6 +74,13 @@ class AppState {
   static final tipsProvider = AsyncNotifierProvider<TipsNotifier, List<ModTip>>(
     TipsNotifier.new,
   );
+
+  /// Provides a list of [ModChangelog]s.
+  /// The keys are mod ids, not smol ids.
+  static final changelogsProvider =
+      AsyncNotifierProvider<ModChangelogsManager, Map<String, ModChangelog>>(
+        ModChangelogsManager.new,
+      );
 
   /// Provides [ModMetadata]s, observable state.
   static final modsMetadata =

@@ -37,6 +37,7 @@ class ModListBasicEntry extends ConsumerStatefulWidget {
   ConsumerState createState() => _ModListBasicEntryState();
 
   static Widget buildVersionCheckTextReadoutForTooltip(
+      Mod mod,
     String? changelogUrl,
     int? versionCheckComparison,
     VersionCheckerInfo? localVersionCheck,
@@ -61,6 +62,7 @@ class ModListBasicEntry extends ConsumerStatefulWidget {
                         children: [
                           Expanded(
                             child: Changelogs(
+                              mod,
                               localVersionCheck,
                               remoteVersionCheck,
                             ),
@@ -100,6 +102,7 @@ class ModListBasicEntry extends ConsumerStatefulWidget {
   }
 
   static IntrinsicHeight changeAndVersionCheckAlertDialogContent(
+      Mod mod,
     String? changelogUrl,
     VersionCheckerInfo? localVersionCheck,
     RemoteVersionCheckResult? remoteVersionCheck,
@@ -114,7 +117,7 @@ class ModListBasicEntry extends ConsumerStatefulWidget {
               child: SizedBox(
                 width: 500,
                 height: 500,
-                child: Changelogs(localVersionCheck, remoteVersionCheck),
+                child: Changelogs(mod, localVersionCheck, remoteVersionCheck),
               ),
             ),
           if (changelogUrl.isNotNullOrEmpty())
@@ -157,10 +160,7 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
     );
     final theme = Theme.of(context);
     final compatTextColor = compatWithGame.getGameCompatibilityColor();
-    final changelogUrl = Changelogs.getChangelogUrl(
-      localVersionCheck,
-      remoteVersionCheck,
-    );
+    final changelogUrl = ref.read(AppState.changelogsProvider.notifier).getChangelogUrl(localVersionCheck, remoteVersionCheck);
     final isEnabled = modVariant.isEnabled(ref.read(AppState.mods));
     final modTextOpacity =
         compatWithGame == GameCompatibility.incompatible ? 0.55 : 1.0;
@@ -246,6 +246,7 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                         position: TooltipPosition.topLeft,
                         tooltipWidget:
                             ModListBasicEntry.buildVersionCheckTextReadoutForTooltip(
+                              mod,
                               changelogUrl,
                               versionCheckComparison,
                               localVersionCheck,
@@ -271,6 +272,7 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                                       (context) => AlertDialog(
                                         content:
                                             ModListBasicEntry.changeAndVersionCheckAlertDialogContent(
+                                              mod,
                                               changelogUrl,
                                               localVersionCheck,
                                               remoteVersionCheck,
@@ -287,6 +289,7 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                                       (context) => AlertDialog(
                                         content:
                                             ModListBasicEntry.changeAndVersionCheckAlertDialogContent(
+                                              mod,
                                               changelogUrl,
                                               localVersionCheck,
                                               remoteVersionCheck,

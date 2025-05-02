@@ -1203,10 +1203,12 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
         final localVersionCheck =
             versionCheckComparison?.variant.versionCheckerInfo;
         final remoteVersionCheck = versionCheckComparison?.remoteVersionCheck;
-        final changelogUrl = Changelogs.getChangelogUrl(
-          versionCheckComparison?.variant.versionCheckerInfo,
-          versionCheckComparison?.remoteVersionCheck,
-        );
+        final changelogUrl = ref
+            .read(AppState.changelogsProvider.notifier)
+            .getChangelogUrl(
+              versionCheckComparison?.variant.versionCheckerInfo,
+              versionCheckComparison?.remoteVersionCheck,
+            );
         final areUpdatesMuted = metadata != null && metadata.areUpdatesMuted;
 
         return mod.modVariants.isEmpty
@@ -1278,6 +1280,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                               Padding(
                                 padding: const EdgeInsets.only(top: 12),
                                 child: Changelogs(
+                                  mod,
                                   localVersionCheck,
                                   remoteVersionCheck,
                                 ),
@@ -1293,6 +1296,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                             builder:
                                 (context) => AlertDialog(
                                   content: Changelogs(
+                                    mod,
                                     localVersionCheck,
                                     remoteVersionCheck,
                                   ),
@@ -1324,6 +1328,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                       : MovingTooltipWidget(
                         tooltipWidget:
                             ModListBasicEntry.buildVersionCheckTextReadoutForTooltip(
+                              mod,
                               null,
                               versionCheckComparison?.comparisonInt,
                               localVersionCheck,
@@ -1349,6 +1354,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                                       (context) => AlertDialog(
                                         content:
                                             ModListBasicEntry.changeAndVersionCheckAlertDialogContent(
+                                              mod,
                                               changelogUrl,
                                               localVersionCheck,
                                               remoteVersionCheck,
@@ -1366,6 +1372,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                                       (context) => AlertDialog(
                                         content:
                                             ModListBasicEntry.changeAndVersionCheckAlertDialogContent(
+                                              mod,
                                               changelogUrl,
                                               localVersionCheck,
                                               remoteVersionCheck,

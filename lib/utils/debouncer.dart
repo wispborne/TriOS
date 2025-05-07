@@ -6,6 +6,8 @@ import 'dart:async';
 /// ensuring that the wrapped [operation] only runs after [duration] has passed
 /// without new calls.
 ///
+/// The first run executes without a delay.
+///
 /// **Usage example:**
 /// ```dart
 /// final debouncer = Debouncer(duration: const Duration(milliseconds: 500));
@@ -36,7 +38,7 @@ class Debouncer {
   Debouncer({this.duration = const Duration(milliseconds: 500)});
 
   /// Debounces the given [operation]. Returns a [Future] of the operation’s result.
-  Future<T> debounce<T>(Future<T> Function() operation) {
+  Future<T> debounce<T>(Future<T>? Function() operation) {
     // Cancel any existing timer.
     _timer?.cancel();
 

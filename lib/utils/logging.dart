@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
 import 'package:path/path.dart' as p;
 
@@ -28,14 +29,21 @@ AdvancedFileOutput? _advancedFileOutput;
 bool _allowSentryReporting = false;
 const useFimber = false;
 bool didLoggingInitializeSuccessfully = false;
+bool _shouldDebugRiverpod = false;
 
 /// Fine to call multiple times.
 configureLogging({
   bool printPlatformInfo = false,
   bool allowSentryReporting = false,
   bool consoleOnly = false,
+  bool? shouldDebugRiverpod = null,
 }) async {
   _allowSentryReporting = allowSentryReporting;
+
+  if (shouldDebugRiverpod != null) {
+    _shouldDebugRiverpod = shouldDebugRiverpod;
+  }
+
   Fimber.i(
     "Crash reporting is ${allowSentryReporting ? "enabled" : "disabled"}.",
   );
@@ -280,6 +288,43 @@ class Fimber {
       );
     }
   }
+}
+
+class RiverpodDebugObserver extends ProviderObserver {
+  @override
+  void didAddProvider(
+    ProviderBase<Object?> provider,
+    Object? value,
+    ProviderContainer container,
+  ) {}
+
+  @override
+  void didDisposeProvider(
+    ProviderBase<Object?> provider,
+    ProviderContainer container,
+  ) {}
+
+  @override
+  void didUpdateProvider(
+    ProviderBase<Object?> provider,
+    Object? previousValue,
+    Object? newValue,
+    ProviderContainer container,
+  ) {
+    if (_shouldDebugRiverpod) {
+      Fimber.d(
+        "Provider: $provider, prev: ${previousValue.toString().take(200)}, new: ${newValue.toString().take(200)}, container: ${container.toString().take(200)}",
+      );
+    }
+  }
+
+  @override
+  void providerDidFail(
+    ProviderBase<Object?> provider,
+    Object error,
+    StackTrace stackTrace,
+    ProviderContainer container,
+  ) {}
 }
 
 final lastErrorMessagesAndTimestamps = <String, DateTime>{};

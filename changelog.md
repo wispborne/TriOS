@@ -11,6 +11,9 @@
   - Added game compatibility checks to more places that you can enable mods from.
   - If app was maximized on close, it would not be properly maximized when reopened.
   - Catalog didn't show loading indicator when the mod list was loading.
+  - Fixed/reduced notification spam. No longer shows useless notifications for mods when you swap versions, and fixed dupes probably  (introduced last update I think).
+  - Mods no longer disappear and reappear when enabling/disabling (introduced last update).
+  - Reduced how often mods are reloaded from disk if there are many changes in a short time.
 - Changed
   - Added shortcut to open settings.json to Game Settings.
   - Added tooltip on how to read logfile and switched around that UI a little.

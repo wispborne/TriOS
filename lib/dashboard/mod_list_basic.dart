@@ -47,13 +47,20 @@ class _ModListMiniState extends ConsumerState<ModListMini>
   Widget build(BuildContext context) {
     final fullModList = ref.watch(AppState.mods);
     final enabledModIds =
-        ref
-            .watch(AppState.enabledModsFile)
-            .valueOrNull
-            ?.filterOutMissingMods(fullModList)
-            .enabledMods;
+        fullModList
+            .where((it) => it.isEnabledInGame)
+            .map((it) => it.id)
+            .toSet();
+    // ref
+    //     .watch(AppState.enabledModsFile)
+    //     .valueOrNull
+    //     ?.filterOutMissingMods(fullModList)
+    //     .enabledMods;
+
     final modVariants = ref.watch(AppState.modVariants);
     final query = ref.watch(_searchQuery);
+    final versionCheck = ref.watch(AppState.versionCheckResults).valueOrNull;
+    final theme = Theme.of(context);
 
     List<Mod> filteredModList =
         fullModList
@@ -69,9 +76,6 @@ class _ModListMiniState extends ConsumerState<ModListMini>
             )
             .let((mods) => query.isEmpty ? mods : searchMods(mods, query) ?? [])
             .sortedByName;
-
-    final versionCheck = ref.watch(AppState.versionCheckResults).valueOrNull;
-    final theme = Theme.of(context);
 
     return Padding(
       padding: const EdgeInsets.all(8.0),

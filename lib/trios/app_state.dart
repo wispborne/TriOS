@@ -98,7 +98,8 @@ class AppState {
     final modVariants = ref.watch(AppState.modVariants).value ?? [];
     final enabledMods =
         ref.watch(AppState.enabledModIds).value.orEmpty().toList();
-    return getModsFromVariants(modVariants, enabledMods);
+    final mods = getModsFromVariants(modVariants, enabledMods);
+    return mods;
   });
 
   static final enabledModVariants = Provider<List<ModVariant>>((ref) {

@@ -9,6 +9,7 @@ class EnabledMods with EnabledModsMappable {
 
   const EnabledMods(this.enabledMods);
 
+  /// Returns only the mod ids that are in both the `enabled_mods.json` file and the provided mod list.
   EnabledMods filterOutMissingMods(List<Mod> mods) {
     return EnabledMods(
       enabledMods

@@ -55,7 +55,7 @@ abstract class GenericSettingsAsyncNotifier<T> extends AsyncNotifier<T> {
         state = AsyncData(newValue);
         settingsManager.scheduleWriteSettingsToDisk(newValue);
       } else {
-        Fimber.d("No settings change detected.");
+        Fimber.v(() => "No settings change detected.");
       }
       return newValue;
     } catch (e, stackTrace) {

@@ -76,6 +76,8 @@ Future<void> _ensureWindowIsVisible() async {
   );
 }
 
+final shouldDebugRiverpod = false;
+
 void main() async {
   double scaleFactorCallback(Size deviceSize) {
     return 1;
@@ -103,7 +105,10 @@ void main() async {
   Constants.configDataFolderPath = await getApplicationSupportDirectory();
   try {
     print("Initializing TriOS logging framework...");
-    configureLogging(printPlatformInfo: true);
+    configureLogging(
+      printPlatformInfo: true,
+      shouldDebugRiverpod: shouldDebugRiverpod,
+    );
     Fimber.i("${Constants.appTitle} logging started.");
     Fimber.i(
       "Platform: ${Platform.operatingSystem} ${Platform.operatingSystemVersion}.",
@@ -274,7 +279,7 @@ void main() async {
 // ignore: missing_provider_scope
 void _runTriOS(Settings? appSettings) => runApp(
   ProviderScope(
-    observers: [],
+    observers: shouldDebugRiverpod ? [RiverpodDebugObserver()] : [],
     child: RestartableApp(
       child: ExcludeSemantics(
         excluding:

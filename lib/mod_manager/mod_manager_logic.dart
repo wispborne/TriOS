@@ -425,7 +425,9 @@ class ModManagerNotifier extends AsyncNotifier<void> {
                                     failedMod.destinationFolder.path,
                                   );
                                 },
-                                child: const Text("Open Starsector mods folder"),
+                                child: const Text(
+                                  "Open Starsector mods folder",
+                                ),
                               ),
                             ],
                           ),
@@ -1005,18 +1007,25 @@ class ModManagerNotifier extends AsyncNotifier<void> {
       }
     }
 
-    final enabledVariants =
+    // Variants that have `mod_info.json` instead of `mod_info.json.disabled`.
+    // We'll want to change those to disabled when we're enabling a specific version.
+    final modInfoEnabledVariants =
         mod.modVariants.where((it) => it.isModInfoEnabled).toList();
-    if (modVariant == null && enabledVariants.isEmpty) {
+    if (modVariant == null && modInfoEnabledVariants.isEmpty) {
       Fimber.i(
         "Went to disable the mod but no variants were active, nothing to do! $mod",
       );
       return;
     }
 
+    // We're going to make a batch of changes, wait until they're done to refresh modVariants.
+    // ref
+    //     .read(AppState.modVariants.notifier)
+    //     .shouldAutomaticallyReloadOnFilesChanged = false;
+
     // If enabling a variant, disable all other non-bricked mod variants
     // (except for the variant we want to actually enable, if that's already active).
-    for (var variant in enabledVariants) {
+    for (var variant in modInfoEnabledVariants) {
       if (variant.smolId != modVariant?.smolId) {
         try {
           await _disableModVariant(
@@ -1064,15 +1073,19 @@ class ModManagerNotifier extends AsyncNotifier<void> {
       }
     }
 
+    // ref
+    //     .read(AppState.modVariants.notifier)
+    //     .shouldAutomaticallyReloadOnFilesChanged = true;
+
     // TODO update ONLY the mod that changed and any dependents/dependencies.
     await ref
         .read(AppState.modVariants.notifier)
         .reloadModVariants(
-          onlyVariants: {...enabledVariants, modVariant}.nonNulls.toList(),
+          onlyVariants: {...modInfoEnabledVariants, modVariant}.nonNulls.toList(),
         );
 
     if (validateDependencies) {
-      validateModDependencies(modsToFreeze: [mod.id]);
+      await validateModDependencies(modsToFreeze: [mod.id]);
     }
   }
 
@@ -1274,7 +1287,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
       variants,
       enabledMods.orEmpty().toList(),
     );
-    Fimber.i("Disabling variant '${modVariant.smolId}'");
+    Fimber.i("Disabling variant '${modVariant.smolId}' (Set mod_info.json to disabled? $brickModInfo. Set enabled_mods to disabled? $disableModInVanillaLauncher.");
 
     if (brickModInfo) {
       disableModInfoFile(modVariant.modFolder, modVariant.smolId);
@@ -1426,43 +1439,6 @@ typedef InstallModResult =
       Exception? err,
       StackTrace? st,
     });
-
-Future<List<ModVariant>> getModsVariantsInFolder(Directory modsFolder) async {
-  final mods = <ModVariant?>[];
-  if (!modsFolder.existsSync()) return [];
-  final folders = modsFolder.listSync().whereType<Directory>();
-
-  for (final modFolder in folders) {
-    try {
-      var progressText = StringBuffer();
-      var modInfo = await getModInfo(modFolder, progressText);
-      if (modInfo == null) {
-        continue;
-      }
-
-      final modVariant = ModVariant(
-        modInfo: modInfo,
-        modFolder: modFolder,
-        versionCheckerInfo: getVersionFile(
-          modFolder,
-        )?.let((it) => getVersionCheckerInfo(it)),
-        hasNonBrickedModInfo:
-            await modFolder
-                .resolve(Constants.unbrickedModInfoFileName)
-                .exists(),
-      );
-
-      // Screenshot mode
-      // if (modVariant.modInfo.isCompatibleWithGame("0.97a-RC10") == GameCompatibility.compatible || (Random().nextBool() && Random().nextBool())) {
-      mods.add(modVariant);
-      // }
-    } catch (e, st) {
-      Fimber.w("Unable to read mod in ${modFolder.absolute}. ($e)\n$st");
-    }
-  }
-
-  return mods.whereType<ModVariant>().toList();
-}
 
 VersionCheckerInfo? getVersionCheckerInfo(File versionFile) {
   if (!versionFile.existsSync()) return null;

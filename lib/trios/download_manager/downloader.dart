@@ -779,6 +779,7 @@ class DownloadManager {
 
     switch (hostType) {
       case HostType.github:
+      case HostType.bitbucket:
       case HostType.dropbox:
         {
           if (currentHeaders.isNotEmpty &&
@@ -925,6 +926,8 @@ class DownloadManager {
       } else if (host.contains('drive.google.com') ||
           host.contains('drive.usercontent.google.com')) {
         return HostType.googleDrive;
+      } else if (host.contains('bitbucket.org')) {
+        return HostType.bitbucket;
       } else if (host.contains('dropbox.com')) {
         return HostType.dropbox;
       } else if (host.contains('onedrive.live.com')) {
@@ -947,6 +950,7 @@ class DownloadManager {
 enum HostType {
   github,
   googleDrive,
+  bitbucket,
   dropbox,
   oneDrive,
   mediaFire,

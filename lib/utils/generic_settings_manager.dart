@@ -68,7 +68,7 @@ abstract class GenericAsyncSettingsManager<T> {
           ex: e,
           stacktrace: stacktrace,
         );
-        await _createBackup();
+        await createBackup();
         await _performWriteSettingsToDisk(fallback);
         return fallback;
       }
@@ -141,18 +141,26 @@ abstract class GenericAsyncSettingsManager<T> {
     }
   }
 
+  Future<void> createBackup() async {
+    final backupFile = getBackupFile();
+    if (await backupFile.exists()) {
+      await backupFile.delete();
+    }
+    await settingsFile.copy(backupFile.path);
+    await settingsFile.setLastModified(DateTime.now());
+    Fimber.i("Backup of $fileName created at ${backupFile.path}");
+  }
+
+  File getBackupFile() {
+    final backupFileName = "${fileName}_backup.bak";
+    return File(p.join(settingsFile.parent.path, backupFileName));
+  }
+
   Future<File> _getFile() async {
     final dir = await getConfigDataFolderPath();
     await dir.create(recursive: true);
     final path = p.join(dir.path, fileName);
     Fimber.i("Settings file path resolved: $path");
     return File(path);
-  }
-
-  Future<void> _createBackup() async {
-    final backupFileName = "${fileName}_backup.bak";
-    final backupFile = File(p.join(settingsFile.parent.path, backupFileName));
-    await settingsFile.copy(backupFile.path);
-    Fimber.i("Backup of $fileName created at ${backupFile.path}");
   }
 }

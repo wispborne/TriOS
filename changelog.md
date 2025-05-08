@@ -21,7 +21,8 @@
   - Clearer popup when there is an error installing a mod (usually happens when there is a Unicode character in the path).
   - Catalog items now indicate better that they may be clicked.
   - Improved changelog parsing, now highlights versions more reliably.
-  - Changelogs are now fetched on program start
+  - Changelogs are now fetched on program start.
+  - Some settings files, like mod metadata and mod profiles, now have a backup (.bak) created on app launch.
 
 # 1.1.9
 - Added

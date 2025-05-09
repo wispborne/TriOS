@@ -20,6 +20,7 @@ import 'package:trios/models/mod.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/thirdparty/dartx/map.dart';
+import 'package:trios/thirdparty/flutter_context_menu/core/utils/extensions.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
@@ -118,134 +119,19 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                                 ),
                                 padding: EdgeInsets.zero,
                               ),
-                              const SizedBox(width: 4),
+                              const SizedBox(width: 8),
                               RefreshModsButton(
-                                iconOnly: false,
-                                outlined: true,
+                                iconOnly: true,
+                                outlined: false,
+                                isDense: true,
                                 isRefreshing: isChangingModProfileProvider,
                               ),
-                              const SizedBox(width: 4),
-                              Builder(
-                                builder: (context) {
-                                  final vramEst = ref.watch(
-                                    AppState.vramEstimatorProvider,
-                                  );
-                                  final isScanningVram =
-                                      vramEst.valueOrNull?.isScanning == true;
-                                  return Animate(
-                                    controller: animationController,
-                                    effects: [
-                                      if (isScanningVram)
-                                        ShimmerEffect(
-                                          colors: [
-                                            theme.colorScheme.onSurface,
-                                            theme.colorScheme.secondary,
-                                            theme.colorScheme.primary,
-                                            theme.colorScheme.secondary,
-                                          ],
-                                          duration: const Duration(
-                                            milliseconds: 1500,
-                                          ),
-                                        ),
-                                    ],
-                                    child: OutlinedButton.icon(
-                                      onPressed:
-                                          () =>
-                                              isScanningVram
-                                                  ? ref
-                                                      .read(
-                                                        AppState
-                                                            .vramEstimatorProvider
-                                                            .notifier,
-                                                      )
-                                                      .cancelEstimation()
-                                                  : showDialog(
-                                                    context: context,
-                                                    builder:
-                                                        (
-                                                          context,
-                                                        ) => AlertDialog(
-                                                          icon: const Icon(
-                                                            Icons.memory,
-                                                          ),
-                                                          title: const Text(
-                                                            "Estimate VRAM",
-                                                          ),
-                                                          content: Column(
-                                                            mainAxisSize:
-                                                                MainAxisSize
-                                                                    .min,
-                                                            children: [
-                                                              const Text(
-                                                                "This will scan all enabled mods and estimate the total VRAM usage.",
-                                                              ),
-                                                              const SizedBox(
-                                                                height: 8,
-                                                              ),
-                                                              Text(
-                                                                "This may take a few minutes and cause your computer to lag!",
-                                                                style: TextStyle(
-                                                                  color:
-                                                                      Theme.of(
-                                                                        context,
-                                                                      ).colorScheme.error,
-                                                                ),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                          actions: [
-                                                            TextButton(
-                                                              onPressed: () {
-                                                                Navigator.of(
-                                                                  context,
-                                                                ).pop();
-                                                              },
-                                                              child: const Text(
-                                                                "Cancel",
-                                                              ),
-                                                            ),
-                                                            TextButton(
-                                                              onPressed: () {
-                                                                ref
-                                                                    .read(
-                                                                      AppState
-                                                                          .vramEstimatorProvider
-                                                                          .notifier,
-                                                                    )
-                                                                    .startEstimating();
-                                                                Navigator.of(
-                                                                  context,
-                                                                ).pop();
-                                                              },
-                                                              child: const Text(
-                                                                "Estimate",
-                                                              ),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                  ),
-                                      label: Text(
-                                        isScanningVram
-                                            ? "Cancel Scan"
-                                            : "Est. VRAM",
-                                      ),
-                                      style: OutlinedButton.styleFrom(
-                                        foregroundColor: Theme.of(context)
-                                            .colorScheme
-                                            .onSurface
-                                            .withOpacity(0.8),
-                                        side: BorderSide(
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .onSurface
-                                              .withOpacity(0.8),
-                                        ),
-                                      ),
-                                      icon: const Icon(Icons.memory),
-                                    ),
-                                  );
-                                },
-                              ),
+                              const SizedBox(width: 8),
+                              buildProfileSelector(isGameRunning),
+                              const SizedBox(width: 8),
+                              // Removing Est. VRAM button because it's on the mod groups now.
+                              // Maybe should add it to an overflow menu, though.
+                              if (false) buildEstimateVramButton(theme),
                               const SizedBox(width: 8),
                               SizedBox(
                                 height: 30,
@@ -257,79 +143,6 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                                 ),
                               ),
                               const Spacer(),
-                              const SizedBox(width: 8),
-                              const Padding(
-                                padding: EdgeInsets.only(right: 8),
-                                child: Text("Profile:"),
-                              ),
-                              MovingTooltipWidget.text(
-                                message: isGameRunning ? "Game is running" : "",
-                                child: Disable(
-                                  isEnabled: !isGameRunning,
-                                  child: SizedBox(
-                                    width: 175,
-                                    child: Builder(
-                                      builder: (context) {
-                                        final profiles =
-                                            ref
-                                                .watch(modProfilesProvider)
-                                                .valueOrNull;
-                                        final activeProfileId = ref.watch(
-                                          appSettings.select(
-                                            (s) => s.activeModProfileId,
-                                          ),
-                                        );
-                                        return DropdownButton(
-                                          value: profiles?.modProfiles
-                                              .firstWhereOrNull(
-                                                (p) => p.id == activeProfileId,
-                                              ),
-                                          isDense: true,
-                                          isExpanded: true,
-                                          hint: const Text("(none active)"),
-                                          padding: const EdgeInsets.all(4),
-                                          focusColor: Colors.transparent,
-                                          items:
-                                              profiles?.modProfiles
-                                                  .map(
-                                                    (p) => DropdownMenuItem(
-                                                      value: p,
-                                                      child: Text(
-                                                        "${p.name} (${p.enabledModVariants.length} mods)",
-                                                        style: const TextStyle(
-                                                          fontSize: 13,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  )
-                                                  .toList() ??
-                                              [],
-                                          onChanged: (value) {
-                                            if (value is ModProfile) {
-                                              ref
-                                                  .read(
-                                                    modProfilesProvider
-                                                        .notifier,
-                                                  )
-                                                  .showActivateDialog(
-                                                    value,
-                                                    context,
-                                                  );
-                                            }
-                                          },
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              CopyModListButtonLarge(
-                                mods: allMods,
-                                enabledMods:
-                                    allMods
-                                        .where((mod) => mod.hasEnabledVariant)
-                                        .toList(),
-                              ),
                               // Builder(builder: (context) {
                               //   final isDoubleClick = ref.watch(
                               //       appSettings.select(
@@ -362,6 +175,8 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                               //             )),
                               //       ]);
                               // }),
+                              buildOverflowButton(allMods),
+                              const SizedBox(width: 8),
                               MovingTooltipWidget.text(
                                 message: "Open side panel",
                                 child: IconButton(
@@ -907,6 +722,244 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
             ),
           ),
       ],
+    );
+  }
+
+  Builder buildEstimateVramButton(ThemeData theme) {
+    return Builder(
+      builder: (context) {
+        final vramEst = ref.watch(AppState.vramEstimatorProvider);
+        final isScanningVram = vramEst.valueOrNull?.isScanning == true;
+        return Animate(
+          controller: animationController,
+          effects: [
+            if (isScanningVram)
+              ShimmerEffect(
+                colors: [
+                  theme.colorScheme.onSurface,
+                  theme.colorScheme.secondary,
+                  theme.colorScheme.primary,
+                  theme.colorScheme.secondary,
+                ],
+                duration: const Duration(milliseconds: 1500),
+              ),
+          ],
+          child: OutlinedButton.icon(
+            onPressed:
+                () =>
+                    isScanningVram
+                        ? ref
+                            .read(AppState.vramEstimatorProvider.notifier)
+                            .cancelEstimation()
+                        : showDialog(
+                          context: context,
+                          builder:
+                              (context) => AlertDialog(
+                                icon: const Icon(Icons.memory),
+                                title: const Text("Estimate VRAM"),
+                                content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Text(
+                                      "This will scan all enabled mods and estimate the total VRAM usage.",
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      "This may take a few minutes and cause your computer to lag!",
+                                      style: TextStyle(
+                                        color:
+                                            Theme.of(context).colorScheme.error,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                    child: const Text("Cancel"),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      ref
+                                          .read(
+                                            AppState
+                                                .vramEstimatorProvider
+                                                .notifier,
+                                          )
+                                          .startEstimating();
+                                      Navigator.of(context).pop();
+                                    },
+                                    child: const Text("Estimate"),
+                                  ),
+                                ],
+                              ),
+                        ),
+            label: Text(isScanningVram ? "Cancel Scan" : "Est. VRAM"),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Theme.of(
+                context,
+              ).colorScheme.onSurface.withOpacity(0.8),
+              side: BorderSide(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+              ),
+            ),
+            icon: const Icon(Icons.memory),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget buildProfileSelector(bool isGameRunning) {
+    return Builder(
+      builder: (context) {
+        final profiles = ref.watch(modProfilesProvider).valueOrNull;
+        final activeProfileId = ref.watch(
+          appSettings.select((s) => s.activeModProfileId),
+        );
+        final activeProfile =
+            ref.read(modProfilesProvider.notifier).getCurrentModProfile();
+
+        return SizedBox(
+          height: 36,
+          child: MovingTooltipWidget.text(
+            message: "Swap between mod loadouts. Manage them in the Profiles tab.",
+            child: PopupMenuButton(
+              onSelected: (profile) {
+                if (profile is ModProfile) {
+                  ref
+                      .read(modProfilesProvider.notifier)
+                      .showActivateDialog(profile, context);
+                }
+              },
+              tooltip: "",
+              borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+              initialValue: activeProfile,
+              itemBuilder: (BuildContext context) {
+                return profiles?.modProfiles
+                        .map(
+                          (p) => PopupMenuItem(
+                            value: p,
+                            child: Text(
+                              "${p.name} (${p.enabledModVariants.length} mods)",
+                              style: const TextStyle(fontSize: 13),
+                            ),
+                          ),
+                        )
+                        .toList() ??
+                    [];
+              },
+              child: Padding(
+                padding: const EdgeInsets.all(4),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "Mod Profile",
+                      style: Theme.of(context).textTheme.labelMedium,
+                    ),
+                    Text(
+                      activeProfile?.name.truncate(20) ?? "(none)",
+                      style: Theme.of(
+                        context,
+                      ).textTheme.labelSmall?.copyWith(fontSize: 8),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+
+        return Row(
+          children: [
+            const Padding(
+              padding: EdgeInsets.only(right: 8),
+              child: Text("Profile:"),
+            ),
+            MovingTooltipWidget.text(
+              message: isGameRunning ? "Game is running" : "",
+              child: Disable(
+                isEnabled: !isGameRunning,
+                child: SizedBox(
+                  width: 175,
+                  child: Builder(
+                    builder: (context) {
+                      return DropdownButton(
+                        value: profiles?.modProfiles.firstWhereOrNull(
+                          (p) => p.id == activeProfileId,
+                        ),
+                        isDense: true,
+                        isExpanded: true,
+                        hint: const Text("(none active)"),
+                        padding: const EdgeInsets.all(4),
+                        focusColor: Colors.transparent,
+                        items:
+                            profiles?.modProfiles
+                                .map(
+                                  (p) => DropdownMenuItem(
+                                    value: p,
+                                    child: Text(
+                                      "${p.name} (${p.enabledModVariants.length} mods)",
+                                      style: const TextStyle(fontSize: 13),
+                                    ),
+                                  ),
+                                )
+                                .toList() ??
+                            [],
+                        onChanged: (value) {
+                          if (value is ModProfile) {
+                            ref
+                                .read(modProfilesProvider.notifier)
+                                .showActivateDialog(value, context);
+                          }
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget buildOverflowButton(List<Mod> allMods) {
+    return MovingTooltipWidget.text(
+      message: "More options",
+      child: PopupMenuButton(
+        tooltip: "",
+        itemBuilder:
+            (context) => [
+              PopupMenuItem(
+                onTap: () {
+                  copyModListToClipboardFromMods(
+                    allMods.where((mod) => mod.hasEnabledVariant).toList(),
+                    context,
+                  );
+                },
+                child: ListTile(
+                  dense: true,
+                  leading: Icon(Icons.copy),
+                  title: Text("Copy Enabled Mods to Clipboard"),
+                ),
+              ),
+              PopupMenuItem(
+                onTap: () {
+                  copyModListToClipboardFromMods(allMods, context);
+                },
+                child: ListTile(
+                  dense: true,
+                  leading: Icon(Icons.copy_all),
+                  title: Text("Copy All Mods to Clipboard"),
+                ),
+              ),
+            ],
+      ),
     );
   }
 

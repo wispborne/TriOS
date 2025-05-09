@@ -14,6 +14,7 @@ class RefreshModsButton extends ConsumerStatefulWidget {
   final bool isRefreshing;
   final bool iconOnly;
   final bool outlined;
+  final bool isDense;
 
   const RefreshModsButton({
     super.key,
@@ -21,6 +22,7 @@ class RefreshModsButton extends ConsumerStatefulWidget {
     this.padding = const EdgeInsets.all(4),
     this.labelWidget,
     this.outlined = false,
+    this.isDense = false,
     required this.isRefreshing,
     required this.iconOnly,
   });
@@ -50,7 +52,7 @@ class _RefreshModsButtonState extends ConsumerState<RefreshModsButton> {
                   onPressed: () {
                     _refresh();
                   },
-                  constraints: const BoxConstraints(),
+                  constraints: widget.isDense ? null : const BoxConstraints(),
                 )
                 : widget.outlined
                 ? SizedBox(

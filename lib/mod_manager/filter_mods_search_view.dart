@@ -22,7 +22,7 @@ class FilterModsSearchBar extends StatelessWidget {
         return SearchBar(
           controller: controller,
           leading: const Icon(Icons.search),
-          hintText: "Filter mods...",
+          // hintText: "Filter mods...",
           trailing: [
             query.isEmpty
                 ? Container()

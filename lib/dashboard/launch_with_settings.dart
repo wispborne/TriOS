@@ -35,7 +35,7 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
   @override
   void initState() {
     try {
-      starsectorLaunchPrefs = Launcher.getStarsectorLaunchPrefs();
+      starsectorLaunchPrefs = LauncherButton.getStarsectorLaunchPrefs();
     } catch (e) {
       Fimber.e("Failed to get default Starsector launch prefs", ex: e);
     }
@@ -129,48 +129,53 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                     padding: const EdgeInsets.all(8.0),
                     child: Column(
                       children: [
-                        Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(
-                              ThemeManager.cornerRadius,
-                            ),
-                            border: Border.all(
-                              color: Theme.of(context).colorScheme.secondary,
-                              strokeAlign: BorderSide.strokeAlignOutside,
-                              width: 2,
-                            ),
-                          ),
-                          child: ElevatedButton(
-                            onPressed: () {
-                              if (isRunning) return;
-                              _onClickedTimer?.cancel();
-                              _onClickedTimer = Timer(
-                                const Duration(seconds: 5),
-                                () => {},
-                              );
-                              Launcher.launchGame(ref, context);
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                                  Theme.of(context).colorScheme.secondary,
-                              shape: RoundedRectangleBorder(
+                        true
+                            ? LauncherButton(showTextInsteadOfIcon: true)
+                            : Container(
+                              decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(
                                   ThemeManager.cornerRadius,
                                 ),
+                                border: Border.all(
+                                  color:
+                                      Theme.of(context).colorScheme.secondary,
+                                  strokeAlign: BorderSide.strokeAlignOutside,
+                                  width: 2,
+                                ),
+                              ),
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  if (isRunning) return;
+                                  _onClickedTimer?.cancel();
+                                  _onClickedTimer = Timer(
+                                    const Duration(seconds: 5),
+                                    () => {},
+                                  );
+                                  LauncherButton.launchGame(ref, context);
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor:
+                                      Theme.of(context).colorScheme.secondary,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      ThemeManager.cornerRadius,
+                                    ),
+                                  ),
+                                ),
+                                child: Text(
+                                  isRunning ? "RUNNING..." : "LAUNCH",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w900,
+                                    fontFamily: "Orbitron",
+                                    fontSize: 27,
+                                    color:
+                                        Theme.of(
+                                          context,
+                                        ).colorScheme.onSecondary,
+                                  ),
+                                ),
                               ),
                             ),
-                            child: Text(
-                              isRunning ? "RUNNING..." : "LAUNCH",
-                              style: TextStyle(
-                                fontWeight: FontWeight.w900,
-                                fontFamily: "Orbitron",
-                                fontSize: 27,
-                                color:
-                                    Theme.of(context).colorScheme.onSecondary,
-                              ),
-                            ),
-                          ),
-                        ),
                         const SizedBox(height: 8),
                         Tooltip(
                           message:

@@ -292,7 +292,7 @@ class _AppShellState extends ConsumerState<AppShell>
                 ],
               ),
             ),
-            const Launcher(),
+            const LauncherButton(showTextInsteadOfIcon: false),
             Padding(
               padding: const EdgeInsets.only(left: 16, right: 0, top: 2),
               child: Row(
@@ -387,7 +387,8 @@ class _AppShellState extends ConsumerState<AppShell>
                           onPressed: () => _changeTab(TriOSTools.weapons),
                         ),
                       ),
-                      if (Constants.currentVersion >= Version.parse("1.2.0-dev01"))
+                      if (Constants.currentVersion >=
+                          Version.parse("1.2.0-dev01"))
                         MovingTooltipWidget.text(
                           message: "Ship Viewer",
                           child: IconButton(

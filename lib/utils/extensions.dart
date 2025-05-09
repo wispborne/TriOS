@@ -96,9 +96,11 @@ extension StringExt on String {
   /// Warning: probably not fast.
   String fixJson() {
     // Replace \# with # because some mod did that and it broke things.
-    var fixed = replaceAll(r"\#", "#");
+    var fixed = replaceAll(r"\#", "#").trim();
     // Replace tabs with spaces because yaml is picky. Thank you VIC.
     fixed = fixed.replaceAll("\t", "  ");
+    // Remove trailing commas. Thank you SkillExtra.
+    fixed = fixed.trimEnd(",");
 
     try {
       return json.encode(loadYaml(fixed));

@@ -15,6 +15,7 @@
   - Mods no longer disappear and reappear when enabling/disabling (introduced last update).
   - Reduced how often mods are reloaded from disk if there are many changes in a short time.
   - Sped up downloads from Bitbucket.
+  - Launch button on dashboard now shows a warning if you have the wrong JRE selected, same as the toolbar launch button does.
 - Changed
   - Added shortcut to open settings.json to Game Settings.
   - Added tooltip on how to read logfile and switched around that UI a little.
@@ -79,6 +80,8 @@
   - Downloads taking more than 30 seconds were getting messed up.
 - Changed
   - A bit of UI polish to the VRAM Estimator page to bring it more in line with other pages.
+- Fixed
+  - Trailing comma in mod_info.json top-level object wouldn't load (e.g. Extra Skills mod).
 
 # 1.1.2
 - Fixed

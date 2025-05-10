@@ -8,10 +8,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:scaled_app/scaled_app.dart';
 import 'package:toastification/toastification.dart';
+import 'package:trios/catalog/mod_browser_page.dart';
 import 'package:trios/chipper/chipper_home.dart';
 import 'package:trios/chipper/utils.dart';
 import 'package:trios/dashboard/dashboard.dart';
-import 'package:trios/catalog/mod_browser_page.dart';
 import 'package:trios/mod_manager/mods_grid_page.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/portraits/portraits_viewer.dart';
@@ -655,37 +655,40 @@ class _AppShellState extends ConsumerState<AppShell>
                           },
                         ),
                       ),
-                      MovingTooltipWidget.text(
-                        message: "Show donation popup",
-                        child: IconButton(
-                          icon: const SvgImageIcon(
-                            "assets/images/icon-donate.svg",
+                      if (ref.watch(
+                        appSettings.select((s) => s.showDonationButton),
+                      ))
+                        MovingTooltipWidget.text(
+                          message: "Show donation popup",
+                          child: IconButton(
+                            icon: const SvgImageIcon(
+                              "assets/images/icon-donate.svg",
+                            ),
+                            color: Theme.of(context).iconTheme.color,
+                            onPressed: () {
+                              // donate options
+                              // Constants.patreonUrl.openAsUriInBrowser();
+                              // Constants.kofiUrl.openAsUriInBrowser();
+                              showDialog(
+                                context: context,
+                                builder: (context) {
+                                  return AlertDialog(
+                                    title: const Text("Donations"),
+                                    content: DonateView(),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.of(context).pop();
+                                        },
+                                        child: const Text("Close"),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+                            },
                           ),
-                          color: Theme.of(context).iconTheme.color,
-                          onPressed: () {
-                            // donate options
-                            // Constants.patreonUrl.openAsUriInBrowser();
-                            // Constants.kofiUrl.openAsUriInBrowser();
-                            showDialog(
-                              context: context,
-                              builder: (context) {
-                                return AlertDialog(
-                                  title: const Text("Donations"),
-                                  content: DonateView(),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () {
-                                        Navigator.of(context).pop();
-                                      },
-                                      child: const Text("Close"),
-                                    ),
-                                  ],
-                                );
-                              },
-                            );
-                          },
                         ),
-                      ),
                       MovingTooltipWidget.text(
                         message:
                             "When enabled, modifying a mod's rules.csv will\nreload in-game rules as long as dev mode is enabled."

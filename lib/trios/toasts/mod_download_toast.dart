@@ -288,7 +288,6 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                                                       .changeActiveModVariantWithForceModGameVersionDialogIfNeeded(
                                                         mod,
                                                         installedMod,
-                                                        ref,
                                                       );
                                                   toastification.dismiss(item);
                                                 },

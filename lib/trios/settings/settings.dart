@@ -82,6 +82,8 @@ class Settings with SettingsMappable {
   // in a different shared_prefs key.
   final String? activeModProfileId;
 
+  final bool showDonationButton;
+
   Settings({
     this.gameDir,
     this.gameCoreDir,
@@ -142,6 +144,7 @@ class Settings with SettingsMappable {
     this.userId = '',
     this.hasHiddenForumDarkModeTip,
     this.activeModProfileId,
+    this.showDonationButton = true,
   });
 }
 

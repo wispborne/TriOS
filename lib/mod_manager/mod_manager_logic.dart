@@ -1081,7 +1081,8 @@ class ModManagerNotifier extends AsyncNotifier<void> {
     await ref
         .read(AppState.modVariants.notifier)
         .reloadModVariants(
-          onlyVariants: {...modInfoEnabledVariants, modVariant}.nonNulls.toList(),
+          onlyVariants:
+              {...modInfoEnabledVariants, modVariant}.nonNulls.toList(),
         );
 
     if (validateDependencies) {
@@ -1287,7 +1288,9 @@ class ModManagerNotifier extends AsyncNotifier<void> {
       variants,
       enabledMods.orEmpty().toList(),
     );
-    Fimber.i("Disabling variant '${modVariant.smolId}' (Set mod_info.json to disabled? $brickModInfo. Set enabled_mods to disabled? $disableModInVanillaLauncher.");
+    Fimber.i(
+      "Disabling variant '${modVariant.smolId}' (Set mod_info.json to disabled? $brickModInfo. Set enabled_mods to disabled? $disableModInVanillaLauncher.",
+    );
 
     if (brickModInfo) {
       disableModInfoFile(modVariant.modFolder, modVariant.smolId);
@@ -1371,45 +1374,94 @@ class ModManagerNotifier extends AsyncNotifier<void> {
     }
   }
 
+  /// Enables the highest version of each disabled mod passed in.
+  /// Does not change already-enabled mods.
+  Future<void> enableMultiple(List<Mod> mods) async {
+    final disabledMods = mods.where((mod) => !mod.hasEnabledVariant).toList();
+
+    if (disabledMods.isEmpty) {
+      return;
+    }
+
+    Fimber.d("Enabling ${disabledMods.length} mods...");
+    final modManagerNotifier = ref.read(modManager.notifier);
+
+    for (final mod in disabledMods.sublist(0, disabledMods.length - 1)) {
+      await modManagerNotifier
+          .changeActiveModVariantWithForceModGameVersionDialogIfNeeded(
+            mod,
+            mod.findHighestVersion,
+            validateDependencies: false,
+          );
+    }
+    // Validate dependencies at the end only.
+    await modManagerNotifier
+        .changeActiveModVariantWithForceModGameVersionDialogIfNeeded(
+          disabledMods.last,
+          disabledMods.last.findHighestVersion,
+          validateDependencies: true,
+        );
+  }
+
+  /// Disables all mods passed in.
+  Future<void> disableMultiple(List<Mod> mods) async {
+    final enabledMods = mods.where((mod) => mod.hasEnabledVariant).toList();
+    if (enabledMods.isEmpty) {
+      return;
+    }
+
+    Fimber.d("Disabling ${enabledMods.length} mods...");
+    var modManagerNotifier = ref.read(modManager.notifier);
+
+    for (final mod in enabledMods) {
+      await modManagerNotifier.changeActiveModVariant(
+        mod,
+        null,
+        validateDependencies: false,
+      );
+    }
+  }
+
   Future<void> changeActiveModVariantWithForceModGameVersionDialogIfNeeded(
     Mod mod,
-    ModVariant? modVariant,
-    WidgetRef widgetRef, {
+    ModVariant? modVariant, {
     bool validateDependencies = true,
     bool refreshModlistAfter = true,
   }) async {
-    final currentStarsectorVersion = ref.read(
-      appSettings.select((s) => s.lastStarsectorVersion),
-    );
-    final isGameRunning = ref.watch(AppState.isGameRunning).value == true;
+    try {
+      final currentStarsectorVersion = ref.read(
+        appSettings.select((s) => s.lastStarsectorVersion),
+      );
+      final isGameRunning = ref.read(AppState.isGameRunning).value == true;
 
-    if (modVariant != null &&
-        isModGameVersionIncorrect(
-          currentStarsectorVersion,
-          isGameRunning,
-          modVariant,
-        )) {
-      showDialog(
-        context: ref.read(AppState.appContext)!,
-        builder: (context) {
-          return buildForceGameVersionWarningDialog(
-            currentStarsectorVersion!,
+      if (modVariant != null &&
+          isModGameVersionIncorrect(
+            currentStarsectorVersion,
+            isGameRunning,
             modVariant,
-            context,
-            widgetRef,
-            onForced: () {
-              changeActiveModVariant(mod, modVariant);
-            },
-            refreshModlistAfter: refreshModlistAfter,
-          );
-        },
-      );
-    } else {
-      await changeActiveModVariant(
-        mod,
-        modVariant,
-        validateDependencies: validateDependencies,
-      );
+          )) {
+        await showDialog(
+          context: ref.read(AppState.appContext)!,
+          builder: (context) {
+            return ForceGameVersionWarningDialog(
+              modVariant: modVariant,
+              onForced: () {
+                changeActiveModVariant(mod, modVariant);
+              },
+              refreshModlistAfter: refreshModlistAfter,
+            );
+          },
+        );
+      } else {
+        await changeActiveModVariant(
+          mod,
+          modVariant,
+          validateDependencies: validateDependencies,
+        );
+      }
+    } catch (e, st) {
+      Fimber.e("Error while changing mod variant", ex: e, stacktrace: st);
+      rethrow;
     }
   }
 }

@@ -140,7 +140,6 @@ class _ModVersionSelectionDropdownState
           .changeActiveModVariantWithForceModGameVersionDialogIfNeeded(
             widget.mod,
             modVariant,
-            ref,
           );
     }
 

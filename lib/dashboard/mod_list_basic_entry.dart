@@ -364,7 +364,6 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                             .changeActiveModVariantWithForceModGameVersionDialogIfNeeded(
                               mod,
                               null,
-                              ref,
                             );
                       } else {
                         // Enable highest version
@@ -373,7 +372,6 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                             .changeActiveModVariantWithForceModGameVersionDialogIfNeeded(
                               mod,
                               mod.findHighestVersion,
-                              ref,
                             );
                       }
                     } catch (e) {

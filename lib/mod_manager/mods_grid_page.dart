@@ -20,7 +20,6 @@ import 'package:trios/models/mod.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/thirdparty/dartx/map.dart';
-import 'package:trios/thirdparty/flutter_context_menu/core/utils/extensions.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
@@ -47,7 +46,6 @@ import 'package:url_launcher/url_launcher.dart';
 import '../mod_profiles/mod_profiles_manager.dart';
 import '../mod_profiles/models/mod_profile.dart';
 import '../utils/search.dart';
-import 'copy_mod_list_button.dart';
 import 'filter_mods_search_view.dart';
 import 'homebrew_grid/wispgrid_group.dart';
 import 'homebrew_grid/wispgrid_header_row_view.dart';
@@ -825,7 +823,8 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
         return SizedBox(
           height: 36,
           child: MovingTooltipWidget.text(
-            message: "Swap between mod loadouts. Manage them in the Profiles tab.",
+            message:
+                "Swap between mod loadouts. Manage them in the Profiles tab.",
             child: PopupMenuButton(
               onSelected: (profile) {
                 if (profile is ModProfile) {
@@ -929,12 +928,102 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
   }
 
   Widget buildOverflowButton(List<Mod> allMods) {
+    final theme = Theme.of(context);
+
     return MovingTooltipWidget.text(
       message: "More options",
       child: PopupMenuButton(
         tooltip: "",
         itemBuilder:
             (context) => [
+              PopupMenuItem(
+                onTap: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) {
+                      return AlertDialog(
+                        title: Text("Enable All Mods"),
+                        content: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              "Are you sure you want to enable all ${allMods.length} mods?",
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              "This will enable the latest version of all disabled mods."
+                              "\nMods that are already enabled won't be changed.",
+                              style: theme.textTheme.labelLarge,
+                            ),
+                          ],
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text("Cancel"),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              ref
+                                  .read(modManager.notifier)
+                                  .enableMultiple(allMods);
+                            },
+                            child: const Text("Enable All"),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
+                child: ListTile(
+                  dense: true,
+                  leading: Icon(Icons.local_fire_department),
+                  title: Text("Enable All Mods"),
+                ),
+              ),
+              PopupMenuItem(
+                onTap: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) {
+                      return AlertDialog(
+                        title: Text("Disable All Mods"),
+                        content: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              "Are you sure you want to disable all ${allMods.length} mods?",
+                            ),
+                          ],
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text("Cancel"),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              ref
+                                  .read(modManager.notifier)
+                                  .disableMultiple(allMods);
+                            },
+                            child: const Text("Disable All"),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
+                child: ListTile(
+                  dense: true,
+                  leading: Icon(Icons.fire_extinguisher),
+                  title: Text("Disable All Mods"),
+                ),
+              ),
               PopupMenuItem(
                 onTap: () {
                   copyModListToClipboardFromMods(
@@ -1618,7 +1707,6 @@ class MissingDependencyButton extends ConsumerWidget {
                             .changeActiveModVariantWithForceModGameVersionDialogIfNeeded(
                               disabledVariant!.mod(allMods)!,
                               disabledVariant,
-                              ref,
                             );
                       },
                       style: buttonStyle,

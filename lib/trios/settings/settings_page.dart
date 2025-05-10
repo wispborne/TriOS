@@ -338,7 +338,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                     ],
                   ),
                   SettingsGroup(
-                    name: "Theme",
+                    name: "Interface",
                     children: [
                       Row(
                         children: [
@@ -452,6 +452,29 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                             ),
                           ),
                         ],
+                      ),
+                      const SizedBox(height: 16),
+                      Builder(
+                        builder: (context) {
+                          final showDonationButton = ref.watch(
+                            appSettings.select((s) => s.showDonationButton),
+                          );
+                          return MovingTooltipWidget.text(
+                            message: "Free up precious UI space",
+                            child: CheckboxWithLabel(
+                              value: !showDonationButton,
+                              onChanged:
+                                  (bool? value) => ref
+                                      .read(appSettings.notifier)
+                                      .update(
+                                        (state) => state.copyWith(
+                                          showDonationButton: !(value ?? false),
+                                        ),
+                                      ),
+                              label: "Hide Donation Button",
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),

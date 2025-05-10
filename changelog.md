@@ -24,6 +24,9 @@
   - Improved changelog parsing, now highlights versions more reliably.
   - Changelogs are now fetched on program start.
   - Some settings files, like mod metadata and mod profiles, now have a backup (.bak) created on app launch.
+  - May now hide the donation button.
+  - Cleaned up Mods tab toolbar.
+    - Removed the "Est. VRAM" button, since there are buttons on the mod groups (Enabled/Disable) now that do that.
 
 # 1.1.9
 - Added

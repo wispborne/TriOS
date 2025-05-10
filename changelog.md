@@ -3,6 +3,9 @@
   - Ships Viewer
 
 # 1.1.10
+- Added
+  - Enable/Disable All mods
+    - Found in the new menu at the top-right of the Mods page.
 - Fixed
   - Unreadable font color on "change version" button if multiple mods were enabled and lowest one was for wrong game version (thanks, SirHartley...)
   - Alignment of mod dependency buttons (thanks SirHartley!)

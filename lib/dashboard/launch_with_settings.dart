@@ -9,6 +9,7 @@ import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/widgets/disable.dart';
+import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:trios/widgets/text_link_button.dart';
 
 import '../launcher/launcher.dart';
@@ -96,20 +97,44 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                           ThemeManager.cornerRadius,
                         ),
                       ),
-                      child: CheckboxWithLabel(
-                        label: "Skip Launcher",
-                        textPadding: const EdgeInsets.only(left: 12, bottom: 0),
-                        labelStyle: Theme.of(context).textTheme.labelMedium,
-                        flipCheckboxAndLabel: true,
-                        value: enableDirectLaunch,
-                        onChanged: (bool? value) {
-                          if (value == null) return;
-                          ref
-                              .read(appSettings.notifier)
-                              .update(
-                                (s) => s.copyWith(enableDirectLaunch: value),
-                              );
-                        },
+                      child: Opacity(
+                        opacity: enableDirectLaunch ? 1 : 0.8,
+                        child: CheckboxWithLabel(
+                          labelWidget: Row(
+                            children: [
+                              Text(
+                                "Skip Launcher",
+                                style: Theme.of(context).textTheme.labelMedium,
+                              ),
+                              if (enableDirectLaunch)
+                                Transform.rotate(
+                                  angle: .6,
+                                  child: SvgImageIcon(
+                                    "assets/images/icon-experimental.svg",
+                                    width: 20,
+                                    color: Theme.of(
+                                      context,
+                                    ).iconTheme.color?.withValues(alpha: 0.8),
+                                  ),
+                                ),
+                            ],
+                          ),
+                          textPadding: const EdgeInsets.only(
+                            left: 12,
+                            bottom: 0,
+                          ),
+                          flipCheckboxAndLabel: true,
+                          value: enableDirectLaunch,
+                          showGlow: enableDirectLaunch,
+                          onChanged: (bool? value) {
+                            if (value == null) return;
+                            ref
+                                .read(appSettings.notifier)
+                                .update(
+                                  (s) => s.copyWith(enableDirectLaunch: value),
+                                );
+                          },
+                        ),
                       ),
                     ),
                     // Padding(

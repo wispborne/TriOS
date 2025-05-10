@@ -179,12 +179,12 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                     ),
                     Padding(
                       padding: const EdgeInsets.only(top: 4, left: 8, right: 8),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          SizedBox(
-                            height: 20,
-                            child: CheckboxWithLabel(
+                      child: SizedBox(
+                        height: 24,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            CheckboxWithLabel(
                               value: hideDisabled,
                               onChanged: (newValue) {
                                 setState(() {
@@ -198,35 +198,36 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                 style: theme.textTheme.labelMedium,
                               ),
                             ),
-                          ),
-                          SizedBox(width: 8),
-                          if (Constants.currentVersion >=
-                              Version.parse("1.2.0-dev01"))
-                            MovingTooltipWidget.text(
-                              message: "Sort By",
-                              child: PopupMenuButton<String>(
-                                icon: Icon(Icons.sort, size: 20),
-                                tooltip: "",
-                                itemBuilder:
-                                    (context) => [
-                                      PopupMenuItem(
-                                        value: "name",
-                                        onTap: () {
-                                          // todo
-                                          ref.watch(
-                                            appSettings.select(
-                                              (s) => s.dashboardModListSort,
-                                            ),
-                                          );
-                                        },
-                                        child: Text("Sort by Name (todo)"),
-                                      ),
-                                    ],
+                            SizedBox(width: 8),
+                            if (Constants.currentVersion >=
+                                Version.parse("1.2.0-dev01"))
+                              MovingTooltipWidget.text(
+                                message: "Sort By",
+                                child: PopupMenuButton<String>(
+                                  icon: Icon(Icons.sort, size: 20),
+                                  tooltip: "",
+                                  padding: EdgeInsets.zero,
+                                  itemBuilder:
+                                      (context) => [
+                                        PopupMenuItem(
+                                          value: "name",
+                                          onTap: () {
+                                            // todo
+                                            ref.watch(
+                                              appSettings.select(
+                                                (s) => s.dashboardModListSort,
+                                              ),
+                                            );
+                                          },
+                                          child: Text("Sort by Name (todo)"),
+                                        ),
+                                      ],
+                                ),
                               ),
-                            ),
-                          const Spacer(),
-                          _SettingsPopupMenu(),
-                        ],
+                            const Spacer(),
+                            _SettingsPopupMenu(),
+                          ],
+                        ),
                       ),
                     ),
                   ],
@@ -675,24 +676,25 @@ class _SettingsPopupMenu extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
 
-    return PopupMenuButton<String>(
-      icon: const Icon(Icons.settings, size: 20),
-      tooltip: "",
-      itemBuilder:
-          (context) => [
-            PopupMenuItem(
-              child: Consumer(
-                builder: (context, consumerRef, child) {
-                  final bool isSwapOnUpdateEnabled = consumerRef.watch(
-                    appSettings.select(
-                      (s) =>
-                          s.modUpdateBehavior ==
-                          ModUpdateBehavior.switchToNewVersionIfWasEnabled,
-                    ),
-                  );
-                  return SizedBox(
-                    height: 20,
-                    child: MovingTooltipWidget.text(
+    return MovingTooltipWidget.text(
+      message: "More Settings",
+      child: PopupMenuButton<String>(
+        icon: const Icon(Icons.settings, size: 20),
+        tooltip: "",
+        padding: EdgeInsets.zero,
+        itemBuilder:
+            (context) => [
+              PopupMenuItem(
+                child: Consumer(
+                  builder: (context, consumerRef, child) {
+                    final bool isSwapOnUpdateEnabled = consumerRef.watch(
+                      appSettings.select(
+                        (s) =>
+                            s.modUpdateBehavior ==
+                            ModUpdateBehavior.switchToNewVersionIfWasEnabled,
+                      ),
+                    );
+                    return MovingTooltipWidget.text(
                       message:
                           "When checked, updating an enabled mod switches to the new version.",
                       child: CheckboxWithLabel(
@@ -717,12 +719,12 @@ class _SettingsPopupMenu extends ConsumerWidget {
                           style: theme.textTheme.labelMedium,
                         ),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+      ),
     );
   }
 }

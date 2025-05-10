@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:trios/themes/theme_manager.dart';
+import 'package:trios/widgets/blur.dart';
 import 'package:trios/widgets/conditional_wrap.dart';
 
 class CheckboxWithLabel extends StatelessWidget {
@@ -15,6 +15,8 @@ class CheckboxWithLabel extends StatelessWidget {
   final Widget Function(Widget)? checkWrapper;
   final bool flipCheckboxAndLabel;
   final double checkboxScale;
+  final Color? checkColor;
+  final bool showGlow;
 
   const CheckboxWithLabel({
     super.key,
@@ -30,6 +32,8 @@ class CheckboxWithLabel extends StatelessWidget {
     this.expand = false,
     this.flipCheckboxAndLabel = false,
     this.checkboxScale = 1.0,
+    this.checkColor,
+    this.showGlow = false,
   }) : assert(label != null || labelWidget != null);
 
   @override
@@ -42,11 +46,16 @@ class CheckboxWithLabel extends StatelessWidget {
         child: IgnorePointer(
           child: Transform.scale(
             scale: checkboxScale,
-            child: Checkbox(
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              value: value,
-              tristate: tristate,
-              onChanged: onChanged,
+            child: ConditionalWrap(
+              condition: showGlow,
+              wrapper: (child) => Blur(child: child),
+              child: Checkbox(
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                value: value,
+                tristate: tristate,
+                onChanged: onChanged,
+                activeColor: checkColor,
+              ),
             ),
           ),
         ),

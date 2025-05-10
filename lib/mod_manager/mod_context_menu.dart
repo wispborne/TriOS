@@ -254,8 +254,23 @@ class ForceGameVersionWarningDialog extends ConsumerWidget {
     final singleModIntro =
         hasMultiple
             ? ""
-            : "'${modsToForce.single.modInfo.nameOrId}' was made for Starsector ${modsToForce.single.modInfo.gameVersion}, but you can try running it in $currentStarsectorVersion."
-                "\n";
+            : "'${modsToForce.single.modInfo.nameOrId}' was made for Starsector ${modsToForce.single.modInfo.gameVersion}, but you can try running it in $currentStarsectorVersion.\n";
+
+    // Split the singleModIntro into parts to apply bold formatting to the mod name
+    final singleModIntroParts =
+        hasMultiple
+            ? <TextSpan>[]
+            : [
+              TextSpan(
+                text: modsToForce.single.modInfo.nameOrId,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              TextSpan(
+                text:
+                    " was made for Starsector ${modsToForce.single.modInfo.gameVersion}, but you can try running it in $currentStarsectorVersion.\n",
+              ),
+            ];
+
     return AlertDialog(
       title: Text(
         "Force ${hasMultiple ? "${modsToForce.length} mods " : ""}to $currentStarsectorVersion?",
@@ -263,9 +278,10 @@ class ForceGameVersionWarningDialog extends ConsumerWidget {
       content: RichText(
         text: TextSpan(
           children: [
+            ...singleModIntroParts, // Use the split parts here
             TextSpan(
               text:
-                  "${singleModIntro}Simple mods like portrait packs should be fine. Game updates usually don't break mods, but it depends on the mod and the game version.\n\n",
+                  "${hasMultiple ? singleModIntro : ""}Simple mods like portrait packs should be fine. Game updates usually don't break mods, but it depends on the mod and the game version.\n\n",
             ),
             if (hasMultiple)
               TextSpan(

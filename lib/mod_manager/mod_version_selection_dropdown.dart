@@ -4,6 +4,7 @@ import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:toastification/toastification.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
+import 'package:trios/models/version.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/trios/app_state.dart';
@@ -134,15 +135,6 @@ class _ModVersionSelectionDropdownState
     );
     final isGameRunning = ref.watch(AppState.isGameRunning).value == true;
 
-    Future<void> switchToVariant(ModVariant? modVariant) async {
-      ref
-          .read(modManager.notifier)
-          .changeActiveModVariantWithForceModGameVersionDialogIfNeeded(
-            widget.mod,
-            modVariant,
-          );
-    }
-
     //////// Single variant button
     if (isSingleVariant) {
       final tooltipMessage =
@@ -198,13 +190,13 @@ class _ModVersionSelectionDropdownState
     //////// Multiple variants button
     final items = [
       if (widget.mod.hasEnabledVariant)
-        const DropdownMenuItem(
+        const DropdownItem(
           value: null,
           child: Text("Disable", overflow: TextOverflow.ellipsis),
         ),
       ...(widget.mod.modVariants
           .map(
-            (variant) => DropdownMenuItem(
+            (variant) => DropdownItem(
               value: variant,
               child: Text(
                 variant.modInfo.version.toString(),
@@ -218,6 +210,15 @@ class _ModVersionSelectionDropdownState
     ];
 
     final dropdownWidth = buttonWidth;
+    final highestVersionVariant =
+        widget.mod.modVariants.maxBy((v) => v.bestVersion ?? Version.zero())!;
+    final enabledVariant = widget.mod.findFirstEnabled;
+    final canUpgradeVersion =
+        enabledVariant != null &&
+        enabledVariant.smolId != highestVersionVariant.smolId;
+    final variantThatCanBeUpgradedTo =
+        canUpgradeVersion ? highestVersionVariant : null;
+
     return MovingTooltipWidget.text(
       message:
           errorTooltip ??
@@ -228,7 +229,7 @@ class _ModVersionSelectionDropdownState
         isEnabled: isButtonEnabled,
         child: DropdownButton2<ModVariant?>(
           items: items,
-          value: widget.mod.findFirstEnabled,
+          valueListenable: ValueNotifier(enabledVariant),
           openWithLongPress: false,
           alignment: Alignment.centerLeft,
           hint: buildDropdownButton(
@@ -238,6 +239,7 @@ class _ModVersionSelectionDropdownState
             warningIcon,
             null,
             textColor,
+            variantThatCanBeUpgradedTo,
           ),
           iconStyleData: const IconStyleData(iconSize: 0),
           // Removes ugly grey line below text
@@ -257,6 +259,7 @@ class _ModVersionSelectionDropdownState
                 warningIcon,
                 item,
                 textColor,
+                variantThatCanBeUpgradedTo,
               );
             }).toList();
           },
@@ -268,19 +271,34 @@ class _ModVersionSelectionDropdownState
     );
   }
 
-  SizedBox buildDropdownButton(
+  Future<void> switchToVariant(ModVariant? modVariant) async {
+    ref
+        .read(modManager.notifier)
+        .changeActiveModVariantWithForceModGameVersionDialogIfNeeded(
+          widget.mod,
+          modVariant,
+        );
+  }
+
+  Widget buildDropdownButton(
     double dropdownWidth,
     ButtonStyle buttonStyle,
     bool hasMultipleEnabled,
     Icon warningIcon,
-    DropdownMenuItem<ModVariant?>? item,
+    DropdownItem<ModVariant?>? item,
     Color textColor,
+    ModVariant? variantThatCanBeUpgradedTo,
   ) {
     return SizedBox(
       width: dropdownWidth,
       child: ElevatedButton(
         onPressed: null,
-        style: buttonStyle,
+        style:
+            variantThatCanBeUpgradedTo == null
+                ? buttonStyle
+                : buttonStyle.copyWith(
+                  padding: WidgetStatePropertyAll(EdgeInsets.zero),
+                ),
         child: Stack(
           children: [
             (hasMultipleEnabled
@@ -306,9 +324,68 @@ class _ModVersionSelectionDropdownState
                 ),
               ],
             ),
+            if (variantThatCanBeUpgradedTo != null)
+              buildUpgradeButton(
+                variantThatCanBeUpgradedTo,
+                getColorForCurrentState(buttonStyle.backgroundColor!, {
+                  WidgetState.selected,
+                }),
+              ),
           ],
         ),
       ),
     );
+  }
+
+  Widget buildUpgradeButton(
+    ModVariant variantThatCanBeUpgradedTo,
+    Color? buttonBackgroundColor,
+  ) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Spacer(),
+        InkWell(
+          onTap: () => switchToVariant(variantThatCanBeUpgradedTo),
+          child: MovingTooltipWidget.text(
+            message:
+                "Click to use newer version ${variantThatCanBeUpgradedTo.bestVersion}",
+            child: Column(
+              mainAxisSize: MainAxisSize.max,
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    width: 32,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: buttonBackgroundColor?.lighter(8),
+                        border: Border.all(
+                          color: buttonBackgroundColor!.darker(6),
+                          width: 1,
+                        ),
+                        borderRadius: BorderRadius.only(
+                          topRight: Radius.circular(ThemeManager.cornerRadius),
+                          bottomRight: Radius.circular(
+                            ThemeManager.cornerRadius,
+                          ),
+                        ),
+                      ),
+                      child: Icon(Icons.arrow_upward),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Color? getColorForCurrentState(
+    WidgetStateProperty<Color?> stateProperty,
+    Set<WidgetState> states,
+  ) {
+    return stateProperty.resolve(states);
   }
 }

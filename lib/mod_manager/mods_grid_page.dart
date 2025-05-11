@@ -18,6 +18,7 @@ import 'package:trios/mod_manager/mod_summary_panel.dart';
 import 'package:trios/mod_manager/mod_version_selection_dropdown.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/models/mod_variant.dart';
+import 'package:trios/models/version.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/thirdparty/dartx/map.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
@@ -1582,7 +1583,29 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                         );
 
                         return MovingTooltipWidget.framed(
-                          tooltipWidget: text,
+                          tooltipWidget: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children:
+                                mod.modVariants
+                                    .sortedByDescending(
+                                      (v) => v.bestVersion ?? Version.zero(),
+                                    )
+                                    .map(
+                                      (v) => Text(
+                                        v.bestVersion?.toString() ?? "",
+
+                                        style: theme.textTheme.labelLarge
+                                            ?.copyWith(
+                                              color:
+                                                  enabledVersion == v
+                                                      ? null
+                                                      : disabledVersionTextColor,
+                                            ),
+                                      ),
+                                    )
+                                    .toList(),
+                          ),
                           child: text,
                         );
                       },

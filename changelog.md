@@ -6,6 +6,7 @@
 - Added
   - Enable/Disable All mods
     - Found in the new menu at the top-right of the Mods page.
+  - Button to switch to the latest version of a mod if you're using an outdated one.
 - Fixed
   - Unreadable font color on "change version" button if multiple mods were enabled and lowest one was for wrong game version (thanks, SirHartley...)
   - Alignment of mod dependency buttons (thanks SirHartley!)
@@ -30,6 +31,7 @@
   - May now hide the donation button.
   - Cleaned up Mods tab toolbar.
     - Removed the "Est. VRAM" button, since there are buttons on the mod groups (Enabled/Disable) now that do that.
+  - New license (from GPLv3 to "depends what you're doing"). 
 
 # 1.1.9
 - Added

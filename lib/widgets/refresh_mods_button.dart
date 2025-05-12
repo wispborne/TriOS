@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/models/mod_variant.dart';
 import 'package:trios/widgets/disable.dart';
 
 import '../trios/app_state.dart';
@@ -107,6 +108,8 @@ class _RefreshModsButtonState extends ConsumerState<RefreshModsButton> {
 
   void _refresh() {
     AppState.skipCacheOnNextVersionCheck = true;
+    ModVariant.iconCache.clear();
     ref.invalidate(AppState.modVariants);
+    ref.invalidate(AppState.changelogsProvider);
   }
 }

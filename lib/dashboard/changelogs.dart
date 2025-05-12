@@ -47,6 +47,12 @@ class _ChangelogsState extends ConsumerState<Changelogs> {
       } else if (modChangelog!.url.isNotEmpty) {
         isLoading = true;
       }
+    } else {
+      isLoading = true;
+    }
+
+    if (changelogsManager.isLoading) {
+      isLoading = true;
     }
 
     if (modChangelog?.url.isEmpty == true) {

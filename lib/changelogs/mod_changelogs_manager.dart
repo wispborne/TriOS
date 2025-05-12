@@ -21,25 +21,26 @@ class ModChangelogsManager extends AsyncNotifier<Map<String, ModChangelog>> {
   FutureOr<Map<String, ModChangelog>> build() async {
     final mods = ref.watch(AppState.mods);
     final httpClient = ref.watch(triOSHttpClient);
-    var cachedVersionChecks =
+    final cachedVersionChecks =
         ref.watch(AppState.versionCheckResults).valueOrNull;
 
-    // Set to loading if never loaded before, but don't wipe results if we already have them.
-    if (!state.hasValue) {
+    // Show a spinner only the first time.
+    if (!state.hasValue && !state.isLoading && !state.hasError) {
       state = const AsyncValue.loading();
     }
 
+    // Start with whatever we already have.
+    final Map<String, ModChangelog> results = Map.of(
+      state.valueOrNull ?? <String, ModChangelog>{},
+    );
+
     for (final mod in mods) {
       // Only fetch changelogs once per mod...
-      if (state.valueOrNull?.containsKey(mod.id) == true) {
-        continue;
-      }
+      if (results.containsKey(mod.id)) continue;
 
       // and only if there is Version Checker...
-      final modVariant = mod.findFirstEnabledOrHighestVersion!;
-      if (modVariant.versionCheckerInfo == null) {
-        continue;
-      }
+      final modVariant = mod.findFirstEnabledOrHighestVersion;
+      if (modVariant == null || modVariant.versionCheckerInfo == null) continue;
 
       final versionCheckComparisonResult = mod.updateCheck(cachedVersionChecks);
 
@@ -49,31 +50,23 @@ class ModChangelogsManager extends AsyncNotifier<Map<String, ModChangelog>> {
       );
 
       // and only if there is a changelog url.
-      if (changelogUrl.isNullOrEmpty()) {
-        continue;
-      }
+      if (changelogUrl.isNullOrEmpty()) continue;
 
-      final changelog = await fetchChangelog(httpClient, changelogUrl!);
+      final raw = await fetchChangelog(httpClient, changelogUrl!, mod.id);
+      if (raw.isNullOrEmpty()) continue;
 
-      if (changelog.isNotNullOrEmpty()) {
-        final processedChangelog = processChangelog(
-          changelog!,
-          changelogUrl,
-          mod.id,
-          modVariant.smolId,
-        );
-
-        if (state.isLoading) {
-          state = AsyncValue.data({});
-        }
-
-        state = AsyncValue.data(
-          (state.valueOrNull ?? {})..[mod.id] = processedChangelog,
-        );
-      }
+      results[mod.id] = processChangelog(
+        raw!,
+        changelogUrl,
+        mod.id,
+        modVariant.smolId,
+      );
+      // Add just-fetched changelog to state.
+      state = AsyncValue.data(Map<String, ModChangelog>.from(results));
     }
 
-    return state.valueOrNull ?? {};
+    state = AsyncValue.data(results);
+    return results;
   }
 
   /// Returns the changelog URL for a mod.
@@ -95,22 +88,25 @@ class ModChangelogsManager extends AsyncNotifier<Map<String, ModChangelog>> {
     );
   }
 
-  /// Fetches the changelog for a mod.
+  /// Downloads a changelog. Any network error is swallowed and logged.
   Future<String?> fetchChangelog(
     TriOSHttpClient httpClient,
     String changelogUrl,
+    String modId,
   ) async {
-    return await httpClient.get(changelogUrl).then((response) {
+    try {
+      final response = await httpClient.get(changelogUrl);
       var data = response.data;
-
-      if (data is List<int>) {
-        data = utf8.decode(data);
-      } else {
-        data = data.toString();
-      }
-
+      if (data is List<int>) data = utf8.decode(data);
       return data.toString().trim();
-    });
+    } catch (ex, st) {
+      Fimber.w(
+        'Failed to fetch changelog for mod "$modId" ($changelogUrl)',
+        ex: ex,
+        stacktrace: st,
+      );
+      return ex.toString();
+    }
   }
 
   /// Processes the changelog by removing the first line if it contains "Changelog".
@@ -156,7 +152,6 @@ class ModChangelogsManager extends AsyncNotifier<Map<String, ModChangelog>> {
             );
             buffer.clear();
           }
-
           try {
             currentVersion = Version.parse(versionStr);
           } catch (ex, st) {

@@ -25,6 +25,7 @@ class SvgImageIcon extends StatelessWidget {
         assetName,
         width: width,
         height: height,
+        fit:  BoxFit.scaleDown,
         colorFilter:
             colorLocal == null
                 ? null

@@ -12,6 +12,7 @@ import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:trios/widgets/svg_image_icon.dart';
 
 import '../models/mod.dart';
 import '../models/mod_variant.dart';
@@ -308,7 +309,7 @@ class _ModVersionSelectionDropdownState
               mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
-                const SizedBox(width: 10),
+                const SizedBox(width: 16),
                 Expanded(
                   child: Align(
                     alignment: Alignment.center,
@@ -319,8 +320,12 @@ class _ModVersionSelectionDropdownState
                   ),
                 ),
                 SizedBox(
-                  width: 10,
-                  child: Icon(Icons.arrow_drop_down, color: textColor),
+                  width: 16,
+                  child: Icon(
+                    Icons.arrow_drop_down,
+                    color: textColor,
+                    size: 24,
+                  ),
                 ),
               ],
             ),
@@ -370,7 +375,11 @@ class _ModVersionSelectionDropdownState
                           ),
                         ),
                       ),
-                      child: Icon(Icons.arrow_upward),
+                      child: SvgImageIcon(
+                        "assets/images/icon-swap-upgrade.svg",
+                        height: 16,
+                        width: 16,
+                      ),
                     ),
                   ),
                 ),

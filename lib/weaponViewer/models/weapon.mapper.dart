@@ -31,17 +31,17 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
       Field('rarity', _$rarity, opt: true);
   static double? _$baseValue(Weapon v) => v.baseValue;
   static const Field<Weapon, double> _f$baseValue =
-      Field('baseValue', _$baseValue, key: 'base value', opt: true);
+      Field('baseValue', _$baseValue, key: r'base value', opt: true);
   static double? _$range(Weapon v) => v.range;
   static const Field<Weapon, double> _f$range =
       Field('range', _$range, opt: true);
   static double? _$damagePerSecond(Weapon v) => v.damagePerSecond;
   static const Field<Weapon, double> _f$damagePerSecond = Field(
       'damagePerSecond', _$damagePerSecond,
-      key: 'damage/second', opt: true);
+      key: r'damage/second', opt: true);
   static double? _$damagePerShot(Weapon v) => v.damagePerShot;
   static const Field<Weapon, double> _f$damagePerShot =
-      Field('damagePerShot', _$damagePerShot, key: 'damage/shot', opt: true);
+      Field('damagePerShot', _$damagePerShot, key: r'damage/shot', opt: true);
   static double? _$emp(Weapon v) => v.emp;
   static const Field<Weapon, double> _f$emp = Field('emp', _$emp, opt: true);
   static double? _$impact(Weapon v) => v.impact;
@@ -49,27 +49,27 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
       Field('impact', _$impact, opt: true);
   static double? _$turnRate(Weapon v) => v.turnRate;
   static const Field<Weapon, double> _f$turnRate =
-      Field('turnRate', _$turnRate, key: 'turn rate', opt: true);
+      Field('turnRate', _$turnRate, key: r'turn rate', opt: true);
   static int? _$ops(Weapon v) => v.ops;
   static const Field<Weapon, int> _f$ops =
-      Field('ops', _$ops, key: 'OPs', opt: true);
+      Field('ops', _$ops, key: r'OPs', opt: true);
   static double? _$ammo(Weapon v) => v.ammo;
   static const Field<Weapon, double> _f$ammo = Field('ammo', _$ammo, opt: true);
   static double? _$ammoPerSec(Weapon v) => v.ammoPerSec;
   static const Field<Weapon, double> _f$ammoPerSec =
-      Field('ammoPerSec', _$ammoPerSec, key: 'ammo/sec', opt: true);
+      Field('ammoPerSec', _$ammoPerSec, key: r'ammo/sec', opt: true);
   static double? _$reloadSize(Weapon v) => v.reloadSize;
   static const Field<Weapon, double> _f$reloadSize =
-      Field('reloadSize', _$reloadSize, key: 'reload size', opt: true);
+      Field('reloadSize', _$reloadSize, key: r'reload size', opt: true);
   static String? _$type(Weapon v) => v.type;
   static const Field<Weapon, String> _f$type = Field('type', _$type, opt: true);
   static double? _$energyPerShot(Weapon v) => v.energyPerShot;
   static const Field<Weapon, double> _f$energyPerShot =
-      Field('energyPerShot', _$energyPerShot, key: 'energy/shot', opt: true);
+      Field('energyPerShot', _$energyPerShot, key: r'energy/shot', opt: true);
   static double? _$energyPerSecond(Weapon v) => v.energyPerSecond;
   static const Field<Weapon, double> _f$energyPerSecond = Field(
       'energyPerSecond', _$energyPerSecond,
-      key: 'energy/second', opt: true);
+      key: r'energy/second', opt: true);
   static double? _$chargeup(Weapon v) => v.chargeup;
   static const Field<Weapon, double> _f$chargeup =
       Field('chargeup', _$chargeup, opt: true);
@@ -78,38 +78,39 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
       Field('chargedown', _$chargedown, opt: true);
   static int? _$burstSize(Weapon v) => v.burstSize;
   static const Field<Weapon, int> _f$burstSize =
-      Field('burstSize', _$burstSize, key: 'burst size', opt: true);
+      Field('burstSize', _$burstSize, key: r'burst size', opt: true);
   static double? _$burstDelay(Weapon v) => v.burstDelay;
   static const Field<Weapon, double> _f$burstDelay =
-      Field('burstDelay', _$burstDelay, key: 'burst delay', opt: true);
+      Field('burstDelay', _$burstDelay, key: r'burst delay', opt: true);
   static double? _$minSpread(Weapon v) => v.minSpread;
   static const Field<Weapon, double> _f$minSpread =
-      Field('minSpread', _$minSpread, key: 'min spread', opt: true);
+      Field('minSpread', _$minSpread, key: r'min spread', opt: true);
   static double? _$maxSpread(Weapon v) => v.maxSpread;
   static const Field<Weapon, double> _f$maxSpread =
-      Field('maxSpread', _$maxSpread, key: 'max spread', opt: true);
+      Field('maxSpread', _$maxSpread, key: r'max spread', opt: true);
   static double? _$spreadPerShot(Weapon v) => v.spreadPerShot;
   static const Field<Weapon, double> _f$spreadPerShot =
-      Field('spreadPerShot', _$spreadPerShot, key: 'spread/shot', opt: true);
+      Field('spreadPerShot', _$spreadPerShot, key: r'spread/shot', opt: true);
   static double? _$spreadDecayPerSec(Weapon v) => v.spreadDecayPerSec;
   static const Field<Weapon, double> _f$spreadDecayPerSec = Field(
       'spreadDecayPerSec', _$spreadDecayPerSec,
-      key: 'spread decay/sec', opt: true);
+      key: r'spread decay/sec', opt: true);
   static double? _$beamSpeed(Weapon v) => v.beamSpeed;
   static const Field<Weapon, double> _f$beamSpeed =
-      Field('beamSpeed', _$beamSpeed, key: 'beam speed', opt: true);
+      Field('beamSpeed', _$beamSpeed, key: r'beam speed', opt: true);
   static double? _$projSpeed(Weapon v) => v.projSpeed;
   static const Field<Weapon, double> _f$projSpeed =
-      Field('projSpeed', _$projSpeed, key: 'proj speed', opt: true);
+      Field('projSpeed', _$projSpeed, key: r'proj speed', opt: true);
   static double? _$launchSpeed(Weapon v) => v.launchSpeed;
   static const Field<Weapon, double> _f$launchSpeed =
-      Field('launchSpeed', _$launchSpeed, key: 'launch speed', opt: true);
+      Field('launchSpeed', _$launchSpeed, key: r'launch speed', opt: true);
   static double? _$flightTime(Weapon v) => v.flightTime;
   static const Field<Weapon, double> _f$flightTime =
-      Field('flightTime', _$flightTime, key: 'flight time', opt: true);
+      Field('flightTime', _$flightTime, key: r'flight time', opt: true);
   static double? _$projHitpoints(Weapon v) => v.projHitpoints;
-  static const Field<Weapon, double> _f$projHitpoints =
-      Field('projHitpoints', _$projHitpoints, key: 'proj hitpoints', opt: true);
+  static const Field<Weapon, double> _f$projHitpoints = Field(
+      'projHitpoints', _$projHitpoints,
+      key: r'proj hitpoints', opt: true);
   static double? _$autofireAccBonus(Weapon v) => v.autofireAccBonus;
   static const Field<Weapon, double> _f$autofireAccBonus =
       Field('autofireAccBonus', _$autofireAccBonus, opt: true);
@@ -127,11 +128,11 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
   static String? _$techManufacturer(Weapon v) => v.techManufacturer;
   static const Field<Weapon, String> _f$techManufacturer = Field(
       'techManufacturer', _$techManufacturer,
-      key: 'tech/manufacturer', opt: true);
+      key: r'tech/manufacturer', opt: true);
   static String? _$forWeaponTooltip(Weapon v) => v.forWeaponTooltip;
   static const Field<Weapon, String> _f$forWeaponTooltip = Field(
       'forWeaponTooltip', _$forWeaponTooltip,
-      key: 'for weapon tooltip>>', opt: true);
+      key: r'for weapon tooltip>>', opt: true);
   static String? _$primaryRoleStr(Weapon v) => v.primaryRoleStr;
   static const Field<Weapon, String> _f$primaryRoleStr =
       Field('primaryRoleStr', _$primaryRoleStr, opt: true);
@@ -170,7 +171,7 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
       Field('specClass', _$specClass, opt: true);
   static String? _$weaponType(Weapon v) => v.weaponType;
   static const Field<Weapon, String> _f$weaponType =
-      Field('weaponType', _$weaponType, key: 'type', opt: true);
+      Field('weaponType', _$weaponType, key: r'type', opt: true);
   static String? _$size(Weapon v) => v.size;
   static const Field<Weapon, String> _f$size = Field('size', _$size, opt: true);
   static String? _$turretSprite(Weapon v) => v.turretSprite;

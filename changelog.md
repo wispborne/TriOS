@@ -32,6 +32,7 @@
   - Cleaned up Mods tab toolbar.
     - Removed the "Est. VRAM" button, since there are buttons on the mod groups (Enabled/Disable) now that do that.
   - New license (from GPLv3 to "depends what you're doing"). 
+  - Aligned versions on Mods page.
 
 # 1.1.9
 - Added

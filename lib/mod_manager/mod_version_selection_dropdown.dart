@@ -69,7 +69,7 @@ class _ModVersionSelectionDropdownState
     // Button color logic
     final buttonColor = switch ((
       hasMultipleEnabled,
-      widget.mod.isEnabledInGame,
+      widget.mod.hasEnabledVariant,
     )) {
       (true, _) => errorColor,
       (false, true) => theme.colorScheme.secondary,
@@ -78,7 +78,7 @@ class _ModVersionSelectionDropdownState
 
     final textColor = switch ((
       hasMultipleEnabled,
-      widget.mod.isEnabledInGame,
+      widget.mod.hasEnabledVariant,
     )) {
       (true, _) => theme.colorScheme.onSecondary.darker(20),
       (false, true) => theme.colorScheme.onSecondary,

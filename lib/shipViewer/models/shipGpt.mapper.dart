@@ -31,39 +31,39 @@ class ShipMapper extends ClassMapperBase<Ship> {
   static String? _$techManufacturer(Ship v) => v.techManufacturer;
   static const Field<Ship, String> _f$techManufacturer = Field(
       'techManufacturer', _$techManufacturer,
-      key: 'tech/manufacturer', opt: true);
+      key: r'tech/manufacturer', opt: true);
   static String? _$systemId(Ship v) => v.systemId;
   static const Field<Ship, String> _f$systemId =
-      Field('systemId', _$systemId, key: 'system id', opt: true);
+      Field('systemId', _$systemId, key: r'system id', opt: true);
   static String? _$fleetPts(Ship v) => v.fleetPts;
   static const Field<Ship, String> _f$fleetPts =
-      Field('fleetPts', _$fleetPts, key: 'fleet pts', opt: true);
+      Field('fleetPts', _$fleetPts, key: r'fleet pts', opt: true);
   static String? _$hitpoints(Ship v) => v.hitpoints;
   static const Field<Ship, String> _f$hitpoints =
       Field('hitpoints', _$hitpoints, opt: true);
   static String? _$armorRating(Ship v) => v.armorRating;
   static const Field<Ship, String> _f$armorRating =
-      Field('armorRating', _$armorRating, key: 'armor rating', opt: true);
+      Field('armorRating', _$armorRating, key: r'armor rating', opt: true);
   static String? _$maxFlux(Ship v) => v.maxFlux;
   static const Field<Ship, String> _f$maxFlux =
-      Field('maxFlux', _$maxFlux, key: 'max flux', opt: true);
+      Field('maxFlux', _$maxFlux, key: r'max flux', opt: true);
   static String? _$fluxPercent8654(Ship v) => v.fluxPercent8654;
   static const Field<Ship, String> _f$fluxPercent8654 =
-      Field('fluxPercent8654', _$fluxPercent8654, key: '8/6/5/4%', opt: true);
+      Field('fluxPercent8654', _$fluxPercent8654, key: r'8/6/5/4%', opt: true);
   static String? _$fluxDissipation(Ship v) => v.fluxDissipation;
   static const Field<Ship, String> _f$fluxDissipation = Field(
       'fluxDissipation', _$fluxDissipation,
-      key: 'flux dissipation', opt: true);
+      key: r'flux dissipation', opt: true);
   static String? _$ordnancePoints(Ship v) => v.ordnancePoints;
   static const Field<Ship, String> _f$ordnancePoints = Field(
       'ordnancePoints', _$ordnancePoints,
-      key: 'ordnance points', opt: true);
+      key: r'ordnance points', opt: true);
   static String? _$fighterBays(Ship v) => v.fighterBays;
   static const Field<Ship, String> _f$fighterBays =
-      Field('fighterBays', _$fighterBays, key: 'fighter bays', opt: true);
+      Field('fighterBays', _$fighterBays, key: r'fighter bays', opt: true);
   static String? _$maxSpeed(Ship v) => v.maxSpeed;
   static const Field<Ship, String> _f$maxSpeed =
-      Field('maxSpeed', _$maxSpeed, key: 'max speed', opt: true);
+      Field('maxSpeed', _$maxSpeed, key: r'max speed', opt: true);
   static String? _$acceleration(Ship v) => v.acceleration;
   static const Field<Ship, String> _f$acceleration =
       Field('acceleration', _$acceleration, opt: true);
@@ -72,41 +72,41 @@ class ShipMapper extends ClassMapperBase<Ship> {
       Field('deceleration', _$deceleration, opt: true);
   static String? _$maxTurnRate(Ship v) => v.maxTurnRate;
   static const Field<Ship, String> _f$maxTurnRate =
-      Field('maxTurnRate', _$maxTurnRate, key: 'max turn rate', opt: true);
+      Field('maxTurnRate', _$maxTurnRate, key: r'max turn rate', opt: true);
   static String? _$turnAcceleration(Ship v) => v.turnAcceleration;
   static const Field<Ship, String> _f$turnAcceleration = Field(
       'turnAcceleration', _$turnAcceleration,
-      key: 'turn acceleration', opt: true);
+      key: r'turn acceleration', opt: true);
   static String? _$mass(Ship v) => v.mass;
   static const Field<Ship, String> _f$mass = Field('mass', _$mass, opt: true);
   static String? _$shieldType(Ship v) => v.shieldType;
   static const Field<Ship, String> _f$shieldType =
-      Field('shieldType', _$shieldType, key: 'shield type', opt: true);
+      Field('shieldType', _$shieldType, key: r'shield type', opt: true);
   static String? _$defenseId(Ship v) => v.defenseId;
   static const Field<Ship, String> _f$defenseId =
-      Field('defenseId', _$defenseId, key: 'defense id', opt: true);
+      Field('defenseId', _$defenseId, key: r'defense id', opt: true);
   static String? _$shieldArc(Ship v) => v.shieldArc;
   static const Field<Ship, String> _f$shieldArc =
-      Field('shieldArc', _$shieldArc, key: 'shield arc', opt: true);
+      Field('shieldArc', _$shieldArc, key: r'shield arc', opt: true);
   static String? _$shieldUpkeep(Ship v) => v.shieldUpkeep;
   static const Field<Ship, String> _f$shieldUpkeep =
-      Field('shieldUpkeep', _$shieldUpkeep, key: 'shield upkeep', opt: true);
+      Field('shieldUpkeep', _$shieldUpkeep, key: r'shield upkeep', opt: true);
   static String? _$shieldEfficiency(Ship v) => v.shieldEfficiency;
   static const Field<Ship, String> _f$shieldEfficiency = Field(
       'shieldEfficiency', _$shieldEfficiency,
-      key: 'shield efficiency', opt: true);
+      key: r'shield efficiency', opt: true);
   static String? _$phaseCost(Ship v) => v.phaseCost;
   static const Field<Ship, String> _f$phaseCost =
-      Field('phaseCost', _$phaseCost, key: 'phase cost', opt: true);
+      Field('phaseCost', _$phaseCost, key: r'phase cost', opt: true);
   static String? _$phaseUpkeep(Ship v) => v.phaseUpkeep;
   static const Field<Ship, String> _f$phaseUpkeep =
-      Field('phaseUpkeep', _$phaseUpkeep, key: 'phase upkeep', opt: true);
+      Field('phaseUpkeep', _$phaseUpkeep, key: r'phase upkeep', opt: true);
   static String? _$minCrew(Ship v) => v.minCrew;
   static const Field<Ship, String> _f$minCrew =
-      Field('minCrew', _$minCrew, key: 'min crew', opt: true);
+      Field('minCrew', _$minCrew, key: r'min crew', opt: true);
   static String? _$maxCrew(Ship v) => v.maxCrew;
   static const Field<Ship, String> _f$maxCrew =
-      Field('maxCrew', _$maxCrew, key: 'max crew', opt: true);
+      Field('maxCrew', _$maxCrew, key: r'max crew', opt: true);
   static String? _$cargo(Ship v) => v.cargo;
   static const Field<Ship, String> _f$cargo =
       Field('cargo', _$cargo, opt: true);
@@ -114,52 +114,52 @@ class ShipMapper extends ClassMapperBase<Ship> {
   static const Field<Ship, String> _f$fuel = Field('fuel', _$fuel, opt: true);
   static String? _$fuelPerLY(Ship v) => v.fuelPerLY;
   static const Field<Ship, String> _f$fuelPerLY =
-      Field('fuelPerLY', _$fuelPerLY, key: 'fuel/ly', opt: true);
+      Field('fuelPerLY', _$fuelPerLY, key: r'fuel/ly', opt: true);
   static String? _$range(Ship v) => v.range;
   static const Field<Ship, String> _f$range =
       Field('range', _$range, opt: true);
   static String? _$maxBurn(Ship v) => v.maxBurn;
   static const Field<Ship, String> _f$maxBurn =
-      Field('maxBurn', _$maxBurn, key: 'max burn', opt: true);
+      Field('maxBurn', _$maxBurn, key: r'max burn', opt: true);
   static String? _$baseValue(Ship v) => v.baseValue;
   static const Field<Ship, String> _f$baseValue =
-      Field('baseValue', _$baseValue, key: 'base value', opt: true);
+      Field('baseValue', _$baseValue, key: r'base value', opt: true);
   static String? _$crPercentPerDay(Ship v) => v.crPercentPerDay;
   static const Field<Ship, String> _f$crPercentPerDay =
-      Field('crPercentPerDay', _$crPercentPerDay, key: 'cr %/day', opt: true);
+      Field('crPercentPerDay', _$crPercentPerDay, key: r'cr %/day', opt: true);
   static String? _$crToDeploy(Ship v) => v.crToDeploy;
   static const Field<Ship, String> _f$crToDeploy =
-      Field('crToDeploy', _$crToDeploy, key: 'cr to deploy', opt: true);
+      Field('crToDeploy', _$crToDeploy, key: r'cr to deploy', opt: true);
   static String? _$peakCrSec(Ship v) => v.peakCrSec;
   static const Field<Ship, String> _f$peakCrSec =
-      Field('peakCrSec', _$peakCrSec, key: 'peak cr sec', opt: true);
+      Field('peakCrSec', _$peakCrSec, key: r'peak cr sec', opt: true);
   static String? _$crLossPerSec(Ship v) => v.crLossPerSec;
   static const Field<Ship, String> _f$crLossPerSec =
-      Field('crLossPerSec', _$crLossPerSec, key: 'cr loss/sec', opt: true);
+      Field('crLossPerSec', _$crLossPerSec, key: r'cr loss/sec', opt: true);
   static String? _$suppliesRec(Ship v) => v.suppliesRec;
   static const Field<Ship, String> _f$suppliesRec =
-      Field('suppliesRec', _$suppliesRec, key: 'supplies/rec', opt: true);
+      Field('suppliesRec', _$suppliesRec, key: r'supplies/rec', opt: true);
   static String? _$suppliesMo(Ship v) => v.suppliesMo;
   static const Field<Ship, String> _f$suppliesMo =
-      Field('suppliesMo', _$suppliesMo, key: 'supplies/mo', opt: true);
+      Field('suppliesMo', _$suppliesMo, key: r'supplies/mo', opt: true);
   static String? _$cPerS(Ship v) => v.cPerS;
   static const Field<Ship, String> _f$cPerS =
-      Field('cPerS', _$cPerS, key: 'c/s', opt: true);
+      Field('cPerS', _$cPerS, key: r'c/s', opt: true);
   static String? _$cPerF(Ship v) => v.cPerF;
   static const Field<Ship, String> _f$cPerF =
-      Field('cPerF', _$cPerF, key: 'c/f', opt: true);
+      Field('cPerF', _$cPerF, key: r'c/f', opt: true);
   static String? _$fPerS(Ship v) => v.fPerS;
   static const Field<Ship, String> _f$fPerS =
-      Field('fPerS', _$fPerS, key: 'f/s', opt: true);
+      Field('fPerS', _$fPerS, key: r'f/s', opt: true);
   static String? _$fPerF(Ship v) => v.fPerF;
   static const Field<Ship, String> _f$fPerF =
-      Field('fPerF', _$fPerF, key: 'f/f', opt: true);
+      Field('fPerF', _$fPerF, key: r'f/f', opt: true);
   static String? _$crewPerS(Ship v) => v.crewPerS;
   static const Field<Ship, String> _f$crewPerS =
-      Field('crewPerS', _$crewPerS, key: 'crew/s', opt: true);
+      Field('crewPerS', _$crewPerS, key: r'crew/s', opt: true);
   static String? _$crewPerF(Ship v) => v.crewPerF;
   static const Field<Ship, String> _f$crewPerF =
-      Field('crewPerF', _$crewPerF, key: 'crew/f', opt: true);
+      Field('crewPerF', _$crewPerF, key: r'crew/f', opt: true);
   static List<String>? _$hints(Ship v) => v.hints;
   static const Field<Ship, List<String>> _f$hints =
       Field('hints', _$hints, opt: true, hook: StringArrayHook());
@@ -180,7 +180,7 @@ class ShipMapper extends ClassMapperBase<Ship> {
       Field('maxPieces', _$maxPieces, opt: true);
   static String? _$travelDrive(Ship v) => v.travelDrive;
   static const Field<Ship, String> _f$travelDrive =
-      Field('travelDrive', _$travelDrive, key: 'travel drive', opt: true);
+      Field('travelDrive', _$travelDrive, key: r'travel drive', opt: true);
   static String? _$number(Ship v) => v.number;
   static const Field<Ship, String> _f$number =
       Field('number', _$number, opt: true);

@@ -1453,7 +1453,9 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                           height: 20,
                         ),
                       ),
-                    ),
+                    )
+                  else
+                    SizedBox(width: 20),
                   (areUpdatesMuted)
                       ? MovingTooltipWidget.text(
                         message: "Updates muted",

@@ -24,22 +24,22 @@ class GraphicsLibConfigMapper extends ClassMapperBase<GraphicsLibConfig> {
       v.areAnyEffectsEnabled;
   static const Field<GraphicsLibConfig, bool> _f$areAnyEffectsEnabled = Field(
       'areAnyEffectsEnabled', _$areAnyEffectsEnabled,
-      key: 'enableShaders');
+      key: r'enableShaders');
   static bool _$areGfxLibNormalMapsEnabled(GraphicsLibConfig v) =>
       v.areGfxLibNormalMapsEnabled;
   static const Field<GraphicsLibConfig, bool> _f$areGfxLibNormalMapsEnabled =
       Field('areGfxLibNormalMapsEnabled', _$areGfxLibNormalMapsEnabled,
-          key: 'enableNormal');
+          key: r'enableNormal');
   static bool _$areGfxLibMaterialMapsEnabled(GraphicsLibConfig v) =>
       v.areGfxLibMaterialMapsEnabled;
   static const Field<GraphicsLibConfig, bool> _f$areGfxLibMaterialMapsEnabled =
       Field('areGfxLibMaterialMapsEnabled', _$areGfxLibMaterialMapsEnabled,
-          key: 'loadMaterial');
+          key: r'loadMaterial');
   static bool _$areGfxLibSurfaceMapsEnabled(GraphicsLibConfig v) =>
       v.areGfxLibSurfaceMapsEnabled;
   static const Field<GraphicsLibConfig, bool> _f$areGfxLibSurfaceMapsEnabled =
       Field('areGfxLibSurfaceMapsEnabled', _$areGfxLibSurfaceMapsEnabled,
-          key: 'loadSurface');
+          key: r'loadSurface');
 
   @override
   final MappableFields<GraphicsLibConfig> fields = const {

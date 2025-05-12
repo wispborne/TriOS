@@ -7,6 +7,9 @@
   - Enable/Disable All mods
     - Found in the new menu at the top-right of the Mods page.
   - Button to switch to the latest version of a mod if you're using an outdated one.
+  - Button in Settings to hide the donation button.
+  - Shortcut to open `settings.json`, found under Game Settings on Dashboard.
+  - On log section of Dashboard, added explanatory tooltip and slight UI refresh.
 - Fixed
   - Unreadable font color on "change version" button if multiple mods were enabled and lowest one was for wrong game version (thanks, SirHartley...)
   - Alignment of mod dependency buttons (thanks SirHartley!)
@@ -21,14 +24,11 @@
   - Sped up downloads from Bitbucket.
   - Launch button on dashboard now shows a warning if you have the wrong JRE selected, same as the toolbar launch button does.
 - Changed
-  - Added shortcut to open settings.json to Game Settings.
-  - Added tooltip on how to read logfile and switched around that UI a little.
   - Clearer popup when there is an error installing a mod (usually happens when there is a Unicode character in the path).
   - Catalog items now indicate better that they may be clicked.
   - Improved changelog parsing, now highlights versions more reliably.
   - Changelogs are now fetched on program start.
   - Some settings files, like mod metadata and mod profiles, now have a backup (.bak) created on app launch.
-  - May now hide the donation button.
   - Cleaned up Mods tab toolbar.
     - Removed the "Est. VRAM" button, since there are buttons on the mod groups (Enabled/Disable) now that do that.
   - New license (from GPLv3 to "depends what you're doing"). 

@@ -31,7 +31,7 @@
   - Some settings files, like mod metadata and mod profiles, now have a backup (.bak) created on app launch.
   - Cleaned up Mods tab toolbar.
     - Removed the "Est. VRAM" button, since there are buttons on the mod groups (Enabled/Disable) now that do that.
-  - New license (from GPLv3 to "depends what you're doing"). 
+  - New license (from GPLv3 to "usually not GPLv3"). 
   - Aligned versions on Mods page.
 
 # 1.1.9

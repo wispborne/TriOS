@@ -499,6 +499,70 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                       ),
                     ),
                     WispGridColumn<Mod>(
+                      key: ModGridHeader.updateStatus.name,
+                      name: "Update",
+                      isSortable: true,
+                      getSortValue: (mod) {
+                        final versionCheckResultsNew =
+                            ref.watch(AppState.versionCheckResults).valueOrNull;
+                        final versionCheckComparison = mod.updateCheck(
+                          versionCheckResultsNew,
+                        );
+                        final updateInt = versionCheckComparison?.comparisonInt;
+                        final metadata = modsMetadata?.getMergedModMetadata(
+                          mod.id,
+                        );
+                        final areUpdatesMuted =
+                            metadata != null && metadata.areUpdatesMuted;
+                        final changelogUrl = ref
+                            .read(AppState.changelogsProvider.notifier)
+                            .getChangelogUrl(
+                              versionCheckComparison
+                                  ?.variant
+                                  .versionCheckerInfo,
+                              versionCheckComparison?.remoteVersionCheck,
+                            );
+
+                        if (updateInt == null) {
+                          // Missing version checker
+                          return -20;
+                        } else if (updateInt == -1 && !areUpdatesMuted) {
+                          // Needs update
+                          if (changelogUrl.isNotNullOrEmpty()) {
+                            return 21;
+                          } else {
+                            return 20;
+                          }
+                        } else if (updateInt >= 0 || areUpdatesMuted) {
+                          // Up to date or local newer than remote (time traveler)
+                          if (changelogUrl.isNotNullOrEmpty()) {
+                            return 1;
+                          } else {
+                            return 0;
+                          }
+                        } else {
+                          // ??????????
+                          return -30;
+                        }
+                      },
+                      itemCellBuilder:
+                          (mod, modifiers) => Builder(
+                            builder: (context) {
+                              final bestVersion =
+                                  mod.findFirstEnabledOrHighestVersion!;
+                              return _buildUpdateCell(
+                                WispGrid.lightTextOpacity,
+                                mod,
+                                isGameRunning,
+                                bestVersion,
+                                modifiers.columnState,
+                                modsMetadata?.getMergedModMetadata(mod.id),
+                              );
+                            },
+                          ),
+                      defaultState: WispGridColumnState(position: 6, width: 65),
+                    ),
+                    WispGridColumn<Mod>(
                       key: ModGridHeader.version.name,
                       name: "Version",
                       isSortable: true,
@@ -523,10 +587,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                               );
                             },
                           ),
-                      defaultState: WispGridColumnState(
-                        position: 6,
-                        width: 100,
-                      ),
+                      defaultState: WispGridColumnState(position: 7, width: 75),
                     ),
                     WispGridColumn<Mod>(
                       key: ModGridHeader.vramImpact.name,
@@ -554,7 +615,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                             modifiers.columnState,
                           ),
                       defaultState: WispGridColumnState(
-                        position: 7,
+                        position: 8,
                         width: 128,
                       ),
                     ),
@@ -615,7 +676,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                             },
                           ),
                       defaultState: WispGridColumnState(
-                        position: 8,
+                        position: 9,
                         width: 100,
                       ),
                     ),
@@ -655,7 +716,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                             ),
                           ),
                       defaultState: WispGridColumnState(
-                        position: 9,
+                        position: 10,
                         width: 150,
                       ),
                     ),
@@ -698,7 +759,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                             ),
                           ),
                       defaultState: WispGridColumnState(
-                        position: 10,
+                        position: 11,
                         width: 150,
                       ),
                     ),
@@ -1071,6 +1132,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
       ModGridHeader.name => ModGridSortField.name,
       ModGridHeader.author => ModGridSortField.author,
       ModGridHeader.version => ModGridSortField.version,
+      ModGridHeader.updateStatus => ModGridSortField.updateStatus,
       ModGridHeader.vramImpact => ModGridSortField.vramImpact,
       ModGridHeader.gameVersion => ModGridSortField.gameVersion,
       ModGridHeader.firstSeen => ModGridSortField.firstSeen,
@@ -1090,6 +1152,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
           ModGridHeader.modIcon => Container(),
           ModGridHeader.name => Text('Name', style: headerTextStyle),
           ModGridHeader.author => Text('Author', style: headerTextStyle),
+          ModGridHeader.updateStatus => Text('Update', style: headerTextStyle),
           ModGridHeader.version => Text('Version', style: headerTextStyle),
           ModGridHeader.vramImpact => MovingTooltipWidget.text(
             message:
@@ -1323,7 +1386,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
     );
   }
 
-  Builder _buildVersionCell(
+  Builder _buildUpdateCell(
     double lightTextOpacity,
     Mod mod,
     bool isGameRunning,
@@ -1337,8 +1400,6 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
         final lightTextColor = theme.colorScheme.onSurface.withOpacity(
           lightTextOpacity,
         );
-        final disabledVersionTextColor = lightTextColor.withOpacity(0.5);
-        final enabledVersion = mod.findFirstEnabled;
         final versionCheckResultsNew =
             ref.watch(AppState.versionCheckResults).valueOrNull;
         //
@@ -1538,84 +1599,110 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                           ),
                         ),
                       ),
-                  Expanded(
-                    child: Builder(
-                      builder: (context) {
-                        final variantsWithEnabledFirst = mod.modVariants.sorted(
-                          (a, b) =>
-                              a.isModInfoEnabled != b.isModInfoEnabled
-                                  ? (a.isModInfoEnabled ? -1 : 1)
-                                  : a.compareTo(b),
-                        );
-
-                        final text = RichText(
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          text: TextSpan(
-                            children: [
-                              for (
-                                var i = 0;
-                                i < variantsWithEnabledFirst.length;
-                                i++
-                              ) ...[
-                                if (i > 0)
-                                  TextSpan(
-                                    text: ', ',
-                                    style: theme.textTheme.labelLarge?.copyWith(
-                                      color: disabledVersionTextColor,
-                                    ),
-                                  ),
-                                TextSpan(
-                                  text:
-                                      variantsWithEnabledFirst[i]
-                                          .modInfo
-                                          .version
-                                          .toString(),
-                                  style: theme.textTheme.labelLarge?.copyWith(
-                                    color:
-                                        enabledVersion ==
-                                                variantsWithEnabledFirst[i]
-                                            ? null
-                                            : disabledVersionTextColor,
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                        );
-
-                        return MovingTooltipWidget.framed(
-                          tooltipWidget: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children:
-                                mod.modVariants
-                                    .sortedByDescending(
-                                      (v) => v.bestVersion ?? Version.zero(),
-                                    )
-                                    .map(
-                                      (v) => Text(
-                                        v.bestVersion?.toString() ?? "",
-
-                                        style: theme.textTheme.labelLarge
-                                            ?.copyWith(
-                                              color:
-                                                  enabledVersion == v
-                                                      ? null
-                                                      : disabledVersionTextColor,
-                                            ),
-                                      ),
-                                    )
-                                    .toList(),
-                          ),
-                          child: text,
-                        );
-                      },
-                    ),
-                  ),
                 ],
                 // ),
               ),
+            );
+      },
+    );
+  }
+
+  Builder _buildVersionCell(
+    double lightTextOpacity,
+    Mod mod,
+    bool isGameRunning,
+    ModVariant bestVersion,
+    WispGridColumnState state,
+    ModMetadata? metadata,
+  ) {
+    return Builder(
+      builder: (context) {
+        final theme = Theme.of(context);
+        final lightTextColor = theme.colorScheme.onSurface.withOpacity(
+          lightTextOpacity,
+        );
+        final disabledVersionTextColor = lightTextColor.withOpacity(0.5);
+        final enabledVersion = mod.findFirstEnabled;
+
+        return mod.modVariants.isEmpty
+            ? const Text("")
+            : Row(
+              children: [
+                Expanded(
+                  child: Builder(
+                    builder: (context) {
+                      final variantsWithEnabledFirst = mod.modVariants.sorted(
+                        (a, b) =>
+                            a.isModInfoEnabled != b.isModInfoEnabled
+                                ? (a.isModInfoEnabled ? -1 : 1)
+                                : a.compareTo(b),
+                      );
+
+                      final text = RichText(
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        text: TextSpan(
+                          children: [
+                            for (
+                              var i = 0;
+                              i < variantsWithEnabledFirst.length;
+                              i++
+                            ) ...[
+                              if (i > 0)
+                                TextSpan(
+                                  text: ', ',
+                                  style: theme.textTheme.labelLarge?.copyWith(
+                                    color: disabledVersionTextColor,
+                                  ),
+                                ),
+                              TextSpan(
+                                text:
+                                    variantsWithEnabledFirst[i].modInfo.version
+                                        .toString(),
+                                style: theme.textTheme.labelLarge?.copyWith(
+                                  color:
+                                      enabledVersion ==
+                                              variantsWithEnabledFirst[i]
+                                          ? null
+                                          : disabledVersionTextColor,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      );
+
+                      return MovingTooltipWidget.framed(
+                        tooltipWidget: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children:
+                              mod.modVariants
+                                  .sortedByDescending(
+                                    (v) => v.bestVersion ?? Version.zero(),
+                                  )
+                                  .map(
+                                    (v) => Text(
+                                      v.bestVersion?.toString() ?? "",
+
+                                      style: theme.textTheme.labelLarge
+                                          ?.copyWith(
+                                            color:
+                                                enabledVersion == v
+                                                    ? null
+                                                    : disabledVersionTextColor,
+                                          ),
+                                    ),
+                                  )
+                                  .toList(),
+                        ),
+                        child: text,
+                      );
+                    },
+                  ),
+                ),
+              ],
+              // ),
             );
       },
     );

@@ -1,6 +1,10 @@
 # 1.2.0 (in dev)
 - Added
   - Ships Viewer
+  - Mods page: copy selected rows to clipboard (right-click).
+- Changed
+  - Mods page: Split the changelogs & Version Checker icons part of the `Version` column into their own column and added sorting for it.
+    - Sorting is, in order: has update, then no update but has changelog, then no update and no changelog, then doesn't support version checker.
 
 # 1.1.10
 - Added

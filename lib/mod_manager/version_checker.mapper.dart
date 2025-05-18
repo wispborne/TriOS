@@ -80,7 +80,8 @@ mixin RemoteVersionCheckResultMappable {
 
   RemoteVersionCheckResultCopyWith<RemoteVersionCheckResult,
           RemoteVersionCheckResult, RemoteVersionCheckResult>
-      get copyWith => _RemoteVersionCheckResultCopyWithImpl(
+      get copyWith => _RemoteVersionCheckResultCopyWithImpl<
+              RemoteVersionCheckResult, RemoteVersionCheckResult>(
           this as RemoteVersionCheckResult, $identity, $identity);
   @override
   String toString() {
@@ -104,8 +105,8 @@ mixin RemoteVersionCheckResultMappable {
 extension RemoteVersionCheckResultValueCopy<$R, $Out>
     on ObjectCopyWith<$R, RemoteVersionCheckResult, $Out> {
   RemoteVersionCheckResultCopyWith<$R, RemoteVersionCheckResult, $Out>
-      get $asRemoteVersionCheckResult => $base
-          .as((v, t, t2) => _RemoteVersionCheckResultCopyWithImpl(v, t, t2));
+      get $asRemoteVersionCheckResult => $base.as((v, t, t2) =>
+          _RemoteVersionCheckResultCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
 abstract class RemoteVersionCheckResultCopyWith<
@@ -152,7 +153,7 @@ class _RemoteVersionCheckResultCopyWithImpl<$R, $Out>
   @override
   RemoteVersionCheckResultCopyWith<$R2, RemoteVersionCheckResult, $Out2>
       $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
-          _RemoteVersionCheckResultCopyWithImpl($value, $cast, t);
+          _RemoteVersionCheckResultCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
 class VersionCheckerStateMapper extends ClassMapperBase<VersionCheckerState> {
@@ -210,9 +211,9 @@ mixin VersionCheckerStateMappable {
   }
 
   VersionCheckerStateCopyWith<VersionCheckerState, VersionCheckerState,
-          VersionCheckerState>
-      get copyWith => _VersionCheckerStateCopyWithImpl(
-          this as VersionCheckerState, $identity, $identity);
+      VersionCheckerState> get copyWith => _VersionCheckerStateCopyWithImpl<
+          VersionCheckerState, VersionCheckerState>(
+      this as VersionCheckerState, $identity, $identity);
   @override
   String toString() {
     return VersionCheckerStateMapper.ensureInitialized()
@@ -235,8 +236,8 @@ mixin VersionCheckerStateMappable {
 extension VersionCheckerStateValueCopy<$R, $Out>
     on ObjectCopyWith<$R, VersionCheckerState, $Out> {
   VersionCheckerStateCopyWith<$R, VersionCheckerState, $Out>
-      get $asVersionCheckerState =>
-          $base.as((v, t, t2) => _VersionCheckerStateCopyWithImpl(v, t, t2));
+      get $asVersionCheckerState => $base.as(
+          (v, t, t2) => _VersionCheckerStateCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
 abstract class VersionCheckerStateCopyWith<$R, $In extends VersionCheckerState,
@@ -287,5 +288,5 @@ class _VersionCheckerStateCopyWithImpl<$R, $Out>
   @override
   VersionCheckerStateCopyWith<$R2, VersionCheckerState, $Out2>
       $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
-          _VersionCheckerStateCopyWithImpl($value, $cast, t);
+          _VersionCheckerStateCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }

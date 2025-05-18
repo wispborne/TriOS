@@ -57,9 +57,9 @@ mixin EnabledModsJsonModeMappable {
   }
 
   EnabledModsJsonModeCopyWith<EnabledModsJsonMode, EnabledModsJsonMode,
-          EnabledModsJsonMode>
-      get copyWith => _EnabledModsJsonModeCopyWithImpl(
-          this as EnabledModsJsonMode, $identity, $identity);
+      EnabledModsJsonMode> get copyWith => _EnabledModsJsonModeCopyWithImpl<
+          EnabledModsJsonMode, EnabledModsJsonMode>(
+      this as EnabledModsJsonMode, $identity, $identity);
   @override
   String toString() {
     return EnabledModsJsonModeMapper.ensureInitialized()
@@ -82,8 +82,8 @@ mixin EnabledModsJsonModeMappable {
 extension EnabledModsJsonModeValueCopy<$R, $Out>
     on ObjectCopyWith<$R, EnabledModsJsonMode, $Out> {
   EnabledModsJsonModeCopyWith<$R, EnabledModsJsonMode, $Out>
-      get $asEnabledModsJsonMode =>
-          $base.as((v, t, t2) => _EnabledModsJsonModeCopyWithImpl(v, t, t2));
+      get $asEnabledModsJsonMode => $base.as(
+          (v, t, t2) => _EnabledModsJsonModeCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
 abstract class EnabledModsJsonModeCopyWith<$R, $In extends EnabledModsJsonMode,
@@ -118,7 +118,7 @@ class _EnabledModsJsonModeCopyWithImpl<$R, $Out>
   @override
   EnabledModsJsonModeCopyWith<$R2, EnabledModsJsonMode, $Out2>
       $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
-          _EnabledModsJsonModeCopyWithImpl($value, $cast, t);
+          _EnabledModsJsonModeCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
 class ModInfoJsonMapper extends ClassMapperBase<ModInfoJson> {
@@ -218,7 +218,8 @@ mixin ModInfoJsonMappable {
   }
 
   ModInfoJsonCopyWith<ModInfoJson, ModInfoJson, ModInfoJson> get copyWith =>
-      _ModInfoJsonCopyWithImpl(this as ModInfoJson, $identity, $identity);
+      _ModInfoJsonCopyWithImpl<ModInfoJson, ModInfoJson>(
+          this as ModInfoJson, $identity, $identity);
   @override
   String toString() {
     return ModInfoJsonMapper.ensureInitialized()
@@ -240,7 +241,7 @@ mixin ModInfoJsonMappable {
 extension ModInfoJsonValueCopy<$R, $Out>
     on ObjectCopyWith<$R, ModInfoJson, $Out> {
   ModInfoJsonCopyWith<$R, ModInfoJson, $Out> get $asModInfoJson =>
-      $base.as((v, t, t2) => _ModInfoJsonCopyWithImpl(v, t, t2));
+      $base.as((v, t, t2) => _ModInfoJsonCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
 abstract class ModInfoJsonCopyWith<$R, $In extends ModInfoJson, $Out>
@@ -319,7 +320,7 @@ class _ModInfoJsonCopyWithImpl<$R, $Out>
   @override
   ModInfoJsonCopyWith<$R2, ModInfoJson, $Out2> $chain<$R2, $Out2>(
           Then<$Out2, $R2> t) =>
-      _ModInfoJsonCopyWithImpl($value, $cast, t);
+      _ModInfoJsonCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
 class DependencyMapper extends ClassMapperBase<Dependency> {
@@ -384,7 +385,8 @@ mixin DependencyMappable {
   }
 
   DependencyCopyWith<Dependency, Dependency, Dependency> get copyWith =>
-      _DependencyCopyWithImpl(this as Dependency, $identity, $identity);
+      _DependencyCopyWithImpl<Dependency, Dependency>(
+          this as Dependency, $identity, $identity);
   @override
   String toString() {
     return DependencyMapper.ensureInitialized()
@@ -406,7 +408,7 @@ mixin DependencyMappable {
 extension DependencyValueCopy<$R, $Out>
     on ObjectCopyWith<$R, Dependency, $Out> {
   DependencyCopyWith<$R, Dependency, $Out> get $asDependency =>
-      $base.as((v, t, t2) => _DependencyCopyWithImpl(v, t, t2));
+      $base.as((v, t, t2) => _DependencyCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
 abstract class DependencyCopyWith<$R, $In extends Dependency, $Out>
@@ -446,7 +448,7 @@ class _DependencyCopyWithImpl<$R, $Out>
   @override
   DependencyCopyWith<$R2, Dependency, $Out2> $chain<$R2, $Out2>(
           Then<$Out2, $R2> t) =>
-      _DependencyCopyWithImpl($value, $cast, t);
+      _DependencyCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
 class VersionObjectMapper extends ClassMapperBase<VersionObject> {
@@ -506,7 +508,7 @@ mixin VersionObjectMappable {
   }
 
   VersionObjectCopyWith<VersionObject, VersionObject, VersionObject>
-      get copyWith => _VersionObjectCopyWithImpl(
+      get copyWith => _VersionObjectCopyWithImpl<VersionObject, VersionObject>(
           this as VersionObject, $identity, $identity);
   @override
   String toString() {
@@ -530,7 +532,7 @@ mixin VersionObjectMappable {
 extension VersionObjectValueCopy<$R, $Out>
     on ObjectCopyWith<$R, VersionObject, $Out> {
   VersionObjectCopyWith<$R, VersionObject, $Out> get $asVersionObject =>
-      $base.as((v, t, t2) => _VersionObjectCopyWithImpl(v, t, t2));
+      $base.as((v, t, t2) => _VersionObjectCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
 abstract class VersionObjectCopyWith<$R, $In extends VersionObject, $Out>
@@ -566,5 +568,5 @@ class _VersionObjectCopyWithImpl<$R, $Out>
   @override
   VersionObjectCopyWith<$R2, VersionObject, $Out2> $chain<$R2, $Out2>(
           Then<$Out2, $R2> t) =>
-      _VersionObjectCopyWithImpl($value, $cast, t);
+      _VersionObjectCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }

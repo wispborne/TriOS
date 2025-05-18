@@ -74,8 +74,8 @@ mixin VramEstimatorStateMappable {
 
   VramEstimatorStateCopyWith<VramEstimatorState, VramEstimatorState,
           VramEstimatorState>
-      get copyWith => _VramEstimatorStateCopyWithImpl(
-          this as VramEstimatorState, $identity, $identity);
+      get copyWith => _VramEstimatorStateCopyWithImpl<VramEstimatorState,
+          VramEstimatorState>(this as VramEstimatorState, $identity, $identity);
   @override
   String toString() {
     return VramEstimatorStateMapper.ensureInitialized()
@@ -98,8 +98,8 @@ mixin VramEstimatorStateMappable {
 extension VramEstimatorStateValueCopy<$R, $Out>
     on ObjectCopyWith<$R, VramEstimatorState, $Out> {
   VramEstimatorStateCopyWith<$R, VramEstimatorState, $Out>
-      get $asVramEstimatorState =>
-          $base.as((v, t, t2) => _VramEstimatorStateCopyWithImpl(v, t, t2));
+      get $asVramEstimatorState => $base.as(
+          (v, t, t2) => _VramEstimatorStateCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
 abstract class VramEstimatorStateCopyWith<$R, $In extends VramEstimatorState,
@@ -137,5 +137,5 @@ class _VramEstimatorStateCopyWithImpl<$R, $Out>
   @override
   VramEstimatorStateCopyWith<$R2, VramEstimatorState, $Out2> $chain<$R2, $Out2>(
           Then<$Out2, $R2> t) =>
-      _VramEstimatorStateCopyWithImpl($value, $cast, t);
+      _VramEstimatorStateCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }

@@ -66,7 +66,8 @@ mixin ModsMetadataMappable {
   }
 
   ModsMetadataCopyWith<ModsMetadata, ModsMetadata, ModsMetadata> get copyWith =>
-      _ModsMetadataCopyWithImpl(this as ModsMetadata, $identity, $identity);
+      _ModsMetadataCopyWithImpl<ModsMetadata, ModsMetadata>(
+          this as ModsMetadata, $identity, $identity);
   @override
   String toString() {
     return ModsMetadataMapper.ensureInitialized()
@@ -89,7 +90,7 @@ mixin ModsMetadataMappable {
 extension ModsMetadataValueCopy<$R, $Out>
     on ObjectCopyWith<$R, ModsMetadata, $Out> {
   ModsMetadataCopyWith<$R, ModsMetadata, $Out> get $asModsMetadata =>
-      $base.as((v, t, t2) => _ModsMetadataCopyWithImpl(v, t, t2));
+      $base.as((v, t, t2) => _ModsMetadataCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
 abstract class ModsMetadataCopyWith<$R, $In extends ModsMetadata, $Out>
@@ -138,7 +139,7 @@ class _ModsMetadataCopyWithImpl<$R, $Out>
   @override
   ModsMetadataCopyWith<$R2, ModsMetadata, $Out2> $chain<$R2, $Out2>(
           Then<$Out2, $R2> t) =>
-      _ModsMetadataCopyWithImpl($value, $cast, t);
+      _ModsMetadataCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
 class ModMetadataMapper extends ClassMapperBase<ModMetadata> {
@@ -216,7 +217,8 @@ mixin ModMetadataMappable {
   }
 
   ModMetadataCopyWith<ModMetadata, ModMetadata, ModMetadata> get copyWith =>
-      _ModMetadataCopyWithImpl(this as ModMetadata, $identity, $identity);
+      _ModMetadataCopyWithImpl<ModMetadata, ModMetadata>(
+          this as ModMetadata, $identity, $identity);
   @override
   String toString() {
     return ModMetadataMapper.ensureInitialized()
@@ -238,7 +240,7 @@ mixin ModMetadataMappable {
 extension ModMetadataValueCopy<$R, $Out>
     on ObjectCopyWith<$R, ModMetadata, $Out> {
   ModMetadataCopyWith<$R, ModMetadata, $Out> get $asModMetadata =>
-      $base.as((v, t, t2) => _ModMetadataCopyWithImpl(v, t, t2));
+      $base.as((v, t, t2) => _ModMetadataCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
 abstract class ModMetadataCopyWith<$R, $In extends ModMetadata, $Out>
@@ -302,7 +304,7 @@ class _ModMetadataCopyWithImpl<$R, $Out>
   @override
   ModMetadataCopyWith<$R2, ModMetadata, $Out2> $chain<$R2, $Out2>(
           Then<$Out2, $R2> t) =>
-      _ModMetadataCopyWithImpl($value, $cast, t);
+      _ModMetadataCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
 class ModVariantMetadataMapper extends ClassMapperBase<ModVariantMetadata> {
@@ -357,8 +359,8 @@ mixin ModVariantMetadataMappable {
 
   ModVariantMetadataCopyWith<ModVariantMetadata, ModVariantMetadata,
           ModVariantMetadata>
-      get copyWith => _ModVariantMetadataCopyWithImpl(
-          this as ModVariantMetadata, $identity, $identity);
+      get copyWith => _ModVariantMetadataCopyWithImpl<ModVariantMetadata,
+          ModVariantMetadata>(this as ModVariantMetadata, $identity, $identity);
   @override
   String toString() {
     return ModVariantMetadataMapper.ensureInitialized()
@@ -381,8 +383,8 @@ mixin ModVariantMetadataMappable {
 extension ModVariantMetadataValueCopy<$R, $Out>
     on ObjectCopyWith<$R, ModVariantMetadata, $Out> {
   ModVariantMetadataCopyWith<$R, ModVariantMetadata, $Out>
-      get $asModVariantMetadata =>
-          $base.as((v, t, t2) => _ModVariantMetadataCopyWithImpl(v, t, t2));
+      get $asModVariantMetadata => $base.as(
+          (v, t, t2) => _ModVariantMetadataCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
 abstract class ModVariantMetadataCopyWith<$R, $In extends ModVariantMetadata,
@@ -410,5 +412,5 @@ class _ModVariantMetadataCopyWithImpl<$R, $Out>
   @override
   ModVariantMetadataCopyWith<$R2, ModVariantMetadata, $Out2> $chain<$R2, $Out2>(
           Then<$Out2, $R2> t) =>
-      _ModVariantMetadataCopyWithImpl($value, $cast, t);
+      _ModVariantMetadataCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }

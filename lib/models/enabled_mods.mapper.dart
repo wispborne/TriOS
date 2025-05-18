@@ -57,7 +57,8 @@ mixin EnabledModsMappable {
   }
 
   EnabledModsCopyWith<EnabledMods, EnabledMods, EnabledMods> get copyWith =>
-      _EnabledModsCopyWithImpl(this as EnabledMods, $identity, $identity);
+      _EnabledModsCopyWithImpl<EnabledMods, EnabledMods>(
+          this as EnabledMods, $identity, $identity);
   @override
   String toString() {
     return EnabledModsMapper.ensureInitialized()
@@ -79,7 +80,7 @@ mixin EnabledModsMappable {
 extension EnabledModsValueCopy<$R, $Out>
     on ObjectCopyWith<$R, EnabledMods, $Out> {
   EnabledModsCopyWith<$R, EnabledMods, $Out> get $asEnabledMods =>
-      $base.as((v, t, t2) => _EnabledModsCopyWithImpl(v, t, t2));
+      $base.as((v, t, t2) => _EnabledModsCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
 abstract class EnabledModsCopyWith<$R, $In extends EnabledMods, $Out>
@@ -106,5 +107,5 @@ class _EnabledModsCopyWithImpl<$R, $Out>
   @override
   EnabledModsCopyWith<$R2, EnabledMods, $Out2> $chain<$R2, $Out2>(
           Then<$Out2, $R2> t) =>
-      _EnabledModsCopyWithImpl($value, $cast, t);
+      _EnabledModsCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }

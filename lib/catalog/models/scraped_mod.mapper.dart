@@ -25,13 +25,13 @@ class ModSourceMapper extends EnumMapper<ModSource> {
   @override
   ModSource decode(dynamic value) {
     switch (value) {
-      case 'Index':
+      case r'Index':
         return ModSource.Index;
-      case 'ModdingSubforum':
+      case r'ModdingSubforum':
         return ModSource.ModdingSubforum;
-      case 'Discord':
+      case r'Discord':
         return ModSource.Discord;
-      case 'NexusMods':
+      case r'NexusMods':
         return ModSource.NexusMods;
       default:
         throw MapperException.unknownEnumValue(value);
@@ -42,13 +42,13 @@ class ModSourceMapper extends EnumMapper<ModSource> {
   dynamic encode(ModSource self) {
     switch (self) {
       case ModSource.Index:
-        return 'Index';
+        return r'Index';
       case ModSource.ModdingSubforum:
-        return 'ModdingSubforum';
+        return r'ModdingSubforum';
       case ModSource.Discord:
-        return 'Discord';
+        return r'Discord';
       case ModSource.NexusMods:
-        return 'NexusMods';
+        return r'NexusMods';
     }
   }
 }
@@ -79,15 +79,15 @@ class ModUrlTypeMapper extends EnumMapper<ModUrlType> {
   @override
   ModUrlType decode(dynamic value) {
     switch (value) {
-      case 'Forum':
+      case r'Forum':
         return ModUrlType.Forum;
-      case 'Discord':
+      case r'Discord':
         return ModUrlType.Discord;
-      case 'NexusMods':
+      case r'NexusMods':
         return ModUrlType.NexusMods;
-      case 'DirectDownload':
+      case r'DirectDownload':
         return ModUrlType.DirectDownload;
-      case 'DownloadPage':
+      case r'DownloadPage':
         return ModUrlType.DownloadPage;
       default:
         throw MapperException.unknownEnumValue(value);
@@ -98,15 +98,15 @@ class ModUrlTypeMapper extends EnumMapper<ModUrlType> {
   dynamic encode(ModUrlType self) {
     switch (self) {
       case ModUrlType.Forum:
-        return 'Forum';
+        return r'Forum';
       case ModUrlType.Discord:
-        return 'Discord';
+        return r'Discord';
       case ModUrlType.NexusMods:
-        return 'NexusMods';
+        return r'NexusMods';
       case ModUrlType.DirectDownload:
-        return 'DirectDownload';
+        return r'DirectDownload';
       case ModUrlType.DownloadPage:
-        return 'DownloadPage';
+        return r'DownloadPage';
     }
   }
 }
@@ -175,8 +175,9 @@ mixin ScrapedModsRepoMappable {
   }
 
   ScrapedModsRepoCopyWith<ScrapedModsRepo, ScrapedModsRepo, ScrapedModsRepo>
-      get copyWith => _ScrapedModsRepoCopyWithImpl(
-          this as ScrapedModsRepo, $identity, $identity);
+      get copyWith =>
+          _ScrapedModsRepoCopyWithImpl<ScrapedModsRepo, ScrapedModsRepo>(
+              this as ScrapedModsRepo, $identity, $identity);
   @override
   String toString() {
     return ScrapedModsRepoMapper.ensureInitialized()
@@ -199,7 +200,7 @@ mixin ScrapedModsRepoMappable {
 extension ScrapedModsRepoValueCopy<$R, $Out>
     on ObjectCopyWith<$R, ScrapedModsRepo, $Out> {
   ScrapedModsRepoCopyWith<$R, ScrapedModsRepo, $Out> get $asScrapedModsRepo =>
-      $base.as((v, t, t2) => _ScrapedModsRepoCopyWithImpl(v, t, t2));
+      $base.as((v, t, t2) => _ScrapedModsRepoCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
 abstract class ScrapedModsRepoCopyWith<$R, $In extends ScrapedModsRepo, $Out>
@@ -237,7 +238,7 @@ class _ScrapedModsRepoCopyWithImpl<$R, $Out>
   @override
   ScrapedModsRepoCopyWith<$R2, ScrapedModsRepo, $Out2> $chain<$R2, $Out2>(
           Then<$Out2, $R2> t) =>
-      _ScrapedModsRepoCopyWithImpl($value, $cast, t);
+      _ScrapedModsRepoCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
 class ScrapedModMapper extends ClassMapperBase<ScrapedMod> {
@@ -349,7 +350,8 @@ mixin ScrapedModMappable {
   }
 
   ScrapedModCopyWith<ScrapedMod, ScrapedMod, ScrapedMod> get copyWith =>
-      _ScrapedModCopyWithImpl(this as ScrapedMod, $identity, $identity);
+      _ScrapedModCopyWithImpl<ScrapedMod, ScrapedMod>(
+          this as ScrapedMod, $identity, $identity);
   @override
   String toString() {
     return ScrapedModMapper.ensureInitialized()
@@ -371,7 +373,7 @@ mixin ScrapedModMappable {
 extension ScrapedModValueCopy<$R, $Out>
     on ObjectCopyWith<$R, ScrapedMod, $Out> {
   ScrapedModCopyWith<$R, ScrapedMod, $Out> get $asScrapedMod =>
-      $base.as((v, t, t2) => _ScrapedModCopyWithImpl(v, t, t2));
+      $base.as((v, t, t2) => _ScrapedModCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
 abstract class ScrapedModCopyWith<$R, $In extends ScrapedMod, $Out>
@@ -492,7 +494,7 @@ class _ScrapedModCopyWithImpl<$R, $Out>
   @override
   ScrapedModCopyWith<$R2, ScrapedMod, $Out2> $chain<$R2, $Out2>(
           Then<$Out2, $R2> t) =>
-      _ScrapedModCopyWithImpl($value, $cast, t);
+      _ScrapedModCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
 class ScrapedModImageMapper extends ClassMapperBase<ScrapedModImage> {
@@ -576,8 +578,9 @@ mixin ScrapedModImageMappable {
   }
 
   ScrapedModImageCopyWith<ScrapedModImage, ScrapedModImage, ScrapedModImage>
-      get copyWith => _ScrapedModImageCopyWithImpl(
-          this as ScrapedModImage, $identity, $identity);
+      get copyWith =>
+          _ScrapedModImageCopyWithImpl<ScrapedModImage, ScrapedModImage>(
+              this as ScrapedModImage, $identity, $identity);
   @override
   String toString() {
     return ScrapedModImageMapper.ensureInitialized()
@@ -600,7 +603,7 @@ mixin ScrapedModImageMappable {
 extension ScrapedModImageValueCopy<$R, $Out>
     on ObjectCopyWith<$R, ScrapedModImage, $Out> {
   ScrapedModImageCopyWith<$R, ScrapedModImage, $Out> get $asScrapedModImage =>
-      $base.as((v, t, t2) => _ScrapedModImageCopyWithImpl(v, t, t2));
+      $base.as((v, t, t2) => _ScrapedModImageCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
 abstract class ScrapedModImageCopyWith<$R, $In extends ScrapedModImage, $Out>
@@ -656,5 +659,5 @@ class _ScrapedModImageCopyWithImpl<$R, $Out>
   @override
   ScrapedModImageCopyWith<$R2, ScrapedModImage, $Out2> $chain<$R2, $Out2>(
           Then<$Out2, $R2> t) =>
-      _ScrapedModImageCopyWithImpl($value, $cast, t);
+      _ScrapedModImageCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }

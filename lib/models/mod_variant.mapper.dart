@@ -76,7 +76,8 @@ mixin ModVariantMappable {
   }
 
   ModVariantCopyWith<ModVariant, ModVariant, ModVariant> get copyWith =>
-      _ModVariantCopyWithImpl(this as ModVariant, $identity, $identity);
+      _ModVariantCopyWithImpl<ModVariant, ModVariant>(
+          this as ModVariant, $identity, $identity);
   @override
   String toString() {
     return ModVariantMapper.ensureInitialized()
@@ -98,7 +99,7 @@ mixin ModVariantMappable {
 extension ModVariantValueCopy<$R, $Out>
     on ObjectCopyWith<$R, ModVariant, $Out> {
   ModVariantCopyWith<$R, ModVariant, $Out> get $asModVariant =>
-      $base.as((v, t, t2) => _ModVariantCopyWithImpl(v, t, t2));
+      $base.as((v, t, t2) => _ModVariantCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
 abstract class ModVariantCopyWith<$R, $In extends ModVariant, $Out>
@@ -155,5 +156,5 @@ class _ModVariantCopyWithImpl<$R, $Out>
   @override
   ModVariantCopyWith<$R2, ModVariant, $Out2> $chain<$R2, $Out2>(
           Then<$Out2, $R2> t) =>
-      _ModVariantCopyWithImpl($value, $cast, t);
+      _ModVariantCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }

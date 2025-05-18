@@ -104,7 +104,8 @@ mixin ModInfoMappable {
   }
 
   ModInfoCopyWith<ModInfo, ModInfo, ModInfo> get copyWith =>
-      _ModInfoCopyWithImpl(this as ModInfo, $identity, $identity);
+      _ModInfoCopyWithImpl<ModInfo, ModInfo>(
+          this as ModInfo, $identity, $identity);
   @override
   String toString() {
     return ModInfoMapper.ensureInitialized().stringifyValue(this as ModInfo);
@@ -124,7 +125,7 @@ mixin ModInfoMappable {
 
 extension ModInfoValueCopy<$R, $Out> on ObjectCopyWith<$R, ModInfo, $Out> {
   ModInfoCopyWith<$R, ModInfo, $Out> get $asModInfo =>
-      $base.as((v, t, t2) => _ModInfoCopyWithImpl(v, t, t2));
+      $base.as((v, t, t2) => _ModInfoCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
 abstract class ModInfoCopyWith<$R, $In extends ModInfo, $Out>
@@ -203,5 +204,5 @@ class _ModInfoCopyWithImpl<$R, $Out>
 
   @override
   ModInfoCopyWith<$R2, ModInfo, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
-      _ModInfoCopyWithImpl($value, $cast, t);
+      _ModInfoCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }

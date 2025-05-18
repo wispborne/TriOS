@@ -333,7 +333,7 @@ mixin WeaponMappable {
   }
 
   WeaponCopyWith<Weapon, Weapon, Weapon> get copyWith =>
-      _WeaponCopyWithImpl(this as Weapon, $identity, $identity);
+      _WeaponCopyWithImpl<Weapon, Weapon>(this as Weapon, $identity, $identity);
   @override
   String toString() {
     return WeaponMapper.ensureInitialized().stringifyValue(this as Weapon);
@@ -352,7 +352,7 @@ mixin WeaponMappable {
 
 extension WeaponValueCopy<$R, $Out> on ObjectCopyWith<$R, Weapon, $Out> {
   WeaponCopyWith<$R, Weapon, $Out> get $asWeapon =>
-      $base.as((v, t, t2) => _WeaponCopyWithImpl(v, t, t2));
+      $base.as((v, t, t2) => _WeaponCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
 abstract class WeaponCopyWith<$R, $In extends Weapon, $Out>
@@ -606,5 +606,5 @@ class _WeaponCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Weapon, $Out>
 
   @override
   WeaponCopyWith<$R2, Weapon, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
-      _WeaponCopyWithImpl($value, $cast, t);
+      _WeaponCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }

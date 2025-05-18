@@ -124,6 +124,7 @@ class Ship with ShipMappable implements WispGridItem {
   // Raw mod data
   final List<dynamic>? engineSlots;
   final List<ShipWeaponSlot>? weaponSlots;
+
   final Map<String, String>? builtInWeapons;
   final List<String>? builtInMods;
   final List<String>? builtInWings;

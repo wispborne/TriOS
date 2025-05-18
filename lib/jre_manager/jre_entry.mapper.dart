@@ -57,7 +57,8 @@ mixin JreVersionMappable {
   }
 
   JreVersionCopyWith<JreVersion, JreVersion, JreVersion> get copyWith =>
-      _JreVersionCopyWithImpl(this as JreVersion, $identity, $identity);
+      _JreVersionCopyWithImpl<JreVersion, JreVersion>(
+          this as JreVersion, $identity, $identity);
   @override
   String toString() {
     return JreVersionMapper.ensureInitialized()
@@ -79,7 +80,7 @@ mixin JreVersionMappable {
 extension JreVersionValueCopy<$R, $Out>
     on ObjectCopyWith<$R, JreVersion, $Out> {
   JreVersionCopyWith<$R, JreVersion, $Out> get $asJreVersion =>
-      $base.as((v, t, t2) => _JreVersionCopyWithImpl(v, t, t2));
+      $base.as((v, t, t2) => _JreVersionCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
 abstract class JreVersionCopyWith<$R, $In extends JreVersion, $Out>
@@ -106,7 +107,7 @@ class _JreVersionCopyWithImpl<$R, $Out>
   @override
   JreVersionCopyWith<$R2, JreVersion, $Out2> $chain<$R2, $Out2>(
           Then<$Out2, $R2> t) =>
-      _JreVersionCopyWithImpl($value, $cast, t);
+      _JreVersionCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
 class CustomJreDownloadStateMapper
@@ -176,7 +177,8 @@ mixin CustomJreDownloadStateMappable {
 
   CustomJreDownloadStateCopyWith<CustomJreDownloadState, CustomJreDownloadState,
           CustomJreDownloadState>
-      get copyWith => _CustomJreDownloadStateCopyWithImpl(
+      get copyWith => _CustomJreDownloadStateCopyWithImpl<
+              CustomJreDownloadState, CustomJreDownloadState>(
           this as CustomJreDownloadState, $identity, $identity);
   @override
   String toString() {
@@ -200,8 +202,8 @@ mixin CustomJreDownloadStateMappable {
 extension CustomJreDownloadStateValueCopy<$R, $Out>
     on ObjectCopyWith<$R, CustomJreDownloadState, $Out> {
   CustomJreDownloadStateCopyWith<$R, CustomJreDownloadState, $Out>
-      get $asCustomJreDownloadState =>
-          $base.as((v, t, t2) => _CustomJreDownloadStateCopyWithImpl(v, t, t2));
+      get $asCustomJreDownloadState => $base.as((v, t, t2) =>
+          _CustomJreDownloadStateCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
 abstract class CustomJreDownloadStateCopyWith<
@@ -252,7 +254,7 @@ class _CustomJreDownloadStateCopyWithImpl<$R, $Out>
   @override
   CustomJreDownloadStateCopyWith<$R2, CustomJreDownloadState, $Out2>
       $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
-          _CustomJreDownloadStateCopyWithImpl($value, $cast, t);
+          _CustomJreDownloadStateCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
 class CustomJreVersionCheckerFileMapper
@@ -362,7 +364,8 @@ mixin CustomJreVersionCheckerFileMappable {
 
   CustomJreVersionCheckerFileCopyWith<CustomJreVersionCheckerFile,
           CustomJreVersionCheckerFile, CustomJreVersionCheckerFile>
-      get copyWith => _CustomJreVersionCheckerFileCopyWithImpl(
+      get copyWith => _CustomJreVersionCheckerFileCopyWithImpl<
+              CustomJreVersionCheckerFile, CustomJreVersionCheckerFile>(
           this as CustomJreVersionCheckerFile, $identity, $identity);
   @override
   String toString() {
@@ -386,8 +389,8 @@ mixin CustomJreVersionCheckerFileMappable {
 extension CustomJreVersionCheckerFileValueCopy<$R, $Out>
     on ObjectCopyWith<$R, CustomJreVersionCheckerFile, $Out> {
   CustomJreVersionCheckerFileCopyWith<$R, CustomJreVersionCheckerFile, $Out>
-      get $asCustomJreVersionCheckerFile => $base
-          .as((v, t, t2) => _CustomJreVersionCheckerFileCopyWithImpl(v, t, t2));
+      get $asCustomJreVersionCheckerFile => $base.as((v, t, t2) =>
+          _CustomJreVersionCheckerFileCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
 abstract class CustomJreVersionCheckerFileCopyWith<
@@ -470,5 +473,6 @@ class _CustomJreVersionCheckerFileCopyWithImpl<$R, $Out>
   @override
   CustomJreVersionCheckerFileCopyWith<$R2, CustomJreVersionCheckerFile, $Out2>
       $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
-          _CustomJreVersionCheckerFileCopyWithImpl($value, $cast, t);
+          _CustomJreVersionCheckerFileCopyWithImpl<$R2, $Out2>(
+              $value, $cast, t);
 }

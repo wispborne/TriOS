@@ -25,11 +25,11 @@ class MapTypeMapper extends EnumMapper<MapType> {
   @override
   MapType decode(dynamic value) {
     switch (value) {
-      case 'Normal':
+      case r'Normal':
         return MapType.Normal;
-      case 'Material':
+      case r'Material':
         return MapType.Material;
-      case 'Surface':
+      case r'Surface':
         return MapType.Surface;
       default:
         throw MapperException.unknownEnumValue(value);
@@ -40,11 +40,11 @@ class MapTypeMapper extends EnumMapper<MapType> {
   dynamic encode(MapType self) {
     switch (self) {
       case MapType.Normal:
-        return 'Normal';
+        return r'Normal';
       case MapType.Material:
-        return 'Material';
+        return r'Material';
       case MapType.Surface:
-        return 'Surface';
+        return r'Surface';
     }
   }
 }
@@ -112,8 +112,9 @@ mixin GraphicsLibInfoMappable {
   }
 
   GraphicsLibInfoCopyWith<GraphicsLibInfo, GraphicsLibInfo, GraphicsLibInfo>
-      get copyWith => _GraphicsLibInfoCopyWithImpl(
-          this as GraphicsLibInfo, $identity, $identity);
+      get copyWith =>
+          _GraphicsLibInfoCopyWithImpl<GraphicsLibInfo, GraphicsLibInfo>(
+              this as GraphicsLibInfo, $identity, $identity);
   @override
   String toString() {
     return GraphicsLibInfoMapper.ensureInitialized()
@@ -136,7 +137,7 @@ mixin GraphicsLibInfoMappable {
 extension GraphicsLibInfoValueCopy<$R, $Out>
     on ObjectCopyWith<$R, GraphicsLibInfo, $Out> {
   GraphicsLibInfoCopyWith<$R, GraphicsLibInfo, $Out> get $asGraphicsLibInfo =>
-      $base.as((v, t, t2) => _GraphicsLibInfoCopyWithImpl(v, t, t2));
+      $base.as((v, t, t2) => _GraphicsLibInfoCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
 abstract class GraphicsLibInfoCopyWith<$R, $In extends GraphicsLibInfo, $Out>
@@ -168,5 +169,5 @@ class _GraphicsLibInfoCopyWithImpl<$R, $Out>
   @override
   GraphicsLibInfoCopyWith<$R2, GraphicsLibInfo, $Out2> $chain<$R2, $Out2>(
           Then<$Out2, $R2> t) =>
-      _GraphicsLibInfoCopyWithImpl($value, $cast, t);
+      _GraphicsLibInfoCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }

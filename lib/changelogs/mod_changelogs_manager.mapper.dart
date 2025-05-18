@@ -78,7 +78,8 @@ mixin ModChangelogMappable {
   }
 
   ModChangelogCopyWith<ModChangelog, ModChangelog, ModChangelog> get copyWith =>
-      _ModChangelogCopyWithImpl(this as ModChangelog, $identity, $identity);
+      _ModChangelogCopyWithImpl<ModChangelog, ModChangelog>(
+          this as ModChangelog, $identity, $identity);
   @override
   String toString() {
     return ModChangelogMapper.ensureInitialized()
@@ -101,7 +102,7 @@ mixin ModChangelogMappable {
 extension ModChangelogValueCopy<$R, $Out>
     on ObjectCopyWith<$R, ModChangelog, $Out> {
   ModChangelogCopyWith<$R, ModChangelog, $Out> get $asModChangelog =>
-      $base.as((v, t, t2) => _ModChangelogCopyWithImpl(v, t, t2));
+      $base.as((v, t, t2) => _ModChangelogCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
 abstract class ModChangelogCopyWith<$R, $In extends ModChangelog, $Out>
@@ -158,7 +159,7 @@ class _ModChangelogCopyWithImpl<$R, $Out>
   @override
   ModChangelogCopyWith<$R2, ModChangelog, $Out2> $chain<$R2, $Out2>(
           Then<$Out2, $R2> t) =>
-      _ModChangelogCopyWithImpl($value, $cast, t);
+      _ModChangelogCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
 class ChangelogVersionMapper extends ClassMapperBase<ChangelogVersion> {
@@ -217,8 +218,9 @@ mixin ChangelogVersionMappable {
   }
 
   ChangelogVersionCopyWith<ChangelogVersion, ChangelogVersion, ChangelogVersion>
-      get copyWith => _ChangelogVersionCopyWithImpl(
-          this as ChangelogVersion, $identity, $identity);
+      get copyWith =>
+          _ChangelogVersionCopyWithImpl<ChangelogVersion, ChangelogVersion>(
+              this as ChangelogVersion, $identity, $identity);
   @override
   String toString() {
     return ChangelogVersionMapper.ensureInitialized()
@@ -241,8 +243,8 @@ mixin ChangelogVersionMappable {
 extension ChangelogVersionValueCopy<$R, $Out>
     on ObjectCopyWith<$R, ChangelogVersion, $Out> {
   ChangelogVersionCopyWith<$R, ChangelogVersion, $Out>
-      get $asChangelogVersion =>
-          $base.as((v, t, t2) => _ChangelogVersionCopyWithImpl(v, t, t2));
+      get $asChangelogVersion => $base
+          .as((v, t, t2) => _ChangelogVersionCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
 abstract class ChangelogVersionCopyWith<$R, $In extends ChangelogVersion, $Out>
@@ -277,5 +279,5 @@ class _ChangelogVersionCopyWithImpl<$R, $Out>
   @override
   ChangelogVersionCopyWith<$R2, ChangelogVersion, $Out2> $chain<$R2, $Out2>(
           Then<$Out2, $R2> t) =>
-      _ChangelogVersionCopyWithImpl($value, $cast, t);
+      _ChangelogVersionCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }

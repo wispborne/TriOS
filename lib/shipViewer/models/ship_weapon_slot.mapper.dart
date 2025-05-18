@@ -98,8 +98,9 @@ mixin ShipWeaponSlotMappable {
   }
 
   ShipWeaponSlotCopyWith<ShipWeaponSlot, ShipWeaponSlot, ShipWeaponSlot>
-      get copyWith => _ShipWeaponSlotCopyWithImpl(
-          this as ShipWeaponSlot, $identity, $identity);
+      get copyWith =>
+          _ShipWeaponSlotCopyWithImpl<ShipWeaponSlot, ShipWeaponSlot>(
+              this as ShipWeaponSlot, $identity, $identity);
   @override
   String toString() {
     return ShipWeaponSlotMapper.ensureInitialized()
@@ -122,7 +123,7 @@ mixin ShipWeaponSlotMappable {
 extension ShipWeaponSlotValueCopy<$R, $Out>
     on ObjectCopyWith<$R, ShipWeaponSlot, $Out> {
   ShipWeaponSlotCopyWith<$R, ShipWeaponSlot, $Out> get $asShipWeaponSlot =>
-      $base.as((v, t, t2) => _ShipWeaponSlotCopyWithImpl(v, t, t2));
+      $base.as((v, t, t2) => _ShipWeaponSlotCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
 abstract class ShipWeaponSlotCopyWith<$R, $In extends ShipWeaponSlot, $Out>
@@ -196,5 +197,5 @@ class _ShipWeaponSlotCopyWithImpl<$R, $Out>
   @override
   ShipWeaponSlotCopyWith<$R2, ShipWeaponSlot, $Out2> $chain<$R2, $Out2>(
           Then<$Out2, $R2> t) =>
-      _ShipWeaponSlotCopyWithImpl($value, $cast, t);
+      _ShipWeaponSlotCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }

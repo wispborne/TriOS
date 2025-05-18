@@ -92,8 +92,8 @@ mixin VersionCheckerInfoMappable {
 
   VersionCheckerInfoCopyWith<VersionCheckerInfo, VersionCheckerInfo,
           VersionCheckerInfo>
-      get copyWith => _VersionCheckerInfoCopyWithImpl(
-          this as VersionCheckerInfo, $identity, $identity);
+      get copyWith => _VersionCheckerInfoCopyWithImpl<VersionCheckerInfo,
+          VersionCheckerInfo>(this as VersionCheckerInfo, $identity, $identity);
   @override
   String toString() {
     return VersionCheckerInfoMapper.ensureInitialized()
@@ -116,8 +116,8 @@ mixin VersionCheckerInfoMappable {
 extension VersionCheckerInfoValueCopy<$R, $Out>
     on ObjectCopyWith<$R, VersionCheckerInfo, $Out> {
   VersionCheckerInfoCopyWith<$R, VersionCheckerInfo, $Out>
-      get $asVersionCheckerInfo =>
-          $base.as((v, t, t2) => _VersionCheckerInfoCopyWithImpl(v, t, t2));
+      get $asVersionCheckerInfo => $base.as(
+          (v, t, t2) => _VersionCheckerInfoCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
 abstract class VersionCheckerInfoCopyWith<$R, $In extends VersionCheckerInfo,
@@ -179,5 +179,5 @@ class _VersionCheckerInfoCopyWithImpl<$R, $Out>
   @override
   VersionCheckerInfoCopyWith<$R2, VersionCheckerInfo, $Out2> $chain<$R2, $Out2>(
           Then<$Out2, $R2> t) =>
-      _VersionCheckerInfoCopyWithImpl($value, $cast, t);
+      _VersionCheckerInfoCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }

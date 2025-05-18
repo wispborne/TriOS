@@ -59,7 +59,8 @@ mixin GameSettingsMappable {
   }
 
   GameSettingsCopyWith<GameSettings, GameSettings, GameSettings> get copyWith =>
-      _GameSettingsCopyWithImpl(this as GameSettings, $identity, $identity);
+      _GameSettingsCopyWithImpl<GameSettings, GameSettings>(
+          this as GameSettings, $identity, $identity);
   @override
   String toString() {
     return GameSettingsMapper.ensureInitialized()
@@ -82,7 +83,7 @@ mixin GameSettingsMappable {
 extension GameSettingsValueCopy<$R, $Out>
     on ObjectCopyWith<$R, GameSettings, $Out> {
   GameSettingsCopyWith<$R, GameSettings, $Out> get $asGameSettings =>
-      $base.as((v, t, t2) => _GameSettingsCopyWithImpl(v, t, t2));
+      $base.as((v, t, t2) => _GameSettingsCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
 abstract class GameSettingsCopyWith<$R, $In extends GameSettings, $Out>
@@ -111,5 +112,5 @@ class _GameSettingsCopyWithImpl<$R, $Out>
   @override
   GameSettingsCopyWith<$R2, GameSettings, $Out2> $chain<$R2, $Out2>(
           Then<$Out2, $R2> t) =>
-      _GameSettingsCopyWithImpl($value, $cast, t);
+      _GameSettingsCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }

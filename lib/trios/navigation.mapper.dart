@@ -25,29 +25,29 @@ class TriOSToolsMapper extends EnumMapper<TriOSTools> {
   @override
   TriOSTools decode(dynamic value) {
     switch (value) {
-      case 'dashboard':
+      case r'dashboard':
         return TriOSTools.dashboard;
-      case 'modManager':
+      case r'modManager':
         return TriOSTools.modManager;
-      case 'modProfiles':
+      case r'modProfiles':
         return TriOSTools.modProfiles;
-      case 'vramEstimator':
+      case r'vramEstimator':
         return TriOSTools.vramEstimator;
-      case 'chipper':
+      case r'chipper':
         return TriOSTools.chipper;
-      case 'jreManager':
+      case r'jreManager':
         return TriOSTools.jreManager;
-      case 'portraits':
+      case r'portraits':
         return TriOSTools.portraits;
-      case 'weapons':
+      case r'weapons':
         return TriOSTools.weapons;
-      case 'ships':
+      case r'ships':
         return TriOSTools.ships;
-      case 'settings':
+      case r'settings':
         return TriOSTools.settings;
-      case 'catalog':
+      case r'catalog':
         return TriOSTools.catalog;
-      case 'tips':
+      case r'tips':
         return TriOSTools.tips;
       default:
         return TriOSTools.values[0];
@@ -58,29 +58,29 @@ class TriOSToolsMapper extends EnumMapper<TriOSTools> {
   dynamic encode(TriOSTools self) {
     switch (self) {
       case TriOSTools.dashboard:
-        return 'dashboard';
+        return r'dashboard';
       case TriOSTools.modManager:
-        return 'modManager';
+        return r'modManager';
       case TriOSTools.modProfiles:
-        return 'modProfiles';
+        return r'modProfiles';
       case TriOSTools.vramEstimator:
-        return 'vramEstimator';
+        return r'vramEstimator';
       case TriOSTools.chipper:
-        return 'chipper';
+        return r'chipper';
       case TriOSTools.jreManager:
-        return 'jreManager';
+        return r'jreManager';
       case TriOSTools.portraits:
-        return 'portraits';
+        return r'portraits';
       case TriOSTools.weapons:
-        return 'weapons';
+        return r'weapons';
       case TriOSTools.ships:
-        return 'ships';
+        return r'ships';
       case TriOSTools.settings:
-        return 'settings';
+        return r'settings';
       case TriOSTools.catalog:
-        return 'catalog';
+        return r'catalog';
       case TriOSTools.tips:
-        return 'tips';
+        return r'tips';
     }
   }
 }

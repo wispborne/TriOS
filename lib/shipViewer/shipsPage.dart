@@ -11,6 +11,7 @@ import 'package:trios/shipViewer/shipManager.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/text_trios.dart';
 import 'package:trios/widgets/toolbar_checkbox_button.dart';
@@ -26,6 +27,8 @@ class ShipPage extends ConsumerStatefulWidget {
 
 class _ShipPageState extends ConsumerState<ShipPage>
     with AutomaticKeepAliveClientMixin<ShipPage>, MultiSplitViewMixin {
+  final spoilerTags = ["threat", "dweller"];
+
   @override
   bool get wantKeepAlive => true;
 
@@ -52,7 +55,6 @@ class _ShipPageState extends ConsumerState<ShipPage>
     final theme = Theme.of(context);
 
     List<Ship> ships = shipsAsync.valueOrNull ?? [];
-    final spoilerTags = ["threat", "dweller"];
 
     if (!showSpoilers) {
       ships =
@@ -149,10 +151,18 @@ class _ShipPageState extends ConsumerState<ShipPage>
                               setState(() {});
                             },
                           ),
-                          IconButton(
-                            icon: const Icon(Icons.refresh),
-                            onPressed:
-                                () => ref.invalidate(shipListNotifierProvider),
+                          MovingTooltipWidget.text(
+                            message: "Refresh",
+                            child: Disable(
+                              isEnabled: !ref.watch(isLoadingShipsList),
+                              child: IconButton(
+                                icon: const Icon(Icons.refresh),
+                                onPressed:
+                                    () => ref.invalidate(
+                                      shipListNotifierProvider,
+                                    ),
+                              ),
+                            ),
                           ),
                         ],
                       ),

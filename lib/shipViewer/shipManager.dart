@@ -87,7 +87,7 @@ Future<ShipParseResult> _parseShips(
   final modName = modVariant?.modInfo.nameOrId ?? 'Vanilla';
 
   if (!await shipsCsvFile.exists()) {
-    errors.add('[$modName] ship_data.csv not found at ${shipsCsvFile.path}');
+    // No ships in the mod.
     return ShipParseResult(ships, errors, filesProcessed);
   }
 
@@ -135,7 +135,7 @@ Future<ShipParseResult> _parseShips(
     final line = lines[i].removeCsvLineComments();
     if (line.trim().isEmpty) continue;
     processedLines.add(line);
-    lineNumberMap.add(i + 1);
+    lineNumberMap.add(i);
   }
 
   List<List<dynamic>> rows;
@@ -182,13 +182,13 @@ Future<ShipParseResult> _parseShips(
 
     final shipId = data['id'] as String?;
     if (shipId == null || shipId.isEmpty) {
-      errors.add('[$modName] Row ${lineNumberMap[i]} missing id');
+      // Blank line in the csv, almost definitely for spacing.
       continue;
     }
 
     final json = shipJsonData[shipId];
     if (json == null) {
-      errors.add('[$modName] Missing .ship data for $shipId');
+      errors.add('[$modName] Missing .ship data for $shipId, defined on line ${lineNumberMap[i]} of ship_data.csv (addon mods sometimes tweak ships in their parent mod)).');
       continue;
     }
 

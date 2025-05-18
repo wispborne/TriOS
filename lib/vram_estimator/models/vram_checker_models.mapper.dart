@@ -25,11 +25,11 @@ class ImageTypeMapper extends EnumMapper<ImageType> {
   @override
   ImageType decode(dynamic value) {
     switch (value) {
-      case 'texture':
+      case r'texture':
         return ImageType.texture;
-      case 'background':
+      case r'background':
         return ImageType.background;
-      case 'unused':
+      case r'unused':
         return ImageType.unused;
       default:
         throw MapperException.unknownEnumValue(value);
@@ -40,11 +40,11 @@ class ImageTypeMapper extends EnumMapper<ImageType> {
   dynamic encode(ImageType self) {
     switch (self) {
       case ImageType.texture:
-        return 'texture';
+        return r'texture';
       case ImageType.background:
-        return 'background';
+        return r'background';
       case ImageType.unused:
-        return 'unused';
+        return r'unused';
     }
   }
 }
@@ -112,8 +112,9 @@ mixin VramCheckerModMappable {
   }
 
   VramCheckerModCopyWith<VramCheckerMod, VramCheckerMod, VramCheckerMod>
-      get copyWith => _VramCheckerModCopyWithImpl(
-          this as VramCheckerMod, $identity, $identity);
+      get copyWith =>
+          _VramCheckerModCopyWithImpl<VramCheckerMod, VramCheckerMod>(
+              this as VramCheckerMod, $identity, $identity);
   @override
   String toString() {
     return VramCheckerModMapper.ensureInitialized()
@@ -136,7 +137,7 @@ mixin VramCheckerModMappable {
 extension VramCheckerModValueCopy<$R, $Out>
     on ObjectCopyWith<$R, VramCheckerMod, $Out> {
   VramCheckerModCopyWith<$R, VramCheckerMod, $Out> get $asVramCheckerMod =>
-      $base.as((v, t, t2) => _VramCheckerModCopyWithImpl(v, t, t2));
+      $base.as((v, t, t2) => _VramCheckerModCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
 abstract class VramCheckerModCopyWith<$R, $In extends VramCheckerMod, $Out>
@@ -171,7 +172,7 @@ class _VramCheckerModCopyWithImpl<$R, $Out>
   @override
   VramCheckerModCopyWith<$R2, VramCheckerMod, $Out2> $chain<$R2, $Out2>(
           Then<$Out2, $R2> t) =>
-      _VramCheckerModCopyWithImpl($value, $cast, t);
+      _VramCheckerModCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
 class VramModMapper extends ClassMapperBase<VramMod> {
@@ -239,7 +240,8 @@ mixin VramModMappable {
   }
 
   VramModCopyWith<VramMod, VramMod, VramMod> get copyWith =>
-      _VramModCopyWithImpl(this as VramMod, $identity, $identity);
+      _VramModCopyWithImpl<VramMod, VramMod>(
+          this as VramMod, $identity, $identity);
   @override
   String toString() {
     return VramModMapper.ensureInitialized().stringifyValue(this as VramMod);
@@ -259,7 +261,7 @@ mixin VramModMappable {
 
 extension VramModValueCopy<$R, $Out> on ObjectCopyWith<$R, VramMod, $Out> {
   VramModCopyWith<$R, VramMod, $Out> get $asVramMod =>
-      $base.as((v, t, t2) => _VramModCopyWithImpl(v, t, t2));
+      $base.as((v, t, t2) => _VramModCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
 abstract class VramModCopyWith<$R, $In extends VramMod, $Out>
@@ -295,5 +297,5 @@ class _VramModCopyWithImpl<$R, $Out>
 
   @override
   VramModCopyWith<$R2, VramMod, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
-      _VramModCopyWithImpl($value, $cast, t);
+      _VramModCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }

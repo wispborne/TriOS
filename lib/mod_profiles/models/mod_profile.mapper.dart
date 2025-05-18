@@ -58,7 +58,8 @@ mixin ModProfilesMappable {
   }
 
   ModProfilesCopyWith<ModProfiles, ModProfiles, ModProfiles> get copyWith =>
-      _ModProfilesCopyWithImpl(this as ModProfiles, $identity, $identity);
+      _ModProfilesCopyWithImpl<ModProfiles, ModProfiles>(
+          this as ModProfiles, $identity, $identity);
   @override
   String toString() {
     return ModProfilesMapper.ensureInitialized()
@@ -80,7 +81,7 @@ mixin ModProfilesMappable {
 extension ModProfilesValueCopy<$R, $Out>
     on ObjectCopyWith<$R, ModProfiles, $Out> {
   ModProfilesCopyWith<$R, ModProfiles, $Out> get $asModProfiles =>
-      $base.as((v, t, t2) => _ModProfilesCopyWithImpl(v, t, t2));
+      $base.as((v, t, t2) => _ModProfilesCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
 abstract class ModProfilesCopyWith<$R, $In extends ModProfiles, $Out>
@@ -113,7 +114,7 @@ class _ModProfilesCopyWithImpl<$R, $Out>
   @override
   ModProfilesCopyWith<$R2, ModProfiles, $Out2> $chain<$R2, $Out2>(
           Then<$Out2, $R2> t) =>
-      _ModProfilesCopyWithImpl($value, $cast, t);
+      _ModProfilesCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
 class ModProfileMapper extends ClassMapperBase<ModProfile> {
@@ -198,7 +199,8 @@ mixin ModProfileMappable {
   }
 
   ModProfileCopyWith<ModProfile, ModProfile, ModProfile> get copyWith =>
-      _ModProfileCopyWithImpl(this as ModProfile, $identity, $identity);
+      _ModProfileCopyWithImpl<ModProfile, ModProfile>(
+          this as ModProfile, $identity, $identity);
   @override
   String toString() {
     return ModProfileMapper.ensureInitialized()
@@ -220,7 +222,7 @@ mixin ModProfileMappable {
 extension ModProfileValueCopy<$R, $Out>
     on ObjectCopyWith<$R, ModProfile, $Out> {
   ModProfileCopyWith<$R, ModProfile, $Out> get $asModProfile =>
-      $base.as((v, t, t2) => _ModProfileCopyWithImpl(v, t, t2));
+      $base.as((v, t, t2) => _ModProfileCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
 abstract class ModProfileCopyWith<$R, $In extends ModProfile, $Out>
@@ -284,7 +286,7 @@ class _ModProfileCopyWithImpl<$R, $Out>
   @override
   ModProfileCopyWith<$R2, ModProfile, $Out2> $chain<$R2, $Out2>(
           Then<$Out2, $R2> t) =>
-      _ModProfileCopyWithImpl($value, $cast, t);
+      _ModProfileCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
 class ShallowModVariantMapper extends ClassMapperBase<ShallowModVariant> {
@@ -356,8 +358,9 @@ mixin ShallowModVariantMappable {
 
   ShallowModVariantCopyWith<ShallowModVariant, ShallowModVariant,
           ShallowModVariant>
-      get copyWith => _ShallowModVariantCopyWithImpl(
-          this as ShallowModVariant, $identity, $identity);
+      get copyWith =>
+          _ShallowModVariantCopyWithImpl<ShallowModVariant, ShallowModVariant>(
+              this as ShallowModVariant, $identity, $identity);
   @override
   String toString() {
     return ShallowModVariantMapper.ensureInitialized()
@@ -380,8 +383,8 @@ mixin ShallowModVariantMappable {
 extension ShallowModVariantValueCopy<$R, $Out>
     on ObjectCopyWith<$R, ShallowModVariant, $Out> {
   ShallowModVariantCopyWith<$R, ShallowModVariant, $Out>
-      get $asShallowModVariant =>
-          $base.as((v, t, t2) => _ShallowModVariantCopyWithImpl(v, t, t2));
+      get $asShallowModVariant => $base
+          .as((v, t, t2) => _ShallowModVariantCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
 abstract class ShallowModVariantCopyWith<$R, $In extends ShallowModVariant,
@@ -429,5 +432,5 @@ class _ShallowModVariantCopyWithImpl<$R, $Out>
   @override
   ShallowModVariantCopyWith<$R2, ShallowModVariant, $Out2> $chain<$R2, $Out2>(
           Then<$Out2, $R2> t) =>
-      _ShallowModVariantCopyWithImpl($value, $cast, t);
+      _ShallowModVariantCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }

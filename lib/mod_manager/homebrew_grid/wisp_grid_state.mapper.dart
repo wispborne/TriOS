@@ -25,27 +25,27 @@ class ModGridHeaderMapper extends EnumMapper<ModGridHeader> {
   @override
   ModGridHeader decode(dynamic value) {
     switch (value) {
-      case 'favorites':
+      case r'favorites':
         return ModGridHeader.favorites;
-      case 'changeVariantButton':
+      case r'changeVariantButton':
         return ModGridHeader.changeVariantButton;
-      case 'icons':
+      case r'icons':
         return ModGridHeader.icons;
-      case 'modIcon':
+      case r'modIcon':
         return ModGridHeader.modIcon;
-      case 'name':
+      case r'name':
         return ModGridHeader.name;
-      case 'author':
+      case r'author':
         return ModGridHeader.author;
-      case 'version':
+      case r'version':
         return ModGridHeader.version;
-      case 'vramImpact':
+      case r'vramImpact':
         return ModGridHeader.vramImpact;
-      case 'gameVersion':
+      case r'gameVersion':
         return ModGridHeader.gameVersion;
-      case 'firstSeen':
+      case r'firstSeen':
         return ModGridHeader.firstSeen;
-      case 'lastEnabled':
+      case r'lastEnabled':
         return ModGridHeader.lastEnabled;
       default:
         return ModGridHeader.values[4];
@@ -56,27 +56,27 @@ class ModGridHeaderMapper extends EnumMapper<ModGridHeader> {
   dynamic encode(ModGridHeader self) {
     switch (self) {
       case ModGridHeader.favorites:
-        return 'favorites';
+        return r'favorites';
       case ModGridHeader.changeVariantButton:
-        return 'changeVariantButton';
+        return r'changeVariantButton';
       case ModGridHeader.icons:
-        return 'icons';
+        return r'icons';
       case ModGridHeader.modIcon:
-        return 'modIcon';
+        return r'modIcon';
       case ModGridHeader.name:
-        return 'name';
+        return r'name';
       case ModGridHeader.author:
-        return 'author';
+        return r'author';
       case ModGridHeader.version:
-        return 'version';
+        return r'version';
       case ModGridHeader.vramImpact:
-        return 'vramImpact';
+        return r'vramImpact';
       case ModGridHeader.gameVersion:
-        return 'gameVersion';
+        return r'gameVersion';
       case ModGridHeader.firstSeen:
-        return 'firstSeen';
+        return r'firstSeen';
       case ModGridHeader.lastEnabled:
-        return 'lastEnabled';
+        return r'lastEnabled';
     }
   }
 }
@@ -107,13 +107,13 @@ class ModGridGroupEnumMapper extends EnumMapper<ModGridGroupEnum> {
   @override
   ModGridGroupEnum decode(dynamic value) {
     switch (value) {
-      case 'enabledState':
+      case r'enabledState':
         return ModGridGroupEnum.enabledState;
-      case 'author':
+      case r'author':
         return ModGridGroupEnum.author;
-      case 'modType':
+      case r'modType':
         return ModGridGroupEnum.modType;
-      case 'gameVersion':
+      case r'gameVersion':
         return ModGridGroupEnum.gameVersion;
       default:
         throw MapperException.unknownEnumValue(value);
@@ -124,13 +124,13 @@ class ModGridGroupEnumMapper extends EnumMapper<ModGridGroupEnum> {
   dynamic encode(ModGridGroupEnum self) {
     switch (self) {
       case ModGridGroupEnum.enabledState:
-        return 'enabledState';
+        return r'enabledState';
       case ModGridGroupEnum.author:
-        return 'author';
+        return r'author';
       case ModGridGroupEnum.modType:
-        return 'modType';
+        return r'modType';
       case ModGridGroupEnum.gameVersion:
-        return 'gameVersion';
+        return r'gameVersion';
     }
   }
 }
@@ -161,23 +161,23 @@ class ModGridSortFieldMapper extends EnumMapper<ModGridSortField> {
   @override
   ModGridSortField decode(dynamic value) {
     switch (value) {
-      case 'enabledState':
+      case r'enabledState':
         return ModGridSortField.enabledState;
-      case 'icons':
+      case r'icons':
         return ModGridSortField.icons;
-      case 'name':
+      case r'name':
         return ModGridSortField.name;
-      case 'author':
+      case r'author':
         return ModGridSortField.author;
-      case 'version':
+      case r'version':
         return ModGridSortField.version;
-      case 'vramImpact':
+      case r'vramImpact':
         return ModGridSortField.vramImpact;
-      case 'gameVersion':
+      case r'gameVersion':
         return ModGridSortField.gameVersion;
-      case 'firstSeen':
+      case r'firstSeen':
         return ModGridSortField.firstSeen;
-      case 'lastEnabled':
+      case r'lastEnabled':
         return ModGridSortField.lastEnabled;
       default:
         return ModGridSortField.values[2];
@@ -188,23 +188,23 @@ class ModGridSortFieldMapper extends EnumMapper<ModGridSortField> {
   dynamic encode(ModGridSortField self) {
     switch (self) {
       case ModGridSortField.enabledState:
-        return 'enabledState';
+        return r'enabledState';
       case ModGridSortField.icons:
-        return 'icons';
+        return r'icons';
       case ModGridSortField.name:
-        return 'name';
+        return r'name';
       case ModGridSortField.author:
-        return 'author';
+        return r'author';
       case ModGridSortField.version:
-        return 'version';
+        return r'version';
       case ModGridSortField.vramImpact:
-        return 'vramImpact';
+        return r'vramImpact';
       case ModGridSortField.gameVersion:
-        return 'gameVersion';
+        return r'gameVersion';
       case ModGridSortField.firstSeen:
-        return 'firstSeen';
+        return r'firstSeen';
       case ModGridSortField.lastEnabled:
-        return 'lastEnabled';
+        return r'lastEnabled';
     }
   }
 }
@@ -235,87 +235,87 @@ class WeaponGridHeaderMapper extends EnumMapper<WeaponGridHeader> {
   @override
   WeaponGridHeader decode(dynamic value) {
     switch (value) {
-      case 'weaponType':
+      case r'weaponType':
         return WeaponGridHeader.weaponType;
-      case 'size':
+      case r'size':
         return WeaponGridHeader.size;
-      case 'techManufacturer':
+      case r'techManufacturer':
         return WeaponGridHeader.techManufacturer;
-      case 'primaryRoleStr':
+      case r'primaryRoleStr':
         return WeaponGridHeader.primaryRoleStr;
-      case 'tier':
+      case r'tier':
         return WeaponGridHeader.tier;
-      case 'damagePerShot':
+      case r'damagePerShot':
         return WeaponGridHeader.damagePerShot;
-      case 'baseValue':
+      case r'baseValue':
         return WeaponGridHeader.baseValue;
-      case 'range':
+      case r'range':
         return WeaponGridHeader.range;
-      case 'damagePerSecond':
+      case r'damagePerSecond':
         return WeaponGridHeader.damagePerSecond;
-      case 'emp':
+      case r'emp':
         return WeaponGridHeader.emp;
-      case 'impact':
+      case r'impact':
         return WeaponGridHeader.impact;
-      case 'turnRate':
+      case r'turnRate':
         return WeaponGridHeader.turnRate;
-      case 'ops':
+      case r'ops':
         return WeaponGridHeader.ops;
-      case 'ammo':
+      case r'ammo':
         return WeaponGridHeader.ammo;
-      case 'ammoPerSec':
+      case r'ammoPerSec':
         return WeaponGridHeader.ammoPerSec;
-      case 'reloadSize':
+      case r'reloadSize':
         return WeaponGridHeader.reloadSize;
-      case 'energyPerShot':
+      case r'energyPerShot':
         return WeaponGridHeader.energyPerShot;
-      case 'energyPerSecond':
+      case r'energyPerSecond':
         return WeaponGridHeader.energyPerSecond;
-      case 'chargeup':
+      case r'chargeup':
         return WeaponGridHeader.chargeup;
-      case 'chargedown':
+      case r'chargedown':
         return WeaponGridHeader.chargedown;
-      case 'burstSize':
+      case r'burstSize':
         return WeaponGridHeader.burstSize;
-      case 'burstDelay':
+      case r'burstDelay':
         return WeaponGridHeader.burstDelay;
-      case 'minSpread':
+      case r'minSpread':
         return WeaponGridHeader.minSpread;
-      case 'maxSpread':
+      case r'maxSpread':
         return WeaponGridHeader.maxSpread;
-      case 'spreadPerShot':
+      case r'spreadPerShot':
         return WeaponGridHeader.spreadPerShot;
-      case 'spreadDecayPerSec':
+      case r'spreadDecayPerSec':
         return WeaponGridHeader.spreadDecayPerSec;
-      case 'beamSpeed':
+      case r'beamSpeed':
         return WeaponGridHeader.beamSpeed;
-      case 'projSpeed':
+      case r'projSpeed':
         return WeaponGridHeader.projSpeed;
-      case 'launchSpeed':
+      case r'launchSpeed':
         return WeaponGridHeader.launchSpeed;
-      case 'flightTime':
+      case r'flightTime':
         return WeaponGridHeader.flightTime;
-      case 'projHitpoints':
+      case r'projHitpoints':
         return WeaponGridHeader.projHitpoints;
-      case 'autofireAccBonus':
+      case r'autofireAccBonus':
         return WeaponGridHeader.autofireAccBonus;
-      case 'extraArcForAI':
+      case r'extraArcForAI':
         return WeaponGridHeader.extraArcForAI;
-      case 'hints':
+      case r'hints':
         return WeaponGridHeader.hints;
-      case 'tags':
+      case r'tags':
         return WeaponGridHeader.tags;
-      case 'groupTag':
+      case r'groupTag':
         return WeaponGridHeader.groupTag;
-      case 'speedStr':
+      case r'speedStr':
         return WeaponGridHeader.speedStr;
-      case 'trackingStr':
+      case r'trackingStr':
         return WeaponGridHeader.trackingStr;
-      case 'turnRateStr':
+      case r'turnRateStr':
         return WeaponGridHeader.turnRateStr;
-      case 'accuracyStr':
+      case r'accuracyStr':
         return WeaponGridHeader.accuracyStr;
-      case 'specClass':
+      case r'specClass':
         return WeaponGridHeader.specClass;
       default:
         return WeaponGridHeader.values[0];
@@ -326,87 +326,87 @@ class WeaponGridHeaderMapper extends EnumMapper<WeaponGridHeader> {
   dynamic encode(WeaponGridHeader self) {
     switch (self) {
       case WeaponGridHeader.weaponType:
-        return 'weaponType';
+        return r'weaponType';
       case WeaponGridHeader.size:
-        return 'size';
+        return r'size';
       case WeaponGridHeader.techManufacturer:
-        return 'techManufacturer';
+        return r'techManufacturer';
       case WeaponGridHeader.primaryRoleStr:
-        return 'primaryRoleStr';
+        return r'primaryRoleStr';
       case WeaponGridHeader.tier:
-        return 'tier';
+        return r'tier';
       case WeaponGridHeader.damagePerShot:
-        return 'damagePerShot';
+        return r'damagePerShot';
       case WeaponGridHeader.baseValue:
-        return 'baseValue';
+        return r'baseValue';
       case WeaponGridHeader.range:
-        return 'range';
+        return r'range';
       case WeaponGridHeader.damagePerSecond:
-        return 'damagePerSecond';
+        return r'damagePerSecond';
       case WeaponGridHeader.emp:
-        return 'emp';
+        return r'emp';
       case WeaponGridHeader.impact:
-        return 'impact';
+        return r'impact';
       case WeaponGridHeader.turnRate:
-        return 'turnRate';
+        return r'turnRate';
       case WeaponGridHeader.ops:
-        return 'ops';
+        return r'ops';
       case WeaponGridHeader.ammo:
-        return 'ammo';
+        return r'ammo';
       case WeaponGridHeader.ammoPerSec:
-        return 'ammoPerSec';
+        return r'ammoPerSec';
       case WeaponGridHeader.reloadSize:
-        return 'reloadSize';
+        return r'reloadSize';
       case WeaponGridHeader.energyPerShot:
-        return 'energyPerShot';
+        return r'energyPerShot';
       case WeaponGridHeader.energyPerSecond:
-        return 'energyPerSecond';
+        return r'energyPerSecond';
       case WeaponGridHeader.chargeup:
-        return 'chargeup';
+        return r'chargeup';
       case WeaponGridHeader.chargedown:
-        return 'chargedown';
+        return r'chargedown';
       case WeaponGridHeader.burstSize:
-        return 'burstSize';
+        return r'burstSize';
       case WeaponGridHeader.burstDelay:
-        return 'burstDelay';
+        return r'burstDelay';
       case WeaponGridHeader.minSpread:
-        return 'minSpread';
+        return r'minSpread';
       case WeaponGridHeader.maxSpread:
-        return 'maxSpread';
+        return r'maxSpread';
       case WeaponGridHeader.spreadPerShot:
-        return 'spreadPerShot';
+        return r'spreadPerShot';
       case WeaponGridHeader.spreadDecayPerSec:
-        return 'spreadDecayPerSec';
+        return r'spreadDecayPerSec';
       case WeaponGridHeader.beamSpeed:
-        return 'beamSpeed';
+        return r'beamSpeed';
       case WeaponGridHeader.projSpeed:
-        return 'projSpeed';
+        return r'projSpeed';
       case WeaponGridHeader.launchSpeed:
-        return 'launchSpeed';
+        return r'launchSpeed';
       case WeaponGridHeader.flightTime:
-        return 'flightTime';
+        return r'flightTime';
       case WeaponGridHeader.projHitpoints:
-        return 'projHitpoints';
+        return r'projHitpoints';
       case WeaponGridHeader.autofireAccBonus:
-        return 'autofireAccBonus';
+        return r'autofireAccBonus';
       case WeaponGridHeader.extraArcForAI:
-        return 'extraArcForAI';
+        return r'extraArcForAI';
       case WeaponGridHeader.hints:
-        return 'hints';
+        return r'hints';
       case WeaponGridHeader.tags:
-        return 'tags';
+        return r'tags';
       case WeaponGridHeader.groupTag:
-        return 'groupTag';
+        return r'groupTag';
       case WeaponGridHeader.speedStr:
-        return 'speedStr';
+        return r'speedStr';
       case WeaponGridHeader.trackingStr:
-        return 'trackingStr';
+        return r'trackingStr';
       case WeaponGridHeader.turnRateStr:
-        return 'turnRateStr';
+        return r'turnRateStr';
       case WeaponGridHeader.accuracyStr:
-        return 'accuracyStr';
+        return r'accuracyStr';
       case WeaponGridHeader.specClass:
-        return 'specClass';
+        return r'specClass';
     }
   }
 }
@@ -517,8 +517,9 @@ mixin WispGridColumnMappable<T extends WispGridItem> {
 
   WispGridColumnCopyWith<WispGridColumn<T>, WispGridColumn<T>,
           WispGridColumn<T>, T>
-      get copyWith => _WispGridColumnCopyWithImpl(
-          this as WispGridColumn<T>, $identity, $identity);
+      get copyWith =>
+          _WispGridColumnCopyWithImpl<WispGridColumn<T>, WispGridColumn<T>, T>(
+              this as WispGridColumn<T>, $identity, $identity);
   @override
   String toString() {
     return WispGridColumnMapper.ensureInitialized()
@@ -541,8 +542,8 @@ mixin WispGridColumnMappable<T extends WispGridItem> {
 extension WispGridColumnValueCopy<$R, $Out, T extends WispGridItem>
     on ObjectCopyWith<$R, WispGridColumn<T>, $Out> {
   WispGridColumnCopyWith<$R, WispGridColumn<T>, $Out, T>
-      get $asWispGridColumn =>
-          $base.as((v, t, t2) => _WispGridColumnCopyWithImpl(v, t, t2));
+      get $asWispGridColumn => $base
+          .as((v, t, t2) => _WispGridColumnCopyWithImpl<$R, $Out, T>(v, t, t2));
 }
 
 abstract class WispGridColumnCopyWith<$R, $In extends WispGridColumn<T>, $Out,
@@ -605,7 +606,7 @@ class _WispGridColumnCopyWithImpl<$R, $Out, T extends WispGridItem>
   @override
   WispGridColumnCopyWith<$R2, WispGridColumn<T>, $Out2, T> $chain<$R2, $Out2>(
           Then<$Out2, $R2> t) =>
-      _WispGridColumnCopyWithImpl($value, $cast, t);
+      _WispGridColumnCopyWithImpl<$R2, $Out2, T>($value, $cast, t);
 }
 
 class WispGridColumnStateMapper extends ClassMapperBase<WispGridColumnState> {
@@ -670,9 +671,9 @@ mixin WispGridColumnStateMappable {
   }
 
   WispGridColumnStateCopyWith<WispGridColumnState, WispGridColumnState,
-          WispGridColumnState>
-      get copyWith => _WispGridColumnStateCopyWithImpl(
-          this as WispGridColumnState, $identity, $identity);
+      WispGridColumnState> get copyWith => _WispGridColumnStateCopyWithImpl<
+          WispGridColumnState, WispGridColumnState>(
+      this as WispGridColumnState, $identity, $identity);
   @override
   String toString() {
     return WispGridColumnStateMapper.ensureInitialized()
@@ -695,8 +696,8 @@ mixin WispGridColumnStateMappable {
 extension WispGridColumnStateValueCopy<$R, $Out>
     on ObjectCopyWith<$R, WispGridColumnState, $Out> {
   WispGridColumnStateCopyWith<$R, WispGridColumnState, $Out>
-      get $asWispGridColumnState =>
-          $base.as((v, t, t2) => _WispGridColumnStateCopyWithImpl(v, t, t2));
+      get $asWispGridColumnState => $base.as(
+          (v, t, t2) => _WispGridColumnStateCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
 abstract class WispGridColumnStateCopyWith<$R, $In extends WispGridColumnState,
@@ -730,7 +731,7 @@ class _WispGridColumnStateCopyWithImpl<$R, $Out>
   @override
   WispGridColumnStateCopyWith<$R2, WispGridColumnState, $Out2>
       $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
-          _WispGridColumnStateCopyWithImpl($value, $cast, t);
+          _WispGridColumnStateCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
 class HeaderBuilderModifiersMapper
@@ -786,7 +787,8 @@ mixin HeaderBuilderModifiersMappable {
 
   HeaderBuilderModifiersCopyWith<HeaderBuilderModifiers, HeaderBuilderModifiers,
           HeaderBuilderModifiers>
-      get copyWith => _HeaderBuilderModifiersCopyWithImpl(
+      get copyWith => _HeaderBuilderModifiersCopyWithImpl<
+              HeaderBuilderModifiers, HeaderBuilderModifiers>(
           this as HeaderBuilderModifiers, $identity, $identity);
   @override
   String toString() {
@@ -810,8 +812,8 @@ mixin HeaderBuilderModifiersMappable {
 extension HeaderBuilderModifiersValueCopy<$R, $Out>
     on ObjectCopyWith<$R, HeaderBuilderModifiers, $Out> {
   HeaderBuilderModifiersCopyWith<$R, HeaderBuilderModifiers, $Out>
-      get $asHeaderBuilderModifiers =>
-          $base.as((v, t, t2) => _HeaderBuilderModifiersCopyWithImpl(v, t, t2));
+      get $asHeaderBuilderModifiers => $base.as((v, t, t2) =>
+          _HeaderBuilderModifiersCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
 abstract class HeaderBuilderModifiersCopyWith<
@@ -842,7 +844,7 @@ class _HeaderBuilderModifiersCopyWithImpl<$R, $Out>
   @override
   HeaderBuilderModifiersCopyWith<$R2, HeaderBuilderModifiers, $Out2>
       $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
-          _HeaderBuilderModifiersCopyWithImpl($value, $cast, t);
+          _HeaderBuilderModifiersCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
 class CellBuilderModifiersMapper extends ClassMapperBase<CellBuilderModifiers> {
@@ -909,9 +911,9 @@ mixin CellBuilderModifiersMappable {
   }
 
   CellBuilderModifiersCopyWith<CellBuilderModifiers, CellBuilderModifiers,
-          CellBuilderModifiers>
-      get copyWith => _CellBuilderModifiersCopyWithImpl(
-          this as CellBuilderModifiers, $identity, $identity);
+      CellBuilderModifiers> get copyWith => _CellBuilderModifiersCopyWithImpl<
+          CellBuilderModifiers, CellBuilderModifiers>(
+      this as CellBuilderModifiers, $identity, $identity);
   @override
   String toString() {
     return CellBuilderModifiersMapper.ensureInitialized()
@@ -934,8 +936,8 @@ mixin CellBuilderModifiersMappable {
 extension CellBuilderModifiersValueCopy<$R, $Out>
     on ObjectCopyWith<$R, CellBuilderModifiers, $Out> {
   CellBuilderModifiersCopyWith<$R, CellBuilderModifiers, $Out>
-      get $asCellBuilderModifiers =>
-          $base.as((v, t, t2) => _CellBuilderModifiersCopyWithImpl(v, t, t2));
+      get $asCellBuilderModifiers => $base.as(
+          (v, t, t2) => _CellBuilderModifiersCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
 abstract class CellBuilderModifiersCopyWith<
@@ -981,7 +983,7 @@ class _CellBuilderModifiersCopyWithImpl<$R, $Out>
   @override
   CellBuilderModifiersCopyWith<$R2, CellBuilderModifiers, $Out2>
       $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
-          _CellBuilderModifiersCopyWithImpl($value, $cast, t);
+          _CellBuilderModifiersCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
 class RowBuilderModifiersMapper extends ClassMapperBase<RowBuilderModifiers> {
@@ -1048,9 +1050,9 @@ mixin RowBuilderModifiersMappable {
   }
 
   RowBuilderModifiersCopyWith<RowBuilderModifiers, RowBuilderModifiers,
-          RowBuilderModifiers>
-      get copyWith => _RowBuilderModifiersCopyWithImpl(
-          this as RowBuilderModifiers, $identity, $identity);
+      RowBuilderModifiers> get copyWith => _RowBuilderModifiersCopyWithImpl<
+          RowBuilderModifiers, RowBuilderModifiers>(
+      this as RowBuilderModifiers, $identity, $identity);
   @override
   String toString() {
     return RowBuilderModifiersMapper.ensureInitialized()
@@ -1073,8 +1075,8 @@ mixin RowBuilderModifiersMappable {
 extension RowBuilderModifiersValueCopy<$R, $Out>
     on ObjectCopyWith<$R, RowBuilderModifiers, $Out> {
   RowBuilderModifiersCopyWith<$R, RowBuilderModifiers, $Out>
-      get $asRowBuilderModifiers =>
-          $base.as((v, t, t2) => _RowBuilderModifiersCopyWithImpl(v, t, t2));
+      get $asRowBuilderModifiers => $base.as(
+          (v, t, t2) => _RowBuilderModifiersCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
 abstract class RowBuilderModifiersCopyWith<$R, $In extends RowBuilderModifiers,
@@ -1129,7 +1131,7 @@ class _RowBuilderModifiersCopyWithImpl<$R, $Out>
   @override
   RowBuilderModifiersCopyWith<$R2, RowBuilderModifiers, $Out2>
       $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
-          _RowBuilderModifiersCopyWithImpl($value, $cast, t);
+          _RowBuilderModifiersCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
 class WispGridStateMapper extends ClassMapperBase<WispGridState> {
@@ -1203,7 +1205,7 @@ mixin WispGridStateMappable {
   }
 
   WispGridStateCopyWith<WispGridState, WispGridState, WispGridState>
-      get copyWith => _WispGridStateCopyWithImpl(
+      get copyWith => _WispGridStateCopyWithImpl<WispGridState, WispGridState>(
           this as WispGridState, $identity, $identity);
   @override
   String toString() {
@@ -1227,7 +1229,7 @@ mixin WispGridStateMappable {
 extension WispGridStateValueCopy<$R, $Out>
     on ObjectCopyWith<$R, WispGridState, $Out> {
   WispGridStateCopyWith<$R, WispGridState, $Out> get $asWispGridState =>
-      $base.as((v, t, t2) => _WispGridStateCopyWithImpl(v, t, t2));
+      $base.as((v, t, t2) => _WispGridStateCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
 abstract class WispGridStateCopyWith<$R, $In extends WispGridState, $Out>
@@ -1293,7 +1295,7 @@ class _WispGridStateCopyWithImpl<$R, $Out>
   @override
   WispGridStateCopyWith<$R2, WispGridState, $Out2> $chain<$R2, $Out2>(
           Then<$Out2, $R2> t) =>
-      _WispGridStateCopyWithImpl($value, $cast, t);
+      _WispGridStateCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
 class GroupingSettingMapper extends ClassMapperBase<GroupingSetting> {
@@ -1354,8 +1356,9 @@ mixin GroupingSettingMappable {
   }
 
   GroupingSettingCopyWith<GroupingSetting, GroupingSetting, GroupingSetting>
-      get copyWith => _GroupingSettingCopyWithImpl(
-          this as GroupingSetting, $identity, $identity);
+      get copyWith =>
+          _GroupingSettingCopyWithImpl<GroupingSetting, GroupingSetting>(
+              this as GroupingSetting, $identity, $identity);
   @override
   String toString() {
     return GroupingSettingMapper.ensureInitialized()
@@ -1378,7 +1381,7 @@ mixin GroupingSettingMappable {
 extension GroupingSettingValueCopy<$R, $Out>
     on ObjectCopyWith<$R, GroupingSetting, $Out> {
   GroupingSettingCopyWith<$R, GroupingSetting, $Out> get $asGroupingSetting =>
-      $base.as((v, t, t2) => _GroupingSettingCopyWithImpl(v, t, t2));
+      $base.as((v, t, t2) => _GroupingSettingCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
 abstract class GroupingSettingCopyWith<$R, $In extends GroupingSetting, $Out>
@@ -1413,5 +1416,5 @@ class _GroupingSettingCopyWithImpl<$R, $Out>
   @override
   GroupingSettingCopyWith<$R2, GroupingSetting, $Out2> $chain<$R2, $Out2>(
           Then<$Out2, $R2> t) =>
-      _GroupingSettingCopyWithImpl($value, $cast, t);
+      _GroupingSettingCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }

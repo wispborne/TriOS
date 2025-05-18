@@ -77,7 +77,8 @@ mixin VersionMappable {
   }
 
   VersionCopyWith<Version, Version, Version> get copyWith =>
-      _VersionCopyWithImpl(this as Version, $identity, $identity);
+      _VersionCopyWithImpl<Version, Version>(
+          this as Version, $identity, $identity);
   @override
   String toString() {
     return VersionMapper.ensureInitialized().stringifyValue(this as Version);
@@ -97,7 +98,7 @@ mixin VersionMappable {
 
 extension VersionValueCopy<$R, $Out> on ObjectCopyWith<$R, Version, $Out> {
   VersionCopyWith<$R, Version, $Out> get $asVersion =>
-      $base.as((v, t, t2) => _VersionCopyWithImpl(v, t, t2));
+      $base.as((v, t, t2) => _VersionCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
 abstract class VersionCopyWith<$R, $In extends Version, $Out>
@@ -143,5 +144,5 @@ class _VersionCopyWithImpl<$R, $Out>
 
   @override
   VersionCopyWith<$R2, Version, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
-      _VersionCopyWithImpl($value, $cast, t);
+      _VersionCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }

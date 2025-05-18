@@ -11,23 +11,14 @@ targets:
 
       # This part is needed to tell original reflectable builder to stay away
       # it overrides default options for reflectable builder to an **empty** set of files
-      reflectable:
-        generate_for:
-          - no/files
+#      reflectable:
+#        generate_for:
+#          - no/files
 
       source_gen|combining_builder:
         options:
           build_extensions:
             '^lib/{{}}.dart': 'lib/generated/{{}}.g.dart'
-
-      freezed:
-        options:
-          # Tells Freezed not to format .freezed.dart files.
-          # This can significantly speed up code-generation.
-          #          format: false
-
-          build_extensions:
-            '^lib/{{}}.dart': 'lib/generated/{{}}.freezed.dart'
 
 # bugged: https://github.com/schultek/dart_mappable/issues/192
 #      dart_mappable_builder:

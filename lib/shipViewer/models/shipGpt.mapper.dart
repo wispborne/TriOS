@@ -435,7 +435,7 @@ mixin ShipMappable {
   }
 
   ShipCopyWith<Ship, Ship, Ship> get copyWith =>
-      _ShipCopyWithImpl(this as Ship, $identity, $identity);
+      _ShipCopyWithImpl<Ship, Ship>(this as Ship, $identity, $identity);
   @override
   String toString() {
     return ShipMapper.ensureInitialized().stringifyValue(this as Ship);
@@ -454,7 +454,7 @@ mixin ShipMappable {
 
 extension ShipValueCopy<$R, $Out> on ObjectCopyWith<$R, Ship, $Out> {
   ShipCopyWith<$R, Ship, $Out> get $asShip =>
-      $base.as((v, t, t2) => _ShipCopyWithImpl(v, t, t2));
+      $base.as((v, t, t2) => _ShipCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
 abstract class ShipCopyWith<$R, $In extends Ship, $Out>
@@ -878,5 +878,5 @@ class _ShipCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Ship, $Out>
 
   @override
   ShipCopyWith<$R2, Ship, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
-      _ShipCopyWithImpl($value, $cast, t);
+      _ShipCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }

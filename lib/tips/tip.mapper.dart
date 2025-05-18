@@ -66,7 +66,7 @@ mixin TipMappable {
   }
 
   TipCopyWith<Tip, Tip, Tip> get copyWith =>
-      _TipCopyWithImpl(this as Tip, $identity, $identity);
+      _TipCopyWithImpl<Tip, Tip>(this as Tip, $identity, $identity);
   @override
   String toString() {
     return TipMapper.ensureInitialized().stringifyValue(this as Tip);
@@ -85,7 +85,7 @@ mixin TipMappable {
 
 extension TipValueCopy<$R, $Out> on ObjectCopyWith<$R, Tip, $Out> {
   TipCopyWith<$R, Tip, $Out> get $asTip =>
-      $base.as((v, t, t2) => _TipCopyWithImpl(v, t, t2));
+      $base.as((v, t, t2) => _TipCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
 abstract class TipCopyWith<$R, $In extends Tip, $Out>
@@ -118,7 +118,7 @@ class _TipCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Tip, $Out>
 
   @override
   TipCopyWith<$R2, Tip, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
-      _TipCopyWithImpl($value, $cast, t);
+      _TipCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
 class TipsMapper extends ClassMapperBase<Tips> {
@@ -171,7 +171,7 @@ mixin TipsMappable {
   }
 
   TipsCopyWith<Tips, Tips, Tips> get copyWith =>
-      _TipsCopyWithImpl(this as Tips, $identity, $identity);
+      _TipsCopyWithImpl<Tips, Tips>(this as Tips, $identity, $identity);
   @override
   String toString() {
     return TipsMapper.ensureInitialized().stringifyValue(this as Tips);
@@ -190,7 +190,7 @@ mixin TipsMappable {
 
 extension TipsValueCopy<$R, $Out> on ObjectCopyWith<$R, Tips, $Out> {
   TipsCopyWith<$R, Tips, $Out> get $asTips =>
-      $base.as((v, t, t2) => _TipsCopyWithImpl(v, t, t2));
+      $base.as((v, t, t2) => _TipsCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
 abstract class TipsCopyWith<$R, $In extends Tips, $Out>
@@ -220,7 +220,7 @@ class _TipsCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Tips, $Out>
 
   @override
   TipsCopyWith<$R2, Tips, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
-      _TipsCopyWithImpl($value, $cast, t);
+      _TipsCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
 class ModTipMapper extends ClassMapperBase<ModTip> {
@@ -283,7 +283,7 @@ mixin ModTipMappable {
   }
 
   ModTipCopyWith<ModTip, ModTip, ModTip> get copyWith =>
-      _ModTipCopyWithImpl(this as ModTip, $identity, $identity);
+      _ModTipCopyWithImpl<ModTip, ModTip>(this as ModTip, $identity, $identity);
   @override
   String toString() {
     return ModTipMapper.ensureInitialized().stringifyValue(this as ModTip);
@@ -302,7 +302,7 @@ mixin ModTipMappable {
 
 extension ModTipValueCopy<$R, $Out> on ObjectCopyWith<$R, ModTip, $Out> {
   ModTipCopyWith<$R, ModTip, $Out> get $asModTip =>
-      $base.as((v, t, t2) => _ModTipCopyWithImpl(v, t, t2));
+      $base.as((v, t, t2) => _ModTipCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
 abstract class ModTipCopyWith<$R, $In extends ModTip, $Out>
@@ -342,5 +342,5 @@ class _ModTipCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, ModTip, $Out>
 
   @override
   ModTipCopyWith<$R2, ModTip, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
-      _ModTipCopyWithImpl($value, $cast, t);
+      _ModTipCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }

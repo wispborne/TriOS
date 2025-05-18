@@ -73,9 +73,9 @@ mixin TriOSDownloadProgressMappable {
   }
 
   TriOSDownloadProgressCopyWith<TriOSDownloadProgress, TriOSDownloadProgress,
-          TriOSDownloadProgress>
-      get copyWith => _TriOSDownloadProgressCopyWithImpl(
-          this as TriOSDownloadProgress, $identity, $identity);
+      TriOSDownloadProgress> get copyWith => _TriOSDownloadProgressCopyWithImpl<
+          TriOSDownloadProgress, TriOSDownloadProgress>(
+      this as TriOSDownloadProgress, $identity, $identity);
   @override
   String toString() {
     return TriOSDownloadProgressMapper.ensureInitialized()
@@ -98,8 +98,8 @@ mixin TriOSDownloadProgressMappable {
 extension TriOSDownloadProgressValueCopy<$R, $Out>
     on ObjectCopyWith<$R, TriOSDownloadProgress, $Out> {
   TriOSDownloadProgressCopyWith<$R, TriOSDownloadProgress, $Out>
-      get $asTriOSDownloadProgress =>
-          $base.as((v, t, t2) => _TriOSDownloadProgressCopyWithImpl(v, t, t2));
+      get $asTriOSDownloadProgress => $base.as(
+          (v, t, t2) => _TriOSDownloadProgressCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
 abstract class TriOSDownloadProgressCopyWith<
@@ -145,5 +145,5 @@ class _TriOSDownloadProgressCopyWithImpl<$R, $Out>
   @override
   TriOSDownloadProgressCopyWith<$R2, TriOSDownloadProgress, $Out2>
       $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
-          _TriOSDownloadProgressCopyWithImpl($value, $cast, t);
+          _TriOSDownloadProgressCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }

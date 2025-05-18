@@ -49,7 +49,8 @@ class ThemeStateMapper extends ClassMapperBase<ThemeState> {
 
 mixin ThemeStateMappable {
   ThemeStateCopyWith<ThemeState, ThemeState, ThemeState> get copyWith =>
-      _ThemeStateCopyWithImpl(this as ThemeState, $identity, $identity);
+      _ThemeStateCopyWithImpl<ThemeState, ThemeState>(
+          this as ThemeState, $identity, $identity);
   @override
   String toString() {
     return ThemeStateMapper.ensureInitialized()
@@ -71,7 +72,7 @@ mixin ThemeStateMappable {
 extension ThemeStateValueCopy<$R, $Out>
     on ObjectCopyWith<$R, ThemeState, $Out> {
   ThemeStateCopyWith<$R, ThemeState, $Out> get $asThemeState =>
-      $base.as((v, t, t2) => _ThemeStateCopyWithImpl(v, t, t2));
+      $base.as((v, t, t2) => _ThemeStateCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
 abstract class ThemeStateCopyWith<$R, $In extends ThemeState, $Out>
@@ -119,5 +120,5 @@ class _ThemeStateCopyWithImpl<$R, $Out>
   @override
   ThemeStateCopyWith<$R2, ThemeState, $Out2> $chain<$R2, $Out2>(
           Then<$Out2, $R2> t) =>
-      _ThemeStateCopyWithImpl($value, $cast, t);
+      _ThemeStateCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }

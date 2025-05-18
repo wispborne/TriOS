@@ -83,8 +83,9 @@ mixin LaunchSettingsMappable {
   }
 
   LaunchSettingsCopyWith<LaunchSettings, LaunchSettings, LaunchSettings>
-      get copyWith => _LaunchSettingsCopyWithImpl(
-          this as LaunchSettings, $identity, $identity);
+      get copyWith =>
+          _LaunchSettingsCopyWithImpl<LaunchSettings, LaunchSettings>(
+              this as LaunchSettings, $identity, $identity);
   @override
   String toString() {
     return LaunchSettingsMapper.ensureInitialized()
@@ -107,7 +108,7 @@ mixin LaunchSettingsMappable {
 extension LaunchSettingsValueCopy<$R, $Out>
     on ObjectCopyWith<$R, LaunchSettings, $Out> {
   LaunchSettingsCopyWith<$R, LaunchSettings, $Out> get $asLaunchSettings =>
-      $base.as((v, t, t2) => _LaunchSettingsCopyWithImpl(v, t, t2));
+      $base.as((v, t, t2) => _LaunchSettingsCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
 abstract class LaunchSettingsCopyWith<$R, $In extends LaunchSettings, $Out>
@@ -160,5 +161,5 @@ class _LaunchSettingsCopyWithImpl<$R, $Out>
   @override
   LaunchSettingsCopyWith<$R2, LaunchSettings, $Out2> $chain<$R2, $Out2>(
           Then<$Out2, $R2> t) =>
-      _LaunchSettingsCopyWithImpl($value, $cast, t);
+      _LaunchSettingsCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }

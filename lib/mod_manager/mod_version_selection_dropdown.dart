@@ -363,7 +363,7 @@ class _ModVersionSelectionDropdownState
                     width: 32,
                     child: Container(
                       decoration: BoxDecoration(
-                        color: buttonBackgroundColor?.lighter(8),
+                        color: buttonBackgroundColor?.lighter(12),
                         border: Border.all(
                           color: buttonBackgroundColor!.darker(6),
                           width: 1,

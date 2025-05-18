@@ -82,8 +82,9 @@ mixin GraphicsLibConfigMappable {
 
   GraphicsLibConfigCopyWith<GraphicsLibConfig, GraphicsLibConfig,
           GraphicsLibConfig>
-      get copyWith => _GraphicsLibConfigCopyWithImpl(
-          this as GraphicsLibConfig, $identity, $identity);
+      get copyWith =>
+          _GraphicsLibConfigCopyWithImpl<GraphicsLibConfig, GraphicsLibConfig>(
+              this as GraphicsLibConfig, $identity, $identity);
   @override
   String toString() {
     return GraphicsLibConfigMapper.ensureInitialized()
@@ -106,8 +107,8 @@ mixin GraphicsLibConfigMappable {
 extension GraphicsLibConfigValueCopy<$R, $Out>
     on ObjectCopyWith<$R, GraphicsLibConfig, $Out> {
   GraphicsLibConfigCopyWith<$R, GraphicsLibConfig, $Out>
-      get $asGraphicsLibConfig =>
-          $base.as((v, t, t2) => _GraphicsLibConfigCopyWithImpl(v, t, t2));
+      get $asGraphicsLibConfig => $base
+          .as((v, t, t2) => _GraphicsLibConfigCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
 abstract class GraphicsLibConfigCopyWith<$R, $In extends GraphicsLibConfig,
@@ -159,5 +160,5 @@ class _GraphicsLibConfigCopyWithImpl<$R, $Out>
   @override
   GraphicsLibConfigCopyWith<$R2, GraphicsLibConfig, $Out2> $chain<$R2, $Out2>(
           Then<$Out2, $R2> t) =>
-      _GraphicsLibConfigCopyWithImpl($value, $cast, t);
+      _GraphicsLibConfigCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }

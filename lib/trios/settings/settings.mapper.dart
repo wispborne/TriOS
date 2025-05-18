@@ -75,9 +75,9 @@ class ModUpdateBehaviorMapper extends EnumMapper<ModUpdateBehavior> {
   @override
   ModUpdateBehavior decode(dynamic value) {
     switch (value) {
-      case 'doNotChange':
+      case r'doNotChange':
         return ModUpdateBehavior.doNotChange;
-      case 'switchToNewVersionIfWasEnabled':
+      case r'switchToNewVersionIfWasEnabled':
         return ModUpdateBehavior.switchToNewVersionIfWasEnabled;
       default:
         return ModUpdateBehavior.values[1];
@@ -88,9 +88,9 @@ class ModUpdateBehaviorMapper extends EnumMapper<ModUpdateBehavior> {
   dynamic encode(ModUpdateBehavior self) {
     switch (self) {
       case ModUpdateBehavior.doNotChange:
-        return 'doNotChange';
+        return r'doNotChange';
       case ModUpdateBehavior.switchToNewVersionIfWasEnabled:
-        return 'switchToNewVersionIfWasEnabled';
+        return r'switchToNewVersionIfWasEnabled';
     }
   }
 }
@@ -123,11 +123,11 @@ class DashboardGridModUpdateVisibilityMapper
   @override
   DashboardGridModUpdateVisibility decode(dynamic value) {
     switch (value) {
-      case 'allVisible':
+      case r'allVisible':
         return DashboardGridModUpdateVisibility.allVisible;
-      case 'hideMuted':
+      case r'hideMuted':
         return DashboardGridModUpdateVisibility.hideMuted;
-      case 'hideAll':
+      case r'hideAll':
         return DashboardGridModUpdateVisibility.hideAll;
       default:
         return DashboardGridModUpdateVisibility.values[1];
@@ -138,11 +138,11 @@ class DashboardGridModUpdateVisibilityMapper
   dynamic encode(DashboardGridModUpdateVisibility self) {
     switch (self) {
       case DashboardGridModUpdateVisibility.allVisible:
-        return 'allVisible';
+        return r'allVisible';
       case DashboardGridModUpdateVisibility.hideMuted:
-        return 'hideMuted';
+        return r'hideMuted';
       case DashboardGridModUpdateVisibility.hideAll:
-        return 'hideAll';
+        return r'hideAll';
     }
   }
 }
@@ -175,9 +175,9 @@ class CompressionLibMapper extends EnumMapper<CompressionLib> {
   @override
   CompressionLib decode(dynamic value) {
     switch (value) {
-      case 'sevenZip':
+      case r'sevenZip':
         return CompressionLib.sevenZip;
-      case 'libarchive':
+      case r'libarchive':
         return CompressionLib.libarchive;
       default:
         return CompressionLib.values[0];
@@ -188,9 +188,9 @@ class CompressionLibMapper extends EnumMapper<CompressionLib> {
   dynamic encode(CompressionLib self) {
     switch (self) {
       case CompressionLib.sevenZip:
-        return 'sevenZip';
+        return r'sevenZip';
       case CompressionLib.libarchive:
-        return 'libarchive';
+        return r'libarchive';
     }
   }
 }
@@ -221,17 +221,17 @@ class DashboardModListSortMapper extends EnumMapper<DashboardModListSort> {
   @override
   DashboardModListSort decode(dynamic value) {
     switch (value) {
-      case 'name':
+      case r'name':
         return DashboardModListSort.name;
-      case 'author':
+      case r'author':
         return DashboardModListSort.author;
-      case 'version':
+      case r'version':
         return DashboardModListSort.version;
-      case 'vram':
+      case r'vram':
         return DashboardModListSort.vram;
-      case 'gameVersion':
+      case r'gameVersion':
         return DashboardModListSort.gameVersion;
-      case 'enabled':
+      case r'enabled':
         return DashboardModListSort.enabled;
       default:
         return DashboardModListSort.values[0];
@@ -242,17 +242,17 @@ class DashboardModListSortMapper extends EnumMapper<DashboardModListSort> {
   dynamic encode(DashboardModListSort self) {
     switch (self) {
       case DashboardModListSort.name:
-        return 'name';
+        return r'name';
       case DashboardModListSort.author:
-        return 'author';
+        return r'author';
       case DashboardModListSort.version:
-        return 'version';
+        return r'version';
       case DashboardModListSort.vram:
-        return 'vram';
+        return r'vram';
       case DashboardModListSort.gameVersion:
-        return 'gameVersion';
+        return r'gameVersion';
       case DashboardModListSort.enabled:
-        return 'enabled';
+        return r'enabled';
     }
   }
 }
@@ -606,7 +606,8 @@ mixin SettingsMappable {
   }
 
   SettingsCopyWith<Settings, Settings, Settings> get copyWith =>
-      _SettingsCopyWithImpl(this as Settings, $identity, $identity);
+      _SettingsCopyWithImpl<Settings, Settings>(
+          this as Settings, $identity, $identity);
   @override
   String toString() {
     return SettingsMapper.ensureInitialized().stringifyValue(this as Settings);
@@ -626,7 +627,7 @@ mixin SettingsMappable {
 
 extension SettingsValueCopy<$R, $Out> on ObjectCopyWith<$R, Settings, $Out> {
   SettingsCopyWith<$R, Settings, $Out> get $asSettings =>
-      $base.as((v, t, t2) => _SettingsCopyWithImpl(v, t, t2));
+      $base.as((v, t, t2) => _SettingsCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
 abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
@@ -898,5 +899,5 @@ class _SettingsCopyWithImpl<$R, $Out>
   @override
   SettingsCopyWith<$R2, Settings, $Out2> $chain<$R2, $Out2>(
           Then<$Out2, $R2> t) =>
-      _SettingsCopyWithImpl($value, $cast, t);
+      _SettingsCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }

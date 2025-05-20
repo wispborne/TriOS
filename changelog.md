@@ -6,6 +6,13 @@
   - Mods page: Split the changelogs & Version Checker icons part of the `Version` column into their own column and added sorting for it.
     - Sorting is, in order: has update, then no update but has changelog, then no update and no changelog, then doesn't support version checker.
 
+# 1.1.11
+- Fixed
+  - A mod archive (zip/rar/7z) without a root-level folder would be installed to /mods, rather than creating a subfolder.
+    - Bug introduced in some recent version, it handled this correctly in the past.
+- Changed
+  - Mods page: When sorting by a column other than Name, mods will be secondarily-sorted alphabetically.
+
 # 1.1.10
 - Added
   - Enable/Disable All mods

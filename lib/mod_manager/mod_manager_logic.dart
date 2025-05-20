@@ -631,10 +631,15 @@ class ModManagerNotifier extends AsyncNotifier<void> {
 
     // Start installing the mods one by one.
     for (final modInfoToInstall in modInfosToInstall) {
+      final fallbackFolderName =
+          modInfoToInstall.extractedFile.originalFile.parent.path != "."
+              ? modInfoToInstall.extractedFile.originalFile.parent.name
+              : modInfoToInstall.modInfo.nameOrId.fixFilenameForFileSystem();
+
       try {
         String targetModFolderName = await setUpNewHighestModVersionFolder(
           modInfoToInstall.modInfo,
-          modInfoToInstall.extractedFile.originalFile.parent.name,
+          fallbackFolderName,
           shouldPersistHighestVersionFolderName,
           currentMods,
           destinationFolder,
@@ -789,7 +794,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
     ModInstallSource modInstallSource,
     Directory destinationFolder,
     String targetModFolderName, {
-    bool dryRun = false,
+    bool dryRun = true,
   }) async {
     final modInfo = modInfoToInstall.modInfo;
     var existingMod = currentMods.firstWhereOrNull((it) => it.id == modInfo.id);

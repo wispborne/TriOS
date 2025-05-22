@@ -128,10 +128,8 @@ class _WispGridState<T extends WispGridItem>
     final grouping = widget.groups.firstWhereOrNull(
       (grp) => grp.key == groupingSetting?.currentGroupedByKey,
     );
-    final activeSortField =
-        gridState.sortedColumnKey ??
-        widget.defaultSortField ??
-        columns.first.key;
+    final defaultSortField = widget.defaultSortField ?? columns.first.key;
+    final activeSortField = gridState.sortedColumnKey ?? defaultSortField;
 
     final items =
         widget.items
@@ -155,14 +153,30 @@ class _WispGridState<T extends WispGridItem>
                 columns,
               );
 
-              final sortResult =
-                  (leftValue != null && rightValue != null)
-                      ? leftValue.compareTo(rightValue)
-                      : (leftValue == null && rightValue == null)
-                      ? 0
-                      : (leftValue == null ? -1 : 1);
+              int sortResult = _compareItems(leftValue, rightValue);
+              bool usedSecondarySort = false;
 
-              return gridState.isSortDescending ? sortResult * -1 : sortResult;
+              if (sortResult == 0) {
+                usedSecondarySort = true;
+                // Use default for tiebreaker (secondary sort)
+                final leftSecondary = _getSortValueForItem(
+                  left,
+                  defaultSortField,
+                  columns,
+                );
+                final rightSecondary = _getSortValueForItem(
+                  right,
+                  defaultSortField,
+                  columns,
+                );
+                sortResult = _compareItems(leftSecondary, rightSecondary);
+              }
+
+              // Flip sorting for the main sort, but always sort secondary sort in the same direction
+              // i.e. sort by Update in either direction, but always secondary sort by Name ascending
+              return gridState.isSortDescending && !usedSecondarySort
+                  ? sortResult * -1
+                  : sortResult;
             })
             .groupBy((item) => grouping?.getGroupSortValue(item))
             .entries
@@ -357,6 +371,24 @@ class _WispGridState<T extends WispGridItem>
         ),
       ),
     );
+  }
+
+  int _compareItems(
+    Comparable<dynamic>? leftValue,
+    Comparable<dynamic>? rightValue,
+  ) {
+    int sortResult;
+    if (leftValue != null && rightValue != null) {
+      sortResult = leftValue.compareTo(rightValue);
+    } else if (leftValue == null && rightValue == null) {
+      sortResult = 0;
+    } else if (leftValue == null) {
+      sortResult = -1;
+    } else {
+      sortResult = 1;
+    }
+
+    return sortResult;
   }
 
   /// Handles multi-check logic for shift/control-clicking a row.

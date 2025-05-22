@@ -309,7 +309,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       Padding(
                         padding: const EdgeInsets.only(top: 8.0),
                         child: MovingTooltipWidget.text(
-                          message: "Play with fire.",
+                          message: "Play with fire."
+                              "\n"
+                              "\nEnabling this will include Prereleases when checking for updates."
+                              "\nPrereleases are *usually* stable, but no guarantees. They contain bugfixes and often add a feature or two that may not be totally finished.",
                           child: CheckboxWithLabel(
                             value: ref.watch(
                               appSettings.select(
@@ -550,7 +553,15 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                         ),
                                       );
                                 },
-                                label: "Manual folder naming",
+                                labelWidget: Row(
+                                  children: [
+                                    Text("Manual folder naming"),
+                                    Padding(
+                                      padding: const EdgeInsets.only(left: 8.0),
+                                      child: Icon(Icons.warning),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),

@@ -921,7 +921,8 @@ class DownloadManager {
       final host = uri.host;
 
       if (host.contains('github.com') ||
-          host.contains('raw.githubusercontent.com')) {
+          host.contains('raw.githubusercontent.com') ||
+          host.contains('objects.githubusercontent.com')) {
         return HostType.github;
       } else if (host.contains('drive.google.com') ||
           host.contains('drive.usercontent.google.com')) {

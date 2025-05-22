@@ -161,6 +161,13 @@ ContextMenu buildModBulkActionContextMenu(
               );
         },
       ),
+      MenuItem(
+        label: 'Copy to clipboard',
+        icon: Icons.copy,
+        onSelected: () {
+          copyModListToClipboardFromMods(selectedMods, context);
+        },
+      ),
 
       if (selectedMods.any(
         (mod) => isModGameVersionIncorrect(

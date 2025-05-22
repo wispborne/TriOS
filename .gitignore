@@ -241,3 +241,5 @@ cache/TriOS-VRAM_CheckerCache.json
 
 /external
 TriOS-Windows.zip
+
+.idea/studiobot.xml

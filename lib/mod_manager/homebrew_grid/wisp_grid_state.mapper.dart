@@ -39,9 +39,9 @@ class ModGridHeaderMapper extends EnumMapper<ModGridHeader> {
         return ModGridHeader.author;
       case 'version':
         return ModGridHeader.version;
-      case r'updateStatus':
+      case 'updateStatus':
         return ModGridHeader.updateStatus;
-      case r'vramImpact':
+      case 'vramImpact':
         return ModGridHeader.vramImpact;
       case 'gameVersion':
         return ModGridHeader.gameVersion;
@@ -70,9 +70,9 @@ class ModGridHeaderMapper extends EnumMapper<ModGridHeader> {
       case ModGridHeader.author:
         return 'author';
       case ModGridHeader.version:
-        return r'version';
+        return 'version';
       case ModGridHeader.updateStatus:
-        return r'updateStatus';
+        return 'updateStatus';
       case ModGridHeader.vramImpact:
         return 'vramImpact';
       case ModGridHeader.gameVersion:
@@ -175,9 +175,9 @@ class ModGridSortFieldMapper extends EnumMapper<ModGridSortField> {
         return ModGridSortField.author;
       case 'version':
         return ModGridSortField.version;
-      case r'updateStatus':
+      case 'updateStatus':
         return ModGridSortField.updateStatus;
-      case r'vramImpact':
+      case 'vramImpact':
         return ModGridSortField.vramImpact;
       case 'gameVersion':
         return ModGridSortField.gameVersion;
@@ -202,9 +202,9 @@ class ModGridSortFieldMapper extends EnumMapper<ModGridSortField> {
       case ModGridSortField.author:
         return 'author';
       case ModGridSortField.version:
-        return r'version';
+        return 'version';
       case ModGridSortField.updateStatus:
-        return r'updateStatus';
+        return 'updateStatus';
       case ModGridSortField.vramImpact:
         return 'vramImpact';
       case ModGridSortField.gameVersion:

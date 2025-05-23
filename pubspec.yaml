@@ -7,8 +7,8 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.7.2
-  flutter: '3.29.3'
+  sdk: ^3.8.0
+  flutter: '3.32.0'
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -118,7 +118,7 @@ dev_dependencies:
   custom_lint: ^0.7.5
   dart_mappable_builder: ^4.5.0
   flutter_launcher_icons: ^0.14.3
-  ffigen: ^18.1.0
+  ffigen: ^19.0.0
   json_serializable: ^6.9.5
   msix: ^3.16.9
 

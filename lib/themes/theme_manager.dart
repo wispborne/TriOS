@@ -10,7 +10,6 @@ import 'package:palette_generator/palette_generator.dart';
 import 'package:trios/themes/theme.dart';
 import 'package:trios/thirdparty/dartx/map.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
-import 'package:trios/trios/settings/settings.dart';
 
 import '../mod_manager/mod_manager_logic.dart';
 import '../utils/logging.dart';
@@ -135,8 +134,9 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
     _currentTheme = theme;
     state = AsyncData(ThemeState(convertToThemeData(theme), allThemes, theme));
 
-    final themeKey =
-        allThemes.entries.firstWhere((entry) => entry.value == theme).key;
+    final themeKey = allThemes.entries
+        .firstWhere((entry) => entry.value == theme)
+        .key;
     ref
         .read(appSettings.notifier)
         .update((s) => s.copyWith(themeKey: themeKey));
@@ -218,10 +218,9 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
     // Choose font here
     final textTheme = GoogleFonts.robotoTextTheme(themeBase.textTheme);
 
-    final onSurfaceVariant =
-        swatch.surface == null
-            ? swatch.onSurface
-            : swatch.onSurface?.mix(swatch.surface!, 0.5)!;
+    final onSurfaceVariant = swatch.surface == null
+        ? swatch.onSurface
+        : swatch.onSurface?.mix(swatch.surface!, 0.5)!;
     final primaryVariant = swatch.primary.mix(swatch.surfaceContainer!, 0.7)!;
 
     return themeBase.copyWith(
@@ -377,7 +376,10 @@ extension PaletteGeneratorExt on PaletteGenerator? {
           context,
         ).textTheme.titleLarge?.copyWith(color: onSurfaceColor),
       ),
-      cardTheme: CardTheme(color: surfaceColor, shadowColor: Colors.black45),
+      cardTheme: CardThemeData(
+        color: surfaceColor,
+        shadowColor: Colors.black45,
+      ),
       tooltipTheme: TooltipThemeData(
         decoration: BoxDecoration(
           color: primaryColor,
@@ -493,16 +495,15 @@ showSnackBar({
 
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
-      content:
-          type != null
-              ? DefaultTextStyle.merge(
-                child: content,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              )
-              : content,
+      content: type != null
+          ? DefaultTextStyle.merge(
+              child: content,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            )
+          : content,
       backgroundColor: switch (type) {
         SnackBarType.info => Colors.blue,
         SnackBarType.warn => ThemeManager.vanillaWarningColor,

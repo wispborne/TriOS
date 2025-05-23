@@ -3,11 +3,15 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:multi_split_view/multi_split_view.dart';
+import 'package:stringr/stringr.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_group.dart';
+import 'package:trios/shipSystemsManager/ship_systems_manager.dart';
 import 'package:trios/shipViewer/models/shipGpt.dart';
 import 'package:trios/shipViewer/shipManager.dart';
+import 'package:trios/thirdparty/dartx/iterable.dart';
+import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
@@ -35,6 +39,7 @@ class _ShipPageState extends ConsumerState<ShipPage>
   final SearchController _searchController = SearchController();
   WispGridController<Ship>? _gridTop;
   WispGridController<Ship>? _gridBottom;
+  bool showEnabled = false;
   bool showSpoilers = false;
   bool splitPane = false;
 
@@ -53,32 +58,36 @@ class _ShipPageState extends ConsumerState<ShipPage>
     super.build(context);
     final shipsAsync = ref.watch(shipListNotifierProvider);
     final theme = Theme.of(context);
+    final mods = ref.watch(AppState.mods);
 
     List<Ship> ships = shipsAsync.valueOrNull ?? [];
 
+    if (showEnabled) {
+      ships = ships.where((ship) {
+        return ship.modVariant == null ||
+            ship.modVariant?.mod(mods)?.hasEnabledVariant == true;
+      }).toList();
+    }
+
     if (!showSpoilers) {
-      ships =
-          ships.where((ship) {
-            final hints = ship.hints.orEmpty().map((h) => h.toLowerCase());
-            final tags = ship.tags.orEmpty().map((t) => t.toLowerCase());
+      ships = ships.where((ship) {
+        final hints = ship.hints.orEmpty().map((h) => h.toLowerCase());
+        final tags = ship.tags.orEmpty().map((t) => t.toLowerCase());
 
-            final hidden = hints.contains('hide_in_codex');
-            final isSpoiler = tags.any(spoilerTags.contains);
+        final hidden = hints.contains('hide_in_codex');
+        final isSpoiler = tags.any(spoilerTags.contains);
 
-            return !hidden && !isSpoiler;
-          }).toList();
+        return !hidden && !isSpoiler;
+      }).toList();
     }
 
     final query = _searchController.value.text;
     if (query.isNotEmpty) {
-      ships =
-          ships.where((ship) {
-            return ship.toMap().values.any((value) {
-              return value.toString().toLowerCase().contains(
-                query.toLowerCase(),
-              );
-            });
-          }).toList();
+      ships = ships.where((ship) {
+        return ship.toMap().values.any((value) {
+          return value.toString().toLowerCase().contains(query.toLowerCase());
+        });
+      }).toList();
     }
 
     final columns = buildCols(theme);
@@ -128,6 +137,19 @@ class _ShipPageState extends ConsumerState<ShipPage>
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           MovingTooltipWidget.text(
+                            message: "Only ships from enabled mods.",
+                            child: TriOSToolbarCheckboxButton(
+                              text: "Only Enabled",
+                              value: showEnabled,
+                              onChanged: (value) {
+                                setState(() {
+                                  showEnabled = value ?? false;
+                                });
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          MovingTooltipWidget.text(
                             message:
                                 "Show ships with 'HIDE_IN_CODEX' or certain ultra-redacted vanilla tags.",
                             warningLevel: TooltipWarningLevel.error,
@@ -157,10 +179,8 @@ class _ShipPageState extends ConsumerState<ShipPage>
                               isEnabled: !ref.watch(isLoadingShipsList),
                               child: IconButton(
                                 icon: const Icon(Icons.refresh),
-                                onPressed:
-                                    () => ref.invalidate(
-                                      shipListNotifierProvider,
-                                    ),
+                                onPressed: () =>
+                                    ref.invalidate(shipListNotifierProvider),
                               ),
                             ),
                           ),
@@ -230,9 +250,8 @@ class _ShipPageState extends ConsumerState<ShipPage>
       items: items,
       itemExtent: 50,
       alwaysShowScrollbar: true,
-      rowBuilder:
-          ({required item, required modifiers, required child}) =>
-              SizedBox(height: 50, child: child),
+      rowBuilder: ({required item, required modifiers, required child}) =>
+          SizedBox(height: 50, child: child),
       onLoaded: (controller) {
         if (isTop) {
           _gridTop = controller;
@@ -248,6 +267,8 @@ class _ShipPageState extends ConsumerState<ShipPage>
     final vanillaBasePath = File(
       ref.watch(appSettings.select((s) => s.gameCoreDir))?.path ?? '',
     );
+    final shipSystems = ref.read(shipSystemsStreamProvider).valueOrNull ?? [];
+    final shipSystemsMap = shipSystems.associateBy((e) => e.id);
     int position = 0;
 
     // Reusable helper
@@ -262,12 +283,11 @@ class _ShipPageState extends ConsumerState<ShipPage>
         isSortable: true,
         name: name,
         getSortValue: getValue,
-        itemCellBuilder:
-            (item, _) => TextTriOS(
-              getValue(item) ?? '',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
+        itemCellBuilder: (item, _) => TextTriOS(
+          getValue(item) ?? '',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
         defaultState: WispGridColumnState(position: position++, width: width),
       );
     }
@@ -278,28 +298,26 @@ class _ShipPageState extends ConsumerState<ShipPage>
         isSortable: true,
         name: 'Mod',
         getSortValue: (ship) => ship.modVariant?.modInfo.nameOrId,
-        itemCellBuilder:
-            (item, _) => TextTriOS(
-              item.modVariant?.modInfo.nameOrId ?? "Vanilla",
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.bodyMedium,
-            ),
+        itemCellBuilder: (item, _) => TextTriOS(
+          item.modVariant?.modInfo.nameOrId ?? "Vanilla",
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: theme.textTheme.bodyMedium,
+        ),
         defaultState: WispGridColumnState(position: position++, width: 120),
       ),
       WispGridColumn(
         key: 'sprite',
         name: '',
         isSortable: false,
-        itemCellBuilder:
-            (item, _) => ShipImageCell(
-              imagePath:
-                  (item.modVariant == null
-                          ? vanillaBasePath
-                          : item.modVariant!.modFolder)
-                      .resolve(item.spriteName ?? "")
-                      .path,
-            ),
+        itemCellBuilder: (item, _) => ShipImageCell(
+          imagePath:
+              (item.modVariant == null
+                      ? vanillaBasePath
+                      : item.modVariant!.modFolder)
+                  .resolve(item.spriteName ?? "")
+                  .path,
+        ),
         defaultState: WispGridColumnState(position: position++, width: 50),
       ),
       col('hullName', 'Name', (s) => s.hullName, width: 200),
@@ -315,7 +333,11 @@ class _ShipPageState extends ConsumerState<ShipPage>
       col('techManufacturer', 'Tech', (s) => s.techManufacturer, width: 220),
       ...[
         col('designation', 'Designation', (s) => s.designation),
-        col('systemId', 'System ID', (s) => s.systemId),
+        col(
+          'systemId',
+          'System',
+          (s) => shipSystemsMap[s.systemId ?? ""]?.name ?? s.systemId,
+        ),
         col('fleetPts', 'Fleet Pts', (s) => s.fleetPts),
         col('hitpoints', 'Hitpoints', (s) => s.hitpoints),
         col('armorRating', 'Armor', (s) => s.armorRating),
@@ -328,8 +350,16 @@ class _ShipPageState extends ConsumerState<ShipPage>
         col('maxTurnRate', 'Turn Rate', (s) => s.maxTurnRate),
         col('turnAcceleration', 'Turn Accel', (s) => s.turnAcceleration),
         col('mass', 'Mass', (s) => s.mass),
-        col('shieldType', 'Shield Type', (s) => s.shieldType),
-        col('defenseId', 'Defense ID', (s) => s.defenseId),
+        col(
+          'shieldType',
+          'Shield Type',
+          (s) => s.shieldType?.lowerCase().capitalize(),
+        ),
+        col(
+          'defenseId',
+          'Defense ID',
+          (s) => shipSystemsMap[s.defenseId ?? ""]?.name ?? s.defenseId,
+        ),
         col('shieldArc', 'Shield Arc', (s) => s.shieldArc),
         col('shieldUpkeep', 'Shield Upkeep', (s) => s.shieldUpkeep),
         col('shieldEfficiency', 'Shield Eff.', (s) => s.shieldEfficiency),

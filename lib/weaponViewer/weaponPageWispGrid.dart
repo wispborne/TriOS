@@ -1,12 +1,12 @@
 import 'dart:io';
 
-import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_group.dart';
+import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/weaponViewer/models/weapon.dart';
@@ -30,6 +30,7 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
   final SearchController _searchController = SearchController();
   WispGridController<Weapon>? _gridStateManagerTop;
   WispGridController<Weapon>? _gridStateManagerBottom;
+  bool showEnabledOnly = false;
   bool showHiddenWeapons = false;
   bool splitPane = false;
   String gameCorePath = "";
@@ -50,40 +51,37 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
     final gridState = ref.watch(appSettings.select((s) => s.weaponsGridState));
     final weaponListAsyncValue = ref.watch(weaponListNotifierProvider);
     final theme = Theme.of(context);
+    final mods = ref.watch(AppState.mods);
     gameCorePath =
         ref.watch(appSettings.select((s) => s.gameCoreDir))?.path ?? '';
     List<Weapon> items = weaponListAsyncValue.valueOrNull ?? [];
+    final allItemsCount = items.length;
+
+    if (showEnabledOnly) {
+      items = items.where((items) {
+        return items.modVariant == null ||
+            items.modVariant?.mod(mods)?.hasEnabledVariant == true;
+      }).toList();
+    }
 
     if (!showHiddenWeapons) {
-      items =
-          items
-              .where(
-                (weapon) => weapon.weaponType?.toLowerCase() != "decorative",
-              )
-              .toList();
+      items = items
+          .where((weapon) => weapon.weaponType?.toLowerCase() != "decorative")
+          .toList();
     }
 
     final query = _searchController.value.text;
     if (query.isNotEmpty) {
-      items =
-          items.where((weapon) {
-            return weapon.toMap().values.any((value) {
-              return value.toString().toLowerCase().contains(
-                query.toLowerCase(),
-              );
-            });
-          }).toList();
+      items = items.where((weapon) {
+        return weapon.toMap().values.any((value) {
+          return value.toString().toLowerCase().contains(query.toLowerCase());
+        });
+      }).toList();
     }
 
     final columns = buildCols(theme);
 
-    final weaponCount = weaponListAsyncValue.valueOrNull?.length;
-    final filteredWeaponCount =
-        _gridStateManagerTop?.lastDisplayedItemsReadonly.distinctBy((row) {
-          final weapon = row;
-          return weapon.id;
-        }).length ??
-        0;
+    final filteredWeaponCount = items.length;
 
     return Column(
       children: [
@@ -102,7 +100,7 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
                       child: Row(
                         children: [
                           Text(
-                            '${weaponCount ?? "..."} Weapons${weaponCount != filteredWeaponCount ? " ($filteredWeaponCount shown)" : ""}',
+                            '${allItemsCount ?? "..."} Weapons${allItemsCount != filteredWeaponCount ? " ($filteredWeaponCount shown)" : ""}',
                             style: Theme.of(
                               context,
                             ).textTheme.headlineSmall?.copyWith(fontSize: 20),
@@ -129,6 +127,18 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
                         mainAxisSize: MainAxisSize.min,
                         spacing: 8,
                         children: [
+                          MovingTooltipWidget.text(
+                            message: "Only weapons from enabled mods.",
+                            child: TriOSToolbarCheckboxButton(
+                              text: "Only Enabled",
+                              value: showEnabledOnly,
+                              onChanged: (value) {
+                                setState(() {
+                                  showEnabledOnly = value ?? false;
+                                });
+                              },
+                            ),
+                          ),
                           MovingTooltipWidget.text(
                             message: "Show hidden weapons",
                             child: TriOSToolbarCheckboxButton(
@@ -220,7 +230,9 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
         updateGridState: (updateFunction) {
           ref.read(appSettings.notifier).update((state) {
             return state.copyWith(
-              weaponsGridState: updateFunction(state.weaponsGridState) ?? Settings().weaponsGridState,
+              weaponsGridState:
+                  updateFunction(state.weaponsGridState) ??
+                  Settings().weaponsGridState,
             );
           });
         },
@@ -228,9 +240,8 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
         items: items,
         itemExtent: 50,
         alwaysShowScrollbar: true,
-        rowBuilder:
-            ({required item, required modifiers, required child}) =>
-                SizedBox(height: 50, child: child),
+        rowBuilder: ({required item, required modifiers, required child}) =>
+            SizedBox(height: 50, child: child),
         onLoaded: (WispGridController<Weapon> controller) {
           if (isTop) {
             _gridStateManagerTop = controller;
@@ -250,40 +261,34 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
         isSortable: true,
         name: 'Mod',
         getSortValue: (weapon) => weapon.modVariant?.modInfo.nameOrId,
-        itemCellBuilder:
-            (item, modifiers) => Builder(
-              builder: (context) {
-                final modName =
-                    item.modVariant?.modInfo.nameOrId ?? "(vanilla)";
-                return Tooltip(
-                  message: modName,
-                  child: Text(
-                    modName,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.headlineSmall!.copyWith(
-                      fontSize: 14,
-                    ),
-                  ),
-                );
-              },
-            ),
+        itemCellBuilder: (item, modifiers) => Builder(
+          builder: (context) {
+            final modName = item.modVariant?.modInfo.nameOrId ?? "(vanilla)";
+            return Tooltip(
+              message: modName,
+              child: Text(
+                modName,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.headlineSmall!.copyWith(fontSize: 14),
+              ),
+            );
+          },
+        ),
         defaultState: WispGridColumnState(position: 0, width: 100),
       ),
       WispGridColumn(
         key: 'spritePaths',
         isSortable: false,
         name: '',
-        itemCellBuilder:
-            (item, modifiers) => WeaponImageCell(
-              imagePaths:
-                  [
-                    item.hardpointGunSprite,
-                    item.hardpointSprite,
-                    item.turretGunSprite,
-                    item.turretSprite,
-                  ].whereType<String>().toList(),
-            ),
+        itemCellBuilder: (item, modifiers) => WeaponImageCell(
+          imagePaths: [
+            item.hardpointGunSprite,
+            item.hardpointSprite,
+            item.turretGunSprite,
+            item.turretSprite,
+          ].whereType<String>().toList(),
+        ),
         defaultState: WispGridColumnState(position: 1, width: 40),
       ),
       WispGridColumn(
@@ -291,16 +296,15 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
         isSortable: true,
         name: 'Name',
         getSortValue: (weapon) => weapon.name ?? weapon.id,
-        itemCellBuilder:
-            (item, modifiers) => Tooltip(
-              message: item.id,
-              child: Text(
-                item.name ?? item.id,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.headlineSmall!.copyWith(fontSize: 14),
-              ),
-            ),
+        itemCellBuilder: (item, modifiers) => Tooltip(
+          message: item.id,
+          child: Text(
+            item.name ?? item.id,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.headlineSmall!.copyWith(fontSize: 14),
+          ),
+        ),
         defaultState: WispGridColumnState(position: 2, width: 150),
       ),
       WispGridColumn(
@@ -332,8 +336,8 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
         isSortable: true,
         name: 'Dmg/Shot',
         getSortValue: (weapon) => weapon.damagePerShot,
-        itemCellBuilder:
-            (item, modifiers) => Text(item.damagePerShot?.toString() ?? ""),
+        itemCellBuilder: (item, modifiers) =>
+            Text(item.damagePerShot?.toString() ?? ""),
         defaultState: WispGridColumnState(position: 6, width: 110),
       ),
       WispGridColumn(
@@ -341,8 +345,8 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
         isSortable: true,
         name: 'Range',
         getSortValue: (weapon) => weapon.range,
-        itemCellBuilder:
-            (item, modifiers) => Text(item.range?.toString() ?? ""),
+        itemCellBuilder: (item, modifiers) =>
+            Text(item.range?.toString() ?? ""),
         defaultState: WispGridColumnState(position: 7, width: 80),
       ),
       WispGridColumn(
@@ -350,8 +354,8 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
         isSortable: true,
         name: 'Dmg/Sec',
         getSortValue: (weapon) => weapon.damagePerSecond,
-        itemCellBuilder:
-            (item, modifiers) => Text(item.damagePerSecond?.toString() ?? ""),
+        itemCellBuilder: (item, modifiers) =>
+            Text(item.damagePerSecond?.toString() ?? ""),
         defaultState: WispGridColumnState(position: 8, width: 90),
       ),
       WispGridColumn(
@@ -375,8 +379,8 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
         isSortable: true,
         name: 'Turn Rate',
         getSortValue: (weapon) => weapon.turnRate,
-        itemCellBuilder:
-            (item, modifiers) => Text(item.turnRate?.toString() ?? ""),
+        itemCellBuilder: (item, modifiers) =>
+            Text(item.turnRate?.toString() ?? ""),
         defaultState: WispGridColumnState(position: 11, width: 90),
       ),
       WispGridColumn(
@@ -405,14 +409,14 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
               controller.value.text.isEmpty
                   ? Container()
                   : IconButton(
-                    icon: const Icon(Icons.clear),
-                    constraints: const BoxConstraints(),
-                    padding: EdgeInsets.zero,
-                    onPressed: () {
-                      controller.clear();
-                      setState(() {});
-                    },
-                  ),
+                      icon: const Icon(Icons.clear),
+                      constraints: const BoxConstraints(),
+                      padding: EdgeInsets.zero,
+                      onPressed: () {
+                        controller.clear();
+                        setState(() {});
+                      },
+                    ),
             ],
             backgroundColor: WidgetStateProperty.all(
               Theme.of(context).colorScheme.surfaceContainer,
@@ -422,12 +426,10 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
             },
           );
         },
-        suggestionsBuilder: (
-          BuildContext context,
-          SearchController controller,
-        ) {
-          return [];
-        },
+        suggestionsBuilder:
+            (BuildContext context, SearchController controller) {
+              return [];
+            },
       ),
     );
   }

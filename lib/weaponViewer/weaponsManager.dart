@@ -252,7 +252,7 @@ Future<ParseResult> _parseWeaponsCsv(
       if (wpnData != null) {
         weaponData.addAll(wpnData);
       } else {
-        errors.add('[$modName] No .wpn data found for weapon id "$weaponId"');
+        errors.add('[$modName] No .wpn data found for weapon id "$weaponId" (addon mods sometimes tweak weapons in their parent mod or vanilla)');
       }
 
       // Create Weapon instance

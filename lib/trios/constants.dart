@@ -5,29 +5,28 @@ import 'package:trios/models/version.dart';
 import 'package:trios/utils/extensions.dart';
 
 class Constants {
-  static const version = "1.1.11";
+  static const version = "1.2.0-dev16";
   static Version currentVersion = Version.parse(version);
 
   static const appName = "TriOS";
   static const appTitle = "$appName v$version";
-  static String appSubtitle =
-      [
-        "Corporate Toolkit",
-        "by Wisp",
-        "Hegemony Tolerated",
-        "Tri-Tachyon Approved",
-        "Powered by Moloch",
-        "COMSEC Compliant",
-        "Wave to Sebestyan",
-        "Gargoyle-resistant",
-        "Unavailable on Asher",
-        "Artemisia's Choice",
-        "Persean Chronicles Died For This?",
-        "where is omega?",
-        "at com.fs.starfarer.oOOOOOOO",
-        "SMOL 2",
-        "Burn bright",
-      ].random();
+  static String appSubtitle = [
+    "Corporate Toolkit",
+    "by Wisp",
+    "Hegemony Tolerated",
+    "Tri-Tachyon Approved",
+    "Powered by Moloch",
+    "COMSEC Compliant",
+    "Wave to Sebestyan",
+    "Gargoyle-resistant",
+    "Unavailable on Asher",
+    "Artemisia's Choice",
+    "Persean Chronicles Died For This?",
+    "where is omega?",
+    "at com.fs.starfarer.oOOOOOOO",
+    "SMOL 2",
+    "Burn bright",
+  ].random();
 
   static const enabledModsFilename = "enabled_mods.json";
   static const modsFolderName = "mods";
@@ -86,8 +85,9 @@ class Constants {
 
   /// Warning: DON'T ADD ANYTHING TO THIS DIRECTLY. It will mutate the shared instance.
   /// Creating a new one each time is expensive, and hardcoding the pattern will hardcode the locale.
-  static DateFormat dateTimeFormat =
-      DateFormat.yMd(Intl.getCurrentLocale()).add_jm();
+  static DateFormat dateTimeFormat = DateFormat.yMd(
+    Intl.getCurrentLocale(),
+  ).add_jm();
   static DateFormat gameDateFormat = DateFormat(
     "'Cycle' y , 'Month' M, 'Day' d",
   );

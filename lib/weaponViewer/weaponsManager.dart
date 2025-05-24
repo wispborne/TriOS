@@ -21,19 +21,19 @@ final weaponListNotifierProvider = StreamProvider<List<Weapon>>((ref) async* {
   final currentTime = DateTime.now();
   ref.watch(isLoadingWeaponsList.notifier).state = true;
   filesProcessed = 0;
-  final gameCorePath =
-      ref.watch(appSettings.select((s) => s.gameCoreDir))?.path;
+  final gameCorePath = ref
+      .watch(appSettings.select((s) => s.gameCoreDir))
+      ?.path;
 
   if (gameCorePath == null || gameCorePath.isEmpty) {
     throw Exception('Game folder path is not set.');
   }
 
-  final variants =
-      ref
-          .watch(AppState.mods)
-          .map((mod) => mod.findFirstEnabledOrHighestVersion)
-          .nonNulls
-          .toList();
+  final variants = ref
+      .watch(AppState.mods)
+      .map((mod) => mod.findFirstEnabledOrHighestVersion)
+      .nonNulls
+      .toList();
 
   final allErrors = <String>[]; // To store all error messages
   List<Weapon> allWeapons = <Weapon>[]; // To store all parsed weapons
@@ -85,12 +85,11 @@ Future<ParseResult> _parseWeaponsCsv(
 ) async {
   int filesProcessed = 0;
 
-  final weaponsCsvFile =
-      p
-          .join(folder.path, 'data/weapons/weapon_data.csv')
-          .toFile()
-          .normalize
-          .toFile();
+  final weaponsCsvFile = p
+      .join(folder.path, 'data/weapons/weapon_data.csv')
+      .toFile()
+      .normalize
+      .toFile();
 
   final weapons = <Weapon>[];
   final errors = <String>[];
@@ -103,12 +102,11 @@ Future<ParseResult> _parseWeaponsCsv(
 
   // Read and parse the .wpn files
   final wpnFilesDir = p.join(folder.path, 'data/weapons');
-  final wpnFiles =
-      Directory(wpnFilesDir)
-          .listSync()
-          .whereType<File>()
-          .where((file) => file.path.endsWith('.wpn'))
-          .toList();
+  final wpnFiles = Directory(wpnFilesDir)
+      .listSync()
+      .whereType<File>()
+      .where((file) => file.path.endsWith('.wpn'))
+      .toList();
 
   final wpnDataMap = <String, Map<String, dynamic>>{};
 
@@ -125,30 +123,27 @@ Future<ParseResult> _parseWeaponsCsv(
           'specClass': jsonData['specClass'],
           'type': jsonData['type'],
           'size': jsonData['size'],
-          'turretSprite':
-              p
-                  .join(folder.path, jsonData['turretSprite'])
-                  .toFile()
-                  .normalize
-                  .path,
-          'turretGunSprite':
-              p
-                  .join(folder.path, jsonData['turretGunSprite'])
-                  .toFile()
-                  .normalize
-                  .path,
-          'hardpointSprite':
-              p
-                  .join(folder.path, jsonData['hardpointSprite'])
-                  .toFile()
-                  .normalize
-                  .path,
-          'hardpointGunSprite':
-              p
-                  .join(folder.path, jsonData['hardpointGunSprite'])
-                  .toFile()
-                  .normalize
-                  .path,
+          'turretSprite': p
+              .join(folder.path, jsonData['turretSprite'])
+              .toFile()
+              .normalize
+              .path,
+          'turretGunSprite': p
+              .join(folder.path, jsonData['turretGunSprite'])
+              .toFile()
+              .normalize
+              .path,
+          'hardpointSprite': p
+              .join(folder.path, jsonData['hardpointSprite'])
+              .toFile()
+              .normalize
+              .path,
+          'hardpointGunSprite': p
+              .join(folder.path, jsonData['hardpointGunSprite'])
+              .toFile()
+              .normalize
+              .path,
+          'wpnFile': wpnFile,
         };
         wpnDataMap[weaponId] = wpnFields;
       } else {
@@ -252,11 +247,16 @@ Future<ParseResult> _parseWeaponsCsv(
       if (wpnData != null) {
         weaponData.addAll(wpnData);
       } else {
-        errors.add('[$modName] No .wpn data found for weapon id "$weaponId" (addon mods sometimes tweak weapons in their parent mod or vanilla)');
+        errors.add(
+          '[$modName] No .wpn data found for weapon id "$weaponId" (addon mods sometimes tweak weapons in their parent mod or vanilla)',
+        );
       }
 
       // Create Weapon instance
-      final weapon = WeaponMapper.fromMap(weaponData)..modVariant = modVariant;
+      final weapon = WeaponMapper.fromMap(weaponData)
+        ..modVariant = modVariant
+        ..csvFile = weaponsCsvFile
+        ..wpnFile = weaponData['wpnFile'];
       weapons.add(weapon);
     } catch (e) {
       final lineNumber = lineNumberMapping[i];

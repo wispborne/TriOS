@@ -6,14 +6,19 @@ import 'package:multi_split_view/multi_split_view.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_group.dart';
+import 'package:trios/thirdparty/flutter_context_menu/core/models/context_menu.dart';
+import 'package:trios/thirdparty/flutter_context_menu/core/models/context_menu_entry.dart';
+import 'package:trios/thirdparty/flutter_context_menu/widgets/context_menu_region.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings.dart';
+import 'package:trios/utils/extensions.dart';
 import 'package:trios/weaponViewer/models/weapon.dart';
 import 'package:trios/weaponViewer/weaponsManager.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/toolbar_checkbox_button.dart';
 
+import '../trios/context_menu_items.dart';
 import '../widgets/MultiSplitViewMixin.dart';
 
 class WeaponPage extends ConsumerStatefulWidget {
@@ -216,6 +221,25 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
     // );
   }
 
+  Widget buildRowContextMenu(Weapon weapon, Widget child) {
+    final weaponSpritePath = spritesForWeapon(weapon).firstOrNull;
+    return ContextMenuRegion(
+      contextMenu: ContextMenu(
+        entries: <ContextMenuEntry>[
+          if (weaponSpritePath != null)
+            buildOpenSingleFolderMenuItem(
+              weapon.csvFile.parent,
+              secondFolder: weapon.wpnFile?.parent,
+              label: 'Open weapon data folder(s)',
+            ),
+        ],
+        padding: const EdgeInsets.all(8.0),
+      ),
+      // Container needed to add hit detection to the non-Text parts of the row.
+      child: Container(color: Colors.transparent, child: child),
+    );
+  }
+
   Widget buildGrid(
     List<WispGridColumn<Weapon>> columns,
     List<Weapon> items,
@@ -241,7 +265,13 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
         itemExtent: 50,
         alwaysShowScrollbar: true,
         rowBuilder: ({required item, required modifiers, required child}) =>
-            SizedBox(height: 50, child: child),
+            SizedBox(
+              height: 50,
+              child: Container(
+                color: Colors.transparent,
+                child: buildRowContextMenu(item, child),
+              ),
+            ),
         onLoaded: (WispGridController<Weapon> controller) {
           if (isTop) {
             _gridStateManagerTop = controller;
@@ -281,14 +311,8 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
         key: 'spritePaths',
         isSortable: false,
         name: '',
-        itemCellBuilder: (item, modifiers) => WeaponImageCell(
-          imagePaths: [
-            item.hardpointGunSprite,
-            item.hardpointSprite,
-            item.turretGunSprite,
-            item.turretSprite,
-          ].whereType<String>().toList(),
-        ),
+        itemCellBuilder: (item, modifiers) =>
+            WeaponImageCell(imagePaths: spritesForWeapon(item)),
         defaultState: WispGridColumnState(position: 1, width: 40),
       ),
       WispGridColumn(
@@ -394,6 +418,15 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
     ];
   }
 
+  List<String> spritesForWeapon(Weapon item) {
+    return [
+      item.hardpointGunSprite,
+      item.hardpointSprite,
+      item.turretGunSprite,
+      item.turretSprite,
+    ].whereType<String>().toList();
+  }
+
   SizedBox buildSearchBox() {
     return SizedBox(
       height: 30,
@@ -435,6 +468,26 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
   }
 }
 
+final Map<String, bool> _weaponImagePathCache = {};
+
+/// Returns the first existing image path from the list
+Future<String?> _getWeaponImagePath(List<String> imagePaths) async {
+  for (String path in imagePaths) {
+    if (_weaponImagePathCache.containsKey(path)) {
+      if (_weaponImagePathCache[path] == true) {
+        return path;
+      }
+    } else {
+      bool exists = await File(path).exists();
+      _weaponImagePathCache[path] = exists;
+      if (exists) {
+        return path;
+      }
+    }
+  }
+  return null;
+}
+
 // Custom widget for asynchronously checking file existence and displaying the image
 class WeaponImageCell extends StatefulWidget {
   final List<String> imagePaths;
@@ -446,8 +499,6 @@ class WeaponImageCell extends StatefulWidget {
 }
 
 class _WeaponImageCellState extends State<WeaponImageCell> {
-  static final Map<String, bool> _fileExistsCache = {};
-
   String? _existingImagePath;
 
   @override
@@ -457,21 +508,7 @@ class _WeaponImageCellState extends State<WeaponImageCell> {
   }
 
   void _findExistingImagePath() async {
-    for (String path in widget.imagePaths) {
-      if (_fileExistsCache.containsKey(path)) {
-        if (_fileExistsCache[path] == true) {
-          _existingImagePath = path;
-          break;
-        }
-      } else {
-        bool exists = await File(path).exists();
-        _fileExistsCache[path] = exists;
-        if (exists) {
-          _existingImagePath = path;
-          break;
-        }
-      }
-    }
+    _existingImagePath = await _getWeaponImagePath(widget.imagePaths);
 
     if (mounted) {
       setState(() {
@@ -490,11 +527,16 @@ class _WeaponImageCellState extends State<WeaponImageCell> {
         child: Center(child: Icon(Icons.image_not_supported)),
       );
     } else {
-      return Image.file(
-        File(_existingImagePath!),
-        width: 40,
-        height: 40,
-        fit: BoxFit.contain,
+      return InkWell(
+        onTap: () {
+          _existingImagePath?.toFile().showInExplorer();
+        },
+        child: Image.file(
+          File(_existingImagePath!),
+          width: 40,
+          height: 40,
+          fit: BoxFit.contain,
+        ),
       );
     }
   }

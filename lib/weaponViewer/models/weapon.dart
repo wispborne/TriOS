@@ -1,5 +1,7 @@
 // weapon.dart
 
+import 'dart:io';
+
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/models/mod_variant.dart';
@@ -94,6 +96,8 @@ class Weapon with WeaponMappable implements WispGridItem {
   final String? hardpointGunSprite;
 
   late ModVariant? modVariant;
+  late File csvFile;
+  File? wpnFile;
 
   Weapon({
     required this.name,

@@ -7,11 +7,14 @@ import 'package:stringr/stringr.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_group.dart';
+import 'package:trios/models/mod.dart';
 import 'package:trios/shipSystemsManager/ship_systems_manager.dart';
 import 'package:trios/shipViewer/models/shipGpt.dart';
 import 'package:trios/shipViewer/shipManager.dart';
 import 'package:trios/thirdparty/dartx/iterable.dart';
+import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/trios/context_menu_items.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
@@ -37,8 +40,7 @@ class _ShipPageState extends ConsumerState<ShipPage>
   bool get wantKeepAlive => true;
 
   final SearchController _searchController = SearchController();
-  WispGridController<Ship>? _gridTop;
-  WispGridController<Ship>? _gridBottom;
+  late File gameCoreDir;
   bool showEnabled = false;
   bool showSpoilers = false;
   bool splitPane = false;
@@ -59,6 +61,9 @@ class _ShipPageState extends ConsumerState<ShipPage>
     final shipsAsync = ref.watch(shipListNotifierProvider);
     final theme = Theme.of(context);
     final mods = ref.watch(AppState.mods);
+    gameCoreDir = File(
+      ref.watch(appSettings.select((s) => s.gameCoreDir))?.path ?? '',
+    );
 
     List<Ship> ships = shipsAsync.valueOrNull ?? [];
 
@@ -212,9 +217,9 @@ class _ShipPageState extends ConsumerState<ShipPage>
                 builder: (context, area) {
                   switch (area.id) {
                     case 'top':
-                      return buildGrid(columns, ships, true, theme);
+                      return buildGrid(columns, ships, mods, true, theme);
                     case 'bottom':
-                      return buildGrid(columns, ships, false, theme);
+                      return buildGrid(columns, ships, mods, false, theme);
                     default:
                       return const SizedBox.shrink();
                   }
@@ -230,6 +235,7 @@ class _ShipPageState extends ConsumerState<ShipPage>
   Widget buildGrid(
     List<WispGridColumn<Ship>> columns,
     List<Ship> items,
+    List<Mod> mods,
     bool isTop,
     ThemeData theme,
   ) {
@@ -249,24 +255,31 @@ class _ShipPageState extends ConsumerState<ShipPage>
       columns: columns,
       items: items,
       itemExtent: 50,
+      scrollbarConfig: ScrollbarConfig(
+        showLeftScrollbar: true,
+        showRightScrollbar: true,
+      ),
       alwaysShowScrollbar: true,
       rowBuilder: ({required item, required modifiers, required child}) =>
-          SizedBox(height: 50, child: child),
-      onLoaded: (controller) {
-        if (isTop) {
-          _gridTop = controller;
-        } else {
-          _gridBottom = controller;
-        }
-      },
+          SizedBox(height: 50, child: buildRowContextMenu(item, child)),
       groups: [ModShipGridGroup()],
     );
   }
 
-  List<WispGridColumn<Ship>> buildCols(ThemeData theme) {
-    final vanillaBasePath = File(
-      ref.watch(appSettings.select((s) => s.gameCoreDir))?.path ?? '',
+  Widget buildRowContextMenu(Ship ship, Widget child) {
+    return ContextMenuRegion(
+      contextMenu: ContextMenu(
+        entries: <ContextMenuEntry>[
+          buildOpenSingleFolderMenuItem(_getPathForSpriteName(ship).parent),
+        ],
+        padding: const EdgeInsets.all(8.0),
+      ),
+      // Container needed to add hit detection to the non-Text parts of the row.
+      child: Container(color: Colors.transparent, child: child),
     );
+  }
+
+  List<WispGridColumn<Ship>> buildCols(ThemeData theme) {
     final shipSystems = ref.read(shipSystemsStreamProvider).valueOrNull ?? [];
     final shipSystemsMap = shipSystems.associateBy((e) => e.id);
     int position = 0;
@@ -310,14 +323,8 @@ class _ShipPageState extends ConsumerState<ShipPage>
         key: 'sprite',
         name: '',
         isSortable: false,
-        itemCellBuilder: (item, _) => ShipImageCell(
-          imagePath:
-              (item.modVariant == null
-                      ? vanillaBasePath
-                      : item.modVariant!.modFolder)
-                  .resolve(item.spriteName ?? "")
-                  .path,
-        ),
+        itemCellBuilder: (item, _) =>
+            ShipImageCell(imagePath: _getPathForSpriteName(item).path),
         defaultState: WispGridColumnState(position: position++, width: 50),
       ),
       col('hullName', 'Name', (s) => s.hullName, width: 200),
@@ -380,6 +387,12 @@ class _ShipPageState extends ConsumerState<ShipPage>
     ];
   }
 
+  Directory _getPathForSpriteName(Ship item) {
+    return (item.modVariant == null ? gameCoreDir : item.modVariant!.modFolder)
+        .resolve(item.spriteName ?? "")
+        .toDirectory();
+  }
+
   SizedBox buildSearchBox() {
     return SizedBox(
       height: 30,
@@ -425,7 +438,7 @@ class ShipImageCell extends StatefulWidget {
 
 class _ShipImageCellState extends State<ShipImageCell> {
   static final _cache = <String, bool>{};
-  String? _found;
+  String? _extantPath;
 
   @override
   void initState() {
@@ -438,18 +451,18 @@ class _ShipImageCellState extends State<ShipImageCell> {
     if (path == null || path.isEmpty) return;
 
     if (_cache[path] == true) {
-      _found = path;
+      _extantPath = path;
     } else {
       final exists = await File(path).exists();
       _cache[path] = exists;
-      if (exists) _found = path;
+      if (exists) _extantPath = path;
     }
     if (mounted) setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_found == null) {
+    if (_extantPath == null) {
       return const SizedBox(
         width: 40,
         height: 40,
@@ -461,14 +474,19 @@ class _ShipImageCellState extends State<ShipImageCell> {
         color: Color.from(red: 0.05, green: 0.05, blue: 0.05, alpha: 1),
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: Image.file(File(_found!), fit: BoxFit.contain),
+          child: Image.file(File(_extantPath!), fit: BoxFit.contain),
         ),
       ),
-      child: Image.file(
-        File(_found!),
-        width: 40,
-        height: 40,
-        fit: BoxFit.contain,
+      child: InkWell(
+        onTap: () {
+          _extantPath?.toFile().showInExplorer();
+        },
+        child: Image.file(
+          File(_extantPath!),
+          width: 40,
+          height: 40,
+          fit: BoxFit.contain,
+        ),
       ),
     );
   }

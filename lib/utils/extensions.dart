@@ -242,14 +242,13 @@ extension StringMapExt on Map<String, dynamic> {
           return false; // Keep the key for now
         } else if (value is List) {
           // Process each element in the list
-          currentMap[key] =
-              value
-                  .where(
-                    (item) =>
-                        item is! Map<String, dynamic> ||
-                        item.removeNullValues().isNotEmpty,
-                  )
-                  .toList();
+          currentMap[key] = value
+              .where(
+                (item) =>
+                    item is! Map<String, dynamic> ||
+                    item.removeNullValues().isNotEmpty,
+              )
+              .toList();
           return (currentMap[key] as List).isEmpty; // Remove if list is empty
         }
         return value == null; // Remove key if value is null
@@ -486,6 +485,30 @@ extension FileExt on File {
         );
         rethrow;
       }
+    }
+  }
+
+  void showInExplorer() async {
+    final filePath = p.normalize(path);
+
+    if (Platform.isWindows) {
+      // explorer.exe /select,<path> highlights the file
+      await Process.start(
+        'explorer.exe /select,"$filePath"',
+        [],
+        runInShell: false,
+      );
+    } else if (Platform.isMacOS) {
+      // open -R reveals file in Finder
+      await Process.run('open', ['-R', filePath]);
+    } else if (Platform.isLinux) {
+      // xdg-open opens the directory; highlighting may not be supported
+      final parentDir = p.dirname(filePath);
+      await Process.run('xdg-open', [parentDir]);
+    } else {
+      throw UnsupportedError(
+        'Revealing files is not supported on this platform: ${Platform.operatingSystem}',
+      );
     }
   }
 }
@@ -885,8 +908,8 @@ extension NumListExt on List<num> {
     num? minDistance;
 
     for (final value in this) {
-      final distance =
-          (targetValue - value).abs(); // Calculate absolute distance
+      final distance = (targetValue - value)
+          .abs(); // Calculate absolute distance
 
       if (minDistance == null || distance < minDistance) {
         closestValue = value;

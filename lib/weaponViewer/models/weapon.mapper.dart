@@ -189,6 +189,12 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
   static ModVariant? _$modVariant(Weapon v) => v.modVariant;
   static const Field<Weapon, ModVariant> _f$modVariant =
       Field('modVariant', _$modVariant, mode: FieldMode.member);
+  static File _$csvFile(Weapon v) => v.csvFile;
+  static const Field<Weapon, File> _f$csvFile =
+      Field('csvFile', _$csvFile, mode: FieldMode.member);
+  static File? _$wpnFile(Weapon v) => v.wpnFile;
+  static const Field<Weapon, File> _f$wpnFile =
+      Field('wpnFile', _$wpnFile, mode: FieldMode.member);
 
   @override
   final MappableFields<Weapon> fields = const {
@@ -249,6 +255,8 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
     #hardpointSprite: _f$hardpointSprite,
     #hardpointGunSprite: _f$hardpointGunSprite,
     #modVariant: _f$modVariant,
+    #csvFile: _f$csvFile,
+    #wpnFile: _f$wpnFile,
   };
 
   static Weapon _instantiate(DecodingData data) {

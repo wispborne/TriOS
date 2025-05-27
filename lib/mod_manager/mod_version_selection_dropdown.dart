@@ -212,7 +212,7 @@ class _ModVersionSelectionDropdownState
 
     final dropdownWidth = buttonWidth;
     final highestVersionVariant =
-        widget.mod.modVariants.maxBy((v) => v.bestVersion ?? Version.zero())!;
+        widget.mod.modVariants.max()!;
     final enabledVariant = widget.mod.findFirstEnabled;
     final canUpgradeVersion =
         enabledVariant != null &&

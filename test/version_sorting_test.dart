@@ -14,6 +14,7 @@ void main() {
       ['2.5 Gramada', '2.5.2'],
       ['1.1.0', '1.1.b'],
       ['1.12.SSS', '1.12.1'],
+      ['0.14.5b', '0.15']
     ];
 
     for (final pair in correctPairs) {

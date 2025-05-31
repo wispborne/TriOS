@@ -40,6 +40,12 @@ class GraphicsLibConfigMapper extends ClassMapperBase<GraphicsLibConfig> {
   static const Field<GraphicsLibConfig, bool> _f$areGfxLibSurfaceMapsEnabled =
       Field('areGfxLibSurfaceMapsEnabled', _$areGfxLibSurfaceMapsEnabled,
           key: r'loadSurface');
+  static bool _$autoGenNormals(GraphicsLibConfig v) => v.autoGenNormals;
+  static const Field<GraphicsLibConfig, bool> _f$autoGenNormals =
+      Field('autoGenNormals', _$autoGenNormals);
+  static bool _$preloadAllMaps(GraphicsLibConfig v) => v.preloadAllMaps;
+  static const Field<GraphicsLibConfig, bool> _f$preloadAllMaps =
+      Field('preloadAllMaps', _$preloadAllMaps);
 
   @override
   final MappableFields<GraphicsLibConfig> fields = const {
@@ -47,6 +53,8 @@ class GraphicsLibConfigMapper extends ClassMapperBase<GraphicsLibConfig> {
     #areGfxLibNormalMapsEnabled: _f$areGfxLibNormalMapsEnabled,
     #areGfxLibMaterialMapsEnabled: _f$areGfxLibMaterialMapsEnabled,
     #areGfxLibSurfaceMapsEnabled: _f$areGfxLibSurfaceMapsEnabled,
+    #autoGenNormals: _f$autoGenNormals,
+    #preloadAllMaps: _f$preloadAllMaps,
   };
 
   static GraphicsLibConfig _instantiate(DecodingData data) {
@@ -54,7 +62,9 @@ class GraphicsLibConfigMapper extends ClassMapperBase<GraphicsLibConfig> {
         areAnyEffectsEnabled: data.dec(_f$areAnyEffectsEnabled),
         areGfxLibNormalMapsEnabled: data.dec(_f$areGfxLibNormalMapsEnabled),
         areGfxLibMaterialMapsEnabled: data.dec(_f$areGfxLibMaterialMapsEnabled),
-        areGfxLibSurfaceMapsEnabled: data.dec(_f$areGfxLibSurfaceMapsEnabled));
+        areGfxLibSurfaceMapsEnabled: data.dec(_f$areGfxLibSurfaceMapsEnabled),
+        autoGenNormals: data.dec(_f$autoGenNormals),
+        preloadAllMaps: data.dec(_f$preloadAllMaps));
   }
 
   @override
@@ -117,7 +127,9 @@ abstract class GraphicsLibConfigCopyWith<$R, $In extends GraphicsLibConfig,
       {bool? areAnyEffectsEnabled,
       bool? areGfxLibNormalMapsEnabled,
       bool? areGfxLibMaterialMapsEnabled,
-      bool? areGfxLibSurfaceMapsEnabled});
+      bool? areGfxLibSurfaceMapsEnabled,
+      bool? autoGenNormals,
+      bool? preloadAllMaps});
   GraphicsLibConfigCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
       Then<$Out2, $R2> t);
 }
@@ -135,7 +147,9 @@ class _GraphicsLibConfigCopyWithImpl<$R, $Out>
           {bool? areAnyEffectsEnabled,
           bool? areGfxLibNormalMapsEnabled,
           bool? areGfxLibMaterialMapsEnabled,
-          bool? areGfxLibSurfaceMapsEnabled}) =>
+          bool? areGfxLibSurfaceMapsEnabled,
+          bool? autoGenNormals,
+          bool? preloadAllMaps}) =>
       $apply(FieldCopyWithData({
         if (areAnyEffectsEnabled != null)
           #areAnyEffectsEnabled: areAnyEffectsEnabled,
@@ -144,7 +158,9 @@ class _GraphicsLibConfigCopyWithImpl<$R, $Out>
         if (areGfxLibMaterialMapsEnabled != null)
           #areGfxLibMaterialMapsEnabled: areGfxLibMaterialMapsEnabled,
         if (areGfxLibSurfaceMapsEnabled != null)
-          #areGfxLibSurfaceMapsEnabled: areGfxLibSurfaceMapsEnabled
+          #areGfxLibSurfaceMapsEnabled: areGfxLibSurfaceMapsEnabled,
+        if (autoGenNormals != null) #autoGenNormals: autoGenNormals,
+        if (preloadAllMaps != null) #preloadAllMaps: preloadAllMaps
       }));
   @override
   GraphicsLibConfig $make(CopyWithData data) => GraphicsLibConfig(
@@ -155,7 +171,9 @@ class _GraphicsLibConfigCopyWithImpl<$R, $Out>
       areGfxLibMaterialMapsEnabled: data.get(#areGfxLibMaterialMapsEnabled,
           or: $value.areGfxLibMaterialMapsEnabled),
       areGfxLibSurfaceMapsEnabled: data.get(#areGfxLibSurfaceMapsEnabled,
-          or: $value.areGfxLibSurfaceMapsEnabled));
+          or: $value.areGfxLibSurfaceMapsEnabled),
+      autoGenNormals: data.get(#autoGenNormals, or: $value.autoGenNormals),
+      preloadAllMaps: data.get(#preloadAllMaps, or: $value.preloadAllMaps));
 
   @override
   GraphicsLibConfigCopyWith<$R2, GraphicsLibConfig, $Out2> $chain<$R2, $Out2>(

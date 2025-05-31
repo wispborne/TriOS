@@ -188,7 +188,7 @@ class TriOSHttpClient {
           'Request timed out on attempt ${attempt + 1}: ${e.toString()}',
         );
       } catch (e, stacktrace) {
-        Fimber.e(
+        Fimber.w(
           'Request failed on attempt ${attempt + 1}: ${e.toString()}',
           ex: e,
           stacktrace: stacktrace,

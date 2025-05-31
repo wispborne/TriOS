@@ -20,7 +20,7 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/platform_paths.dart';
 import 'package:trios/utils/util.dart';
-import 'package:trios/vram_estimator/vram_estimator.dart';
+import 'package:trios/vram_estimator/vram_estimator_manager.dart';
 
 import '../jre_manager/jre_manager_logic.dart';
 import '../mod_manager/audit_log.dart';
@@ -135,7 +135,7 @@ class AppState {
   });
 
   static final vramEstimatorProvider =
-      AsyncNotifierProvider<VramEstimatorNotifier, VramEstimatorState>(
+      AsyncNotifierProvider<VramEstimatorNotifier, VramEstimatorManagerState>(
         VramEstimatorNotifier.new,
       );
 

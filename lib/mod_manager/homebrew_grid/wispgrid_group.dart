@@ -200,41 +200,37 @@ Widget? _vramSummaryOverlayWidget(
       final vramProvider = ref.watch(AppState.vramEstimatorProvider);
       final vramMap = vramProvider.valueOrNull?.modVramInfo ?? {};
       final graphicsLibConfig = ref.watch(graphicsLibConfigProvider);
-      final variantsInGroup =
-          itemsInGroup.nonNulls
-              .map((e) => e.findFirstEnabledOrHighestVersion)
-              .nonNulls
-              .toList();
+      final variantsInGroup = itemsInGroup.nonNulls
+          .map((e) => e.findFirstEnabledOrHighestVersion)
+          .nonNulls
+          .toList();
       final allEstimatesIncludingMissing = variantsInGroup.map(
         (e) => vramMap[e.smolId],
       );
       final allEstimates = allEstimatesIncludingMissing.nonNulls.toList();
       const disabledGraphicsLibConfig = GraphicsLibConfig.disabled;
-      final vramModsNoGraphicsLib =
-          allEstimates
-              .map(
-                (e) => e.bytesUsingGraphicsLibConfig(disabledGraphicsLibConfig),
-              )
-              .sum;
-      final vramFromGraphicsLib =
-          allEstimates
-              .expand(
-                (mod) => List.generate(
-                  mod.images.length,
-                  (i) => ModImageView(i, mod.images),
-                ),
-              )
-              .where(
-                (view) =>
-                    view.graphicsLibType != null &&
-                    view.isUsedBasedOnGraphicsLibConfig(graphicsLibConfig),
-              )
-              .map((view) => view.bytesUsed)
-              .toList();
+      final vramModsNoGraphicsLib = allEstimates
+          .map((e) => e.bytesUsingGraphicsLibConfig(disabledGraphicsLibConfig))
+          .sum;
+      final vramFromGraphicsLib = allEstimates
+          .expand(
+            (mod) => List.generate(
+              mod.images.length,
+              (i) => ModImageView(i, mod.images),
+            ),
+          )
+          .where(
+            (view) =>
+                view.graphicsLibType != null &&
+                view.isUsedBasedOnGraphicsLibConfig(graphicsLibConfig),
+          )
+          .map((view) => view.bytesUsed)
+          .toList();
 
       // TODO include vanilla graphicslib usage
-      final vramFromVanilla =
-          shownIndex == 0 ? VramChecker.VANILLA_GAME_VRAM_USAGE_IN_BYTES : null;
+      final vramFromVanilla = shownIndex == 0
+          ? VramChecker.VANILLA_GAME_VRAM_USAGE_IN_BYTES
+          : null;
 
       // Calculate the offset of the VRAM column
       final gridState = ref.watch(appSettings.select((s) => s.modsGridState));
@@ -269,13 +265,15 @@ Widget? _vramSummaryOverlayWidget(
                   ),
                 if (graphicsLibConfig != null)
                   Text(
-                    "Enabled: ${graphicsLibConfig.areAnyEffectsEnabled ? "yes" : "no"}",
+                    "Enabled: ${graphicsLibConfig.areAnyEffectsEnabled ? "yes" : "no"}"
+                    "\nGenerate Normal maps: ${graphicsLibConfig.autoGenNormals ? "on" : "off"}"
+                    "\nPreload all: ${graphicsLibConfig.preloadAllMaps ? "on" : "off"}",
                     style: Theme.of(context).textTheme.labelLarge,
                   ),
                 if (graphicsLibConfig != null &&
                     graphicsLibConfig.areAnyEffectsEnabled)
                   Text(
-                    "Normal maps: ${graphicsLibConfig.areGfxLibNormalMapsEnabled ? "on" : "off"}"
+                    "\nNormal maps: ${graphicsLibConfig.areGfxLibNormalMapsEnabled ? "on" : "off"}"
                     "\nMaterial maps: ${graphicsLibConfig.areGfxLibMaterialMapsEnabled ? "on" : "off"}"
                     "\nSurface maps: ${graphicsLibConfig.areGfxLibSurfaceMapsEnabled ? "on" : "off"}",
                     style: Theme.of(context).textTheme.labelLarge,
@@ -297,16 +295,16 @@ Widget? _vramSummaryOverlayWidget(
                   children: [
                     Text(
                       "∑ ${(vramModsNoGraphicsLib + vramFromGraphicsLib.sum() + (vramFromVanilla ?? 0.0)).bytesAsReadableMB()}",
-                      style:
-                          Theme.of(context).textTheme.labelMedium?.copyWith(),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.labelMedium?.copyWith(),
                     ),
                     if (allEstimatesIncludingMissing.contains(null))
                       Builder(
                         builder: (context) {
-                          final variantsToCheck =
-                              variantsInGroup
-                                  .where((e) => vramMap[e.smolId] == null)
-                                  .toList();
+                          final variantsToCheck = variantsInGroup
+                              .where((e) => vramMap[e.smolId] == null)
+                              .toList();
                           return MovingTooltipWidget.text(
                             message:
                                 "Estimate VRAM usage for ${variantsToCheck.length} unscanned mods",

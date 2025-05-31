@@ -183,6 +183,7 @@ class VramModMapper extends ClassMapperBase<VramMod> {
     if (_instance == null) {
       MapperContainer.globals.use(_instance = VramModMapper._());
       VramCheckerModMapper.ensureInitialized();
+      GraphicsLibInfoMapper.ensureInitialized();
     }
     return _instance!;
   }
@@ -198,6 +199,10 @@ class VramModMapper extends ClassMapperBase<VramMod> {
   static ModImageTable _$images(VramMod v) => v.images;
   static const Field<VramMod, ModImageTable> _f$images =
       Field('images', _$images, hook: ModImageTableHook());
+  static List<GraphicsLibInfo>? _$graphicsLibEntries(VramMod v) =>
+      v.graphicsLibEntries;
+  static const Field<VramMod, List<GraphicsLibInfo>> _f$graphicsLibEntries =
+      Field('graphicsLibEntries', _$graphicsLibEntries);
   static int _$maxPossibleBytesForMod(VramMod v) => v.maxPossibleBytesForMod;
   static const Field<VramMod, int> _f$maxPossibleBytesForMod = Field(
       'maxPossibleBytesForMod', _$maxPossibleBytesForMod,
@@ -208,12 +213,13 @@ class VramModMapper extends ClassMapperBase<VramMod> {
     #info: _f$info,
     #isEnabled: _f$isEnabled,
     #images: _f$images,
+    #graphicsLibEntries: _f$graphicsLibEntries,
     #maxPossibleBytesForMod: _f$maxPossibleBytesForMod,
   };
 
   static VramMod _instantiate(DecodingData data) {
-    return VramMod(
-        data.dec(_f$info), data.dec(_f$isEnabled), data.dec(_f$images));
+    return VramMod(data.dec(_f$info), data.dec(_f$isEnabled),
+        data.dec(_f$images), data.dec(_f$graphicsLibEntries));
   }
 
   @override
@@ -267,7 +273,14 @@ extension VramModValueCopy<$R, $Out> on ObjectCopyWith<$R, VramMod, $Out> {
 abstract class VramModCopyWith<$R, $In extends VramMod, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
   VramCheckerModCopyWith<$R, VramCheckerMod, VramCheckerMod> get info;
-  $R call({VramCheckerMod? info, bool? isEnabled, ModImageTable? images});
+  ListCopyWith<$R, GraphicsLibInfo,
+          GraphicsLibInfoCopyWith<$R, GraphicsLibInfo, GraphicsLibInfo>>?
+      get graphicsLibEntries;
+  $R call(
+      {VramCheckerMod? info,
+      bool? isEnabled,
+      ModImageTable? images,
+      List<GraphicsLibInfo>? graphicsLibEntries});
   VramModCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
 
@@ -283,17 +296,32 @@ class _VramModCopyWithImpl<$R, $Out>
   VramCheckerModCopyWith<$R, VramCheckerMod, VramCheckerMod> get info =>
       $value.info.copyWith.$chain((v) => call(info: v));
   @override
-  $R call({VramCheckerMod? info, bool? isEnabled, ModImageTable? images}) =>
+  ListCopyWith<$R, GraphicsLibInfo,
+          GraphicsLibInfoCopyWith<$R, GraphicsLibInfo, GraphicsLibInfo>>?
+      get graphicsLibEntries => $value.graphicsLibEntries != null
+          ? ListCopyWith(
+              $value.graphicsLibEntries!,
+              (v, t) => v.copyWith.$chain(t),
+              (v) => call(graphicsLibEntries: v))
+          : null;
+  @override
+  $R call(
+          {VramCheckerMod? info,
+          bool? isEnabled,
+          ModImageTable? images,
+          Object? graphicsLibEntries = $none}) =>
       $apply(FieldCopyWithData({
         if (info != null) #info: info,
         if (isEnabled != null) #isEnabled: isEnabled,
-        if (images != null) #images: images
+        if (images != null) #images: images,
+        if (graphicsLibEntries != $none) #graphicsLibEntries: graphicsLibEntries
       }));
   @override
   VramMod $make(CopyWithData data) => VramMod(
       data.get(#info, or: $value.info),
       data.get(#isEnabled, or: $value.isEnabled),
-      data.get(#images, or: $value.images));
+      data.get(#images, or: $value.images),
+      data.get(#graphicsLibEntries, or: $value.graphicsLibEntries));
 
   @override
   VramModCopyWith<$R2, VramMod, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>

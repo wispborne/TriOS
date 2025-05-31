@@ -5,7 +5,7 @@ import 'package:trios/models/version.dart';
 import 'package:trios/utils/extensions.dart';
 
 class Constants {
-  static const version = "1.2.0-dev17";
+  static const version = "1.2.0-dev18";
   static Version currentVersion = Version.parse(version);
 
   static const appName = "TriOS";
@@ -31,6 +31,7 @@ class Constants {
   static const enabledModsFilename = "enabled_mods.json";
   static const modsFolderName = "mods";
   static const savesFolderName = "saves";
+  static const savesCommonFolderName = "saves/common";
   static const archivesFolderName = "Mod_Backups";
   static const modInfoFileName = "mod_info.json";
   static const unbrickedModInfoFileName = modInfoFileName;
@@ -57,6 +58,7 @@ class Constants {
   static const forumHostname = "fractalsoftworks.com";
   static const tipsFileRelativePath = "data/strings/tips.json";
   static const graphicsLibId = "shaderLib";
+  static const lunalibId = "lunalib";
   static const changelogUrl =
       "https://raw.githubusercontent.com/wispborne/TriOS/main/changelog.md";
   static const triosForumThread =

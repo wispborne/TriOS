@@ -3,10 +3,17 @@
   - Ships Viewer
   - Mods page: copy selected rows to clipboard (right-click).
   - Weapons Viewer: may now click on image to open in Explorer, and right-click to open data folder (same as Ships Viewer grid).
+- Fixed
+  - Mods Grid: If two mod versions had the same Version Checker version but different mod_info.json versions, the "Click to use newer version" button could suggest updating to the wrong version.
+  - [Work in progress]: Updated VRAM estimation for the new GraphicsLib 1.12+ update.
+    - GraphicsLb can now dynamically load textures instead of preloading everything.
+  - [Work in progress]: Updated VRAM estimation for Illustrated Entities (it dynamically loads textures like GraphicsLib).
 - Changed
   - Mods page: Split the changelogs & Version Checker icons part of the `Version` column into their own column and added sorting for it.
     - Sorting is, in order: has update, then no update but has changelog, then no update and no changelog, then doesn't support version checker.
   - Added "Show Enabled [Only]" to Weapons Viewer.
+  - Updated to Flutter 3.32.0 and updated various dependencies.
+  - "Update All" button now asks if you're sure if updating more than one mod, rather than 5+.
 
 # 1.1.11
 - Fixed

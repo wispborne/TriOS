@@ -95,6 +95,9 @@ class ModImageTable {
     return rows;
   }
 
+  List<ModImageView> toImageViews() =>
+      List.generate(filePaths.length, (i) => ModImageView(i, this));
+
   int get length => filePaths.length;
 }
 
@@ -138,20 +141,22 @@ class ModImageView {
     return rawSize.ceil();
   }
 
+  // TODO should also have a isUsed here that can be used for showing top 10 largest images
   /// Determines if the image is used based on the provided graphics library configuration.
   bool isUsedBasedOnGraphicsLibConfig(GraphicsLibConfig? cfg) {
     if (cfg == null) {
       return graphicsLibType == null;
     }
+
     switch (graphicsLibType) {
       case null:
         return true;
       case MapType.Normal:
-        return cfg.areGfxLibNormalMapsEnabled;
+        return cfg.preloadAllMaps && cfg.areGfxLibNormalMapsEnabled;
       case MapType.Material:
-        return cfg.areGfxLibMaterialMapsEnabled;
+        return cfg.preloadAllMaps && cfg.areGfxLibMaterialMapsEnabled;
       case MapType.Surface:
-        return cfg.areGfxLibSurfaceMapsEnabled;
+        return cfg.preloadAllMaps && cfg.areGfxLibSurfaceMapsEnabled;
     }
   }
 
@@ -202,22 +207,21 @@ class VramCheckerMod with VramCheckerModMappable {
 }
 
 /// Represents a mod with VRAM usage information.
-/// Instead of storing a list of [ModImage] objects, this class uses a single [ModImageTable].
 @MappableClass()
 class VramMod with VramModMappable {
   final VramCheckerMod info;
   final bool isEnabled;
+  final List<GraphicsLibInfo>? graphicsLibEntries;
 
   @MappableField(hook: ModImageTableHook())
   final ModImageTable images;
 
-  VramMod(this.info, this.isEnabled, this.images);
+  VramMod(this.info, this.isEnabled, this.images, this.graphicsLibEntries);
 
   /// Computes the total bytes used by all images in the table.
-  late final int maxPossibleBytesForMod =
-      Iterable<int>.generate(
-        images.length,
-      ).map((i) => ModImageView(i, images).bytesUsed).sum;
+  late final int maxPossibleBytesForMod = Iterable<int>.generate(
+    images.length,
+  ).map((i) => ModImageView(i, images).bytesUsed).sum;
 
   ModImageView getModViewForIndex(int index) => ModImageView(index, images);
 
@@ -232,11 +236,12 @@ class VramMod with VramModMappable {
     int sum = 0;
     for (int i = 0; i < images.length; i++) {
       final view = ModImageView(i, images);
-      final isUsed =
-          graphicsLibConfig == null
-              ? (view.graphicsLibType == null)
-              : view.isUsedBasedOnGraphicsLibConfig(graphicsLibConfig);
-      if (isUsed) {
+      final isUsedBasedOnGraphicsLibConfig = graphicsLibConfig == null
+          ? (view.graphicsLibType == null)
+          : view.isUsedBasedOnGraphicsLibConfig(graphicsLibConfig);
+      final isIllustratedEntities = info.modInfo.id == "illustrated_entities";
+
+      if (isUsedBasedOnGraphicsLibConfig && !isIllustratedEntities) {
         sum += view.bytesUsed;
       }
     }

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:xml/xml.dart';
@@ -29,7 +30,7 @@ class SaveFileNotifier extends AsyncNotifier<List<SaveFile>> {
       return [];
     }
 
-    final saveDir = Directory("${gameFolder.path}/saves");
+    final saveDir = gameFolder.resolve(Constants.savesFolderName).toDirectory();
 
     // if (state.valueOrNull?.isNotEmpty == true) {
     //   Fimber.i("Saves already loaded, not refreshing.");

@@ -71,6 +71,8 @@ class GraphicsLibInfoMapper extends ClassMapperBase<GraphicsLibInfo> {
   @override
   final String id = 'GraphicsLibInfo';
 
+  static String _$id(GraphicsLibInfo v) => v.id;
+  static const Field<GraphicsLibInfo, String> _f$id = Field('id', _$id);
   static MapType _$mapType(GraphicsLibInfo v) => v.mapType;
   static const Field<GraphicsLibInfo, MapType> _f$mapType =
       Field('mapType', _$mapType);
@@ -80,12 +82,14 @@ class GraphicsLibInfoMapper extends ClassMapperBase<GraphicsLibInfo> {
 
   @override
   final MappableFields<GraphicsLibInfo> fields = const {
+    #id: _f$id,
     #mapType: _f$mapType,
     #relativeFilePath: _f$relativeFilePath,
   };
 
   static GraphicsLibInfo _instantiate(DecodingData data) {
-    return GraphicsLibInfo(data.dec(_f$mapType), data.dec(_f$relativeFilePath));
+    return GraphicsLibInfo(
+        data.dec(_f$id), data.dec(_f$mapType), data.dec(_f$relativeFilePath));
   }
 
   @override
@@ -142,7 +146,7 @@ extension GraphicsLibInfoValueCopy<$R, $Out>
 
 abstract class GraphicsLibInfoCopyWith<$R, $In extends GraphicsLibInfo, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
-  $R call({MapType? mapType, String? relativeFilePath});
+  $R call({String? id, MapType? mapType, String? relativeFilePath});
   GraphicsLibInfoCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
       Then<$Out2, $R2> t);
 }
@@ -156,13 +160,15 @@ class _GraphicsLibInfoCopyWithImpl<$R, $Out>
   late final ClassMapperBase<GraphicsLibInfo> $mapper =
       GraphicsLibInfoMapper.ensureInitialized();
   @override
-  $R call({MapType? mapType, String? relativeFilePath}) =>
+  $R call({String? id, MapType? mapType, String? relativeFilePath}) =>
       $apply(FieldCopyWithData({
+        if (id != null) #id: id,
         if (mapType != null) #mapType: mapType,
         if (relativeFilePath != null) #relativeFilePath: relativeFilePath
       }));
   @override
   GraphicsLibInfo $make(CopyWithData data) => GraphicsLibInfo(
+      data.get(#id, or: $value.id),
       data.get(#mapType, or: $value.mapType),
       data.get(#relativeFilePath, or: $value.relativeFilePath));
 

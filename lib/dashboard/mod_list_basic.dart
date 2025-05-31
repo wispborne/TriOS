@@ -463,8 +463,8 @@ class _ModListMiniState extends ConsumerState<ModListMini>
       }
     }
 
-    // Confirm if # updates is more than 5
-    if (modsWithUpdates.length <= 5) {
+    // Confirm if # updates is more than 1
+    if (modsWithUpdates.length <= 1) {
       downloadUpdates();
     } else {
       showDialog(

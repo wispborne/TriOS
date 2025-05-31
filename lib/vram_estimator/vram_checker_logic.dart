@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:collection/collection.dart';
 import 'package:csv/csv.dart';
 import 'package:path/path.dart' as p;
-import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/extensions.dart';
 
 import '../models/mod_variant.dart';
@@ -14,7 +13,7 @@ import 'image_reader/png_chatgpt.dart';
 import 'models/gpu_info.dart';
 import 'models/graphics_lib_config.dart';
 import 'models/graphics_lib_info.dart';
-import 'models/vram_checker_models.dart'; // This now contains ModImageTable & ModImageView
+import 'models/vram_checker_models.dart';
 
 class VramChecker {
   List<String>? enabledModIds;
@@ -117,24 +116,20 @@ class VramChecker {
               final baseFolderPath = modInfo.modFolder;
 
               // Gather all file data for this mod.
-              final filesInMod =
-                  modInfo.modFolder
-                      .toDirectory()
-                      .listSync(recursive: true)
-                      .whereType<File>()
-                      .map((file) {
-                        final relPath = p.relative(
-                          file.path,
-                          from: baseFolderPath,
-                        );
-                        return _FileData(
-                          file: file,
-                          relativePath: file.relativePath(
-                            modInfo.modFolder.toDirectory(),
-                          ),
-                        );
-                      })
-                      .toList();
+              final filesInMod = modInfo.modFolder
+                  .toDirectory()
+                  .listSync(recursive: true)
+                  .whereType<File>()
+                  .map((file) {
+                    final relPath = p.relative(file.path, from: baseFolderPath);
+                    return _FileData(
+                      file: file,
+                      relativePath: file.relativePath(
+                        modInfo.modFolder.toDirectory(),
+                      ),
+                    );
+                  })
+                  .toList();
 
               // Get GraphicsLib settings from CSV files.
               final List<GraphicsLibInfo> graphicsLibEntries =
@@ -156,13 +151,7 @@ class VramChecker {
 
               // Process image files (png, jpg, etc.).
               final imageRowFutures = filesInMod
-                  .where((it) {
-                    final ext = p.extension(it.file.path).toLowerCase();
-                    return ext.endsWith(".png") ||
-                        ext.endsWith(".jpg") ||
-                        ext.endsWith(".jpeg") ||
-                        ext.endsWith(".gif");
-                  })
+                  .where((it) => it.file.isImage)
                   .map((file) async {
                     if (isCancelled()) {
                       throw Exception("Cancelled");
@@ -178,12 +167,11 @@ class VramChecker {
                       imageType = ImageType.texture;
                     }
 
-                    final graphicsLibType =
-                        graphicsLibEntries
-                            .firstWhereOrNull(
-                              (it) => it.relativeFilePath == file.relativePath,
-                            )
-                            ?.mapType;
+                    final graphicsLibType = graphicsLibEntries
+                        .firstWhereOrNull(
+                          (it) => it.relativeFilePath == file.relativePath,
+                        )
+                        ?.mapType;
 
                     final ext = file.file.nameWithExtension.toLowerCase();
                     if (ext.endsWith(".png")) {
@@ -206,8 +194,9 @@ class VramChecker {
                   });
 
               // Gather non-null image rows.
-              final modImageRows =
-                  (await Future.wait(imageRowFutures)).nonNulls.toList();
+              final modImageRows = (await Future.wait(
+                imageRowFutures,
+              )).nonNulls.toList();
 
               final timeFinishedGettingFileData =
                   DateTime.timestamp().millisecondsSinceEpoch;
@@ -227,10 +216,9 @@ class VramChecker {
               );
 
               // Filter out unused images.
-              final unusedViews =
-                  imageViews
-                      .where((view) => view.imageType == ImageType.unused)
-                      .toList();
+              final unusedViews = imageViews
+                  .where((view) => view.imageType == ImageType.unused)
+                  .toList();
               if (unusedViews.isNotEmpty && showSkippedFiles) {
                 progressText.appendAndPrint(
                   "Skipping unused files",
@@ -249,21 +237,18 @@ class VramChecker {
 
               // The game only loads one background at a time and vanilla always has one loaded.
               // Therefore, a mod only increases the VRAM use by the size difference of the largest background over vanilla.
-              final backgroundViews =
-                  imageViews
-                      .where((view) => view.imageType == ImageType.background)
-                      .toList();
+              final backgroundViews = imageViews
+                  .where((view) => view.imageType == ImageType.background)
+                  .toList();
               final largestBackground = backgroundViews
                   .where((view) => view.textureWidth > VANILLA_BACKGROUND_WIDTH)
                   .maxByOrNull<num>((view) => view.bytesUsed);
-              final modBackgroundsSmallerThanLargestVanilla =
-                  backgroundViews
-                      .where(
-                        (view) =>
-                            largestBackground != null &&
-                            view != largestBackground,
-                      )
-                      .toList();
+              final modBackgroundsSmallerThanLargestVanilla = backgroundViews
+                  .where(
+                    (view) =>
+                        largestBackground != null && view != largestBackground,
+                  )
+                  .toList();
               if (modBackgroundsSmallerThanLargestVanilla.isNotEmpty) {
                 progressText.appendAndPrint(
                   "Skipping backgrounds that are not larger than vanilla and/or not the mod's largest background.",
@@ -292,25 +277,25 @@ class VramChecker {
               }
 
               // Reassemble the final table from the remaining image views.
-              final filteredRows =
-                  imageViews
-                      .map(
-                        (view) => {
-                          'filePath': view.filePath,
-                          'textureHeight': view.textureHeight,
-                          'textureWidth': view.textureWidth,
-                          'bitsInAllChannelsSum': view.bitsInAllChannelsSum,
-                          'imageType': view.imageType.name,
-                          'graphicsLibType': view.graphicsLibType?.name,
-                        },
-                      )
-                      .toList();
+              final filteredRows = imageViews
+                  .map(
+                    (view) => {
+                      'filePath': view.filePath,
+                      'textureHeight': view.textureHeight,
+                      'textureWidth': view.textureWidth,
+                      'bitsInAllChannelsSum': view.bitsInAllChannelsSum,
+                      'imageType': view.imageType.name,
+                      'graphicsLibType': view.graphicsLibType?.name,
+                    },
+                  )
+                  .toList();
               final finalTable = ModImageTable.fromRows(filteredRows);
 
               final mod = VramMod(
                 modInfo,
                 (enabledModIds ?? []).contains(modInfo.modId),
                 finalTable,
+                graphicsLibEntries,
               );
 
               if (showPerformance) {
@@ -408,7 +393,7 @@ class VramChecker {
     } catch (it, st) {
       summaryText.writeln();
       summaryText.writeln(
-        "Unable to get GPU information due to the follow error:",
+        "Unable to get GPU information due to the following error:",
       );
       summaryText.writeln(st.toString());
     }
@@ -474,10 +459,12 @@ class VramChecker {
       }
       return {
         'filePath': file.file.path,
-        'textureHeight':
-            (image.width == 1) ? 1 : (image.width - 1).highestOneBit() * 2,
-        'textureWidth':
-            (image.height == 1) ? 1 : (image.height - 1).highestOneBit() * 2,
+        'textureHeight': (image.width == 1)
+            ? 1
+            : (image.width - 1).highestOneBit() * 2,
+        'textureWidth': (image.height == 1)
+            ? 1
+            : (image.height - 1).highestOneBit() * 2,
         'bitsInAllChannelsSum': image.bitDepth * image.numChannels,
         'imageType': imageType.name,
         'graphicsLibType': graphicsLibType?.name,
@@ -519,10 +506,12 @@ class VramChecker {
     }
     return {
       'filePath': file.file.path,
-      'textureHeight':
-          (image.width == 1) ? 1 : (image.width - 1).highestOneBit() * 2,
-      'textureWidth':
-          (image.height == 1) ? 1 : (image.height - 1).highestOneBit() * 2,
+      'textureHeight': (image.width == 1)
+          ? 1
+          : (image.width - 1).highestOneBit() * 2,
+      'textureWidth': (image.height == 1)
+          ? 1
+          : (image.height - 1).highestOneBit() * 2,
       'bitsInAllChannelsSum': image.bitDepth * image.numChannels,
       'imageType': imageType.name,
       'graphicsLibType': graphicsLibType?.name,
@@ -559,6 +548,7 @@ class VramChecker {
       return null;
     }
 
+    final idColumn = modGraphicsLibSettingsFile.first!.indexOf("id");
     final mapColumn = modGraphicsLibSettingsFile.first!.indexOf("map");
     final pathColumn = modGraphicsLibSettingsFile.first!.indexOf("path");
 
@@ -577,7 +567,7 @@ class VramChecker {
             }
 
             final path = row[pathColumn].trim();
-            return GraphicsLibInfo(mapType, p.normalize(path));
+            return GraphicsLibInfo(row[idColumn], mapType, p.normalize(path));
           } catch (e) {
             progressText.appendAndPrint("$row - $e", verboseOut);
           }
@@ -621,6 +611,17 @@ extension ModListExt on Iterable<VramMod> {
       }
     }
     return sum;
+  }
+}
+
+extension _FileExtensions on File {
+  bool get isImage {
+    final ext = p.extension(path).toLowerCase();
+    return ext.endsWith(".png") ||
+        ext.endsWith(".jpg") ||
+        ext.endsWith(".jpeg") ||
+        ext.endsWith(".gif") ||
+        ext.endsWith(".webp");
   }
 }
 

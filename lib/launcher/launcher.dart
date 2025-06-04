@@ -61,7 +61,7 @@ class LauncherButton extends HookConsumerWidget {
         .watch(AppState.starsectorVersion)
         .valueOrNull ?? "";
     final isCurrentJreValid =
-        currentJre?.isGameVersionSupported(gameVersion) ?? false;
+        currentJre?.isGameVersionSupported(gameVersion) ?? true;
 
     final buttonBackgroundColor =
     isGameRunning

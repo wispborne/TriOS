@@ -8,6 +8,7 @@ import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/utils/util.dart';
 
 import '../utils/platform_paths.dart';
 import 'jre_entry.dart';
@@ -31,8 +32,9 @@ final doesJre23ExistInGameFolderProvider = FutureProvider<bool>((ref) async {
         gameDir.resolve("Miko_Rouge.bat").toFile().existsSync();
   }
 
-  final gamePath =
-      ref.read(appSettings.select((value) => value.gameDir))?.toDirectory();
+  final gamePath = ref
+      .read(appSettings.select((value) => value.gameDir))
+      ?.toDirectory();
   if (gamePath == null) {
     return false;
   }
@@ -51,11 +53,10 @@ class JreManager extends AsyncNotifier<JreManagerState> {
   Future<JreManagerState> build() async {
     final installedJres = await _findJREs();
     _startWatchingJres();
-    final activeJres =
-        installedJres
-            .whereType<JreEntryInstalled>()
-            .where((jre) => jre.hasAllFilesReadyToLaunch())
-            .toList();
+    final activeJres = installedJres
+        .whereType<JreEntryInstalled>()
+        .where((jre) => jre.hasAllFilesReadyToLaunch())
+        .toList();
     final lastActiveJreVersion = ref.watch(
       appSettings.select((value) => value.lastActiveJreVersion),
     );
@@ -68,8 +69,9 @@ class JreManager extends AsyncNotifier<JreManagerState> {
     double ramInMb, {
     bool alsoChangeCustomVmparams = true,
   }) async {
-    final gamePath =
-        ref.read(appSettings.select((value) => value.gameDir))?.toDirectory();
+    final gamePath = ref
+        .read(appSettings.select((value) => value.gameDir))
+        ?.toDirectory();
     if (gamePath == null) {
       return;
     }
@@ -89,57 +91,56 @@ class JreManager extends AsyncNotifier<JreManagerState> {
       return [];
     }
 
-    final List<JreEntry> jres =
-        (await Future.wait(
-          gamePath.listSync().whereType<Directory>().map((jrePath) async {
-            var javaExe = getJavaExecutable(jrePath);
-            if (!javaExe.existsSync()) {
-              return null;
-            }
+    final jresRootPath = generateJresFolderPath(gamePath)!;
 
-            String? versionString;
-            var cmd = javaExe.absolute.normalize.path;
-            try {
-              var process = await Process.start(cmd, [
-                "-Xmx128m",
-                "-Xms32m",
-                "-version",
-              ]);
-              var lines =
-                  await process.stderr
-                      .transform(utf8.decoder)
-                      .transform(const LineSplitter())
-                      .toList();
-              var versionLine = lines.firstWhere(
-                (line) => line.contains(jreVersionRegex),
-                orElse: () => lines.first,
-              );
-              versionString =
-                  jreVersionRegex.firstMatch(versionLine)?.group(1) ??
-                  versionLine;
-            } catch (e, st) {
-              Fimber.e(
-                "Error getting java version from '$cmd'.",
-                ex: e,
-                stacktrace: st,
-              );
-            }
+    final List<JreEntry> jres = (await Future.wait(
+      jresRootPath.listSync().whereType<Directory>().map((jrePath) async {
+        var javaExe = getJavaExecutable(jrePath);
+        if (!javaExe.existsSync()) {
+          return null;
+        }
 
-            if (versionString == null) {
-              return null;
-            }
+        String? versionString;
+        var cmd = javaExe.absolute.normalize.path;
+        try {
+          var process = await Process.start(cmd, [
+            "-Xmx128m",
+            "-Xms32m",
+            "-version",
+          ]);
+          var lines = await process.stderr
+              .transform(utf8.decoder)
+              .transform(const LineSplitter())
+              .toList();
+          var versionLine = lines.firstWhere(
+            (line) => line.contains(jreVersionRegex),
+            orElse: () => lines.first,
+          );
+          versionString =
+              jreVersionRegex.firstMatch(versionLine)?.group(1) ?? versionLine;
+        } catch (e, st) {
+          Fimber.e(
+            "Error getting java version from '$cmd'.",
+            ex: e,
+            stacktrace: st,
+          );
+        }
 
-            final jreVersion = JreVersion(versionString);
-            switch (jreVersion.version) {
-              case 23:
-                return Jre23InstalledJreEntry(gamePath, jrePath, jreVersion);
-              case 24:
-                return Jre24InstalledJreEntry(gamePath, jrePath, jreVersion);
-              default:
-                return StandardInstalledJreEntry(gamePath, jrePath, jreVersion);
-            }
-          }),
-        )).whereType<JreEntry>().toList();
+        if (versionString == null) {
+          return null;
+        }
+
+        final jreVersion = JreVersion(versionString);
+        switch (jreVersion.version) {
+          case 23:
+            return Jre23InstalledJreEntry(gamePath, jrePath, jreVersion);
+          case 24:
+            return Jre24InstalledJreEntry(gamePath, jrePath, jreVersion);
+          default:
+            return StandardInstalledJreEntry(gamePath, jrePath, jreVersion);
+        }
+      }),
+    )).whereType<JreEntry>().toList();
 
     // Add downloadable JREs
     final downloadableJres = [
@@ -159,8 +160,9 @@ class JreManager extends AsyncNotifier<JreManagerState> {
   }
 
   Future<void> changeActiveJre(JreEntryInstalled newJre) async {
-    var gamePath =
-        ref.read(appSettings.select((value) => value.gameDir))?.toDirectory();
+    var gamePath = ref
+        .read(appSettings.select((value) => value.gameDir))
+        ?.toDirectory();
     if (gamePath == null || !gamePath.existsSync()) {
       return;
     }
@@ -244,8 +246,9 @@ class JreManager extends AsyncNotifier<JreManagerState> {
     StandardInstalledJreEntry newJre,
   ) async {
     final existingStandardJre = state.valueOrNull?.standardActiveJre;
-    final gameJrePath =
-        gamePath.resolve(Constants.gameJreFolderName).toDirectory();
+    final gameJrePath = gamePath
+        .resolve(Constants.gameJreFolderName)
+        .toDirectory();
 
     // If there is an active standard JRE, attempt to swap it out.
     if (existingStandardJre != null &&
@@ -286,8 +289,13 @@ class JreManager extends AsyncNotifier<JreManagerState> {
 
   _startWatchingJres() async {
     _jreWatcherSubscription?.cancel();
-    final jresDir =
-        ref.read(appSettings.select((value) => value.gameDir))?.toDirectory();
+    final gamePath = ref
+        .read(appSettings.select((value) => value.gameDir))
+        ?.toDirectory();
+    if (gamePath == null) {
+      return;
+    }
+    final jresDir = generateJresFolderPath(gamePath);
     if (jresDir == null || !jresDir.existsSync()) return;
     _jreWatcherSubscription = jresDir.watch().listen((event) {
       _findJREs();

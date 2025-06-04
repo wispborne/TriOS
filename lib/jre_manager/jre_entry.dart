@@ -176,15 +176,27 @@ class StandardInstalledJreEntry extends JreEntryInstalled {
   String get vmParamsFileRelativePath => switch (currentPlatform) {
     TargetPlatform.windows => "vmparams",
     TargetPlatform.linux => "starsector.sh",
-    TargetPlatform.macOS => "starsector_mac.sh",
+    TargetPlatform.macOS => "Contents/MacOS/starsector_mac.sh",
     _ => throw UnsupportedError("Platform not supported: $currentPlatform"),
   };
 
   @override
   bool hasAllFilesReadyToLaunch() =>
       vmParamsFileAbsolutePath.existsSync() &&
-      jreRelativePath.name == Constants.gameJreFolderName &&
+      isActiveJre() &&
       jreAbsolutePath.existsSync();
+
+  bool isActiveJre() {
+    if (Platform.isWindows) {
+      return jreRelativePath.name == Constants.gameJreFolderName;
+    } else if (Platform.isMacOS) {
+      return jreRelativePath.parent.name == "Contents";
+    } else if (Platform.isLinux) {
+      return jreRelativePath.name == "jre_linux";
+    } else {
+      return false;
+    }
+  }
 
   @override
   List<String> missingFiles() {

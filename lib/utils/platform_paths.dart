@@ -17,8 +17,8 @@ Directory getJreDir(Directory gamePath, {TargetPlatform? platform}) {
 File getJavaExecutable(Directory jrePath, {TargetPlatform? platform}) {
   return switch (platform ?? currentPlatform) {
     TargetPlatform.windows => jrePath.resolve("bin/java.exe"),
-    TargetPlatform.linux => jrePath.resolve("bin/java"), // not sure about this
-    TargetPlatform.macOS => jrePath.resolve("bin/java"), // not sure about this
+    TargetPlatform.linux => jrePath.resolve("bin/java"),
+    TargetPlatform.macOS => jrePath.resolve("bin/java"),
     _ => throw UnsupportedError("Platform not supported: $currentPlatform"),
   }.toFile().normalize;
 }

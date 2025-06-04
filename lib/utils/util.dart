@@ -87,6 +87,18 @@ Directory? generateModsFolderPath(Directory gamePath) {
   }
 }
 
+Directory? generateJresFolderPath(Directory gamePath) {
+  if (Platform.isWindows) {
+    return gamePath;
+  } else if (Platform.isMacOS) {
+    return Directory(p.join(gamePath.path, "Contents")).normalize;
+  } else if (Platform.isLinux) {
+    return gamePath;
+  } else {
+    return null;
+  }
+}
+
 File? getRulesCsvInModFolder(Directory modFolder) {
   var file = File(p.join(modFolder.path, "data/campaign/rules.csv"));
   if (file.existsSync()) {

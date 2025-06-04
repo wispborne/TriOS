@@ -5,7 +5,7 @@ import 'package:trios/models/version.dart';
 import 'package:trios/utils/extensions.dart';
 
 class Constants {
-  static const version = "1.2.0-dev19";
+  static const version = "1.2.0-dev20";
   static Version currentVersion = Version.parse(version);
 
   static const appName = "TriOS";
@@ -35,7 +35,11 @@ class Constants {
   static const archivesFolderName = "Mod_Backups";
   static const modInfoFileName = "mod_info.json";
   static const unbrickedModInfoFileName = modInfoFileName;
-  static const gameJreFolderName = "jre";
+  static final gameJreFolderName = switch (1) {
+    _ when Platform.isWindows => 'jre',
+    _ when Platform.isMacOS => 'Contents/Home',
+    _ => 'jre',
+  };
 
   //     // Backwards compat, first one is the one used for new disable actions.
   static const modInfoFileDisabledNames = [

@@ -140,10 +140,9 @@ class _WispGridHeaderRowViewState extends ConsumerState<WispGridHeaderRowView>
               data: MultiSplitViewThemeData(
                 dividerThickness: WispGrid.gridRowSpacing,
                 dividerPainter: DividerPainters.grooved1(
-                  color:
-                      isHovering
-                          ? theme.colorScheme.onSurface.withOpacity(_opacity)
-                          : Colors.transparent,
+                  color: isHovering
+                      ? theme.colorScheme.onSurface.withOpacity(_opacity)
+                      : Colors.transparent,
                   highlightedColor: theme.colorScheme.onSurface,
                   size: 20,
                   animationDuration: const Duration(milliseconds: 100),
@@ -230,27 +229,25 @@ class _WispGridHeaderRowViewState extends ConsumerState<WispGridHeaderRowView>
           MenuItem.submenu(
             label: "Group By",
             icon: Icons.horizontal_split,
-            items:
-                widget.groups
-                    .map(
-                      (group) => MenuItem(
-                        label: group.displayName,
-                        icon:
-                            groupingSetting?.currentGroupedByKey == group.key
-                                ? Icons.check
-                                : null,
-                        onSelected: () {
-                          updateGridState(
-                            (WispGridState state) => state.copyWith(
-                              groupingSetting: GroupingSetting(
-                                currentGroupedByKey: group.key,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    )
-                    .toList(),
+            items: widget.groups
+                .map(
+                  (group) => MenuItem(
+                    label: group.displayName,
+                    icon: groupingSetting?.currentGroupedByKey == group.key
+                        ? Icons.check
+                        : null,
+                    onSelected: () {
+                      updateGridState(
+                        (WispGridState state) => state.copyWith(
+                          groupingSetting: GroupingSetting(
+                            currentGroupedByKey: group.key,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                )
+                .toList(),
           ),
         MenuDivider(),
         MenuHeader(text: "Hide/Show Columns", disableUppercase: true),
@@ -344,7 +341,9 @@ class DraggableHeader extends ConsumerWidget {
 
     return Draggable(
       data: header,
-      feedback: Material(child: Theme(data: Theme.of(context), child: child)),
+      feedback: Material(
+        child: Theme(data: Theme.of(context), child: child),
+      ),
       axis: Axis.horizontal,
       dragAnchorStrategy: (draggable, context, position) => const Offset(16, 8),
       childWhenDragging: Opacity(
@@ -359,14 +358,14 @@ class DraggableHeader extends ConsumerWidget {
         onWillAcceptWithDetails: (data) => data.data != header,
         onAcceptWithDetails: (data) {
           updateGridState((WispGridState state) {
-            final columnSettings = state.columnsState;
+            final Map<String, WispGridColumnState> columnSettings = gridState
+                .sortedVisibleColumns(columns)
+                .toMap();
             final draggedHeader = data.data;
             final draggedSetting = columnSettings.remove(draggedHeader)!;
 
-            final sorted =
-                columnSettings.entries.toList()..sort(
-                  (a, b) => a.value.position.compareTo(b.value.position),
-                );
+            final sorted = columnSettings.entries.toList()
+              ..sort((a, b) => a.value.position.compareTo(b.value.position));
 
             final targetIndex = columnSettings[header]!.position.clamp(
               0,
@@ -415,10 +414,9 @@ class _SortableHeaderState extends ConsumerState<SortableHeader> {
   Widget build(BuildContext context) {
     final gridState = widget.gridState;
     final isSortDescending = gridState.isSortDescending;
-    final isActive =
-        gridState.sortedColumnKey != null
-            ? gridState.sortedColumnKey == widget.columnSortField
-            : widget.defaultGridSort == widget.columnSortField;
+    final isActive = gridState.sortedColumnKey != null
+        ? gridState.sortedColumnKey == widget.columnSortField
+        : widget.defaultGridSort == widget.columnSortField;
 
     return InkWell(
       onTap: () {

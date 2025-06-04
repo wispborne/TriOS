@@ -8,6 +8,7 @@
   - [Work in progress]: Updated VRAM estimation for the new GraphicsLib 1.12+ update.
     - GraphicsLb can now dynamically load textures instead of preloading everything.
   - [Work in progress]: Updated VRAM estimation for Illustrated Entities (it dynamically loads textures like GraphicsLib).
+  - Reordering columns on Mods/Weapons/Ships pages.
 - Changed
   - Mods page: Split the changelogs & Version Checker icons part of the `Version` column into their own column and added sorting for it.
     - Sorting is, in order: has update, then no update but has changelog, then no update and no changelog, then doesn't support version checker.

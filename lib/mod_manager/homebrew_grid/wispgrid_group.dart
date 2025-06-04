@@ -210,7 +210,7 @@ Widget? _vramSummaryOverlayWidget(
       final allEstimates = allEstimatesIncludingMissing.nonNulls.toList();
       const disabledGraphicsLibConfig = GraphicsLibConfig.disabled;
       final vramModsNoGraphicsLib = allEstimates
-          .map((e) => e.bytesUsingGraphicsLibConfig(disabledGraphicsLibConfig))
+          .map((e) => e.totalBytesUsingGraphicsLibConfig(disabledGraphicsLibConfig))
           .sum;
       final vramFromGraphicsLib = allEstimates
           .expand(

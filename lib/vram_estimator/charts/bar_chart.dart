@@ -68,7 +68,7 @@ class VramBarChartState extends ConsumerState<VramBarChart> {
                         (vramMod) => vramMod.id == mod.info.modInfo.id,
                       );
                       final percentOfMax =
-                          mod.bytesUsingGraphicsLibConfig(graphicsLibConfig) /
+                          mod.totalBytesUsingGraphicsLibConfig(graphicsLibConfig) /
                           maxVramUsed;
                       final width = layoutConstraints.maxWidth * percentOfMax;
 
@@ -119,7 +119,7 @@ class VramBarChartState extends ConsumerState<VramBarChart> {
                                           ),
                                           child: Text(
                                             mod
-                                                .bytesUsingGraphicsLibConfig(
+                                                .totalBytesUsingGraphicsLibConfig(
                                                   graphicsLibConfig,
                                                 )
                                                 .bytesAsReadableMB(),
@@ -159,9 +159,9 @@ class VramBarChartState extends ConsumerState<VramBarChart> {
   double _calculateMostVramUse() {
     return widget.modVramInfo
             .maxByOrNull<num>(
-              (mod) => mod.bytesUsingGraphicsLibConfig(graphicsLibConfig),
+              (mod) => mod.totalBytesUsingGraphicsLibConfig(graphicsLibConfig),
             )
-            ?.bytesUsingGraphicsLibConfig(graphicsLibConfig)
+            ?.totalBytesUsingGraphicsLibConfig(graphicsLibConfig)
             .toDouble() ??
         0;
   }
@@ -198,7 +198,7 @@ class VramBarChartState extends ConsumerState<VramBarChart> {
     return widget.modVramInfo
         .where(
           (element) =>
-              element.bytesUsingGraphicsLibConfig(graphicsLibConfig) > 0,
+              element.totalBytesUsingGraphicsLibConfig(graphicsLibConfig) > 0,
         )
         .map(
           (mod) => BarChartGroupData(
@@ -207,7 +207,7 @@ class VramBarChartState extends ConsumerState<VramBarChart> {
               BarChartRodData(
                 toY:
                     mod
-                        .bytesUsingGraphicsLibConfig(graphicsLibConfig)
+                        .totalBytesUsingGraphicsLibConfig(graphicsLibConfig)
                         .toDouble(), // Y-axis value
                 color:
                     ColorGenerator.generateFromColor(

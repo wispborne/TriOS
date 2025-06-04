@@ -93,6 +93,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
     final modsMatchingSearch = searchMods(allMods, query) ?? [];
     final modsMetadata = ref.watch(AppState.modsMetadata).valueOrNull;
     final vramEstState = ref.watch(AppState.vramEstimatorProvider);
+    final graphicsLibConfig = ref.watch(graphicsLibConfigProvider);
 
     return Stack(
       children: [
@@ -601,7 +602,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                                   ?.modVramInfo[mod
                                       .findHighestEnabledVersion
                                       ?.smolId]
-                                  ?.maxPossibleBytesForMod ??
+                                  ?.totalBytesUsingGraphicsLibConfig(graphicsLibConfig) ??
                               0,
                       headerCellBuilder:
                           (modifiers) =>
@@ -1221,15 +1222,15 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
               final biggestFish = vramMap
                   .maxBy(
                     (e) =>
-                        e.value.bytesUsingGraphicsLibConfig(graphicsLibConfig),
+                        e.value.totalBytesUsingGraphicsLibConfig(graphicsLibConfig),
                   )
                   ?.value
-                  .bytesUsingGraphicsLibConfig(graphicsLibConfig);
+                  .totalBytesUsingGraphicsLibConfig(graphicsLibConfig);
               final ratio =
                   biggestFish == null
                       ? 0.00
                       : (vramMap[bestVersion.smolId]
-                                  ?.bytesUsingGraphicsLibConfig(
+                                  ?.totalBytesUsingGraphicsLibConfig(
                                     graphicsLibConfig,
                                   )
                                   .toDouble() ??
@@ -1237,26 +1238,10 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                           biggestFish.toDouble();
               final vramEstimate = vramMap[bestVersion.smolId];
               final withoutGraphicsLib =
-                  vramEstimate != null
-                      ? List.generate(
-                            vramEstimate.images.length,
-                            (i) => ModImageView(i, vramEstimate.images),
-                          )
-                          .where((view) => view.graphicsLibType == null)
-                          .map((view) => view.bytesUsed)
-                          .toList()
-                      : null;
+                  vramEstimate?.bytesNotIncludingGraphicsLib(graphicsLibConfig);
 
               final fromGraphicsLib =
-                  vramEstimate != null
-                      ? List.generate(
-                            vramEstimate.images.length,
-                            (i) => ModImageView(i, vramEstimate.images),
-                          )
-                          .where((view) => view.graphicsLibType != null)
-                          .map((view) => view.bytesUsed)
-                          .toList()
-                      : null;
+                  vramEstimate?.bytesFromGraphicsLib(graphicsLibConfig);
 
               final isIllustratedEntities =
                   mod.findFirstEnabledOrHighestVersion?.modInfo.id ==
@@ -1283,7 +1268,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                                 "\n\n${withoutGraphicsLib?.sum().bytesAsReadableMB()} from mod (${withoutGraphicsLib?.length} images)"
                                 "\n${fromGraphicsLib?.sum().bytesAsReadableMB()} added by your GraphicsLib settings (${fromGraphicsLib?.length} images)"
                                 "\n---"
-                                "\n${vramEstimate.bytesUsingGraphicsLibConfig(graphicsLibConfig).bytesAsReadableMB()} total"
+                                "\n${vramEstimate.totalBytesUsingGraphicsLibConfig(graphicsLibConfig).bytesAsReadableMB()} total"
                                 "${isIllustratedEntities ? ""
                                         ""
                                         "\n\nNOTE"
@@ -1317,13 +1302,13 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8.0),
                         child:
-                            vramEstimate?.bytesUsingGraphicsLibConfig(
+                            vramEstimate?.totalBytesUsingGraphicsLibConfig(
                                       graphicsLibConfig,
                                     ) !=
                                     null
                                 ? Text(
                                   vramEstimate!
-                                      .bytesUsingGraphicsLibConfig(
+                                      .totalBytesUsingGraphicsLibConfig(
                                         graphicsLibConfig,
                                       )
                                       .bytesAsReadableMB(),

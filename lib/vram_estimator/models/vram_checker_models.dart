@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:dart_mappable/dart_mappable.dart';
+import 'package:ktx/collections.dart';
 import 'package:trios/models/mod_info.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/vram_estimator/models/graphics_lib_config.dart';
@@ -152,11 +153,11 @@ class ModImageView {
       case null:
         return true;
       case MapType.Normal:
-        return cfg.preloadAllMaps && cfg.areGfxLibNormalMapsEnabled;
+        return cfg.areGfxLibNormalMapsEnabled;
       case MapType.Material:
-        return cfg.preloadAllMaps && cfg.areGfxLibMaterialMapsEnabled;
+        return cfg.areGfxLibMaterialMapsEnabled;
       case MapType.Surface:
-        return cfg.preloadAllMaps && cfg.areGfxLibSurfaceMapsEnabled;
+        return cfg.areGfxLibSurfaceMapsEnabled;
     }
   }
 
@@ -219,34 +220,78 @@ class VramMod with VramModMappable {
   VramMod(this.info, this.isEnabled, this.images, this.graphicsLibEntries);
 
   /// Computes the total bytes used by all images in the table.
-  late final int maxPossibleBytesForMod = Iterable<int>.generate(
+  late final int _maxPossibleBytesForMod = Iterable<int>.generate(
     images.length,
   ).map((i) => ModImageView(i, images).bytesUsed).sum;
 
   ModImageView getModViewForIndex(int index) => ModImageView(index, images);
 
-  final Map<GraphicsLibConfig?, int> _cache = {};
+  final Map<GraphicsLibConfig?, List<ModImageView>> _cache = {};
 
-  /// Returns the total bytes used by images that satisfy the given graphics library configuration.
-  int bytesUsingGraphicsLibConfig(GraphicsLibConfig? graphicsLibConfig) {
+  /// Returns the total bytes for the mod, including images that satisfy the given graphics library configuration.
+  int totalBytesUsingGraphicsLibConfig(
+    GraphicsLibConfig? graphicsLibConfig, {
+    int maxNumUniqueShipsInBattle = 20,
+  }) {
     if (_cache.containsKey(graphicsLibConfig)) {
-      return _cache[graphicsLibConfig]!;
+      return _cache[graphicsLibConfig]!.sumBy((it) => it.bytesUsed);
     }
 
-    int sum = 0;
-    for (int i = 0; i < images.length; i++) {
-      final view = ModImageView(i, images);
+    final imagesSortedByBytes = images.toImageViews().sortedBy(
+      (it) => it.bytesUsed,
+    );
+
+    List<ModImageView> imagesToInclude = [];
+    // If GraphicsLib dynamically loads maps,
+    // only count the number of ships that'll be in a battle(ish).
+    int graphicsLibImagesToInclude = maxNumUniqueShipsInBattle;
+
+    // If we're preloading all maps, count them all
+    if (graphicsLibConfig?.preloadAllMaps == true) {
+      graphicsLibImagesToInclude = images.length;
+    }
+
+    for (final view in imagesSortedByBytes) {
       final isUsedBasedOnGraphicsLibConfig = graphicsLibConfig == null
           ? (view.graphicsLibType == null)
           : view.isUsedBasedOnGraphicsLibConfig(graphicsLibConfig);
+
+      // If we've already counted all of the GraphicsLib maps we're going to include,
+      // skip this image
+      if (view.graphicsLibType != null &&
+          isUsedBasedOnGraphicsLibConfig &&
+          graphicsLibImagesToInclude <= 0) {
+        continue;
+      }
+
       final isIllustratedEntities = info.modInfo.id == "illustrated_entities";
 
       if (isUsedBasedOnGraphicsLibConfig && !isIllustratedEntities) {
-        sum += view.bytesUsed;
+        imagesToInclude.add(view);
+
+        if (view.graphicsLibType != null) {
+          graphicsLibImagesToInclude--;
+        }
       }
     }
 
-    _cache[graphicsLibConfig] = sum;
-    return sum;
+    _cache[graphicsLibConfig] = imagesToInclude;
+    return imagesToInclude.sumBy((it) => it.bytesUsed);
+  }
+
+  /// Each value is the usage by one of the images.GraphicsLib() {
+  List<int> bytesNotIncludingGraphicsLib(GraphicsLibConfig? graphicsLibConfig) {
+    return _cache[graphicsLibConfig]!
+        .where((view) => view.graphicsLibType == null)
+        .map((view) => view.bytesUsed)
+        .toList();
+  }
+
+  /// Each value is the usage by one of the images.
+  List<int> bytesFromGraphicsLib(GraphicsLibConfig? graphicsLibConfig) {
+    return _cache[graphicsLibConfig]!
+        .where((view) => view.graphicsLibType != null)
+        .map((view) => view.bytesUsed)
+        .toList();
   }
 }

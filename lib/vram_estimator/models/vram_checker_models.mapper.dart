@@ -203,10 +203,6 @@ class VramModMapper extends ClassMapperBase<VramMod> {
       v.graphicsLibEntries;
   static const Field<VramMod, List<GraphicsLibInfo>> _f$graphicsLibEntries =
       Field('graphicsLibEntries', _$graphicsLibEntries);
-  static int _$maxPossibleBytesForMod(VramMod v) => v.maxPossibleBytesForMod;
-  static const Field<VramMod, int> _f$maxPossibleBytesForMod = Field(
-      'maxPossibleBytesForMod', _$maxPossibleBytesForMod,
-      mode: FieldMode.member);
 
   @override
   final MappableFields<VramMod> fields = const {
@@ -214,7 +210,6 @@ class VramModMapper extends ClassMapperBase<VramMod> {
     #isEnabled: _f$isEnabled,
     #images: _f$images,
     #graphicsLibEntries: _f$graphicsLibEntries,
-    #maxPossibleBytesForMod: _f$maxPossibleBytesForMod,
   };
 
   static VramMod _instantiate(DecodingData data) {

@@ -34,7 +34,7 @@ class VramPieChartState extends ConsumerState<VramPieChart> {
     return widget.modVramInfo
         .where(
           (element) =>
-              element.bytesUsingGraphicsLibConfig(graphicsLibConfig) > 0,
+              element.totalBytesUsingGraphicsLibConfig(graphicsLibConfig) > 0,
         )
         .map((mod) {
           const fontSize = 12.0;
@@ -54,9 +54,9 @@ class VramPieChartState extends ConsumerState<VramPieChart> {
           return PieChartSectionData(
             color: materialColor.shade700,
             value:
-                mod.bytesUsingGraphicsLibConfig(graphicsLibConfig).toDouble(),
+                mod.totalBytesUsingGraphicsLibConfig(graphicsLibConfig).toDouble(),
             title:
-                "${mod.info.name} ${mod.info.version}\n${mod.bytesUsingGraphicsLibConfig(graphicsLibConfig).bytesAsReadableMB()}",
+                "${mod.info.name} ${mod.info.version}\n${mod.totalBytesUsingGraphicsLibConfig(graphicsLibConfig).bytesAsReadableMB()}",
             radius: radius,
             titlePositionPercentageOffset: 2,
             titleStyle: const TextStyle(

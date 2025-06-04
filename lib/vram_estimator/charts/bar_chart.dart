@@ -60,95 +60,94 @@ class VramBarChartState extends ConsumerState<VramBarChart> {
               return mods.isEmpty
                   ? const CircularProgressIndicator()
                   : ListView.builder(
-                    itemCount: mods.length,
-                    itemBuilder: (context, index) {
-                      if (index > mods.length - 1) return const SizedBox();
-                      final mod = mods[index];
-                      final realMod = realMods.firstWhereOrNull(
-                        (vramMod) => vramMod.id == mod.info.modInfo.id,
-                      );
-                      final percentOfMax =
-                          mod.bytesUsingGraphicsLibConfig(graphicsLibConfig) /
-                          maxVramUsed;
-                      final width = layoutConstraints.maxWidth * percentOfMax;
+                      itemCount: mods.length,
+                      itemBuilder: (context, index) {
+                        if (index > mods.length - 1) return const SizedBox();
+                        final mod = mods[index];
+                        final realMod = realMods.firstWhereOrNull(
+                          (vramMod) => vramMod.id == mod.info.modInfo.id,
+                        );
+                        final percentOfMax =
+                            mod.bytesNotIncludingGraphicsLib() / maxVramUsed;
+                        final width = layoutConstraints.maxWidth * percentOfMax;
 
-                      final iconFilePath =
-                          realMod
-                              ?.findFirstEnabledOrHighestVersion
-                              ?.iconFilePath;
+                        final iconFilePath = realMod
+                            ?.findFirstEnabledOrHighestVersion
+                            ?.iconFilePath;
 
-                      return MovingTooltipWidget.framed(
-                        tooltipWidget:
-                            VramEstimatorPage.buildVramTopFilesTableWidget(
-                              theme,
-                              mod,
-                              graphicsLibConfig,
-                            ),
-                        child: Card(
-                          clipBehavior: Clip.antiAlias,
-                          child: Padding(
-                            padding: const EdgeInsets.only(top: 8.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    if (iconFilePath != null)
-                                      Padding(
-                                        padding: const EdgeInsets.only(
-                                          left: 8.0,
+                        return MovingTooltipWidget.framed(
+                          tooltipWidget:
+                              VramEstimatorPage.buildVramTopFilesTableWidget(
+                                theme,
+                                mod,
+                                graphicsLibConfig,
+                              ),
+                          child: Card(
+                            clipBehavior: Clip.antiAlias,
+                            child: Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      if (iconFilePath != null)
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                            left: 8.0,
+                                          ),
+                                          child: ModIcon(
+                                            iconFilePath,
+                                            size: 28,
+                                          ),
                                         ),
-                                        child: ModIcon(iconFilePath, size: 28),
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8.0,
+                                            ),
+                                            child: Text(
+                                              mod.info.formattedName,
+                                              style: theme.textTheme.labelLarge,
+                                            ),
+                                          ),
+                                          Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8.0,
+                                            ),
+                                            child: Text(
+                                              mod
+                                                  .bytesNotIncludingGraphicsLib()
+                                                  .bytesAsReadableMB(),
+                                              style:
+                                                  theme.textTheme.labelMedium,
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 8.0,
-                                          ),
-                                          child: Text(
-                                            mod.info.formattedName,
-                                            style: theme.textTheme.labelLarge,
-                                          ),
-                                        ),
-                                        Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 8.0,
-                                          ),
-                                          child: Text(
-                                            mod
-                                                .bytesUsingGraphicsLibConfig(
-                                                  graphicsLibConfig,
-                                                )
-                                                .bytesAsReadableMB(),
-                                            style: theme.textTheme.labelMedium,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                                Opacity(
-                                  opacity: 0.6,
-                                  child: Container(
-                                    width: width,
-                                    height: 10,
-                                    color:
-                                        ColorGenerator.generateFromColor(
-                                          mod.info.smolId,
-                                          baseColor,
-                                        ).createMaterialColor().shade700,
+                                    ],
                                   ),
-                                ),
-                              ],
+                                  Opacity(
+                                    opacity: 0.6,
+                                    child: Container(
+                                      width: width,
+                                      height: 10,
+                                      color: ColorGenerator.generateFromColor(
+                                        mod.info.smolId,
+                                        baseColor,
+                                      ).createMaterialColor().shade700,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                      );
-                    },
-                  );
+                        );
+                      },
+                    );
             },
           ),
         ),
@@ -158,10 +157,8 @@ class VramBarChartState extends ConsumerState<VramBarChart> {
 
   double _calculateMostVramUse() {
     return widget.modVramInfo
-            .maxByOrNull<num>(
-              (mod) => mod.bytesUsingGraphicsLibConfig(graphicsLibConfig),
-            )
-            ?.bytesUsingGraphicsLibConfig(graphicsLibConfig)
+            .maxByOrNull<num>((mod) => mod.bytesNotIncludingGraphicsLib())
+            ?.bytesNotIncludingGraphicsLib()
             .toDouble() ??
         0;
   }
@@ -196,24 +193,19 @@ class VramBarChartState extends ConsumerState<VramBarChart> {
   List<BarChartGroupData> _buildBarGroups(BuildContext context) {
     final baseColor = Theme.of(context).colorScheme.primary;
     return widget.modVramInfo
-        .where(
-          (element) =>
-              element.bytesUsingGraphicsLibConfig(graphicsLibConfig) > 0,
-        )
+        .where((element) => element.bytesNotIncludingGraphicsLib() > 0)
         .map(
           (mod) => BarChartGroupData(
             x: widget.modVramInfo.indexOf(mod),
             barRods: [
               BarChartRodData(
-                toY:
-                    mod
-                        .bytesUsingGraphicsLibConfig(graphicsLibConfig)
-                        .toDouble(), // Y-axis value
-                color:
-                    ColorGenerator.generateFromColor(
-                      mod.info.smolId,
-                      baseColor,
-                    ).createMaterialColor().shade700,
+                toY: mod
+                    .bytesNotIncludingGraphicsLib()
+                    .toDouble(), // Y-axis value
+                color: ColorGenerator.generateFromColor(
+                  mod.info.smolId,
+                  baseColor,
+                ).createMaterialColor().shade700,
                 width: 12, // Adjust bar width
               ),
             ],

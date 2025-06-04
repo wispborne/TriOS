@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:collection/collection.dart';
 import 'package:csv/csv.dart';
 import 'package:path/path.dart' as p;
+import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/extensions.dart';
 
 import '../models/mod_variant.dart';
@@ -167,12 +168,20 @@ class VramChecker {
                       imageType = ImageType.texture;
                     }
 
-                    final graphicsLibType = graphicsLibEntries
-                        .firstWhereOrNull(
-                          (it) => it.relativeFilePath == file.relativePath,
-                        )
-                        ?.mapType;
+                    MapType? graphicsLibType;
 
+                    // Hardcode logic that the cache folder of GraphicsLib
+                    // always contains normal maps.
+                    if (modInfo.modId == Constants.graphicsLibId &&
+                        file.file.path.contains("cache")) {
+                      graphicsLibType = MapType.Normal;
+                    } else {
+                      graphicsLibType = graphicsLibEntries
+                          .firstWhereOrNull(
+                            (it) => it.relativeFilePath == file.relativePath,
+                          )
+                          ?.mapType;
+                    }
                     final ext = file.file.nameWithExtension.toLowerCase();
                     if (ext.endsWith(".png")) {
                       return await _getModImagePng(
@@ -306,7 +315,7 @@ class VramChecker {
               }
               progressText.appendAndPrint(
                 mod
-                    .bytesUsingGraphicsLibConfig(graphicsLibConfig)
+                    .bytesNotIncludingGraphicsLib()
                     .bytesAsReadableMB(),
                 verboseOut,
               );
@@ -314,7 +323,7 @@ class VramChecker {
               return mod;
             }).toList())
             .sortedByDescending<num>(
-              (it) => it.bytesUsingGraphicsLibConfig(graphicsLibConfig),
+              (it) => it.bytesNotIncludingGraphicsLib(),
             )
             .toList();
 
@@ -324,7 +333,9 @@ class VramChecker {
         "${mod.info.formattedName} - ${mod.images.length} images - ${(mod.isEnabled) ? "Enabled" : "Disabled"}",
       );
       modTotals.writeln(
-        mod.bytesUsingGraphicsLibConfig(graphicsLibConfig).bytesAsReadableMB(),
+        mod
+            .bytesNotIncludingGraphicsLib()
+            .bytesAsReadableMB(),
       );
     }
 
@@ -527,7 +538,7 @@ class VramChecker {
         .filter((it) => it.file.nameWithExtension.endsWith(".csv"))
         .map((file) {
           try {
-            return csvReader.convert(file.file.readAsStringSync());
+            return csvReader.convert(file.file.readAsStringSync().replaceAll("\r\n", "\n"), eol: "\n");
           } catch (e) {
             progressText.appendAndPrint(
               "Unable to read ${file.file.path}: $e",

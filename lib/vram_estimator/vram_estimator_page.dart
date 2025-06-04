@@ -78,10 +78,7 @@ class VramEstimatorPage extends ConsumerStatefulWidget {
     final topTenLargestImagesByVram =
         List.generate(mod.images.length, mod.getModViewForIndex)
             .sortedByDescending<num>((image) => image.bytesUsed)
-            .where(
-              (image) =>
-                  image.isUsedBasedOnGraphicsLibConfig(graphicsLibConfig),
-            )
+            .where((image) => image.isUsedBasedOnGraphicsLibConfig())
             .take(10)
             .toList();
 
@@ -145,35 +142,31 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
     }
     final vramState = vramStateProvider.requireValue;
     final isScanning = vramState.isScanning;
-    final enabledSmolIds =
-        ref
-            .watch(AppState.enabledModVariants)
-            .map((mod) => mod.smolId)
-            .toList();
+    final enabledSmolIds = ref
+        .watch(AppState.enabledModVariants)
+        .map((mod) => mod.smolId)
+        .toList();
 
     // Display only the highest version of each mod.
-    final groupedModVramInfo =
-        vramState.modVramInfo.values
-            .where(
-              (mod) =>
-                  // If only showing enabled, filter to only the enabled *variants*.
-                  _onlyEnabled
-                      ? enabledSmolIds.contains(mod.info.smolId)
-                      : true,
-            )
-            .groupBy((mod) => mod.info.modInfo.id)
-            .values
-            .map(
-              (group) => group.maxWith(
-                (a, b) => (a.info.version ?? Version.zero()).compareTo(
-                  b.info.version,
-                ),
-              ),
-            )
-            .nonNulls
-            .toList();
-    final modVramInfo =
-        groupedModVramInfo.map((mod) => MapEntry(mod.info.smolId, mod)).toMap();
+    final groupedModVramInfo = vramState.modVramInfo.values
+        .where(
+          (mod) =>
+              // If only showing enabled, filter to only the enabled *variants*.
+              _onlyEnabled ? enabledSmolIds.contains(mod.info.smolId) : true,
+        )
+        .groupBy((mod) => mod.info.modInfo.id)
+        .values
+        .map(
+          (group) => group.maxWith(
+            (a, b) =>
+                (a.info.version ?? Version.zero()).compareTo(b.info.version),
+          ),
+        )
+        .nonNulls
+        .toList();
+    final modVramInfo = groupedModVramInfo
+        .map((mod) => MapEntry(mod.info.smolId, mod))
+        .toMap();
     final graphicsLibConfig = ref.watch(graphicsLibConfigProvider);
 
     var modVramInfoToShow = _calculateModsToShow(
@@ -210,12 +203,10 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
                       message: "About VRAM & VRAM Estimator",
                       child: IconButton(
                         icon: const Icon(Icons.info),
-                        onPressed:
-                            () => showDialog(
-                              context: context,
-                              builder:
-                                  (context) => VramCheckerExplanationDialog(),
-                            ),
+                        onPressed: () => showDialog(
+                          context: context,
+                          builder: (context) => VramCheckerExplanationDialog(),
+                        ),
                       ),
                     ),
                     Disable(
@@ -236,13 +227,9 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
                       Padding(
                         padding: const EdgeInsets.only(left: 8.0),
                         child: OutlinedButton.icon(
-                          onPressed:
-                              () =>
-                                  ref
-                                      .read(
-                                        AppState.vramEstimatorProvider.notifier,
-                                      )
-                                      .cancelEstimation(),
+                          onPressed: () => ref
+                              .read(AppState.vramEstimatorProvider.notifier)
+                              .cancelEstimation(),
                           label: Text(
                             vramState.isCancelled ? 'Canceling...' : 'Cancel',
                           ),
@@ -279,9 +266,8 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
                     ),
                     Spacer(),
                     TriOSToolbarCheckboxButton(
-                      onChanged:
-                          (newValue) =>
-                              setState(() => _onlyEnabled = newValue ?? true),
+                      onChanged: (newValue) =>
+                          setState(() => _onlyEnabled = newValue ?? true),
                       value: _onlyEnabled,
                       text: 'Enabled Mods Only',
                     ),
@@ -356,15 +342,13 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
     return modVramInfo.values
         .where(
           (mod) =>
-              mod.bytesUsingGraphicsLibConfig(graphicsLibConfig) >=
+              mod.bytesNotIncludingGraphicsLib() >=
                   (selectedSliderValues?.start ?? 0) &&
-              mod.bytesUsingGraphicsLibConfig(graphicsLibConfig) <=
+              mod.bytesNotIncludingGraphicsLib() <=
                   (selectedSliderValues?.end ??
                       _maxRange(modVramInfo, graphicsLibConfig)),
         )
-        .sortedByDescending<num>(
-          (mod) => mod.bytesUsingGraphicsLibConfig(graphicsLibConfig),
-        )
+        .sortedByDescending<num>((mod) => mod.bytesNotIncludingGraphicsLib())
         .toList();
   }
 
@@ -373,11 +357,9 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
     GraphicsLibConfig? graphicsLibConfig,
   ) {
     return modVramInfo.values
-            .sortedByButBetter<num>(
-              (mod) => mod.bytesUsingGraphicsLibConfig(graphicsLibConfig),
-            )
+            .sortedByButBetter<num>((mod) => mod.bytesNotIncludingGraphicsLib())
             .lastOrNull
-            ?.bytesUsingGraphicsLibConfig(graphicsLibConfig)
+            ?.bytesNotIncludingGraphicsLib()
             .toDouble() ??
         2;
   }

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:dart_mappable/dart_mappable.dart';
+import 'package:ktx/collections.dart';
 import 'package:trios/models/mod_info.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/vram_estimator/models/graphics_lib_config.dart';
@@ -141,23 +142,9 @@ class ModImageView {
     return rawSize.ceil();
   }
 
-  // TODO should also have a isUsed here that can be used for showing top 10 largest images
   /// Determines if the image is used based on the provided graphics library configuration.
-  bool isUsedBasedOnGraphicsLibConfig(GraphicsLibConfig? cfg) {
-    if (cfg == null) {
-      return graphicsLibType == null;
-    }
-
-    switch (graphicsLibType) {
-      case null:
-        return true;
-      case MapType.Normal:
-        return cfg.preloadAllMaps && cfg.areGfxLibNormalMapsEnabled;
-      case MapType.Material:
-        return cfg.preloadAllMaps && cfg.areGfxLibMaterialMapsEnabled;
-      case MapType.Surface:
-        return cfg.preloadAllMaps && cfg.areGfxLibSurfaceMapsEnabled;
-    }
+  bool isUsedBasedOnGraphicsLibConfig() {
+    return graphicsLibType == null;
   }
 
   @override
@@ -219,34 +206,28 @@ class VramMod with VramModMappable {
   VramMod(this.info, this.isEnabled, this.images, this.graphicsLibEntries);
 
   /// Computes the total bytes used by all images in the table.
-  late final int maxPossibleBytesForMod = Iterable<int>.generate(
+  late final int _maxPossibleBytesForMod = Iterable<int>.generate(
     images.length,
   ).map((i) => ModImageView(i, images).bytesUsed).sum;
 
   ModImageView getModViewForIndex(int index) => ModImageView(index, images);
 
-  final Map<GraphicsLibConfig?, int> _cache = {};
+  List<int>? _cache;
 
-  /// Returns the total bytes used by images that satisfy the given graphics library configuration.
-  int bytesUsingGraphicsLibConfig(GraphicsLibConfig? graphicsLibConfig) {
-    if (_cache.containsKey(graphicsLibConfig)) {
-      return _cache[graphicsLibConfig]!;
+  /// Each value is the usage by one of the images.GraphicsLib() {
+  List<int> imagesNotIncludingGraphicsLib() {
+    if (_cache != null) {
+      return _cache!;
     }
 
-    int sum = 0;
-    for (int i = 0; i < images.length; i++) {
-      final view = ModImageView(i, images);
-      final isUsedBasedOnGraphicsLibConfig = graphicsLibConfig == null
-          ? (view.graphicsLibType == null)
-          : view.isUsedBasedOnGraphicsLibConfig(graphicsLibConfig);
-      final isIllustratedEntities = info.modInfo.id == "illustrated_entities";
+    _cache = images
+        .toImageViews()
+        .where((view) => view.graphicsLibType == null)
+        .map((view) => view.bytesUsed)
+        .toList();
 
-      if (isUsedBasedOnGraphicsLibConfig && !isIllustratedEntities) {
-        sum += view.bytesUsed;
-      }
-    }
-
-    _cache[graphicsLibConfig] = sum;
-    return sum;
+    return _cache!;
   }
+
+  int bytesNotIncludingGraphicsLib() => imagesNotIncludingGraphicsLib().sum;
 }

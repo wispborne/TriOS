@@ -32,19 +32,15 @@ class VramPieChartState extends ConsumerState<VramPieChart> {
     final realMods = ref.watch(AppState.mods);
 
     return widget.modVramInfo
-        .where(
-          (element) =>
-              element.bytesUsingGraphicsLibConfig(graphicsLibConfig) > 0,
-        )
+        .where((element) => element.bytesNotIncludingGraphicsLib() > 0)
         .map((mod) {
           const fontSize = 12.0;
           const radius = 50.0;
           const shadows = [Shadow(color: Colors.black, blurRadius: 2)];
-          final materialColor =
-              ColorGenerator.generateFromColor(
-                mod.info.smolId,
-                baseColor,
-              ).createMaterialColor();
+          final materialColor = ColorGenerator.generateFromColor(
+            mod.info.smolId,
+            baseColor,
+          ).createMaterialColor();
           final realMod = realMods.firstWhereOrNull(
             (vramMod) => vramMod.id == mod.info.modInfo.id,
           );
@@ -53,10 +49,9 @@ class VramPieChartState extends ConsumerState<VramPieChart> {
 
           return PieChartSectionData(
             color: materialColor.shade700,
-            value:
-                mod.bytesUsingGraphicsLibConfig(graphicsLibConfig).toDouble(),
+            value: mod.bytesNotIncludingGraphicsLib().toDouble(),
             title:
-                "${mod.info.name} ${mod.info.version}\n${mod.bytesUsingGraphicsLibConfig(graphicsLibConfig).bytesAsReadableMB()}",
+                "${mod.info.name} ${mod.info.version}\n${mod.bytesNotIncludingGraphicsLib().bytesAsReadableMB()}",
             radius: radius,
             titlePositionPercentageOffset: 2,
             titleStyle: const TextStyle(
@@ -71,17 +66,16 @@ class VramPieChartState extends ConsumerState<VramPieChart> {
                 mod,
                 graphicsLibConfig,
               ),
-              child:
-                  iconFilePath != null
-                      ? ModIcon(iconFilePath)
-                      : Container(
-                        height: 32,
-                        width: 32,
-                        decoration: BoxDecoration(
-                          color: materialColor.shade900,
-                          shape: BoxShape.circle,
-                        ),
+              child: iconFilePath != null
+                  ? ModIcon(iconFilePath)
+                  : Container(
+                      height: 32,
+                      width: 32,
+                      decoration: BoxDecoration(
+                        color: materialColor.shade900,
+                        shape: BoxShape.circle,
                       ),
+                    ),
             ),
           );
         })

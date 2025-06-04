@@ -93,6 +93,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
     final modsMatchingSearch = searchMods(allMods, query) ?? [];
     final modsMetadata = ref.watch(AppState.modsMetadata).valueOrNull;
     final vramEstState = ref.watch(AppState.vramEstimatorProvider);
+    final graphicsLibConfig = ref.watch(graphicsLibConfigProvider);
 
     return Stack(
       children: [
@@ -182,10 +183,9 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                                 child: IconButton(
                                   onPressed: () {
                                     setState(() {
-                                      selectedMod =
-                                          modsMatchingSearch.isEmpty
-                                              ? null
-                                              : modsMatchingSearch.random();
+                                      selectedMod = modsMatchingSearch.isEmpty
+                                          ? null
+                                          : modsMatchingSearch.random();
                                     });
                                   },
                                   icon: Icon(Icons.view_sidebar),
@@ -254,23 +254,17 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
 
                     return null;
                   },
-                  rowBuilder: ({
-                    required item,
-                    required modifiers,
-                    required child,
-                  }) {
+                  rowBuilder: ({required item, required modifiers, required child}) {
                     final isHovering = modifiers.isHovering ?? false;
-                    final modMetadata =
-                        ref
-                            .watch(AppState.modsMetadata)
-                            .valueOrNull
-                            ?.userMetadata[item.id];
+                    final modMetadata = ref
+                        .watch(AppState.modsMetadata)
+                        .valueOrNull
+                        ?.userMetadata[item.id];
                     final isFavorited = modMetadata?.isFavorited ?? false;
 
-                    final backgroundBaseColor =
-                        isFavorited
-                            ? theme.colorScheme.primary.withOpacity(0.3)
-                            : Colors.transparent;
+                    final backgroundBaseColor = isFavorited
+                        ? theme.colorScheme.primary.withOpacity(0.3)
+                        : Colors.transparent;
 
                     // Mix in any hover/checked overlay color
                     final backgroundColor = backgroundBaseColor.mix(
@@ -290,23 +284,23 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                           return ContextMenuRegion(
                             contextMenu:
                                 (controller!.checkedItemIdsReadonly.length) > 1
-                                    ? buildModBulkActionContextMenu(
-                                      (controller!.lastDisplayedItemsReadonly)
-                                          .where(
-                                            (mod) => controller!
-                                                .checkedItemIdsReadonly
-                                                .contains(mod.id),
-                                          )
-                                          .toList(),
-                                      ref,
-                                      context,
-                                    )
-                                    : buildModContextMenu(
-                                      item,
-                                      ref,
-                                      context,
-                                      showSwapToVersion: true,
-                                    ),
+                                ? buildModBulkActionContextMenu(
+                                    (controller!.lastDisplayedItemsReadonly)
+                                        .where(
+                                          (mod) => controller!
+                                              .checkedItemIdsReadonly
+                                              .contains(mod.id),
+                                        )
+                                        .toList(),
+                                    ref,
+                                    context,
+                                  )
+                                : buildModContextMenu(
+                                    item,
+                                    ref,
+                                    context,
+                                    showSwapToVersion: true,
+                                  ),
                             child: Container(
                               // This container is so that the context menu gets hit detection.
                               // Without it, right-clicking empty space doesn't show the context menu.
@@ -341,26 +335,22 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                       key: ModGridHeader.favorites.name,
                       name: "Favorite",
                       isSortable: false,
-                      headerCellBuilder:
-                          (modifiers) =>
-                              buildColumnHeader(
-                                ModGridHeader.favorites,
-                                modifiers,
-                              ).child,
-                      itemCellBuilder:
-                          (mod, modifiers) => Builder(
-                            builder: (context) {
-                              final modMetadata =
-                                  modsMetadata?.userMetadata[mod.id];
-                              final isFavorited =
-                                  modMetadata?.isFavorited ?? false;
-                              return FavoriteButton(
-                                mod: mod,
-                                isRowHighlighted: modifiers.isHovering,
-                                isFavorited: isFavorited,
-                              );
-                            },
-                          ),
+                      headerCellBuilder: (modifiers) => buildColumnHeader(
+                        ModGridHeader.favorites,
+                        modifiers,
+                      ).child,
+                      itemCellBuilder: (mod, modifiers) => Builder(
+                        builder: (context) {
+                          final modMetadata =
+                              modsMetadata?.userMetadata[mod.id];
+                          final isFavorited = modMetadata?.isFavorited ?? false;
+                          return FavoriteButton(
+                            mod: mod,
+                            isRowHighlighted: modifiers.isHovering,
+                            isFavorited: isFavorited,
+                          );
+                        },
+                      ),
                       defaultState: WispGridColumnState(position: 0, width: 50),
                     ),
                     WispGridColumn<Mod>(
@@ -368,15 +358,14 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                       name: "Version Select",
                       isSortable: false,
                       headerCellBuilder: (modifiers) => Container(),
-                      itemCellBuilder:
-                          (mod, modifiers) => Disable(
-                            isEnabled: !isGameRunning,
-                            child: ModVersionSelectionDropdown(
-                              mod: mod,
-                              width: modifiers.columnState.width,
-                              showTooltip: true,
-                            ),
-                          ),
+                      itemCellBuilder: (mod, modifiers) => Disable(
+                        isEnabled: !isGameRunning,
+                        child: ModVersionSelectionDropdown(
+                          mod: mod,
+                          width: modifiers.columnState.width,
+                          showTooltip: true,
+                        ),
+                      ),
                       defaultState: WispGridColumnState(
                         position: 1,
                         width: 130,
@@ -386,34 +375,31 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                       key: ModGridHeader.icons.name,
                       name: "Mod Type Icon",
                       isSortable: true,
-                      getSortValue:
-                          (mod) =>
-                              mod
-                                          .findFirstEnabledOrHighestVersion
-                                          ?.modInfo
-                                          .isUtility ==
-                                      true
-                                  ? "utility"
-                                  : mod
-                                          .findFirstEnabledOrHighestVersion
-                                          ?.modInfo
-                                          .isTotalConversion ==
-                                      true
-                                  ? "total conversion"
-                                  : "other",
+                      getSortValue: (mod) =>
+                          mod
+                                  .findFirstEnabledOrHighestVersion
+                                  ?.modInfo
+                                  .isUtility ==
+                              true
+                          ? "utility"
+                          : mod
+                                    .findFirstEnabledOrHighestVersion
+                                    ?.modInfo
+                                    .isTotalConversion ==
+                                true
+                          ? "total conversion"
+                          : "other",
                       headerCellBuilder: (modifiers) => Container(),
-                      itemCellBuilder:
-                          (mod, modifiers) => Builder(
-                            builder: (context) {
-                              String? iconPath =
-                                  mod
-                                      .findFirstEnabledOrHighestVersion
-                                      ?.iconFilePath;
-                              return iconPath != null
-                                  ? ModIcon(iconPath, size: 32)
-                                  : const SizedBox(width: 32, height: 32);
-                            },
-                          ),
+                      itemCellBuilder: (mod, modifiers) => Builder(
+                        builder: (context) {
+                          String? iconPath = mod
+                              .findFirstEnabledOrHighestVersion
+                              ?.iconFilePath;
+                          return iconPath != null
+                              ? ModIcon(iconPath, size: 32)
+                              : const SizedBox(width: 32, height: 32);
+                        },
+                      ),
                       defaultState: WispGridColumnState(position: 2, width: 32),
                     ),
                     WispGridColumn<Mod>(
@@ -421,35 +407,29 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                       name: "Mod Icon",
                       isSortable: false,
                       headerCellBuilder: (modifiers) => Container(),
-                      itemCellBuilder:
-                          (mod, modifiers) => ModTypeIcon(
-                            modVariant: mod.findFirstEnabledOrHighestVersion!,
-                          ),
+                      itemCellBuilder: (mod, modifiers) => ModTypeIcon(
+                        modVariant: mod.findFirstEnabledOrHighestVersion!,
+                      ),
                       defaultState: WispGridColumnState(position: 3, width: 32),
                     ),
                     WispGridColumn<Mod>(
                       key: ModGridHeader.name.name,
                       name: "Name",
                       isSortable: true,
-                      getSortValue:
-                          (mod) =>
-                              mod
-                                  .findFirstEnabledOrHighestVersion
-                                  ?.modInfo
-                                  .nameOrId,
-                      headerCellBuilder:
-                          (modifiers) =>
-                              buildColumnHeader(
-                                ModGridHeader.name,
-                                modifiers,
-                              ).child,
-                      itemCellBuilder:
-                          (mod, modifiers) => buildNameCell(
-                            mod,
-                            mod.findFirstEnabledOrHighestVersion!,
-                            allMods,
-                            modifiers.columnState,
-                          ),
+                      getSortValue: (mod) => mod
+                          .findFirstEnabledOrHighestVersion
+                          ?.modInfo
+                          .nameOrId,
+                      headerCellBuilder: (modifiers) => buildColumnHeader(
+                        ModGridHeader.name,
+                        modifiers,
+                      ).child,
+                      itemCellBuilder: (mod, modifiers) => buildNameCell(
+                        mod,
+                        mod.findFirstEnabledOrHighestVersion!,
+                        allMods,
+                        modifiers.columnState,
+                      ),
                       defaultState: WispGridColumnState(
                         position: 4,
                         width: 200,
@@ -459,41 +439,35 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                       key: ModGridHeader.author.name,
                       name: "Author",
                       isSortable: true,
-                      getSortValue:
-                          (mod) =>
-                              mod
-                                  .findFirstEnabledOrHighestVersion
-                                  ?.modInfo
-                                  .author
-                                  ?.toLowerCase() ??
-                              "",
-                      headerCellBuilder:
-                          (modifiers) =>
-                              buildColumnHeader(
-                                ModGridHeader.author,
-                                modifiers,
-                              ).child,
-                      itemCellBuilder:
-                          (mod, modifiers) => Builder(
-                            builder: (context) {
-                              final theme = Theme.of(context);
-                              final lightTextColor = theme.colorScheme.onSurface
-                                  .withValues(alpha: WispGrid.lightTextOpacity);
-                              final bestVersion =
-                                  mod.findFirstEnabledOrHighestVersion!;
-                              return TextTriOS(
-                                bestVersion.modInfo.author
-                                        ?.toString()
-                                        .replaceAll("\n", "   ") ??
-                                    "(no author)",
-                                maxLines: 1,
-                                style: theme.textTheme.labelLarge?.copyWith(
-                                  color: lightTextColor,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              );
-                            },
-                          ),
+                      getSortValue: (mod) =>
+                          mod.findFirstEnabledOrHighestVersion?.modInfo.author
+                              ?.toLowerCase() ??
+                          "",
+                      headerCellBuilder: (modifiers) => buildColumnHeader(
+                        ModGridHeader.author,
+                        modifiers,
+                      ).child,
+                      itemCellBuilder: (mod, modifiers) => Builder(
+                        builder: (context) {
+                          final theme = Theme.of(context);
+                          final lightTextColor = theme.colorScheme.onSurface
+                              .withValues(alpha: WispGrid.lightTextOpacity);
+                          final bestVersion =
+                              mod.findFirstEnabledOrHighestVersion!;
+                          return TextTriOS(
+                            bestVersion.modInfo.author?.toString().replaceAll(
+                                  "\n",
+                                  "   ",
+                                ) ??
+                                "(no author)",
+                            maxLines: 1,
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              color: lightTextColor,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          );
+                        },
+                      ),
                       defaultState: WispGridColumnState(
                         position: 5,
                         width: 200,
@@ -504,8 +478,9 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                       name: "Update",
                       isSortable: true,
                       getSortValue: (mod) {
-                        final versionCheckResultsNew =
-                            ref.watch(AppState.versionCheckResults).valueOrNull;
+                        final versionCheckResultsNew = ref
+                            .watch(AppState.versionCheckResults)
+                            .valueOrNull;
                         final versionCheckComparison = mod.updateCheck(
                           versionCheckResultsNew,
                         );
@@ -546,75 +521,66 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                           return -30;
                         }
                       },
-                      itemCellBuilder:
-                          (mod, modifiers) => Builder(
-                            builder: (context) {
-                              final bestVersion =
-                                  mod.findFirstEnabledOrHighestVersion!;
-                              return _buildUpdateCell(
-                                WispGrid.lightTextOpacity,
-                                mod,
-                                isGameRunning,
-                                bestVersion,
-                                modifiers.columnState,
-                                modsMetadata?.getMergedModMetadata(mod.id),
-                              );
-                            },
-                          ),
+                      itemCellBuilder: (mod, modifiers) => Builder(
+                        builder: (context) {
+                          final bestVersion =
+                              mod.findFirstEnabledOrHighestVersion!;
+                          return _buildUpdateCell(
+                            WispGrid.lightTextOpacity,
+                            mod,
+                            isGameRunning,
+                            bestVersion,
+                            modifiers.columnState,
+                            modsMetadata?.getMergedModMetadata(mod.id),
+                          );
+                        },
+                      ),
                       defaultState: WispGridColumnState(position: 6, width: 65),
                     ),
                     WispGridColumn<Mod>(
                       key: ModGridHeader.version.name,
                       name: "Version",
                       isSortable: true,
-                      getSortValue:
-                          (mod) =>
-                              mod
-                                  .findFirstEnabledOrHighestVersion
-                                  ?.modInfo
-                                  .version,
-                      itemCellBuilder:
-                          (mod, modifiers) => Builder(
-                            builder: (context) {
-                              final bestVersion =
-                                  mod.findFirstEnabledOrHighestVersion!;
-                              return _buildVersionCell(
-                                WispGrid.lightTextOpacity,
-                                mod,
-                                isGameRunning,
-                                bestVersion,
-                                modifiers.columnState,
-                                modsMetadata?.getMergedModMetadata(mod.id),
-                              );
-                            },
-                          ),
+                      getSortValue: (mod) =>
+                          mod.findFirstEnabledOrHighestVersion?.modInfo.version,
+                      itemCellBuilder: (mod, modifiers) => Builder(
+                        builder: (context) {
+                          final bestVersion =
+                              mod.findFirstEnabledOrHighestVersion!;
+                          return _buildVersionCell(
+                            WispGrid.lightTextOpacity,
+                            mod,
+                            isGameRunning,
+                            bestVersion,
+                            modifiers.columnState,
+                            modsMetadata?.getMergedModMetadata(mod.id),
+                          );
+                        },
+                      ),
                       defaultState: WispGridColumnState(position: 7, width: 75),
                     ),
                     WispGridColumn<Mod>(
                       key: ModGridHeader.vramImpact.name,
                       name: "VRAM Est.",
                       isSortable: true,
-                      getSortValue:
-                          (mod) =>
-                              vramEstState
-                                  .valueOrNull
-                                  ?.modVramInfo[mod
-                                      .findHighestEnabledVersion
-                                      ?.smolId]
-                                  ?.maxPossibleBytesForMod ??
-                              0,
-                      headerCellBuilder:
-                          (modifiers) =>
-                              buildColumnHeader(
-                                ModGridHeader.vramImpact,
-                                modifiers,
-                              ).child,
-                      itemCellBuilder:
-                          (mod, modifiers) => buildVramCell(
-                            WispGrid.lightTextOpacity,
-                            mod,
-                            modifiers.columnState,
-                          ),
+                      getSortValue: (mod) =>
+                          vramEstState
+                              .valueOrNull
+                              ?.modVramInfo[mod
+                                  .findHighestEnabledVersion
+                                  ?.smolId]
+                              ?.imagesNotIncludingGraphicsLib()
+                              .sum() ??
+                          0,
+                      headerCellBuilder: (modifiers) => buildColumnHeader(
+                        ModGridHeader.vramImpact,
+                        modifiers,
+                      ).child,
+                      itemCellBuilder: (mod, modifiers) => buildVramCell(
+                        WispGrid.lightTextOpacity,
+                        mod,
+                        modifiers.columnState,
+                      ),
                       defaultState: WispGridColumnState(
                         position: 8,
                         width: 128,
@@ -624,58 +590,47 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                       key: ModGridHeader.gameVersion.name,
                       name: "Game Version",
                       isSortable: true,
-                      getSortValue:
-                          (mod) =>
-                              mod
-                                  .findFirstEnabledOrHighestVersion
-                                  ?.modInfo
-                                  .gameVersion,
-                      headerCellBuilder:
-                          (modifiers) =>
-                              buildColumnHeader(
-                                ModGridHeader.gameVersion,
-                                modifiers,
-                              ).child,
-                      itemCellBuilder:
-                          (mod, modifiers) => Builder(
-                            builder: (context) {
-                              final bestVersion =
-                                  mod.findFirstEnabledOrHighestVersion!;
-                              final originalGameVersion =
-                                  bestVersion.modInfo.originalGameVersion;
+                      getSortValue: (mod) => mod
+                          .findFirstEnabledOrHighestVersion
+                          ?.modInfo
+                          .gameVersion,
+                      headerCellBuilder: (modifiers) => buildColumnHeader(
+                        ModGridHeader.gameVersion,
+                        modifiers,
+                      ).child,
+                      itemCellBuilder: (mod, modifiers) => Builder(
+                        builder: (context) {
+                          final bestVersion =
+                              mod.findFirstEnabledOrHighestVersion!;
+                          final originalGameVersion =
+                              bestVersion.modInfo.originalGameVersion;
 
-                              return MovingTooltipWidget.text(
-                                message:
-                                    originalGameVersion != null
-                                        ? "Original game version: $originalGameVersion"
-                                        : null,
-                                child: Opacity(
-                                  opacity: WispGrid.lightTextOpacity,
-                                  child: Text(
-                                    "${bestVersion.modInfo.gameVersion ?? "(no game version)"}"
-                                    "${originalGameVersion != null ? "**" : ""}",
-                                    style:
-                                        compareGameVersions(
-                                                  bestVersion
-                                                      .modInfo
-                                                      .gameVersion,
-                                                  ref
-                                                      .watch(appSettings)
-                                                      .lastStarsectorVersion,
-                                                ) ==
-                                                GameCompatibility.perfectMatch
-                                            ? theme.textTheme.labelLarge
-                                            : theme.textTheme.labelLarge
-                                                ?.copyWith(
-                                                  color:
-                                                      ThemeManager
-                                                          .vanillaErrorColor,
-                                                ),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
+                          return MovingTooltipWidget.text(
+                            message: originalGameVersion != null
+                                ? "Original game version: $originalGameVersion"
+                                : null,
+                            child: Opacity(
+                              opacity: WispGrid.lightTextOpacity,
+                              child: Text(
+                                "${bestVersion.modInfo.gameVersion ?? "(no game version)"}"
+                                "${originalGameVersion != null ? "**" : ""}",
+                                style:
+                                    compareGameVersions(
+                                          bestVersion.modInfo.gameVersion,
+                                          ref
+                                              .watch(appSettings)
+                                              .lastStarsectorVersion,
+                                        ) ==
+                                        GameCompatibility.perfectMatch
+                                    ? theme.textTheme.labelLarge
+                                    : theme.textTheme.labelLarge?.copyWith(
+                                        color: ThemeManager.vanillaErrorColor,
+                                      ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                       defaultState: WispGridColumnState(
                         position: 9,
                         width: 100,
@@ -685,37 +640,33 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                       key: ModGridHeader.firstSeen.name,
                       name: "First Seen",
                       isSortable: true,
-                      getSortValue:
-                          (mod) =>
-                              modsMetadata
+                      getSortValue: (mod) =>
+                          modsMetadata
+                              ?.getMergedModMetadata(mod.id)
+                              ?.firstSeen ??
+                          0,
+                      headerCellBuilder: (modifiers) => buildColumnHeader(
+                        ModGridHeader.firstSeen,
+                        modifiers,
+                      ).child,
+                      itemCellBuilder: (mod, modifiers) => Opacity(
+                        opacity: WispGrid.lightTextOpacity,
+                        child: Text(
+                          modsMetadata
                                   ?.getMergedModMetadata(mod.id)
-                                  ?.firstSeen ??
-                              0,
-                      headerCellBuilder:
-                          (modifiers) =>
-                              buildColumnHeader(
-                                ModGridHeader.firstSeen,
-                                modifiers,
-                              ).child,
-                      itemCellBuilder:
-                          (mod, modifiers) => Opacity(
-                            opacity: WispGrid.lightTextOpacity,
-                            child: Text(
-                              modsMetadata
-                                      ?.getMergedModMetadata(mod.id)
-                                      ?.let(
-                                        (m) => Constants.dateTimeFormat.format(
-                                          DateTime.fromMillisecondsSinceEpoch(
-                                            m.firstSeen,
-                                          ),
-                                        ),
-                                      ) ??
-                                  "",
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.labelLarge,
-                            ),
-                          ),
+                                  ?.let(
+                                    (m) => Constants.dateTimeFormat.format(
+                                      DateTime.fromMillisecondsSinceEpoch(
+                                        m.firstSeen,
+                                      ),
+                                    ),
+                                  ) ??
+                              "",
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.labelLarge,
+                        ),
+                      ),
                       defaultState: WispGridColumnState(
                         position: 10,
                         width: 150,
@@ -725,40 +676,35 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                       key: ModGridHeader.lastEnabled.name,
                       name: "Last Enabled",
                       isSortable: true,
-                      getSortValue:
-                          (mod) =>
-                              modsMetadata
+                      getSortValue: (mod) =>
+                          modsMetadata
+                              ?.getMergedModMetadata(mod.id)
+                              ?.lastEnabled ??
+                          0,
+                      headerCellBuilder: (modifiers) => buildColumnHeader(
+                        ModGridHeader.lastEnabled,
+                        modifiers,
+                      ).child,
+                      itemCellBuilder: (mod, modifiers) => Opacity(
+                        opacity: WispGrid.lightTextOpacity,
+                        child: Text(
+                          modsMetadata
                                   ?.getMergedModMetadata(mod.id)
-                                  ?.lastEnabled ??
-                              0,
-                      headerCellBuilder:
-                          (modifiers) =>
-                              buildColumnHeader(
-                                ModGridHeader.lastEnabled,
-                                modifiers,
-                              ).child,
-                      itemCellBuilder:
-                          (mod, modifiers) => Opacity(
-                            opacity: WispGrid.lightTextOpacity,
-                            child: Text(
-                              modsMetadata
-                                      ?.getMergedModMetadata(mod.id)
-                                      ?.lastEnabled
-                                      ?.let(
-                                        (
-                                          lastEnabled,
-                                        ) => Constants.dateTimeFormat.format(
+                                  ?.lastEnabled
+                                  ?.let(
+                                    (lastEnabled) =>
+                                        Constants.dateTimeFormat.format(
                                           DateTime.fromMillisecondsSinceEpoch(
                                             lastEnabled,
                                           ),
                                         ),
-                                      ) ??
-                                  "",
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.labelLarge,
-                            ),
-                          ),
+                                  ) ??
+                              "",
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.labelLarge,
+                        ),
+                      ),
                       defaultState: WispGridColumnState(
                         position: 11,
                         width: 150,
@@ -806,57 +752,49 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
               ),
           ],
           child: OutlinedButton.icon(
-            onPressed:
-                () =>
-                    isScanningVram
-                        ? ref
-                            .read(AppState.vramEstimatorProvider.notifier)
-                            .cancelEstimation()
-                        : showDialog(
-                          context: context,
-                          builder:
-                              (context) => AlertDialog(
-                                icon: const Icon(Icons.memory),
-                                title: const Text("Estimate VRAM"),
-                                content: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Text(
-                                      "This will scan all enabled mods and estimate the total VRAM usage.",
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      "This may take a few minutes and cause your computer to lag!",
-                                      style: TextStyle(
-                                        color:
-                                            Theme.of(context).colorScheme.error,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () {
-                                      Navigator.of(context).pop();
-                                    },
-                                    child: const Text("Cancel"),
-                                  ),
-                                  TextButton(
-                                    onPressed: () {
-                                      ref
-                                          .read(
-                                            AppState
-                                                .vramEstimatorProvider
-                                                .notifier,
-                                          )
-                                          .startEstimating();
-                                      Navigator.of(context).pop();
-                                    },
-                                    child: const Text("Estimate"),
-                                  ),
-                                ],
-                              ),
+            onPressed: () => isScanningVram
+                ? ref
+                      .read(AppState.vramEstimatorProvider.notifier)
+                      .cancelEstimation()
+                : showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      icon: const Icon(Icons.memory),
+                      title: const Text("Estimate VRAM"),
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text(
+                            "This will scan all enabled mods and estimate the total VRAM usage.",
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            "This may take a few minutes and cause your computer to lag!",
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.error,
+                            ),
+                          ),
+                        ],
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                          child: const Text("Cancel"),
                         ),
+                        TextButton(
+                          onPressed: () {
+                            ref
+                                .read(AppState.vramEstimatorProvider.notifier)
+                                .startEstimating();
+                            Navigator.of(context).pop();
+                          },
+                          child: const Text("Estimate"),
+                        ),
+                      ],
+                    ),
+                  ),
             label: Text(isScanningVram ? "Cancel Scan" : "Est. VRAM"),
             style: OutlinedButton.styleFrom(
               foregroundColor: Theme.of(
@@ -880,8 +818,9 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
         final activeProfileId = ref.watch(
           appSettings.select((s) => s.activeModProfileId),
         );
-        final activeProfile =
-            ref.read(modProfilesProvider.notifier).getCurrentModProfile();
+        final activeProfile = ref
+            .read(modProfilesProvider.notifier)
+            .getCurrentModProfile();
 
         return SizedBox(
           height: 36,
@@ -997,120 +936,117 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
       message: "More options",
       child: PopupMenuButton(
         tooltip: "",
-        itemBuilder:
-            (context) => [
-              PopupMenuItem(
-                onTap: () {
-                  showDialog(
-                    context: context,
-                    builder: (context) {
-                      return AlertDialog(
-                        title: Text("Enable All Mods"),
-                        content: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              "Are you sure you want to enable all ${allMods.length} mods?",
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              "This will enable the latest version of all disabled mods."
-                              "\nMods that are already enabled won't be changed.",
-                              style: theme.textTheme.labelLarge,
-                            ),
-                          ],
+        itemBuilder: (context) => [
+          PopupMenuItem(
+            onTap: () {
+              showDialog(
+                context: context,
+                builder: (context) {
+                  return AlertDialog(
+                    title: Text("Enable All Mods"),
+                    content: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          "Are you sure you want to enable all ${allMods.length} mods?",
                         ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: const Text("Cancel"),
-                          ),
-                          TextButton(
-                            onPressed: () {
-                              Navigator.pop(context);
-                              ref
-                                  .read(modManager.notifier)
-                                  .enableMultiple(allMods);
-                            },
-                            child: const Text("Enable All"),
-                          ),
-                        ],
-                      );
-                    },
-                  );
-                },
-                child: ListTile(
-                  dense: true,
-                  leading: Icon(Icons.local_fire_department),
-                  title: Text("Enable All Mods"),
-                ),
-              ),
-              PopupMenuItem(
-                onTap: () {
-                  showDialog(
-                    context: context,
-                    builder: (context) {
-                      return AlertDialog(
-                        title: Text("Disable All Mods"),
-                        content: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              "Are you sure you want to disable all ${allMods.length} mods?",
-                            ),
-                          ],
+                        const SizedBox(height: 16),
+                        Text(
+                          "This will enable the latest version of all disabled mods."
+                          "\nMods that are already enabled won't be changed.",
+                          style: theme.textTheme.labelLarge,
                         ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: const Text("Cancel"),
-                          ),
-                          TextButton(
-                            onPressed: () {
-                              Navigator.pop(context);
-                              ref
-                                  .read(modManager.notifier)
-                                  .disableMultiple(allMods);
-                            },
-                            child: const Text("Disable All"),
-                          ),
-                        ],
-                      );
-                    },
+                      ],
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text("Cancel"),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          ref.read(modManager.notifier).enableMultiple(allMods);
+                        },
+                        child: const Text("Enable All"),
+                      ),
+                    ],
                   );
                 },
-                child: ListTile(
-                  dense: true,
-                  leading: Icon(Icons.fire_extinguisher),
-                  title: Text("Disable All Mods"),
-                ),
-              ),
-              PopupMenuItem(
-                onTap: () {
-                  copyModListToClipboardFromMods(
-                    allMods.where((mod) => mod.hasEnabledVariant).toList(),
-                    context,
+              );
+            },
+            child: ListTile(
+              dense: true,
+              leading: Icon(Icons.local_fire_department),
+              title: Text("Enable All Mods"),
+            ),
+          ),
+          PopupMenuItem(
+            onTap: () {
+              showDialog(
+                context: context,
+                builder: (context) {
+                  return AlertDialog(
+                    title: Text("Disable All Mods"),
+                    content: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          "Are you sure you want to disable all ${allMods.length} mods?",
+                        ),
+                      ],
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text("Cancel"),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          ref
+                              .read(modManager.notifier)
+                              .disableMultiple(allMods);
+                        },
+                        child: const Text("Disable All"),
+                      ),
+                    ],
                   );
                 },
-                child: ListTile(
-                  dense: true,
-                  leading: Icon(Icons.copy),
-                  title: Text("Copy Enabled Mods to Clipboard"),
-                ),
-              ),
-              PopupMenuItem(
-                onTap: () {
-                  copyModListToClipboardFromMods(allMods, context);
-                },
-                child: ListTile(
-                  dense: true,
-                  leading: Icon(Icons.copy_all),
-                  title: Text("Copy All Mods to Clipboard"),
-                ),
-              ),
-            ],
+              );
+            },
+            child: ListTile(
+              dense: true,
+              leading: Icon(Icons.fire_extinguisher),
+              title: Text("Disable All Mods"),
+            ),
+          ),
+          PopupMenuItem(
+            onTap: () {
+              copyModListToClipboardFromMods(
+                allMods.where((mod) => mod.hasEnabledVariant).toList(),
+                context,
+              );
+            },
+            child: ListTile(
+              dense: true,
+              leading: Icon(Icons.copy),
+              title: Text("Copy Enabled Mods to Clipboard"),
+            ),
+          ),
+          PopupMenuItem(
+            onTap: () {
+              copyModListToClipboardFromMods(allMods, context);
+            },
+            child: ListTile(
+              dense: true,
+              leading: Icon(Icons.copy_all),
+              title: Text("Copy All Mods to Clipboard"),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1166,11 +1102,10 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                 MovingTooltipWidget.text(
                   message: "About VRAM & VRAM Estimator",
                   child: IconButton(
-                    onPressed:
-                        () => showDialog(
-                          context: context,
-                          builder: (context) => VramCheckerExplanationDialog(),
-                        ),
+                    onPressed: () => showDialog(
+                      context: context,
+                      builder: (context) => VramCheckerExplanationDialog(),
+                    ),
                     padding: const EdgeInsets.all(2),
                     constraints: const BoxConstraints(),
                     icon: const Icon(Icons.info_outline, size: 20),
@@ -1219,97 +1154,71 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
               final vramProvider = ref.watch(AppState.vramEstimatorProvider);
               final vramMap = vramProvider.valueOrNull?.modVramInfo ?? {};
               final biggestFish = vramMap
-                  .maxBy(
-                    (e) =>
-                        e.value.bytesUsingGraphicsLibConfig(graphicsLibConfig),
-                  )
+                  .maxBy((e) => e.value.imagesNotIncludingGraphicsLib().sum())
                   ?.value
-                  .bytesUsingGraphicsLibConfig(graphicsLibConfig);
-              final ratio =
-                  biggestFish == null
-                      ? 0.00
-                      : (vramMap[bestVersion.smolId]
-                                  ?.bytesUsingGraphicsLibConfig(
-                                    graphicsLibConfig,
-                                  )
-                                  .toDouble() ??
-                              0) /
-                          biggestFish.toDouble();
+                  .imagesNotIncludingGraphicsLib()
+                  .sum();
+              final ratio = biggestFish == null
+                  ? 0.00
+                  : (vramMap[bestVersion.smolId]
+                                ?.imagesNotIncludingGraphicsLib()
+                                .sum()
+                                .toDouble() ??
+                            0) /
+                        biggestFish.toDouble();
               final vramEstimate = vramMap[bestVersion.smolId];
-              final withoutGraphicsLib =
-                  vramEstimate != null
-                      ? List.generate(
-                            vramEstimate.images.length,
-                            (i) => ModImageView(i, vramEstimate.images),
-                          )
-                          .where((view) => view.graphicsLibType == null)
-                          .map((view) => view.bytesUsed)
-                          .toList()
-                      : null;
-
-              final fromGraphicsLib =
-                  vramEstimate != null
-                      ? List.generate(
-                            vramEstimate.images.length,
-                            (i) => ModImageView(i, vramEstimate.images),
-                          )
-                          .where((view) => view.graphicsLibType != null)
-                          .map((view) => view.bytesUsed)
-                          .toList()
-                      : null;
+              final withoutGraphicsLib = vramEstimate
+                  ?.imagesNotIncludingGraphicsLib();
 
               final isIllustratedEntities =
                   mod.findFirstEnabledOrHighestVersion?.modInfo.id ==
                   "illustrated_entities";
 
               return MovingTooltipWidget.framed(
-                tooltipWidget:
-                    vramEstimate == null
-                        ? null
-                        : IntrinsicWidth(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                "VRAM Estimate",
-                                style: theme.textTheme.labelLarge?.copyWith(
-                                  fontSize: 14,
-                                ),
+                tooltipWidget: vramEstimate == null
+                    ? null
+                    : IntrinsicWidth(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              "VRAM Estimate",
+                              style: theme.textTheme.labelLarge?.copyWith(
+                                fontSize: 14,
                               ),
-                              Text(
-                                "${mod.findFirstEnabledOrHighestVersion?.modInfo.nameOrId} v${vramEstimate.info.version}"
-                                "\n\n${withoutGraphicsLib?.sum().bytesAsReadableMB()} from mod (${withoutGraphicsLib?.length} images)"
-                                "\n${fromGraphicsLib?.sum().bytesAsReadableMB()} added by your GraphicsLib settings (${fromGraphicsLib?.length} images)"
-                                "\n---"
-                                "\n${vramEstimate.bytesUsingGraphicsLibConfig(graphicsLibConfig).bytesAsReadableMB()} total"
-                                "${isIllustratedEntities ? ""
+                            ),
+                            Text(
+                              "${mod.findFirstEnabledOrHighestVersion?.modInfo.nameOrId} v${vramEstimate.info.version}"
+                              "\n\n${withoutGraphicsLib?.sum().bytesAsReadableMB()} from mod (${withoutGraphicsLib?.length} images)"
+                              "\n---"
+                              "\n${withoutGraphicsLib?.sum().bytesAsReadableMB()} total"
+                              "${isIllustratedEntities ? ""
                                         ""
                                         "\n\nNOTE"
                                         "\nIllustrated Entities dynamically loads in images, so it uses much less VRAM than ${Constants.appName} estimates." : ""}",
-                                style: theme.textTheme.labelLarge,
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 8,
-                                ),
-                                child: Divider(
-                                  color: theme.colorScheme.onSurface.withValues(
-                                    alpha: .5,
-                                  ),
+                              style: theme.textTheme.labelLarge,
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              child: Divider(
+                                color: theme.colorScheme.onSurface.withValues(
+                                  alpha: .5,
                                 ),
                               ),
-                              VramEstimatorPage.buildVramTopFilesTableWidget(
-                                theme,
-                                vramEstimate,
-                                graphicsLibConfig,
-                              ),
-                            ],
-                          ),
+                            ),
+                            VramEstimatorPage.buildVramTopFilesTableWidget(
+                              theme,
+                              vramEstimate,
+                              graphicsLibConfig,
+                            ),
+                          ],
                         ),
-                warningLevel:
-                    isIllustratedEntities ? TooltipWarningLevel.warning : null,
+                      ),
+                warningLevel: isIllustratedEntities
+                    ? TooltipWarningLevel.warning
+                    : null,
                 child: Stack(
                   children: [
                     Align(
@@ -1317,53 +1226,49 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8.0),
                         child:
-                            vramEstimate?.bytesUsingGraphicsLibConfig(
-                                      graphicsLibConfig,
-                                    ) !=
-                                    null
-                                ? Text(
-                                  vramEstimate!
-                                      .bytesUsingGraphicsLibConfig(
-                                        graphicsLibConfig,
-                                      )
-                                      .bytesAsReadableMB(),
-                                  style: theme.textTheme.labelLarge?.copyWith(
-                                    color: lightTextColor,
-                                  ),
-                                )
-                                : Align(
-                                  alignment: Alignment.centerRight,
-                                  child: Opacity(
-                                    opacity: 0.5,
-                                    child: Disable(
-                                      isEnabled:
-                                          vramEstimatorState
-                                              .valueOrNull
-                                              ?.isScanning !=
-                                          true,
-                                      child: MovingTooltipWidget.text(
-                                        message: "Estimate VRAM usage",
-                                        child: IconButton(
-                                          icon: const Icon(Icons.memory),
-                                          iconSize: 24,
-                                          onPressed: () {
-                                            ref
-                                                .read(
-                                                  AppState
-                                                      .vramEstimatorProvider
-                                                      .notifier,
-                                                )
-                                                .startEstimating(
-                                                  variantsToCheck: [
-                                                    mod.findFirstEnabledOrHighestVersion!,
-                                                  ],
-                                                );
-                                          },
-                                        ),
+                            vramEstimate?.imagesNotIncludingGraphicsLib() != null
+                            ? Text(
+                                vramEstimate!
+                                    .imagesNotIncludingGraphicsLib()
+                                    .sum()
+                                    .bytesAsReadableMB(),
+                                style: theme.textTheme.labelLarge?.copyWith(
+                                  color: lightTextColor,
+                                ),
+                              )
+                            : Align(
+                                alignment: Alignment.centerRight,
+                                child: Opacity(
+                                  opacity: 0.5,
+                                  child: Disable(
+                                    isEnabled:
+                                        vramEstimatorState
+                                            .valueOrNull
+                                            ?.isScanning !=
+                                        true,
+                                    child: MovingTooltipWidget.text(
+                                      message: "Estimate VRAM usage",
+                                      child: IconButton(
+                                        icon: const Icon(Icons.memory),
+                                        iconSize: 24,
+                                        onPressed: () {
+                                          ref
+                                              .read(
+                                                AppState
+                                                    .vramEstimatorProvider
+                                                    .notifier,
+                                              )
+                                              .startEstimating(
+                                                variantsToCheck: [
+                                                  mod.findFirstEnabledOrHighestVersion!,
+                                                ],
+                                              );
+                                        },
                                       ),
                                     ),
                                   ),
                                 ),
+                              ),
                       ),
                     ),
                     if (vramEstimate != null)
@@ -1401,8 +1306,9 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
         final lightTextColor = theme.colorScheme.onSurface.withOpacity(
           lightTextOpacity,
         );
-        final versionCheckResultsNew =
-            ref.watch(AppState.versionCheckResults).valueOrNull;
+        final versionCheckResultsNew = ref
+            .watch(AppState.versionCheckResults)
+            .valueOrNull;
         //
         final versionCheckComparison = mod.updateCheck(versionCheckResultsNew);
         final localVersionCheck =
@@ -1419,191 +1325,194 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
         return mod.modVariants.isEmpty
             ? const Text("")
             : ContextMenuRegion(
-              contextMenu: ContextMenu(
-                entries: [
-                  if (!areUpdatesMuted)
-                    MenuItem(
-                      label: 'Recheck',
-                      icon: Icons.refresh,
-                      onSelected: () {
-                        ref
-                            .read(AppState.versionCheckResults.notifier)
-                            .refresh(
-                              skipCache: true,
-                              specificVariantsToCheck: [
-                                mod.findFirstEnabledOrHighestVersion!,
-                              ],
-                            );
-                      },
-                    ),
-                  buildMenuItemToggleMuteUpdates(mod, ref),
-                ],
-              ),
-              child: Row(
-                children: [
-                  if (changelogUrl.isNotNullOrEmpty())
-                    MovingTooltipWidget(
-                      tooltipWidget: SizedBox(
-                        width: 400,
-                        height: 400,
-                        child: TooltipFrame(
-                          child: Stack(
-                            children: [
-                              Align(
-                                alignment: Alignment.topRight,
-                                child: Padding(
-                                  padding: const EdgeInsets.only(
-                                    bottom: 4,
-                                    top: 0,
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    children: [
-                                      Padding(
-                                        padding: const EdgeInsets.only(
-                                          right: 4,
-                                        ),
-                                        child: SvgImageIcon(
-                                          "assets/images/icon-bullhorn-variant.svg",
-                                          color: theme.colorScheme.primary,
-                                          width: 20,
-                                          height: 20,
-                                        ),
-                                      ),
-                                      Text(
-                                        "Click horn to see full changelog",
-                                        style: theme.textTheme.bodySmall
-                                            ?.copyWith(
-                                              fontWeight: FontWeight.bold,
-                                              color: theme.colorScheme.primary,
-                                            ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.only(top: 12),
-                                child: Changelogs(
-                                  mod,
-                                  localVersionCheck,
-                                  remoteVersionCheck,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                contextMenu: ContextMenu(
+                  entries: [
+                    if (!areUpdatesMuted)
+                      MenuItem(
+                        label: 'Recheck',
+                        icon: Icons.refresh,
+                        onSelected: () {
+                          ref
+                              .read(AppState.versionCheckResults.notifier)
+                              .refresh(
+                                skipCache: true,
+                                specificVariantsToCheck: [
+                                  mod.findFirstEnabledOrHighestVersion!,
+                                ],
+                              );
+                        },
                       ),
-                      child: InkWell(
-                        onTap: () {
-                          showDialog(
-                            context: context,
-                            builder:
-                                (context) => AlertDialog(
-                                  content: Changelogs(
+                    buildMenuItemToggleMuteUpdates(mod, ref),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    if (changelogUrl.isNotNullOrEmpty())
+                      MovingTooltipWidget(
+                        tooltipWidget: SizedBox(
+                          width: 400,
+                          height: 400,
+                          child: TooltipFrame(
+                            child: Stack(
+                              children: [
+                                Align(
+                                  alignment: Alignment.topRight,
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(
+                                      bottom: 4,
+                                      top: 0,
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                            right: 4,
+                                          ),
+                                          child: SvgImageIcon(
+                                            "assets/images/icon-bullhorn-variant.svg",
+                                            color: theme.colorScheme.primary,
+                                            width: 20,
+                                            height: 20,
+                                          ),
+                                        ),
+                                        Text(
+                                          "Click horn to see full changelog",
+                                          style: theme.textTheme.bodySmall
+                                              ?.copyWith(
+                                                fontWeight: FontWeight.bold,
+                                                color:
+                                                    theme.colorScheme.primary,
+                                              ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 12),
+                                  child: Changelogs(
                                     mod,
                                     localVersionCheck,
                                     remoteVersionCheck,
                                   ),
                                 ),
-                          );
-                        },
-                        child: SvgImageIcon(
-                          "assets/images/icon-bullhorn-variant.svg",
-                          color: theme.iconTheme.color?.withValues(alpha: 0.7),
-                          width: 20,
-                          height: 20,
-                        ),
-                      ),
-                    )
-                  else
-                    SizedBox(width: 20),
-                  (areUpdatesMuted)
-                      ? MovingTooltipWidget.text(
-                        message: "Updates muted",
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 4.0, right: 8),
-                          child: Icon(
-                            Icons.notifications_off,
-                            size: 20.0,
-                            color: theme.colorScheme.onSurface.withValues(
-                              alpha: 0.5,
+                              ],
                             ),
+                          ),
+                        ),
+                        child: InkWell(
+                          onTap: () {
+                            showDialog(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                content: Changelogs(
+                                  mod,
+                                  localVersionCheck,
+                                  remoteVersionCheck,
+                                ),
+                              ),
+                            );
+                          },
+                          child: SvgImageIcon(
+                            "assets/images/icon-bullhorn-variant.svg",
+                            color: theme.iconTheme.color?.withValues(
+                              alpha: 0.7,
+                            ),
+                            width: 20,
+                            height: 20,
                           ),
                         ),
                       )
-                      : MovingTooltipWidget(
-                        tooltipWidget:
-                            ModListBasicEntry.buildVersionCheckTextReadoutForTooltip(
-                              mod,
-                              null,
-                              versionCheckComparison?.comparisonInt,
-                              localVersionCheck,
-                              remoteVersionCheck,
-                            ),
-                        child: Disable(
-                          isEnabled: !isGameRunning,
-                          child: InkWell(
-                            onTap: () {
-                              if (remoteVersionCheck?.remoteVersion != null &&
-                                  versionCheckComparison?.comparisonInt == -1) {
-                                ref
-                                    .read(downloadManager.notifier)
-                                    .downloadUpdateViaBrowser(
-                                      remoteVersionCheck!.remoteVersion!,
-                                      activateVariantOnComplete: false,
-                                      modInfo: bestVersion.modInfo,
-                                    );
-                              } else {
-                                showDialog(
-                                  context: context,
-                                  builder:
-                                      (context) => AlertDialog(
-                                        content:
-                                            ModListBasicEntry.changeAndVersionCheckAlertDialogContent(
-                                              mod,
-                                              changelogUrl,
-                                              localVersionCheck,
-                                              remoteVersionCheck,
-                                              versionCheckComparison
-                                                  ?.comparisonInt,
-                                            ),
-                                      ),
-                                );
-                              }
-                            },
-                            onSecondaryTap:
-                                () => showDialog(
-                                  context: context,
-                                  builder:
-                                      (context) => AlertDialog(
-                                        content:
-                                            ModListBasicEntry.changeAndVersionCheckAlertDialogContent(
-                                              mod,
-                                              changelogUrl,
-                                              localVersionCheck,
-                                              remoteVersionCheck,
-                                              versionCheckComparison
-                                                  ?.comparisonInt,
-                                            ),
-                                      ),
-                                ),
+                    else
+                      SizedBox(width: 20),
+                    (areUpdatesMuted)
+                        ? MovingTooltipWidget.text(
+                            message: "Updates muted",
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 5.0,
+                              padding: const EdgeInsets.only(
+                                left: 4.0,
+                                right: 8,
                               ),
-                              child: VersionCheckIcon.fromComparison(
-                                comparison: versionCheckComparison,
-                                theme: theme,
+                              child: Icon(
+                                Icons.notifications_off,
+                                size: 20.0,
+                                color: theme.colorScheme.onSurface.withValues(
+                                  alpha: 0.5,
+                                ),
+                              ),
+                            ),
+                          )
+                        : MovingTooltipWidget(
+                            tooltipWidget:
+                                ModListBasicEntry.buildVersionCheckTextReadoutForTooltip(
+                                  mod,
+                                  null,
+                                  versionCheckComparison?.comparisonInt,
+                                  localVersionCheck,
+                                  remoteVersionCheck,
+                                ),
+                            child: Disable(
+                              isEnabled: !isGameRunning,
+                              child: InkWell(
+                                onTap: () {
+                                  if (remoteVersionCheck?.remoteVersion !=
+                                          null &&
+                                      versionCheckComparison?.comparisonInt ==
+                                          -1) {
+                                    ref
+                                        .read(downloadManager.notifier)
+                                        .downloadUpdateViaBrowser(
+                                          remoteVersionCheck!.remoteVersion!,
+                                          activateVariantOnComplete: false,
+                                          modInfo: bestVersion.modInfo,
+                                        );
+                                  } else {
+                                    showDialog(
+                                      context: context,
+                                      builder: (context) => AlertDialog(
+                                        content:
+                                            ModListBasicEntry.changeAndVersionCheckAlertDialogContent(
+                                              mod,
+                                              changelogUrl,
+                                              localVersionCheck,
+                                              remoteVersionCheck,
+                                              versionCheckComparison
+                                                  ?.comparisonInt,
+                                            ),
+                                      ),
+                                    );
+                                  }
+                                },
+                                onSecondaryTap: () => showDialog(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    content:
+                                        ModListBasicEntry.changeAndVersionCheckAlertDialogContent(
+                                          mod,
+                                          changelogUrl,
+                                          localVersionCheck,
+                                          remoteVersionCheck,
+                                          versionCheckComparison?.comparisonInt,
+                                        ),
+                                  ),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 5.0,
+                                  ),
+                                  child: VersionCheckIcon.fromComparison(
+                                    comparison: versionCheckComparison,
+                                    theme: theme,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ),
-                ],
-                // ),
-              ),
-            );
+                  ],
+                  // ),
+                ),
+              );
       },
     );
   }
@@ -1628,83 +1537,80 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
         return mod.modVariants.isEmpty
             ? const Text("")
             : Row(
-              children: [
-                Expanded(
-                  child: Builder(
-                    builder: (context) {
-                      final variantsWithEnabledFirst = mod.modVariants.sorted(
-                        (a, b) =>
-                            a.isModInfoEnabled != b.isModInfoEnabled
-                                ? (a.isModInfoEnabled ? -1 : 1)
-                                : a.compareTo(b),
-                      );
+                children: [
+                  Expanded(
+                    child: Builder(
+                      builder: (context) {
+                        final variantsWithEnabledFirst = mod.modVariants.sorted(
+                          (a, b) => a.isModInfoEnabled != b.isModInfoEnabled
+                              ? (a.isModInfoEnabled ? -1 : 1)
+                              : a.compareTo(b),
+                        );
 
-                      final text = RichText(
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        text: TextSpan(
-                          children: [
-                            for (
-                              var i = 0;
-                              i < variantsWithEnabledFirst.length;
-                              i++
-                            ) ...[
-                              if (i > 0)
+                        final text = RichText(
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          text: TextSpan(
+                            children: [
+                              for (
+                                var i = 0;
+                                i < variantsWithEnabledFirst.length;
+                                i++
+                              ) ...[
+                                if (i > 0)
+                                  TextSpan(
+                                    text: ', ',
+                                    style: theme.textTheme.labelLarge?.copyWith(
+                                      color: disabledVersionTextColor,
+                                    ),
+                                  ),
                                 TextSpan(
-                                  text: ', ',
+                                  text: variantsWithEnabledFirst[i]
+                                      .modInfo
+                                      .version
+                                      .toString(),
                                   style: theme.textTheme.labelLarge?.copyWith(
-                                    color: disabledVersionTextColor,
+                                    color:
+                                        enabledVersion ==
+                                            variantsWithEnabledFirst[i]
+                                        ? null
+                                        : disabledVersionTextColor,
                                   ),
                                 ),
-                              TextSpan(
-                                text:
-                                    variantsWithEnabledFirst[i].modInfo.version
-                                        .toString(),
-                                style: theme.textTheme.labelLarge?.copyWith(
-                                  color:
-                                      enabledVersion ==
-                                              variantsWithEnabledFirst[i]
+                              ],
+                            ],
+                          ),
+                        );
+
+                        return MovingTooltipWidget.framed(
+                          tooltipWidget: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: mod.modVariants
+                                .sortedByDescending(
+                                  (v) => v.bestVersion ?? Version.zero(),
+                                )
+                                .map(
+                                  (v) => Text(
+                                    v.bestVersion?.toString() ?? "",
+
+                                    style: theme.textTheme.labelLarge?.copyWith(
+                                      color: enabledVersion == v
                                           ? null
                                           : disabledVersionTextColor,
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      );
-
-                      return MovingTooltipWidget.framed(
-                        tooltipWidget: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children:
-                              mod.modVariants
-                                  .sortedByDescending(
-                                    (v) => v.bestVersion ?? Version.zero(),
-                                  )
-                                  .map(
-                                    (v) => Text(
-                                      v.bestVersion?.toString() ?? "",
-
-                                      style: theme.textTheme.labelLarge
-                                          ?.copyWith(
-                                            color:
-                                                enabledVersion == v
-                                                    ? null
-                                                    : disabledVersionTextColor,
-                                          ),
                                     ),
-                                  )
-                                  .toList(),
-                        ),
-                        child: text,
-                      );
-                    },
+                                  ),
+                                )
+                                .toList(),
+                          ),
+                          child: text,
+                        );
+                      },
+                    ),
                   ),
-                ),
-              ],
-              // ),
-            );
+                ],
+                // ),
+              );
       },
     );
   }
@@ -1737,8 +1643,9 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
     ModVariant? enabledVersion,
     List<Mod> allMods,
   ) {
-    final modCompatibility =
-        ref.watch(AppState.modCompatibility)[enabledVersion?.smolId];
+    final modCompatibility = ref.watch(
+      AppState.modCompatibility,
+    )[enabledVersion?.smolId];
     final unmetDependencies =
         modCompatibility?.dependencyChecks
             .where((e) => !e.isCurrentlySatisfied)
@@ -1748,12 +1655,11 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
     if (unmetDependencies.isEmpty) return Container();
 
     final gridState = ref.watch(appSettings.select((s) => s.modsGridState));
-    final cellWidthBeforeNameColumn =
-        gridState.columnsState.entries
-            .sortedBy<num>((entry) => entry.value.position)
-            .takeWhile((element) => element.key != ModGridHeader.name.name)
-            .map((e) => e.value.width + WispGrid.gridRowSpacing)
-            .sum;
+    final cellWidthBeforeNameColumn = gridState.columnsState.entries
+        .sortedBy<num>((entry) => entry.value.position)
+        .takeWhile((element) => element.key != ModGridHeader.name.name)
+        .map((e) => e.value.width + WispGrid.gridRowSpacing)
+        .sum;
 
     return Padding(
       padding: EdgeInsets.only(left: cellWidthBeforeNameColumn, bottom: 4),
@@ -1826,15 +1732,13 @@ class MissingDependencyButton extends ConsumerWidget {
                       child: TextWithIcon(
                         text:
                             "Enable ${disabledVariant?.modInfo.formattedNameVersion}",
-                        leading:
-                            disabledVariant?.iconFilePath == null
-                                ? null
-                                : Image.file(
-                                  (disabledVariant?.iconFilePath ?? "")
-                                      .toFile(),
-                                  height: 20,
-                                  isAntiAlias: true,
-                                ),
+                        leading: disabledVariant?.iconFilePath == null
+                            ? null
+                            : Image.file(
+                                (disabledVariant?.iconFilePath ?? "").toFile(),
+                                height: 20,
+                                isAntiAlias: true,
+                              ),
                         leadingPadding: const EdgeInsets.only(right: 4),
                       ),
                     );
@@ -1919,14 +1823,9 @@ class FavoriteButton extends ConsumerWidget {
                 },
                 child: Icon(
                   isFavorited ? Icons.favorite : Icons.favorite_border,
-                  color:
-                      isFavorited
-                          ? Theme.of(
-                            context,
-                          ).colorScheme.secondary.withOpacity(0.6)
-                          : Theme.of(
-                            context,
-                          ).colorScheme.primary.withOpacity(0.6),
+                  color: isFavorited
+                      ? Theme.of(context).colorScheme.secondary.withOpacity(0.6)
+                      : Theme.of(context).colorScheme.primary.withOpacity(0.6),
                 ),
               ),
             ),

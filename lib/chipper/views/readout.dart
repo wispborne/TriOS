@@ -74,13 +74,13 @@ class Readout extends StatelessWidget {
                               _chips.filepath == null
                                   ? const TextSpan(text: "log")
                                   : TextSpan(
-                                    text: basename(_chips.filepath!),
-                                    style: TextStyle(
-                                      color: theme.textTheme.labelSmall?.color
-                                          ?.withAlpha(200),
-                                      fontWeight: FontWeight.w500,
+                                      text: basename(_chips.filepath!),
+                                      style: TextStyle(
+                                        color: theme.textTheme.labelSmall?.color
+                                            ?.withAlpha(200),
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                     ),
-                                  ),
                               TextSpan(
                                 text:
                                     " chipped in ${NumberFormat.decimalPattern().format(_chips.timeTaken)}ms",
@@ -232,18 +232,14 @@ class Readout extends StatelessWidget {
                 ConstrainedBox(
                   constraints: const BoxConstraints(maxHeight: 150),
                   child: InkWell(
-                    onTap:
-                        () => showMyDialog(
-                          context,
-                          body: [ModsList(mods: _mods)],
-                        ),
+                    onTap: () =>
+                        showMyDialog(context, body: [ModsList(mods: _mods)]),
                     mouseCursor: SystemMouseCursors.click,
                     child: ListView.builder(
                       itemCount: _mods.length,
                       scrollDirection: Axis.vertical,
-                      itemBuilder:
-                          (context, index) =>
-                              _mods[index].createWidget(context),
+                      itemBuilder: (context, index) =>
+                          _mods[index].createWidget(context),
                     ),
                   ),
                 ),
@@ -278,6 +274,7 @@ class Readout extends StatelessWidget {
                   child: ChipperLog(
                     errors: _chips.errorBlock,
                     showInfoLogs: showInfoLogs,
+                    showInfoIcons: false,
                   ),
                 ),
               ],
@@ -303,17 +300,15 @@ class ViewPreviousEntryButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Take a list of all lines before this one, then find the last one in the list that is specifically a "previous line" entry..
-    var thisError =
-        _errors[index] is GeneralErrorLogLine
-            ? (_errors[index] as GeneralErrorLogLine)
-            : null;
+    var thisError = _errors[index] is GeneralErrorLogLine
+        ? (_errors[index] as GeneralErrorLogLine)
+        : null;
     var prevThreadMessage = _errors
         .sublist(index + 1, _errors.length)
         .firstWhereOrNull(
-          (element) =>
-              element is GeneralErrorLogLine
-                  ? element.thread == thisError?.thread
-                  : true,
+          (element) => element is GeneralErrorLogLine
+              ? element.thread == thisError?.thread
+              : true,
         );
     if (prevThreadMessage == null) return const SizedBox(height: 15, width: 20);
 

@@ -33,9 +33,7 @@ class _DashboardState extends ConsumerState<Dashboard>
   @override
   void initState() {
     super.initState();
-    if (ref
-        .read(ChipperState.logRawContents)
-        .valueOrNull == null) {
+    if (ref.read(ChipperState.logRawContents).valueOrNull == null) {
       ref.read(ChipperState.logRawContents.notifier).loadDefaultLog();
     }
   }
@@ -43,11 +41,8 @@ class _DashboardState extends ConsumerState<Dashboard>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final isGameRunning = ref
-        .watch(AppState.isGameRunning)
-        .value == true;
-    final logfile =
-    ref
+    final isGameRunning = ref.watch(AppState.isGameRunning).value == true;
+    final logfile = ref
         .watch(ChipperState.logRawContents)
         .valueOrNull
         ?.filepath
@@ -79,17 +74,9 @@ class _DashboardState extends ConsumerState<Dashboard>
                                   ),
                                   leading: const Icon(Icons.speed, size: 32),
                                   subtitle: Text(
-                                    "Java ${ref
-                                        .watch(AppState.activeJre)
-                                        .valueOrNull
-                                        ?.version
-                                        .versionString ??
-                                        "(unknown JRE)"} • ${ref
-                                        .watch(currentRamAmountInMb)
-                                        .valueOrNull ?? "(unknown RAM)"} MB",
+                                    "Java ${ref.watch(AppState.activeJre).valueOrNull?.version.versionString ?? "(unknown JRE)"} • ${ref.watch(currentRamAmountInMb).valueOrNull ?? "(unknown RAM)"} MB",
                                   ),
-                                  collapsedBackgroundColor: Theme
-                                      .of(context)
+                                  collapsedBackgroundColor: Theme.of(context)
                                       .colorScheme
                                       .surfaceContainerLow
                                       .withOpacity(0.5),
@@ -108,10 +95,9 @@ class _DashboardState extends ConsumerState<Dashboard>
                       padding: const EdgeInsets.symmetric(horizontal: 8),
                       child: Builder(
                         builder: (context) {
-                          final errors =
-                              ref
-                                  .watch(ChipperState.logRawContents)
-                                  .valueOrNull;
+                          final errors = ref
+                              .watch(ChipperState.logRawContents)
+                              .valueOrNull;
                           final theme = Theme.of(context);
                           return Column(
                             children: [
@@ -123,7 +109,7 @@ class _DashboardState extends ConsumerState<Dashboard>
                                   children: [
                                     MovingTooltipWidget.text(
                                       message:
-                                      "Errors are normal. You can ignore them unless Starsector is misbehaving."
+                                          "Errors are normal. You can ignore them unless Starsector is misbehaving."
                                           "\n"
                                           "\nIf there is a crash, look at the bottom of the log for a bunch of lines starting with 'at'. Hopefully, one of them will mention the problematic mod's id, name, or prefix."
                                           "\nFor example, 'at data.scripts.campaign.II_IGFleetInflater.inflate(II_IGFleetInflater.java:59)' shows 'II_', which is Interstellar Imperium."
@@ -131,12 +117,11 @@ class _DashboardState extends ConsumerState<Dashboard>
                                           "\nMake sure your mods are up to date and report bugs to the mod makers!",
                                       child: Row(
                                         crossAxisAlignment:
-                                        CrossAxisAlignment.center,
+                                            CrossAxisAlignment.center,
                                         children: [
                                           Text(
                                             "Starsector Log",
-                                            style: Theme
-                                                .of(context)
+                                            style: Theme.of(context)
                                                 .textTheme
                                                 .titleLarge
                                                 ?.copyWith(fontSize: 20),
@@ -162,11 +147,7 @@ class _DashboardState extends ConsumerState<Dashboard>
                                       child: Padding(
                                         padding: const EdgeInsets.only(top: 4),
                                         child: Text(
-                                          "${logfile?.nameWithExtension ??
-                                              ""} • last updated ${errors
-                                              ?.lastUpdated
-                                              ?.relativeTimestamp() ??
-                                              "unknown"}",
+                                          "${logfile?.nameWithExtension ?? ""} • last updated ${errors?.lastUpdated?.relativeTimestamp() ?? "unknown"}",
                                           style: theme.textTheme.labelSmall,
                                         ),
                                       ),
@@ -179,13 +160,10 @@ class _DashboardState extends ConsumerState<Dashboard>
                                       ),
                                       child: TextButton.icon(
                                         onPressed: () {
-                                          final path =
-                                              ref
-                                                  .read(
-                                                ChipperState.logRawContents,
-                                              )
-                                                  .value
-                                                  ?.filepath;
+                                          final path = ref
+                                              .read(ChipperState.logRawContents)
+                                              .value
+                                              ?.filepath;
                                           if (path != null) {
                                             final file = File(path);
                                             launchUrlString(
@@ -199,9 +177,9 @@ class _DashboardState extends ConsumerState<Dashboard>
                                         ),
                                         style: ButtonStyle(
                                           foregroundColor:
-                                          WidgetStateProperty.all(
-                                            theme.colorScheme.onSurface,
-                                          ),
+                                              WidgetStateProperty.all(
+                                                theme.colorScheme.onSurface,
+                                              ),
                                         ),
                                         label: const Text("Open"),
                                       ),
@@ -215,10 +193,10 @@ class _DashboardState extends ConsumerState<Dashboard>
                                         onPressed: () {
                                           ref
                                               .read(
-                                            ChipperState
-                                                .logRawContents
-                                                .notifier,
-                                          )
+                                                ChipperState
+                                                    .logRawContents
+                                                    .notifier,
+                                              )
                                               .loadDefaultLog();
                                         },
                                         icon: Icon(
@@ -227,9 +205,9 @@ class _DashboardState extends ConsumerState<Dashboard>
                                         ),
                                         style: ButtonStyle(
                                           foregroundColor:
-                                          WidgetStateProperty.all(
-                                            theme.colorScheme.onSurface,
-                                          ),
+                                              WidgetStateProperty.all(
+                                                theme.colorScheme.onSurface,
+                                              ),
                                         ),
                                         label: const Text("Reload"),
                                       ),
@@ -238,28 +216,36 @@ class _DashboardState extends ConsumerState<Dashboard>
                                 ),
                               ),
                               Expanded(
-                                child:
-                                (errors != null)
+                                child: (errors != null)
                                     ? DefaultTextStyle.merge(
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(
-                                      bottom: 4,
-                                    ),
-                                    child: ChipperLog(
-                                      errors: errors.errorBlock,
-                                      showInfoLogs: true,
-                                    ),
-                                  ),
-                                  style: Theme
-                                      .of(context)
-                                      .textTheme
-                                      .bodyMedium
-                                      ?.copyWith(fontSize: 14),
-                                )
+                                        child: Padding(
+                                          padding: const EdgeInsets.only(
+                                            bottom: 4,
+                                          ),
+                                          child: ChipperLog(
+                                            errors: errors.errorBlock,
+                                            showInfoLogs: true,
+                                            showInfoIcons: false,
+                                          ),
+                                        ),
+                                        style: theme.textTheme.bodyMedium
+                                            ?.copyWith(fontSize: 14),
+                                      )
                                     : const SizedBox(
-                                  width: 350,
-                                  child: Column(
-                                    children: [Text("No log loaded")],
+                                        width: 350,
+                                        child: Column(
+                                          children: [Text("No log loaded")],
+                                        ),
+                                      ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 2),
+                                child: Text(
+                                  "Errors are normal. If the game crashes, check here for fatal errors.",
+                                  style: theme.textTheme.labelMedium?.copyWith(
+                                    color: theme.textTheme.labelMedium?.color
+                                        ?.withValues(alpha: 0.6),
+                                    fontStyle: FontStyle.italic,
                                   ),
                                 ),
                               ),

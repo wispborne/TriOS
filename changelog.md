@@ -4,6 +4,7 @@
   - Mods page: copy selected rows to clipboard (right-click).
   - Weapons Viewer: may now click on image to open in Explorer, and right-click to open data folder (same as Ships Viewer grid).
   - MacOS and Linux now show the current JRE and RAM allocation (when hovering the launch button).
+  - Right-click option to force re-estimate mods in a group (e.g. all enabled).
 - Fixed
   - Mods Grid: If two mod versions had the same Version Checker version but different mod_info.json versions, the "Click to use newer version" button could suggest updating to the wrong version.
   - Reordering columns on Mods/Weapons/Ships pages.
@@ -16,6 +17,8 @@
   - Added "Show Enabled [Only]" to Weapons Viewer.
   - Updated to Flutter 3.32.0 and updated various dependencies.
   - "Update All" button now asks if you're sure if updating more than one mod, rather than 5+.
+  - Mentioning that errors in the log don't mean there's a problem with the game or mods.
+  - Further clarify that TriOS isn't needed to launch Starsector.
 
 # 1.1.11
 - Fixed

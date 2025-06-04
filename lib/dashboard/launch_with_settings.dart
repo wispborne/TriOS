@@ -204,7 +204,7 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                         const SizedBox(height: 8),
                         Tooltip(
                           message:
-                              "${Constants.appName} is not needed to launch the game.",
+                              "${Constants.appName} is not required to launch the game.",
                           child: Builder(
                             builder: (context) {
                               final path = ref

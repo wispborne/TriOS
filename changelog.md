@@ -10,6 +10,8 @@
   - Mods Grid: If two mod versions had the same Version Checker version but different mod_info.json versions, the "Click to use newer version" button could suggest updating to the wrong version.
   - Reordering columns on Mods/Weapons/Ships pages.
   - MacOS and Linux incorrectly showing warnings that the JRE wasn't supported.
+  - Mods page: If a mod had a missing dependency, you couldn't disable it.
+  - Mods page: Cleaned up warning outline colors and warning tooltip colors.
 - Changed
   - Remove GraphicsLib from VRAM estimation.
     - With GraphicsLib dynamically unloading textures, estimating VRAM becomes complex.
@@ -20,9 +22,10 @@
   - "Update All" button now asks if you're sure if updating more than one mod, rather than 5+.
   - Mentioning that errors in the log don't mean there's a problem with the game or mods.
   - Further clarify that TriOS isn't needed to launch Starsector.
+  - Removed warning from tooltip on Create Profile button that it would use the first versions of a mod that the save was made with, as Starsector now updates this version to the last one used. 
 
 # 1.1.11
-- Fixed
+- Fixed[descriptor.xml](../../../../../Applications/Starsector.app/saves/save_RyanBarrett_6385924199500988831/descriptor.xml)
   - A mod archive (zip/rar/7z) without a root-level folder would be installed to /mods, rather than creating a subfolder.
     - Bug introduced in some recent version, it handled this correctly in the past.
 - Changed

@@ -97,13 +97,10 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                 Expanded(
                   child: modProfilesAsync.when(
                     data: (modProfilesObj) {
-                      final modProfiles =
-                          modProfilesObj.modProfiles
-                              .sortedByButBetter(
-                                (profile) => profile.dateModified,
-                              )
-                              .reversed
-                              .toList();
+                      final modProfiles = modProfilesObj.modProfiles
+                          .sortedByButBetter((profile) => profile.dateModified)
+                          .reversed
+                          .toList();
                       return AlignedGridView.extent(
                         crossAxisSpacing: axisSpacingForHeightHack,
                         mainAxisSpacing: 10,
@@ -143,11 +140,10 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                         },
                       );
                     },
-                    loading:
-                        () => const Center(child: CircularProgressIndicator()),
-                    error:
-                        (error, stackTrace) =>
-                            Center(child: Text('Error: $error')),
+                    loading: () =>
+                        const Center(child: CircularProgressIndicator()),
+                    error: (error, stackTrace) =>
+                        Center(child: Text('Error: $error')),
                   ),
                 ),
               ],
@@ -192,15 +188,14 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                   Expanded(
                     child: saveGamesAsync.when(
                       data: (saveGames) {
-                        saveGames =
-                            saveGames
-                                .sortedByButBetter(
-                                  (save) =>
-                                      save.saveDate ??
-                                      DateTime.fromMicrosecondsSinceEpoch(0),
-                                )
-                                .reversed
-                                .toList();
+                        saveGames = saveGames
+                            .sortedByButBetter(
+                              (save) =>
+                                  save.saveDate ??
+                                  DateTime.fromMicrosecondsSinceEpoch(0),
+                            )
+                            .reversed
+                            .toList();
                         return AlignedGridView.count(
                           crossAxisSpacing: axisSpacingForHeightHack,
                           mainAxisSpacing: 10,
@@ -221,12 +216,10 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                           },
                         );
                       },
-                      loading:
-                          () =>
-                              const Center(child: CircularProgressIndicator()),
-                      error:
-                          (error, stackTrace) =>
-                              Center(child: Text('Error: $error')),
+                      loading: () =>
+                          const Center(child: CircularProgressIndicator()),
+                      error: (error, stackTrace) =>
+                          Center(child: Text('Error: $error')),
                     ),
                   ),
                 ],
@@ -282,16 +275,13 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                             .read(modProfilesProvider.notifier)
                             .createModProfile(
                               newProfileNameController.text,
-                              enabledModVariants:
-                                  ref
-                                      .read(AppState.enabledModVariants)
-                                      .map(
-                                        (mod) =>
-                                            ShallowModVariant.fromModVariant(
-                                              mod,
-                                            ),
-                                      )
-                                      .toList(),
+                              enabledModVariants: ref
+                                  .read(AppState.enabledModVariants)
+                                  .map(
+                                    (mod) =>
+                                        ShallowModVariant.fromModVariant(mod),
+                                  )
+                                  .toList(),
                             );
                         newProfileNameController.clear();
                       }
@@ -371,13 +361,12 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
             )
             .toList();
 
-    final modRootFolders =
-        [
-          ref.watch(appSettings.select((s) => s.gameCoreDir)),
-          ...ref
-              .watch(AppState.mods)
-              .map((mod) => mod.findFirstEnabledOrHighestVersion?.modFolder),
-        ].nonNulls.toList();
+    final modRootFolders = [
+      ref.watch(appSettings.select((s) => s.gameCoreDir)),
+      ...ref
+          .watch(AppState.mods)
+          .map((mod) => mod.findFirstEnabledOrHighestVersion?.modFolder),
+    ].nonNulls.toList();
 
     var dateCreated = profile?.dateCreated ?? save!.saveDate;
     return ConstrainedBox(
@@ -387,10 +376,9 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
         child: Container(
           decoration: BoxDecoration(
             border: Border.all(
-              color:
-                  isActiveProfile
-                      ? theme.colorScheme.primary
-                      : Colors.transparent,
+              color: isActiveProfile
+                  ? theme.colorScheme.primary
+                  : Colors.transparent,
               width: 2,
             ),
             borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
@@ -401,32 +389,29 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                 Positioned(
                   right: 0,
                   top: 0,
-                  child:
-                      isEditing
-                          ? IconButton(
-                            icon: const Icon(Icons.check),
-                            onPressed: () {
-                              ref
-                                  .read(modProfilesProvider.notifier)
-                                  .updateModProfile(
-                                    profile!.copyWith(
-                                      name: _nameController.text,
-                                    ),
-                                  );
-                              setState(() {
-                                _editingProfileId = null;
-                              });
-                            },
-                          )
-                          : IconButton(
-                            icon: const Icon(Icons.edit),
-                            onPressed: () {
-                              setState(() {
-                                _editingProfileId = profile!.id;
-                                _nameController.text = profile.name;
-                              });
-                            },
-                          ),
+                  child: isEditing
+                      ? IconButton(
+                          icon: const Icon(Icons.check),
+                          onPressed: () {
+                            ref
+                                .read(modProfilesProvider.notifier)
+                                .updateModProfile(
+                                  profile!.copyWith(name: _nameController.text),
+                                );
+                            setState(() {
+                              _editingProfileId = null;
+                            });
+                          },
+                        )
+                      : IconButton(
+                          icon: const Icon(Icons.edit),
+                          onPressed: () {
+                            setState(() {
+                              _editingProfileId = profile!.id;
+                              _nameController.text = profile.name;
+                            });
+                          },
+                        ),
                 ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -446,10 +431,9 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                             builder: (context) {
                               var portraitImage = modRootFolders
                                   .map(
-                                    (dir) =>
-                                        dir
-                                            .resolve(save!.portraitPath!)
-                                            .toFile(),
+                                    (dir) => dir
+                                        .resolve(save!.portraitPath!)
+                                        .toFile(),
                                   )
                                   .firstWhereOrNull(
                                     (file) => file.existsSync(),
@@ -474,10 +458,9 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                                       portraitImage,
                                       width: _isPortraitExpanded ? null : 36,
                                       // Toggle width: full size or thumbnail
-                                      height:
-                                          _isPortraitExpanded
-                                              ? null
-                                              : 36, // Optional: toggle height as well
+                                      height: _isPortraitExpanded
+                                          ? null
+                                          : 36, // Optional: toggle height as well
                                     ),
                                   ),
                                 ),
@@ -489,22 +472,22 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                             builder: (context) {
                               return isEditing
                                   ? TextField(
-                                    controller: _nameController,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Name',
-                                    ),
-                                  )
+                                      controller: _nameController,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Name',
+                                      ),
+                                    )
                                   : MovingTooltipWidget.text(
-                                    message:
-                                        profile?.name ?? save?.characterName,
-                                    child: Text(
-                                      profile?.name ?? save!.characterName,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: theme.textTheme.bodyLarge
-                                          ?.copyWith(fontSize: 18),
-                                    ),
-                                  );
+                                      message:
+                                          profile?.name ?? save?.characterName,
+                                      child: Text(
+                                        profile?.name ?? save!.characterName,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: theme.textTheme.bodyLarge
+                                            ?.copyWith(fontSize: 18),
+                                      ),
+                                    );
                             },
                           ),
                         ),
@@ -602,35 +585,31 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                                 onPressed: () {
                                   showDialog(
                                     context: context,
-                                    builder:
-                                        (context) => AlertDialog(
-                                          title: const Text('Delete profile?'),
-                                          content: Text(
-                                            "Are you sure you want to delete profile '${profile?.name}'?",
-                                          ),
-                                          actions: [
-                                            TextButton(
-                                              onPressed: () {
-                                                Navigator.of(context).pop();
-                                              },
-                                              child: const Text('Cancel'),
-                                            ),
-                                            TextButton(
-                                              onPressed: () {
-                                                Navigator.of(context).pop();
-                                                ref
-                                                    .read(
-                                                      modProfilesProvider
-                                                          .notifier,
-                                                    )
-                                                    .removeModProfile(
-                                                      profile!.id,
-                                                    );
-                                              },
-                                              child: const Text('Delete'),
-                                            ),
-                                          ],
+                                    builder: (context) => AlertDialog(
+                                      title: const Text('Delete profile?'),
+                                      content: Text(
+                                        "Are you sure you want to delete profile '${profile?.name}'?",
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.of(context).pop();
+                                          },
+                                          child: const Text('Cancel'),
                                         ),
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.of(context).pop();
+                                            ref
+                                                .read(
+                                                  modProfilesProvider.notifier,
+                                                )
+                                                .removeModProfile(profile!.id);
+                                          },
+                                          child: const Text('Delete'),
+                                        ),
+                                      ],
+                                    ),
                                   );
                                 },
                               ),
@@ -661,19 +640,16 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                             child: MovingTooltipWidget.text(
                               message: isGameRunning ? "Game is running" : "",
                               child: OutlinedButton(
-                                onPressed:
-                                    isActiveProfile
-                                        ? null
-                                        : () {
-                                          ref
-                                              .read(
-                                                modProfilesProvider.notifier,
-                                              )
-                                              .showActivateDialog(
-                                                profile!,
-                                                context,
-                                              );
-                                        },
+                                onPressed: isActiveProfile
+                                    ? null
+                                    : () {
+                                        ref
+                                            .read(modProfilesProvider.notifier)
+                                            .showActivateDialog(
+                                              profile!,
+                                              context,
+                                            );
+                                      },
                                 child: Text(
                                   isActiveProfile ? 'Enabled' : 'Enable',
                                 ),
@@ -683,12 +659,7 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                         if (isSaveGame)
                           MovingTooltipWidget.text(
                             message:
-                                "Warning!"
-                                "\nThis create a profile from the mods & versions from when you FIRST STARTED this save/campaign."
-                                "\nIf you updated or changed mods during the run, those changes won't be in the profile."
-                                "\n\nThis is due to how Starsector saves work, and should be fixed in 0.98a.",
-                            warningLevel: TooltipWarningLevel.warning,
-
+                                "Creates a profile based on this save's last-used mods.",
                             child: OutlinedButton(
                               onPressed: () {
                                 ref
@@ -732,25 +703,24 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                       });
                     },
                     childrenPadding: const EdgeInsets.all(8),
-                    children:
-                        enabledModVariants.map((mod) {
-                          return Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  mod.modName ?? mod.modId,
-                                  overflow: TextOverflow.fade,
-                                  maxLines: 1,
-                                  style: theme.textTheme.labelLarge,
-                                ),
-                              ),
-                              Text(
-                                mod.version?.toString() ?? '???',
-                                style: theme.textTheme.labelLarge,
-                              ),
-                            ],
-                          );
-                        }).toList(),
+                    children: enabledModVariants.map((mod) {
+                      return Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              mod.modName ?? mod.modId,
+                              overflow: TextOverflow.fade,
+                              maxLines: 1,
+                              style: theme.textTheme.labelLarge,
+                            ),
+                          ),
+                          Text(
+                            mod.version?.toString() ?? '???',
+                            style: theme.textTheme.labelLarge,
+                          ),
+                        ],
+                      );
+                    }).toList(),
                   ),
                 ],
               ),

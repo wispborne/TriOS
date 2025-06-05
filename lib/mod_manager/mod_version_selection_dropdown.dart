@@ -46,30 +46,34 @@ class _ModVersionSelectionDropdownState
     final mainVariant = widget.mod.findFirstEnabledOrHighestVersion;
     final hasMultipleEnabled = widget.mod.enabledVariants.length > 1;
     final modCompatibilityMap = ref.watch(AppState.modCompatibility);
-    final dependencyChecks =
-        widget.mod.modVariants.map((v) {
-          return modCompatibilityMap[v.smolId];
-        }).toList();
+    final dependencyChecks = widget.mod.modVariants.map((v) {
+      return modCompatibilityMap[v.smolId];
+    }).toList();
     final isSupportedByGameVersion =
         dependencyChecks.isCompatibleWithGameVersion;
     final mainDependencyCheck = modCompatibilityMap[mainVariant?.smolId];
     final modDependenciesSatisfied = mainDependencyCheck?.dependencyChecks;
 
     // TODO consolidate this logic with the logic in smol2.
-    var areAllDependenciesSatisfied = modDependenciesSatisfied?.every(
+    final areAllDependenciesSatisfied = modDependenciesSatisfied?.every(
       (d) =>
           d.satisfiedAmount is Satisfied ||
           d.satisfiedAmount is VersionWarning ||
           d.satisfiedAmount is Disabled,
     );
-    final isButtonEnabled = areAllDependenciesSatisfied == true;
+    final isEnabled = widget.mod.hasEnabledVariant;
+    // You can always disable a mod, but you can't enable a mod if dependencies are missing.
+    final isButtonEnabled =
+        areAllDependenciesSatisfied == true || isEnabled;
     // Pseudo-disabled means it's enabled but has a warning outline.
-    final isButtonPseudoDisabled = isButtonEnabled && !isSupportedByGameVersion;
+    final isButtonPseudoDisabled =
+        isButtonEnabled &&
+        (!isSupportedByGameVersion || areAllDependenciesSatisfied != true);
 
     // Button color logic
     final buttonColor = switch ((
       hasMultipleEnabled,
-      widget.mod.hasEnabledVariant,
+      isEnabled,
     )) {
       (true, _) => errorColor,
       (false, true) => theme.colorScheme.secondary,
@@ -78,26 +82,25 @@ class _ModVersionSelectionDropdownState
 
     final textColor = switch ((
       hasMultipleEnabled,
-      widget.mod.hasEnabledVariant,
+      isEnabled,
     )) {
       (true, _) => theme.colorScheme.onSecondary.darker(20),
       (false, true) => theme.colorScheme.onSecondary,
       _ => theme.colorScheme.onSurface,
     };
 
-    final borderColor =
-        (isButtonEnabled && !isButtonPseudoDisabled)
-            ? (hasMultipleEnabled
-                ? ThemeManager.vanillaErrorColor.darker(20)
-                : theme.colorScheme.secondary.darker(20))
-            : ThemeManager.vanillaErrorColor.withOpacity(0.4);
+    final borderColor = (isButtonEnabled && !isButtonPseudoDisabled)
+        ? (hasMultipleEnabled
+              ? ThemeManager.vanillaErrorColor.darker(20)
+              : theme.colorScheme.secondary.darker(20))
+        : ThemeManager.vanillaErrorColor.withOpacity(isEnabled ? 0.8 : 0.4);
 
     Color? getGameCompatibilityTextColor(ModVariant variant) {
       // Special handling if background color is errorColor. GameCompat color is orange/red, which is too hard to see.
       return buttonColor == errorColor
           ? null
           : modCompatibilityMap[variant.smolId]?.gameCompatibility
-              .getGameCompatibilityColor();
+                .getGameCompatibilityColor();
     }
 
     final buttonStyle = ElevatedButton.styleFrom(
@@ -122,14 +125,13 @@ class _ModVersionSelectionDropdownState
 
     const gameVersionMessage =
         "This mod requires a different version of the game";
-    final errorTooltip =
-        hasMultipleEnabled
-            ? "Warning"
-                "\nYou have two or more enabled mod folders for ${mainVariant?.modInfo.nameOrId}. The game will pick one at 'random'."
-                "\nSelect one version from the dropdown."
-            : areAllDependenciesSatisfied == false
-            ? "Requires ${modDependenciesSatisfied?.where((it) => !it.canBeSatisfiedWithInstalledMods).joinToString(transform: (it) => it.dependency.nameOrId)}"
-            : null;
+    final errorTooltip = hasMultipleEnabled
+        ? "Warning"
+              "\nYou have two or more enabled mod folders for ${mainVariant?.modInfo.nameOrId}. The game will pick one at 'random'."
+              "\nSelect one version from the dropdown."
+        : areAllDependenciesSatisfied == false
+        ? "Requires ${modDependenciesSatisfied?.where((it) => !it.canBeSatisfiedWithInstalledMods).joinToString(transform: (it) => it.dependency.nameOrId)}"
+        : null;
     final warningIcon = Icon(Icons.warning, color: textColor, size: 20);
     final currentStarsectorVersion = ref.watch(
       appSettings.select((s) => s.lastStarsectorVersion),
@@ -145,10 +147,9 @@ class _ModVersionSelectionDropdownState
               : null);
       return MovingTooltipWidget.text(
         message: tooltipMessage,
-        warningLevel:
-            tooltipMessage != null
-                ? TooltipWarningLevel.warning
-                : TooltipWarningLevel.none,
+        warningLevel: tooltipMessage != null
+            ? TooltipWarningLevel.warning
+            : TooltipWarningLevel.none,
         child: Disable(
           isEnabled: isButtonEnabled,
           child: SizedBox(
@@ -159,7 +160,7 @@ class _ModVersionSelectionDropdownState
                 if (!mounted) return;
                 // Enable if disabled, disable if enabled
                 try {
-                  widget.mod.hasEnabledVariant
+                  isEnabled
                       ? await switchToVariant(null)
                       : await switchToVariant(widget.mod.findHighestVersion);
                 } catch (e, st) {
@@ -171,13 +172,13 @@ class _ModVersionSelectionDropdownState
                 children: [
                   (hasMultipleEnabled
                       ? Align(
-                        alignment: Alignment.centerLeft,
-                        child: warningIcon,
-                      )
+                          alignment: Alignment.centerLeft,
+                          child: warningIcon,
+                        )
                       : Container()),
                   Center(
                     child: Text(
-                      widget.mod.hasEnabledVariant ? "Disable" : "Enable",
+                      isEnabled ? "Disable" : "Enable",
                     ),
                   ),
                 ],
@@ -190,7 +191,7 @@ class _ModVersionSelectionDropdownState
 
     //////// Multiple variants button
     final items = [
-      if (widget.mod.hasEnabledVariant)
+      if (isEnabled)
         const DropdownItem(
           value: null,
           child: Text("Disable", overflow: TextOverflow.ellipsis),
@@ -211,14 +212,14 @@ class _ModVersionSelectionDropdownState
     ];
 
     final dropdownWidth = buttonWidth;
-    final highestVersionVariant =
-        widget.mod.modVariants.max()!;
+    final highestVersionVariant = widget.mod.modVariants.max()!;
     final enabledVariant = widget.mod.findFirstEnabled;
     final canUpgradeVersion =
         enabledVariant != null &&
         enabledVariant.smolId != highestVersionVariant.smolId;
-    final variantThatCanBeUpgradedTo =
-        canUpgradeVersion ? highestVersionVariant : null;
+    final variantThatCanBeUpgradedTo = canUpgradeVersion
+        ? highestVersionVariant
+        : null;
 
     return MovingTooltipWidget.text(
       message:
@@ -226,6 +227,9 @@ class _ModVersionSelectionDropdownState
           (widget.showTooltip
               ? (!isSupportedByGameVersion ? gameVersionMessage : null)
               : null),
+      warningLevel: errorTooltip != null
+          ? TooltipWarningLevel.warning
+          : TooltipWarningLevel.none,
       child: Disable(
         isEnabled: isButtonEnabled,
         child: DropdownButton2<ModVariant?>(
@@ -294,12 +298,11 @@ class _ModVersionSelectionDropdownState
       width: dropdownWidth,
       child: ElevatedButton(
         onPressed: null,
-        style:
-            variantThatCanBeUpgradedTo == null
-                ? buttonStyle
-                : buttonStyle.copyWith(
-                  padding: WidgetStatePropertyAll(EdgeInsets.zero),
-                ),
+        style: variantThatCanBeUpgradedTo == null
+            ? buttonStyle
+            : buttonStyle.copyWith(
+                padding: WidgetStatePropertyAll(EdgeInsets.zero),
+              ),
         child: Stack(
           children: [
             (hasMultipleEnabled
@@ -313,10 +316,9 @@ class _ModVersionSelectionDropdownState
                 Expanded(
                   child: Align(
                     alignment: Alignment.center,
-                    child:
-                        item?.value == null
-                            ? const Text("Enable")
-                            : item?.child,
+                    child: item?.value == null
+                        ? const Text("Enable")
+                        : item?.child,
                   ),
                 ),
                 SizedBox(

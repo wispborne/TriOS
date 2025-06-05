@@ -941,7 +941,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
             },
             child: ListTile(
               dense: true,
-              leading: Icon(Icons.fire_extinguisher),
+              leading: Icon(Icons.fire_truck),
               title: Text("Disable All Mods"),
             ),
           ),

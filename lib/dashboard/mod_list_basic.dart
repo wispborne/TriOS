@@ -46,11 +46,10 @@ class _ModListMiniState extends ConsumerState<ModListMini>
   @override
   Widget build(BuildContext context) {
     final fullModList = ref.watch(AppState.mods);
-    final enabledModIds =
-        fullModList
-            .where((it) => it.isEnabledInGame)
-            .map((it) => it.id)
-            .toSet();
+    final enabledModIds = fullModList
+        .where((it) => it.isEnabledInGame)
+        .map((it) => it.id)
+        .toSet();
     // ref
     //     .watch(AppState.enabledModsFile)
     //     .valueOrNull
@@ -61,21 +60,43 @@ class _ModListMiniState extends ConsumerState<ModListMini>
     final query = ref.watch(_searchQuery);
     final versionCheck = ref.watch(AppState.versionCheckResults).valueOrNull;
     final theme = Theme.of(context);
+    final vramEstState = ref.watch(AppState.vramEstimatorProvider).valueOrNull;
+    final sorting = ref.watch(
+      appSettings.select((s) => s.dashboardModListSort),
+    );
 
-    List<Mod> filteredModList =
-        fullModList
-            .let(
-              (mods) =>
-                  hideDisabled
-                      ? mods
-                          .where(
-                            (mod) => !hideDisabled || mod.hasEnabledVariant,
-                          )
-                          .toList()
-                      : mods,
-            )
-            .let((mods) => query.isEmpty ? mods : searchMods(mods, query) ?? [])
-            .sortedByName;
+    List<Mod> filteredModList = fullModList
+        .let(
+          (mods) => hideDisabled
+              ? mods
+                    .where((mod) => !hideDisabled || mod.hasEnabledVariant)
+                    .toList()
+              : mods,
+        )
+        .let((mods) => query.isEmpty ? mods : searchMods(mods, query) ?? [])
+        .let(
+          (mods) => switch (sorting) {
+            DashboardModListSort.name => mods.sortedByButBetter(
+              (mod) => mod.getSortValueForName(),
+            ),
+            DashboardModListSort.author => mods.sortedByButBetter(
+              (mod) => mod.getSortValueForAuthor(),
+            ),
+            DashboardModListSort.version => mods.sortedByButBetter(
+              (mod) => mod.getSortValueForVersion(),
+              isAscending: false,
+            ),
+            DashboardModListSort.vram => mods.sortedByButBetter(
+              (mod) => mod.getSortValueForVram(vramEstState),
+            ),
+            DashboardModListSort.gameVersion => mods.sortedByButBetter(
+              (mod) => mod.getSortValueForGameVersion(),
+            ),
+            DashboardModListSort.enabled => mods.sortedByButBetter(
+              (mod) => mod.getSortValueForEnabled(),
+            ),
+          },
+        );
 
     return Padding(
       padding: const EdgeInsets.all(8.0),
@@ -102,7 +123,7 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                             Padding(
                               padding: const EdgeInsets.only(left: 0),
                               child: Text(
-                                "${enabledModIds?.length ?? 0} of ${fullModList.length} enabled",
+                                "${enabledModIds.length ?? 0} of ${fullModList.length} enabled",
                                 style: Theme.of(context).textTheme.labelMedium,
                               ),
                             ),
@@ -199,31 +220,128 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                               ),
                             ),
                             SizedBox(width: 8),
-                            if (Constants.currentVersion >=
-                                Version.parse("1.2.0-dev01"))
-                              MovingTooltipWidget.text(
-                                message: "Sort By",
-                                child: PopupMenuButton<String>(
-                                  icon: Icon(Icons.sort, size: 20),
-                                  tooltip: "",
-                                  padding: EdgeInsets.zero,
-                                  itemBuilder:
-                                      (context) => [
-                                        PopupMenuItem(
-                                          value: "name",
-                                          onTap: () {
-                                            // todo
-                                            ref.watch(
-                                              appSettings.select(
-                                                (s) => s.dashboardModListSort,
-                                              ),
-                                            );
-                                          },
-                                          child: Text("Sort by Name (todo)"),
-                                        ),
-                                      ],
+                            MovingTooltipWidget.text(
+                              message: "Sort By",
+                              child: PopupMenuButton<String>(
+                                icon: Padding(
+                                  padding: const EdgeInsets.only(
+                                    left: 4,
+                                    right: 6,
+                                  ),
+                                  child: Row(
+                                    spacing: 4,
+                                    children: [
+                                      Icon(Icons.sort, size: 20),
+                                      Text(
+                                        getDisplayNameForSort(sorting),
+                                        style: theme.textTheme.labelMedium,
+                                      ),
+                                    ],
+                                  ),
                                 ),
+                                tooltip: "",
+                                padding: EdgeInsets.zero,
+                                itemBuilder: (context) => [
+                                  PopupMenuItem(
+                                    value: "name",
+                                    onTap: () {
+                                      ref
+                                          .read(appSettings.notifier)
+                                          .update(
+                                            (state) => state.copyWith(
+                                              dashboardModListSort:
+                                                  DashboardModListSort.name,
+                                            ),
+                                          );
+                                    },
+                                    child: Text(
+                                      "Sort by ${getDisplayNameForSort(DashboardModListSort.name)}",
+                                    ),
+                                  ),
+                                  PopupMenuItem(
+                                    value: "author",
+                                    onTap: () {
+                                      ref
+                                          .read(appSettings.notifier)
+                                          .update(
+                                            (state) => state.copyWith(
+                                              dashboardModListSort:
+                                                  DashboardModListSort.author,
+                                            ),
+                                          );
+                                    },
+                                    child: Text(
+                                      "Sort by ${getDisplayNameForSort(DashboardModListSort.author)}",
+                                    ),
+                                  ),
+                                  PopupMenuItem(
+                                    value: "version",
+                                    onTap: () {
+                                      ref
+                                          .read(appSettings.notifier)
+                                          .update(
+                                            (state) => state.copyWith(
+                                              dashboardModListSort:
+                                                  DashboardModListSort.version,
+                                            ),
+                                          );
+                                    },
+                                    child: Text(
+                                      "Sort by ${getDisplayNameForSort(DashboardModListSort.version)}",
+                                    ),
+                                  ),
+                                  PopupMenuItem(
+                                    value: "vram",
+                                    onTap: () {
+                                      ref
+                                          .read(appSettings.notifier)
+                                          .update(
+                                            (state) => state.copyWith(
+                                              dashboardModListSort:
+                                                  DashboardModListSort.vram,
+                                            ),
+                                          );
+                                    },
+                                    child: Text(
+                                      "Sort by ${getDisplayNameForSort(DashboardModListSort.vram)}",
+                                    ),
+                                  ),
+                                  PopupMenuItem(
+                                    value: "gameVersion",
+                                    onTap: () {
+                                      ref
+                                          .read(appSettings.notifier)
+                                          .update(
+                                            (state) => state.copyWith(
+                                              dashboardModListSort:
+                                                  DashboardModListSort
+                                                      .gameVersion,
+                                            ),
+                                          );
+                                    },
+                                    child: Text(
+                                      "Sort by ${getDisplayNameForSort(DashboardModListSort.gameVersion)}",
+                                    ),
+                                  ),
+                                  PopupMenuItem(
+                                    value: "enabled",
+                                    onTap: () {
+                                      ref
+                                          .read(appSettings.notifier)
+                                          .update(
+                                            (state) => state.copyWith(
+                                              dashboardModListSort:
+                                                  DashboardModListSort.enabled,
+                                            ),
+                                          );
+                                    },
+                                    child: Text(
+                                      "Sort by ${getDisplayNameForSort(DashboardModListSort.enabled)}",
+                                    ),
+                                  ),
+                                ],
                               ),
+                            ),
                             const Spacer(),
                             _SettingsPopupMenu(),
                           ],
@@ -244,8 +362,9 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                 final isUpdatesFieldShown =
                     dashboardGridModUpdateVisibility !=
                     DashboardGridModUpdateVisibility.hideAll;
-                final modsMetadata =
-                    ref.watch(AppState.modsMetadata).valueOrNull;
+                final modsMetadata = ref
+                    .watch(AppState.modsMetadata)
+                    .valueOrNull;
                 final modsWithUpdates =
                     <Mod?>[null] +
                     filteredModList
@@ -266,19 +385,18 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                         })
                         .toList()
                         .sortedByName;
-                final mutedModsWithUpdates =
-                    modsMetadata == null
-                        ? <Mod?>[]
-                        : modsWithUpdates
-                            .where(
-                              (mod) =>
-                                  mod != null &&
-                                  modsMetadata
-                                          .getMergedModMetadata(mod.id)
-                                          ?.areUpdatesMuted ==
-                                      true,
-                            )
-                            .toList();
+                final mutedModsWithUpdates = modsMetadata == null
+                    ? <Mod?>[]
+                    : modsWithUpdates
+                          .where(
+                            (mod) =>
+                                mod != null &&
+                                modsMetadata
+                                        .getMergedModMetadata(mod.id)
+                                        ?.areUpdatesMuted ==
+                                    true,
+                          )
+                          .toList();
 
                 final updatesToDisplay =
                     switch (dashboardGridModUpdateVisibility) {
@@ -291,7 +409,7 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                 final listItems =
                     updatesToDisplay +
                     (modsWithUpdates.isEmpty ? [] : [null]) +
-                    (filteredModList.sortedByName.toList());
+                    filteredModList;
                 final isGameRunning =
                     ref.watch(AppState.isGameRunning).value ?? false;
 
@@ -333,10 +451,9 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                           ),
                                           const Spacer(),
                                           MovingTooltipWidget.text(
-                                            message:
-                                                isGameRunning
-                                                    ? "Game is running"
-                                                    : "Download all ${modsWithUpdates.nonNulls.length} updates",
+                                            message: isGameRunning
+                                                ? "Game is running"
+                                                : "Download all ${modsWithUpdates.nonNulls.length} updates",
                                             child: Disable(
                                               isEnabled: !isGameRunning,
                                               child: SizedBox(
@@ -354,10 +471,9 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                                   icon: Icon(
                                                     Icons.update,
                                                     size: 24,
-                                                    color:
-                                                        Theme.of(
-                                                          context,
-                                                        ).colorScheme.primary,
+                                                    color: Theme.of(
+                                                      context,
+                                                    ).colorScheme.primary,
                                                   ),
                                                 ),
                                               ),
@@ -393,10 +509,9 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                         children: [
                                           Text(
                                             "ALL MODS",
-                                            style:
-                                                Theme.of(
-                                                  context,
-                                                ).textTheme.labelMedium,
+                                            style: Theme.of(
+                                              context,
+                                            ).textTheme.labelMedium,
                                           ),
                                         ],
                                       ),
@@ -424,20 +539,30 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                   ],
                 );
               },
-              loading:
-                  () => const Center(
-                    child: SizedBox(
-                      width: 48,
-                      height: 48,
-                      child: CircularProgressIndicator(),
-                    ),
-                  ),
+              loading: () => const Center(
+                child: SizedBox(
+                  width: 48,
+                  height: 48,
+                  child: CircularProgressIndicator(),
+                ),
+              ),
               error: (error, stackTrace) => Text('Error: $error'),
             ),
           ),
         ].animate(interval: 400.ms).fade(duration: 300.ms),
       ),
     );
+  }
+
+  String getDisplayNameForSort(DashboardModListSort sorting) {
+    return switch (sorting) {
+      DashboardModListSort.name => "Name",
+      DashboardModListSort.author => "Author",
+      DashboardModListSort.version => "Version",
+      DashboardModListSort.vram => "VRAM Impact",
+      DashboardModListSort.gameVersion => "Game Version",
+      DashboardModListSort.enabled => "Enabled",
+    };
   }
 
   void _onClickedDownloadModUpdatesDialog(
@@ -520,14 +645,14 @@ class ModListBasicSearch extends ConsumerWidget {
             query.isEmpty
                 ? Container()
                 : IconButton(
-                  icon: const Icon(Icons.clear),
-                  constraints: const BoxConstraints(),
-                  padding: EdgeInsets.zero,
-                  onPressed: () {
-                    controller.clear();
-                    ref.read(_searchQuery.notifier).state = "";
-                  },
-                ),
+                    icon: const Icon(Icons.clear),
+                    constraints: const BoxConstraints(),
+                    padding: EdgeInsets.zero,
+                    onPressed: () {
+                      controller.clear();
+                      ref.read(_searchQuery.notifier).state = "";
+                    },
+                  ),
           ],
           backgroundColor: WidgetStateProperty.all(
             Theme.of(context).colorScheme.surfaceContainer,
@@ -557,13 +682,12 @@ class ChangeUpdateVisibilityEyeView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return IconButton(
-      onPressed:
-          () => ref
-              .read(appSettings.notifier)
-              .update(
-                (s) => s.copyWith(
-                  dashboardGridModUpdateVisibility: switch (s
-                      .dashboardGridModUpdateVisibility) {
+      onPressed: () => ref
+          .read(appSettings.notifier)
+          .update(
+            (s) => s.copyWith(
+              dashboardGridModUpdateVisibility:
+                  switch (s.dashboardGridModUpdateVisibility) {
                     DashboardGridModUpdateVisibility.allVisible =>
                       DashboardGridModUpdateVisibility.hideMuted,
                     DashboardGridModUpdateVisibility.hideMuted =>
@@ -571,8 +695,8 @@ class ChangeUpdateVisibilityEyeView extends ConsumerWidget {
                     DashboardGridModUpdateVisibility.hideAll =>
                       DashboardGridModUpdateVisibility.allVisible,
                   },
-                ),
-              ),
+            ),
+          ),
       constraints: const BoxConstraints(),
       icon: MovingTooltipWidget.text(
         message: switch (dashboardGridModUpdateVisibility) {
@@ -682,48 +806,46 @@ class _SettingsPopupMenu extends ConsumerWidget {
         icon: const Icon(Icons.settings, size: 20),
         tooltip: "",
         padding: EdgeInsets.zero,
-        itemBuilder:
-            (context) => [
-              PopupMenuItem(
-                child: Consumer(
-                  builder: (context, consumerRef, child) {
-                    final bool isSwapOnUpdateEnabled = consumerRef.watch(
-                      appSettings.select(
-                        (s) =>
-                            s.modUpdateBehavior ==
-                            ModUpdateBehavior.switchToNewVersionIfWasEnabled,
-                      ),
-                    );
-                    return MovingTooltipWidget.text(
-                      message:
-                          "When checked, updating an enabled mod switches to the new version.",
-                      child: CheckboxWithLabel(
-                        value: isSwapOnUpdateEnabled,
-                        onChanged: (newValue) {
-                          consumerRef
-                              .read(appSettings.notifier)
-                              .update(
-                                (s) => s.copyWith(
-                                  modUpdateBehavior:
-                                      newValue == true
-                                          ? ModUpdateBehavior
-                                              .switchToNewVersionIfWasEnabled
-                                          : ModUpdateBehavior.doNotChange,
-                                ),
-                              );
-                        },
-                        checkboxScale: 0.8,
-                        textPadding: const EdgeInsets.all(0),
-                        labelWidget: Text(
-                          "Swap on Update",
-                          style: theme.textTheme.labelMedium,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
+        itemBuilder: (context) => [
+          PopupMenuItem(
+            child: Consumer(
+              builder: (context, consumerRef, child) {
+                final bool isSwapOnUpdateEnabled = consumerRef.watch(
+                  appSettings.select(
+                    (s) =>
+                        s.modUpdateBehavior ==
+                        ModUpdateBehavior.switchToNewVersionIfWasEnabled,
+                  ),
+                );
+                return MovingTooltipWidget.text(
+                  message:
+                      "When checked, updating an enabled mod switches to the new version.",
+                  child: CheckboxWithLabel(
+                    value: isSwapOnUpdateEnabled,
+                    onChanged: (newValue) {
+                      consumerRef
+                          .read(appSettings.notifier)
+                          .update(
+                            (s) => s.copyWith(
+                              modUpdateBehavior: newValue == true
+                                  ? ModUpdateBehavior
+                                        .switchToNewVersionIfWasEnabled
+                                  : ModUpdateBehavior.doNotChange,
+                            ),
+                          );
+                    },
+                    checkboxScale: 0.8,
+                    textPadding: const EdgeInsets.all(0),
+                    labelWidget: Text(
+                      "Swap on Update",
+                      style: theme.textTheme.labelMedium,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

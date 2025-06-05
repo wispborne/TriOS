@@ -1,9 +1,14 @@
 import 'package:collection/collection.dart';
+import 'package:dart_extensions_methods/dart_extension_methods.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/mod_manager/version_checker.dart';
 import 'package:trios/models/mod_info_json.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/thirdparty/dartx/iterable.dart';
+import 'package:trios/trios/app_state.dart';
+import 'package:trios/trios/mod_metadata.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/vram_estimator/vram_estimator_manager.dart';
 
 import '../models/mod.dart';
 import '../models/mod_info.dart';
@@ -49,10 +54,9 @@ extension DependencyExt on Dependency {
       return Missing();
     }
 
-    final satisfyResults =
-        foundDependencies
-            .map((variant) => isSatisfiedBy(variant, enabledModIds))
-            .toList();
+    final satisfyResults = foundDependencies
+        .map((variant) => isSatisfiedBy(variant, enabledModIds))
+        .toList();
 
     // Return the least severe state.
     return getTopDependencySeverity(
@@ -109,6 +113,85 @@ extension ModExt on Mod {
       versionChecks?.versionCheckResultsBySmolId ?? {},
     );
   }
+
+  Comparable<num>? getSortValueForEnabled() => hasEnabledVariant ? 1 : 0;
+
+  Comparable<String>? getSortValueForType() =>
+      findFirstEnabledOrHighestVersion?.modInfo.isUtility == true
+      ? "utility"
+      : findFirstEnabledOrHighestVersion?.modInfo.isTotalConversion == true
+      ? "total conversion"
+      : "other";
+
+  Comparable<String>? getSortValueForName() =>
+      findFirstEnabledOrHighestVersion?.modInfo.nameOrId;
+
+  Comparable<String>? getSortValueForAuthor() =>
+      findFirstEnabledOrHighestVersion?.modInfo.author?.toLowerCase() ?? "";
+
+  Comparable<num>? getSortValueForUpdateStatus(
+    WidgetRef ref,
+    ModsMetadata? modsMetadata,
+  ) {
+    final versionCheckResultsNew = ref
+        .watch(AppState.versionCheckResults)
+        .valueOrNull;
+    final versionCheckComparison = updateCheck(versionCheckResultsNew);
+    final updateInt = versionCheckComparison?.comparisonInt;
+    final metadata = modsMetadata?.getMergedModMetadata(id);
+    final areUpdatesMuted = metadata != null && metadata.areUpdatesMuted;
+    final changelogUrl = ref
+        .read(AppState.changelogsProvider.notifier)
+        .getChangelogUrl(
+          versionCheckComparison?.variant.versionCheckerInfo,
+          versionCheckComparison?.remoteVersionCheck,
+        );
+
+    if (updateInt == null) {
+      // Missing version checker
+      return -20;
+    } else if (updateInt == -1 && !areUpdatesMuted) {
+      // Needs update
+      if (changelogUrl.isNotNullOrEmpty()) {
+        return 21;
+      } else {
+        return 20;
+      }
+    } else if (updateInt >= 0 || areUpdatesMuted) {
+      // Up to date or local newer than remote (time traveler)
+      if (changelogUrl.isNotNullOrEmpty()) {
+        return 1;
+      } else {
+        return 0;
+      }
+    } else {
+      // ??????????
+      return -30;
+    }
+  }
+
+  Comparable<String>? getSortValueForModIcon() =>
+      findFirstEnabledOrHighestVersion?.iconFilePath;
+
+  Comparable<String>? getSortValueForVersion() =>
+      findFirstEnabledOrHighestVersion?.modInfo.version?.toString();
+
+  Comparable<num>? getSortValueForVram(
+    VramEstimatorManagerState? vramEstState,
+  ) =>
+      vramEstState?.modVramInfo[findHighestEnabledVersion?.smolId]
+          ?.imagesNotIncludingGraphicsLib()
+          .sum() ??
+      0;
+
+  Comparable<String> getSortValueForGameVersion() =>
+      findFirstEnabledOrHighestVersion?.modInfo.gameVersion ?? "";
+
+  Comparable<num> getSortValueForFirstSeen(ModsMetadata? modsMetadata) =>
+      modsMetadata?.getMergedModMetadata(id)?.firstSeen ?? 0;
+
+  Comparable<num> getSortValueForLastEnabled(ModsMetadata? modsMetadata) =>
+      modsMetadata?.getMergedModMetadata(id)?.lastEnabled ?? 0;
 }
 
 extension ModDependencySatisfiedStateExt on ModDependencySatisfiedState {
@@ -239,8 +322,9 @@ extension ModVariantsExt on List<ModVariant> {
 
       // See if the remote version is newer than ALL local versions,
       // not just the one with the .version file we're checking.
-      final List<VersionCheckComparison> versionChecks =
-          map((v) => versionCheck.compareToLocal(v)).nonNulls.toList();
+      final List<VersionCheckComparison> versionChecks = map(
+        (v) => versionCheck.compareToLocal(v),
+      ).nonNulls.toList();
       if (versionChecks.isEmpty) continue;
       // If the remote version is newer than all local versions with a VC file, we have an update.
       final isRemoteNewerThanAllLocal = versionChecks.all(

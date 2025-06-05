@@ -93,7 +93,6 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
     final modsMatchingSearch = searchMods(allMods, query) ?? [];
     final modsMetadata = ref.watch(AppState.modsMetadata).valueOrNull;
     final vramEstState = ref.watch(AppState.vramEstimatorProvider);
-    final graphicsLibConfig = ref.watch(graphicsLibConfigProvider);
 
     return Stack(
       children: [
@@ -373,22 +372,9 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                     ),
                     WispGridColumn<Mod>(
                       key: ModGridHeader.icons.name,
-                      name: "Mod Type Icon",
+                      name: "Mod Icon",
                       isSortable: true,
-                      getSortValue: (mod) =>
-                          mod
-                                  .findFirstEnabledOrHighestVersion
-                                  ?.modInfo
-                                  .isUtility ==
-                              true
-                          ? "utility"
-                          : mod
-                                    .findFirstEnabledOrHighestVersion
-                                    ?.modInfo
-                                    .isTotalConversion ==
-                                true
-                          ? "total conversion"
-                          : "other",
+                      getSortValue: (mod) => mod.getSortValueForModIcon(),
                       headerCellBuilder: (modifiers) => Container(),
                       itemCellBuilder: (mod, modifiers) => Builder(
                         builder: (context) {
@@ -404,8 +390,9 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                     ),
                     WispGridColumn<Mod>(
                       key: ModGridHeader.modIcon.name,
-                      name: "Mod Icon",
-                      isSortable: false,
+                      name: "Mod Type Icon",
+                      isSortable: true,
+                      getSortValue: (mod) => mod.getSortValueForType(),
                       headerCellBuilder: (modifiers) => Container(),
                       itemCellBuilder: (mod, modifiers) => ModTypeIcon(
                         modVariant: mod.findFirstEnabledOrHighestVersion!,
@@ -416,10 +403,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                       key: ModGridHeader.name.name,
                       name: "Name",
                       isSortable: true,
-                      getSortValue: (mod) => mod
-                          .findFirstEnabledOrHighestVersion
-                          ?.modInfo
-                          .nameOrId,
+                      getSortValue: (mod) => mod.getSortValueForName(),
                       headerCellBuilder: (modifiers) => buildColumnHeader(
                         ModGridHeader.name,
                         modifiers,
@@ -439,10 +423,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                       key: ModGridHeader.author.name,
                       name: "Author",
                       isSortable: true,
-                      getSortValue: (mod) =>
-                          mod.findFirstEnabledOrHighestVersion?.modInfo.author
-                              ?.toLowerCase() ??
-                          "",
+                      getSortValue: (mod) => mod.getSortValueForAuthor(),
                       headerCellBuilder: (modifiers) => buildColumnHeader(
                         ModGridHeader.author,
                         modifiers,
@@ -477,50 +458,8 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                       key: ModGridHeader.updateStatus.name,
                       name: "Update",
                       isSortable: true,
-                      getSortValue: (mod) {
-                        final versionCheckResultsNew = ref
-                            .watch(AppState.versionCheckResults)
-                            .valueOrNull;
-                        final versionCheckComparison = mod.updateCheck(
-                          versionCheckResultsNew,
-                        );
-                        final updateInt = versionCheckComparison?.comparisonInt;
-                        final metadata = modsMetadata?.getMergedModMetadata(
-                          mod.id,
-                        );
-                        final areUpdatesMuted =
-                            metadata != null && metadata.areUpdatesMuted;
-                        final changelogUrl = ref
-                            .read(AppState.changelogsProvider.notifier)
-                            .getChangelogUrl(
-                              versionCheckComparison
-                                  ?.variant
-                                  .versionCheckerInfo,
-                              versionCheckComparison?.remoteVersionCheck,
-                            );
-
-                        if (updateInt == null) {
-                          // Missing version checker
-                          return -20;
-                        } else if (updateInt == -1 && !areUpdatesMuted) {
-                          // Needs update
-                          if (changelogUrl.isNotNullOrEmpty()) {
-                            return 21;
-                          } else {
-                            return 20;
-                          }
-                        } else if (updateInt >= 0 || areUpdatesMuted) {
-                          // Up to date or local newer than remote (time traveler)
-                          if (changelogUrl.isNotNullOrEmpty()) {
-                            return 1;
-                          } else {
-                            return 0;
-                          }
-                        } else {
-                          // ??????????
-                          return -30;
-                        }
-                      },
+                      getSortValue: (mod) =>
+                          mod.getSortValueForUpdateStatus(ref, modsMetadata),
                       itemCellBuilder: (mod, modifiers) => Builder(
                         builder: (context) {
                           final bestVersion =
@@ -541,8 +480,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                       key: ModGridHeader.version.name,
                       name: "Version",
                       isSortable: true,
-                      getSortValue: (mod) =>
-                          mod.findFirstEnabledOrHighestVersion?.modInfo.version,
+                      getSortValue: (mod) => mod.getSortValueForVersion(),
                       itemCellBuilder: (mod, modifiers) => Builder(
                         builder: (context) {
                           final bestVersion =
@@ -564,14 +502,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                       name: "VRAM Est.",
                       isSortable: true,
                       getSortValue: (mod) =>
-                          vramEstState
-                              .valueOrNull
-                              ?.modVramInfo[mod
-                                  .findHighestEnabledVersion
-                                  ?.smolId]
-                              ?.imagesNotIncludingGraphicsLib()
-                              .sum() ??
-                          0,
+                          mod.getSortValueForVram(vramEstState.valueOrNull),
                       headerCellBuilder: (modifiers) => buildColumnHeader(
                         ModGridHeader.vramImpact,
                         modifiers,
@@ -590,10 +521,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                       key: ModGridHeader.gameVersion.name,
                       name: "Game Version",
                       isSortable: true,
-                      getSortValue: (mod) => mod
-                          .findFirstEnabledOrHighestVersion
-                          ?.modInfo
-                          .gameVersion,
+                      getSortValue: (mod) => mod.getSortValueForGameVersion(),
                       headerCellBuilder: (modifiers) => buildColumnHeader(
                         ModGridHeader.gameVersion,
                         modifiers,
@@ -641,10 +569,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                       name: "First Seen",
                       isSortable: true,
                       getSortValue: (mod) =>
-                          modsMetadata
-                              ?.getMergedModMetadata(mod.id)
-                              ?.firstSeen ??
-                          0,
+                          mod.getSortValueForFirstSeen(modsMetadata),
                       headerCellBuilder: (modifiers) => buildColumnHeader(
                         ModGridHeader.firstSeen,
                         modifiers,
@@ -677,10 +602,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                       name: "Last Enabled",
                       isSortable: true,
                       getSortValue: (mod) =>
-                          modsMetadata
-                              ?.getMergedModMetadata(mod.id)
-                              ?.lastEnabled ??
-                          0,
+                          mod.getSortValueForLastEnabled(modsMetadata),
                       headerCellBuilder: (modifiers) => buildColumnHeader(
                         ModGridHeader.lastEnabled,
                         modifiers,
@@ -1226,7 +1148,8 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8.0),
                         child:
-                            vramEstimate?.imagesNotIncludingGraphicsLib() != null
+                            vramEstimate?.imagesNotIncludingGraphicsLib() !=
+                                null
                             ? Text(
                                 vramEstimate!
                                     .imagesNotIncludingGraphicsLib()

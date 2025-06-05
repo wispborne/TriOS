@@ -5,6 +5,7 @@
   - Weapons Viewer: may now click on image to open in Explorer, and right-click to open data folder (same as Ships Viewer grid).
   - MacOS and Linux now show the current JRE and RAM allocation (when hovering the launch button).
   - Right-click option to force re-estimate mods in a group (e.g. all enabled).
+  - Sort By options for the mods list on the Dashboard page.
 - Fixed
   - Mods Grid: If two mod versions had the same Version Checker version but different mod_info.json versions, the "Click to use newer version" button could suggest updating to the wrong version.
   - Reordering columns on Mods/Weapons/Ships pages.

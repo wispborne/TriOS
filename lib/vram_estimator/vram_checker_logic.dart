@@ -108,7 +108,7 @@ class VramChecker {
       }
       final startTimeForMod = DateTime.timestamp().millisecondsSinceEpoch;
 
-      int? maxImages = null;
+      int? maxImages;
 
       // Special handling for Illustrated Entities, which dynamically unloads images.
       // Very rough estimate.

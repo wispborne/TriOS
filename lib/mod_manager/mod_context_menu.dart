@@ -60,7 +60,7 @@ ContextMenu buildModBulkActionContextMenu(
 
   return ContextMenu(
     entries: <ContextMenuEntry>[
-      MenuHeader(text: "${selectedMods.length} mods selected"),
+      MenuHeader(text: "${selectedMods.length} mods"),
       if (!isGameRunning && selectedMods.any((mod) => !mod.hasEnabledVariant))
         MenuItem(
           label: 'Enable',

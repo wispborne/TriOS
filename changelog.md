@@ -7,6 +7,7 @@
   - Special VRAM Estimate handling for Illustrated Entities, which unloads textures when not in use.
   - Mods page: may now right-click on checked rows and choose to copy those mods to clipboard.
   - Weapons Viewer: may now click on image to open in Explorer, and right-click to open data folder (same as Ships Viewer grid).
+  - Mods page: may now right-click on groups (e.g. Enabled, Disabled) and take bulk actions on them.
 - Fixed
   - Mods Grid: If two mod versions had the same Version Checker version but different mod_info.json versions, the "Click to use newer version" button could suggest updating to the wrong version.
   - Reordering columns on Mods/Weapons/Ships pages.

@@ -1,9 +1,9 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:path/path.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
+import 'package:trios/mod_manager/mod_context_menu.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/trios/app_state.dart';
@@ -26,6 +26,15 @@ abstract class WispGridGroup<T extends WispGridItem> {
     int shownIndex,
     List<WispGridColumn<T>> columns,
   ) => null;
+
+  Widget wrapGroupWidget(
+    BuildContext context,
+    List<T> itemsInGroup,
+    WidgetRef ref,
+    int shownIndex,
+    List<WispGridColumn<T>> columns, {
+    required Widget child,
+  }) => child;
 
   WispGridGroup(this.key, this.displayName);
 
@@ -57,6 +66,19 @@ class EnabledStateModGridGroup extends WispGridGroup<Mod> {
 
   @override
   Comparable getGroupSortValue(Mod mod) => mod.isEnabledOnUi ? 0 : 1;
+
+  @override
+  Widget wrapGroupWidget(
+    BuildContext context,
+    List<Mod> itemsInGroup,
+    WidgetRef ref,
+    int shownIndex,
+    List<WispGridColumn<Mod>> columns, {
+    required Widget child,
+  }) => ContextMenuRegion(
+    contextMenu: buildModBulkActionContextMenu(itemsInGroup, ref, context),
+    child: child,
+  );
 
   @override
   Widget? overlayWidget(
@@ -100,6 +122,19 @@ class AuthorModGridGroup extends WispGridGroup<Mod> {
   @override
   Comparable? getGroupSortValue(Mod mod) =>
       mod.findFirstEnabledOrHighestVersion?.modInfo.author?.toLowerCase();
+
+  @override
+  Widget wrapGroupWidget(
+    BuildContext context,
+    List<Mod> itemsInGroup,
+    WidgetRef ref,
+    int shownIndex,
+    List<WispGridColumn<Mod>> columns, {
+    required Widget child,
+  }) => ContextMenuRegion(
+    contextMenu: buildModBulkActionContextMenu(itemsInGroup, ref, context),
+    child: child,
+  );
 
   @override
   Widget? overlayWidget(
@@ -146,6 +181,19 @@ class ModTypeModGridGroup extends WispGridGroup<Mod> {
   }
 
   @override
+  Widget wrapGroupWidget(
+    BuildContext context,
+    List<Mod> itemsInGroup,
+    WidgetRef ref,
+    int shownIndex,
+    List<WispGridColumn<Mod>> columns, {
+    required Widget child,
+  }) => ContextMenuRegion(
+    contextMenu: buildModBulkActionContextMenu(itemsInGroup, ref, context),
+    child: child,
+  );
+
+  @override
   Widget? overlayWidget(
     BuildContext context,
     List<Mod> itemsInGroup,
@@ -171,6 +219,19 @@ class GameVersionModGridGroup extends WispGridGroup<Mod> {
 
   @override
   Comparable getGroupSortValue(Mod mod) => getGroupName(mod).toLowerCase();
+
+  @override
+  Widget wrapGroupWidget(
+    BuildContext context,
+    List<Mod> itemsInGroup,
+    WidgetRef ref,
+    int shownIndex,
+    List<WispGridColumn<Mod>> columns, {
+    required Widget child,
+  }) => ContextMenuRegion(
+    contextMenu: buildModBulkActionContextMenu(itemsInGroup, ref, context),
+    child: child,
+  );
 
   @override
   Widget? overlayWidget(

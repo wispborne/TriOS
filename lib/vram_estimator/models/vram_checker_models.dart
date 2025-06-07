@@ -143,8 +143,21 @@ class ModImageView {
   }
 
   /// Determines if the image is used based on the provided graphics library configuration.
-  bool isUsedBasedOnGraphicsLibConfig() {
-    return graphicsLibType == null;
+  bool isUsedBasedOnGraphicsLibConfig(GraphicsLibConfig? cfg) {
+    if (cfg == null) {
+      return graphicsLibType == null;
+    }
+
+    switch (graphicsLibType) {
+      case null:
+        return true;
+      case MapType.Normal:
+        return cfg.preloadAllMaps && cfg.areGfxLibNormalMapsEnabled;
+      case MapType.Material:
+        return cfg.preloadAllMaps && cfg.areGfxLibMaterialMapsEnabled;
+      case MapType.Surface:
+        return cfg.preloadAllMaps && cfg.areGfxLibSurfaceMapsEnabled;
+    }
   }
 
   @override

@@ -23,14 +23,14 @@ class ShipSystemMapper extends ClassMapperBase<ShipSystem> {
   static String _$id(ShipSystem v) => v.id;
   static const Field<ShipSystem, String> _f$id = Field('id', _$id);
   static String? _$name(ShipSystem v) => v.name;
-  static const Field<ShipSystem, String> _f$name =
-      Field('name', _$name, opt: true);
+  static const Field<ShipSystem, String> _f$name = Field(
+    'name',
+    _$name,
+    opt: true,
+  );
 
   @override
-  final MappableFields<ShipSystem> fields = const {
-    #id: _f$id,
-    #name: _f$name,
-  };
+  final MappableFields<ShipSystem> fields = const {#id: _f$id, #name: _f$name};
 
   static ShipSystem _instantiate(DecodingData data) {
     return ShipSystem(id: data.dec(_f$id), name: data.dec(_f$name));
@@ -50,28 +50,36 @@ class ShipSystemMapper extends ClassMapperBase<ShipSystem> {
 
 mixin ShipSystemMappable {
   String toJson() {
-    return ShipSystemMapper.ensureInitialized()
-        .encodeJson<ShipSystem>(this as ShipSystem);
+    return ShipSystemMapper.ensureInitialized().encodeJson<ShipSystem>(
+      this as ShipSystem,
+    );
   }
 
   Map<String, dynamic> toMap() {
-    return ShipSystemMapper.ensureInitialized()
-        .encodeMap<ShipSystem>(this as ShipSystem);
+    return ShipSystemMapper.ensureInitialized().encodeMap<ShipSystem>(
+      this as ShipSystem,
+    );
   }
 
   ShipSystemCopyWith<ShipSystem, ShipSystem, ShipSystem> get copyWith =>
       _ShipSystemCopyWithImpl<ShipSystem, ShipSystem>(
-          this as ShipSystem, $identity, $identity);
+        this as ShipSystem,
+        $identity,
+        $identity,
+      );
   @override
   String toString() {
-    return ShipSystemMapper.ensureInitialized()
-        .stringifyValue(this as ShipSystem);
+    return ShipSystemMapper.ensureInitialized().stringifyValue(
+      this as ShipSystem,
+    );
   }
 
   @override
   bool operator ==(Object other) {
-    return ShipSystemMapper.ensureInitialized()
-        .equalsValue(this as ShipSystem, other);
+    return ShipSystemMapper.ensureInitialized().equalsValue(
+      this as ShipSystem,
+      other,
+    );
   }
 
   @override
@@ -101,14 +109,20 @@ class _ShipSystemCopyWithImpl<$R, $Out>
   late final ClassMapperBase<ShipSystem> $mapper =
       ShipSystemMapper.ensureInitialized();
   @override
-  $R call({String? id, Object? name = $none}) => $apply(FieldCopyWithData(
-      {if (id != null) #id: id, if (name != $none) #name: name}));
+  $R call({String? id, Object? name = $none}) => $apply(
+    FieldCopyWithData({
+      if (id != null) #id: id,
+      if (name != $none) #name: name,
+    }),
+  );
   @override
   ShipSystem $make(CopyWithData data) => ShipSystem(
-      id: data.get(#id, or: $value.id), name: data.get(#name, or: $value.name));
+    id: data.get(#id, or: $value.id),
+    name: data.get(#name, or: $value.name),
+  );
 
   @override
   ShipSystemCopyWith<$R2, ShipSystem, $Out2> $chain<$R2, $Out2>(
-          Then<$Out2, $R2> t) =>
-      _ShipSystemCopyWithImpl<$R2, $Out2>($value, $cast, t);
+    Then<$Out2, $R2> t,
+  ) => _ShipSystemCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }

@@ -227,7 +227,7 @@ Widget? _vramSummaryOverlayWidget(
                 .where(
                   (view) =>
                       view.graphicsLibType != null &&
-                      view.isUsedBasedOnGraphicsLibConfig(),
+                      view.isUsedBasedOnGraphicsLibConfig(graphicsLibConfig),
                 )
                 .map((view) => view.bytesUsed)
                 .toList()

@@ -92,7 +92,7 @@ class ModListBasicEntry extends ConsumerStatefulWidget {
                   localVersionCheck,
                   remoteVersionCheck,
                   true,
-                  true
+                  true,
                 ),
               ),
             ),
@@ -130,7 +130,7 @@ class ModListBasicEntry extends ConsumerStatefulWidget {
                 localVersionCheck,
                 remoteVersionCheck,
                 true,
-                false
+                false,
               ),
             ),
           ),

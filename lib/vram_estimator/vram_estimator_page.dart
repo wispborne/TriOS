@@ -78,7 +78,10 @@ class VramEstimatorPage extends ConsumerStatefulWidget {
     final topTenLargestImagesByVram =
         List.generate(mod.images.length, mod.getModViewForIndex)
             .sortedByDescending<num>((image) => image.bytesUsed)
-            .where((image) => image.isUsedBasedOnGraphicsLibConfig())
+            .where(
+              (image) =>
+                  image.isUsedBasedOnGraphicsLibConfig(graphicsLibConfig),
+            )
             .take(10)
             .toList();
 

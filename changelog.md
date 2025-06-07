@@ -18,11 +18,12 @@
   - Mods page: Split the changelogs & Version Checker icons part of the `Version` column into their own column and added sorting for it.
     - Sorting is, in order: has update, then no update but has changelog, then no update and no changelog, then doesn't support version checker.
   - Added "Show Enabled [Only]" to Weapons Viewer.
-  - Updated to Flutter 3.32.0 and updated various dependencies.
+  - Updated to Flutter 3.32.2 and updated various dependencies.
   - "Update All" button now asks if you're sure if updating more than one mod, rather than 5+.
-  - Mentioning that errors in the log don't mean there's a problem with the game or mods.
+  - Added a mention on the Dashboard page that errors in the log don't mean there's a problem with the game or mods.
   - Further clarify that TriOS isn't needed to launch Starsector.
-  - Removed warning from tooltip on Create Profile button that it would use the first versions of a mod that the save was made with, as Starsector now updates this version to the last one used. 
+  - Removed warning from tooltip on Create Profile button that it would use the first versions of a mod that the save was made with, as Starsector now updates this version to the last one used.
+  - The mod update tooltip is now more readable.
 
 # 1.1.11
 - Fixed[descriptor.xml](../../../../../Applications/Starsector.app/saves/save_RyanBarrett_6385924199500988831/descriptor.xml)

@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:trios/models/version_checker_info.dart';
 import 'package:trios/themes/theme_manager.dart';
+import 'package:trios/trios/constants.dart';
+import 'package:trios/widgets/svg_image_icon.dart';
+import 'package:trios/widgets/text_with_icon.dart';
 
 import '../mod_manager/version_checker.dart';
 
@@ -10,12 +14,14 @@ class VersionCheckTextReadout extends ConsumerStatefulWidget {
   final VersionCheckerInfo? localVersionCheck;
   final RemoteVersionCheckResult? remoteVersionCheck;
   final bool showClickToDownloadIfPossible;
+  final bool showRightClickToExpand;
 
   const VersionCheckTextReadout(
     this.versionCheckComparison,
     this.localVersionCheck,
     this.remoteVersionCheck,
-    this.showClickToDownloadIfPossible, {
+    this.showClickToDownloadIfPossible,
+    this.showRightClickToExpand, {
     super.key,
   });
 
@@ -39,72 +45,108 @@ class _VersionCheckTextReadoutState
       child: switch (versionCheckComparison) {
         -1 => Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             if (widget.showClickToDownloadIfPossible && hasUpdate)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              Container(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       hasDirectDownload
-                          ? "Click to download"
-                          : "Click to open in browser",
-                      style: theme.textTheme.bodyMedium?.copyWith(
+                          ? "Download & Install Update"
+                          : "Click to Open Download Page",
+                      style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 2),
-                      child: Text(
-                        "Right-click to expand this tooltip.",
-                        style: theme.textTheme.labelLarge,
+                        color: theme.colorScheme.primary,
                       ),
                     ),
                   ],
                 ),
               ),
-            Text(
-              "New version:      ${remoteVersionCheck?.remoteVersion?.modVersion}",
-              style: theme.textTheme.labelLarge,
+
+            Row(
+              children: [
+                TextWithIcon(
+                  leading: const Icon(Icons.upcoming, size: 20),
+                  text: '',
+                ),
+                TextWithIcon(
+                  text: '${remoteVersionCheck?.remoteVersion?.modVersion}',
+                  style: GoogleFonts.robotoMono().copyWith(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
-            Text(
-              "Current version: ${localVersionCheck?.modVersion}",
-              style: theme.textTheme.labelLarge,
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                TextWithIcon(
+                  leading: SvgImageIcon(
+                    "assets/images/icon-not-upcoming.svg",
+                    height: 20,
+                  ),
+                  text: '',
+                ),
+                TextWithIcon(
+                  text: '${localVersionCheck?.modVersion}',
+                  style: GoogleFonts.robotoMono().copyWith(fontSize: 13),
+                ),
+              ],
             ),
             if (hasDirectDownload)
               Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  "File: ${remoteVersionCheck?.remoteVersion?.directDownloadURL}",
+                padding: const EdgeInsets.only(top: 4, bottom: 8),
+                child: TextWithIcon(
+                  text:
+                      "${remoteVersionCheck?.remoteVersion?.directDownloadURL}",
+                  leading: const Icon(Icons.file_download_outlined, size: 20),
                   style: theme.textTheme.labelLarge,
                 ),
               ),
-            Padding(
-              padding: const EdgeInsets.only(top: 8.0),
-              child: Text(
-                "Version Checker url:\n${remoteVersionCheck?.uri}",
-                style: theme.textTheme.labelLarge?.copyWith(
-                  fontFeatures: [const FontFeature.tabularFigures()],
-                ),
-              ),
-            ),
-            Text(
-              "\nUpdate information is provided by the mod author, not TriOS, and cannot be guaranteed.",
-              style: theme.textTheme.labelLarge?.copyWith(
-                fontStyle: FontStyle.italic,
-              ),
-            ),
             if (!hasDirectDownload)
               Padding(
-                padding: const EdgeInsets.only(top: 4),
+                padding: const EdgeInsets.only(top: 8),
                 child: Text(
-                  "This mod does not support direct download and should be downloaded manually.",
+                  "This mod requires a manual download."
+                  "${widget.showRightClickToExpand ? "\nClick to open the download page." : ""}",
                   style: theme.textTheme.labelLarge?.copyWith(
                     fontStyle: FontStyle.italic,
                   ),
                 ),
               ),
+
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 4),
+              child: Divider(),
+            ),
+
+            Text(
+              "Source: ${remoteVersionCheck?.uri}",
+              style: theme.textTheme.labelLarge,
+            ),
+
+            const SizedBox(height: 16),
+
+            if (widget.showRightClickToExpand)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text(
+                  "Right-click to expand this tooltip.",
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ),
+            Text(
+              "Update information is provided by the mod author, not ${Constants.appName}.",
+              style: theme.textTheme.labelLarge?.copyWith(
+                fontStyle: FontStyle.italic,
+              ),
+            ),
           ],
         ),
         _ => Column(

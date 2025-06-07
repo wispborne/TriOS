@@ -105,12 +105,11 @@ class DownloadManager {
       // If given a download folder, then get the file's name from the URL and put it in the folder.
       // If given an actual filename rather than a folder, then we already have the name.
       final isDirectory = await Directory(destFolder).exists();
-      final downloadFile =
-          isDirectory
-              ? destFolder +
-                  Platform.pathSeparator +
-                  await fetchFileNameFromUrl(url, headersMap)
-              : destFolder + Platform.pathSeparator + filename!;
+      final downloadFile = isDirectory
+          ? destFolder +
+                Platform.pathSeparator +
+                await fetchFileNameFromUrl(url, headersMap)
+          : destFolder + Platform.pathSeparator + filename!;
       task.file.value = File(downloadFile);
 
       setStatus(task, DownloadStatus.downloading);
@@ -256,15 +255,14 @@ class DownloadManager {
       }
 
       Uri uri = Uri.parse(url);
-      url =
-          uri
-              .replace(
-                queryParameters: {
-                  ...uri.queryParameters,
-                  'confirm': 't', // Skip Google Drive confirmation page
-                },
-              )
-              .toString();
+      url = uri
+          .replace(
+            queryParameters: {
+              ...uri.queryParameters,
+              'confirm': 't', // Skip Google Drive confirmation page
+            },
+          )
+          .toString();
     }
     // Dropbox
     else if (urlLower.contains("dropbox.com") && !urlLower.contains("dl=1")) {
@@ -847,8 +845,9 @@ class DownloadManager {
             caseSensitive: false,
           ).firstMatch(content ?? '');
           if (urlMatch != null) {
-            currentUrl =
-                Uri.parse(currentUrl).resolve(urlMatch.group(1)!).toString();
+            currentUrl = Uri.parse(
+              currentUrl,
+            ).resolve(urlMatch.group(1)!).toString();
             redirectCount++;
             continue;
           }

@@ -87,34 +87,33 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
           return;
         }
 
-        final files =
-            (await Future.wait(
-              droppedItems.map((e) async {
-                final reader = e.dataReader;
-                if (reader == null) return null;
+        final files = (await Future.wait(
+          droppedItems.map((e) async {
+            final reader = e.dataReader;
+            if (reader == null) return null;
 
-                // File
-                if (reader.canProvide(Formats.fileUri)) {
-                  Fimber.i("Dropped file: ${await reader.getSuggestedName()}");
-                  return await getFileFromReader(reader);
-                } else if (reader.canProvide(Formats.uri)) {
-                  Fimber.i("Dropped uri: ${await reader.getSuggestedName()}");
-                  final uri = await getUriFromReader(reader);
-                  if (uri == null) return null;
+            // File
+            if (reader.canProvide(Formats.fileUri)) {
+              Fimber.i("Dropped file: ${await reader.getSuggestedName()}");
+              return await getFileFromReader(reader);
+            } else if (reader.canProvide(Formats.uri)) {
+              Fimber.i("Dropped uri: ${await reader.getSuggestedName()}");
+              final uri = await getUriFromReader(reader);
+              if (uri == null) return null;
 
-                  ref
-                      .read(downloadManager.notifier)
-                      .downloadAndInstallMod(
-                        "Web link download",
-                        uri.uri.toString(),
-                        activateVariantOnComplete: false,
-                      );
-                  return null;
-                }
+              ref
+                  .read(downloadManager.notifier)
+                  .downloadAndInstallMod(
+                    "Web link download",
+                    uri.uri.toString(),
+                    activateVariantOnComplete: false,
+                  );
+              return null;
+            }
 
-                return null;
-              }),
-            )).nonNulls.toList();
+            return null;
+          }),
+        )).nonNulls.toList();
 
         if (files.isEmpty) {
           Fimber.i("No files dropped.");
@@ -181,10 +180,9 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
         //     .nonNulls
         //     .toList()
 
-        final files =
-            (await filterToSupportedTypes(
-              detail.session.items,
-            )).orEmpty().toList();
+        final files = (await filterToSupportedTypes(
+          detail.session.items,
+        )).orEmpty().toList();
         if (files.isEmpty) {
           return DropOperation.none;
         }
@@ -227,81 +225,70 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
               if (!ignoringDrop)
                 IgnorePointer(
                   child: Container(
-                    color:
-                        _dragging
-                            ? Colors.blue.withOpacity(0.4)
-                            : Colors.transparent,
-                    child:
-                        _inProgress
-                            ? const Center(child: CircularProgressIndicator())
-                            : hoveredEvents != null
-                            ? SizedBox(
-                              width: double.infinity,
-                              height: double.infinity,
-                              child: Center(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child:
-                                      isGameRunning
-                                          ? const Text(
-                                            "Game is running. Close to install mods.",
-                                          )
-                                          : FutureBuilder(
-                                            future: Future.wait(
-                                              hoveredEvents!.map((event) async {
-                                                if (event.dataReader == null) {
-                                                  return null;
-                                                } else if (event.dataReader!
-                                                    .canProvide(
-                                                      Formats.fileUri,
-                                                    )) {
-                                                  return await getFileFromReader(
-                                                    event.dataReader!,
-                                                  );
-                                                } else if (event.dataReader!
-                                                    .canProvide(Formats.uri)) {
-                                                  return (await getUriFromReader(
-                                                    event.dataReader!,
-                                                  ))?.uri;
-                                                }
-                                              }),
-                                            ),
-                                            builder: (context, future) {
-                                              return IntrinsicHeight(
-                                                child: IntrinsicWidth(
-                                                  child: ConstrainedBox(
-                                                    constraints:
-                                                        const BoxConstraints(
-                                                          minWidth: 400,
-                                                        ),
-                                                    child:
-                                                        DragDropInstallModOverlay(
-                                                          entities:
-                                                              future.data
-                                                                  .orEmpty()
-                                                                  .nonNulls
-                                                                  .whereType<
-                                                                    File
-                                                                  >()
-                                                                  .toList(),
-                                                          urls:
-                                                              future.data
-                                                                  .orEmpty()
-                                                                  .nonNulls
-                                                                  .whereType<
-                                                                    Uri
-                                                                  >()
-                                                                  .toList(),
-                                                        ),
-                                                  ),
-                                                ),
+                    color: _dragging
+                        ? Colors.blue.withOpacity(0.4)
+                        : Colors.transparent,
+                    child: _inProgress
+                        ? const Center(child: CircularProgressIndicator())
+                        : hoveredEvents != null
+                        ? SizedBox(
+                            width: double.infinity,
+                            height: double.infinity,
+                            child: Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: isGameRunning
+                                    ? const Text(
+                                        "Game is running. Close to install mods.",
+                                      )
+                                    : FutureBuilder(
+                                        future: Future.wait(
+                                          hoveredEvents!.map((event) async {
+                                            if (event.dataReader == null) {
+                                              return null;
+                                            } else if (event.dataReader!
+                                                .canProvide(Formats.fileUri)) {
+                                              return await getFileFromReader(
+                                                event.dataReader!,
                                               );
-                                            },
-                                          ),
-                                ),
+                                            } else if (event.dataReader!
+                                                .canProvide(Formats.uri)) {
+                                              return (await getUriFromReader(
+                                                event.dataReader!,
+                                              ))?.uri;
+                                            }
+                                          }),
+                                        ),
+                                        builder: (context, future) {
+                                          return IntrinsicHeight(
+                                            child: IntrinsicWidth(
+                                              child: ConstrainedBox(
+                                                constraints:
+                                                    const BoxConstraints(
+                                                      minWidth: 400,
+                                                    ),
+                                                child:
+                                                    DragDropInstallModOverlay(
+                                                      entities: future.data
+                                                          .orEmpty()
+                                                          .nonNulls
+                                                          .whereType<File>()
+                                                          .toList(),
+                                                      urls: future.data
+                                                          .orEmpty()
+                                                          .nonNulls
+                                                          .whereType<Uri>()
+                                                          .toList(),
+                                                    ),
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
                               ),
-                            )
-                            : null,
+                            ),
+                          )
+                        : null,
                   ),
                 ),
             ],

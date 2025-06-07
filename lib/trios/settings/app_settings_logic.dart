@@ -184,10 +184,9 @@ class SettingsFileManager {
       if (_settingsFile.existsSync()) {
         try {
           final contents = _settingsFile.readAsStringSync();
-          final map =
-              (_fileFormat == FileFormat.toml)
-                  ? TomlDocument.parse(contents).toMap()
-                  : jsonDecode(contents) as Map<String, dynamic>;
+          final map = (_fileFormat == FileFormat.toml)
+              ? TomlDocument.parse(contents).toMap()
+              : jsonDecode(contents) as Map<String, dynamic>;
           Fimber.i("$_fileName successfully loaded from disk.");
           return SettingsMapper.fromMap(map);
         } catch (e, stackTrace) {
@@ -207,10 +206,9 @@ class SettingsFileManager {
   void writeSync(Settings settings) {
     try {
       _lock.protectSync(() {
-        final serializedData =
-            (_fileFormat == FileFormat.toml)
-                ? TomlDocument.fromMap(settings.toMap()).toString()
-                : settings.toMap().prettyPrintJson();
+        final serializedData = (_fileFormat == FileFormat.toml)
+            ? TomlDocument.fromMap(settings.toMap()).toString()
+            : settings.toMap().prettyPrintJson();
 
         _settingsFile.writeAsStringSync(serializedData);
         Fimber.i("$_fileName successfully written to disk.");

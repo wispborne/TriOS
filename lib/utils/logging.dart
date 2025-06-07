@@ -418,8 +418,9 @@ SentryFlutterOptions configureSentry(
 }
 
 String getSentryUserId(Settings? settings) {
-  final userIdFile =
-      Constants.configDataFolderPath.resolve("user_id_sentry.txt").toFile();
+  final userIdFile = Constants.configDataFolderPath
+      .resolve("user_id_sentry.txt")
+      .toFile();
   var userId = "";
 
   // Read user id from file.
@@ -457,25 +458,23 @@ SentryEvent _scrubSensitiveDataFromSentryEvent(
   Hint? hint,
 }) {
   // Scrub sensitive data from the exception values
-  final exceptions =
-      event.exceptions?.map((exception) {
-        if (exception.stackTrace != null) {
-          final frames =
-              exception.stackTrace!.frames.map((frame) {
-                if (frame.fileName != null) {
-                  frame = frame.copyWith(fileName: _scrubPath(frame.fileName!));
-                }
-                return frame;
-              }).toList();
-          exception = exception.copyWith(
-            stackTrace: SentryStackTrace(frames: frames),
-          );
+  final exceptions = event.exceptions?.map((exception) {
+    if (exception.stackTrace != null) {
+      final frames = exception.stackTrace!.frames.map((frame) {
+        if (frame.fileName != null) {
+          frame = frame.copyWith(fileName: _scrubPath(frame.fileName!));
         }
-        if (exception.value != null) {
-          exception = exception.copyWith(value: _scrubPath(exception.value!));
-        }
-        return exception;
+        return frame;
       }).toList();
+      exception = exception.copyWith(
+        stackTrace: SentryStackTrace(frames: frames),
+      );
+    }
+    if (exception.value != null) {
+      exception = exception.copyWith(value: _scrubPath(exception.value!));
+    }
+    return exception;
+  }).toList();
 
   return event.copyWith(exceptions: exceptions);
 }

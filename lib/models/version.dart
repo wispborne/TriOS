@@ -68,10 +68,9 @@ class Version with VersionMappable implements Comparable<Version> {
   /// - `sanitizeInput` should be true for `mod_info.json`, false for `.version`. Whether to remove all but numbers and symbols.
   static Version parse(String versionString, {bool sanitizeInput = true}) {
     // Remove non-version characters
-    final sanitizedString =
-        sanitizeInput
-            ? versionString.replaceAll(RegExp(r"[^0-9.-]"), "")
-            : versionString;
+    final sanitizedString = sanitizeInput
+        ? versionString.replaceAll(RegExp(r"[^0-9.-]"), "")
+        : versionString;
 
     // Split into version and release candidate
     final parts = sanitizedString.split("-").take(2);

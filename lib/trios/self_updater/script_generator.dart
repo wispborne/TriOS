@@ -13,10 +13,9 @@ class ScriptGenerator {
       TargetPlatform.windows => "bat",
       TargetPlatform.macOS => "sh",
       TargetPlatform.linux => "sh",
-      _ =>
-        throw UnsupportedError(
-          "Unsupported platform: ${Platform.operatingSystem}",
-        ),
+      _ => throw UnsupportedError(
+        "Unsupported platform: ${Platform.operatingSystem}",
+      ),
     };
 
     final scriptName = "$SELF_UPDATE_FILE_NAME.$tempFileNameExt";
@@ -51,20 +50,19 @@ class ScriptGenerator {
     Directory destDir, {
     int delaySeconds = 2,
   }) async {
-    final filePairs =
-        sourceDir
-            .listSync(recursive: true)
-            .map((e) {
-              if (e is File) {
-                return Tuple2(
-                  e,
-                  File(p.join(destDir.path, e.relativeTo(sourceDir))),
-                );
-              }
-              return null;
-            })
-            .whereType<Tuple2<File, File>>()
-            .toList();
+    final filePairs = sourceDir
+        .listSync(recursive: true)
+        .map((e) {
+          if (e is File) {
+            return Tuple2(
+              e,
+              File(p.join(destDir.path, e.relativeTo(sourceDir))),
+            );
+          }
+          return null;
+        })
+        .whereType<Tuple2<File, File>>()
+        .toList();
 
     return writeUpdateScriptToFileManual(
       filePairs,

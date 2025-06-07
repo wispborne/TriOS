@@ -27,14 +27,14 @@ class FilterModsSearchBar extends StatelessWidget {
             query.isEmpty
                 ? Container()
                 : IconButton(
-                  icon: const Icon(Icons.clear),
-                  constraints: const BoxConstraints(),
-                  padding: EdgeInsets.zero,
-                  onPressed: () {
-                    controller.clear();
-                    ref.read(modsGridSearchQuery.notifier).state = "";
-                  },
-                ),
+                    icon: const Icon(Icons.clear),
+                    constraints: const BoxConstraints(),
+                    padding: EdgeInsets.zero,
+                    onPressed: () {
+                      controller.clear();
+                      ref.read(modsGridSearchQuery.notifier).state = "";
+                    },
+                  ),
           ],
           backgroundColor: WidgetStateProperty.all(
             Theme.of(context).colorScheme.surfaceContainer,

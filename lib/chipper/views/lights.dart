@@ -100,10 +100,9 @@ class LightPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     for (var light in lights) {
-      final paint =
-          Paint()
-            ..color = light.color.withOpacity(light.intensity)
-            ..style = PaintingStyle.fill;
+      final paint = Paint()
+        ..color = light.color.withOpacity(light.intensity)
+        ..style = PaintingStyle.fill;
       canvas.drawCircle(light.position, light.size, paint);
     }
   }

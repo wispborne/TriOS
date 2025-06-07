@@ -155,8 +155,8 @@ class _AppShellState extends ConsumerState<AppShell>
 
                 toastification.showCustom(
                   context: ref.read(AppState.appContext),
-                  builder:
-                      (context, item) => SelfUpdateToast(latestRelease, item),
+                  builder: (context, item) =>
+                      SelfUpdateToast(latestRelease, item),
                 );
 
                 // if (ref.read(appSettings
@@ -522,44 +522,48 @@ class _AppShellState extends ConsumerState<AppShell>
             const SizedBox(width: 8),
             Builder(
               builder: (context) {
-                var gameFolderPath =
-                    ref.watch(AppState.gameFolder).valueOrNull?.path;
+                var gameFolderPath = ref
+                    .watch(AppState.gameFolder)
+                    .valueOrNull
+                    ?.path;
                 return gameFolderPath == null
                     ? Container()
                     : MovingTooltipWidget.text(
-                      message: "Open Starsector folder",
-                      child: IconButton(
-                        icon: const SvgImageIcon(
-                          "assets/images/icon-folder-game.svg",
-                        ),
-                        color: Theme.of(context).iconTheme.color,
-                        onPressed: () async {
-                          if (Platform.isMacOS) {
-                            // Hack for mac to reveal the Contents folder
-                            // otherwise it runs the game.
-                            try {
-                              final process = await Process.start('open', [
-                                "-R",
-                                "$gameFolderPath/Contents",
-                              ]);
-                              final result = await process.exitCode;
-                              if (result != 0) {
-                                Fimber.e("Error opening game folder: $result");
+                        message: "Open Starsector folder",
+                        child: IconButton(
+                          icon: const SvgImageIcon(
+                            "assets/images/icon-folder-game.svg",
+                          ),
+                          color: Theme.of(context).iconTheme.color,
+                          onPressed: () async {
+                            if (Platform.isMacOS) {
+                              // Hack for mac to reveal the Contents folder
+                              // otherwise it runs the game.
+                              try {
+                                final process = await Process.start('open', [
+                                  "-R",
+                                  "$gameFolderPath/Contents",
+                                ]);
+                                final result = await process.exitCode;
+                                if (result != 0) {
+                                  Fimber.e(
+                                    "Error opening game folder: $result",
+                                  );
+                                }
+                              } catch (e, st) {
+                                Fimber.e(
+                                  "Error opening game folder: $e",
+                                  ex: e,
+                                  stacktrace: st,
+                                );
                               }
-                            } catch (e, st) {
-                              Fimber.e(
-                                "Error opening game folder: $e",
-                                ex: e,
-                                stacktrace: st,
-                              );
+                            } else {
+                              // Everybody else just opens the folder
+                              OpenFilex.open(gameFolderPath);
                             }
-                          } else {
-                            // Everybody else just opens the folder
-                            OpenFilex.open(gameFolderPath);
-                          }
-                        },
-                      ),
-                    );
+                          },
+                        ),
+                      );
               },
             ),
             if (logFilePath != null)
@@ -593,10 +597,9 @@ class _AppShellState extends ConsumerState<AppShell>
                 onPressed: () {
                   _changeTab(TriOSTools.settings);
                 },
-                color:
-                    _currentPage == TriOSTools.settings
-                        ? Theme.of(context).colorScheme.primary
-                        : Theme.of(context).iconTheme.color,
+                color: _currentPage == TriOSTools.settings
+                    ? Theme.of(context).colorScheme.primary
+                    : Theme.of(context).iconTheme.color,
                 isSelected: _currentPage == TriOSTools.settings,
                 icon: const Icon(Icons.settings),
               ),
@@ -633,14 +636,13 @@ class _AppShellState extends ConsumerState<AppShell>
                             "assets/images/icon-bullhorn-variant.svg",
                           ),
                           color: Theme.of(context).iconTheme.color,
-                          onPressed:
-                              () => showTriOSChangelogDialog(
-                                context,
-                                lastestVersionToShow: Version.parse(
-                                  Constants.version,
-                                  sanitizeInput: false,
-                                ),
-                              ),
+                          onPressed: () => showTriOSChangelogDialog(
+                            context,
+                            lastestVersionToShow: Version.parse(
+                              Constants.version,
+                              sanitizeInput: false,
+                            ),
+                          ),
                         ),
                       ),
                       MovingTooltipWidget.text(
@@ -698,15 +700,14 @@ class _AppShellState extends ConsumerState<AppShell>
                           borderRadius: BorderRadius.circular(
                             ThemeManager.cornerRadius,
                           ),
-                          onTap:
-                              () => ref
-                                  .read(appSettings.notifier)
-                                  .update(
-                                    (state) => state.copyWith(
-                                      isRulesHotReloadEnabled:
-                                          !isRulesHotReloadEnabled,
-                                    ),
-                                  ),
+                          onTap: () => ref
+                              .read(appSettings.notifier)
+                              .update(
+                                (state) => state.copyWith(
+                                  isRulesHotReloadEnabled:
+                                      !isRulesHotReloadEnabled,
+                                ),
+                              ),
                           child: Padding(
                             padding: const EdgeInsets.only(left: 16.0),
                             child: RulesHotReload(
@@ -893,22 +894,20 @@ class _FilePermissionShieldState extends ConsumerState<FilePermissionShield> {
         text: TextSpan(
           children: [
             TextSpan(
-              text:
-                  isAlreadyAdmin
-                      ? "Unable to find or modify file(s)."
-                      : "Right-click TriOS.exe and select 'Run as Administrator'.",
+              text: isAlreadyAdmin
+                  ? "Unable to find or modify file(s)."
+                  : "Right-click TriOS.exe and select 'Run as Administrator'.",
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             TextSpan(
-              text:
-                  isAlreadyAdmin
-                      ? "\nEnsure that they exist and are not read-only.\n"
-                      : "\nTriOS may not be able to modify game files, otherwise.\n",
+              text: isAlreadyAdmin
+                  ? "\nEnsure that they exist and are not read-only.\n"
+                  : "\nTriOS may not be able to modify game files, otherwise.\n",
             ),
             TextSpan(
               text:
                   "\n${nonWritablePaths.joinToString(separator: "\n", transform: (path) => "❌ Unable to edit ${path.description}."
-                  "\n    (${path.path ?? 'unknown path'}).")}",
+                      "\n    (${path.path ?? 'unknown path'}).")}",
             ),
           ],
         ),

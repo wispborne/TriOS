@@ -31,15 +31,14 @@ class TextWithIcon extends StatelessWidget {
       children: [
         if (leading != null) Padding(padding: leadingPadding!, child: leading),
         Flexible(
-          child:
-              text != null
-                  ? Text(
-                    text!,
-                    style: style,
-                    overflow: overflow,
-                    maxLines: maxLines,
-                  )
-                  : widget!,
+          child: text != null
+              ? Text(
+                  text!,
+                  style: style,
+                  overflow: overflow,
+                  maxLines: maxLines,
+                )
+              : widget!,
         ),
         if (trailing != null)
           Padding(padding: trailingPadding!, child: trailing),

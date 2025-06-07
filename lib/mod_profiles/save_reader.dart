@@ -42,12 +42,11 @@ class SaveFileNotifier extends AsyncNotifier<List<SaveFile>> {
       return [];
     }
 
-    final saveFolders =
-        saveDir
-            .listSync()
-            .whereType<Directory>()
-            .where((d) => d.name.startsWith("save"))
-            .toList();
+    final saveFolders = saveDir
+        .listSync()
+        .whereType<Directory>()
+        .where((d) => d.name.startsWith("save"))
+        .toList();
 
     final newSaves = await Future.wait(
       saveFolders.map((folder) async {
@@ -85,8 +84,8 @@ class SaveFileNotifier extends AsyncNotifier<List<SaveFile>> {
     DateTime saveDate = DateTime.now();
     try {
       saveDate = DateFormat("yyyy-MM-dd HH:mm:ss.SS")
-      // Save file dates are always in UTC
-      .parse(saveDateString.replaceAll(' UTC', ''), true);
+          // Save file dates are always in UTC
+          .parse(saveDateString.replaceAll(' UTC', ''), true);
     } catch (e) {
       Fimber.e('Error parsing save date: $e');
     }

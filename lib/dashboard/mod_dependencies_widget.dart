@@ -31,13 +31,12 @@ class _ModDependenciesWidgetState extends ConsumerState<ModDependenciesWidget> {
     final modVariants = ref.watch(AppState.modVariants).valueOrNull;
     final mods = ref.watch(AppState.mods);
     final gameVersion = ref.watch(AppState.starsectorVersion).valueOrNull;
-    final enabledMods =
-        ref
-            .watch(AppState.enabledModsFile)
-            .valueOrNull
-            ?.filterOutMissingMods(mods)
-            .enabledMods
-            .toList();
+    final enabledMods = ref
+        .watch(AppState.enabledModsFile)
+        .valueOrNull
+        ?.filterOutMissingMods(mods)
+        .enabledMods
+        .toList();
     if (modVariants == null || enabledMods == null) return const SizedBox();
 
     final modVariant = widget.modVariant;

@@ -309,14 +309,13 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
       )) {
         try {
           final mods = variants.orEmpty().toList();
-          final variantInfo =
-              mods
-                  .flatMap((mod) => mod.modVariants)
-                  .map(
-                    (v) =>
-                        "${v.isEnabled(mods) ? "E" : "X"} ${v.modInfo.id} ${v.modInfo.version}",
-                  )
-                  .sorted();
+          final variantInfo = mods
+              .flatMap((mod) => mod.modVariants)
+              .map(
+                (v) =>
+                    "${v.isEnabled(mods) ? "E" : "X"} ${v.modInfo.id} ${v.modInfo.version}",
+              )
+              .sorted();
 
           Sentry.configureScope((scope) {
             scope.setContexts("mods", variantInfo);
@@ -342,10 +341,9 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
     return MaterialApp(
       title: Constants.appTitle,
       theme: currentTheme.themeData,
-      themeMode:
-          currentTheme.themeData.brightness == Brightness.light
-              ? ThemeMode.light
-              : ThemeMode.dark,
+      themeMode: currentTheme.themeData.brightness == Brightness.light
+          ? ThemeMode.light
+          : ThemeMode.dark,
       debugShowCheckedModeBanner: false,
       darkTheme: currentTheme.themeData,
       home: const ToastificationConfigProvider(

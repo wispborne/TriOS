@@ -46,8 +46,9 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
     gameDirPath = settings.gameDir?.path;
     textEditingController = TextEditingController(text: gameDirPath);
     enableMultipleVersions = settings.keepLastNVersions != 1;
-    lastNVersionsSetting =
-        enableMultipleVersions ? settings.keepLastNVersions : null;
+    lastNVersionsSetting = enableMultipleVersions
+        ? settings.keepLastNVersions
+        : null;
     allowCrashReporting = settings.allowCrashReporting ?? false;
     pages = [];
     if (Platform.isMacOS &&
@@ -144,23 +145,21 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
                       labelText: 'Game Location',
                       hintText: 'Select your game directory',
                     ),
-                    validator:
-                        (value) =>
-                            value == null || !validateGameFolderPath(value)
-                                ? 'Game not found'
-                                : null,
-                    onChanged:
-                        (value) => setState(() {
-                          gameDirPath = value;
-                        }),
+                    validator: (value) =>
+                        value == null || !validateGameFolderPath(value)
+                        ? 'Game not found'
+                        : null,
+                    onChanged: (value) => setState(() {
+                      gameDirPath = value;
+                    }),
                     onSaved: (value) => gameDirPath = value,
                   ),
                 ),
                 IconButton(
                   icon: const Icon(Icons.folder),
                   onPressed: () async {
-                    var newGameDir =
-                        await FilePicker.platform.getDirectoryPath();
+                    var newGameDir = await FilePicker.platform
+                        .getDirectoryPath();
                     if (newGameDir == null) return;
                     setState(() {
                       textEditingController.text = newGameDir;
@@ -210,28 +209,25 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
                 title: const Text("Keep only one mod version"),
                 value: false,
                 groupValue: enableMultipleVersions,
-                onChanged:
-                    (value) => setState(() {
-                      enableMultipleVersions = value!;
-                    }),
+                onChanged: (value) => setState(() {
+                  enableMultipleVersions = value!;
+                }),
               ),
             ),
             Row(
               children: [
                 IntrinsicWidth(
                   child: MovingTooltipWidget.text(
-                    message:
-                        lastNVersionsSetting == null
-                            ? "TriOS will never automatically remove mod versions."
-                            : "Installing or updating a mod will remove all but the last $lastNVersionsSetting highest versions.",
+                    message: lastNVersionsSetting == null
+                        ? "TriOS will never automatically remove mod versions."
+                        : "Installing or updating a mod will remove all but the last $lastNVersionsSetting highest versions.",
                     child: RadioListTile(
                       title: const Text("Keep all mod versions"),
                       value: true,
                       groupValue: enableMultipleVersions,
-                      onChanged:
-                          (value) => setState(() {
-                            enableMultipleVersions = value!;
-                          }),
+                      onChanged: (value) => setState(() {
+                        enableMultipleVersions = value!;
+                      }),
                     ),
                   ),
                 ),
@@ -413,8 +409,9 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
                       height: 8,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color:
-                            _currentPage == index ? Colors.blue : Colors.grey,
+                        color: _currentPage == index
+                            ? Colors.blue
+                            : Colors.grey,
                       ),
                     );
                   }),
@@ -480,8 +477,9 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
     settings.update(
       (state) => state.copyWith(
         gameDir: gameDirPath != null ? Directory(gameDirPath!) : null,
-        modsDir:
-            generateModsFolderPath(gameDirPath!.toDirectory())?.toDirectory(),
+        modsDir: generateModsFolderPath(
+          gameDirPath!.toDirectory(),
+        )?.toDirectory(),
         keepLastNVersions: enableMultipleVersions ? lastNVersionsSetting : 1,
         allowCrashReporting: allowCrashReporting,
       ),

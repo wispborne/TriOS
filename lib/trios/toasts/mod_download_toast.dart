@@ -67,17 +67,16 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
     final item = widget.item;
     final modString = download.displayName;
     final downloadTask = download.task;
-    var installedMod =
-        download is ModDownload
-            ? ref
-                .watch(AppState.modVariants)
-                .value
-                .orEmpty()
-                .firstWhereOrNull(
-                  (ModVariant element) =>
-                      element.smolId == (download).modInfo.smolId,
-                )
-            : null;
+    var installedMod = download is ModDownload
+        ? ref
+              .watch(AppState.modVariants)
+              .value
+              .orEmpty()
+              .firstWhereOrNull(
+                (ModVariant element) =>
+                    element.smolId == (download).modInfo.smolId,
+              )
+        : null;
     if (palette == null && installedMod != null) {
       _generatePalette(installedMod);
     }
@@ -196,9 +195,8 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                                         downloadTask.error.toString(),
                                         style: theme.textTheme.labelMedium
                                             ?.copyWith(
-                                              color:
-                                                  ThemeManager
-                                                      .vanillaErrorColor,
+                                              color: ThemeManager
+                                                  .vanillaErrorColor,
                                             ),
                                       ),
                                     ),
@@ -213,11 +211,9 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                                                 DownloadStatus
                                                     .retrievingFileInfo;
                                         return TriOSDownloadProgressIndicator(
-                                          color:
-                                              status == DownloadStatus.failed
-                                                  ? ThemeManager
-                                                      .vanillaErrorColor
-                                                  : null,
+                                          color: status == DownloadStatus.failed
+                                              ? ThemeManager.vanillaErrorColor
+                                              : null,
                                           value: TriOSDownloadProgress(
                                             downloaded.bytesReceived,
                                             downloaded.totalBytes,
@@ -258,10 +254,9 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                                               "Open",
                                               style: theme.textTheme.bodyMedium
                                                   ?.copyWith(
-                                                    color:
-                                                        theme
-                                                            .colorScheme
-                                                            .onSurface,
+                                                    color: theme
+                                                        .colorScheme
+                                                        .onSurface,
                                                   ),
                                             ),
                                           ),
@@ -327,8 +322,8 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                                   ),
                                 ),
                                 IconButton(
-                                  onPressed:
-                                      () => toastification.dismiss(widget.item),
+                                  onPressed: () =>
+                                      toastification.dismiss(widget.item),
                                   icon: const Icon(Icons.close),
                                 ),
                               ],

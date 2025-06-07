@@ -50,10 +50,9 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
       }
       // generate guid for id
       final id = const Uuid().v4();
-      final download =
-          modInfo == null
-              ? Download(id, displayName, value)
-              : ModDownload(id, displayName, value, modInfo);
+      final download = modInfo == null
+          ? Download(id, displayName, value)
+          : ModDownload(id, displayName, value, modInfo);
       _downloads.add(download);
       state = AsyncValue.data(_downloads);
 

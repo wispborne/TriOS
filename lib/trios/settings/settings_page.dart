@@ -98,14 +98,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                     controller: _gamePathTextController,
                                     decoration: InputDecoration(
                                       border: const OutlineInputBorder(),
-                                      labelStyle:
-                                          Theme.of(
-                                            context,
-                                          ).textTheme.labelLarge,
-                                      errorText:
-                                          gamePathExists
-                                              ? null
-                                              : "Starsector not found",
+                                      labelStyle: Theme.of(
+                                        context,
+                                      ).textTheme.labelLarge,
+                                      errorText: gamePathExists
+                                          ? null
+                                          : "Starsector not found",
                                       labelText: 'Starsector Folder',
                                     ),
                                     onChanged: (newGameDir) {
@@ -118,13 +116,14 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                             IconButton(
                               icon: const Icon(Icons.folder),
                               onPressed: () async {
-                                var newGameDir =
-                                    await FilePicker.platform
-                                        .getDirectoryPath();
+                                var newGameDir = await FilePicker.platform
+                                    .getDirectoryPath();
                                 if (newGameDir == null) return;
                                 setState(() {
-                                  _gamePathTextController.text =
-                                      newGameDir.toDirectory().normalize.path;
+                                  _gamePathTextController.text = newGameDir
+                                      .toDirectory()
+                                      .normalize
+                                      .path;
                                   tryUpdateGamePath(newGameDir);
                                 });
                               },
@@ -142,37 +141,33 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                 (value) => value.useCustomGameExePath,
                               ),
                             );
-                            final gamePath =
-                                ref
-                                    .watch(
-                                      appSettings.select(
-                                        (value) => value.gameDir,
-                                      ),
-                                    )
-                                    ?.toDirectory();
+                            final gamePath = ref
+                                .watch(
+                                  appSettings.select((value) => value.gameDir),
+                                )
+                                ?.toDirectory();
                             final currentLaunchPath = gamePath?.let(
                               (dir) =>
                                   getVanillaGameExecutable(dir).toFile().path,
                             );
-                            bool doesCustomExePathExist =
-                                !useCustomExecutable
-                                    ? validateGameFolderPath(
-                                      _gamePathTextController.text,
-                                    )
-                                    : (_customExecutablePathTextController
-                                            .text
-                                            .isNotEmpty &&
-                                        validateIsProbablyAProgram(
-                                          _customExecutablePathTextController
-                                              .text,
-                                        ));
+                            bool doesCustomExePathExist = !useCustomExecutable
+                                ? validateGameFolderPath(
+                                    _gamePathTextController.text,
+                                  )
+                                : (_customExecutablePathTextController
+                                          .text
+                                          .isNotEmpty &&
+                                      validateIsProbablyAProgram(
+                                        _customExecutablePathTextController
+                                            .text,
+                                      ));
 
                             // If not using override, show the vanilla path that'll be used instead.
                             if (!useCustomExecutable) {
                               _customExecutablePathTextController.text =
                                   (currentLaunchPath?.isNotEmpty == true)
-                                      ? File(currentLaunchPath!).path
-                                      : "";
+                                  ? File(currentLaunchPath!).path
+                                  : "";
                             }
 
                             return Row(
@@ -206,7 +201,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                                     currentLaunchPath ?? "";
                                               } else if (value == true) {
                                                 _customExecutablePathTextController
-                                                    .text = customPath;
+                                                        .text =
+                                                    customPath;
                                               }
                                             });
                                           });
@@ -236,19 +232,16 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                         decoration: InputDecoration(
                                           border: const OutlineInputBorder(),
                                           isDense: true,
-                                          errorText:
-                                              doesCustomExePathExist
-                                                  ? null
-                                                  : "Path does not exist",
+                                          errorText: doesCustomExePathExist
+                                              ? null
+                                              : "Path does not exist",
                                           labelText: "Starsector launcher path",
-                                          hintStyle:
-                                              Theme.of(
-                                                context,
-                                              ).textTheme.labelLarge,
-                                          labelStyle:
-                                              Theme.of(
-                                                context,
-                                              ).textTheme.labelLarge,
+                                          hintStyle: Theme.of(
+                                            context,
+                                          ).textTheme.labelLarge,
+                                          labelStyle: Theme.of(
+                                            context,
+                                          ).textTheme.labelLarge,
                                         ),
                                         onChanged: (newPath) {
                                           tryUpdateCustomExecutablePath(
@@ -309,7 +302,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       Padding(
                         padding: const EdgeInsets.only(top: 8.0),
                         child: MovingTooltipWidget.text(
-                          message: "Play with fire."
+                          message:
+                              "Play with fire."
                               "\n"
                               "\nEnabling this will include Prereleases when checking for updates."
                               "\nPrereleases are *usually* stable, but no guarantees. They contain bugfixes and often add a feature or two that may not be totally finished.",
@@ -383,10 +377,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                                 width: 40,
                                                 height: 20,
                                                 child: Container(
-                                                  color:
-                                                      themeData
-                                                          .colorScheme
-                                                          .primary,
+                                                  color: themeData
+                                                      .colorScheme
+                                                      .primary,
                                                   child:
                                                       const SizedBox.shrink(),
                                                 ),
@@ -396,10 +389,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                                 width: 20,
                                                 height: 20,
                                                 child: Container(
-                                                  color:
-                                                      themeData
-                                                          .colorScheme
-                                                          .secondary,
+                                                  color: themeData
+                                                      .colorScheme
+                                                      .secondary,
                                                   child:
                                                       const SizedBox.shrink(),
                                                 ),
@@ -409,10 +401,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                                 triosTheme.key,
                                                 style: theme.textTheme.bodyLarge
                                                     ?.copyWith(
-                                                      color:
-                                                          themeData
-                                                              .colorScheme
-                                                              .onSurface,
+                                                      color: themeData
+                                                          .colorScheme
+                                                          .onSurface,
                                                     ),
                                               ),
                                             ],
@@ -422,14 +413,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                       })
                                       .distinctBy((e) => e.value)
                                       .toList(),
-                              onSelected:
-                                  (TriOSTheme? theme) => ref
-                                      .read(AppState.themeData.notifier)
-                                      .switchThemes(theme!),
-                              initialSelection:
-                                  ref
-                                      .watch(AppState.themeData.notifier)
-                                      .currentTheme,
+                              onSelected: (TriOSTheme? theme) => ref
+                                  .read(AppState.themeData.notifier)
+                                  .switchThemes(theme!),
+                              initialSelection: ref
+                                  .watch(AppState.themeData.notifier)
+                                  .currentTheme,
                               // borderRadius: BorderRadius.all(
                               //     Radius.circular(ThemeManager.cornerRadius)),
                               // padding: const EdgeInsets.symmetric(horizontal: 0),
@@ -438,16 +427,15 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                           MovingTooltipWidget.text(
                             message: "I'm feeling lucky",
                             child: IconButton(
-                              onPressed:
-                                  () => ref
-                                      .read(AppState.themeData.notifier)
-                                      .switchThemes(
-                                        ref
-                                            .read(AppState.themeData.notifier)
-                                            .allThemes
-                                            .values
-                                            .random(),
-                                      ),
+                              onPressed: () => ref
+                                  .read(AppState.themeData.notifier)
+                                  .switchThemes(
+                                    ref
+                                        .read(AppState.themeData.notifier)
+                                        .allThemes
+                                        .values
+                                        .random(),
+                                  ),
                               icon: SvgImageIcon(
                                 "assets/images/icon-dice.svg",
                                 color: theme.colorScheme.onSurface,
@@ -466,14 +454,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                             message: "Free up precious UI space",
                             child: CheckboxWithLabel(
                               value: !showDonationButton,
-                              onChanged:
-                                  (bool? value) => ref
-                                      .read(appSettings.notifier)
-                                      .update(
-                                        (state) => state.copyWith(
-                                          showDonationButton: !(value ?? false),
-                                        ),
-                                      ),
+                              onChanged: (bool? value) => ref
+                                  .read(appSettings.notifier)
+                                  .update(
+                                    (state) => state.copyWith(
+                                      showDonationButton: !(value ?? false),
+                                    ),
+                                  ),
                               label: "Hide Donation Button",
                             ),
                           );
@@ -510,12 +497,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                     .read(appSettings.notifier)
                                     .update(
                                       (state) => state.copyWith(
-                                        folderNamingSetting:
-                                            value == true
-                                                ? FolderNamingSetting
-                                                    .allFoldersVersioned
-                                                : FolderNamingSetting
-                                                    .doNotChangeNameForHighestVersion,
+                                        folderNamingSetting: value == true
+                                            ? FolderNamingSetting
+                                                  .allFoldersVersioned
+                                            : FolderNamingSetting
+                                                  .doNotChangeNameForHighestVersion,
                                       ),
                                     );
                               },
@@ -544,12 +530,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                       .read(appSettings.notifier)
                                       .update(
                                         (state) => state.copyWith(
-                                          folderNamingSetting:
-                                              value == true
-                                                  ? FolderNamingSetting
-                                                      .doNotChangeNamesEver
-                                                  : FolderNamingSetting
-                                                      .doNotChangeNameForHighestVersion,
+                                          folderNamingSetting: value == true
+                                              ? FolderNamingSetting
+                                                    .doNotChangeNamesEver
+                                              : FolderNamingSetting
+                                                    .doNotChangeNameForHighestVersion,
                                         ),
                                       );
                                 },
@@ -584,12 +569,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                       .read(appSettings.notifier)
                                       .update(
                                         (s) => s.copyWith(
-                                          modUpdateBehavior:
-                                              newValue == true
-                                                  ? ModUpdateBehavior
-                                                      .switchToNewVersionIfWasEnabled
-                                                  : ModUpdateBehavior
-                                                      .doNotChange,
+                                          modUpdateBehavior: newValue == true
+                                              ? ModUpdateBehavior
+                                                    .switchToNewVersionIfWasEnabled
+                                              : ModUpdateBehavior.doNotChange,
                                         ),
                                       );
                                 });
@@ -614,14 +597,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                     value: false,
                                     contentPadding: const EdgeInsets.all(0),
                                     groupValue: enableMultipleVersions,
-                                    onChanged:
-                                        (value) => ref
-                                            .read(appSettings.notifier)
-                                            .update(
-                                              (state) => state.copyWith(
-                                                keepLastNVersions: 1,
-                                              ),
-                                            ),
+                                    onChanged: (value) => ref
+                                        .read(appSettings.notifier)
+                                        .update(
+                                          (state) => state.copyWith(
+                                            keepLastNVersions: 1,
+                                          ),
+                                        ),
                                   ),
                                 ),
                               ),
@@ -629,10 +611,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                 children: [
                                   IntrinsicWidth(
                                     child: MovingTooltipWidget.text(
-                                      message:
-                                          lastNVersionsSetting == null
-                                              ? "TriOS will never automatically remove mod versions."
-                                              : "Installing or updating a mod will remove all but the last $lastNVersionsSetting highest versions.",
+                                      message: lastNVersionsSetting == null
+                                          ? "TriOS will never automatically remove mod versions."
+                                          : "Installing or updating a mod will remove all but the last $lastNVersionsSetting highest versions.",
                                       child: RadioListTile(
                                         title: const Text(
                                           "Keep all mod versions",
@@ -640,17 +621,14 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                         value: true,
                                         contentPadding: const EdgeInsets.all(0),
                                         groupValue: enableMultipleVersions,
-                                        onChanged:
-                                            (value) => ref
-                                                .read(appSettings.notifier)
-                                                .update(
-                                                  (state) => state.copyWith(
-                                                    keepLastNVersions:
-                                                        (value ?? false)
-                                                            ? null
-                                                            : 1,
-                                                  ),
-                                                ),
+                                        onChanged: (value) => ref
+                                            .read(appSettings.notifier)
+                                            .update(
+                                              (state) => state.copyWith(
+                                                keepLastNVersions:
+                                                    (value ?? false) ? null : 1,
+                                              ),
+                                            ),
                                       ),
                                     ),
                                   ),
@@ -873,8 +851,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                       .read(appSettings.notifier)
                                       .update(
                                         (state) => state.copyWith(
-                                          secondsBetweenModFolderChecks:
-                                              value.toInt(),
+                                          secondsBetweenModFolderChecks: value
+                                              .toInt(),
                                         ),
                                       );
                                 },
@@ -970,8 +948,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                         .read(appSettings.notifier)
                                         .update(
                                           (state) => state.copyWith(
-                                            maxHttpRequestsAtOnce:
-                                                value.toInt(),
+                                            maxHttpRequestsAtOnce: value
+                                                .toInt(),
                                           ),
                                         );
                                   },
@@ -991,8 +969,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                             onPressed: () {
                               showDialog(
                                 context: context,
-                                builder:
-                                    (context) => const OnboardingCarousel(),
+                                builder: (context) =>
+                                    const OnboardingCarousel(),
                                 barrierDismissible: false,
                               );
                             },
@@ -1095,23 +1073,22 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                   .read(appSettings.notifier)
                                   .update(
                                     (state) => state.copyWith(
-                                      compressionLib:
-                                          value!
-                                              ? CompressionLib.sevenZip
-                                              : CompressionLib.libarchive,
+                                      compressionLib: value!
+                                          ? CompressionLib.sevenZip
+                                          : CompressionLib.libarchive,
                                     ),
                                   );
                             },
                             label:
                                 ref.watch(
-                                      appSettings.select(
-                                        (value) =>
-                                            value.compressionLib ==
-                                            CompressionLib.libarchive,
-                                      ),
-                                    )
-                                    ? "Using libarchive for extracting. Click to switch to 7zip."
-                                    : "Using 7zip for extracting. Click to switch to libarchive.",
+                                  appSettings.select(
+                                    (value) =>
+                                        value.compressionLib ==
+                                        CompressionLib.libarchive,
+                                  ),
+                                )
+                                ? "Using libarchive for extracting. Click to switch to 7zip."
+                                : "Using 7zip for extracting. Click to switch to libarchive.",
                           ),
                         ),
                       ),
@@ -1132,10 +1109,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                     border: const OutlineInputBorder(),
                                     isDense: true,
                                     labelText: "${Constants.appName} scaling",
-                                    hintStyle:
-                                        Theme.of(context).textTheme.labelLarge,
-                                    labelStyle:
-                                        Theme.of(context).textTheme.labelLarge,
+                                    hintStyle: Theme.of(
+                                      context,
+                                    ).textTheme.labelLarge,
+                                    labelStyle: Theme.of(
+                                      context,
+                                    ).textTheme.labelLarge,
                                   ),
                                   onChanged: (newPath) {
                                     final newScale =
@@ -1263,10 +1242,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
     if (dirExists) {
       ref.read(appSettings.notifier).update((state) {
-        var newModDirPath =
-            state.hasCustomModsDir
-                ? state.modsDir?.toDirectory()
-                : generateModsFolderPath(newGameDir.toDirectory());
+        var newModDirPath = state.hasCustomModsDir
+            ? state.modsDir?.toDirectory()
+            : generateModsFolderPath(newGameDir.toDirectory());
         newModDirPath = newModDirPath?.normalize.toDirectory();
 
         return state.copyWith(
@@ -1335,8 +1313,8 @@ class CheckForUpdatesButton extends StatelessWidget {
 
                         toastification.showCustom(
                           context: context,
-                          builder:
-                              (context, item) => SelfUpdateToast(release, item),
+                          builder: (context, item) =>
+                              SelfUpdateToast(release, item),
                         );
                       });
                 },

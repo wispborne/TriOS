@@ -14,7 +14,7 @@ void main() {
       ['2.5 Gramada', '2.5.2'],
       ['1.1.0', '1.1.b'],
       ['1.12.SSS', '1.12.1'],
-      ['0.14.5b', '0.15']
+      ['0.14.5b', '0.15'],
     ];
 
     for (final pair in correctPairs) {
@@ -27,16 +27,14 @@ void main() {
 
   test('sort versions', () {
     const iterations = 50;
-    final versions =
-        _expectedList
-            .map((v) => Version.parse(v, sanitizeInput: true))
-            .toList();
+    final versions = _expectedList
+        .map((v) => Version.parse(v, sanitizeInput: true))
+        .toList();
 
     for (int i = 0; i < iterations; i++) {
-      final sorted =
-          versions.toList()
-            ..shuffle()
-            ..sort((a, b) => a.compareTo(b));
+      final sorted = versions.toList()
+        ..shuffle()
+        ..sort((a, b) => a.compareTo(b));
       expect(sorted, versions);
     }
   });

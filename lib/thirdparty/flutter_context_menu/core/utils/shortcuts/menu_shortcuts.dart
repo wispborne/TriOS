@@ -3,7 +3,6 @@ import 'package:flutter/widgets.dart';
 
 import '../../../widgets/context_menu_state.dart';
 
-
 Map<ShortcutActivator, VoidCallback> defaultMenuShortcuts(
   BuildContext context,
   ContextMenuState menuState,

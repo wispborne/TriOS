@@ -40,10 +40,9 @@ class _HoverableWidgetState extends State<HoverableWidget> {
           _isHovering = false;
         });
       },
-      cursor:
-          widget.onTap != null
-              ? SystemMouseCursors.click
-              : SystemMouseCursors.basic,
+      cursor: widget.onTap != null
+          ? SystemMouseCursors.click
+          : SystemMouseCursors.basic,
       child: GestureDetector(
         onTap: () {
           if (widget.onTap != null) widget.onTap!();
@@ -57,10 +56,9 @@ class _HoverableWidgetState extends State<HoverableWidget> {
         behavior: HitTestBehavior.translucent,
         child: Container(
           decoration: BoxDecoration(
-            color:
-                _isHovering
-                    ? widget.hoverColor ?? Colors.black.withOpacity(0.2)
-                    : Colors.transparent,
+            color: _isHovering
+                ? widget.hoverColor ?? Colors.black.withOpacity(0.2)
+                : Colors.transparent,
             borderRadius: widget.borderRadius,
           ),
           padding: widget.padding,

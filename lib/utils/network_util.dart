@@ -125,10 +125,9 @@ class Release {
       prerelease: json['prerelease'],
       createdAt: DateTime.parse(json['created_at']),
       publishedAt: DateTime.parse(json['published_at']),
-      assets:
-          (json['assets'] as List)
-              .map((e) => Asset.fromJson(e as Map<String, dynamic>))
-              .toList(),
+      assets: (json['assets'] as List)
+          .map((e) => Asset.fromJson(e as Map<String, dynamic>))
+          .toList(),
       body: json['body'],
     );
   }

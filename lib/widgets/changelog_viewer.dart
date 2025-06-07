@@ -65,15 +65,13 @@ class _TriOSChangelogViewerState extends ConsumerState<TriOSChangelogViewer> {
         } else if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));
         } else {
-          final text =
-              widget.lastestVersionToShow == null
-                  ? snapshot.data
-                  : snapshot.data?.skipLinesWhile(
-                    (line) =>
-                        !line.contains(
-                          widget.lastestVersionToShow!.toStringFromParts(),
-                        ),
-                  );
+          final text = widget.lastestVersionToShow == null
+              ? snapshot.data
+              : snapshot.data?.skipLinesWhile(
+                  (line) => !line.contains(
+                    widget.lastestVersionToShow!.toStringFromParts(),
+                  ),
+                );
 
           return Column(
             mainAxisSize: MainAxisSize.min,

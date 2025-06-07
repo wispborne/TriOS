@@ -63,27 +63,20 @@ class _ModVersionSelectionDropdownState
     );
     final isEnabled = widget.mod.hasEnabledVariant;
     // You can always disable a mod, but you can't enable a mod if dependencies are missing.
-    final isButtonEnabled =
-        areAllDependenciesSatisfied == true || isEnabled;
+    final isButtonEnabled = areAllDependenciesSatisfied == true || isEnabled;
     // Pseudo-disabled means it's enabled but has a warning outline.
     final isButtonPseudoDisabled =
         isButtonEnabled &&
         (!isSupportedByGameVersion || areAllDependenciesSatisfied != true);
 
     // Button color logic
-    final buttonColor = switch ((
-      hasMultipleEnabled,
-      isEnabled,
-    )) {
+    final buttonColor = switch ((hasMultipleEnabled, isEnabled)) {
       (true, _) => errorColor,
       (false, true) => theme.colorScheme.secondary,
       _ => theme.colorScheme.surface,
     };
 
-    final textColor = switch ((
-      hasMultipleEnabled,
-      isEnabled,
-    )) {
+    final textColor = switch ((hasMultipleEnabled, isEnabled)) {
       (true, _) => theme.colorScheme.onSecondary.darker(20),
       (false, true) => theme.colorScheme.onSecondary,
       _ => theme.colorScheme.onSurface,
@@ -176,11 +169,7 @@ class _ModVersionSelectionDropdownState
                           child: warningIcon,
                         )
                       : Container()),
-                  Center(
-                    child: Text(
-                      isEnabled ? "Disable" : "Enable",
-                    ),
-                  ),
+                  Center(child: Text(isEnabled ? "Disable" : "Enable")),
                 ],
               ),
             ),

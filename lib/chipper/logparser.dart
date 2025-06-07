@@ -153,15 +153,14 @@ class LogParser {
 
       // javaVersion ??= "(no java version in log)";
 
-      final userMods =
-          modList.isNotEmpty
-              ? UserMods(UnmodifiableListView(modList), isPerfectList: true)
-              : UserMods(
-                UnmodifiableListView(
-                  poorMansModList..sortBy((element) => element.modName!),
-                ),
-                isPerfectList: false,
-              );
+      final userMods = modList.isNotEmpty
+          ? UserMods(UnmodifiableListView(modList), isPerfectList: true)
+          : UserMods(
+              UnmodifiableListView(
+                poorMansModList..sortBy((element) => element.modName!),
+              ),
+              isPerfectList: false,
+            );
 
       final elapsedMilliseconds = stopwatch.elapsedMilliseconds;
       final chips = LogChips(
@@ -176,13 +175,10 @@ class LogParser {
       );
       Fimber.i("Parsing took $elapsedMilliseconds ms");
       Fimber.v(
-        () =>
-            chips.errorBlock
-                .map(
-                  (element) => "\n${element.lineNumber}-${element.fullError}",
-                )
-                .toList()
-                .toString(),
+        () => chips.errorBlock
+            .map((element) => "\n${element.lineNumber}-${element.fullError}")
+            .toList()
+            .toString(),
       );
       return chips;
     } catch (e, stacktrace) {

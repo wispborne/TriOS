@@ -29,6 +29,10 @@ class MenuRouteOptions {
 }
 
 Widget _defaultTransitionsBuilder(
-    context, animation, secondaryAnimation, child) {
+  context,
+  animation,
+  secondaryAnimation,
+  child,
+) {
   return child;
 }

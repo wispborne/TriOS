@@ -42,12 +42,11 @@ class ScrapedMod with ScrapedModMappable {
 
   List<String> getAuthors() => authorsList ?? [];
 
-  List<String> getAuthorsWithAliases() =>
-      getAuthors()
-          .map((author) => ModRepoUtils.getOtherMatchingAliases(author))
-          .expand((aliases) => aliases)
-          .toSet()
-          .toList();
+  List<String> getAuthorsWithAliases() => getAuthors()
+      .map((author) => ModRepoUtils.getOtherMatchingAliases(author))
+      .expand((aliases) => aliases)
+      .toSet()
+      .toList();
 
   List<String> getCategories() => categories ?? [];
 

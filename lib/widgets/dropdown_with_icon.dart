@@ -66,10 +66,9 @@ class _AnimatedPopupMenuButtonState<T> extends State<AnimatedPopupMenuButton<T>>
           decoration: BoxDecoration(
             shape: BoxShape.rectangle,
             borderRadius: BorderRadius.circular(24),
-            color:
-                _isOpen
-                    ? Theme.of(context).colorScheme.surface
-                    : Colors.transparent,
+            color: _isOpen
+                ? Theme.of(context).colorScheme.surface
+                : Colors.transparent,
           ),
           child: Theme(
             data: Theme.of(

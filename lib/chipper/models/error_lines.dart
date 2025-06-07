@@ -160,8 +160,14 @@ class StacktraceLogLineWidget extends StatelessWidget {
       style: TextStyle(color: isObf ? obfColor : importantColor.withAlpha(240)),
       TextSpan(
         children: [
-          TextSpan(text: "    ", style: TextStyle(color: theme.hintColor)),
-          TextSpan(text: logLine.at, style: TextStyle(color: theme.hintColor)),
+          TextSpan(
+            text: "    ",
+            style: TextStyle(color: theme.hintColor),
+          ),
+          TextSpan(
+            text: logLine.at,
+            style: TextStyle(color: theme.hintColor),
+          ),
           TextSpan(
             text: logLine.namespace?.prepend(" "),
             style: TextStyle(

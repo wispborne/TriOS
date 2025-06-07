@@ -35,19 +35,19 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
     final modVariants = ref.watch(AppState.modVariants).valueOrNull;
     final mods = ref.watch(AppState.mods);
     final gameVersion = ref.watch(AppState.starsectorVersion).valueOrNull;
-    final enabledMods =
-        ref
-            .watch(AppState.enabledModsFile)
-            .valueOrNull
-            ?.filterOutMissingMods(mods)
-            .enabledMods
-            .toList();
+    final enabledMods = ref
+        .watch(AppState.enabledModsFile)
+        .valueOrNull
+        ?.filterOutMissingMods(mods)
+        .enabledMods
+        .toList();
     if (modVariants == null || enabledMods == null) return const SizedBox();
 
     final modVariant = widget.modVariant;
     final modInfo = modVariant.modInfo;
-    var cachedVersionChecks =
-        ref.watch(AppState.versionCheckResults).valueOrNull;
+    var cachedVersionChecks = ref
+        .watch(AppState.versionCheckResults)
+        .valueOrNull;
     final versionCheckComparisonResult = modVariant.updateCheck(
       cachedVersionChecks,
     );
@@ -86,13 +86,12 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
                       padding: const EdgeInsets.only(right: 8),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(4),
-                        child:
-                            modVariant.iconFilePath != null
-                                ? Image.file(
-                                  (modVariant.iconFilePath ?? "").toFile(),
-                                  isAntiAlias: true,
-                                )
-                                : Container(),
+                        child: modVariant.iconFilePath != null
+                            ? Image.file(
+                                (modVariant.iconFilePath ?? "").toFile(),
+                                isAntiAlias: true,
+                              )
+                            : Container(),
                       ),
                     ),
                   ),

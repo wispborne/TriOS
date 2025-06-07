@@ -77,21 +77,20 @@ class ArchiveModInstallSource extends ModInstallSource {
     String Function(String path)? pathTransform,
     bool Function(Object ex, StackTrace? st)? onError,
   }) async {
-    final fileList =
-        (await archive.listFiles(
-          _archive,
-        )).where((e) => fileFilter == null || fileFilter(e.path)).toList();
+    final fileList = (await archive.listFiles(
+      _archive,
+    )).where((e) => fileFilter == null || fileFilter(e.path)).toList();
 
     final extractResult =
         (await archive.extractEntriesInArchive(
               _archive,
               destinationPath,
-              fileFilter:
-                  fileFilter != null ? (entry) => fileFilter(entry.path) : null,
-              pathTransform:
-                  pathTransform != null
-                      ? (entry) => pathTransform(entry.path)
-                      : null,
+              fileFilter: fileFilter != null
+                  ? (entry) => fileFilter(entry.path)
+                  : null,
+              pathTransform: pathTransform != null
+                  ? (entry) => pathTransform(entry.path)
+                  : null,
               onError: onError,
             )).nonNulls
             .map(
@@ -104,11 +103,10 @@ class ArchiveModInstallSource extends ModInstallSource {
             .toList();
 
     final extractedPaths = extractResult.map((e) => e.relativePath).toList();
-    final missingFiles =
-        fileList
-            .map((e) => e.path)
-            .where((expected) => !extractedPaths.contains(expected))
-            .toList();
+    final missingFiles = fileList
+        .map((e) => e.path)
+        .where((expected) => !extractedPaths.contains(expected))
+        .toList();
 
     if (missingFiles.isNotEmpty) {
       final errMessage =
@@ -190,8 +188,9 @@ class DirectoryModInstallSource extends ModInstallSource {
             continue;
           }
 
-          String destRelativePath =
-              pathTransform != null ? pathTransform(entity.path) : relativePath;
+          String destRelativePath = pathTransform != null
+              ? pathTransform(entity.path)
+              : relativePath;
 
           File destFile = File(
             '$destinationPath${Platform.pathSeparator}$destRelativePath',

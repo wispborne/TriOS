@@ -87,12 +87,11 @@ class _VramCheckerExplanationDialogState
                           const SizedBox(height: 8),
                           Text(
                             "To see true VRAM usage, enable the Console Commands mod and open it in-game. The amount of free VRAM will be shown in the top-left corner.",
-                            style: Theme.of(
-                              context,
-                            ).textTheme.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              decoration: TextDecoration.underline,
-                            ),
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  decoration: TextDecoration.underline,
+                                ),
                           ),
                           const SizedBox(height: 16),
                           Text("Calculation", style: titleStyle),

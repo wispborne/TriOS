@@ -78,8 +78,9 @@ class ModProfileManagerNotifier
     ModProfiles initialState,
   ) async {
     // Look for pre-1.0 double/triple encoded json files and migrate them to proper json
-    final existingJsonFile =
-        settingsFile.parent.resolve("trios_mod_profiles.json").toFile();
+    final existingJsonFile = settingsFile.parent
+        .resolve("trios_mod_profiles.json")
+        .toFile();
     if (initialState.modProfiles.isEmpty && existingJsonFile.existsSync()) {
       try {
         Fimber.i("Migrating mod profiles to proper json.");
@@ -123,10 +124,9 @@ class ModProfileManagerNotifier
     if (_pauseAutomaticProfileUpdates) return;
 
     final mods = ref.read(AppState.enabledModVariants);
-    final enabledModVariants =
-        mods.sortedByName
-            .map((variant) => ShallowModVariant.fromModVariant(variant))
-            .toList();
+    final enabledModVariants = mods.sortedByName
+        .map((variant) => ShallowModVariant.fromModVariant(variant))
+        .toList();
 
     Fimber.d("Updating mod profile with ${enabledModVariants.length} mods");
 
@@ -175,13 +175,12 @@ class ModProfileManagerNotifier
     final startingState =
         state.valueOrNull ?? const ModProfiles(modProfiles: []);
 
-    final newModProfiles =
-        startingState.modProfiles
-            .map(
-              (profile) =>
-                  profile.id == updatedProfile.id ? updatedProfile : profile,
-            )
-            .toList();
+    final newModProfiles = startingState.modProfiles
+        .map(
+          (profile) =>
+              profile.id == updatedProfile.id ? updatedProfile : profile,
+        )
+        .toList();
 
     updateState((oldState) => oldState.copyWith(modProfiles: newModProfiles));
   }
@@ -191,10 +190,9 @@ class ModProfileManagerNotifier
       return;
     }
 
-    final newModProfiles =
-        state.value!.modProfiles
-            .where((profile) => profile.id != modProfileId)
-            .toList();
+    final newModProfiles = state.value!.modProfiles
+        .where((profile) => profile.id != modProfileId)
+        .toList();
     updateState((oldState) => oldState.copyWith(modProfiles: newModProfiles));
   }
 
@@ -207,10 +205,9 @@ class ModProfileManagerNotifier
     List<ModVariant> modVariants,
     List<ModVariant> currentlyEnabledModVariants,
   ) {
-    final currentlyEnabledShallows =
-        currentlyEnabledModVariants.sortedByName
-            .map((variant) => ShallowModVariant.fromModVariant(variant))
-            .toList();
+    final currentlyEnabledShallows = currentlyEnabledModVariants.sortedByName
+        .map((variant) => ShallowModVariant.fromModVariant(variant))
+        .toList();
     final profileShallows = profile.enabledModVariants;
 
     // Map of modId to ShallowModVariant
@@ -228,124 +225,119 @@ class ModProfileManagerNotifier
     );
 
     // Mods to swap
-    final toSwap =
-        modIdsInBoth
-            .where((modId) {
-              final currentVariant = currentModIdToShallow[modId]!;
-              final profileVariant = profileModIdToShallow[modId]!;
-              return currentVariant.smolVariantId !=
-                  profileVariant.smolVariantId;
-            })
-            .map((modId) {
-              final mod = allMods.firstWhereOrNull((mod) => mod.id == modId);
-              final fromVariant = modVariants.firstWhereOrNull(
-                (v) => v.smolId == currentModIdToShallow[modId]!.smolVariantId,
-              );
-              final modProfileVariant = profileModIdToShallow[modId];
-              final toVariant = modVariants.firstWhereOrNull((v) {
-                return v.smolId == modProfileVariant!.smolVariantId;
-              });
+    final toSwap = modIdsInBoth
+        .where((modId) {
+          final currentVariant = currentModIdToShallow[modId]!;
+          final profileVariant = profileModIdToShallow[modId]!;
+          return currentVariant.smolVariantId != profileVariant.smolVariantId;
+        })
+        .map((modId) {
+          final mod = allMods.firstWhereOrNull((mod) => mod.id == modId);
+          final fromVariant = modVariants.firstWhereOrNull(
+            (v) => v.smolId == currentModIdToShallow[modId]!.smolVariantId,
+          );
+          final modProfileVariant = profileModIdToShallow[modId];
+          final toVariant = modVariants.firstWhereOrNull((v) {
+            return v.smolId == modProfileVariant!.smolVariantId;
+          });
 
-              if (toVariant == null) {
-                final highestVersion = mod?.findHighestVersion;
-                final targetVersion = modProfileVariant?.version;
+          if (toVariant == null) {
+            final highestVersion = mod?.findHighestVersion;
+            final targetVersion = modProfileVariant?.version;
 
-                final toVariantAlternate =
-                    highestVersion?.bestVersion == null
-                        ? null
-                        : targetVersion == null
-                        ? highestVersion
-                        : highestVersion!.bestVersion! > targetVersion
-                        ? highestVersion
-                        : null;
+            final toVariantAlternate = highestVersion?.bestVersion == null
+                ? null
+                : targetVersion == null
+                ? highestVersion
+                : highestVersion!.bestVersion! > targetVersion
+                ? highestVersion
+                : null;
 
-                // Missing variant
-                return ModChange(
-                  modId: modId,
-                  mod: mod,
-                  fromVariant: fromVariant,
-                  toVariant: null,
-                  variantAsShallowMod: modProfileVariant,
-                  toVariantAlternate: toVariantAlternate,
-                  changeType: ModChangeType.missingVariant,
-                );
-              }
+            // Missing variant
+            return ModChange(
+              modId: modId,
+              mod: mod,
+              fromVariant: fromVariant,
+              toVariant: null,
+              variantAsShallowMod: modProfileVariant,
+              toVariantAlternate: toVariantAlternate,
+              changeType: ModChangeType.missingVariant,
+            );
+          }
 
-              // Swap
-              return ModChange(
-                modId: modId,
-                mod: mod,
-                fromVariant: fromVariant,
-                toVariant: toVariant,
-                variantAsShallowMod: modProfileVariant,
-                toVariantAlternate: null,
-                changeType: ModChangeType.swap,
-              );
-            })
-            .toList();
+          // Swap
+          return ModChange(
+            modId: modId,
+            mod: mod,
+            fromVariant: fromVariant,
+            toVariant: toVariant,
+            variantAsShallowMod: modProfileVariant,
+            toVariantAlternate: null,
+            changeType: ModChangeType.swap,
+          );
+        })
+        .toList();
 
     // Mods to enable
     final modIdsToEnable = profileModIdToShallow.keys.toSet().difference(
       currentModIdToShallow.keys.toSet(),
     );
 
-    final toEnable =
-        modIdsToEnable.map((modId) {
-          final mod = allMods.firstWhereOrNull((mod) => mod.id == modId);
-          final modProfileVariant = profileModIdToShallow[modId];
-          final toVariant = modVariants.firstWhereOrNull(
-            (v) => v.smolId == modProfileVariant!.smolVariantId,
-          );
+    final toEnable = modIdsToEnable.map((modId) {
+      final mod = allMods.firstWhereOrNull((mod) => mod.id == modId);
+      final modProfileVariant = profileModIdToShallow[modId];
+      final toVariant = modVariants.firstWhereOrNull(
+        (v) => v.smolId == modProfileVariant!.smolVariantId,
+      );
 
-          if (mod == null || toVariant == null) {
-            // Missing mod
-            return ModChange(
-              modId: modId,
-              mod: mod,
-              fromVariant: null,
-              toVariant: null,
-              variantAsShallowMod: modProfileVariant,
-              toVariantAlternate: null,
-              changeType: ModChangeType.missingMod,
-            );
-          }
+      if (mod == null || toVariant == null) {
+        // Missing mod
+        return ModChange(
+          modId: modId,
+          mod: mod,
+          fromVariant: null,
+          toVariant: null,
+          variantAsShallowMod: modProfileVariant,
+          toVariantAlternate: null,
+          changeType: ModChangeType.missingMod,
+        );
+      }
 
-          // Enable
-          return ModChange(
-            modId: modId,
-            mod: mod,
-            fromVariant: null,
-            toVariant: toVariant,
-            variantAsShallowMod: modProfileVariant,
-            toVariantAlternate: null,
-            changeType: ModChangeType.enable,
-          );
-        }).toList();
+      // Enable
+      return ModChange(
+        modId: modId,
+        mod: mod,
+        fromVariant: null,
+        toVariant: toVariant,
+        variantAsShallowMod: modProfileVariant,
+        toVariantAlternate: null,
+        changeType: ModChangeType.enable,
+      );
+    }).toList();
 
     // Mods to disable
     final modIdsToDisable = currentModIdToShallow.keys.toSet().difference(
       profileModIdToShallow.keys.toSet(),
     );
 
-    final toDisable =
-        modIdsToDisable.map((modId) {
-          final mod = allMods.firstWhereOrNull((mod) => mod.id == modId);
-          final modProfileVariant = profileModIdToShallow[modId];
-          final fromVariant = modVariants.firstWhereOrNull(
-            (v) => v.smolId == modProfileVariant?.smolVariantId,
-          );
+    final toDisable = modIdsToDisable.map((modId) {
+      final mod = allMods.firstWhereOrNull((mod) => mod.id == modId);
+      final modProfileVariant = profileModIdToShallow[modId];
+      final fromVariant = modVariants.firstWhereOrNull(
+        (v) => v.smolId == modProfileVariant?.smolVariantId,
+      );
 
-          // Disable
-          return ModChange(
-            modId: modId,
-            mod: mod,
-            fromVariant: fromVariant,
-            toVariant: null,
-            variantAsShallowMod: modProfileVariant,
-            toVariantAlternate: null,
-            changeType: ModChangeType.disable,
-          );
-        }).toList();
+      // Disable
+      return ModChange(
+        modId: modId,
+        mod: mod,
+        fromVariant: fromVariant,
+        toVariant: null,
+        variantAsShallowMod: modProfileVariant,
+        toVariantAlternate: null,
+        changeType: ModChangeType.disable,
+      );
+    }).toList();
 
     return [...toSwap, ...toEnable, ...toDisable];
   }
@@ -445,10 +437,9 @@ class ModProfileManagerNotifier
       return;
     }
     final currentMods = ref.read(AppState.enabledModVariants);
-    final currentShallows =
-        currentMods.sortedByName
-            .map((variant) => ShallowModVariant.fromModVariant(variant))
-            .toList();
+    final currentShallows = currentMods.sortedByName
+        .map((variant) => ShallowModVariant.fromModVariant(variant))
+        .toList();
     final newProfile = currentProfile.copyWith(
       enabledModVariants: currentShallows,
       dateModified: DateTime.now(),
@@ -472,22 +463,24 @@ class ModProfileManagerNotifier
     );
 
     // Group changes by type
-    final modsToEnable =
-        changes.where((c) => c.changeType == ModChangeType.enable).toList();
-    final modsToDisable =
-        changes.where((c) => c.changeType == ModChangeType.disable).toList();
-    final modsToSwap =
-        changes.where((c) => c.changeType == ModChangeType.swap).toList();
-    final missingMods =
-        changes.where((c) => c.changeType == ModChangeType.missingMod).toList();
-    final missingVariants =
-        changes
-            .where((c) => c.changeType == ModChangeType.missingVariant)
-            .toList();
-    final latestVariants =
-        (ref.read(
-          AppState.mods,
-        )).map((mod) => mod.findHighestVersion).nonNulls.toList();
+    final modsToEnable = changes
+        .where((c) => c.changeType == ModChangeType.enable)
+        .toList();
+    final modsToDisable = changes
+        .where((c) => c.changeType == ModChangeType.disable)
+        .toList();
+    final modsToSwap = changes
+        .where((c) => c.changeType == ModChangeType.swap)
+        .toList();
+    final missingMods = changes
+        .where((c) => c.changeType == ModChangeType.missingMod)
+        .toList();
+    final missingVariants = changes
+        .where((c) => c.changeType == ModChangeType.missingVariant)
+        .toList();
+    final latestVariants = (ref.read(
+      AppState.mods,
+    )).map((mod) => mod.findHighestVersion).nonNulls.toList();
     final modIconsById = Map.fromEntries(
       latestVariants.map((e) => MapEntry(e.modInfo.id, e.iconFilePath)),
     );
@@ -501,75 +494,74 @@ class ModProfileManagerNotifier
         final iconColor = theme.iconTheme.color?.withOpacity(0.8);
         return AlertDialog(
           title: Text("Activate '${profile.name}'?"),
-          content:
-              changes.isEmpty
-                  ? Column(
+          content: changes.isEmpty
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      "The new profile will be activated and is identical to your current profile.",
+                    ),
+                  ],
+                )
+              : SingleChildScrollView(
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        "The new profile will be activated and is identical to your current profile.",
+                        "Mods Being Enabled, Disabled, or Changing Version",
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
+                      const SizedBox(height: 8),
+                      // if (modsToEnable.isNotEmpty)
+                      _buildChangeSection(
+                        null,
+                        "Enabling mod",
+                        modsToEnable,
+                        Icons.check,
+                        iconColor,
+                        modIconsById,
+                        context,
+                      ),
+                      // if (modsToDisable.isNotEmpty)
+                      const SizedBox(height: 8),
+                      _buildChangeSection(
+                        null,
+                        "Disabling mod",
+                        modsToDisable,
+                        Icons.close,
+                        iconColor,
+                        modIconsById,
+                        context,
+                      ),
+                      // if (modsToSwap.isNotEmpty)
+                      const SizedBox(height: 8),
+                      _buildChangeSection(
+                        null,
+                        "Swapping version",
+                        modsToSwap,
+                        Icons.swap_horiz,
+                        iconColor,
+                        modIconsById,
+                        context,
+                      ),
+                      if (hasMissingModsOrVariants)
+                        Column(
+                          children: [
+                            const SizedBox(height: 8),
+                            _buildMissingModsSection(
+                              missingMods,
+                              missingVariants,
+                              iconColor,
+                              context,
+                            ),
+                          ],
+                        ),
                     ],
-                  )
-                  : SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Mods Being Enabled, Disabled, or Changing Version",
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        // if (modsToEnable.isNotEmpty)
-                        _buildChangeSection(
-                          null,
-                          "Enabling mod",
-                          modsToEnable,
-                          Icons.check,
-                          iconColor,
-                          modIconsById,
-                          context,
-                        ),
-                        // if (modsToDisable.isNotEmpty)
-                        const SizedBox(height: 8),
-                        _buildChangeSection(
-                          null,
-                          "Disabling mod",
-                          modsToDisable,
-                          Icons.close,
-                          iconColor,
-                          modIconsById,
-                          context,
-                        ),
-                        // if (modsToSwap.isNotEmpty)
-                        const SizedBox(height: 8),
-                        _buildChangeSection(
-                          null,
-                          "Swapping version",
-                          modsToSwap,
-                          Icons.swap_horiz,
-                          iconColor,
-                          modIconsById,
-                          context,
-                        ),
-                        if (hasMissingModsOrVariants)
-                          Column(
-                            children: [
-                              const SizedBox(height: 8),
-                              _buildMissingModsSection(
-                                missingMods,
-                                missingVariants,
-                                iconColor,
-                                context,
-                              ),
-                            ],
-                          ),
-                      ],
-                    ),
                   ),
+                ),
           actions: [
             TextButton(
               onPressed: () {
@@ -664,13 +656,12 @@ class ModProfileManagerNotifier
                 child: Icon(icon, color: iconColor, size: 20),
               ),
               widget: TextWithIcon(
-                leading:
-                    modIconsById[change.modId] != null
-                        ? Image.file(
-                          modIconsById[change.modId]!.toFile(),
-                          width: 20,
-                        )
-                        : null,
+                leading: modIconsById[change.modId] != null
+                    ? Image.file(
+                        modIconsById[change.modId]!.toFile(),
+                        width: 20,
+                      )
+                    : null,
                 text: description,
                 style: GoogleFonts.roboto(
                   textStyle: theme.textTheme.labelLarge?.copyWith(
@@ -759,17 +750,17 @@ class ModProfileManagerNotifier
           onPressed: () {
             Clipboard.setData(
               ClipboardData(
-                text: (missingMods.map((e) => e.variantAsShallowMod).toList() +
-                        missingVariants
-                            .map((e) => e.variantAsShallowMod)
-                            .toList())
-                    .nonNulls
-                    .joinToString(
-                      separator: '\n',
-                      transform:
-                          (ShallowModVariant e) =>
+                text:
+                    (missingMods.map((e) => e.variantAsShallowMod).toList() +
+                            missingVariants
+                                .map((e) => e.variantAsShallowMod)
+                                .toList())
+                        .nonNulls
+                        .joinToString(
+                          separator: '\n',
+                          transform: (ShallowModVariant e) =>
                               "${e.modName ?? e.modId} - ${e.version}",
-                    ),
+                        ),
               ),
             );
           },

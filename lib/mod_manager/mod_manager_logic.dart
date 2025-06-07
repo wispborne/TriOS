@@ -150,22 +150,22 @@ class ModManagerNotifier extends AsyncNotifier<void> {
                                                     ),
                                                   ),
                                                   TextSpan(
-                                                    text:
-                                                        it
-                                                            .modInfo
-                                                            .modInfo
-                                                            .gameVersion,
+                                                    text: it
+                                                        .modInfo
+                                                        .modInfo
+                                                        .gameVersion,
                                                     style: TextStyle(
                                                       fontSize: subtitleSize,
-                                                      color: (it.modInfo.modInfo
-                                                                  .isCompatibleWithGame(
-                                                                    gameVersion,
-                                                                  )
-                                                                  .getGameCompatibilityColor() ??
-                                                              themeData
-                                                                  .colorScheme
-                                                                  .onSurface)
-                                                          .withOpacity(0.9),
+                                                      color:
+                                                          (it.modInfo.modInfo
+                                                                      .isCompatibleWithGame(
+                                                                        gameVersion,
+                                                                      )
+                                                                      .getGameCompatibilityColor() ??
+                                                                  themeData
+                                                                      .colorScheme
+                                                                      .onSurface)
+                                                              .withOpacity(0.9),
                                                     ),
                                                   ),
                                                 ],
@@ -180,11 +180,10 @@ class ModManagerNotifier extends AsyncNotifier<void> {
                                               size: iconSize,
                                               color: iconColor,
                                             ),
-                                            text:
-                                                it
-                                                    .modInfo
-                                                    .extractedFile
-                                                    .relativePath,
+                                            text: it
+                                                .modInfo
+                                                .extractedFile
+                                                .relativePath,
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
                                             style: const TextStyle(
@@ -225,16 +224,15 @@ class ModManagerNotifier extends AsyncNotifier<void> {
                                           ),
                                           it.alreadyExistingVariant != null
                                               ? Text(
-                                                isSelected
-                                                    ? "(existing mod will be replaced)"
-                                                    : "(already exists)",
-                                                style: TextStyle(
-                                                  color:
-                                                      ThemeManager
-                                                          .vanillaWarningColor,
-                                                  fontSize: 12,
-                                                ),
-                                              )
+                                                  isSelected
+                                                      ? "(existing mod will be replaced)"
+                                                      : "(already exists)",
+                                                  style: TextStyle(
+                                                    color: ThemeManager
+                                                        .vanillaWarningColor,
+                                                    fontSize: 12,
+                                                  ),
+                                                )
                                               : const SizedBox(),
                                         ],
                                       ),
@@ -274,11 +272,10 @@ class ModManagerNotifier extends AsyncNotifier<void> {
                                 modsBeingInstalled.length)
                               Text(
                                 "Multiple mods have the same id and version. Only one of those may be selected.",
-                                style: Theme.of(
-                                  context,
-                                ).textTheme.labelLarge?.copyWith(
-                                  color: ThemeManager.vanillaWarningColor,
-                                ),
+                                style: Theme.of(context).textTheme.labelLarge
+                                    ?.copyWith(
+                                      color: ThemeManager.vanillaWarningColor,
+                                    ),
                               ),
                           ],
                         ),
@@ -357,8 +354,9 @@ class ModManagerNotifier extends AsyncNotifier<void> {
         await ref.read(AppState.modVariants.notifier).reloadModVariants();
       }
 
-      final List<InstallModResult> errors =
-          installModsResult.where((it) => it.err != null).toList();
+      final List<InstallModResult> errors = installModsResult
+          .where((it) => it.err != null)
+          .toList();
       if (errors.isNotEmpty) {
         showAlertDialog(
           context,
@@ -373,10 +371,9 @@ class ModManagerNotifier extends AsyncNotifier<void> {
                     text: TextSpan(
                       children: [
                         TextSpan(
-                          text:
-                              errors.length == 1
-                                  ? "There was an error while installing.\nPlease install the mod manually."
-                                  : "There were errors while installing.\nPlease install the mods manually.\n",
+                          text: errors.length == 1
+                              ? "There was an error while installing.\nPlease install the mod manually."
+                              : "There were errors while installing.\nPlease install the mods manually.\n",
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
@@ -485,16 +482,15 @@ class ModManagerNotifier extends AsyncNotifier<void> {
     final archive = ref.read(archiveProvider).requireValue;
 
     final archiveFileList = await modInstallSource.listFilePaths(archive);
-    final modInfoFiles =
-        archiveFileList
-            .filter(
-              (it) =>
-                  it.containsIgnoreCase(Constants.modInfoFileName) &&
-                  !it.toFile().nameWithExtension
-                  // avoid doing toFile() twice for each file
-                  .let((name) => name.startsWith(".") || name.startsWith("_")),
-            )
-            .toList();
+    final modInfoFiles = archiveFileList
+        .filter(
+          (it) =>
+              it.containsIgnoreCase(Constants.modInfoFileName) &&
+              !it.toFile().nameWithExtension
+              // avoid doing toFile() twice for each file
+              .let((name) => name.startsWith(".") || name.startsWith("_")),
+        )
+        .toList();
 
     if (modInfoFiles.isEmpty) {
       throw Exception(
@@ -539,11 +535,10 @@ class ModManagerNotifier extends AsyncNotifier<void> {
 
     // Check for mods that are already installed.
     var allModVariants = currentMods.variants;
-    final alreadyPresentModVariants =
-        modInfos
-            .map((it) => getModVariantForModInfo(it.modInfo, allModVariants))
-            .nonNulls
-            .toList();
+    final alreadyPresentModVariants = modInfos
+        .map((it) => getModVariantForModInfo(it.modInfo, allModVariants))
+        .nonNulls
+        .toList();
 
     if (alreadyPresentModVariants.isNotEmpty) {
       Fimber.i(
@@ -574,21 +569,19 @@ class ModManagerNotifier extends AsyncNotifier<void> {
         return [];
       }
       // Grab just the modInfos that the user wants to install.
-      modInfosToInstall =
-          userInput
-              .map(
-                (selectedModInfoToInstall) => modInfos.firstWhere(
-                  (modInfo) => modInfo == selectedModInfoToInstall,
-                ),
-              )
-              .toList();
+      modInfosToInstall = userInput
+          .map(
+            (selectedModInfoToInstall) => modInfos.firstWhere(
+              (modInfo) => modInfo == selectedModInfoToInstall,
+            ),
+          )
+          .toList();
 
       // Find any mods that are already installed.
-      final existingVariantsMatchingOneBeingInstalled =
-          modInfosToInstall
-              .map((it) => getModVariantForModInfo(it.modInfo, allModVariants))
-              .nonNulls
-              .toList();
+      final existingVariantsMatchingOneBeingInstalled = modInfosToInstall
+          .map((it) => getModVariantForModInfo(it.modInfo, allModVariants))
+          .nonNulls
+          .toList();
 
       // If the same mod variant is already installed, delete it first.
       for (var modToDelete in existingVariantsMatchingOneBeingInstalled) {
@@ -634,8 +627,8 @@ class ModManagerNotifier extends AsyncNotifier<void> {
     for (final modInfoToInstall in modInfosToInstall) {
       final fallbackFolderName =
           modInfoToInstall.extractedFile.originalFile.parent.path != "."
-              ? modInfoToInstall.extractedFile.originalFile.parent.name
-              : modInfoToInstall.modInfo.nameOrId.fixFilenameForFileSystem();
+          ? modInfoToInstall.extractedFile.originalFile.parent.name
+          : modInfoToInstall.modInfo.nameOrId.fixFilenameForFileSystem();
 
       try {
         String targetModFolderName = await setUpNewHighestModVersionFolder(
@@ -693,31 +686,26 @@ class ModManagerNotifier extends AsyncNotifier<void> {
 
     // If we persist the highest version folder name, do some extra logic.
     if (folderSetting == FolderNamingSetting.doNotChangeNameForHighestVersion) {
-      final otherVariants =
-          currentMods
-              .where((mod) => mod.id == modInfo.id)
-              .flatMap((mod) => mod.modVariants)
-              .toList();
+      final otherVariants = currentMods
+          .where((mod) => mod.id == modInfo.id)
+          .flatMap((mod) => mod.modVariants)
+          .toList();
       if (otherVariants.isNotEmpty) {
         Fimber.i(
           "Found other versions of ${modInfo.id}: ${otherVariants.map((it) => it.modInfo.version).toList()}",
         );
         // Check if the new version is higher than any other installed version.
-        var isHigherVersionThanAllExisting =
-            !otherVariants.any(
-              (existingVersion) =>
-                  (existingVersion.modInfo.version?.compareTo(
-                        modInfo.version,
-                      ) ??
-                      0) >=
-                  0,
-            );
+        var isHigherVersionThanAllExisting = !otherVariants.any(
+          (existingVersion) =>
+              (existingVersion.modInfo.version?.compareTo(modInfo.version) ??
+                  0) >=
+              0,
+        );
         if (isHigherVersionThanAllExisting) {
           Fimber.i("New version is higher than all existing versions.");
-          final highestVersion =
-              otherVariants.maxByOrNull(
-                (it) => it.modInfo.version ?? Version.zero(),
-              )!;
+          final highestVersion = otherVariants.maxByOrNull(
+            (it) => it.modInfo.version ?? Version.zero(),
+          )!;
           final highestVersionFolder = highestVersion.modFolder;
           final versionedNameForHighestVersion =
               ModVariant.generateUniqueVariantFolderName(
@@ -748,11 +736,10 @@ class ModManagerNotifier extends AsyncNotifier<void> {
               final file = folderItem.toFile();
 
               final relativePath = file.relativeTo(highestVersionFolder);
-              final newFilePath =
-                  destinationFolder
-                      .resolve(versionedNameForHighestVersion)
-                      .resolve(relativePath)
-                      .toFile();
+              final newFilePath = destinationFolder
+                  .resolve(versionedNameForHighestVersion)
+                  .resolve(relativePath)
+                  .toFile();
 
               Fimber.d("Moving file: ${file.path} to $newFilePath");
               if (!dryRun) {
@@ -807,12 +794,9 @@ class ModManagerNotifier extends AsyncNotifier<void> {
       final modInfoParentFolder =
           modInfoToInstall.extractedFile.originalFile.parent;
       // TODO this is always empty because `sourceFileList` uses relative paths and `modInfoParentFolder` is an absolute path.
-      final modInfoSiblings =
-          sourceFileList
-              .where(
-                (it) => it.toFile().parent.path == modInfoParentFolder.path,
-              )
-              .toList();
+      final modInfoSiblings = sourceFileList
+          .where((it) => it.toFile().parent.path == modInfoParentFolder.path)
+          .toList();
       Fimber.d(
         "Mod info (${modInfoToInstall.extractedFile.originalFile.path}) siblings: ${modInfoSiblings.map((it) => it).toList()}",
       );
@@ -838,11 +822,10 @@ class ModManagerNotifier extends AsyncNotifier<void> {
         destinationFolder.path,
         archive,
         fileFilter: (entry) => p.isWithin(modInfoParentFolder.path, entry),
-        pathTransform:
-            (entry) => p.join(
-              targetModFolderName,
-              p.relative(entry, from: modInfoParentFolder.path),
-            ),
+        pathTransform: (entry) => p.join(
+          targetModFolderName,
+          p.relative(entry, from: modInfoParentFolder.path),
+        ),
         onError: (e, st) {
           errors.add((e, st));
           Fimber.e(
@@ -854,8 +837,9 @@ class ModManagerNotifier extends AsyncNotifier<void> {
         },
       );
 
-      final newModFolder =
-          destinationFolder.resolve(targetModFolderName).toDirectory();
+      final newModFolder = destinationFolder
+          .resolve(targetModFolderName)
+          .toDirectory();
       Fimber.i(
         "Extracted ${extractedMod.length} files in mod ${modInfo.id} ${modInfo.version} to '$newModFolder'",
       );
@@ -872,11 +856,10 @@ class ModManagerNotifier extends AsyncNotifier<void> {
         modInfo.smolId,
       ], dryRun: dryRun);
 
-      final missingFilesError =
-          errors
-              .map((record) => record.$1)
-              .whereType<ModInstallValidationException>()
-              .toList();
+      final missingFilesError = errors
+          .map((record) => record.$1)
+          .whereType<ModInstallValidationException>()
+          .toList();
       if (missingFilesError.isNotEmpty) {
         throw missingFilesError.first;
       }
@@ -935,23 +918,22 @@ class ModManagerNotifier extends AsyncNotifier<void> {
       return [];
     }
 
-    final variantsSpecificallyKept =
-        mod.modVariants
-            .where((it) => smolIdsToKeep.contains(it.modInfo.smolId))
-            .toList();
-    final theOtherVariants =
-        mod.modVariants
-            .where((it) => !smolIdsToKeep.contains(it.modInfo.smolId))
-            .toList();
+    final variantsSpecificallyKept = mod.modVariants
+        .where((it) => smolIdsToKeep.contains(it.modInfo.smolId))
+        .toList();
+    final theOtherVariants = mod.modVariants
+        .where((it) => !smolIdsToKeep.contains(it.modInfo.smolId))
+        .toList();
 
-    final variantsToKeep =
-        variantsSpecificallyKept..addAll(
-          theOtherVariants.sortedDescending().take(
-            lastNVersionsSetting - variantsSpecificallyKept.length,
-          ),
-        );
-    final variantsToDelete =
-        mod.modVariants.where((it) => !variantsToKeep.contains(it)).toList();
+    final variantsToKeep = variantsSpecificallyKept
+      ..addAll(
+        theOtherVariants.sortedDescending().take(
+          lastNVersionsSetting - variantsSpecificallyKept.length,
+        ),
+      );
+    final variantsToDelete = mod.modVariants
+        .where((it) => !variantsToKeep.contains(it))
+        .toList();
 
     if (variantsToDelete.isEmpty) {
       Fimber.i("All variants of $modId are being retained.");
@@ -1015,8 +997,9 @@ class ModManagerNotifier extends AsyncNotifier<void> {
 
     // Variants that have `mod_info.json` instead of `mod_info.json.disabled`.
     // We'll want to change those to disabled when we're enabling a specific version.
-    final modInfoEnabledVariants =
-        mod.modVariants.where((it) => it.isModInfoEnabled).toList();
+    final modInfoEnabledVariants = mod.modVariants
+        .where((it) => it.isModInfoEnabled)
+        .toList();
     if (modVariant == null && modInfoEnabledVariants.isEmpty) {
       Fimber.i(
         "Went to disable the mod but no variants were active, nothing to do! $mod",
@@ -1042,10 +1025,9 @@ class ModManagerNotifier extends AsyncNotifier<void> {
             // If disabling the mod, all `mod_info.json` files should be unbricked (happens later in this method).
             // If there's only one variant, it's fine to leave the `mod_info.json` file unbricked.
             brickModInfo: !isDisablingMod && mod.modVariants.length > 1,
-            reason:
-                isDisablingMod
-                    ? "You disabled ${mod.id} (${variant.modInfo.version} was enabled before)."
-                    : "Changed ${mod.id} to ${modVariant.modInfo.version}, so ${variant.bestVersion} has to be disabled.",
+            reason: isDisablingMod
+                ? "You disabled ${mod.id} (${variant.modInfo.version} was enabled before)."
+                : "Changed ${mod.id} to ${modVariant.modInfo.version}, so ${variant.bestVersion} has to be disabled.",
           );
         } catch (e, st) {
           Fimber.e("Error disabling mod variant: $e", ex: e, stacktrace: st);
@@ -1064,8 +1046,9 @@ class ModManagerNotifier extends AsyncNotifier<void> {
     } else {
       // If mod is disabled in `enabled_mods.json`, set all the `mod_info.json` files to non-bricked.
       // That makes things easier on the user & MOSS by mimicking vanilla behavior whenever possible.
-      final disabledModVariants =
-          mod.modVariants.where((v) => !v.isModInfoEnabled).toList();
+      final disabledModVariants = mod.modVariants
+          .where((v) => !v.isModInfoEnabled)
+          .toList();
       for (final disabledVariant in disabledModVariants) {
         try {
           await _enableModInfoFile(disabledVariant);
@@ -1087,8 +1070,10 @@ class ModManagerNotifier extends AsyncNotifier<void> {
     await ref
         .read(AppState.modVariants.notifier)
         .reloadModVariants(
-          onlyVariants:
-              {...modInfoEnabledVariants, modVariant}.nonNulls.toList(),
+          onlyVariants: {
+            ...modInfoEnabledVariants,
+            modVariant,
+          }.nonNulls.toList(),
         );
 
     if (validateDependencies) {
@@ -1114,13 +1099,18 @@ class ModManagerNotifier extends AsyncNotifier<void> {
 
     do {
       numModsChangedLastLoop = 0;
-      final enabledMods =
-          ref.read(AppState.enabledModsFile).valueOrNull?.enabledMods.toList();
+      final enabledMods = ref
+          .read(AppState.enabledModsFile)
+          .valueOrNull
+          ?.enabledMods
+          .toList();
       if (enabledMods == null) return;
 
       final allVariants = ref.read(AppState.modVariants).valueOrNull ?? [];
-      final allMods =
-          AppState.getModsFromVariants(allVariants, enabledMods).toList();
+      final allMods = AppState.getModsFromVariants(
+        allVariants,
+        enabledMods,
+      ).toList();
       // final dependencyCheck = ref.read(AppState.modCompatibility);
       for (final mod in allMods) {
         if (!mod.isEnabledInGameSync(enabledMods)) continue;
@@ -1265,8 +1255,9 @@ class ModManagerNotifier extends AsyncNotifier<void> {
     // Look for any disabled mod_info files in the folder.
     final disabledModInfoFiles =
         (await Constants.modInfoFileDisabledNames
-            .map((it) => modVariant.modFolder.resolve(it).toFile())
-            .whereAsync((it) async => await it.isWritable())).toList();
+                .map((it) => modVariant.modFolder.resolve(it).toFile())
+                .whereAsync((it) async => await it.isWritable()))
+            .toList();
 
     // And re-enable one.
     if (!modVariant.isModInfoEnabled) {
@@ -1489,14 +1480,13 @@ bool isModGameVersionIncorrect(
 
 typedef ExtractedModInfo = ({SourcedFile extractedFile, ModInfo modInfo});
 
-typedef InstallModResult =
-    ({
-      File sourceFileEntity,
-      Directory destinationFolder,
-      ModInfo modInfo,
-      Exception? err,
-      StackTrace? st,
-    });
+typedef InstallModResult = ({
+  File sourceFileEntity,
+  Directory destinationFolder,
+  ModInfo modInfo,
+  Exception? err,
+  StackTrace? st,
+});
 
 VersionCheckerInfo? getVersionCheckerInfo(File versionFile) {
   if (!versionFile.existsSync()) return null;
@@ -1549,11 +1539,10 @@ Future<ModInfo?> getModInfo(
   StringBuffer progressText,
 ) async {
   try {
-    final possibleModInfos =
-        [
-          Constants.modInfoFileName,
-          ...Constants.modInfoFileDisabledNames,
-        ].map((it) => modFolder.resolve(it).toFile()).toList();
+    final possibleModInfos = [
+      Constants.modInfoFileName,
+      ...Constants.modInfoFileDisabledNames,
+    ].map((it) => modFolder.resolve(it).toFile()).toList();
 
     return possibleModInfos.firstWhereOrNull((file) => file.existsSync())?.let((
       modInfoFile,
@@ -1640,14 +1629,11 @@ watchModsFolder(
   // Only run the mod folder check if the window is focused.
   // Checks every second to see if it's still in the background.
   while (!cancelController.isClosed) {
-    var delaySeconds =
-        ref.read(AppState.isWindowFocused)
-            ? ref.read(
-              appSettings.select(
-                (value) => value.secondsBetweenModFolderChecks,
-              ),
-            )
-            : 1;
+    var delaySeconds = ref.read(AppState.isWindowFocused)
+        ? ref.read(
+            appSettings.select((value) => value.secondsBetweenModFolderChecks),
+          )
+        : 1;
     await Future.delayed(Duration(seconds: delaySeconds));
     // TODO: re-add full manual scan, minus time-based diffing.
     // if (ref.read(AppState.isWindowFocused)) {
@@ -1707,15 +1693,17 @@ addModsFolderFileWatcher(
 
 /// Looks for a mod_info.json file in the mod folder. Returns a disabled one if no enabled one is found.
 File? getModInfoFile(Directory modFolder) {
-  final regularModInfoFile =
-      modFolder.resolve(Constants.modInfoFileName).toFile();
+  final regularModInfoFile = modFolder
+      .resolve(Constants.modInfoFileName)
+      .toFile();
   if (regularModInfoFile.existsSync()) {
     return regularModInfoFile;
   }
 
   for (var disabledModInfoFileName in Constants.modInfoFileDisabledNames) {
-    final disabledModInfoFile =
-        modFolder.resolve(disabledModInfoFileName).toFile();
+    final disabledModInfoFile = modFolder
+        .resolve(disabledModInfoFileName)
+        .toFile();
     if (disabledModInfoFile.existsSync()) {
       return disabledModInfoFile;
     }
@@ -1760,13 +1748,12 @@ void copyModListToClipboardFromIds(
   List<Mod> allMods,
   BuildContext context,
 ) {
-  final enabledModsList =
-      modIds
-          .orEmpty()
-          .map((id) => allMods.firstWhereOrNull((mod) => mod.id == id))
-          .nonNulls
-          .toList()
-          .sortedByName;
+  final enabledModsList = modIds
+      .orEmpty()
+      .map((id) => allMods.firstWhereOrNull((mod) => mod.id == id))
+      .nonNulls
+      .toList()
+      .sortedByName;
   copyModListToClipboardFromMods(enabledModsList, context);
 }
 
@@ -1820,10 +1807,9 @@ ModDependencySatisfiedState getTopDependencySeverity(
   String? gameVersion, {
   required bool sortLeastSevere,
 }) {
-  final statePriority =
-      sortLeastSevere
-          ? [Satisfied, Disabled, VersionWarning, VersionInvalid, Missing]
-          : [Missing, VersionInvalid, VersionWarning, Disabled, Satisfied];
+  final statePriority = sortLeastSevere
+      ? [Satisfied, Disabled, VersionWarning, VersionInvalid, Missing]
+      : [Missing, VersionInvalid, VersionWarning, Disabled, Satisfied];
 
   // Add the most (or least) severe state(s) to a list.
   final mostOrLeastSevere = <ModDependencySatisfiedState>[];
@@ -1846,20 +1832,19 @@ ModDependencySatisfiedState getTopDependencySeverity(
       mostOrLeastSevere.firstOrNull is Disabled ||
       mostOrLeastSevere.firstOrNull is VersionWarning) {
     // Find the highest version that's compatible.
-    final possibilities =
-        satisfyResults
-            .where(
-              (it) => it is Satisfied || it is Disabled || it is VersionWarning,
-            )
-            .prefer(
-              (it) =>
-                  gameVersion != null &&
-                  it.modVariant?.isCompatibleWithGameVersion(
-                        gameVersion.toString(),
-                      ) !=
-                      GameCompatibility.incompatible,
-            )
-            .toList();
+    final possibilities = satisfyResults
+        .where(
+          (it) => it is Satisfied || it is Disabled || it is VersionWarning,
+        )
+        .prefer(
+          (it) =>
+              gameVersion != null &&
+              it.modVariant?.isCompatibleWithGameVersion(
+                    gameVersion.toString(),
+                  ) !=
+                  GameCompatibility.incompatible,
+        )
+        .toList();
 
     if (possibilities.isNotEmpty) {
       // Find the highest version.

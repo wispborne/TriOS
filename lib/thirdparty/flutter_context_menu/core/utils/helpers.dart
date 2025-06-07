@@ -12,16 +12,12 @@ Future<T?> showContextMenu<T>(
   MenuRouteOptions? routeOptions,
 }) async {
   final menuState = ContextMenuState(menu: contextMenu);
-  routeOptions ??= const MenuRouteOptions(
-    barrierDismissible: true,
-  );
+  routeOptions ??= const MenuRouteOptions(barrierDismissible: true);
   return await Navigator.push<T>(
     context,
     PageRouteBuilder<T>(
       pageBuilder: (context, animation, secondaryAnimation) {
-        return Stack(
-          children: [ContextMenuWidget(menuState: menuState)],
-        );
+        return Stack(children: [ContextMenuWidget(menuState: menuState)]);
       },
       fullscreenDialog: true,
       settings: routeOptions.routeSettings,

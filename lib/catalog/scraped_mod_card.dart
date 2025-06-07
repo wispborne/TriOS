@@ -67,25 +67,24 @@ class _ScrapedModCardState extends State<ScrapedModCard> {
             ),
             child: ConditionalWrap(
               condition: hasClickableLink,
-              wrapper:
-                  (child) => InkWell(
-                    onTap: () {
-                      if (urls == null) {
-                        return;
-                      }
+              wrapper: (child) => InkWell(
+                onTap: () {
+                  if (urls == null) {
+                    return;
+                  }
 
-                      if (websiteUrl != null) {
-                        widget.linkLoader(websiteUrl);
-                      } else if (urls.containsKey(ModUrlType.DirectDownload)) {
-                        _showDirectDownloadDialog(
-                          context,
-                          mod.name,
-                          urls[ModUrlType.DirectDownload]!,
-                        );
-                      }
-                    },
-                    child: child,
-                  ),
+                  if (websiteUrl != null) {
+                    widget.linkLoader(websiteUrl);
+                  } else if (urls.containsKey(ModUrlType.DirectDownload)) {
+                    _showDirectDownloadDialog(
+                      context,
+                      mod.name,
+                      urls[ModUrlType.DirectDownload]!,
+                    );
+                  }
+                },
+                child: child,
+              ),
               child: Container(
                 padding: const EdgeInsets.all(12.0),
                 decoration: BoxDecoration(
@@ -144,26 +143,26 @@ class _ScrapedModCardState extends State<ScrapedModCard> {
                                 padding: const EdgeInsets.only(top: 4.0),
                                 child:
                                     !((mod.summary?.isNotEmpty ?? false) ||
-                                            (mod.description?.isNotEmpty ??
-                                                false))
-                                        ? Container()
-                                        : Text(
-                                          (mod.summary ?? mod.description)!
-                                              .split('\n')
-                                              .where((line) => line.isNotEmpty)
-                                              .take(2)
-                                              .join('\n'),
-                                          overflow: TextOverflow.fade,
-                                          style: Theme.of(
-                                            context,
-                                          ).textTheme.labelLarge?.copyWith(
-                                            color: theme
-                                                .textTheme
-                                                .labelLarge
-                                                ?.color
-                                                ?.withOpacity(0.8),
-                                          ),
-                                        ),
+                                        (mod.description?.isNotEmpty ?? false))
+                                    ? Container()
+                                    : Text(
+                                        (mod.summary ?? mod.description)!
+                                            .split('\n')
+                                            .where((line) => line.isNotEmpty)
+                                            .take(2)
+                                            .join('\n'),
+                                        overflow: TextOverflow.fade,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .labelLarge
+                                            ?.copyWith(
+                                              color: theme
+                                                  .textTheme
+                                                  .labelLarge
+                                                  ?.color
+                                                  ?.withOpacity(0.8),
+                                            ),
+                                      ),
                               ),
                             ),
                             if ((mod.description?.isNotEmpty ?? false))
@@ -172,13 +171,12 @@ class _ScrapedModCardState extends State<ScrapedModCard> {
                                 child: ConditionalWrap(
                                   condition:
                                       mod.description?.isNotEmpty == true,
-                                  wrapper:
-                                      (child) => MovingTooltipWidget(
-                                        tooltipWidget: TooltipFrame(
-                                          child: Text(mod.description ?? ''),
-                                        ),
-                                        child: child,
-                                      ),
+                                  wrapper: (child) => MovingTooltipWidget(
+                                    tooltipWidget: TooltipFrame(
+                                      child: Text(mod.description ?? ''),
+                                    ),
+                                    child: child,
+                                  ),
                                   child: OutlinedButton(
                                     onPressed: () {
                                       _showDescriptionDialog(
@@ -384,8 +382,9 @@ class ModImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final mainImage =
-        mod.images?.values.isNotEmpty == true ? mod.images?.values.first : null;
+    final mainImage = mod.images?.values.isNotEmpty == true
+        ? mod.images?.values.first
+        : null;
 
     if (mainImage != null && mainImage.url != null) {
       return MovingTooltipWidget.text(

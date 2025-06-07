@@ -38,14 +38,14 @@ class _ToastDisplayerState extends ConsumerState<ToastDisplayer> {
       final downloads = ref.watch(downloadManager).value.orEmpty().toList();
 
       // modAddedDebouncer.debounce(() async {
-        showModAddedToasts(
-          modsAtTimeOfLastRefresh ?? prevMods.valueOrNull,
-          currMods.valueOrNull,
-          downloads,
-          context,
-          toastDurationMillis,
-        );
-        // modsAtTimeOfLastRefresh = currMods.valueOrNull?.toList();
+      showModAddedToasts(
+        modsAtTimeOfLastRefresh ?? prevMods.valueOrNull,
+        currMods.valueOrNull,
+        downloads,
+        context,
+        toastDurationMillis,
+      );
+      // modsAtTimeOfLastRefresh = currMods.valueOrNull?.toList();
       // });
     });
     final downloads = ref.watch(downloadManager).value.orEmpty().toList();
@@ -102,12 +102,11 @@ class _ToastDisplayerState extends ConsumerState<ToastDisplayer> {
   ) {
     final prevModsList = prevMods.orEmpty().toList();
     final currModsList = currMods.orEmpty().toList();
-    final addedVariants =
-        currModsList
-            .where(
-              (element) => prevModsList.none((e) => e.smolId == element.smolId),
-            )
-            .toList();
+    final addedVariants = currModsList
+        .where(
+          (element) => prevModsList.none((e) => e.smolId == element.smolId),
+        )
+        .toList();
     // final removedVariants = prevModsList
     //     .where(
     //         (element) => currModsList.none((e) => e.smolId == element.smolId))

@@ -66,10 +66,9 @@ class TriOSHttpClient {
         return Future.error(Exception('Invalid URL: $url'));
       }
 
-      final client =
-          allowSelfSignedCertificates
-              ? _selfSignedHttpClient
-              : _defaultHttpClient;
+      final client = allowSelfSignedCertificates
+          ? _selfSignedHttpClient
+          : _defaultHttpClient;
       return _retry(
         () => _createRequest(
           () => client.getUrl(url),

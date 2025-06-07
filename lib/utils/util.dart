@@ -134,11 +134,10 @@ Future<String?> getStarsectorVersionFromObf(
     throw Exception("${obfPath.path} not found.");
   }
 
-  final extractedVersionFile =
-      (await archive.readEntriesInArchive(
-        obfPath,
-        fileFilter: (entry) => entry.path.contains("Version.class"),
-      )).firstOrNull;
+  final extractedVersionFile = (await archive.readEntriesInArchive(
+    obfPath,
+    fileFilter: (entry) => entry.path.contains("Version.class"),
+  )).firstOrNull;
   if (extractedVersionFile == null) {
     return null;
   }
@@ -159,8 +158,9 @@ Future<String?> getStarsectorVersionFromObf(
           RegExp(r'[^a-zA-Z0-9.-]'),
           versionStart,
         );
-        final gameVersion =
-            utf8String.substring(versionStart, versionEnd).trim();
+        final gameVersion = utf8String
+            .substring(versionStart, versionEnd)
+            .trim();
         Fimber.i("Found game version in obs: $gameVersion");
         return gameVersion;
       }
@@ -347,8 +347,9 @@ pollFileForModification(
 }) async {
   var didExistLastCheck = file.existsSync();
   // If the file doesn't exist when we start, use the current time as the last modified date.
-  var lastModified =
-      didExistLastCheck ? file.lastModifiedSync() : DateTime.now();
+  var lastModified = didExistLastCheck
+      ? file.lastModifiedSync()
+      : DateTime.now();
   final fileChangesInstance = streamController;
 
   while (!fileChangesInstance.isClosed) {

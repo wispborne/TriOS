@@ -96,8 +96,11 @@ class AppState {
   static final mods = Provider<List<Mod>>((ref) {
     // Fimber.d("Recalculating mods from variants.");
     final modVariants = ref.watch(AppState.modVariants).value ?? [];
-    final enabledMods =
-        ref.watch(AppState.enabledModIds).value.orEmpty().toList();
+    final enabledMods = ref
+        .watch(AppState.enabledModIds)
+        .value
+        .orEmpty()
+        .toList();
     final mods = getModsFromVariants(modVariants, enabledMods);
     return mods;
   });
@@ -148,8 +151,9 @@ class AppState {
   );
   static final modsState = Provider<Map<String, ModState>>((ref) => {});
   static final starsectorVersion = FutureProvider<String?>((ref) async {
-    final gamePath =
-        ref.watch(appSettings.select((value) => value.gameDir))?.toDirectory();
+    final gamePath = ref
+        .watch(appSettings.select((value) => value.gameDir))
+        ?.toDirectory();
     if (gamePath == null || gamePath.existsSync() == false) return null;
     final gameCorePath = generateGameCorePath(gamePath)!;
 
@@ -200,12 +204,14 @@ class AppState {
   });
 
   static final canWriteToModsFolder = FutureProvider<bool>((ref) async {
-    final gamePath =
-        ref.watch(appSettings.select((value) => value.gameDir))?.toDirectory();
+    final gamePath = ref
+        .watch(appSettings.select((value) => value.gameDir))
+        ?.toDirectory();
     if (gamePath == null) return false;
 
-    final filesAndFolders =
-        [ref.read(enabledModsFile).valueOrNull?.enabledMods.toList()].nonNulls;
+    final filesAndFolders = [
+      ref.read(enabledModsFile).valueOrNull?.enabledMods.toList(),
+    ].nonNulls;
     for (final file in filesAndFolders) {
       if (filesAndFolders.isEmpty) {
         Fimber.d("Cannot find or write to: $file");
@@ -251,16 +257,16 @@ class AppState {
 
     return isJre23
         ? gamePath
-            .resolve(
-              ref.watch(
-                    appSettings.select(
-                      (value) => value.showCustomJreConsoleWindow,
-                    ),
-                  )
-                  ? "Miko_Rouge.bat"
-                  : "Miko_Silent.bat",
-            )
-            .toFile()
+              .resolve(
+                ref.watch(
+                      appSettings.select(
+                        (value) => value.showCustomJreConsoleWindow,
+                      ),
+                    )
+                    ? "Miko_Rouge.bat"
+                    : "Miko_Silent.bat",
+              )
+              .toFile()
         : getVanillaGameExecutable(gamePath).toFile();
   });
 
@@ -321,11 +327,10 @@ class _GameRunningChecker extends AsyncNotifier<bool> {
     _gameExecutables = [ref.watch(AppState.gameExecutable).value];
 
     // Extract executable names from file paths
-    final List<String> executableNames =
-        _gameExecutables
-            .whereType<File>()
-            .map((file) => file.path.split(Platform.pathSeparator).last)
-            .toList();
+    final List<String> executableNames = _gameExecutables
+        .whereType<File>()
+        .map((file) => file.path.split(Platform.pathSeparator).last)
+        .toList();
 
     // Perform an initial check
     bool isRunning = await _checkIfAnyProcessIsRunning(executableNames);
@@ -407,8 +412,10 @@ class _GameRunningChecker extends AsyncNotifier<bool> {
         ]);
         if (process.exitCode == 0) {
           final output = process.stdout as String;
-          final windowTitles =
-              output.split('\n').map((line) => line.trim()).toList();
+          final windowTitles = output
+              .split('\n')
+              .map((line) => line.trim())
+              .toList();
           final isStarsectorRunning = windowTitles.any(
             (title) => title.contains(
               'Starsector ${ref.watch(appSettings).lastStarsectorVersion}',

@@ -37,7 +37,7 @@ class ModListBasicEntry extends ConsumerStatefulWidget {
   ConsumerState createState() => _ModListBasicEntryState();
 
   static Widget buildVersionCheckTextReadoutForTooltip(
-      Mod mod,
+    Mod mod,
     String? changelogUrl,
     int? versionCheckComparison,
     VersionCheckerInfo? localVersionCheck,
@@ -102,7 +102,7 @@ class ModListBasicEntry extends ConsumerStatefulWidget {
   }
 
   static IntrinsicHeight changeAndVersionCheckAlertDialogContent(
-      Mod mod,
+    Mod mod,
     String? changelogUrl,
     VersionCheckerInfo? localVersionCheck,
     RemoteVersionCheckResult? remoteVersionCheck,
@@ -141,8 +141,9 @@ class ModListBasicEntry extends ConsumerStatefulWidget {
 class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
   @override
   Widget build(BuildContext context) {
-    var cachedVersionChecks =
-        ref.watch(AppState.versionCheckResults).valueOrNull;
+    var cachedVersionChecks = ref
+        .watch(AppState.versionCheckResults)
+        .valueOrNull;
     final mod = widget.mod;
     final modVariant =
         mod.findFirstEnabledOrHighestVersion ?? mod.modVariants.first;
@@ -160,10 +161,13 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
     );
     final theme = Theme.of(context);
     final compatTextColor = compatWithGame.getGameCompatibilityColor();
-    final changelogUrl = ref.read(AppState.changelogsProvider.notifier).getChangelogUrl(localVersionCheck, remoteVersionCheck);
+    final changelogUrl = ref
+        .read(AppState.changelogsProvider.notifier)
+        .getChangelogUrl(localVersionCheck, remoteVersionCheck);
     final isEnabled = modVariant.isEnabled(ref.read(AppState.mods));
-    final modTextOpacity =
-        compatWithGame == GameCompatibility.incompatible ? 0.55 : 1.0;
+    final modTextOpacity = compatWithGame == GameCompatibility.incompatible
+        ? 0.55
+        : 1.0;
 
     const rowHeight = 25.0;
 
@@ -195,13 +199,12 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                           height: rowHeight,
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(4),
-                            child:
-                                modVariant.iconFilePath != null
-                                    ? Image.file(
-                                      (modVariant.iconFilePath ?? "").toFile(),
-                                      isAntiAlias: true,
-                                    )
-                                    : Container(),
+                            child: modVariant.iconFilePath != null
+                                ? Image.file(
+                                    (modVariant.iconFilePath ?? "").toFile(),
+                                    isAntiAlias: true,
+                                  )
+                                : Container(),
                           ),
                         ),
                       ),
@@ -268,35 +271,32 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                               } else {
                                 showDialog(
                                   context: context,
-                                  builder:
-                                      (context) => AlertDialog(
-                                        content:
-                                            ModListBasicEntry.changeAndVersionCheckAlertDialogContent(
-                                              mod,
-                                              changelogUrl,
-                                              localVersionCheck,
-                                              remoteVersionCheck,
-                                              versionCheckComparison,
-                                            ),
-                                      ),
+                                  builder: (context) => AlertDialog(
+                                    content:
+                                        ModListBasicEntry.changeAndVersionCheckAlertDialogContent(
+                                          mod,
+                                          changelogUrl,
+                                          localVersionCheck,
+                                          remoteVersionCheck,
+                                          versionCheckComparison,
+                                        ),
+                                  ),
                                 );
                               }
                             },
-                            onSecondaryTap:
-                                () => showDialog(
-                                  context: context,
-                                  builder:
-                                      (context) => AlertDialog(
-                                        content:
-                                            ModListBasicEntry.changeAndVersionCheckAlertDialogContent(
-                                              mod,
-                                              changelogUrl,
-                                              localVersionCheck,
-                                              remoteVersionCheck,
-                                              versionCheckComparison,
-                                            ),
-                                      ),
-                                ),
+                            onSecondaryTap: () => showDialog(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                content:
+                                    ModListBasicEntry.changeAndVersionCheckAlertDialogContent(
+                                      mod,
+                                      changelogUrl,
+                                      localVersionCheck,
+                                      remoteVersionCheck,
+                                      versionCheckComparison,
+                                    ),
+                              ),
+                            ),
                             child: Padding(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 5.0,
@@ -311,9 +311,8 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                       ),
                     ],
                   ),
-                  checkWrapper:
-                      (child) =>
-                          Disable(isEnabled: !widget.isDisabled, child: child),
+                  checkWrapper: (child) =>
+                      Disable(isEnabled: !widget.isDisabled, child: child),
                   textPadding: const EdgeInsets.only(left: 0, bottom: 2),
                   value: isEnabled,
                   expand: true,
@@ -326,8 +325,9 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                     if (!isCurrentlyEnabled) {
                       final allMods =
                           ref.read(AppState.modVariants).value ?? [];
-                      final enabledMods =
-                          ref.read(AppState.enabledModIds).value!;
+                      final enabledMods = ref
+                          .read(AppState.enabledModIds)
+                          .value!;
                       // Check dependencies
                       final dependencyCheck = modInfo.checkDependencies(
                         allMods,

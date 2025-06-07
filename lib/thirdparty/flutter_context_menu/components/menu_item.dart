@@ -88,8 +88,9 @@ final class MenuItem<T> extends ContextMenuItem<T> {
       child: ConstrainedBox(
         constraints: constraints ?? const BoxConstraints.expand(height: 32.0),
         child: Material(
-          color:
-              isFocused ? context.theme.focusColor.withAlpha(20) : background,
+          color: isFocused
+              ? context.theme.focusColor.withAlpha(20)
+              : background,
           borderRadius: BorderRadius.circular(4.0),
           clipBehavior: Clip.antiAlias,
           child: InkWell(

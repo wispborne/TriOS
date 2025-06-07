@@ -29,36 +29,34 @@ class AddNewModsButton extends ConsumerWidget {
 
     var isIconOnly = labelWidget != null;
     return MovingTooltipWidget.text(
-      message:
-          isGameRunning
-              ? "Game is running"
-              : isIconOnly
-              ? "Tip: drag'n'drop to install mods!"
-              : "Add new mod(s)\n\nTip: drag'n'drop to install mods!",
+      message: isGameRunning
+          ? "Game is running"
+          : isIconOnly
+          ? "Tip: drag'n'drop to install mods!"
+          : "Add new mod(s)\n\nTip: drag'n'drop to install mods!",
       child: Disable(
         isEnabled: !isGameRunning,
         child: DisableIfCannotWriteMods(
-          child:
-              isIconOnly
-                  ? Padding(
-                    padding: padding,
-                    child: OutlinedButton.icon(
-                      onPressed: () => _pickAndInstallMods(ref),
-                      label: labelWidget!,
-                      icon: Icon(
-                        Icons.add,
-                        size: iconSize,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    ),
-                  )
-                  : IconButton(
+          child: isIconOnly
+              ? Padding(
+                  padding: padding,
+                  child: OutlinedButton.icon(
                     onPressed: () => _pickAndInstallMods(ref),
-                    constraints: const BoxConstraints(),
-                    iconSize: iconSize,
-                    padding: padding,
-                    icon: Icon(Icons.add, size: iconSize),
+                    label: labelWidget!,
+                    icon: Icon(
+                      Icons.add,
+                      size: iconSize,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
                   ),
+                )
+              : IconButton(
+                  onPressed: () => _pickAndInstallMods(ref),
+                  constraints: const BoxConstraints(),
+                  iconSize: iconSize,
+                  padding: padding,
+                  icon: Icon(Icons.add, size: iconSize),
+                ),
         ),
       ),
     );

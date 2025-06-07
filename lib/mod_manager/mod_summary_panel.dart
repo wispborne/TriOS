@@ -39,16 +39,18 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
     final selectedMod = widget.mod;
     final theme = Theme.of(context);
     final modVariants = ref.watch(AppState.modVariants).valueOrNull;
-    final enabledMods =
-        ref.watch(AppState.enabledModsFile).valueOrNull?.enabledMods.toList();
+    final enabledMods = ref
+        .watch(AppState.enabledModsFile)
+        .valueOrNull
+        ?.enabledMods
+        .toList();
     final allMods = ref.watch(AppState.mods);
     final gameVersion = ref.watch(AppState.starsectorVersion).valueOrNull;
-    final dependents =
-        selectedMod != null
-            ? calculateDependents(
-              selectedMod.findFirstEnabledOrHighestVersion!,
-            ).getAsMods(allMods)
-            : <Mod>[];
+    final dependents = selectedMod != null
+        ? calculateDependents(
+            selectedMod.findFirstEnabledOrHighestVersion!,
+          ).getAsMods(allMods)
+        : <Mod>[];
     const buttonsOpacity = 0.8;
 
     final paletteTheme = paletteGenerator.createPaletteTheme(context);
@@ -83,11 +85,10 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
           child: Builder(
             builder: (context) {
               final variant = selectedMod!.findHighestVersion;
-              final versionCheck =
-                  ref
-                      .watch(AppState.versionCheckResults)
-                      .valueOrNull
-                      ?.versionCheckResultsBySmolId[variant?.smolId];
+              final versionCheck = ref
+                  .watch(AppState.versionCheckResults)
+                  .valueOrNull
+                  ?.versionCheckResultsBySmolId[variant?.smolId];
               if (variant == null) return const SizedBox();
               final iconFilePath = variant.iconFilePath;
               final modMetadata = ref
@@ -99,13 +100,12 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
                 context,
               ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold);
               final bodyOpacity = 0.92;
-              final bodyTextStyle = Theme.of(
-                context,
-              ).textTheme.labelLarge?.copyWith(
-                color: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.color?.withOpacity(bodyOpacity),
-              );
+              final bodyTextStyle = Theme.of(context).textTheme.labelLarge
+                  ?.copyWith(
+                    color: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.color?.withOpacity(bodyOpacity),
+                  );
 
               // if (iconFilePath != null) {
               //   PaletteGenerator.fromImageProvider(
@@ -199,11 +199,10 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
                             // Don't show line if no palette, otherwise it encloses the details part too much
                             Divider(
                               height: 1,
-                              color:
-                                  paletteGenerator != null
-                                      ? paletteTheme.colorScheme.outline
-                                          .withOpacity(0.4)
-                                      : Theme.of(context).colorScheme.surface,
+                              color: paletteGenerator != null
+                                  ? paletteTheme.colorScheme.outline
+                                        .withOpacity(0.4)
+                                  : Theme.of(context).colorScheme.surface,
                             ),
                             // Container(
                             //   height: 12, // Adjust height for gradient fade
@@ -231,18 +230,16 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
                                   Text(
                                     "${variant.modInfo.id} ${variant.modInfo.version}",
                                     style: theme.textTheme.labelLarge?.copyWith(
-                                      fontFamily:
-                                          GoogleFonts.sourceCodePro()
-                                              .fontFamily,
+                                      fontFamily: GoogleFonts.sourceCodePro()
+                                          .fontFamily,
                                     ),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
                                     "Starsector ${variant.modInfo.gameVersion}",
                                     style: theme.textTheme.labelLarge?.copyWith(
-                                      fontFamily:
-                                          GoogleFonts.sourceCodePro()
-                                              .fontFamily,
+                                      fontFamily: GoogleFonts.sourceCodePro()
+                                          .fontFamily,
                                     ),
                                   ),
                                   if (variant.modInfo.isUtility ||
@@ -286,10 +283,9 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
                                                 child: OutlinedButton.icon(
                                                   icon: SvgImageIcon(
                                                     "assets/images/icon-web.svg",
-                                                    color:
-                                                        Theme.of(
-                                                          context,
-                                                        ).colorScheme.primary,
+                                                    color: Theme.of(
+                                                      context,
+                                                    ).colorScheme.primary,
                                                   ),
                                                   label: const Text(
                                                     "Forum Thread",
@@ -318,13 +314,10 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
                                             selectedMod.modVariants
                                                 .joinToString(
                                                   separator: ",  ",
-                                                  transform:
-                                                      (variant) =>
-                                                          variant
-                                                              .modInfo
-                                                              .version
-                                                              ?.toString() ??
-                                                          "",
+                                                  transform: (variant) =>
+                                                      variant.modInfo.version
+                                                          ?.toString() ??
+                                                      "",
                                                 ),
                                             style: bodyTextStyle,
                                           ),
@@ -443,10 +436,10 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
                                               child: Column(
                                                 crossAxisAlignment:
                                                     CrossAxisAlignment.start,
-                                                children:
-                                                    variant.modInfo.dependencies.map((
-                                                      dep,
-                                                    ) {
+                                                children: variant
+                                                    .modInfo
+                                                    .dependencies
+                                                    .map((dep) {
                                                       var dependencyState = dep
                                                           .isSatisfiedByAny(
                                                             modVariants,
@@ -464,7 +457,8 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
                                                               ),
                                                             ),
                                                       );
-                                                    }).toList(),
+                                                    })
+                                                    .toList(),
                                               ),
                                             ),
                                           if (variant
@@ -484,62 +478,58 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
                                   Text("Dependents", style: labelTextStyle),
                                   Builder(
                                     builder: (context) {
-                                      final enabledDependents =
-                                          dependents
-                                              .where(
-                                                (mod) => mod.hasEnabledVariant,
-                                              )
-                                              .toList();
+                                      final enabledDependents = dependents
+                                          .where((mod) => mod.hasEnabledVariant)
+                                          .toList();
                                       return enabledDependents.isNotEmpty
                                           ? DependentsListWidget(
-                                            dependents: enabledDependents,
-                                            selectedMod: selectedMod,
-                                            allMods: allMods,
-                                            style: bodyTextStyle,
-                                          )
+                                              dependents: enabledDependents,
+                                              selectedMod: selectedMod,
+                                              allMods: allMods,
+                                              style: bodyTextStyle,
+                                            )
                                           : Text(
-                                            "No mods depend on ${variant.modInfo.name}",
-                                            style: bodyTextStyle,
-                                          );
+                                              "No mods depend on ${variant.modInfo.name}",
+                                              style: bodyTextStyle,
+                                            );
                                     },
                                   ),
                                   const SizedBox(height: 4),
                                   Builder(
                                     builder: (context) {
-                                      final disabledDependents =
-                                          dependents
-                                              .where(
-                                                (mod) => !mod.hasEnabledVariant,
-                                              )
-                                              .toList();
+                                      final disabledDependents = dependents
+                                          .where(
+                                            (mod) => !mod.hasEnabledVariant,
+                                          )
+                                          .toList();
                                       return disabledDependents.isNotEmpty
                                           ? Opacity(
-                                            opacity: 0.8,
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  "Disabled Dependents",
-                                                  style: theme
-                                                      .textTheme
-                                                      .labelLarge
-                                                      ?.copyWith(
-                                                        fontSize: 14,
-                                                        fontWeight:
-                                                            FontWeight.w600,
-                                                      ),
-                                                ),
-                                                DependentsListWidget(
-                                                  dependents:
-                                                      disabledDependents,
-                                                  selectedMod: selectedMod,
-                                                  allMods: allMods,
-                                                  style: bodyTextStyle,
-                                                ),
-                                              ],
-                                            ),
-                                          )
+                                              opacity: 0.8,
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    "Disabled Dependents",
+                                                    style: theme
+                                                        .textTheme
+                                                        .labelLarge
+                                                        ?.copyWith(
+                                                          fontSize: 14,
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                        ),
+                                                  ),
+                                                  DependentsListWidget(
+                                                    dependents:
+                                                        disabledDependents,
+                                                    selectedMod: selectedMod,
+                                                    allMods: allMods,
+                                                    style: bodyTextStyle,
+                                                  ),
+                                                ],
+                                              ),
+                                            )
                                           : const SizedBox();
                                     },
                                   ),
@@ -577,8 +567,11 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
 
   List<ModVariant> calculateDependents(ModVariant variant) {
     final modVariants = ref.watch(AppState.modVariants).valueOrNull;
-    final enabledMods =
-        ref.watch(AppState.enabledModsFile).valueOrNull?.enabledMods.toList();
+    final enabledMods = ref
+        .watch(AppState.enabledModsFile)
+        .valueOrNull
+        ?.enabledMods
+        .toList();
     if (modVariants == null || enabledMods == null) return [];
     return modVariants
         .where(
@@ -614,19 +607,17 @@ class DependentsListWidget extends StatelessWidget {
       children: [
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children:
-              dependents.map((modDep) {
-                final variant = modDep.findFirstEnabledOrHighestVersion;
-                final dependencyVersion =
-                    variant?.modInfo.dependencies
-                        .firstWhereOrNull((dep) => dep.id == selectedMod.id)
-                        ?.version;
-                final enabled = variant?.isEnabled(allMods) == true;
-                return Text(
-                  "- ${variant?.modInfo.name}${dependencyVersion != null ? " (wants $dependencyVersion)" : ""}",
-                  style: style,
-                );
-              }).toList(),
+          children: dependents.map((modDep) {
+            final variant = modDep.findFirstEnabledOrHighestVersion;
+            final dependencyVersion = variant?.modInfo.dependencies
+                .firstWhereOrNull((dep) => dep.id == selectedMod.id)
+                ?.version;
+            final enabled = variant?.isEnabled(allMods) == true;
+            return Text(
+              "- ${variant?.modInfo.name}${dependencyVersion != null ? " (wants $dependencyVersion)" : ""}",
+              style: style,
+            );
+          }).toList(),
         ),
       ],
     );

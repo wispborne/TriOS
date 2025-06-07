@@ -24,8 +24,8 @@ class CopyModListButtonLarge extends StatelessWidget {
             copyModListToClipboardFromMods(mods, context);
           },
           child: OutlinedButton.icon(
-            onPressed:
-                () => copyModListToClipboardFromMods(enabledMods, context),
+            onPressed: () =>
+                copyModListToClipboardFromMods(enabledMods, context),
             label: const Text("Copy"),
             style: OutlinedButton.styleFrom(
               foregroundColor: Theme.of(

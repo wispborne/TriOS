@@ -38,6 +38,6 @@ class GraphicsLibConfig with GraphicsLibConfigMappable {
     areGfxLibMaterialMapsEnabled: false,
     areGfxLibSurfaceMapsEnabled: false,
     autoGenNormals: false,
-    preloadAllMaps: false
+    preloadAllMaps: false,
   );
 }

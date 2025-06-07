@@ -53,10 +53,9 @@ class TriOSRadioTile<T> extends StatelessWidget {
                 groupValue: groupValue,
                 onChanged: onChanged,
                 splashRadius: splashRadius,
-                materialTapTargetSize:
-                    dense
-                        ? MaterialTapTargetSize.shrinkWrap
-                        : MaterialTapTargetSize.padded,
+                materialTapTargetSize: dense
+                    ? MaterialTapTargetSize.shrinkWrap
+                    : MaterialTapTargetSize.padded,
               ),
               Expanded(
                 child: DefaultTextStyle.merge(

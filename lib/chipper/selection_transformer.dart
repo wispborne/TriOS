@@ -122,10 +122,9 @@ class SeparatedSelectionContainerDelegate
   SelectedContent? getSelectedContent() {
     final List<SelectedContent> selections = <SelectedContent>[];
     for (final Selectable selectable in selectables) {
-      final allSelectedContent =
-          getAllSelectables(
-            selectable,
-          ).map((e) => e.getSelectedContent()).nonNulls;
+      final allSelectedContent = getAllSelectables(
+        selectable,
+      ).map((e) => e.getSelectedContent()).nonNulls;
       selections.addAll(allSelectedContent);
     }
     if (selections.isEmpty) {

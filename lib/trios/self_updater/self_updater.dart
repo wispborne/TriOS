@@ -70,8 +70,10 @@ class SelfUpdater extends AsyncNotifier<TriOSDownloadProgress?> {
   Future<void> updateSelf(Release release, {bool exitSelfAfter = true}) async {
     state = const AsyncValue.loading();
 
-    final updateWorkingDir =
-        Directory.systemTemp.createTempSync('trios_update').absolute.normalize;
+    final updateWorkingDir = Directory.systemTemp
+        .createTempSync('trios_update')
+        .absolute
+        .normalize;
 
     // Download the release asset.
     final downloadFile = await downloadRelease(release, updateWorkingDir);
@@ -100,8 +102,8 @@ class SelfUpdater extends AsyncNotifier<TriOSDownloadProgress?> {
       // If there's a subfolder, use the contents of the subfolder as the files to update (added in 0.0.48).
       final directoryWithNewVersionFiles =
           updateWorkingDir.listSync().length == 1
-              ? updateWorkingDir.listSync()[0].toDirectory()
-              : updateWorkingDir;
+          ? updateWorkingDir.listSync()[0].toDirectory()
+          : updateWorkingDir;
 
       try {
         await replaceSelf(directoryWithNewVersionFiles);
@@ -153,16 +155,17 @@ class SelfUpdater extends AsyncNotifier<TriOSDownloadProgress?> {
       recursive: true,
       followLinks: true,
     );
-    final currentDir =
-        currentPlatform != TargetPlatform.macOS
-            ? currentDirectory
-            : currentMacOSAppPath;
+    final currentDir = currentPlatform != TargetPlatform.macOS
+        ? currentDirectory
+        : currentMacOSAppPath;
     final jobs = <Future<void>>[];
 
     for (final newFile in allNewFiles) {
       if (newFile.isFile()) {
-        final newFileRelative =
-            newFile.toFile().relativeTo(sourceDirectory).toFile();
+        final newFileRelative = newFile
+            .toFile()
+            .relativeTo(sourceDirectory)
+            .toFile();
         final fileToReplace = File(
           p.join(currentDir.path, newFileRelative.path),
         );
@@ -238,11 +241,10 @@ class SelfUpdater extends AsyncNotifier<TriOSDownloadProgress?> {
   }
 
   static Future<void> cleanUpOldUpdateFiles() async {
-    final filesInCurrentDir =
-        currentDirectory
-            .listSync(recursive: true)
-            .where((element) => element.path.endsWith(oldFileSuffix))
-            .toList();
+    final filesInCurrentDir = currentDirectory
+        .listSync(recursive: true)
+        .where((element) => element.path.endsWith(oldFileSuffix))
+        .toList();
     for (final file in filesInCurrentDir) {
       if (file is File) {
         try {
@@ -338,8 +340,10 @@ class SelfUpdater extends AsyncNotifier<TriOSDownloadProgress?> {
     Directory destDir, {
     String? platform,
   }) async {
-    final downloadLink =
-        getAssetForPlatform(release, platform: platform)?.browserDownloadUrl;
+    final downloadLink = getAssetForPlatform(
+      release,
+      platform: platform,
+    )?.browserDownloadUrl;
 
     if (downloadLink == null) {
       throw Exception("No download link found for platform.");

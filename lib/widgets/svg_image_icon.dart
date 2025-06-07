@@ -25,11 +25,10 @@ class SvgImageIcon extends StatelessWidget {
         assetName,
         width: width,
         height: height,
-        fit:  BoxFit.scaleDown,
-        colorFilter:
-            colorLocal == null
-                ? null
-                : ColorFilter.mode(colorLocal, BlendMode.srcIn),
+        fit: BoxFit.scaleDown,
+        colorFilter: colorLocal == null
+            ? null
+            : ColorFilter.mode(colorLocal, BlendMode.srcIn),
       ),
     );
   }

@@ -47,12 +47,10 @@ class ContextMenuState extends ChangeNotifier {
   final VoidCallback? selfClose;
   WidgetBuilder submenuBuilder = (context) => const SizedBox.shrink();
 
-  ContextMenuState({
-    required this.menu,
-    this.parentItem,
-  })  : _parentItemRect = null,
-        _isSubmenu = false,
-        selfClose = null;
+  ContextMenuState({required this.menu, this.parentItem})
+    : _parentItemRect = null,
+      _isSubmenu = false,
+      selfClose = null;
 
   ContextMenuState.submenu({
     required this.menu,
@@ -61,9 +59,9 @@ class ContextMenuState extends ChangeNotifier {
     AlignmentGeometry? spawnAnchor,
     Rect? parentItemRect,
     GlobalKey? parentMenuKey,
-  })  : _spawnAnchor = spawnAnchor ?? AlignmentDirectional.topEnd,
-        _parentItemRect = parentItemRect,
-        _isSubmenu = true;
+  }) : _spawnAnchor = spawnAnchor ?? AlignmentDirectional.topEnd,
+       _parentItemRect = parentItemRect,
+       _isSubmenu = true;
 
   List<ContextMenuEntry> get entries => menu.entries;
 
@@ -96,8 +94,8 @@ class ContextMenuState extends ChangeNotifier {
   bool get isSubmenu => _isSubmenu;
 
   static ContextMenuState of(BuildContext context) {
-    final provider =
-        context.dependOnInheritedWidgetOfExactType<ContextMenuProvider>();
+    final provider = context
+        .dependOnInheritedWidgetOfExactType<ContextMenuProvider>();
 
     if (provider == null) {
       throw 'No ContextMenuProvider found in context';
@@ -106,8 +104,8 @@ class ContextMenuState extends ChangeNotifier {
   }
 
   static ContextMenuState? maybeOf(BuildContext context) {
-    final provider =
-        context.dependOnInheritedWidgetOfExactType<ContextMenuProvider>();
+    final provider = context
+        .dependOnInheritedWidgetOfExactType<ContextMenuProvider>();
 
     return provider?.notifier;
   }
@@ -146,15 +144,14 @@ class ContextMenuState extends ChangeNotifier {
     final submenuParentRect = context.getWidgetBounds();
     if (submenuParentRect == null) return;
 
-    final submenuPosition =
-        calculateSubmenuPosition(submenuParentRect, menu.padding);
+    final submenuPosition = calculateSubmenuPosition(
+      submenuParentRect,
+      menu.padding,
+    );
 
     submenuBuilder = (BuildContext context) {
       final subMenuState = ContextMenuState.submenu(
-        menu: menu.copyWith(
-          entries: items,
-          position: submenuPosition,
-        ),
+        menu: menu.copyWith(entries: items, position: submenuPosition),
         spawnAnchor: spawnAnchor,
         parentItemRect: submenuParentRect,
         selfClose: closeSubmenu,

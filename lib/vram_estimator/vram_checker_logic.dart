@@ -314,17 +314,13 @@ class VramChecker {
                 );
               }
               progressText.appendAndPrint(
-                mod
-                    .bytesNotIncludingGraphicsLib()
-                    .bytesAsReadableMB(),
+                mod.bytesNotIncludingGraphicsLib().bytesAsReadableMB(),
                 verboseOut,
               );
               modProgressOut(mod);
               return mod;
             }).toList())
-            .sortedByDescending<num>(
-              (it) => it.bytesNotIncludingGraphicsLib(),
-            )
+            .sortedByDescending<num>((it) => it.bytesNotIncludingGraphicsLib())
             .toList();
 
     for (var mod in mods) {
@@ -332,11 +328,7 @@ class VramChecker {
       modTotals.writeln(
         "${mod.info.formattedName} - ${mod.images.length} images - ${(mod.isEnabled) ? "Enabled" : "Disabled"}",
       );
-      modTotals.writeln(
-        mod
-            .bytesNotIncludingGraphicsLib()
-            .bytesAsReadableMB(),
-      );
+      modTotals.writeln(mod.bytesNotIncludingGraphicsLib().bytesAsReadableMB());
     }
 
     final enabledMods = mods.where((mod) => mod.isEnabled);
@@ -538,7 +530,10 @@ class VramChecker {
         .filter((it) => it.file.nameWithExtension.endsWith(".csv"))
         .map((file) {
           try {
-            return csvReader.convert(file.file.readAsStringSync().replaceAll("\r\n", "\n"), eol: "\n");
+            return csvReader.convert(
+              file.file.readAsStringSync().replaceAll("\r\n", "\n"),
+              eol: "\n",
+            );
           } catch (e) {
             progressText.appendAndPrint(
               "Unable to read ${file.file.path}: $e",

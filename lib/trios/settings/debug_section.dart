@@ -89,10 +89,9 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                     "\nGoing back in time is not tested. Recommend backing up your settings first (click Log File button to open folder).",
                 warningLevel: TooltipWarningLevel.error,
                 child: ElevatedButton.icon(
-                  icon:
-                      _selectedRelease != null
-                          ? const Icon(Icons.settings_backup_restore, size: 20)
-                          : null,
+                  icon: _selectedRelease != null
+                      ? const Icon(Icons.settings_backup_restore, size: 20)
+                      : null,
                   onPressed: () {
                     if (_selectedRelease != null) {
                       ref
@@ -299,10 +298,9 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                 child: ElevatedButton.icon(
                   icon: const Icon(Icons.system_security_update_warning),
                   onPressed: () async {
-                    final latestRelease =
-                        await ref
-                            .watch(AppState.selfUpdate.notifier)
-                            .getLatestRelease();
+                    final latestRelease = await ref
+                        .watch(AppState.selfUpdate.notifier)
+                        .getLatestRelease();
                     ref
                         .read(AppState.selfUpdate.notifier)
                         .updateSelf(latestRelease!);
@@ -369,9 +367,9 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                       context: ref.read(AppState.appContext)!,
                       content: Text(
                         ref
-                            .refresh(shipListNotifierProvider)
-                            .valueOrNull
-                            ?.toString() ??
+                                .refresh(shipListNotifierProvider)
+                                .valueOrNull
+                                ?.toString() ??
                             "weh",
                       ),
                     );
@@ -633,24 +631,22 @@ class _ModCompatibilityFilterWidgetState
                   },
                 );
               },
-              suggestionsBuilder: (
-                BuildContext context,
-                SearchController controller,
-              ) {
-                return allSmolIds
-                    .where((id) => id.contains(controller.text))
-                    .map(
-                      (id) => ListTile(
-                        title: Text(id),
-                        onTap: () {
-                          setState(() {
-                            controller.closeView(id);
-                          });
-                        },
-                      ),
-                    )
-                    .toList();
-              },
+              suggestionsBuilder:
+                  (BuildContext context, SearchController controller) {
+                    return allSmolIds
+                        .where((id) => id.contains(controller.text))
+                        .map(
+                          (id) => ListTile(
+                            title: Text(id),
+                            onTap: () {
+                              setState(() {
+                                controller.closeView(id);
+                              });
+                            },
+                          ),
+                        )
+                        .toList();
+                  },
             ),
             SelectableText(
               "${_searchController.text.ifBlank("(no search)")}:\n${ref.watch(AppState.modCompatibility)[_searchController.text]?.toString() ?? "(id not found)"}",

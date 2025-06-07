@@ -75,8 +75,9 @@ class _TipsPageState extends ConsumerState<TipsPage>
                               return AlertDialog(
                                 title: const Text('Tips Hider'),
                                 icon: const Icon(Icons.lightbulb),
-                                iconColor:
-                                    Theme.of(context).colorScheme.onSurface,
+                                iconColor: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface,
                                 content: ConstrainedBox(
                                   constraints: const BoxConstraints(
                                     maxWidth: 900,
@@ -111,9 +112,8 @@ class _TipsPageState extends ConsumerState<TipsPage>
                     ),
                     const SizedBox(width: 4),
                     TriOSToolbarCheckboxButton(
-                      onChanged:
-                          (newValue) =>
-                              setState(() => _onlyEnabled = newValue ?? true),
+                      onChanged: (newValue) =>
+                          setState(() => _onlyEnabled = newValue ?? true),
                       value: _onlyEnabled,
                       text: 'Enabled Mods Only',
                     ),
@@ -134,19 +134,18 @@ class _TipsPageState extends ConsumerState<TipsPage>
                             ],
                           ),
                         ),
-                        onSelected:
-                            (value) => setState(() => _grouping = value),
-                        itemBuilder:
-                            (context) => const [
-                              PopupMenuItem(
-                                value: TipsGrouping.none,
-                                child: Text('No Grouping'),
-                              ),
-                              PopupMenuItem(
-                                value: TipsGrouping.mod,
-                                child: Text('Group By Mod'),
-                              ),
-                            ],
+                        onSelected: (value) =>
+                            setState(() => _grouping = value),
+                        itemBuilder: (context) => const [
+                          PopupMenuItem(
+                            value: TipsGrouping.none,
+                            child: Text('No Grouping'),
+                          ),
+                          PopupMenuItem(
+                            value: TipsGrouping.mod,
+                            child: Text('Group By Mod'),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -176,9 +175,8 @@ class _TipsPageState extends ConsumerState<TipsPage>
                     MovingTooltipWidget.text(
                       message: 'Whether hidden tips are shown',
                       child: TriOSToolbarCheckboxButton(
-                        onChanged:
-                            (newValue) =>
-                                setState(() => _showHidden = newValue ?? true),
+                        onChanged: (newValue) =>
+                            setState(() => _showHidden = newValue ?? true),
                         value: _showHidden,
                         text: 'Show Hidden',
                       ),
@@ -206,18 +204,16 @@ class _TipsPageState extends ConsumerState<TipsPage>
   }
 
   Widget _buildDeleteButton(BuildContext context) {
-    final selectedTips =
-        _selectionStates.entries
-            .where((entry) => entry.value)
-            .map((entry) => entry.key)
-            .toList();
+    final selectedTips = _selectionStates.entries
+        .where((entry) => entry.value)
+        .map((entry) => entry.key)
+        .toList();
 
     final isEnabled = selectedTips.isNotEmpty;
 
-    final hiddenCount =
-        selectedTips
-            .where((t) => ref.read(AppState.tipsProvider.notifier).isHidden(t))
-            .length;
+    final hiddenCount = selectedTips
+        .where((t) => ref.read(AppState.tipsProvider.notifier).isHidden(t))
+        .length;
     final notHiddenCount = selectedTips.length - hiddenCount;
     final showUnhide = hiddenCount > notHiddenCount;
 
@@ -277,16 +273,15 @@ class _TipsPageState extends ConsumerState<TipsPage>
   Widget _buildBody(List<ModTip> tips, BuildContext context) {
     final allMods = ref.read(AppState.mods);
     // Filter tips if onlyEnabled is set.
-    List<ModTip> filtered =
-        _onlyEnabled
-            ? tips
-                .where(
-                  (tip) => tip.variants.any(
-                    (variant) => variant.isEnabled(allMods) == true,
-                  ),
-                )
-                .toList()
-            : tips;
+    List<ModTip> filtered = _onlyEnabled
+        ? tips
+              .where(
+                (tip) => tip.variants.any(
+                  (variant) => variant.isEnabled(allMods) == true,
+                ),
+              )
+              .toList()
+        : tips;
 
     final hiddenTips = ref
         .watch(AppState.tipsProvider.notifier)
@@ -365,12 +360,12 @@ class _TipsPageState extends ConsumerState<TipsPage>
                 ),
                 Builder(
                   builder: (context) {
-                    final List<ModTip> modTips =
-                        grouped[mod]!..sort(
-                          (a, b) =>
-                              (b.tipObj.tip?.length ?? 0) -
-                              (a.tipObj.tip?.length ?? 0),
-                        );
+                    final List<ModTip> modTips = grouped[mod]!
+                      ..sort(
+                        (a, b) =>
+                            (b.tipObj.tip?.length ?? 0) -
+                            (a.tipObj.tip?.length ?? 0),
+                      );
                     return WispAdaptiveGridView<ModTip>(
                       items: modTips,
                       minItemWidth: 350,
@@ -403,10 +398,10 @@ class _TipsPageState extends ConsumerState<TipsPage>
       );
     } else {
       // No grouping: show a grid sorted by tip text length (descending).
-      final List<ModTip> modTips =
-          filtered..sort(
-            (a, b) => (b.tipObj.tip?.length ?? 0) - (a.tipObj.tip?.length ?? 0),
-          );
+      final List<ModTip> modTips = filtered
+        ..sort(
+          (a, b) => (b.tipObj.tip?.length ?? 0) - (a.tipObj.tip?.length ?? 0),
+        );
 
       return Padding(
         padding: const EdgeInsets.only(left: 8, right: 8),
@@ -521,18 +516,16 @@ class _TipCardViewState extends ConsumerState<TipCardView> {
             child: Container(
               decoration: BoxDecoration(
                 border: Border.all(
-                  color:
-                      isSelected
-                          ? theme.colorScheme.primary
-                          : theme.colorScheme.onSurface.withOpacity(0.2),
+                  color: isSelected
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurface.withOpacity(0.2),
                   width: 1,
                 ),
-                color:
-                    isSelected
-                        ? theme.colorScheme.surfaceContainer.withOpacity(0.5)
-                        : isHidden
-                        ? theme.colorScheme.surfaceContainerLowest
-                        : theme.colorScheme.surfaceContainer.withOpacity(0.2),
+                color: isSelected
+                    ? theme.colorScheme.surfaceContainer.withOpacity(0.5)
+                    : isHidden
+                    ? theme.colorScheme.surfaceContainerLowest
+                    : theme.colorScheme.surfaceContainer.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
               ),
               padding: const EdgeInsets.all(8.0),

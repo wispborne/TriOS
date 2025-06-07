@@ -37,8 +37,9 @@ class _GamePerformanceWidgetState extends ConsumerState<GamePerformanceWidget>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final gameDir =
-        ref.read(appSettings.select((value) => value.gameDir))?.toDirectory();
+    final gameDir = ref
+        .read(appSettings.select((value) => value.gameDir))
+        ?.toDirectory();
 
     if (gameDir == null) {
       return const Center(child: Text("Game directory not set."));
@@ -122,8 +123,8 @@ class _ChangeJreWidgetState extends ConsumerState<ChangeJreWidget> {
                               height: 32,
                               width: 32,
                               child: IconButton(
-                                onPressed:
-                                    () => ref.invalidate(jreManagerProvider),
+                                onPressed: () =>
+                                    ref.invalidate(jreManagerProvider),
                                 icon: const Icon(Icons.refresh),
                                 padding: EdgeInsets.zero,
                                 color: Theme.of(context).iconTheme.color,
@@ -139,10 +140,9 @@ class _ChangeJreWidgetState extends ConsumerState<ChangeJreWidget> {
                         ))
                       Builder(
                         builder: (context) {
-                          var missingFilesForJre =
-                              jre is JreEntryInstalled
-                                  ? jre.missingFiles()
-                                  : <String>[];
+                          var missingFilesForJre = jre is JreEntryInstalled
+                              ? jre.missingFiles()
+                              : <String>[];
                           final isSupported = jre.isGameVersionSupported(
                             gameVersion,
                           );
@@ -150,115 +150,106 @@ class _ChangeJreWidgetState extends ConsumerState<ChangeJreWidget> {
                             gameVersion,
                           );
                           return MovingTooltipWidget.text(
-                            warningLevel:
-                                jre is JreToDownload
-                                    ? TooltipWarningLevel.warning
-                                    : null,
-                            message:
-                                !isSupported
-                                    ? "This JRE is not supported for $gameVersion."
-                                    : jre is JreToDownload
-                                    ? "Run ${Constants.appName} as an administrator if installation hangs after downloading."
-                                    : jre == activeJre
-                                    ? "Active"
-                                    : null,
+                            warningLevel: jre is JreToDownload
+                                ? TooltipWarningLevel.warning
+                                : null,
+                            message: !isSupported
+                                ? "This JRE is not supported for $gameVersion."
+                                : jre is JreToDownload
+                                ? "Run ${Constants.appName} as an administrator if installation hangs after downloading."
+                                : jre == activeJre
+                                ? "Active"
+                                : null,
                             child: Disable(
                               isEnabled: isEnabled,
                               child: ConditionalWrap(
                                 condition: jre != activeJre,
-                                wrapper:
-                                    (child) =>
-                                        missingFilesForJre.isNotEmpty
-                                            ? child
-                                            : InkWell(
-                                              onTap: () async {
-                                                if (jre is JreToDownload) {
-                                                  // confirmation dialog
-                                                  showDialog(
-                                                    context: context,
-                                                    builder: (context) {
-                                                      return AlertDialog(
-                                                        title: const Text(
-                                                          "Download JRE",
-                                                        ),
-                                                        content: Text(
-                                                          "Are you sure you want to download Java ${jre.versionString}?"
-                                                          "\n"
-                                                          "If it fails, please try running ${Constants.appName} as an administrator and trying again.",
-                                                        ),
-                                                        actions: [
-                                                          TextButton(
-                                                            onPressed: () {
-                                                              Navigator.of(
-                                                                context,
-                                                              ).pop();
-                                                            },
-                                                            child: const Text(
-                                                              "Cancel",
-                                                            ),
-                                                          ),
-                                                          TextButton(
-                                                            onPressed: () async {
-                                                              Navigator.of(
-                                                                context,
-                                                              ).pop();
-                                                              await ref
-                                                                  .read(
-                                                                    jre
-                                                                        .downloadProvider
-                                                                        .notifier,
-                                                                  )
-                                                                  .installCustomJre();
-                                                              ref.invalidate(
-                                                                jreManagerProvider,
-                                                              );
-                                                            },
-                                                            child: const Text(
-                                                              "Download",
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      );
-                                                    },
-                                                  );
-                                                } else if (jre
-                                                    is JreEntryInstalled) {
-                                                  if (!jre
-                                                      .isGameVersionSupported(
-                                                        gameVersion,
-                                                      )) {
-                                                    showDialog(
-                                                      context: context,
-                                                      builder:
-                                                          (
-                                                            context,
-                                                          ) => const AlertDialog(
-                                                            content: Text(
-                                                              "This game version is not supported.",
-                                                            ),
-                                                          ),
-                                                    );
-                                                  } else {
-                                                    setState(() {
-                                                      isModifyingFiles = true;
-                                                    });
-                                                    await ref
-                                                        .read(
-                                                          jreManagerProvider
-                                                              .notifier,
-                                                        )
-                                                        .changeActiveJre(jre);
-                                                    setState(() {
-                                                      isModifyingFiles = false;
-                                                    });
-                                                  }
-                                                }
+                                wrapper: (child) =>
+                                    missingFilesForJre.isNotEmpty
+                                    ? child
+                                    : InkWell(
+                                        onTap: () async {
+                                          if (jre is JreToDownload) {
+                                            // confirmation dialog
+                                            showDialog(
+                                              context: context,
+                                              builder: (context) {
+                                                return AlertDialog(
+                                                  title: const Text(
+                                                    "Download JRE",
+                                                  ),
+                                                  content: Text(
+                                                    "Are you sure you want to download Java ${jre.versionString}?"
+                                                    "\n"
+                                                    "If it fails, please try running ${Constants.appName} as an administrator and trying again.",
+                                                  ),
+                                                  actions: [
+                                                    TextButton(
+                                                      onPressed: () {
+                                                        Navigator.of(
+                                                          context,
+                                                        ).pop();
+                                                      },
+                                                      child: const Text(
+                                                        "Cancel",
+                                                      ),
+                                                    ),
+                                                    TextButton(
+                                                      onPressed: () async {
+                                                        Navigator.of(
+                                                          context,
+                                                        ).pop();
+                                                        await ref
+                                                            .read(
+                                                              jre
+                                                                  .downloadProvider
+                                                                  .notifier,
+                                                            )
+                                                            .installCustomJre();
+                                                        ref.invalidate(
+                                                          jreManagerProvider,
+                                                        );
+                                                      },
+                                                      child: const Text(
+                                                        "Download",
+                                                      ),
+                                                    ),
+                                                  ],
+                                                );
                                               },
-                                              mouseCursor:
-                                                  WidgetStateMouseCursor
-                                                      .clickable,
-                                              child: child,
-                                            ),
+                                            );
+                                          } else if (jre is JreEntryInstalled) {
+                                            if (!jre.isGameVersionSupported(
+                                              gameVersion,
+                                            )) {
+                                              showDialog(
+                                                context: context,
+                                                builder: (context) =>
+                                                    const AlertDialog(
+                                                      content: Text(
+                                                        "This game version is not supported.",
+                                                      ),
+                                                    ),
+                                              );
+                                            } else {
+                                              setState(() {
+                                                isModifyingFiles = true;
+                                              });
+                                              await ref
+                                                  .read(
+                                                    jreManagerProvider.notifier,
+                                                  )
+                                                  .changeActiveJre(jre);
+                                              setState(() {
+                                                isModifyingFiles = false;
+                                              });
+                                            }
+                                          }
+                                        },
+                                        mouseCursor:
+                                            WidgetStateMouseCursor.clickable,
+                                        child: child,
+                                      ),
                                 child: Opacity(
                                   opacity: isEnabled ? 1 : 0.5,
                                   child: Padding(
@@ -267,32 +258,30 @@ class _ChangeJreWidgetState extends ConsumerState<ChangeJreWidget> {
                                       children: [
                                         jre == activeJre
                                             ? Container(
-                                              width: iconSize,
-                                              height: iconSize,
-                                              decoration: BoxDecoration(
-                                                shape: BoxShape.circle,
-                                                color:
-                                                    Theme.of(
-                                                      context,
-                                                    ).colorScheme.primary,
-                                              ),
-                                              child: Icon(
-                                                Icons.coffee,
-                                                color:
-                                                    Theme.of(
-                                                      context,
-                                                    ).colorScheme.onPrimary,
-                                              ),
-                                            )
+                                                width: iconSize,
+                                                height: iconSize,
+                                                decoration: BoxDecoration(
+                                                  shape: BoxShape.circle,
+                                                  color: Theme.of(
+                                                    context,
+                                                  ).colorScheme.primary,
+                                                ),
+                                                child: Icon(
+                                                  Icons.coffee,
+                                                  color: Theme.of(
+                                                    context,
+                                                  ).colorScheme.onPrimary,
+                                                ),
+                                              )
                                             : SizedBox(
-                                              width: iconSize,
-                                              height: iconSize,
-                                              child: Icon(
-                                                jre is JreEntryInstalled
-                                                    ? Icons.coffee
-                                                    : Icons.download,
+                                                width: iconSize,
+                                                height: iconSize,
+                                                child: Icon(
+                                                  jre is JreEntryInstalled
+                                                      ? Icons.coffee
+                                                      : Icons.download,
+                                                ),
                                               ),
-                                            ),
                                         Expanded(
                                           child: Padding(
                                             padding: const EdgeInsets.only(
@@ -313,18 +302,18 @@ class _ChangeJreWidgetState extends ConsumerState<ChangeJreWidget> {
                                                                 .middle,
                                                         child: Text(
                                                           "Java ${jre.versionInt}",
-                                                          style: Theme.of(
-                                                            context,
-                                                          ).textTheme.titleMedium?.copyWith(
-                                                            color:
-                                                                jre == activeJre
+                                                          style: Theme.of(context)
+                                                              .textTheme
+                                                              .titleMedium
+                                                              ?.copyWith(
+                                                                color:
+                                                                    jre ==
+                                                                        activeJre
                                                                     ? Theme.of(
-                                                                          context,
-                                                                        )
-                                                                        .colorScheme
-                                                                        .primary
+                                                                        context,
+                                                                      ).colorScheme.primary
                                                                     : null,
-                                                          ),
+                                                              ),
                                                         ),
                                                       ),
                                                       TextSpan(
@@ -347,48 +336,44 @@ class _ChangeJreWidgetState extends ConsumerState<ChangeJreWidget> {
                                                     opacity: 0.8,
                                                     child: Text(
                                                       "${jre.jreAbsolutePath.name}/",
-                                                      style:
-                                                          Theme.of(
-                                                            context,
-                                                          ).textTheme.bodySmall,
+                                                      style: Theme.of(
+                                                        context,
+                                                      ).textTheme.bodySmall,
                                                     ),
                                                   ),
                                                 if (jre is JreToDownload)
                                                   Builder(
                                                     builder: (context) {
-                                                      final downloadState =
-                                                          ref
-                                                              .watch(
-                                                                jre.downloadProvider,
-                                                              )
-                                                              .valueOrNull;
+                                                      final downloadState = ref
+                                                          .watch(
+                                                            jre.downloadProvider,
+                                                          )
+                                                          .valueOrNull;
                                                       return downloadState
                                                                   ?.downloadProgress ==
                                                               null
                                                           ? Text(
-                                                            "Click to download",
-                                                            style: Theme.of(
-                                                                  context,
-                                                                )
-                                                                .textTheme
-                                                                .labelLarge
-                                                                ?.copyWith(
-                                                                  fontStyle:
-                                                                      FontStyle
-                                                                          .italic,
-                                                                ),
-                                                          )
+                                                              "Click to download",
+                                                              style: Theme.of(context)
+                                                                  .textTheme
+                                                                  .labelLarge
+                                                                  ?.copyWith(
+                                                                    fontStyle:
+                                                                        FontStyle
+                                                                            .italic,
+                                                                  ),
+                                                            )
                                                           : TriOSDownloadProgressIndicator(
-                                                            value:
-                                                                downloadState
-                                                                    ?.downloadProgress ??
-                                                                TriOSDownloadProgress(
-                                                                  0,
-                                                                  1,
-                                                                  isIndeterminate:
-                                                                      false,
-                                                                ),
-                                                          );
+                                                              value:
+                                                                  downloadState
+                                                                      ?.downloadProgress ??
+                                                                  TriOSDownloadProgress(
+                                                                    0,
+                                                                    1,
+                                                                    isIndeterminate:
+                                                                        false,
+                                                                  ),
+                                                            );
                                                     },
                                                   ),
                                               ],
@@ -421,8 +406,8 @@ class _ChangeJreWidgetState extends ConsumerState<ChangeJreWidget> {
                                                                 "JRE will be downloaded from:",
                                                               ),
                                                               Linkify(
-                                                                text:
-                                                                    jre.versionCheckerUrl,
+                                                                text: jre
+                                                                    .versionCheckerUrl,
                                                                 onOpen: (link) {
                                                                   OpenFilex.open(
                                                                     link.url,
@@ -449,9 +434,8 @@ class _ChangeJreWidgetState extends ConsumerState<ChangeJreWidget> {
                                                     "\n${missingFilesForJre.map((file) => "$file is missing").join("\n")}",
                                                 child: const Icon(
                                                   Icons.error,
-                                                  color:
-                                                      ThemeManager
-                                                          .vanillaErrorColor,
+                                                  color: ThemeManager
+                                                      .vanillaErrorColor,
                                                 ),
                                               );
                                             },
@@ -474,13 +458,12 @@ class _ChangeJreWidgetState extends ConsumerState<ChangeJreWidget> {
                         child: Text(
                           "Multiple \"Mikohime\" JREs are not supported."
                           "\nOnly the last-installed one will run.",
-                          style: Theme.of(
-                            context,
-                          ).textTheme.labelLarge?.copyWith(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSurface.withValues(alpha: 0.5),
-                          ),
+                          style: Theme.of(context).textTheme.labelLarge
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withValues(alpha: 0.5),
+                              ),
                         ),
                       ),
                   ],
@@ -510,10 +493,9 @@ class ChangeRamWidget extends StatelessWidget {
               children: [
                 Text("RAM", style: Theme.of(context).textTheme.titleLarge),
                 StyledText(
-                  text:
-                      currentRamAmountInMb == null
-                          ? "No vmparams file found."
-                          : "Assigned: <b>${currentRamAmountInMb!} MB</b>",
+                  text: currentRamAmountInMb == null
+                      ? "No vmparams file found."
+                      : "Assigned: <b>${currentRamAmountInMb!} MB</b>",
                   tags: {
                     "b": StyledTextTag(
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -599,13 +581,11 @@ class _ChangeSettingsWidgetState extends ConsumerState<ChangeSettingsWidget> {
                             height: 32,
                             width: 32,
                             child: IconButton(
-                              onPressed:
-                                  () =>
-                                      ref
-                                          .read(gameSettingsProvider.notifier)
-                                          .settingsFile
-                                          .path
-                                          .openAsUriInBrowser(),
+                              onPressed: () => ref
+                                  .read(gameSettingsProvider.notifier)
+                                  .settingsFile
+                                  .path
+                                  .openAsUriInBrowser(),
                               icon: SvgImageIcon(
                                 "assets/images/icon-file-settings.svg",
                               ),
@@ -619,134 +599,128 @@ class _ChangeSettingsWidgetState extends ConsumerState<ChangeSettingsWidget> {
                   ),
                 ),
                 gameSettingsPvdr.when(
-                  data:
-                      (gameSettings) => Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                  data: (gameSettings) => Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
                         children: [
-                          Row(
-                            children: [
-                              Text(
-                                "FPS Limit",
-                                style: Theme.of(context).textTheme.titleSmall,
-                              ),
-                              SizedBox(width: 8),
-                              MovingTooltipWidget.text(
-                                message:
-                                    "Recommended: Set your max FPS to your monitor's refresh rate or lower.",
-                                child: Icon(
-                                  Icons.info_outlined,
-                                  size: 20,
-                                  color: Theme.of(
-                                    context,
-                                  ).iconTheme.color?.withValues(alpha: 0.8),
-                                ),
-                              ),
-                            ],
+                          Text(
+                            "FPS Limit",
+                            style: Theme.of(context).textTheme.titleSmall,
                           ),
-                          gameSettings.fps == null
-                              ? TextTriOS(
-                                "Unable to read FPS Limit from settings.json",
-                                style: Theme.of(
-                                  context,
-                                ).textTheme.labelLarge?.copyWith(
-                                  fontStyle: FontStyle.italic,
-                                  color: warningColor,
+                          SizedBox(width: 8),
+                          MovingTooltipWidget.text(
+                            message:
+                                "Recommended: Set your max FPS to your monitor's refresh rate or lower.",
+                            child: Icon(
+                              Icons.info_outlined,
+                              size: 20,
+                              color: Theme.of(
+                                context,
+                              ).iconTheme.color?.withValues(alpha: 0.8),
+                            ),
+                          ),
+                        ],
+                      ),
+                      gameSettings.fps == null
+                          ? TextTriOS(
+                              "Unable to read FPS Limit from settings.json",
+                              style: Theme.of(context).textTheme.labelLarge
+                                  ?.copyWith(
+                                    fontStyle: FontStyle.italic,
+                                    color: warningColor,
+                                  ),
+                            )
+                          : Row(
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                    left: 8,
+                                    right: 8,
+                                  ),
+                                  child: Text(
+                                    "$fpsSliderValue",
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .labelMedium
+                                        ?.copyWith(fontWeight: FontWeight.bold),
+                                  ),
                                 ),
-                              )
-                              : Row(
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.only(
-                                      left: 8,
-                                      right: 8,
-                                    ),
-                                    child: Text(
-                                      "$fpsSliderValue",
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.labelMedium?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: Slider(
-                                      value: fpsSliderValue!.toDouble(),
-                                      min: 30,
-                                      max: 240,
-                                      divisions: 240,
-                                      padding: EdgeInsets.zero,
-                                      onChangeEnd: (value) {
-                                        ref
-                                            .read(gameSettingsProvider.notifier)
-                                            .setFps(value.toInt());
-                                        fpsSliderValue = value.toInt();
-                                      },
-                                      onChanged: (value) {
-                                        setState(() {
-                                          fpsSliderValue = value.toInt();
-                                        });
-                                      },
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.only(left: 8),
-                                    child: MovingTooltipWidget.text(
-                                      message: "Reset to 60 FPS",
-                                      child: IconButton(
-                                        padding: EdgeInsets.zero,
-                                        visualDensity: VisualDensity.compact,
-                                        onPressed: () {
-                                          ref
-                                              .read(
-                                                gameSettingsProvider.notifier,
-                                              )
-                                              .setFps(60);
-                                          setState(() {
-                                            fpsSliderValue = 60;
-                                          });
-                                        },
-                                        icon: Icon(Icons.restart_alt),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                          gameSettings.vsync == null
-                              ? TextTriOS(
-                                "Unable to read Vsync from settings.json",
-                                style: Theme.of(
-                                  context,
-                                ).textTheme.labelLarge?.copyWith(
-                                  fontStyle: FontStyle.italic,
-                                  color: warningColor,
-                                ),
-                              )
-                              : MovingTooltipWidget.text(
-                                message:
-                                    "Vsync reduces screen tearing but introduces a tiny input delay.",
-                                child: Transform.translate(
-                                  offset: Offset(0, 0),
-                                  child: CheckboxWithLabel(
-                                    label: "Use Vsync",
-                                    value: gameSettings.vsync!,
-                                    labelStyle:
-                                        Theme.of(context).textTheme.labelLarge,
-                                    onChanged: (value) {
+                                Expanded(
+                                  child: Slider(
+                                    value: fpsSliderValue!.toDouble(),
+                                    min: 30,
+                                    max: 240,
+                                    divisions: 240,
+                                    padding: EdgeInsets.zero,
+                                    onChangeEnd: (value) {
                                       ref
                                           .read(gameSettingsProvider.notifier)
-                                          .setVsync(value == true);
+                                          .setFps(value.toInt());
+                                      fpsSliderValue = value.toInt();
+                                    },
+                                    onChanged: (value) {
+                                      setState(() {
+                                        fpsSliderValue = value.toInt();
+                                      });
                                     },
                                   ),
                                 ),
+                                Padding(
+                                  padding: const EdgeInsets.only(left: 8),
+                                  child: MovingTooltipWidget.text(
+                                    message: "Reset to 60 FPS",
+                                    child: IconButton(
+                                      padding: EdgeInsets.zero,
+                                      visualDensity: VisualDensity.compact,
+                                      onPressed: () {
+                                        ref
+                                            .read(gameSettingsProvider.notifier)
+                                            .setFps(60);
+                                        setState(() {
+                                          fpsSliderValue = 60;
+                                        });
+                                      },
+                                      icon: Icon(Icons.restart_alt),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                      gameSettings.vsync == null
+                          ? TextTriOS(
+                              "Unable to read Vsync from settings.json",
+                              style: Theme.of(context).textTheme.labelLarge
+                                  ?.copyWith(
+                                    fontStyle: FontStyle.italic,
+                                    color: warningColor,
+                                  ),
+                            )
+                          : MovingTooltipWidget.text(
+                              message:
+                                  "Vsync reduces screen tearing but introduces a tiny input delay.",
+                              child: Transform.translate(
+                                offset: Offset(0, 0),
+                                child: CheckboxWithLabel(
+                                  label: "Use Vsync",
+                                  value: gameSettings.vsync!,
+                                  labelStyle: Theme.of(
+                                    context,
+                                  ).textTheme.labelLarge,
+                                  onChanged: (value) {
+                                    ref
+                                        .read(gameSettingsProvider.notifier)
+                                        .setVsync(value == true);
+                                  },
+                                ),
                               ),
-                        ],
-                      ),
-                  error:
-                      (err, stack) => TextTriOS(
-                        "Error: $err",
-                        style: Theme.of(context).textTheme.labelLarge,
-                      ),
+                            ),
+                    ],
+                  ),
+                  error: (err, stack) => TextTriOS(
+                    "Error: $err",
+                    style: Theme.of(context).textTheme.labelLarge,
+                  ),
                   loading: () => CircularProgressIndicator(),
                 ),
               ],

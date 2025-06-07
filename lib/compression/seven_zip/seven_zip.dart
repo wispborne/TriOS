@@ -18,8 +18,9 @@ class SevenZipEntry implements ArchiveEntry {
   @Deprecated('Use path instead.')
   String get pathName => path;
 
-  late FileSystemEntity file =
-      FileSystemEntity.isDirectorySync(path) ? Directory(path) : File(path);
+  late FileSystemEntity file = FileSystemEntity.isDirectorySync(path)
+      ? Directory(path)
+      : File(path);
 
   @override
   String toString() => path;
@@ -51,21 +52,20 @@ class SevenZip implements ArchiveInterface {
   SevenZip() {
     final assetsPath = getAssetsPath();
     sevenZipExecutable = switch (currentPlatform) {
-      TargetPlatform.windows =>
-        File("$assetsPath/windows/7zip/7z.exe").normalize,
+      TargetPlatform.windows => File(
+        "$assetsPath/windows/7zip/7z.exe",
+      ).normalize,
       TargetPlatform.linux => () {
-        final platform =
-            Process.runSync('uname', ['-m']).stdout.toString().trim();
-        final executable =
-            switch (platform) {
-              "x86_64" => assetsPath.toDirectory().resolve(
-                "linux/7zip/x64/7zzs",
-              ),
-              "aarch64" => assetsPath.toDirectory().resolve(
-                "linux/7zip/arm64/7zzs",
-              ),
-              _ => throw Exception("Not supported: $platform"),
-            }.toFile();
+        final platform = Process.runSync('uname', [
+          '-m',
+        ]).stdout.toString().trim();
+        final executable = switch (platform) {
+          "x86_64" => assetsPath.toDirectory().resolve("linux/7zip/x64/7zzs"),
+          "aarch64" => assetsPath.toDirectory().resolve(
+            "linux/7zip/arm64/7zzs",
+          ),
+          _ => throw Exception("Not supported: $platform"),
+        }.toFile();
 
         final chmodResult = Process.runSync('chmod', ['+x', executable.path]);
         final success = chmodResult.stdout.toString().trim();
@@ -76,8 +76,10 @@ class SevenZip implements ArchiveInterface {
         return executable;
       }(),
       TargetPlatform.macOS => () {
-        final executable =
-            assetsPath.toDirectory().resolve("macos/7zip/7zz").toFile();
+        final executable = assetsPath
+            .toDirectory()
+            .resolve("macos/7zip/7zz")
+            .toFile();
         final chmodResult = Process.runSync('chmod', ['+x', executable.path]);
         final success = chmodResult.stdout.toString().trim();
         final failure = chmodResult.stderr.toString().trim();
@@ -241,17 +243,17 @@ class SevenZip implements ArchiveInterface {
     final renameRetryDelay = Duration(milliseconds: 200);
 
     final allEntries = await listFiles(archivePath);
-    final toExtract =
-        allEntries.where((e) => fileFilter == null || fileFilter(e)).toList();
+    final toExtract = allEntries
+        .where((e) => fileFilter == null || fileFilter(e))
+        .toList();
     if (toExtract.isEmpty) return [];
 
     // Unlike libarchive, 7zip cannot transform a file's path during extraction.
     // Create a temporary folder to extract to, preventing any folder name collisions
     // e.g. if "LazyLib" already exists in the mod folder, we don't want to extract to it.
-    final tempFolder =
-        (await Directory.systemTemp.createTemp(
-          "${Constants.appName}-${archivePath.hashCode}",
-        )).normalize.path;
+    final tempFolder = (await Directory.systemTemp.createTemp(
+      "${Constants.appName}-${archivePath.hashCode}",
+    )).normalize.path;
 
     final results = <SevenZipExtractedFile?>[];
 
@@ -271,8 +273,9 @@ class SevenZip implements ArchiveInterface {
           'stderr: ${extractionResult.stderr}',
         );
       }
-      final oldFiles =
-          toExtract.map((entry) => File('$tempFolder/${entry.path}')).toList();
+      final oldFiles = toExtract
+          .map((entry) => File('$tempFolder/${entry.path}'))
+          .toList();
       await oldFiles.waitToBeAccessible();
 
       for (final entry in toExtract) {
@@ -473,8 +476,9 @@ class SevenZip implements ArchiveInterface {
 
     final exitCode = await process.exitCode;
     if (exitCode != 0) {
-      final stderrData =
-          await process.stderr.transform(systemEncoding.decoder).join();
+      final stderrData = await process.stderr
+          .transform(systemEncoding.decoder)
+          .join();
       throw Exception(
         '7z extraction of $inArchivePath failed (exit code: $exitCode).\n'
         'stderr: $stderrData',

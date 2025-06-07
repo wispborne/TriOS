@@ -26,9 +26,8 @@ class TriOSToolbarCheckboxButton extends StatelessWidget {
           ),
         ),
         textPadding: const EdgeInsets.only(left: 4),
-        checkWrapper:
-            (child) =>
-                Padding(padding: const EdgeInsets.only(left: 4), child: child),
+        checkWrapper: (child) =>
+            Padding(padding: const EdgeInsets.only(left: 4), child: child),
         value: value,
         onChanged: onChanged,
       ),

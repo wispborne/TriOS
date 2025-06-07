@@ -92,8 +92,7 @@ extension CsvStringUtils on String {
       CsvJsonParsingUtils.removeCsvLineComments(this);
 
   /// Removes all `#` comments from a JSON-ish file (.ship/.wpn).
-  String removeJsonComments() =>
-      CsvJsonParsingUtils.removeJsonComments(this);
+  String removeJsonComments() => CsvJsonParsingUtils.removeJsonComments(this);
 
   /// Removes comment lines from CSV, returns cleaned content + line number map.
   ({String cleanContent, List<int> lineNumberMap})

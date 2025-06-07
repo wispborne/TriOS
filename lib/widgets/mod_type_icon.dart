@@ -12,21 +12,20 @@ class ModTypeIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     return modVariant.modInfo.isTotalConversion || modVariant.modInfo.isUtility
         ? MovingTooltipWidget.text(
-          message: getTooltipText(modVariant),
-          child: Opacity(
-            opacity: 0.7,
-            child: SizedBox(
-              width: 24,
-              height: 24,
-              child:
-                  modVariant.modInfo.isTotalConversion
-                      ? const SvgImageIcon("assets/images/icon-death-star.svg")
-                      : modVariant.modInfo.isUtility
-                      ? const SvgImageIcon("assets/images/icon-utility-mod.svg")
-                      : Container(),
+            message: getTooltipText(modVariant),
+            child: Opacity(
+              opacity: 0.7,
+              child: SizedBox(
+                width: 24,
+                height: 24,
+                child: modVariant.modInfo.isTotalConversion
+                    ? const SvgImageIcon("assets/images/icon-death-star.svg")
+                    : modVariant.modInfo.isUtility
+                    ? const SvgImageIcon("assets/images/icon-utility-mod.svg")
+                    : Container(),
+              ),
             ),
-          ),
-        )
+          )
         : Container();
   }
 

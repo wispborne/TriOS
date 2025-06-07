@@ -12,13 +12,14 @@ import '../core/utils/menu_route_options.dart';
 /// - [pointerPosition] - The position of the pointer (like mouse or touch) on the screen.
 /// - [showMenu] - The function to show the context menu.
 /// - [child] - The child widget.
-typedef ContextMenuRegionBuilder<T> = Widget Function(
-  BuildContext context,
-  ContextMenu contextMenu,
-  Offset pointerPosition,
-  void Function() showMenu,
-  Widget? child,
-);
+typedef ContextMenuRegionBuilder<T> =
+    Widget Function(
+      BuildContext context,
+      ContextMenu contextMenu,
+      Offset pointerPosition,
+      void Function() showMenu,
+      Widget? child,
+    );
 
 /// A widget that shows a context menu when the user long presses or right clicks on the widget.
 class ContextMenuRegion<T> extends StatefulWidget {
@@ -65,7 +66,8 @@ class _ContextMenuRegionState<T> extends State<ContextMenuRegion<T>> {
   Widget build(BuildContext context) {
     Offset pointerPosition = Offset.zero;
 
-    final childBuilder = widget.builder?.call(
+    final childBuilder =
+        widget.builder?.call(
           context,
           widget.contextMenu,
           pointerPosition,
@@ -92,8 +94,9 @@ class _ContextMenuRegionState<T> extends State<ContextMenuRegion<T>> {
   }
 
   void _showMenu(BuildContext context, Offset position) async {
-    final menu = widget.contextMenu
-        .copyWith(position: widget.contextMenu.position ?? position);
+    final menu = widget.contextMenu.copyWith(
+      position: widget.contextMenu.position ?? position,
+    );
     final value = await showContextMenu(
       context,
       contextMenu: menu,

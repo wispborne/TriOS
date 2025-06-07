@@ -63,8 +63,11 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
     );
 
     // final gameDir = ref.read(appSettings.select((value) => value.gameDir));
-    final isUsingCustomJre =
-        ref.watch(jreManagerProvider).valueOrNull?.activeJre?.isCustomJre;
+    final isUsingCustomJre = ref
+        .watch(jreManagerProvider)
+        .valueOrNull
+        ?.activeJre
+        ?.isCustomJre;
     // var currentScreenScaling = ref.watch(appSettings.select((value) => value.launchSettings)).screenScaling ??
     //     starsectorLaunchPrefs?.screenScaling ??
     //     1;
@@ -157,50 +160,51 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                         true
                             ? LauncherButton(showTextInsteadOfIcon: true)
                             : Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(
-                                  ThemeManager.cornerRadius,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(
+                                    ThemeManager.cornerRadius,
+                                  ),
+                                  border: Border.all(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.secondary,
+                                    strokeAlign: BorderSide.strokeAlignOutside,
+                                    width: 2,
+                                  ),
                                 ),
-                                border: Border.all(
-                                  color:
-                                      Theme.of(context).colorScheme.secondary,
-                                  strokeAlign: BorderSide.strokeAlignOutside,
-                                  width: 2,
-                                ),
-                              ),
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  if (isRunning) return;
-                                  _onClickedTimer?.cancel();
-                                  _onClickedTimer = Timer(
-                                    const Duration(seconds: 5),
-                                    () => {},
-                                  );
-                                  LauncherButton.launchGame(ref, context);
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor:
-                                      Theme.of(context).colorScheme.secondary,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(
-                                      ThemeManager.cornerRadius,
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    if (isRunning) return;
+                                    _onClickedTimer?.cancel();
+                                    _onClickedTimer = Timer(
+                                      const Duration(seconds: 5),
+                                      () => {},
+                                    );
+                                    LauncherButton.launchGame(ref, context);
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Theme.of(
+                                      context,
+                                    ).colorScheme.secondary,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(
+                                        ThemeManager.cornerRadius,
+                                      ),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    isRunning ? "RUNNING..." : "LAUNCH",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w900,
+                                      fontFamily: "Orbitron",
+                                      fontSize: 27,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSecondary,
                                     ),
                                   ),
                                 ),
-                                child: Text(
-                                  isRunning ? "RUNNING..." : "LAUNCH",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w900,
-                                    fontFamily: "Orbitron",
-                                    fontSize: 27,
-                                    color:
-                                        Theme.of(
-                                          context,
-                                        ).colorScheme.onSecondary,
-                                  ),
-                                ),
                               ),
-                            ),
                         const SizedBox(height: 8),
                         Tooltip(
                           message:
@@ -216,12 +220,12 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                                     return currentPlatform !=
                                             TargetPlatform.macOS
                                         ? p.let(
-                                          (p) => p.toFile().relativePath(
-                                            ref
-                                                .watch(AppState.gameFolder)
-                                                .value!,
-                                          ),
-                                        )
+                                            (p) => p.toFile().relativePath(
+                                              ref
+                                                  .watch(AppState.gameFolder)
+                                                  .value!,
+                                            ),
+                                          )
                                         : File(p).nameWithExtension;
                                   });
 
@@ -286,146 +290,138 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.center,
-                        children:
-                            (starsectorLaunchPrefs == null
-                                ? []
-                                : [
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      CheckboxWithLabel(
-                                        label: "Fullscreen",
-                                        value:
-                                            ref
-                                                .watch(
-                                                  appSettings.select(
-                                                    (value) =>
-                                                        value.launchSettings,
-                                                  ),
-                                                )
-                                                .isFullscreen ??
-                                            starsectorLaunchPrefs!.isFullscreen,
-                                        onChanged: (bool? value) {
+                        children: (starsectorLaunchPrefs == null
+                            ? []
+                            : [
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    CheckboxWithLabel(
+                                      label: "Fullscreen",
+                                      value:
                                           ref
-                                              .read(appSettings.notifier)
-                                              .update(
-                                                (state) => state.copyWith(
-                                                  launchSettings: state
-                                                      .launchSettings
-                                                      .copyWith(
-                                                        isFullscreen: value,
-                                                      ),
+                                              .watch(
+                                                appSettings.select(
+                                                  (value) =>
+                                                      value.launchSettings,
                                                 ),
-                                              );
-                                        },
-                                      ),
-                                      CheckboxWithLabel(
-                                        label: "Sound",
-                                        value:
-                                            ref
-                                                .watch(
-                                                  appSettings.select(
-                                                    (value) =>
-                                                        value.launchSettings,
-                                                  ),
-                                                )
-                                                .hasSound ??
-                                            starsectorLaunchPrefs!.hasSound,
-                                        onChanged: (bool? value) {
+                                              )
+                                              .isFullscreen ??
+                                          starsectorLaunchPrefs!.isFullscreen,
+                                      onChanged: (bool? value) {
+                                        ref
+                                            .read(appSettings.notifier)
+                                            .update(
+                                              (state) => state.copyWith(
+                                                launchSettings: state
+                                                    .launchSettings
+                                                    .copyWith(
+                                                      isFullscreen: value,
+                                                    ),
+                                              ),
+                                            );
+                                      },
+                                    ),
+                                    CheckboxWithLabel(
+                                      label: "Sound",
+                                      value:
                                           ref
-                                              .read(appSettings.notifier)
-                                              .update(
-                                                (state) => state.copyWith(
-                                                  launchSettings: state
-                                                      .launchSettings
-                                                      .copyWith(
-                                                        hasSound: value,
-                                                      ),
+                                              .watch(
+                                                appSettings.select(
+                                                  (value) =>
+                                                      value.launchSettings,
                                                 ),
-                                              );
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                  Row(
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    children: [
-                                      SizedBox(
-                                        width: 50,
-                                        child: TextField(
-                                          controller: resControllerHeight,
-                                          inputFormatters: <TextInputFormatter>[
-                                            FilteringTextInputFormatter
-                                                .digitsOnly,
-                                          ],
-                                          decoration: const InputDecoration(
-                                            // errorText: gamePathExists ? null : "Path does not exist",
-                                            labelText: 'Width',
-                                          ),
-                                        ),
-                                      ),
-                                      Padding(
-                                        padding: const EdgeInsets.only(
-                                          bottom: 2,
-                                        ),
-                                        child: Text(
-                                          " x ",
-                                          style:
-                                              Theme.of(
-                                                context,
-                                              ).textTheme.headlineSmall,
-                                        ),
-                                      ),
-                                      SizedBox(
-                                        width: 50,
-                                        child: TextField(
-                                          controller: resControllerWidth,
-                                          keyboardType: TextInputType.number,
-                                          inputFormatters: <TextInputFormatter>[
-                                            FilteringTextInputFormatter
-                                                .digitsOnly,
-                                          ],
-                                          decoration: const InputDecoration(
-                                            // errorText: gamePathExists ? null : "Path does not exist",
-                                            labelText: 'Height',
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 8),
-                                    child: Tooltip(
-                                      message:
-                                          "Use your non-TriOS launcher settings instead",
-                                      child: Opacity(
-                                        opacity: 0.8,
-                                        child: TextLinkButton(
-                                          onPressed: () {
-                                            ref
-                                                .read(appSettings.notifier)
-                                                .update(
-                                                  (s) => s.copyWith(
-                                                    launchSettings:
-                                                        const LaunchSettings(),
-                                                  ),
-                                                );
-                                            setState(
-                                              () {},
-                                            ); // Force refresh widget to update text fields to default.
-                                          },
-                                          text: "Clear Custom Launch Settings",
-                                          style:
-                                              Theme.of(
-                                                context,
-                                              ).textTheme.bodySmall,
+                                              )
+                                              .hasSound ??
+                                          starsectorLaunchPrefs!.hasSound,
+                                      onChanged: (bool? value) {
+                                        ref
+                                            .read(appSettings.notifier)
+                                            .update(
+                                              (state) => state.copyWith(
+                                                launchSettings: state
+                                                    .launchSettings
+                                                    .copyWith(hasSound: value),
+                                              ),
+                                            );
+                                      },
+                                    ),
+                                  ],
+                                ),
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  children: [
+                                    SizedBox(
+                                      width: 50,
+                                      child: TextField(
+                                        controller: resControllerHeight,
+                                        inputFormatters: <TextInputFormatter>[
+                                          FilteringTextInputFormatter
+                                              .digitsOnly,
+                                        ],
+                                        decoration: const InputDecoration(
+                                          // errorText: gamePathExists ? null : "Path does not exist",
+                                          labelText: 'Width',
                                         ),
                                       ),
                                     ),
+                                    Padding(
+                                      padding: const EdgeInsets.only(bottom: 2),
+                                      child: Text(
+                                        " x ",
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.headlineSmall,
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      width: 50,
+                                      child: TextField(
+                                        controller: resControllerWidth,
+                                        keyboardType: TextInputType.number,
+                                        inputFormatters: <TextInputFormatter>[
+                                          FilteringTextInputFormatter
+                                              .digitsOnly,
+                                        ],
+                                        decoration: const InputDecoration(
+                                          // errorText: gamePathExists ? null : "Path does not exist",
+                                          labelText: 'Height',
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 8),
+                                  child: Tooltip(
+                                    message:
+                                        "Use your non-TriOS launcher settings instead",
+                                    child: Opacity(
+                                      opacity: 0.8,
+                                      child: TextLinkButton(
+                                        onPressed: () {
+                                          ref
+                                              .read(appSettings.notifier)
+                                              .update(
+                                                (s) => s.copyWith(
+                                                  launchSettings:
+                                                      const LaunchSettings(),
+                                                ),
+                                              );
+                                          setState(
+                                            () {},
+                                          ); // Force refresh widget to update text fields to default.
+                                        },
+                                        text: "Clear Custom Launch Settings",
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.bodySmall,
+                                      ),
+                                    ),
                                   ),
-                                ]),
+                                ),
+                              ]),
                       ),
                     ),
                   if (showLauncherControls)

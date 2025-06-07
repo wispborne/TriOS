@@ -48,11 +48,10 @@ class DashedPainter extends CustomPainter {
       );
     }
 
-    Paint paint =
-        Paint()
-          ..strokeWidth = strokeWidth
-          ..strokeCap = strokeCap
-          ..style = PaintingStyle.stroke;
+    Paint paint = Paint()
+      ..strokeWidth = strokeWidth
+      ..strokeCap = strokeCap
+      ..style = PaintingStyle.stroke;
 
     if (gradient != null) {
       final rect = Offset.zero & size;

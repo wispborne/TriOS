@@ -81,13 +81,13 @@ class _ImageGridScreenState extends ConsumerState<ImageGridScreen>
     // });
 
     final images = ref.watch(imageListProvider);
-    final List<({Portrait image, ModVariant variant})> modsAndImages =
-        images.entries
-            .expand(
-              (element) =>
-                  element.value.map((e) => (variant: element.key, image: e)),
-            )
-            .toList();
+    final List<({Portrait image, ModVariant variant})> modsAndImages = images
+        .entries
+        .expand(
+          (element) =>
+              element.value.map((e) => (variant: element.key, image: e)),
+        )
+        .toList();
 
     final sortedImages = sortModsAndImages(
       modsAndImages,
@@ -97,63 +97,63 @@ class _ImageGridScreenState extends ConsumerState<ImageGridScreen>
 
     return isLoading
         ? const Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircularProgressIndicator(),
-              Padding(
-                padding: EdgeInsets.all(16),
-                child: Text('Loading images...'),
-              ),
-            ],
-          ),
-        )
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircularProgressIndicator(),
+                Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Text('Loading images...'),
+                ),
+              ],
+            ),
+          )
         : Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Card(
-              margin: const EdgeInsets.all(0),
-              child: Padding(
-                padding: const EdgeInsets.all(4),
-                child: Row(
-                  children: [
-                    TextButton.icon(
-                      onPressed: () {
-                        ref.read(imageListProvider.notifier).setImageList({});
-                        _loadImages(
-                          ref.read(AppState.modVariants).valueOrNull ?? [],
-                        );
-                      },
-                      style: ButtonStyle(
-                        foregroundColor: WidgetStateProperty.all(
-                          theme.colorScheme.onSurface,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Card(
+                margin: const EdgeInsets.all(0),
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: Row(
+                    children: [
+                      TextButton.icon(
+                        onPressed: () {
+                          ref.read(imageListProvider.notifier).setImageList({});
+                          _loadImages(
+                            ref.read(AppState.modVariants).valueOrNull ?? [],
+                          );
+                        },
+                        style: ButtonStyle(
+                          foregroundColor: WidgetStateProperty.all(
+                            theme.colorScheme.onSurface,
+                          ),
+                        ),
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Reload'),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 8),
+                        child: Text(
+                          'Showing ${sortedImages.length} images',
+                          style: theme.textTheme.labelLarge,
                         ),
                       ),
-                      icon: const Icon(Icons.refresh),
-                      label: const Text('Reload'),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(left: 8),
-                      child: Text(
-                        'Showing ${sortedImages.length} images',
-                        style: theme.textTheme.labelLarge,
+                      const Spacer(),
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: Text(
+                          'Currently just a portrait viewer. Will allow portrait replacement in the future.',
+                          style: theme.textTheme.labelLarge,
+                        ),
                       ),
-                    ),
-                    const Spacer(),
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: Text(
-                        'Currently just a portrait viewer. Will allow portrait replacement in the future.',
-                        style: theme.textTheme.labelLarge,
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
-            Expanded(child: ResponsiveImageGrid(modsAndImages: sortedImages)),
-          ],
-        );
+              Expanded(child: ResponsiveImageGrid(modsAndImages: sortedImages)),
+            ],
+          );
   }
 
   List<({Portrait image, ModVariant variant})> sortModsAndImages(
@@ -204,8 +204,9 @@ class ResponsiveImageGrid extends ConsumerWidget {
             final portrait = modsAndImages[index].image;
             String bytesAsReadableKB = "unknown";
             try {
-              bytesAsReadableKB =
-                  portrait.imageFile.lengthSync().bytesAsReadableKB();
+              bytesAsReadableKB = portrait.imageFile
+                  .lengthSync()
+                  .bytesAsReadableKB();
             } catch (error) {
               Fimber.w('Error reading file size: $error');
             }

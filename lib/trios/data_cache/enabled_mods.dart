@@ -58,8 +58,9 @@ class EnabledModsNotifier extends AsyncNotifier<EnabledMods> {
         // enabledMods = enabledMods.copyWith()..enabledMods.add(modId);
       } else {
         enabledMods = enabledMods.copyWith(
-          enabledMods:
-              enabledMods.enabledMods.where((id) => id != modId).toSet(),
+          enabledMods: enabledMods.enabledMods
+              .where((id) => id != modId)
+              .toSet(),
         );
         // enabledMods = enabledMods.copyWith()..enabledMods.remove(modId);
       }

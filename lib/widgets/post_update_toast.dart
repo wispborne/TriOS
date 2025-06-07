@@ -59,14 +59,13 @@ class PostUpdateToast extends ConsumerWidget {
                         Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: ElevatedButton.icon(
-                            onPressed:
-                                () => showTriOSChangelogDialog(
-                                  context,
-                                  lastestVersionToShow: Version.parse(
-                                    Constants.version,
-                                    sanitizeInput: false,
-                                  ),
-                                ),
+                            onPressed: () => showTriOSChangelogDialog(
+                              context,
+                              lastestVersionToShow: Version.parse(
+                                Constants.version,
+                                sanitizeInput: false,
+                              ),
+                            ),
                             icon: const SvgImageIcon(
                               "assets/images/icon-bullhorn-variant.svg",
                             ),

@@ -10,7 +10,8 @@ extension Function1InvokeExtensions<A, R> on Function1<A, R> {
 }
 
 extension Function1PartialExtensions<A, R> on Function1<A, R> {
-  Function0<R> partial(A first) => () => this(first);
+  Function0<R> partial(A first) =>
+      () => this(first);
 }
 
 extension Function2InvokeExtension<A, B, R> on Function2<A, B, R> {
@@ -19,24 +20,29 @@ extension Function2InvokeExtension<A, B, R> on Function2<A, B, R> {
 }
 
 extension Function2PartialExtension<A, B, R> on Function2<A, B, R> {
-  Function1<B, R> partial(A first) => (B second) => this(first, second);
+  Function1<B, R> partial(A first) =>
+      (B second) => this(first, second);
 }
 
 extension Function2Partial2Extension<A, B, R> on Function2<A, B, R> {
-  Function0<R> partial2(A first, B second) => () => this(first, second);
+  Function0<R> partial2(A first, B second) =>
+      () => this(first, second);
 }
 
 extension Function2FlipExtension<A, B, R> on Function2<A, B, R> {
-  Function2<B, A, R> flip() => (B second, A first) => this(first, second);
+  Function2<B, A, R> flip() =>
+      (B second, A first) => this(first, second);
 }
 
 extension Function2CurryExtension<A, B, R> on Function2<A, B, R> {
   Function1<A, Function1<B, R>> curry() =>
-      (A first) => (B second) => this(first, second);
+      (A first) =>
+          (B second) => this(first, second);
 }
 
 extension Function2UncurryExtension<A, B, R> on Function1<A, Function1<B, R>> {
-  Function2<A, B, R> uncurry() => (A first, B second) => this(first)(second);
+  Function2<A, B, R> uncurry() =>
+      (A first, B second) => this(first)(second);
 }
 
 extension Function3InvokeExtension<R, A, B, C> on Function3<A, B, C, R> {
@@ -46,7 +52,9 @@ extension Function3InvokeExtension<R, A, B, C> on Function3<A, B, C, R> {
 
 extension Function3CurryExtension<R, A, B, C> on Function3<A, B, C, R> {
   Function1<A, Function1<B, Function1<C, R>>> curry() =>
-      (A first) => (B second) => (C third) => this(first, second, third);
+      (A first) =>
+          (B second) =>
+              (C third) => this(first, second, third);
 }
 
 extension Function3PartialExtension<R, A, B, C> on Function3<A, B, C, R> {
@@ -80,7 +88,8 @@ extension Function4CurryExtension<R, A, B, C, D> on Function4<A, B, C, D, R> {
   Function1<A, Function1<B, Function1<C, Function1<D, R>>>> curry() =>
       (A first) =>
           (B second) =>
-              (C third) => (D fourth) => this(first, second, third, fourth);
+              (C third) =>
+                  (D fourth) => this(first, second, third, fourth);
 }
 
 extension Function4PartialExtension<R, A, B, C, D> on Function4<A, B, C, D, R> {

@@ -72,44 +72,39 @@ class _ChangelogsState extends ConsumerState<Changelogs> {
             ),
           ),
         Expanded(
-          child:
-              !isLoading
-                  ? Builder(
-                    builder: (context) {
-                      List<TextSpan> textSpans = [];
+          child: !isLoading
+              ? Builder(
+                  builder: (context) {
+                    List<TextSpan> textSpans = [];
 
-                      if (modChangelog?.parsedVersions.isNotNullOrEmpty() ==
-                          true) {
-                        final versions = modChangelog!.parsedVersions!;
-                        for (final version in versions) {
-                          textSpans.add(
-                            buildVersionText(
-                              version.version.toString(),
-                              context,
-                            ),
-                          );
-                          textSpans.add(
-                            buildChangelogText(version.changelog, context),
-                          );
-                        }
-                      } else {
-                        final lines = modChangelog?.changelog.split('\n') ?? [];
-                        textSpans =
-                            lines.map((line) {
-                              if (line.trimLeft().toLowerCase().startsWith(
-                                'version',
-                              )) {
-                                return buildVersionText(line, context);
-                              } else {
-                                return buildChangelogText(line, context);
-                              }
-                            }).toList();
+                    if (modChangelog?.parsedVersions.isNotNullOrEmpty() ==
+                        true) {
+                      final versions = modChangelog!.parsedVersions!;
+                      for (final version in versions) {
+                        textSpans.add(
+                          buildVersionText(version.version.toString(), context),
+                        );
+                        textSpans.add(
+                          buildChangelogText(version.changelog, context),
+                        );
                       }
+                    } else {
+                      final lines = modChangelog?.changelog.split('\n') ?? [];
+                      textSpans = lines.map((line) {
+                        if (line.trimLeft().toLowerCase().startsWith(
+                          'version',
+                        )) {
+                          return buildVersionText(line, context);
+                        } else {
+                          return buildChangelogText(line, context);
+                        }
+                      }).toList();
+                    }
 
-                      return SelectableText.rich(TextSpan(children: textSpans));
-                    },
-                  )
-                  : const Center(child: CircularProgressIndicator()),
+                    return SelectableText.rich(TextSpan(children: textSpans));
+                  },
+                )
+              : const Center(child: CircularProgressIndicator()),
         ),
       ],
     );

@@ -33,8 +33,9 @@ class _RamChangerState extends ConsumerState<RamChanger> {
   @override
   Widget build(BuildContext context) {
     final currentRamInMb = ref.watch(currentRamAmountInMb);
-    final gamePath =
-        ref.read(appSettings.select((value) => value.gameDir))?.toDirectory();
+    final gamePath = ref
+        .read(appSettings.select((value) => value.gameDir))
+        ?.toDirectory();
     if (gamePath == null) {
       return const SizedBox();
     }
@@ -50,58 +51,57 @@ class _RamChangerState extends ConsumerState<RamChanger> {
     return (isStandardVmparamsWritable == false ||
             areAllCustomJresWritable == false)
         ? Text(
-          "Cannot write to vmparams file:\n${vmParamsFilesThatCannotBeWritten.join("\n")}."
-          "\n\nMake sure it exists or try running ${Constants.appName} as an administrator.",
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: ThemeManager.vanillaWarningColor,
-          ),
-        )
+            "Cannot write to vmparams file:\n${vmParamsFilesThatCannotBeWritten.join("\n")}."
+            "\n\nMake sure it exists or try running ${Constants.appName} as an administrator.",
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: ThemeManager.vanillaWarningColor,
+            ),
+          )
         : GridView.builder(
-          shrinkWrap: true,
-          itemCount: ramChoices.length,
-          gridDelegate:
-              const SliverGridDelegateWithFixedCrossAxisCountAndFixedHeight(
-                crossAxisCount: 2,
-                crossAxisSpacing: 8,
-                mainAxisSpacing: 8,
-                height: 25,
-              ),
-          itemBuilder: (context, index) {
-            final ram = ramChoices[index];
-            return ConditionalWrap(
-              condition:
-                  currentRamInMb.value != null &&
-                  ramChoices.findClosest(
-                        double.tryParse(
-                              currentRamInMb.value!,
-                            )?.div(mbPerGb.toDouble()) ??
-                            0,
-                      ) ==
-                      ram,
-              wrapper:
-                  (child) => Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(
-                        ThemeManager.cornerRadius,
-                      ),
-                      border: Border.all(
-                        width: 2,
-                        color: Theme.of(context).colorScheme.primaryFixedDim,
-                      ),
+            shrinkWrap: true,
+            itemCount: ramChoices.length,
+            gridDelegate:
+                const SliverGridDelegateWithFixedCrossAxisCountAndFixedHeight(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 8,
+                  mainAxisSpacing: 8,
+                  height: 25,
+                ),
+            itemBuilder: (context, index) {
+              final ram = ramChoices[index];
+              return ConditionalWrap(
+                condition:
+                    currentRamInMb.value != null &&
+                    ramChoices.findClosest(
+                          double.tryParse(
+                                currentRamInMb.value!,
+                              )?.div(mbPerGb.toDouble()) ??
+                              0,
+                        ) ==
+                        ram,
+                wrapper: (child) => Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(
+                      ThemeManager.cornerRadius,
                     ),
-                    child: child,
+                    border: Border.all(
+                      width: 2,
+                      color: Theme.of(context).colorScheme.primaryFixedDim,
+                    ),
                   ),
-              child: ElevatedButton(
-                onPressed: () {
-                  ref
-                      .read(jreManagerProvider.notifier)
-                      .changeRamAmount((ram * mbPerGb).toDouble());
-                },
-                child: Text("$ram GB"),
-              ),
-            );
-          },
-        );
+                  child: child,
+                ),
+                child: ElevatedButton(
+                  onPressed: () {
+                    ref
+                        .read(jreManagerProvider.notifier)
+                        .changeRamAmount((ram * mbPerGb).toDouble());
+                  },
+                  child: Text("$ram GB"),
+                ),
+              );
+            },
+          );
   }
 
   Future<void> setWhetherVmParamsAreWritable(JreManagerState newState) async {

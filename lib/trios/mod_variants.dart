@@ -85,29 +85,28 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
         return;
       }
 
-      final variants =
-          onlyVariants == null
-              ? await getModsVariantsInFolder(
-                modsPath.toDirectory(),
-                searchRootFolder: false,
-              )
-              : (await Future.wait(
-                onlyVariants.map((variant) {
-                  try {
-                    return getModsVariantsInFolder(
-                      variant.modFolder,
-                      searchRootFolder: true,
-                    );
-                  } catch (e, st) {
-                    Fimber.w(
-                      "Error getting mod variants for ${variant.smolId}",
-                      ex: e,
-                      stacktrace: st,
-                    );
-                    return Future<List<ModVariant>?>.value(null);
-                  }
-                }),
-              )).nonNulls.flattened.toList();
+      final variants = onlyVariants == null
+          ? await getModsVariantsInFolder(
+              modsPath.toDirectory(),
+              searchRootFolder: false,
+            )
+          : (await Future.wait(
+              onlyVariants.map((variant) {
+                try {
+                  return getModsVariantsInFolder(
+                    variant.modFolder,
+                    searchRootFolder: true,
+                  );
+                } catch (e, st) {
+                  Fimber.w(
+                    "Error getting mod variants for ${variant.smolId}",
+                    ex: e,
+                    stacktrace: st,
+                  );
+                  return Future<List<ModVariant>?>.value(null);
+                }
+              }),
+            )).nonNulls.flattened.toList();
 
       if (onlyVariants == null) {
         // Replace the entire state with the new data.
@@ -156,10 +155,9 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
           versionCheckerInfo: getVersionFile(
             modFolder,
           )?.let((it) => getVersionCheckerInfo(it)),
-          hasNonBrickedModInfo:
-              await modFolder
-                  .resolve(Constants.unbrickedModInfoFileName)
-                  .exists(),
+          hasNonBrickedModInfo: await modFolder
+              .resolve(Constants.unbrickedModInfoFileName)
+              .exists(),
         );
 
         Fimber.d("Found mod ${modVariant.smolId} in folder ${modFolder.name}");

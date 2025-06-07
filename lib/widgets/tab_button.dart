@@ -21,8 +21,9 @@ class TabButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final foregroundColor =
-        isSelected ? colors.primary : colors.onSurface.withOpacity(0.8);
+    final foregroundColor = isSelected
+        ? colors.primary
+        : colors.onSurface.withOpacity(0.8);
 
     return Padding(
       padding: const EdgeInsets.all(0),

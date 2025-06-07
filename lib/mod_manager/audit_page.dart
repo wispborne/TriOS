@@ -86,13 +86,12 @@ class _AuditPageState extends ConsumerState<AuditPage> {
                         const SizedBox(height: 4),
                         Text(
                           "$actionWord ${dateFormat.format(entry.timestamp)}\nReason: ${entry.reason}",
-                          style: Theme.of(
-                            context,
-                          ).textTheme.labelSmall?.copyWith(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSurface.withOpacity(0.6),
-                          ),
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withOpacity(0.6),
+                              ),
                         ),
                       ],
                     ),

@@ -45,10 +45,9 @@ class LibArchiveEntry implements ArchiveEntry {
     return "LibArchiveEntry{pathName: $pathName, unpackedSize: $unpackedSize, mTime: $modifiedTime, birthTime: $birthTime, cTime: $cTime, aTime: $accessedTime, type: $fileType, fflags: $fflags, gname: $gname, sourcePath: $sourcePath, sizeIsSet: $sizeIsSet, isEncrypted: $isEncrypted}";
   }
 
-  late FileSystemEntity file =
-      FileSystemEntity.isDirectorySync(pathName)
-          ? Directory(pathName)
-          : File(pathName);
+  late FileSystemEntity file = FileSystemEntity.isDirectorySync(pathName)
+      ? Directory(pathName)
+      : File(pathName);
 
   @override
   String get path => pathName;
@@ -88,22 +87,18 @@ class LibArchive implements ArchiveInterface {
   static LibArchiveBinding _getArchive({Directory? assetsPath}) {
     final currentAssetsPath = assetsPath?.path ?? getAssetsPath();
 
-    final libArchivePathForPlatform =
-        switch (Platform.operatingSystem) {
-          "windows" => File(
-            "$currentAssetsPath/windows/libarchive/bin/archive.dll",
-          ),
-          "macos" => File(
-            "$currentAssetsPath/macos/libarchive/lib/libarchive.dylib",
-          ),
-          "linux" => File(
-            "$currentAssetsPath/linux/libarchive/lib/libarchive.so",
-          ),
-          _ =>
-            throw UnimplementedError(
-              'Libarchive not supported for this platform',
-            ),
-        }.absolute.normalize.toFile();
+    final libArchivePathForPlatform = switch (Platform.operatingSystem) {
+      "windows" => File(
+        "$currentAssetsPath/windows/libarchive/bin/archive.dll",
+      ),
+      "macos" => File(
+        "$currentAssetsPath/macos/libarchive/lib/libarchive.dylib",
+      ),
+      "linux" => File("$currentAssetsPath/linux/libarchive/lib/libarchive.so"),
+      _ => throw UnimplementedError(
+        'Libarchive not supported for this platform',
+      ),
+    }.absolute.normalize.toFile();
 
     if (!libArchivePathForPlatform.existsSync()) {
       throw Exception("Libarchive not found at $libArchivePathForPlatform");
@@ -363,12 +358,15 @@ class LibArchive implements ArchiveInterface {
     final cTime = binding.archive_entry_ctime(entryPtrPtr.value);
     final aTime = binding.archive_entry_atime(entryPtrPtr.value);
     final type = binding.archive_entry_filetype(entryPtrPtr.value);
-    final fflags =
-        binding.archive_entry_fflags_text(entryPtrPtr.value).toDartStringSafe();
-    final gname =
-        binding.archive_entry_gname(entryPtrPtr.value).toDartStringSafe();
-    final sourcePath =
-        binding.archive_entry_sourcepath(entryPtrPtr.value).toDartStringSafe();
+    final fflags = binding
+        .archive_entry_fflags_text(entryPtrPtr.value)
+        .toDartStringSafe();
+    final gname = binding
+        .archive_entry_gname(entryPtrPtr.value)
+        .toDartStringSafe();
+    final sourcePath = binding
+        .archive_entry_sourcepath(entryPtrPtr.value)
+        .toDartStringSafe();
     final sizeIsSet = binding.archive_entry_size_is_set(entryPtrPtr.value);
     final isEncrypted = binding.archive_entry_is_encrypted(entryPtrPtr.value);
 
@@ -393,14 +391,11 @@ class LibArchive implements ArchiveInterface {
   /// MacOS works correctly using [archive_entry_pathname].
   String? getEntryPathnamePlatformAware(
     Pointer<Pointer<archive_entry>> entryPtrPtr,
-  ) =>
-      Platform.isWindows
-          ? binding
-              .archive_entry_pathname_utf8(entryPtrPtr.value)
-              .toDartStringSafe()
-          : binding
-              .archive_entry_pathname(entryPtrPtr.value)
-              .toDartStringSafe();
+  ) => Platform.isWindows
+      ? binding
+            .archive_entry_pathname_utf8(entryPtrPtr.value)
+            .toDartStringSafe()
+      : binding.archive_entry_pathname(entryPtrPtr.value).toDartStringSafe();
 
   int _copyData(Pointer<archive> ar, Pointer<archive> aw) {
     final buffer = malloc<Uint8>(10240); // Allocate a temporary buffer
@@ -608,11 +603,10 @@ class LibArchive implements ArchiveInterface {
   @override
   Future<List<LibArchiveEntry>> listFiles(File archiveFile) {
     return readEntriesInArchive(archiveFile).then(
-      (entries) =>
-          entries
-              .map((e) => e?.archiveFile)
-              .whereType<LibArchiveEntry>()
-              .toList(),
+      (entries) => entries
+          .map((e) => e?.archiveFile)
+          .whereType<LibArchiveEntry>()
+          .toList(),
     );
   }
 }

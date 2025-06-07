@@ -16,11 +16,10 @@ class WavyLinePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint =
-        Paint()
-          ..color = lineColor
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.0;
+    final paint = Paint()
+      ..color = lineColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
 
     final path = Path();
     path.moveTo(0, lineHeight);

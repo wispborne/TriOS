@@ -22,19 +22,19 @@ final shipListNotifierProvider = StreamProvider<List<Ship>>((ref) async* {
   final currentTime = DateTime.now();
   ref.watch(isLoadingShipsList.notifier).state = true;
   filesProcessed = 0;
-  final gameCorePath =
-      ref.watch(appSettings.select((s) => s.gameCoreDir))?.path;
+  final gameCorePath = ref
+      .watch(appSettings.select((s) => s.gameCoreDir))
+      ?.path;
 
   if (gameCorePath == null || gameCorePath.isEmpty) {
     throw Exception('Game folder path is not set.');
   }
 
-  final variants =
-      ref
-          .watch(AppState.mods)
-          .map((mod) => mod.findFirstEnabledOrHighestVersion)
-          .nonNulls
-          .toList();
+  final variants = ref
+      .watch(AppState.mods)
+      .map((mod) => mod.findFirstEnabledOrHighestVersion)
+      .nonNulls
+      .toList();
 
   final allErrors = <String>[];
   List<Ship> allShips = <Ship>[];
@@ -76,12 +76,11 @@ Future<ShipParseResult> _parseShips(
   ModVariant? modVariant,
 ) async {
   int filesProcessed = 0;
-  final shipsCsvFile =
-      p
-          .join(folder.path, 'data/hulls/ship_data.csv')
-          .toFile()
-          .normalize
-          .toFile();
+  final shipsCsvFile = p
+      .join(folder.path, 'data/hulls/ship_data.csv')
+      .toFile()
+      .normalize
+      .toFile();
   final ships = <Ship>[];
   final errors = <String>[];
   final modName = modVariant?.modInfo.nameOrId ?? 'Vanilla';
@@ -93,12 +92,11 @@ Future<ShipParseResult> _parseShips(
 
   // Load and index .ship files
   final shipDir = Directory(p.join(folder.path, 'data/hulls'));
-  final shipFiles =
-      shipDir
-          .listSync()
-          .whereType<File>()
-          .where((f) => f.path.endsWith('.ship'))
-          .toList();
+  final shipFiles = shipDir
+      .listSync()
+      .whereType<File>()
+      .where((f) => f.path.endsWith('.ship'))
+      .toList();
 
   final shipJsonData = <String, Map<String, dynamic>>{};
   for (final shipFile in shipFiles) {
@@ -188,19 +186,19 @@ Future<ShipParseResult> _parseShips(
 
     final json = shipJsonData[shipId];
     if (json == null) {
-      errors.add('[$modName] Missing .ship data for $shipId, defined on line ${lineNumberMap[i]} of ship_data.csv (addon mods sometimes tweak ships in their parent mod)).');
+      errors.add(
+        '[$modName] Missing .ship data for $shipId, defined on line ${lineNumberMap[i]} of ship_data.csv (addon mods sometimes tweak ships in their parent mod)).',
+      );
       continue;
     }
 
     final rawSlots = json.remove('weaponSlots');
     if (rawSlots is List) {
-      data['weaponSlots'] =
-          rawSlots
-              .map(
-                (e) =>
-                    ShipWeaponSlotMapper.fromMap(Map<String, dynamic>.from(e)),
-              )
-              .toList();
+      data['weaponSlots'] = rawSlots
+          .map(
+            (e) => ShipWeaponSlotMapper.fromMap(Map<String, dynamic>.from(e)),
+          )
+          .toList();
     }
 
     data.addAll(json);

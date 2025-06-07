@@ -53,16 +53,15 @@ class ModMetadataStore extends GenericSettingsAsyncNotifier<ModsMetadata> {
   ) {
     for (final mod in allMods) {
       final baseMetadata = settings.baseMetadata[mod.id] ?? ModMetadata.empty();
-      final baseVariantMetadata =
-          mod.modVariants
-              .map(
-                (variant) => MapEntry(
-                  variant.smolId,
-                  baseMetadata.variantsMetadata[variant.smolId] ??
-                      ModVariantMetadata.empty(),
-                ),
-              )
-              .toMap();
+      final baseVariantMetadata = mod.modVariants
+          .map(
+            (variant) => MapEntry(
+              variant.smolId,
+              baseMetadata.variantsMetadata[variant.smolId] ??
+                  ModVariantMetadata.empty(),
+            ),
+          )
+          .toMap();
       final newModMetadata = baseMetadata.copyWith(
         variantsMetadata: baseVariantMetadata,
       );

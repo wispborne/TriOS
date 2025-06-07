@@ -48,9 +48,8 @@ class VersionCheckIcon extends StatelessWidget {
             padding: const EdgeInsets.only(right: 6),
             child: ConditionalWrap(
               condition: versionCheckComparison == -1,
-              wrapper:
-                  (child) =>
-                      Blur(blurX: 0, blurY: 0, blurOpacity: 0.7, child: child),
+              wrapper: (child) =>
+                  Blur(blurX: 0, blurY: 0, blurOpacity: 0.7, child: child),
               child: Builder(
                 builder: (context) {
                   if (versionCheckComparison == -1 && hasDirectDownload) {

@@ -82,17 +82,14 @@ class VersionCheckerAsyncProvider
     final metadata = ref.read(AppState.modsMetadata).valueOrNull;
 
     if (metadata != null && !evenIfMuted) {
-      final mutedIds =
-          variantsToCheck
-              .where(
-                (v) =>
-                    metadata
-                        .getMergedModMetadata(v.modInfo.id)
-                        ?.areUpdatesMuted ==
-                    true,
-              )
-              .map((v) => v.smolId)
-              .toSet();
+      final mutedIds = variantsToCheck
+          .where(
+            (v) =>
+                metadata.getMergedModMetadata(v.modInfo.id)?.areUpdatesMuted ==
+                true,
+          )
+          .map((v) => v.smolId)
+          .toSet();
       variantsToCheck.removeWhere((v) => mutedIds.contains(v.smolId));
     }
 
@@ -167,26 +164,24 @@ class VersionCheckerAsyncProvider
 
   /// Executes the version check tasks, updating the cache and state.
   Future<void> _executeVersionCheckTasks(List<VersionCheckTask> tasks) async {
-    final futures =
-        tasks.where((task) => !task.wasCached).map((task) async {
-          try {
-            final result = await task.future;
-            Fimber.v(
-              () =>
-                  "Caching remote version info for ${task.modVariant.modInfo.id}: $result",
-            );
-            _updateCache(result);
-          } catch (e, st) {
-            Fimber.e(
-              "Error fetching remote version info for ${task.modVariant.modInfo.id}: $e\n$st",
-            );
-            final errorResult =
-                RemoteVersionCheckResult(null, null)
-                  ..smolId = task.modVariant.smolId
-                  ..error = e;
-            _updateCache(errorResult);
-          }
-        }).toList();
+    final futures = tasks.where((task) => !task.wasCached).map((task) async {
+      try {
+        final result = await task.future;
+        Fimber.v(
+          () =>
+              "Caching remote version info for ${task.modVariant.modInfo.id}: $result",
+        );
+        _updateCache(result);
+      } catch (e, st) {
+        Fimber.e(
+          "Error fetching remote version info for ${task.modVariant.modInfo.id}: $e\n$st",
+        );
+        final errorResult = RemoteVersionCheckResult(null, null)
+          ..smolId = task.modVariant.smolId
+          ..error = e;
+        _updateCache(errorResult);
+      }
+    }).toList();
 
     await Future.wait(futures);
   }
@@ -213,8 +208,9 @@ class VersionCheckerAsyncProvider
       ) ??
       VersionCheckerState(versionCheckResultsCache);
 
-  final versionCheckerCacheFile =
-      File(p.join("cache", "TriOS-VersionCheckerCache.json")).normalize;
+  final versionCheckerCacheFile = File(
+    p.join("cache", "TriOS-VersionCheckerCache.json"),
+  ).normalize;
 }
 
 /// Represents a task for checking the version of a mod variant.

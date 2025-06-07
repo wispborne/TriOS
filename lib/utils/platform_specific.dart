@@ -72,14 +72,13 @@ bool windowsIsAdmin() {
 void _moveToRecycleBinWindows(String path, bool deleteIfFailed) {
   final filePath = TEXT('$path\0'); // Ensure double null-termination
 
-  final fileOpStruct =
-      calloc<SHFILEOPSTRUCT>()
-        ..ref.wFunc = FO_DELETE
-        ..ref.pFrom = filePath.cast()
-        ..ref.fFlags =
-            FILEOPERATION_FLAGS.FOF_ALLOWUNDO |
-            FILEOPERATION_FLAGS.FOF_NOCONFIRMATION |
-            FILEOPERATION_FLAGS.FOF_SILENT;
+  final fileOpStruct = calloc<SHFILEOPSTRUCT>()
+    ..ref.wFunc = FO_DELETE
+    ..ref.pFrom = filePath.cast()
+    ..ref.fFlags =
+        FILEOPERATION_FLAGS.FOF_ALLOWUNDO |
+        FILEOPERATION_FLAGS.FOF_NOCONFIRMATION |
+        FILEOPERATION_FLAGS.FOF_SILENT;
 
   final result = SHFileOperation(fileOpStruct);
 
@@ -112,12 +111,9 @@ void _moveToTrashMacOS(String path, bool deleteIfFailed) {
   final library = DynamicLibrary.open(
     '/System/Library/Frameworks/CoreServices.framework/Versions/A/CoreServices',
   );
-  final MoveToTrashDart moveToTrash =
-      library
-          .lookup<NativeFunction<MoveToTrashNative>>(
-            'FSPathMoveObjectToTrashSync',
-          )
-          .asFunction();
+  final MoveToTrashDart moveToTrash = library
+      .lookup<NativeFunction<MoveToTrashNative>>('FSPathMoveObjectToTrashSync')
+      .asFunction();
 
   final pathPtr = path.toNativeUtf8();
   final errorPtr = calloc<Pointer<Utf8>>();

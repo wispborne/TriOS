@@ -37,8 +37,8 @@ class _ChipperAppState extends ConsumerState<ChipperApp>
     super.build(context);
     return CallbackShortcuts(
       bindings: {
-        const SingleActivator(LogicalKeyboardKey.keyV, control: true):
-            () => pasteLog(ref),
+        const SingleActivator(LogicalKeyboardKey.keyV, control: true): () =>
+            pasteLog(ref),
       },
       child: const MyHomePage(
         title: chipperTitleAndVersion,
@@ -168,9 +168,8 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                             children: [
                               TextButton.icon(
                                 label: const Text("About Chipper"),
-                                onPressed:
-                                    () =>
-                                        showChipperAboutDialog(context, theme),
+                                onPressed: () =>
+                                    showChipperAboutDialog(context, theme),
                                 icon: const Icon(Icons.info),
                                 style: ButtonStyle(
                                   foregroundColor: WidgetStateProperty.all(
@@ -200,8 +199,8 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
             child: FloatingActionButton(
               onPressed: () async {
                 try {
-                  FilePickerResult? result =
-                      await FilePicker.platform.pickFiles();
+                  FilePickerResult? result = await FilePicker.platform
+                      .pickFiles();
 
                   if (result?.files.single != null) {
                     var file = result!.files.single;

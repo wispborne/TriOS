@@ -86,20 +86,16 @@ Future<void> showAlertDialog(
 }
 
 Future<void> showTriOSAboutDialog(BuildContext context) async {
-  return
-    showAboutDialog(
-      context: context,
-      applicationIcon: const TriOSAppIcon(),
-      applicationName: Constants.appTitle,
-      applicationVersion:
-      "A Starsector toolkit\nby Wisp",
-      children: [
-        ConstrainedBox(
-          constraints: const BoxConstraints(
-            maxWidth: 700,
-          ),
-          child: const AboutPage(),
-        ),
-      ],
-    );
+  return showAboutDialog(
+    context: context,
+    applicationIcon: const TriOSAppIcon(),
+    applicationName: Constants.appTitle,
+    applicationVersion: "A Starsector toolkit\nby Wisp",
+    children: [
+      ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 700),
+        child: const AboutPage(),
+      ),
+    ],
+  );
 }

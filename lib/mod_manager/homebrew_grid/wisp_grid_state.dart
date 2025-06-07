@@ -94,22 +94,21 @@ class WispGridState with WispGridStateMappable {
   List<MapEntry<String, WispGridColumnState>> sortedColumns(
     List<WispGridColumn> columnSpecs,
   ) {
-    final mergedStates =
-        columnSpecs.map((spec) {
-          // The user's override, if any
-          final userState = columnsState[spec.key];
-          // The column's default state
-          final base = spec.defaultState;
+    final mergedStates = columnSpecs.map((spec) {
+      // The user's override, if any
+      final userState = columnsState[spec.key];
+      // The column's default state
+      final base = spec.defaultState;
 
-          // Merge them: userState takes precedence if it exists
-          final finalState = WispGridColumnState(
-            position: userState?.position ?? base.position,
-            width: userState?.width ?? base.width,
-            isVisible: userState?.isVisible ?? base.isVisible,
-          );
+      // Merge them: userState takes precedence if it exists
+      final finalState = WispGridColumnState(
+        position: userState?.position ?? base.position,
+        width: userState?.width ?? base.width,
+        isVisible: userState?.isVisible ?? base.isVisible,
+      );
 
-          return MapEntry(spec.key, finalState);
-        }).toList();
+      return MapEntry(spec.key, finalState);
+    }).toList();
 
     // Sort by final position
     mergedStates.sort((a, b) => a.value.position.compareTo(b.value.position));

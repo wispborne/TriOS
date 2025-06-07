@@ -26,10 +26,9 @@ class _TriOSDownloadProgressIndicatorState
         ClipRRect(
           borderRadius: BorderRadius.circular(3),
           child: LinearProgressIndicator(
-            value:
-                widget.value.isIndeterminate
-                    ? null
-                    : widget.value.progressPercent,
+            value: widget.value.isIndeterminate
+                ? null
+                : widget.value.progressPercent,
             minHeight: 10,
             color: widget.color,
           ),

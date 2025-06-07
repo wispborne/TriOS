@@ -54,18 +54,16 @@ class GameSettingsNotifier extends StateNotifier<AsyncValue<GameSettings>> {
 
   Future<void> _initialize() async {
     try {
-      final gameCoreDir =
-          ref
-              .read(appSettings.select((settings) => settings.gameCoreDir))
-              ?.toDirectory();
+      final gameCoreDir = ref
+          .read(appSettings.select((settings) => settings.gameCoreDir))
+          ?.toDirectory();
       if (gameCoreDir == null) {
         return;
       }
 
-      settingsFile =
-          gameCoreDir
-              .resolve(p.join('data', 'config', 'settings.json'))
-              .toFile();
+      settingsFile = gameCoreDir
+          .resolve(p.join('data', 'config', 'settings.json'))
+          .toFile();
 
       state = AsyncValue.data(await _readSettings());
     } catch (e, st) {

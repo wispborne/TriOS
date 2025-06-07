@@ -53,36 +53,36 @@ class ModEntryWidget extends StatelessWidget {
             ...(modEntry.modVersion == null
                 ? [const TextSpan()]
                 : [
-                  TextSpan(
-                    text: " • ",
-                    style: TextStyle(
-                      color: theme.colorScheme.onSurface.withAlpha(100),
+                    TextSpan(
+                      text: " • ",
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurface.withAlpha(100),
+                      ),
                     ),
-                  ),
-                  TextSpan(
-                    text: "${modEntry.modVersion}",
-                    style: TextStyle(
-                      color: theme.colorScheme.onSurface.withAlpha(240),
+                    TextSpan(
+                      text: "${modEntry.modVersion}",
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurface.withAlpha(240),
+                      ),
                     ),
-                  ),
-                ]),
+                  ]),
             ...(modEntry.modId == null
                 ? [const TextSpan()]
                 : [
-                  TextSpan(
-                    text: " • ",
-                    style: TextStyle(
-                      color: theme.colorScheme.onSurface.withAlpha(100),
+                    TextSpan(
+                      text: " • ",
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurface.withAlpha(100),
+                      ),
                     ),
-                  ),
-                  TextSpan(
-                    text: "${modEntry.modId}",
-                    style: TextStyle(
-                      color: theme.colorScheme.onSurface.withAlpha(180),
-                      fontFamily: 'RobotoMono',
+                    TextSpan(
+                      text: "${modEntry.modId}",
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurface.withAlpha(180),
+                        fontFamily: 'RobotoMono',
+                      ),
                     ),
-                  ),
-                ]),
+                  ]),
           ],
         ),
       ),

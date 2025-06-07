@@ -66,7 +66,11 @@ bool validateIsProbablyAProgram(String path) {
   try {
     if (currentPlatform == TargetPlatform.macOS) {
       if (path.toDirectory().existsSync()) {
-        return path.toDirectory().resolve("Contents/MacOS").toDirectory().existsSync();
+        return path
+            .toDirectory()
+            .resolve("Contents/MacOS")
+            .toDirectory()
+            .existsSync();
       }
     }
 

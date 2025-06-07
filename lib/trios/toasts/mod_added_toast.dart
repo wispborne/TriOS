@@ -56,10 +56,9 @@ class _ModAddedToastState extends ConsumerState<ModAddedToast> {
     final mod = widget.modVariant.mod(mods);
     final currentVariant = mod?.findFirstEnabled;
 
-    final icon =
-        widget.modVariant.iconFilePath.isNotNullOrEmpty()
-            ? Image.file((widget.modVariant.iconFilePath ?? "").toFile())
-            : null;
+    final icon = widget.modVariant.iconFilePath.isNotNullOrEmpty()
+        ? Image.file((widget.modVariant.iconFilePath ?? "").toFile())
+        : null;
     final timeElapsed = (widget.item.elapsedDuration?.inMilliseconds ?? 0);
     final timeTotal = (widget.item.originalDuration?.inMilliseconds ?? 1);
 
@@ -222,8 +221,8 @@ class _ModAddedToastState extends ConsumerState<ModAddedToast> {
                             ),
                           ),
                           IconButton(
-                            onPressed:
-                                () => toastification.dismiss(widget.item),
+                            onPressed: () =>
+                                toastification.dismiss(widget.item),
                             icon: const Icon(Icons.close),
                           ),
                         ],

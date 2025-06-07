@@ -101,20 +101,18 @@ class _RulesHotReloadState extends ConsumerState<RulesHotReload> {
                 ),
               FadingEye(
                 shouldAnimate: false,
-                color:
-                    widget.isEnabled
-                        ? theme.colorScheme.primary
-                        : theme.colorScheme.onSurface,
+                color: widget.isEnabled
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.onSurface,
               ),
             ],
           ),
           Text(
             'rules.csv',
             style: theme.textTheme.labelMedium?.copyWith(
-              color:
-                  widget.isEnabled
-                      ? theme.colorScheme.primary
-                      : theme.colorScheme.onSurface,
+              color: widget.isEnabled
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.onSurface,
             ),
           ),
           // RichText(

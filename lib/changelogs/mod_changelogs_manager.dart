@@ -21,8 +21,9 @@ class ModChangelogsManager extends AsyncNotifier<Map<String, ModChangelog>> {
   FutureOr<Map<String, ModChangelog>> build() async {
     final mods = ref.watch(AppState.mods);
     final httpClient = ref.watch(triOSHttpClient);
-    final cachedVersionChecks =
-        ref.watch(AppState.versionCheckResults).valueOrNull;
+    final cachedVersionChecks = ref
+        .watch(AppState.versionCheckResults)
+        .valueOrNull;
 
     // Show a spinner only the first time.
     if (!state.hasValue && !state.isLoading && !state.hasError) {

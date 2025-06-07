@@ -337,8 +337,9 @@ class PrettyPrinterCustom extends LogPrinter {
             .toList();
     List<String> formatted = [];
 
-    int stackTraceLength =
-        (methodCount != null ? min(lines.length, methodCount) : lines.length);
+    int stackTraceLength = (methodCount != null
+        ? min(lines.length, methodCount)
+        : lines.length);
 
     for (
       int count = 0;

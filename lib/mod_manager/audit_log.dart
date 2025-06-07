@@ -14,32 +14,30 @@ class AuditLogPersistenceManager
   @override
   Map<String, dynamic> Function(List<AuditEntry>) get toMap =>
       (auditEntries) => {
-        'auditLog':
-            auditEntries
-                .map(
-                  (entry) => {
-                    'smolId': entry.smolId,
-                    'timestamp': entry.timestamp.toIso8601String(),
-                    'action': entry.action.name,
-                    'reason': entry.reason,
-                  },
-                )
-                .toList(),
+        'auditLog': auditEntries
+            .map(
+              (entry) => {
+                'smolId': entry.smolId,
+                'timestamp': entry.timestamp.toIso8601String(),
+                'action': entry.action.name,
+                'reason': entry.reason,
+              },
+            )
+            .toList(),
       };
 
   @override
   List<AuditEntry> Function(Map<String, dynamic>) get fromMap =>
-      (map) =>
-          (map['auditLog'] as List<dynamic>)
-              .map(
-                (entry) => AuditEntry(
-                  entry['smolId'],
-                  DateTime.parse(entry['timestamp']),
-                  ModAction.values.byName(entry['action']),
-                  entry['reason'],
-                ),
-              )
-              .toList();
+      (map) => (map['auditLog'] as List<dynamic>)
+          .map(
+            (entry) => AuditEntry(
+              entry['smolId'],
+              DateTime.parse(entry['timestamp']),
+              ModAction.values.byName(entry['action']),
+              entry['reason'],
+            ),
+          )
+          .toList();
 }
 
 class AuditLog extends GenericSettingsAsyncNotifier<List<AuditEntry>> {

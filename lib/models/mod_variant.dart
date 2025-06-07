@@ -38,15 +38,15 @@ class ModVariant with ModVariantMappable implements Comparable<ModVariant> {
 
   String? get iconFilePath {
     return iconCache.putIfAbsent(modInfo.id, () {
-      var path =
-          modIconFilePaths
-              .map((path) => modFolder.resolve(path))
-              .firstWhereOrNull((file) => file.existsSync())
-              ?.path;
+      var path = modIconFilePaths
+          .map((path) => modFolder.resolve(path))
+          .firstWhereOrNull((file) => file.existsSync())
+          ?.path;
 
       if (path == null) {
-        final lunaSettings =
-            modFolder.resolve("data/config/LunaSettingsConfig.json").toFile();
+        final lunaSettings = modFolder
+            .resolve("data/config/LunaSettingsConfig.json")
+            .toFile();
         if (lunaSettings.existsSync()) {
           try {
             final lunaSettingsIconPath =

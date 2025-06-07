@@ -66,10 +66,9 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
   String? currentUrl;
 
   @override
-  List<Area> get areas =>
-      splitPane
-          ? [Area(id: 'left', size: 500), Area(id: 'right')]
-          : [Area(id: 'left')];
+  List<Area> get areas => splitPane
+      ? [Area(id: 'left', size: 500), Area(id: 'right')]
+      : [Area(id: 'left')];
 
   @override
   void initState() {
@@ -278,56 +277,55 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                             ),
                           ),
                           Expanded(
-                            child:
-                                ref.watch(isLoadingCatalog)
-                                    ? Center(
-                                      child: SizedBox(
-                                        width: 64,
-                                        height: 64,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          strokeCap: StrokeCap.round,
-                                        ),
+                            child: ref.watch(isLoadingCatalog)
+                                ? Center(
+                                    child: SizedBox(
+                                      width: 64,
+                                      height: 64,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        strokeCap: StrokeCap.round,
                                       ),
-                                    )
-                                    : ListView.builder(
-                                      itemExtent: 200,
-                                      itemCount: displayedMods?.length,
-                                      itemBuilder: (context, index) {
-                                        if (displayedMods == null) {
-                                          return const SizedBox();
-                                        }
-                                        final profile = displayedMods![index];
-
-                                        return Padding(
-                                          padding: const EdgeInsets.only(
-                                            left: 4,
-                                            top: 4,
-                                            bottom: 4,
-                                          ),
-                                          child: ScrapedModCard(
-                                            mod: profile,
-                                            linkLoader: (url) {
-                                              selectedModName = profile.name;
-                                              if (_webViewStatus ==
-                                                  WebViewStatus.loaded) {
-                                                webViewController?.loadUrl(
-                                                  urlRequest: URLRequest(
-                                                    url: WebUri(url),
-                                                  ),
-                                                );
-                                              } else {
-                                                url.openAsUriInBrowser();
-                                              }
-                                              setState(() {});
-                                            },
-                                            isSelected:
-                                                currentUrl ==
-                                                profile.getBestWebsiteUrl(),
-                                          ),
-                                        );
-                                      },
                                     ),
+                                  )
+                                : ListView.builder(
+                                    itemExtent: 200,
+                                    itemCount: displayedMods?.length,
+                                    itemBuilder: (context, index) {
+                                      if (displayedMods == null) {
+                                        return const SizedBox();
+                                      }
+                                      final profile = displayedMods![index];
+
+                                      return Padding(
+                                        padding: const EdgeInsets.only(
+                                          left: 4,
+                                          top: 4,
+                                          bottom: 4,
+                                        ),
+                                        child: ScrapedModCard(
+                                          mod: profile,
+                                          linkLoader: (url) {
+                                            selectedModName = profile.name;
+                                            if (_webViewStatus ==
+                                                WebViewStatus.loaded) {
+                                              webViewController?.loadUrl(
+                                                urlRequest: URLRequest(
+                                                  url: WebUri(url),
+                                                ),
+                                              );
+                                            } else {
+                                              url.openAsUriInBrowser();
+                                            }
+                                            setState(() {});
+                                          },
+                                          isSelected:
+                                              currentUrl ==
+                                              profile.getBestWebsiteUrl(),
+                                        ),
+                                      );
+                                    },
+                                  ),
                           ),
                         ],
                       );
@@ -358,10 +356,9 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                                           webViewController?.canGoBack() ??
                                           Future.value(false),
                                       builder: (context, snapshot) {
-                                        final canGoBack =
-                                            snapshot.hasData
-                                                ? snapshot.data!
-                                                : false;
+                                        final canGoBack = snapshot.hasData
+                                            ? snapshot.data!
+                                            : false;
                                         return Disable(
                                           isEnabled: canGoBack == true,
                                           child: MovingTooltipWidget.text(
@@ -385,10 +382,9 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                                           webViewController?.canGoForward() ??
                                           Future.value(false),
                                       builder: (context, snapshot) {
-                                        final canGoForward =
-                                            snapshot.hasData
-                                                ? snapshot.data!
-                                                : false;
+                                        final canGoForward = snapshot.hasData
+                                            ? snapshot.data!
+                                            : false;
                                         return Disable(
                                           isEnabled: canGoForward == true,
                                           child: MovingTooltipWidget.text(
@@ -414,48 +410,50 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                                       builder: (context, snapshot) {
                                         return (webLoadingProgress != null)
                                             ? Padding(
-                                              padding: const EdgeInsets.only(
-                                                left: 8,
-                                                right: 8,
-                                              ),
-                                              child: SizedBox(
-                                                width: 24,
-                                                height: 24,
-                                                child: Transform.flip(
-                                                  // Trick to have indeterminate progress go CCW, then loading progress goes CW as normal.
-                                                  flipX:
-                                                      webLoadingProgress == 0,
-                                                  child: CircularProgressIndicator(
-                                                    strokeWidth: 2,
-                                                    value:
-                                                        webLoadingProgress == 0
-                                                            ? null
-                                                            : webLoadingProgress,
-                                                    color:
-                                                        theme.iconTheme.color,
-                                                    strokeCap: StrokeCap.round,
+                                                padding: const EdgeInsets.only(
+                                                  left: 8,
+                                                  right: 8,
+                                                ),
+                                                child: SizedBox(
+                                                  width: 24,
+                                                  height: 24,
+                                                  child: Transform.flip(
+                                                    // Trick to have indeterminate progress go CCW, then loading progress goes CW as normal.
+                                                    flipX:
+                                                        webLoadingProgress == 0,
+                                                    child: CircularProgressIndicator(
+                                                      strokeWidth: 2,
+                                                      value:
+                                                          webLoadingProgress ==
+                                                              0
+                                                          ? null
+                                                          : webLoadingProgress,
+                                                      color:
+                                                          theme.iconTheme.color,
+                                                      strokeCap:
+                                                          StrokeCap.round,
+                                                    ),
                                                   ),
                                                 ),
-                                              ),
-                                            )
+                                              )
                                             : Disable(
-                                              isEnabled:
-                                                  snapshot.hasData &&
-                                                  snapshot.data != null,
-                                              child: MovingTooltipWidget.text(
-                                                message: "Reload",
-                                                child: IconButton(
-                                                  onPressed: () async {
-                                                    await webViewController
-                                                        ?.reload();
-                                                    setState(() {});
-                                                  },
-                                                  icon: const Icon(
-                                                    Icons.refresh,
+                                                isEnabled:
+                                                    snapshot.hasData &&
+                                                    snapshot.data != null,
+                                                child: MovingTooltipWidget.text(
+                                                  message: "Reload",
+                                                  child: IconButton(
+                                                    onPressed: () async {
+                                                      await webViewController
+                                                          ?.reload();
+                                                      setState(() {});
+                                                    },
+                                                    icon: const Icon(
+                                                      Icons.refresh,
+                                                    ),
                                                   ),
                                                 ),
-                                              ),
-                                            );
+                                              );
                                       },
                                     ),
                                     MovingTooltipWidget.text(
@@ -463,10 +461,9 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                                       child: IconButton(
                                         onPressed: () {
                                           webViewController?.getUrl().then(
-                                            (url) =>
-                                                url
-                                                    ?.toString()
-                                                    .openAsUriInBrowser(),
+                                            (url) => url
+                                                ?.toString()
+                                                .openAsUriInBrowser(),
                                           );
                                         },
                                         icon: const Icon(Icons.public),
@@ -527,8 +524,9 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                                                 ),
                                               );
                                           showDialog(
-                                            context:
-                                                ref.read(AppState.appContext)!,
+                                            context: ref.read(
+                                              AppState.appContext,
+                                            )!,
                                             builder: (context) {
                                               return AlertDialog(
                                                 title: const Text(
@@ -576,22 +574,24 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
 
                                         return hasHiddenDarkModeTip != true
                                             ? OutlinedButton.icon(
-                                              onPressed: onPressedDarkTheme,
-                                              label: const Text(
-                                                "Forum Dark Theme Instructions",
-                                              ),
-                                              icon: const Icon(Icons.dark_mode),
-                                            )
-                                            : MovingTooltipWidget.text(
-                                              message:
-                                                  "Forum Dark Theme Instructions",
-                                              child: IconButton(
                                                 onPressed: onPressedDarkTheme,
+                                                label: const Text(
+                                                  "Forum Dark Theme Instructions",
+                                                ),
                                                 icon: const Icon(
                                                   Icons.dark_mode,
                                                 ),
-                                              ),
-                                            );
+                                              )
+                                            : MovingTooltipWidget.text(
+                                                message:
+                                                    "Forum Dark Theme Instructions",
+                                                child: IconButton(
+                                                  onPressed: onPressedDarkTheme,
+                                                  icon: const Icon(
+                                                    Icons.dark_mode,
+                                                  ),
+                                                ),
+                                              );
                                       },
                                     ),
                                   ],
@@ -613,41 +613,43 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                                   webViewEnvironment: ref.watch(
                                     webViewEnvironment,
                                   ),
-                                  shouldOverrideUrlLoading: (
-                                    controller,
-                                    navigationAction,
-                                  ) async {
-                                    if (navigationAction.request.url != null) {
-                                      final finalUrlAndHeaders =
-                                          await DownloadManager.fetchFinalUrlAndHeaders(
-                                            navigationAction.request.url
-                                                .toString(),
-                                            httpClient,
-                                          );
-                                      final url = finalUrlAndHeaders.url;
+                                  shouldOverrideUrlLoading:
+                                      (controller, navigationAction) async {
+                                        if (navigationAction.request.url !=
+                                            null) {
+                                          final finalUrlAndHeaders =
+                                              await DownloadManager.fetchFinalUrlAndHeaders(
+                                                navigationAction.request.url
+                                                    .toString(),
+                                                httpClient,
+                                              );
+                                          final url = finalUrlAndHeaders.url;
 
-                                      final isDownloadFile =
-                                          await DownloadManager.isDownloadableFile(
-                                            url.toString(),
-                                            finalUrlAndHeaders.headersMap,
-                                            httpClient,
-                                          );
+                                          final isDownloadFile =
+                                              await DownloadManager.isDownloadableFile(
+                                                url.toString(),
+                                                finalUrlAndHeaders.headersMap,
+                                                httpClient,
+                                              );
 
-                                      if (isDownloadFile) {
-                                        ref
-                                            .read(downloadManager.notifier)
-                                            .downloadAndInstallMod(
-                                              selectedModName ?? "Catalog Mod",
-                                              url.toString(),
-                                              activateVariantOnComplete: false,
-                                            );
+                                          if (isDownloadFile) {
+                                            ref
+                                                .read(downloadManager.notifier)
+                                                .downloadAndInstallMod(
+                                                  selectedModName ??
+                                                      "Catalog Mod",
+                                                  url.toString(),
+                                                  activateVariantOnComplete:
+                                                      false,
+                                                );
 
-                                        return NavigationActionPolicy.CANCEL;
-                                      }
-                                    }
+                                            return NavigationActionPolicy
+                                                .CANCEL;
+                                          }
+                                        }
 
-                                    return NavigationActionPolicy.ALLOW;
-                                  },
+                                        return NavigationActionPolicy.ALLOW;
+                                      },
                                   onDownloadStartRequest: (controller, url) {},
                                   initialUrlRequest: URLRequest(
                                     url: WebUri(Constants.forumModIndexUrl),
@@ -688,8 +690,8 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                                     Linkify(
                                       text:
                                           "Please install it from https://developer.microsoft.com/en-us/microsoft-edge/webview2/",
-                                      onOpen:
-                                          (link) => OpenFilex.open(link.url),
+                                      onOpen: (link) =>
+                                          OpenFilex.open(link.url),
                                     ),
                                     const Text(
                                       "and then restart ${Constants.appName}.",
@@ -707,8 +709,8 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                                     Linkify(
                                       text:
                                           "Use a standalone browser to find mods (maybe at https://starmodder2.pages.dev ?) instead.",
-                                      onOpen:
-                                          (link) => OpenFilex.open(link.url),
+                                      onOpen: (link) =>
+                                          OpenFilex.open(link.url),
                                     ),
                                   ],
                                 ),
@@ -723,8 +725,8 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                                     Linkify(
                                       text:
                                           "Use a standalone browser to find mods (maybe at https://starmodder2.pages.dev ?) instead.",
-                                      onOpen:
-                                          (link) => OpenFilex.open(link.url),
+                                      onOpen: (link) =>
+                                          OpenFilex.open(link.url),
                                     ),
                                   ],
                                 ),
@@ -762,63 +764,51 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
     }
 
     if (filterHasDownloadLink == true) {
-      displayedMods =
-          displayedMods
-              ?.where(
-                (mod) =>
-                    mod.urls?.containsKey(ModUrlType.DirectDownload) == true,
-              )
-              .toList();
+      displayedMods = displayedMods
+          ?.where(
+            (mod) => mod.urls?.containsKey(ModUrlType.DirectDownload) == true,
+          )
+          .toList();
     } else if (filterHasDownloadLink == false) {
-      displayedMods =
-          displayedMods
-              ?.where(
-                (mod) =>
-                    mod.urls?.containsKey(ModUrlType.DirectDownload) != true,
-              )
-              .toList();
+      displayedMods = displayedMods
+          ?.where(
+            (mod) => mod.urls?.containsKey(ModUrlType.DirectDownload) != true,
+          )
+          .toList();
     }
 
     if (filterDiscord == true) {
-      displayedMods =
-          displayedMods
-              ?.where((mod) => mod.sources?.contains(ModSource.Discord) == true)
-              .toList();
+      displayedMods = displayedMods
+          ?.where((mod) => mod.sources?.contains(ModSource.Discord) == true)
+          .toList();
     } else if (filterDiscord == false) {
-      displayedMods =
-          displayedMods
-              ?.where((mod) => mod.sources?.contains(ModSource.Discord) != true)
-              .toList();
+      displayedMods = displayedMods
+          ?.where((mod) => mod.sources?.contains(ModSource.Discord) != true)
+          .toList();
     }
 
     if (filterIndex == true) {
-      displayedMods =
-          displayedMods
-              ?.where((mod) => mod.sources?.contains(ModSource.Index) == true)
-              .toList();
+      displayedMods = displayedMods
+          ?.where((mod) => mod.sources?.contains(ModSource.Index) == true)
+          .toList();
     } else if (filterIndex == false) {
-      displayedMods =
-          displayedMods
-              ?.where((mod) => mod.sources?.contains(ModSource.Index) != true)
-              .toList();
+      displayedMods = displayedMods
+          ?.where((mod) => mod.sources?.contains(ModSource.Index) != true)
+          .toList();
     }
 
     if (filterForumModding == true) {
-      displayedMods =
-          displayedMods
-              ?.where(
-                (mod) =>
-                    mod.sources?.contains(ModSource.ModdingSubforum) == true,
-              )
-              .toList();
+      displayedMods = displayedMods
+          ?.where(
+            (mod) => mod.sources?.contains(ModSource.ModdingSubforum) == true,
+          )
+          .toList();
     } else if (filterForumModding == false) {
-      displayedMods =
-          displayedMods
-              ?.where(
-                (mod) =>
-                    mod.sources?.contains(ModSource.ModdingSubforum) != true,
-              )
-              .toList();
+      displayedMods = displayedMods
+          ?.where(
+            (mod) => mod.sources?.contains(ModSource.ModdingSubforum) != true,
+          )
+          .toList();
     }
   }
 
@@ -913,16 +903,16 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
             controller.value.text.isEmpty
                 ? Container()
                 : IconButton(
-                  icon: const Icon(Icons.clear),
-                  constraints: const BoxConstraints(),
-                  padding: EdgeInsets.zero,
-                  onPressed: () {
-                    setState(() {
-                      controller.clear();
-                      updateFilter();
-                    });
-                  },
-                ),
+                    icon: const Icon(Icons.clear),
+                    constraints: const BoxConstraints(),
+                    padding: EdgeInsets.zero,
+                    onPressed: () {
+                      setState(() {
+                        controller.clear();
+                        updateFilter();
+                      });
+                    },
+                  ),
           ],
           backgroundColor: WidgetStateProperty.all(
             Theme.of(context).colorScheme.surfaceContainer,

@@ -15,5 +15,6 @@ extension CompararatorComposeExtensions<T> on Comparator<T> {
 
 extension CompararatorReverseExtensions<T> on Comparator<T> {
   /// reverse the sort order of this comparator
-  Comparator<T> reverse() => (a, b) => this(b, a);
+  Comparator<T> reverse() =>
+      (a, b) => this(b, a);
 }

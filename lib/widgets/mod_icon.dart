@@ -73,9 +73,9 @@ class _ModIconState extends ConsumerState<ModIcon> {
     if (widget.path == null) {
       return widget.takeUpSpaceIfNoIcon
           ? Padding(
-            padding: widget.padding ?? EdgeInsets.zero,
-            child: SizedBox(width: widget.size, height: widget.size),
-          )
+              padding: widget.padding ?? EdgeInsets.zero,
+              child: SizedBox(width: widget.size, height: widget.size),
+            )
           : const SizedBox.shrink();
     }
 

@@ -63,10 +63,9 @@ class CheckboxWithLabel extends StatelessWidget {
       Flexible(
         child: Padding(
           padding: textPadding,
-          child:
-              label != null
-                  ? Text(label!, style: labelStyle, textAlign: TextAlign.center)
-                  : labelWidget,
+          child: label != null
+              ? Text(label!, style: labelStyle, textAlign: TextAlign.center)
+              : labelWidget,
         ),
       ),
     ];

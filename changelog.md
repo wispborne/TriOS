@@ -14,6 +14,7 @@
   - MacOS and Linux incorrectly showing warnings that the JRE wasn't supported.
   - Mods page: If a mod had a missing dependency, you couldn't disable it.
   - Mods page: Cleaned up warning outline colors and warning tooltip colors.
+  - Date formats did not respect your locale.
 - Changed
   - Greatly simplified GraphicsLib from VRAM estimation.
     - Not as accurate, but GraphicsLib uses far less VRAM now so it shouldn't be too far off.

@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:toastification/toastification.dart';
 import 'package:trios/compression/archive.dart';
 import 'package:trios/compression/libarchive/libarchive.dart';
@@ -439,6 +440,8 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                   Text("Temp folder: ${Directory.systemTemp.path}"),
                   const SizedBox(height: 8),
                   Text("Locale: ${Platform.localeName}"),
+                  const SizedBox(height: 8),
+                  Text("Locale (using Intl package): ${Intl.getCurrentLocale()}"),
                   const SizedBox(height: 8),
                   Text(
                     "RAM usage: ${ProcessInfo.currentRss.bytesAsReadableMB()}",

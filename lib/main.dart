@@ -7,6 +7,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:scaled_app/scaled_app.dart';
 import 'package:screen_retriever/screen_retriever.dart';
@@ -117,6 +119,15 @@ void main() async {
     print("Error initializing logging. $ex");
     loggingError = ex;
   }
+
+  try {
+    final locale = PlatformDispatcher.instance.locale;
+    Intl.defaultLocale = locale.toLanguageTag();
+    await initializeDateFormatting(Intl.defaultLocale ?? "en_US", null);
+  } catch (ex) {
+    Fimber.w("Error initializing date formatting.", ex: ex);
+  }
+
   try {
     await windowManager.ensureInitialized();
   } catch (ex) {

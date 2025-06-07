@@ -1,11 +1,12 @@
 # 1.2.0 (in dev)
 - Added
   - Ships Viewer
-  - Mods page: copy selected rows to clipboard (right-click).
-  - Weapons Viewer: may now click on image to open in Explorer, and right-click to open data folder (same as Ships Viewer grid).
   - MacOS and Linux now show the current JRE and RAM allocation (when hovering the launch button).
   - Right-click option to force re-estimate mods in a group (e.g. all enabled).
   - Sort By options for the mods list on the Dashboard page.
+  - Special VRAM Estimate handling for Illustrated Entities, which unloads textures when not in use.
+  - Mods page: may now right-click on checked rows and choose to copy those mods to clipboard.
+  - Weapons Viewer: may now click on image to open in Explorer, and right-click to open data folder (same as Ships Viewer grid).
 - Fixed
   - Mods Grid: If two mod versions had the same Version Checker version but different mod_info.json versions, the "Click to use newer version" button could suggest updating to the wrong version.
   - Reordering columns on Mods/Weapons/Ships pages.
@@ -13,7 +14,8 @@
   - Mods page: If a mod had a missing dependency, you couldn't disable it.
   - Mods page: Cleaned up warning outline colors and warning tooltip colors.
 - Changed
-  - Remove GraphicsLib from VRAM estimation.
+  - Greatly simplified GraphicsLib from VRAM estimation.
+    - Not as accurate, but GraphicsLib uses far less VRAM now so it shouldn't be too far off.
     - With GraphicsLib dynamically unloading textures, estimating VRAM becomes complex.
   - Mods page: Split the changelogs & Version Checker icons part of the `Version` column into their own column and added sorting for it.
     - Sorting is, in order: has update, then no update but has changelog, then no update and no changelog, then doesn't support version checker.

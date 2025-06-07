@@ -1094,7 +1094,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
 
               final isIllustratedEntities =
                   mod.findFirstEnabledOrHighestVersion?.modInfo.id ==
-                  "illustrated_entities";
+                  Constants.illustratedEntitiesId;
 
               return MovingTooltipWidget.framed(
                 tooltipWidget: vramEstimate == null
@@ -1119,7 +1119,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                               "${isIllustratedEntities ? ""
                                         ""
                                         "\n\nNOTE"
-                                        "\nIllustrated Entities dynamically loads in images, so it uses much less VRAM than ${Constants.appName} estimates." : ""}",
+                                        "\nIllustrated Entities dynamically loads and unloads images from VRAM." : ""}",
                               style: theme.textTheme.labelLarge,
                             ),
                             Padding(

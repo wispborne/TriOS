@@ -471,3 +471,5 @@ Future<bool> waitForFilesToBeAccessible(
   );
   return false;
 }
+
+const int intMaxValue = -1 >>> 1;

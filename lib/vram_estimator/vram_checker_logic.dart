@@ -99,229 +99,214 @@ class VramChecker {
     final imageHeaderReaderPool = ReadImageHeaders();
 
     // Process each mod variant asynchronously.
-    final mods =
-        (await Stream.fromIterable(
-              variantsToCheck.map(
-                (it) => VramCheckerMod(it.modInfo, it.modFolder.path),
-              ),
-            ).asyncMap((modInfo) async {
-              progressText.appendAndPrint(
-                "\nFolder: ${modInfo.name}",
-                verboseOut,
-              );
-              if (isCancelled()) {
-                throw Exception("Cancelled");
-              }
-              final startTimeForMod =
-                  DateTime.timestamp().millisecondsSinceEpoch;
-              final baseFolderPath = modInfo.modFolder;
+    final mods = (await Stream.fromIterable(variantsToCheck.map((it) => VramCheckerMod(it.modInfo, it.modFolder.path))).asyncMap((
+      modInfo,
+    ) async {
+      progressText.appendAndPrint("\nFolder: ${modInfo.name}", verboseOut);
+      if (isCancelled()) {
+        throw Exception("Cancelled");
+      }
+      final startTimeForMod = DateTime.timestamp().millisecondsSinceEpoch;
 
-              // Gather all file data for this mod.
-              final filesInMod = modInfo.modFolder
-                  .toDirectory()
-                  .listSync(recursive: true)
-                  .whereType<File>()
-                  .map((file) {
-                    final relPath = p.relative(file.path, from: baseFolderPath);
-                    return _FileData(
-                      file: file,
-                      relativePath: file.relativePath(
-                        modInfo.modFolder.toDirectory(),
-                      ),
-                    );
-                  })
-                  .toList();
+      int? maxImages = null;
 
-              // Get GraphicsLib settings from CSV files.
-              final List<GraphicsLibInfo> graphicsLibEntries =
-                  _getGraphicsLibSettingsForMod(
-                    filesInMod,
-                    csvReader,
-                    progressText,
-                  ) ??
-                  [];
+      // Special handling for Illustrated Entities, which dynamically unloads images.
+      // Very rough estimate.
+      if (modInfo.modInfo.id == Constants.illustratedEntitiesId) {
+        maxImages = 20;
+      }
 
-              final timeFinishedGettingGraphicsLibData =
-                  DateTime.timestamp().millisecondsSinceEpoch;
-              if (showPerformance) {
-                progressText.appendAndPrint(
-                  "Finished getting GraphicsLib images for ${modInfo.name} in ${(timeFinishedGettingGraphicsLibData - startTimeForMod)} ms",
-                  verboseOut,
-                );
-              }
+      // Gather all file data for this mod.
+      final filesInMod = modInfo.modFolder
+          .toDirectory()
+          .listSync(recursive: true)
+          .whereType<File>()
+          .take(maxImages ?? intMaxValue)
+          .map((file) {
+            return _FileData(
+              file: file,
+              relativePath: file.relativePath(modInfo.modFolder.toDirectory()),
+            );
+          })
+          .toList();
 
-              // Process image files (png, jpg, etc.).
-              final imageRowFutures = filesInMod
-                  .where((it) => it.file.isImage)
-                  .map((file) async {
-                    if (isCancelled()) {
-                      throw Exception("Cancelled");
-                    }
-                    ImageType imageType;
-                    if (file.relativePath.contains(BACKGROUND_FOLDER_NAME)) {
-                      imageType = ImageType.background;
-                    } else if (UNUSED_INDICATOR.any(
-                      (suffix) => file.relativePath.contains(suffix),
-                    )) {
-                      imageType = ImageType.unused;
-                    } else {
-                      imageType = ImageType.texture;
-                    }
+      // Get GraphicsLib settings from CSV files.
+      final List<GraphicsLibInfo> graphicsLibEntries =
+          _getGraphicsLibSettingsForMod(filesInMod, csvReader, progressText) ??
+          [];
 
-                    MapType? graphicsLibType;
+      final timeFinishedGettingGraphicsLibData =
+          DateTime.timestamp().millisecondsSinceEpoch;
+      if (showPerformance) {
+        progressText.appendAndPrint(
+          "Finished getting GraphicsLib images for ${modInfo.name} in ${(timeFinishedGettingGraphicsLibData - startTimeForMod)} ms",
+          verboseOut,
+        );
+      }
 
-                    // Hardcode logic that the cache folder of GraphicsLib
-                    // always contains normal maps.
-                    if (modInfo.modId == Constants.graphicsLibId &&
-                        file.file.path.contains("cache")) {
-                      graphicsLibType = MapType.Normal;
-                    } else {
-                      graphicsLibType = graphicsLibEntries
-                          .firstWhereOrNull(
-                            (it) => it.relativeFilePath == file.relativePath,
-                          )
-                          ?.mapType;
-                    }
-                    final ext = file.file.nameWithExtension.toLowerCase();
-                    if (ext.endsWith(".png")) {
-                      return await _getModImagePng(
-                        imageHeaderReaderPool,
-                        file,
-                        imageType,
-                        modInfo,
-                        graphicsLibType,
-                      );
-                    } else {
-                      return await _getModImageGeneric(
-                        imageHeaderReaderPool,
-                        file,
-                        modInfo,
-                        imageType,
-                        graphicsLibType,
-                      );
-                    }
-                  });
+      // Process image files (png, jpg, etc.).
+      final imageRowFutures = filesInMod.where((it) => it.file.isImage).map((
+        file,
+      ) async {
+        if (isCancelled()) {
+          throw Exception("Cancelled");
+        }
+        ImageType imageType;
+        if (file.relativePath.contains(BACKGROUND_FOLDER_NAME)) {
+          imageType = ImageType.background;
+        } else if (UNUSED_INDICATOR.any(
+          (suffix) => file.relativePath.contains(suffix),
+        )) {
+          imageType = ImageType.unused;
+        } else {
+          imageType = ImageType.texture;
+        }
 
-              // Gather non-null image rows.
-              final modImageRows = (await Future.wait(
-                imageRowFutures,
-              )).nonNulls.toList();
+        MapType? graphicsLibType;
 
-              final timeFinishedGettingFileData =
-                  DateTime.timestamp().millisecondsSinceEpoch;
-              if (showPerformance) {
-                progressText.appendAndPrint(
-                  "Finished getting file data for ${modInfo.formattedName} in ${(timeFinishedGettingFileData - timeFinishedGettingGraphicsLibData)} ms",
-                  verboseOut,
-                );
-              }
+        // Hardcode logic that the cache folder of GraphicsLib
+        // always contains normal maps.
+        if (modInfo.modId == Constants.graphicsLibId &&
+            file.file.path.contains("cache")) {
+          graphicsLibType = MapType.Normal;
+        } else {
+          graphicsLibType = graphicsLibEntries
+              .firstWhereOrNull(
+                (it) => it.relativeFilePath == file.relativePath,
+              )
+              ?.mapType;
+        }
+        final ext = file.file.nameWithExtension.toLowerCase();
+        if (ext.endsWith(".png")) {
+          return await _getModImagePng(
+            imageHeaderReaderPool,
+            file,
+            imageType,
+            modInfo,
+            graphicsLibType,
+          );
+        } else {
+          return await _getModImageGeneric(
+            imageHeaderReaderPool,
+            file,
+            modInfo,
+            imageType,
+            graphicsLibType,
+          );
+        }
+      });
 
-              // Build a columnar table from the row maps.
-              final fullTable = ModImageTable.fromRows(modImageRows);
-              // Create views for each row.
-              List<ModImageView> imageViews = List.generate(
-                fullTable.length,
-                (i) => ModImageView(i, fullTable),
-              );
+      // Gather non-null image rows.
+      final modImageRows = (await Future.wait(
+        imageRowFutures,
+      )).nonNulls.toList();
 
-              // Filter out unused images.
-              final unusedViews = imageViews
-                  .where((view) => view.imageType == ImageType.unused)
-                  .toList();
-              if (unusedViews.isNotEmpty && showSkippedFiles) {
-                progressText.appendAndPrint(
-                  "Skipping unused files",
-                  verboseOut,
-                );
-                for (var view in unusedViews) {
-                  progressText.appendAndPrint(
-                    "  ${p.relative(view.file.path, from: modInfo.modFolder)}",
-                    verboseOut,
-                  );
-                }
-              }
-              imageViews.removeWhere(
-                (view) => view.imageType == ImageType.unused,
-              );
+      final timeFinishedGettingFileData =
+          DateTime.timestamp().millisecondsSinceEpoch;
+      if (showPerformance) {
+        progressText.appendAndPrint(
+          "Finished getting file data for ${modInfo.formattedName} in ${(timeFinishedGettingFileData - timeFinishedGettingGraphicsLibData)} ms",
+          verboseOut,
+        );
+      }
 
-              // The game only loads one background at a time and vanilla always has one loaded.
-              // Therefore, a mod only increases the VRAM use by the size difference of the largest background over vanilla.
-              final backgroundViews = imageViews
-                  .where((view) => view.imageType == ImageType.background)
-                  .toList();
-              final largestBackground = backgroundViews
-                  .where((view) => view.textureWidth > VANILLA_BACKGROUND_WIDTH)
-                  .maxByOrNull<num>((view) => view.bytesUsed);
-              final modBackgroundsSmallerThanLargestVanilla = backgroundViews
-                  .where(
-                    (view) =>
-                        largestBackground != null && view != largestBackground,
-                  )
-                  .toList();
-              if (modBackgroundsSmallerThanLargestVanilla.isNotEmpty) {
-                progressText.appendAndPrint(
-                  "Skipping backgrounds that are not larger than vanilla and/or not the mod's largest background.",
-                  verboseOut,
-                );
-                for (var view in modBackgroundsSmallerThanLargestVanilla) {
-                  progressText.appendAndPrint(
-                    "   ${p.relative(view.file.path, from: modInfo.modFolder)}",
-                    verboseOut,
-                  );
-                }
-              }
-              imageViews.removeWhere(
-                (view) =>
-                    modBackgroundsSmallerThanLargestVanilla.contains(view),
-              );
+      // Build a columnar table from the row maps.
+      final fullTable = ModImageTable.fromRows(modImageRows);
+      // Create views for each row.
+      List<ModImageView> imageViews = List.generate(
+        fullTable.length,
+        (i) => ModImageView(i, fullTable),
+      );
 
-              // Optionally log each image’s details.
-              for (var view in imageViews) {
-                if (showCountedFiles) {
-                  progressText.appendAndPrint(
-                    "${p.relative(view.file.path, from: modInfo.modFolder)} - TexHeight: ${view.textureHeight}, TexWidth: ${view.textureWidth}, ChannelBits: ${view.bitsInAllChannelsSum}, Mult: ${view.multiplier}\n   --> ${view.textureHeight} * ${view.textureWidth} * ${view.bitsInAllChannelsSum} * ${view.multiplier} = ${view.bytesUsed} bytes added over vanilla",
-                    verboseOut,
-                  );
-                }
-              }
+      // Filter out unused images.
+      final unusedViews = imageViews
+          .where((view) => view.imageType == ImageType.unused)
+          .toList();
+      if (unusedViews.isNotEmpty && showSkippedFiles) {
+        progressText.appendAndPrint("Skipping unused files", verboseOut);
+        for (var view in unusedViews) {
+          progressText.appendAndPrint(
+            "  ${p.relative(view.file.path, from: modInfo.modFolder)}",
+            verboseOut,
+          );
+        }
+      }
+      imageViews.removeWhere((view) => view.imageType == ImageType.unused);
 
-              // Reassemble the final table from the remaining image views.
-              final filteredRows = imageViews
-                  .map(
-                    (view) => {
-                      'filePath': view.filePath,
-                      'textureHeight': view.textureHeight,
-                      'textureWidth': view.textureWidth,
-                      'bitsInAllChannelsSum': view.bitsInAllChannelsSum,
-                      'imageType': view.imageType.name,
-                      'graphicsLibType': view.graphicsLibType?.name,
-                    },
-                  )
-                  .toList();
-              final finalTable = ModImageTable.fromRows(filteredRows);
+      // The game only loads one background at a time and vanilla always has one loaded.
+      // Therefore, a mod only increases the VRAM use by the size difference of the largest background over vanilla.
+      final backgroundViews = imageViews
+          .where((view) => view.imageType == ImageType.background)
+          .toList();
+      final largestBackground = backgroundViews
+          .where((view) => view.textureWidth > VANILLA_BACKGROUND_WIDTH)
+          .maxByOrNull<num>((view) => view.bytesUsed);
+      final modBackgroundsSmallerThanLargestVanilla = backgroundViews
+          .where(
+            (view) => largestBackground != null && view != largestBackground,
+          )
+          .toList();
+      if (modBackgroundsSmallerThanLargestVanilla.isNotEmpty) {
+        progressText.appendAndPrint(
+          "Skipping backgrounds that are not larger than vanilla and/or not the mod's largest background.",
+          verboseOut,
+        );
+        for (var view in modBackgroundsSmallerThanLargestVanilla) {
+          progressText.appendAndPrint(
+            "   ${p.relative(view.file.path, from: modInfo.modFolder)}",
+            verboseOut,
+          );
+        }
+      }
+      imageViews.removeWhere(
+        (view) => modBackgroundsSmallerThanLargestVanilla.contains(view),
+      );
 
-              final mod = VramMod(
-                modInfo,
-                (enabledModIds ?? []).contains(modInfo.modId),
-                finalTable,
-                graphicsLibEntries,
-              );
+      // Optionally log each image’s details.
+      for (var view in imageViews) {
+        if (showCountedFiles) {
+          progressText.appendAndPrint(
+            "${p.relative(view.file.path, from: modInfo.modFolder)} - TexHeight: ${view.textureHeight}, TexWidth: ${view.textureWidth}, ChannelBits: ${view.bitsInAllChannelsSum}, Mult: ${view.multiplier}\n   --> ${view.textureHeight} * ${view.textureWidth} * ${view.bitsInAllChannelsSum} * ${view.multiplier} = ${view.bytesUsed} bytes added over vanilla",
+            verboseOut,
+          );
+        }
+      }
 
-              if (showPerformance) {
-                progressText.appendAndPrint(
-                  "Finished calculating ${finalTable.length} file sizes for ${mod.info.formattedName} in ${(DateTime.timestamp().millisecondsSinceEpoch - timeFinishedGettingFileData)} ms",
-                  verboseOut,
-                );
-              }
-              progressText.appendAndPrint(
-                mod.bytesNotIncludingGraphicsLib().bytesAsReadableMB(),
-                verboseOut,
-              );
-              modProgressOut(mod);
-              return mod;
-            }).toList())
-            .sortedByDescending<num>((it) => it.bytesNotIncludingGraphicsLib())
-            .toList();
+      // Reassemble the final table from the remaining image views.
+      final filteredRows = imageViews
+          .map(
+            (view) => {
+              'filePath': view.filePath,
+              'textureHeight': view.textureHeight,
+              'textureWidth': view.textureWidth,
+              'bitsInAllChannelsSum': view.bitsInAllChannelsSum,
+              'imageType': view.imageType.name,
+              'graphicsLibType': view.graphicsLibType?.name,
+            },
+          )
+          .toList();
+      final finalTable = ModImageTable.fromRows(filteredRows);
+
+      final mod = VramMod(
+        modInfo,
+        (enabledModIds ?? []).contains(modInfo.modId),
+        finalTable,
+        graphicsLibEntries,
+      );
+
+      if (showPerformance) {
+        progressText.appendAndPrint(
+          "Finished calculating ${finalTable.length} file sizes for ${mod.info.formattedName} in ${(DateTime.timestamp().millisecondsSinceEpoch - timeFinishedGettingFileData)} ms",
+          verboseOut,
+        );
+      }
+      progressText.appendAndPrint(
+        mod.bytesNotIncludingGraphicsLib().bytesAsReadableMB(),
+        verboseOut,
+      );
+      modProgressOut(mod);
+      return mod;
+    }).toList()).sortedByDescending<num>((it) => it.bytesNotIncludingGraphicsLib()).toList();
 
     for (var mod in mods) {
       modTotals.writeln();

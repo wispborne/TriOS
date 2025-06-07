@@ -259,6 +259,8 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
             TextField(
               controller: newProfileNameController,
               decoration: const InputDecoration(labelText: 'Name'),
+              onSubmitted: (_) =>
+                  _onSubmittedNewProfile(newProfileNameController),
             ),
             const SizedBox(height: 8.0),
             Row(
@@ -270,21 +272,7 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                       "\nDoes not set it to active.",
                   child: OutlinedButton(
                     onPressed: () {
-                      if (newProfileNameController.text.isNotEmpty) {
-                        ref
-                            .read(modProfilesProvider.notifier)
-                            .createModProfile(
-                              newProfileNameController.text,
-                              enabledModVariants: ref
-                                  .read(AppState.enabledModVariants)
-                                  .map(
-                                    (mod) =>
-                                        ShallowModVariant.fromModVariant(mod),
-                                  )
-                                  .toList(),
-                            );
-                        newProfileNameController.clear();
-                      }
+                      _onSubmittedNewProfile(newProfileNameController);
                     },
                     child: const Text('Create Profile'),
                   ),
@@ -295,6 +283,21 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
         ),
       ),
     );
+  }
+
+  void _onSubmittedNewProfile(TextEditingController newProfileNameController) {
+    if (newProfileNameController.text.isNotEmpty) {
+      ref
+          .read(modProfilesProvider.notifier)
+          .createModProfile(
+            newProfileNameController.text,
+            enabledModVariants: ref
+                .read(AppState.enabledModVariants)
+                .map((mod) => ShallowModVariant.fromModVariant(mod))
+                .toList(),
+          );
+      newProfileNameController.clear();
+    }
   }
 }
 
@@ -393,14 +396,7 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                       ? IconButton(
                           icon: const Icon(Icons.check),
                           onPressed: () {
-                            ref
-                                .read(modProfilesProvider.notifier)
-                                .updateModProfile(
-                                  profile!.copyWith(name: _nameController.text),
-                                );
-                            setState(() {
-                              _editingProfileId = null;
-                            });
+                            _onSubmitProfileRename(profile);
                           },
                         )
                       : IconButton(
@@ -476,6 +472,9 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                                       decoration: const InputDecoration(
                                         labelText: 'Name',
                                       ),
+                                      onSubmitted: (value) {
+                                        _onSubmitProfileRename(profile);
+                                      },
                                     )
                                   : MovingTooltipWidget.text(
                                       message:
@@ -729,6 +728,15 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
         ),
       ),
     );
+  }
+
+  void _onSubmitProfileRename(ModProfile? profile) {
+    ref
+        .read(modProfilesProvider.notifier)
+        .updateModProfile(profile!.copyWith(name: _nameController.text));
+    setState(() {
+      _editingProfileId = null;
+    });
   }
 
   void _copyModListToClipboard(List<ShallowModVariant> enabledModVariants) {

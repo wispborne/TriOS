@@ -24,6 +24,7 @@
   - Further clarify that TriOS isn't needed to launch Starsector.
   - Removed warning from tooltip on Create Profile button that it would use the first versions of a mod that the save was made with, as Starsector now updates this version to the last one used.
   - The mod update tooltip is now more readable.
+  - May now hit Enter to finish editing a profile name.
 
 # 1.1.11
 - Fixed[descriptor.xml](../../../../../Applications/Starsector.app/saves/save_RyanBarrett_6385924199500988831/descriptor.xml)

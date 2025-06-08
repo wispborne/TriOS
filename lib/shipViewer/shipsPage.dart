@@ -9,6 +9,7 @@ import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_group.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/shipSystemsManager/ship_systems_manager.dart';
+import 'package:trios/shipViewer/filter_widget.dart';
 import 'package:trios/shipViewer/models/shipGpt.dart';
 import 'package:trios/shipViewer/shipManager.dart';
 import 'package:trios/thirdparty/dartx/iterable.dart';
@@ -44,6 +45,12 @@ class _ShipPageState extends ConsumerState<ShipPage>
   bool showEnabled = false;
   bool showSpoilers = false;
   bool splitPane = false;
+  bool showFilters = true;
+
+  // Filter states
+  Set<String> selectedHullSizes = <String>{};
+  Set<String> selectedDesignations = <String>{};
+  Set<String> selectedTechManufacturers = <String>{};
 
   @override
   List<Area> get areas =>
@@ -86,6 +93,27 @@ class _ShipPageState extends ConsumerState<ShipPage>
       }).toList();
     }
 
+    // Apply column filters
+    if (selectedHullSizes.isNotEmpty) {
+      ships = ships.where((ship) {
+        return selectedHullSizes.contains(ship.hullSizeForDisplay());
+      }).toList();
+    }
+
+    if (selectedDesignations.isNotEmpty) {
+      ships = ships.where((ship) {
+        final designation = ship.designation ?? '';
+        return selectedDesignations.contains(designation);
+      }).toList();
+    }
+
+    if (selectedTechManufacturers.isNotEmpty) {
+      ships = ships.where((ship) {
+        final tech = ship.techManufacturer ?? '';
+        return selectedTechManufacturers.contains(tech);
+      }).toList();
+    }
+
     final query = _searchController.value.text;
     if (query.isNotEmpty) {
       ships = ships.where((ship) {
@@ -99,6 +127,7 @@ class _ShipPageState extends ConsumerState<ShipPage>
 
     final total = shipsAsync.valueOrNull?.length;
     final visible = ships.length ?? 0;
+    final allShips = shipsAsync.valueOrNull ?? [];
 
     return Column(
       children: [
@@ -141,6 +170,19 @@ class _ShipPageState extends ConsumerState<ShipPage>
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
+                          MovingTooltipWidget.text(
+                            message: "Show/hide column filters",
+                            child: TriOSToolbarCheckboxButton(
+                              text: "Filters",
+                              value: showFilters,
+                              onChanged: (value) {
+                                setState(() {
+                                  showFilters = value ?? false;
+                                });
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 8),
                           MovingTooltipWidget.text(
                             message: "Only ships from enabled mods.",
                             child: TriOSToolbarCheckboxButton(
@@ -198,6 +240,111 @@ class _ShipPageState extends ConsumerState<ShipPage>
             ),
           ),
         ),
+        // Filter section
+        if (showFilters)
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.filter_list,
+                            size: 18,
+                            color: theme.colorScheme.primary,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Ship Filters',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: theme.colorScheme.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const Spacer(),
+                          if (selectedHullSizes.isNotEmpty ||
+                              selectedDesignations.isNotEmpty ||
+                              selectedTechManufacturers.isNotEmpty)
+                            TextButton.icon(
+                              onPressed: () {
+                                setState(() {
+                                  selectedHullSizes.clear();
+                                  selectedDesignations.clear();
+                                  selectedTechManufacturers.clear();
+                                });
+                              },
+                              icon: const Icon(Icons.clear_all, size: 16),
+                              label: const Text('Clear All Filters'),
+                              style: TextButton.styleFrom(
+                                foregroundColor: theme.colorScheme.error,
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        height: 400,
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 4,
+                          children: [
+                            SizedBox(
+                              width: 250,
+                              child: ShipFilterWidget(
+                                columnName: 'Hull Size',
+                                getValue: (ship) => ship.hullSizeForDisplay(),
+                                ships: allShips,
+                                selectedValues: selectedHullSizes,
+                                onSelectionChanged: (values) {
+                                  setState(() {
+                                    selectedHullSizes = values;
+                                  });
+                                },
+                              ),
+                            ),
+                            SizedBox(
+                              width: 250,
+                              child: ShipFilterWidget(
+                                columnName: 'Designation',
+                                getValue: (ship) => ship.designation ?? '',
+                                ships: allShips,
+                                selectedValues: selectedDesignations,
+                                onSelectionChanged: (values) {
+                                  setState(() {
+                                    selectedDesignations = values;
+                                  });
+                                },
+                              ),
+                            ),
+                            SizedBox(
+                              width: 300,
+                              child: ShipFilterWidget(
+                                columnName: 'Tech/Manufacturer',
+                                getValue: (ship) => ship.techManufacturer ?? '',
+                                ships: allShips,
+                                selectedValues: selectedTechManufacturers,
+                                onSelectionChanged: (values) {
+                                  setState(() {
+                                    selectedTechManufacturers = values;
+                                  });
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
         Expanded(
           child: Padding(
             padding: const EdgeInsets.all(8),

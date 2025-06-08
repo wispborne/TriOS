@@ -1,4 +1,4 @@
-# 1.2.0 (in dev)
+# 1.2.0
 - Added
   - Ships Viewer
   - MacOS and Linux now show the current JRE and RAM allocation (when hovering the launch button).

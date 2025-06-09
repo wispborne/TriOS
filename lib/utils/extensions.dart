@@ -893,13 +893,21 @@ extension IntExt on int {
 
 extension IntListExt on List<int> {
   int sum() {
-    return fold(0, (previousValue, element) => previousValue + element);
+    int sum = 0;
+    for (int i = 0; i < this.length; i++) {
+      sum += this[i];
+    }
+    return sum;
   }
 }
 
 extension NumListExt on List<num> {
   num sum() {
-    return fold(0, (previousValue, element) => previousValue + element);
+    num sum = 0;
+    for (int i = 0; i < this.length; i++) {
+      sum += this[i];
+    }
+    return sum;
   }
 
   // From Gemini

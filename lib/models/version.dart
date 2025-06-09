@@ -1,6 +1,5 @@
 import 'dart:math';
 
-import 'package:collection/collection.dart';
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
@@ -24,10 +23,10 @@ class Version with VersionMappable implements Comparable<Version> {
   });
 
   @override
-  String toString() => raw ?? [major, minor, patch, build].nonNulls.join(".");
+  String toString() => raw ?? [major, minor, patch, build].nonNulls.join('.');
 
   /// Ignores the `raw` field even if it exists.
-  String toStringFromParts() => [major, minor, patch, build].nonNulls.join(".");
+  String toStringFromParts() => [major, minor, patch, build].nonNulls.join('.');
 
   @override
   int compareTo(Version? other) {
@@ -89,6 +88,18 @@ class Version with VersionMappable implements Comparable<Version> {
 
   static Version zero() => Version.parse("0.0.0", sanitizeInput: true);
 
+  // Precompiled regex and suffix order
+  static final RegExp _regex = RegExp(r'(\d+|[a-zA-Z]+|[-\.]+)');
+  static final RegExp _sep = RegExp(r'[\s\-–_]+');
+  static final List<String> _suffixOrder = [
+    'dev',
+    'prerelease',
+    'pre',
+    'alpha',
+    'beta',
+    'rc',
+  ];
+
   (List<String>, List<String>) _normalizeAndSplitStringsToCompare(
     String a,
     String b,
@@ -147,36 +158,30 @@ class Version with VersionMappable implements Comparable<Version> {
   }
 
   int compareVersions(String a, String b) {
-    final suffixOrder = [
-      'dev',
-      'prerelease',
-      'pre',
-      'alpha',
-      'beta',
-      'rc',
-    ]; // Define the order of suffixes
-
     if (a == b) {
       Fimber.v(() => '$a is the same as $b');
       return 0;
     }
 
-    final regex = RegExp(r'(\d+|[a-zA-Z]+|[-\.]+)');
     final aOriginal = a;
     final bOriginal = b;
-    final aPartsOriginal = regex.allMatches(a).map((m) => m.group(0)!).toList();
-    final bPartsOriginal = regex.allMatches(b).map((m) => m.group(0)!).toList();
+    final aPartsOriginal = _regex
+        .allMatches(a)
+        .map((m) => m.group(0)!)
+        .toList();
+    final bPartsOriginal = _regex
+        .allMatches(b)
+        .map((m) => m.group(0)!)
+        .toList();
 
-    // Normalize version strings
-    a = a.replaceAll(RegExp(r'[\s\-–_]+'), '.');
-    b = b.replaceAll(RegExp(r'[\s\-–_]+'), '.');
+    a = a.replaceAll(_sep, '.');
+    b = b.replaceAll(_sep, '.');
 
-    // Normalize and split the strings for comparison
-    final (aParts, bParts) = _normalizeAndSplitStringsToCompare(a, b, regex);
+    final (aParts, bParts) = _normalizeAndSplitStringsToCompare(a, b, _regex);
 
     for (int i = 0; i < max(aParts.length, bParts.length); i++) {
-      var aPart = aParts.getOrNull(i) ?? '';
-      var bPart = bParts.getOrNull(i) ?? '';
+      final aPart = aParts.getOrNull(i) ?? '';
+      final bPart = bParts.getOrNull(i) ?? '';
 
       final aIsNumber = int.tryParse(aPart) != null;
       final bIsNumber = int.tryParse(bPart) != null;
@@ -184,142 +189,50 @@ class Version with VersionMappable implements Comparable<Version> {
       if (aIsNumber && bIsNumber) {
         final aNum = int.parse(aPart);
         final bNum = int.parse(bPart);
-
         if (aNum != bNum) {
-          if (aNum > bNum) {
-            Fimber.v(
-              () =>
-                  '$aOriginal ($a) is newer than $bOriginal ($b) because $aNum > $bNum',
-            );
-            return 1;
-          } else {
-            Fimber.v(
-              () =>
-                  '$bOriginal ($b) is newer than $aOriginal ($a) because $bNum > $aNum',
-            );
-            return -1;
-          }
+          Fimber.v(() => '$aOriginal ($a) vs $bOriginal ($b): $aNum vs $bNum');
+          return aNum > bNum ? 1 : -1;
         }
       } else if (aIsNumber && !bIsNumber) {
-        Fimber.v(
-          () =>
-              '$aOriginal ($a) is lower than $bOriginal ($b) because numbers come before letters or other characters',
-        );
-        return 1; // Numbers come before letters or other characters
+        Fimber.v(() => '$aOriginal ($a) num before letter');
+        return 1;
       } else if (!aIsNumber && bIsNumber) {
-        Fimber.v(
-          () =>
-              '$aOriginal ($a) is newer than $bOriginal ($b) because letters or other characters come after numbers',
-        );
-        return -1; // Letters or other characters come after numbers
+        Fimber.v(() => '$bOriginal ($b) num before letter');
+        return -1;
       } else {
-        final aLower = aPart.toLowerCase();
-        final bLower = bPart.toLowerCase();
+        final aLow = aPart.toLowerCase();
+        final bLow = bPart.toLowerCase();
+        final aContains = _suffixOrder.contains(aLow);
+        final bContains = _suffixOrder.contains(bLow);
+        if (aContains && bContains) {
+          final ai = _suffixOrder.indexOf(aLow);
+          final bi = _suffixOrder.indexOf(bLow);
+          if (ai != bi) return ai > bi ? 1 : -1;
+        } else if (aContains) {
+          return -1;
+        } else if (bContains) {
+          return 1;
+        }
 
-        final aContainsSuffix = suffixOrder.contains(aLower);
-        final bContainsSuffix = suffixOrder.contains(bLower);
-
-        if (aContainsSuffix && bContainsSuffix) {
-          final aIndex = suffixOrder.indexOf(aLower);
-          final bIndex = suffixOrder.indexOf(bLower);
-
-          if (aIndex != bIndex) {
-            if (aIndex > bIndex) {
-              Fimber.v(
-                () =>
-                    '$bOriginal ($b) is newer than $aOriginal ($a) because $bPart has a higher suffix precedence than $aPart',
-              );
-              return 1;
-            } else {
-              Fimber.v(
-                () =>
-                    '$aOriginal ($a) is newer than $bOriginal ($b) because $aPart has a higher suffix precedence than $bPart',
-              );
-              return -1;
-            }
-          }
-        } else if (aContainsSuffix) {
-          Fimber.v(
-            () =>
-                '$aOriginal ($a) is lower than $bOriginal ($b) because $aPart should come before the non-suffix part',
-          );
-          return -1; // Suffix should come before non-suffix part
-        } else if (bContainsSuffix) {
-          Fimber.v(
-            () =>
-                '$aOriginal ($a) is newer than $bOriginal ($b) because $bPart should come before the non-suffix part',
-          );
-          return 1; // Suffix should come before non-suffix part
-        } else {
-          if (aPart.isEmpty && bPart.isNotEmpty) {
-            Fimber.v(
-              () =>
-                  '$bOriginal ($b) is newer than $aOriginal ($a) because $a is empty and $b is not',
-            );
-            return -1;
-          }
-          if (aPart.isNotEmpty && bPart.isEmpty) {
-            Fimber.v(
-              () =>
-                  '$aOriginal ($a) is newer than $bOriginal ($b) because $b is empty and $a is not',
-            );
-            return 1;
-          }
-
+        if (aPart != bPart) {
           final cmp = aPart.compareTo(bPart);
-          if (cmp != 0) {
-            if (cmp > 0) {
-              Fimber.v(
-                () =>
-                    '$aOriginal ($a) is newer than $bOriginal ($b) because $aPart > $bPart lexically',
-              );
-              return 1;
-            } else {
-              Fimber.v(
-                () =>
-                    '$bOriginal ($b) is newer than $aOriginal ($a) because $bPart > $aPart lexically',
-              );
-              return -1;
-            }
-          }
+          Fimber.v(() => '$aPart vs $bPart lexical $cmp');
+          return cmp > 0 ? 1 : -1;
         }
       }
     }
 
-    // Final length-based comparison
-    final partsLengthComparison = aPartsOriginal.length.compareTo(
-      bPartsOriginal.length,
-    );
-    if (partsLengthComparison > 0) {
-      Fimber.v(
-        () =>
-            '$aOriginal ($a) is newer than $bOriginal ($b) because $a has more parts',
-      );
-      return 1;
-    } else if (partsLengthComparison < 0) {
-      Fimber.v(
-        () =>
-            '$bOriginal ($b) is newer than $aOriginal ($a) because $b has more parts',
-      );
-      return -1;
+    final lenCmp = aPartsOriginal.length.compareTo(bPartsOriginal.length);
+    if (lenCmp != 0) {
+      return lenCmp > 0 ? 1 : -1;
     }
 
-    final rawStringComparison = aOriginal.compareTo(bOriginal);
-    if (rawStringComparison > 0) {
-      Fimber.v(
-        () =>
-            '$aOriginal ($a) is newer than $bOriginal ($b) because $a is longer than $b',
-      );
-      return 1;
-    } else if (rawStringComparison < 0) {
-      Fimber.v(
-        () =>
-            '$bOriginal ($b) is newer than $aOriginal ($a) because $b is longer than $a',
-      );
-      return -1;
+    final rawCmp = aOriginal.compareTo(bOriginal);
+    if (rawCmp != 0) {
+      return rawCmp > 0 ? 1 : -1;
     }
 
-    Fimber.v(() => '$aOriginal ($a) is the same as $bOriginal ($b)');
+    Fimber.v(() => '$aOriginal same as $bOriginal');
     return 0;
   }
 }

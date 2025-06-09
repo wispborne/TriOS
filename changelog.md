@@ -1,3 +1,9 @@
+# 1.2.1
+- Fixed
+  - Performance regression when enabling/disabling mods.
+- Changed
+  - Hide GraphicsLib images from the Portraits Viewer.
+
 # 1.2.0
 - Added
   - Ships Viewer

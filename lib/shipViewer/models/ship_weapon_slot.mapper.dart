@@ -21,67 +21,32 @@ class ShipWeaponSlotMapper extends ClassMapperBase<ShipWeaponSlot> {
   final String id = 'ShipWeaponSlot';
 
   static double _$angle(ShipWeaponSlot v) => v.angle;
-  static const Field<ShipWeaponSlot, double> _f$angle = Field(
-    'angle',
-    _$angle,
-    opt: true,
-    def: 0,
-  );
+  static const Field<ShipWeaponSlot, double> _f$angle =
+      Field('angle', _$angle, opt: true, def: 0);
   static double _$arc(ShipWeaponSlot v) => v.arc;
-  static const Field<ShipWeaponSlot, double> _f$arc = Field(
-    'arc',
-    _$arc,
-    opt: true,
-    def: 0,
-  );
+  static const Field<ShipWeaponSlot, double> _f$arc =
+      Field('arc', _$arc, opt: true, def: 0);
   static String _$id(ShipWeaponSlot v) => v.id;
-  static const Field<ShipWeaponSlot, String> _f$id = Field(
-    'id',
-    _$id,
-    opt: true,
-    def: '',
-  );
+  static const Field<ShipWeaponSlot, String> _f$id =
+      Field('id', _$id, opt: true, def: '');
   static List<double> _$locations(ShipWeaponSlot v) => v.locations;
-  static const Field<ShipWeaponSlot, List<double>> _f$locations = Field(
-    'locations',
-    _$locations,
-    opt: true,
-    def: const [],
-  );
+  static const Field<ShipWeaponSlot, List<double>> _f$locations =
+      Field('locations', _$locations, opt: true, def: const []);
   static List<double> _$position(ShipWeaponSlot v) => v.position;
-  static const Field<ShipWeaponSlot, List<double>> _f$position = Field(
-    'position',
-    _$position,
-    opt: true,
-    def: const [],
-  );
+  static const Field<ShipWeaponSlot, List<double>> _f$position =
+      Field('position', _$position, opt: true, def: const []);
   static String _$mount(ShipWeaponSlot v) => v.mount;
-  static const Field<ShipWeaponSlot, String> _f$mount = Field(
-    'mount',
-    _$mount,
-    opt: true,
-    def: '',
-  );
+  static const Field<ShipWeaponSlot, String> _f$mount =
+      Field('mount', _$mount, opt: true, def: '');
   static String _$size(ShipWeaponSlot v) => v.size;
-  static const Field<ShipWeaponSlot, String> _f$size = Field(
-    'size',
-    _$size,
-    opt: true,
-    def: '',
-  );
+  static const Field<ShipWeaponSlot, String> _f$size =
+      Field('size', _$size, opt: true, def: '');
   static String _$type(ShipWeaponSlot v) => v.type;
-  static const Field<ShipWeaponSlot, String> _f$type = Field(
-    'type',
-    _$type,
-    opt: true,
-    def: '',
-  );
+  static const Field<ShipWeaponSlot, String> _f$type =
+      Field('type', _$type, opt: true, def: '');
   static double? _$renderOrderMod(ShipWeaponSlot v) => v.renderOrderMod;
-  static const Field<ShipWeaponSlot, double> _f$renderOrderMod = Field(
-    'renderOrderMod',
-    _$renderOrderMod,
-    opt: true,
-  );
+  static const Field<ShipWeaponSlot, double> _f$renderOrderMod =
+      Field('renderOrderMod', _$renderOrderMod, opt: true);
 
   @override
   final MappableFields<ShipWeaponSlot> fields = const {
@@ -98,16 +63,15 @@ class ShipWeaponSlotMapper extends ClassMapperBase<ShipWeaponSlot> {
 
   static ShipWeaponSlot _instantiate(DecodingData data) {
     return ShipWeaponSlot(
-      angle: data.dec(_f$angle),
-      arc: data.dec(_f$arc),
-      id: data.dec(_f$id),
-      locations: data.dec(_f$locations),
-      position: data.dec(_f$position),
-      mount: data.dec(_f$mount),
-      size: data.dec(_f$size),
-      type: data.dec(_f$type),
-      renderOrderMod: data.dec(_f$renderOrderMod),
-    );
+        angle: data.dec(_f$angle),
+        arc: data.dec(_f$arc),
+        id: data.dec(_f$id),
+        locations: data.dec(_f$locations),
+        position: data.dec(_f$position),
+        mount: data.dec(_f$mount),
+        size: data.dec(_f$size),
+        type: data.dec(_f$type),
+        renderOrderMod: data.dec(_f$renderOrderMod));
   }
 
   @override
@@ -124,43 +88,35 @@ class ShipWeaponSlotMapper extends ClassMapperBase<ShipWeaponSlot> {
 
 mixin ShipWeaponSlotMappable {
   String toJson() {
-    return ShipWeaponSlotMapper.ensureInitialized().encodeJson<ShipWeaponSlot>(
-      this as ShipWeaponSlot,
-    );
+    return ShipWeaponSlotMapper.ensureInitialized()
+        .encodeJson<ShipWeaponSlot>(this as ShipWeaponSlot);
   }
 
   Map<String, dynamic> toMap() {
-    return ShipWeaponSlotMapper.ensureInitialized().encodeMap<ShipWeaponSlot>(
-      this as ShipWeaponSlot,
-    );
+    return ShipWeaponSlotMapper.ensureInitialized()
+        .encodeMap<ShipWeaponSlot>(this as ShipWeaponSlot);
   }
 
   ShipWeaponSlotCopyWith<ShipWeaponSlot, ShipWeaponSlot, ShipWeaponSlot>
-  get copyWith => _ShipWeaponSlotCopyWithImpl<ShipWeaponSlot, ShipWeaponSlot>(
-    this as ShipWeaponSlot,
-    $identity,
-    $identity,
-  );
+      get copyWith =>
+          _ShipWeaponSlotCopyWithImpl<ShipWeaponSlot, ShipWeaponSlot>(
+              this as ShipWeaponSlot, $identity, $identity);
   @override
   String toString() {
-    return ShipWeaponSlotMapper.ensureInitialized().stringifyValue(
-      this as ShipWeaponSlot,
-    );
+    return ShipWeaponSlotMapper.ensureInitialized()
+        .stringifyValue(this as ShipWeaponSlot);
   }
 
   @override
   bool operator ==(Object other) {
-    return ShipWeaponSlotMapper.ensureInitialized().equalsValue(
-      this as ShipWeaponSlot,
-      other,
-    );
+    return ShipWeaponSlotMapper.ensureInitialized()
+        .equalsValue(this as ShipWeaponSlot, other);
   }
 
   @override
   int get hashCode {
-    return ShipWeaponSlotMapper.ensureInitialized().hashValue(
-      this as ShipWeaponSlot,
-    );
+    return ShipWeaponSlotMapper.ensureInitialized()
+        .hashValue(this as ShipWeaponSlot);
   }
 }
 
@@ -174,20 +130,18 @@ abstract class ShipWeaponSlotCopyWith<$R, $In extends ShipWeaponSlot, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
   ListCopyWith<$R, double, ObjectCopyWith<$R, double, double>> get locations;
   ListCopyWith<$R, double, ObjectCopyWith<$R, double, double>> get position;
-  $R call({
-    double? angle,
-    double? arc,
-    String? id,
-    List<double>? locations,
-    List<double>? position,
-    String? mount,
-    String? size,
-    String? type,
-    double? renderOrderMod,
-  });
+  $R call(
+      {double? angle,
+      double? arc,
+      String? id,
+      List<double>? locations,
+      List<double>? position,
+      String? mount,
+      String? size,
+      String? type,
+      double? renderOrderMod});
   ShipWeaponSlotCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
-    Then<$Out2, $R2> t,
-  );
+      Then<$Out2, $R2> t);
 }
 
 class _ShipWeaponSlotCopyWithImpl<$R, $Out>
@@ -200,57 +154,48 @@ class _ShipWeaponSlotCopyWithImpl<$R, $Out>
       ShipWeaponSlotMapper.ensureInitialized();
   @override
   ListCopyWith<$R, double, ObjectCopyWith<$R, double, double>> get locations =>
-      ListCopyWith(
-        $value.locations,
-        (v, t) => ObjectCopyWith(v, $identity, t),
-        (v) => call(locations: v),
-      );
+      ListCopyWith($value.locations, (v, t) => ObjectCopyWith(v, $identity, t),
+          (v) => call(locations: v));
   @override
   ListCopyWith<$R, double, ObjectCopyWith<$R, double, double>> get position =>
-      ListCopyWith(
-        $value.position,
-        (v, t) => ObjectCopyWith(v, $identity, t),
-        (v) => call(position: v),
-      );
+      ListCopyWith($value.position, (v, t) => ObjectCopyWith(v, $identity, t),
+          (v) => call(position: v));
   @override
-  $R call({
-    double? angle,
-    double? arc,
-    String? id,
-    List<double>? locations,
-    List<double>? position,
-    String? mount,
-    String? size,
-    String? type,
-    Object? renderOrderMod = $none,
-  }) => $apply(
-    FieldCopyWithData({
-      if (angle != null) #angle: angle,
-      if (arc != null) #arc: arc,
-      if (id != null) #id: id,
-      if (locations != null) #locations: locations,
-      if (position != null) #position: position,
-      if (mount != null) #mount: mount,
-      if (size != null) #size: size,
-      if (type != null) #type: type,
-      if (renderOrderMod != $none) #renderOrderMod: renderOrderMod,
-    }),
-  );
+  $R call(
+          {double? angle,
+          double? arc,
+          String? id,
+          List<double>? locations,
+          List<double>? position,
+          String? mount,
+          String? size,
+          String? type,
+          Object? renderOrderMod = $none}) =>
+      $apply(FieldCopyWithData({
+        if (angle != null) #angle: angle,
+        if (arc != null) #arc: arc,
+        if (id != null) #id: id,
+        if (locations != null) #locations: locations,
+        if (position != null) #position: position,
+        if (mount != null) #mount: mount,
+        if (size != null) #size: size,
+        if (type != null) #type: type,
+        if (renderOrderMod != $none) #renderOrderMod: renderOrderMod
+      }));
   @override
   ShipWeaponSlot $make(CopyWithData data) => ShipWeaponSlot(
-    angle: data.get(#angle, or: $value.angle),
-    arc: data.get(#arc, or: $value.arc),
-    id: data.get(#id, or: $value.id),
-    locations: data.get(#locations, or: $value.locations),
-    position: data.get(#position, or: $value.position),
-    mount: data.get(#mount, or: $value.mount),
-    size: data.get(#size, or: $value.size),
-    type: data.get(#type, or: $value.type),
-    renderOrderMod: data.get(#renderOrderMod, or: $value.renderOrderMod),
-  );
+      angle: data.get(#angle, or: $value.angle),
+      arc: data.get(#arc, or: $value.arc),
+      id: data.get(#id, or: $value.id),
+      locations: data.get(#locations, or: $value.locations),
+      position: data.get(#position, or: $value.position),
+      mount: data.get(#mount, or: $value.mount),
+      size: data.get(#size, or: $value.size),
+      type: data.get(#type, or: $value.type),
+      renderOrderMod: data.get(#renderOrderMod, or: $value.renderOrderMod));
 
   @override
   ShipWeaponSlotCopyWith<$R2, ShipWeaponSlot, $Out2> $chain<$R2, $Out2>(
-    Then<$Out2, $R2> t,
-  ) => _ShipWeaponSlotCopyWithImpl<$R2, $Out2>($value, $cast, t);
+          Then<$Out2, $R2> t) =>
+      _ShipWeaponSlotCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }

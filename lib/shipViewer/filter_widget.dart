@@ -2,29 +2,55 @@ import 'package:flutter/material.dart';
 import 'package:trios/shipViewer/models/shipGpt.dart';
 import 'package:trios/widgets/text_trios.dart';
 
-class ShipFilterWidget extends StatefulWidget {
-  final String columnName;
-  final String Function(Ship) getValue;
-  final List<Ship> ships;
-  final Set<String> selectedValues;
-  final ValueChanged<Set<String>> onSelectionChanged;
+class GridFilter {
+  final String name;
+  final String Function(Ship) valueGetter;
+  final String Function(String)? displayNameGetter;
 
-  const ShipFilterWidget({
+  // Map of values to filter states:
+  // true = include, false = exclude, null = no filter
+  final Map<String, bool?> filterStates = {};
+
+  GridFilter({
+    required this.name,
+    required this.valueGetter,
+    this.displayNameGetter,
+  });
+
+  Set<String> get includedValues => filterStates.entries
+      .where((e) => e.value == true)
+      .map((e) => e.key)
+      .toSet();
+
+  Set<String> get excludedValues => filterStates.entries
+      .where((e) => e.value == false)
+      .map((e) => e.key)
+      .toSet();
+
+  bool get hasActiveFilters => filterStates.isNotEmpty;
+}
+
+class GridFilterWidget extends StatefulWidget {
+  final GridFilter filter;
+  final List<Ship> ships;
+  final Map<String, bool?> filterStates;
+  final Function(Map<String, bool?>) onSelectionChanged;
+
+  const GridFilterWidget({
     super.key,
-    required this.columnName,
-    required this.getValue,
+    required this.filter,
     required this.ships,
-    required this.selectedValues,
+    required this.filterStates,
     required this.onSelectionChanged,
   });
 
   @override
-  State<ShipFilterWidget> createState() => _ShipFilterWidgetState();
+  State<GridFilterWidget> createState() => _GridFilterWidgetState();
 }
 
-class _ShipFilterWidgetState extends State<ShipFilterWidget> {
+class _GridFilterWidgetState extends State<GridFilterWidget> {
   List<String> _uniqueValues = [];
-  bool _isExpanded = false;
+  bool _isExpanded = true;
 
   @override
   void initState() {
@@ -33,7 +59,7 @@ class _ShipFilterWidgetState extends State<ShipFilterWidget> {
   }
 
   @override
-  void didUpdateWidget(ShipFilterWidget oldWidget) {
+  void didUpdateWidget(GridFilterWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.ships != widget.ships) {
       _updateUniqueValues();
@@ -42,7 +68,7 @@ class _ShipFilterWidgetState extends State<ShipFilterWidget> {
 
   void _updateUniqueValues() {
     final values = widget.ships
-        .map(widget.getValue)
+        .map(widget.filter.valueGetter)
         .where((value) => value.isNotEmpty)
         .toSet()
         .toList();
@@ -51,29 +77,54 @@ class _ShipFilterWidgetState extends State<ShipFilterWidget> {
   }
 
   void _toggleValue(String value) {
-    final newSelection = Set<String>.from(widget.selectedValues);
-    if (newSelection.contains(value)) {
-      newSelection.remove(value);
+    // Create a copy of the current filter states
+    final newFilterStates = Map<String, bool?>.from(widget.filterStates);
+
+    // Cycle through states: null -> true -> false -> null
+    bool? currentState = widget.filterStates[value];
+    bool? newState;
+
+    if (currentState == null) {
+      newState = true; // Include
+    } else if (currentState == true) {
+      newState = false; // Exclude
     } else {
-      newSelection.add(value);
+      newState = null; // No filter
     }
-    widget.onSelectionChanged(newSelection);
+
+    if (newState == null) {
+      newFilterStates.remove(value);
+    } else {
+      newFilterStates[value] = newState;
+    }
+
+    widget.onSelectionChanged(newFilterStates);
   }
 
   void _selectAll() {
-    widget.onSelectionChanged(_uniqueValues.toSet());
+    final newFilterStates = Map<String, bool?>.from(widget.filterStates);
+    for (final value in _uniqueValues) {
+      newFilterStates[value] = true;
+    }
+    widget.onSelectionChanged(newFilterStates);
   }
 
   void _clearAll() {
-    widget.onSelectionChanged(<String>{});
+    widget.onSelectionChanged({});
   }
+
+  int get includedCount =>
+      widget.filterStates.values.where((v) => v == true).length;
+
+  int get excludedCount =>
+      widget.filterStates.values.where((v) => v == false).length;
+
+  int get totalCount => _uniqueValues.length;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final hasSelection = widget.selectedValues.isNotEmpty;
-    final selectedCount = widget.selectedValues.length;
-    final totalCount = _uniqueValues.length;
+    final hasFilters = widget.filterStates.isNotEmpty;
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
@@ -82,22 +133,50 @@ class _ShipFilterWidgetState extends State<ShipFilterWidget> {
         children: [
           InkWell(
             onTap: () => setState(() => _isExpanded = !_isExpanded),
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(12),
+              topRight: Radius.circular(12),
+            ),
             child: Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(4),
               child: Row(
                 children: [
-                  Expanded(
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     child: TextTriOS(
-                      widget.columnName,
+                      widget.filter.name,
                       style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: hasSelection
-                            ? theme.colorScheme.primary
-                            : theme.colorScheme.onSurface,
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.onSurface,
                       ),
                     ),
                   ),
-                  if (hasSelection)
+                  IconButton(
+                    onPressed: _selectAll,
+                    icon: const Icon(Icons.check_box, size: 16),
+                    tooltip: 'Include all',
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      minimumSize: const Size(0, 32),
+                      foregroundColor: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  IconButton(
+                    onPressed: _clearAll,
+                    icon: const Icon(Icons.check_box_outline_blank, size: 16),
+                    tooltip: 'Clear all filters',
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      minimumSize: const Size(0, 32),
+                      foregroundColor: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                  Spacer(),
+                  if (hasFilters)
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 8,
@@ -111,7 +190,7 @@ class _ShipFilterWidgetState extends State<ShipFilterWidget> {
                         ),
                       ),
                       child: TextTriOS(
-                        '$selectedCount/$totalCount',
+                        '${includedCount}+ ${excludedCount}-',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.primary,
                           fontWeight: FontWeight.w500,
@@ -123,71 +202,85 @@ class _ShipFilterWidgetState extends State<ShipFilterWidget> {
             ),
           ),
           const Divider(height: 1),
-          Padding(
-            padding: const EdgeInsets.all(4),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Select/Clear buttons
-                Row(
-                  children: [
-                    TextButton.icon(
-                      onPressed: _selectAll,
-                      icon: const Icon(Icons.check_box, size: 16),
-                      label: const Text('Select All'),
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        minimumSize: const Size(0, 32),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    TextButton.icon(
-                      onPressed: _clearAll,
-                      icon: const Icon(Icons.check_box_outline_blank, size: 16),
-                      label: const Text('Clear'),
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        minimumSize: const Size(0, 32),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
+          if (_isExpanded)
+            Padding(
+              padding: const EdgeInsets.all(4),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 4),
+                  SizedBox(
+                    height: 200,
+                    child: SingleChildScrollView(
+                      child: Wrap(
+                        spacing: 4,
+                        runSpacing: 4,
+                        children: _uniqueValues.map((value) {
+                          final state = widget.filterStates[value];
 
-                SizedBox(
-                  height: 200,
-                  child: SingleChildScrollView(
-                    child: Wrap(
-                      spacing: 4,
-                      runSpacing: 4,
-                      children: _uniqueValues.map((value) {
-                        final isSelected = widget.selectedValues.contains(
-                          value,
-                        );
-                        return FilterChip(
-                          label: Text(
-                            value,
-                            style: theme.textTheme.labelMedium,
-                          ),
-                          selected: isSelected,
-                          onSelected: (_) => _toggleValue(value),
-                          selectedColor: theme.colorScheme.primary.withOpacity(
-                            0.15,
-                          ),
-                          checkmarkColor: theme.colorScheme.primary,
-                          side: BorderSide(
-                            color: isSelected
-                                ? theme.colorScheme.primary
-                                : theme.colorScheme.outline.withOpacity(0.25),
-                          ),
-                        );
-                      }).toList(),
+                          // Determine the visual style based on state
+                          Color? chipColor;
+                          Icon? leadingIcon;
+                          BorderSide? side;
+
+                          switch (state) {
+                            case true: // Include
+                              chipColor = theme.colorScheme.primaryContainer;
+                              leadingIcon = Icon(
+                                Icons.check,
+                                size: 16,
+                                color: theme.colorScheme.primary,
+                              );
+                              side = BorderSide(
+                                color: theme.colorScheme.primary,
+                              );
+                              break;
+                            case false: // Exclude
+                              chipColor = theme.colorScheme.secondaryContainer;
+                              leadingIcon = Icon(
+                                Icons.remove,
+                                size: 16,
+                                color: theme.colorScheme.secondary,
+                              );
+                              side = BorderSide(
+                                color: theme.colorScheme.secondary,
+                              );
+                              break;
+                            case null: // No filter
+                              chipColor = null;
+                              leadingIcon = null;
+                              side = BorderSide(
+                                color: theme.colorScheme.outline.withOpacity(
+                                  0.25,
+                                ),
+                              );
+                              break;
+                          }
+
+                          return FilterChip(
+                            label: Text(
+                              widget.filter.displayNameGetter != null
+                                  ? widget.filter.displayNameGetter!(value)
+                                  : value,
+                              style: theme.textTheme.labelMedium,
+                            ),
+                            selected: state != null,
+                            avatar: leadingIcon,
+                            onSelected: (_) => _toggleValue(value),
+                            selectedColor: chipColor,
+                            checkmarkColor: Colors.transparent,
+                            // Hide the default checkmark
+                            backgroundColor: Colors.transparent,
+                            side: side,
+                            showCheckmark: false,
+                          );
+                        }).toList(),
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
         ],
       ),
     );

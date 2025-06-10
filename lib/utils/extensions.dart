@@ -37,6 +37,9 @@ extension DoubleExt on double {
   double div(double other) {
     return this / other;
   }
+
+  String toStringMinimizingDigits(int fractionDigits) =>
+      toStringAsFixed(truncateToDouble() == this ? 0 : fractionDigits);
 }
 // Long.bytesAsReadableMB: String
 // get() = "%.3f MB".format(this / 1000000f)
@@ -893,13 +896,21 @@ extension IntExt on int {
 
 extension IntListExt on List<int> {
   int sum() {
-    return fold(0, (previousValue, element) => previousValue + element);
+    int sum = 0;
+    for (int i = 0; i < this.length; i++) {
+      sum += this[i];
+    }
+    return sum;
   }
 }
 
 extension NumListExt on List<num> {
   num sum() {
-    return fold(0, (previousValue, element) => previousValue + element);
+    num sum = 0;
+    for (int i = 0; i < this.length; i++) {
+      sum += this[i];
+    }
+    return sum;
   }
 
   // From Gemini

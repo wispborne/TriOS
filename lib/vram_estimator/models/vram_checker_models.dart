@@ -2,9 +2,9 @@ import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:dart_mappable/dart_mappable.dart';
-import 'package:ktx/collections.dart';
 import 'package:trios/models/mod_info.dart';
 import 'package:trios/models/mod_variant.dart';
+import 'package:trios/utils/extensions.dart';
 import 'package:trios/vram_estimator/models/graphics_lib_config.dart';
 import 'package:trios/vram_estimator/models/graphics_lib_info.dart';
 
@@ -218,11 +218,6 @@ class VramMod with VramModMappable {
 
   VramMod(this.info, this.isEnabled, this.images, this.graphicsLibEntries);
 
-  /// Computes the total bytes used by all images in the table.
-  late final int _maxPossibleBytesForMod = Iterable<int>.generate(
-    images.length,
-  ).map((i) => ModImageView(i, images).bytesUsed).sum;
-
   ModImageView getModViewForIndex(int index) => ModImageView(index, images);
 
   List<int>? _cache;
@@ -242,5 +237,5 @@ class VramMod with VramModMappable {
     return _cache!;
   }
 
-  int bytesNotIncludingGraphicsLib() => imagesNotIncludingGraphicsLib().sum;
+  int bytesNotIncludingGraphicsLib() => imagesNotIncludingGraphicsLib().sum();
 }

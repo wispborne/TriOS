@@ -3,7 +3,9 @@ import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:crypto/crypto.dart';
+import 'package:hashlib/hashlib.dart';
 import 'package:image/image.dart';
+import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/logging.dart';
 
 import '../models/mod_variant.dart';
@@ -28,7 +30,11 @@ Future<Map<ModVariant, List<Portrait>>> scanModFoldersForSquareImages(
 
       if (await modVariant.modFolder.exists()) {
         await for (var entity in modVariant.modFolder.list(recursive: true)) {
-          if (entity is File && await _isImageFile(entity)) {
+          // Skip files GraphicsLib (it has that /cache folder with generated normal maps,
+          // and also it doesn't have any portraits
+          if (entity is File &&
+              !(modVariant.modInfo.id == Constants.graphicsLibId) &&
+              await _isImageFile(entity)) {
             try {
               Uint8List imageBytes = await entity.readAsBytes();
               final (imageWidth, imageHeight) = await getImageSize(imageBytes);
@@ -104,7 +110,7 @@ Future<(int, int)> getImageSize(Uint8List data) async {
 }
 
 String hashImageBytes(Uint8List imageBytes) {
-  var digest = md5.convert(imageBytes);
+  var digest = crc64.convert(imageBytes);
   return digest.toString();
 }
 

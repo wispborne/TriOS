@@ -2,6 +2,7 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trios/models/version.dart';
+import 'package:trios/utils/logging.dart';
 
 void main() {
   test('problem comparisons', () {
@@ -37,6 +38,28 @@ void main() {
         ..sort((a, b) => a.compareTo(b));
       expect(sorted, versions);
     }
+  });
+
+  test('benchmark', () {
+    // Disable slow console log output
+    configureLogging(consoleOnly: true);
+
+    final iterations = 1000;
+    final versions = _expectedList
+        .map((v) => Version.parse(v, sanitizeInput: true))
+        .toList();
+
+    final start = DateTime.now().millisecondsSinceEpoch;
+    for (int i = 0; i < iterations; i++) {
+      final sorted = versions.toList()
+        ..shuffle()
+        ..sort((a, b) => a.compareTo(b));
+    }
+    final end = DateTime.now().millisecondsSinceEpoch;
+    final duration = end - start;
+    print(
+      'Sorting ${versions.length} items $iterations times took $duration ms',
+    );
   });
 }
 

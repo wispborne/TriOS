@@ -86,6 +86,7 @@ class WispAdaptiveGridView<T> extends StatelessWidget {
 
         return ListView.builder(
           padding: padding,
+          primary: true,
           itemCount: totalRows,
           shrinkWrap: shrinkWrap,
           itemBuilder: (context, rowIndex) {

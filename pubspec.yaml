@@ -41,6 +41,7 @@ dependencies:
   flutter_color: ^2.1.0
   google_fonts: ^6.2.1
   hooks_riverpod: ^2.6.1
+  hashlib: ^1.21.2
   html: ^0.15.6
   image: ^4.5.4
   image_size_getter: ^2.4.0

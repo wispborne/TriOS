@@ -403,10 +403,10 @@ class _ShipPageState extends ConsumerState<ShipPage>
       items: items,
       itemExtent: 50,
       scrollbarConfig: ScrollbarConfig(
-        showLeftScrollbar: true,
-        showRightScrollbar: true,
+        showLeftScrollbar: ScrollbarVisibility.always,
+        showRightScrollbar: ScrollbarVisibility.always,
+        showBottomScrollbar: ScrollbarVisibility.always,
       ),
-      alwaysShowScrollbar: true,
       rowBuilder: ({required item, required modifiers, required child}) =>
           SizedBox(height: 50, child: buildRowContextMenu(item, child)),
       groups: [ModShipGridGroup()],
@@ -435,7 +435,7 @@ class _ShipPageState extends ConsumerState<ShipPage>
     WispGridColumn<Ship> col(
       String key,
       String name,
-      String? Function(Ship) getValue, {
+      Comparable<dynamic>? Function(Ship) getValue, {
       double width = 100,
     }) {
       return WispGridColumn<Ship>(
@@ -443,11 +443,15 @@ class _ShipPageState extends ConsumerState<ShipPage>
         isSortable: true,
         name: name,
         getSortValue: getValue,
-        itemCellBuilder: (item, _) => TextTriOS(
-          getValue(item) ?? '',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
+        itemCellBuilder: (item, _) {
+          final value = getValue(item);
+          final str = switch (value) {
+            double dbl => dbl.toStringMinimizingDigits(2),
+            null => "",
+            _ => value.toString(),
+          };
+          return TextTriOS(str, maxLines: 1, overflow: TextOverflow.ellipsis);
+        },
         defaultState: WispGridColumnState(position: position++, width: width),
       );
     }

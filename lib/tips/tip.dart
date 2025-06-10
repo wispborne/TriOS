@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:trios/models/mod_variant.dart';
+import 'package:trios/utils/dart_mappable_utils.dart';
 
 part 'tip.mapper.dart';
 
@@ -36,6 +37,7 @@ class Tips with TipsMappable {
 class ModTip with ModTipMappable {
   final Tip tipObj;
   final List<ModVariant> variants;
+  @MappableField(hook: FileHook())
   final File tipFile;
 
   const ModTip({

@@ -1,4 +1,18 @@
-# 1.2.0 (in dev)
+# 1.2.2
+- Added
+  - Search bar for tips page.
+- Fixed
+  - Ship Viewer: Sorting did not work correctly for columns with numbers.
+- Changed
+  - Set some scrollbars to always be visible.
+
+# 1.2.1
+- Fixed
+  - Performance regression when enabling/disabling mods.
+- Changed
+  - Hide GraphicsLib images from the Portraits Viewer.
+
+# 1.2.0
 - Added
   - Ships Viewer
   - MacOS and Linux now show the current JRE and RAM allocation (when hovering the launch button).
@@ -9,6 +23,8 @@
   - Weapons Viewer: may now click on image to open in Explorer, and right-click to open data folder (same as Ships Viewer grid).
   - Mods page: may now right-click on groups (e.g. Enabled, Disabled) and take bulk actions on them.
 - Fixed
+  - A mod archive (zip/rar/7z) without a root-level folder would be installed to /mods, rather than creating a subfolder.
+    - Bug introduced in some recent version, it handled this correctly in the past.
   - Mods Grid: If two mod versions had the same Version Checker version but different mod_info.json versions, the "Click to use newer version" button could suggest updating to the wrong version.
   - Reordering columns on Mods/Weapons/Ships pages.
   - MacOS and Linux incorrectly showing warnings that the JRE wasn't supported.
@@ -17,7 +33,7 @@
   - Date formats did not respect your locale.
 - Changed
   - Greatly simplified GraphicsLib from VRAM estimation.
-    - Not as accurate, but GraphicsLib uses far less VRAM now so it shouldn't be too far off.
+    - Not quite as accurate as before the GraphicsLib 1.12.0 update, but GraphicsLib uses far less VRAM now so it shouldn't be too far off.
     - With GraphicsLib dynamically unloading textures, estimating VRAM becomes complex.
   - Mods page: Split the changelogs & Version Checker icons part of the `Version` column into their own column and added sorting for it.
     - Sorting is, in order: has update, then no update but has changelog, then no update and no changelog, then doesn't support version checker.
@@ -29,12 +45,6 @@
   - Removed warning from tooltip on Create Profile button that it would use the first versions of a mod that the save was made with, as Starsector now updates this version to the last one used.
   - The mod update tooltip is now more readable.
   - May now hit Enter to finish editing a profile name.
-
-# 1.1.11
-- Fixed[descriptor.xml](../../../../../Applications/Starsector.app/saves/save_RyanBarrett_6385924199500988831/descriptor.xml)
-  - A mod archive (zip/rar/7z) without a root-level folder would be installed to /mods, rather than creating a subfolder.
-    - Bug introduced in some recent version, it handled this correctly in the past.
-- Changed
   - Mods page: When sorting by a column other than Name, mods will be secondarily-sorted alphabetically.
 
 # 1.1.10

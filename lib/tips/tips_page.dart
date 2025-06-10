@@ -33,6 +33,7 @@ class _TipsPageState extends ConsumerState<TipsPage>
   @override
   bool get wantKeepAlive => true;
 
+  final SearchController _searchController = SearchController();
   bool _onlyEnabled = false;
   bool _showHidden = false;
   TipsGrouping _grouping = TipsGrouping.none;
@@ -171,6 +172,8 @@ class _TipsPageState extends ConsumerState<TipsPage>
                     ),
                     const SizedBox(width: 8),
                     _buildDeleteButton(context),
+                    const SizedBox(width: 8),
+                    buildSearchBox(),
                     const Spacer(),
                     MovingTooltipWidget.text(
                       message: 'Whether hidden tips are shown',
@@ -297,6 +300,17 @@ class _TipsPageState extends ConsumerState<TipsPage>
       _selectionStates.putIfAbsent(tip, () => false);
     }
 
+    final searchQuery = _searchController.value.text;
+    if (searchQuery.isNotEmpty) {
+      filtered = filtered.where((item) {
+        return item.toMap().values.any((value) {
+          return value.toString().toLowerCase().contains(
+            searchQuery.toLowerCase(),
+          );
+        });
+      }).toList();
+    }
+
     if (_grouping == TipsGrouping.mod) {
       // Group tips by mod.
       final Map<Mod, List<ModTip>> grouped = {};
@@ -309,90 +323,94 @@ class _TipsPageState extends ConsumerState<TipsPage>
       }
       final List<Mod> sortedKeys = grouped.keys.toList()..sort();
 
-      return SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.only(left: 8, right: 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              for (final mod in sortedKeys) ...[
-                Padding(
-                  padding: const EdgeInsets.only(top: 16, bottom: 8),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: ModIcon.fromMod(
-                          mod,
-                          padding: const EdgeInsets.only(left: 4),
-                        ),
-                      ),
-                      Text(
-                        '${mod.findFirstEnabledOrHighestVersion?.modInfo.nameOrId} (${grouped[mod]?.length ?? 0})',
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(width: 16),
-                      DenseButton(
-                        density: DenseButtonStyle.compact,
-                        child: OutlinedButton(
-                          style: ButtonStyle(
-                            foregroundColor: WidgetStateProperty.all(
-                              Theme.of(context).colorScheme.onSurface,
-                            ),
+      return Scrollbar(
+        thumbVisibility: true,
+        child: SingleChildScrollView(
+          primary: true,
+          child: Padding(
+            padding: const EdgeInsets.only(left: 8, right: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (final mod in sortedKeys) ...[
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16, bottom: 8),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: ModIcon.fromMod(
+                            mod,
+                            padding: const EdgeInsets.only(left: 4),
                           ),
-                          onPressed: () {
-                            final areAllSelected = grouped[mod]!.every(
-                              (t) => _selectionStates[t] ?? false,
-                            );
-                            setState(() {
-                              for (final tip in grouped[mod]!) {
-                                _selectionStates[tip] = !areAllSelected;
-                              }
-                            });
-                          },
-                          child: Text('Select'),
                         ),
-                      ),
-                    ],
+                        Text(
+                          '${mod.findFirstEnabledOrHighestVersion?.modInfo.nameOrId} (${grouped[mod]?.length ?? 0})',
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(width: 16),
+                        DenseButton(
+                          density: DenseButtonStyle.compact,
+                          child: OutlinedButton(
+                            style: ButtonStyle(
+                              foregroundColor: WidgetStateProperty.all(
+                                Theme.of(context).colorScheme.onSurface,
+                              ),
+                            ),
+                            onPressed: () {
+                              final areAllSelected = grouped[mod]!.every(
+                                (t) => _selectionStates[t] ?? false,
+                              );
+                              setState(() {
+                                for (final tip in grouped[mod]!) {
+                                  _selectionStates[tip] = !areAllSelected;
+                                }
+                              });
+                            },
+                            child: Text('Select'),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                Builder(
-                  builder: (context) {
-                    final List<ModTip> modTips = grouped[mod]!
-                      ..sort(
-                        (a, b) =>
-                            (b.tipObj.tip?.length ?? 0) -
-                            (a.tipObj.tip?.length ?? 0),
-                      );
-                    return WispAdaptiveGridView<ModTip>(
-                      items: modTips,
-                      minItemWidth: 350,
-                      shrinkWrap: true,
-                      horizontalSpacing: 8,
-                      verticalSpacing: 8,
-                      padding: const EdgeInsets.only(bottom: 8),
-                      itemBuilder: (context, tip, index) {
-                        return TipCardView(
-                          tip: tip,
-                          isSelected: _selectionStates[tip] ?? false,
-                          isHidden: hiddenTips.contains(tip),
-                          showMod: false,
-                          onSelected: (selected) {
-                            setState(() {
-                              _selectionStates[tip] = selected;
-                            });
-                          },
-                          hideTips: () => _hideSelectedAndClickedTip(tip),
-                          unhideTips: () => _unhideSelectedAndClickedTip(tip),
+                  Builder(
+                    builder: (context) {
+                      final List<ModTip> modTips = grouped[mod]!
+                        ..sort(
+                          (a, b) =>
+                              (b.tipObj.tip?.length ?? 0) -
+                              (a.tipObj.tip?.length ?? 0),
                         );
-                      },
-                    );
-                  },
-                ),
+                      return WispAdaptiveGridView<ModTip>(
+                        items: modTips,
+                        minItemWidth: 350,
+                        shrinkWrap: true,
+                        horizontalSpacing: 8,
+                        verticalSpacing: 8,
+                        padding: const EdgeInsets.only(bottom: 8),
+                        itemBuilder: (context, tip, index) {
+                          return TipCardView(
+                            tip: tip,
+                            isSelected: _selectionStates[tip] ?? false,
+                            isHidden: hiddenTips.contains(tip),
+                            showMod: false,
+                            onSelected: (selected) {
+                              setState(() {
+                                _selectionStates[tip] = selected;
+                              });
+                            },
+                            hideTips: () => _hideSelectedAndClickedTip(tip),
+                            unhideTips: () => _unhideSelectedAndClickedTip(tip),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       );
@@ -405,26 +423,29 @@ class _TipsPageState extends ConsumerState<TipsPage>
 
       return Padding(
         padding: const EdgeInsets.only(left: 8, right: 8),
-        child: WispAdaptiveGridView<ModTip>(
-          items: modTips,
-          minItemWidth: 350,
-          horizontalSpacing: 8,
-          verticalSpacing: 8,
-          padding: const EdgeInsets.only(bottom: 8),
-          itemBuilder: (context, tip, index) {
-            return TipCardView(
-              tip: tip,
-              isSelected: _selectionStates[tip] ?? false,
-              isHidden: hiddenTips.contains(tip),
-              onSelected: (selected) {
-                setState(() {
-                  _selectionStates[tip] = selected;
-                });
-              },
-              hideTips: () => _hideSelectedAndClickedTip(tip),
-              unhideTips: () => _unhideSelectedAndClickedTip(tip),
-            );
-          },
+        child: Scrollbar(
+          thumbVisibility: true,
+          child: WispAdaptiveGridView<ModTip>(
+            items: modTips,
+            minItemWidth: 350,
+            horizontalSpacing: 8,
+            verticalSpacing: 8,
+            padding: const EdgeInsets.only(bottom: 8),
+            itemBuilder: (context, tip, index) {
+              return TipCardView(
+                tip: tip,
+                isSelected: _selectionStates[tip] ?? false,
+                isHidden: hiddenTips.contains(tip),
+                onSelected: (selected) {
+                  setState(() {
+                    _selectionStates[tip] = selected;
+                  });
+                },
+                hideTips: () => _hideSelectedAndClickedTip(tip),
+                unhideTips: () => _unhideSelectedAndClickedTip(tip),
+              );
+            },
+          ),
         ),
       );
     }
@@ -443,6 +464,52 @@ class _TipsPageState extends ConsumerState<TipsPage>
 
   void _hideSelectedAndClickedTip(ModTip tip) {
     _hideTips(_getSelectedTips() + [tip]);
+  }
+
+  SizedBox buildSearchBox() {
+    return SizedBox(
+      height: 30,
+      width: 300,
+      child: SearchAnchor(
+        searchController: _searchController,
+        builder: (BuildContext context, SearchController controller) {
+          return SearchBar(
+            controller: controller,
+            leading: const Icon(Icons.search),
+            hintText: "Filter...",
+            trailing: [
+              controller.value.text.isEmpty
+                  ? Container()
+                  : IconButton(
+                icon: const Icon(Icons.clear),
+                constraints: const BoxConstraints(),
+                padding: EdgeInsets.zero,
+                onPressed: () {
+                  controller.clear();
+                  setState(() {});
+                },
+              ),
+            ],
+            backgroundColor: WidgetStateProperty.all(
+              Theme.of(context).colorScheme.surfaceContainer,
+            ),
+            onChanged: (value) {
+              setState(() {});
+            },
+          );
+        },
+        suggestionsBuilder:
+            (BuildContext context, SearchController controller) {
+          return [];
+        },
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 }
 

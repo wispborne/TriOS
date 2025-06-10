@@ -263,7 +263,11 @@ class _WeaponPageState extends ConsumerState<WeaponPage>
         columns: columns,
         items: items,
         itemExtent: 50,
-        alwaysShowScrollbar: true,
+        scrollbarConfig: ScrollbarConfig(
+          showLeftScrollbar: ScrollbarVisibility.always,
+          showRightScrollbar: ScrollbarVisibility.always,
+          showBottomScrollbar: ScrollbarVisibility.always,
+        ),
         rowBuilder: ({required item, required modifiers, required child}) =>
             SizedBox(
               height: 50,

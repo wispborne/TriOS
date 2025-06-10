@@ -323,90 +323,94 @@ class _TipsPageState extends ConsumerState<TipsPage>
       }
       final List<Mod> sortedKeys = grouped.keys.toList()..sort();
 
-      return SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.only(left: 8, right: 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              for (final mod in sortedKeys) ...[
-                Padding(
-                  padding: const EdgeInsets.only(top: 16, bottom: 8),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: ModIcon.fromMod(
-                          mod,
-                          padding: const EdgeInsets.only(left: 4),
-                        ),
-                      ),
-                      Text(
-                        '${mod.findFirstEnabledOrHighestVersion?.modInfo.nameOrId} (${grouped[mod]?.length ?? 0})',
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(width: 16),
-                      DenseButton(
-                        density: DenseButtonStyle.compact,
-                        child: OutlinedButton(
-                          style: ButtonStyle(
-                            foregroundColor: WidgetStateProperty.all(
-                              Theme.of(context).colorScheme.onSurface,
-                            ),
+      return Scrollbar(
+        thumbVisibility: true,
+        child: SingleChildScrollView(
+          primary: true,
+          child: Padding(
+            padding: const EdgeInsets.only(left: 8, right: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (final mod in sortedKeys) ...[
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16, bottom: 8),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: ModIcon.fromMod(
+                            mod,
+                            padding: const EdgeInsets.only(left: 4),
                           ),
-                          onPressed: () {
-                            final areAllSelected = grouped[mod]!.every(
-                              (t) => _selectionStates[t] ?? false,
-                            );
-                            setState(() {
-                              for (final tip in grouped[mod]!) {
-                                _selectionStates[tip] = !areAllSelected;
-                              }
-                            });
-                          },
-                          child: Text('Select'),
                         ),
-                      ),
-                    ],
+                        Text(
+                          '${mod.findFirstEnabledOrHighestVersion?.modInfo.nameOrId} (${grouped[mod]?.length ?? 0})',
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(width: 16),
+                        DenseButton(
+                          density: DenseButtonStyle.compact,
+                          child: OutlinedButton(
+                            style: ButtonStyle(
+                              foregroundColor: WidgetStateProperty.all(
+                                Theme.of(context).colorScheme.onSurface,
+                              ),
+                            ),
+                            onPressed: () {
+                              final areAllSelected = grouped[mod]!.every(
+                                (t) => _selectionStates[t] ?? false,
+                              );
+                              setState(() {
+                                for (final tip in grouped[mod]!) {
+                                  _selectionStates[tip] = !areAllSelected;
+                                }
+                              });
+                            },
+                            child: Text('Select'),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                Builder(
-                  builder: (context) {
-                    final List<ModTip> modTips = grouped[mod]!
-                      ..sort(
-                        (a, b) =>
-                            (b.tipObj.tip?.length ?? 0) -
-                            (a.tipObj.tip?.length ?? 0),
-                      );
-                    return WispAdaptiveGridView<ModTip>(
-                      items: modTips,
-                      minItemWidth: 350,
-                      shrinkWrap: true,
-                      horizontalSpacing: 8,
-                      verticalSpacing: 8,
-                      padding: const EdgeInsets.only(bottom: 8),
-                      itemBuilder: (context, tip, index) {
-                        return TipCardView(
-                          tip: tip,
-                          isSelected: _selectionStates[tip] ?? false,
-                          isHidden: hiddenTips.contains(tip),
-                          showMod: false,
-                          onSelected: (selected) {
-                            setState(() {
-                              _selectionStates[tip] = selected;
-                            });
-                          },
-                          hideTips: () => _hideSelectedAndClickedTip(tip),
-                          unhideTips: () => _unhideSelectedAndClickedTip(tip),
+                  Builder(
+                    builder: (context) {
+                      final List<ModTip> modTips = grouped[mod]!
+                        ..sort(
+                          (a, b) =>
+                              (b.tipObj.tip?.length ?? 0) -
+                              (a.tipObj.tip?.length ?? 0),
                         );
-                      },
-                    );
-                  },
-                ),
+                      return WispAdaptiveGridView<ModTip>(
+                        items: modTips,
+                        minItemWidth: 350,
+                        shrinkWrap: true,
+                        horizontalSpacing: 8,
+                        verticalSpacing: 8,
+                        padding: const EdgeInsets.only(bottom: 8),
+                        itemBuilder: (context, tip, index) {
+                          return TipCardView(
+                            tip: tip,
+                            isSelected: _selectionStates[tip] ?? false,
+                            isHidden: hiddenTips.contains(tip),
+                            showMod: false,
+                            onSelected: (selected) {
+                              setState(() {
+                                _selectionStates[tip] = selected;
+                              });
+                            },
+                            hideTips: () => _hideSelectedAndClickedTip(tip),
+                            unhideTips: () => _unhideSelectedAndClickedTip(tip),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       );
@@ -419,26 +423,29 @@ class _TipsPageState extends ConsumerState<TipsPage>
 
       return Padding(
         padding: const EdgeInsets.only(left: 8, right: 8),
-        child: WispAdaptiveGridView<ModTip>(
-          items: modTips,
-          minItemWidth: 350,
-          horizontalSpacing: 8,
-          verticalSpacing: 8,
-          padding: const EdgeInsets.only(bottom: 8),
-          itemBuilder: (context, tip, index) {
-            return TipCardView(
-              tip: tip,
-              isSelected: _selectionStates[tip] ?? false,
-              isHidden: hiddenTips.contains(tip),
-              onSelected: (selected) {
-                setState(() {
-                  _selectionStates[tip] = selected;
-                });
-              },
-              hideTips: () => _hideSelectedAndClickedTip(tip),
-              unhideTips: () => _unhideSelectedAndClickedTip(tip),
-            );
-          },
+        child: Scrollbar(
+          thumbVisibility: true,
+          child: WispAdaptiveGridView<ModTip>(
+            items: modTips,
+            minItemWidth: 350,
+            horizontalSpacing: 8,
+            verticalSpacing: 8,
+            padding: const EdgeInsets.only(bottom: 8),
+            itemBuilder: (context, tip, index) {
+              return TipCardView(
+                tip: tip,
+                isSelected: _selectionStates[tip] ?? false,
+                isHidden: hiddenTips.contains(tip),
+                onSelected: (selected) {
+                  setState(() {
+                    _selectionStates[tip] = selected;
+                  });
+                },
+                hideTips: () => _hideSelectedAndClickedTip(tip),
+                unhideTips: () => _unhideSelectedAndClickedTip(tip),
+              );
+            },
+          ),
         ),
       );
     }

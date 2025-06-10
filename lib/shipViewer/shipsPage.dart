@@ -256,10 +256,10 @@ class _ShipPageState extends ConsumerState<ShipPage>
       items: items,
       itemExtent: 50,
       scrollbarConfig: ScrollbarConfig(
-        showLeftScrollbar: true,
-        showRightScrollbar: true,
+        showLeftScrollbar: ScrollbarVisibility.always,
+        showRightScrollbar: ScrollbarVisibility.always,
+        showBottomScrollbar: ScrollbarVisibility.always,
       ),
-      alwaysShowScrollbar: true,
       rowBuilder: ({required item, required modifiers, required child}) =>
           SizedBox(height: 50, child: buildRowContextMenu(item, child)),
       groups: [ModShipGridGroup()],

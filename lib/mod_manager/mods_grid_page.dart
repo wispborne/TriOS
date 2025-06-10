@@ -227,6 +227,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                       }
                     });
                   },
+                  scrollbarConfig: ScrollbarConfig(),
                   selectedItem: selectedMod,
                   defaultGrouping: EnabledStateModGridGroup(),
                   defaultSortField: ModGridSortField.name.name,

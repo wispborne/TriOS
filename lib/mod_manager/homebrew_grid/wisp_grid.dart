@@ -38,7 +38,6 @@ class WispGrid<T extends WispGridItem> extends ConsumerStatefulWidget {
   final WispGridState gridState;
   final Function(WispGridState? Function(WispGridState)) updateGridState;
   final double? itemExtent;
-  final bool alwaysShowScrollbar;
   final double topPadding;
   final double bottomPadding;
 
@@ -60,7 +59,6 @@ class WispGrid<T extends WispGridItem> extends ConsumerStatefulWidget {
     required this.gridState,
     required this.updateGridState,
     this.itemExtent,
-    this.alwaysShowScrollbar = false,
     this.topPadding = 0,
     this.bottomPadding = 8,
     this.scrollbarConfig = const ScrollbarConfig(),
@@ -78,22 +76,20 @@ class WispGrid<T extends WispGridItem> extends ConsumerStatefulWidget {
 
 /// Configuration for scrollbars in WispGrid
 class ScrollbarConfig {
-  final bool showLeftScrollbar;
+  final ScrollbarVisibility showLeftScrollbar;
 
-  final bool showRightScrollbar;
+  final ScrollbarVisibility showRightScrollbar;
 
-  final bool showBottomScrollbar;
-
-  /// Whether scrollbars should always be visible (not auto-hiding)
-  final bool alwaysVisible;
+  final ScrollbarVisibility showBottomScrollbar;
 
   const ScrollbarConfig({
-    this.showLeftScrollbar = true,
-    this.showRightScrollbar = false,
-    this.showBottomScrollbar = true,
-    this.alwaysVisible = false,
+    this.showLeftScrollbar = ScrollbarVisibility.always,
+    this.showRightScrollbar = ScrollbarVisibility.never,
+    this.showBottomScrollbar = ScrollbarVisibility.auto,
   });
 }
+
+enum ScrollbarVisibility { auto, always, never }
 
 /// Provides readonly access to the grid's internal state.
 class WispGridController<T extends WispGridItem> {
@@ -300,32 +296,38 @@ class _WispGridState<T extends WispGridItem>
     Widget content = _buildVerticalScrollView(displayedMods, totalRowWidth);
 
     // Apply scrollbars based on configuration
-    if (widget.scrollbarConfig.showLeftScrollbar) {
+    if (widget.scrollbarConfig.showLeftScrollbar != ScrollbarVisibility.never) {
       content = Scrollbar(
         controller: _gridScrollControllerVertical,
         scrollbarOrientation: ScrollbarOrientation.left,
         thumbVisibility:
-            widget.scrollbarConfig.alwaysVisible || widget.alwaysShowScrollbar,
+            widget.scrollbarConfig.showLeftScrollbar ==
+            ScrollbarVisibility.always,
         child: content,
       );
     }
 
-    if (widget.scrollbarConfig.showRightScrollbar) {
+    if (widget.scrollbarConfig.showRightScrollbar !=
+        ScrollbarVisibility.never) {
       content = Scrollbar(
         controller: _gridScrollControllerVertical, // Same controller for sync
         scrollbarOrientation: ScrollbarOrientation.right,
         thumbVisibility:
-            widget.scrollbarConfig.alwaysVisible || widget.alwaysShowScrollbar,
+            widget.scrollbarConfig.showRightScrollbar ==
+            ScrollbarVisibility.always,
         child: content,
       );
     }
 
     // Apply horizontal scrollbar if needed
-    if (widget.scrollbarConfig.showBottomScrollbar) {
+    if (widget.scrollbarConfig.showBottomScrollbar !=
+        ScrollbarVisibility.never) {
       content = Scrollbar(
         controller: _gridScrollControllerHorizontal,
         scrollbarOrientation: ScrollbarOrientation.bottom,
-        thumbVisibility: widget.scrollbarConfig.alwaysVisible,
+        thumbVisibility:
+            widget.scrollbarConfig.showBottomScrollbar ==
+            ScrollbarVisibility.always,
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           controller: _gridScrollControllerHorizontal,

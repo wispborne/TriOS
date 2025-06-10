@@ -1,6 +1,8 @@
 # 1.2.2
 - Added
   - Search bar for tips page.
+- Changed
+  - Set some scrollbars to always be visible.
 
 # 1.2.1
 - Fixed

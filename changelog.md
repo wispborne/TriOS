@@ -1,3 +1,7 @@
+# 1.2.2
+- Added
+  - Search bar for tips page.
+
 # 1.2.1
 - Fixed
   - Performance regression when enabling/disabling mods.

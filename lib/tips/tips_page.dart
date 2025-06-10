@@ -33,6 +33,7 @@ class _TipsPageState extends ConsumerState<TipsPage>
   @override
   bool get wantKeepAlive => true;
 
+  final SearchController _searchController = SearchController();
   bool _onlyEnabled = false;
   bool _showHidden = false;
   TipsGrouping _grouping = TipsGrouping.none;
@@ -171,6 +172,8 @@ class _TipsPageState extends ConsumerState<TipsPage>
                     ),
                     const SizedBox(width: 8),
                     _buildDeleteButton(context),
+                    const SizedBox(width: 8),
+                    buildSearchBox(),
                     const Spacer(),
                     MovingTooltipWidget.text(
                       message: 'Whether hidden tips are shown',
@@ -295,6 +298,17 @@ class _TipsPageState extends ConsumerState<TipsPage>
     // Ensure we have an entry in _selectionStates for each tip.
     for (final tip in filtered) {
       _selectionStates.putIfAbsent(tip, () => false);
+    }
+
+    final searchQuery = _searchController.value.text;
+    if (searchQuery.isNotEmpty) {
+      filtered = filtered.where((item) {
+        return item.toMap().values.any((value) {
+          return value.toString().toLowerCase().contains(
+            searchQuery.toLowerCase(),
+          );
+        });
+      }).toList();
     }
 
     if (_grouping == TipsGrouping.mod) {
@@ -443,6 +457,52 @@ class _TipsPageState extends ConsumerState<TipsPage>
 
   void _hideSelectedAndClickedTip(ModTip tip) {
     _hideTips(_getSelectedTips() + [tip]);
+  }
+
+  SizedBox buildSearchBox() {
+    return SizedBox(
+      height: 30,
+      width: 300,
+      child: SearchAnchor(
+        searchController: _searchController,
+        builder: (BuildContext context, SearchController controller) {
+          return SearchBar(
+            controller: controller,
+            leading: const Icon(Icons.search),
+            hintText: "Filter...",
+            trailing: [
+              controller.value.text.isEmpty
+                  ? Container()
+                  : IconButton(
+                icon: const Icon(Icons.clear),
+                constraints: const BoxConstraints(),
+                padding: EdgeInsets.zero,
+                onPressed: () {
+                  controller.clear();
+                  setState(() {});
+                },
+              ),
+            ],
+            backgroundColor: WidgetStateProperty.all(
+              Theme.of(context).colorScheme.surfaceContainer,
+            ),
+            onChanged: (value) {
+              setState(() {});
+            },
+          );
+        },
+        suggestionsBuilder:
+            (BuildContext context, SearchController controller) {
+          return [];
+        },
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 }
 

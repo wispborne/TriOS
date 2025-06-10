@@ -92,6 +92,20 @@ class DirectoryHook extends MappingHook {
   }
 }
 
+class FileHook extends MappingHook {
+  const FileHook();
+
+  @override
+  File? beforeDecode(dynamic value) {
+    return value is String ? File(value) : null;
+  }
+
+  @override
+  String? beforeEncode(dynamic value) {
+    return value is File ? value.path : null;
+  }
+}
+
 class SafeDecodeHook<T> extends MappingHook {
   final T? defaultValue;
 

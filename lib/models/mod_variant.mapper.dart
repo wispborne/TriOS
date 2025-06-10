@@ -31,7 +31,7 @@ class ModVariantMapper extends ClassMapperBase<ModVariant> {
       Field('versionCheckerInfo', _$versionCheckerInfo);
   static Directory _$modFolder(ModVariant v) => v.modFolder;
   static const Field<ModVariant, Directory> _f$modFolder =
-      Field('modFolder', _$modFolder);
+      Field('modFolder', _$modFolder, hook: DirectoryHook());
   static bool _$hasNonBrickedModInfo(ModVariant v) => v.hasNonBrickedModInfo;
   static const Field<ModVariant, bool> _f$hasNonBrickedModInfo =
       Field('hasNonBrickedModInfo', _$hasNonBrickedModInfo);

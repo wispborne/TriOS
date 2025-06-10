@@ -7,6 +7,7 @@ import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/models/version_checker_info.dart';
+import 'package:trios/utils/dart_mappable_utils.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 
@@ -20,6 +21,7 @@ typedef SmolId = String;
 class ModVariant with ModVariantMappable implements Comparable<ModVariant> {
   final ModInfo modInfo;
   final VersionCheckerInfo? versionCheckerInfo;
+  @MappableField(hook: DirectoryHook())
   final Directory modFolder;
   final bool hasNonBrickedModInfo;
 

@@ -245,7 +245,8 @@ class ModTipMapper extends ClassMapperBase<ModTip> {
   static const Field<ModTip, List<ModVariant>> _f$variants =
       Field('variants', _$variants);
   static File _$tipFile(ModTip v) => v.tipFile;
-  static const Field<ModTip, File> _f$tipFile = Field('tipFile', _$tipFile);
+  static const Field<ModTip, File> _f$tipFile =
+      Field('tipFile', _$tipFile, hook: FileHook());
 
   @override
   final MappableFields<ModTip> fields = const {

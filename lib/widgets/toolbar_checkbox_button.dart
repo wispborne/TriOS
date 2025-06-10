@@ -36,9 +36,10 @@ class TriOSToolbarCheckboxButton extends StatelessWidget {
 }
 
 class TriOSToolbarItem extends StatelessWidget {
-  const TriOSToolbarItem({super.key, required this.child});
-
+  final double? elevation;
   final Widget child;
+
+  const TriOSToolbarItem({super.key, this.elevation, required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -46,6 +47,7 @@ class TriOSToolbarItem extends StatelessWidget {
     return SizedBox(
       height: 30,
       child: Card.outlined(
+        elevation: elevation,
         margin: const EdgeInsets.symmetric(),
         child: DefaultTextStyle.merge(
           child: child,

@@ -37,6 +37,9 @@ extension DoubleExt on double {
   double div(double other) {
     return this / other;
   }
+
+  String toStringMinimizingDigits(int fractionDigits) =>
+      toStringAsFixed(truncateToDouble() == this ? 0 : fractionDigits);
 }
 // Long.bytesAsReadableMB: String
 // get() = "%.3f MB".format(this / 1000000f)

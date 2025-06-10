@@ -288,7 +288,7 @@ class _ShipPageState extends ConsumerState<ShipPage>
     WispGridColumn<Ship> col(
       String key,
       String name,
-      String? Function(Ship) getValue, {
+      Comparable<dynamic>? Function(Ship) getValue, {
       double width = 100,
     }) {
       return WispGridColumn<Ship>(
@@ -296,11 +296,15 @@ class _ShipPageState extends ConsumerState<ShipPage>
         isSortable: true,
         name: name,
         getSortValue: getValue,
-        itemCellBuilder: (item, _) => TextTriOS(
-          getValue(item) ?? '',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
+        itemCellBuilder: (item, _) {
+          final value = getValue(item);
+          final str = switch (value) {
+            double dbl => dbl.toStringMinimizingDigits(2),
+            null => "",
+            _ => value.toString(),
+          };
+          return TextTriOS(str, maxLines: 1, overflow: TextOverflow.ellipsis);
+        },
         defaultState: WispGridColumnState(position: position++, width: width),
       );
     }

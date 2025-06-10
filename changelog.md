@@ -1,6 +1,8 @@
 # 1.2.2
 - Added
   - Search bar for tips page.
+- Fixed
+  - Ship Viewer: Sorting did not work correctly for columns with numbers.
 - Changed
   - Set some scrollbars to always be visible.
 

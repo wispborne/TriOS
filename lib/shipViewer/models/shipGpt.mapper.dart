@@ -35,112 +35,112 @@ class ShipMapper extends ClassMapperBase<Ship> {
   static String? _$systemId(Ship v) => v.systemId;
   static const Field<Ship, String> _f$systemId =
       Field('systemId', _$systemId, key: r'system id', opt: true);
-  static String? _$fleetPts(Ship v) => v.fleetPts;
-  static const Field<Ship, String> _f$fleetPts =
+  static double? _$fleetPts(Ship v) => v.fleetPts;
+  static const Field<Ship, double> _f$fleetPts =
       Field('fleetPts', _$fleetPts, key: r'fleet pts', opt: true);
-  static String? _$hitpoints(Ship v) => v.hitpoints;
-  static const Field<Ship, String> _f$hitpoints =
+  static double? _$hitpoints(Ship v) => v.hitpoints;
+  static const Field<Ship, double> _f$hitpoints =
       Field('hitpoints', _$hitpoints, opt: true);
-  static String? _$armorRating(Ship v) => v.armorRating;
-  static const Field<Ship, String> _f$armorRating =
+  static double? _$armorRating(Ship v) => v.armorRating;
+  static const Field<Ship, double> _f$armorRating =
       Field('armorRating', _$armorRating, key: r'armor rating', opt: true);
-  static String? _$maxFlux(Ship v) => v.maxFlux;
-  static const Field<Ship, String> _f$maxFlux =
+  static double? _$maxFlux(Ship v) => v.maxFlux;
+  static const Field<Ship, double> _f$maxFlux =
       Field('maxFlux', _$maxFlux, key: r'max flux', opt: true);
   static String? _$fluxPercent8654(Ship v) => v.fluxPercent8654;
   static const Field<Ship, String> _f$fluxPercent8654 =
       Field('fluxPercent8654', _$fluxPercent8654, key: r'8/6/5/4%', opt: true);
-  static String? _$fluxDissipation(Ship v) => v.fluxDissipation;
-  static const Field<Ship, String> _f$fluxDissipation = Field(
+  static double? _$fluxDissipation(Ship v) => v.fluxDissipation;
+  static const Field<Ship, double> _f$fluxDissipation = Field(
       'fluxDissipation', _$fluxDissipation,
       key: r'flux dissipation', opt: true);
-  static String? _$ordnancePoints(Ship v) => v.ordnancePoints;
-  static const Field<Ship, String> _f$ordnancePoints = Field(
+  static double? _$ordnancePoints(Ship v) => v.ordnancePoints;
+  static const Field<Ship, double> _f$ordnancePoints = Field(
       'ordnancePoints', _$ordnancePoints,
       key: r'ordnance points', opt: true);
-  static String? _$fighterBays(Ship v) => v.fighterBays;
-  static const Field<Ship, String> _f$fighterBays =
+  static double? _$fighterBays(Ship v) => v.fighterBays;
+  static const Field<Ship, double> _f$fighterBays =
       Field('fighterBays', _$fighterBays, key: r'fighter bays', opt: true);
-  static String? _$maxSpeed(Ship v) => v.maxSpeed;
-  static const Field<Ship, String> _f$maxSpeed =
+  static double? _$maxSpeed(Ship v) => v.maxSpeed;
+  static const Field<Ship, double> _f$maxSpeed =
       Field('maxSpeed', _$maxSpeed, key: r'max speed', opt: true);
-  static String? _$acceleration(Ship v) => v.acceleration;
-  static const Field<Ship, String> _f$acceleration =
+  static double? _$acceleration(Ship v) => v.acceleration;
+  static const Field<Ship, double> _f$acceleration =
       Field('acceleration', _$acceleration, opt: true);
-  static String? _$deceleration(Ship v) => v.deceleration;
-  static const Field<Ship, String> _f$deceleration =
+  static double? _$deceleration(Ship v) => v.deceleration;
+  static const Field<Ship, double> _f$deceleration =
       Field('deceleration', _$deceleration, opt: true);
-  static String? _$maxTurnRate(Ship v) => v.maxTurnRate;
-  static const Field<Ship, String> _f$maxTurnRate =
+  static double? _$maxTurnRate(Ship v) => v.maxTurnRate;
+  static const Field<Ship, double> _f$maxTurnRate =
       Field('maxTurnRate', _$maxTurnRate, key: r'max turn rate', opt: true);
-  static String? _$turnAcceleration(Ship v) => v.turnAcceleration;
-  static const Field<Ship, String> _f$turnAcceleration = Field(
+  static double? _$turnAcceleration(Ship v) => v.turnAcceleration;
+  static const Field<Ship, double> _f$turnAcceleration = Field(
       'turnAcceleration', _$turnAcceleration,
       key: r'turn acceleration', opt: true);
-  static String? _$mass(Ship v) => v.mass;
-  static const Field<Ship, String> _f$mass = Field('mass', _$mass, opt: true);
+  static double? _$mass(Ship v) => v.mass;
+  static const Field<Ship, double> _f$mass = Field('mass', _$mass, opt: true);
   static String? _$shieldType(Ship v) => v.shieldType;
   static const Field<Ship, String> _f$shieldType =
       Field('shieldType', _$shieldType, key: r'shield type', opt: true);
   static String? _$defenseId(Ship v) => v.defenseId;
   static const Field<Ship, String> _f$defenseId =
       Field('defenseId', _$defenseId, key: r'defense id', opt: true);
-  static String? _$shieldArc(Ship v) => v.shieldArc;
-  static const Field<Ship, String> _f$shieldArc =
+  static double? _$shieldArc(Ship v) => v.shieldArc;
+  static const Field<Ship, double> _f$shieldArc =
       Field('shieldArc', _$shieldArc, key: r'shield arc', opt: true);
-  static String? _$shieldUpkeep(Ship v) => v.shieldUpkeep;
-  static const Field<Ship, String> _f$shieldUpkeep =
+  static double? _$shieldUpkeep(Ship v) => v.shieldUpkeep;
+  static const Field<Ship, double> _f$shieldUpkeep =
       Field('shieldUpkeep', _$shieldUpkeep, key: r'shield upkeep', opt: true);
-  static String? _$shieldEfficiency(Ship v) => v.shieldEfficiency;
-  static const Field<Ship, String> _f$shieldEfficiency = Field(
+  static double? _$shieldEfficiency(Ship v) => v.shieldEfficiency;
+  static const Field<Ship, double> _f$shieldEfficiency = Field(
       'shieldEfficiency', _$shieldEfficiency,
       key: r'shield efficiency', opt: true);
-  static String? _$phaseCost(Ship v) => v.phaseCost;
-  static const Field<Ship, String> _f$phaseCost =
+  static double? _$phaseCost(Ship v) => v.phaseCost;
+  static const Field<Ship, double> _f$phaseCost =
       Field('phaseCost', _$phaseCost, key: r'phase cost', opt: true);
-  static String? _$phaseUpkeep(Ship v) => v.phaseUpkeep;
-  static const Field<Ship, String> _f$phaseUpkeep =
+  static double? _$phaseUpkeep(Ship v) => v.phaseUpkeep;
+  static const Field<Ship, double> _f$phaseUpkeep =
       Field('phaseUpkeep', _$phaseUpkeep, key: r'phase upkeep', opt: true);
-  static String? _$minCrew(Ship v) => v.minCrew;
-  static const Field<Ship, String> _f$minCrew =
+  static double? _$minCrew(Ship v) => v.minCrew;
+  static const Field<Ship, double> _f$minCrew =
       Field('minCrew', _$minCrew, key: r'min crew', opt: true);
-  static String? _$maxCrew(Ship v) => v.maxCrew;
-  static const Field<Ship, String> _f$maxCrew =
+  static double? _$maxCrew(Ship v) => v.maxCrew;
+  static const Field<Ship, double> _f$maxCrew =
       Field('maxCrew', _$maxCrew, key: r'max crew', opt: true);
-  static String? _$cargo(Ship v) => v.cargo;
-  static const Field<Ship, String> _f$cargo =
+  static double? _$cargo(Ship v) => v.cargo;
+  static const Field<Ship, double> _f$cargo =
       Field('cargo', _$cargo, opt: true);
-  static String? _$fuel(Ship v) => v.fuel;
-  static const Field<Ship, String> _f$fuel = Field('fuel', _$fuel, opt: true);
-  static String? _$fuelPerLY(Ship v) => v.fuelPerLY;
-  static const Field<Ship, String> _f$fuelPerLY =
+  static double? _$fuel(Ship v) => v.fuel;
+  static const Field<Ship, double> _f$fuel = Field('fuel', _$fuel, opt: true);
+  static double? _$fuelPerLY(Ship v) => v.fuelPerLY;
+  static const Field<Ship, double> _f$fuelPerLY =
       Field('fuelPerLY', _$fuelPerLY, key: r'fuel/ly', opt: true);
-  static String? _$range(Ship v) => v.range;
-  static const Field<Ship, String> _f$range =
+  static double? _$range(Ship v) => v.range;
+  static const Field<Ship, double> _f$range =
       Field('range', _$range, opt: true);
-  static String? _$maxBurn(Ship v) => v.maxBurn;
-  static const Field<Ship, String> _f$maxBurn =
+  static double? _$maxBurn(Ship v) => v.maxBurn;
+  static const Field<Ship, double> _f$maxBurn =
       Field('maxBurn', _$maxBurn, key: r'max burn', opt: true);
-  static String? _$baseValue(Ship v) => v.baseValue;
-  static const Field<Ship, String> _f$baseValue =
+  static double? _$baseValue(Ship v) => v.baseValue;
+  static const Field<Ship, double> _f$baseValue =
       Field('baseValue', _$baseValue, key: r'base value', opt: true);
-  static String? _$crPercentPerDay(Ship v) => v.crPercentPerDay;
-  static const Field<Ship, String> _f$crPercentPerDay =
+  static double? _$crPercentPerDay(Ship v) => v.crPercentPerDay;
+  static const Field<Ship, double> _f$crPercentPerDay =
       Field('crPercentPerDay', _$crPercentPerDay, key: r'cr %/day', opt: true);
-  static String? _$crToDeploy(Ship v) => v.crToDeploy;
-  static const Field<Ship, String> _f$crToDeploy =
+  static double? _$crToDeploy(Ship v) => v.crToDeploy;
+  static const Field<Ship, double> _f$crToDeploy =
       Field('crToDeploy', _$crToDeploy, key: r'cr to deploy', opt: true);
-  static String? _$peakCrSec(Ship v) => v.peakCrSec;
-  static const Field<Ship, String> _f$peakCrSec =
+  static double? _$peakCrSec(Ship v) => v.peakCrSec;
+  static const Field<Ship, double> _f$peakCrSec =
       Field('peakCrSec', _$peakCrSec, key: r'peak cr sec', opt: true);
-  static String? _$crLossPerSec(Ship v) => v.crLossPerSec;
-  static const Field<Ship, String> _f$crLossPerSec =
+  static double? _$crLossPerSec(Ship v) => v.crLossPerSec;
+  static const Field<Ship, double> _f$crLossPerSec =
       Field('crLossPerSec', _$crLossPerSec, key: r'cr loss/sec', opt: true);
-  static String? _$suppliesRec(Ship v) => v.suppliesRec;
-  static const Field<Ship, String> _f$suppliesRec =
+  static double? _$suppliesRec(Ship v) => v.suppliesRec;
+  static const Field<Ship, double> _f$suppliesRec =
       Field('suppliesRec', _$suppliesRec, key: r'supplies/rec', opt: true);
-  static String? _$suppliesMo(Ship v) => v.suppliesMo;
-  static const Field<Ship, String> _f$suppliesMo =
+  static double? _$suppliesMo(Ship v) => v.suppliesMo;
+  static const Field<Ship, double> _f$suppliesMo =
       Field('suppliesMo', _$suppliesMo, key: r'supplies/mo', opt: true);
   static String? _$cPerS(Ship v) => v.cPerS;
   static const Field<Ship, String> _f$cPerS =
@@ -172,17 +172,17 @@ class ShipMapper extends ClassMapperBase<Ship> {
   static String? _$breakProb(Ship v) => v.breakProb;
   static const Field<Ship, String> _f$breakProb =
       Field('breakProb', _$breakProb, opt: true);
-  static String? _$minPieces(Ship v) => v.minPieces;
-  static const Field<Ship, String> _f$minPieces =
+  static double? _$minPieces(Ship v) => v.minPieces;
+  static const Field<Ship, double> _f$minPieces =
       Field('minPieces', _$minPieces, opt: true);
-  static String? _$maxPieces(Ship v) => v.maxPieces;
-  static const Field<Ship, String> _f$maxPieces =
+  static double? _$maxPieces(Ship v) => v.maxPieces;
+  static const Field<Ship, double> _f$maxPieces =
       Field('maxPieces', _$maxPieces, opt: true);
   static String? _$travelDrive(Ship v) => v.travelDrive;
   static const Field<Ship, String> _f$travelDrive =
       Field('travelDrive', _$travelDrive, key: r'travel drive', opt: true);
-  static String? _$number(Ship v) => v.number;
-  static const Field<Ship, String> _f$number =
+  static double? _$number(Ship v) => v.number;
+  static const Field<Ship, double> _f$number =
       Field('number', _$number, opt: true);
   static List<double>? _$bounds(Ship v) => v.bounds;
   static const Field<Ship, List<double>> _f$bounds =
@@ -483,41 +483,41 @@ abstract class ShipCopyWith<$R, $In extends Ship, $Out>
       String? designation,
       String? techManufacturer,
       String? systemId,
-      String? fleetPts,
-      String? hitpoints,
-      String? armorRating,
-      String? maxFlux,
+      double? fleetPts,
+      double? hitpoints,
+      double? armorRating,
+      double? maxFlux,
       String? fluxPercent8654,
-      String? fluxDissipation,
-      String? ordnancePoints,
-      String? fighterBays,
-      String? maxSpeed,
-      String? acceleration,
-      String? deceleration,
-      String? maxTurnRate,
-      String? turnAcceleration,
-      String? mass,
+      double? fluxDissipation,
+      double? ordnancePoints,
+      double? fighterBays,
+      double? maxSpeed,
+      double? acceleration,
+      double? deceleration,
+      double? maxTurnRate,
+      double? turnAcceleration,
+      double? mass,
       String? shieldType,
       String? defenseId,
-      String? shieldArc,
-      String? shieldUpkeep,
-      String? shieldEfficiency,
-      String? phaseCost,
-      String? phaseUpkeep,
-      String? minCrew,
-      String? maxCrew,
-      String? cargo,
-      String? fuel,
-      String? fuelPerLY,
-      String? range,
-      String? maxBurn,
-      String? baseValue,
-      String? crPercentPerDay,
-      String? crToDeploy,
-      String? peakCrSec,
-      String? crLossPerSec,
-      String? suppliesRec,
-      String? suppliesMo,
+      double? shieldArc,
+      double? shieldUpkeep,
+      double? shieldEfficiency,
+      double? phaseCost,
+      double? phaseUpkeep,
+      double? minCrew,
+      double? maxCrew,
+      double? cargo,
+      double? fuel,
+      double? fuelPerLY,
+      double? range,
+      double? maxBurn,
+      double? baseValue,
+      double? crPercentPerDay,
+      double? crToDeploy,
+      double? peakCrSec,
+      double? crLossPerSec,
+      double? suppliesRec,
+      double? suppliesMo,
       String? cPerS,
       String? cPerF,
       String? fPerS,
@@ -528,10 +528,10 @@ abstract class ShipCopyWith<$R, $In extends Ship, $Out>
       List<String>? tags,
       String? rarity,
       String? breakProb,
-      String? minPieces,
-      String? maxPieces,
+      double? minPieces,
+      double? maxPieces,
       String? travelDrive,
-      String? number,
+      double? number,
       List<double>? bounds,
       List<double>? center,
       double? collisionRadius,

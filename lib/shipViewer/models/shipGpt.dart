@@ -21,68 +21,68 @@ class Ship with ShipMappable implements WispGridItem {
   @MappableField(key: 'system id')
   final String? systemId;
   @MappableField(key: 'fleet pts')
-  final String? fleetPts;
-  final String? hitpoints;
+  final double? fleetPts;
+  final double? hitpoints;
   @MappableField(key: 'armor rating')
-  final String? armorRating;
+  final double? armorRating;
   @MappableField(key: 'max flux')
-  final String? maxFlux;
+  final double? maxFlux;
   @MappableField(key: '8/6/5/4%')
   final String? fluxPercent8654;
   @MappableField(key: 'flux dissipation')
-  final String? fluxDissipation;
+  final double? fluxDissipation;
   @MappableField(key: 'ordnance points')
-  final String? ordnancePoints;
+  final double? ordnancePoints;
   @MappableField(key: 'fighter bays')
-  final String? fighterBays;
+  final double? fighterBays;
   @MappableField(key: 'max speed')
-  final String? maxSpeed;
-  final String? acceleration;
-  final String? deceleration;
+  final double? maxSpeed;
+  final double? acceleration;
+  final double? deceleration;
   @MappableField(key: 'max turn rate')
-  final String? maxTurnRate;
+  final double? maxTurnRate;
   @MappableField(key: 'turn acceleration')
-  final String? turnAcceleration;
-  final String? mass;
+  final double? turnAcceleration;
+  final double? mass;
   @MappableField(key: 'shield type')
   final String? shieldType;
   @MappableField(key: 'defense id')
   final String? defenseId;
   @MappableField(key: 'shield arc')
-  final String? shieldArc;
+  final double? shieldArc;
   @MappableField(key: 'shield upkeep')
-  final String? shieldUpkeep;
+  final double? shieldUpkeep;
   @MappableField(key: 'shield efficiency')
-  final String? shieldEfficiency;
+  final double? shieldEfficiency;
   @MappableField(key: 'phase cost')
-  final String? phaseCost;
+  final double? phaseCost;
   @MappableField(key: 'phase upkeep')
-  final String? phaseUpkeep;
+  final double? phaseUpkeep;
   @MappableField(key: 'min crew')
-  final String? minCrew;
+  final double? minCrew;
   @MappableField(key: 'max crew')
-  final String? maxCrew;
-  final String? cargo;
-  final String? fuel;
+  final double? maxCrew;
+  final double? cargo;
+  final double? fuel;
   @MappableField(key: 'fuel/ly')
-  final String? fuelPerLY;
-  final String? range;
+  final double? fuelPerLY;
+  final double? range;
   @MappableField(key: 'max burn')
-  final String? maxBurn;
+  final double? maxBurn;
   @MappableField(key: 'base value')
-  final String? baseValue;
+  final double? baseValue;
   @MappableField(key: 'cr %/day')
-  final String? crPercentPerDay;
+  final double? crPercentPerDay;
   @MappableField(key: 'cr to deploy')
-  final String? crToDeploy;
+  final double? crToDeploy;
   @MappableField(key: 'peak cr sec')
-  final String? peakCrSec;
+  final double? peakCrSec;
   @MappableField(key: 'cr loss/sec')
-  final String? crLossPerSec;
+  final double? crLossPerSec;
   @MappableField(key: 'supplies/rec')
-  final String? suppliesRec;
+  final double? suppliesRec;
   @MappableField(key: 'supplies/mo')
-  final String? suppliesMo;
+  final double? suppliesMo;
   @MappableField(key: 'c/s')
   final String? cPerS;
   @MappableField(key: 'c/f')
@@ -101,11 +101,11 @@ class Ship with ShipMappable implements WispGridItem {
   final List<String>? tags;
   final String? rarity;
   final String? breakProb;
-  final String? minPieces;
-  final String? maxPieces;
+  final double? minPieces;
+  final double? maxPieces;
   @MappableField(key: 'travel drive')
   final String? travelDrive;
-  final String? number;
+  final double? number;
 
   // Visual and gameplay data
   final List<double>? bounds;

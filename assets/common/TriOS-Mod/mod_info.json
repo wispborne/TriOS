@@ -1,0 +1,9 @@
+{
+  "id": "wisp_trios",
+  "name": "zzz TriOS Companion",
+  "author": "Wisp",
+  "utility": "true",
+  "version": "1.0.0",
+  "description": "Overrides portraits without needing to change actual mods.",
+  "gameVersion": "0.98a-RC8"
+}

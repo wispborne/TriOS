@@ -2,11 +2,11 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui';
 
-import 'package:crypto/crypto.dart';
 import 'package:hashlib/hashlib.dart';
 import 'package:image/image.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/vram_estimator/image_reader/png_chatgpt.dart';
 
 import '../models/mod_variant.dart';
 
@@ -20,7 +20,7 @@ Future<Map<ModVariant, List<Portrait>>> scanModFoldersForSquareImages(
   Map<ModVariant, List<Portrait>> modImagesMap = {};
   final timer = Stopwatch()..start();
   Fimber.i(
-    'Scanning mod folders for square images in ${modVariants.length} mods',
+    'Scanning mod folders for square images in ${modVariants.length} mod versions',
   );
 
   await Future.wait(
@@ -37,7 +37,10 @@ Future<Map<ModVariant, List<Portrait>>> scanModFoldersForSquareImages(
               await _isImageFile(entity)) {
             try {
               Uint8List imageBytes = await entity.readAsBytes();
-              final (imageWidth, imageHeight) = await getImageSize(imageBytes);
+              final (imageWidth, imageHeight) = await getImageSize(
+                entity.path,
+                imageBytes,
+              );
 
               if (imageWidth == imageHeight &&
                   imageWidth >= minWidth &&
@@ -88,11 +91,12 @@ Image? _decodeImage(String filePath, Uint8List data) {
   }
 }
 
-Future<bool> _isImageFile(File file) async {
-  final List<String> allowedExtensions = ['jpg', 'jpeg', 'png'];
-  final String extension = file.path.split('.').last.toLowerCase();
+final List<String> allowedExtensions = ['jpg', 'jpeg', 'png', '.webp'];
 
-  if (!allowedExtensions.contains(extension)) {
+Future<bool> _isImageFile(File file) async {
+  final String extension = file.path.toLowerCase();
+
+  if (!allowedExtensions.any((ext) => extension.endsWith(ext))) {
     return false;
   }
 
@@ -100,14 +104,24 @@ Future<bool> _isImageFile(File file) async {
   return fileSize >= minSizeInBytes;
 }
 
-Future<(int, int)> getImageSize(Uint8List data) async {
-  final buffer = await ImmutableBuffer.fromUint8List(data);
-  final descriptor = await ImageDescriptor.encoded(buffer);
+Future<(int, int)> getImageSize(String path, Uint8List data) async {
+  if (path.toLowerCase().endsWith(".png")) {
+    final image = readPngHeadersFromBytes(data);
+    return (image!.width, image.height);
+  } else {
+    final buffer = await ImmutableBuffer.fromUint8List(data);
+    final descriptor = await ImageDescriptor.encoded(buffer);
 
-  final imageWidth = descriptor.width;
-  final imageHeight = descriptor.height;
-  return (imageWidth, imageHeight);
+    final imageWidth = descriptor.width;
+    final imageHeight = descriptor.height;
+    return (imageWidth, imageHeight);
+  }
 }
+
+// Future<(int, int)> getImageSize(String path) async {
+//   final image = await _imageSizeReader.readImageDeterminingBest(path);
+//   return (image!.width, image.height);
+// }
 
 String hashImageBytes(Uint8List imageBytes) {
   var digest = crc64.convert(imageBytes);

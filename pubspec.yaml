@@ -44,7 +44,6 @@ dependencies:
   hashlib: ^1.21.2
   html: ^0.15.6
   image: ^4.5.4
-  image_size_getter: ^2.4.0
   flutter_inappwebview: ^6.2.0-beta.2
   intl: ^0.20.2
   json_annotation: ^4.9.0
@@ -161,6 +160,7 @@ flutter:
     - assets/linux/7zip/arm64/
     - assets/linux/7zip/x64/
     - assets/macos/7zip/
+    - assets/common/TriOS-Mod/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

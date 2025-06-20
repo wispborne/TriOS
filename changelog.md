@@ -1,3 +1,7 @@
+# 1.3.0
+- Changed
+  - Optimized loading of portraits.
+
 # 1.2.2
 - Added
   - Search bar for tips page.

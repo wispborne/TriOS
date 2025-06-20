@@ -176,23 +176,33 @@ class VramChecker {
               )
               ?.mapType;
         }
-        final ext = file.file.nameWithExtension.toLowerCase();
-        if (ext.endsWith(".png")) {
-          return await _getModImagePng(
-            imageHeaderReaderPool,
-            file,
-            imageType,
-            modInfo,
-            graphicsLibType,
-          );
-        } else {
-          return await _getModImageGeneric(
-            imageHeaderReaderPool,
-            file,
-            modInfo,
-            imageType,
-            graphicsLibType,
-          );
+
+        try {
+          final image = await _readImageHeaders(file, imageHeaderReaderPool);
+          if (image == null) {
+            throw Exception("Image is null");
+          } else {
+            return {
+              'filePath': file.file.path,
+              'textureHeight': (image.width == 1)
+                  ? 1
+                  : (image.width - 1).highestOneBit() * 2,
+              'textureWidth': (image.height == 1)
+                  ? 1
+                  : (image.height - 1).highestOneBit() * 2,
+              'bitsInAllChannelsSum': image.bitDepth * image.numChannels,
+              'imageType': imageType.name,
+              'graphicsLibType': graphicsLibType?.name,
+            };
+          }
+        } catch (e) {
+          if (showSkippedFiles) {
+            progressText.appendAndPrint(
+              "Skipped non-image ${file.relativePath} ($e)",
+              verboseOut,
+            );
+          }
+          return null;
         }
       });
 
@@ -428,83 +438,14 @@ class VramChecker {
     return mods;
   }
 
+  Future<ImageHeader?> _readImageHeaders(
+    _FileData file,
+    ReadImageHeaders imageHeaderReaderPool,
+  ) async {
+    return await imageHeaderReaderPool.readImageDeterminingBest(file.file.path);
+  }
+
   // Update helper functions to return a row-map instead of a ModImage
-
-  Future<Map<String, dynamic>?> _getModImagePng(
-    ReadImageHeaders imageHeaderReaderPool,
-    _FileData file,
-    ImageType imageType,
-    VramCheckerMod modInfo,
-    MapType? graphicsLibType,
-  ) async {
-    ImageHeader? image;
-    try {
-      image = await withFileHandleLimit(
-        () => imageHeaderReaderPool.readPng(file.file.path),
-      );
-      if (image == null) {
-        throw Exception("Image is null");
-      }
-      return {
-        'filePath': file.file.path,
-        'textureHeight': (image.width == 1)
-            ? 1
-            : (image.width - 1).highestOneBit() * 2,
-        'textureWidth': (image.height == 1)
-            ? 1
-            : (image.height - 1).highestOneBit() * 2,
-        'bitsInAllChannelsSum': image.bitDepth * image.numChannels,
-        'imageType': imageType.name,
-        'graphicsLibType': graphicsLibType?.name,
-      };
-    } catch (e) {
-      if (showSkippedFiles) {
-        progressText.appendAndPrint(
-          "Skipped non-image ${file.relativePath} ($e)",
-          verboseOut,
-        );
-      }
-      return null;
-    }
-  }
-
-  Future<Map<String, dynamic>?> _getModImageGeneric(
-    ReadImageHeaders imageHeaderReaderPool,
-    _FileData file,
-    VramCheckerMod modInfo,
-    ImageType imageType,
-    MapType? graphicsLibType,
-  ) async {
-    ImageHeader? image;
-    try {
-      image = await withFileHandleLimit(
-        () => imageHeaderReaderPool.readGeneric(file.file.path),
-      );
-      if (image == null) {
-        throw Exception("Image is null");
-      }
-    } catch (e) {
-      if (showSkippedFiles) {
-        progressText.appendAndPrint(
-          "Skipped non-image ${file.relativePath} ($e)",
-          verboseOut,
-        );
-      }
-      return null;
-    }
-    return {
-      'filePath': file.file.path,
-      'textureHeight': (image.width == 1)
-          ? 1
-          : (image.width - 1).highestOneBit() * 2,
-      'textureWidth': (image.height == 1)
-          ? 1
-          : (image.height - 1).highestOneBit() * 2,
-      'bitsInAllChannelsSum': image.bitDepth * image.numChannels,
-      'imageType': imageType.name,
-      'graphicsLibType': graphicsLibType?.name,
-    };
-  }
 
   List<GraphicsLibInfo>? _getGraphicsLibSettingsForMod(
     List<_FileData> filesInMod,

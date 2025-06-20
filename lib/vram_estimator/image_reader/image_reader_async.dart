@@ -5,6 +5,14 @@ import 'package:image/image.dart' as img;
 import 'png_chatgpt.dart';
 
 class ReadImageHeaders {
+  Future<ImageHeader?> readImageDeterminingBest(String path) async {
+    if (path.toLowerCase().endsWith(".png")) {
+      return await readPng(path);
+    } else {
+      return await readGeneric(path);
+    }
+  }
+
   Future<ImageHeader?> readPng(String path) async {
     return readPngFileHeaders(path);
   }

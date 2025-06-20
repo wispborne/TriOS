@@ -6,8 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:toastification/toastification.dart';
+import 'package:trios/companion_mod/companion_mod_manager.dart';
 import 'package:trios/compression/archive.dart';
-import 'package:trios/compression/libarchive/libarchive.dart';
 import 'package:trios/mod_profiles/mod_profiles_manager.dart';
 import 'package:trios/models/download_progress.dart';
 import 'package:trios/onboarding/onboarding_page.dart';
@@ -409,6 +409,21 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
           ),
         ),
         const SizedBox(height: 16),
+        ElevatedButton.icon(
+          icon: const Icon(Icons.people_alt_outlined),
+          label: const Text("Force Replace TriOS Companion Mod"),
+          onPressed: () async {
+            try {
+              await ref.read(companionModManagerProvider).copyModToGameFolder();
+            } catch (e) {
+              showSnackBar(
+                context: ref.read(AppState.appContext)!,
+                content: Text(e.toString()),
+              );
+            }
+          },
+        ),
+        const SizedBox(height: 16),
         Card(
           child: Padding(
             padding: const EdgeInsets.all(8),
@@ -441,7 +456,9 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                   const SizedBox(height: 8),
                   Text("Locale: ${Platform.localeName}"),
                   const SizedBox(height: 8),
-                  Text("Locale (using Intl package): ${Intl.getCurrentLocale()}"),
+                  Text(
+                    "Locale (using Intl package): ${Intl.getCurrentLocale()}",
+                  ),
                   const SizedBox(height: 8),
                   Text(
                     "RAM usage: ${ProcessInfo.currentRss.bytesAsReadableMB()}",

@@ -59,6 +59,13 @@ class _ImageGridScreenState extends ConsumerState<ImageGridScreen>
   @override
   bool get wantKeepAlive => true;
   bool isLoading = false;
+  final SearchController _searchController = SearchController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   void _loadImages(List<ModVariant> modVariants) async {
     if (isLoading) return;
@@ -89,10 +96,24 @@ class _ImageGridScreenState extends ConsumerState<ImageGridScreen>
         )
         .toList();
 
-    final sortedImages = sortModsAndImages(
+    var sortedImages = sortModsAndImages(
       modsAndImages,
       r'graphics\\.*portraits\\',
     );
+
+    // Apply search filter
+    final query = _searchController.value.text;
+    if (query.isNotEmpty) {
+      sortedImages = sortedImages.where((item) {
+        final variant = item.variant;
+        final portrait = item.image;
+        return variant.modInfo.nameOrId.toLowerCase().contains(
+              query.toLowerCase(),
+            ) ||
+            portrait.imageFile.path.toLowerCase().contains(query.toLowerCase());
+      }).toList();
+    }
+
     final theme = Theme.of(context);
 
     return isLoading
@@ -115,38 +136,46 @@ class _ImageGridScreenState extends ConsumerState<ImageGridScreen>
                 margin: const EdgeInsets.all(0),
                 child: Padding(
                   padding: const EdgeInsets.all(4),
-                  child: Row(
+                  child: Stack(
                     children: [
-                      TextButton.icon(
-                        onPressed: () {
-                          ref.read(imageListProvider.notifier).setImageList({});
-                          _loadImages(
-                            ref.read(AppState.modVariants).valueOrNull ?? [],
-                          );
-                        },
-                        style: ButtonStyle(
-                          foregroundColor: WidgetStateProperty.all(
-                            theme.colorScheme.onSurface,
+                      Row(
+                        children: [
+                          TextButton.icon(
+                            onPressed: () {
+                              ref
+                                  .read(imageListProvider.notifier)
+                                  .setImageList({});
+                              _loadImages(
+                                ref.read(AppState.modVariants).valueOrNull ??
+                                    [],
+                              );
+                            },
+                            style: ButtonStyle(
+                              foregroundColor: WidgetStateProperty.all(
+                                theme.colorScheme.onSurface,
+                              ),
+                            ),
+                            icon: const Icon(Icons.refresh),
+                            label: const Text('Reload'),
                           ),
-                        ),
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('Reload'),
+                          Padding(
+                            padding: const EdgeInsets.only(left: 8),
+                            child: Text(
+                              'Showing ${sortedImages.length} images',
+                              style: theme.textTheme.labelLarge,
+                            ),
+                          ),
+                          const Spacer(),
+                          Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: Text(
+                              'Currently just a portrait viewer. Will allow portrait replacement in the future.',
+                              style: theme.textTheme.labelLarge,
+                            ),
+                          ),
+                        ],
                       ),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 8),
-                        child: Text(
-                          'Showing ${sortedImages.length} images',
-                          style: theme.textTheme.labelLarge,
-                        ),
-                      ),
-                      const Spacer(),
-                      Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: Text(
-                          'Currently just a portrait viewer. Will allow portrait replacement in the future.',
-                          style: theme.textTheme.labelLarge,
-                        ),
-                      ),
+                      Center(child: buildSearchBox()),
                     ],
                   ),
                 ),
@@ -154,6 +183,46 @@ class _ImageGridScreenState extends ConsumerState<ImageGridScreen>
               Expanded(child: ResponsiveImageGrid(modsAndImages: sortedImages)),
             ],
           );
+  }
+
+  SizedBox buildSearchBox() {
+    return SizedBox(
+      height: 30,
+      width: 300,
+      child: SearchAnchor(
+        searchController: _searchController,
+        builder: (BuildContext context, SearchController controller) {
+          return SearchBar(
+            controller: controller,
+            leading: const Icon(Icons.search),
+            hintText: "Filter...",
+            trailing: [
+              controller.value.text.isEmpty
+                  ? Container()
+                  : IconButton(
+                      icon: const Icon(Icons.clear),
+                      constraints: const BoxConstraints(),
+                      padding: EdgeInsets.zero,
+                      onPressed: () {
+                        controller.clear();
+                        setState(() {});
+                      },
+                    ),
+            ],
+            backgroundColor: WidgetStateProperty.all(
+              Theme.of(context).colorScheme.surfaceContainer,
+            ),
+            onChanged: (value) {
+              setState(() {});
+            },
+          );
+        },
+        suggestionsBuilder:
+            (BuildContext context, SearchController controller) {
+              return [];
+            },
+      ),
+    );
   }
 
   List<({Portrait image, ModVariant variant})> sortModsAndImages(

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:rxdart/rxdart.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
+import 'package:trios/models/mod.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/extensions.dart';
@@ -121,6 +122,10 @@ class CompanionModManager {
       );
       rethrow;
     }
+  }
+
+  Mod? getLoadedCompanionMod() {
+    return ref.read(AppState.mods).firstWhereOrNull((mod) => mod.id == Constants.companionModId);
   }
 
   /// Copies all files from the assets mod folder to the destination

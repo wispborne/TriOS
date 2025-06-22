@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/models/mod_variant.dart';
-import 'package:trios/portraits/portraits_loader.dart';
+import 'package:trios/portraits/portraits_manager.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/extensions.dart';
@@ -11,41 +11,6 @@ import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 import '../utils/logging.dart';
-
-// Define the state for the list of images
-class ImageListState extends StateNotifier<Map<ModVariant, List<Portrait>>> {
-  ImageListState() : super({});
-
-  void setImageList(Map<ModVariant, List<Portrait>> images) {
-    state = images;
-  }
-
-  void addImages(Map<ModVariant, List<Portrait>> images) {
-    if (images.isNotEmpty) {
-      final existingHashes = state.values.expand(
-        (element) => element.map((e) => e.hash),
-      );
-      images = images.map(
-        (key, value) => MapEntry(
-          key,
-          value
-              .where((element) => !existingHashes.contains(element.hash))
-              .toList(),
-        ),
-      );
-
-      state = state..addAll(images);
-    }
-  }
-}
-
-// Create a provider for the ImageListState
-final imageListProvider =
-    StateNotifierProvider<ImageListState, Map<ModVariant, List<Portrait>>>((
-      ref,
-    ) {
-      return ImageListState();
-    });
 
 class ImageGridScreen extends ConsumerStatefulWidget {
   const ImageGridScreen({super.key});
@@ -58,7 +23,6 @@ class _ImageGridScreenState extends ConsumerState<ImageGridScreen>
     with AutomaticKeepAliveClientMixin<ImageGridScreen> {
   @override
   bool get wantKeepAlive => true;
-  bool isLoading = false;
   final SearchController _searchController = SearchController();
 
   @override
@@ -67,122 +31,144 @@ class _ImageGridScreenState extends ConsumerState<ImageGridScreen>
     super.dispose();
   }
 
-  void _loadImages(List<ModVariant> modVariants) async {
-    if (isLoading) return;
-    setState(() {
-      isLoading = true;
-    });
-    final images = (await scanModFoldersForSquareImages(modVariants));
-    ref.read(imageListProvider.notifier).addImages(images);
-    setState(() {
-      isLoading = false;
-    });
+  void _refreshPortraits() {
+    // Invalidate the provider to trigger a reload
+    ref.invalidate(portraitsProvider);
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    // ref.listen(AppState.modVariants, (prev, after) {
-    //   final modsAdded = (after.valueOrNull ?? []) - (prev?.valueOrNull ?? []);
-    //   _loadImages(modsAdded);
-    // });
 
-    final images = ref.watch(imageListProvider);
-    final List<({Portrait image, ModVariant variant})> modsAndImages = images
-        .entries
-        .expand(
-          (element) =>
-              element.value.map((e) => (variant: element.key, image: e)),
-        )
-        .toList();
+    // Watch the portraits provider and loading state
+    final portraitsAsync = ref.watch(portraitsProvider);
+    final isLoading = ref.watch(isLoadingPortraits);
 
-    var sortedImages = sortModsAndImages(
-      modsAndImages,
-      r'graphics\\.*portraits\\',
-    );
-
-    // Apply search filter
-    final query = _searchController.value.text;
-    if (query.isNotEmpty) {
-      sortedImages = sortedImages.where((item) {
-        final variant = item.variant;
-        final portrait = item.image;
-        return variant.modInfo.nameOrId.toLowerCase().contains(
-              query.toLowerCase(),
-            ) ||
-            portrait.imageFile.path.toLowerCase().contains(query.toLowerCase());
-      }).toList();
-    }
-
-    final theme = Theme.of(context);
-
-    return isLoading
-        ? const Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CircularProgressIndicator(),
-                Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Text('Loading images...'),
-                ),
-              ],
+    return portraitsAsync.when(
+      loading: () => const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(),
+            Padding(
+              padding: EdgeInsets.all(16),
+              child: Text('Loading portraits...'),
             ),
-          )
-        : Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Card(
-                margin: const EdgeInsets.all(0),
-                child: Padding(
-                  padding: const EdgeInsets.all(4),
-                  child: Stack(
-                    children: [
-                      Row(
-                        children: [
-                          TextButton.icon(
-                            onPressed: () {
-                              ref
-                                  .read(imageListProvider.notifier)
-                                  .setImageList({});
-                              _loadImages(
-                                ref.read(AppState.modVariants).valueOrNull ??
-                                    [],
-                              );
-                            },
-                            style: ButtonStyle(
-                              foregroundColor: WidgetStateProperty.all(
-                                theme.colorScheme.onSurface,
-                              ),
-                            ),
-                            icon: const Icon(Icons.refresh),
-                            label: const Text('Reload'),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(left: 8),
-                            child: Text(
-                              'Showing ${sortedImages.length} images',
-                              style: theme.textTheme.labelLarge,
-                            ),
-                          ),
-                          const Spacer(),
-                          Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: Text(
-                              'Currently just a portrait viewer. Will allow portrait replacement in the future.',
-                              style: theme.textTheme.labelLarge,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Center(child: buildSearchBox()),
-                    ],
+          ],
+        ),
+      ),
+      error: (error, stackTrace) => Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: 64,
+              color: Theme.of(context).colorScheme.error,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Error loading portraits: $error',
+              style: Theme.of(context).textTheme.bodyLarge,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: _refreshPortraits,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Retry'),
+            ),
+          ],
+        ),
+      ),
+      data: (portraits) {
+        final List<({Portrait image, ModVariant variant})> modsAndImages =
+            portraits.entries
+                .expand(
+                  (element) => element.value.map(
+                    (e) => (variant: element.key, image: e),
                   ),
+                )
+                .toList();
+
+        var sortedImages = sortModsAndImages(
+          modsAndImages,
+          r'graphics\\.*portraits\\',
+        );
+
+        // Apply search filter
+        final query = _searchController.value.text;
+        if (query.isNotEmpty) {
+          sortedImages = sortedImages.where((item) {
+            final variant = item.variant;
+            final portrait = item.image;
+            return variant.modInfo.nameOrId.toLowerCase().contains(
+                  query.toLowerCase(),
+                ) ||
+                portrait.imageFile.path.toLowerCase().contains(
+                  query.toLowerCase(),
+                );
+          }).toList();
+        }
+
+        final theme = Theme.of(context);
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Card(
+              margin: const EdgeInsets.all(0),
+              child: Padding(
+                padding: const EdgeInsets.all(4),
+                child: Stack(
+                  children: [
+                    Row(
+                      children: [
+                        TextButton.icon(
+                          onPressed: isLoading ? null : _refreshPortraits,
+                          style: ButtonStyle(
+                            foregroundColor: WidgetStateProperty.all(
+                              theme.colorScheme.onSurface,
+                            ),
+                          ),
+                          icon: isLoading
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.refresh),
+                          label: const Text('Reload'),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8),
+                          child: Text(
+                            'Showing ${sortedImages.length} images',
+                            style: theme.textTheme.labelLarge,
+                          ),
+                        ),
+                        const Spacer(),
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: Text(
+                            'Currently just a portrait viewer. Will allow portrait replacement in the future.',
+                            style: theme.textTheme.labelLarge,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Center(child: buildSearchBox()),
+                  ],
                 ),
               ),
-              Expanded(child: ResponsiveImageGrid(modsAndImages: sortedImages)),
-            ],
-          );
+            ),
+            Expanded(child: ResponsiveImageGrid(modsAndImages: sortedImages)),
+          ],
+        );
+      },
+    );
   }
 
   SizedBox buildSearchBox() {

@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/TriOS-Companion-Mod/TriOS-Companion-Mod.iml" filepath="$PROJECT_DIR$/TriOS-Companion-Mod/TriOS-Companion-Mod.iml" />
       <module fileurl="file://$PROJECT_DIR$/trios.iml" filepath="$PROJECT_DIR$/trios.iml" />
     </modules>
   </component>

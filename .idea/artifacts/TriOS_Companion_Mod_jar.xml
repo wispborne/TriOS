@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" build-on-make="true" name="TriOS-Companion-Mod:jar">
+    <output-path>$PROJECT_DIR$/assets/common/TriOS-Mod/jars</output-path>
+    <root id="archive" name="TriOS-Companion-Mod.jar">
+      <element id="module-output" name="TriOS-Companion-Mod" />
+    </root>
+  </artifact>
+</component>

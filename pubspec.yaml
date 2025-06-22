@@ -161,6 +161,8 @@ flutter:
     - assets/linux/7zip/x64/
     - assets/macos/7zip/
     - assets/common/TriOS-Mod/
+    - assets/common/TriOS-Mod/jars/
+#    - assets/common/TriOS-Mod/data/config/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

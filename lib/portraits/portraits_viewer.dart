@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/models/mod_variant.dart';
+import 'package:trios/portraits/portrait_model.dart';
 import 'package:trios/portraits/portraits_manager.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/trios/app_state.dart';
@@ -150,13 +151,6 @@ class _ImageGridScreenState extends ConsumerState<ImageGridScreen>
                           ),
                         ),
                         const Spacer(),
-                        Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: Text(
-                            'Currently just a portrait viewer. Will allow portrait replacement in the future.',
-                            style: theme.textTheme.labelLarge,
-                          ),
-                        ),
                       ],
                     ),
                     Center(child: buildSearchBox()),

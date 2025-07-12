@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 import 'package:rxdart/rxdart.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/mod.dart';
+import 'package:trios/portraits/portrait_model.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/extensions.dart';
@@ -125,7 +126,9 @@ class CompanionModManager {
   }
 
   Mod? getLoadedCompanionMod() {
-    return ref.read(AppState.mods).firstWhereOrNull((mod) => mod.id == Constants.companionModId);
+    return ref
+        .read(AppState.mods)
+        .firstWhereOrNull((mod) => mod.id == Constants.companionModId);
   }
 
   /// Copies all files from the assets mod folder to the destination
@@ -185,6 +188,202 @@ class CompanionModManager {
       Fimber.i('Updated mod_info.json with game version: $gameVersion');
     } catch (e) {
       throw FormatException('Failed to update mod_info.json: $e');
+    }
+  }
+
+  /// Gets the path to the trios_image_replacements.json config file
+  Future<File> _getImageReplacementsConfigFile() async {
+    final modsFolder = ref.read(AppState.modsFolder).valueOrNull;
+    if (modsFolder == null) {
+      throw StateError('Game mods folder not configured');
+    }
+
+    final companionModPath = Directory(
+      p.join(modsFolder.path, Constants.companionModFolderName),
+    );
+
+    if (!await companionModPath.exists()) {
+      throw StateError(
+        'TriOS companion mod not found. Please copy the mod first.',
+      );
+    }
+
+    // Create the config directory if it doesn't exist
+    final configDir = Directory(
+      p.join(companionModPath.path, 'data', 'config'),
+    );
+    await configDir.create(recursive: true);
+
+    return File(p.join(configDir.path, 'trios_image_replacements.json'));
+  }
+
+  /// Safely reads existing image replacements from the config file
+  /// Returns an empty map if the file doesn't exist or is invalid
+  Future<Map<String, String>> _readExistingReplacements() async {
+    try {
+      final configFile = await _getImageReplacementsConfigFile();
+
+      if (!await configFile.exists()) {
+        return {};
+      }
+
+      final jsonString = await configFile.readAsString();
+      final jsonData = jsonDecode(jsonString) as Map<String, dynamic>;
+      final replacementsList = jsonData['replacements'] as List<dynamic>?;
+
+      if (replacementsList == null) {
+        return {};
+      }
+
+      final Map<String, String> existingReplacements = {};
+      for (final item in replacementsList) {
+        if (item is Map<String, dynamic>) {
+          final original = item['original'] as String?;
+          final replacement = item['replacement'] as String?;
+          if (original != null && replacement != null) {
+            existingReplacements[original] = replacement;
+          }
+        }
+      }
+
+      return existingReplacements;
+    } catch (e) {
+      Fimber.w('Error reading existing replacements config: $e');
+      return {};
+    }
+  }
+
+  /// Writes the replacements map to the config file with proper JSON formatting
+  Future<void> _writeReplacementsToFile(
+    File configFile,
+    Map<String, String> replacements,
+  ) async {
+    // Convert replacements map to the expected JSON structure
+    final List<Map<String, String>> replacementsList = replacements.entries
+        .map((entry) => {
+              'original': entry.key,
+              'replacement': entry.value,
+            })
+        .toList();
+
+    final jsonData = {
+      'replacements': replacementsList,
+    };
+
+    // Write the JSON file with pretty formatting
+    const encoder = JsonEncoder.withIndent('  ');
+    final prettyJson = encoder.convert(jsonData);
+    await configFile.writeAsString(prettyJson);
+  }
+
+  /// Updates the trios_image_replacements.json file in the companion mod
+  /// with the provided portrait replacement mappings
+  Future<void> updateImageReplacementsConfig(
+    Map<String, String> replacements,
+  ) async {
+    try {
+      final configFile = await _getImageReplacementsConfigFile();
+      await _writeReplacementsToFile(configFile, replacements);
+
+      Fimber.i(
+        'Updated trios_image_replacements.json with ${replacements.length} replacements',
+      );
+    } catch (e, stackTrace) {
+      Fimber.e(
+        'Failed to update image replacements config: $e',
+        ex: e,
+        stacktrace: stackTrace,
+      );
+      rethrow;
+    }
+  }
+
+  /// Updates the image replacements config using portrait hash to file path mappings
+  /// This method converts portrait hashes to actual file paths for the JSON config
+  Future<void> updateImageReplacementsFromHashMap(
+    Map<String, String> hashToPathReplacements,
+    Map<String, Portrait> hashToPortrait,
+  ) async {
+    try {
+      // Convert hash-based replacements to path-based replacements
+      final Map<String, String> pathReplacements = {};
+
+      for (final entry in hashToPathReplacements.entries) {
+        final originalHash = entry.key;
+        final replacementPath = entry.value;
+
+        // Find the original portrait by hash
+        final originalPortrait = hashToPortrait[originalHash];
+        if (originalPortrait == null) {
+          Fimber.w('Original portrait not found for hash: $originalHash');
+          continue;
+        }
+
+        // Use the original portrait's file path as the key
+        pathReplacements[originalPortrait.imageFile.path] = replacementPath;
+      }
+
+      // Update the config file with path-based replacements
+      await updateImageReplacementsConfig(pathReplacements);
+
+      Fimber.i(
+        'Converted ${hashToPathReplacements.length} hash-based replacements to ${pathReplacements.length} path-based replacements',
+      );
+    } catch (e, stackTrace) {
+      Fimber.e(
+        'Failed to update image replacements from hash map: $e',
+        ex: e,
+        stacktrace: stackTrace,
+      );
+      rethrow;
+    }
+  }
+
+  /// Clears all image replacements from the config file
+  Future<void> clearImageReplacementsConfig() async {
+    await updateImageReplacementsConfig({});
+  }
+
+  /// Adds a single image replacement to the existing config
+  Future<void> addImageReplacement(String originalPath, String replacementPath) async {
+    try {
+      final existingReplacements = await _readExistingReplacements();
+      existingReplacements[originalPath] = replacementPath;
+
+      final configFile = await _getImageReplacementsConfigFile();
+      await _writeReplacementsToFile(configFile, existingReplacements);
+
+      Fimber.i('Added image replacement: $originalPath -> $replacementPath');
+    } catch (e, stackTrace) {
+      Fimber.e(
+        'Failed to add image replacement: $e',
+        ex: e,
+        stacktrace: stackTrace,
+      );
+      rethrow;
+    }
+  }
+
+  /// Removes a single image replacement from the existing config
+  Future<void> removeImageReplacement(String originalPath) async {
+    try {
+      final existingReplacements = await _readExistingReplacements();
+      final removed = existingReplacements.remove(originalPath);
+
+      if (removed != null) {
+        final configFile = await _getImageReplacementsConfigFile();
+        await _writeReplacementsToFile(configFile, existingReplacements);
+        Fimber.i('Removed image replacement: $originalPath');
+      } else {
+        Fimber.w('Image replacement not found: $originalPath');
+      }
+    } catch (e, stackTrace) {
+      Fimber.e(
+        'Failed to remove image replacement: $e',
+        ex: e,
+        stacktrace: stackTrace,
+      );
+      rethrow;
     }
   }
 }

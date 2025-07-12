@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/portraits/portrait_model.dart';
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/companion_mod/companion_mod_manager.dart';
 
 import '../models/mod_variant.dart';
 import 'portrait_replacements_manager.dart';
@@ -37,30 +38,3 @@ final portraitsProvider = StreamProvider<Map<ModVariant, List<Portrait>>>((
 
   ref.watch(isLoadingPortraits.notifier).state = false;
 });
-
-// Global manager instance
-final portraitsManager = PortraitsManager();
-
-/// Main portraits manager - coordinates scanning and replacements
-class PortraitsManager {
-  final _scanner = PortraitScanner();
-  final _replacementsManager = PortraitReplacementsManager();
-
-  Future<Map<ModVariant, List<Portrait>>> scanModFolders(
-    List<ModVariant> variants,
-  ) {
-    return _scanner.scanVariants(variants);
-  }
-
-  Future<void> saveReplacement(String originalHash, String replacementPath) {
-    return _replacementsManager.saveReplacement(originalHash, replacementPath);
-  }
-
-  Future<void> removeReplacement(String originalHash) {
-    return _replacementsManager.removeReplacement(originalHash);
-  }
-
-  Future<String?> getReplacement(String portraitHash) {
-    return _replacementsManager.getReplacement(portraitHash);
-  }
-}

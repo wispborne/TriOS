@@ -1,0 +1,8 @@
+{
+  "replacements": [
+#    {
+#      "original": "graphics/portraits/portrait_mercenary01.png",
+#      "replacement": "graphics/portraits/portrait_custom01.png"
+#    },
+  ]
+}

@@ -20,6 +20,11 @@
                     hash = "sha256-12ktCyWJunvYbtTNixN6qDl9OeOj4b+MmoA7kK3JN10=";
                 };
 
+                icon = pkgs.fetchurl {
+                    url = "https://raw.githubusercontent.com/wispborne/TriOS/main/assets/images/telos_faction_crest.svg";
+                    hash = "sha256-VZaGC0+yldComOBO4o14fX2uhpm4P60DEo3HQj0RWYE=";
+                };
+
                 runtimeLibs = with pkgs; [
                     gtk3
                     atk
@@ -50,6 +55,20 @@
                         makeWrapper $out/share/trios/TriOS $out/bin/TriOS \
                             --prefix LD_LIBRARY_PATH : ${pkgs.lib.makeLibraryPath runtimeLibs}:$out/share/trios/lib \
                             --prefix PATH : ${pkgs.lib.makeBinPath [pkgs.zenity]}
+
+                        mkdir -p $out/share/applications
+                        cat > $out/share/applications/org.wisp.TriOS.desktop <<EOF
+                        [Desktop Entry]
+                        Name=TriOS
+                        Exec=$out/bin/TriOS
+                        Icon=trios
+                        Type=Application
+                        Categories=Game;Utility
+                        Description=Starsector mod manager & Toolkit
+                        EOF
+
+                        mkdir -p $out/share/icons/hicolor/scalable/apps/
+                        install -Dm644 ${icon} $out/share/icons/hicolor/scalable/apps/trios.svg
                     '';
 
                     dontStrip = true;

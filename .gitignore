@@ -243,3 +243,6 @@ cache/TriOS-VRAM_CheckerCache.json
 TriOS-Windows.zip
 
 .idea/studiobot.xml
+
+# Commit flake.lock to ensure reproducible environment
+!flake.lock

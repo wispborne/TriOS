@@ -1,3 +1,7 @@
+# If TriOS crashes on exit run it using nixGL or maybe figure it out
+# I give up
+#
+# Also set GTK_THEME so it fits your theme ¯\_(ツ)_/¯
 {
     description = "Starsector mod manager & toolkit";
 

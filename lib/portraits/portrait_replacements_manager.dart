@@ -6,44 +6,18 @@ import 'package:trios/portraits/portrait_model.dart';
 import 'package:trios/utils/generic_settings_manager.dart';
 import 'package:trios/utils/logging.dart';
 
-/// Private storage manager for portrait replacements
-class _PortraitReplacementsStorage
-    extends GenericAsyncSettingsManager<Map<String, String>> {
-  @override
-  FileFormat get fileFormat => FileFormat.json;
-
-  @override
-  String get fileName => 'portrait_replacements.json';
-
-  @override
-  Map<String, dynamic> Function(Map<String, String> obj) get toMap =>
-      (obj) => obj.cast<String, dynamic>();
-
-  @override
-  Map<String, String> Function(Map<String, dynamic> map) get fromMap =>
-      (map) => map.cast<String, String>();
-}
-
-/// Riverpod provider for the portrait replacements manager
-final portraitReplacementsManagerProvider =
-    Provider<PortraitReplacementsManager>(
-      (ref) => PortraitReplacementsManager(ref),
-    );
-
-/// Provider for the current portrait replacements state
-final portraitReplacementsStateProvider =
+final portraitReplacementsManager =
     AsyncNotifierProvider<PortraitReplacementsNotifier, Map<String, String>>(
       () => PortraitReplacementsNotifier(),
     );
 
 /// State notifier for portrait replacements
 class PortraitReplacementsNotifier extends AsyncNotifier<Map<String, String>> {
-  late final PortraitReplacementsManager _manager;
+  final _PortraitReplacementsStorage _storage = _PortraitReplacementsStorage();
 
   @override
   Future<Map<String, String>> build() async {
-    _manager = ref.read(portraitReplacementsManagerProvider);
-    return await _manager._loadReplacements();
+    return await _loadReplacements();
   }
 
   /// Saves a portrait replacement mapping
@@ -51,17 +25,17 @@ class PortraitReplacementsNotifier extends AsyncNotifier<Map<String, String>> {
     String originalHash,
     String replacementPath,
   ) async {
-    state = const AsyncValue.loading();
+    // state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
-      return await _manager._saveReplacement(originalHash, replacementPath);
+      return await _saveReplacement(originalHash, replacementPath);
     });
   }
 
   /// Removes a portrait replacement mapping
   Future<void> removeReplacement(String originalHash) async {
-    state = const AsyncValue.loading();
+    // state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
-      return await _manager._removeReplacement(originalHash);
+      return await _removeReplacement(originalHash);
     });
   }
 
@@ -84,19 +58,30 @@ class PortraitReplacementsNotifier extends AsyncNotifier<Map<String, String>> {
 
   /// Clears all replacements
   Future<void> clearReplacements() async {
-    state = const AsyncValue.loading();
+    // state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
-      return await _manager._clearReplacements();
+      return await _clearReplacements();
     });
   }
-}
 
-/// Frontend manager that handles business logic and syncing with companion mod
-class PortraitReplacementsManager {
-  final Ref ref;
-  final _PortraitReplacementsStorage _storage = _PortraitReplacementsStorage();
+  /// Syncs replacements to companion mod with portrait mapping
+  Future<void> syncToCompanionModWithPortraits(
+    Map<String, Portrait> hashToPortrait,
+  ) async {
+    try {
+      final replacements = await _storage.readSettingsFromDisk({});
+      final companionModManager = ref.read(companionModManagerProvider);
 
-  PortraitReplacementsManager(this.ref);
+      await companionModManager.updateImageReplacementsFromHashMap(
+        replacements,
+        hashToPortrait,
+      );
+    } catch (e) {
+      Fimber.w(
+        'Failed to sync replacements to companion mod with portraits: $e',
+      );
+    }
+  }
 
   /// Internal method to load replacements from storage
   Future<Map<String, String>> _loadReplacements() async {
@@ -181,23 +166,22 @@ class PortraitReplacementsManager {
       // Don't rethrow as this is a sync operation that shouldn't block the main operation
     }
   }
+}
 
-  /// Syncs replacements to companion mod with portrait mapping
-  Future<void> syncToCompanionModWithPortraits(
-    Map<String, Portrait> hashToPortrait,
-  ) async {
-    try {
-      final replacements = await _storage.readSettingsFromDisk({});
-      final companionModManager = ref.read(companionModManagerProvider);
+/// Private storage manager for portrait replacements
+class _PortraitReplacementsStorage
+    extends GenericAsyncSettingsManager<Map<String, String>> {
+  @override
+  FileFormat get fileFormat => FileFormat.json;
 
-      await companionModManager.updateImageReplacementsFromHashMap(
-        replacements,
-        hashToPortrait,
-      );
-    } catch (e) {
-      Fimber.w(
-        'Failed to sync replacements to companion mod with portraits: $e',
-      );
-    }
-  }
+  @override
+  String get fileName => 'portrait_replacements.json';
+
+  @override
+  Map<String, dynamic> Function(Map<String, String> obj) get toMap =>
+      (obj) => obj.cast<String, dynamic>();
+
+  @override
+  Map<String, String> Function(Map<String, dynamic> map) get fromMap =>
+      (map) => map.cast<String, String>();
 }

@@ -41,8 +41,8 @@ class _ImageGridScreenState extends ConsumerState<ImageGridScreen>
   }
 
   void _showReplacementsDialog() async {
-    final PortraitReplacementsManager _replacementsManager = ref.read(portraitReplacementsStateProvider.notifier);
-    final replacements = await _replacementsManager.loadReplacements();
+    final replacements =
+        ref.watch(portraitReplacementsManager).valueOrNull ?? {};
 
     // Get current portraits to create hash-to-portrait lookup
     final portraitsAsync = ref.read(portraitsProvider);
@@ -93,18 +93,21 @@ class _ImageGridScreenState extends ConsumerState<ImageGridScreen>
       final randomPortrait =
           otherPortraits[random.nextInt(otherPortraits.length)];
 
+      final replacementsManager = ref.read(
+        portraitReplacementsManager.notifier,
+      );
       // Save the replacement
-      await _replacementsManager.saveReplacement(
+      await replacementsManager.saveReplacement(
         originalPortrait.hash,
         randomPortrait.image.imageFile.path,
       );
 
       // Update the replacements provider to trigger UI refresh
-      final currentReplacements = ref.read(portraitReplacementsProvider);
-      ref.read(portraitReplacementsProvider.notifier).state = {
-        ...currentReplacements,
-        originalPortrait.hash: randomPortrait.image.imageFile.path,
-      };
+      // final currentReplacements = ref.read(portraitReplacementsManager).valueOrNull ?? {};
+      // replacementsManager. = {
+      //   ...currentReplacements,
+      //   originalPortrait.hash: randomPortrait.image.imageFile.path,
+      // };
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -141,7 +144,8 @@ class _ImageGridScreenState extends ConsumerState<ImageGridScreen>
     // Watch the portraits provider and loading state
     final portraitsAsync = ref.watch(portraitsProvider);
     final isLoading = ref.watch(isLoadingPortraits);
-    final replacements = ref.watch(portraitReplacementsProvider);
+    final replacements =
+        ref.watch(portraitReplacementsManager).valueOrNull ?? {};
 
     return portraitsAsync.when(
       loading: () => const Center(
@@ -697,7 +701,7 @@ class ResponsiveImageGrid extends ConsumerWidget {
                           const Text('Replacement Size: Unknown'),
                         if (replacementDetails?.replacementPortrait != null)
                           Text(
-                            'Replacement Dimensions: ${replacementDetails!.replacementPortrait!.width} x ${replacementDetails!.replacementPortrait!.height}',
+                            'Replacement Dimensions: ${replacementDetails!.replacementPortrait!.width} x ${replacementDetails.replacementPortrait!.height}',
                           )
                         else
                           const Text('Replacement Dimensions: Unknown'),
@@ -709,6 +713,24 @@ class ResponsiveImageGrid extends ConsumerWidget {
               child: ContextMenuRegion(
                 contextMenu: ContextMenu(
                   entries: <ContextMenuEntry>[
+                    MenuItem(
+                      label: 'Set Random Replacement',
+                      icon: Icons.shuffle,
+                      onSelected: () {
+                        onAddRandomReplacement(portrait, allPortraits);
+                      },
+                    ),
+                    if (hasReplacement)
+                      MenuItem(
+                        label: 'Clear Replacement',
+                        icon: Icons.undo,
+                        onSelected: () {
+                          ref
+                              .read(portraitReplacementsManager.notifier)
+                              .removeReplacement(portrait.hash);
+                        },
+                      ),
+                    MenuDivider(),
                     MenuItem(
                       label: 'Open',
                       icon: Icons.open_in_new,
@@ -740,14 +762,6 @@ class ResponsiveImageGrid extends ConsumerWidget {
                         },
                       ),
                     ],
-                    MenuDivider(),
-                    MenuItem(
-                      label: 'Add Random Replacement',
-                      icon: Icons.shuffle,
-                      onSelected: () {
-                        onAddRandomReplacement(portrait, allPortraits);
-                      },
-                    ),
                   ],
                 ),
                 child: PortraitImageWidget(
@@ -806,7 +820,7 @@ class _PortraitImageWidgetState extends State<PortraitImageWidget> {
         borderRadius: BorderRadius.circular(4),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 2,
             offset: const Offset(0, 1),
           ),
@@ -846,7 +860,7 @@ class _PortraitImageWidgetState extends State<PortraitImageWidget> {
             borderRadius: BorderRadius.circular(4),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.2),
+                color: Colors.black.withValues(alpha: 0.2),
                 blurRadius: 4,
                 offset: const Offset(1, 2),
               ),
@@ -877,12 +891,12 @@ class _PortraitImageWidgetState extends State<PortraitImageWidget> {
               borderRadius: BorderRadius.circular(4),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.4),
+                  color: Colors.black.withValues(alpha: 0.4),
                   blurRadius: 8,
                   offset: const Offset(0, 4),
                 ),
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 2,
                   offset: const Offset(0, 1),
                 ),
@@ -905,6 +919,32 @@ class _PortraitImageWidgetState extends State<PortraitImageWidget> {
                         child: const Icon(Icons.broken_image),
                       );
                     },
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        Align(
+          alignment: Alignment.topLeft,
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Opacity(
+              opacity: _isHovering ? 0.5 : 1,
+              child: Stack(
+                children: [
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: theme.colorScheme.primaryContainer,
+                    ),
+                    child: Icon(
+                      Icons.swap_horiz,
+                      color: theme.colorScheme.primary,
+                      size: 24,
+                    ),
                   ),
                 ],
               ),

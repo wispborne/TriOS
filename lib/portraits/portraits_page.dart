@@ -32,7 +32,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
   @override
   List<Area> get areas => inReplaceMode
       ? [Area(id: 'left'), Area(id: 'right')]
-      : [Area(id: 'left')];
+      : [Area(id: 'main')];
 
   void _refreshPortraits() {
     // Invalidate the provider to trigger a reload
@@ -292,12 +292,20 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                     axis: Axis.horizontal,
                     builder: (context, area) {
                       switch (area.id) {
-                        case 'left':
+                        case 'main':
                           return PortraitsGridView(
                             modsAndImages: sortedImages,
                             allPortraits: modsAndImages,
                             replacements: replacements,
                             onAddRandomReplacement: _addRandomReplacement,
+                          );
+                        case 'left':
+                          return PortraitsGridView(
+                            modsAndImages: sortedImages,
+                            allPortraits: modsAndImages,
+                            replacements: {},
+                            onAddRandomReplacement: _addRandomReplacement,
+                            isDraggable: true,
                           );
                         case 'right':
                           return PortraitsGridView(
@@ -305,6 +313,14 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                             allPortraits: modsAndImages,
                             replacements: replacements,
                             onAddRandomReplacement: _addRandomReplacement,
+                            onAcceptDraggable: (original, replacement) {
+                              ref
+                                  .read(portraitReplacementsManager.notifier)
+                                  .saveReplacement(
+                                    original.hash,
+                                    replacement.imageFile.path,
+                                  );
+                            },
                           );
                         default:
                           return const SizedBox.shrink();

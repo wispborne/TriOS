@@ -10,6 +10,7 @@ import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart'
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/widgets/conditional_wrap.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
@@ -22,6 +23,9 @@ class PortraitsGridView extends ConsumerWidget {
     List<({Portrait image, ModVariant variant})>,
   )
   onAddRandomReplacement;
+  final bool isDraggable;
+  final void Function(Portrait original, Portrait replacement)?
+  onAcceptDraggable;
 
   const PortraitsGridView({
     super.key,
@@ -29,6 +33,8 @@ class PortraitsGridView extends ConsumerWidget {
     required this.allPortraits,
     required this.replacements,
     required this.onAddRandomReplacement,
+    this.isDraggable = false,
+    this.onAcceptDraggable,
   });
 
   // Helper method to find replacement details
@@ -214,10 +220,51 @@ class PortraitsGridView extends ConsumerWidget {
                     ],
                   ],
                 ),
-                child: PortraitImageWidget(
-                  originalPortrait: portrait,
-                  replacementPath: replacementPath,
-                  hasReplacement: hasReplacement,
+                child: ConditionalWrap(
+                  condition: onAcceptDraggable != null,
+                  wrapper: (child) => DragTarget(
+                    builder:
+                        (
+                          BuildContext context,
+                          List<dynamic> accepted,
+                          List<dynamic> rejected,
+                        ) => Container(
+                          foregroundDecoration: BoxDecoration(
+                            color: accepted.isNotEmpty
+                                ? Colors.black54
+                                : Colors.transparent,
+                          ),
+                          child: child,
+                        ),
+                    onAcceptWithDetails: (DragTargetDetails<Portrait> details) {
+                      onAcceptDraggable!(portrait, details.data);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Replaced ${portrait.imageFile.nameWithExtension} with\n${details.data.imageFile.nameWithExtension}',
+                          ),
+                          duration: const Duration(seconds: 3),
+                        ),
+                      );
+                    },
+                  ),
+                  child: ConditionalWrap(
+                    condition: isDraggable,
+                    wrapper: (child) => Draggable<Portrait>(
+                      data: portrait,
+                      feedback: Opacity(opacity: 0.5, child: child),
+                      onDragUpdate: (details) {},
+                      onDragCompleted: () {},
+                      onDraggableCanceled: (velocity, offset) {},
+                      maxSimultaneousDrags: 1,
+                      child: child,
+                    ),
+                    child: PortraitImageWidget(
+                      originalPortrait: portrait,
+                      replacementPath: replacementPath,
+                      hasReplacement: hasReplacement,
+                    ),
+                  ),
                 ),
               ),
             );
@@ -228,7 +275,7 @@ class PortraitsGridView extends ConsumerWidget {
   }
 }
 
-class PortraitImageWidget extends StatefulWidget {
+class PortraitImageWidget extends ConsumerStatefulWidget {
   final Portrait originalPortrait;
   final String? replacementPath;
   final bool hasReplacement;
@@ -241,10 +288,11 @@ class PortraitImageWidget extends StatefulWidget {
   });
 
   @override
-  State<PortraitImageWidget> createState() => _PortraitImageWidgetState();
+  ConsumerState<PortraitImageWidget> createState() =>
+      _PortraitImageWidgetState();
 }
 
-class _PortraitImageWidgetState extends State<PortraitImageWidget> {
+class _PortraitImageWidgetState extends ConsumerState<PortraitImageWidget> {
   bool _isHovering = false;
 
   @override
@@ -258,7 +306,7 @@ class _PortraitImageWidgetState extends State<PortraitImageWidget> {
         width: 128,
         height: 128,
         child: widget.hasReplacement
-            ? _buildStackedCards(theme)
+            ? _buildStackedCards(theme, ref)
             : _buildSingleCard(widget.originalPortrait.imageFile),
       ),
     );
@@ -292,7 +340,7 @@ class _PortraitImageWidgetState extends State<PortraitImageWidget> {
     );
   }
 
-  Widget _buildStackedCards(ThemeData theme) {
+  Widget _buildStackedCards(ThemeData theme, WidgetRef ref) {
     final replacementFile = _isHovering
         ? widget.originalPortrait.imageFile
         : File(widget.replacementPath!);
@@ -300,108 +348,112 @@ class _PortraitImageWidgetState extends State<PortraitImageWidget> {
         ? File(widget.replacementPath!)
         : widget.originalPortrait.imageFile;
 
-    return Stack(
-      fit: StackFit.passthrough,
-      children: [
-        // Back card (original image) - always visible at bottom-right
-        Container(
-          padding: const EdgeInsets.only(left: 16, top: 16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(4),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.2),
-                blurRadius: 4,
-                offset: const Offset(1, 2),
-              ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: ImageFiltered(
-              imageFilter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
-              child: Image.file(
-                originalFile,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    color: Colors.grey[400],
-                    child: const Icon(Icons.broken_image, size: 30),
-                  );
-                },
-              ),
-            ),
-          ),
-        ),
-        // Front card (replacement image) - covers most of the original
-        Padding(
-          padding: const EdgeInsets.only(bottom: 12, right: 12),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(4),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.4),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: 2,
-                  offset: const Offset(0, 1),
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: Stack(
-                fit: StackFit.passthrough,
-                children: [
-                  // Background, prevents transparent images from being see-through
-                  Container(color: Colors.black),
-                  // Replacement image
-                  Image.file(
-                    replacementFile,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        color: Colors.grey[300],
-                        child: const Icon(Icons.broken_image),
-                      );
-                    },
+    return Builder(
+      builder: (context) {
+        return Stack(
+          fit: StackFit.passthrough,
+          children: [
+            // Back card (original image) - always visible at bottom-right
+            Container(
+              padding: const EdgeInsets.only(left: 16, top: 16),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(4),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.2),
+                    blurRadius: 4,
+                    offset: const Offset(1, 2),
                   ),
                 ],
               ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: ImageFiltered(
+                  imageFilter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
+                  child: Image.file(
+                    originalFile,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        color: Colors.grey[400],
+                        child: const Icon(Icons.broken_image, size: 30),
+                      );
+                    },
+                  ),
+                ),
+              ),
             ),
-          ),
-        ),
-        Align(
-          alignment: Alignment.topLeft,
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Opacity(
-              opacity: _isHovering ? 0.5 : 1,
-              child: Stack(
-                children: [
-                  Container(
-                    width: 32,
-                    height: 32,
+            // Front card (replacement image) - covers most of the original
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12, right: 12),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(4),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.4),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 2,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: Stack(
+                    fit: StackFit.passthrough,
+                    children: [
+                      // Background, prevents transparent images from being see-through
+                      Container(color: Colors.black),
+                      // Replacement image
+                      Image.file(
+                        replacementFile,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            color: Colors.grey[300],
+                            child: const Icon(Icons.broken_image),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Align(
+              alignment: Alignment.topLeft,
+              child: Padding(
+                padding: const EdgeInsets.all(0),
+                child: IconButton(
+                  icon: Container(
+                    width: 24,
+                    height: 24,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: theme.colorScheme.primaryContainer,
                     ),
                     child: Icon(
-                      Icons.swap_horiz,
+                      Icons.undo,
                       color: theme.colorScheme.primary,
-                      size: 24,
+                      size: 16,
                     ),
                   ),
-                ],
+                  onPressed: () {
+                    ref
+                        .read(portraitReplacementsManager.notifier)
+                        .removeReplacement(widget.originalPortrait.hash);
+                  },
+                ),
               ),
             ),
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 }

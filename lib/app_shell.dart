@@ -14,7 +14,7 @@ import 'package:trios/chipper/utils.dart';
 import 'package:trios/dashboard/dashboard.dart';
 import 'package:trios/mod_manager/mods_grid_page.dart';
 import 'package:trios/models/version.dart';
-import 'package:trios/portraits/portraits_viewer.dart';
+import 'package:trios/portraits/portraits_page.dart';
 import 'package:trios/rules_autofresh/rules_hotreload.dart';
 import 'package:trios/shipViewer/shipsPage.dart';
 import 'package:trios/themes/theme_manager.dart';
@@ -219,7 +219,7 @@ class _AppShellState extends ConsumerState<AppShell>
       const Padding(padding: EdgeInsets.all(8), child: ModProfilePage()),
       const VramEstimatorPage(),
       const Padding(padding: EdgeInsets.all(8), child: ChipperApp()),
-      const Padding(padding: EdgeInsets.all(8), child: ImageGridScreen()),
+      const Padding(padding: EdgeInsets.all(8), child: PortraitsPage()),
       const WeaponPage(),
       const ShipPage(),
       const Padding(padding: EdgeInsets.all(8), child: SettingsPage()),

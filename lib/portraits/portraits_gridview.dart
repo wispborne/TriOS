@@ -389,6 +389,11 @@ class _PortraitImageWidgetState extends ConsumerState<PortraitImageWidget> {
               child: Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(4),
+                  border: Border.all(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                    width: 2,
+                    strokeAlign: BorderSide.strokeAlignInside,
+                  ),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.4),
@@ -426,9 +431,9 @@ class _PortraitImageWidgetState extends ConsumerState<PortraitImageWidget> {
               ),
             ),
             Align(
-              alignment: Alignment.topLeft,
+              alignment: Alignment.bottomRight,
               child: Padding(
-                padding: const EdgeInsets.all(0),
+                padding: const EdgeInsets.only(bottom: 8, right: 8),
                 child: IconButton(
                   icon: Container(
                     width: 24,
@@ -436,6 +441,13 @@ class _PortraitImageWidgetState extends ConsumerState<PortraitImageWidget> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: theme.colorScheme.primaryContainer,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.8),
+                          blurRadius: 4,
+                          offset: const Offset(2, 2),
+                        ),
+                      ],
                     ),
                     child: Icon(
                       Icons.undo,

@@ -278,18 +278,47 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                 padding: const EdgeInsets.only(top: 8),
                 child: MultiSplitViewTheme(
                   data: MultiSplitViewThemeData(
-                    dividerThickness: 16,
-                    dividerPainter: DividerPainters.grooved1(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                      highlightedColor: theme.colorScheme.onSurface,
-                      highlightedThickness: 2,
-                      backgroundColor: theme.colorScheme.surfaceContainer,
-                      animationDuration: const Duration(milliseconds: 100),
-                    ),
+                    dividerThickness: 24,
+                    // dividerPainter: DividerPainters.grooved1(
+                    //   color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                    //   highlightedColor: theme.colorScheme.onSurface,
+                    //   highlightedThickness: 2,
+                    //   backgroundColor: theme.colorScheme.surfaceContainer,
+                    //   animationDuration: const Duration(milliseconds: 100),
+                    // ),
                   ),
                   child: MultiSplitView(
                     controller: multiSplitController,
                     axis: Axis.horizontal,
+                    dividerBuilder:
+                        (
+                          axis,
+                          index,
+                          resizable,
+                          dragging,
+                          highlighted,
+                          themeData,
+                        ) {
+                          return Container(
+                            color: dragging
+                                ? theme.colorScheme.surfaceContainer.withValues(
+                                    alpha: 1,
+                                  )
+                                : theme.colorScheme.surfaceContainer.withValues(
+                                    alpha: 0.8,
+                                  ),
+                            child: Icon(
+                              Icons.forward,
+                              color: highlighted
+                                  ? theme.colorScheme.onSurface.withValues(
+                                      alpha: 1,
+                                    )
+                                  : theme.colorScheme.onSurface.withValues(
+                                      alpha: 0.8,
+                                    ),
+                            ),
+                          );
+                        },
                     builder: (context, area) {
                       switch (area.id) {
                         case 'main':

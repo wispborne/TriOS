@@ -15,12 +15,12 @@ import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 class PortraitsGridView extends ConsumerWidget {
-  final List<({Portrait image, ModVariant variant})> modsAndImages;
-  final List<({Portrait image, ModVariant variant})> allPortraits;
+  final List<({Portrait image, ModVariant? variant})> modsAndImages;
+  final List<({Portrait image, ModVariant? variant})> allPortraits;
   final Map<String, String> replacements;
   final Future<void> Function(
     Portrait,
-    List<({Portrait image, ModVariant variant})>,
+    List<({Portrait image, ModVariant? variant})>,
   )
   onAddRandomReplacement;
   final bool isDraggable;
@@ -41,7 +41,7 @@ class PortraitsGridView extends ConsumerWidget {
   ({Portrait? replacementPortrait, ModVariant? replacementMod})?
   _findReplacementDetails(
     String replacementPath,
-    List<({Portrait image, ModVariant variant})> allPortraits,
+    List<({Portrait image, ModVariant? variant})> allPortraits,
   ) {
     for (final item in allPortraits) {
       if (item.image.imageFile.path == replacementPath) {
@@ -119,7 +119,7 @@ class PortraitsGridView extends ConsumerWidget {
                           color: Theme.of(context).colorScheme.primary,
                         ),
                       ),
-                      Text('Mod: ${mod.modInfo.nameOrId}'),
+                      Text('Mod: ${mod?.modInfo.nameOrId}'),
                       Text(
                         'Path: ${portrait.imageFile.path.toFile().relativeTo(modsPath)}',
                       ),
@@ -238,14 +238,14 @@ class PortraitsGridView extends ConsumerWidget {
                         ),
                     onAcceptWithDetails: (DragTargetDetails<Portrait> details) {
                       onAcceptDraggable!(portrait, details.data);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'Replaced ${portrait.imageFile.nameWithExtension} with\n${details.data.imageFile.nameWithExtension}',
-                          ),
-                          duration: const Duration(seconds: 3),
-                        ),
-                      );
+                      // ScaffoldMessenger.of(context).showSnackBar(
+                      //   SnackBar(
+                      //     content: Text(
+                      //       'Replaced ${portrait.imageFile.nameWithExtension} with\n${details.data.imageFile.nameWithExtension}',
+                      //     ),
+                      //     duration: const Duration(seconds: 3),
+                      //   ),
+                      // );
                     },
                   ),
                   child: ConditionalWrap(

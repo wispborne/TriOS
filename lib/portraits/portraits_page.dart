@@ -11,6 +11,7 @@ import 'package:trios/portraits/portraits_gridview.dart';
 import 'package:trios/portraits/portraits_manager.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/utils/search.dart';
 import 'package:trios/widgets/MultiSplitViewMixin.dart';
 import 'package:trios/widgets/toolbar_checkbox_button.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -27,6 +28,8 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
   @override
   bool get wantKeepAlive => true;
   final SearchController _searchController = SearchController();
+  final SearchController _leftSearchController = SearchController();
+  final SearchController _rightSearchController = SearchController();
   bool inReplaceMode = false;
 
   @override
@@ -68,7 +71,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
 
   Future<void> _addRandomReplacement(
     Portrait originalPortrait,
-    List<({Portrait image, ModVariant variant})> allPortraits,
+    List<({Portrait image, ModVariant? variant})> allPortraits,
   ) async {
     try {
       // Filter out the original portrait and get a random replacement
@@ -129,6 +132,64 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
     }
   }
 
+  List<({Portrait image, ModVariant? variant})> _filterImages(
+    List<({Portrait image, ModVariant? variant})> images,
+    String query,
+  ) {
+    if (query.isEmpty) return images;
+
+    return images.where((item) {
+      final variant = item.variant;
+      final portrait = item.image;
+
+      return (query.toLowerCase() == 'vanilla' && variant == null) ||
+          searchModVariants([?variant], query).isNotEmpty ||
+          portrait.imageFile.path.toLowerCase().contains(query.toLowerCase());
+    }).toList();
+  }
+
+  Widget _buildGridSearchBar(SearchController controller, String hintText) {
+    return Container(
+      padding: const EdgeInsets.only(left: 8, right: 8, bottom: 4),
+      child: SizedBox(
+        height: 30,
+        child: SearchAnchor(
+          searchController: controller,
+          builder: (BuildContext context, SearchController controller) {
+            return SearchBar(
+              controller: controller,
+              leading: const Icon(Icons.search),
+              hintText: hintText,
+              trailing: [
+                controller.value.text.isEmpty
+                    ? Container()
+                    : IconButton(
+                        icon: const Icon(Icons.clear),
+                        constraints: const BoxConstraints(),
+                        padding: EdgeInsets.zero,
+                        onPressed: () {
+                          controller.clear();
+                          setState(() {});
+                        },
+                      ),
+              ],
+              backgroundColor: WidgetStateProperty.all(
+                Theme.of(context).colorScheme.surfaceContainer,
+              ),
+              onChanged: (value) {
+                setState(() {});
+              },
+            );
+          },
+          suggestionsBuilder:
+              (BuildContext context, SearchController controller) {
+                return [];
+              },
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -177,7 +238,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
         ),
       ),
       data: (portraits) {
-        final List<({Portrait image, ModVariant variant})> modsAndImages =
+        final List<({Portrait image, ModVariant? variant})> modsAndImages =
             portraits.entries
                 .expand(
                   (element) => element.value.map(
@@ -191,19 +252,10 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
           r'graphics\\.*portraits\\',
         );
 
-        // Apply search filter
-        final query = _searchController.value.text;
-        if (query.isNotEmpty) {
-          sortedImages = sortedImages.where((item) {
-            final variant = item.variant;
-            final portrait = item.image;
-            return variant.modInfo.nameOrId.toLowerCase().contains(
-                  query.toLowerCase(),
-                ) ||
-                portrait.imageFile.path.toLowerCase().contains(
-                  query.toLowerCase(),
-                );
-          }).toList();
+        // Apply search filter (only when not in replace mode)
+        if (!inReplaceMode) {
+          final query = _searchController.value.text;
+          sortedImages = _filterImages(sortedImages, query);
         }
 
         final theme = Theme.of(context);
@@ -260,6 +312,10 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                           value: inReplaceMode,
                           onChanged: (value) {
                             setState(() {
+                              if (_searchController.text.isNotEmpty) {
+                                _leftSearchController.text =
+                                    _searchController.text;
+                              }
                               inReplaceMode = value ?? false;
                               multiSplitController.areas = areas;
                             });
@@ -268,7 +324,8 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                         const Spacer(),
                       ],
                     ),
-                    Center(child: buildSearchBox()),
+                    // Only show center search box when not in replace mode
+                    if (!inReplaceMode) Center(child: buildSearchBox()),
                   ],
                 ),
               ),
@@ -329,27 +386,89 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                             onAddRandomReplacement: _addRandomReplacement,
                           );
                         case 'left':
-                          return PortraitsGridView(
-                            modsAndImages: sortedImages,
-                            allPortraits: modsAndImages,
-                            replacements: {},
-                            onAddRandomReplacement: _addRandomReplacement,
-                            isDraggable: true,
+                          final leftFilteredImages = _filterImages(
+                            sortedImages,
+                            _leftSearchController.value.text,
+                          );
+                          return Column(
+                            children: [
+                              _buildGridSearchBar(
+                                _leftSearchController,
+                                "Filter...",
+                              ),
+                              Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(
+                                    left: 8,
+                                    bottom: 4,
+                                  ),
+                                  child: Text(
+                                    '${leftFilteredImages.length} images',
+                                    style: theme.textTheme.labelSmall?.copyWith(
+                                      color: theme.colorScheme.onSurface
+                                          .withValues(alpha: 0.8),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                child: PortraitsGridView(
+                                  modsAndImages: leftFilteredImages,
+                                  allPortraits: modsAndImages,
+                                  replacements: {},
+                                  onAddRandomReplacement: _addRandomReplacement,
+                                  isDraggable: true,
+                                ),
+                              ),
+                            ],
                           );
                         case 'right':
-                          return PortraitsGridView(
-                            modsAndImages: sortedImages,
-                            allPortraits: modsAndImages,
-                            replacements: replacements,
-                            onAddRandomReplacement: _addRandomReplacement,
-                            onAcceptDraggable: (original, replacement) {
-                              ref
-                                  .read(portraitReplacementsManager.notifier)
-                                  .saveReplacement(
-                                    original.hash,
-                                    replacement.imageFile.path,
-                                  );
-                            },
+                          final rightFilteredImages = _filterImages(
+                            sortedImages,
+                            _rightSearchController.value.text,
+                          );
+                          return Column(
+                            children: [
+                              _buildGridSearchBar(
+                                _rightSearchController,
+                                "Filter...",
+                              ),
+                              Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(
+                                    left: 8,
+                                    bottom: 4,
+                                  ),
+                                  child: Text(
+                                    '${rightFilteredImages.length} images',
+                                    style: theme.textTheme.labelSmall?.copyWith(
+                                      color: theme.colorScheme.onSurface
+                                          .withValues(alpha: 0.8),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                child: PortraitsGridView(
+                                  modsAndImages: rightFilteredImages,
+                                  allPortraits: modsAndImages,
+                                  replacements: replacements,
+                                  onAddRandomReplacement: _addRandomReplacement,
+                                  onAcceptDraggable: (original, replacement) {
+                                    ref
+                                        .read(
+                                          portraitReplacementsManager.notifier,
+                                        )
+                                        .saveReplacement(
+                                          original.hash,
+                                          replacement.imageFile.path,
+                                        );
+                                  },
+                                ),
+                              ),
+                            ],
                           );
                         default:
                           return const SizedBox.shrink();
@@ -405,8 +524,8 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
     );
   }
 
-  List<({Portrait image, ModVariant variant})> sortModsAndImages(
-    List<({Portrait image, ModVariant variant})> modsAndImages,
+  List<({Portrait image, ModVariant? variant})> sortModsAndImages(
+    List<({Portrait image, ModVariant? variant})> modsAndImages,
     String regexPattern,
   ) {
     final regex = RegExp(regexPattern);
@@ -418,9 +537,11 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
       if (aMatches && !bMatches) return -1;
       if (!aMatches && bMatches) return 1;
 
-      final variantComparison = a.variant.modInfo.nameOrId.compareTo(
-        b.variant.modInfo.nameOrId,
-      );
+      final variantComparison =
+          a.variant?.modInfo.nameOrId.compareTo(
+            b.variant?.modInfo.nameOrId ?? "",
+          ) ??
+          -1;
       if (variantComparison != 0) return variantComparison;
 
       return a.image.imageFile.path.compareTo(b.image.imageFile.path);
@@ -430,6 +551,8 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
   @override
   void dispose() {
     _searchController.dispose();
+    _leftSearchController.dispose();
+    _rightSearchController.dispose();
     super.dispose();
   }
 }

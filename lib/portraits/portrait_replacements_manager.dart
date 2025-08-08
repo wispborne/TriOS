@@ -81,17 +81,12 @@ class PortraitReplacementsNotifier
   }
 
   /// Syncs replacements to companion mod with portrait mapping
-  Future<void> syncToCompanionModWithPortraits(
-    Map<String, Portrait> portraitsByHash,
-  ) async {
+  Future<void> syncToCompanionModWithPortraits() async {
     try {
       final replacements = await _storage.readSettingsFromDisk({});
       final companionModManager = ref.read(companionModManagerProvider);
 
-      await companionModManager.updateImageReplacementsFromHashMap(
-        replacements,
-        portraitsByHash,
-      );
+      await companionModManager.updateImageReplacementsConfig(replacements);
     } catch (e) {
       Fimber.w(
         'Failed to sync replacements to companion mod with portraits: $e',

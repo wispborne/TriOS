@@ -248,41 +248,43 @@ class LauncherButton extends HookConsumerWidget {
         context: context,
         builder: (context) {
           return AlertDialog(
-            title: const Text('Launch precheck failed'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ...launchPrecheckFailures
-                // .distinctBy((it) => it.message)
-                .map((failure) {
-                  return ListTile(
-                    title: Text(failure.message),
-                    subtitle: failure.requiringModVariant != null
-                        ? Text(
-                            failure
-                                .requiringModVariant!
-                                .modInfo
-                                .formattedNameVersion,
-                          )
-                        : null,
-                    trailing: failure.fixActionName != null
-                        ? OutlinedButton(
-                            onPressed: () async {
-                              await failure.doFix!();
-                              Navigator.of(context).pop();
-                            },
-                            child: Text(failure.fixActionName!),
-                          )
-                        : null,
-                  );
-                }),
-                const SizedBox(height: 16),
-                ElevatedButton.icon(
-                  onPressed: () => _launchGameWithoutPrecheck(ref),
-                  icon: const SvgImageIcon("assets/images/icon-skip.svg"),
-                  label: const Text('Launch anyway'),
-                ),
-              ],
+            title: const Text('Launch Precheck Failed'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ...launchPrecheckFailures
+                  // .distinctBy((it) => it.message)
+                  .map((failure) {
+                    return ListTile(
+                      title: Text(failure.message),
+                      subtitle: failure.requiringModVariant != null
+                          ? Text(
+                              failure
+                                  .requiringModVariant!
+                                  .modInfo
+                                  .formattedNameVersion,
+                            )
+                          : null,
+                      trailing: failure.fixActionName != null
+                          ? OutlinedButton(
+                              onPressed: () async {
+                                await failure.doFix!();
+                                Navigator.of(context).pop();
+                              },
+                              child: Text(failure.fixActionName!),
+                            )
+                          : null,
+                    );
+                  }),
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    onPressed: () => _launchGameWithoutPrecheck(ref),
+                    icon: const SvgImageIcon("assets/images/icon-skip.svg"),
+                    label: const Text('Launch anyway'),
+                  ),
+                ],
+              ),
             ),
           );
         },

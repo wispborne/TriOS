@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:toastification/toastification.dart';
+import 'package:trios/companion_mod/companion_mod_manager.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/onboarding/onboarding_page.dart';
 import 'package:trios/thirdparty/dartx/comparable.dart';
@@ -809,6 +810,100 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         ],
                       );
                     },
+                  ),
+                  SettingsGroup(
+                    name: "Companion Mod",
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(
+                          left: leftTextOptionPadding,
+                        ),
+                        child: Builder(
+                          builder: (context) {
+                            final mods = ref.watch(AppState.mods);
+                            final companionMod = mods.firstOrNullWhere(
+                              (m) => m.id == Constants.companionModId,
+                            );
+                            final isCompanionModEnabled = mods.any(
+                              (m) =>
+                                  m.id == Constants.companionModId &&
+                                  m.hasEnabledVariant,
+                            );
+
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "The ${Constants.appName} Companion Mod is required to replace portraits without touching the actual mods (see Portraits tab).",
+                                  style: theme.textTheme.labelLarge?.copyWith(
+                                    fontStyle: FontStyle.italic,
+                                    color: theme.textTheme.labelLarge?.color
+                                        ?.withValues(alpha: 0.9),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  companionMod == null
+                                      ? "Companion Mod is not installed."
+                                      : isCompanionModEnabled
+                                      ? "Companion Mod is installed."
+                                      : "Companion Mod is installed but not enabled.",
+                                  style: theme.textTheme.labelLarge,
+                                ),
+
+                                const SizedBox(height: 8),
+                                Disable(
+                                  isEnabled: companionMod != null,
+                                  child: ElevatedButton.icon(
+                                    icon: Icon(Icons.install_desktop),
+                                    label: const Text("Open Companion Mod"),
+                                    onPressed: () async {
+                                      try {
+                                        companionMod
+                                            ?.findFirstEnabledOrHighestVersion
+                                            ?.modFolder
+                                            .openInExplorer();
+                                      } catch (e) {
+                                        showSnackBar(
+                                          context: ref.read(
+                                            AppState.appContext,
+                                          )!,
+                                          content: Text(e.toString()),
+                                        );
+                                      }
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                ElevatedButton.icon(
+                                  icon: Icon(Icons.install_desktop),
+                                  label: const Text("Reinstall Companion Mod"),
+                                  onPressed: () async {
+                                    try {
+                                      await ref
+                                          .read(companionModManagerProvider)
+                                          .copyModToGameFolder();
+                                      await ref
+                                          .read(
+                                            AppState
+                                                .portraitReplacementsManager
+                                                .notifier,
+                                          )
+                                          .syncToCompanionModWithPortraits();
+                                    } catch (e) {
+                                      showSnackBar(
+                                        context: ref.read(AppState.appContext)!,
+                                        content: Text(e.toString()),
+                                      );
+                                    }
+                                  },
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                      ),
+                    ],
                   ),
                   SettingsGroup(
                     name: "Misc",

@@ -29,12 +29,20 @@ class CompanionModManager {
 
   CompanionModManager(this.ref);
 
+  Directory? get companionModDefaultFolder {
+    final modsFolder = ref.read(appSettings.select((s) => s.modsDir));
+    if (modsFolder == null) {
+      return null;
+    }
+    return Directory(p.join(modsFolder.path, Constants.companionModFolderName));
+  }
+
   /// Copies the TriOS companion mod from assets to the game's mods folder
   /// and updates the game version in mod_info.json
   Future<void> copyModToGameFolder({bool enableMod = true}) async {
     try {
       // Get the mods folder path using Riverpod
-      final modsFolder = ref.read(AppState.modsFolder).valueOrNull;
+      final modsFolder = ref.read(appSettings.select((s) => s.modsDir));
       if (modsFolder == null) {
         throw StateError('Game mods folder not configured');
       }
@@ -320,47 +328,6 @@ class CompanionModManager {
           ),
         )
         .toMap();
-  }
-
-  /// Updates the image replacements config using portrait hash to file path mappings
-  /// This method converts portrait hashes to actual file paths for the JSON config
-  Future<void> updateImageReplacementsFromHashMap(
-    Map<String, ReplacedSavedPortrait> hashToPathReplacements,
-    Map<String, Portrait> hashToPortrait,
-  ) async {
-    // try {
-    //   // Convert hash-based replacements to path-based replacements
-    //   final Map<String, ReplacedSavedPortrait> pathReplacements = {};
-    //
-    //   for (final entry in hashToPathReplacements.entries) {
-    //     final original = entry.key;
-    //     final replacement = entry.value;
-    //
-    //     // Find the original portrait by hash
-    //     final originalPortrait = hashToPortrait[original];
-    //     if (originalPortrait == null) {
-    //       Fimber.w('Original portrait not found for hash: $original');
-    //       continue;
-    //     }
-    //
-    //     // Use the original portrait's hash as the key
-    //     pathReplacements[originalPortrait.hash] = replacement.replacement;
-    //   }
-
-    // Update the config file with path-based replacements
-    await updateImageReplacementsConfig(hashToPathReplacements);
-    //
-    //   Fimber.i(
-    //     'Converted ${hashToPathReplacements.length} hash-based replacements to ${pathReplacements.length} path-based replacements',
-    //   );
-    // } catch (e, stackTrace) {
-    //   Fimber.e(
-    //     'Failed to update image replacements from hash map: $e',
-    //     ex: e,
-    //     stacktrace: stackTrace,
-    //   );
-    //   rethrow;
-    // }
   }
 
   /// Clears all image replacements from the config file

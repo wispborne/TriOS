@@ -1,4 +1,12 @@
 # 1.3.0
+- Added
+  - Portrait Replacer!
+    - Enable "Replace Mode", then drag'n'drop to replace.
+    - **Prerelease Version**: all portraits are rescanned whenever a mod is enabled/disabled.
+    - A new TriOS Companion Mod is required to perform the replacements at runtime, and will be installed automatically if missing.
+      - The only thing the Companion Mod does is do any portrait replacements you've specified. It has no impact on anything else.
+- Fixed
+  - Launch Precheck Failed dialog did not scroll if you had too many failures listed.
 - Changed
   - Optimized loading of portraits.
 

@@ -241,7 +241,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                             Padding(
                               padding: const EdgeInsets.only(),
                               child: Text(
-                                'Portrait Viewer',
+                                'Portrait${inReplaceMode ? ' Replacer' : ' Viewer'}',
                                 style: theme.textTheme.headlineSmall?.copyWith(
                                   fontSize: 20,
                                 ),

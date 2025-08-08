@@ -1,18 +1,26 @@
 import 'dart:io';
 import 'dart:math';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:multi_split_view/multi_split_view.dart';
+import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/portraits/portrait_model.dart';
 import 'package:trios/portraits/portrait_replacements_manager.dart';
 import 'package:trios/portraits/portraits_gridview.dart';
 import 'package:trios/portraits/portraits_manager.dart';
+import 'package:trios/trios/app_state.dart';
+import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/search.dart';
 import 'package:trios/widgets/MultiSplitViewMixin.dart';
+import 'package:trios/widgets/blur.dart';
+import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:trios/widgets/overflow_menu_button.dart';
 import 'package:trios/widgets/toolbar_checkbox_button.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
@@ -30,6 +38,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
   final SearchController _searchController = SearchController();
   final SearchController _leftSearchController = SearchController();
   final SearchController _rightSearchController = SearchController();
+  bool showOnlyReplaced = false;
   bool inReplaceMode = false;
 
   @override
@@ -42,10 +51,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
     ref.invalidate(portraitsProvider);
   }
 
-  void _showReplacementsDialog() async {
-    final replacements =
-        ref.watch(portraitReplacementsManager).valueOrNull ?? {};
-
+  void _showReplacementsDialog(Map<String, Portrait> replacements) async {
     // Get current portraits to create hash-to-portrait lookup
     final portraitsAsync = ref.read(portraitsProvider);
     final Map<String, Portrait> hashToPortrait = {};
@@ -67,69 +73,6 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
         hashToPortrait: hashToPortrait,
       ),
     );
-  }
-
-  Future<void> _addRandomReplacement(
-    Portrait originalPortrait,
-    List<({Portrait image, ModVariant? variant})> allPortraits,
-  ) async {
-    try {
-      // Filter out the original portrait and get a random replacement
-      final otherPortraits = allPortraits
-          .where((item) => item.image.hash != originalPortrait.hash)
-          .toList();
-
-      if (otherPortraits.isEmpty) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('No other portraits available for replacement'),
-              duration: Duration(seconds: 2),
-            ),
-          );
-        }
-        return;
-      }
-
-      final random = Random();
-      final randomPortrait =
-          otherPortraits[random.nextInt(otherPortraits.length)];
-
-      final replacementsManager = ref.read(
-        portraitReplacementsManager.notifier,
-      );
-      // Save the replacement
-      await replacementsManager.saveReplacement(
-        originalPortrait.hash,
-        randomPortrait.image.imageFile.path,
-      );
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Replacement added: ${originalPortrait.imageFile.path.split('\\').last} -> ${randomPortrait.image.imageFile.path.split('\\').last}',
-            ),
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-
-      Fimber.i(
-        'Random replacement added: ${originalPortrait.hash} -> ${randomPortrait.image.imageFile.path}',
-      );
-    } catch (e) {
-      Fimber.e('Error adding random replacement: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error adding replacement: $e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-    }
   }
 
   List<({Portrait image, ModVariant? variant})> _filterImages(
@@ -197,8 +140,6 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
     // Watch the portraits provider and loading state
     final portraitsAsync = ref.watch(portraitsProvider);
     final isLoading = ref.watch(isLoadingPortraits);
-    final replacements =
-        ref.watch(portraitReplacementsManager).valueOrNull ?? {};
 
     return portraitsAsync.when(
       loading: () => const Center(
@@ -238,6 +179,16 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
         ),
       ),
       data: (portraits) {
+        // TODO There's no way this is fast.
+        final loadedReplacements =
+            ref.watch(AppState.portraitReplacementsManager).valueOrNull ?? {};
+        final replacements = loadedReplacements
+            .hydrateToPortraitMap(portraits.convertToPortraitMap())
+            .entries
+            .where((element) => element.value != null)
+            .toMap()
+            .cast<String, Portrait>();
+
         final List<({Portrait image, ModVariant? variant})> modsAndImages =
             portraits.entries
                 .expand(
@@ -252,6 +203,12 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
           r'graphics\\.*portraits\\',
         );
 
+        if (showOnlyReplaced) {
+          sortedImages = sortedImages
+              .where((element) => replacements.containsKey(element.image.hash))
+              .toList();
+        }
+
         // Apply search filter (only when not in replace mode)
         if (!inReplaceMode) {
           final query = _searchController.value.text;
@@ -259,80 +216,168 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
         }
 
         final theme = Theme.of(context);
+        final visible = sortedImages.length;
+        final total = modsAndImages.length;
+        final companionMod = ref
+            .watch(AppState.mods)
+            .firstWhereOrNull((it) => it.id == Constants.companionModId);
+        final isCompanionModEnabled = companionMod?.hasEnabledVariant == true;
+        multiSplitController.areas = areas;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Card(
-              margin: const EdgeInsets.all(0),
-              child: Padding(
-                padding: const EdgeInsets.all(4),
-                child: Stack(
-                  children: [
-                    Row(
+            Padding(
+              padding: const EdgeInsets.all(4),
+              child: SizedBox(
+                height: 50,
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 8, right: 8),
+                    child: Stack(
                       children: [
-                        TextButton.icon(
-                          onPressed: isLoading ? null : _refreshPortraits,
-                          style: ButtonStyle(
-                            foregroundColor: WidgetStateProperty.all(
-                              theme.colorScheme.onSurface,
+                        Row(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(),
+                              child: Text(
+                                'Portrait Viewer',
+                                style: theme.textTheme.headlineSmall?.copyWith(
+                                  fontSize: 20,
+                                ),
+                              ),
                             ),
-                          ),
-                          icon: isLoading
-                              ? const SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
+                            MovingTooltipWidget.text(
+                              message:
+                                  "Displays images that are *likely* to be portraits.\n\nBecause mods may use any image as a portrait, this is not an exact science, but best guesses.",
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Icon(Icons.info),
+                              ),
+                            ),
+                            if (!isCompanionModEnabled)
+                              Padding(
+                                padding: const EdgeInsets.all(0),
+                                child: Stack(
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Opacity(
+                                        opacity: 0.9,
+                                        child: Blur(
+                                          blur: 5,
+                                          child: Icon(
+                                            Icons.warning,
+                                            color: theme.colorScheme.error
+                                                .darker(20),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    MovingTooltipWidget.text(
+                                      message: companionMod == null
+                                          ? "${Constants.appName} Companion mod not found!"
+                                          : "${Constants.appName} Companion mod is not enabled. Portrait replacements will not work.\n\nClick to enable it.",
+                                      child: IconButton(
+                                        onPressed: () {
+                                          if (companionMod == null) return;
+                                          ref
+                                              .read(modManager.notifier)
+                                              .changeActiveModVariant(
+                                                companionMod,
+                                                companionMod.findHighestVersion,
+                                              );
+                                        },
+                                        icon: Icon(
+                                          Icons.warning,
+                                          color: theme.colorScheme.error,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            TextButton.icon(
+                              onPressed: isLoading ? null : _refreshPortraits,
+                              style: ButtonStyle(
+                                foregroundColor: WidgetStateProperty.all(
+                                  theme.colorScheme.onSurface,
+                                ),
+                              ),
+                              icon: isLoading
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Icon(Icons.refresh),
+                              label: const Text('Reload'),
+                            ),
+                            const SizedBox(width: 8),
+                            MovingTooltipWidget.text(
+                              message:
+                                  "In this mode, drag and drop images from the right pane to replace images on the left pane.",
+                              child: TriOSToolbarCheckboxButton(
+                                text: "Replace Mode",
+                                value: inReplaceMode,
+                                onChanged: (value) {
+                                  setState(() {
+                                    if (_searchController.text.isNotEmpty) {
+                                      _leftSearchController.text =
+                                          _searchController.text;
+                                    }
+                                    inReplaceMode = value ?? false;
+                                  });
+                                },
+                              ),
+                            ),
+                            if (inReplaceMode)
+                              Padding(
+                                padding: const EdgeInsets.only(left: 16),
+                                child: Text(
+                                  "Tip: Drag from right to left",
+                                  style: theme.textTheme.labelLarge?.copyWith(
+                                    fontStyle: FontStyle.italic,
                                   ),
-                                )
-                              : const Icon(Icons.refresh),
-                          label: const Text('Reload'),
-                        ),
-                        TextButton.icon(
-                          onPressed: _showReplacementsDialog,
-                          style: ButtonStyle(
-                            foregroundColor: WidgetStateProperty.all(
-                              theme.colorScheme.onSurface,
+                                ),
+                              ),
+                            const Spacer(),
+                            // Only show center search box when not in replace mode
+                            if (!inReplaceMode) Center(child: buildSearchBox()),
+                            const SizedBox(width: 8),
+                            MovingTooltipWidget.text(
+                              message: "Only view images with replacements",
+                              child: TriOSToolbarCheckboxButton(
+                                text: "Replacements",
+                                value: showOnlyReplaced,
+                                onChanged: (value) => setState(
+                                  () => showOnlyReplaced = value ?? false,
+                                ),
+                              ),
                             ),
-                          ),
-                          icon: const Icon(Icons.swap_horiz),
-                          label: const Text('Replacements'),
+                            OverflowMenuButton(
+                              menuItems: [
+                                OverflowMenuItem(
+                                  title: "View Replacements",
+                                  icon: Icons.swap_horiz,
+                                  onTap: () =>
+                                      _showReplacementsDialog(replacements),
+                                ).toEntry(0),
+                              ],
+                            ),
+                          ],
                         ),
-                        Padding(
-                          padding: const EdgeInsets.only(left: 8),
-                          child: Text(
-                            '${sortedImages.length} images',
-                            style: theme.textTheme.labelLarge,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        TriOSToolbarCheckboxButton(
-                          text: "Replace Mode",
-                          value: inReplaceMode,
-                          onChanged: (value) {
-                            setState(() {
-                              if (_searchController.text.isNotEmpty) {
-                                _leftSearchController.text =
-                                    _searchController.text;
-                              }
-                              inReplaceMode = value ?? false;
-                              multiSplitController.areas = areas;
-                            });
-                          },
-                        ),
-                        const Spacer(),
                       ],
                     ),
-                    // Only show center search box when not in replace mode
-                    if (!inReplaceMode) Center(child: buildSearchBox()),
-                  ],
+                  ),
                 ),
               ),
             ),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.only(top: 8),
+                padding: const EdgeInsets.only(left: 8, right: 8),
                 child: MultiSplitViewTheme(
                   data: MultiSplitViewThemeData(
                     dividerThickness: 24,
@@ -344,136 +389,211 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                     //   animationDuration: const Duration(milliseconds: 100),
                     // ),
                   ),
-                  child: MultiSplitView(
-                    controller: multiSplitController,
-                    axis: Axis.horizontal,
-                    dividerBuilder:
-                        (
-                          axis,
-                          index,
-                          resizable,
-                          dragging,
-                          highlighted,
-                          themeData,
-                        ) {
-                          return Container(
-                            color: dragging
-                                ? theme.colorScheme.surfaceContainer.withValues(
-                                    alpha: 1,
-                                  )
-                                : theme.colorScheme.surfaceContainer.withValues(
-                                    alpha: 0.8,
-                                  ),
-                            child: Icon(
-                              Icons.forward,
-                              color: highlighted
-                                  ? theme.colorScheme.onSurface.withValues(
-                                      alpha: 1,
-                                    )
-                                  : theme.colorScheme.onSurface.withValues(
-                                      alpha: 0.8,
-                                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.max,
+                    children: [
+                      if (!inReplaceMode)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8, bottom: 6),
+                          child: Text(
+                            '${total ?? "..."} images${total != visible ? " ($visible shown)" : ""}',
+                            style: theme.textTheme.labelMedium?.copyWith(
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.8,
+                              ),
                             ),
-                          );
-                        },
-                    builder: (context, area) {
-                      switch (area.id) {
-                        case 'main':
-                          return PortraitsGridView(
-                            modsAndImages: sortedImages,
-                            allPortraits: modsAndImages,
-                            replacements: replacements,
-                            onAddRandomReplacement: _addRandomReplacement,
-                          );
-                        case 'left':
-                          final leftFilteredImages = _filterImages(
-                            sortedImages,
-                            _leftSearchController.value.text,
-                          );
-                          return Column(
-                            children: [
-                              _buildGridSearchBar(
-                                _leftSearchController,
-                                "Filter...",
-                              ),
-                              Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Padding(
-                                  padding: const EdgeInsets.only(
-                                    left: 8,
-                                    bottom: 4,
+                          ),
+                        ),
+                      Expanded(
+                        child: MultiSplitView(
+                          controller: multiSplitController,
+                          axis: Axis.horizontal,
+                          dividerBuilder:
+                              (
+                                axis,
+                                index,
+                                resizable,
+                                dragging,
+                                highlighted,
+                                themeData,
+                              ) {
+                                return Container(
+                                  color: dragging
+                                      ? theme.colorScheme.surfaceContainer
+                                            .withValues(alpha: 1)
+                                      : theme.colorScheme.surfaceContainer
+                                            .withValues(alpha: 0.8),
+                                  child: Icon(
+                                    Icons.keyboard_double_arrow_left,
+                                    color: highlighted
+                                        ? theme.colorScheme.onSurface
+                                              .withValues(alpha: 1)
+                                        : theme.colorScheme.onSurface
+                                              .withValues(alpha: 0.8),
                                   ),
-                                  child: Text(
-                                    '${leftFilteredImages.length} images',
-                                    style: theme.textTheme.labelSmall?.copyWith(
-                                      color: theme.colorScheme.onSurface
-                                          .withValues(alpha: 0.8),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                child: PortraitsGridView(
-                                  modsAndImages: leftFilteredImages,
-                                  allPortraits: modsAndImages,
-                                  replacements: {},
-                                  onAddRandomReplacement: _addRandomReplacement,
-                                  isDraggable: true,
-                                ),
-                              ),
-                            ],
-                          );
-                        case 'right':
-                          final rightFilteredImages = _filterImages(
-                            sortedImages,
-                            _rightSearchController.value.text,
-                          );
-                          return Column(
-                            children: [
-                              _buildGridSearchBar(
-                                _rightSearchController,
-                                "Filter...",
-                              ),
-                              Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Padding(
-                                  padding: const EdgeInsets.only(
-                                    left: 8,
-                                    bottom: 4,
-                                  ),
-                                  child: Text(
-                                    '${rightFilteredImages.length} images',
-                                    style: theme.textTheme.labelSmall?.copyWith(
-                                      color: theme.colorScheme.onSurface
-                                          .withValues(alpha: 0.8),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                child: PortraitsGridView(
-                                  modsAndImages: rightFilteredImages,
+                                );
+                              },
+                          builder: (context, area) {
+                            switch (area.id) {
+                              case 'main':
+                                return PortraitsGridView(
+                                  modsAndImages: sortedImages,
                                   allPortraits: modsAndImages,
                                   replacements: replacements,
+                                  showPickReplacementIcon: true,
+                                  onSelectedPortraitToReplace:
+                                      _onSelectedPortraitToReplace,
                                   onAddRandomReplacement: _addRandomReplacement,
-                                  onAcceptDraggable: (original, replacement) {
-                                    ref
-                                        .read(
-                                          portraitReplacementsManager.notifier,
-                                        )
-                                        .saveReplacement(
-                                          original.hash,
-                                          replacement.imageFile.path,
-                                        );
-                                  },
-                                ),
-                              ),
-                            ],
-                          );
-                        default:
-                          return const SizedBox.shrink();
-                      }
-                    },
+                                );
+                              case 'left':
+                                final leftFilteredImages = _filterImages(
+                                  sortedImages,
+                                  _leftSearchController.value.text,
+                                );
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        // Padding(
+                                        //   padding: const EdgeInsets.only(
+                                        //     left: 8,
+                                        //   ),
+                                        //   child: Text(
+                                        //     "Portraits",
+                                        //     style: theme.textTheme.titleLarge,
+                                        //   ),
+                                        // ),
+                                        // const SizedBox(width: 8),
+                                        Expanded(
+                                          child: _buildGridSearchBar(
+                                            _leftSearchController,
+                                            "Filter...",
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(
+                                          left: 8,
+                                          bottom: 4,
+                                        ),
+                                        child: Text(
+                                          '${leftFilteredImages.length} images',
+                                          style: theme.textTheme.labelSmall
+                                              ?.copyWith(
+                                                color: theme
+                                                    .colorScheme
+                                                    .onSurface
+                                                    .withValues(alpha: 0.8),
+                                              ),
+                                        ),
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: PortraitsGridView(
+                                        modsAndImages: leftFilteredImages,
+                                        allPortraits: modsAndImages,
+                                        replacements: replacements,
+                                        showPickReplacementIcon: false,
+                                        onAddRandomReplacement:
+                                            _addRandomReplacement,
+                                        onSelectedPortraitToReplace:
+                                            _onSelectedPortraitToReplace,
+                                        onAcceptDraggable: (original, replacement) {
+                                          ref
+                                              .read(
+                                                AppState
+                                                    .portraitReplacementsManager
+                                                    .notifier,
+                                              )
+                                              .saveReplacement(
+                                                original,
+                                                replacement,
+                                              );
+                                        },
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              case 'right':
+                                final rightFilteredImages = _filterImages(
+                                  sortedImages,
+                                  _rightSearchController.value.text,
+                                );
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                            left: 8,
+                                          ),
+                                          child: Text(
+                                            "Replacements",
+                                            style: theme.textTheme.titleLarge,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: _buildGridSearchBar(
+                                            _rightSearchController,
+                                            "Filter...",
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(
+                                          left: 8,
+                                          bottom: 4,
+                                        ),
+                                        child: Text(
+                                          '${rightFilteredImages.length} images',
+                                          style: theme.textTheme.labelSmall
+                                              ?.copyWith(
+                                                color: theme
+                                                    .colorScheme
+                                                    .onSurface
+                                                    .withValues(alpha: 0.8),
+                                              ),
+                                        ),
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: PortraitsGridView(
+                                        modsAndImages: rightFilteredImages,
+                                        allPortraits: modsAndImages,
+                                        replacements: {},
+                                        showPickReplacementIcon: false,
+                                        onAddRandomReplacement:
+                                            _addRandomReplacement,
+                                        onSelectedPortraitToReplace:
+                                            _onSelectedPortraitToReplace,
+                                        isDraggable: true,
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              default:
+                                return const SizedBox.shrink();
+                            }
+                          },
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -555,10 +675,80 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
     _rightSearchController.dispose();
     super.dispose();
   }
+
+  void _onSelectedPortraitToReplace(Portrait selectedPortrait) {
+    setState(() {
+      _leftSearchController.text = selectedPortrait.relativePath;
+      inReplaceMode = true;
+    });
+  }
+
+  Future<void> _addRandomReplacement(
+    Portrait originalPortrait,
+    List<({Portrait image, ModVariant? variant})> allPortraits,
+  ) async {
+    try {
+      // Filter out the original portrait and get a random replacement
+      final otherPortraits = allPortraits
+          .where((item) => item.image.hash != originalPortrait.hash)
+          .toList();
+
+      if (otherPortraits.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('No other portraits available for replacement'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+        return;
+      }
+
+      final random = Random();
+      final randomPortrait =
+          otherPortraits[random.nextInt(otherPortraits.length)];
+
+      final replacementsManager = ref.read(
+        AppState.portraitReplacementsManager.notifier,
+      );
+      // Save the replacement
+      await replacementsManager.saveReplacement(
+        originalPortrait,
+        randomPortrait.image,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Replacement added: ${originalPortrait.imageFile.path.split('\\').last} -> ${randomPortrait.image.imageFile.path.split('\\').last}',
+            ),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+
+      Fimber.i(
+        'Random replacement added: ${originalPortrait.hash} -> ${randomPortrait.image.imageFile.path}',
+      );
+    } catch (e) {
+      Fimber.e('Error adding random replacement: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error adding replacement: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
+  }
 }
 
 class ReplacementsDialog extends StatelessWidget {
-  final Map<String, String> replacements;
+  final Map<String, Portrait> replacements;
   final Map<String, Portrait> hashToPortrait;
 
   const ReplacementsDialog({
@@ -585,7 +775,7 @@ class ReplacementsDialog extends StatelessWidget {
 
                   return ReplacementListItem(
                     originalHash: originalHash,
-                    replacementPath: replacementPath,
+                    replacementPath: replacementPath.imageFile.path,
                     originalPortrait: hashToPortrait[originalHash],
                   );
                 },

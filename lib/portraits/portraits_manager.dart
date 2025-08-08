@@ -12,16 +12,18 @@ final isLoadingPortraits = StateProvider<bool>((ref) => false);
 final portraitsProvider = StreamProvider<Map<ModVariant?, List<Portrait>>>((
   ref,
 ) async* {
+  // Detects when mods are added or removed, not enabled/disabled
+  ref.watch(AppState.variantSmolIds);
   ref.watch(isLoadingPortraits.notifier).state = true;
 
   final variants = ref
-      .watch(AppState.mods)
+      .read(AppState.mods)
       .map((mod) => mod.findFirstEnabledOrHighestVersion)
       .toList();
 
-  final defaultGamePath = ref.watch(appSettings.select((s) => s.gameCoreDir));
+  final gameCoreFolder = ref.watch(appSettings.select((s) => s.gameCoreDir));
 
-  if (defaultGamePath == null) {
+  if (gameCoreFolder == null) {
     ref.watch(isLoadingPortraits.notifier).state = false;
     return;
   }
@@ -31,7 +33,7 @@ final portraitsProvider = StreamProvider<Map<ModVariant?, List<Portrait>>>((
   // Scan and yield results progressively
   await for (final result in scanner.scanVariantsStream(
     variants + [null],
-    defaultGamePath,
+    gameCoreFolder,
   )) {
     yield result;
   }

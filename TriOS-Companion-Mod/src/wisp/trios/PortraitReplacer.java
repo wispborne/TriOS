@@ -1,3 +1,5 @@
+package wisp.trios;
+
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.graphics.SpriteAPI;
 import org.apache.log4j.Level;
@@ -178,32 +180,34 @@ public class PortraitReplacer {
     private static void processReplacementEntry(JSONObject entry, Map<String, Integer> stats) {
         TextureReplacement.fromJson(entry).ifPresentOrElse(
                 replacement -> {
-                    log.info("Processing replacement: " + replacement.originalTexture() + " -> " + replacement.replacementTexture());
+                    log.info("Processing replacement: " + replacement.originalTexture + " -> " + replacement.replacementTexture);
 
                     try {
                         // Load the sprites
-                        SpriteAPI originalSprite = Global.getSettings().getSprite(replacement.originalTexture());
-                        SpriteAPI replacementSprite = Global.getSettings().getSprite(replacement.replacementTexture());
+                        Global.getSettings().loadTexture(replacement.originalTexture); // Original texture should already be loaded, but just in case
+                        SpriteAPI originalSprite = Global.getSettings().getSprite(replacement.originalTexture);
+                        Global.getSettings().loadTexture(replacement.replacementTexture);
+                        SpriteAPI replacementSprite = Global.getSettings().getSprite(replacement.replacementTexture);
 
                         // Validate sprites
                         if (originalSprite == null) {
-                            log.warn("Original texture not found: " + replacement.originalTexture());
+                            log.warn("Original texture not found: " + replacement.originalTexture);
                             stats.compute("failure", (k, v) -> v + 1);
                             return;
                         }
 
                         if (replacementSprite == null) {
-                            log.warn("Replacement texture not found: " + replacement.replacementTexture());
+                            log.warn("Replacement texture not found: " + replacement.replacementTexture);
                             stats.compute("failure", (k, v) -> v + 1);
                             return;
                         }
 
                         // Perform the replacement
                         replaceTexture(originalSprite, replacementSprite);
-                        log.info("Successfully replaced texture: " + replacement.originalTexture());
+                        log.info("Successfully replaced texture: " + replacement.originalTexture);
                         stats.compute("success", (k, v) -> v + 1);
                     } catch (Exception e) {
-                        log.error("Error replacing texture: " + replacement.originalTexture(), e);
+                        log.error("Error replacing texture: " + replacement.originalTexture, e);
                         stats.compute("failure", (k, v) -> v + 1);
                     }
                 },

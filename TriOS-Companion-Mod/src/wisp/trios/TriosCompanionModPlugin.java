@@ -1,3 +1,5 @@
+package wisp.trios;
+
 import com.fs.starfarer.api.BaseModPlugin;
 
 public class TriosCompanionModPlugin extends BaseModPlugin {

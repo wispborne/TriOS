@@ -8,8 +8,10 @@ import 'package:rxdart/rxdart.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/portraits/portrait_model.dart';
+import 'package:trios/thirdparty/dartx/map.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
+import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/util.dart';
@@ -256,19 +258,14 @@ class CompanionModManager {
   /// Writes the replacements map to the config file with proper JSON formatting
   Future<void> _writeReplacementsToFile(
     File configFile,
-    Map<String, String> replacements,
+    Map<String, String> replacementPaths,
   ) async {
     // Convert replacements map to the expected JSON structure
-    final List<Map<String, String>> replacementsList = replacements.entries
-        .map((entry) => {
-              'original': entry.key,
-              'replacement': entry.value,
-            })
+    final List<Map<String, String>> replacementsList = replacementPaths.entries
+        .map((entry) => {'original': entry.key, 'replacement': entry.value})
         .toList();
 
-    final jsonData = {
-      'replacements': replacementsList,
-    };
+    final jsonData = {'replacements': replacementsList};
 
     // Write the JSON file with pretty formatting
     const encoder = JsonEncoder.withIndent('  ');
@@ -279,11 +276,22 @@ class CompanionModManager {
   /// Updates the trios_image_replacements.json file in the companion mod
   /// with the provided portrait replacement mappings
   Future<void> updateImageReplacementsConfig(
-    Map<String, String> replacements,
+    Map<String, ReplacedSavedPortrait> replacements,
   ) async {
+    final gameCoreFolder = ref
+        .read(appSettings.select((s) => s.gameCoreDir))
+        ?.toDirectory();
+
     try {
+      if (gameCoreFolder == null) {
+        throw StateError('Game core folder not configured');
+      }
+
       final configFile = await _getImageReplacementsConfigFile();
-      await _writeReplacementsToFile(configFile, replacements);
+      await _writeReplacementsToFile(
+        configFile,
+        _convertSavedPortraitMapToPaths(replacements, gameCoreFolder),
+      );
 
       Fimber.i(
         'Updated trios_image_replacements.json with ${replacements.length} replacements',
@@ -298,45 +306,61 @@ class CompanionModManager {
     }
   }
 
+  Map<String, String> _convertSavedPortraitMapToPaths(
+    Map<String, ReplacedSavedPortrait> replacements,
+    Directory gameCoreFolder,
+  ) {
+    return replacements
+        .mapEntries(
+          // Convert SavedPortrait to image file paths that'll get stored in the Companion Mod.
+          // Must be relative to the game/mod folder.
+          (entry) => MapEntry(
+            entry.value.original.relativePath.replaceAll("\\", "/"),
+            entry.value.replacement.relativePath.replaceAll("\\", "/"),
+          ),
+        )
+        .toMap();
+  }
+
   /// Updates the image replacements config using portrait hash to file path mappings
   /// This method converts portrait hashes to actual file paths for the JSON config
   Future<void> updateImageReplacementsFromHashMap(
-    Map<String, String> hashToPathReplacements,
+    Map<String, ReplacedSavedPortrait> hashToPathReplacements,
     Map<String, Portrait> hashToPortrait,
   ) async {
-    try {
-      // Convert hash-based replacements to path-based replacements
-      final Map<String, String> pathReplacements = {};
+    // try {
+    //   // Convert hash-based replacements to path-based replacements
+    //   final Map<String, ReplacedSavedPortrait> pathReplacements = {};
+    //
+    //   for (final entry in hashToPathReplacements.entries) {
+    //     final original = entry.key;
+    //     final replacement = entry.value;
+    //
+    //     // Find the original portrait by hash
+    //     final originalPortrait = hashToPortrait[original];
+    //     if (originalPortrait == null) {
+    //       Fimber.w('Original portrait not found for hash: $original');
+    //       continue;
+    //     }
+    //
+    //     // Use the original portrait's hash as the key
+    //     pathReplacements[originalPortrait.hash] = replacement.replacement;
+    //   }
 
-      for (final entry in hashToPathReplacements.entries) {
-        final originalHash = entry.key;
-        final replacementPath = entry.value;
-
-        // Find the original portrait by hash
-        final originalPortrait = hashToPortrait[originalHash];
-        if (originalPortrait == null) {
-          Fimber.w('Original portrait not found for hash: $originalHash');
-          continue;
-        }
-
-        // Use the original portrait's file path as the key
-        pathReplacements[originalPortrait.imageFile.path] = replacementPath;
-      }
-
-      // Update the config file with path-based replacements
-      await updateImageReplacementsConfig(pathReplacements);
-
-      Fimber.i(
-        'Converted ${hashToPathReplacements.length} hash-based replacements to ${pathReplacements.length} path-based replacements',
-      );
-    } catch (e, stackTrace) {
-      Fimber.e(
-        'Failed to update image replacements from hash map: $e',
-        ex: e,
-        stacktrace: stackTrace,
-      );
-      rethrow;
-    }
+    // Update the config file with path-based replacements
+    await updateImageReplacementsConfig(hashToPathReplacements);
+    //
+    //   Fimber.i(
+    //     'Converted ${hashToPathReplacements.length} hash-based replacements to ${pathReplacements.length} path-based replacements',
+    //   );
+    // } catch (e, stackTrace) {
+    //   Fimber.e(
+    //     'Failed to update image replacements from hash map: $e',
+    //     ex: e,
+    //     stacktrace: stackTrace,
+    //   );
+    //   rethrow;
+    // }
   }
 
   /// Clears all image replacements from the config file
@@ -345,7 +369,10 @@ class CompanionModManager {
   }
 
   /// Adds a single image replacement to the existing config
-  Future<void> addImageReplacement(String originalPath, String replacementPath) async {
+  Future<void> addImageReplacement(
+    String originalPath,
+    String replacementPath,
+  ) async {
     try {
       final existingReplacements = await _readExistingReplacements();
       existingReplacements[originalPath] = replacementPath;

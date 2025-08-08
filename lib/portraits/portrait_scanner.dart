@@ -4,6 +4,7 @@ import 'dart:ui';
 
 import 'package:trios/portraits/portrait_model.dart';
 import 'package:trios/trios/constants.dart';
+import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/vram_estimator/image_reader/png_chatgpt.dart';
 
@@ -19,7 +20,7 @@ class PortraitScanner {
   /// Scans multiple mod variants and returns results as a stream
   Stream<Map<ModVariant?, List<Portrait>>> scanVariantsStream(
     List<ModVariant?> variants,
-    Directory defaultGamePath,
+    Directory gameCoreFolder,
   ) async* {
     final timer = Stopwatch()..start();
     Map<ModVariant?, List<Portrait>> allPortraits = {};
@@ -27,7 +28,7 @@ class PortraitScanner {
     Fimber.i('Scanning ${variants.length} mod variants for portraits');
 
     for (final variant in variants) {
-      final portraits = await _scanSingleVariant(variant, defaultGamePath);
+      final portraits = await _scanSingleVariant(variant, gameCoreFolder);
       if (portraits.isNotEmpty) {
         allPortraits[variant] = portraits;
       }
@@ -40,14 +41,14 @@ class PortraitScanner {
   /// Scans multiple mod variants (non-streaming)
   Future<Map<ModVariant, List<Portrait>>> scanVariants(
     List<ModVariant> variants,
-    Directory defaultGamePath,
+    Directory gameCoreFolder,
   ) async {
     final timer = Stopwatch()..start();
     Map<ModVariant, List<Portrait>> results = {};
 
     await Future.wait(
       variants.map((variant) async {
-        final portraits = await _scanSingleVariant(variant, defaultGamePath);
+        final portraits = await _scanSingleVariant(variant, gameCoreFolder);
         if (portraits.isNotEmpty) {
           results[variant] = portraits;
         }
@@ -63,21 +64,21 @@ class PortraitScanner {
   /// Scans a single mod variant for portrait images
   Future<List<Portrait>> _scanSingleVariant(
     ModVariant? variant,
-    Directory defaultGamePath,
+    Directory gameCoreFolder,
   ) async {
     if (variant != null && !await variant.modFolder.exists()) return [];
 
     final portraits = <Portrait>[];
     final uniqueHashes = <String>{};
 
-    await for (final entity in (variant?.modFolder ?? defaultGamePath).list(
+    await for (final entity in (variant?.modFolder ?? gameCoreFolder).list(
       recursive: true,
     )) {
       if (entity is File &&
           !_isGraphicsLib(variant) &&
           !_isBlocklisted(variant, entity.path) &&
           await _isValidImageFile(entity)) {
-        final portrait = await _processImageFile(entity, variant);
+        final portrait = await _processImageFile(entity, variant, gameCoreFolder);
         if (portrait != null && uniqueHashes.add(portrait.hash)) {
           portraits.add(portrait);
         }
@@ -88,13 +89,13 @@ class PortraitScanner {
   }
 
   /// Processes a single image file into a Portrait object
-  Future<Portrait?> _processImageFile(File file, ModVariant? modVariant) async {
+  Future<Portrait?> _processImageFile(File file, ModVariant? modVariant, Directory gameCoreFolder) async {
     try {
       final imageBytes = await file.readAsBytes();
       final (width, height) = await _getImageSize(file.path, imageBytes);
 
       if (_isValidPortraitSize(width, height)) {
-        return Portrait(modVariant?.smolId, file, width, height, imageBytes);
+        return Portrait.fromBytes(modVariant: modVariant, imageFile: file, relativePath: file.relativeTo(modVariant?.modFolder ?? gameCoreFolder), width: width, height: height, imageBytes: imageBytes);
       }
     } catch (e) {
       Fimber.w('Error processing ${file.path}: $e');

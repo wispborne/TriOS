@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/portraits/portrait_model.dart';
-import 'package:trios/portraits/portrait_replacements_manager.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/extensions.dart';
@@ -17,7 +16,7 @@ import 'package:url_launcher/url_launcher_string.dart';
 class PortraitsGridView extends ConsumerWidget {
   final List<({Portrait image, ModVariant? variant})> modsAndImages;
   final List<({Portrait image, ModVariant? variant})> allPortraits;
-  final Map<String, String> replacements;
+  final Map<String, Portrait> replacements;
   final Future<void> Function(
     Portrait,
     List<({Portrait image, ModVariant? variant})>,
@@ -26,6 +25,8 @@ class PortraitsGridView extends ConsumerWidget {
   final bool isDraggable;
   final void Function(Portrait original, Portrait replacement)?
   onAcceptDraggable;
+  final void Function(Portrait selectedPortrait) onSelectedPortraitToReplace;
+  final bool showPickReplacementIcon;
 
   const PortraitsGridView({
     super.key,
@@ -33,6 +34,8 @@ class PortraitsGridView extends ConsumerWidget {
     required this.allPortraits,
     required this.replacements,
     required this.onAddRandomReplacement,
+    required this.onSelectedPortraitToReplace,
+    required this.showPickReplacementIcon,
     this.isDraggable = false,
     this.onAcceptDraggable,
   });
@@ -69,8 +72,9 @@ class PortraitsGridView extends ConsumerWidget {
           itemBuilder: (context, index) {
             final mod = modsAndImages[index].variant;
             final portrait = modsAndImages[index].image;
-            final hasReplacement = replacements.containsKey(portrait.hash);
-            final replacementPath = replacements[portrait.hash];
+            final replacement = replacements[portrait.hash];
+            final hasReplacement =
+                replacements.containsKey(portrait.hash) && replacement != null;
 
             String bytesAsReadableKB = "unknown";
             try {
@@ -86,13 +90,13 @@ class PortraitsGridView extends ConsumerWidget {
             ({Portrait? replacementPortrait, ModVariant? replacementMod})?
             replacementDetails;
 
-            if (hasReplacement && replacementPath != null) {
+            if (hasReplacement) {
               replacementDetails = _findReplacementDetails(
-                replacementPath,
+                replacement.imageFile.path,
                 allPortraits,
               );
               try {
-                final replacementFile = File(replacementPath);
+                final replacementFile = replacement.imageFile;
                 if (replacementFile.existsSync()) {
                   replacementBytesAsReadableKB = replacementFile
                       .lengthSync()
@@ -111,33 +115,13 @@ class PortraitsGridView extends ConsumerWidget {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Original portrait info
-                      Text(
-                        'Original Portrait',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                      ),
-                      Text('Mod: ${mod?.modInfo.nameOrId}'),
-                      Text(
-                        'Path: ${portrait.imageFile.path.toFile().relativeTo(modsPath)}',
-                      ),
-                      Text('Size: $bytesAsReadableKB'),
-                      Text(
-                        'Dimensions: ${portrait.width} x ${portrait.height}',
-                      ),
-
                       // Replacement info if exists
-                      if (hasReplacement && replacementPath != null) ...[
-                        const SizedBox(height: 8),
-                        Divider(color: Theme.of(context).colorScheme.outline),
-                        const SizedBox(height: 4),
+                      if (hasReplacement) ...[
                         Text(
-                          'Replacement Portrait',
+                          'Replacement: ${replacement.imageFile.nameWithExtension}',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: Theme.of(context).colorScheme.secondary,
+                            color: Theme.of(context).colorScheme.primary,
                           ),
                         ),
                         if (replacementDetails?.replacementMod != null)
@@ -145,23 +129,40 @@ class PortraitsGridView extends ConsumerWidget {
                             'Replacement Mod: ${replacementDetails!.replacementMod!.modInfo.nameOrId}',
                           )
                         else
-                          Text('Replacement Mod: Unknown'),
-                        Text(
-                          'Replacement Path: ${File(replacementPath).path.toFile().relativeTo(modsPath)}',
-                        ),
+                          Text('Vanilla'),
+                        Text('Path: ${replacement.relativePath}'),
                         if (replacementBytesAsReadableKB != null)
-                          Text(
-                            'Replacement Size: $replacementBytesAsReadableKB',
-                          )
-                        else
-                          const Text('Replacement Size: Unknown'),
+                          Text('Size: $replacementBytesAsReadableKB'),
                         if (replacementDetails?.replacementPortrait != null)
                           Text(
-                            'Replacement Dimensions: ${replacementDetails!.replacementPortrait!.width} x ${replacementDetails.replacementPortrait!.height}',
-                          )
-                        else
-                          const Text('Replacement Dimensions: Unknown'),
+                            'Dimensions: ${replacementDetails!.replacementPortrait!.width} x ${replacementDetails.replacementPortrait!.height}',
+                          ),
+                        const SizedBox(height: 8),
+                        Divider(color: Theme.of(context).colorScheme.onSurface),
+                        const SizedBox(height: 4),
                       ],
+                      // Original portrait info
+                      Text(
+                        hasReplacement
+                            ? "Original: ${portrait.imageFile.nameWithExtension}"
+                            : portrait.imageFile.nameWithExtension,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: hasReplacement
+                              ? null
+                              : Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                      Text(
+                        mod == null
+                            ? "Vanilla"
+                            : 'Mod: ${mod.modInfo.nameOrId}',
+                      ),
+                      Text('Path: ${portrait.relativePath}'),
+                      Text('Size: $bytesAsReadableKB'),
+                      Text(
+                        'Dimensions: ${portrait.width} x ${portrait.height}',
+                      ),
                     ],
                   ),
                 ],
@@ -169,11 +170,18 @@ class PortraitsGridView extends ConsumerWidget {
               child: ContextMenuRegion(
                 contextMenu: ContextMenu(
                   entries: <ContextMenuEntry>[
+                    // MenuItem(
+                    //   label: 'Set Random Replacement',
+                    //   icon: Icons.shuffle,
+                    //   onSelected: () {
+                    //     onAddRandomReplacement(portrait, allPortraits);
+                    //   },
+                    // ),
                     MenuItem(
-                      label: 'Set Random Replacement',
-                      icon: Icons.shuffle,
+                      label: 'Pick Replacement',
+                      icon: Icons.swap_horiz,
                       onSelected: () {
-                        onAddRandomReplacement(portrait, allPortraits);
+                        onSelectedPortraitToReplace(portrait);
                       },
                     ),
                     if (hasReplacement)
@@ -182,42 +190,45 @@ class PortraitsGridView extends ConsumerWidget {
                         icon: Icons.undo,
                         onSelected: () {
                           ref
-                              .read(portraitReplacementsManager.notifier)
-                              .removeReplacement(portrait.hash);
+                              .read(
+                                AppState.portraitReplacementsManager.notifier,
+                              )
+                              .removeReplacement(portrait);
                         },
                       ),
                     MenuDivider(),
+                    if (hasReplacement) ...[
+                      MenuDivider(),
+                      MenuItem(
+                        label: 'Open Replacement',
+                        icon: Icons.open_in_new,
+                        onSelected: () {
+                          launchUrlString(replacement.imageFile.path);
+                        },
+                      ),
+                      MenuItem(
+                        label: "Open Folder of Replacement",
+                        icon: Icons.folder_open,
+                        onSelected: () {
+                          launchUrlString(replacement.imageFile.parent.path);
+                        },
+                      ),
+                      MenuDivider(),
+                    ],
                     MenuItem(
-                      label: 'Open',
+                      label: 'Open Original',
                       icon: Icons.open_in_new,
                       onSelected: () {
                         launchUrlString(portrait.imageFile.path);
                       },
                     ),
                     MenuItem(
-                      label: "Open Folder",
+                      label: "Open Folder Of Original",
                       icon: Icons.folder_open,
                       onSelected: () {
                         launchUrlString(portrait.imageFile.parent.path);
                       },
                     ),
-                    if (hasReplacement && replacementPath != null) ...[
-                      MenuDivider(),
-                      MenuItem(
-                        label: 'Open Replacement',
-                        icon: Icons.open_in_new,
-                        onSelected: () {
-                          launchUrlString(replacementPath);
-                        },
-                      ),
-                      MenuItem(
-                        label: "Open Replacement Folder",
-                        icon: Icons.folder_open,
-                        onSelected: () {
-                          launchUrlString(File(replacementPath).parent.path);
-                        },
-                      ),
-                    ],
                   ],
                 ),
                 child: ConditionalWrap(
@@ -261,8 +272,11 @@ class PortraitsGridView extends ConsumerWidget {
                     ),
                     child: PortraitImageWidget(
                       originalPortrait: portrait,
-                      replacementPath: replacementPath,
+                      replacementPath: replacement?.imageFile.path,
                       hasReplacement: hasReplacement,
+                      showPickReplacementIcon: showPickReplacementIcon,
+                      onSelectedPortraitToReplace: onSelectedPortraitToReplace,
+                      isDraggable: isDraggable,
                     ),
                   ),
                 ),
@@ -279,12 +293,18 @@ class PortraitImageWidget extends ConsumerStatefulWidget {
   final Portrait originalPortrait;
   final String? replacementPath;
   final bool hasReplacement;
+  final void Function(Portrait selectedPortrait) onSelectedPortraitToReplace;
+  final bool isDraggable;
+  final bool showPickReplacementIcon;
 
   const PortraitImageWidget({
     super.key,
     required this.originalPortrait,
     required this.replacementPath,
     required this.hasReplacement,
+    required this.showPickReplacementIcon,
+    required this.onSelectedPortraitToReplace,
+    required this.isDraggable,
   });
 
   @override
@@ -302,17 +322,21 @@ class _PortraitImageWidgetState extends ConsumerState<PortraitImageWidget> {
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovering = true),
       onExit: (_) => setState(() => _isHovering = false),
+      cursor: widget.isDraggable
+          ? SystemMouseCursors.move
+          : SystemMouseCursors.basic,
       child: SizedBox(
         width: 128,
         height: 128,
         child: widget.hasReplacement
             ? _buildStackedCards(theme, ref)
-            : _buildSingleCard(widget.originalPortrait.imageFile),
+            : _buildSingleCard(widget.originalPortrait),
       ),
     );
   }
 
-  Widget _buildSingleCard(File imageFile) {
+  Widget _buildSingleCard(Portrait portrait) {
+    final theme = Theme.of(context);
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(4),
@@ -326,15 +350,60 @@ class _PortraitImageWidgetState extends ConsumerState<PortraitImageWidget> {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(4),
-        child: Image.file(
-          imageFile,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            return Container(
-              color: Colors.grey[300],
-              child: const Icon(Icons.broken_image),
-            );
-          },
+        child: Stack(
+          fit: StackFit.passthrough,
+          children: [
+            Image.file(
+              portrait.imageFile,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  color: Colors.grey[300],
+                  child: const Icon(Icons.broken_image),
+                );
+              },
+            ),
+            if (widget.showPickReplacementIcon)
+              Align(
+                alignment: Alignment.bottomRight,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 0, right: 2),
+                  child: MovingTooltipWidget.text(
+                    message: 'Pick Replacement',
+                    child: IconButton(
+                      icon: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: theme.colorScheme.secondaryContainer
+                              .withValues(alpha: 0.6),
+                          border: Border.all(
+                            color: theme.colorScheme.onSecondaryContainer
+                                .withValues(alpha: 0.3),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 1),
+                              blurRadius: 4,
+                              offset: const Offset(2, 2),
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          Icons.swap_horiz,
+                          size: 20,
+                          color: theme.colorScheme.onSecondaryContainer,
+                        ),
+                      ),
+                      onPressed: () {
+                        widget.onSelectedPortraitToReplace(portrait);
+                      },
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );
@@ -434,32 +503,39 @@ class _PortraitImageWidgetState extends ConsumerState<PortraitImageWidget> {
               alignment: Alignment.bottomRight,
               child: Padding(
                 padding: const EdgeInsets.only(bottom: 8, right: 8),
-                child: IconButton(
-                  icon: Container(
-                    width: 24,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: theme.colorScheme.primaryContainer,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.8),
-                          blurRadius: 4,
-                          offset: const Offset(2, 2),
+                child: MovingTooltipWidget.text(
+                  message: 'Clear Replacement',
+                  child: IconButton(
+                    icon: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: theme.colorScheme.primaryContainer,
+                        border: Border.all(
+                          color: theme.colorScheme.onPrimaryContainer
+                              .withValues(alpha: 0.3),
                         ),
-                      ],
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.8),
+                            blurRadius: 4,
+                            offset: const Offset(2, 2),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        Icons.undo,
+                        color: theme.colorScheme.primary,
+                        size: 18,
+                      ),
                     ),
-                    child: Icon(
-                      Icons.undo,
-                      color: theme.colorScheme.primary,
-                      size: 16,
-                    ),
+                    onPressed: () {
+                      ref
+                          .read(AppState.portraitReplacementsManager.notifier)
+                          .removeReplacement(widget.originalPortrait);
+                    },
                   ),
-                  onPressed: () {
-                    ref
-                        .read(portraitReplacementsManager.notifier)
-                        .removeReplacement(widget.originalPortrait.hash);
-                  },
                 ),
               ),
             ),

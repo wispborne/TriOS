@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:math';
 
 import 'package:collection/collection.dart';
@@ -423,9 +424,9 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                       children: [
                         const SizedBox(width: 8),
                         if (save?.portraitPath != null)
-                          Builder(
-                            builder: (context) {
-                              var portraitImage = modRootFolders
+                          FutureBuilder<File?>(
+                            future: Future.sync(() async {
+                              final portraitImage = modRootFolders
                                   .map(
                                     (dir) => dir
                                         .resolve(save!.portraitPath!)
@@ -435,7 +436,21 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                                     (file) => file.existsSync(),
                                   );
 
-                              if (portraitImage == null) {
+                              if (portraitImage == null) return null;
+
+                              final portraitReplacements = ref.read(
+                                AppState.portraitReplacementsManager.notifier,
+                              );
+                              final replacement = await portraitReplacements
+                                  .getReplacementByPath(portraitImage);
+                              if (replacement != null) {
+                                return replacement.lastKnownFullPath.toFile();
+                              } else {
+                                return portraitImage;
+                              }
+                            }),
+                            builder: (context, portraitImage) {
+                              if (portraitImage.data == null) {
                                 return const SizedBox.shrink();
                               }
 
@@ -450,13 +465,17 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                                   padding: const EdgeInsets.only(right: 8),
                                   child: MouseRegion(
                                     cursor: SystemMouseCursors.click,
-                                    child: Image.file(
-                                      portraitImage,
-                                      width: _isPortraitExpanded ? null : 36,
-                                      // Toggle width: full size or thumbnail
-                                      height: _isPortraitExpanded
-                                          ? null
-                                          : 36, // Optional: toggle height as well
+                                    child: MovingTooltipWidget.text(
+                                      message:
+                                          portraitImage.data!.nameWithExtension,
+                                      child: Image.file(
+                                        portraitImage.data!,
+                                        width: _isPortraitExpanded ? null : 36,
+                                        // Toggle width: full size or thumbnail
+                                        height: _isPortraitExpanded
+                                            ? null
+                                            : 36, // Optional: toggle height as well
+                                      ),
                                     ),
                                   ),
                                 ),

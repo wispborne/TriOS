@@ -2,55 +2,71 @@ import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/companion_mod/companion_mod_manager.dart';
+import 'package:trios/models/mod_variant.dart';
 import 'package:trios/portraits/portrait_model.dart';
+import 'package:trios/thirdparty/dartx/io/file_system_entity.dart';
+import 'package:trios/thirdparty/dartx/map.dart';
+import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/generic_settings_manager.dart';
 import 'package:trios/utils/logging.dart';
 
-final portraitReplacementsManager =
-    AsyncNotifierProvider<PortraitReplacementsNotifier, Map<String, String>>(
-      () => PortraitReplacementsNotifier(),
-    );
-
 /// State notifier for portrait replacements
-class PortraitReplacementsNotifier extends AsyncNotifier<Map<String, String>> {
+class PortraitReplacementsNotifier
+    extends AsyncNotifier<Map<String, SavedPortrait>> {
   final _PortraitReplacementsStorage _storage = _PortraitReplacementsStorage();
 
   @override
-  Future<Map<String, String>> build() async {
+  Future<Map<String, SavedPortrait>> build() async {
     return await _loadReplacements();
   }
 
   /// Saves a portrait replacement mapping
-  Future<void> saveReplacement(
-    String originalHash,
-    String replacementPath,
-  ) async {
+  Future<void> saveReplacement(Portrait original, Portrait replacement) async {
     // state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
-      return await _saveReplacement(originalHash, replacementPath);
+      return await _saveReplacement(
+        original.toSavedPortrait(),
+        replacement.toSavedPortrait(),
+      );
     });
   }
 
   /// Removes a portrait replacement mapping
-  Future<void> removeReplacement(String originalHash) async {
+  Future<void> removeReplacement(Portrait original) async {
     // state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
-      return await _removeReplacement(originalHash);
+      return await _removeReplacement(original.toSavedPortrait());
     });
   }
 
-  /// Gets replacement path for a portrait hash
-  Future<String?> getReplacement(String portraitHash) async {
-    final current = state.valueOrNull ?? {};
-    final replacementPath = current[portraitHash];
+  /// Gets replacement portrait for a portrait hash
+  Future<Portrait?> getReplacementByHash(
+    String portraitHash,
+    Map<String, Portrait> portraitsByHash,
+  ) async {
+    final replacement = await _getReplacement(portraitHash);
+    return replacement?.toPortrait(portraitsByHash);
+  }
 
-    if (replacementPath != null) {
-      if (await File(replacementPath).exists()) {
-        return replacementPath;
-      } else {
-        // Clean up dead reference
-        await removeReplacement(portraitHash);
-      }
+  /// Gets replacement portrait for a portrait hash
+  /// Note: loads portrait from disk and hashes bytes
+  Future<SavedPortrait?> getReplacementByPath(File portraitPath) async {
+    final hash = Portrait.hashImagesBytes(await portraitPath.readAsBytes());
+    return await _getReplacement(hash);
+  }
+
+  /// Gets replacement path for a portrait hash
+  Future<SavedPortrait?> _getReplacement(String portraitHash) async {
+    final currentState = state.valueOrNull ?? {};
+    final replacementPortrait = currentState[portraitHash];
+
+    if (replacementPortrait != null) {
+      // if (await File(replacementPortrait).exists()) {
+      return replacementPortrait;
+      // } else {
+      // Clean up dead reference
+      // await removeReplacement(portraitHash);
+      // }
     }
 
     return null;
@@ -66,7 +82,7 @@ class PortraitReplacementsNotifier extends AsyncNotifier<Map<String, String>> {
 
   /// Syncs replacements to companion mod with portrait mapping
   Future<void> syncToCompanionModWithPortraits(
-    Map<String, Portrait> hashToPortrait,
+    Map<String, Portrait> portraitsByHash,
   ) async {
     try {
       final replacements = await _storage.readSettingsFromDisk({});
@@ -74,7 +90,7 @@ class PortraitReplacementsNotifier extends AsyncNotifier<Map<String, String>> {
 
       await companionModManager.updateImageReplacementsFromHashMap(
         replacements,
-        hashToPortrait,
+        portraitsByHash,
       );
     } catch (e) {
       Fimber.w(
@@ -84,11 +100,11 @@ class PortraitReplacementsNotifier extends AsyncNotifier<Map<String, String>> {
   }
 
   /// Internal method to load replacements from storage
-  Future<Map<String, String>> _loadReplacements() async {
+  Future<Map<String, SavedPortrait>> _loadReplacements() async {
     try {
       final replacements = await _storage.readSettingsFromDisk({});
       await _syncToCompanionMod(replacements);
-      return replacements;
+      return replacements.toMapWithoutReplacedSavePortrait();
     } catch (e) {
       Fimber.e('Error loading portrait replacements: $e');
       return {};
@@ -96,18 +112,21 @@ class PortraitReplacementsNotifier extends AsyncNotifier<Map<String, String>> {
   }
 
   /// Internal method to save a replacement
-  Future<Map<String, String>> _saveReplacement(
-    String originalHash,
-    String replacementPath,
+  Future<Map<String, SavedPortrait>> _saveReplacement(
+    SavedPortrait original,
+    SavedPortrait replacement,
   ) async {
     try {
       final replacements = await _storage.readSettingsFromDisk({});
-      replacements[originalHash] = replacementPath;
+      replacements[original.hash] = ReplacedSavedPortrait(
+        original: original,
+        replacement: replacement,
+      );
       await _storage.scheduleWriteSettingsToDisk(replacements);
       await _syncToCompanionMod(replacements);
 
-      Fimber.i('Portrait replacement saved: $originalHash -> $replacementPath');
-      return replacements;
+      Fimber.i('Portrait replacement saved: $original -> $replacement');
+      return replacements.toMapWithoutReplacedSavePortrait();
     } catch (e) {
       Fimber.e('Error saving portrait replacement: $e');
       rethrow;
@@ -115,15 +134,19 @@ class PortraitReplacementsNotifier extends AsyncNotifier<Map<String, String>> {
   }
 
   /// Internal method to remove a replacement
-  Future<Map<String, String>> _removeReplacement(String originalHash) async {
+  Future<Map<String, SavedPortrait>> _removeReplacement(
+    SavedPortrait original,
+  ) async {
     try {
       final replacements = await _storage.readSettingsFromDisk({});
-      replacements.remove(originalHash);
+      replacements.remove(original.hash);
       await _storage.scheduleWriteSettingsToDisk(replacements);
       await _syncToCompanionMod(replacements);
 
-      Fimber.i('Portrait replacement removed: $originalHash');
-      return replacements;
+      Fimber.i(
+        'Portrait replacement removed: ${original.relativePath.toFile().name}',
+      );
+      return replacements.toMapWithoutReplacedSavePortrait();
     } catch (e) {
       Fimber.e('Error removing portrait replacement: $e');
       rethrow;
@@ -131,14 +154,14 @@ class PortraitReplacementsNotifier extends AsyncNotifier<Map<String, String>> {
   }
 
   /// Internal method to clear all replacements
-  Future<Map<String, String>> _clearReplacements() async {
+  Future<Map<String, SavedPortrait>> _clearReplacements() async {
     try {
-      const replacements = <String, String>{};
+      const replacements = <String, ReplacedSavedPortrait>{};
       await _storage.scheduleWriteSettingsToDisk(replacements);
       await _syncToCompanionMod(replacements);
 
       Fimber.i('All portrait replacements cleared');
-      return replacements;
+      return replacements.toMapWithoutReplacedSavePortrait();
     } catch (e) {
       Fimber.e('Error clearing portrait replacements: $e');
       rethrow;
@@ -146,7 +169,9 @@ class PortraitReplacementsNotifier extends AsyncNotifier<Map<String, String>> {
   }
 
   /// Syncs current replacements to the companion mod
-  Future<void> _syncToCompanionMod(Map<String, String> replacements) async {
+  Future<void> _syncToCompanionMod(
+    Map<String, ReplacedSavedPortrait> replacements,
+  ) async {
     try {
       final companionModManager = ref.read(companionModManagerProvider);
 
@@ -170,7 +195,7 @@ class PortraitReplacementsNotifier extends AsyncNotifier<Map<String, String>> {
 
 /// Private storage manager for portrait replacements
 class _PortraitReplacementsStorage
-    extends GenericAsyncSettingsManager<Map<String, String>> {
+    extends GenericAsyncSettingsManager<Map<String, ReplacedSavedPortrait>> {
   @override
   FileFormat get fileFormat => FileFormat.json;
 
@@ -178,10 +203,55 @@ class _PortraitReplacementsStorage
   String get fileName => 'portrait_replacements.json';
 
   @override
-  Map<String, dynamic> Function(Map<String, String> obj) get toMap =>
-      (obj) => obj.cast<String, dynamic>();
+  Map<String, dynamic> Function(Map<String, ReplacedSavedPortrait> obj)
+  get toMap =>
+      (obj) => obj.map((key, value) => MapEntry(key, value.toMap()));
 
   @override
-  Map<String, String> Function(Map<String, dynamic> map) get fromMap =>
-      (map) => map.cast<String, String>();
+  Map<String, ReplacedSavedPortrait> Function(Map<String, dynamic> map)
+  get fromMap =>
+      (map) => map.map(
+        (key, value) =>
+            MapEntry(key, ReplacedSavedPortraitMapper.fromMap(value)),
+      );
+}
+
+extension SavedPortraitExt on Map<String, ReplacedSavedPortrait> {
+  Map<String, SavedPortrait> toMapWithoutReplacedSavePortrait() =>
+      map((key, value) => MapEntry(key, value.replacement));
+}
+
+extension SavedPortraitsMapExt on Map<String, SavedPortrait> {
+  Map<String, Portrait?> hydrateToPortraitMap(
+    Map<String, Portrait> loadedPortraits,
+  ) => map((hashOfOriginal, replacement) {
+    try {
+      return MapEntry(hashOfOriginal, loadedPortraits[replacement.hash]!);
+    } catch (ex) {
+      Fimber.w('Failed to hydrate portrait: $replacement.hash');
+      return MapEntry(hashOfOriginal, null);
+    }
+  });
+
+  Map<String, Portrait> hydrateToPortraitMapFromLoaded(
+    Map<ModVariant?, List<Portrait>> loadedPortraits,
+  ) => hydrateToPortraitMap(
+    loadedPortraits.convertToPortraitMap(),
+  ).filterValues((value) => value != null).cast<String, Portrait>();
+}
+
+extension PortraitMapConversion on Map<ModVariant?, List<Portrait>> {
+  Map<String, Portrait> convertToPortraitMap() {
+    // Convert the nested portraits map into a flat Map<String, Portrait> where key is hash
+    final Map<String, Portrait> allPortraits = {};
+
+    for (final entry in entries) {
+      for (final portrait in entry.value) {
+        // Store portrait with its hash as the key
+        allPortraits[portrait.hash] = portrait;
+      }
+    }
+
+    return allPortraits;
+  }
 }

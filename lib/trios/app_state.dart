@@ -11,6 +11,8 @@ import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/download_progress.dart';
 import 'package:trios/models/mod_variant.dart';
+import 'package:trios/portraits/portrait_model.dart';
+import 'package:trios/portraits/portrait_replacements_manager.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/tips/tip.dart';
 import 'package:trios/tips/tips_notifier.dart';
@@ -107,7 +109,13 @@ class AppState {
 
   static final enabledModVariants = Provider<List<ModVariant>>((ref) {
     final mods = ref.watch(AppState.mods);
-    return mods.map((mod) => mod.findFirstEnabled).nonNulls.toList();
+    return mods.map((mod) => mod.findFirstEnabled).nonNulls.toList()..sort();
+  });
+
+  /// Emits when a mod is added/removed, but not when it's changed (e.g. enabled/disabled)
+  static final variantSmolIds = Provider<List<String>>((ref) {
+    final mods = ref.watch(AppState.modVariants).valueOrNull ?? [];
+    return mods.map((mod) => mod.smolId).toList()..sort();
   });
 
   static final modAudit = AsyncNotifierProvider<AuditLog, List<AuditEntry>>(
@@ -150,6 +158,11 @@ class AppState {
     (ref) async => ref.watch(enabledModsFile).value?.enabledMods.toList() ?? [],
   );
   static final modsState = Provider<Map<String, ModState>>((ref) => {});
+
+  static final portraitReplacementsManager =
+      AsyncNotifierProvider<PortraitReplacementsNotifier, Map<String, SavedPortrait>>(
+        () => PortraitReplacementsNotifier(),
+      );
   static final starsectorVersion = FutureProvider<String?>((ref) async {
     final gamePath = ref
         .watch(appSettings.select((value) => value.gameDir))

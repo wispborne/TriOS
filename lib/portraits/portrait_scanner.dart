@@ -29,9 +29,9 @@ class PortraitScanner {
 
     for (final variant in variants) {
       final portraits = await _scanSingleVariant(variant, gameCoreFolder);
-      if (portraits.isNotEmpty) {
-        allPortraits[variant] = portraits;
-      }
+      // if (portraits.isNotEmpty) {
+      allPortraits[variant] = portraits;
+      // }
       yield Map.from(allPortraits);
     }
 
@@ -39,6 +39,7 @@ class PortraitScanner {
   }
 
   /// Scans multiple mod variants (non-streaming)
+  @Deprecated("Use scanVariantsStream instead")
   Future<Map<ModVariant, List<Portrait>>> scanVariants(
     List<ModVariant> variants,
     Directory gameCoreFolder,
@@ -78,7 +79,11 @@ class PortraitScanner {
           !_isGraphicsLib(variant) &&
           !_isBlocklisted(variant, entity.path) &&
           await _isValidImageFile(entity)) {
-        final portrait = await _processImageFile(entity, variant, gameCoreFolder);
+        final portrait = await _processImageFile(
+          entity,
+          variant,
+          gameCoreFolder,
+        );
         if (portrait != null && uniqueHashes.add(portrait.hash)) {
           portraits.add(portrait);
         }
@@ -89,13 +94,26 @@ class PortraitScanner {
   }
 
   /// Processes a single image file into a Portrait object
-  Future<Portrait?> _processImageFile(File file, ModVariant? modVariant, Directory gameCoreFolder) async {
+  Future<Portrait?> _processImageFile(
+    File file,
+    ModVariant? modVariant,
+    Directory gameCoreFolder,
+  ) async {
     try {
       final imageBytes = await file.readAsBytes();
       final (width, height) = await _getImageSize(file.path, imageBytes);
 
       if (_isValidPortraitSize(width, height)) {
-        return Portrait.fromBytes(modVariant: modVariant, imageFile: file, relativePath: file.relativeTo(modVariant?.modFolder ?? gameCoreFolder), width: width, height: height, imageBytes: imageBytes);
+        return Portrait.fromBytes(
+          modVariant: modVariant,
+          imageFile: file,
+          relativePath: file.relativeTo(
+            modVariant?.modFolder ?? gameCoreFolder,
+          ),
+          width: width,
+          height: height,
+          imageBytes: imageBytes,
+        );
       }
     } catch (e) {
       Fimber.w('Error processing ${file.path}: $e');

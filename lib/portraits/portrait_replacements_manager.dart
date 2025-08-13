@@ -11,6 +11,7 @@ import 'package:trios/utils/generic_settings_manager.dart';
 import 'package:trios/utils/logging.dart';
 
 /// State notifier for portrait replacements
+/// Key is original portrait hash, value is replacement portrait
 class PortraitReplacementsNotifier
     extends AsyncNotifier<Map<String, SavedPortrait>> {
   final _PortraitReplacementsStorage _storage = _PortraitReplacementsStorage();
@@ -218,20 +219,28 @@ extension SavedPortraitExt on Map<String, ReplacedSavedPortrait> {
 
 extension SavedPortraitsMapExt on Map<String, SavedPortrait> {
   Map<String, Portrait?> hydrateToPortraitMap(
-    Map<String, Portrait> loadedPortraits,
-  ) => map((hashOfOriginal, replacement) {
+    Map<String, Portrait> allPortraits, {
+    required bool logWarnings,
+  }) => map((hashOfOriginal, replacement) {
     try {
-      return MapEntry(hashOfOriginal, loadedPortraits[replacement.hash]!);
+      return MapEntry(hashOfOriginal, allPortraits[replacement.hash]!);
     } catch (ex) {
-      Fimber.w('Failed to hydrate portrait: $replacement.hash');
+      if (logWarnings) {
+        Fimber.w(
+          'Failed to hydrate portrait: $hashOfOriginal (${allPortraits[hashOfOriginal]?.relativePath} to replacement ${replacement.hash} (${replacement.relativePath})'
+          '\n\tUnable to find replacement portrait ${replacement.hash} in loaded portraits.',
+        );
+      }
       return MapEntry(hashOfOriginal, null);
     }
   });
 
   Map<String, Portrait> hydrateToPortraitMapFromLoaded(
     Map<ModVariant?, List<Portrait>> loadedPortraits,
+    bool logWarnings,
   ) => hydrateToPortraitMap(
     loadedPortraits.convertToPortraitMap(),
+    logWarnings: logWarnings,
   ).filterValues((value) => value != null).cast<String, Portrait>();
 }
 

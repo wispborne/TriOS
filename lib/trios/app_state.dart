@@ -13,6 +13,7 @@ import 'package:trios/models/download_progress.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/portraits/portrait_model.dart';
 import 'package:trios/portraits/portrait_replacements_manager.dart';
+import 'package:trios/portraits/portraits_manager.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/tips/tip.dart';
 import 'package:trios/tips/tips_notifier.dart';
@@ -159,10 +160,18 @@ class AppState {
   );
   static final modsState = Provider<Map<String, ModState>>((ref) => {});
 
+  static final portraits =
+      AsyncNotifierProvider<
+        PortraitsNotifier,
+        Map<ModVariant?, List<Portrait>>
+      >(PortraitsNotifier.new);
+
+  /// Key is original portrait hash, value is replacement portrait
   static final portraitReplacementsManager =
-      AsyncNotifierProvider<PortraitReplacementsNotifier, Map<String, SavedPortrait>>(
-        () => PortraitReplacementsNotifier(),
-      );
+      AsyncNotifierProvider<
+        PortraitReplacementsNotifier,
+        Map<String, SavedPortrait>
+      >(() => PortraitReplacementsNotifier());
   static final starsectorVersion = FutureProvider<String?>((ref) async {
     final gamePath = ref
         .watch(appSettings.select((value) => value.gameDir))

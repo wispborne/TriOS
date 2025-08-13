@@ -11,7 +11,6 @@ import 'package:trios/models/mod_variant.dart';
 import 'package:trios/portraits/portrait_model.dart';
 import 'package:trios/portraits/portrait_replacements_manager.dart';
 import 'package:trios/portraits/portraits_gridview.dart';
-import 'package:trios/portraits/portraits_manager.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/extensions.dart';
@@ -48,12 +47,12 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
 
   void _refreshPortraits() {
     // Invalidate the provider to trigger a reload
-    ref.invalidate(portraitsProvider);
+    ref.invalidate(AppState.portraits);
   }
 
   void _showReplacementsDialog(Map<String, Portrait> replacements) async {
     // Get current portraits to create hash-to-portrait lookup
-    final portraitsAsync = ref.read(portraitsProvider);
+    final portraitsAsync = ref.read(AppState.portraits);
     final Map<String, Portrait> hashToPortrait = {};
 
     portraitsAsync.whenData((portraits) {
@@ -138,8 +137,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
     super.build(context);
 
     // Watch the portraits provider and loading state
-    final portraitsAsync = ref.watch(portraitsProvider);
-    final isLoading = ref.watch(isLoadingPortraits);
+    final portraitsAsync = ref.watch(AppState.portraits);
 
     return portraitsAsync.when(
       loading: () => const Center(
@@ -183,7 +181,12 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
         final loadedReplacements =
             ref.watch(AppState.portraitReplacementsManager).valueOrNull ?? {};
         final replacements = loadedReplacements
-            .hydrateToPortraitMap(portraits.convertToPortraitMap())
+            .hydrateToPortraitMap(
+              portraits.convertToPortraitMap(),
+              logWarnings: !ref
+                  .read(AppState.portraits.notifier)
+                  .isLoadingPortraits,
+            )
             .entries
             .where((element) => element.value != null)
             .toMap()
@@ -249,7 +252,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                             ),
                             MovingTooltipWidget.text(
                               message:
-                                  "Displays images that are *likely* to be portraits.\n\nBecause mods may use any image as a portrait, this is not an exact science, but best guesses.",
+                                  "Displays images that are *likely* to be portraits from your enabled or highest-version mods.\n\nBecause mods may use any image as a portrait, this is not an exact science, but best guesses.",
                               child: Padding(
                                 padding: const EdgeInsets.all(8.0),
                                 child: Icon(Icons.info),
@@ -298,16 +301,24 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                                 ),
                               ),
                             TextButton.icon(
-                              onPressed: isLoading ? null : _refreshPortraits,
+                              onPressed:
+                                  ref
+                                      .read(AppState.portraits.notifier)
+                                      .isLoadingPortraits
+                                  ? null
+                                  : _refreshPortraits,
                               style: ButtonStyle(
                                 foregroundColor: WidgetStateProperty.all(
                                   theme.colorScheme.onSurface,
                                 ),
                               ),
-                              icon: isLoading
+                              icon:
+                                  ref
+                                      .read(AppState.portraits.notifier)
+                                      .isLoadingPortraits
                                   ? const SizedBox(
-                                      width: 16,
-                                      height: 16,
+                                      width: 24,
+                                      height: 24,
                                       child: CircularProgressIndicator(
                                         strokeWidth: 2,
                                       ),

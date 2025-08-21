@@ -6,11 +6,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:multi_split_view/multi_split_view.dart';
+import 'package:trios/chipper/utils.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/mod_variant.dart';
+import 'package:trios/models/version.dart';
 import 'package:trios/portraits/portrait_model.dart';
 import 'package:trios/portraits/portrait_replacements_manager.dart';
 import 'package:trios/portraits/portraits_gridview.dart';
+import 'package:trios/thirdparty/dartx/comparable.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/extensions.dart';
@@ -353,6 +356,27 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                                     fontStyle: FontStyle.italic,
                                   ),
                                 ),
+                              ),
+                            if (Constants.currentVersion <
+                                Version.parse("1.3.0"))
+                              TextButton.icon(
+                                icon: const Icon(Icons.construction),
+                                label: const Text("UNDER CONSTRUCTION"),
+                                style: ButtonStyle(
+                                  foregroundColor: WidgetStateProperty.all(
+                                    theme.colorScheme.error,
+                                  ),
+                                ),
+                                onPressed: () => {
+                                  showAlertDialog(
+                                    context,
+                                    title: "Under Construction",
+                                    content:
+                                        "Portrait Replacement will be fully finished and tested in TriOS v1.3.0!"
+                                        "\n\nIf you *really* want to try it now (I tested it quickly and it worked, but I didn't do 'I am confident in releasing this' testing),"
+                                        "\ninstall the TriOS Companion Mod from Settings - Debugging - Force Replace TriOS Companion Mod. Portrait replacements won't show ingame without that enabled.",
+                                  ),
+                                },
                               ),
                             const Spacer(),
                             // Only show center search box when not in replace mode

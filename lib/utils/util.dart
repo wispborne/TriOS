@@ -136,14 +136,14 @@ Future<String?> getStarsectorVersionFromObf(
 
   final extractedVersionFile = (await archive.readEntriesInArchive(
     obfPath,
-    fileFilter: (entry) => entry.path.contains("Version.class"),
+    fileFilter: (entry) => entry.path.contains("StarfarerLauncher.class"),
   )).firstOrNull;
   if (extractedVersionFile == null) {
     return null;
   }
 
   final bytes = extractedVersionFile.extractedContent;
-  const versionMarkers = ['versionOnly', 'versionString'];
+  const versionMarkers = ['Starting Starsector '];
 
   // Decode bytes as UTF-8 and search for markers to find the version string.
   final utf8String = utf8.decode(bytes, allowMalformed: true);

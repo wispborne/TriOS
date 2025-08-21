@@ -149,7 +149,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                 ?.toDirectory();
                             final currentLaunchPath = gamePath?.let(
                               (dir) =>
-                                  getVanillaGameExecutable(dir).toFile().path,
+                                  getDefaultGameExecutable(dir).toFile().path,
                             );
                             bool doesCustomExePathExist = !useCustomExecutable
                                 ? validateGameFolderPath(

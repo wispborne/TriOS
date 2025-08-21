@@ -289,7 +289,7 @@ class AppState {
                     : "Miko_Silent.bat",
               )
               .toFile()
-        : getVanillaGameExecutable(gamePath).toFile();
+        : getDefaultGameExecutable(gamePath).toFile();
   });
 
   static final vmParamsFile = FutureProvider<File?>((ref) async {

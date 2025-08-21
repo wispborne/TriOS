@@ -34,7 +34,9 @@ File getLogPath(Directory gamePath, {TargetPlatform? platform}) {
   }.toFile().normalize;
 }
 
-FileSystemEntity getVanillaGameExecutable(
+/// WARNING: This can be set by the user and stored in settings.
+/// Use the custom exe path if available.
+FileSystemEntity getDefaultGameExecutable(
   Directory gamePath, {
   TargetPlatform? platform,
 }) {
@@ -46,6 +48,9 @@ FileSystemEntity getVanillaGameExecutable(
   }.toFile().normalize;
 }
 
+/// WARNING: This checks to see if things are set up according to DEFAULTS.
+/// It does not check for custom exe paths, and will fail on Arch Linux because
+/// its script doesn't end in .sh.
 bool validateGameFolderPath(String newGameDir) {
   try {
     if (newGameDir.isEmpty) return false;
@@ -55,7 +60,7 @@ bool validateGameFolderPath(String newGameDir) {
           .resolve("Contents/MacOS/starsector_mac.sh")
           .existsSync();
     }
-    return getVanillaGameExecutable(newGameDir.toDirectory()).existsSync();
+    return getDefaultGameExecutable(newGameDir.toDirectory()).existsSync();
   } catch (e) {
     Fimber.w("Error validating game folder path", ex: e);
     return false;

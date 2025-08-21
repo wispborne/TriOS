@@ -665,7 +665,7 @@ class LauncherButton extends HookConsumerWidget {
     Directory gamePath, {
     FileSystemEntity? customExePath,
   }) {
-    final gameExe = customExePath ?? getVanillaGameExecutable(gamePath);
+    final gameExe = customExePath ?? getDefaultGameExecutable(gamePath);
     if (Platform.isWindows) {
       if (gameExe.existsSync()) {
         Process.start(

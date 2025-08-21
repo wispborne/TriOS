@@ -4,10 +4,14 @@
     - Enable "Replace Mode", then drag'n'drop to replace.
     - A new TriOS Companion Mod is required to perform the replacements at runtime, and will be installed automatically if missing.
       - The only thing the Companion Mod does is do any portrait replacements you've specified. It has no impact on anything else.
+
+# 1.2.3
 - Fixed
-  - Launch Precheck Failed dialog did not scroll if you had too many failures listed.
+    - Game Version misread as "9" when Fast Rendering is installed.
+        - This was due to Fast Rendering changing the game file that TriOS was reading the version from.
+    - Launch Precheck Failed dialog did not scroll if you had too many failures listed.
 - Changed
-  - Optimized loading of portraits.
+    - Optimized loading of portraits.
 
 # 1.2.2
 - Added

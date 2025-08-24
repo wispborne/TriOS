@@ -37,12 +37,30 @@ class CompanionModManager {
     return Directory(p.join(modsFolder.path, Constants.companionModFolderName));
   }
 
+  /// Replaces mod folder if it already exists.
+  Future<void> fullySetUpCompanionMod({
+    bool enableMod = true,
+    bool includePortraitReplacements = true,
+  }) async {
+    await copyModToModsFolder();
+    final mod = getLoadedCompanionMod();
+
+    if (mod != null && enableMod) {
+      await ref
+          .read(modManager.notifier)
+          .changeActiveModVariant(mod, mod.findHighestVersion);
+    }
+
+    if (includePortraitReplacements) {
+      await ref
+          .read(AppState.portraitReplacementsManager.notifier)
+          .syncToCompanionModWithPortraits();
+    }
+  }
+
   /// Copies the TriOS companion mod from assets to the game's mods folder
   /// and updates the game version in mod_info.json
-  Future<void> copyModToModsFolder({
-    bool enableMod = true,
-    bool overwriteExisting = true,
-  }) async {
+  Future<void> copyModToModsFolder({bool overwriteExisting = true}) async {
     try {
       // Get the mods folder path using Riverpod
       final modsFolder = ref.read(appSettings.select((s) => s.modsDir));
@@ -84,18 +102,6 @@ class CompanionModManager {
       Fimber.i(
         'TriOS companion mod copied successfully to ${destinationPath.path}',
       );
-
-      if (enableMod) {
-        final mod = getLoadedCompanionMod();
-
-        if (mod != null) {
-          ref
-              .read(modManager.notifier)
-              .changeActiveModVariant(mod, mod.findHighestVersion);
-        } else {
-          Fimber.w('TriOS companion mod not found in mods list');
-        }
-      }
     } catch (e, stackTrace) {
       Fimber.w(
         'Failed to copy companion mod: $e',

@@ -878,24 +878,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                                   companionModManagerProvider,
                                                 );
                                             await companionModManager
-                                                .copyModToModsFolder();
-                                            final mod = companionModManager
-                                                .getLoadedCompanionMod();
-                                            if (mod != null) {
-                                              await ref
-                                                  .read(modManager.notifier)
-                                                  .changeActiveModVariant(
-                                                    mod,
-                                                    mod.findHighestVersion,
-                                                  );
-                                            }
-                                            await ref
-                                                .read(
-                                                  AppState
-                                                      .portraitReplacementsManager
-                                                      .notifier,
-                                                )
-                                                .syncToCompanionModWithPortraits();
+                                                .fullySetUpCompanionMod();
                                           } catch (e) {
                                             showSnackBar(
                                               context: ref.read(

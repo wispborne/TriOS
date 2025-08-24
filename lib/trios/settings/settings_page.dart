@@ -48,6 +48,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
   // 1.0 is 100%, 1.25 is 125%
   double newWindowScaleDouble = 1.0;
+  bool isInstallingCompanionMod = false;
 
   @override
   void initState() {
@@ -819,7 +820,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                           left: leftTextOptionPadding,
                         ),
                         child: Builder(
-                          builder: (context) {
+                          builder: (BuildContext context) {
                             final mods = ref.watch(AppState.mods);
                             final companionMod = mods.firstOrNullWhere(
                               (m) => m.id == Constants.companionModId,
@@ -834,29 +835,97 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  "The ${Constants.appName} Companion Mod is required to replace portraits without touching the actual mods (see Portraits tab).",
+                                  "The ${Constants.appName} Companion Mod is required to replace portraits without touching the actual mods (see Portraits tab)."
+                                  "\nIt does nothing else and has effectively no impact on loading or performance.",
                                   style: theme.textTheme.labelLarge?.copyWith(
                                     fontStyle: FontStyle.italic,
                                     color: theme.textTheme.labelLarge?.color
-                                        ?.withValues(alpha: 0.9),
+                                        ?.withValues(alpha: 0.7),
                                   ),
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
                                   companionMod == null
-                                      ? "Companion Mod is not installed."
+                                      ? "The Companion Mod is not installed."
                                       : isCompanionModEnabled
-                                      ? "Companion Mod is installed."
-                                      : "Companion Mod is installed but not enabled.",
+                                      ? "The Companion Mod is set up correctly."
+                                      : "The Companion Mod is installed but not enabled.",
                                   style: theme.textTheme.labelLarge,
                                 ),
 
                                 const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    MovingTooltipWidget.text(
+                                      message:
+                                          "If the Companion Mod already exists, it'll be replaced with a fresh version."
+                                          "\nPortrait replacements that show in ${Constants.appName} will NOT be lost.",
+                                      child: ElevatedButton.icon(
+                                        icon: Icon(Icons.install_desktop),
+                                        label: Text(
+                                          companionMod != null
+                                              ? "Reinstall Companion Mod"
+                                              : "Install Companion Mod",
+                                        ),
+                                        onPressed: () async {
+                                          setState(() {
+                                            isInstallingCompanionMod = true;
+                                          });
+
+                                          try {
+                                            final companionModManager = ref
+                                                .read(
+                                                  companionModManagerProvider,
+                                                );
+                                            await companionModManager
+                                                .copyModToModsFolder();
+                                            final mod = companionModManager
+                                                .getLoadedCompanionMod();
+                                            if (mod != null) {
+                                              await ref
+                                                  .read(modManager.notifier)
+                                                  .changeActiveModVariant(
+                                                    mod,
+                                                    mod.findHighestVersion,
+                                                  );
+                                            }
+                                            await ref
+                                                .read(
+                                                  AppState
+                                                      .portraitReplacementsManager
+                                                      .notifier,
+                                                )
+                                                .syncToCompanionModWithPortraits();
+                                          } catch (e) {
+                                            showSnackBar(
+                                              context: ref.read(
+                                                AppState.appContext,
+                                              )!,
+                                              content: Text(e.toString()),
+                                            );
+                                          } finally {
+                                            setState(() {
+                                              isInstallingCompanionMod = false;
+                                            });
+                                          }
+                                        },
+                                      ),
+                                    ),
+                                    if (isInstallingCompanionMod)
+                                      SizedBox(
+                                        width: 24,
+                                        height: 24,
+                                        child:
+                                            const CircularProgressIndicator(),
+                                      ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
                                 Disable(
                                   isEnabled: companionMod != null,
                                   child: ElevatedButton.icon(
-                                    icon: Icon(Icons.install_desktop),
-                                    label: const Text("Open Companion Mod"),
+                                    icon: Icon(Icons.folder_open),
+                                    label: const Text("Open Folder"),
                                     onPressed: () async {
                                       try {
                                         companionMod
@@ -873,30 +942,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                       }
                                     },
                                   ),
-                                ),
-                                const SizedBox(height: 8),
-                                ElevatedButton.icon(
-                                  icon: Icon(Icons.install_desktop),
-                                  label: const Text("Reinstall Companion Mod"),
-                                  onPressed: () async {
-                                    try {
-                                      await ref
-                                          .read(companionModManagerProvider)
-                                          .copyModToGameFolder();
-                                      await ref
-                                          .read(
-                                            AppState
-                                                .portraitReplacementsManager
-                                                .notifier,
-                                          )
-                                          .syncToCompanionModWithPortraits();
-                                    } catch (e) {
-                                      showSnackBar(
-                                        context: ref.read(AppState.appContext)!,
-                                        content: Text(e.toString()),
-                                      );
-                                    }
-                                  },
                                 ),
                               ],
                             );

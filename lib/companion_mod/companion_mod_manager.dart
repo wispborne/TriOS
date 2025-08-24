@@ -39,7 +39,10 @@ class CompanionModManager {
 
   /// Copies the TriOS companion mod from assets to the game's mods folder
   /// and updates the game version in mod_info.json
-  Future<void> copyModToGameFolder({bool enableMod = true}) async {
+  Future<void> copyModToModsFolder({
+    bool enableMod = true,
+    bool overwriteExisting = true,
+  }) async {
     try {
       // Get the mods folder path using Riverpod
       final modsFolder = ref.read(appSettings.select((s) => s.modsDir));
@@ -60,6 +63,13 @@ class CompanionModManager {
 
       // Delete if exists
       if (await destinationPath.exists()) {
+        if (!overwriteExisting) {
+          Fimber.i(
+            "Companion Mod already exists and overwriteExisting is false. Skipping copy to mods folder.",
+          );
+          return;
+        }
+
         await destinationPath.delete(recursive: true);
       }
 
@@ -76,9 +86,8 @@ class CompanionModManager {
       );
 
       if (enableMod) {
-        final mod = ref
-            .read(AppState.mods)
-            .firstWhereOrNull((mod) => mod.id == Constants.companionModId);
+        final mod = getLoadedCompanionMod();
+
         if (mod != null) {
           ref
               .read(modManager.notifier)
@@ -98,42 +107,42 @@ class CompanionModManager {
   }
 
   /// Alternative method that allows specifying a custom mod folder name
-  Future<void> copyModToGameFolderWithName(String modFolderName) async {
-    try {
-      // Get the mods folder path using Riverpod
-      final modsFolder = ref.read(AppState.modsFolder).valueOrNull;
-      if (modsFolder == null) {
-        throw StateError('Game mods folder not configured');
-      }
-
-      // Get the current game version using Riverpod
-      final gameVersion = await ref.read(AppState.starsectorVersion.future);
-      if (gameVersion == null) {
-        throw StateError('Game version not available');
-      }
-
-      // Create destination directory with custom name
-      final destinationPath = Directory(p.join(modsFolder.path, modFolderName));
-      await destinationPath.create(recursive: true);
-
-      // Copy mod files from assets
-      await _copyModFiles(destinationPath);
-
-      // Update mod_info.json with current game version
-      await _updateModInfo(destinationPath, gameVersion);
-
-      Fimber.i(
-        'TriOS companion mod copied successfully to ${destinationPath.path}',
-      );
-    } catch (e, stackTrace) {
-      Fimber.e(
-        'Failed to copy companion mod: $e',
-        ex: e,
-        stacktrace: stackTrace,
-      );
-      rethrow;
-    }
-  }
+  // Future<void> copyModToGameFolderWithName(String modFolderName) async {
+  //   try {
+  //     // Get the mods folder path using Riverpod
+  //     final modsFolder = ref.read(AppState.modsFolder).valueOrNull;
+  //     if (modsFolder == null) {
+  //       throw StateError('Game mods folder not configured');
+  //     }
+  //
+  //     // Get the current game version using Riverpod
+  //     final gameVersion = await ref.read(AppState.starsectorVersion.future);
+  //     if (gameVersion == null) {
+  //       throw StateError('Game version not available');
+  //     }
+  //
+  //     // Create destination directory with custom name
+  //     final destinationPath = Directory(p.join(modsFolder.path, modFolderName));
+  //     await destinationPath.create(recursive: true);
+  //
+  //     // Copy mod files from assets
+  //     await _copyModFiles(destinationPath);
+  //
+  //     // Update mod_info.json with current game version
+  //     await _updateModInfo(destinationPath, gameVersion);
+  //
+  //     Fimber.i(
+  //       'TriOS companion mod copied successfully to ${destinationPath.path}',
+  //     );
+  //   } catch (e, stackTrace) {
+  //     Fimber.e(
+  //       'Failed to copy companion mod: $e',
+  //       ex: e,
+  //       stacktrace: stackTrace,
+  //     );
+  //     rethrow;
+  //   }
+  // }
 
   Mod? getLoadedCompanionMod() {
     return ref
@@ -189,6 +198,7 @@ class CompanionModManager {
 
       // Update the gameVersion key
       jsonData['gameVersion'] = gameVersion;
+      jsonData['id'] = Constants.companionModId;
 
       // Write back to file with pretty formatting
       const encoder = JsonEncoder.withIndent('  ');

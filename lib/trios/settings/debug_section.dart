@@ -414,7 +414,7 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
           label: const Text("Force Replace TriOS Companion Mod"),
           onPressed: () async {
             try {
-              await ref.read(companionModManagerProvider).copyModToGameFolder();
+              await ref.read(companionModManagerProvider).copyModToModsFolder();
             } catch (e) {
               showSnackBar(
                 context: ref.read(AppState.appContext)!,

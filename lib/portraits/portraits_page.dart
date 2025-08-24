@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:trios/chipper/utils.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
+import 'package:trios/models/mod.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/portraits/portrait_model.dart';
@@ -209,10 +210,8 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
           r'graphics\\.*portraits\\',
         );
 
-        if (showOnlyReplaced) {
-          sortedImages = sortedImages
-              .where((element) => replacements.containsKey(element.image.hash))
-              .toList();
+        if (!inReplaceMode && showOnlyReplaced) {
+          sortedImages = filterToOnlyReplacedImages(sortedImages, replacements);
         }
 
         // Apply search filter (only when not in replace mode)
@@ -244,6 +243,8 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                       children: [
                         Row(
                           children: [
+                            if (!isCompanionModEnabled)
+                              buildCompanionModWarningIcon(theme, companionMod),
                             Padding(
                               padding: const EdgeInsets.only(),
                               child: Text(
@@ -261,48 +262,6 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                                 child: Icon(Icons.info),
                               ),
                             ),
-                            if (!isCompanionModEnabled)
-                              Padding(
-                                padding: const EdgeInsets.all(0),
-                                child: Stack(
-                                  children: [
-                                    Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Opacity(
-                                        opacity: 0.9,
-                                        child: Blur(
-                                          blur: 5,
-                                          child: Icon(
-                                            Icons.warning,
-                                            color: theme.colorScheme.error
-                                                .darker(20),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    MovingTooltipWidget.text(
-                                      message: companionMod == null
-                                          ? "${Constants.appName} Companion mod not found!"
-                                          : "${Constants.appName} Companion mod is not enabled. Portrait replacements will not work.\n\nClick to enable it.",
-                                      child: IconButton(
-                                        onPressed: () {
-                                          if (companionMod == null) return;
-                                          ref
-                                              .read(modManager.notifier)
-                                              .changeActiveModVariant(
-                                                companionMod,
-                                                companionMod.findHighestVersion,
-                                              );
-                                        },
-                                        icon: Icon(
-                                          Icons.warning,
-                                          color: theme.colorScheme.error,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
                             TextButton.icon(
                               onPressed:
                                   ref
@@ -351,7 +310,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                               Padding(
                                 padding: const EdgeInsets.only(left: 16),
                                 child: Text(
-                                  "Tip: Drag from right to left",
+                                  "Drag portraits from the right to the left",
                                   style: theme.textTheme.labelLarge?.copyWith(
                                     fontStyle: FontStyle.italic,
                                   ),
@@ -459,13 +418,43 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                                             .withValues(alpha: 1)
                                       : theme.colorScheme.surfaceContainer
                                             .withValues(alpha: 0.8),
-                                  child: Icon(
-                                    Icons.keyboard_double_arrow_left,
-                                    color: highlighted
-                                        ? theme.colorScheme.onSurface
-                                              .withValues(alpha: 1)
-                                        : theme.colorScheme.onSurface
-                                              .withValues(alpha: 0.8),
+                                  child: Column(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceEvenly,
+                                    children: [
+                                      Icon(
+                                        Icons.keyboard_double_arrow_left,
+                                        color: highlighted
+                                            ? theme.colorScheme.onSurface
+                                                  .withValues(alpha: 1)
+                                            : theme.colorScheme.onSurface
+                                                  .withValues(alpha: 0.8),
+                                      ),
+                                      Icon(
+                                        Icons.keyboard_double_arrow_left,
+                                        color: highlighted
+                                            ? theme.colorScheme.onSurface
+                                                  .withValues(alpha: 1)
+                                            : theme.colorScheme.onSurface
+                                                  .withValues(alpha: 0.8),
+                                      ),
+                                      Icon(
+                                        Icons.keyboard_double_arrow_left,
+                                        color: highlighted
+                                            ? theme.colorScheme.onSurface
+                                                  .withValues(alpha: 1)
+                                            : theme.colorScheme.onSurface
+                                                  .withValues(alpha: 0.8),
+                                      ),
+                                      Icon(
+                                        Icons.keyboard_double_arrow_left,
+                                        color: highlighted
+                                            ? theme.colorScheme.onSurface
+                                                  .withValues(alpha: 1)
+                                            : theme.colorScheme.onSurface
+                                                  .withValues(alpha: 0.8),
+                                      ),
+                                    ],
                                   ),
                                 );
                               },
@@ -482,8 +471,15 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                                   onAddRandomReplacement: _addRandomReplacement,
                                 );
                               case 'left':
+                                var leftSortedImages = sortedImages;
+                                if (showOnlyReplaced) {
+                                  leftSortedImages = filterToOnlyReplacedImages(
+                                    sortedImages,
+                                    replacements,
+                                  );
+                                }
                                 final leftFilteredImages = _filterImages(
-                                  sortedImages,
+                                  leftSortedImages,
                                   _leftSearchController.value.text,
                                 );
                                 return Column(
@@ -636,6 +632,55 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
           ],
         );
       },
+    );
+  }
+
+  List<({Portrait image, ModVariant? variant})> filterToOnlyReplacedImages(
+    List<({Portrait image, ModVariant? variant})> sortedImages,
+    Map<String, Portrait> replacements,
+  ) {
+    return sortedImages
+        .where((element) => replacements.containsKey(element.image.hash))
+        .toList();
+  }
+
+  Padding buildCompanionModWarningIcon(ThemeData theme, Mod? companionMod) {
+    return Padding(
+      padding: const EdgeInsets.all(0),
+      child: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Opacity(
+              opacity: 0.9,
+              child: Blur(
+                blur: 5,
+                child: Icon(
+                  Icons.warning,
+                  color: theme.colorScheme.error.darker(20),
+                ),
+              ),
+            ),
+          ),
+          MovingTooltipWidget.text(
+            message: companionMod == null
+                ? "${Constants.appName} Companion mod not found!\nPortrait Replacement will not work.\n\nClick to install it."
+                : "${Constants.appName} Companion mod is not enabled. Portrait replacements will not work.\n\nClick to enable it.",
+            child: IconButton(
+              onPressed: () {
+                if (companionMod == null) return;
+                ref
+                    .read(modManager.notifier)
+                    .changeActiveModVariant(
+                      companionMod,
+                      companionMod.findHighestVersion,
+                    );
+              },
+              icon: Icon(Icons.warning, color: theme.colorScheme.error),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

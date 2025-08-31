@@ -51,6 +51,7 @@ class _ShipPageState extends ConsumerState<ShipPage>
   bool showFilters = false;
 
   List<GridFilter> filterCategories = [];
+  Map<String, List<String>> shipValuesByShipId = {};
 
   @override
   List<Area> get areas =>
@@ -64,7 +65,10 @@ class _ShipPageState extends ConsumerState<ShipPage>
         name: 'Hull Size',
         valueGetter: (ship) => ship.hullSizeForDisplay(),
       ),
-      GridFilter(name: 'Mod', valueGetter: (ship) => ship.modVariant?.modInfo.nameOrId ?? 'Vanilla'),
+      GridFilter(
+        name: 'Mod',
+        valueGetter: (ship) => ship.modVariant?.modInfo.nameOrId ?? 'Vanilla',
+      ),
       GridFilter(
         name: 'System',
         valueGetter: (ship) => ship.systemId ?? '',
@@ -111,6 +115,14 @@ class _ShipPageState extends ConsumerState<ShipPage>
       ref.watch(appSettings.select((s) => s.gameCoreDir))?.path ?? '',
     );
 
+    // Rebuild ship search cache
+    ref.listen(shipListNotifierProvider, (previous, next) {
+      // Don't build search indices until done loading.
+      if (!ref.read(isLoadingShipsList)) {
+        _rebuildSearchIndex(next);
+      }
+    });
+
     List<Ship> ships = shipsAsync.valueOrNull ?? [];
 
     if (showEnabled) {
@@ -135,33 +147,17 @@ class _ShipPageState extends ConsumerState<ShipPage>
     final shipsBeforeFilter = ships.toList();
     ships = applyFilters(ships);
 
-    // // Apply column filters
-    // if (selectedHullSizes.isNotEmpty) {
-    //   ships = ships.where((ship) {
-    //     return selectedHullSizes.contains(ship.hullSizeForDisplay());
-    //   }).toList();
-    // }
-    //
-    // if (selectedDesignations.isNotEmpty) {
-    //   ships = ships.where((ship) {
-    //     final designation = ship.designation ?? '';
-    //     return selectedDesignations.contains(designation);
-    //   }).toList();
-    // }
-    //
-    // if (selectedTechManufacturers.isNotEmpty) {
-    //   ships = ships.where((ship) {
-    //     final tech = ship.techManufacturer ?? '';
-    //     return selectedTechManufacturers.contains(tech);
-    //   }).toList();
-    // }
-
-    final query = _searchController.value.text;
+    final query = _searchController.value.text.toLowerCase();
     if (query.isNotEmpty) {
+      if (shipValuesByShipId.isEmpty) {
+        _rebuildSearchIndex(shipsAsync);
+      }
+
       ships = ships.where((ship) {
-        return ship.toMap().values.any((value) {
-          return value.toString().toLowerCase().contains(query.toLowerCase());
-        });
+        return shipValuesByShipId[ship.id]?.any(
+              (value) => value.contains(query),
+            ) ??
+            false;
       }).toList();
     }
 
@@ -205,7 +201,12 @@ class _ShipPageState extends ConsumerState<ShipPage>
                         ],
                       ),
                     ),
-                    Center(child: buildSearchBox()),
+                    Center(
+                      child: Disable(
+                        isEnabled: !ref.watch(isLoadingShipsList),
+                        child: buildSearchBox(),
+                      ),
+                    ),
                     Align(
                       alignment: Alignment.centerRight,
                       child: Row(
@@ -348,6 +349,23 @@ class _ShipPageState extends ConsumerState<ShipPage>
         ),
       ],
     );
+  }
+
+  void _rebuildSearchIndex(AsyncValue<List<Ship>> next) {
+    shipValuesByShipId =
+        next.valueOrNull
+            ?.map(
+              (ship) => MapEntry(
+                ship.id,
+                ship
+                    .toMap()
+                    .values
+                    .map((shipField) => shipField.toString().toLowerCase())
+                    .toList(),
+              ),
+            )
+            .toMap() ??
+        {};
   }
 
   List<Ship> applyFilters(List<Ship> ships) {

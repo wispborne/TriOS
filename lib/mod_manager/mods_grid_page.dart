@@ -567,6 +567,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                                                   index: index,
                                                   title: tagsForMod[index].name,
                                                   singleItem: true,
+                                                  active: true,
                                                   textActiveColor: theme
                                                       .colorScheme
                                                       .onPrimaryContainer,

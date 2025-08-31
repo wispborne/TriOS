@@ -16,7 +16,7 @@ import 'package:trios/mod_manager/mods_grid_page.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/portraits/portraits_page.dart';
 import 'package:trios/rules_autofresh/rules_hotreload.dart';
-import 'package:trios/shipViewer/shipsPage.dart';
+import 'package:trios/shipViewer/ships_page.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/thirdparty/dartx/comparable.dart';
 import 'package:trios/trios/constants.dart';
@@ -29,7 +29,7 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/platform_specific.dart';
 import 'package:trios/vram_estimator/vram_estimator_page.dart';
-import 'package:trios/weaponViewer/weaponPageWispGrid.dart';
+import 'package:trios/weaponViewer/weapons_page.dart';
 import 'package:trios/widgets/blur.dart';
 import 'package:trios/widgets/changelog_viewer.dart';
 import 'package:trios/widgets/dropdown_with_icon.dart';
@@ -220,8 +220,8 @@ class _AppShellState extends ConsumerState<AppShell>
       const VramEstimatorPage(),
       const Padding(padding: EdgeInsets.all(8), child: ChipperApp()),
       const PortraitsPage(),
-      const WeaponPage(),
-      const ShipPage(),
+      const WeaponsPage(),
+      const ShipsPage(),
       const Padding(padding: EdgeInsets.all(8), child: SettingsPage()),
       const CatalogPage(),
       const TipsPage(),

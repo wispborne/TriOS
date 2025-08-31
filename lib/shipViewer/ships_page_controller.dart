@@ -6,7 +6,7 @@ import 'package:trios/shipSystemsManager/ship_system.dart';
 import 'package:trios/shipSystemsManager/ship_systems_manager.dart';
 import 'package:trios/shipViewer/filter_widget.dart';
 import 'package:trios/shipViewer/models/shipGpt.dart';
-import 'package:trios/shipViewer/shipManager.dart';
+import 'package:trios/shipViewer/ship_manager.dart';
 import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';

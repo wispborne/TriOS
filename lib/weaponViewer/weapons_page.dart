@@ -14,22 +14,22 @@ import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/weaponViewer/models/weapon.dart';
-import 'package:trios/weaponViewer/weaponsManager.dart';
+import 'package:trios/weaponViewer/weapons_manager.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/toolbar_checkbox_button.dart';
 
 import '../trios/context_menu_items.dart';
 import '../widgets/MultiSplitViewMixin.dart';
 
-class WeaponPage extends ConsumerStatefulWidget {
-  const WeaponPage({super.key});
+class WeaponsPage extends ConsumerStatefulWidget {
+  const WeaponsPage({super.key});
 
   @override
-  ConsumerState<WeaponPage> createState() => _WeaponPageState();
+  ConsumerState<WeaponsPage> createState() => _WeaponsPageState();
 }
 
-class _WeaponPageState extends ConsumerState<WeaponPage>
-    with AutomaticKeepAliveClientMixin<WeaponPage>, MultiSplitViewMixin {
+class _WeaponsPageState extends ConsumerState<WeaponsPage>
+    with AutomaticKeepAliveClientMixin<WeaponsPage>, MultiSplitViewMixin {
   @override
   bool get wantKeepAlive => true;
   final SearchController _searchController = SearchController();

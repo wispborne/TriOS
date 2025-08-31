@@ -9,7 +9,7 @@ import 'package:trios/mod_manager/homebrew_grid/wispgrid_group.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/shipViewer/filter_widget.dart';
 import 'package:trios/shipViewer/models/shipGpt.dart';
-import 'package:trios/shipViewer/shipManager.dart';
+import 'package:trios/shipViewer/ship_manager.dart';
 import 'package:trios/shipViewer/ships_page_controller.dart';
 import 'package:trios/themes/theme_manager.dart' show ThemeManager;
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
@@ -25,15 +25,15 @@ import 'package:trios/widgets/toolbar_checkbox_button.dart';
 
 import '../widgets/MultiSplitViewMixin.dart';
 
-class ShipPage extends ConsumerStatefulWidget {
-  const ShipPage({super.key});
+class ShipsPage extends ConsumerStatefulWidget {
+  const ShipsPage({super.key});
 
   @override
-  ConsumerState<ShipPage> createState() => _ShipPageState();
+  ConsumerState<ShipsPage> createState() => _ShipsPageState();
 }
 
-class _ShipPageState extends ConsumerState<ShipPage>
-    with AutomaticKeepAliveClientMixin<ShipPage>, MultiSplitViewMixin {
+class _ShipsPageState extends ConsumerState<ShipsPage>
+    with AutomaticKeepAliveClientMixin<ShipsPage>, MultiSplitViewMixin {
   @override
   bool get wantKeepAlive => true;
 
@@ -133,20 +133,15 @@ class _ShipPageState extends ConsumerState<ShipPage>
                         const Padding(
                           padding: EdgeInsets.only(left: 8),
                           child: SizedBox(
-                            width: 12,
-                            height: 12,
+                            width: 24,
+                            height: 24,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           ),
                         ),
                     ],
                   ),
                 ),
-                Center(
-                  child: Disable(
-                    isEnabled: !controllerState.isLoading,
-                    child: buildSearchBox(),
-                  ),
-                ),
+                Center(child: buildSearchBox()),
                 Align(
                   alignment: Alignment.centerRight,
                   child: Row(
@@ -510,6 +505,7 @@ class _ShipPageState extends ConsumerState<ShipPage>
         col('armorRating', 'Armor', (s) => s.armorRating),
         col('maxFlux', 'Max Flux', (s) => s.maxFlux),
         col('fluxDissipation', 'Flux Diss', (s) => s.fluxDissipation),
+        col('shield', 'Shield', (s) => s.shieldType?.toTitleCase()),
       ],
     ];
   }

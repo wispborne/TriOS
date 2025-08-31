@@ -42,6 +42,7 @@ ContextMenu buildModContextMenu(
           ref,
           modVariant,
         ),
+      buildMenuItemViewModWeapons(context, mod, ref),
       buildMenuItemDebugging(context, mod, ref, isGameRunning),
     ],
     padding: const EdgeInsets.all(8.0),

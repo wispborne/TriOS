@@ -49,6 +49,8 @@ class ModGridHeaderMapper extends EnumMapper<ModGridHeader> {
         return ModGridHeader.firstSeen;
       case r'lastEnabled':
         return ModGridHeader.lastEnabled;
+      case r'tags':
+        return ModGridHeader.tags;
       default:
         return ModGridHeader.values[4];
     }
@@ -81,6 +83,8 @@ class ModGridHeaderMapper extends EnumMapper<ModGridHeader> {
         return r'firstSeen';
       case ModGridHeader.lastEnabled:
         return r'lastEnabled';
+      case ModGridHeader.tags:
+        return r'tags';
     }
   }
 }

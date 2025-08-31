@@ -24,15 +24,22 @@ class ModTagMapper extends ClassMapperBase<ModTag> {
   static const Field<ModTag, String> _f$id = Field('id', _$id);
   static String _$name(ModTag v) => v.name;
   static const Field<ModTag, String> _f$name = Field('name', _$name);
+  static bool _$isUserCreated(ModTag v) => v.isUserCreated;
+  static const Field<ModTag, bool> _f$isUserCreated =
+      Field('isUserCreated', _$isUserCreated);
 
   @override
   final MappableFields<ModTag> fields = const {
     #id: _f$id,
     #name: _f$name,
+    #isUserCreated: _f$isUserCreated,
   };
 
   static ModTag _instantiate(DecodingData data) {
-    return ModTag(id: data.dec(_f$id), name: data.dec(_f$name));
+    return ModTag(
+        id: data.dec(_f$id),
+        name: data.dec(_f$name),
+        isUserCreated: data.dec(_f$isUserCreated));
   }
 
   @override
@@ -81,7 +88,7 @@ extension ModTagValueCopy<$R, $Out> on ObjectCopyWith<$R, ModTag, $Out> {
 
 abstract class ModTagCopyWith<$R, $In extends ModTag, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
-  $R call({String? id, String? name});
+  $R call({String? id, String? name, bool? isUserCreated});
   ModTagCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
 
@@ -92,11 +99,17 @@ class _ModTagCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, ModTag, $Out>
   @override
   late final ClassMapperBase<ModTag> $mapper = ModTagMapper.ensureInitialized();
   @override
-  $R call({String? id, String? name}) => $apply(FieldCopyWithData(
-      {if (id != null) #id: id, if (name != null) #name: name}));
+  $R call({String? id, String? name, bool? isUserCreated}) =>
+      $apply(FieldCopyWithData({
+        if (id != null) #id: id,
+        if (name != null) #name: name,
+        if (isUserCreated != null) #isUserCreated: isUserCreated
+      }));
   @override
   ModTag $make(CopyWithData data) => ModTag(
-      id: data.get(#id, or: $value.id), name: data.get(#name, or: $value.name));
+      id: data.get(#id, or: $value.id),
+      name: data.get(#name, or: $value.name),
+      isUserCreated: data.get(#isUserCreated, or: $value.isUserCreated));
 
   @override
   ModTagCopyWith<$R2, ModTag, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>

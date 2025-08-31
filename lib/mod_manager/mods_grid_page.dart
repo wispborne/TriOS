@@ -16,6 +16,7 @@ import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/mod_manager/mod_summary_panel.dart';
 import 'package:trios/mod_manager/mod_version_selection_dropdown.dart';
+import 'package:trios/mod_tag_manager/mod_tag_manager.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/models/version.dart';
@@ -31,7 +32,6 @@ import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/vram_estimator/graphics_lib_config_provider.dart';
-import 'package:trios/vram_estimator/models/vram_checker_models.dart';
 import 'package:trios/vram_estimator/vram_estimator_page.dart';
 import 'package:trios/widgets/add_new_mods_button.dart';
 import 'package:trios/widgets/disable.dart';
@@ -47,6 +47,8 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../mod_profiles/mod_profiles_manager.dart';
 import '../mod_profiles/models/mod_profile.dart';
+import '../thirdparty/flutter_tags/item_tags.dart';
+import '../thirdparty/flutter_tags/tags.dart' show Tags;
 import '../utils/search.dart';
 import 'filter_mods_search_view.dart';
 import 'homebrew_grid/wispgrid_group.dart';
@@ -519,6 +521,96 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                       ),
                     ),
                     WispGridColumn<Mod>(
+                      key: ModGridHeader.tags.name,
+                      name: "Tags",
+                      isSortable: false,
+                      headerCellBuilder: (modifiers) => buildColumnHeader(
+                        ModGridHeader.tags,
+                        modifiers,
+                      ).child,
+                      itemCellBuilder: (mod, modifiers) => Opacity(
+                        opacity: WispGrid.lightTextOpacity,
+                        child: ContextMenuRegion(
+                          contextMenu: ContextMenu(
+                            entries: [
+                              MenuItem(
+                                label: "Add Default Tags",
+                                onSelected: () {
+                                  ref
+                                      .read(modTagManagerProvider.notifier)
+                                      .addDefaultModTags([
+                                        mod.findFirstEnabledOrHighestVersion!,
+                                      ]);
+                                },
+                              ),
+                            ],
+                          ),
+                          child: Container(
+                            // For hit testing, same as the Row below
+                            color: Colors.transparent,
+                            child: Builder(
+                              builder: (context) {
+                                final tagsForMod = ref
+                                    .watch(modTagManagerProvider.notifier)
+                                    .getTagsForMod(mod.id)
+                                    .toList();
+                                return Row(
+                                  mainAxisSize: MainAxisSize.max,
+                                  children: [
+                                    Expanded(
+                                      child: tagsForMod.isEmpty
+                                          ? Text("")
+                                          : Tags(
+                                              itemCount: tagsForMod.length,
+                                              itemBuilder: (index) {
+                                                return ItemTags(
+                                                  index: index,
+                                                  title: tagsForMod[index].name,
+                                                  singleItem: true,
+                                                  textActiveColor: theme
+                                                      .colorScheme
+                                                      .onPrimaryContainer,
+                                                  activeColor: theme
+                                                      .colorScheme
+                                                      .primaryContainer,
+                                                  splashColor:
+                                                      Colors.transparent,
+                                                  removeButton: ItemTagsRemoveButton(
+                                                    backgroundColor:
+                                                        Colors.transparent,
+                                                    onRemoved: () {
+                                                      ref
+                                                          .read(
+                                                            modTagManagerProvider
+                                                                .notifier,
+                                                          )
+                                                          .removeTagIdsFromMod(
+                                                            mod.id,
+                                                            [
+                                                              tagsForMod[index]
+                                                                  .id,
+                                                            ],
+                                                          );
+                                                      return true;
+                                                    },
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                    ),
+                                  ],
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                      ),
+                      defaultState: WispGridColumnState(
+                        position: 9,
+                        width: 150,
+                      ),
+                    ),
+                    WispGridColumn<Mod>(
                       key: ModGridHeader.gameVersion.name,
                       name: "Game Version",
                       isSortable: true,
@@ -561,7 +653,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                         },
                       ),
                       defaultState: WispGridColumnState(
-                        position: 9,
+                        position: 10,
                         width: 100,
                       ),
                     ),
@@ -594,7 +686,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                         ),
                       ),
                       defaultState: WispGridColumnState(
-                        position: 10,
+                        position: 11,
                         width: 150,
                       ),
                     ),
@@ -629,7 +721,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                         ),
                       ),
                       defaultState: WispGridColumnState(
-                        position: 11,
+                        position: 12,
                         width: 150,
                       ),
                     ),
@@ -978,11 +1070,11 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
     ModGridHeader header,
     HeaderBuilderModifiers modifiers,
   ) {
-    final state =
-        ref
-            .watch(appSettings.select((s) => s.modsGridState))
-            .columnsState[header.name] ??
-        WispGridColumnState(position: 0, width: 100);
+    // final state =
+    //     ref
+    //         .watch(appSettings.select((s) => s.modsGridState))
+    //         .columnsState[header.name] ??
+    //     WispGridColumnState(position: 0, width: 100);
 
     final sortField = switch (header) {
       ModGridHeader.favorites => null,
@@ -994,6 +1086,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
       ModGridHeader.version => ModGridSortField.version,
       ModGridHeader.updateStatus => ModGridSortField.updateStatus,
       ModGridHeader.vramImpact => ModGridSortField.vramImpact,
+      ModGridHeader.tags => null,
       ModGridHeader.gameVersion => ModGridSortField.gameVersion,
       ModGridHeader.firstSeen => ModGridSortField.firstSeen,
       ModGridHeader.lastEnabled => ModGridSortField.lastEnabled,
@@ -1046,6 +1139,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
             'Last Enabled',
             style: headerTextStyle,
           ),
+          ModGridHeader.tags => Text('Tags', style: headerTextStyle),
         };
       },
     );

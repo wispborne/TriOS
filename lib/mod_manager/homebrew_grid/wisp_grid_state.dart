@@ -155,6 +155,7 @@ enum ModGridHeader {
   gameVersion,
   firstSeen,
   lastEnabled,
+  tags,
   // category
 }
 

@@ -384,3 +384,18 @@ MenuItem buildMenuItemToggleMuteUpdates(Mod mod, WidgetRef ref) {
     },
   );
 }
+
+
+buildMenuItemViewModWeapons(BuildContext context, Mod mod, WidgetRef ref) {
+  return MenuItem(
+    label: 'View Mod Weapons',
+    icon: Icons.gps_fixed,
+    onSelected: () {
+      // Navigate to WeaponPage
+      // final appShell = context.findAncestorStateOfType<_AppShellState>();
+      // appShell?._changeTab(TriOSTools.weapons);
+
+    },
+  );
+
+}

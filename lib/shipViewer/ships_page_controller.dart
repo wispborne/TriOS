@@ -18,7 +18,7 @@ class ShipsPageState {
   final bool showSpoilers;
   final bool splitPane;
   final bool showFilters;
-  final List<GridFilter> filterCategories;
+  final List<GridFilter<Ship>> filterCategories;
 
   /// Ship properties, lowercase, by ship id.
   final Map<String, List<String>> shipSearchIndices;
@@ -49,7 +49,7 @@ class ShipsPageState {
     bool? showSpoilers,
     bool? splitPane,
     bool? showFilters,
-    List<GridFilter>? filterCategories,
+    List<GridFilter<Ship>>? filterCategories,
     Map<String, List<String>>? shipValuesByShipId,
     Map<String, ShipSystem>? shipSystemsMap,
     List<Ship>? allShips,
@@ -84,35 +84,35 @@ class ShipsPageController extends AutoDisposeNotifier<ShipsPageState> {
   ShipsPageState build() {
     // Initialize filter categories
     final filterCategories = [
-      GridFilter(
+      GridFilter<Ship>(
         name: 'Hull Size',
         valueGetter: (ship) => ship.hullSizeForDisplay(),
       ),
-      GridFilter(
+      GridFilter<Ship>(
         name: 'Mod',
         valueGetter: (ship) => ship.modVariant?.modInfo.nameOrId ?? 'Vanilla',
       ),
-      GridFilter(
+      GridFilter<Ship>(
         name: 'System',
         valueGetter: (ship) => ship.systemId ?? '',
         displayNameGetter: (value) =>
             state.shipSystemsMap[value ?? ""]?.name ?? value,
       ),
-      GridFilter(
+      GridFilter<Ship>(
         name: 'Shield Type',
         valueGetter: (ship) => ship.shieldType ?? '',
       ),
-      GridFilter(
+      GridFilter<Ship>(
         name: 'Defense Id',
         valueGetter: (ship) => ship.defenseId ?? '',
         displayNameGetter: (value) =>
             state.shipSystemsMap[value ?? ""]?.name ?? value,
       ),
-      GridFilter(
+      GridFilter<Ship>(
         name: 'Tech/Manufacturer',
         valueGetter: (ship) => ship.techManufacturer ?? '',
       ),
-      GridFilter(
+      GridFilter<Ship>(
         name: 'Designation',
         valueGetter: (ship) => ship.designation ?? '',
       ),

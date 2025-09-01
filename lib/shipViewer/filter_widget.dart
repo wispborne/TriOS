@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:trios/shipViewer/models/shipGpt.dart';
 import 'package:trios/widgets/text_trios.dart';
 
-class GridFilter {
+class GridFilter<T> {
   final String name;
-  final String Function(Ship) valueGetter;
+  final String Function(T) valueGetter;
   final String Function(String)? displayNameGetter;
 
   // Map of values to filter states:
@@ -30,25 +29,25 @@ class GridFilter {
   bool get hasActiveFilters => filterStates.isNotEmpty;
 }
 
-class GridFilterWidget extends StatefulWidget {
-  final GridFilter filter;
-  final List<Ship> ships;
+class GridFilterWidget<T> extends StatefulWidget {
+  final GridFilter<T> filter;
+  final List<T> items;
   final Map<String, bool?> filterStates;
   final Function(Map<String, bool?>) onSelectionChanged;
 
   const GridFilterWidget({
     super.key,
     required this.filter,
-    required this.ships,
+    required this.items,
     required this.filterStates,
     required this.onSelectionChanged,
   });
 
   @override
-  State<GridFilterWidget> createState() => _GridFilterWidgetState();
+  State<GridFilterWidget<T>> createState() => _GridFilterWidgetState<T>();
 }
 
-class _GridFilterWidgetState extends State<GridFilterWidget> {
+class _GridFilterWidgetState<T> extends State<GridFilterWidget<T>> {
   List<String> _uniqueValues = [];
   bool _isExpanded = true;
 
@@ -59,15 +58,15 @@ class _GridFilterWidgetState extends State<GridFilterWidget> {
   }
 
   @override
-  void didUpdateWidget(GridFilterWidget oldWidget) {
+  void didUpdateWidget(GridFilterWidget<T> oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.ships != widget.ships) {
+    if (oldWidget.items != widget.items) {
       _updateUniqueValues();
     }
   }
 
   void _updateUniqueValues() {
-    final values = widget.ships
+    final values = widget.items
         .map(widget.filter.valueGetter)
         .where((value) => value.isNotEmpty)
         .toSet()
@@ -133,7 +132,7 @@ class _GridFilterWidgetState extends State<GridFilterWidget> {
         children: [
           InkWell(
             onTap: () => setState(() => _isExpanded = !_isExpanded),
-            borderRadius: BorderRadius.only(
+            borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(12),
               topRight: Radius.circular(12),
             ),
@@ -175,7 +174,7 @@ class _GridFilterWidgetState extends State<GridFilterWidget> {
                       foregroundColor: theme.colorScheme.onSurface,
                     ),
                   ),
-                  Spacer(),
+                  const Spacer(),
                   if (hasFilters)
                     Container(
                       padding: const EdgeInsets.symmetric(

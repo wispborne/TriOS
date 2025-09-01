@@ -351,7 +351,7 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
                             ) {
                               return GridFilterWidget(
                                 filter: filter,
-                                ships: displayedShips,
+                                items: displayedShips,
                                 filterStates: filter.filterStates,
                                 onSelectionChanged: (states) {
                                   controller.updateFilterStates(filter, states);

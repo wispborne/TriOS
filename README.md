@@ -25,7 +25,7 @@ All-in-one Starsector launcher, mod manager, and toolkit.
 
 ## Building TriOS
 
-1. [Download and install/extract Flutter SDK](https://flutter-ko.dev/get-started/install) so that it's on your path.
+1. [Download and install/extract Flutter SDK](https://docs.flutter.dev/install/archive#stable-channel) so that it's on your path.
 2. Follow the instructions for your platform so that InAppWebView can build: https://inappwebview.dev/docs/intro/#setup-windows.
 3. Linux: Install `libcurl4-openssl-dev`.
 4. Download the TriOS source code, navigate to it, and run

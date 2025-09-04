@@ -15,30 +15,60 @@ class CopyModListButtonLarge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MovingTooltipWidget.text(
-      message: "Copy mod list to clipboard\n\nRight-click for ALL mods",
-      child: Padding(
-        padding: const EdgeInsets.only(left: 4, top: 4, bottom: 4),
-        child: GestureDetector(
-          onSecondaryTap: () {
-            copyModListToClipboardFromMods(mods, context);
-          },
-          child: OutlinedButton.icon(
-            onPressed: () =>
-                copyModListToClipboardFromMods(enabledMods, context),
-            label: const Text("Copy"),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Theme.of(
-                context,
-              ).colorScheme.onSurface.withOpacity(0.8),
-              side: BorderSide(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        MovingTooltipWidget.text(
+          message: "Copy mod list to clipboard\n\nRight-click for ALL mods",
+          child: Padding(
+            padding: const EdgeInsets.only(left: 4, top: 4, bottom: 4),
+            child: GestureDetector(
+              onSecondaryTap: () {
+                copyModListToClipboardFromMods(mods, context);
+              },
+              child: OutlinedButton.icon(
+                onPressed: () =>
+                    copyModListToClipboardFromMods(enabledMods, context),
+                label: const Text("Copy"),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.8),
+                  side: BorderSide(
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                  ),
+                ),
+                icon: const Icon(Icons.copy, size: 20),
               ),
             ),
-            icon: const Icon(Icons.copy, size: 20),
           ),
         ),
-      ),
+        MovingTooltipWidget.text(
+          message: "Share mod list by copying the IDs to clipboard\n\nRight-click for ALL mods",
+          child: Padding(
+            padding: const EdgeInsets.only(right: 4, top: 4, bottom: 4),
+            child: GestureDetector(
+              onSecondaryTap: () {
+                copyModListToClipboardAsJson(mods, context);
+              },
+              child: OutlinedButton.icon(
+                onPressed: () =>
+                    copyModListToClipboardAsJson(enabledMods, context),
+                label: const Text("JSON"),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.8),
+                  side: BorderSide(
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                  ),
+                ),
+                icon: const Icon(Icons.data_object, size: 20),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

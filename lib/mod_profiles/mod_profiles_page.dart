@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
@@ -16,8 +17,10 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
+import 'package:uuid/uuid.dart';
 
 import '../models/mod_variant.dart';
+import '../models/version.dart';
 import '../widgets/trios_expansion_tile.dart';
 import 'mod_profiles_manager.dart';
 import 'models/mod_profile.dart';
@@ -65,6 +68,7 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                           context,
                         ).textTheme.headlineSmall?.copyWith(fontSize: 20),
                       ),
+                      const Spacer(),
                       IconButton(
                         icon: const Icon(Icons.info),
                         onPressed: () {
@@ -268,6 +272,16 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
               children: [
                 const Spacer(),
                 MovingTooltipWidget.text(
+                  message: "Import a mod profile from clipboard JSON",
+                  child: OutlinedButton(
+                    onPressed: () {
+                      _importModProfileFromClipboard();
+                    },
+                    child: const Text('Import Profile'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                MovingTooltipWidget.text(
                   message:
                       "Creates a new profile using your current mods."
                       "\nDoes not set it to active.",
@@ -299,6 +313,153 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
           );
       newProfileNameController.clear();
     }
+  }
+
+  Future<void> _importModProfileFromClipboard() async {
+    try {
+      final clipboardData = await Clipboard.getData(Clipboard.kTextPlain);
+      if (clipboardData?.text == null || clipboardData!.text!.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Clipboard is empty')),
+        );
+        return;
+      }
+
+      final jsonData = jsonDecode(clipboardData.text!);
+      if (jsonData is! Map<String, dynamic>) {
+        throw const FormatException('Invalid JSON format');
+      }
+
+      // Validate required fields
+      if (!jsonData.containsKey('enabledModVariants')) {
+        throw const FormatException('Missing enabledModVariants field');
+      }
+
+      final originalId = jsonData['id'] as String?;
+      final originalName = jsonData['name'] as String? ?? 'Imported Profile';
+      
+      // Check for existing profiles
+      final existingProfiles = ref.read(modProfilesProvider).valueOrNull?.modProfiles ?? [];
+      final existingProfileWithId = existingProfiles.firstWhereOrNull((p) => p.id == originalId);
+      final existingProfileWithName = existingProfiles.firstWhereOrNull((p) => p.name == originalName);
+
+      String finalId = originalId ?? const Uuid().v4();
+      String finalName = originalName;
+
+      // Handle conflicts
+      if (existingProfileWithId != null || existingProfileWithName != null) {
+        final conflictType = existingProfileWithId != null ? 'ID and name' : 'name';
+        final existingProfile = existingProfileWithId ?? existingProfileWithName!;
+        
+        final result = await showDialog<String>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Profile Already Exists'),
+            content: Text(
+              'A profile with the same $conflictType already exists:\n\n'
+              '"${existingProfile.name}"\n\n'
+              'What would you like to do?'
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop('cancel'),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop('rename'),
+                child: const Text('Import as Copy'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop('overwrite'),
+                child: const Text('Overwrite Existing'),
+              ),
+            ],
+          ),
+        );
+
+        switch (result) {
+          case 'cancel':
+            return;
+          case 'rename':
+            // Generate new ID and create unique name
+            finalId = const Uuid().v4();
+            finalName = _generateUniqueProfileName(originalName, existingProfiles);
+            break;
+          case 'overwrite':
+            // Keep original ID and name to overwrite
+            break;
+          default:
+            return; // User dismissed dialog
+        }
+      }
+
+      // Create ModProfile from JSON
+      final profile = ModProfile(
+        id: finalId,
+        name: finalName,
+        description: jsonData['description'] ?? 'Imported from clipboard',
+        sortOrder: jsonData['sortOrder'] ?? 0,
+        enabledModVariants: (jsonData['enabledModVariants'] as List)
+            .map((variant) => ShallowModVariant(
+                  modId: variant['modId'] ?? '',
+                  modName: variant['modName'],
+                  smolVariantId: variant['smolVariantId'] ?? '',
+                  version: variant['version'] != null 
+                      ? Version.parse(variant['version'].toString(), sanitizeInput: true)
+                      : null,
+                ))
+            .toList(),
+        dateCreated: jsonData['dateCreated'] != null 
+            ? DateTime.parse(jsonData['dateCreated'])
+            : DateTime.now(),
+        dateModified: DateTime.now(), // Always update modified time on import
+      );
+
+      // Add or update the profile
+      final notifier = ref.read(modProfilesProvider.notifier);
+      if (existingProfileWithId != null && finalId == originalId) {
+        // Overwrite existing profile
+        notifier.updateModProfile(profile);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Successfully overwritten profile: ${profile.name}')),
+        );
+      } else {
+        // Add new profile
+        notifier.updateState(
+          (prevState) => prevState.copyWith(
+            modProfiles: [...?prevState.modProfiles, profile],
+          ),
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Successfully imported profile: ${profile.name}')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to import profile: ${e.toString()}')),
+      );
+    }
+  }
+
+  String _generateUniqueProfileName(String baseName, List<ModProfile> existingProfiles) {
+    final existingNames = existingProfiles.map((p) => p.name).toSet();
+    
+    if (!existingNames.contains(baseName)) {
+      return baseName;
+    }
+
+    // Try "Base Name (Copy)", "Base Name (Copy 2)", etc.
+    String copyName = '$baseName (Copy)';
+    if (!existingNames.contains(copyName)) {
+      return copyName;
+    }
+
+    int counter = 2;
+    while (existingNames.contains('$baseName (Copy $counter)')) {
+      counter++;
+    }
+    
+    return '$baseName (Copy $counter)';
   }
 }
 
@@ -591,6 +752,15 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                             },
                           ),
                         ),
+                        MovingTooltipWidget.text(
+                          message: 'Share mod list by copying the IDs to clipboard',
+                          child: IconButton(
+                            icon: const Icon(Icons.data_object),
+                            onPressed: () {
+                              _copyModListToClipboardAsJson(enabledModVariants);
+                            },
+                          ),
+                        ),
                         if (!isSaveGame)
                           Disable(
                             isEnabled:
@@ -768,6 +938,33 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
     Clipboard.setData(ClipboardData(text: modList));
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Mod list copied to clipboard')),
+    );
+  }
+
+  void _copyModListToClipboardAsJson(List<ShallowModVariant> enabledModVariants) {
+    final enabledModVariantsJson = enabledModVariants.map((mod) => {
+      "modId": mod.modId,
+      "modName": mod.modName ?? mod.modId,
+      "smolVariantId": mod.smolVariantId,
+      "version": mod.version?.toString() ?? "Unknown"
+    }).toList();
+
+    final profile = widget.profile;
+    final jsonOutput = {
+      "id": profile?.id ?? "generated-profile",
+      "name": profile?.name ?? "Current Mod Profile",
+      "description": profile?.description ?? "Generated mod profile from TriOS",
+      "sortOrder": profile?.sortOrder ?? 0,
+      "enabledModVariants": enabledModVariantsJson,
+      "dateCreated": (profile?.dateCreated ?? DateTime.now()).toIso8601String(),
+      "dateModified": (profile?.dateModified ?? DateTime.now()).toIso8601String()
+    };
+
+    final jsonString = const JsonEncoder.withIndent('  ').convert(jsonOutput);
+    
+    Clipboard.setData(ClipboardData(text: jsonString));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Mod list copied as JSON to clipboard')),
     );
   }
 }

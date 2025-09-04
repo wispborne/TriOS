@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:collection/collection.dart';
@@ -1757,6 +1758,20 @@ void copyModListToClipboardFromIds(
   copyModListToClipboardFromMods(enabledModsList, context);
 }
 
+void copyModListToClipboardFromIdsAsJson(
+  Set<String>? modIds,
+  List<Mod> allMods,
+  BuildContext context,
+) {
+  final enabledModsList = modIds
+      .orEmpty()
+      .map((id) => allMods.firstWhereOrNull((mod) => mod.id == id))
+      .nonNulls
+      .toList()
+      .sortedByName;
+  copyModListToClipboardAsJson(enabledModsList, context);
+}
+
 void copyModListToClipboardFromMods(List<Mod> mods, BuildContext context) {
   Clipboard.setData(
     ClipboardData(
@@ -1769,6 +1784,35 @@ void copyModListToClipboardFromMods(List<Mod> mods, BuildContext context) {
   );
   ScaffoldMessenger.of(context).showSnackBar(
     const SnackBar(content: Text("Copied mod list to clipboard.")),
+  );
+}
+
+void copyModListToClipboardAsJson(List<Mod> mods, BuildContext context) {
+  final enabledModVariants = mods.map((mod) {
+    final variant = mod.findFirstEnabledOrHighestVersion;
+    return {
+      "modId": mod.id,
+      "modName": variant?.modInfo.name ?? mod.id,
+      "smolVariantId": variant?.smolId ?? "",
+      "version": variant?.modInfo.version?.toString() ?? "Unknown"
+    };
+  }).toList();
+
+  final jsonOutput = {
+    "id": "generated-mod-list",
+    "name": "Current Mod List",
+    "description": "Generated mod list from TriOS",
+    "sortOrder": 0,
+    "enabledModVariants": enabledModVariants,
+    "dateCreated": DateTime.now().toIso8601String(),
+    "dateModified": DateTime.now().toIso8601String()
+  };
+
+  final jsonString = const JsonEncoder.withIndent('  ').convert(jsonOutput);
+  
+  Clipboard.setData(ClipboardData(text: jsonString));
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(content: Text("Copied mod list as JSON to clipboard.")),
   );
 }
 

@@ -172,6 +172,33 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                       ),
                                     ),
                                   ),
+                                  MovingTooltipWidget.text(
+                                    message:
+                                        "Share mod list by copying the IDs to clipboard\n\nRight-click for ALL mods",
+                                    child: GestureDetector(
+                                      onSecondaryTap: () {
+                                        copyModListToClipboardAsJson(
+                                          fullModList,
+                                          context,
+                                        );
+                                      },
+                                      child: IconButton(
+                                        icon: const Icon(Icons.data_object),
+                                        iconSize: 20,
+                                        constraints: const BoxConstraints(),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 4,
+                                        ),
+                                        onPressed: () {
+                                          copyModListToClipboardFromIdsAsJson(
+                                            enabledModIds,
+                                            filteredModList,
+                                            context,
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ),
                                   const AddNewModsButton(
                                     padding: EdgeInsets.symmetric(
                                       horizontal: 4,

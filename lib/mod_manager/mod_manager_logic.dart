@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:collection/collection.dart';
@@ -15,6 +16,8 @@ import 'package:trios/mod_manager/mod_context_menu.dart';
 import 'package:trios/mod_manager/mod_install_source.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_manager/version_checker.dart';
+import 'package:trios/mod_profiles/models/mod_profile.dart';
+import 'package:trios/mod_profiles/models/shared_mod_list.dart';
 import 'package:trios/models/mod_info_json.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/models/version_checker_info.dart';
@@ -1757,6 +1760,26 @@ void copyModListToClipboardFromIds(
   copyModListToClipboardFromMods(enabledModsList, context);
 }
 
+void copyModListToClipboard({
+  String? id,
+  String? name,
+  String? description,
+  required List<ShallowModVariant> variants,
+  DateTime? dateCreated,
+  DateTime? dateModified,
+  required BuildContext context,
+}) {
+  final sharedList = createSharedModListFromVariants(
+    id,
+    name,
+    description,
+    dateCreated,
+    dateModified,
+    variants,
+  );
+  copySharedModListToClipboard(sharedList, context);
+}
+
 void copyModListToClipboardFromMods(List<Mod> mods, BuildContext context) {
   Clipboard.setData(
     ClipboardData(
@@ -1769,6 +1792,47 @@ void copyModListToClipboardFromMods(List<Mod> mods, BuildContext context) {
   );
   ScaffoldMessenger.of(context).showSnackBar(
     const SnackBar(content: Text("Copied mod list to clipboard.")),
+  );
+}
+
+void copySharedModListToClipboard(
+  SharedModList sharedModList,
+  BuildContext context,
+) {
+  Clipboard.setData(ClipboardData(text: sharedModList.toMap().prettyPrintJson()));
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text(
+        "Copied mod list to clipboard. Import via Mod Profiles page.",
+      ),
+    ),
+  );
+}
+
+SharedModList createSharedModListFromVariants(
+  String? id,
+  String? name,
+  String? description,
+  DateTime? dateCreated,
+  DateTime? dateModified,
+  List<ShallowModVariant> variants,
+) {
+  final enabledModVariants = variants.map((variant) {
+    return SharedModVariant(
+      modId: variant.modId,
+      modName: variant.modName,
+      smolVariantId: variant.smolVariantId,
+      versionName: variant.version,
+    );
+  }).toList();
+
+  return SharedModList.create(
+    id: id,
+    name: name ?? "Current Mod List",
+    description: description ?? "Generated mod list from TriOS",
+    mods: enabledModVariants,
+    dateCreated: dateCreated,
+    dateModified: dateModified,
   );
 }
 

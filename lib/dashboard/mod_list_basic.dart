@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
+import 'package:trios/mod_profiles/models/mod_profile.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/thirdparty/dartx/comparable.dart';
 import 'package:trios/thirdparty/dartx/iterable.dart';
@@ -15,6 +16,7 @@ import 'package:trios/widgets/checkbox_with_label.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/disable_if_cannot_write_mods.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:vs_scrollbar/vs_scrollbar.dart';
 
 import '../mod_manager/mod_context_menu.dart';
@@ -174,26 +176,44 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                   ),
                                   MovingTooltipWidget.text(
                                     message:
-                                        "Share mod list by copying the IDs to clipboard\n\nRight-click for ALL mods",
+                                        "Copy importable list of enabled mods to clipboard\n\nRight-click for ALL mods",
                                     child: GestureDetector(
                                       onSecondaryTap: () {
-                                        copyModListToClipboardAsJson(
-                                          fullModList,
-                                          context,
+                                        copyModListToClipboard(
+                                          id: null,
+                                          variants: modVariants.valueOrNull
+                                              .orEmpty()
+                                              .map(
+                                                ShallowModVariant
+                                                    .fromModVariant,
+                                              )
+                                              .toList(),
+                                          context: context,
                                         );
                                       },
                                       child: IconButton(
-                                        icon: const Icon(Icons.data_object),
+                                        icon: SvgImageIcon(
+                                          "assets/images/icon-export-horiz.svg",
+                                        ),
                                         iconSize: 20,
                                         constraints: const BoxConstraints(),
                                         padding: const EdgeInsets.symmetric(
                                           horizontal: 4,
                                         ),
                                         onPressed: () {
-                                          copyModListToClipboardFromIdsAsJson(
-                                            enabledModIds,
-                                            filteredModList,
-                                            context,
+                                          copyModListToClipboard(
+                                            variants: modVariants.valueOrNull
+                                                .orEmpty()
+                                                .where(
+                                                  (it) =>
+                                                      it.isEnabled(fullModList),
+                                                )
+                                                .map(
+                                                  ShallowModVariant
+                                                      .fromModVariant,
+                                                )
+                                                .toList(),
+                                            context: context,
                                           );
                                         },
                                       ),

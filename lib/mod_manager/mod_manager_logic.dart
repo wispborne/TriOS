@@ -16,6 +16,8 @@ import 'package:trios/mod_manager/mod_context_menu.dart';
 import 'package:trios/mod_manager/mod_install_source.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_manager/version_checker.dart';
+import 'package:trios/mod_profiles/models/mod_profile.dart';
+import 'package:trios/mod_profiles/models/shared_mod_list.dart';
 import 'package:trios/models/mod_info_json.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/models/version_checker_info.dart';
@@ -1758,18 +1760,24 @@ void copyModListToClipboardFromIds(
   copyModListToClipboardFromMods(enabledModsList, context);
 }
 
-void copyModListToClipboardFromIdsAsJson(
-  Set<String>? modIds,
-  List<Mod> allMods,
-  BuildContext context,
-) {
-  final enabledModsList = modIds
-      .orEmpty()
-      .map((id) => allMods.firstWhereOrNull((mod) => mod.id == id))
-      .nonNulls
-      .toList()
-      .sortedByName;
-  copyModListToClipboardAsJson(enabledModsList, context);
+void copyModListToClipboard({
+  String? id,
+  String? name,
+  String? description,
+  required List<ShallowModVariant> variants,
+  DateTime? dateCreated,
+  DateTime? dateModified,
+  required BuildContext context,
+}) {
+  final sharedList = createSharedModListFromVariants(
+    id,
+    name,
+    description,
+    dateCreated,
+    dateModified,
+    variants,
+  );
+  copySharedModListToClipboard(sharedList, context);
 }
 
 void copyModListToClipboardFromMods(List<Mod> mods, BuildContext context) {
@@ -1787,32 +1795,44 @@ void copyModListToClipboardFromMods(List<Mod> mods, BuildContext context) {
   );
 }
 
-void copyModListToClipboardAsJson(List<Mod> mods, BuildContext context) {
-  final enabledModVariants = mods.map((mod) {
-    final variant = mod.findFirstEnabledOrHighestVersion;
-    return {
-      "modId": mod.id,
-      "modName": variant?.modInfo.name ?? mod.id,
-      "smolVariantId": variant?.smolId ?? "",
-      "version": variant?.modInfo.version?.toString() ?? "Unknown"
-    };
+void copySharedModListToClipboard(
+  SharedModList sharedModList,
+  BuildContext context,
+) {
+  Clipboard.setData(ClipboardData(text: sharedModList.toMap().prettyPrintJson()));
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text(
+        "Copied mod list to clipboard. Import via Mod Profiles page.",
+      ),
+    ),
+  );
+}
+
+SharedModList createSharedModListFromVariants(
+  String? id,
+  String? name,
+  String? description,
+  DateTime? dateCreated,
+  DateTime? dateModified,
+  List<ShallowModVariant> variants,
+) {
+  final enabledModVariants = variants.map((variant) {
+    return SharedModVariant(
+      modId: variant.modId,
+      modName: variant.modName,
+      smolVariantId: variant.smolVariantId,
+      versionName: variant.version,
+    );
   }).toList();
 
-  final jsonOutput = {
-    "id": "generated-mod-list",
-    "name": "Current Mod List",
-    "description": "Generated mod list from TriOS",
-    "sortOrder": 0,
-    "enabledModVariants": enabledModVariants,
-    "dateCreated": DateTime.now().toIso8601String(),
-    "dateModified": DateTime.now().toIso8601String()
-  };
-
-  final jsonString = const JsonEncoder.withIndent('  ').convert(jsonOutput);
-  
-  Clipboard.setData(ClipboardData(text: jsonString));
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(content: Text("Copied mod list as JSON to clipboard.")),
+  return SharedModList.create(
+    id: id,
+    name: name ?? "Current Mod List",
+    description: description ?? "Generated mod list from TriOS",
+    mods: enabledModVariants,
+    dateCreated: dateCreated,
+    dateModified: dateModified,
   );
 }
 

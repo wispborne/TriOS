@@ -36,6 +36,8 @@ class ShallowModVariant with ShallowModVariantMappable {
   final String? modName;
   final String smolVariantId;
   final Version? version;
+
+  String get nameOrId => modName ?? modId;
 }
 
 @MappableClass()

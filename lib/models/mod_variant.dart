@@ -151,6 +151,20 @@ const modIconFilePaths = [
 
 final smolIdAllowedChars = RegExp(r'[^0-9a-zA-Z\\.\-_]');
 
+final _smolIdCache = <String, String>{};
+
 String createSmolId(String id, Version? version) {
-  return '${id.replaceAll(smolIdAllowedChars, '').take(6)}-${version.toString().replaceAll(smolIdAllowedChars, '').take(9)}-${(id.hashCode + version.hashCode).abs()}';
+  if (_smolIdCache.containsKey(id)) {
+    return _smolIdCache[id]!;
+  }
+
+  final result =
+      '${id.replaceAll(smolIdAllowedChars, '').take(6)}-${version.toString().replaceAll(smolIdAllowedChars, '').take(9)}-${(id.hashCode + version.hashCode).abs()}';
+  _smolIdCache[id] = result;
+
+  if (_smolIdCache.length > 1000) {
+    _smolIdCache.clear();
+  }
+
+  return result;
 }

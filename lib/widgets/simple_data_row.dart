@@ -8,8 +8,8 @@ class SimpleDataRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RichText(
-      text: TextSpan(
+    return SelectableText.rich(
+      TextSpan(
         style: Theme.of(context).textTheme.labelLarge,
         children: [
           TextSpan(

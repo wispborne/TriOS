@@ -520,6 +520,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                         width: 128,
                       ),
                     ),
+                    if (false)
                     WispGridColumn<Mod>(
                       key: ModGridHeader.tags.name,
                       name: "Tags",

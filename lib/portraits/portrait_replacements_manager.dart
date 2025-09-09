@@ -231,7 +231,17 @@ extension SavedPortraitsMapExt on Map<String, SavedPortrait> {
           '\n\tUnable to find replacement portrait ${replacement.hash} in loaded portraits.',
         );
       }
-      return MapEntry(hashOfOriginal, null);
+      return MapEntry(
+        hashOfOriginal,
+        Portrait( // TODO not sure if this is a good idea, want to display when a portrait cannot be found in the UI
+          modVariant: null,
+          hash: replacement.hash,
+          imageFile: replacement.lastKnownFullPath.toFile(),
+          relativePath: replacement.relativePath,
+          width: 100,
+          height: 100,
+        ),
+      );
     }
   });
 

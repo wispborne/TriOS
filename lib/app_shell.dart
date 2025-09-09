@@ -387,28 +387,27 @@ class _AppShellState extends ConsumerState<AppShell>
                           onPressed: () => _changeTab(TriOSTools.weapons),
                         ),
                       ),
-                      if (Constants.currentVersion >=
-                          Version.parse("1.2.0-dev01"))
-                        MovingTooltipWidget.text(
-                          message: "Ship Viewer",
-                          child: IconButton(
-                            icon: SvgImageIcon(
-                              "assets/images/icon-onslaught.svg",
-                              height: 24,
-                              width: 24,
-                            ),
-                            selectedIcon: SvgImageIcon(
-                              "assets/images/icon-onslaught.svg",
-                              color: Theme.of(context).colorScheme.primary,
-                              height: 24,
-                              width: 24,
-                            ),
-                            isSelected: _currentPage == TriOSTools.ships,
-                            onPressed: () => _changeTab(TriOSTools.ships),
-                          ),
-                        ),
                       MovingTooltipWidget.text(
-                        message: "Portrait Viewer/Replacer\n\nWarning: spoilers!",
+                        message: "Ship Viewer",
+                        child: IconButton(
+                          icon: SvgImageIcon(
+                            "assets/images/icon-onslaught.svg",
+                            height: 24,
+                            width: 24,
+                          ),
+                          selectedIcon: SvgImageIcon(
+                            "assets/images/icon-onslaught.svg",
+                            color: Theme.of(context).colorScheme.primary,
+                            height: 24,
+                            width: 24,
+                          ),
+                          isSelected: _currentPage == TriOSTools.ships,
+                          onPressed: () => _changeTab(TriOSTools.ships),
+                        ),
+                      ),
+                      MovingTooltipWidget.text(
+                        message:
+                            "Portrait Viewer/Replacer\n\nWarning: spoilers!",
                         child: IconButton(
                           icon: SvgImageIcon(
                             "assets/images/icon-account-box-outline.svg",

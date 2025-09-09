@@ -24,11 +24,11 @@ class WeaponsPageState {
   final bool isLoading;
 
   const WeaponsPageState({
-    required this.filterCategories,
-    required this.allWeapons,
-    required this.filteredWeapons,
-    required this.weaponsBeforeGridFilter,
-    required this.weaponSearchIndices,
+    this.filterCategories = const [],
+    this.allWeapons = const [],
+    this.filteredWeapons = const [],
+    this.weaponsBeforeGridFilter = const [],
+    this.weaponSearchIndices = const {},
     this.currentSearchQuery = '',
     this.showEnabled = false,
     this.showHidden = false,
@@ -111,11 +111,11 @@ class WeaponsPageController extends AutoDisposeNotifier<WeaponsPageState> {
     );
 
     // Build initial state
-    var initialState = WeaponsPageState(
+    var initialState = (stateOrNull ?? WeaponsPageState()).copyWith(
       filterCategories: filterCategories,
       allWeapons: allWeapons,
-      filteredWeapons: [],
-      weaponsBeforeGridFilter: [],
+      // filteredWeapons: [],
+      // weaponsBeforeGridFilter: [],
       weaponSearchIndices: weaponValuesByWeaponId,
       isLoading: isLoadingWeapons,
     );

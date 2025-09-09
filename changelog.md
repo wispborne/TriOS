@@ -7,6 +7,8 @@
   - Import/Export Mod Profiles/Lists (contributed by hihahahalol)
     - Copy your mod profile or list to the clipboard and send it to someone else.
     - Copy someone else's and import it.
+- Fixed
+  - Ship Viewer filters not working.
 
 # 1.2.3
 - Fixed

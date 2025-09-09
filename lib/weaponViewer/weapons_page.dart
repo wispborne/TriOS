@@ -40,6 +40,7 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
   bool get wantKeepAlive => true;
 
   final SearchController _searchController = SearchController();
+  final ScrollController _filterScrollController = ScrollController();
 
   @override
   List<Area> get areas {
@@ -52,6 +53,7 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
   @override
   void dispose() {
     _searchController.dispose();
+    _filterScrollController.dispose();
     super.dispose();
   }
 
@@ -281,6 +283,7 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
         child: Card(
           child: Scrollbar(
             thumbVisibility: true,
+            controller: _filterScrollController,
             child: Padding(
               padding: const EdgeInsets.only(
                 left: 8,
@@ -343,7 +346,7 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
                           context,
                         ).copyWith(scrollbars: false),
                         child: SingleChildScrollView(
-                          primary: true,
+                          controller: _filterScrollController,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: controllerState.filterCategories.map((

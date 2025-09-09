@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:trios/mod_profiles/models/mod_profile.dart';
+import 'package:trios/models/mod_variant.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
@@ -210,4 +212,13 @@ class SaveFileMod {
   final Version version;
 
   SaveFileMod({required this.id, required this.name, required this.version});
+
+  ShallowModVariant toShallowModVariant() {
+    return ShallowModVariant(
+      modId: id,
+      modName: name,
+      version: version,
+      smolVariantId: createSmolId(id, version),
+    );
+  }
 }

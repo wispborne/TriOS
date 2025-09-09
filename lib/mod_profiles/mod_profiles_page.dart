@@ -13,6 +13,7 @@ import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/mod_profiles/models/shared_mod_list.dart';
 import 'package:trios/mod_profiles/save_reader.dart';
 import 'package:trios/themes/theme_manager.dart';
+import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/thirdparty/dartx/string.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
@@ -768,6 +769,20 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
         activeProfileId != null && profile?.id == activeProfileId;
     final isGameRunning = ref.watch(AppState.isGameRunning).value == true;
 
+    final allMods = ref.read(AppState.mods);
+    final modVariants = ref.read(AppState.modVariants).valueOrNull ?? [];
+    final currentlyEnabledModVariants = ref.read(AppState.enabledModVariants);
+    final changesByModId = ModProfileManagerNotifier.computeModProfileChanges(
+      profile ??
+          ModProfile.newProfile(
+            "",
+            save?.mods.map((m) => m.toShallowModVariant()).toList() ?? [],
+          ),
+      allMods,
+      modVariants,
+      currentlyEnabledModVariants,
+    ).associateBy((m) => m.modId);
+
     var enabledModVariants =
         profile?.enabledModVariants ??
         save!.mods
@@ -1161,19 +1176,44 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                     },
                     childrenPadding: const EdgeInsets.all(8),
                     children: enabledModVariants.map((mod) {
+                      final change = changesByModId[mod.modId];
+                      final textColor =
+                          change?.changeType == ModChangeType.missingMod
+                          ? theme.colorScheme.error
+                          : theme.colorScheme.onSurface;
+
                       return Row(
                         children: [
+                          if (change?.changeType == ModChangeType.missingMod)
+                            Padding(
+                              padding: const EdgeInsets.only(right: 2),
+                              child: MovingTooltipWidget.text(
+                                message: 'Search Catalog',
+                                child: IconButton.outlined(
+                                  icon: Icon(Icons.search),
+                                  iconSize: 16,
+                                  color: theme.colorScheme.primary,q
+                                  constraints: const BoxConstraints(),
+                                  padding: const EdgeInsets.all(2),
+                                  onPressed: () {},
+                                ),
+                              ),
+                            ),
                           Expanded(
                             child: Text(
                               mod.modName ?? mod.modId,
                               overflow: TextOverflow.fade,
                               maxLines: 1,
-                              style: theme.textTheme.labelLarge,
+                              style: theme.textTheme.labelLarge?.copyWith(
+                                color: textColor,
+                              ),
                             ),
                           ),
                           Text(
                             mod.version?.toString() ?? '???',
-                            style: theme.textTheme.labelLarge,
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              color: textColor,
+                            ),
                           ),
                         ],
                       );

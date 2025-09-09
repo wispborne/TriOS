@@ -50,7 +50,7 @@ class ShipsPageState {
     bool? splitPane,
     bool? showFilters,
     List<GridFilter<Ship>>? filterCategories,
-    Map<String, List<String>>? shipValuesByShipId,
+    Map<String, List<String>>? shipSearchIndices,
     Map<String, ShipSystem>? shipSystemsMap,
     List<Ship>? allShips,
     List<Ship>? filteredShips,
@@ -64,7 +64,7 @@ class ShipsPageState {
       splitPane: splitPane ?? this.splitPane,
       showFilters: showFilters ?? this.showFilters,
       filterCategories: filterCategories ?? this.filterCategories,
-      shipSearchIndices: shipValuesByShipId ?? this.shipSearchIndices,
+      shipSearchIndices: shipSearchIndices ?? this.shipSearchIndices,
       shipSystemsMap: shipSystemsMap ?? this.shipSystemsMap,
       allShips: allShips ?? this.allShips,
       filteredShips: filteredShips ?? this.filteredShips,
@@ -129,16 +129,16 @@ class ShipsPageController extends AutoDisposeNotifier<ShipsPageState> {
     final shipSystemsMap = shipSystems.associateBy((e) => e.id);
 
     // Build search index from current ships (incremental update)
-    Map<String, List<String>> shipValuesByShipId = _updateSearchIndices(
+    Map<String, List<String>> shipSearchIndices = _updateSearchIndices(
       allShips,
     );
 
     // Build initial state
-    var initialState = ShipsPageState(
+    var initialState = (stateOrNull ?? ShipsPageState()).copyWith(
       filterCategories: filterCategories,
       shipSystemsMap: shipSystemsMap,
       allShips: allShips,
-      shipSearchIndices: shipValuesByShipId,
+      shipSearchIndices: shipSearchIndices,
       isLoading: isLoadingShips,
     );
 
@@ -318,7 +318,7 @@ class ShipsPageController extends AutoDisposeNotifier<ShipsPageState> {
   /// Apply grid filters to ships
   List<Ship> _applyFilters(
     List<Ship> ships,
-    List<GridFilter> filterCategories,
+    List<GridFilter<Ship>> filterCategories,
   ) {
     for (final filter in filterCategories) {
       if (filter.hasActiveFilters) {

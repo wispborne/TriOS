@@ -531,7 +531,7 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                         message: switch (change?.changeType) {
                           ModChangeType.missingMod => "Mod not found",
                           ModChangeType.missingVariant =>
-                            "Version ${mod.version} not found for ${mod.nameOrId}.",
+                            "Version ${mod.version} not found for ${mod.nameOrId}. You have ${change?.fromVariant?.modInfo.version} installed.",
                           _ => null,
                         },
                         child: Row(

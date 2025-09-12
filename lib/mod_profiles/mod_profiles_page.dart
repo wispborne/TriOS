@@ -392,7 +392,12 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
       }
 
       try {
-        importedModList = SharedModListMapper.fromJson(clipboardData.text!);
+        importedModList = SharedModListCodec.fromShareString(
+          clipboardData.text!,
+          fallbackId: "shared-mod-list",
+          fallbackName: "Shared Mod List",
+        );
+        // importedModList = SharedModListMapper.fromJson(clipboardData.text!);
       } catch (e) {
         Fimber.w('Failed to parse JSON from clipboard: $e');
         ScaffoldMessenger.of(
@@ -472,123 +477,130 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                     maxWidth: 520,
                     maxHeight: 420,
                   ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("Unable to import profile '$finalName'."),
-                      Text(
-                        "\nA profile with the same ${existingProfileWithId != null ? "ID (name: '${existingProfile.name}')" : existingProfile.name} already exists.",
-                      ),
-                      const SizedBox(height: 8),
-                      if (differingIds.isEmpty)
-                        Text('Both profiles are identical.')
-                      else
-                        Container(
-                          decoration: BoxDecoration(
-                            border: Border.all(
-                              color: theme.dividerColor.withOpacity(0.4),
-                            ),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Column(
-                            children: [
-                              // Header
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 6,
-                                ),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      flex: 2,
-                                      child: Text(
-                                        'Mod',
-                                        style: theme.textTheme.labelMedium
-                                            ?.copyWith(
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                      ),
-                                    ),
-                                    Expanded(
-                                      child: Text(
-                                        'Existing',
-                                        style: theme.textTheme.labelMedium
-                                            ?.copyWith(
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        'Imported',
-                                        style: theme.textTheme.labelMedium
-                                            ?.copyWith(
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const Divider(height: 1),
-                              // Rows
-                              SingleChildScrollView(
-                                child: Column(
-                                  children: differingIds.map((id) {
-                                    final existing = existingById[id];
-                                    final imported = importedById[id];
-                                    final name =
-                                        imported?.name ?? existing?.name ?? id;
-                                    final existingV =
-                                        existing?.version.toString() ?? '—';
-                                    final importedV =
-                                        imported?.version.toString() ?? '—';
-                                    return Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 6,
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          Expanded(
-                                            flex: 2,
-                                            child: Text(
-                                              name,
-                                              overflow: TextOverflow.ellipsis,
-                                              maxLines: 1,
-                                              style: theme.textTheme.labelLarge,
-                                            ),
-                                          ),
-                                          Expanded(
-                                            child: Text(
-                                              existingV,
-                                              overflow: TextOverflow.ellipsis,
-                                              maxLines: 1,
-                                              style: theme.textTheme.labelLarge,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Expanded(
-                                            child: Text(
-                                              importedV,
-                                              overflow: TextOverflow.ellipsis,
-                                              maxLines: 1,
-                                              style: theme.textTheme.labelLarge,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  }).toList(),
-                                ),
-                              ),
-                            ],
-                          ),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text("Unable to import profile '$finalName'."),
+                        Text(
+                          "\nA profile with the same ${existingProfileWithId != null ? "ID (name: '${existingProfile.name}')" : existingProfile.name} already exists.",
                         ),
-                    ],
+                        const SizedBox(height: 8),
+                        if (differingIds.isEmpty)
+                          Text('Both profiles are identical.')
+                        else
+                          Container(
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: theme.dividerColor.withOpacity(0.4),
+                              ),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Column(
+                              children: [
+                                // Header
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 6,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        flex: 2,
+                                        child: Text(
+                                          'Mod',
+                                          style: theme.textTheme.labelMedium
+                                              ?.copyWith(
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: Text(
+                                          'Existing',
+                                          style: theme.textTheme.labelMedium
+                                              ?.copyWith(
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          'Imported',
+                                          style: theme.textTheme.labelMedium
+                                              ?.copyWith(
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const Divider(height: 1),
+                                // Rows
+                                SingleChildScrollView(
+                                  child: Column(
+                                    children: differingIds.map((id) {
+                                      final existing = existingById[id];
+                                      final imported = importedById[id];
+                                      final name =
+                                          imported?.name ??
+                                          existing?.name ??
+                                          id;
+                                      final existingV =
+                                          existing?.version.toString() ?? '—';
+                                      final importedV =
+                                          imported?.version.toString() ?? '—';
+                                      return Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 6,
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Expanded(
+                                              flex: 2,
+                                              child: Text(
+                                                name,
+                                                overflow: TextOverflow.ellipsis,
+                                                maxLines: 1,
+                                                style:
+                                                    theme.textTheme.labelLarge,
+                                              ),
+                                            ),
+                                            Expanded(
+                                              child: Text(
+                                                existingV,
+                                                overflow: TextOverflow.ellipsis,
+                                                maxLines: 1,
+                                                style:
+                                                    theme.textTheme.labelLarge,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: Text(
+                                                importedV,
+                                                overflow: TextOverflow.ellipsis,
+                                                maxLines: 1,
+                                                style:
+                                                    theme.textTheme.labelLarge,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 );
               },

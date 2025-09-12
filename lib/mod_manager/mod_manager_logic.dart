@@ -1799,7 +1799,8 @@ void copySharedModListToClipboard(
   SharedModList sharedModList,
   BuildContext context,
 ) {
-  Clipboard.setData(ClipboardData(text: sharedModList.toMap().prettyPrintJson()));
+  Clipboard.setData(ClipboardData(text: sharedModList.toShareString()));
+  // Clipboard.setData(ClipboardData(text: sharedModList.toMap().prettyPrintJson()));
   ScaffoldMessenger.of(context).showSnackBar(
     const SnackBar(
       content: Text(

@@ -59,7 +59,6 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
   bool _isPortraitExpanded = false;
   Map<String, ModChange> _changesByModId = {};
 
-
   @override
   void initState() {
     super.initState();
@@ -101,7 +100,6 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
       }
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -358,23 +356,19 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                               },
                             ),
                           ),
+                        // MovingTooltipWidget.text(
+                        //   message: 'Copy mod list to clipboard',
+                        //   child: IconButton(
+                        //     icon: const Icon(Icons.content_copy),
+                        //     onPressed: () {
+                        //       _copyModListToClipboard(enabledModVariants);
+                        //     },
+                        //   ),
+                        // ),
                         MovingTooltipWidget.text(
-                          message: 'Copy mod list to clipboard',
+                          message: 'Copy mod profile to clipboard',
                           child: IconButton(
                             icon: const Icon(Icons.content_copy),
-                            onPressed: () {
-                              _copyModListToClipboard(enabledModVariants);
-                            },
-                          ),
-                        ),
-                        MovingTooltipWidget.text(
-                          message:
-                              'Share mod Profile'
-                              '\n(copies data to clipboard)',
-                          child: IconButton(
-                            icon: SvgImageIcon(
-                              "assets/images/icon-export-horiz.svg",
-                            ),
                             onPressed: () {
                               copyModListToClipboard(
                                 id: profile?.id,
@@ -557,7 +551,11 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                                       ),
                                     ),
                                     onPressed: () {
-                                      showAlertDialog(context, title: "WIP", content: "Unimplemented");
+                                      showAlertDialog(
+                                        context,
+                                        title: "WIP",
+                                        content: "Unimplemented",
+                                      );
                                     },
                                   ),
                                 ),

@@ -4,11 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/mod_profiles/models/mod_profile.dart';
-import 'package:trios/models/version.dart';
-import 'package:trios/thirdparty/dartx/comparable.dart';
 import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
-import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
@@ -149,38 +146,14 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                   ),
                                   MovingTooltipWidget.text(
                                     message:
-                                        "Copy mod list to clipboard\n\nRight-click for ALL mods",
+                                        "Copy mod list to clipboard\n\nRight-click to include disabled mods",
                                     child: GestureDetector(
                                       onSecondaryTap: () {
-                                        copyModListToClipboardFromMods(
-                                          fullModList,
-                                          context,
-                                        );
-                                      },
-                                      child: IconButton(
-                                        icon: const Icon(Icons.copy),
-                                        iconSize: 20,
-                                        constraints: const BoxConstraints(),
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 4,
-                                        ),
-                                        onPressed: () {
-                                          copyModListToClipboardFromIds(
-                                            enabledModIds,
-                                            filteredModList,
-                                            context,
-                                          );
-                                        },
-                                      ),
-                                    ),
-                                  ),
-                                  MovingTooltipWidget.text(
-                                    message:
-                                        "Copy importable list of enabled mods to clipboard\n\nRight-click for ALL mods",
-                                    child: GestureDetector(
-                                      onSecondaryTap: () {
+                                        // copyModListToClipboardFromMods(
+                                        //   fullModList,
+                                        //   context,
+                                        // );
                                         copyModListToClipboard(
-                                          id: null,
                                           variants: modVariants.valueOrNull
                                               .orEmpty()
                                               .map(
@@ -192,15 +165,18 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                         );
                                       },
                                       child: IconButton(
-                                        icon: SvgImageIcon(
-                                          "assets/images/icon-export-horiz.svg",
-                                        ),
+                                        icon: const Icon(Icons.copy),
                                         iconSize: 20,
                                         constraints: const BoxConstraints(),
                                         padding: const EdgeInsets.symmetric(
                                           horizontal: 4,
                                         ),
                                         onPressed: () {
+                                          // copyModListToClipboardFromIds(
+                                          //   enabledModIds,
+                                          //   filteredModList,
+                                          //   context,
+                                          // );
                                           copyModListToClipboard(
                                             variants: modVariants.valueOrNull
                                                 .orEmpty()
@@ -219,6 +195,51 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                       ),
                                     ),
                                   ),
+                                  // MovingTooltipWidget.text(
+                                  //   message:
+                                  //       "Copy importable list of enabled mods to clipboard\n\nRight-click for ALL mods",
+                                  //   child: GestureDetector(
+                                  //     onSecondaryTap: () {
+                                  //       copyModListToClipboard(
+                                  //         id: null,
+                                  //         variants: modVariants.valueOrNull
+                                  //             .orEmpty()
+                                  //             .map(
+                                  //               ShallowModVariant
+                                  //                   .fromModVariant,
+                                  //             )
+                                  //             .toList(),
+                                  //         context: context,
+                                  //       );
+                                  //     },
+                                  //     child: IconButton(
+                                  //       icon: SvgImageIcon(
+                                  //         "assets/images/icon-export-horiz.svg",
+                                  //       ),
+                                  //       iconSize: 20,
+                                  //       constraints: const BoxConstraints(),
+                                  //       padding: const EdgeInsets.symmetric(
+                                  //         horizontal: 4,
+                                  //       ),
+                                  //       onPressed: () {
+                                  //         copyModListToClipboard(
+                                  //           variants: modVariants.valueOrNull
+                                  //               .orEmpty()
+                                  //               .where(
+                                  //                 (it) =>
+                                  //                     it.isEnabled(fullModList),
+                                  //               )
+                                  //               .map(
+                                  //                 ShallowModVariant
+                                  //                     .fromModVariant,
+                                  //               )
+                                  //               .toList(),
+                                  //           context: context,
+                                  //         );
+                                  //       },
+                                  //     ),
+                                  //   ),
+                                  // ),
                                   const AddNewModsButton(
                                     padding: EdgeInsets.symmetric(
                                       horizontal: 4,

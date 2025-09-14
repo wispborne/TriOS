@@ -286,16 +286,23 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 4,
                                     ),
-                                    child: SvgImageIcon(
-                                      "assets/images/icon-export-horiz.svg",
+                                    child: Icon(
+                                      Icons.content_copy,
                                       color: Theme.of(
                                         context,
                                       ).colorScheme.onSurface,
-                                      width: 24,
-                                      height: 24,
+                                      size: 24,
                                     ),
+                                    // child: SvgImageIcon(
+                                    //   "assets/images/icon-export-horiz.svg",
+                                    //   color: Theme.of(
+                                    //     context,
+                                    //   ).colorScheme.onSurface,
+                                    //   width: 24,
+                                    //   height: 24,
+                                    // ),
                                   ),
-                                  const Text("Share button on a Mod Profile."),
+                                  const Text("Copy button on a Mod Profile."),
                                 ],
                               ),
                               const Text(
@@ -394,8 +401,8 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
       try {
         importedModList = SharedModListCodec.fromShareString(
           clipboardData.text!,
-          fallbackId: "shared-mod-list",
-          fallbackName: "Shared Mod List",
+          fallbackProfileId: "shared-mod-list",
+          fallbackProfileName: "Shared Mod List",
         );
         // importedModList = SharedModListMapper.fromJson(clipboardData.text!);
       } catch (e) {
@@ -644,7 +651,7 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
       final modProfile = ModProfile(
         id: finalId,
         name: finalName,
-        description: importedModList.description,
+        description: importedModList.description ?? "",
         sortOrder: 0,
         enabledModVariants: importedModList.mods
             .map(

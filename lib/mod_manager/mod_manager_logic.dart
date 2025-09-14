@@ -1829,7 +1829,7 @@ SharedModList createSharedModListFromVariants(
 
   return SharedModList.create(
     id: id,
-    name: name ?? "Current Mod List",
+    name: name,
     description: description ?? "Generated mod list from TriOS",
     mods: enabledModVariants,
     dateCreated: dateCreated,

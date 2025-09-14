@@ -11,36 +11,36 @@ part 'shared_mod_list.mapper.dart';
 @MappableClass()
 class SharedModList with SharedModListMappable {
   const SharedModList({
-    required this.id,
-    required this.name,
-    required this.description,
+    this.id,
+    this.name,
+    this.description,
     required this.mods,
-    required this.dateCreated,
-    required this.dateModified,
+    this.dateCreated,
+    this.dateModified,
   });
 
-  final String id;
-  final String name;
-  final String description;
+  final String? id;
+  final String? name;
+  final String? description;
   final List<SharedModVariant> mods;
-  final DateTime dateCreated;
-  final DateTime dateModified;
+  final DateTime? dateCreated;
+  final DateTime? dateModified;
 
   static SharedModList create({
     String? id,
-    required String name,
+    String? name,
     required List<SharedModVariant> mods,
     String description = '',
     DateTime? dateCreated,
     DateTime? dateModified,
   }) {
     return SharedModList(
-      id: id ?? const Uuid().v4(),
+      id: id,
       name: name,
       description: description,
       mods: mods,
-      dateCreated: dateCreated ?? DateTime.now(),
-      dateModified: dateModified ?? DateTime.now(),
+      dateCreated: dateCreated,
+      dateModified: dateModified,
     );
   }
 }
@@ -69,29 +69,48 @@ class SharedModVariant with SharedModVariantMappable {
 
 // Custom share format codec for SharedModList / SharedModVariant.
 // Spec:
-//   Header: "<name> (=<id>)"
-//   Mods per line: "<name> - <version> (<modId>)" | "<name> (<modId>)" |
-//                  "<modId> - <version>" | "<modId>"
-// Escaping: "\(", "\)", "\\"
+//   Header: "<name> (<id>)"
+//   Separator: "---"
+//   Mods per line: "<name> v<version> (<modId>)"
+//                  If name is missing, we use "<modId> v<version> (<modId>)"
+// Escaping: "\(", "\)", "\\", and "\ v" for literal " v" inside versions.
+// Parsing notes:
+//   - Work backwards: ID is the trailing "(...)".
+//   - Version is detected by the last unescaped " v" before the ID.
+//   - Everything to the left of that delimiter is the (optional) name.
 extension SharedModListCodec on SharedModList {
-  String toShareString({bool includeSeparator = true}) {
-    final buf = StringBuffer()..writeln('${_esc(name)} (=${_escHeaderId(id)})');
-    if (includeSeparator) buf.writeln('===');
+  String toShareString() {
+    final buf = StringBuffer();
+    final hasNameOrId = name != null || id != null;
+
+    if (hasNameOrId) {
+      buf.writeln(
+        '${_esc(name ?? '')} (${_escHeaderId(id ?? const Uuid().v4())})',
+      );
+      buf.writeln('---');
+    }
 
     for (final m in mods) {
       final hasName = (m.modName != null && m.modName!.isNotEmpty);
       final hasVer = (m.versionName != null);
       final line = StringBuffer();
 
-      if (hasName) {
-        line.write(_esc(m.modName!));
-        if (hasVer) line.write(' - ${_esc(m.versionName!.toString())}');
-        line.write(' (${_esc(m.modId)})');
+      // Always include something on the left for readability:
+      // prefer name; fall back to modId if name is missing.
+      line.write(_esc(hasName ? m.modName! : m.modId));
+
+      if (hasVer) {
+        // Version delimiter is " v" and we must escape any literal " v" in the version itself.
+        line.write(' v${_escVersion(m.versionName!.toString())}');
       } else {
-        // No name: either "id - version" or just "id"
-        line.write(_esc(m.modId));
-        if (hasVer) line.write(' - ${_esc(m.versionName!.toString())}');
+        // Version is required in this format to ensure unambiguous parsing.
+        // If absent, emit a placeholder that will fail parsing back (consistent with parser expectations).
+        line.write(' v'); // creates a guaranteed parse error if used
       }
+
+      // ID is always at the end, in parenthesis.
+      line.write(' (${_esc(m.modId)})');
+
       buf.writeln(line.toString());
     }
     return buf.toString().trimRight();
@@ -99,8 +118,8 @@ extension SharedModListCodec on SharedModList {
 
   static SharedModList fromShareString(
     String input, {
-    required String fallbackId,
-    required String fallbackName,
+    required String fallbackProfileId,
+    required String fallbackProfileName,
   }) {
     final lines = input
         .split(RegExp(r'\r?\n'))
@@ -112,77 +131,82 @@ extension SharedModListCodec on SharedModList {
       throw const FormatException('Empty share string');
     }
 
-    // Header: "<name> (=<id>)"
+    // Header: "<name> (<id>)" ONLY if followed by a hyphen separator line.
     final headLine = lines.first;
     final headParens = _takeTrailingParens(headLine);
-    String id = fallbackId;
-    String name = fallbackName;
+    String id = fallbackProfileId;
+    String name = fallbackProfileName;
 
-    if (headParens != null && headParens.content.startsWith('=')) {
-      id = _unesc(headParens.content.substring(1));
-      name = _unesc(headParens.left.trimRight());
+    bool headerAccepted = false;
+    if (headParens != null) {
+      // Look ahead for a hyphen separator ('---', or any run of '-')
+      final hasHyphenSeparator =
+          lines.length > 1 && RegExp(r'^-+$').hasMatch(lines[1]);
+      if (hasHyphenSeparator) {
+        id = _unesc(headParens.content);
+        name = _unesc(headParens.left.trimRight());
+        headerAccepted = true;
+      } else {
+        // No separator after header-like line; treat entire input as mods.
+        Fimber.w('Header-like first line without separator; treating as mods');
+      }
     } else {
       // No valid header; fallbacks in use and treat all lines as mods.
       Fimber.w('Missing or malformed header; using fallbacks');
     }
 
-    // Skip separator lines of '=' exactly, if present.
-    var i = (id != fallbackId || name != fallbackName) ? 1 : 0;
-    if (i < lines.length && RegExp(r'^=+$').hasMatch(lines[i])) i++;
+    // Start index: skip header and the following hyphen separator if we accepted the header.
+    var i = headerAccepted ? 2 : 0;
 
     // Mods
     final mods = <SharedModVariant>[];
     for (; i < lines.length; i++) {
       final raw = lines[i];
-      if (RegExp(r'^=+$').hasMatch(raw)) continue; // stray separators
+      if (RegExp(r'^-+$').hasMatch(raw)) continue; // stray separators
 
+      // Extract trailing "(modId)"
       final par = _takeTrailingParens(raw);
       final rightId = par?.content != null ? _unesc(par!.content) : null;
-      final left = _trimRight(par?.left ?? raw);
-
-      // Split by last " - " for version.
-      String? versionStr;
-      String leftNoVer = left;
-      // Match last occurrence of <ws>-<ws>
-      final reg = RegExp(r'\s-\s');
-      Match? last;
-      for (final m in reg.allMatches(left)) {
-        last = m;
-      }
-      if (last != null) {
-        versionStr = _unesc(left.substring(last.end).trim());
-        leftNoVer = _trimRight(left.substring(0, last.start));
+      if (rightId == null || rightId.trim().isEmpty) {
+        throw FormatException(
+          'Line ${i + 1}: missing mod id in parentheses at end',
+        );
       }
 
-      String modId;
-      String? modName;
+      final left = _trimRight(par!.left);
 
-      if (rightId != null) {
-        // Name is required when parens are present; id comes from parens.
-        modId = rightId;
-        final nm = _unesc(leftNoVer.trim());
-        modName = nm.isNotEmpty ? nm : null;
-      } else {
-        // No parens: left token is the id, optional version to the right.
-        modId = _unesc(leftNoVer.trim());
-        modName = null;
+      // Find the last unescaped " v" delimiter (space followed by 'v').
+      final delimIdx = _lastUnescapedVersionDelimiter(left);
+      if (delimIdx == null) {
+        throw FormatException(
+          'Line ${i + 1}: missing version (expected " v<version>") for "$rightId"',
+        );
       }
 
-      final version = (versionStr != null && versionStr.isNotEmpty)
-          ? Version.parse(versionStr)
-          : null;
+      final namePart = left.substring(
+        0,
+        delimIdx,
+      ); // up to the space before 'v'
+      final versionPart = left.substring(delimIdx + 1); // starts with 'v...'
 
-      if (modId.isEmpty) {
-        Fimber.w('Skipping line ${i + 1}: empty mod id');
-        continue;
+      final versionStr = _unesc(versionPart.trim());
+      if (versionStr.isEmpty || !versionStr.startsWith('v')) {
+        throw FormatException(
+          'Line ${i + 1}: invalid version "$versionStr" for "$rightId"',
+        );
       }
+
+      final version = Version.parse(versionStr.substring(1));
+
+      final nm = _unesc(namePart.trimRight());
+      final modName = nm.isNotEmpty ? nm : null;
 
       mods.add(
         SharedModVariant(
-          modId: modId,
+          modId: rightId,
           modName: modName,
           versionName: version,
-          smolVariantId: createSmolId(modId, version),
+          smolVariantId: createSmolId(rightId, version),
         ),
       );
     }
@@ -290,6 +314,30 @@ String _esc(String s) {
   return sb.toString();
 }
 
+/// Escape for versions:
+/// - First escape parens and backslashes (same as _esc)
+/// - Then escape any literal " v" by turning it into "\ v"
+String _escVersion(String s) {
+  final base = _esc(s);
+  // Escape the delimiter occurrence inside version text
+  // We only target space followed by 'v'
+  final sb = StringBuffer();
+  for (var i = 0; i < base.length; i++) {
+    final ch = base[i];
+    if (ch == ' ' && i + 1 < base.length && base[i + 1] == 'v') {
+      // ensure it's not already escaped with a backslash just before the space
+      final prevIsEscape = i > 0 && base[i - 1] == r'\';
+      if (!prevIsEscape) {
+        sb.write(r'\'); // add escape before space
+      }
+      sb.write(' ');
+      continue;
+    }
+    sb.write(ch);
+  }
+  return sb.toString();
+}
+
 String _unesc(String s) {
   final sb = StringBuffer();
   var esc = false;
@@ -306,6 +354,21 @@ String _unesc(String s) {
   }
   if (esc) sb.write(r'\'); // lone trailing backslash kept literal
   return sb.toString();
+}
+
+/// Find the index of the space that begins the last unescaped " v" sequence.
+/// Returns null if not found. The returned index is the position of the space.
+/// Example: "Name v1.2" -> returns index of ' ' before 'v'
+int? _lastUnescapedVersionDelimiter(String s) {
+  for (var i = s.length - 2; i >= 0; i--) {
+    // need at least " v"
+    if (s[i] == ' ' && s[i + 1] == 'v') {
+      // Check that this space wasn't escaped as "\ "
+      final prevIsEscape = i > 0 && s[i - 1] == r'\';
+      if (!prevIsEscape) return i;
+    }
+  }
+  return null;
 }
 
 String _trimRight(String s) {

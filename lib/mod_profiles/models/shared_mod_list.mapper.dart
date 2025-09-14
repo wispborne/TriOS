@@ -21,22 +21,24 @@ class SharedModListMapper extends ClassMapperBase<SharedModList> {
   @override
   final String id = 'SharedModList';
 
-  static String _$id(SharedModList v) => v.id;
-  static const Field<SharedModList, String> _f$id = Field('id', _$id);
-  static String _$name(SharedModList v) => v.name;
-  static const Field<SharedModList, String> _f$name = Field('name', _$name);
-  static String _$description(SharedModList v) => v.description;
+  static String? _$id(SharedModList v) => v.id;
+  static const Field<SharedModList, String> _f$id =
+      Field('id', _$id, opt: true);
+  static String? _$name(SharedModList v) => v.name;
+  static const Field<SharedModList, String> _f$name =
+      Field('name', _$name, opt: true);
+  static String? _$description(SharedModList v) => v.description;
   static const Field<SharedModList, String> _f$description =
-      Field('description', _$description);
+      Field('description', _$description, opt: true);
   static List<SharedModVariant> _$mods(SharedModList v) => v.mods;
   static const Field<SharedModList, List<SharedModVariant>> _f$mods =
       Field('mods', _$mods);
-  static DateTime _$dateCreated(SharedModList v) => v.dateCreated;
+  static DateTime? _$dateCreated(SharedModList v) => v.dateCreated;
   static const Field<SharedModList, DateTime> _f$dateCreated =
-      Field('dateCreated', _$dateCreated);
-  static DateTime _$dateModified(SharedModList v) => v.dateModified;
+      Field('dateCreated', _$dateCreated, opt: true);
+  static DateTime? _$dateModified(SharedModList v) => v.dateModified;
   static const Field<SharedModList, DateTime> _f$dateModified =
-      Field('dateModified', _$dateModified);
+      Field('dateModified', _$dateModified, opt: true);
 
   @override
   final MappableFields<SharedModList> fields = const {
@@ -139,19 +141,19 @@ class _SharedModListCopyWithImpl<$R, $Out>
           $value.mods, (v, t) => v.copyWith.$chain(t), (v) => call(mods: v));
   @override
   $R call(
-          {String? id,
-          String? name,
-          String? description,
+          {Object? id = $none,
+          Object? name = $none,
+          Object? description = $none,
           List<SharedModVariant>? mods,
-          DateTime? dateCreated,
-          DateTime? dateModified}) =>
+          Object? dateCreated = $none,
+          Object? dateModified = $none}) =>
       $apply(FieldCopyWithData({
-        if (id != null) #id: id,
-        if (name != null) #name: name,
-        if (description != null) #description: description,
+        if (id != $none) #id: id,
+        if (name != $none) #name: name,
+        if (description != $none) #description: description,
         if (mods != null) #mods: mods,
-        if (dateCreated != null) #dateCreated: dateCreated,
-        if (dateModified != null) #dateModified: dateModified
+        if (dateCreated != $none) #dateCreated: dateCreated,
+        if (dateModified != $none) #dateModified: dateModified
       }));
   @override
   SharedModList $make(CopyWithData data) => SharedModList(

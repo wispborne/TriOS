@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:toastification/toastification.dart';
@@ -9,15 +8,13 @@ import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/onboarding/onboarding_page.dart';
 import 'package:trios/thirdparty/dartx/comparable.dart';
 import 'package:trios/thirdparty/dartx/iterable.dart';
-import 'package:trios/thirdparty/dartx/string.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
-import 'package:trios/utils/platform_paths.dart';
-import 'package:trios/utils/util.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
 import 'package:trios/widgets/disable.dart';
+import 'package:trios/widgets/game_paths_setup_widget/game_paths_widget.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/settings_group.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
@@ -41,8 +38,6 @@ class SettingsPage extends ConsumerStatefulWidget {
 }
 
 class _SettingsPageState extends ConsumerState<SettingsPage> {
-  final _gamePathTextController = TextEditingController();
-  final _customExecutablePathTextController = TextEditingController();
   final _windowScaleTextController = TextEditingController();
   final _scrollController = ScrollController();
 
@@ -53,11 +48,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   @override
   void initState() {
     super.initState();
-    _gamePathTextController.text =
-        ref.read(appSettings).gameDir?.normalize.path ?? "";
-
-    _customExecutablePathTextController.text =
-        ref.read(appSettings).customGameExePath ?? "";
 
     newWindowScaleDouble = ref.read(appSettings).windowScaleFactor;
     _windowScaleTextController.text = (newWindowScaleDouble * 100.0)
@@ -84,209 +74,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 children: [
                   SettingsGroup(
                     name: "Starsector",
-                    children: [
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 700),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Builder(
-                                builder: (context) {
-                                  final gamePathExists = validateGameFolderPath(
-                                    _gamePathTextController.text,
-                                  );
-
-                                  return TextField(
-                                    controller: _gamePathTextController,
-                                    decoration: InputDecoration(
-                                      border: const OutlineInputBorder(),
-                                      labelStyle: Theme.of(
-                                        context,
-                                      ).textTheme.labelLarge,
-                                      errorText: gamePathExists
-                                          ? null
-                                          : "Starsector not found",
-                                      labelText: 'Starsector Folder',
-                                    ),
-                                    onChanged: (newGameDir) {
-                                      tryUpdateGamePath(newGameDir);
-                                    },
-                                  );
-                                },
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.folder),
-                              onPressed: () async {
-                                var newGameDir = await FilePicker.platform
-                                    .getDirectoryPath();
-                                if (newGameDir == null) return;
-                                setState(() {
-                                  _gamePathTextController.text = newGameDir
-                                      .toDirectory()
-                                      .normalize
-                                      .path;
-                                  tryUpdateGamePath(newGameDir);
-                                });
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 700),
-                        child: Builder(
-                          builder: (context) {
-                            final useCustomExecutable = ref.watch(
-                              appSettings.select(
-                                (value) => value.useCustomGameExePath,
-                              ),
-                            );
-                            final gamePath = ref
-                                .watch(
-                                  appSettings.select((value) => value.gameDir),
-                                )
-                                ?.toDirectory();
-                            final currentLaunchPath = gamePath?.let(
-                              (dir) =>
-                                  getDefaultGameExecutable(dir).toFile().path,
-                            );
-                            bool doesCustomExePathExist = !useCustomExecutable
-                                ? validateGameFolderPath(
-                                    _gamePathTextController.text,
-                                  )
-                                : (_customExecutablePathTextController
-                                          .text
-                                          .isNotEmpty &&
-                                      validateIsProbablyAProgram(
-                                        _customExecutablePathTextController
-                                            .text,
-                                      ));
-
-                            // If not using override, show the vanilla path that'll be used instead.
-                            if (!useCustomExecutable) {
-                              _customExecutablePathTextController.text =
-                                  (currentLaunchPath?.isNotEmpty == true)
-                                  ? File(currentLaunchPath!).path
-                                  : "";
-                            }
-
-                            return Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.only(right: 8),
-                                  child: MovingTooltipWidget.text(
-                                    message:
-                                        "When checked, uses the custom launcher path",
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(top: 4),
-                                      child: Checkbox(
-                                        value: useCustomExecutable,
-                                        onChanged: (value) {
-                                          final customPath =
-                                              ref.read(
-                                                appSettings.select(
-                                                  (s) => s.customGameExePath,
-                                                ),
-                                              ) ??
-                                              "";
-
-                                          WidgetsBinding.instance.addPostFrameCallback((
-                                            _,
-                                          ) {
-                                            setState(() {
-                                              if (value == false) {
-                                                _customExecutablePathTextController
-                                                        .text =
-                                                    currentLaunchPath ?? "";
-                                              } else if (value == true) {
-                                                _customExecutablePathTextController
-                                                        .text =
-                                                    customPath;
-                                              }
-                                            });
-                                          });
-
-                                          ref
-                                              .read(appSettings.notifier)
-                                              .update(
-                                                (state) => state.copyWith(
-                                                  useCustomGameExePath:
-                                                      value ?? false,
-                                                ),
-                                              );
-                                        },
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                Expanded(
-                                  child: MovingTooltipWidget.text(
-                                    message:
-                                        "Allows you to set a custom Starsector launcher path",
-                                    child: Disable(
-                                      isEnabled: useCustomExecutable,
-                                      child: TextField(
-                                        controller:
-                                            _customExecutablePathTextController,
-                                        decoration: InputDecoration(
-                                          border: const OutlineInputBorder(),
-                                          isDense: true,
-                                          errorText: doesCustomExePathExist
-                                              ? null
-                                              : "Path does not exist",
-                                          labelText: "Starsector launcher path",
-                                          hintStyle: Theme.of(
-                                            context,
-                                          ).textTheme.labelLarge,
-                                          labelStyle: Theme.of(
-                                            context,
-                                          ).textTheme.labelLarge,
-                                        ),
-                                        onChanged: (newPath) {
-                                          tryUpdateCustomExecutablePath(
-                                            newPath,
-                                          );
-                                        },
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                Disable(
-                                  isEnabled: useCustomExecutable,
-                                  child: IconButton(
-                                    icon: const Icon(Icons.folder),
-                                    onPressed: () async {
-                                      var newPath =
-                                          (await FilePicker.platform.pickFiles(
-                                            dialogTitle:
-                                                "Select Starsector launcher",
-                                            allowMultiple: false,
-                                            initialDirectory:
-                                                ref
-                                                    .read(
-                                                      appSettings.select(
-                                                        (s) => s.gameDir,
-                                                      ),
-                                                    )
-                                                    ?.path ??
-                                                defaultGamePath().path,
-                                          ))?.paths.firstOrNull;
-                                      if (newPath == null) return;
-                                      _customExecutablePathTextController.text =
-                                          newPath;
-                                      tryUpdateCustomExecutablePath(newPath);
-                                    },
-                                  ),
-                                ),
-                              ],
-                            );
-                          },
-                        ),
-                      ),
-                    ],
+                    children: [GamePathsWidget()],
                   ),
                   SettingsGroup(
                     name: "${Constants.appName} Updates",
@@ -1356,43 +1144,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         ),
       ],
     );
-  }
-
-  void tryUpdateGamePath(String newGameDir) {
-    newGameDir = newGameDir.isNullOrEmpty ? defaultGamePath().path : newGameDir;
-
-    var dirExists = validateGameFolderPath(newGameDir);
-
-    if (dirExists) {
-      ref.read(appSettings.notifier).update((state) {
-        var newModDirPath = state.hasCustomModsDir
-            ? state.modsDir?.toDirectory()
-            : generateModsFolderPath(newGameDir.toDirectory());
-        newModDirPath = newModDirPath?.normalize.toDirectory();
-
-        return state.copyWith(
-          gameDir: Directory(newGameDir).normalize,
-          modsDir: newModDirPath,
-        );
-      });
-    }
-
-    setState(() {});
-  }
-
-  void tryUpdateCustomExecutablePath(String newPath) {
-    final exists = validateIsProbablyAProgram(newPath);
-
-    if (exists) {
-      ref
-          .read(appSettings.notifier)
-          .update(
-            (state) =>
-                state.copyWith(customGameExePath: File(newPath).normalize.path),
-          );
-    }
-
-    setState(() {});
   }
 }
 

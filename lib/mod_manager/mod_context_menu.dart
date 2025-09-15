@@ -156,6 +156,8 @@ ContextMenu buildModBulkActionContextMenu(
         },
       ),
 
+      menuItemDeleteMultipleMods(selectedMods, context, ref),
+
       if (selectedMods.any(
         (mod) => isModGameVersionIncorrect(
           currentStarsectorVersion,

@@ -174,6 +174,116 @@ MenuItem buildMenuItemOpenModInfoFile(Mod mod) {
 }
 
 MenuItem menuItemDeleteFolder(Mod mod, BuildContext context, WidgetRef ref) {
+  if (mod.modVariants.length == 1) {
+    return MenuItem(
+      label: 'Delete Mod',
+      icon: Icons.delete,
+      onSelected: () {
+        showDeleteModFoldersConfirmationDialog(
+          [mod.modVariants.first.modFolder.absolute.path],
+          context,
+          ref,
+        );
+      },
+    );
+  } else {
+    final modVariantsSorted = mod.modVariants.sortedDescending();
+    return MenuItem.submenu(
+      label: "Delete Mod...",
+      icon: Icons.delete,
+      items: [
+        for (var variant in modVariantsSorted)
+          MenuItem(
+            label: variant.modInfo.version.toString(),
+            onSelected: () {
+              showDeleteModFoldersConfirmationDialog(
+                [variant.modFolder.absolute.path],
+                context,
+                ref,
+              );
+            },
+          ),
+        MenuItem(
+          label: "All but ${modVariantsSorted.firstOrNull?.modInfo.version}",
+          onSelected: () {
+            showDeleteModFoldersConfirmationDialog(
+              modVariantsSorted
+                  .skip(1)
+                  .map((v) => v.modFolder.absolute.path)
+                  .toList(),
+              context,
+              ref,
+            );
+          },
+        ),
+        MenuItem(
+          label: "All versions",
+          onSelected: () {
+            showDeleteModFoldersConfirmationDialog(
+              modVariantsSorted.map((v) => v.modFolder.absolute.path).toList(),
+              context,
+              ref,
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+MenuItem menuItemDeleteMultipleMods(
+  List<Mod> mods,
+  BuildContext context,
+  WidgetRef ref,
+) {
+  if (mods.length == 1) {
+    return menuItemDeleteFolder(mods.first, context, ref);
+  }
+
+  return MenuItem.submenu(
+    label: "Delete Mods...",
+    icon: Icons.delete,
+    items: [
+      MenuItem(
+        label: "All but enabled/highest version of each",
+        onSelected: () {
+          showDeleteModFoldersConfirmationDialog(
+            mods
+                .flatMap(
+                  (mod) =>
+                      mod.modVariants
+                          .toList() // Copy the list to avoid modifying the original
+                        ..remove(mod.findFirstEnabledOrHighestVersion!),
+                )
+                .map((v) => v.modFolder.absolute.path)
+                .toList(),
+            context,
+            ref,
+          );
+        },
+      ),
+      MenuItem(
+        label: "All selected mods",
+        onSelected: () {
+          showDeleteModFoldersConfirmationDialog(
+            mods
+                .flatMap((mod) => mod.modVariants)
+                .map((v) => v.modFolder.absolute.path)
+                .toList(),
+            context,
+            ref,
+          );
+        },
+      ),
+    ],
+  );
+}
+
+Future<void> showDeleteModFoldersConfirmationDialog(
+  List<String> folderPaths,
+  BuildContext context,
+  WidgetRef ref,
+) async {
   Future<void> deleteFolder(String folderPath) async {
     final directory = Directory(folderPath);
     final modsDir = ref.read(appSettings.select((s) => s.modsDir))!.path;
@@ -182,7 +292,9 @@ MenuItem menuItemDeleteFolder(Mod mod, BuildContext context, WidgetRef ref) {
       Fimber.e("Refusing to delete the mods root folder");
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Did you just try to delete your mods folder? No!"),
+          content: Text(
+            "Did you just try to delete your mods folder? No! Bad!",
+          ),
         ),
       );
       return;
@@ -194,98 +306,62 @@ MenuItem menuItemDeleteFolder(Mod mod, BuildContext context, WidgetRef ref) {
     ref.read(AppState.modVariants.notifier).reloadModVariants();
   }
 
-  Future<void> showDeleteConfirmationDialog(List<String> folderPaths) async {
-    runZonedGuarded(
-      () async {
-        final shouldDelete = await showDialog<bool>(
-          context: context,
-          builder: (context) {
-            return AlertDialog(
-              title: Text('Delete Mod${folderPaths.length > 1 ? "s" : ""}'),
-              content: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Are you sure you want to delete:\n'),
-                    for (var folderPath in folderPaths)
-                      Text("• ${folderPath.toDirectory().name}"),
-                    const Text("\nThis action cannot be undone."),
-                  ],
-                ),
+  if (folderPaths.isEmpty) {
+    return;
+  }
+
+  runZonedGuarded(
+    () async {
+      final shouldDelete = await showDialog<bool>(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text('Delete Mod${folderPaths.length > 1 ? "s" : ""}'),
+            content: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Are you sure you want to delete:\n'),
+                  for (var folderPath in folderPaths)
+                    Text("• ${folderPath.toDirectory().name}"),
+                  Text(
+                    "\nThis will delete the mod folder${folderPaths.length > 1 ? "s" : ""} on disk. This action cannot be undone.",
+                  ),
+                ],
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(false),
-                  child: const Text('Cancel'),
-                ),
-                TextButton.icon(
-                  onPressed: () => Navigator.of(context).pop(true),
-                  label: const Text('Delete'),
-                  icon: const Icon(Icons.delete),
-                ),
-              ],
-            );
-          },
-        );
-
-        if (shouldDelete == true) {
-          for (var folderPath in folderPaths) {
-            deleteFolder(folderPath);
-          }
-        }
-      },
-      (e, s) {
-        Fimber.w("Error deleting mod folder", ex: e, stacktrace: s);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              "An error occurred while deleting the mod folder(s).",
             ),
-          ),
-        );
-      },
-    );
-  }
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancel'),
+              ),
+              TextButton.icon(
+                onPressed: () => Navigator.of(context).pop(true),
+                label: const Text('Delete'),
+                icon: const Icon(Icons.delete),
+              ),
+            ],
+          );
+        },
+      );
 
-  if (mod.modVariants.length == 1) {
-    return MenuItem(
-      label: 'Delete Folder',
-      icon: Icons.delete,
-      onSelected: () {
-        showDeleteConfirmationDialog([
-          mod.modVariants.first.modFolder.absolute.path,
-        ]);
-      },
-    );
-  } else {
-    final modVariantsSorted = mod.modVariants.sortedDescending();
-    return MenuItem.submenu(
-      label: "Delete Folder...",
-      icon: Icons.delete,
-      items: [
-        for (var variant in modVariantsSorted)
-          MenuItem(
-            label: variant.modInfo.version.toString(),
-            onSelected: () {
-              showDeleteConfirmationDialog([variant.modFolder.absolute.path]);
-            },
-          ),
-        MenuItem(
-          label: "All but ${modVariantsSorted.firstOrNull?.modInfo.version}",
-          onSelected: () {
-            showDeleteConfirmationDialog(
-              modVariantsSorted
-                  .skip(1)
-                  .map((v) => v.modFolder.absolute.path)
-                  .toList(),
-            );
-          },
+      if (shouldDelete == true) {
+        for (var folderPath in folderPaths) {
+          deleteFolder(folderPath);
+        }
+      }
+    },
+    (e, s) {
+      Fimber.w("Error deleting mod folder", ex: e, stacktrace: s);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("An error occurred while deleting the mod folder(s)."),
         ),
-      ],
-    );
-  }
+      );
+    },
+  );
 }
 
 MenuItem buildMenuItemDebugging(
@@ -385,7 +461,6 @@ MenuItem buildMenuItemToggleMuteUpdates(Mod mod, WidgetRef ref) {
   );
 }
 
-
 buildMenuItemViewModWeapons(BuildContext context, Mod mod, WidgetRef ref) {
   return MenuItem(
     label: 'View Mod Weapons',
@@ -394,8 +469,6 @@ buildMenuItemViewModWeapons(BuildContext context, Mod mod, WidgetRef ref) {
       // Navigate to WeaponPage
       // final appShell = context.findAncestorStateOfType<_AppShellState>();
       // appShell?._changeTab(TriOSTools.weapons);
-
     },
   );
-
 }

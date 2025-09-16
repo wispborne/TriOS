@@ -249,6 +249,17 @@ class AppState {
   );
 
   static final modsFolder = FutureProvider<Directory?>((ref) async {
+    final useCustomModsPath = ref.watch(
+      appSettings.select((value) => value.hasCustomModsDir),
+    );
+    final customModsFolder = ref.watch(
+      appSettings.select((value) => value.modsDir),
+    );
+
+    if (useCustomModsPath == true) {
+      return customModsFolder?.toDirectory();
+    }
+
     final gamePath = ref.watch(gameFolder).valueOrNull;
     if (gamePath == null) return null;
     return generateModsFolderPath(gamePath)?.toDirectory();

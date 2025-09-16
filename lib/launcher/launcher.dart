@@ -666,12 +666,16 @@ class LauncherButton extends HookConsumerWidget {
     FileSystemEntity? customExePath,
   }) {
     final gameExe = customExePath ?? getDefaultGameExecutable(gamePath);
+    final workingDirectory = gameExe.parent.existsSync()
+        ? gameExe.absolute.parent.path
+        : gamePath.absolute.path;
+
     if (Platform.isWindows) {
       if (gameExe.existsSync()) {
         Process.start(
           gameExe.absolute.path,
           [],
-          workingDirectory: gamePath.path,
+          workingDirectory: workingDirectory,
           mode: ProcessStartMode.detached,
           includeParentEnvironment: true,
         );
@@ -685,7 +689,7 @@ class LauncherButton extends HookConsumerWidget {
         Process.start(
           "open",
           [gameExe.absolute.path],
-          workingDirectory: gamePath.path,
+          workingDirectory: workingDirectory,
           mode: ProcessStartMode.detached,
           includeParentEnvironment: true,
         );
@@ -697,7 +701,7 @@ class LauncherButton extends HookConsumerWidget {
       Process.start(
         "./${gameExe.name}",
         [],
-        workingDirectory: gamePath.path,
+        workingDirectory: workingDirectory,
         mode: ProcessStartMode.detached,
         includeParentEnvironment: true,
       );

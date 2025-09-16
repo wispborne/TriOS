@@ -19,9 +19,22 @@ class Settings with SettingsMappable {
   final Directory? gameDir;
   @MappableField(hook: DirectoryHook())
   final Directory? gameCoreDir;
+
+  // Paths
+  final String? customGameExePath;
+  final bool useCustomGameExePath;
+
+  /// DO NOT USE directly; use `AppState.modsFolder`
   @MappableField(hook: DirectoryHook())
   final Directory? modsDir;
   final bool hasCustomModsDir;
+  @MappableField(hook: DirectoryHook())
+  final Directory? customSavesPath;
+  final bool useCustomSavesPath;
+  @MappableField(hook: DirectoryHook())
+  final Directory? customCoreFolderPath;
+  final bool useCustomCoreFolderPath;
+
   final bool isRulesHotReloadEnabled;
 
   // Window State
@@ -47,8 +60,6 @@ class Settings with SettingsMappable {
   final WispGridState modsGridState;
   final WispGridState weaponsGridState;
   final WispGridState shipsGridState;
-  final String? customGameExePath;
-  final bool useCustomGameExePath;
 
   // Mods Page
   final bool doubleClickForModsPanel;
@@ -124,6 +135,10 @@ class Settings with SettingsMappable {
     ),
     this.customGameExePath,
     this.useCustomGameExePath = false,
+    this.customSavesPath,
+    this.useCustomSavesPath = false,
+    this.customCoreFolderPath,
+    this.useCustomCoreFolderPath = false,
     this.doubleClickForModsPanel = true,
     this.shouldAutoUpdateOnLaunch = false,
     this.secondsBetweenModFolderChecks = 15,

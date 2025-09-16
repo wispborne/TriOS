@@ -386,6 +386,23 @@ class SettingsMapper extends ClassMapperBase<Settings> {
   static const Field<Settings, bool> _f$useCustomGameExePath = Field(
       'useCustomGameExePath', _$useCustomGameExePath,
       opt: true, def: false);
+  static Directory? _$customSavesPath(Settings v) => v.customSavesPath;
+  static const Field<Settings, Directory> _f$customSavesPath = Field(
+      'customSavesPath', _$customSavesPath,
+      opt: true, hook: DirectoryHook());
+  static bool _$useCustomSavesPath(Settings v) => v.useCustomSavesPath;
+  static const Field<Settings, bool> _f$useCustomSavesPath =
+      Field('useCustomSavesPath', _$useCustomSavesPath, opt: true, def: false);
+  static Directory? _$customCoreFolderPath(Settings v) =>
+      v.customCoreFolderPath;
+  static const Field<Settings, Directory> _f$customCoreFolderPath = Field(
+      'customCoreFolderPath', _$customCoreFolderPath,
+      opt: true, hook: DirectoryHook());
+  static bool _$useCustomCoreFolderPath(Settings v) =>
+      v.useCustomCoreFolderPath;
+  static const Field<Settings, bool> _f$useCustomCoreFolderPath = Field(
+      'useCustomCoreFolderPath', _$useCustomCoreFolderPath,
+      opt: true, def: false);
   static bool _$doubleClickForModsPanel(Settings v) =>
       v.doubleClickForModsPanel;
   static const Field<Settings, bool> _f$doubleClickForModsPanel = Field(
@@ -502,6 +519,10 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #shipsGridState: _f$shipsGridState,
     #customGameExePath: _f$customGameExePath,
     #useCustomGameExePath: _f$useCustomGameExePath,
+    #customSavesPath: _f$customSavesPath,
+    #useCustomSavesPath: _f$useCustomSavesPath,
+    #customCoreFolderPath: _f$customCoreFolderPath,
+    #useCustomCoreFolderPath: _f$useCustomCoreFolderPath,
     #doubleClickForModsPanel: _f$doubleClickForModsPanel,
     #shouldAutoUpdateOnLaunch: _f$shouldAutoUpdateOnLaunch,
     #secondsBetweenModFolderChecks: _f$secondsBetweenModFolderChecks,
@@ -556,6 +577,10 @@ class SettingsMapper extends ClassMapperBase<Settings> {
         shipsGridState: data.dec(_f$shipsGridState),
         customGameExePath: data.dec(_f$customGameExePath),
         useCustomGameExePath: data.dec(_f$useCustomGameExePath),
+        customSavesPath: data.dec(_f$customSavesPath),
+        useCustomSavesPath: data.dec(_f$useCustomSavesPath),
+        customCoreFolderPath: data.dec(_f$customCoreFolderPath),
+        useCustomCoreFolderPath: data.dec(_f$useCustomCoreFolderPath),
         doubleClickForModsPanel: data.dec(_f$doubleClickForModsPanel),
         shouldAutoUpdateOnLaunch: data.dec(_f$shouldAutoUpdateOnLaunch),
         secondsBetweenModFolderChecks:
@@ -662,6 +687,10 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
       WispGridState? shipsGridState,
       String? customGameExePath,
       bool? useCustomGameExePath,
+      Directory? customSavesPath,
+      bool? useCustomSavesPath,
+      Directory? customCoreFolderPath,
+      bool? useCustomCoreFolderPath,
       bool? doubleClickForModsPanel,
       bool? shouldAutoUpdateOnLaunch,
       int? secondsBetweenModFolderChecks,
@@ -735,6 +764,10 @@ class _SettingsCopyWithImpl<$R, $Out>
           WispGridState? shipsGridState,
           Object? customGameExePath = $none,
           bool? useCustomGameExePath,
+          Object? customSavesPath = $none,
+          bool? useCustomSavesPath,
+          Object? customCoreFolderPath = $none,
+          bool? useCustomCoreFolderPath,
           bool? doubleClickForModsPanel,
           bool? shouldAutoUpdateOnLaunch,
           int? secondsBetweenModFolderChecks,
@@ -789,6 +822,12 @@ class _SettingsCopyWithImpl<$R, $Out>
         if (customGameExePath != $none) #customGameExePath: customGameExePath,
         if (useCustomGameExePath != null)
           #useCustomGameExePath: useCustomGameExePath,
+        if (customSavesPath != $none) #customSavesPath: customSavesPath,
+        if (useCustomSavesPath != null) #useCustomSavesPath: useCustomSavesPath,
+        if (customCoreFolderPath != $none)
+          #customCoreFolderPath: customCoreFolderPath,
+        if (useCustomCoreFolderPath != null)
+          #useCustomCoreFolderPath: useCustomCoreFolderPath,
         if (doubleClickForModsPanel != null)
           #doubleClickForModsPanel: doubleClickForModsPanel,
         if (shouldAutoUpdateOnLaunch != null)
@@ -865,6 +904,13 @@ class _SettingsCopyWithImpl<$R, $Out>
           data.get(#customGameExePath, or: $value.customGameExePath),
       useCustomGameExePath:
           data.get(#useCustomGameExePath, or: $value.useCustomGameExePath),
+      customSavesPath: data.get(#customSavesPath, or: $value.customSavesPath),
+      useCustomSavesPath:
+          data.get(#useCustomSavesPath, or: $value.useCustomSavesPath),
+      customCoreFolderPath:
+          data.get(#customCoreFolderPath, or: $value.customCoreFolderPath),
+      useCustomCoreFolderPath: data.get(#useCustomCoreFolderPath,
+          or: $value.useCustomCoreFolderPath),
       doubleClickForModsPanel: data.get(#doubleClickForModsPanel,
           or: $value.doubleClickForModsPanel),
       shouldAutoUpdateOnLaunch: data.get(#shouldAutoUpdateOnLaunch,
@@ -877,12 +923,9 @@ class _SettingsCopyWithImpl<$R, $Out>
           data.get(#maxHttpRequestsAtOnce, or: $value.maxHttpRequestsAtOnce),
       folderNamingSetting:
           data.get(#folderNamingSetting, or: $value.folderNamingSetting),
-      keepLastNVersions:
-          data.get(#keepLastNVersions, or: $value.keepLastNVersions),
-      allowCrashReporting:
-          data.get(#allowCrashReporting, or: $value.allowCrashReporting),
-      updateToPrereleases:
-          data.get(#updateToPrereleases, or: $value.updateToPrereleases),
+      keepLastNVersions: data.get(#keepLastNVersions, or: $value.keepLastNVersions),
+      allowCrashReporting: data.get(#allowCrashReporting, or: $value.allowCrashReporting),
+      updateToPrereleases: data.get(#updateToPrereleases, or: $value.updateToPrereleases),
       autoEnableAndDisableDependencies: data.get(#autoEnableAndDisableDependencies, or: $value.autoEnableAndDisableDependencies),
       enableLauncherPrecheck: data.get(#enableLauncherPrecheck, or: $value.enableLauncherPrecheck),
       modUpdateBehavior: data.get(#modUpdateBehavior, or: $value.modUpdateBehavior),

@@ -4,13 +4,15 @@
     - Enable "Replace Mode", then drag'n'drop to replace.
     - A new TriOS Companion Mod is required to perform the replacements at runtime, and will be installed automatically if missing.
       - The only thing the Companion Mod does is do any portrait replacements you've specified. It has no impact on anything else.
-  - Import/Export Mod Profiles/Lists (contributed by hihahahalol)
+  - Import Mod Profiles and Modlists (contributed by hihahahalol)
     - Copy your mod profile or list to the clipboard and send it to someone else.
     - Copy someone else's and import it.
   - Menu option: Delete Mod (all versions)
     - Added to multi-select menu as well (hold Control or Shift to select multiple mods).
 - Fixed
   - Ship Viewer filters not working.
+  - Custom launcher files are no longer hardcoded to use the game folder as their working directory.
+    - This fixes Fast Rendering, which launches using a .bat in the `starsector-core` folder.
 
 # 1.2.3
 - Fixed

@@ -1,4 +1,3 @@
-
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,43 +9,43 @@ import 'package:trios/widgets/moving_tooltip.dart';
 class CustomPathField extends ConsumerStatefulWidget {
   /// The label text for the field
   final String labelText;
-  
+
   /// The hint text for the field (optional)
   final String? hintText;
-  
+
   /// Tooltip message for the checkbox (optional)
   final String? checkboxTooltip;
-  
-  /// Tooltip message for the text field (optional) 
+
+  /// Tooltip message for the text field (optional)
   final String? fieldTooltip;
-  
+
   /// Current path value from settings
   final String currentPath;
-  
+
   /// Whether the custom path is currently enabled
   final bool isEnabled;
-  
+
   /// Whether this field is for selecting directories (true) or files (false)
   final bool isDirectoryPicker;
-  
+
   /// Initial directory for file picker (optional)
   final String? initialDirectory;
-  
+
   /// File type filters for file picker (only used when isDirectoryPicker is false)
   final List<String>? allowedExtensions;
-  
+
   /// Dialog title for the picker
   final String? pickerDialogTitle;
-  
+
   /// Validation function to check if the path is valid
   final bool Function(String path) validatePath;
-  
+
   /// Error message to show when validation fails
   final String errorMessage;
-  
+
   /// Callback when the enabled state changes
   final void Function(bool isEnabled) onEnabledChanged;
-  
+
   /// Callback when the path value changes
   final void Function(String path) onPathChanged;
 
@@ -86,7 +85,7 @@ class _CustomPathFieldState extends ConsumerState<CustomPathField> {
   @override
   void didUpdateWidget(CustomPathField oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.currentPath != widget.currentPath) {
+    if (_textController.text != widget.currentPath) {
       _textController.text = widget.currentPath;
       _validateCurrentPath();
     }
@@ -149,7 +148,9 @@ class _CustomPathFieldState extends ConsumerState<CustomPathField> {
         decoration: InputDecoration(
           border: const OutlineInputBorder(),
           isDense: true,
-          errorText: widget.isEnabled && !_isPathValid ? widget.errorMessage : null,
+          errorText: widget.isEnabled && !_isPathValid
+              ? widget.errorMessage
+              : null,
           labelText: widget.labelText,
           hintText: widget.hintText,
           hintStyle: Theme.of(context).textTheme.labelLarge,
@@ -167,7 +168,7 @@ class _CustomPathFieldState extends ConsumerState<CustomPathField> {
 
   Future<void> _handlePickPath() async {
     String? newPath;
-    
+
     if (widget.isDirectoryPicker) {
       newPath = await FilePicker.platform.getDirectoryPath(
         dialogTitle: widget.pickerDialogTitle,
@@ -186,7 +187,7 @@ class _CustomPathFieldState extends ConsumerState<CustomPathField> {
       );
       newPath = result?.paths.firstOrNull;
     }
-    
+
     if (newPath != null) {
       _textController.text = newPath;
       setState(() {

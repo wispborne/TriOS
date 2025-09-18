@@ -666,6 +666,7 @@ class LauncherButton extends HookConsumerWidget {
     FileSystemEntity? customExePath,
   }) {
     final gameExe = customExePath ?? getDefaultGameExecutable(gamePath);
+    // "Fast Rendering" launches from a .bat in the starsector-core folder, not the game folder.
     final workingDirectory = gameExe.parent.existsSync()
         ? gameExe.absolute.parent.path
         : gamePath.absolute.path;

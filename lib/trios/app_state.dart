@@ -265,6 +265,25 @@ class AppState {
     return generateModsFolderPath(gamePath)?.toDirectory();
   });
 
+  static final savesFolder = FutureProvider<Directory?>((ref) async {
+    final useCustomSavesPath = ref.watch(
+      appSettings.select((value) => value.useCustomSavesPath),
+    );
+
+    if (useCustomSavesPath == true) {
+      final customSavesPath = ref.watch(
+        appSettings.select((value) => value.customSavesPath),
+      );
+      if (customSavesPath != null) {
+        return customSavesPath.toDirectory();
+      }
+    } else {
+      final gamePath = ref.watch(gameFolder).valueOrNull;
+      if (gamePath == null) return null;
+      return generateSavesFolderPath(gamePath)?.toDirectory();
+    }
+  });
+
   static final gameExecutable = FutureProvider<File?>((ref) async {
     try {
       final useCustomGameExePath = ref.watch(

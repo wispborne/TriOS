@@ -6,7 +6,6 @@ import 'package:trios/mod_profiles/models/mod_profile.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/trios/app_state.dart';
-import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:xml/xml.dart';
@@ -32,7 +31,7 @@ class SaveFileNotifier extends AsyncNotifier<List<SaveFile>> {
       return [];
     }
 
-    final saveDir = gameFolder.resolve(Constants.savesFolderName).toDirectory();
+    final saveDir = ref.watch(AppState.savesFolder).value!.toDirectory();
 
     // if (state.valueOrNull?.isNotEmpty == true) {
     //   Fimber.i("Saves already loaded, not refreshing.");

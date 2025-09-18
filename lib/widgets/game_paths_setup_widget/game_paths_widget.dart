@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/util.dart';
 import 'package:trios/widgets/game_paths_setup_widget/game_paths_setup_controller.dart';
-import 'package:trios/widgets/under_construction_overlay.dart';
 
 import 'custom_path_field_widget.dart';
 
@@ -33,7 +32,7 @@ class GamePathsWidget extends ConsumerWidget {
                     errorText: state.gamePathExists
                         ? null
                         : "Starsector not found",
-                    labelText: 'Starsector Folder',
+                    labelText: 'Game Folder',
                   ),
                   onChanged: (newGameDir) {
                     controller.updateGamePath(newGameDir);
@@ -55,43 +54,81 @@ class GamePathsWidget extends ConsumerWidget {
         const SizedBox(height: 24),
         // Custom Paths
         CustomPathField(
-          labelText: "Starsector launcher path",
+          labelText: "Starsector launcher",
           checkboxTooltip: "When checked, uses the custom launcher path",
           fieldTooltip: "Allows you to set a custom Starsector launcher path",
-          currentPath: state.customExecutablePathText,
+          currentPath: state.customExecutablePathState.pathText,
           isEnabled: settings.useCustomGameExePath,
           isDirectoryPicker: false,
           initialDirectory: settings.gameDir?.path ?? defaultGamePath().path,
           pickerDialogTitle: "Select Starsector launcher",
-          validatePath: (path) => state.customExecutablePathExists,
-          errorMessage: "Path does not exist",
+          errorMessage: state.customExecutablePathState.pathExists
+              ? null
+              : "Path does not exist",
           onEnabledChanged: (isEnabled) {
             controller.toggleUseCustomExecutable(isEnabled);
           },
-          onPathChanged: (path) {
-            controller.updateCustomExecutablePath(path);
-          },
+          onPathChanged: controller.updateCustomExecutablePath,
+          onSubmitted: controller.submitCustomExecutablePath,
         ),
         const SizedBox(height: 16),
-        UnderConstructionOverlay(
-          child: CustomPathField(
-            labelText: "Mods path",
-            checkboxTooltip: "When checked, uses the custom mod folder",
-            fieldTooltip: "Allows you to set a custom mod folder",
-            currentPath: state.customModsPathText,
-            isEnabled: state.useCustomModsPath,
-            isDirectoryPicker: false,
-            initialDirectory: settings.gameDir?.path ?? defaultGamePath().path,
-            pickerDialogTitle: "Select Mods folder",
-            validatePath: (path) => state.customModsPathExists,
-            errorMessage: "Path does not exist",
-            onEnabledChanged: (isEnabled) {
-              controller.toggleUseCustomModsPath(isEnabled);
-            },
-            onPathChanged: (path) {
-              controller.updateCustomModsPath(path);
-            },
-          ),
+        CustomPathField(
+          labelText: "Mods",
+          checkboxTooltip: "When checked, uses the custom mod folder",
+          fieldTooltip: "Allows you to set a custom mod folder",
+          currentPath: state.customModsPathState.pathText,
+          isEnabled: state.customModsPathState.useCustomPath,
+          isDirectoryPicker: true,
+          initialDirectory: settings.gameDir?.path ?? defaultGamePath().path,
+          pickerDialogTitle: "Select Mods folder",
+          errorMessage: state.customModsPathState.pathExists
+              ? null
+              : "Path does not exist",
+          onEnabledChanged: (isEnabled) {
+            controller.toggleUseCustomModsPath(isEnabled);
+          },
+          onPathChanged: controller.updateCustomModsPath,
+          onSubmitted: controller.submitCustomModsPath,
+        ),
+        const SizedBox(height: 16),
+        CustomPathField(
+          labelText: "Saves",
+          checkboxTooltip: "When checked, uses the custom saves folder",
+          fieldTooltip: "Allows you to set a custom saves folder",
+          currentPath: state.customSavesPathState.pathText,
+          isEnabled: state.customSavesPathState.useCustomPath,
+          isDirectoryPicker: true,
+          initialDirectory: settings.gameDir?.path ?? defaultGamePath().path,
+          pickerDialogTitle: "Select Saves folder",
+          errorMessage: state.customSavesPathState.pathExists
+              ? null
+              : "Path does not exist",
+          onEnabledChanged: (isEnabled) {
+            controller.toggleUseCustomSavesPath(isEnabled);
+          },
+          onPathChanged: controller.updateCustomSavesPath,
+          onSubmitted: controller.submitCustomSavesPath,
+        ),
+        const SizedBox(height: 16),
+        CustomPathField(
+          labelText: "Core data",
+          checkboxTooltip:
+              "When checked, uses the custom core folder."
+              "\nThis is the folder that contains data, graphics, sounds, and jar files.",
+          fieldTooltip: "Allows you to set a custom core folder",
+          currentPath: state.customCorePathState.pathText,
+          isEnabled: state.customCorePathState.useCustomPath,
+          isDirectoryPicker: true,
+          initialDirectory: settings.gameDir?.path ?? defaultGamePath().path,
+          pickerDialogTitle: "Select Core folder",
+          errorMessage: state.customCorePathState.pathExists
+              ? null
+              : "Path does not exist",
+          onEnabledChanged: (isEnabled) {
+            controller.toggleUseCustomCorePath(isEnabled);
+          },
+          onPathChanged: controller.updateCustomCorePath,
+          onSubmitted: controller.submitCustomCorePath,
         ),
       ],
     );

@@ -87,6 +87,14 @@ Directory? generateModsFolderPath(Directory gamePath) {
   }
 }
 
+Directory? generateSavesFolderPath(Directory gamePath) {
+  if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
+    return Directory(p.join(gamePath.path, "saves")).normalize;
+  } else {
+    return null;
+  }
+}
+
 Directory? generateJresFolderPath(Directory gamePath) {
   if (Platform.isWindows) {
     return gamePath;

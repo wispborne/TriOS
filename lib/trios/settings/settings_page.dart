@@ -329,6 +329,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                       );
                                 },
                                 labelWidget: Row(
+                                  mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Text("Manual folder naming"),
                                     Padding(

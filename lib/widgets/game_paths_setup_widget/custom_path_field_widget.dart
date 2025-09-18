@@ -37,11 +37,8 @@ class CustomPathField extends ConsumerStatefulWidget {
   /// Dialog title for the picker
   final String? pickerDialogTitle;
 
-  /// Validation function to check if the path is valid
-  final bool Function(String path) validatePath;
-
   /// Error message to show when validation fails
-  final String errorMessage;
+  final String? errorMessage;
 
   /// Callback when the enabled state changes
   final void Function(bool isEnabled) onEnabledChanged;
@@ -49,15 +46,18 @@ class CustomPathField extends ConsumerStatefulWidget {
   /// Callback when the path value changes
   final void Function(String path) onPathChanged;
 
+  /// Callback when the path value changes
+  final void Function(String path) onSubmitted;
+
   const CustomPathField({
     super.key,
     required this.labelText,
     required this.currentPath,
     required this.isEnabled,
-    required this.validatePath,
     required this.errorMessage,
     required this.onEnabledChanged,
     required this.onPathChanged,
+    required this.onSubmitted,
     this.hintText,
     this.checkboxTooltip,
     this.fieldTooltip,
@@ -73,13 +73,18 @@ class CustomPathField extends ConsumerStatefulWidget {
 
 class _CustomPathFieldState extends ConsumerState<CustomPathField> {
   late final TextEditingController _textController;
-  bool _isPathValid = true;
+  late final FocusNode _focusNode;
+  String? _lastSubmittedValue;
 
   @override
   void initState() {
     super.initState();
     _textController = TextEditingController(text: widget.currentPath);
-    _validateCurrentPath();
+    _focusNode = FocusNode();
+    _lastSubmittedValue = widget.currentPath;
+
+    // Listen for focus changes to auto-submit when user navigates away
+    _focusNode.addListener(_onFocusChanged);
   }
 
   @override
@@ -87,12 +92,22 @@ class _CustomPathFieldState extends ConsumerState<CustomPathField> {
     super.didUpdateWidget(oldWidget);
     if (_textController.text != widget.currentPath) {
       _textController.text = widget.currentPath;
-      _validateCurrentPath();
+      _lastSubmittedValue = widget.currentPath;
     }
   }
 
-  void _validateCurrentPath() {
-    _isPathValid = widget.validatePath(widget.currentPath);
+  void _onFocusChanged() {
+    if (!_focusNode.hasFocus) {
+      _submitIfChanged();
+    }
+  }
+
+  void _submitIfChanged() {
+    final currentText = _textController.text;
+    if (currentText != _lastSubmittedValue) {
+      _lastSubmittedValue = currentText;
+      widget.onSubmitted(currentText);
+    }
   }
 
   @override
@@ -145,10 +160,11 @@ class _CustomPathFieldState extends ConsumerState<CustomPathField> {
       isEnabled: widget.isEnabled,
       child: TextField(
         controller: _textController,
+        focusNode: _focusNode,
         decoration: InputDecoration(
           border: const OutlineInputBorder(),
           isDense: true,
-          errorText: widget.isEnabled && !_isPathValid
+          errorText: widget.isEnabled && widget.errorMessage != null
               ? widget.errorMessage
               : null,
           labelText: widget.labelText,
@@ -157,10 +173,10 @@ class _CustomPathFieldState extends ConsumerState<CustomPathField> {
           labelStyle: Theme.of(context).textTheme.labelLarge,
         ),
         onChanged: (newPath) {
-          setState(() {
-            _isPathValid = widget.validatePath(newPath);
-          });
           widget.onPathChanged(newPath);
+        },
+        onSubmitted: (value) {
+          _submitIfChanged();
         },
       ),
     );
@@ -190,15 +206,16 @@ class _CustomPathFieldState extends ConsumerState<CustomPathField> {
 
     if (newPath != null) {
       _textController.text = newPath;
-      setState(() {
-        _isPathValid = widget.validatePath(newPath!);
-      });
       widget.onPathChanged(newPath);
+      _lastSubmittedValue = newPath;
+      widget.onSubmitted(newPath);
     }
   }
 
   @override
   void dispose() {
+    _focusNode.removeListener(_onFocusChanged);
+    _focusNode.dispose();
     _textController.dispose();
     super.dispose();
   }

@@ -19,6 +19,7 @@ import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/disable.dart';
+import 'package:trios/widgets/export_to_csv_dialog.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/text_trios.dart';
 import 'package:trios/widgets/toolbar_checkbox_button.dart';
@@ -38,6 +39,8 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
   bool get wantKeepAlive => true;
 
   final SearchController _searchController = SearchController();
+
+  WispGridController<Ship>? _gridController;
 
   @override
   List<Area> get areas {
@@ -186,6 +189,11 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
                                 ref.invalidate(shipListNotifierProvider),
                           ),
                         ),
+                      ),
+                      _buildOverflowButton(
+                        context: context,
+                        theme: theme,
+                        controllerState: controllerState,
                       ),
                     ],
                   ),
@@ -392,6 +400,9 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
           );
         });
       },
+      onLoaded: (controller) {
+        _gridController = controller;
+      },
       columns: columns,
       items: items,
       itemExtent: 50,
@@ -432,6 +443,19 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
     final controller = ref.read(shipsPageControllerProvider.notifier);
     final gameCoreDir = controller.getGameCoreDir();
 
+    String shipValueToString(
+      Comparable<dynamic>? Function(Ship) getValue,
+      Ship item,
+    ) {
+      final value = getValue(item);
+      final str = switch (value) {
+        double dbl => dbl.toStringMinimizingDigits(2),
+        null => "",
+        _ => value.toString(),
+      };
+      return str;
+    }
+
     // Reusable helper
     WispGridColumn<Ship> col(
       String key,
@@ -445,14 +469,10 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
         name: name,
         getSortValue: getValue,
         itemCellBuilder: (item, _) {
-          final value = getValue(item);
-          final str = switch (value) {
-            double dbl => dbl.toStringMinimizingDigits(2),
-            null => "",
-            _ => value.toString(),
-          };
+          String str = shipValueToString(getValue, item);
           return TextTriOS(str, maxLines: 1, overflow: TextOverflow.ellipsis);
         },
+        csvValue: (item) => shipValueToString(getValue, item),
         defaultState: WispGridColumnState(position: position++, width: width),
       );
     }
@@ -469,6 +489,7 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
           overflow: TextOverflow.ellipsis,
           style: theme.textTheme.bodyMedium,
         ),
+        csvValue: (ship) => ship.modVariant?.modInfo.nameOrId,
         defaultState: WispGridColumnState(position: position++, width: 120),
       ),
       WispGridColumn(
@@ -478,6 +499,7 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
         itemCellBuilder: (item, _) => ShipImageCell(
           imagePath: _getPathForSpriteName(item, gameCoreDir).path,
         ),
+        csvValue: (ship) => _getPathForSpriteName(ship, gameCoreDir).path,
         defaultState: WispGridColumnState(position: position++, width: 50),
       ),
       col('hullName', 'Name', (s) => s.hullName, width: 200),
@@ -488,6 +510,7 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
         isSortable: true,
         getSortValue: (ship) => ship.weaponSlots?.length ?? 0,
         itemCellBuilder: (item, _) => Text('${item.weaponSlots?.length ?? 0}'),
+        csvValue: (ship) => ship.weaponSlots?.length.toString(),
         defaultState: WispGridColumnState(position: position++, width: 120),
       ),
       col('techManufacturer', 'Tech', (s) => s.techManufacturer, width: 220),
@@ -551,6 +574,36 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
         },
         suggestionsBuilder: (_, __) => [],
       ),
+    );
+  }
+
+  Widget _buildOverflowButton({
+    required BuildContext context,
+    required ThemeData theme,
+    required ShipsPageState controllerState,
+  }) {
+    return PopupMenuButton(
+      tooltip: "More actions",
+      icon: const Icon(Icons.more_vert),
+      itemBuilder: (context) => [
+        PopupMenuItem(
+          onTap: () {
+            if (_gridController == null) return;
+
+            showExportOrCopyDialog(
+              context,
+              WispGridCsvExporter.toCsv(_gridController!, includeHeaders: true),
+            );
+          },
+          child: const Row(
+            children: [
+              Icon(Icons.table_view, size: 18),
+              SizedBox(width: 8),
+              Text('Export to CSV'),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

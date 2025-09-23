@@ -9,6 +9,7 @@
     - Copy someone else's and import it.
   - Menu option: Delete Mod (all versions)
     - Added to multi-select menu as well (hold Control or Shift to select multiple mods).
+  - Export grid data (mods, ships, weapons) to csv.
 - Fixed
   - Ship Viewer filters not working.
   - Custom launcher files are no longer hardcoded to use the game folder as their working directory.

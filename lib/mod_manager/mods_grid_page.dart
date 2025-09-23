@@ -1,6 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -35,6 +36,7 @@ import 'package:trios/vram_estimator/graphics_lib_config_provider.dart';
 import 'package:trios/vram_estimator/vram_estimator_page.dart';
 import 'package:trios/widgets/add_new_mods_button.dart';
 import 'package:trios/widgets/disable.dart';
+import 'package:trios/widgets/export_to_csv_dialog.dart';
 import 'package:trios/widgets/mod_icon.dart';
 import 'package:trios/widgets/mod_type_icon.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
@@ -353,6 +355,10 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                           );
                         },
                       ),
+                      csvValue: (mod) =>
+                          modsMetadata?.userMetadata[mod.id]?.isFavorited
+                              .toString() ??
+                          "false",
                       defaultState: WispGridColumnState(position: 0, width: 50),
                     ),
                     WispGridColumn<Mod>(
@@ -368,6 +374,9 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                           showTooltip: true,
                         ),
                       ),
+                      csvValue: (mod) => mod.modVariants
+                          .map((v) => v.modInfo.version.toString())
+                          .join(","),
                       defaultState: WispGridColumnState(
                         position: 1,
                         width: 130,
@@ -389,6 +398,8 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                               : const SizedBox(width: 32, height: 32);
                         },
                       ),
+                      csvValue: (mod) =>
+                          mod.findFirstEnabledOrHighestVersion?.iconFilePath,
                       defaultState: WispGridColumnState(position: 2, width: 32),
                     ),
                     WispGridColumn<Mod>(
@@ -400,6 +411,11 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                       itemCellBuilder: (mod, modifiers) => ModTypeIcon(
                         modVariant: mod.findFirstEnabledOrHighestVersion!,
                       ),
+                      csvValue: (mod) => mod
+                          .findFirstEnabledOrHighestVersion
+                          ?.modInfo
+                          .modTypes
+                          .joinToString(transform: (type) => type.name),
                       defaultState: WispGridColumnState(position: 3, width: 32),
                     ),
                     WispGridColumn<Mod>(
@@ -417,6 +433,10 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                         allMods,
                         modifiers.columnState,
                       ),
+                      csvValue: (mod) => mod
+                          .findFirstEnabledOrHighestVersion
+                          ?.modInfo
+                          .nameOrId,
                       defaultState: WispGridColumnState(
                         position: 4,
                         width: 200,
@@ -452,6 +472,8 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                           );
                         },
                       ),
+                      csvValue: (mod) =>
+                          mod.findFirstEnabledOrHighestVersion?.modInfo.author,
                       defaultState: WispGridColumnState(
                         position: 5,
                         width: 200,
@@ -477,6 +499,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                           );
                         },
                       ),
+                      csvValue: (mod) => null,
                       defaultState: WispGridColumnState(position: 6, width: 65),
                     ),
                     WispGridColumn<Mod>(
@@ -498,6 +521,11 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                           );
                         },
                       ),
+                      csvValue: (mod) => mod
+                          .findFirstEnabledOrHighestVersion
+                          ?.modInfo
+                          .version
+                          .toString(),
                       defaultState: WispGridColumnState(position: 7, width: 75),
                     ),
                     WispGridColumn<Mod>(
@@ -515,103 +543,117 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                         mod,
                         modifiers.columnState,
                       ),
+                      csvValue: (mod) => ref
+                          .read(AppState.vramEstimatorProvider)
+                          .valueOrNull
+                          ?.modVramInfo[mod
+                              .findFirstEnabledOrHighestVersion!
+                              .smolId]
+                          ?.bytesNotIncludingGraphicsLib()
+                          .toString(),
                       defaultState: WispGridColumnState(
                         position: 8,
                         width: 128,
                       ),
                     ),
                     if (false)
-                    WispGridColumn<Mod>(
-                      key: ModGridHeader.tags.name,
-                      name: "Tags",
-                      isSortable: false,
-                      headerCellBuilder: (modifiers) => buildColumnHeader(
-                        ModGridHeader.tags,
-                        modifiers,
-                      ).child,
-                      itemCellBuilder: (mod, modifiers) => Opacity(
-                        opacity: WispGrid.lightTextOpacity,
-                        child: ContextMenuRegion(
-                          contextMenu: ContextMenu(
-                            entries: [
-                              MenuItem(
-                                label: "Add Default Tags",
-                                onSelected: () {
-                                  ref
-                                      .read(modTagManagerProvider.notifier)
-                                      .addDefaultModTags([
-                                        mod.findFirstEnabledOrHighestVersion!,
-                                      ]);
+                      WispGridColumn<Mod>(
+                        key: ModGridHeader.tags.name,
+                        name: "Tags",
+                        isSortable: false,
+                        headerCellBuilder: (modifiers) => buildColumnHeader(
+                          ModGridHeader.tags,
+                          modifiers,
+                        ).child,
+                        itemCellBuilder: (mod, modifiers) => Opacity(
+                          opacity: WispGrid.lightTextOpacity,
+                          child: ContextMenuRegion(
+                            contextMenu: ContextMenu(
+                              entries: [
+                                MenuItem(
+                                  label: "Add Default Tags",
+                                  onSelected: () {
+                                    ref
+                                        .read(modTagManagerProvider.notifier)
+                                        .addDefaultModTags([
+                                          mod.findFirstEnabledOrHighestVersion!,
+                                        ]);
+                                  },
+                                ),
+                              ],
+                            ),
+                            child: Container(
+                              // For hit testing, same as the Row below
+                              color: Colors.transparent,
+                              child: Builder(
+                                builder: (context) {
+                                  final tagsForMod = ref
+                                      .watch(modTagManagerProvider.notifier)
+                                      .getTagsForMod(mod.id)
+                                      .toList();
+                                  return Row(
+                                    mainAxisSize: MainAxisSize.max,
+                                    children: [
+                                      Expanded(
+                                        child: tagsForMod.isEmpty
+                                            ? Text("")
+                                            : Tags(
+                                                itemCount: tagsForMod.length,
+                                                itemBuilder: (index) {
+                                                  return ItemTags(
+                                                    index: index,
+                                                    title:
+                                                        tagsForMod[index].name,
+                                                    singleItem: true,
+                                                    active: true,
+                                                    textActiveColor: theme
+                                                        .colorScheme
+                                                        .onPrimaryContainer,
+                                                    activeColor: theme
+                                                        .colorScheme
+                                                        .primaryContainer,
+                                                    splashColor:
+                                                        Colors.transparent,
+                                                    removeButton: ItemTagsRemoveButton(
+                                                      backgroundColor:
+                                                          Colors.transparent,
+                                                      onRemoved: () {
+                                                        ref
+                                                            .read(
+                                                              modTagManagerProvider
+                                                                  .notifier,
+                                                            )
+                                                            .removeTagIdsFromMod(
+                                                              mod.id,
+                                                              [
+                                                                tagsForMod[index]
+                                                                    .id,
+                                                              ],
+                                                            );
+                                                        return true;
+                                                      },
+                                                    ),
+                                                  );
+                                                },
+                                              ),
+                                      ),
+                                    ],
+                                  );
                                 },
                               ),
-                            ],
-                          ),
-                          child: Container(
-                            // For hit testing, same as the Row below
-                            color: Colors.transparent,
-                            child: Builder(
-                              builder: (context) {
-                                final tagsForMod = ref
-                                    .watch(modTagManagerProvider.notifier)
-                                    .getTagsForMod(mod.id)
-                                    .toList();
-                                return Row(
-                                  mainAxisSize: MainAxisSize.max,
-                                  children: [
-                                    Expanded(
-                                      child: tagsForMod.isEmpty
-                                          ? Text("")
-                                          : Tags(
-                                              itemCount: tagsForMod.length,
-                                              itemBuilder: (index) {
-                                                return ItemTags(
-                                                  index: index,
-                                                  title: tagsForMod[index].name,
-                                                  singleItem: true,
-                                                  active: true,
-                                                  textActiveColor: theme
-                                                      .colorScheme
-                                                      .onPrimaryContainer,
-                                                  activeColor: theme
-                                                      .colorScheme
-                                                      .primaryContainer,
-                                                  splashColor:
-                                                      Colors.transparent,
-                                                  removeButton: ItemTagsRemoveButton(
-                                                    backgroundColor:
-                                                        Colors.transparent,
-                                                    onRemoved: () {
-                                                      ref
-                                                          .read(
-                                                            modTagManagerProvider
-                                                                .notifier,
-                                                          )
-                                                          .removeTagIdsFromMod(
-                                                            mod.id,
-                                                            [
-                                                              tagsForMod[index]
-                                                                  .id,
-                                                            ],
-                                                          );
-                                                      return true;
-                                                    },
-                                                  ),
-                                                );
-                                              },
-                                            ),
-                                    ),
-                                  ],
-                                );
-                              },
                             ),
                           ),
                         ),
+                        csvValue: (mod) => ref
+                            .watch(modTagManagerProvider.notifier)
+                            .getTagsForMod(mod.id)
+                            .toList()
+                            .join(", "),
+                        defaultState: WispGridColumnState(
+                          position: 9,
+                          width: 150,
+                        ),
                       ),
-                      defaultState: WispGridColumnState(
-                        position: 9,
-                        width: 150,
-                      ),
-                    ),
                     WispGridColumn<Mod>(
                       key: ModGridHeader.gameVersion.name,
                       name: "Game Version",
@@ -654,6 +696,10 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                           );
                         },
                       ),
+                      csvValue: (mod) => mod
+                          .findFirstEnabledOrHighestVersion
+                          ?.modInfo
+                          .gameVersion,
                       defaultState: WispGridColumnState(
                         position: 10,
                         width: 100,
@@ -687,6 +733,15 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                           style: theme.textTheme.labelLarge,
                         ),
                       ),
+                      csvValue: (mod) =>
+                          modsMetadata
+                              ?.getMergedModMetadata(mod.id)
+                              ?.let(
+                                (m) => DateTime.fromMillisecondsSinceEpoch(
+                                  m.firstSeen,
+                                ).toIso8601String(),
+                              ) ??
+                          "",
                       defaultState: WispGridColumnState(
                         position: 11,
                         width: 150,
@@ -722,6 +777,17 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                           style: theme.textTheme.labelLarge,
                         ),
                       ),
+                      csvValue: (mod) =>
+                          modsMetadata
+                              ?.getMergedModMetadata(mod.id)
+                              ?.lastEnabled
+                              ?.let(
+                                (lastEnabled) =>
+                                    DateTime.fromMillisecondsSinceEpoch(
+                                      lastEnabled,
+                                    ).toIso8601String(),
+                              ) ??
+                          "",
                       defaultState: WispGridColumnState(
                         position: 12,
                         width: 150,
@@ -1063,6 +1129,20 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
               title: Text("Copy All Mods to Clipboard"),
             ),
           ),
+          PopupMenuItem(
+            onTap: () {
+              if (controller == null) return;
+              showExportOrCopyDialog(
+                context,
+                WispGridCsvExporter.toCsv(controller!, includeHeaders: true),
+              );
+            },
+            child: ListTile(
+              dense: true,
+              leading: Icon(Icons.table_view),
+              title: Text("Export to CSV"),
+            ),
+          ),
         ],
       ),
     );
@@ -1172,6 +1252,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
               );
               final vramProvider = ref.watch(AppState.vramEstimatorProvider);
               final vramMap = vramProvider.valueOrNull?.modVramInfo ?? {};
+              final vramEstimate = vramMap[bestVersion.smolId];
               final biggestFish = vramMap
                   .maxBy((e) => e.value.imagesNotIncludingGraphicsLib().sum())
                   ?.value
@@ -1185,7 +1266,6 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                                 .toDouble() ??
                             0) /
                         biggestFish.toDouble();
-              final vramEstimate = vramMap[bestVersion.smolId];
               final withoutGraphicsLib = vramEstimate
                   ?.imagesNotIncludingGraphicsLib();
 

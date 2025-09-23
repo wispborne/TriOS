@@ -54,9 +54,19 @@ class ModInfo with ModInfoMappable {
 
   // TODO swap this to id, change id to modId.
   String get smolId => createSmolId(id, version);
+
   String get nameOrId => name ?? id;
+
   String get formattedNameVersionId =>
       "$name${version != null ? " $version" : ""}${" ($id)"}";
+
   String get formattedNameVersion =>
       "$nameOrId${version != null ? " $version" : ""}";
+
+  List<ModType> get modTypes => [
+    if (isUtility) ModType.utility,
+    if (isTotalConversion) ModType.totalConversion,
+  ];
 }
+
+enum ModType { utility, totalConversion }

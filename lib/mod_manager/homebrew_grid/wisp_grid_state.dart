@@ -14,6 +14,7 @@ class WispGridColumn<T extends WispGridItem> with WispGridColumnMappable {
   final Widget Function(HeaderBuilderModifiers modifiers)? headerCellBuilder;
   final Widget Function(T item, CellBuilderModifiers modifiers)?
   itemCellBuilder;
+  final String? Function(T item)? csvValue;
   final WispGridColumnState defaultState;
 
   const WispGridColumn({
@@ -23,6 +24,7 @@ class WispGridColumn<T extends WispGridItem> with WispGridColumnMappable {
     this.getSortValue,
     this.headerCellBuilder,
     this.itemCellBuilder,
+    required this.csvValue,
     required this.defaultState,
   }) : assert(!isSortable || getSortValue != null);
 }

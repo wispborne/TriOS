@@ -128,7 +128,10 @@ class _WispGridState<T extends WispGridItem>
 
   /// Used for shift-clicking to select a range.
   String? _lastCheckedItemId;
+
+  // Exposed to public, and used for selecting/checking rows.
   List<T> _lastDisplayedItems = [];
+  List<MapEntry<WispGridGroup<T>?, List<T>>> _lastDisplayedItemsInGroups = [];
 
   @override
   void initState() {
@@ -212,6 +215,14 @@ class _WispGridState<T extends WispGridItem>
         )
         .toList();
     _lastDisplayedItems = items.flatMap((entry) => entry.value).toList();
+    _lastDisplayedItemsInGroups = items
+        .map(
+          (entry) => MapEntry(
+            entry.key == null ? null : widget.groups[entry.key as int],
+            entry.value,
+          ),
+        )
+        .toList();
 
     int index = 0;
 
@@ -551,4 +562,72 @@ class _PinnedHeaderDelegate extends SliverPersistentHeaderDelegate {
         minHeight != oldDelegate.minHeight ||
         child != oldDelegate.child;
   }
+}
+
+extension WispGridCsvExport<T extends WispGridItem> on _WispGridState<T> {
+  /// Converts the currently visible grid data to CSV format.
+  /// Returns a CSV string with headers and data formatted as displayed in the grid.
+  String toCsv({bool includeHeaders = true}) {
+    final visibleColumns = gridState.sortedVisibleColumns(widget.columns);
+    final csvRows = <List<String>>[];
+
+    WispGridColumn<T> columnForColumnKey(String columnKey) =>
+        widget.columns.firstWhere((c) => c.key == columnKey);
+
+    // Add headers if requested
+    if (includeHeaders) {
+      final headers = visibleColumns
+          .map((entry) => columnForColumnKey(entry.key).name)
+          .toList();
+      csvRows.add(headers);
+    }
+
+    // Process each item from the last displayed items
+    for (final item in _lastDisplayedItemsInGroups) {
+      if (item.key != null) {
+        csvRows.add(["# Group: ${item.key?.displayName}"]);
+      }
+
+      final itemsInGroup = item.value;
+
+      for (final item in itemsInGroup) {
+        final row = <String>[];
+        for (final columnEntry in visibleColumns) {
+          final column = columnForColumnKey(columnEntry.key);
+          row.add(column.csvValue?.call(item) ?? "");
+        }
+        csvRows.add(row);
+      }
+    }
+
+    return _convertRowsToCsv(csvRows);
+  }
+
+  /// Converts rows of data to properly escaped CSV format
+  String _convertRowsToCsv(List<List<String>> rows) {
+    return rows
+        .map((row) => row.map((cell) => _escapeCsvValue(cell)).join(','))
+        .join('\n');
+  }
+
+  /// Properly escapes a CSV value by wrapping in quotes if necessary
+  String _escapeCsvValue(String value) {
+    if (value.contains(',') ||
+        value.contains('\n') ||
+        value.contains('\r') ||
+        value.contains('"')) {
+      final escapedValue = value.replaceAll('"', '""');
+      return '"$escapedValue"';
+    }
+    return value;
+  }
+}
+
+/// Utility methods to add CSV export functionality to WispGrid
+class WispGridCsvExporter {
+  /// Converts the grid's visible data to CSV using the provided controller
+  static String toCsv<T extends WispGridItem>(
+    WispGridController<T> controller, {
+    bool includeHeaders = true,
+  }) => controller._wispGridState.toCsv(includeHeaders: includeHeaders);
 }

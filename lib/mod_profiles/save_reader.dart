@@ -31,7 +31,12 @@ class SaveFileNotifier extends AsyncNotifier<List<SaveFile>> {
       return [];
     }
 
-    final saveDir = ref.watch(AppState.savesFolder).value!.toDirectory();
+    final saveDir = ref.watch(AppState.savesFolder).valueOrNull?.toDirectory();
+
+    if (saveDir == null) {
+      Fimber.w("Save folder not set");
+      return [];
+    }
 
     // if (state.valueOrNull?.isNotEmpty == true) {
     //   Fimber.i("Saves already loaded, not refreshing.");

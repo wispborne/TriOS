@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
@@ -21,6 +22,7 @@ import 'package:trios/weaponViewer/models/weapon.dart';
 import 'package:trios/weaponViewer/weapons_manager.dart';
 import 'package:trios/weaponViewer/weapons_page_controller.dart';
 import 'package:trios/widgets/disable.dart';
+import 'package:trios/widgets/export_to_csv_dialog.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/text_trios.dart';
 import 'package:trios/widgets/toolbar_checkbox_button.dart';
@@ -41,6 +43,7 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
 
   final SearchController _searchController = SearchController();
   final ScrollController _filterScrollController = ScrollController();
+  WispGridController<Weapon>? _gridController;
 
   @override
   List<Area> get areas {
@@ -188,6 +191,11 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
                                 ref.invalidate(weaponListNotifierProvider),
                           ),
                         ),
+                      ),
+                      _buildOverflowButton(
+                        context: context,
+                        theme: theme,
+                        controllerState: controllerState,
                       ),
                     ],
                   ),
@@ -397,6 +405,9 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
             );
           });
         },
+        onLoaded: (controller) {
+          _gridController = controller;
+        },
         columns: columns,
         items: items,
         itemExtent: 50,
@@ -440,6 +451,19 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
   List<WispGridColumn<Weapon>> buildCols(ThemeData theme) {
     int position = 0;
 
+    String wepValueToString(
+      Comparable<dynamic>? Function(Weapon) getValue,
+      Weapon item,
+    ) {
+      final value = getValue(item);
+      final str = switch (value) {
+        double dbl => dbl.toStringMinimizingDigits(2),
+        null => "",
+        _ => value.toString(),
+      };
+      return str;
+    }
+
     // Reusable helper
     WispGridColumn<Weapon> col(
       String key,
@@ -453,14 +477,13 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
         name: name,
         getSortValue: getValue,
         itemCellBuilder: (item, _) {
-          final value = getValue(item);
-          final str = switch (value) {
-            double dbl => dbl.toStringAsFixed(2),
-            null => "",
-            _ => value.toString(),
-          };
-          return TextTriOS(str, maxLines: 1, overflow: TextOverflow.ellipsis);
+          return TextTriOS(
+            wepValueToString(getValue, item),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          );
         },
+        csvValue: (item) => wepValueToString(getValue, item),
         defaultState: WispGridColumnState(position: position++, width: width),
       );
     }
@@ -477,6 +500,7 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
           overflow: TextOverflow.ellipsis,
           style: theme.textTheme.bodyMedium,
         ),
+        csvValue: (weapon) => weapon.modVariant?.modInfo.nameOrId ?? "Vanilla",
         defaultState: WispGridColumnState(position: position++, width: 120),
       ),
       WispGridColumn(
@@ -485,6 +509,7 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
         name: '',
         itemCellBuilder: (item, modifiers) =>
             WeaponImageCell(imagePaths: spritesForWeapon(item)),
+        csvValue: (weapon) => spritesForWeapon(weapon).join(","),
         defaultState: WispGridColumnState(position: position++, width: 40),
       ),
       col('name', 'Name', (w) => w.name ?? w.id, width: 150),
@@ -555,6 +580,36 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
         },
         suggestionsBuilder: (_, __) => [],
       ),
+    );
+  }
+
+  Widget _buildOverflowButton({
+    required BuildContext context,
+    required ThemeData theme,
+    required WeaponsPageState controllerState,
+  }) {
+    return PopupMenuButton(
+      tooltip: "More actions",
+      icon: const Icon(Icons.more_vert),
+      itemBuilder: (context) => [
+        PopupMenuItem(
+          onTap: () {
+            if (_gridController == null) return;
+
+            showExportOrCopyDialog(
+              context,
+              WispGridCsvExporter.toCsv(_gridController!, includeHeaders: true),
+            );
+          },
+          child: const Row(
+            children: [
+              Icon(Icons.table_view, size: 18),
+              SizedBox(width: 8),
+              Text('Export to CSV'),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

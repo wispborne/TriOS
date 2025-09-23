@@ -476,6 +476,12 @@ class WispGridColumnMapper extends ClassMapperBase<WispGridColumn> {
   static const Field<WispGridColumn, Function> _f$itemCellBuilder = Field(
       'itemCellBuilder', _$itemCellBuilder,
       opt: true, arg: _arg$itemCellBuilder);
+  static Function _$csvValue(WispGridColumn v) =>
+      (v as dynamic).csvValue as Function;
+  static dynamic _arg$csvValue<T extends WispGridItem>(f) =>
+      f<String? Function(T)>();
+  static const Field<WispGridColumn, Function> _f$csvValue =
+      Field('csvValue', _$csvValue, arg: _arg$csvValue);
   static WispGridColumnState _$defaultState(WispGridColumn v) => v.defaultState;
   static const Field<WispGridColumn, WispGridColumnState> _f$defaultState =
       Field('defaultState', _$defaultState);
@@ -488,6 +494,7 @@ class WispGridColumnMapper extends ClassMapperBase<WispGridColumn> {
     #getSortValue: _f$getSortValue,
     #headerCellBuilder: _f$headerCellBuilder,
     #itemCellBuilder: _f$itemCellBuilder,
+    #csvValue: _f$csvValue,
     #defaultState: _f$defaultState,
   };
 
@@ -500,6 +507,7 @@ class WispGridColumnMapper extends ClassMapperBase<WispGridColumn> {
         getSortValue: data.dec(_f$getSortValue),
         headerCellBuilder: data.dec(_f$headerCellBuilder),
         itemCellBuilder: data.dec(_f$itemCellBuilder),
+        csvValue: data.dec(_f$csvValue),
         defaultState: data.dec(_f$defaultState));
   }
 
@@ -569,6 +577,7 @@ abstract class WispGridColumnCopyWith<$R, $In extends WispGridColumn<T>, $Out,
       Comparable<dynamic>? Function(T)? getSortValue,
       Widget Function(HeaderBuilderModifiers)? headerCellBuilder,
       Widget Function(T, CellBuilderModifiers)? itemCellBuilder,
+      String? Function(T)? csvValue,
       WispGridColumnState? defaultState});
   WispGridColumnCopyWith<$R2, $In, $Out2, T> $chain<$R2, $Out2>(
       Then<$Out2, $R2> t);
@@ -594,6 +603,7 @@ class _WispGridColumnCopyWithImpl<$R, $Out, T extends WispGridItem>
           Object? getSortValue = $none,
           Object? headerCellBuilder = $none,
           Object? itemCellBuilder = $none,
+          Object? csvValue = $none,
           WispGridColumnState? defaultState}) =>
       $apply(FieldCopyWithData({
         if (key != null) #key: key,
@@ -602,6 +612,7 @@ class _WispGridColumnCopyWithImpl<$R, $Out, T extends WispGridItem>
         if (getSortValue != $none) #getSortValue: getSortValue,
         if (headerCellBuilder != $none) #headerCellBuilder: headerCellBuilder,
         if (itemCellBuilder != $none) #itemCellBuilder: itemCellBuilder,
+        if (csvValue != $none) #csvValue: csvValue,
         if (defaultState != null) #defaultState: defaultState
       }));
   @override
@@ -613,6 +624,7 @@ class _WispGridColumnCopyWithImpl<$R, $Out, T extends WispGridItem>
       headerCellBuilder:
           data.get(#headerCellBuilder, or: $value.headerCellBuilder),
       itemCellBuilder: data.get(#itemCellBuilder, or: $value.itemCellBuilder),
+      csvValue: data.get(#csvValue, or: $value.csvValue),
       defaultState: data.get(#defaultState, or: $value.defaultState));
 
   @override

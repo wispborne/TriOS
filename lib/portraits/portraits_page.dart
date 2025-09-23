@@ -20,6 +20,7 @@ import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/search.dart';
 import 'package:trios/widgets/MultiSplitViewMixin.dart';
 import 'package:trios/widgets/blur.dart';
+import 'package:trios/widgets/expanding_constrained_aligned_widget.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/overflow_menu_button.dart';
 import 'package:trios/widgets/toolbar_checkbox_button.dart';
@@ -40,6 +41,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
   final SearchController _leftSearchController = SearchController();
   final SearchController _rightSearchController = SearchController();
   bool showOnlyReplaced = false;
+  bool showOnlyEnabledMods = false;
   bool inReplaceMode = false;
 
   @override
@@ -212,6 +214,12 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
           sortedImages = filterToOnlyReplacedImages(sortedImages, replacements);
         }
 
+        final allMods = ref.watch(AppState.mods);
+
+        if (showOnlyEnabledMods) {
+          sortedImages = filterToOnlyEnabledMods(sortedImages, allMods);
+        }
+
         // Apply search filter (only when not in replace mode)
         if (!inReplaceMode) {
           final query = _searchController.value.text;
@@ -221,9 +229,9 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
         final theme = Theme.of(context);
         final visible = sortedImages.length;
         final total = modsAndImages.length;
-        final companionMod = ref
-            .watch(AppState.mods)
-            .firstWhereOrNull((it) => it.id == Constants.companionModId);
+        final companionMod = allMods.firstWhereOrNull(
+          (it) => it.id == Constants.companionModId,
+        );
         final isCompanionModEnabled = companionMod?.hasEnabledVariant == true;
         multiSplitController.areas = areas;
 
@@ -335,17 +343,34 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                             //       ),
                             //     },
                             //   ),
-                            const Spacer(),
+                            const SizedBox(width: 8),
                             // Only show center search box when not in replace mode
-                            if (!inReplaceMode) Center(child: buildSearchBox()),
+                            if (!inReplaceMode)
+                              ExpandingConstrainedAlignedWidget(
+                                minWidth: 200,
+                                maxWidth: 350,
+                                alignment: Alignment.centerRight,
+                                child: buildSearchBox(),
+                              ),
                             const SizedBox(width: 8),
                             MovingTooltipWidget.text(
                               message: "Only view images with replacements",
                               child: TriOSToolbarCheckboxButton(
-                                text: "Replacements",
+                                text: "View Replaced",
                                 value: showOnlyReplaced,
                                 onChanged: (value) => setState(
                                   () => showOnlyReplaced = value ?? false,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            MovingTooltipWidget.text(
+                              message: "Only view images from enabled mods",
+                              child: TriOSToolbarCheckboxButton(
+                                text: "Only Enabled Mods",
+                                value: showOnlyEnabledMods,
+                                onChanged: (value) => setState(
+                                  () => showOnlyEnabledMods = value ?? false,
                                 ),
                               ),
                             ),
@@ -642,6 +667,19 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
         .toList();
   }
 
+  List<({Portrait image, ModVariant? variant})> filterToOnlyEnabledMods(
+    List<({Portrait image, ModVariant? variant})> sortedImages,
+    List<Mod> allMods,
+  ) {
+    return sortedImages
+        .where(
+          (element) =>
+              element.variant == null ||
+              element.variant?.mod(allMods)?.hasEnabledVariant == true,
+        )
+        .toList();
+  }
+
   Padding buildCompanionModWarningIcon(ThemeData theme, Mod? companionMod) {
     return Padding(
       padding: const EdgeInsets.all(0),
@@ -690,7 +728,6 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
   SizedBox buildSearchBox() {
     return SizedBox(
       height: 30,
-      width: 300,
       child: SearchAnchor(
         searchController: _searchController,
         builder: (BuildContext context, SearchController controller) {

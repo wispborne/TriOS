@@ -19,6 +19,7 @@ import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/disable.dart';
+import 'package:trios/widgets/expanding_constrained_aligned_widget.dart';
 import 'package:trios/widgets/export_to_csv_dialog.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/text_trios.dart';
@@ -120,83 +121,70 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
         child: Card(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Stack(
+            child: Row(
               children: [
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Row(
-                    children: [
-                      Text(
-                        '$total Ships${total != visible ? " ($visible shown)" : ""}',
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          fontSize: 20,
-                        ),
-                      ),
-                      if (controllerState.isLoading)
-                        const Padding(
-                          padding: EdgeInsets.only(left: 8),
-                          child: SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                        ),
-                    ],
+                Text(
+                  '$total Ships${total != visible ? " ($visible shown)" : ""}',
+                  style: theme.textTheme.headlineSmall?.copyWith(fontSize: 20),
+                ),
+                if (controllerState.isLoading)
+                  const Padding(
+                    padding: EdgeInsets.only(left: 8),
+                    child: SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ),
+                const SizedBox(width: 8),
+                ExpandingConstrainedAlignedWidget(
+                  alignment: Alignment.centerRight,
+                  child: buildSearchBox(),
+                ),
+                const SizedBox(width: 8),
+                MovingTooltipWidget.text(
+                  message: "Only ships from enabled mods.",
+                  child: TriOSToolbarCheckboxButton(
+                    text: "Only Enabled",
+                    value: controllerState.showEnabled,
+                    onChanged: (value) => controller.toggleShowEnabled(),
                   ),
                 ),
-                Center(child: buildSearchBox()),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      MovingTooltipWidget.text(
-                        message: "Only ships from enabled mods.",
-                        child: TriOSToolbarCheckboxButton(
-                          text: "Only Enabled",
-                          value: controllerState.showEnabled,
-                          onChanged: (value) => controller.toggleShowEnabled(),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      MovingTooltipWidget.text(
-                        message:
-                            "Show ships with 'HIDE_IN_CODEX' or certain ultra-redacted vanilla tags.",
-                        warningLevel: TooltipWarningLevel.error,
-                        child: TriOSToolbarCheckboxButton(
-                          text: "Show Spoilers",
-                          value: controllerState.showSpoilers,
-                          onChanged: (value) => controller.toggleShowSpoilers(),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      TriOSToolbarCheckboxButton(
-                        text: "Compare",
-                        value: controllerState.splitPane,
-                        onChanged: (value) {
-                          controller.toggleSplitPane();
-                          multiSplitController.areas = areas;
-                          setState(() {});
-                        },
-                      ),
-                      MovingTooltipWidget.text(
-                        message: "Refresh",
-                        child: Disable(
-                          isEnabled: !controllerState.isLoading,
-                          child: IconButton(
-                            icon: const Icon(Icons.refresh),
-                            onPressed: () =>
-                                ref.invalidate(shipListNotifierProvider),
-                          ),
-                        ),
-                      ),
-                      _buildOverflowButton(
-                        context: context,
-                        theme: theme,
-                        controllerState: controllerState,
-                      ),
-                    ],
+                const SizedBox(width: 8),
+                MovingTooltipWidget.text(
+                  message:
+                      "Show ships with 'HIDE_IN_CODEX' or certain ultra-redacted vanilla tags.",
+                  warningLevel: TooltipWarningLevel.error,
+                  child: TriOSToolbarCheckboxButton(
+                    text: "Show Spoilers",
+                    value: controllerState.showSpoilers,
+                    onChanged: (value) => controller.toggleShowSpoilers(),
                   ),
+                ),
+                const SizedBox(width: 8),
+                TriOSToolbarCheckboxButton(
+                  text: "Compare",
+                  value: controllerState.splitPane,
+                  onChanged: (value) {
+                    controller.toggleSplitPane();
+                    multiSplitController.areas = areas;
+                    setState(() {});
+                  },
+                ),
+                MovingTooltipWidget.text(
+                  message: "Refresh",
+                  child: Disable(
+                    isEnabled: !controllerState.isLoading,
+                    child: IconButton(
+                      icon: const Icon(Icons.refresh),
+                      onPressed: () => ref.invalidate(shipListNotifierProvider),
+                    ),
+                  ),
+                ),
+                _buildOverflowButton(
+                  context: context,
+                  theme: theme,
+                  controllerState: controllerState,
                 ),
               ],
             ),

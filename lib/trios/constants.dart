@@ -6,7 +6,7 @@ import 'package:trios/models/version.dart';
 import 'package:trios/utils/extensions.dart';
 
 class Constants {
-  static const version = "1.3.0-dev08";
+  static const version = "1.3.0-dev09";
   static Version currentVersion = Version.parse(version);
 
   static const appName = "TriOS";
@@ -27,6 +27,8 @@ class Constants {
     "at com.fs.starfarer.oOOOOOOO",
     "SMOL 2",
     "Burn bright",
+    "Quietly used by the High Hegemon's office",
+    
   ].random();
 
   static const enabledModsFilename = "enabled_mods.json";

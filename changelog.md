@@ -16,6 +16,8 @@
   - Ship Viewer filters not working.
   - Custom launcher files are no longer hardcoded to use the game folder as their working directory.
     - This fixes Fast Rendering, which launches using a .bat in the `starsector-core` folder.
+- Changed
+  - Cleaned up search bar positioning on Ships and Weapons pages.
 
 # 1.2.3
 - Fixed

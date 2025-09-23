@@ -488,6 +488,10 @@ class SettingsMapper extends ClassMapperBase<Settings> {
   static String? _$activeModProfileId(Settings v) => v.activeModProfileId;
   static const Field<Settings, String> _f$activeModProfileId =
       Field('activeModProfileId', _$activeModProfileId, opt: true);
+  static bool _$showForceUpdateWarning(Settings v) => v.showForceUpdateWarning;
+  static const Field<Settings, bool> _f$showForceUpdateWarning = Field(
+      'showForceUpdateWarning', _$showForceUpdateWarning,
+      opt: true, def: true);
   static bool _$showDonationButton(Settings v) => v.showDonationButton;
   static const Field<Settings, bool> _f$showDonationButton =
       Field('showDonationButton', _$showDonationButton, opt: true, def: true);
@@ -544,6 +548,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #userId: _f$userId,
     #hasHiddenForumDarkModeTip: _f$hasHiddenForumDarkModeTip,
     #activeModProfileId: _f$activeModProfileId,
+    #showForceUpdateWarning: _f$showForceUpdateWarning,
     #showDonationButton: _f$showDonationButton,
   };
   @override
@@ -604,6 +609,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
         userId: data.dec(_f$userId),
         hasHiddenForumDarkModeTip: data.dec(_f$hasHiddenForumDarkModeTip),
         activeModProfileId: data.dec(_f$activeModProfileId),
+        showForceUpdateWarning: data.dec(_f$showForceUpdateWarning),
         showDonationButton: data.dec(_f$showDonationButton));
   }
 
@@ -711,6 +717,7 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
       String? userId,
       bool? hasHiddenForumDarkModeTip,
       String? activeModProfileId,
+      bool? showForceUpdateWarning,
       bool? showDonationButton});
   SettingsCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -788,6 +795,7 @@ class _SettingsCopyWithImpl<$R, $Out>
           String? userId,
           Object? hasHiddenForumDarkModeTip = $none,
           Object? activeModProfileId = $none,
+          bool? showForceUpdateWarning,
           bool? showDonationButton}) =>
       $apply(FieldCopyWithData({
         if (gameDir != $none) #gameDir: gameDir,
@@ -864,6 +872,8 @@ class _SettingsCopyWithImpl<$R, $Out>
           #hasHiddenForumDarkModeTip: hasHiddenForumDarkModeTip,
         if (activeModProfileId != $none)
           #activeModProfileId: activeModProfileId,
+        if (showForceUpdateWarning != null)
+          #showForceUpdateWarning: showForceUpdateWarning,
         if (showDonationButton != null) #showDonationButton: showDonationButton
       }));
   @override
@@ -937,6 +947,7 @@ class _SettingsCopyWithImpl<$R, $Out>
       userId: data.get(#userId, or: $value.userId),
       hasHiddenForumDarkModeTip: data.get(#hasHiddenForumDarkModeTip, or: $value.hasHiddenForumDarkModeTip),
       activeModProfileId: data.get(#activeModProfileId, or: $value.activeModProfileId),
+      showForceUpdateWarning: data.get(#showForceUpdateWarning, or: $value.showForceUpdateWarning),
       showDonationButton: data.get(#showDonationButton, or: $value.showDonationButton));
 
   @override

@@ -237,21 +237,43 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       const SizedBox(height: 16),
                       Builder(
                         builder: (context) {
-                          final showDonationButton = ref.watch(
-                            appSettings.select((s) => s.showDonationButton),
+                          final showForceUpdateWarning = ref.watch(
+                            appSettings.select((s) => s.showForceUpdateWarning),
                           );
                           return MovingTooltipWidget.text(
-                            message: "Free up precious UI space",
+                            message:
+                                "Whether to show the warning when forcing a mod to run on the current game version.",
                             child: CheckboxWithLabel(
-                              value: !showDonationButton,
+                              value: showForceUpdateWarning,
                               onChanged: (bool? value) => ref
                                   .read(appSettings.notifier)
                                   .update(
                                     (state) => state.copyWith(
-                                      showDonationButton: !(value ?? false),
+                                      showForceUpdateWarning: value ?? true,
                                     ),
                                   ),
-                              label: "Hide Donation Button",
+                              label: "Show 'Force Update' Warning",
+                            ),
+                          );
+                        },
+                      ),
+                      Builder(
+                        builder: (context) {
+                          final showDonationButton = ref.watch(
+                            appSettings.select((s) => s.showDonationButton),
+                          );
+                          return MovingTooltipWidget.text(
+                            message: "No solicitors!",
+                            child: CheckboxWithLabel(
+                              value: showDonationButton,
+                              onChanged: (bool? value) => ref
+                                  .read(appSettings.notifier)
+                                  .update(
+                                    (state) => state.copyWith(
+                                      showDonationButton: value ?? true,
+                                    ),
+                                  ),
+                              label: "Show Donation Button",
                             ),
                           );
                         },

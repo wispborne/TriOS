@@ -27,8 +27,9 @@ class Constants {
     "at com.fs.starfarer.oOOOOOOO",
     "SMOL 2",
     "Burn bright",
-    "Quietly used by the High Hegemon's office",
-    
+    "Rumored in use at the High Hegemon's office",
+    "I couldn't have made this without the support of your mom",
+    "Don't fear the reapers",
   ].random();
 
   static const enabledModsFilename = "enabled_mods.json";

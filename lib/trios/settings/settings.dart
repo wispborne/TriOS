@@ -93,6 +93,7 @@ class Settings with SettingsMappable {
   // in a different shared_prefs key.
   final String? activeModProfileId;
 
+  final bool showForceUpdateWarning;
   final bool showDonationButton;
 
   Settings({
@@ -159,6 +160,7 @@ class Settings with SettingsMappable {
     this.userId = '',
     this.hasHiddenForumDarkModeTip,
     this.activeModProfileId,
+    this.showForceUpdateWarning = true,
     this.showDonationButton = true,
   });
 }

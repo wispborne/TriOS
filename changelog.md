@@ -10,6 +10,8 @@
   - Menu option: Delete Mod (all versions)
     - Added to multi-select menu as well (hold Control or Shift to select multiple mods).
   - Export grid data (mods, ships, weapons) to csv.
+  - You may now set custom paths for more game folders: executable, mods, saves, and game data (core).
+    - NOT FINISHED in prerelease version.
 - Fixed
   - Ship Viewer filters not working.
   - Custom launcher files are no longer hardcoded to use the game folder as their working directory.

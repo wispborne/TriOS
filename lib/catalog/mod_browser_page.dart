@@ -24,7 +24,7 @@ import 'package:trios/widgets/tristate_icon_button.dart';
 
 import '../main.dart';
 import '../trios/download_manager/downloader.dart';
-import '../widgets/MultiSplitViewMixin.dart';
+import '../widgets/multi_split_mixin_view.dart';
 import '../widgets/moving_tooltip.dart';
 import 'mod_browser_manager.dart';
 

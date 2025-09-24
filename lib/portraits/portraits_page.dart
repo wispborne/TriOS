@@ -18,7 +18,7 @@ import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/search.dart';
-import 'package:trios/widgets/MultiSplitViewMixin.dart';
+import 'package:trios/widgets/multi_split_mixin_view.dart';
 import 'package:trios/widgets/blur.dart';
 import 'package:trios/widgets/expanding_constrained_aligned_widget.dart';
 import 'package:trios/widgets/moving_tooltip.dart';

@@ -11,6 +11,7 @@ import 'package:trios/shipViewer/filter_widget.dart';
 import 'package:trios/shipViewer/models/shipGpt.dart';
 import 'package:trios/shipViewer/ship_manager.dart';
 import 'package:trios/shipViewer/ships_page_controller.dart';
+import 'package:trios/themes/theme.dart';
 import 'package:trios/themes/theme_manager.dart' show ThemeManager;
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/trios/app_state.dart';
@@ -24,8 +25,9 @@ import 'package:trios/widgets/export_to_csv_dialog.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/text_trios.dart';
 import 'package:trios/widgets/toolbar_checkbox_button.dart';
+import 'package:trios/widgets/trios_dropdown_menu.dart';
 
-import '../widgets/MultiSplitViewMixin.dart';
+import '../widgets/multi_split_mixin_view.dart';
 
 class ShipsPage extends ConsumerStatefulWidget {
   const ShipsPage({super.key});
@@ -151,15 +153,41 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
                   ),
                 ),
                 const SizedBox(width: 8),
-                MovingTooltipWidget.text(
-                  message:
-                      "Show ships with 'HIDE_IN_CODEX' or certain ultra-redacted vanilla tags.",
-                  warningLevel: TooltipWarningLevel.error,
-                  child: TriOSToolbarCheckboxButton(
-                    text: "Show Spoilers",
-                    value: controllerState.showSpoilers,
-                    onChanged: (value) => controller.toggleShowSpoilers(),
-                  ),
+                TriOSDropdownMenu<SpoilerLevel>(
+                  initialSelection: controllerState.spoilerLevelToShow,
+                  onSelected: (level) {
+                    if (level == null) return;
+                    controller.setShowSpoilers(level);
+                  },
+                  dropdownMenuEntries: [
+                    DropdownMenuEntry(
+                      value: SpoilerLevel.showNone,
+                      label: "No Spoilers",
+                      labelWidget: MovingTooltipWidget.text(
+                        message: "No spoilers shown at all.",
+                        child: Text("No Spoilers"),
+                      ),
+                    ),
+                    DropdownMenuEntry(
+                      value: SpoilerLevel.showSlightSpoilers,
+                      label: "Slight spoilers",
+                      labelWidget: MovingTooltipWidget.text(
+                        warningLevel: TooltipWarningLevel.warning,
+                        message: "Shows CODEX_UNLOCKABLE ships.",
+                        child: Text("Slight spoilers"),
+                      ),
+                    ),
+                    DropdownMenuEntry(
+                      value: SpoilerLevel.showAllSpoilers,
+                      label: "Show all spoilers",
+                      labelWidget: MovingTooltipWidget.text(
+                        warningLevel: TooltipWarningLevel.error,
+                        message:
+                            "Show all spoilers, including HIDE_IN_CODEX and certain ultra-redacted vanilla tagged ships",
+                        child: Text("Show all spoilers"),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(width: 8),
                 TriOSToolbarCheckboxButton(

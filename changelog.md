@@ -12,12 +12,14 @@
   - Export grid data (mods, ships, weapons) to csv.
   - You may now set custom paths for more game folders: executable, mods, saves, and game data (core).
     - NOT FINISHED in prerelease version.
+  - Ship Viewer now has three options for showing spoilers; none, "show CODEX_UNLOCKABLE", and show all spoilers including <ultra redacted>.
 - Fixed
   - Ship Viewer filters not working.
   - Custom launcher files are no longer hardcoded to use the game folder as their working directory.
     - This fixes Fast Rendering, which launches using a .bat in the `starsector-core` folder.
 - Changed
   - Cleaned up search bar positioning on Ships and Weapons pages.
+  - CODEX_UNLOCKABLE ships are now hidden by default on the Ship Viewer.
 
 # 1.2.3
 - Fixed

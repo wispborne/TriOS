@@ -28,7 +28,7 @@ import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/text_trios.dart';
 import 'package:trios/widgets/toolbar_checkbox_button.dart';
 
-import '../widgets/MultiSplitViewMixin.dart';
+import '../widgets/multi_split_mixin_view.dart';
 
 class WeaponsPage extends ConsumerStatefulWidget {
   const WeaponsPage({super.key});

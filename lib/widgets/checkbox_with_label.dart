@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/widgets/blur.dart';
 import 'package:trios/widgets/conditional_wrap.dart';
 
@@ -88,7 +89,7 @@ class CheckboxWithLabel extends StatelessWidget {
           onChanged(!value!);
         }
       },
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
       child: Padding(
         padding: const EdgeInsets.only(right: 7),
         child: Row(

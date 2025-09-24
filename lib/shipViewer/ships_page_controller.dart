@@ -15,7 +15,7 @@ import 'package:trios/utils/extensions.dart';
 /// State class for the ships page controller
 class ShipsPageState {
   final bool showEnabled;
-  final bool showSpoilers;
+  final SpoilerLevel spoilerLevelToShow;
   final bool splitPane;
   final bool showFilters;
   final List<GridFilter<Ship>> filterCategories;
@@ -31,7 +31,7 @@ class ShipsPageState {
 
   const ShipsPageState({
     this.showEnabled = false,
-    this.showSpoilers = false,
+    this.spoilerLevelToShow = SpoilerLevel.showNone,
     this.splitPane = false,
     this.showFilters = false,
     this.filterCategories = const [],
@@ -46,7 +46,7 @@ class ShipsPageState {
 
   ShipsPageState copyWith({
     bool? showEnabled,
-    bool? showSpoilers,
+    SpoilerLevel? spoilerLevelToShow,
     bool? splitPane,
     bool? showFilters,
     List<GridFilter<Ship>>? filterCategories,
@@ -60,7 +60,7 @@ class ShipsPageState {
   }) {
     return ShipsPageState(
       showEnabled: showEnabled ?? this.showEnabled,
-      showSpoilers: showSpoilers ?? this.showSpoilers,
+      spoilerLevelToShow: spoilerLevelToShow ?? this.spoilerLevelToShow,
       splitPane: splitPane ?? this.splitPane,
       showFilters: showFilters ?? this.showFilters,
       filterCategories: filterCategories ?? this.filterCategories,
@@ -76,8 +76,11 @@ class ShipsPageState {
   }
 }
 
+enum SpoilerLevel { showNone, showSlightSpoilers, showAllSpoilers }
+
 /// Controller for the ships page using AutoDisposeNotifier (synchronous)
 class ShipsPageController extends AutoDisposeNotifier<ShipsPageState> {
+  final slightSpoilerTags = ["codex_unlockable"];
   final spoilerTags = ["threat", "dweller"];
 
   @override
@@ -185,7 +188,7 @@ class ShipsPageController extends AutoDisposeNotifier<ShipsPageState> {
     ships = _filterByEnabled(ships, mods, currentState.showEnabled);
 
     // Apply spoiler filter
-    ships = _filterBySpoilers(ships, currentState.showSpoilers);
+    ships = _filterBySpoilers(ships, currentState.spoilerLevelToShow);
 
     // Store ships before grid filters for filter panel
     final shipsBeforeGridFilter = ships.toList();
@@ -225,9 +228,9 @@ class ShipsPageController extends AutoDisposeNotifier<ShipsPageState> {
   }
 
   /// Toggle show spoilers filter
-  void toggleShowSpoilers() {
+  void setShowSpoilers(SpoilerLevel spoilerLevelToShow) {
     final mods = ref.read(AppState.mods);
-    final updatedState = state.copyWith(showSpoilers: !state.showSpoilers);
+    final updatedState = state.copyWith(spoilerLevelToShow: spoilerLevelToShow);
     final processedState = _processAllFilters(updatedState, mods);
 
     state = processedState;
@@ -301,17 +304,26 @@ class ShipsPageController extends AutoDisposeNotifier<ShipsPageState> {
   }
 
   /// Filter ships based on spoiler settings
-  List<Ship> _filterBySpoilers(List<Ship> ships, bool showSpoilers) {
-    if (showSpoilers) return ships;
+  List<Ship> _filterBySpoilers(
+    List<Ship> ships,
+    SpoilerLevel spoilerLevelToShow,
+  ) {
+    if (spoilerLevelToShow == SpoilerLevel.showAllSpoilers) return ships;
 
     return ships.where((ship) {
       final hints = ship.hints.orEmpty().map((h) => h.toLowerCase());
       final tags = ship.tags.orEmpty().map((t) => t.toLowerCase());
 
       final hidden = hints.contains('hide_in_codex');
+      final isSlightSpoiler = tags.any(slightSpoilerTags.contains);
       final isSpoiler = tags.any(spoilerTags.contains);
 
-      return !hidden && !isSpoiler;
+      if (spoilerLevelToShow == SpoilerLevel.showSlightSpoilers) {
+        return !hidden && !isSpoiler;
+      }
+
+      // Show no spoilers
+      return !hidden && !isSlightSpoiler && !isSpoiler;
     }).toList();
   }
 

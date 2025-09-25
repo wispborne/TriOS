@@ -13,13 +13,16 @@
   - You may now set custom paths for more game folders: executable, mods, saves, and game data (core).
     - NOT FINISHED in prerelease version.
   - Ship Viewer now has three options for showing spoilers; none, "show CODEX_UNLOCKABLE", and show all spoilers including <ultra redacted>.
+  - Weapon Viewer now shows OP.
+  - Added popup dialogs to Weapons and Ships that display full information.
 - Fixed
   - Ship Viewer filters not working.
   - Custom launcher files are no longer hardcoded to use the game folder as their working directory.
     - This fixes Fast Rendering, which launches using a .bat in the `starsector-core` folder.
 - Changed
-  - Cleaned up search bar positioning on Ships and Weapons pages.
+  - Cleaned up search bar positioning on Ships and Weapons Viewer pages.
   - CODEX_UNLOCKABLE ships are now hidden by default on the Ship Viewer.
+  - Cleaned up the Filter UI (icon in top-left) on the Ships and Weapons Viewer pages.
 
 # 1.2.3
 - Fixed

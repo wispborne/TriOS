@@ -27,6 +27,7 @@ import 'package:trios/widgets/export_to_csv_dialog.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/text_trios.dart';
 import 'package:trios/widgets/toolbar_checkbox_button.dart';
+import 'package:trios/widgets/trios_dropdown_menu.dart';
 
 import '../widgets/multi_split_mixin_view.dart';
 
@@ -156,12 +157,40 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
                 ),
                 const SizedBox(width: 8),
                 MovingTooltipWidget.text(
-                  message: "Show hidden weapons.",
+                  message:
+                      "Show hidden weapons (deco weapons, system weapons without SHOW_IN_CODEX tag).",
                   child: TriOSToolbarCheckboxButton(
                     text: "Show Hidden",
                     value: controllerState.showHidden,
                     onChanged: (value) => controller.toggleShowHidden(),
                   ),
+                ),
+                const SizedBox(width: 8),
+                TriOSDropdownMenu<WeaponSpoilerLevel>(
+                  initialSelection: controllerState.weaponSpoilerLevel,
+                  onSelected: (level) {
+                    if (level == null) return;
+                    controller.setWeaponSpoilerLevel(level);
+                  },
+                  dropdownMenuEntries: [
+                    DropdownMenuEntry(
+                      value: WeaponSpoilerLevel.noSpoilers,
+                      label: "No spoilers",
+                      labelWidget: MovingTooltipWidget.text(
+                        message: "Hides weapons tagged CODEX_UNLOCKABLE.",
+                        child: Text("No spoilers"),
+                      ),
+                    ),
+                    DropdownMenuEntry(
+                      value: WeaponSpoilerLevel.showAllSpoilers,
+                      label: "Show all spoilers",
+                      labelWidget: MovingTooltipWidget.text(
+                        warningLevel: TooltipWarningLevel.warning,
+                        message: "Shows weapons tagged CODEX_UNLOCKABLE.",
+                        child: Text("Show all spoilers"),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(width: 8),
                 TriOSToolbarCheckboxButton(
@@ -346,6 +375,7 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
                           controller: _filterScrollController,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
+                            spacing: 4,
                             children: controllerState.filterCategories.map((
                               filter,
                             ) {
@@ -408,12 +438,254 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
         rowBuilder: ({required item, required modifiers, required child}) =>
             SizedBox(
               height: 50,
-              child: Container(
-                color: Colors.transparent,
-                child: buildRowContextMenu(item, child),
+              child: InkWell(
+                onTap: () => _showWeaponDetailsDialog(context, item),
+                child: Container(
+                  // Needed to add hit detection for right-clicking.
+                  color: Colors.transparent,
+                  child: buildRowContextMenu(item, child),
+                ),
               ),
             ),
         groups: [UngroupedWeaponGridGroup(), ModNameWeaponGridGroup()],
+      ),
+    );
+  }
+
+  void _showWeaponDetailsDialog(BuildContext context, Weapon w) {
+    final theme = Theme.of(context);
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return Dialog(
+          insetPadding: const EdgeInsets.all(16),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildInfoPane(w, theme, context),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        const Spacer(),
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: const Text('Close'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Column _buildInfoPane(Weapon w, ThemeData theme, BuildContext context) {
+    final imagePaths = spritesForWeapon(w);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                w.name ?? w.id ?? 'Weapon',
+                style: theme.textTheme.titleLarge,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            IconButton(
+              tooltip: 'Close',
+              icon: const Icon(Icons.close),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: imagePaths
+              .map(
+                (p) => FutureBuilder<String?>(
+                  future: _getWeaponImagePath([p]),
+                  builder: (context, snap) {
+                    final path = snap.data;
+                    if (path == null) {
+                      return const SizedBox.shrink();
+                    }
+                    return GestureDetector(
+                      onTap: () => path.toFile().showInExplorer(),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          MovingTooltipWidget.image(
+                            path: path,
+                            child: Image.file(
+                              File(path),
+                              width: 56,
+                              height: 56,
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          SizedBox(
+                            width: 56,
+                            child: TextTriOS(
+                              path.split(Platform.pathSeparator).last,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.bodySmall,
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              )
+              .toList(),
+        ),
+        if (w.customPrimary != null || w.customAncillary != null)
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 8),
+              if ((w.customPrimary ?? '').isNotEmpty)
+                w.customPrimary!.replaceSubstitutionsRich(
+                  w.customPrimaryHL,
+                  highlightColor: theme.colorScheme.secondary,
+                  baseStyle: theme.textTheme.bodySmall,
+                ),
+              if ((w.customAncillary ?? '').isNotEmpty)
+                w.customAncillary!.replaceSubstitutionsRich(
+                  w.customAncillaryHL,
+                  highlightColor: theme.colorScheme.secondary,
+                  baseStyle: theme.textTheme.bodySmall,
+                ),
+            ],
+          ),
+        Divider(color: Theme.of(context).colorScheme.outline),
+        _kv(
+          w.modVariant != null ? 'Mod' : null,
+          w.modVariant?.modInfo.nameOrId ?? 'Vanilla',
+          theme,
+        ),
+        _kv('Type', w.weaponType?.toTitleCase(), theme),
+        _kv('Size', w.size?.toTitleCase(), theme),
+        _kv('Tech/Manufacturer', w.techManufacturer, theme),
+        const SizedBox(height: 12),
+        Wrap(
+          runSpacing: 6,
+          children: [
+            _chip('Dmg/Shot', _fmtNum(w.damagePerShot)),
+            _chip('Dmg/Sec', _fmtNum(w.damagePerSecond)),
+            _chip('EMP', _fmtNum(w.emp)),
+            _chip('Impact', _fmtNum(w.impact)),
+            _chip('Range', _fmtNum(w.range)),
+            _chip('Turn Rate', _fmtNum(w.turnRate)),
+            _chip('OP', _fmtNum(w.ops)),
+            _chip('Ammo', _fmtNum(w.ammo)),
+            _chip('Ammo/Sec', _fmtNum(w.ammoPerSec)),
+            _chip('Reload Size', _fmtNum(w.reloadSize)),
+            _chip('Energy/Shot', _fmtNum(w.energyPerShot)),
+            _chip('Energy/Sec', _fmtNum(w.energyPerSecond)),
+            _chip('Chargeup', _fmtNum(w.chargeup)),
+            _chip('Chargedown', _fmtNum(w.chargedown)),
+            _chip('Burst Size', _fmtNum(w.burstSize)),
+            _chip('Burst Delay', _fmtNum(w.burstDelay)),
+            _chip('Min Spread', _fmtNum(w.minSpread)),
+            _chip('Max Spread', _fmtNum(w.maxSpread)),
+            _chip('Spread/Shot', _fmtNum(w.spreadPerShot)),
+            _chip('Spread Decay/Sec', _fmtNum(w.spreadDecayPerSec)),
+            _chip('Beam Speed', _fmtNum(w.beamSpeed)),
+            _chip('Proj Speed', _fmtNum(w.projSpeed)),
+            _chip('Launch Speed', _fmtNum(w.launchSpeed)),
+            _chip('Flight Time', _fmtNum(w.flightTime)),
+            _chip('Proj HP', _fmtNum(w.projHitpoints)),
+            _chip('Autofire Acc Bonus', _fmtNum(w.autofireAccBonus)),
+            if ((w.extraArcForAI ?? '').isNotEmpty)
+              _chip('Extra Arc (AI)', w.extraArcForAI!),
+            if ((w.hints ?? '').isNotEmpty) _chip('Hints', w.hints!),
+            if ((w.tags ?? '').isNotEmpty) _chip('Tags', w.tags!),
+            if ((w.groupTag ?? '').isNotEmpty) _chip('Group Tag', w.groupTag!),
+            if ((w.forWeaponTooltip ?? '').isNotEmpty)
+              _chip('Tooltip', w.forWeaponTooltip!),
+            if ((w.primaryRoleStr ?? '').isNotEmpty)
+              _chip('Primary Role', w.primaryRoleStr!),
+            if ((w.speedStr ?? '').isNotEmpty) _chip('Speed', w.speedStr!),
+            if ((w.trackingStr ?? '').isNotEmpty)
+              _chip('Tracking', w.trackingStr!),
+            if ((w.turnRateStr ?? '').isNotEmpty)
+              _chip('Turn Rate (txt)', w.turnRateStr!),
+            if ((w.accuracyStr ?? '').isNotEmpty)
+              _chip('Accuracy', w.accuracyStr!),
+            if (w.noDPSInTooltip == true) _chip('No DPS In Tooltip', 'Yes'),
+            if (w.number != null) _chip('Number', _fmtNum(w.number)),
+            if ((w.specClass ?? '').isNotEmpty)
+              _chip('Spec Class', w.specClass!),
+            if ((w.type ?? '').isNotEmpty) _chip('Type', w.type!),
+          ],
+        ),
+      ],
+    );
+  }
+
+  String _fmtNum(num? n) => switch (n) {
+    null => '-',
+    double d => d.toStringAsFixed(d % 1 == 0 ? 0 : 2),
+    _ => n.toString(),
+  };
+
+  Widget _kv(String? k, String? v, ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: RichText(
+        text: TextSpan(
+          style: theme.textTheme.bodySmall,
+          children: [
+            if (k != null) TextSpan(text: '$k: '),
+            TextSpan(
+              text: (v == null || v.isEmpty) ? '-' : v,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _chip(String label, String value) {
+    return Container(
+      margin: const EdgeInsets.only(right: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: RichText(
+        text: TextSpan(
+          style: const TextStyle(fontSize: 11, color: Colors.white70),
+          children: [
+            TextSpan(
+              text: '$label: ',
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            TextSpan(text: value),
+          ],
+        ),
       ),
     );
   }
@@ -479,6 +751,29 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
 
     return [
       WispGridColumn(
+        key: 'info',
+        isSortable: false,
+        name: '',
+        itemCellBuilder: (item, _) => MovingTooltipWidget.framed(
+          tooltipWidget: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400),
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: SingleChildScrollView(
+                child: _buildInfoPane(item, theme, context),
+              ),
+            ),
+          ),
+          child: Icon(
+            Icons.info,
+            size: 24,
+            color: theme.iconTheme.color?.withAlpha(200),
+          ),
+        ),
+        csvValue: (weapon) => null,
+        defaultState: WispGridColumnState(position: position++, width: 32),
+      ),
+      WispGridColumn(
         key: 'modVariant',
         isSortable: true,
         name: 'Mod',
@@ -487,7 +782,7 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
           item.modVariant?.modInfo.nameOrId ?? "Vanilla",
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: theme.textTheme.bodyMedium,
+          style: theme.textTheme.labelLarge,
         ),
         csvValue: (weapon) => weapon.modVariant?.modInfo.nameOrId ?? "Vanilla",
         defaultState: WispGridColumnState(position: position++, width: 120),
@@ -516,6 +811,7 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
         width: 150,
       ),
       col('damagePerShot', 'Dmg/Shot', (w) => w.damagePerShot, width: 110),
+      col('op', 'OP', (w) => w.ops, width: 110),
       col('range', 'Range', (w) => w.range, width: 80),
       col('damagePerSecond', 'Dmg/Sec', (w) => w.damagePerSecond, width: 90),
       col('ammo', 'Ammo', (w) => w.ammo, width: 80),
@@ -662,15 +958,18 @@ class _WeaponImageCellState extends State<WeaponImageCell> {
         child: Center(child: Icon(Icons.image_not_supported)),
       );
     } else {
-      return InkWell(
-        onTap: () {
-          _existingImagePath?.toFile().showInExplorer();
-        },
-        child: Image.file(
-          File(_existingImagePath!),
-          width: 40,
-          height: 40,
-          fit: BoxFit.contain,
+      return MovingTooltipWidget.image(
+        path: _existingImagePath!,
+        child: InkWell(
+          onTap: () {
+            _existingImagePath?.toFile().showInExplorer();
+          },
+          child: Image.file(
+            File(_existingImagePath!),
+            width: 40,
+            height: 40,
+            fit: BoxFit.contain,
+          ),
         ),
       );
     }

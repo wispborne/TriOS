@@ -158,4 +158,10 @@ class Weapon with WeaponMappable implements WispGridItem {
     this.hardpointSprite,
     this.hardpointGunSprite,
   });
+
+  /// Returns the hints as a set of strings, with each hint trimmed and lowercased.
+  late Set<String> hintsAsSet = hints?.split(',').map((hint) => hint.trim().toLowerCase()).toSet() ?? {};
+
+  /// Returns the tags as a set of strings, with each tag trimmed and lowercased.
+  late Set<String> tagsAsSet = tags?.split(',').map((tag) => tag.trim().toLowerCase()).toSet() ?? {};
 }

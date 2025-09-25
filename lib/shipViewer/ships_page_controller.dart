@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:dart_mappable/dart_mappable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/shipSystemsManager/ship_system.dart';
@@ -12,8 +13,11 @@ import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
 
+part 'ships_page_controller.mapper.dart';
+
 /// State class for the ships page controller
-class ShipsPageState {
+@MappableClass()
+class ShipsPageState with ShipsPageStateMappable {
   final bool showEnabled;
   final SpoilerLevel spoilerLevelToShow;
   final bool splitPane;
@@ -43,39 +47,9 @@ class ShipsPageState {
     this.currentSearchQuery = '',
     this.isLoading = false,
   });
-
-  ShipsPageState copyWith({
-    bool? showEnabled,
-    SpoilerLevel? spoilerLevelToShow,
-    bool? splitPane,
-    bool? showFilters,
-    List<GridFilter<Ship>>? filterCategories,
-    Map<String, List<String>>? shipSearchIndices,
-    Map<String, ShipSystem>? shipSystemsMap,
-    List<Ship>? allShips,
-    List<Ship>? filteredShips,
-    List<Ship>? shipsBeforeGridFilter,
-    String? currentSearchQuery,
-    bool? isLoading,
-  }) {
-    return ShipsPageState(
-      showEnabled: showEnabled ?? this.showEnabled,
-      spoilerLevelToShow: spoilerLevelToShow ?? this.spoilerLevelToShow,
-      splitPane: splitPane ?? this.splitPane,
-      showFilters: showFilters ?? this.showFilters,
-      filterCategories: filterCategories ?? this.filterCategories,
-      shipSearchIndices: shipSearchIndices ?? this.shipSearchIndices,
-      shipSystemsMap: shipSystemsMap ?? this.shipSystemsMap,
-      allShips: allShips ?? this.allShips,
-      filteredShips: filteredShips ?? this.filteredShips,
-      shipsBeforeGridFilter:
-          shipsBeforeGridFilter ?? this.shipsBeforeGridFilter,
-      currentSearchQuery: currentSearchQuery ?? this.currentSearchQuery,
-      isLoading: isLoading ?? this.isLoading,
-    );
-  }
 }
 
+@MappableEnum()
 enum SpoilerLevel { showNone, showSlightSpoilers, showAllSpoilers }
 
 /// Controller for the ships page using AutoDisposeNotifier (synchronous)
@@ -104,6 +78,7 @@ class ShipsPageController extends AutoDisposeNotifier<ShipsPageState> {
       GridFilter<Ship>(
         name: 'Shield Type',
         valueGetter: (ship) => ship.shieldType ?? '',
+        displayNameGetter: (value) => value.toTitleCase(),
       ),
       GridFilter<Ship>(
         name: 'Defense Id',

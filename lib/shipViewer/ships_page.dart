@@ -370,6 +370,8 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
                           primary: true,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            spacing: 4,
                             children: controllerState.filterCategories.map((
                               filter,
                             ) {
@@ -428,7 +430,16 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
         showBottomScrollbar: ScrollbarVisibility.always,
       ),
       rowBuilder: ({required item, required modifiers, required child}) =>
-          SizedBox(height: 50, child: buildRowContextMenu(item, child)),
+          SizedBox(
+            height: 50,
+            child: InkWell(
+              onTap: () => _showShipDetailsDialog(context, item),
+              child: Container(
+                color: Colors.transparent,
+                child: buildRowContextMenu(item, child),
+              ),
+            ),
+          ),
       groups: [ModShipGridGroup()],
     );
   }
@@ -494,6 +505,25 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
     }
 
     return [
+      WispGridColumn(
+        key: 'info',
+        name: '',
+        isSortable: false,
+        itemCellBuilder: (item, _) => MovingTooltipWidget.framed(
+          tooltipWidget: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: SingleChildScrollView(
+                child: _buildShipInfoPane(item, theme, controllerState),
+              ),
+            ),
+          ),
+          child: Icon(Icons.info, size: 24, color: theme.iconTheme.color?.withAlpha(200)),
+        ),
+        csvValue: (ship) => null,
+        defaultState: WispGridColumnState(position: position++, width: 32),
+      ),
       WispGridColumn(
         key: 'modVariant',
         isSortable: true,
@@ -622,6 +652,193 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
       ],
     );
   }
+
+  void _showShipDetailsDialog(BuildContext context, Ship s) {
+    final theme = Theme.of(context);
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return Dialog(
+          insetPadding: const EdgeInsets.all(16),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 650),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildShipInfoPane(
+                      s,
+                      theme,
+                      ref.read(shipsPageControllerProvider),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        const Spacer(),
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: const Text('Close'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Column _buildShipInfoPane(
+    Ship s,
+    ThemeData theme,
+    ShipsPageState controllerState,
+  ) {
+    final controller = ref.read(shipsPageControllerProvider.notifier);
+    final gameCoreDir = controller.getGameCoreDir();
+    final spriteDir = _getPathForSpriteName(s, gameCoreDir);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                s.hullName ?? s.id ?? 'Ship',
+                style: theme.textTheme.titleLarge,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            IconButton(
+              tooltip: 'Close',
+              icon: const Icon(Icons.close),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            if ((spriteDir.path).isNotEmpty)
+              GestureDetector(
+                onTap: () => spriteDir.toFile().showInExplorer(),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    MovingTooltipWidget.image(
+                      path: spriteDir.path,
+                      child: Image.file(
+                        File(spriteDir.path),
+                        width: 80,
+                        height: 80,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    SizedBox(
+                      width: 80,
+                      child: TextTriOS(
+                        spriteDir.path.split(Platform.pathSeparator).last,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodySmall,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Divider(color: Theme.of(context).colorScheme.outline),
+        _kv(
+          s.modVariant != null ? 'Mod' : null,
+          s.modVariant?.modInfo.nameOrId ?? 'Vanilla',
+          theme,
+        ),
+        _kv('Hull Size', s.hullSizeForDisplay(), theme),
+        _kv(
+          'System',
+          controllerState.shipSystemsMap[s.systemId ?? ""]?.name ?? s.systemId,
+          theme,
+        ),
+        _kv('Tech/Manufacturer', s.techManufacturer, theme),
+        const SizedBox(height: 12),
+        Wrap(
+          runSpacing: 6,
+          children: [
+            _chip('Fleet Pts', _fmtNum(s.fleetPts)),
+            _chip('Hitpoints', _fmtNum(s.hitpoints)),
+            _chip('Armor', _fmtNum(s.armorRating)),
+            _chip('Max Flux', _fmtNum(s.maxFlux)),
+            _chip('Flux Diss', _fmtNum(s.fluxDissipation)),
+            _chip('Shield', s.shieldType?.toTitleCase() ?? '-'),
+            _chip('Weapons', _fmtNum(s.weaponSlots?.length)),
+            if ((s.designation ?? '').isNotEmpty)
+              _chip('Designation', s.designation!),
+            if ((s.tags ?? []).isNotEmpty) _chip('Tags', s.tags!.join(", ")),
+          ],
+        ),
+      ],
+    );
+  }
+
+  String _fmtNum(num? n) => switch (n) {
+    null => '-',
+    double d => d.toStringAsFixed(d % 1 == 0 ? 0 : 2),
+    _ => n.toString(),
+  };
+
+  Widget _kv(String? k, String? v, ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: RichText(
+        text: TextSpan(
+          style: theme.textTheme.bodySmall,
+          children: [
+            if (k != null) TextSpan(text: '$k: '),
+            TextSpan(
+              text: (v == null || v.isEmpty) ? '-' : v,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _chip(String label, String value) {
+    return Container(
+      margin: const EdgeInsets.only(right: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: RichText(
+        text: TextSpan(
+          style: const TextStyle(fontSize: 11, color: Colors.white70),
+          children: [
+            TextSpan(
+              text: '$label: ',
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            TextSpan(text: value),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 // Ship image loader with basic caching
@@ -667,14 +884,8 @@ class _ShipImageCellState extends State<ShipImageCell> {
         child: Icon(Icons.image_not_supported),
       );
     }
-    return MovingTooltipWidget(
-      tooltipWidget: Card(
-        color: Color.from(red: 0.05, green: 0.05, blue: 0.05, alpha: 1),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Image.file(File(_extantPath!), fit: BoxFit.contain),
-        ),
-      ),
+    return MovingTooltipWidget.image(
+      path: _extantPath!,
       child: InkWell(
         onTap: () {
           _extantPath?.toFile().showInExplorer();

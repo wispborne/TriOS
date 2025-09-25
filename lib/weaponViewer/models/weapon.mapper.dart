@@ -195,6 +195,12 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
   static File? _$wpnFile(Weapon v) => v.wpnFile;
   static const Field<Weapon, File> _f$wpnFile =
       Field('wpnFile', _$wpnFile, mode: FieldMode.member);
+  static Set<String> _$hintsAsSet(Weapon v) => v.hintsAsSet;
+  static const Field<Weapon, Set<String>> _f$hintsAsSet =
+      Field('hintsAsSet', _$hintsAsSet, mode: FieldMode.member);
+  static Set<String> _$tagsAsSet(Weapon v) => v.tagsAsSet;
+  static const Field<Weapon, Set<String>> _f$tagsAsSet =
+      Field('tagsAsSet', _$tagsAsSet, mode: FieldMode.member);
 
   @override
   final MappableFields<Weapon> fields = const {
@@ -257,6 +263,8 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
     #modVariant: _f$modVariant,
     #csvFile: _f$csvFile,
     #wpnFile: _f$wpnFile,
+    #hintsAsSet: _f$hintsAsSet,
+    #tagsAsSet: _f$tagsAsSet,
   };
 
   static Weapon _instantiate(DecodingData data) {

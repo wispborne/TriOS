@@ -21,7 +21,7 @@ class TriOSDropdownMenu<T> extends StatelessWidget {
     this.onSelected,
     this.height = 30,
     this.borderRadius = 10,
-    this.contentPadding = const EdgeInsets.symmetric(horizontal: 16),
+    this.contentPadding = const EdgeInsets.symmetric(horizontal: 8),
     this.textStyle,
     this.enabled = true,
   });

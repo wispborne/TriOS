@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:dart_mappable/dart_mappable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/shipViewer/filter_widget.dart';
@@ -9,8 +10,10 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/weaponViewer/models/weapon.dart';
 import 'package:trios/weaponViewer/weapons_manager.dart';
 
-// State class for the weapons page
-class WeaponsPageState {
+part 'weapons_page_controller.mapper.dart';
+
+@MappableClass()
+class WeaponsPageState with WeaponsPageStateMappable {
   final List<GridFilter<Weapon>> filterCategories;
   final List<Weapon> allWeapons;
   final List<Weapon> filteredWeapons;
@@ -22,6 +25,7 @@ class WeaponsPageState {
   final bool splitPane;
   final bool showFilters;
   final bool isLoading;
+  final WeaponSpoilerLevel weaponSpoilerLevel;
 
   const WeaponsPageState({
     this.filterCategories = const [],
@@ -35,37 +39,12 @@ class WeaponsPageState {
     this.splitPane = false,
     this.showFilters = false,
     this.isLoading = false,
+    this.weaponSpoilerLevel = WeaponSpoilerLevel.noSpoilers,
   });
-
-  WeaponsPageState copyWith({
-    List<GridFilter<Weapon>>? filterCategories,
-    List<Weapon>? allWeapons,
-    List<Weapon>? filteredWeapons,
-    List<Weapon>? weaponsBeforeGridFilter,
-    Map<String, List<String>>? weaponSearchIndices,
-    String? currentSearchQuery,
-    bool? showEnabled,
-    bool? showHidden,
-    bool? splitPane,
-    bool? showFilters,
-    bool? isLoading,
-  }) {
-    return WeaponsPageState(
-      filterCategories: filterCategories ?? this.filterCategories,
-      allWeapons: allWeapons ?? this.allWeapons,
-      filteredWeapons: filteredWeapons ?? this.filteredWeapons,
-      weaponsBeforeGridFilter:
-          weaponsBeforeGridFilter ?? this.weaponsBeforeGridFilter,
-      weaponSearchIndices: weaponSearchIndices ?? this.weaponSearchIndices,
-      currentSearchQuery: currentSearchQuery ?? this.currentSearchQuery,
-      showEnabled: showEnabled ?? this.showEnabled,
-      showHidden: showHidden ?? this.showHidden,
-      splitPane: splitPane ?? this.splitPane,
-      showFilters: showFilters ?? this.showFilters,
-      isLoading: isLoading ?? this.isLoading,
-    );
-  }
 }
+
+@MappableEnum()
+enum WeaponSpoilerLevel { noSpoilers, showAllSpoilers }
 
 // Provider for the weapons page controller
 final weaponsPageControllerProvider =
@@ -81,6 +60,7 @@ class WeaponsPageController extends AutoDisposeNotifier<WeaponsPageState> {
       GridFilter<Weapon>(
         name: 'Weapon Type',
         valueGetter: (weapon) => weapon.weaponType ?? '',
+        displayNameGetter: (name) => name.toTitleCase(),
       ),
       GridFilter<Weapon>(
         name: 'Mod',
@@ -163,11 +143,11 @@ class WeaponsPageController extends AutoDisposeNotifier<WeaponsPageState> {
   ) {
     var weapons = currentState.allWeapons.toList();
 
-    // Apply enabled filter
     weapons = _filterByEnabled(weapons, mods, currentState.showEnabled);
 
-    // Apply hidden filter
     weapons = _filterByHidden(weapons, currentState.showHidden);
+
+    weapons = _filterByWeaponSpoilers(weapons, currentState.weaponSpoilerLevel);
 
     // Store weapons before grid filters for filter panel
     final weaponsBeforeGridFilter = weapons.toList();
@@ -175,7 +155,6 @@ class WeaponsPageController extends AutoDisposeNotifier<WeaponsPageState> {
     // Apply grid filters
     weapons = _applyFilters(weapons, currentState.filterCategories);
 
-    // Apply search filter
     weapons = _filterBySearch(
       weapons,
       currentState.currentSearchQuery,
@@ -210,6 +189,15 @@ class WeaponsPageController extends AutoDisposeNotifier<WeaponsPageState> {
   void toggleShowHidden() {
     final mods = ref.read(AppState.mods);
     final updatedState = state.copyWith(showHidden: !state.showHidden);
+    final processedState = _processAllFilters(updatedState, mods);
+
+    state = processedState;
+  }
+
+  /// Set spoiler level for weapons
+  void setWeaponSpoilerLevel(WeaponSpoilerLevel level) {
+    final mods = ref.read(AppState.mods);
+    final updatedState = state.copyWith(weaponSpoilerLevel: level);
     final processedState = _processAllFilters(updatedState, mods);
 
     state = processedState;
@@ -288,7 +276,28 @@ class WeaponsPageController extends AutoDisposeNotifier<WeaponsPageState> {
 
     return weapons
         .where((weapon) => weapon.weaponType?.toLowerCase() != "decorative")
+        .where(
+          (weapon) =>
+              // If weapon has SYSTEM hint, hide unless SHOW_IN_CODEX tag is present
+              !weapon.hintsAsSet.contains("system") ||
+              weapon.tagsAsSet.contains("show_in_codex"),
+        )
         .toList();
+  }
+
+  /// Filter weapons by spoiler level (hide codex_unlockable when No spoilers)
+  List<Weapon> _filterByWeaponSpoilers(
+    List<Weapon> weapons,
+    WeaponSpoilerLevel level,
+  ) {
+    if (level == WeaponSpoilerLevel.showAllSpoilers) return weapons;
+
+    return weapons.where((weapon) {
+      final tags =
+          weapon.tags?.split(',').map((t) => t.trim().toLowerCase()) ?? [];
+      final isCodexUnlockable = tags.contains('codex_unlockable');
+      return !isCodexUnlockable;
+    }).toList();
   }
 
   /// Apply grid filters to weapons

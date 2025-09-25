@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/thirdparty/dartx/string.dart';
+import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/tooltip_frame.dart';
 
 enum TooltipPosition { topLeft, topRight, bottomLeft, bottomRight }
@@ -285,6 +286,27 @@ class MovingTooltipWidget extends StatefulWidget {
           child: child,
         );
       },
+    );
+  }
+
+  static Widget image({
+    Key? key,
+    double padding = 16,
+    Color? backgroundColor,
+    required String path,
+    required Widget child,
+  }) {
+    return MovingTooltipWidget(
+      tooltipWidget: Card(
+        color:
+            backgroundColor ??
+            Color.from(red: 0.05, green: 0.05, blue: 0.05, alpha: 1),
+        child: Padding(
+          padding: EdgeInsets.all(padding),
+          child: Image.file(path.toFile(), fit: BoxFit.contain),
+        ),
+      ),
+      child: child,
     );
   }
 

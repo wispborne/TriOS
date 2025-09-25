@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/text_trios.dart';
 
 class GridFilter<T> {
@@ -118,6 +119,16 @@ class _GridFilterWidgetState<T> extends State<GridFilterWidget<T>> {
   int get excludedCount =>
       widget.filterStates.values.where((v) => v == false).length;
 
+  List<String> get includedValues => widget.filterStates.entries
+      .where((e) => e.value == true)
+      .map((e) => widget.filter.displayNameGetter?.call(e.key) ?? e.key)
+      .toList();
+
+  List<String> get excludedValues => widget.filterStates.entries
+      .where((e) => e.value == false)
+      .map((e) => widget.filter.displayNameGetter?.call(e.key) ?? e.key)
+      .toList();
+
   int get totalCount => _uniqueValues.length;
 
   @override
@@ -127,8 +138,10 @@ class _GridFilterWidgetState<T> extends State<GridFilterWidget<T>> {
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      color: theme.colorScheme.surfaceContainer,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           InkWell(
             onTap: () => setState(() => _isExpanded = !_isExpanded),
@@ -181,19 +194,55 @@ class _GridFilterWidgetState<T> extends State<GridFilterWidget<T>> {
                         horizontal: 8,
                         vertical: 2,
                       ),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: theme.colorScheme.primary.withOpacity(0.3),
-                        ),
-                      ),
-                      child: TextTriOS(
-                        '${includedCount}+ ${excludedCount}-',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.primary,
-                          fontWeight: FontWeight.w500,
-                        ),
+                      // decoration: BoxDecoration(
+                      //   // color: theme.colorScheme.primary.withOpacity(0.1),
+                      //   borderRadius: BorderRadius.circular(12),
+                      //   border: Border.all(
+                      //     color: theme.colorScheme.outline.withOpacity(0.3),
+                      //   ),
+                      // ),
+                      child: Row(
+                        children: [
+                          if (includedCount > 0)
+                            MovingTooltipWidget.text(
+                              message:
+                                  'Included:\n${includedValues.join('\n')}',
+                              child: Row(
+                                children: [
+                                  Text(
+                                    includedCount.toString(),
+                                    style: theme.textTheme.labelMedium,
+                                  ),
+                                  const SizedBox(width: 2),
+                                  Icon(Icons.check, size: 16),
+                                ],
+                              ),
+                            ),
+                          if (includedCount > 0 && excludedCount > 0)
+                            const SizedBox(width: 8),
+                          if (excludedCount > 0)
+                            MovingTooltipWidget.text(
+                              message:
+                                  'Excluded:\n${excludedValues.join('\n')}',
+                              child: Row(
+                                children: [
+                                  Text(
+                                    excludedCount.toString(),
+                                    style: theme.textTheme.labelMedium,
+                                  ),
+                                  const SizedBox(width: 2),
+                                  Icon(Icons.remove, size: 16),
+                                ],
+                              ),
+                            ),
+                          // TextTriOS(
+                          //   '${includedCount}+ ${excludedCount}–',
+                          //   style: theme.textTheme.bodySmall?.copyWith(
+                          //     color: theme.colorScheme.primary,
+                          //     fontWeight: FontWeight.w500,
+                          //   ),
+                          // ),
+                        ],
                       ),
                     ),
                 ],
@@ -208,55 +257,58 @@ class _GridFilterWidgetState<T> extends State<GridFilterWidget<T>> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 4),
-                  SizedBox(
-                    height: 200,
-                    child: SingleChildScrollView(
-                      child: Wrap(
-                        spacing: 4,
-                        runSpacing: 4,
-                        children: _uniqueValues.map((value) {
-                          final state = widget.filterStates[value];
+                  SingleChildScrollView(
+                    child: Wrap(
+                      spacing: 4,
+                      runSpacing: 4,
+                      children: _uniqueValues.map((value) {
+                        final state = widget.filterStates[value];
 
-                          // Determine the visual style based on state
-                          Color? chipColor;
-                          Icon? leadingIcon;
-                          BorderSide? side;
+                        // Determine the visual style based on state
+                        Color? chipColor;
+                        Icon? leadingIcon;
+                        BorderSide? side;
 
-                          switch (state) {
-                            case true: // Include
-                              chipColor = theme.colorScheme.primaryContainer;
-                              leadingIcon = Icon(
-                                Icons.check,
-                                size: 16,
-                                color: theme.colorScheme.primary,
-                              );
-                              side = BorderSide(
-                                color: theme.colorScheme.primary,
-                              );
-                              break;
-                            case false: // Exclude
-                              chipColor = theme.colorScheme.secondaryContainer;
-                              leadingIcon = Icon(
-                                Icons.remove,
-                                size: 16,
-                                color: theme.colorScheme.secondary,
-                              );
-                              side = BorderSide(
-                                color: theme.colorScheme.secondary,
-                              );
-                              break;
-                            case null: // No filter
-                              chipColor = null;
-                              leadingIcon = null;
-                              side = BorderSide(
-                                color: theme.colorScheme.outline.withOpacity(
-                                  0.25,
-                                ),
-                              );
-                              break;
-                          }
+                        switch (state) {
+                          case true: // Include
+                            chipColor = theme.colorScheme.primaryContainer;
+                            leadingIcon = Icon(
+                              Icons.check,
+                              size: 16,
+                              color: theme.colorScheme.primary,
+                            );
+                            side = BorderSide(color: theme.colorScheme.primary);
+                            break;
+                          case false: // Exclude
+                            chipColor =
+                                theme.colorScheme.surfaceContainerLowest;
+                            leadingIcon = Icon(
+                              Icons.remove,
+                              size: 16,
+                              color: theme.colorScheme.secondary,
+                            );
+                            side = BorderSide(
+                              color: theme.colorScheme.secondary,
+                            );
+                            break;
+                          case null: // No filter
+                            chipColor = null;
+                            leadingIcon = null;
+                            side = BorderSide(
+                              color: theme.colorScheme.outline.withOpacity(
+                                0.25,
+                              ),
+                            );
+                            break;
+                        }
 
-                          return FilterChip(
+                        return MovingTooltipWidget.text(
+                          message: switch (state) {
+                            true => "Included",
+                            false => "Excluded",
+                            null => "",
+                          },
+                          child: FilterChip(
                             label: Text(
                               widget.filter.displayNameGetter != null
                                   ? widget.filter.displayNameGetter!(value)
@@ -269,12 +321,12 @@ class _GridFilterWidgetState<T> extends State<GridFilterWidget<T>> {
                             selectedColor: chipColor,
                             checkmarkColor: Colors.transparent,
                             // Hide the default checkmark
-                            backgroundColor: Colors.transparent,
+                            backgroundColor: theme.colorScheme.surfaceContainer,
                             side: side,
                             showCheckmark: false,
-                          );
-                        }).toList(),
-                      ),
+                          ),
+                        );
+                      }).toList(),
                     ),
                   ),
                 ],

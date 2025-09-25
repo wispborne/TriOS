@@ -202,7 +202,8 @@ extension StringExt on String {
   String toTitleCase() {
     if (isEmpty) return this;
 
-    return split(' ')
+    return replaceAll('_', ' ')
+        .split(' ')
         .map((word) {
           if (word.isEmpty) return '';
           return word[0].toUpperCase() + word.substring(1).toLowerCase();
@@ -224,6 +225,139 @@ extension StringExt on String {
     if (endIndex > length) endIndex = length;
     return substring(startIndex, endIndex);
   }
+
+  /// Starsector style, replaces %s with replacementValues in order, but
+  /// doesn't replace %%s, as %% means % in the string.
+  String replaceSubstitutions(String? replacementValuesString) {
+    return _parseStarsectorSubstitutions(
+      template: this,
+      replacementValuesString: replacementValuesString,
+    ).map((it) => it.text).join();
+  }
+
+  /// Starsector style, returns RichText where each %s substitution is highlighted.
+  /// - `replacementValuesString` is a `|`-separated list.
+  /// - `highlightColor` is applied to substituted segments.
+  /// - Escaped percent `%%` renders as a single `%`.
+  RichText replaceSubstitutionsRich(
+    String? replacementValuesString, {
+    required Color highlightColor,
+    TextStyle? baseStyle,
+    TextAlign? textAlign,
+    TextDirection? textDirection,
+    int? maxLines,
+    TextOverflow? overflow,
+    StrutStyle? strutStyle,
+    TextHeightBehavior? textHeightBehavior,
+    Locale? locale,
+    TextWidthBasis? textWidthBasis,
+    TextScaler? textScaler,
+    bool? softWrap,
+  }) {
+    final parsed = _parseStarsectorSubstitutions(
+      template: this,
+      replacementValuesString: replacementValuesString,
+    );
+
+    final spans = <InlineSpan>[];
+    for (final part in parsed) {
+      spans.add(
+        TextSpan(
+          text: part.text,
+          style: part.isReplacement
+              ? (baseStyle ?? const TextStyle()).copyWith(color: highlightColor)
+              : baseStyle,
+        ),
+      );
+    }
+
+    return RichText(
+      text: TextSpan(children: spans, style: baseStyle),
+      textAlign: textAlign ?? TextAlign.start,
+      textDirection: textDirection,
+      maxLines: maxLines,
+      overflow: overflow ?? TextOverflow.clip,
+      strutStyle: strutStyle,
+      textHeightBehavior: textHeightBehavior,
+      locale: locale,
+      textWidthBasis: textWidthBasis ?? TextWidthBasis.parent,
+      textScaler: textScaler ?? TextScaler.noScaling,
+      softWrap: softWrap ?? true,
+    );
+  }
+}
+
+class _SubstitutionPart {
+  final String text;
+  final bool isReplacement;
+
+  _SubstitutionPart(this.text, this.isReplacement);
+}
+
+List<_SubstitutionPart> _parseStarsectorSubstitutions({
+  required String template,
+  required String? replacementValuesString,
+}) {
+  final parts = <_SubstitutionPart>[];
+
+  if (replacementValuesString == null || replacementValuesString.isEmpty) {
+    // No replacements: whole template is literal.
+    parts.add(_SubstitutionPart(template, false));
+    return parts;
+  }
+
+  final replacementValues = replacementValuesString
+      .split('|')
+      .map((it) => it.trim())
+      .toList();
+
+  final sb = StringBuffer();
+  int i = 0;
+  int argIndex = 0;
+
+  void flushLiteral() {
+    if (sb.isNotEmpty) {
+      parts.add(_SubstitutionPart(sb.toString(), false));
+      sb.clear();
+    }
+  }
+
+  while (i < template.length) {
+    final ch = template[i];
+
+    if (ch == '%') {
+      final next = (i + 1 < template.length) ? template[i + 1] : null;
+
+      if (next == '%') {
+        // Escaped percent
+        sb.write('%');
+        i += 2;
+        continue;
+      }
+
+      if (next == 's') {
+        // Flush pending literal, then add replacement part
+        flushLiteral();
+        final replacement = (argIndex < replacementValues.length)
+            ? replacementValues[argIndex++]
+            : '%s';
+        parts.add(_SubstitutionPart(replacement, true));
+        i += 2;
+        continue;
+      }
+
+      // Lone '%' or unsupported, treat '%' as literal
+      sb.write('%');
+      i += 1;
+      continue;
+    }
+
+    sb.write(ch);
+    i += 1;
+  }
+
+  flushLiteral();
+  return parts;
 }
 
 extension StringMapExt on Map<String, dynamic> {

@@ -15,6 +15,7 @@
   - Ship Viewer now has three options for showing spoilers; none, "show CODEX_UNLOCKABLE", and show all spoilers including <ultra redacted>.
   - Weapon Viewer now shows OP.
   - Added popup dialogs to Weapons and Ships that display full information.
+  - Option to unpin Favorited mods from the top of the mod list.
 - Fixed
   - Ship Viewer filters not working.
   - Custom launcher files are no longer hardcoded to use the game folder as their working directory.
@@ -23,6 +24,8 @@
   - Cleaned up search bar positioning on Ships and Weapons Viewer pages.
   - CODEX_UNLOCKABLE ships are now hidden by default on the Ship Viewer.
   - Cleaned up the Filter UI (icon in top-left) on the Ships and Weapons Viewer pages.
+  - Mac version now requires MacOS 13 (Ventura, released 2022).
+  - Log now waits to load until after mods are loaded in order to hasten startup.
 
 # 1.2.3
 - Fixed

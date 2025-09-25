@@ -7,6 +7,7 @@ import 'package:trios/chipper/views/chipper_home.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings.dart';
+import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/platform_paths.dart';
 
 import 'models/error_lines.dart';
@@ -29,6 +30,7 @@ class ChipperState {
 class _ChipperLogParserNotifier extends AsyncNotifier<LogChips?> {
   @override
   LogChips? build() {
+    // Reload when game is closed
     ref.listen(AppState.isGameRunning, (wasRunning, isRunning) {
       if (wasRunning?.valueOrNull == true && isRunning.valueOrNull == false) {
         loadDefaultLog();
@@ -38,7 +40,7 @@ class _ChipperLogParserNotifier extends AsyncNotifier<LogChips?> {
     return null;
   }
 
-  void parseLog(LogFile? next) {
+  void parseLogAndSetState(LogFile? next) {
     if (next == null) return;
     state = const AsyncValue.loading();
 
@@ -51,14 +53,20 @@ class _ChipperLogParserNotifier extends AsyncNotifier<LogChips?> {
     });
   }
 
-  loadDefaultLog() {
+  void loadDefaultLog() async {
     final gamePath = ref.read(appSettings.select((value) => value.gameDir));
     final gameFilesPath = getLogPath(gamePath!);
 
     if (gameFilesPath.existsSync()) {
       gameFilesPath.readAsBytes().then((bytes) async {
+        final stopwatch = Stopwatch()..start();
         final content = utf8.decode(bytes.toList(), allowMalformed: true);
-        return parseLog(LogFile(gameFilesPath.path, content));
+        final parsedLog = parseLogAndSetState(
+          LogFile(gameFilesPath.path, content),
+        );
+        stopwatch.stop();
+        Fimber.i("Parsed log in ${stopwatch.elapsedMilliseconds}ms");
+        return parsedLog;
       });
     }
   }

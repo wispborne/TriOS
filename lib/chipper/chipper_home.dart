@@ -54,7 +54,7 @@ Future<void> pasteLog(WidgetRef ref) async {
   if (clipboardData?.isNotEmpty == true) {
     ref
         .read(ChipperState.logRawContents.notifier)
-        .parseLog(clipboardData == null ? null : LogFile(null, clipboardData));
+        .parseLogAndSetState(clipboardData == null ? null : LogFile(null, clipboardData));
   }
 }
 
@@ -212,7 +212,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                       );
                       ref
                           .read(ChipperState.logRawContents.notifier)
-                          .parseLog(LogFile(file.path, content));
+                          .parseLogAndSetState(LogFile(file.path, content));
                     } else if (file.path != null) {
                       final content = utf8.decode(
                         File(file.path!).readAsBytesSync().toList(),
@@ -220,7 +220,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                       );
                       ref
                           .read(ChipperState.logRawContents.notifier)
-                          .parseLog(LogFile(file.path, content));
+                          .parseLogAndSetState(LogFile(file.path, content));
                     }
                   } else {
                     Fimber.w("Error reading file! $result");

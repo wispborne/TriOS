@@ -148,7 +148,7 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
             }
             return ref
                 .read(ChipperState.logRawContents.notifier)
-                .parseLog(LogFile(firstFile.path, content));
+                .parseLogAndSetState(LogFile(firstFile.path, content));
           });
           widget.onDroppedLog?.call(firstFile.path);
         }

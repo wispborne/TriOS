@@ -33,14 +33,19 @@ class _DashboardState extends ConsumerState<Dashboard>
   @override
   void initState() {
     super.initState();
-    if (ref.read(ChipperState.logRawContents).valueOrNull == null) {
-      ref.read(ChipperState.logRawContents.notifier).loadDefaultLog();
-    }
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
+
+    // For startup performance, wait to load until after mods have loaded.
+    if (ref.watch(AppState.mods).isNotEmpty) {
+      if (ref.read(ChipperState.logRawContents).valueOrNull == null) {
+        ref.read(ChipperState.logRawContents.notifier).loadDefaultLog();
+      }
+    }
+
     final isGameRunning = ref.watch(AppState.isGameRunning).value == true;
     final logfile = ref
         .watch(ChipperState.logRawContents)

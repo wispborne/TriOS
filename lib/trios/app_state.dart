@@ -385,7 +385,11 @@ class _GameRunningChecker extends AsyncNotifier<bool> {
         .toList();
 
     // Perform an initial check
+    // final stopwatch = Stopwatch()..start();
     bool isRunning = await _checkIfAnyProcessIsRunning(executableNames);
+    // Fimber.d(
+    //   "Checked if game is running in ${(stopwatch..stop()).elapsedMilliseconds}ms",
+    // );
 
     // Update the state with the initial value
     state = AsyncValue.data(isRunning);
@@ -480,7 +484,9 @@ class _GameRunningChecker extends AsyncNotifier<bool> {
         ProcessResult result = await Process.run('ps', ['aux']);
         String output = result.stdout.toString().toLowerCase();
         for (String identifier in identifiers) {
-          if (output.contains(identifier.toLowerCase())) {
+          // Check for e.g. `starsector.app` but not `starsector.app/`
+          if (output.contains(identifier.toLowerCase()) &&
+              !output.contains("${identifier.toLowerCase()}/")) {
             return true;
           }
         }

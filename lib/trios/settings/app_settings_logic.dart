@@ -4,7 +4,8 @@ import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
-import 'package:toml/toml.dart';
+
+// import 'package:toml/toml.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
@@ -184,9 +185,11 @@ class SettingsFileManager {
       if (_settingsFile.existsSync()) {
         try {
           final contents = _settingsFile.readAsStringSync();
-          final map = (_fileFormat == FileFormat.toml)
-              ? TomlDocument.parse(contents).toMap()
-              : jsonDecode(contents) as Map<String, dynamic>;
+          final map =
+              // (_fileFormat == FileFormat.toml)
+              //     ? TomlDocument.parse(contents).toMap()
+              //     :
+              jsonDecode(contents) as Map<String, dynamic>;
           Fimber.i("$_fileName successfully loaded from disk.");
           return SettingsMapper.fromMap(map);
         } catch (e, stackTrace) {
@@ -206,9 +209,11 @@ class SettingsFileManager {
   void writeSync(Settings settings) {
     try {
       _lock.protectSync(() {
-        final serializedData = (_fileFormat == FileFormat.toml)
-            ? TomlDocument.fromMap(settings.toMap()).toString()
-            : settings.toMap().prettyPrintJson();
+        final serializedData =
+            // (_fileFormat == FileFormat.toml)
+            //     ? TomlDocument.fromMap(settings.toMap()).toString()
+            //     :
+            settings.toMap().prettyPrintJson();
 
         _settingsFile.writeAsStringSync(serializedData);
         Fimber.i("$_fileName successfully written to disk.");

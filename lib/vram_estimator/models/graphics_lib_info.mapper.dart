@@ -1,5 +1,6 @@
 // coverage:ignore-file
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// dart format off
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, unnecessary_cast, override_on_non_overriding_member
 // ignore_for_file: strict_raw_type, inference_failure_on_untyped_parameter
@@ -74,11 +75,15 @@ class GraphicsLibInfoMapper extends ClassMapperBase<GraphicsLibInfo> {
   static String _$id(GraphicsLibInfo v) => v.id;
   static const Field<GraphicsLibInfo, String> _f$id = Field('id', _$id);
   static MapType _$mapType(GraphicsLibInfo v) => v.mapType;
-  static const Field<GraphicsLibInfo, MapType> _f$mapType =
-      Field('mapType', _$mapType);
+  static const Field<GraphicsLibInfo, MapType> _f$mapType = Field(
+    'mapType',
+    _$mapType,
+  );
   static String _$relativeFilePath(GraphicsLibInfo v) => v.relativeFilePath;
-  static const Field<GraphicsLibInfo, String> _f$relativeFilePath =
-      Field('relativeFilePath', _$relativeFilePath);
+  static const Field<GraphicsLibInfo, String> _f$relativeFilePath = Field(
+    'relativeFilePath',
+    _$relativeFilePath,
+  );
 
   @override
   final MappableFields<GraphicsLibInfo> fields = const {
@@ -89,7 +94,10 @@ class GraphicsLibInfoMapper extends ClassMapperBase<GraphicsLibInfo> {
 
   static GraphicsLibInfo _instantiate(DecodingData data) {
     return GraphicsLibInfo(
-        data.dec(_f$id), data.dec(_f$mapType), data.dec(_f$relativeFilePath));
+      data.dec(_f$id),
+      data.dec(_f$mapType),
+      data.dec(_f$relativeFilePath),
+    );
   }
 
   @override
@@ -111,30 +119,38 @@ mixin GraphicsLibInfoMappable {
   }
 
   Map<String, dynamic> toMap() {
-    return GraphicsLibInfoMapper.ensureInitialized()
-        .encodeMap<GraphicsLibInfo>(this as GraphicsLibInfo);
+    return GraphicsLibInfoMapper.ensureInitialized().encodeMap<GraphicsLibInfo>(
+      this as GraphicsLibInfo,
+    );
   }
 
   GraphicsLibInfoCopyWith<GraphicsLibInfo, GraphicsLibInfo, GraphicsLibInfo>
-      get copyWith =>
-          _GraphicsLibInfoCopyWithImpl<GraphicsLibInfo, GraphicsLibInfo>(
-              this as GraphicsLibInfo, $identity, $identity);
+  get copyWith =>
+      _GraphicsLibInfoCopyWithImpl<GraphicsLibInfo, GraphicsLibInfo>(
+        this as GraphicsLibInfo,
+        $identity,
+        $identity,
+      );
   @override
   String toString() {
-    return GraphicsLibInfoMapper.ensureInitialized()
-        .stringifyValue(this as GraphicsLibInfo);
+    return GraphicsLibInfoMapper.ensureInitialized().stringifyValue(
+      this as GraphicsLibInfo,
+    );
   }
 
   @override
   bool operator ==(Object other) {
-    return GraphicsLibInfoMapper.ensureInitialized()
-        .equalsValue(this as GraphicsLibInfo, other);
+    return GraphicsLibInfoMapper.ensureInitialized().equalsValue(
+      this as GraphicsLibInfo,
+      other,
+    );
   }
 
   @override
   int get hashCode {
-    return GraphicsLibInfoMapper.ensureInitialized()
-        .hashValue(this as GraphicsLibInfo);
+    return GraphicsLibInfoMapper.ensureInitialized().hashValue(
+      this as GraphicsLibInfo,
+    );
   }
 }
 
@@ -148,7 +164,8 @@ abstract class GraphicsLibInfoCopyWith<$R, $In extends GraphicsLibInfo, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
   $R call({String? id, MapType? mapType, String? relativeFilePath});
   GraphicsLibInfoCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
-      Then<$Out2, $R2> t);
+    Then<$Out2, $R2> t,
+  );
 }
 
 class _GraphicsLibInfoCopyWithImpl<$R, $Out>
@@ -160,20 +177,23 @@ class _GraphicsLibInfoCopyWithImpl<$R, $Out>
   late final ClassMapperBase<GraphicsLibInfo> $mapper =
       GraphicsLibInfoMapper.ensureInitialized();
   @override
-  $R call({String? id, MapType? mapType, String? relativeFilePath}) =>
-      $apply(FieldCopyWithData({
-        if (id != null) #id: id,
-        if (mapType != null) #mapType: mapType,
-        if (relativeFilePath != null) #relativeFilePath: relativeFilePath
-      }));
+  $R call({String? id, MapType? mapType, String? relativeFilePath}) => $apply(
+    FieldCopyWithData({
+      if (id != null) #id: id,
+      if (mapType != null) #mapType: mapType,
+      if (relativeFilePath != null) #relativeFilePath: relativeFilePath,
+    }),
+  );
   @override
   GraphicsLibInfo $make(CopyWithData data) => GraphicsLibInfo(
-      data.get(#id, or: $value.id),
-      data.get(#mapType, or: $value.mapType),
-      data.get(#relativeFilePath, or: $value.relativeFilePath));
+    data.get(#id, or: $value.id),
+    data.get(#mapType, or: $value.mapType),
+    data.get(#relativeFilePath, or: $value.relativeFilePath),
+  );
 
   @override
   GraphicsLibInfoCopyWith<$R2, GraphicsLibInfo, $Out2> $chain<$R2, $Out2>(
-          Then<$Out2, $R2> t) =>
-      _GraphicsLibInfoCopyWithImpl<$R2, $Out2>($value, $cast, t);
+    Then<$Out2, $R2> t,
+  ) => _GraphicsLibInfoCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
+

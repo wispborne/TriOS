@@ -16,7 +16,7 @@ class ExpandingConstrainedAlignedWidget extends StatelessWidget {
   const ExpandingConstrainedAlignedWidget({
     super.key,
     this.minWidth = 0,
-    this.maxWidth = double.infinity,
+    this.maxWidth = 400,
     this.alignment = Alignment.centerLeft,
     this.flex = 1,
     required this.child,

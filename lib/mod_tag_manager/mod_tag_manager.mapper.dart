@@ -1,5 +1,6 @@
 // coverage:ignore-file
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// dart format off
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, unnecessary_cast, override_on_non_overriding_member
 // ignore_for_file: strict_raw_type, inference_failure_on_untyped_parameter
@@ -22,8 +23,10 @@ class ModTagStoreMapper extends ClassMapperBase<ModTagStore> {
   final String id = 'ModTagStore';
 
   static List<ModTag> _$masterTags(ModTagStore v) => v.masterTags;
-  static const Field<ModTagStore, List<ModTag>> _f$masterTags =
-      Field('masterTags', _$masterTags);
+  static const Field<ModTagStore, List<ModTag>> _f$masterTags = Field(
+    'masterTags',
+    _$masterTags,
+  );
   static Map<String, Set<String>> _$tagsByModId(ModTagStore v) => v.tagsByModId;
   static const Field<ModTagStore, Map<String, Set<String>>> _f$tagsByModId =
       Field('tagsByModId', _$tagsByModId);
@@ -36,8 +39,9 @@ class ModTagStoreMapper extends ClassMapperBase<ModTagStore> {
 
   static ModTagStore _instantiate(DecodingData data) {
     return ModTagStore(
-        masterTags: data.dec(_f$masterTags),
-        tagsByModId: data.dec(_f$tagsByModId));
+      masterTags: data.dec(_f$masterTags),
+      tagsByModId: data.dec(_f$tagsByModId),
+    );
   }
 
   @override
@@ -54,28 +58,36 @@ class ModTagStoreMapper extends ClassMapperBase<ModTagStore> {
 
 mixin ModTagStoreMappable {
   String toJson() {
-    return ModTagStoreMapper.ensureInitialized()
-        .encodeJson<ModTagStore>(this as ModTagStore);
+    return ModTagStoreMapper.ensureInitialized().encodeJson<ModTagStore>(
+      this as ModTagStore,
+    );
   }
 
   Map<String, dynamic> toMap() {
-    return ModTagStoreMapper.ensureInitialized()
-        .encodeMap<ModTagStore>(this as ModTagStore);
+    return ModTagStoreMapper.ensureInitialized().encodeMap<ModTagStore>(
+      this as ModTagStore,
+    );
   }
 
   ModTagStoreCopyWith<ModTagStore, ModTagStore, ModTagStore> get copyWith =>
       _ModTagStoreCopyWithImpl<ModTagStore, ModTagStore>(
-          this as ModTagStore, $identity, $identity);
+        this as ModTagStore,
+        $identity,
+        $identity,
+      );
   @override
   String toString() {
-    return ModTagStoreMapper.ensureInitialized()
-        .stringifyValue(this as ModTagStore);
+    return ModTagStoreMapper.ensureInitialized().stringifyValue(
+      this as ModTagStore,
+    );
   }
 
   @override
   bool operator ==(Object other) {
-    return ModTagStoreMapper.ensureInitialized()
-        .equalsValue(this as ModTagStore, other);
+    return ModTagStoreMapper.ensureInitialized().equalsValue(
+      this as ModTagStore,
+      other,
+    );
   }
 
   @override
@@ -93,8 +105,13 @@ extension ModTagStoreValueCopy<$R, $Out>
 abstract class ModTagStoreCopyWith<$R, $In extends ModTagStore, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
   ListCopyWith<$R, ModTag, ModTagCopyWith<$R, ModTag, ModTag>> get masterTags;
-  MapCopyWith<$R, String, Set<String>,
-      ObjectCopyWith<$R, Set<String>, Set<String>>> get tagsByModId;
+  MapCopyWith<
+    $R,
+    String,
+    Set<String>,
+    ObjectCopyWith<$R, Set<String>, Set<String>>
+  >
+  get tagsByModId;
   $R call({List<ModTag>? masterTags, Map<String, Set<String>>? tagsByModId});
   ModTagStoreCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -109,28 +126,40 @@ class _ModTagStoreCopyWithImpl<$R, $Out>
       ModTagStoreMapper.ensureInitialized();
   @override
   ListCopyWith<$R, ModTag, ModTagCopyWith<$R, ModTag, ModTag>> get masterTags =>
-      ListCopyWith($value.masterTags, (v, t) => v.copyWith.$chain(t),
-          (v) => call(masterTags: v));
+      ListCopyWith(
+        $value.masterTags,
+        (v, t) => v.copyWith.$chain(t),
+        (v) => call(masterTags: v),
+      );
   @override
-  MapCopyWith<$R, String, Set<String>,
-          ObjectCopyWith<$R, Set<String>, Set<String>>>
-      get tagsByModId => MapCopyWith(
-          $value.tagsByModId,
-          (v, t) => ObjectCopyWith(v, $identity, t),
-          (v) => call(tagsByModId: v));
+  MapCopyWith<
+    $R,
+    String,
+    Set<String>,
+    ObjectCopyWith<$R, Set<String>, Set<String>>
+  >
+  get tagsByModId => MapCopyWith(
+    $value.tagsByModId,
+    (v, t) => ObjectCopyWith(v, $identity, t),
+    (v) => call(tagsByModId: v),
+  );
   @override
   $R call({List<ModTag>? masterTags, Map<String, Set<String>>? tagsByModId}) =>
-      $apply(FieldCopyWithData({
-        if (masterTags != null) #masterTags: masterTags,
-        if (tagsByModId != null) #tagsByModId: tagsByModId
-      }));
+      $apply(
+        FieldCopyWithData({
+          if (masterTags != null) #masterTags: masterTags,
+          if (tagsByModId != null) #tagsByModId: tagsByModId,
+        }),
+      );
   @override
   ModTagStore $make(CopyWithData data) => ModTagStore(
-      masterTags: data.get(#masterTags, or: $value.masterTags),
-      tagsByModId: data.get(#tagsByModId, or: $value.tagsByModId));
+    masterTags: data.get(#masterTags, or: $value.masterTags),
+    tagsByModId: data.get(#tagsByModId, or: $value.tagsByModId),
+  );
 
   @override
   ModTagStoreCopyWith<$R2, ModTagStore, $Out2> $chain<$R2, $Out2>(
-          Then<$Out2, $R2> t) =>
-      _ModTagStoreCopyWithImpl<$R2, $Out2>($value, $cast, t);
+    Then<$Out2, $R2> t,
+  ) => _ModTagStoreCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
+

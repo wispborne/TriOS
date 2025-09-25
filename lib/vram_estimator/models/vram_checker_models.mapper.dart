@@ -1,5 +1,6 @@
 // coverage:ignore-file
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// dart format off
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, unnecessary_cast, override_on_non_overriding_member
 // ignore_for_file: strict_raw_type, inference_failure_on_untyped_parameter
@@ -72,11 +73,15 @@ class VramCheckerModMapper extends ClassMapperBase<VramCheckerMod> {
   final String id = 'VramCheckerMod';
 
   static ModInfo _$modInfo(VramCheckerMod v) => v.modInfo;
-  static const Field<VramCheckerMod, ModInfo> _f$modInfo =
-      Field('modInfo', _$modInfo);
+  static const Field<VramCheckerMod, ModInfo> _f$modInfo = Field(
+    'modInfo',
+    _$modInfo,
+  );
   static String _$modFolder(VramCheckerMod v) => v.modFolder;
-  static const Field<VramCheckerMod, String> _f$modFolder =
-      Field('modFolder', _$modFolder);
+  static const Field<VramCheckerMod, String> _f$modFolder = Field(
+    'modFolder',
+    _$modFolder,
+  );
 
   @override
   final MappableFields<VramCheckerMod> fields = const {
@@ -102,35 +107,43 @@ class VramCheckerModMapper extends ClassMapperBase<VramCheckerMod> {
 
 mixin VramCheckerModMappable {
   String toJson() {
-    return VramCheckerModMapper.ensureInitialized()
-        .encodeJson<VramCheckerMod>(this as VramCheckerMod);
+    return VramCheckerModMapper.ensureInitialized().encodeJson<VramCheckerMod>(
+      this as VramCheckerMod,
+    );
   }
 
   Map<String, dynamic> toMap() {
-    return VramCheckerModMapper.ensureInitialized()
-        .encodeMap<VramCheckerMod>(this as VramCheckerMod);
+    return VramCheckerModMapper.ensureInitialized().encodeMap<VramCheckerMod>(
+      this as VramCheckerMod,
+    );
   }
 
   VramCheckerModCopyWith<VramCheckerMod, VramCheckerMod, VramCheckerMod>
-      get copyWith =>
-          _VramCheckerModCopyWithImpl<VramCheckerMod, VramCheckerMod>(
-              this as VramCheckerMod, $identity, $identity);
+  get copyWith => _VramCheckerModCopyWithImpl<VramCheckerMod, VramCheckerMod>(
+    this as VramCheckerMod,
+    $identity,
+    $identity,
+  );
   @override
   String toString() {
-    return VramCheckerModMapper.ensureInitialized()
-        .stringifyValue(this as VramCheckerMod);
+    return VramCheckerModMapper.ensureInitialized().stringifyValue(
+      this as VramCheckerMod,
+    );
   }
 
   @override
   bool operator ==(Object other) {
-    return VramCheckerModMapper.ensureInitialized()
-        .equalsValue(this as VramCheckerMod, other);
+    return VramCheckerModMapper.ensureInitialized().equalsValue(
+      this as VramCheckerMod,
+      other,
+    );
   }
 
   @override
   int get hashCode {
-    return VramCheckerModMapper.ensureInitialized()
-        .hashValue(this as VramCheckerMod);
+    return VramCheckerModMapper.ensureInitialized().hashValue(
+      this as VramCheckerMod,
+    );
   }
 }
 
@@ -145,7 +158,8 @@ abstract class VramCheckerModCopyWith<$R, $In extends VramCheckerMod, $Out>
   ModInfoCopyWith<$R, ModInfo, ModInfo> get modInfo;
   $R call({ModInfo? modInfo, String? modFolder});
   VramCheckerModCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
-      Then<$Out2, $R2> t);
+    Then<$Out2, $R2> t,
+  );
 }
 
 class _VramCheckerModCopyWithImpl<$R, $Out>
@@ -160,19 +174,22 @@ class _VramCheckerModCopyWithImpl<$R, $Out>
   ModInfoCopyWith<$R, ModInfo, ModInfo> get modInfo =>
       $value.modInfo.copyWith.$chain((v) => call(modInfo: v));
   @override
-  $R call({ModInfo? modInfo, String? modFolder}) => $apply(FieldCopyWithData({
-        if (modInfo != null) #modInfo: modInfo,
-        if (modFolder != null) #modFolder: modFolder
-      }));
+  $R call({ModInfo? modInfo, String? modFolder}) => $apply(
+    FieldCopyWithData({
+      if (modInfo != null) #modInfo: modInfo,
+      if (modFolder != null) #modFolder: modFolder,
+    }),
+  );
   @override
   VramCheckerMod $make(CopyWithData data) => VramCheckerMod(
-      data.get(#modInfo, or: $value.modInfo),
-      data.get(#modFolder, or: $value.modFolder));
+    data.get(#modInfo, or: $value.modInfo),
+    data.get(#modFolder, or: $value.modFolder),
+  );
 
   @override
   VramCheckerModCopyWith<$R2, VramCheckerMod, $Out2> $chain<$R2, $Out2>(
-          Then<$Out2, $R2> t) =>
-      _VramCheckerModCopyWithImpl<$R2, $Out2>($value, $cast, t);
+    Then<$Out2, $R2> t,
+  ) => _VramCheckerModCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
 class VramModMapper extends ClassMapperBase<VramMod> {
@@ -194,11 +211,16 @@ class VramModMapper extends ClassMapperBase<VramMod> {
   static VramCheckerMod _$info(VramMod v) => v.info;
   static const Field<VramMod, VramCheckerMod> _f$info = Field('info', _$info);
   static bool _$isEnabled(VramMod v) => v.isEnabled;
-  static const Field<VramMod, bool> _f$isEnabled =
-      Field('isEnabled', _$isEnabled);
+  static const Field<VramMod, bool> _f$isEnabled = Field(
+    'isEnabled',
+    _$isEnabled,
+  );
   static ModImageTable _$images(VramMod v) => v.images;
-  static const Field<VramMod, ModImageTable> _f$images =
-      Field('images', _$images, hook: ModImageTableHook());
+  static const Field<VramMod, ModImageTable> _f$images = Field(
+    'images',
+    _$images,
+    hook: ModImageTableHook(),
+  );
   static List<GraphicsLibInfo>? _$graphicsLibEntries(VramMod v) =>
       v.graphicsLibEntries;
   static const Field<VramMod, List<GraphicsLibInfo>> _f$graphicsLibEntries =
@@ -213,8 +235,12 @@ class VramModMapper extends ClassMapperBase<VramMod> {
   };
 
   static VramMod _instantiate(DecodingData data) {
-    return VramMod(data.dec(_f$info), data.dec(_f$isEnabled),
-        data.dec(_f$images), data.dec(_f$graphicsLibEntries));
+    return VramMod(
+      data.dec(_f$info),
+      data.dec(_f$isEnabled),
+      data.dec(_f$images),
+      data.dec(_f$graphicsLibEntries),
+    );
   }
 
   @override
@@ -231,18 +257,23 @@ class VramModMapper extends ClassMapperBase<VramMod> {
 
 mixin VramModMappable {
   String toJson() {
-    return VramModMapper.ensureInitialized()
-        .encodeJson<VramMod>(this as VramMod);
+    return VramModMapper.ensureInitialized().encodeJson<VramMod>(
+      this as VramMod,
+    );
   }
 
   Map<String, dynamic> toMap() {
-    return VramModMapper.ensureInitialized()
-        .encodeMap<VramMod>(this as VramMod);
+    return VramModMapper.ensureInitialized().encodeMap<VramMod>(
+      this as VramMod,
+    );
   }
 
   VramModCopyWith<VramMod, VramMod, VramMod> get copyWith =>
       _VramModCopyWithImpl<VramMod, VramMod>(
-          this as VramMod, $identity, $identity);
+        this as VramMod,
+        $identity,
+        $identity,
+      );
   @override
   String toString() {
     return VramModMapper.ensureInitialized().stringifyValue(this as VramMod);
@@ -250,8 +281,10 @@ mixin VramModMappable {
 
   @override
   bool operator ==(Object other) {
-    return VramModMapper.ensureInitialized()
-        .equalsValue(this as VramMod, other);
+    return VramModMapper.ensureInitialized().equalsValue(
+      this as VramMod,
+      other,
+    );
   }
 
   @override
@@ -268,14 +301,18 @@ extension VramModValueCopy<$R, $Out> on ObjectCopyWith<$R, VramMod, $Out> {
 abstract class VramModCopyWith<$R, $In extends VramMod, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
   VramCheckerModCopyWith<$R, VramCheckerMod, VramCheckerMod> get info;
-  ListCopyWith<$R, GraphicsLibInfo,
-          GraphicsLibInfoCopyWith<$R, GraphicsLibInfo, GraphicsLibInfo>>?
-      get graphicsLibEntries;
-  $R call(
-      {VramCheckerMod? info,
-      bool? isEnabled,
-      ModImageTable? images,
-      List<GraphicsLibInfo>? graphicsLibEntries});
+  ListCopyWith<
+    $R,
+    GraphicsLibInfo,
+    GraphicsLibInfoCopyWith<$R, GraphicsLibInfo, GraphicsLibInfo>
+  >?
+  get graphicsLibEntries;
+  $R call({
+    VramCheckerMod? info,
+    bool? isEnabled,
+    ModImageTable? images,
+    List<GraphicsLibInfo>? graphicsLibEntries,
+  });
   VramModCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
 
@@ -291,34 +328,42 @@ class _VramModCopyWithImpl<$R, $Out>
   VramCheckerModCopyWith<$R, VramCheckerMod, VramCheckerMod> get info =>
       $value.info.copyWith.$chain((v) => call(info: v));
   @override
-  ListCopyWith<$R, GraphicsLibInfo,
-          GraphicsLibInfoCopyWith<$R, GraphicsLibInfo, GraphicsLibInfo>>?
-      get graphicsLibEntries => $value.graphicsLibEntries != null
-          ? ListCopyWith(
-              $value.graphicsLibEntries!,
-              (v, t) => v.copyWith.$chain(t),
-              (v) => call(graphicsLibEntries: v))
-          : null;
+  ListCopyWith<
+    $R,
+    GraphicsLibInfo,
+    GraphicsLibInfoCopyWith<$R, GraphicsLibInfo, GraphicsLibInfo>
+  >?
+  get graphicsLibEntries => $value.graphicsLibEntries != null
+      ? ListCopyWith(
+          $value.graphicsLibEntries!,
+          (v, t) => v.copyWith.$chain(t),
+          (v) => call(graphicsLibEntries: v),
+        )
+      : null;
   @override
-  $R call(
-          {VramCheckerMod? info,
-          bool? isEnabled,
-          ModImageTable? images,
-          Object? graphicsLibEntries = $none}) =>
-      $apply(FieldCopyWithData({
-        if (info != null) #info: info,
-        if (isEnabled != null) #isEnabled: isEnabled,
-        if (images != null) #images: images,
-        if (graphicsLibEntries != $none) #graphicsLibEntries: graphicsLibEntries
-      }));
+  $R call({
+    VramCheckerMod? info,
+    bool? isEnabled,
+    ModImageTable? images,
+    Object? graphicsLibEntries = $none,
+  }) => $apply(
+    FieldCopyWithData({
+      if (info != null) #info: info,
+      if (isEnabled != null) #isEnabled: isEnabled,
+      if (images != null) #images: images,
+      if (graphicsLibEntries != $none) #graphicsLibEntries: graphicsLibEntries,
+    }),
+  );
   @override
   VramMod $make(CopyWithData data) => VramMod(
-      data.get(#info, or: $value.info),
-      data.get(#isEnabled, or: $value.isEnabled),
-      data.get(#images, or: $value.images),
-      data.get(#graphicsLibEntries, or: $value.graphicsLibEntries));
+    data.get(#info, or: $value.info),
+    data.get(#isEnabled, or: $value.isEnabled),
+    data.get(#images, or: $value.images),
+    data.get(#graphicsLibEntries, or: $value.graphicsLibEntries),
+  );
 
   @override
   VramModCopyWith<$R2, VramMod, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
       _VramModCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
+

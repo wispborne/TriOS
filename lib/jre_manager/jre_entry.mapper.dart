@@ -1,5 +1,6 @@
 // coverage:ignore-file
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// dart format off
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, unnecessary_cast, override_on_non_overriding_member
 // ignore_for_file: strict_raw_type, inference_failure_on_untyped_parameter
@@ -21,8 +22,10 @@ class JreVersionMapper extends ClassMapperBase<JreVersion> {
   final String id = 'JreVersion';
 
   static String _$versionString(JreVersion v) => v.versionString;
-  static const Field<JreVersion, String> _f$versionString =
-      Field('versionString', _$versionString);
+  static const Field<JreVersion, String> _f$versionString = Field(
+    'versionString',
+    _$versionString,
+  );
 
   @override
   final MappableFields<JreVersion> fields = const {
@@ -47,28 +50,36 @@ class JreVersionMapper extends ClassMapperBase<JreVersion> {
 
 mixin JreVersionMappable {
   String toJson() {
-    return JreVersionMapper.ensureInitialized()
-        .encodeJson<JreVersion>(this as JreVersion);
+    return JreVersionMapper.ensureInitialized().encodeJson<JreVersion>(
+      this as JreVersion,
+    );
   }
 
   Map<String, dynamic> toMap() {
-    return JreVersionMapper.ensureInitialized()
-        .encodeMap<JreVersion>(this as JreVersion);
+    return JreVersionMapper.ensureInitialized().encodeMap<JreVersion>(
+      this as JreVersion,
+    );
   }
 
   JreVersionCopyWith<JreVersion, JreVersion, JreVersion> get copyWith =>
       _JreVersionCopyWithImpl<JreVersion, JreVersion>(
-          this as JreVersion, $identity, $identity);
+        this as JreVersion,
+        $identity,
+        $identity,
+      );
   @override
   String toString() {
-    return JreVersionMapper.ensureInitialized()
-        .stringifyValue(this as JreVersion);
+    return JreVersionMapper.ensureInitialized().stringifyValue(
+      this as JreVersion,
+    );
   }
 
   @override
   bool operator ==(Object other) {
-    return JreVersionMapper.ensureInitialized()
-        .equalsValue(this as JreVersion, other);
+    return JreVersionMapper.ensureInitialized().equalsValue(
+      this as JreVersion,
+      other,
+    );
   }
 
   @override
@@ -98,16 +109,19 @@ class _JreVersionCopyWithImpl<$R, $Out>
   late final ClassMapperBase<JreVersion> $mapper =
       JreVersionMapper.ensureInitialized();
   @override
-  $R call({String? versionString}) => $apply(FieldCopyWithData(
-      {if (versionString != null) #versionString: versionString}));
+  $R call({String? versionString}) => $apply(
+    FieldCopyWithData({
+      if (versionString != null) #versionString: versionString,
+    }),
+  );
   @override
   JreVersion $make(CopyWithData data) =>
       JreVersion(data.get(#versionString, or: $value.versionString));
 
   @override
   JreVersionCopyWith<$R2, JreVersion, $Out2> $chain<$R2, $Out2>(
-          Then<$Out2, $R2> t) =>
-      _JreVersionCopyWithImpl<$R2, $Out2>($value, $cast, t);
+    Then<$Out2, $R2> t,
+  ) => _JreVersionCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
 class CustomJreDownloadStateMapper
@@ -129,14 +143,24 @@ class CustomJreDownloadStateMapper
   static TriOSDownloadProgress? _$downloadProgress(CustomJreDownloadState v) =>
       v.downloadProgress;
   static const Field<CustomJreDownloadState, TriOSDownloadProgress>
-      _f$downloadProgress =
-      Field('downloadProgress', _$downloadProgress, opt: true);
+  _f$downloadProgress = Field(
+    'downloadProgress',
+    _$downloadProgress,
+    opt: true,
+  );
   static String? _$errorMessage(CustomJreDownloadState v) => v.errorMessage;
-  static const Field<CustomJreDownloadState, String> _f$errorMessage =
-      Field('errorMessage', _$errorMessage, opt: true);
+  static const Field<CustomJreDownloadState, String> _f$errorMessage = Field(
+    'errorMessage',
+    _$errorMessage,
+    opt: true,
+  );
   static bool _$isInstalling(CustomJreDownloadState v) => v.isInstalling;
-  static const Field<CustomJreDownloadState, bool> _f$isInstalling =
-      Field('isInstalling', _$isInstalling, opt: true, def: false);
+  static const Field<CustomJreDownloadState, bool> _f$isInstalling = Field(
+    'isInstalling',
+    _$isInstalling,
+    opt: true,
+    def: false,
+  );
 
   @override
   final MappableFields<CustomJreDownloadState> fields = const {
@@ -147,9 +171,10 @@ class CustomJreDownloadStateMapper
 
   static CustomJreDownloadState _instantiate(DecodingData data) {
     return CustomJreDownloadState(
-        downloadProgress: data.dec(_f$downloadProgress),
-        errorMessage: data.dec(_f$errorMessage),
-        isInstalling: data.dec(_f$isInstalling));
+      downloadProgress: data.dec(_f$downloadProgress),
+      errorMessage: data.dec(_f$errorMessage),
+      isInstalling: data.dec(_f$isInstalling),
+    );
   }
 
   @override
@@ -175,49 +200,67 @@ mixin CustomJreDownloadStateMappable {
         .encodeMap<CustomJreDownloadState>(this as CustomJreDownloadState);
   }
 
-  CustomJreDownloadStateCopyWith<CustomJreDownloadState, CustomJreDownloadState,
-          CustomJreDownloadState>
-      get copyWith => _CustomJreDownloadStateCopyWithImpl<
-              CustomJreDownloadState, CustomJreDownloadState>(
-          this as CustomJreDownloadState, $identity, $identity);
+  CustomJreDownloadStateCopyWith<
+    CustomJreDownloadState,
+    CustomJreDownloadState,
+    CustomJreDownloadState
+  >
+  get copyWith =>
+      _CustomJreDownloadStateCopyWithImpl<
+        CustomJreDownloadState,
+        CustomJreDownloadState
+      >(this as CustomJreDownloadState, $identity, $identity);
   @override
   String toString() {
-    return CustomJreDownloadStateMapper.ensureInitialized()
-        .stringifyValue(this as CustomJreDownloadState);
+    return CustomJreDownloadStateMapper.ensureInitialized().stringifyValue(
+      this as CustomJreDownloadState,
+    );
   }
 
   @override
   bool operator ==(Object other) {
-    return CustomJreDownloadStateMapper.ensureInitialized()
-        .equalsValue(this as CustomJreDownloadState, other);
+    return CustomJreDownloadStateMapper.ensureInitialized().equalsValue(
+      this as CustomJreDownloadState,
+      other,
+    );
   }
 
   @override
   int get hashCode {
-    return CustomJreDownloadStateMapper.ensureInitialized()
-        .hashValue(this as CustomJreDownloadState);
+    return CustomJreDownloadStateMapper.ensureInitialized().hashValue(
+      this as CustomJreDownloadState,
+    );
   }
 }
 
 extension CustomJreDownloadStateValueCopy<$R, $Out>
     on ObjectCopyWith<$R, CustomJreDownloadState, $Out> {
   CustomJreDownloadStateCopyWith<$R, CustomJreDownloadState, $Out>
-      get $asCustomJreDownloadState => $base.as((v, t, t2) =>
-          _CustomJreDownloadStateCopyWithImpl<$R, $Out>(v, t, t2));
+  get $asCustomJreDownloadState => $base.as(
+    (v, t, t2) => _CustomJreDownloadStateCopyWithImpl<$R, $Out>(v, t, t2),
+  );
 }
 
 abstract class CustomJreDownloadStateCopyWith<
+  $R,
+  $In extends CustomJreDownloadState,
+  $Out
+>
+    implements ClassCopyWith<$R, $In, $Out> {
+  TriOSDownloadProgressCopyWith<
     $R,
-    $In extends CustomJreDownloadState,
-    $Out> implements ClassCopyWith<$R, $In, $Out> {
-  TriOSDownloadProgressCopyWith<$R, TriOSDownloadProgress,
-      TriOSDownloadProgress>? get downloadProgress;
-  $R call(
-      {TriOSDownloadProgress? downloadProgress,
-      String? errorMessage,
-      bool? isInstalling});
+    TriOSDownloadProgress,
+    TriOSDownloadProgress
+  >?
+  get downloadProgress;
+  $R call({
+    TriOSDownloadProgress? downloadProgress,
+    String? errorMessage,
+    bool? isInstalling,
+  });
   CustomJreDownloadStateCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
-      Then<$Out2, $R2> t);
+    Then<$Out2, $R2> t,
+  );
 }
 
 class _CustomJreDownloadStateCopyWithImpl<$R, $Out>
@@ -230,31 +273,37 @@ class _CustomJreDownloadStateCopyWithImpl<$R, $Out>
   late final ClassMapperBase<CustomJreDownloadState> $mapper =
       CustomJreDownloadStateMapper.ensureInitialized();
   @override
-  TriOSDownloadProgressCopyWith<$R, TriOSDownloadProgress,
-          TriOSDownloadProgress>?
-      get downloadProgress => $value.downloadProgress?.copyWith
-          .$chain((v) => call(downloadProgress: v));
+  TriOSDownloadProgressCopyWith<
+    $R,
+    TriOSDownloadProgress,
+    TriOSDownloadProgress
+  >?
+  get downloadProgress => $value.downloadProgress?.copyWith.$chain(
+    (v) => call(downloadProgress: v),
+  );
   @override
-  $R call(
-          {Object? downloadProgress = $none,
-          Object? errorMessage = $none,
-          bool? isInstalling}) =>
-      $apply(FieldCopyWithData({
-        if (downloadProgress != $none) #downloadProgress: downloadProgress,
-        if (errorMessage != $none) #errorMessage: errorMessage,
-        if (isInstalling != null) #isInstalling: isInstalling
-      }));
+  $R call({
+    Object? downloadProgress = $none,
+    Object? errorMessage = $none,
+    bool? isInstalling,
+  }) => $apply(
+    FieldCopyWithData({
+      if (downloadProgress != $none) #downloadProgress: downloadProgress,
+      if (errorMessage != $none) #errorMessage: errorMessage,
+      if (isInstalling != null) #isInstalling: isInstalling,
+    }),
+  );
   @override
   CustomJreDownloadState $make(CopyWithData data) => CustomJreDownloadState(
-      downloadProgress:
-          data.get(#downloadProgress, or: $value.downloadProgress),
-      errorMessage: data.get(#errorMessage, or: $value.errorMessage),
-      isInstalling: data.get(#isInstalling, or: $value.isInstalling));
+    downloadProgress: data.get(#downloadProgress, or: $value.downloadProgress),
+    errorMessage: data.get(#errorMessage, or: $value.errorMessage),
+    isInstalling: data.get(#isInstalling, or: $value.isInstalling),
+  );
 
   @override
   CustomJreDownloadStateCopyWith<$R2, CustomJreDownloadState, $Out2>
-      $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
-          _CustomJreDownloadStateCopyWithImpl<$R2, $Out2>($value, $cast, t);
+  $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
+      _CustomJreDownloadStateCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
 class CustomJreVersionCheckerFileMapper
@@ -264,8 +313,9 @@ class CustomJreVersionCheckerFileMapper
   static CustomJreVersionCheckerFileMapper? _instance;
   static CustomJreVersionCheckerFileMapper ensureInitialized() {
     if (_instance == null) {
-      MapperContainer.globals
-          .use(_instance = CustomJreVersionCheckerFileMapper._());
+      MapperContainer.globals.use(
+        _instance = CustomJreVersionCheckerFileMapper._(),
+      );
       VersionMapper.ensureInitialized();
     }
     return _instance!;
@@ -279,8 +329,10 @@ class CustomJreVersionCheckerFileMapper
   static const Field<CustomJreVersionCheckerFile, String> _f$masterVersionFile =
       Field('masterVersionFile', _$masterVersionFile);
   static String _$modName(CustomJreVersionCheckerFile v) => v.modName;
-  static const Field<CustomJreVersionCheckerFile, String> _f$modName =
-      Field('modName', _$modName);
+  static const Field<CustomJreVersionCheckerFile, String> _f$modName = Field(
+    'modName',
+    _$modName,
+  );
   static double? _$modThreadId(CustomJreVersionCheckerFile v) => v.modThreadId;
   static const Field<CustomJreVersionCheckerFile, double> _f$modThreadId =
       Field('modThreadId', _$modThreadId, opt: true);
@@ -294,13 +346,19 @@ class CustomJreVersionCheckerFileMapper
   static String? _$windowsJDKDownload(CustomJreVersionCheckerFile v) =>
       v.windowsJDKDownload;
   static const Field<CustomJreVersionCheckerFile, String>
-      _f$windowsJDKDownload =
-      Field('windowsJDKDownload', _$windowsJDKDownload, opt: true);
+  _f$windowsJDKDownload = Field(
+    'windowsJDKDownload',
+    _$windowsJDKDownload,
+    opt: true,
+  );
   static String? _$windowsConfigDownload(CustomJreVersionCheckerFile v) =>
       v.windowsConfigDownload;
   static const Field<CustomJreVersionCheckerFile, String>
-      _f$windowsConfigDownload =
-      Field('windowsConfigDownload', _$windowsConfigDownload, opt: true);
+  _f$windowsConfigDownload = Field(
+    'windowsConfigDownload',
+    _$windowsConfigDownload,
+    opt: true,
+  );
   static String? _$linuxJDKDownload(CustomJreVersionCheckerFile v) =>
       v.linuxJDKDownload;
   static const Field<CustomJreVersionCheckerFile, String> _f$linuxJDKDownload =
@@ -308,8 +366,11 @@ class CustomJreVersionCheckerFileMapper
   static String? _$linuxConfigDownload(CustomJreVersionCheckerFile v) =>
       v.linuxConfigDownload;
   static const Field<CustomJreVersionCheckerFile, String>
-      _f$linuxConfigDownload =
-      Field('linuxConfigDownload', _$linuxConfigDownload, opt: true);
+  _f$linuxConfigDownload = Field(
+    'linuxConfigDownload',
+    _$linuxConfigDownload,
+    opt: true,
+  );
 
   @override
   final MappableFields<CustomJreVersionCheckerFile> fields = const {
@@ -326,15 +387,16 @@ class CustomJreVersionCheckerFileMapper
 
   static CustomJreVersionCheckerFile _instantiate(DecodingData data) {
     return CustomJreVersionCheckerFile(
-        masterVersionFile: data.dec(_f$masterVersionFile),
-        modName: data.dec(_f$modName),
-        modThreadId: data.dec(_f$modThreadId),
-        modVersion: data.dec(_f$modVersion),
-        starsectorVersion: data.dec(_f$starsectorVersion),
-        windowsJDKDownload: data.dec(_f$windowsJDKDownload),
-        windowsConfigDownload: data.dec(_f$windowsConfigDownload),
-        linuxJDKDownload: data.dec(_f$linuxJDKDownload),
-        linuxConfigDownload: data.dec(_f$linuxConfigDownload));
+      masterVersionFile: data.dec(_f$masterVersionFile),
+      modName: data.dec(_f$modName),
+      modThreadId: data.dec(_f$modThreadId),
+      modVersion: data.dec(_f$modVersion),
+      starsectorVersion: data.dec(_f$starsectorVersion),
+      windowsJDKDownload: data.dec(_f$windowsJDKDownload),
+      windowsConfigDownload: data.dec(_f$windowsConfigDownload),
+      linuxJDKDownload: data.dec(_f$linuxJDKDownload),
+      linuxConfigDownload: data.dec(_f$linuxConfigDownload),
+    );
   }
 
   @override
@@ -353,72 +415,94 @@ mixin CustomJreVersionCheckerFileMappable {
   String toJson() {
     return CustomJreVersionCheckerFileMapper.ensureInitialized()
         .encodeJson<CustomJreVersionCheckerFile>(
-            this as CustomJreVersionCheckerFile);
+          this as CustomJreVersionCheckerFile,
+        );
   }
 
   Map<String, dynamic> toMap() {
     return CustomJreVersionCheckerFileMapper.ensureInitialized()
         .encodeMap<CustomJreVersionCheckerFile>(
-            this as CustomJreVersionCheckerFile);
+          this as CustomJreVersionCheckerFile,
+        );
   }
 
-  CustomJreVersionCheckerFileCopyWith<CustomJreVersionCheckerFile,
-          CustomJreVersionCheckerFile, CustomJreVersionCheckerFile>
-      get copyWith => _CustomJreVersionCheckerFileCopyWithImpl<
-              CustomJreVersionCheckerFile, CustomJreVersionCheckerFile>(
-          this as CustomJreVersionCheckerFile, $identity, $identity);
+  CustomJreVersionCheckerFileCopyWith<
+    CustomJreVersionCheckerFile,
+    CustomJreVersionCheckerFile,
+    CustomJreVersionCheckerFile
+  >
+  get copyWith =>
+      _CustomJreVersionCheckerFileCopyWithImpl<
+        CustomJreVersionCheckerFile,
+        CustomJreVersionCheckerFile
+      >(this as CustomJreVersionCheckerFile, $identity, $identity);
   @override
   String toString() {
-    return CustomJreVersionCheckerFileMapper.ensureInitialized()
-        .stringifyValue(this as CustomJreVersionCheckerFile);
+    return CustomJreVersionCheckerFileMapper.ensureInitialized().stringifyValue(
+      this as CustomJreVersionCheckerFile,
+    );
   }
 
   @override
   bool operator ==(Object other) {
-    return CustomJreVersionCheckerFileMapper.ensureInitialized()
-        .equalsValue(this as CustomJreVersionCheckerFile, other);
+    return CustomJreVersionCheckerFileMapper.ensureInitialized().equalsValue(
+      this as CustomJreVersionCheckerFile,
+      other,
+    );
   }
 
   @override
   int get hashCode {
-    return CustomJreVersionCheckerFileMapper.ensureInitialized()
-        .hashValue(this as CustomJreVersionCheckerFile);
+    return CustomJreVersionCheckerFileMapper.ensureInitialized().hashValue(
+      this as CustomJreVersionCheckerFile,
+    );
   }
 }
 
 extension CustomJreVersionCheckerFileValueCopy<$R, $Out>
     on ObjectCopyWith<$R, CustomJreVersionCheckerFile, $Out> {
   CustomJreVersionCheckerFileCopyWith<$R, CustomJreVersionCheckerFile, $Out>
-      get $asCustomJreVersionCheckerFile => $base.as((v, t, t2) =>
-          _CustomJreVersionCheckerFileCopyWithImpl<$R, $Out>(v, t, t2));
+  get $asCustomJreVersionCheckerFile => $base.as(
+    (v, t, t2) => _CustomJreVersionCheckerFileCopyWithImpl<$R, $Out>(v, t, t2),
+  );
 }
 
 abstract class CustomJreVersionCheckerFileCopyWith<
-    $R,
-    $In extends CustomJreVersionCheckerFile,
-    $Out> implements ClassCopyWith<$R, $In, $Out> {
+  $R,
+  $In extends CustomJreVersionCheckerFile,
+  $Out
+>
+    implements ClassCopyWith<$R, $In, $Out> {
   VersionCopyWith<$R, Version, Version> get modVersion;
-  $R call(
-      {String? masterVersionFile,
-      String? modName,
-      double? modThreadId,
-      Version? modVersion,
-      String? starsectorVersion,
-      String? windowsJDKDownload,
-      String? windowsConfigDownload,
-      String? linuxJDKDownload,
-      String? linuxConfigDownload});
+  $R call({
+    String? masterVersionFile,
+    String? modName,
+    double? modThreadId,
+    Version? modVersion,
+    String? starsectorVersion,
+    String? windowsJDKDownload,
+    String? windowsConfigDownload,
+    String? linuxJDKDownload,
+    String? linuxConfigDownload,
+  });
   CustomJreVersionCheckerFileCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
-      Then<$Out2, $R2> t);
+    Then<$Out2, $R2> t,
+  );
 }
 
 class _CustomJreVersionCheckerFileCopyWithImpl<$R, $Out>
     extends ClassCopyWithBase<$R, CustomJreVersionCheckerFile, $Out>
     implements
-        CustomJreVersionCheckerFileCopyWith<$R, CustomJreVersionCheckerFile,
-            $Out> {
+        CustomJreVersionCheckerFileCopyWith<
+          $R,
+          CustomJreVersionCheckerFile,
+          $Out
+        > {
   _CustomJreVersionCheckerFileCopyWithImpl(
-      super.value, super.then, super.then2);
+    super.value,
+    super.then,
+    super.then2,
+  );
 
   @override
   late final ClassMapperBase<CustomJreVersionCheckerFile> $mapper =
@@ -427,52 +511,66 @@ class _CustomJreVersionCheckerFileCopyWithImpl<$R, $Out>
   VersionCopyWith<$R, Version, Version> get modVersion =>
       $value.modVersion.copyWith.$chain((v) => call(modVersion: v));
   @override
-  $R call(
-          {String? masterVersionFile,
-          String? modName,
-          Object? modThreadId = $none,
-          Version? modVersion,
-          String? starsectorVersion,
-          Object? windowsJDKDownload = $none,
-          Object? windowsConfigDownload = $none,
-          Object? linuxJDKDownload = $none,
-          Object? linuxConfigDownload = $none}) =>
-      $apply(FieldCopyWithData({
-        if (masterVersionFile != null) #masterVersionFile: masterVersionFile,
-        if (modName != null) #modName: modName,
-        if (modThreadId != $none) #modThreadId: modThreadId,
-        if (modVersion != null) #modVersion: modVersion,
-        if (starsectorVersion != null) #starsectorVersion: starsectorVersion,
-        if (windowsJDKDownload != $none)
-          #windowsJDKDownload: windowsJDKDownload,
-        if (windowsConfigDownload != $none)
-          #windowsConfigDownload: windowsConfigDownload,
-        if (linuxJDKDownload != $none) #linuxJDKDownload: linuxJDKDownload,
-        if (linuxConfigDownload != $none)
-          #linuxConfigDownload: linuxConfigDownload
-      }));
+  $R call({
+    String? masterVersionFile,
+    String? modName,
+    Object? modThreadId = $none,
+    Version? modVersion,
+    String? starsectorVersion,
+    Object? windowsJDKDownload = $none,
+    Object? windowsConfigDownload = $none,
+    Object? linuxJDKDownload = $none,
+    Object? linuxConfigDownload = $none,
+  }) => $apply(
+    FieldCopyWithData({
+      if (masterVersionFile != null) #masterVersionFile: masterVersionFile,
+      if (modName != null) #modName: modName,
+      if (modThreadId != $none) #modThreadId: modThreadId,
+      if (modVersion != null) #modVersion: modVersion,
+      if (starsectorVersion != null) #starsectorVersion: starsectorVersion,
+      if (windowsJDKDownload != $none) #windowsJDKDownload: windowsJDKDownload,
+      if (windowsConfigDownload != $none)
+        #windowsConfigDownload: windowsConfigDownload,
+      if (linuxJDKDownload != $none) #linuxJDKDownload: linuxJDKDownload,
+      if (linuxConfigDownload != $none)
+        #linuxConfigDownload: linuxConfigDownload,
+    }),
+  );
   @override
   CustomJreVersionCheckerFile $make(CopyWithData data) =>
       CustomJreVersionCheckerFile(
-          masterVersionFile:
-              data.get(#masterVersionFile, or: $value.masterVersionFile),
-          modName: data.get(#modName, or: $value.modName),
-          modThreadId: data.get(#modThreadId, or: $value.modThreadId),
-          modVersion: data.get(#modVersion, or: $value.modVersion),
-          starsectorVersion:
-              data.get(#starsectorVersion, or: $value.starsectorVersion),
-          windowsJDKDownload:
-              data.get(#windowsJDKDownload, or: $value.windowsJDKDownload),
-          windowsConfigDownload: data.get(#windowsConfigDownload,
-              or: $value.windowsConfigDownload),
-          linuxJDKDownload:
-              data.get(#linuxJDKDownload, or: $value.linuxJDKDownload),
-          linuxConfigDownload:
-              data.get(#linuxConfigDownload, or: $value.linuxConfigDownload));
+        masterVersionFile: data.get(
+          #masterVersionFile,
+          or: $value.masterVersionFile,
+        ),
+        modName: data.get(#modName, or: $value.modName),
+        modThreadId: data.get(#modThreadId, or: $value.modThreadId),
+        modVersion: data.get(#modVersion, or: $value.modVersion),
+        starsectorVersion: data.get(
+          #starsectorVersion,
+          or: $value.starsectorVersion,
+        ),
+        windowsJDKDownload: data.get(
+          #windowsJDKDownload,
+          or: $value.windowsJDKDownload,
+        ),
+        windowsConfigDownload: data.get(
+          #windowsConfigDownload,
+          or: $value.windowsConfigDownload,
+        ),
+        linuxJDKDownload: data.get(
+          #linuxJDKDownload,
+          or: $value.linuxJDKDownload,
+        ),
+        linuxConfigDownload: data.get(
+          #linuxConfigDownload,
+          or: $value.linuxConfigDownload,
+        ),
+      );
 
   @override
   CustomJreVersionCheckerFileCopyWith<$R2, CustomJreVersionCheckerFile, $Out2>
-      $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
-          _CustomJreVersionCheckerFileCopyWithImpl<$R2, $Out2>(
-              $value, $cast, t);
+  $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
+      _CustomJreVersionCheckerFileCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
+

@@ -1,5 +1,6 @@
 // coverage:ignore-file
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// dart format off
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, unnecessary_cast, override_on_non_overriding_member
 // ignore_for_file: strict_raw_type, inference_failure_on_untyped_parameter
@@ -25,8 +26,11 @@ class TipMapper extends ClassMapperBase<Tip> {
   static String? _$tip(Tip v) => v.tip;
   static const Field<Tip, String> _f$tip = Field('tip', _$tip, opt: true);
   static String? _$originalFreq(Tip v) => v.originalFreq;
-  static const Field<Tip, String> _f$originalFreq =
-      Field('originalFreq', _$originalFreq, opt: true);
+  static const Field<Tip, String> _f$originalFreq = Field(
+    'originalFreq',
+    _$originalFreq,
+    opt: true,
+  );
 
   @override
   final MappableFields<Tip> fields = const {
@@ -39,9 +43,10 @@ class TipMapper extends ClassMapperBase<Tip> {
   final MappingHook hook = const TipHooks();
   static Tip _instantiate(DecodingData data) {
     return Tip(
-        freq: data.dec(_f$freq),
-        tip: data.dec(_f$tip),
-        originalFreq: data.dec(_f$originalFreq));
+      freq: data.dec(_f$freq),
+      tip: data.dec(_f$tip),
+      originalFreq: data.dec(_f$originalFreq),
+    );
   }
 
   @override
@@ -101,20 +106,23 @@ class _TipCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Tip, $Out>
   @override
   late final ClassMapperBase<Tip> $mapper = TipMapper.ensureInitialized();
   @override
-  $R call(
-          {Object? freq = $none,
-          Object? tip = $none,
-          Object? originalFreq = $none}) =>
-      $apply(FieldCopyWithData({
-        if (freq != $none) #freq: freq,
-        if (tip != $none) #tip: tip,
-        if (originalFreq != $none) #originalFreq: originalFreq
-      }));
+  $R call({
+    Object? freq = $none,
+    Object? tip = $none,
+    Object? originalFreq = $none,
+  }) => $apply(
+    FieldCopyWithData({
+      if (freq != $none) #freq: freq,
+      if (tip != $none) #tip: tip,
+      if (originalFreq != $none) #originalFreq: originalFreq,
+    }),
+  );
   @override
   Tip $make(CopyWithData data) => Tip(
-      freq: data.get(#freq, or: $value.freq),
-      tip: data.get(#tip, or: $value.tip),
-      originalFreq: data.get(#originalFreq, or: $value.originalFreq));
+    freq: data.get(#freq, or: $value.freq),
+    tip: data.get(#tip, or: $value.tip),
+    originalFreq: data.get(#originalFreq, or: $value.originalFreq),
+  );
 
   @override
   TipCopyWith<$R2, Tip, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
@@ -137,13 +145,14 @@ class TipsMapper extends ClassMapperBase<Tips> {
   final String id = 'Tips';
 
   static List<Tip>? _$tips(Tips v) => v.tips;
-  static const Field<Tips, List<Tip>> _f$tips =
-      Field('tips', _$tips, opt: true);
+  static const Field<Tips, List<Tip>> _f$tips = Field(
+    'tips',
+    _$tips,
+    opt: true,
+  );
 
   @override
-  final MappableFields<Tips> fields = const {
-    #tips: _f$tips,
-  };
+  final MappableFields<Tips> fields = const {#tips: _f$tips};
 
   static Tips _instantiate(DecodingData data) {
     return Tips(tips: data.dec(_f$tips));
@@ -207,10 +216,13 @@ class _TipsCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Tips, $Out>
   @override
   late final ClassMapperBase<Tips> $mapper = TipsMapper.ensureInitialized();
   @override
-  ListCopyWith<$R, Tip, TipCopyWith<$R, Tip, Tip>>? get tips => $value.tips !=
-          null
+  ListCopyWith<$R, Tip, TipCopyWith<$R, Tip, Tip>>? get tips =>
+      $value.tips != null
       ? ListCopyWith(
-          $value.tips!, (v, t) => v.copyWith.$chain(t), (v) => call(tips: v))
+          $value.tips!,
+          (v, t) => v.copyWith.$chain(t),
+          (v) => call(tips: v),
+        )
       : null;
   @override
   $R call({Object? tips = $none}) =>
@@ -242,11 +254,16 @@ class ModTipMapper extends ClassMapperBase<ModTip> {
   static Tip _$tipObj(ModTip v) => v.tipObj;
   static const Field<ModTip, Tip> _f$tipObj = Field('tipObj', _$tipObj);
   static List<ModVariant> _$variants(ModTip v) => v.variants;
-  static const Field<ModTip, List<ModVariant>> _f$variants =
-      Field('variants', _$variants);
+  static const Field<ModTip, List<ModVariant>> _f$variants = Field(
+    'variants',
+    _$variants,
+  );
   static File _$tipFile(ModTip v) => v.tipFile;
-  static const Field<ModTip, File> _f$tipFile =
-      Field('tipFile', _$tipFile, hook: FileHook());
+  static const Field<ModTip, File> _f$tipFile = Field(
+    'tipFile',
+    _$tipFile,
+    hook: FileHook(),
+  );
 
   @override
   final MappableFields<ModTip> fields = const {
@@ -257,9 +274,10 @@ class ModTipMapper extends ClassMapperBase<ModTip> {
 
   static ModTip _instantiate(DecodingData data) {
     return ModTip(
-        tipObj: data.dec(_f$tipObj),
-        variants: data.dec(_f$variants),
-        tipFile: data.dec(_f$tipFile));
+      tipObj: data.dec(_f$tipObj),
+      variants: data.dec(_f$variants),
+      tipFile: data.dec(_f$tipFile),
+    );
   }
 
   @override
@@ -310,7 +328,7 @@ abstract class ModTipCopyWith<$R, $In extends ModTip, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
   TipCopyWith<$R, Tip, Tip> get tipObj;
   ListCopyWith<$R, ModVariant, ModVariantCopyWith<$R, ModVariant, ModVariant>>
-      get variants;
+  get variants;
   $R call({Tip? tipObj, List<ModVariant>? variants, File? tipFile});
   ModTipCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -326,22 +344,28 @@ class _ModTipCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, ModTip, $Out>
       $value.tipObj.copyWith.$chain((v) => call(tipObj: v));
   @override
   ListCopyWith<$R, ModVariant, ModVariantCopyWith<$R, ModVariant, ModVariant>>
-      get variants => ListCopyWith($value.variants,
-          (v, t) => v.copyWith.$chain(t), (v) => call(variants: v));
+  get variants => ListCopyWith(
+    $value.variants,
+    (v, t) => v.copyWith.$chain(t),
+    (v) => call(variants: v),
+  );
   @override
-  $R call({Tip? tipObj, List<ModVariant>? variants, File? tipFile}) =>
-      $apply(FieldCopyWithData({
-        if (tipObj != null) #tipObj: tipObj,
-        if (variants != null) #variants: variants,
-        if (tipFile != null) #tipFile: tipFile
-      }));
+  $R call({Tip? tipObj, List<ModVariant>? variants, File? tipFile}) => $apply(
+    FieldCopyWithData({
+      if (tipObj != null) #tipObj: tipObj,
+      if (variants != null) #variants: variants,
+      if (tipFile != null) #tipFile: tipFile,
+    }),
+  );
   @override
   ModTip $make(CopyWithData data) => ModTip(
-      tipObj: data.get(#tipObj, or: $value.tipObj),
-      variants: data.get(#variants, or: $value.variants),
-      tipFile: data.get(#tipFile, or: $value.tipFile));
+    tipObj: data.get(#tipObj, or: $value.tipObj),
+    variants: data.get(#variants, or: $value.variants),
+    tipFile: data.get(#tipFile, or: $value.tipFile),
+  );
 
   @override
   ModTipCopyWith<$R2, ModTip, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
       _ModTipCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
+

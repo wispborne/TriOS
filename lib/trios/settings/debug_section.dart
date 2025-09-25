@@ -482,7 +482,7 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                                 ref
                                     .watch(appSettings)
                                     .toMap()
-                                    .prettyPrintToml(),
+                                    .prettyPrintJson(),
                               ),
                             ),
                           );
@@ -506,7 +506,7 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                                         .watch(modProfilesProvider)
                                         .valueOrNull
                                         ?.toMap()
-                                        .prettyPrintToml() ??
+                                        .prettyPrintJson() ??
                                     "",
                               ),
                             ),
@@ -527,7 +527,7 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                             title: const Text("Environment Variables"),
                             content: SingleChildScrollView(
                               child: SelectableText(
-                                Platform.environment.prettyPrintToml() ?? "",
+                                Platform.environment.prettyPrintJson() ?? "",
                               ),
                             ),
                           );

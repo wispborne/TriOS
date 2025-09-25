@@ -1,5 +1,6 @@
 // coverage:ignore-file
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// dart format off
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, unnecessary_cast, override_on_non_overriding_member
 // ignore_for_file: strict_raw_type, inference_failure_on_untyped_parameter
@@ -49,34 +50,43 @@ class GameSettingsMapper extends ClassMapperBase<GameSettings> {
 
 mixin GameSettingsMappable {
   String toJson() {
-    return GameSettingsMapper.ensureInitialized()
-        .encodeJson<GameSettings>(this as GameSettings);
+    return GameSettingsMapper.ensureInitialized().encodeJson<GameSettings>(
+      this as GameSettings,
+    );
   }
 
   Map<String, dynamic> toMap() {
-    return GameSettingsMapper.ensureInitialized()
-        .encodeMap<GameSettings>(this as GameSettings);
+    return GameSettingsMapper.ensureInitialized().encodeMap<GameSettings>(
+      this as GameSettings,
+    );
   }
 
   GameSettingsCopyWith<GameSettings, GameSettings, GameSettings> get copyWith =>
       _GameSettingsCopyWithImpl<GameSettings, GameSettings>(
-          this as GameSettings, $identity, $identity);
+        this as GameSettings,
+        $identity,
+        $identity,
+      );
   @override
   String toString() {
-    return GameSettingsMapper.ensureInitialized()
-        .stringifyValue(this as GameSettings);
+    return GameSettingsMapper.ensureInitialized().stringifyValue(
+      this as GameSettings,
+    );
   }
 
   @override
   bool operator ==(Object other) {
-    return GameSettingsMapper.ensureInitialized()
-        .equalsValue(this as GameSettings, other);
+    return GameSettingsMapper.ensureInitialized().equalsValue(
+      this as GameSettings,
+      other,
+    );
   }
 
   @override
   int get hashCode {
-    return GameSettingsMapper.ensureInitialized()
-        .hashValue(this as GameSettings);
+    return GameSettingsMapper.ensureInitialized().hashValue(
+      this as GameSettings,
+    );
   }
 }
 
@@ -101,16 +111,21 @@ class _GameSettingsCopyWithImpl<$R, $Out>
   late final ClassMapperBase<GameSettings> $mapper =
       GameSettingsMapper.ensureInitialized();
   @override
-  $R call({Object? vsync = $none, Object? fps = $none}) =>
-      $apply(FieldCopyWithData(
-          {if (vsync != $none) #vsync: vsync, if (fps != $none) #fps: fps}));
+  $R call({Object? vsync = $none, Object? fps = $none}) => $apply(
+    FieldCopyWithData({
+      if (vsync != $none) #vsync: vsync,
+      if (fps != $none) #fps: fps,
+    }),
+  );
   @override
   GameSettings $make(CopyWithData data) => GameSettings(
-      vsync: data.get(#vsync, or: $value.vsync),
-      fps: data.get(#fps, or: $value.fps));
+    vsync: data.get(#vsync, or: $value.vsync),
+    fps: data.get(#fps, or: $value.fps),
+  );
 
   @override
   GameSettingsCopyWith<$R2, GameSettings, $Out2> $chain<$R2, $Out2>(
-          Then<$Out2, $R2> t) =>
-      _GameSettingsCopyWithImpl<$R2, $Out2>($value, $cast, t);
+    Then<$Out2, $R2> t,
+  ) => _GameSettingsCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
+

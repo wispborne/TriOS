@@ -6,7 +6,7 @@ import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:path/path.dart' as p;
-import 'package:toml/toml.dart';
+// import 'package:toml/toml.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/util.dart';
 import 'package:yaml/yaml.dart';
@@ -402,11 +402,11 @@ extension StringMapExt on Map<String, dynamic> {
     return JsonEncoder.withIndent('  ').convert(this);
   }
 
-  String prettyPrintToml() {
-    return TomlDocument.fromMap(
-      Map<String, dynamic>.from(this).removeNullValues(),
-    ).toString();
-  }
+  // String prettyPrintToml() {
+  //   return TomlDocument.fromMap(
+  //     Map<String, dynamic>.from(this).removeNullValues(),
+  //   ).toString();
+  // }
 }
 
 final _letterDigitSplitterRegex = RegExp(r"(?<=\D)(?=\d)|(?<=\d)(?=\D)");

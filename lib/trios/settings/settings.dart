@@ -63,6 +63,7 @@ class Settings with SettingsMappable {
 
   // Mods Page
   final bool doubleClickForModsPanel;
+  final bool pinFavorites;
 
   // Settings Page
   @Deprecated(
@@ -141,6 +142,7 @@ class Settings with SettingsMappable {
     this.customCoreFolderPath,
     this.useCustomCoreFolderPath = false,
     this.doubleClickForModsPanel = true,
+    this.pinFavorites = true,
     this.shouldAutoUpdateOnLaunch = false,
     this.secondsBetweenModFolderChecks = 15,
     this.toastDurationSeconds = 7,

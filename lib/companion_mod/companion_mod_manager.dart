@@ -218,10 +218,11 @@ class CompanionModManager {
   }
 
   /// Gets the path to the trios_image_replacements.json config file
-  Future<File> _getImageReplacementsConfigFile() async {
+  Future<File?> _getImageReplacementsConfigFile() async {
     final modsFolder = ref.read(AppState.modsFolder).valueOrNull;
     if (modsFolder == null) {
-      throw StateError('Game mods folder not configured');
+      Fimber.i("Game mods folder not configured. Often happens before game folder has been read yet.");
+      return null;
     }
 
     final companionModPath = Directory(
@@ -249,7 +250,7 @@ class CompanionModManager {
     try {
       final configFile = await _getImageReplacementsConfigFile();
 
-      if (!await configFile.exists()) {
+      if (configFile == null || !await configFile.exists()) {
         return {};
       }
 
@@ -312,6 +313,8 @@ class CompanionModManager {
       }
 
       final configFile = await _getImageReplacementsConfigFile();
+      if (configFile == null) return;
+
       await _writeReplacementsToFile(
         configFile,
         _convertSavedPortraitMapToPaths(replacements, gameCoreFolder),
@@ -361,6 +364,7 @@ class CompanionModManager {
       existingReplacements[originalPath] = replacementPath;
 
       final configFile = await _getImageReplacementsConfigFile();
+      if (configFile == null) return;
       await _writeReplacementsToFile(configFile, existingReplacements);
 
       Fimber.i('Added image replacement: $originalPath -> $replacementPath');
@@ -382,6 +386,7 @@ class CompanionModManager {
 
       if (removed != null) {
         final configFile = await _getImageReplacementsConfigFile();
+        if (configFile == null) return;
         await _writeReplacementsToFile(configFile, existingReplacements);
         Fimber.i('Removed image replacement: $originalPath');
       } else {

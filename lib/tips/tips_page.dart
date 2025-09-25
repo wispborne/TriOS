@@ -12,6 +12,7 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/widgets/dense_button.dart';
 import 'package:trios/widgets/disable.dart';
+import 'package:trios/widgets/expanding_constrained_aligned_widget.dart';
 import 'package:trios/widgets/mod_icon.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/toolbar_checkbox_button.dart';
@@ -173,15 +174,22 @@ class _TipsPageState extends ConsumerState<TipsPage>
                     const SizedBox(width: 8),
                     _buildDeleteButton(context),
                     const SizedBox(width: 8),
-                    buildSearchBox(),
-                    const Spacer(),
-                    MovingTooltipWidget.text(
-                      message: 'Whether hidden tips are shown',
-                      child: TriOSToolbarCheckboxButton(
-                        onChanged: (newValue) =>
-                            setState(() => _showHidden = newValue ?? true),
-                        value: _showHidden,
-                        text: 'Show Hidden',
+                    ExpandingConstrainedAlignedWidget(
+                      alignment: Alignment.centerLeft,
+                      minWidth: 150,
+                      child: buildSearchBox(),
+                    ),
+                    const SizedBox(width: 8),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: MovingTooltipWidget.text(
+                        message: 'Whether hidden tips are shown',
+                        child: TriOSToolbarCheckboxButton(
+                          onChanged: (newValue) =>
+                              setState(() => _showHidden = newValue ?? true),
+                          value: _showHidden,
+                          text: 'Show Hidden',
+                        ),
                       ),
                     ),
                   ],
@@ -469,7 +477,6 @@ class _TipsPageState extends ConsumerState<TipsPage>
   SizedBox buildSearchBox() {
     return SizedBox(
       height: 30,
-      width: 300,
       child: SearchAnchor(
         searchController: _searchController,
         builder: (BuildContext context, SearchController controller) {
@@ -481,14 +488,14 @@ class _TipsPageState extends ConsumerState<TipsPage>
               controller.value.text.isEmpty
                   ? Container()
                   : IconButton(
-                icon: const Icon(Icons.clear),
-                constraints: const BoxConstraints(),
-                padding: EdgeInsets.zero,
-                onPressed: () {
-                  controller.clear();
-                  setState(() {});
-                },
-              ),
+                      icon: const Icon(Icons.clear),
+                      constraints: const BoxConstraints(),
+                      padding: EdgeInsets.zero,
+                      onPressed: () {
+                        controller.clear();
+                        setState(() {});
+                      },
+                    ),
             ],
             backgroundColor: WidgetStateProperty.all(
               Theme.of(context).colorScheme.surfaceContainer,
@@ -500,8 +507,8 @@ class _TipsPageState extends ConsumerState<TipsPage>
         },
         suggestionsBuilder:
             (BuildContext context, SearchController controller) {
-          return [];
-        },
+              return [];
+            },
       ),
     );
   }

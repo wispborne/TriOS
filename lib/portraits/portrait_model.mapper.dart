@@ -1,5 +1,6 @@
 // coverage:ignore-file
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// dart format off
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, unnecessary_cast, override_on_non_overriding_member
 // ignore_for_file: strict_raw_type, inference_failure_on_untyped_parameter
@@ -22,14 +23,22 @@ class PortraitMapper extends ClassMapperBase<Portrait> {
   final String id = 'Portrait';
 
   static ModVariant? _$modVariant(Portrait v) => v.modVariant;
-  static const Field<Portrait, ModVariant> _f$modVariant =
-      Field('modVariant', _$modVariant, opt: true);
+  static const Field<Portrait, ModVariant> _f$modVariant = Field(
+    'modVariant',
+    _$modVariant,
+    opt: true,
+  );
   static File _$imageFile(Portrait v) => v.imageFile;
-  static const Field<Portrait, File> _f$imageFile =
-      Field('imageFile', _$imageFile, hook: FileHook());
+  static const Field<Portrait, File> _f$imageFile = Field(
+    'imageFile',
+    _$imageFile,
+    hook: FileHook(),
+  );
   static String _$relativePath(Portrait v) => v.relativePath;
-  static const Field<Portrait, String> _f$relativePath =
-      Field('relativePath', _$relativePath);
+  static const Field<Portrait, String> _f$relativePath = Field(
+    'relativePath',
+    _$relativePath,
+  );
   static int _$width(Portrait v) => v.width;
   static const Field<Portrait, int> _f$width = Field('width', _$width);
   static int _$height(Portrait v) => v.height;
@@ -49,12 +58,13 @@ class PortraitMapper extends ClassMapperBase<Portrait> {
 
   static Portrait _instantiate(DecodingData data) {
     return Portrait(
-        modVariant: data.dec(_f$modVariant),
-        imageFile: data.dec(_f$imageFile),
-        relativePath: data.dec(_f$relativePath),
-        width: data.dec(_f$width),
-        height: data.dec(_f$height),
-        hash: data.dec(_f$hash));
+      modVariant: data.dec(_f$modVariant),
+      imageFile: data.dec(_f$imageFile),
+      relativePath: data.dec(_f$relativePath),
+      width: data.dec(_f$width),
+      height: data.dec(_f$height),
+      hash: data.dec(_f$hash),
+    );
   }
 
   @override
@@ -71,18 +81,23 @@ class PortraitMapper extends ClassMapperBase<Portrait> {
 
 mixin PortraitMappable {
   String toJson() {
-    return PortraitMapper.ensureInitialized()
-        .encodeJson<Portrait>(this as Portrait);
+    return PortraitMapper.ensureInitialized().encodeJson<Portrait>(
+      this as Portrait,
+    );
   }
 
   Map<String, dynamic> toMap() {
-    return PortraitMapper.ensureInitialized()
-        .encodeMap<Portrait>(this as Portrait);
+    return PortraitMapper.ensureInitialized().encodeMap<Portrait>(
+      this as Portrait,
+    );
   }
 
   PortraitCopyWith<Portrait, Portrait, Portrait> get copyWith =>
       _PortraitCopyWithImpl<Portrait, Portrait>(
-          this as Portrait, $identity, $identity);
+        this as Portrait,
+        $identity,
+        $identity,
+      );
   @override
   String toString() {
     return PortraitMapper.ensureInitialized().stringifyValue(this as Portrait);
@@ -90,8 +105,10 @@ mixin PortraitMappable {
 
   @override
   bool operator ==(Object other) {
-    return PortraitMapper.ensureInitialized()
-        .equalsValue(this as Portrait, other);
+    return PortraitMapper.ensureInitialized().equalsValue(
+      this as Portrait,
+      other,
+    );
   }
 
   @override
@@ -108,13 +125,14 @@ extension PortraitValueCopy<$R, $Out> on ObjectCopyWith<$R, Portrait, $Out> {
 abstract class PortraitCopyWith<$R, $In extends Portrait, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
   ModVariantCopyWith<$R, ModVariant, ModVariant>? get modVariant;
-  $R call(
-      {ModVariant? modVariant,
-      File? imageFile,
-      String? relativePath,
-      int? width,
-      int? height,
-      String? hash});
+  $R call({
+    ModVariant? modVariant,
+    File? imageFile,
+    String? relativePath,
+    int? width,
+    int? height,
+    String? hash,
+  });
   PortraitCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
 
@@ -130,34 +148,37 @@ class _PortraitCopyWithImpl<$R, $Out>
   ModVariantCopyWith<$R, ModVariant, ModVariant>? get modVariant =>
       $value.modVariant?.copyWith.$chain((v) => call(modVariant: v));
   @override
-  $R call(
-          {Object? modVariant = $none,
-          File? imageFile,
-          String? relativePath,
-          int? width,
-          int? height,
-          String? hash}) =>
-      $apply(FieldCopyWithData({
-        if (modVariant != $none) #modVariant: modVariant,
-        if (imageFile != null) #imageFile: imageFile,
-        if (relativePath != null) #relativePath: relativePath,
-        if (width != null) #width: width,
-        if (height != null) #height: height,
-        if (hash != null) #hash: hash
-      }));
+  $R call({
+    Object? modVariant = $none,
+    File? imageFile,
+    String? relativePath,
+    int? width,
+    int? height,
+    String? hash,
+  }) => $apply(
+    FieldCopyWithData({
+      if (modVariant != $none) #modVariant: modVariant,
+      if (imageFile != null) #imageFile: imageFile,
+      if (relativePath != null) #relativePath: relativePath,
+      if (width != null) #width: width,
+      if (height != null) #height: height,
+      if (hash != null) #hash: hash,
+    }),
+  );
   @override
   Portrait $make(CopyWithData data) => Portrait(
-      modVariant: data.get(#modVariant, or: $value.modVariant),
-      imageFile: data.get(#imageFile, or: $value.imageFile),
-      relativePath: data.get(#relativePath, or: $value.relativePath),
-      width: data.get(#width, or: $value.width),
-      height: data.get(#height, or: $value.height),
-      hash: data.get(#hash, or: $value.hash));
+    modVariant: data.get(#modVariant, or: $value.modVariant),
+    imageFile: data.get(#imageFile, or: $value.imageFile),
+    relativePath: data.get(#relativePath, or: $value.relativePath),
+    width: data.get(#width, or: $value.width),
+    height: data.get(#height, or: $value.height),
+    hash: data.get(#hash, or: $value.hash),
+  );
 
   @override
   PortraitCopyWith<$R2, Portrait, $Out2> $chain<$R2, $Out2>(
-          Then<$Out2, $R2> t) =>
-      _PortraitCopyWithImpl<$R2, $Out2>($value, $cast, t);
+    Then<$Out2, $R2> t,
+  ) => _PortraitCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
 class SavedPortraitMapper extends ClassMapperBase<SavedPortrait> {
@@ -175,11 +196,15 @@ class SavedPortraitMapper extends ClassMapperBase<SavedPortrait> {
   final String id = 'SavedPortrait';
 
   static String _$relativePath(SavedPortrait v) => v.relativePath;
-  static const Field<SavedPortrait, String> _f$relativePath =
-      Field('relativePath', _$relativePath);
+  static const Field<SavedPortrait, String> _f$relativePath = Field(
+    'relativePath',
+    _$relativePath,
+  );
   static String _$lastKnownFullPath(SavedPortrait v) => v.lastKnownFullPath;
-  static const Field<SavedPortrait, String> _f$lastKnownFullPath =
-      Field('lastKnownFullPath', _$lastKnownFullPath);
+  static const Field<SavedPortrait, String> _f$lastKnownFullPath = Field(
+    'lastKnownFullPath',
+    _$lastKnownFullPath,
+  );
   static String _$hash(SavedPortrait v) => v.hash;
   static const Field<SavedPortrait, String> _f$hash = Field('hash', _$hash);
 
@@ -192,9 +217,10 @@ class SavedPortraitMapper extends ClassMapperBase<SavedPortrait> {
 
   static SavedPortrait _instantiate(DecodingData data) {
     return SavedPortrait(
-        relativePath: data.dec(_f$relativePath),
-        lastKnownFullPath: data.dec(_f$lastKnownFullPath),
-        hash: data.dec(_f$hash));
+      relativePath: data.dec(_f$relativePath),
+      lastKnownFullPath: data.dec(_f$lastKnownFullPath),
+      hash: data.dec(_f$hash),
+    );
   }
 
   @override
@@ -211,34 +237,43 @@ class SavedPortraitMapper extends ClassMapperBase<SavedPortrait> {
 
 mixin SavedPortraitMappable {
   String toJson() {
-    return SavedPortraitMapper.ensureInitialized()
-        .encodeJson<SavedPortrait>(this as SavedPortrait);
+    return SavedPortraitMapper.ensureInitialized().encodeJson<SavedPortrait>(
+      this as SavedPortrait,
+    );
   }
 
   Map<String, dynamic> toMap() {
-    return SavedPortraitMapper.ensureInitialized()
-        .encodeMap<SavedPortrait>(this as SavedPortrait);
+    return SavedPortraitMapper.ensureInitialized().encodeMap<SavedPortrait>(
+      this as SavedPortrait,
+    );
   }
 
   SavedPortraitCopyWith<SavedPortrait, SavedPortrait, SavedPortrait>
-      get copyWith => _SavedPortraitCopyWithImpl<SavedPortrait, SavedPortrait>(
-          this as SavedPortrait, $identity, $identity);
+  get copyWith => _SavedPortraitCopyWithImpl<SavedPortrait, SavedPortrait>(
+    this as SavedPortrait,
+    $identity,
+    $identity,
+  );
   @override
   String toString() {
-    return SavedPortraitMapper.ensureInitialized()
-        .stringifyValue(this as SavedPortrait);
+    return SavedPortraitMapper.ensureInitialized().stringifyValue(
+      this as SavedPortrait,
+    );
   }
 
   @override
   bool operator ==(Object other) {
-    return SavedPortraitMapper.ensureInitialized()
-        .equalsValue(this as SavedPortrait, other);
+    return SavedPortraitMapper.ensureInitialized().equalsValue(
+      this as SavedPortrait,
+      other,
+    );
   }
 
   @override
   int get hashCode {
-    return SavedPortraitMapper.ensureInitialized()
-        .hashValue(this as SavedPortrait);
+    return SavedPortraitMapper.ensureInitialized().hashValue(
+      this as SavedPortrait,
+    );
   }
 }
 
@@ -264,22 +299,27 @@ class _SavedPortraitCopyWithImpl<$R, $Out>
       SavedPortraitMapper.ensureInitialized();
   @override
   $R call({String? relativePath, String? lastKnownFullPath, String? hash}) =>
-      $apply(FieldCopyWithData({
-        if (relativePath != null) #relativePath: relativePath,
-        if (lastKnownFullPath != null) #lastKnownFullPath: lastKnownFullPath,
-        if (hash != null) #hash: hash
-      }));
+      $apply(
+        FieldCopyWithData({
+          if (relativePath != null) #relativePath: relativePath,
+          if (lastKnownFullPath != null) #lastKnownFullPath: lastKnownFullPath,
+          if (hash != null) #hash: hash,
+        }),
+      );
   @override
   SavedPortrait $make(CopyWithData data) => SavedPortrait(
-      relativePath: data.get(#relativePath, or: $value.relativePath),
-      lastKnownFullPath:
-          data.get(#lastKnownFullPath, or: $value.lastKnownFullPath),
-      hash: data.get(#hash, or: $value.hash));
+    relativePath: data.get(#relativePath, or: $value.relativePath),
+    lastKnownFullPath: data.get(
+      #lastKnownFullPath,
+      or: $value.lastKnownFullPath,
+    ),
+    hash: data.get(#hash, or: $value.hash),
+  );
 
   @override
   SavedPortraitCopyWith<$R2, SavedPortrait, $Out2> $chain<$R2, $Out2>(
-          Then<$Out2, $R2> t) =>
-      _SavedPortraitCopyWithImpl<$R2, $Out2>($value, $cast, t);
+    Then<$Out2, $R2> t,
+  ) => _SavedPortraitCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
 class ReplacedSavedPortraitMapper
@@ -299,8 +339,10 @@ class ReplacedSavedPortraitMapper
   final String id = 'ReplacedSavedPortrait';
 
   static SavedPortrait _$original(ReplacedSavedPortrait v) => v.original;
-  static const Field<ReplacedSavedPortrait, SavedPortrait> _f$original =
-      Field('original', _$original);
+  static const Field<ReplacedSavedPortrait, SavedPortrait> _f$original = Field(
+    'original',
+    _$original,
+  );
   static SavedPortrait _$replacement(ReplacedSavedPortrait v) => v.replacement;
   static const Field<ReplacedSavedPortrait, SavedPortrait> _f$replacement =
       Field('replacement', _$replacement);
@@ -313,7 +355,9 @@ class ReplacedSavedPortraitMapper
 
   static ReplacedSavedPortrait _instantiate(DecodingData data) {
     return ReplacedSavedPortrait(
-        original: data.dec(_f$original), replacement: data.dec(_f$replacement));
+      original: data.dec(_f$original),
+      replacement: data.dec(_f$replacement),
+    );
   }
 
   @override
@@ -339,45 +383,59 @@ mixin ReplacedSavedPortraitMappable {
         .encodeMap<ReplacedSavedPortrait>(this as ReplacedSavedPortrait);
   }
 
-  ReplacedSavedPortraitCopyWith<ReplacedSavedPortrait, ReplacedSavedPortrait,
-      ReplacedSavedPortrait> get copyWith => _ReplacedSavedPortraitCopyWithImpl<
-          ReplacedSavedPortrait, ReplacedSavedPortrait>(
-      this as ReplacedSavedPortrait, $identity, $identity);
+  ReplacedSavedPortraitCopyWith<
+    ReplacedSavedPortrait,
+    ReplacedSavedPortrait,
+    ReplacedSavedPortrait
+  >
+  get copyWith =>
+      _ReplacedSavedPortraitCopyWithImpl<
+        ReplacedSavedPortrait,
+        ReplacedSavedPortrait
+      >(this as ReplacedSavedPortrait, $identity, $identity);
   @override
   String toString() {
-    return ReplacedSavedPortraitMapper.ensureInitialized()
-        .stringifyValue(this as ReplacedSavedPortrait);
+    return ReplacedSavedPortraitMapper.ensureInitialized().stringifyValue(
+      this as ReplacedSavedPortrait,
+    );
   }
 
   @override
   bool operator ==(Object other) {
-    return ReplacedSavedPortraitMapper.ensureInitialized()
-        .equalsValue(this as ReplacedSavedPortrait, other);
+    return ReplacedSavedPortraitMapper.ensureInitialized().equalsValue(
+      this as ReplacedSavedPortrait,
+      other,
+    );
   }
 
   @override
   int get hashCode {
-    return ReplacedSavedPortraitMapper.ensureInitialized()
-        .hashValue(this as ReplacedSavedPortrait);
+    return ReplacedSavedPortraitMapper.ensureInitialized().hashValue(
+      this as ReplacedSavedPortrait,
+    );
   }
 }
 
 extension ReplacedSavedPortraitValueCopy<$R, $Out>
     on ObjectCopyWith<$R, ReplacedSavedPortrait, $Out> {
   ReplacedSavedPortraitCopyWith<$R, ReplacedSavedPortrait, $Out>
-      get $asReplacedSavedPortrait => $base.as(
-          (v, t, t2) => _ReplacedSavedPortraitCopyWithImpl<$R, $Out>(v, t, t2));
+  get $asReplacedSavedPortrait => $base.as(
+    (v, t, t2) => _ReplacedSavedPortraitCopyWithImpl<$R, $Out>(v, t, t2),
+  );
 }
 
 abstract class ReplacedSavedPortraitCopyWith<
-    $R,
-    $In extends ReplacedSavedPortrait,
-    $Out> implements ClassCopyWith<$R, $In, $Out> {
+  $R,
+  $In extends ReplacedSavedPortrait,
+  $Out
+>
+    implements ClassCopyWith<$R, $In, $Out> {
   SavedPortraitCopyWith<$R, SavedPortrait, SavedPortrait> get original;
   SavedPortraitCopyWith<$R, SavedPortrait, SavedPortrait> get replacement;
   $R call({SavedPortrait? original, SavedPortrait? replacement});
   ReplacedSavedPortraitCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
-      Then<$Out2, $R2> t);
+    Then<$Out2, $R2> t,
+  );
 }
 
 class _ReplacedSavedPortraitCopyWithImpl<$R, $Out>
@@ -395,18 +453,21 @@ class _ReplacedSavedPortraitCopyWithImpl<$R, $Out>
   SavedPortraitCopyWith<$R, SavedPortrait, SavedPortrait> get replacement =>
       $value.replacement.copyWith.$chain((v) => call(replacement: v));
   @override
-  $R call({SavedPortrait? original, SavedPortrait? replacement}) =>
-      $apply(FieldCopyWithData({
-        if (original != null) #original: original,
-        if (replacement != null) #replacement: replacement
-      }));
+  $R call({SavedPortrait? original, SavedPortrait? replacement}) => $apply(
+    FieldCopyWithData({
+      if (original != null) #original: original,
+      if (replacement != null) #replacement: replacement,
+    }),
+  );
   @override
   ReplacedSavedPortrait $make(CopyWithData data) => ReplacedSavedPortrait(
-      original: data.get(#original, or: $value.original),
-      replacement: data.get(#replacement, or: $value.replacement));
+    original: data.get(#original, or: $value.original),
+    replacement: data.get(#replacement, or: $value.replacement),
+  );
 
   @override
   ReplacedSavedPortraitCopyWith<$R2, ReplacedSavedPortrait, $Out2>
-      $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
-          _ReplacedSavedPortraitCopyWithImpl<$R2, $Out2>($value, $cast, t);
+  $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
+      _ReplacedSavedPortraitCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
+

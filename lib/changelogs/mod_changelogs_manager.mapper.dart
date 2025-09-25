@@ -1,5 +1,6 @@
 // coverage:ignore-file
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// dart format off
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, unnecessary_cast, override_on_non_overriding_member
 // ignore_for_file: strict_raw_type, inference_failure_on_untyped_parameter
@@ -24,11 +25,15 @@ class ModChangelogMapper extends ClassMapperBase<ModChangelog> {
   static String _$modId(ModChangelog v) => v.modId;
   static const Field<ModChangelog, String> _f$modId = Field('modId', _$modId);
   static String _$smolId(ModChangelog v) => v.smolId;
-  static const Field<ModChangelog, String> _f$smolId =
-      Field('smolId', _$smolId);
+  static const Field<ModChangelog, String> _f$smolId = Field(
+    'smolId',
+    _$smolId,
+  );
   static String _$changelog(ModChangelog v) => v.changelog;
-  static const Field<ModChangelog, String> _f$changelog =
-      Field('changelog', _$changelog);
+  static const Field<ModChangelog, String> _f$changelog = Field(
+    'changelog',
+    _$changelog,
+  );
   static String _$url(ModChangelog v) => v.url;
   static const Field<ModChangelog, String> _f$url = Field('url', _$url);
   static List<ChangelogVersion>? _$parsedVersions(ModChangelog v) =>
@@ -47,11 +52,12 @@ class ModChangelogMapper extends ClassMapperBase<ModChangelog> {
 
   static ModChangelog _instantiate(DecodingData data) {
     return ModChangelog(
-        modId: data.dec(_f$modId),
-        smolId: data.dec(_f$smolId),
-        changelog: data.dec(_f$changelog),
-        url: data.dec(_f$url),
-        parsedVersions: data.dec(_f$parsedVersions));
+      modId: data.dec(_f$modId),
+      smolId: data.dec(_f$smolId),
+      changelog: data.dec(_f$changelog),
+      url: data.dec(_f$url),
+      parsedVersions: data.dec(_f$parsedVersions),
+    );
   }
 
   @override
@@ -68,34 +74,43 @@ class ModChangelogMapper extends ClassMapperBase<ModChangelog> {
 
 mixin ModChangelogMappable {
   String toJson() {
-    return ModChangelogMapper.ensureInitialized()
-        .encodeJson<ModChangelog>(this as ModChangelog);
+    return ModChangelogMapper.ensureInitialized().encodeJson<ModChangelog>(
+      this as ModChangelog,
+    );
   }
 
   Map<String, dynamic> toMap() {
-    return ModChangelogMapper.ensureInitialized()
-        .encodeMap<ModChangelog>(this as ModChangelog);
+    return ModChangelogMapper.ensureInitialized().encodeMap<ModChangelog>(
+      this as ModChangelog,
+    );
   }
 
   ModChangelogCopyWith<ModChangelog, ModChangelog, ModChangelog> get copyWith =>
       _ModChangelogCopyWithImpl<ModChangelog, ModChangelog>(
-          this as ModChangelog, $identity, $identity);
+        this as ModChangelog,
+        $identity,
+        $identity,
+      );
   @override
   String toString() {
-    return ModChangelogMapper.ensureInitialized()
-        .stringifyValue(this as ModChangelog);
+    return ModChangelogMapper.ensureInitialized().stringifyValue(
+      this as ModChangelog,
+    );
   }
 
   @override
   bool operator ==(Object other) {
-    return ModChangelogMapper.ensureInitialized()
-        .equalsValue(this as ModChangelog, other);
+    return ModChangelogMapper.ensureInitialized().equalsValue(
+      this as ModChangelog,
+      other,
+    );
   }
 
   @override
   int get hashCode {
-    return ModChangelogMapper.ensureInitialized()
-        .hashValue(this as ModChangelog);
+    return ModChangelogMapper.ensureInitialized().hashValue(
+      this as ModChangelog,
+    );
   }
 }
 
@@ -107,15 +122,19 @@ extension ModChangelogValueCopy<$R, $Out>
 
 abstract class ModChangelogCopyWith<$R, $In extends ModChangelog, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
-  ListCopyWith<$R, ChangelogVersion,
-          ChangelogVersionCopyWith<$R, ChangelogVersion, ChangelogVersion>>?
-      get parsedVersions;
-  $R call(
-      {String? modId,
-      String? smolId,
-      String? changelog,
-      String? url,
-      List<ChangelogVersion>? parsedVersions});
+  ListCopyWith<
+    $R,
+    ChangelogVersion,
+    ChangelogVersionCopyWith<$R, ChangelogVersion, ChangelogVersion>
+  >?
+  get parsedVersions;
+  $R call({
+    String? modId,
+    String? smolId,
+    String? changelog,
+    String? url,
+    List<ChangelogVersion>? parsedVersions,
+  });
   ModChangelogCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
 
@@ -128,38 +147,47 @@ class _ModChangelogCopyWithImpl<$R, $Out>
   late final ClassMapperBase<ModChangelog> $mapper =
       ModChangelogMapper.ensureInitialized();
   @override
-  ListCopyWith<$R, ChangelogVersion,
-          ChangelogVersionCopyWith<$R, ChangelogVersion, ChangelogVersion>>?
-      get parsedVersions => $value.parsedVersions != null
-          ? ListCopyWith($value.parsedVersions!, (v, t) => v.copyWith.$chain(t),
-              (v) => call(parsedVersions: v))
-          : null;
+  ListCopyWith<
+    $R,
+    ChangelogVersion,
+    ChangelogVersionCopyWith<$R, ChangelogVersion, ChangelogVersion>
+  >?
+  get parsedVersions => $value.parsedVersions != null
+      ? ListCopyWith(
+          $value.parsedVersions!,
+          (v, t) => v.copyWith.$chain(t),
+          (v) => call(parsedVersions: v),
+        )
+      : null;
   @override
-  $R call(
-          {String? modId,
-          String? smolId,
-          String? changelog,
-          String? url,
-          Object? parsedVersions = $none}) =>
-      $apply(FieldCopyWithData({
-        if (modId != null) #modId: modId,
-        if (smolId != null) #smolId: smolId,
-        if (changelog != null) #changelog: changelog,
-        if (url != null) #url: url,
-        if (parsedVersions != $none) #parsedVersions: parsedVersions
-      }));
+  $R call({
+    String? modId,
+    String? smolId,
+    String? changelog,
+    String? url,
+    Object? parsedVersions = $none,
+  }) => $apply(
+    FieldCopyWithData({
+      if (modId != null) #modId: modId,
+      if (smolId != null) #smolId: smolId,
+      if (changelog != null) #changelog: changelog,
+      if (url != null) #url: url,
+      if (parsedVersions != $none) #parsedVersions: parsedVersions,
+    }),
+  );
   @override
   ModChangelog $make(CopyWithData data) => ModChangelog(
-      modId: data.get(#modId, or: $value.modId),
-      smolId: data.get(#smolId, or: $value.smolId),
-      changelog: data.get(#changelog, or: $value.changelog),
-      url: data.get(#url, or: $value.url),
-      parsedVersions: data.get(#parsedVersions, or: $value.parsedVersions));
+    modId: data.get(#modId, or: $value.modId),
+    smolId: data.get(#smolId, or: $value.smolId),
+    changelog: data.get(#changelog, or: $value.changelog),
+    url: data.get(#url, or: $value.url),
+    parsedVersions: data.get(#parsedVersions, or: $value.parsedVersions),
+  );
 
   @override
   ModChangelogCopyWith<$R2, ModChangelog, $Out2> $chain<$R2, $Out2>(
-          Then<$Out2, $R2> t) =>
-      _ModChangelogCopyWithImpl<$R2, $Out2>($value, $cast, t);
+    Then<$Out2, $R2> t,
+  ) => _ModChangelogCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
 class ChangelogVersionMapper extends ClassMapperBase<ChangelogVersion> {
@@ -178,11 +206,15 @@ class ChangelogVersionMapper extends ClassMapperBase<ChangelogVersion> {
   final String id = 'ChangelogVersion';
 
   static Version _$version(ChangelogVersion v) => v.version;
-  static const Field<ChangelogVersion, Version> _f$version =
-      Field('version', _$version);
+  static const Field<ChangelogVersion, Version> _f$version = Field(
+    'version',
+    _$version,
+  );
   static String _$changelog(ChangelogVersion v) => v.changelog;
-  static const Field<ChangelogVersion, String> _f$changelog =
-      Field('changelog', _$changelog);
+  static const Field<ChangelogVersion, String> _f$changelog = Field(
+    'changelog',
+    _$changelog,
+  );
 
   @override
   final MappableFields<ChangelogVersion> fields = const {
@@ -218,33 +250,40 @@ mixin ChangelogVersionMappable {
   }
 
   ChangelogVersionCopyWith<ChangelogVersion, ChangelogVersion, ChangelogVersion>
-      get copyWith =>
-          _ChangelogVersionCopyWithImpl<ChangelogVersion, ChangelogVersion>(
-              this as ChangelogVersion, $identity, $identity);
+  get copyWith =>
+      _ChangelogVersionCopyWithImpl<ChangelogVersion, ChangelogVersion>(
+        this as ChangelogVersion,
+        $identity,
+        $identity,
+      );
   @override
   String toString() {
-    return ChangelogVersionMapper.ensureInitialized()
-        .stringifyValue(this as ChangelogVersion);
+    return ChangelogVersionMapper.ensureInitialized().stringifyValue(
+      this as ChangelogVersion,
+    );
   }
 
   @override
   bool operator ==(Object other) {
-    return ChangelogVersionMapper.ensureInitialized()
-        .equalsValue(this as ChangelogVersion, other);
+    return ChangelogVersionMapper.ensureInitialized().equalsValue(
+      this as ChangelogVersion,
+      other,
+    );
   }
 
   @override
   int get hashCode {
-    return ChangelogVersionMapper.ensureInitialized()
-        .hashValue(this as ChangelogVersion);
+    return ChangelogVersionMapper.ensureInitialized().hashValue(
+      this as ChangelogVersion,
+    );
   }
 }
 
 extension ChangelogVersionValueCopy<$R, $Out>
     on ObjectCopyWith<$R, ChangelogVersion, $Out> {
   ChangelogVersionCopyWith<$R, ChangelogVersion, $Out>
-      get $asChangelogVersion => $base
-          .as((v, t, t2) => _ChangelogVersionCopyWithImpl<$R, $Out>(v, t, t2));
+  get $asChangelogVersion =>
+      $base.as((v, t, t2) => _ChangelogVersionCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
 abstract class ChangelogVersionCopyWith<$R, $In extends ChangelogVersion, $Out>
@@ -252,7 +291,8 @@ abstract class ChangelogVersionCopyWith<$R, $In extends ChangelogVersion, $Out>
   VersionCopyWith<$R, Version, Version> get version;
   $R call({Version? version, String? changelog});
   ChangelogVersionCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
-      Then<$Out2, $R2> t);
+    Then<$Out2, $R2> t,
+  );
 }
 
 class _ChangelogVersionCopyWithImpl<$R, $Out>
@@ -267,17 +307,21 @@ class _ChangelogVersionCopyWithImpl<$R, $Out>
   VersionCopyWith<$R, Version, Version> get version =>
       $value.version.copyWith.$chain((v) => call(version: v));
   @override
-  $R call({Version? version, String? changelog}) => $apply(FieldCopyWithData({
-        if (version != null) #version: version,
-        if (changelog != null) #changelog: changelog
-      }));
+  $R call({Version? version, String? changelog}) => $apply(
+    FieldCopyWithData({
+      if (version != null) #version: version,
+      if (changelog != null) #changelog: changelog,
+    }),
+  );
   @override
   ChangelogVersion $make(CopyWithData data) => ChangelogVersion(
-      data.get(#version, or: $value.version),
-      data.get(#changelog, or: $value.changelog));
+    data.get(#version, or: $value.version),
+    data.get(#changelog, or: $value.changelog),
+  );
 
   @override
   ChangelogVersionCopyWith<$R2, ChangelogVersion, $Out2> $chain<$R2, $Out2>(
-          Then<$Out2, $R2> t) =>
-      _ChangelogVersionCopyWithImpl<$R2, $Out2>($value, $cast, t);
+    Then<$Out2, $R2> t,
+  ) => _ChangelogVersionCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
+

@@ -179,8 +179,6 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                               //             )),
                               //       ]);
                               // }),
-                              buildOverflowButton(allMods),
-                              const SizedBox(width: 8),
                               MovingTooltipWidget.text(
                                 message: "Open side panel",
                                 child: IconButton(
@@ -194,6 +192,8 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                                   icon: Icon(Icons.view_sidebar),
                                 ),
                               ),
+                              const SizedBox(width: 8),
+                              buildOverflowButton(allMods),
                             ],
                           ),
                         ),
@@ -249,11 +249,14 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                     final rightMetadata = modsMetadata?.getMergedModMetadata(
                       right.id,
                     );
-                    final leftFavorited = leftMetadata?.isFavorited == true;
-                    final rightFavorited = rightMetadata?.isFavorited == true;
 
-                    if (leftFavorited != rightFavorited) {
-                      return leftFavorited ? -1 : 1;
+                    if (ref.watch(appSettings.select((s) => s.pinFavorites))) {
+                      final leftFavorited = leftMetadata?.isFavorited == true;
+                      final rightFavorited = rightMetadata?.isFavorited == true;
+
+                      if (leftFavorited != rightFavorited) {
+                        return leftFavorited ? -1 : 1;
+                      }
                     }
 
                     return null;
@@ -1019,7 +1022,32 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
       message: "More options",
       child: PopupMenuButton(
         tooltip: "",
-        itemBuilder: (context) => [
+        icon: const Icon(Icons.more_vert),
+        itemBuilder: (context) => <PopupMenuEntry>[
+          PopupMenuItem(
+            onTap: () {
+              ref
+                  .read(appSettings.notifier)
+                  .update((s) => s.copyWith(pinFavorites: !s.pinFavorites));
+            },
+            child: Builder(
+              builder: (context) {
+                final pinFavorites = ref.watch(
+                  appSettings.select((s) => s.pinFavorites),
+                );
+                return ListTile(
+                  dense: true,
+                  leading: Icon(
+                    pinFavorites
+                        ? Icons.check_box
+                        : Icons.check_box_outline_blank,
+                  ),
+                  title: Text("Pin Favorited Mods to Top"),
+                );
+              },
+            ),
+          ),
+          PopupMenuDivider(),
           PopupMenuItem(
             onTap: () {
               showDialog(

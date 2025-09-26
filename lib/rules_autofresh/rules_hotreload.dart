@@ -33,7 +33,7 @@ class _RulesHotReloadState extends ConsumerState<RulesHotReload> {
     Fimber.i(
       "Detected rules.csv change, touching vanilla rules.csv last modified date. Count: $_counter",
     );
-    final gameCoreDir = ref.read(appSettings.select((s) => s.gameCoreDir));
+    final gameCoreDir = ref.read(AppState.modsFolder).valueOrNull;
     if (gameCoreDir == null) {
       return;
     }

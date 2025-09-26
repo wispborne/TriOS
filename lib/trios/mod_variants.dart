@@ -12,6 +12,7 @@ import 'package:trios/utils/extensions.dart';
 
 import '../mod_manager/mod_manager_logic.dart';
 import '../utils/logging.dart';
+import 'app_state.dart';
 
 /// Master list of all mod variants found in the mods folder.
 class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
@@ -32,7 +33,7 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
       Fimber.e("Failed to reload mod variants", ex: e, stacktrace: stacktrace);
     }
 
-    ref.listen(appSettings.select((value) => value.modsDir), (previous, next) {
+    ref.listen(AppState.modsFolder, (previous, next) {
       if (previous != next) {
         Fimber.i("Mods directory changed, resetting file watcher.");
         _initializedFileWatcher = false;
@@ -41,7 +42,7 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
 
     if (!_initializedFileWatcher) {
       _initializedFileWatcher = true;
-      final modsPath = ref.watch(appSettings.select((value) => value.modsDir));
+      final modsPath = ref.watch(AppState.modsFolder).valueOrNull;
 
       if (modsPath != null && modsPath.existsSync()) {
         addModsFolderFileWatcher(modsPath, (List<File> files) {
@@ -79,8 +80,8 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
       Fimber.i(
         "Loading mod variant data from disk (reading mod_info.json files).${(onlyVariants == null) ? "" : " Only reloading ${onlyVariants.joinToString(transform: (it) => it.smolId)}"}",
       );
-      final gamePath = ref.watch(appSettings.select((value) => value.gameDir));
-      final modsPath = ref.watch(appSettings.select((value) => value.modsDir));
+      final gamePath = ref.watch(AppState.gameFolder).valueOrNull;
+      final modsPath = ref.watch(AppState.modsFolder).valueOrNull;
       if (gamePath == null || modsPath == null) {
         return;
       }

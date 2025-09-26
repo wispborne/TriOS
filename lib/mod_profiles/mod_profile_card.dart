@@ -138,7 +138,7 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
             .toList();
 
     final modRootFolders = [
-      ref.watch(appSettings.select((s) => s.gameCoreDir)),
+      ref.watch(AppState.gameCoreFolder).valueOrNull,
       ...ref
           .watch(AppState.mods)
           .map((mod) => mod.findFirstEnabledOrHighestVersion?.modFolder),

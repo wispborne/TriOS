@@ -61,7 +61,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
     try {
       final installModsResult = await installModFromDisk(
         modInstallSource,
-        ref.read(appSettings.select((s) => s.modsDir))!,
+        ref.read(AppState.modsFolder).valueOrNull!,
         ref.read(AppState.mods),
         (modsBeingInstalled) {
           return showDialog<List<ExtractedModInfo>>(
@@ -1217,7 +1217,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
     // final mod = mods.firstWhereOrNull((mod) => mod.id == modVariant.modInfo.id);
     final enabledMods = ref.read(AppState.enabledModsFile).valueOrNull;
     Fimber.i("Enabling variant ${modVariant.smolId}");
-    final modsFolderPath = ref.read(appSettings).modsDir;
+    final modsFolderPath = ref.read(AppState.modsFolder).valueOrNull;
 
     if (modsFolderPath == null || !modsFolderPath.existsSync()) {
       throw Exception("Mods folder does not exist: $modsFolderPath");

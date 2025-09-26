@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
+import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 
@@ -54,9 +55,7 @@ class GameSettingsNotifier extends StateNotifier<AsyncValue<GameSettings>> {
 
   Future<void> _initialize() async {
     try {
-      final gameCoreDir = ref
-          .read(appSettings.select((settings) => settings.gameCoreDir))
-          ?.toDirectory();
+      final gameCoreDir = ref.read(AppState.gameCoreFolder).valueOrNull;
       if (gameCoreDir == null) {
         return;
       }

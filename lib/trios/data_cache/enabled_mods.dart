@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mutex/mutex.dart';
 import 'package:path/path.dart' as p;
+import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
 
@@ -32,7 +33,7 @@ class EnabledModsNotifier extends AsyncNotifier<EnabledMods> {
   }
 
   Future<bool> isWritable() {
-    final modsFolder = ref.read(appSettings.select((value) => value.modsDir));
+    final modsFolder = ref.read(AppState.modsFolder).valueOrNull;
     if (modsFolder == null) {
       return Future.value(false);
     }
@@ -43,7 +44,7 @@ class EnabledModsNotifier extends AsyncNotifier<EnabledMods> {
     // Prevent concurrent writes to the enabled_mods.json file and make sure
     // that the file is not read while it's being written to.
     await fileLock.protect(() async {
-      final modsFolder = ref.read(appSettings.select((value) => value.modsDir));
+      final modsFolder = ref.read(AppState.modsFolder).valueOrNull;
       if (modsFolder == null) {
         return;
       }
@@ -87,9 +88,7 @@ class EnabledModsNotifier extends AsyncNotifier<EnabledMods> {
   /// `allMods` is an optional parameter that filters out mods that don't exist.
   Future<void> refreshEnabledMods() async {
     fileLock.protect(() async {
-      final modsFolder = ref.watch(
-        appSettings.select((value) => value.modsDir),
-      );
+      final modsFolder = ref.watch(AppState.modsFolder).valueOrNull;
 
       if (modsFolder == null || !modsFolder.existsSync()) {
         state = const AsyncValue.data(EnabledMods({}));

@@ -298,9 +298,7 @@ class LauncherButton extends HookConsumerWidget {
     if (ref.read(appSettings.select((s) => s.useCustomGameExePath))) {
       launchGameUsingLauncher(
         ref.read(appSettings.select((s) => s.gameDir))!,
-        customExePath: File(
-          ref.read(appSettings.select((s) => s.customGameExePath))!,
-        ),
+        customExePath: ref.read(AppState.gameExecutable).valueOrNull,
       );
     } else if (ref
             .read(jreManagerProvider)
@@ -317,7 +315,7 @@ class LauncherButton extends HookConsumerWidget {
   static List<LaunchPrecheckError> performLaunchPrecheck(WidgetRef ref) {
     final launchPrecheckFailures = <LaunchPrecheckError?>[];
     final mods = ref.read(AppState.mods);
-    final modsFolder = ref.read(appSettings.select((it) => it.modsDir));
+    final modsFolder = ref.read(AppState.modsFolder).valueOrNull;
     final enabledMods = ref
         .read(AppState.enabledModsFile)
         .valueOrNull
@@ -525,12 +523,8 @@ class LauncherButton extends HookConsumerWidget {
   /// Launches game without JRE 23.
   static launchGameVanilla(WidgetRef ref) async {
     // Starsector folder
-    var gamePath = ref
-        .read(appSettings.select((value) => value.gameDir))
-        ?.toDirectory();
-    final gameCorePath = ref
-        .read(appSettings.select((value) => value.gameCoreDir))
-        ?.toDirectory();
+    var gamePath = ref.read(AppState.gameFolder).valueOrNull;
+    final gameCorePath = ref.read(AppState.gameCoreFolder).valueOrNull;
 
     if (gamePath == null || gameCorePath == null) {
       Fimber.e('Game path or game core path not set');

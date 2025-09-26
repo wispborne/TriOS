@@ -66,8 +66,8 @@ class VramEstimatorNotifier
   Future<void> startEstimating({List<ModVariant>? variantsToCheck}) async {
     if (state.valueOrNull?.isScanning == true) return;
 
-    var settings = ref.read(appSettings);
-    if (settings.modsDir == null || !settings.modsDir!.existsSync()) {
+    var modsFolder = ref.read(AppState.modsFolder).valueOrNull;
+    if (modsFolder == null || !modsFolder.existsSync()) {
       Fimber.e('Mods folder not set');
       // Optionally, you can set an error state here
       return;

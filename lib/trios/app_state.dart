@@ -177,7 +177,8 @@ class AppState {
         .watch(appSettings.select((value) => value.gameDir))
         ?.toDirectory();
     if (gamePath == null || gamePath.existsSync() == false) return null;
-    final gameCorePath = generateGameCorePath(gamePath)!;
+    final gameCorePath = ref.watch(gameCoreFolder).valueOrNull;
+    if (gameCorePath == null || gameCorePath.existsSync() == false) return null;
 
     try {
       final archive = ref.watch(archiveProvider).value;
@@ -281,6 +282,25 @@ class AppState {
       final gamePath = ref.watch(gameFolder).valueOrNull;
       if (gamePath == null) return null;
       return generateSavesFolderPath(gamePath)?.toDirectory();
+    }
+  });
+
+  static final gameCoreFolder = FutureProvider<Directory?>((ref) async {
+    final useCustomCoreFolderPath = ref.watch(
+      appSettings.select((value) => value.useCustomCoreFolderPath),
+    );
+
+    if (useCustomCoreFolderPath == true) {
+      final customCoreFolderPath = ref.watch(
+        appSettings.select((value) => value.customCoreFolderPath),
+      );
+      if (customCoreFolderPath != null) {
+        return customCoreFolderPath.toDirectory();
+      }
+    } else {
+      final gamePath = ref.watch(gameFolder).valueOrNull;
+      if (gamePath == null) return null;
+      return generateGameCorePath(gamePath)?.toDirectory();
     }
   });
 

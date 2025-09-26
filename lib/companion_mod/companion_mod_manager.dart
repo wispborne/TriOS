@@ -30,7 +30,7 @@ class CompanionModManager {
   CompanionModManager(this.ref);
 
   Directory? get companionModDefaultFolder {
-    final modsFolder = ref.read(appSettings.select((s) => s.modsDir));
+    final modsFolder = ref.read(AppState.modsFolder).valueOrNull;
     if (modsFolder == null) {
       return null;
     }
@@ -63,7 +63,7 @@ class CompanionModManager {
   Future<void> copyModToModsFolder({bool overwriteExisting = true}) async {
     try {
       // Get the mods folder path using Riverpod
-      final modsFolder = ref.read(appSettings.select((s) => s.modsDir));
+      final modsFolder = ref.read(AppState.modsFolder).valueOrNull;
       if (modsFolder == null) {
         throw StateError('Game mods folder not configured');
       }
@@ -304,8 +304,7 @@ class CompanionModManager {
     Map<String, ReplacedSavedPortrait> replacements,
   ) async {
     final gameCoreFolder = ref
-        .read(appSettings.select((s) => s.gameCoreDir))
-        ?.toDirectory();
+        .read(AppState.gameCoreFolder).valueOrNull;
 
     try {
       if (gameCoreFolder == null) {

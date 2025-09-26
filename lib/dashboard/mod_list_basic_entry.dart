@@ -353,9 +353,9 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                       }
                     }
 
-                    final modsFolder = ref.read(
-                      appSettings.select((value) => value.modsDir),
-                    );
+                    final modsFolder = ref
+                        .read(AppState.modsFolder)
+                        .valueOrNull;
                     if (modsFolder == null) return;
 
                     try {

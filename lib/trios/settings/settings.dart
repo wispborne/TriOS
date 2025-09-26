@@ -15,8 +15,11 @@ const sharedPrefsSettingsKey = "settings";
 /// Settings object model
 @MappableClass(ignoreNull: true)
 class Settings with SettingsMappable {
+  /// DO NOT USE directly; use `AppState.gameFolder`
   @MappableField(hook: DirectoryHook())
   final Directory? gameDir;
+
+  /// DO NOT USE directly; use `AppState.gameCoreFolder`
   @MappableField(hook: DirectoryHook())
   final Directory? gameCoreDir;
 
@@ -28,9 +31,13 @@ class Settings with SettingsMappable {
   @MappableField(hook: DirectoryHook())
   final Directory? modsDir;
   final bool hasCustomModsDir;
+
+  /// DO NOT USE directly; use `AppState.savesFolder`
   @MappableField(hook: DirectoryHook())
   final Directory? customSavesPath;
   final bool useCustomSavesPath;
+
+  /// DO NOT USE directly; use `AppState.gameCoreFolder`
   @MappableField(hook: DirectoryHook())
   final Directory? customCoreFolderPath;
   final bool useCustomCoreFolderPath;

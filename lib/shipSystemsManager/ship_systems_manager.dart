@@ -28,7 +28,7 @@ final shipSystemsStreamProvider = StreamProvider<List<ShipSystem>>((
   int filesProcessed = 0;
 
   final gameCorePath = ref
-      .watch(appSettings.select((s) => s.gameCoreDir))
+      .watch(AppState.modsFolder).valueOrNull
       ?.path;
   if (gameCorePath == null || gameCorePath.isEmpty) {
     throw Exception('Game folder path is not set.');

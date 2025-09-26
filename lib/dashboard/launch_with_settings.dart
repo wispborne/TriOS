@@ -253,7 +253,7 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                         // }),
                         Text(
                           ref
-                                  .watch(appSettings.select((s) => s.modsDir))
+                                  .watch(AppState.modsFolder).valueOrNull
                                   ?.path ??
                               "No mods folder!",
                           style: Theme.of(context).textTheme.labelMedium,

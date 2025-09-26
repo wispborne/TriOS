@@ -286,7 +286,7 @@ Future<void> showDeleteModFoldersConfirmationDialog(
 ) async {
   Future<void> deleteFolder(String folderPath) async {
     final directory = Directory(folderPath);
-    final modsDir = ref.read(appSettings.select((s) => s.modsDir))!.path;
+    final modsDir = ref.read(AppState.modsFolder).valueOrNull!.path;
 
     if (p.equals(folderPath, modsDir)) {
       Fimber.e("Refusing to delete the mods root folder");

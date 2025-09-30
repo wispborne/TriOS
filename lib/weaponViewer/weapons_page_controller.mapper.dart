@@ -53,6 +53,171 @@ extension WeaponSpoilerLevelMapperExtension on WeaponSpoilerLevel {
   }
 }
 
+class WeaponsPageStatePersistedMapper
+    extends ClassMapperBase<WeaponsPageStatePersisted> {
+  WeaponsPageStatePersistedMapper._();
+
+  static WeaponsPageStatePersistedMapper? _instance;
+  static WeaponsPageStatePersistedMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(
+        _instance = WeaponsPageStatePersistedMapper._(),
+      );
+    }
+    return _instance!;
+  }
+
+  @override
+  final String id = 'WeaponsPageStatePersisted';
+
+  static bool _$showEnabled(WeaponsPageStatePersisted v) => v.showEnabled;
+  static const Field<WeaponsPageStatePersisted, bool> _f$showEnabled = Field(
+    'showEnabled',
+    _$showEnabled,
+    opt: true,
+    def: false,
+  );
+  static bool _$showHidden(WeaponsPageStatePersisted v) => v.showHidden;
+  static const Field<WeaponsPageStatePersisted, bool> _f$showHidden = Field(
+    'showHidden',
+    _$showHidden,
+    opt: true,
+    def: false,
+  );
+  static bool _$splitPane(WeaponsPageStatePersisted v) => v.splitPane;
+  static const Field<WeaponsPageStatePersisted, bool> _f$splitPane = Field(
+    'splitPane',
+    _$splitPane,
+    opt: true,
+    def: false,
+  );
+
+  @override
+  final MappableFields<WeaponsPageStatePersisted> fields = const {
+    #showEnabled: _f$showEnabled,
+    #showHidden: _f$showHidden,
+    #splitPane: _f$splitPane,
+  };
+
+  static WeaponsPageStatePersisted _instantiate(DecodingData data) {
+    return WeaponsPageStatePersisted(
+      showEnabled: data.dec(_f$showEnabled),
+      showHidden: data.dec(_f$showHidden),
+      splitPane: data.dec(_f$splitPane),
+    );
+  }
+
+  @override
+  final Function instantiate = _instantiate;
+
+  static WeaponsPageStatePersisted fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<WeaponsPageStatePersisted>(map);
+  }
+
+  static WeaponsPageStatePersisted fromJson(String json) {
+    return ensureInitialized().decodeJson<WeaponsPageStatePersisted>(json);
+  }
+}
+
+mixin WeaponsPageStatePersistedMappable {
+  String toJson() {
+    return WeaponsPageStatePersistedMapper.ensureInitialized()
+        .encodeJson<WeaponsPageStatePersisted>(
+          this as WeaponsPageStatePersisted,
+        );
+  }
+
+  Map<String, dynamic> toMap() {
+    return WeaponsPageStatePersistedMapper.ensureInitialized()
+        .encodeMap<WeaponsPageStatePersisted>(
+          this as WeaponsPageStatePersisted,
+        );
+  }
+
+  WeaponsPageStatePersistedCopyWith<
+    WeaponsPageStatePersisted,
+    WeaponsPageStatePersisted,
+    WeaponsPageStatePersisted
+  >
+  get copyWith =>
+      _WeaponsPageStatePersistedCopyWithImpl<
+        WeaponsPageStatePersisted,
+        WeaponsPageStatePersisted
+      >(this as WeaponsPageStatePersisted, $identity, $identity);
+  @override
+  String toString() {
+    return WeaponsPageStatePersistedMapper.ensureInitialized().stringifyValue(
+      this as WeaponsPageStatePersisted,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return WeaponsPageStatePersistedMapper.ensureInitialized().equalsValue(
+      this as WeaponsPageStatePersisted,
+      other,
+    );
+  }
+
+  @override
+  int get hashCode {
+    return WeaponsPageStatePersistedMapper.ensureInitialized().hashValue(
+      this as WeaponsPageStatePersisted,
+    );
+  }
+}
+
+extension WeaponsPageStatePersistedValueCopy<$R, $Out>
+    on ObjectCopyWith<$R, WeaponsPageStatePersisted, $Out> {
+  WeaponsPageStatePersistedCopyWith<$R, WeaponsPageStatePersisted, $Out>
+  get $asWeaponsPageStatePersisted => $base.as(
+    (v, t, t2) => _WeaponsPageStatePersistedCopyWithImpl<$R, $Out>(v, t, t2),
+  );
+}
+
+abstract class WeaponsPageStatePersistedCopyWith<
+  $R,
+  $In extends WeaponsPageStatePersisted,
+  $Out
+>
+    implements ClassCopyWith<$R, $In, $Out> {
+  $R call({bool? showEnabled, bool? showHidden, bool? splitPane});
+  WeaponsPageStatePersistedCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
+    Then<$Out2, $R2> t,
+  );
+}
+
+class _WeaponsPageStatePersistedCopyWithImpl<$R, $Out>
+    extends ClassCopyWithBase<$R, WeaponsPageStatePersisted, $Out>
+    implements
+        WeaponsPageStatePersistedCopyWith<$R, WeaponsPageStatePersisted, $Out> {
+  _WeaponsPageStatePersistedCopyWithImpl(super.value, super.then, super.then2);
+
+  @override
+  late final ClassMapperBase<WeaponsPageStatePersisted> $mapper =
+      WeaponsPageStatePersistedMapper.ensureInitialized();
+  @override
+  $R call({bool? showEnabled, bool? showHidden, bool? splitPane}) => $apply(
+    FieldCopyWithData({
+      if (showEnabled != null) #showEnabled: showEnabled,
+      if (showHidden != null) #showHidden: showHidden,
+      if (splitPane != null) #splitPane: splitPane,
+    }),
+  );
+  @override
+  WeaponsPageStatePersisted $make(CopyWithData data) =>
+      WeaponsPageStatePersisted(
+        showEnabled: data.get(#showEnabled, or: $value.showEnabled),
+        showHidden: data.get(#showHidden, or: $value.showHidden),
+        splitPane: data.get(#splitPane, or: $value.splitPane),
+      );
+
+  @override
+  WeaponsPageStatePersistedCopyWith<$R2, WeaponsPageStatePersisted, $Out2>
+  $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
+      _WeaponsPageStatePersistedCopyWithImpl<$R2, $Out2>($value, $cast, t);
+}
+
 class WeaponsPageStateMapper extends ClassMapperBase<WeaponsPageState> {
   WeaponsPageStateMapper._();
 
@@ -60,6 +225,7 @@ class WeaponsPageStateMapper extends ClassMapperBase<WeaponsPageState> {
   static WeaponsPageStateMapper ensureInitialized() {
     if (_instance == null) {
       MapperContainer.globals.use(_instance = WeaponsPageStateMapper._());
+      WeaponsPageStatePersistedMapper.ensureInitialized();
       WeaponMapper.ensureInitialized();
       WeaponSpoilerLevelMapper.ensureInitialized();
     }
@@ -69,6 +235,15 @@ class WeaponsPageStateMapper extends ClassMapperBase<WeaponsPageState> {
   @override
   final String id = 'WeaponsPageState';
 
+  static WeaponsPageStatePersisted _$persisted(WeaponsPageState v) =>
+      v.persisted;
+  static const Field<WeaponsPageState, WeaponsPageStatePersisted> _f$persisted =
+      Field(
+        'persisted',
+        _$persisted,
+        opt: true,
+        def: const WeaponsPageStatePersisted(),
+      );
   static List<GridFilter<Weapon>> _$filterCategories(WeaponsPageState v) =>
       v.filterCategories;
   static const Field<WeaponsPageState, List<GridFilter<Weapon>>>
@@ -119,27 +294,6 @@ class WeaponsPageStateMapper extends ClassMapperBase<WeaponsPageState> {
     opt: true,
     def: '',
   );
-  static bool _$showEnabled(WeaponsPageState v) => v.showEnabled;
-  static const Field<WeaponsPageState, bool> _f$showEnabled = Field(
-    'showEnabled',
-    _$showEnabled,
-    opt: true,
-    def: false,
-  );
-  static bool _$showHidden(WeaponsPageState v) => v.showHidden;
-  static const Field<WeaponsPageState, bool> _f$showHidden = Field(
-    'showHidden',
-    _$showHidden,
-    opt: true,
-    def: false,
-  );
-  static bool _$splitPane(WeaponsPageState v) => v.splitPane;
-  static const Field<WeaponsPageState, bool> _f$splitPane = Field(
-    'splitPane',
-    _$splitPane,
-    opt: true,
-    def: false,
-  );
   static bool _$showFilters(WeaponsPageState v) => v.showFilters;
   static const Field<WeaponsPageState, bool> _f$showFilters = Field(
     'showFilters',
@@ -166,15 +320,13 @@ class WeaponsPageStateMapper extends ClassMapperBase<WeaponsPageState> {
 
   @override
   final MappableFields<WeaponsPageState> fields = const {
+    #persisted: _f$persisted,
     #filterCategories: _f$filterCategories,
     #allWeapons: _f$allWeapons,
     #filteredWeapons: _f$filteredWeapons,
     #weaponsBeforeGridFilter: _f$weaponsBeforeGridFilter,
     #weaponSearchIndices: _f$weaponSearchIndices,
     #currentSearchQuery: _f$currentSearchQuery,
-    #showEnabled: _f$showEnabled,
-    #showHidden: _f$showHidden,
-    #splitPane: _f$splitPane,
     #showFilters: _f$showFilters,
     #isLoading: _f$isLoading,
     #weaponSpoilerLevel: _f$weaponSpoilerLevel,
@@ -182,15 +334,13 @@ class WeaponsPageStateMapper extends ClassMapperBase<WeaponsPageState> {
 
   static WeaponsPageState _instantiate(DecodingData data) {
     return WeaponsPageState(
+      persisted: data.dec(_f$persisted),
       filterCategories: data.dec(_f$filterCategories),
       allWeapons: data.dec(_f$allWeapons),
       filteredWeapons: data.dec(_f$filteredWeapons),
       weaponsBeforeGridFilter: data.dec(_f$weaponsBeforeGridFilter),
       weaponSearchIndices: data.dec(_f$weaponSearchIndices),
       currentSearchQuery: data.dec(_f$currentSearchQuery),
-      showEnabled: data.dec(_f$showEnabled),
-      showHidden: data.dec(_f$showHidden),
-      splitPane: data.dec(_f$splitPane),
       showFilters: data.dec(_f$showFilters),
       isLoading: data.dec(_f$isLoading),
       weaponSpoilerLevel: data.dec(_f$weaponSpoilerLevel),
@@ -259,6 +409,12 @@ extension WeaponsPageStateValueCopy<$R, $Out>
 
 abstract class WeaponsPageStateCopyWith<$R, $In extends WeaponsPageState, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
+  WeaponsPageStatePersistedCopyWith<
+    $R,
+    WeaponsPageStatePersisted,
+    WeaponsPageStatePersisted
+  >
+  get persisted;
   ListCopyWith<
     $R,
     GridFilter<Weapon>,
@@ -278,15 +434,13 @@ abstract class WeaponsPageStateCopyWith<$R, $In extends WeaponsPageState, $Out>
   >
   get weaponSearchIndices;
   $R call({
+    WeaponsPageStatePersisted? persisted,
     List<GridFilter<Weapon>>? filterCategories,
     List<Weapon>? allWeapons,
     List<Weapon>? filteredWeapons,
     List<Weapon>? weaponsBeforeGridFilter,
     Map<String, List<String>>? weaponSearchIndices,
     String? currentSearchQuery,
-    bool? showEnabled,
-    bool? showHidden,
-    bool? splitPane,
     bool? showFilters,
     bool? isLoading,
     WeaponSpoilerLevel? weaponSpoilerLevel,
@@ -304,6 +458,13 @@ class _WeaponsPageStateCopyWithImpl<$R, $Out>
   @override
   late final ClassMapperBase<WeaponsPageState> $mapper =
       WeaponsPageStateMapper.ensureInitialized();
+  @override
+  WeaponsPageStatePersistedCopyWith<
+    $R,
+    WeaponsPageStatePersisted,
+    WeaponsPageStatePersisted
+  >
+  get persisted => $value.persisted.copyWith.$chain((v) => call(persisted: v));
   @override
   ListCopyWith<
     $R,
@@ -350,20 +511,19 @@ class _WeaponsPageStateCopyWithImpl<$R, $Out>
   );
   @override
   $R call({
+    WeaponsPageStatePersisted? persisted,
     List<GridFilter<Weapon>>? filterCategories,
     List<Weapon>? allWeapons,
     List<Weapon>? filteredWeapons,
     List<Weapon>? weaponsBeforeGridFilter,
     Map<String, List<String>>? weaponSearchIndices,
     String? currentSearchQuery,
-    bool? showEnabled,
-    bool? showHidden,
-    bool? splitPane,
     bool? showFilters,
     bool? isLoading,
     WeaponSpoilerLevel? weaponSpoilerLevel,
   }) => $apply(
     FieldCopyWithData({
+      if (persisted != null) #persisted: persisted,
       if (filterCategories != null) #filterCategories: filterCategories,
       if (allWeapons != null) #allWeapons: allWeapons,
       if (filteredWeapons != null) #filteredWeapons: filteredWeapons,
@@ -372,9 +532,6 @@ class _WeaponsPageStateCopyWithImpl<$R, $Out>
       if (weaponSearchIndices != null)
         #weaponSearchIndices: weaponSearchIndices,
       if (currentSearchQuery != null) #currentSearchQuery: currentSearchQuery,
-      if (showEnabled != null) #showEnabled: showEnabled,
-      if (showHidden != null) #showHidden: showHidden,
-      if (splitPane != null) #splitPane: splitPane,
       if (showFilters != null) #showFilters: showFilters,
       if (isLoading != null) #isLoading: isLoading,
       if (weaponSpoilerLevel != null) #weaponSpoilerLevel: weaponSpoilerLevel,
@@ -382,6 +539,7 @@ class _WeaponsPageStateCopyWithImpl<$R, $Out>
   );
   @override
   WeaponsPageState $make(CopyWithData data) => WeaponsPageState(
+    persisted: data.get(#persisted, or: $value.persisted),
     filterCategories: data.get(#filterCategories, or: $value.filterCategories),
     allWeapons: data.get(#allWeapons, or: $value.allWeapons),
     filteredWeapons: data.get(#filteredWeapons, or: $value.filteredWeapons),
@@ -397,9 +555,6 @@ class _WeaponsPageStateCopyWithImpl<$R, $Out>
       #currentSearchQuery,
       or: $value.currentSearchQuery,
     ),
-    showEnabled: data.get(#showEnabled, or: $value.showEnabled),
-    showHidden: data.get(#showHidden, or: $value.showHidden),
-    splitPane: data.get(#splitPane, or: $value.splitPane),
     showFilters: data.get(#showFilters, or: $value.showFilters),
     isLoading: data.get(#isLoading, or: $value.isLoading),
     weaponSpoilerLevel: data.get(

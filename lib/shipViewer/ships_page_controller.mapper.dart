@@ -64,7 +64,7 @@ class ShipsPageStateMapper extends ClassMapperBase<ShipsPageState> {
   static ShipsPageStateMapper ensureInitialized() {
     if (_instance == null) {
       MapperContainer.globals.use(_instance = ShipsPageStateMapper._());
-      SpoilerLevelMapper.ensureInitialized();
+      ShipsPageStatePersistedMapper.ensureInitialized();
       ShipMapper.ensureInitialized();
       ShipSystemMapper.ensureInitialized();
     }
@@ -74,36 +74,14 @@ class ShipsPageStateMapper extends ClassMapperBase<ShipsPageState> {
   @override
   final String id = 'ShipsPageState';
 
-  static bool _$showEnabled(ShipsPageState v) => v.showEnabled;
-  static const Field<ShipsPageState, bool> _f$showEnabled = Field(
-    'showEnabled',
-    _$showEnabled,
-    opt: true,
-    def: false,
-  );
-  static SpoilerLevel _$spoilerLevelToShow(ShipsPageState v) =>
-      v.spoilerLevelToShow;
-  static const Field<ShipsPageState, SpoilerLevel> _f$spoilerLevelToShow =
+  static ShipsPageStatePersisted _$persisted(ShipsPageState v) => v.persisted;
+  static const Field<ShipsPageState, ShipsPageStatePersisted> _f$persisted =
       Field(
-        'spoilerLevelToShow',
-        _$spoilerLevelToShow,
+        'persisted',
+        _$persisted,
         opt: true,
-        def: SpoilerLevel.showNone,
+        def: const ShipsPageStatePersisted(),
       );
-  static bool _$splitPane(ShipsPageState v) => v.splitPane;
-  static const Field<ShipsPageState, bool> _f$splitPane = Field(
-    'splitPane',
-    _$splitPane,
-    opt: true,
-    def: false,
-  );
-  static bool _$showFilters(ShipsPageState v) => v.showFilters;
-  static const Field<ShipsPageState, bool> _f$showFilters = Field(
-    'showFilters',
-    _$showFilters,
-    opt: true,
-    def: false,
-  );
   static List<GridFilter<Ship>> _$filterCategories(ShipsPageState v) =>
       v.filterCategories;
   static const Field<ShipsPageState, List<GridFilter<Ship>>>
@@ -171,10 +149,7 @@ class ShipsPageStateMapper extends ClassMapperBase<ShipsPageState> {
 
   @override
   final MappableFields<ShipsPageState> fields = const {
-    #showEnabled: _f$showEnabled,
-    #spoilerLevelToShow: _f$spoilerLevelToShow,
-    #splitPane: _f$splitPane,
-    #showFilters: _f$showFilters,
+    #persisted: _f$persisted,
     #filterCategories: _f$filterCategories,
     #shipSearchIndices: _f$shipSearchIndices,
     #shipSystemsMap: _f$shipSystemsMap,
@@ -187,10 +162,7 @@ class ShipsPageStateMapper extends ClassMapperBase<ShipsPageState> {
 
   static ShipsPageState _instantiate(DecodingData data) {
     return ShipsPageState(
-      showEnabled: data.dec(_f$showEnabled),
-      spoilerLevelToShow: data.dec(_f$spoilerLevelToShow),
-      splitPane: data.dec(_f$splitPane),
-      showFilters: data.dec(_f$showFilters),
+      persisted: data.dec(_f$persisted),
       filterCategories: data.dec(_f$filterCategories),
       shipSearchIndices: data.dec(_f$shipSearchIndices),
       shipSystemsMap: data.dec(_f$shipSystemsMap),
@@ -264,6 +236,12 @@ extension ShipsPageStateValueCopy<$R, $Out>
 
 abstract class ShipsPageStateCopyWith<$R, $In extends ShipsPageState, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
+  ShipsPageStatePersistedCopyWith<
+    $R,
+    ShipsPageStatePersisted,
+    ShipsPageStatePersisted
+  >
+  get persisted;
   ListCopyWith<
     $R,
     GridFilter<Ship>,
@@ -289,10 +267,7 @@ abstract class ShipsPageStateCopyWith<$R, $In extends ShipsPageState, $Out>
   ListCopyWith<$R, Ship, ShipCopyWith<$R, Ship, Ship>>
   get shipsBeforeGridFilter;
   $R call({
-    bool? showEnabled,
-    SpoilerLevel? spoilerLevelToShow,
-    bool? splitPane,
-    bool? showFilters,
+    ShipsPageStatePersisted? persisted,
     List<GridFilter<Ship>>? filterCategories,
     Map<String, List<String>>? shipSearchIndices,
     Map<String, ShipSystem>? shipSystemsMap,
@@ -315,6 +290,13 @@ class _ShipsPageStateCopyWithImpl<$R, $Out>
   @override
   late final ClassMapperBase<ShipsPageState> $mapper =
       ShipsPageStateMapper.ensureInitialized();
+  @override
+  ShipsPageStatePersistedCopyWith<
+    $R,
+    ShipsPageStatePersisted,
+    ShipsPageStatePersisted
+  >
+  get persisted => $value.persisted.copyWith.$chain((v) => call(persisted: v));
   @override
   ListCopyWith<
     $R,
@@ -373,10 +355,7 @@ class _ShipsPageStateCopyWithImpl<$R, $Out>
   );
   @override
   $R call({
-    bool? showEnabled,
-    SpoilerLevel? spoilerLevelToShow,
-    bool? splitPane,
-    bool? showFilters,
+    ShipsPageStatePersisted? persisted,
     List<GridFilter<Ship>>? filterCategories,
     Map<String, List<String>>? shipSearchIndices,
     Map<String, ShipSystem>? shipSystemsMap,
@@ -387,10 +366,7 @@ class _ShipsPageStateCopyWithImpl<$R, $Out>
     bool? isLoading,
   }) => $apply(
     FieldCopyWithData({
-      if (showEnabled != null) #showEnabled: showEnabled,
-      if (spoilerLevelToShow != null) #spoilerLevelToShow: spoilerLevelToShow,
-      if (splitPane != null) #splitPane: splitPane,
-      if (showFilters != null) #showFilters: showFilters,
+      if (persisted != null) #persisted: persisted,
       if (filterCategories != null) #filterCategories: filterCategories,
       if (shipSearchIndices != null) #shipSearchIndices: shipSearchIndices,
       if (shipSystemsMap != null) #shipSystemsMap: shipSystemsMap,
@@ -404,13 +380,7 @@ class _ShipsPageStateCopyWithImpl<$R, $Out>
   );
   @override
   ShipsPageState $make(CopyWithData data) => ShipsPageState(
-    showEnabled: data.get(#showEnabled, or: $value.showEnabled),
-    spoilerLevelToShow: data.get(
-      #spoilerLevelToShow,
-      or: $value.spoilerLevelToShow,
-    ),
-    splitPane: data.get(#splitPane, or: $value.splitPane),
-    showFilters: data.get(#showFilters, or: $value.showFilters),
+    persisted: data.get(#persisted, or: $value.persisted),
     filterCategories: data.get(#filterCategories, or: $value.filterCategories),
     shipSearchIndices: data.get(
       #shipSearchIndices,
@@ -434,5 +404,192 @@ class _ShipsPageStateCopyWithImpl<$R, $Out>
   ShipsPageStateCopyWith<$R2, ShipsPageState, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
   ) => _ShipsPageStateCopyWithImpl<$R2, $Out2>($value, $cast, t);
+}
+
+class ShipsPageStatePersistedMapper
+    extends ClassMapperBase<ShipsPageStatePersisted> {
+  ShipsPageStatePersistedMapper._();
+
+  static ShipsPageStatePersistedMapper? _instance;
+  static ShipsPageStatePersistedMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(
+        _instance = ShipsPageStatePersistedMapper._(),
+      );
+      SpoilerLevelMapper.ensureInitialized();
+    }
+    return _instance!;
+  }
+
+  @override
+  final String id = 'ShipsPageStatePersisted';
+
+  static bool _$showEnabled(ShipsPageStatePersisted v) => v.showEnabled;
+  static const Field<ShipsPageStatePersisted, bool> _f$showEnabled = Field(
+    'showEnabled',
+    _$showEnabled,
+    opt: true,
+    def: false,
+  );
+  static SpoilerLevel _$spoilerLevelToShow(ShipsPageStatePersisted v) =>
+      v.spoilerLevelToShow;
+  static const Field<ShipsPageStatePersisted, SpoilerLevel>
+  _f$spoilerLevelToShow = Field(
+    'spoilerLevelToShow',
+    _$spoilerLevelToShow,
+    opt: true,
+    def: SpoilerLevel.showNone,
+  );
+  static bool _$splitPane(ShipsPageStatePersisted v) => v.splitPane;
+  static const Field<ShipsPageStatePersisted, bool> _f$splitPane = Field(
+    'splitPane',
+    _$splitPane,
+    opt: true,
+    def: false,
+  );
+  static bool _$showFilters(ShipsPageStatePersisted v) => v.showFilters;
+  static const Field<ShipsPageStatePersisted, bool> _f$showFilters = Field(
+    'showFilters',
+    _$showFilters,
+    opt: true,
+    def: false,
+  );
+
+  @override
+  final MappableFields<ShipsPageStatePersisted> fields = const {
+    #showEnabled: _f$showEnabled,
+    #spoilerLevelToShow: _f$spoilerLevelToShow,
+    #splitPane: _f$splitPane,
+    #showFilters: _f$showFilters,
+  };
+
+  static ShipsPageStatePersisted _instantiate(DecodingData data) {
+    return ShipsPageStatePersisted(
+      showEnabled: data.dec(_f$showEnabled),
+      spoilerLevelToShow: data.dec(_f$spoilerLevelToShow),
+      splitPane: data.dec(_f$splitPane),
+      showFilters: data.dec(_f$showFilters),
+    );
+  }
+
+  @override
+  final Function instantiate = _instantiate;
+
+  static ShipsPageStatePersisted fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<ShipsPageStatePersisted>(map);
+  }
+
+  static ShipsPageStatePersisted fromJson(String json) {
+    return ensureInitialized().decodeJson<ShipsPageStatePersisted>(json);
+  }
+}
+
+mixin ShipsPageStatePersistedMappable {
+  String toJson() {
+    return ShipsPageStatePersistedMapper.ensureInitialized()
+        .encodeJson<ShipsPageStatePersisted>(this as ShipsPageStatePersisted);
+  }
+
+  Map<String, dynamic> toMap() {
+    return ShipsPageStatePersistedMapper.ensureInitialized()
+        .encodeMap<ShipsPageStatePersisted>(this as ShipsPageStatePersisted);
+  }
+
+  ShipsPageStatePersistedCopyWith<
+    ShipsPageStatePersisted,
+    ShipsPageStatePersisted,
+    ShipsPageStatePersisted
+  >
+  get copyWith =>
+      _ShipsPageStatePersistedCopyWithImpl<
+        ShipsPageStatePersisted,
+        ShipsPageStatePersisted
+      >(this as ShipsPageStatePersisted, $identity, $identity);
+  @override
+  String toString() {
+    return ShipsPageStatePersistedMapper.ensureInitialized().stringifyValue(
+      this as ShipsPageStatePersisted,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return ShipsPageStatePersistedMapper.ensureInitialized().equalsValue(
+      this as ShipsPageStatePersisted,
+      other,
+    );
+  }
+
+  @override
+  int get hashCode {
+    return ShipsPageStatePersistedMapper.ensureInitialized().hashValue(
+      this as ShipsPageStatePersisted,
+    );
+  }
+}
+
+extension ShipsPageStatePersistedValueCopy<$R, $Out>
+    on ObjectCopyWith<$R, ShipsPageStatePersisted, $Out> {
+  ShipsPageStatePersistedCopyWith<$R, ShipsPageStatePersisted, $Out>
+  get $asShipsPageStatePersisted => $base.as(
+    (v, t, t2) => _ShipsPageStatePersistedCopyWithImpl<$R, $Out>(v, t, t2),
+  );
+}
+
+abstract class ShipsPageStatePersistedCopyWith<
+  $R,
+  $In extends ShipsPageStatePersisted,
+  $Out
+>
+    implements ClassCopyWith<$R, $In, $Out> {
+  $R call({
+    bool? showEnabled,
+    SpoilerLevel? spoilerLevelToShow,
+    bool? splitPane,
+    bool? showFilters,
+  });
+  ShipsPageStatePersistedCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
+    Then<$Out2, $R2> t,
+  );
+}
+
+class _ShipsPageStatePersistedCopyWithImpl<$R, $Out>
+    extends ClassCopyWithBase<$R, ShipsPageStatePersisted, $Out>
+    implements
+        ShipsPageStatePersistedCopyWith<$R, ShipsPageStatePersisted, $Out> {
+  _ShipsPageStatePersistedCopyWithImpl(super.value, super.then, super.then2);
+
+  @override
+  late final ClassMapperBase<ShipsPageStatePersisted> $mapper =
+      ShipsPageStatePersistedMapper.ensureInitialized();
+  @override
+  $R call({
+    bool? showEnabled,
+    SpoilerLevel? spoilerLevelToShow,
+    bool? splitPane,
+    bool? showFilters,
+  }) => $apply(
+    FieldCopyWithData({
+      if (showEnabled != null) #showEnabled: showEnabled,
+      if (spoilerLevelToShow != null) #spoilerLevelToShow: spoilerLevelToShow,
+      if (splitPane != null) #splitPane: splitPane,
+      if (showFilters != null) #showFilters: showFilters,
+    }),
+  );
+  @override
+  ShipsPageStatePersisted $make(CopyWithData data) => ShipsPageStatePersisted(
+    showEnabled: data.get(#showEnabled, or: $value.showEnabled),
+    spoilerLevelToShow: data.get(
+      #spoilerLevelToShow,
+      or: $value.spoilerLevelToShow,
+    ),
+    splitPane: data.get(#splitPane, or: $value.splitPane),
+    showFilters: data.get(#showFilters, or: $value.showFilters),
+  );
+
+  @override
+  ShipsPageStatePersistedCopyWith<$R2, ShipsPageStatePersisted, $Out2>
+  $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
+      _ShipsPageStatePersistedCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 

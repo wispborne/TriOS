@@ -280,6 +280,8 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       LaunchSettingsMapper.ensureInitialized();
       DashboardGridModUpdateVisibilityMapper.ensureInitialized();
       WispGridStateMapper.ensureInitialized();
+      ShipsPageStatePersistedMapper.ensureInitialized();
+      WeaponsPageStatePersistedMapper.ensureInitialized();
       FolderNamingSettingMapper.ensureInitialized();
       ModUpdateBehaviorMapper.ensureInitialized();
       DashboardModListSortMapper.ensureInitialized();
@@ -456,6 +458,24 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     opt: true,
     def: const WispGridState(groupingSetting: null, columnsState: {}),
   );
+  static ShipsPageStatePersisted? _$shipsPageState(Settings v) =>
+      v.shipsPageState;
+  static const Field<Settings, ShipsPageStatePersisted> _f$shipsPageState =
+      Field(
+        'shipsPageState',
+        _$shipsPageState,
+        opt: true,
+        hook: SafeDecodeHook(),
+      );
+  static WeaponsPageStatePersisted? _$weaponsPageState(Settings v) =>
+      v.weaponsPageState;
+  static const Field<Settings, WeaponsPageStatePersisted> _f$weaponsPageState =
+      Field(
+        'weaponsPageState',
+        _$weaponsPageState,
+        opt: true,
+        hook: SafeDecodeHook(),
+      );
   static String? _$customGameExePath(Settings v) => v.customGameExePath;
   static const Field<Settings, String> _f$customGameExePath = Field(
     'customGameExePath',
@@ -695,6 +715,8 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #modsGridState: _f$modsGridState,
     #weaponsGridState: _f$weaponsGridState,
     #shipsGridState: _f$shipsGridState,
+    #shipsPageState: _f$shipsPageState,
+    #weaponsPageState: _f$weaponsPageState,
     #customGameExePath: _f$customGameExePath,
     #useCustomGameExePath: _f$useCustomGameExePath,
     #customSavesPath: _f$customSavesPath,
@@ -756,6 +778,8 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       modsGridState: data.dec(_f$modsGridState),
       weaponsGridState: data.dec(_f$weaponsGridState),
       shipsGridState: data.dec(_f$shipsGridState),
+      shipsPageState: data.dec(_f$shipsPageState),
+      weaponsPageState: data.dec(_f$weaponsPageState),
       customGameExePath: data.dec(_f$customGameExePath),
       useCustomGameExePath: data.dec(_f$useCustomGameExePath),
       customSavesPath: data.dec(_f$customSavesPath),
@@ -853,6 +877,18 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
   WispGridStateCopyWith<$R, WispGridState, WispGridState> get modsGridState;
   WispGridStateCopyWith<$R, WispGridState, WispGridState> get weaponsGridState;
   WispGridStateCopyWith<$R, WispGridState, WispGridState> get shipsGridState;
+  ShipsPageStatePersistedCopyWith<
+    $R,
+    ShipsPageStatePersisted,
+    ShipsPageStatePersisted
+  >?
+  get shipsPageState;
+  WeaponsPageStatePersistedCopyWith<
+    $R,
+    WeaponsPageStatePersisted,
+    WeaponsPageStatePersisted
+  >?
+  get weaponsPageState;
   $R call({
     Directory? gameDir,
     Directory? gameCoreDir,
@@ -877,6 +913,8 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     WispGridState? modsGridState,
     WispGridState? weaponsGridState,
     WispGridState? shipsGridState,
+    ShipsPageStatePersisted? shipsPageState,
+    WeaponsPageStatePersisted? weaponsPageState,
     String? customGameExePath,
     bool? useCustomGameExePath,
     Directory? customSavesPath,
@@ -933,6 +971,23 @@ class _SettingsCopyWithImpl<$R, $Out>
   WispGridStateCopyWith<$R, WispGridState, WispGridState> get shipsGridState =>
       $value.shipsGridState.copyWith.$chain((v) => call(shipsGridState: v));
   @override
+  ShipsPageStatePersistedCopyWith<
+    $R,
+    ShipsPageStatePersisted,
+    ShipsPageStatePersisted
+  >?
+  get shipsPageState =>
+      $value.shipsPageState?.copyWith.$chain((v) => call(shipsPageState: v));
+  @override
+  WeaponsPageStatePersistedCopyWith<
+    $R,
+    WeaponsPageStatePersisted,
+    WeaponsPageStatePersisted
+  >?
+  get weaponsPageState => $value.weaponsPageState?.copyWith.$chain(
+    (v) => call(weaponsPageState: v),
+  );
+  @override
   $R call({
     Object? gameDir = $none,
     Object? gameCoreDir = $none,
@@ -957,6 +1012,8 @@ class _SettingsCopyWithImpl<$R, $Out>
     WispGridState? modsGridState,
     WispGridState? weaponsGridState,
     WispGridState? shipsGridState,
+    Object? shipsPageState = $none,
+    Object? weaponsPageState = $none,
     Object? customGameExePath = $none,
     bool? useCustomGameExePath,
     Object? customSavesPath = $none,
@@ -1017,6 +1074,8 @@ class _SettingsCopyWithImpl<$R, $Out>
       if (modsGridState != null) #modsGridState: modsGridState,
       if (weaponsGridState != null) #weaponsGridState: weaponsGridState,
       if (shipsGridState != null) #shipsGridState: shipsGridState,
+      if (shipsPageState != $none) #shipsPageState: shipsPageState,
+      if (weaponsPageState != $none) #weaponsPageState: weaponsPageState,
       if (customGameExePath != $none) #customGameExePath: customGameExePath,
       if (useCustomGameExePath != null)
         #useCustomGameExePath: useCustomGameExePath,
@@ -1113,6 +1172,8 @@ class _SettingsCopyWithImpl<$R, $Out>
     modsGridState: data.get(#modsGridState, or: $value.modsGridState),
     weaponsGridState: data.get(#weaponsGridState, or: $value.weaponsGridState),
     shipsGridState: data.get(#shipsGridState, or: $value.shipsGridState),
+    shipsPageState: data.get(#shipsPageState, or: $value.shipsPageState),
+    weaponsPageState: data.get(#weaponsPageState, or: $value.weaponsPageState),
     customGameExePath: data.get(
       #customGameExePath,
       or: $value.customGameExePath,

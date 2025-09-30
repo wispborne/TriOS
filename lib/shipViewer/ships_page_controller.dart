@@ -12,16 +12,15 @@ import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/logging.dart';
 
 part 'ships_page_controller.mapper.dart';
 
 /// State class for the ships page controller
 @MappableClass()
 class ShipsPageState with ShipsPageStateMappable {
-  final bool showEnabled;
-  final SpoilerLevel spoilerLevelToShow;
-  final bool splitPane;
-  final bool showFilters;
+  final ShipsPageStatePersisted persisted;
+
   final List<GridFilter<Ship>> filterCategories;
 
   /// Ship properties, lowercase, by ship id.
@@ -33,11 +32,17 @@ class ShipsPageState with ShipsPageStateMappable {
   final String currentSearchQuery;
   final bool isLoading;
 
+  // Backward-compatible passthroughs (API unchanged)
+  bool get showEnabled => persisted.showEnabled;
+
+  SpoilerLevel get spoilerLevelToShow => persisted.spoilerLevelToShow;
+
+  bool get splitPane => persisted.splitPane;
+
+  bool get showFilters => persisted.showFilters;
+
   const ShipsPageState({
-    this.showEnabled = false,
-    this.spoilerLevelToShow = SpoilerLevel.showNone,
-    this.splitPane = false,
-    this.showFilters = false,
+    this.persisted = const ShipsPageStatePersisted(),
     this.filterCategories = const [],
     this.shipSearchIndices = const {},
     this.shipSystemsMap = const {},
@@ -46,6 +51,21 @@ class ShipsPageState with ShipsPageStateMappable {
     this.shipsBeforeGridFilter = const [],
     this.currentSearchQuery = '',
     this.isLoading = false,
+  });
+}
+
+@MappableClass()
+class ShipsPageStatePersisted with ShipsPageStatePersistedMappable {
+  final bool showEnabled;
+  final SpoilerLevel spoilerLevelToShow;
+  final bool splitPane;
+  final bool showFilters;
+
+  const ShipsPageStatePersisted({
+    this.showEnabled = false,
+    this.spoilerLevelToShow = SpoilerLevel.showNone,
+    this.splitPane = false,
+    this.showFilters = false,
   });
 }
 
@@ -59,6 +79,9 @@ class ShipsPageController extends AutoDisposeNotifier<ShipsPageState> {
 
   @override
   ShipsPageState build() {
+    // Try restore saved state from Settings
+    final saved = ref.read(appSettings).shipsPageState;
+
     // Initialize filter categories
     final filterCategories = [
       GridFilter<Ship>(
@@ -111,19 +134,54 @@ class ShipsPageController extends AutoDisposeNotifier<ShipsPageState> {
       allShips,
     );
 
-    // Build initial state
-    var initialState = (stateOrNull ?? ShipsPageState()).copyWith(
-      filterCategories: filterCategories,
-      shipSystemsMap: shipSystemsMap,
-      allShips: allShips,
-      shipSearchIndices: shipSearchIndices,
-      isLoading: isLoadingShips,
-    );
+    // Build initial state (prefer saved state when available)
+    final initialState =
+        (stateOrNull ??
+                ShipsPageState(
+                  persisted: ShipsPageStatePersisted(
+                    showEnabled: saved?.showEnabled ?? false,
+                    spoilerLevelToShow:
+                        saved?.spoilerLevelToShow ?? SpoilerLevel.showNone,
+                    splitPane: saved?.splitPane ?? false,
+                    showFilters: saved?.showFilters ?? false,
+                  ),
+                ))
+            .copyWith(
+              filterCategories: filterCategories,
+              shipSystemsMap: shipSystemsMap,
+              allShips: allShips,
+              shipSearchIndices: shipSearchIndices,
+              isLoading: isLoadingShips,
+            );
 
     // Process filters to get final ship lists
     final processedState = _processAllFilters(initialState, mods);
 
     return processedState;
+  }
+
+  void _persistState(ShipsPageState newState) {
+    try {
+      ref
+          .read(appSettings.notifier)
+          .update(
+            (s) => s.copyWith(
+              shipsPageState: (s.shipsPageState ?? ShipsPageStatePersisted())
+                  .copyWith(
+                    showEnabled: newState.showEnabled,
+                    spoilerLevelToShow: newState.spoilerLevelToShow,
+                    splitPane: newState.splitPane,
+                    showFilters: newState.showFilters,
+                  ),
+            ),
+          );
+    } catch (e, stackTrace) {
+      Fimber.w(
+        "Failed to persist ships page state",
+        ex: e,
+        stacktrace: stackTrace,
+      );
+    }
   }
 
   Map<String, List<String>> _updateSearchIndices(List<Ship> allShips) {
@@ -196,38 +254,50 @@ class ShipsPageController extends AutoDisposeNotifier<ShipsPageState> {
   /// Toggle show enabled filter
   void toggleShowEnabled() {
     final mods = ref.read(AppState.mods);
-    final updatedState = state.copyWith(showEnabled: !state.showEnabled);
+    final updatedState = state.copyWith(
+      persisted: state.persisted.copyWith(showEnabled: !state.showEnabled),
+    );
     final processedState = _processAllFilters(updatedState, mods);
 
+    _persistState(processedState);
     state = processedState;
   }
 
   /// Toggle show spoilers filter
   void setShowSpoilers(SpoilerLevel spoilerLevelToShow) {
     final mods = ref.read(AppState.mods);
-    final updatedState = state.copyWith(spoilerLevelToShow: spoilerLevelToShow);
+    final updatedState = state.copyWith(
+      persisted: state.persisted.copyWith(
+        spoilerLevelToShow: spoilerLevelToShow,
+      ),
+    );
     final processedState = _processAllFilters(updatedState, mods);
 
     state = processedState;
+    _persistState(state);
   }
 
   /// Toggle split pane view
   void toggleSplitPane() {
-    final updatedState = state.copyWith(splitPane: !state.splitPane);
+    final updatedState = state.copyWith(
+      persisted: state.persisted.copyWith(splitPane: !state.splitPane),
+    );
     state = updatedState;
+    _persistState(state);
   }
 
   /// Toggle filters panel visibility
   void toggleShowFilters() {
-    final updatedState = state.copyWith(showFilters: !state.showFilters);
+    final updatedState = state.copyWith(
+      persisted: state.persisted.copyWith(showFilters: !state.showFilters),
+    );
     state = updatedState;
+    _persistState(state);
   }
 
   /// Get game core directory
   Directory getGameCoreDir() {
-    return Directory(
-      ref.read(AppState.modsFolder).valueOrNull?.path ?? '',
-    );
+    return Directory(ref.read(AppState.modsFolder).valueOrNull?.path ?? '');
   }
 
   /// Clear all active filters

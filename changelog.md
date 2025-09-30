@@ -26,6 +26,7 @@
   - Cleaned up the Filter UI (icon in top-left) on the Ships and Weapons Viewer pages.
   - Mac version now requires MacOS 13 (Ventura, released 2022).
   - Log now waits to load until after mods are loaded in order to hasten startup.
+  - Some parts of the Ship and Weapon Viewer UI is persisted across restarts (buttons).
 
 # 1.2.3
 - Fixed

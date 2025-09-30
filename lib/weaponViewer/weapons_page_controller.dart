@@ -13,30 +13,46 @@ import 'package:trios/weaponViewer/weapons_manager.dart';
 part 'weapons_page_controller.mapper.dart';
 
 @MappableClass()
+class WeaponsPageStatePersisted with WeaponsPageStatePersistedMappable {
+  final bool showEnabled;
+  final bool showHidden;
+  final bool splitPane;
+
+  const WeaponsPageStatePersisted({
+    this.showEnabled = false,
+    this.showHidden = false,
+    this.splitPane = false,
+  });
+}
+
+@MappableClass()
 class WeaponsPageState with WeaponsPageStateMappable {
+  final WeaponsPageStatePersisted persisted;
   final List<GridFilter<Weapon>> filterCategories;
   final List<Weapon> allWeapons;
   final List<Weapon> filteredWeapons;
   final List<Weapon> weaponsBeforeGridFilter;
   final Map<String, List<String>> weaponSearchIndices;
   final String currentSearchQuery;
-  final bool showEnabled;
-  final bool showHidden;
-  final bool splitPane;
   final bool showFilters;
   final bool isLoading;
   final WeaponSpoilerLevel weaponSpoilerLevel;
 
+  // Backwards-compatible getters
+  bool get showEnabled => persisted.showEnabled;
+
+  bool get showHidden => persisted.showHidden;
+
+  bool get splitPane => persisted.splitPane;
+
   const WeaponsPageState({
+    this.persisted = const WeaponsPageStatePersisted(),
     this.filterCategories = const [],
     this.allWeapons = const [],
     this.filteredWeapons = const [],
     this.weaponsBeforeGridFilter = const [],
     this.weaponSearchIndices = const {},
     this.currentSearchQuery = '',
-    this.showEnabled = false,
-    this.showHidden = false,
-    this.splitPane = false,
     this.showFilters = false,
     this.isLoading = false,
     this.weaponSpoilerLevel = WeaponSpoilerLevel.noSpoilers,
@@ -78,6 +94,9 @@ class WeaponsPageController extends AutoDisposeNotifier<WeaponsPageState> {
       ),
     ];
 
+    // Restore saved state
+    final saved = ref.read(appSettings).weaponsPageState;
+
     // Watch weapon data
     final weaponsAsync = ref.watch(weaponListNotifierProvider);
     final mods = ref.watch(AppState.mods);
@@ -90,20 +109,44 @@ class WeaponsPageController extends AutoDisposeNotifier<WeaponsPageState> {
       allWeapons,
     );
 
-    // Build initial state
-    var initialState = (stateOrNull ?? WeaponsPageState()).copyWith(
-      filterCategories: filterCategories,
-      allWeapons: allWeapons,
-      // filteredWeapons: [],
-      // weaponsBeforeGridFilter: [],
-      weaponSearchIndices: weaponValuesByWeaponId,
-      isLoading: isLoadingWeapons,
-    );
+    // Build initial state; prefer persisted when available
+    var initialState =
+        (stateOrNull ??
+                WeaponsPageState(
+                  persisted: WeaponsPageStatePersisted(
+                    showEnabled: saved?.showEnabled ?? false,
+                    showHidden: saved?.showHidden ?? false,
+                    splitPane: saved?.splitPane ?? false,
+                  ),
+                ))
+            .copyWith(
+              filterCategories: filterCategories,
+              allWeapons: allWeapons,
+              weaponSearchIndices: weaponValuesByWeaponId,
+              isLoading: isLoadingWeapons,
+            );
 
     // Process filters to get final weapon lists
     final processedState = _processAllFilters(initialState, mods);
 
     return processedState;
+  }
+
+  void _persistState(WeaponsPageState newState) {
+    try {
+      ref.read(appSettings.notifier).update((s) {
+        final current = s.weaponsPageState ?? const WeaponsPageStatePersisted();
+        return s.copyWith(
+          weaponsPageState: current.copyWith(
+            showEnabled: newState.showEnabled,
+            showHidden: newState.showHidden,
+            splitPane: newState.splitPane,
+          ),
+        );
+      });
+    } catch (_) {
+      // swallow; persistence failures shouldn't break UX
+    }
   }
 
   Map<String, List<String>> _updateSearchIndices(List<Weapon> allWeapons) {
@@ -179,19 +222,25 @@ class WeaponsPageController extends AutoDisposeNotifier<WeaponsPageState> {
   /// Toggle show enabled filter
   void toggleShowEnabled() {
     final mods = ref.read(AppState.mods);
-    final updatedState = state.copyWith(showEnabled: !state.showEnabled);
+    final updatedState = state.copyWith(
+      persisted: state.persisted.copyWith(showEnabled: !state.showEnabled),
+    );
     final processedState = _processAllFilters(updatedState, mods);
 
     state = processedState;
+    _persistState(state);
   }
 
   /// Toggle show hidden weapons filter
   void toggleShowHidden() {
     final mods = ref.read(AppState.mods);
-    final updatedState = state.copyWith(showHidden: !state.showHidden);
+    final updatedState = state.copyWith(
+      persisted: state.persisted.copyWith(showHidden: !state.showHidden),
+    );
     final processedState = _processAllFilters(updatedState, mods);
 
     state = processedState;
+    _persistState(state);
   }
 
   /// Set spoiler level for weapons
@@ -205,8 +254,11 @@ class WeaponsPageController extends AutoDisposeNotifier<WeaponsPageState> {
 
   /// Toggle split pane view
   void toggleSplitPane() {
-    final updatedState = state.copyWith(splitPane: !state.splitPane);
+    final updatedState = state.copyWith(
+      persisted: state.persisted.copyWith(splitPane: !state.splitPane),
+    );
     state = updatedState;
+    _persistState(state);
   }
 
   /// Toggle filters panel visibility
@@ -217,9 +269,7 @@ class WeaponsPageController extends AutoDisposeNotifier<WeaponsPageState> {
 
   /// Get game core directory
   Directory getGameCoreDir() {
-    return Directory(
-      ref.read(AppState.modsFolder).valueOrNull?.path ?? '',
-    );
+    return Directory(ref.read(AppState.modsFolder).valueOrNull?.path ?? '');
   }
 
   /// Clear all active filters

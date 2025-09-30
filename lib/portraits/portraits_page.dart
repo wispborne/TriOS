@@ -367,7 +367,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                             MovingTooltipWidget.text(
                               message: "Only view images from enabled mods",
                               child: TriOSToolbarCheckboxButton(
-                                text: "Only Enabled Mods",
+                                text: "Only Enabled",
                                 value: showOnlyEnabledMods,
                                 onChanged: (value) => setState(
                                   () => showOnlyEnabledMods = value ?? false,

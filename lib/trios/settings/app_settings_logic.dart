@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
@@ -39,7 +40,8 @@ class AppSettingNotifier extends Notifier<Settings> {
           state = loadedState;
         } else {
           state = Settings();
-          _fileManager.writeSync(state!);
+          _fileManager.writeSync(state);
+          Fimber.w("Failed to load settings, using defaults.");
         }
         _isInitialized = true;
       } catch (e, stackTrace) {
@@ -52,7 +54,7 @@ class AppSettingNotifier extends Notifier<Settings> {
       }
     }
 
-    final settings = state!;
+    final settings = state;
     configureLogging(
       allowSentryReporting: settings.allowCrashReporting ?? false,
     );

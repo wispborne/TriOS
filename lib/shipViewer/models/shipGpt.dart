@@ -27,8 +27,6 @@ class Ship with ShipMappable implements WispGridItem {
   final double? armorRating;
   @MappableField(key: 'max flux')
   final double? maxFlux;
-  @MappableField(key: '8/6/5/4%')
-  final String? fluxPercent8654;
   @MappableField(key: 'flux dissipation')
   final double? fluxDissipation;
   @MappableField(key: 'ordnance points')
@@ -83,18 +81,6 @@ class Ship with ShipMappable implements WispGridItem {
   final double? suppliesRec;
   @MappableField(key: 'supplies/mo')
   final double? suppliesMo;
-  @MappableField(key: 'c/s')
-  final String? cPerS;
-  @MappableField(key: 'c/f')
-  final String? cPerF;
-  @MappableField(key: 'f/s')
-  final String? fPerS;
-  @MappableField(key: 'f/f')
-  final String? fPerF;
-  @MappableField(key: 'crew/s')
-  final String? crewPerS;
-  @MappableField(key: 'crew/f')
-  final String? crewPerF;
   @MappableField(hook: StringArrayHook())
   final List<String>? hints;
   @MappableField(hook: StringArrayHook())
@@ -149,7 +135,6 @@ class Ship with ShipMappable implements WispGridItem {
     this.hitpoints,
     this.armorRating,
     this.maxFlux,
-    this.fluxPercent8654,
     this.fluxDissipation,
     this.ordnancePoints,
     this.fighterBays,
@@ -180,12 +165,6 @@ class Ship with ShipMappable implements WispGridItem {
     this.crLossPerSec,
     this.suppliesRec,
     this.suppliesMo,
-    this.cPerS,
-    this.cPerF,
-    this.fPerS,
-    this.fPerF,
-    this.crewPerS,
-    this.crewPerF,
     this.hints,
     this.tags,
     this.rarity,

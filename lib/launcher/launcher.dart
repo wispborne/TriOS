@@ -447,11 +447,11 @@ class LauncherButton extends HookConsumerWidget {
     final key = Registry.openPath(RegistryHive.currentUser, path: registryPath);
     final prefs = StarsectorVanillaLaunchPreferences(
       isFullscreen:
-          key.getValueAsString('fullscreen')?.equalsIgnoreCase("true") ?? false,
-      resolution: key.getValueAsString('resolution') ?? '1920x1080',
-      hasSound: key.getValueAsString('sound')?.equalsIgnoreCase("true") ?? true,
-      numAASamples: key.getValueAsString('num/A/A/Samples')?.toIntOrNull(),
-      screenScaling: key.getValueAsString('screen/Scale')?.toDoubleOrNull(),
+          key.getStringValue('fullscreen')?.equalsIgnoreCase("true") ?? false,
+      resolution: key.getStringValue('resolution') ?? '1920x1080',
+      hasSound: key.getStringValue('sound')?.equalsIgnoreCase("true") ?? true,
+      numAASamples: key.getStringValue('num/A/A/Samples')?.toIntOrNull(),
+      screenScaling: key.getStringValue('screen/Scale')?.toDoubleOrNull(),
     );
     key.close();
 

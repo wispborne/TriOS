@@ -348,7 +348,7 @@ TargetPlatform? get currentPlatform {
 /// CAREFUL. Make sure to close the stream controller when you're done with it.
 /// Does not return.
 /// Starts async polling every [intervalMillis] for changes in the file's last modified date.
-pollFileForModification(
+Future<void> pollFileForModification(
   File file,
   StreamController<File?> streamController, {
   int intervalMillis = 1000,
@@ -362,6 +362,9 @@ pollFileForModification(
 
   while (!fileChangesInstance.isClosed) {
     await Future.delayed(Duration(milliseconds: intervalMillis));
+    if (fileChangesInstance.isClosed) {
+      continue;
+    }
     // If the file doesn't exist, we don't need to check the last modified date.
     // We do want to notify the listener that the file is gone, once.
     if (!file.existsSync()) {

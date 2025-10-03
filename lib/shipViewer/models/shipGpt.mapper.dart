@@ -73,13 +73,6 @@ class ShipMapper extends ClassMapperBase<Ship> {
     key: r'max flux',
     opt: true,
   );
-  static String? _$fluxPercent8654(Ship v) => v.fluxPercent8654;
-  static const Field<Ship, String> _f$fluxPercent8654 = Field(
-    'fluxPercent8654',
-    _$fluxPercent8654,
-    key: r'8/6/5/4%',
-    opt: true,
-  );
   static double? _$fluxDissipation(Ship v) => v.fluxDissipation;
   static const Field<Ship, double> _f$fluxDissipation = Field(
     'fluxDissipation',
@@ -274,48 +267,6 @@ class ShipMapper extends ClassMapperBase<Ship> {
     'suppliesMo',
     _$suppliesMo,
     key: r'supplies/mo',
-    opt: true,
-  );
-  static String? _$cPerS(Ship v) => v.cPerS;
-  static const Field<Ship, String> _f$cPerS = Field(
-    'cPerS',
-    _$cPerS,
-    key: r'c/s',
-    opt: true,
-  );
-  static String? _$cPerF(Ship v) => v.cPerF;
-  static const Field<Ship, String> _f$cPerF = Field(
-    'cPerF',
-    _$cPerF,
-    key: r'c/f',
-    opt: true,
-  );
-  static String? _$fPerS(Ship v) => v.fPerS;
-  static const Field<Ship, String> _f$fPerS = Field(
-    'fPerS',
-    _$fPerS,
-    key: r'f/s',
-    opt: true,
-  );
-  static String? _$fPerF(Ship v) => v.fPerF;
-  static const Field<Ship, String> _f$fPerF = Field(
-    'fPerF',
-    _$fPerF,
-    key: r'f/f',
-    opt: true,
-  );
-  static String? _$crewPerS(Ship v) => v.crewPerS;
-  static const Field<Ship, String> _f$crewPerS = Field(
-    'crewPerS',
-    _$crewPerS,
-    key: r'crew/s',
-    opt: true,
-  );
-  static String? _$crewPerF(Ship v) => v.crewPerF;
-  static const Field<Ship, String> _f$crewPerF = Field(
-    'crewPerF',
-    _$crewPerF,
-    key: r'crew/f',
     opt: true,
   );
   static List<String>? _$hints(Ship v) => v.hints;
@@ -515,7 +466,6 @@ class ShipMapper extends ClassMapperBase<Ship> {
     #hitpoints: _f$hitpoints,
     #armorRating: _f$armorRating,
     #maxFlux: _f$maxFlux,
-    #fluxPercent8654: _f$fluxPercent8654,
     #fluxDissipation: _f$fluxDissipation,
     #ordnancePoints: _f$ordnancePoints,
     #fighterBays: _f$fighterBays,
@@ -546,12 +496,6 @@ class ShipMapper extends ClassMapperBase<Ship> {
     #crLossPerSec: _f$crLossPerSec,
     #suppliesRec: _f$suppliesRec,
     #suppliesMo: _f$suppliesMo,
-    #cPerS: _f$cPerS,
-    #cPerF: _f$cPerF,
-    #fPerS: _f$fPerS,
-    #fPerF: _f$fPerF,
-    #crewPerS: _f$crewPerS,
-    #crewPerF: _f$crewPerF,
     #hints: _f$hints,
     #tags: _f$tags,
     #rarity: _f$rarity,
@@ -596,7 +540,6 @@ class ShipMapper extends ClassMapperBase<Ship> {
       hitpoints: data.dec(_f$hitpoints),
       armorRating: data.dec(_f$armorRating),
       maxFlux: data.dec(_f$maxFlux),
-      fluxPercent8654: data.dec(_f$fluxPercent8654),
       fluxDissipation: data.dec(_f$fluxDissipation),
       ordnancePoints: data.dec(_f$ordnancePoints),
       fighterBays: data.dec(_f$fighterBays),
@@ -627,12 +570,6 @@ class ShipMapper extends ClassMapperBase<Ship> {
       crLossPerSec: data.dec(_f$crLossPerSec),
       suppliesRec: data.dec(_f$suppliesRec),
       suppliesMo: data.dec(_f$suppliesMo),
-      cPerS: data.dec(_f$cPerS),
-      cPerF: data.dec(_f$cPerF),
-      fPerS: data.dec(_f$fPerS),
-      fPerF: data.dec(_f$fPerF),
-      crewPerS: data.dec(_f$crewPerS),
-      crewPerF: data.dec(_f$crewPerF),
       hints: data.dec(_f$hints),
       tags: data.dec(_f$tags),
       rarity: data.dec(_f$rarity),
@@ -742,7 +679,6 @@ abstract class ShipCopyWith<$R, $In extends Ship, $Out>
     double? hitpoints,
     double? armorRating,
     double? maxFlux,
-    String? fluxPercent8654,
     double? fluxDissipation,
     double? ordnancePoints,
     double? fighterBays,
@@ -773,12 +709,6 @@ abstract class ShipCopyWith<$R, $In extends Ship, $Out>
     double? crLossPerSec,
     double? suppliesRec,
     double? suppliesMo,
-    String? cPerS,
-    String? cPerF,
-    String? fPerS,
-    String? fPerF,
-    String? crewPerS,
-    String? crewPerF,
     List<String>? hints,
     List<String>? tags,
     String? rarity,
@@ -932,7 +862,6 @@ class _ShipCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Ship, $Out>
     Object? hitpoints = $none,
     Object? armorRating = $none,
     Object? maxFlux = $none,
-    Object? fluxPercent8654 = $none,
     Object? fluxDissipation = $none,
     Object? ordnancePoints = $none,
     Object? fighterBays = $none,
@@ -963,12 +892,6 @@ class _ShipCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Ship, $Out>
     Object? crLossPerSec = $none,
     Object? suppliesRec = $none,
     Object? suppliesMo = $none,
-    Object? cPerS = $none,
-    Object? cPerF = $none,
-    Object? fPerS = $none,
-    Object? fPerF = $none,
-    Object? crewPerS = $none,
-    Object? crewPerF = $none,
     Object? hints = $none,
     Object? tags = $none,
     Object? rarity = $none,
@@ -1009,7 +932,6 @@ class _ShipCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Ship, $Out>
       if (hitpoints != $none) #hitpoints: hitpoints,
       if (armorRating != $none) #armorRating: armorRating,
       if (maxFlux != $none) #maxFlux: maxFlux,
-      if (fluxPercent8654 != $none) #fluxPercent8654: fluxPercent8654,
       if (fluxDissipation != $none) #fluxDissipation: fluxDissipation,
       if (ordnancePoints != $none) #ordnancePoints: ordnancePoints,
       if (fighterBays != $none) #fighterBays: fighterBays,
@@ -1040,12 +962,6 @@ class _ShipCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Ship, $Out>
       if (crLossPerSec != $none) #crLossPerSec: crLossPerSec,
       if (suppliesRec != $none) #suppliesRec: suppliesRec,
       if (suppliesMo != $none) #suppliesMo: suppliesMo,
-      if (cPerS != $none) #cPerS: cPerS,
-      if (cPerF != $none) #cPerF: cPerF,
-      if (fPerS != $none) #fPerS: fPerS,
-      if (fPerF != $none) #fPerF: fPerF,
-      if (crewPerS != $none) #crewPerS: crewPerS,
-      if (crewPerF != $none) #crewPerF: crewPerF,
       if (hints != $none) #hints: hints,
       if (tags != $none) #tags: tags,
       if (rarity != $none) #rarity: rarity,
@@ -1088,7 +1004,6 @@ class _ShipCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Ship, $Out>
     hitpoints: data.get(#hitpoints, or: $value.hitpoints),
     armorRating: data.get(#armorRating, or: $value.armorRating),
     maxFlux: data.get(#maxFlux, or: $value.maxFlux),
-    fluxPercent8654: data.get(#fluxPercent8654, or: $value.fluxPercent8654),
     fluxDissipation: data.get(#fluxDissipation, or: $value.fluxDissipation),
     ordnancePoints: data.get(#ordnancePoints, or: $value.ordnancePoints),
     fighterBays: data.get(#fighterBays, or: $value.fighterBays),
@@ -1119,12 +1034,6 @@ class _ShipCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Ship, $Out>
     crLossPerSec: data.get(#crLossPerSec, or: $value.crLossPerSec),
     suppliesRec: data.get(#suppliesRec, or: $value.suppliesRec),
     suppliesMo: data.get(#suppliesMo, or: $value.suppliesMo),
-    cPerS: data.get(#cPerS, or: $value.cPerS),
-    cPerF: data.get(#cPerF, or: $value.cPerF),
-    fPerS: data.get(#fPerS, or: $value.fPerS),
-    fPerF: data.get(#fPerF, or: $value.fPerF),
-    crewPerS: data.get(#crewPerS, or: $value.crewPerS),
-    crewPerF: data.get(#crewPerF, or: $value.crewPerF),
     hints: data.get(#hints, or: $value.hints),
     tags: data.get(#tags, or: $value.tags),
     rarity: data.get(#rarity, or: $value.rarity),

@@ -218,7 +218,9 @@ class _WispGridState<T extends WispGridItem>
     _lastDisplayedItemsInGroups = items
         .map(
           (entry) => MapEntry(
-            entry.key == null ? null : widget.groups[entry.key as int],
+            entry.key == null
+                ? null
+                : widget.groups.firstWhereOrNull((g) => g.key == entry.key),
             entry.value,
           ),
         )

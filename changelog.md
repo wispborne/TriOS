@@ -1,12 +1,14 @@
 # 1.3.0
 - Added
-  - Portrait Replacer!
+  - **Portrait Replacer**
     - Enable "Replace Mode", then drag'n'drop to replace.
     - A new TriOS Companion Mod is required to perform the replacements at runtime, and will be installed automatically if missing.
       - The only thing the Companion Mod does is do any portrait replacements you've specified. It has no impact on anything else.
-  - Import Mod Profiles and Modlists (contributed by hihahahalol)
+  - **Import Mod Profiles** and Modlists (contributed by hihahahalol)
     - Copy your mod profile or list to the clipboard and send it to someone else.
     - Copy someone else's and import it.
+  - Report A Bug
+    - New icon (hidable) to submit a bug report, optionally with a full screenshot.
   - Menu option: Delete Mod (all versions)
     - Added to multi-select menu as well (hold Control or Shift to select multiple mods).
   - Export grid data (mods, ships, weapons) to csv.

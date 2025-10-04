@@ -24,6 +24,7 @@ import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/vram_estimator/vram_estimator_page.dart';
+import 'package:trios/widgets/conditional_wrap.dart';
 import 'package:trios/widgets/post_update_toast.dart';
 import 'package:trios/widgets/restartable_app.dart';
 import 'package:window_manager/window_manager.dart';
@@ -198,9 +199,11 @@ void main() async {
     Fimber.w("Error reading crash reporting setting.", ex: e);
   }
 
+  // Actually it's fine, just don't fuck up.
   // Don't use Sentry in debug mode, ever.
   // There's a max error limit and UI rendering errors send a million errors.
-  if (allowCrashReporting && kDebugMode == false) {
+  // if (allowCrashReporting && kDebugMode == false) {
+  if (allowCrashReporting) {
     try {
       await SentryFlutter.init(
         (options) {
@@ -208,7 +211,10 @@ void main() async {
         },
         appRunner: () {
           Fimber.i("Sentry initialized.");
-          _runTriOS(settings);
+          _runTriOS(
+            settings,
+            wrapper: (appWidget) => SentryWidget(child: appWidget),
+          );
         },
       );
     } catch (e) {
@@ -288,15 +294,22 @@ void main() async {
 }
 
 // ignore: missing_provider_scope
-void _runTriOS(Settings? appSettings) => runApp(
-  ProviderScope(
-    observers: shouldDebugRiverpod ? [RiverpodDebugObserver()] : [],
-    child: RestartableApp(
-      child: ExcludeSemantics(
-        excluding:
-            Platform.isLinux &&
-            appSettings?.enableAccessibilitySemanticsOnLinux != true,
-        child: TriOSApp(),
+void _runTriOS(
+  Settings? appSettings, {
+  Widget Function(Widget appWidget)? wrapper,
+}) => runApp(
+  ConditionalWrap(
+    condition: wrapper != null,
+    wrapper: wrapper!,
+    child: ProviderScope(
+      observers: shouldDebugRiverpod ? [RiverpodDebugObserver()] : [],
+      child: RestartableApp(
+        child: ExcludeSemantics(
+          excluding:
+              Platform.isLinux &&
+              appSettings?.enableAccessibilitySemanticsOnLinux != true,
+          child: TriOSApp(),
+        ),
       ),
     ),
   ),

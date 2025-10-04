@@ -99,8 +99,6 @@ class Settings with SettingsMappable {
   final double windowScaleFactor;
   final bool enableAccessibilitySemanticsOnLinux;
 
-  @Deprecated("Use getSentryUserId instead.")
-  final String userId; // For Sentry
   final bool? hasHiddenForumDarkModeTip;
 
   // Mod profiles are stored in [ModProfilesSettings] and [ModProfileManagerNotifier],
@@ -109,6 +107,7 @@ class Settings with SettingsMappable {
 
   final bool showForceUpdateWarning;
   final bool showDonationButton;
+  final bool showReportBugButton;
 
   Settings({
     this.gameDir,
@@ -174,11 +173,11 @@ class Settings with SettingsMappable {
     this.compressionLib = CompressionLib.sevenZip,
     this.windowScaleFactor = 1.0,
     this.enableAccessibilitySemanticsOnLinux = false,
-    this.userId = '',
     this.hasHiddenForumDarkModeTip,
     this.activeModProfileId,
     this.showForceUpdateWarning = true,
     this.showDonationButton = true,
+    this.showReportBugButton = true
   });
 }
 

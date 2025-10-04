@@ -187,11 +187,17 @@ class ModTagStoreNotifier extends GenericSettingsAsyncNotifier<ModTagStore> {
       _mutate((store) {
         final newTags = <ModTag>[];
         if (variant.modInfo.isUtility) {
-          newTags.add(ModTag.create(name: "Utility", isUserCreated: false));
+          newTags.add(
+            ModTag.create(name: "Utility", type: "", isUserCreated: false),
+          );
         }
         if (variant.modInfo.isTotalConversion) {
           newTags.add(
-            ModTag.create(name: "Total Conversion", isUserCreated: false),
+            ModTag.create(
+              name: "Total Conversion",
+              type: "",
+              isUserCreated: false,
+            ),
           );
         }
 

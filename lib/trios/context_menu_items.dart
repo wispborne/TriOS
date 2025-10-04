@@ -42,12 +42,13 @@ MenuItem<dynamic> buildMenuItemOpenForumPage(
   ModVariant modVariant,
   BuildContext context,
 ) {
+  final hasThread = modVariant.versionCheckerInfo?.modThreadId != null;
   return MenuItem(
-    label:
-        'Open Forum Page${modVariant.versionCheckerInfo?.modThreadId == null ? ' (not set)' : ''}',
+    label: hasThread ? 'Open Forum Page' : 'Open Forum Page (unavailable)',
     icon: Icons.open_in_browser,
+    iconOpacity: hasThread ? 1 : 0.5,
     onSelected: () {
-      if (modVariant.versionCheckerInfo?.modThreadId == null) {
+      if (!hasThread) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(

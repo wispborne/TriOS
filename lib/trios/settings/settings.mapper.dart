@@ -655,13 +655,6 @@ class SettingsMapper extends ClassMapperBase<Settings> {
         opt: true,
         def: false,
       );
-  static String _$userId(Settings v) => v.userId;
-  static const Field<Settings, String> _f$userId = Field(
-    'userId',
-    _$userId,
-    opt: true,
-    def: '',
-  );
   static bool? _$hasHiddenForumDarkModeTip(Settings v) =>
       v.hasHiddenForumDarkModeTip;
   static const Field<Settings, bool> _f$hasHiddenForumDarkModeTip = Field(
@@ -686,6 +679,13 @@ class SettingsMapper extends ClassMapperBase<Settings> {
   static const Field<Settings, bool> _f$showDonationButton = Field(
     'showDonationButton',
     _$showDonationButton,
+    opt: true,
+    def: true,
+  );
+  static bool _$showReportBugButton(Settings v) => v.showReportBugButton;
+  static const Field<Settings, bool> _f$showReportBugButton = Field(
+    'showReportBugButton',
+    _$showReportBugButton,
     opt: true,
     def: true,
   );
@@ -742,11 +742,11 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #windowScaleFactor: _f$windowScaleFactor,
     #enableAccessibilitySemanticsOnLinux:
         _f$enableAccessibilitySemanticsOnLinux,
-    #userId: _f$userId,
     #hasHiddenForumDarkModeTip: _f$hasHiddenForumDarkModeTip,
     #activeModProfileId: _f$activeModProfileId,
     #showForceUpdateWarning: _f$showForceUpdateWarning,
     #showDonationButton: _f$showDonationButton,
+    #showReportBugButton: _f$showReportBugButton,
   };
   @override
   final bool ignoreNull = true;
@@ -808,11 +808,11 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       enableAccessibilitySemanticsOnLinux: data.dec(
         _f$enableAccessibilitySemanticsOnLinux,
       ),
-      userId: data.dec(_f$userId),
       hasHiddenForumDarkModeTip: data.dec(_f$hasHiddenForumDarkModeTip),
       activeModProfileId: data.dec(_f$activeModProfileId),
       showForceUpdateWarning: data.dec(_f$showForceUpdateWarning),
       showDonationButton: data.dec(_f$showDonationButton),
+      showReportBugButton: data.dec(_f$showReportBugButton),
     );
   }
 
@@ -939,11 +939,11 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     CompressionLib? compressionLib,
     double? windowScaleFactor,
     bool? enableAccessibilitySemanticsOnLinux,
-    String? userId,
     bool? hasHiddenForumDarkModeTip,
     String? activeModProfileId,
     bool? showForceUpdateWarning,
     bool? showDonationButton,
+    bool? showReportBugButton,
   });
   SettingsCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -1038,11 +1038,11 @@ class _SettingsCopyWithImpl<$R, $Out>
     CompressionLib? compressionLib,
     double? windowScaleFactor,
     bool? enableAccessibilitySemanticsOnLinux,
-    String? userId,
     Object? hasHiddenForumDarkModeTip = $none,
     Object? activeModProfileId = $none,
     bool? showForceUpdateWarning,
     bool? showDonationButton,
+    bool? showReportBugButton,
   }) => $apply(
     FieldCopyWithData({
       if (gameDir != $none) #gameDir: gameDir,
@@ -1117,13 +1117,14 @@ class _SettingsCopyWithImpl<$R, $Out>
       if (enableAccessibilitySemanticsOnLinux != null)
         #enableAccessibilitySemanticsOnLinux:
             enableAccessibilitySemanticsOnLinux,
-      if (userId != null) #userId: userId,
       if (hasHiddenForumDarkModeTip != $none)
         #hasHiddenForumDarkModeTip: hasHiddenForumDarkModeTip,
       if (activeModProfileId != $none) #activeModProfileId: activeModProfileId,
       if (showForceUpdateWarning != null)
         #showForceUpdateWarning: showForceUpdateWarning,
       if (showDonationButton != null) #showDonationButton: showDonationButton,
+      if (showReportBugButton != null)
+        #showReportBugButton: showReportBugButton,
     }),
   );
   @override
@@ -1261,7 +1262,6 @@ class _SettingsCopyWithImpl<$R, $Out>
       #enableAccessibilitySemanticsOnLinux,
       or: $value.enableAccessibilitySemanticsOnLinux,
     ),
-    userId: data.get(#userId, or: $value.userId),
     hasHiddenForumDarkModeTip: data.get(
       #hasHiddenForumDarkModeTip,
       or: $value.hasHiddenForumDarkModeTip,
@@ -1277,6 +1277,10 @@ class _SettingsCopyWithImpl<$R, $Out>
     showDonationButton: data.get(
       #showDonationButton,
       or: $value.showDonationButton,
+    ),
+    showReportBugButton: data.get(
+      #showReportBugButton,
+      or: $value.showReportBugButton,
     ),
   );
 

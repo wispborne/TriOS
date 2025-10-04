@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:toastification/toastification.dart';
+import 'package:trios/chipper/utils.dart';
 import 'package:trios/companion_mod/companion_mod_manager.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/onboarding/onboarding_page.dart';
@@ -274,6 +275,27 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                     ),
                                   ),
                               label: "Show Donation Button",
+                            ),
+                          );
+                        },
+                      ),
+                      Builder(
+                        builder: (context) {
+                          final showReportBugButton = ref.watch(
+                            appSettings.select((s) => s.showReportBugButton),
+                          );
+                          return MovingTooltipWidget.text(
+                            message: "All right then, keep your secrets.",
+                            child: CheckboxWithLabel(
+                              value: showReportBugButton,
+                              onChanged: (bool? value) => ref
+                                  .read(appSettings.notifier)
+                                  .update(
+                                    (state) => state.copyWith(
+                                      showReportBugButton: value ?? true,
+                                    ),
+                                  ),
+                              label: "Show Report Bug Button",
                             ),
                           );
                         },
@@ -915,27 +937,49 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       // Checkbox for enabling crash reporting
                       Padding(
                         padding: const EdgeInsets.only(top: 16),
-                        child: MovingTooltipWidget.text(
-                          message:
-                              "This allows ${Constants.appName} to send crash/error reports to get fixed.\nNo personal/identifiable data is sent.\nWill soft-restart ${Constants.appName} to apply.",
-                          child: CheckboxWithLabel(
-                            value: ref.watch(
-                              appSettings.select(
-                                (value) => value.allowCrashReporting ?? false,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            MovingTooltipWidget.text(
+                              message:
+                                  "This allows ${Constants.appName} to send crash/error reports to get fixed.\nNo personal/identifiable data is sent.\nWill soft-restart ${Constants.appName} to apply.",
+                              child: CheckboxWithLabel(
+                                value: ref.watch(
+                                  appSettings.select(
+                                    (value) =>
+                                        value.allowCrashReporting ?? false,
+                                  ),
+                                ),
+                                onChanged: (value) {
+                                  ref
+                                      .read(appSettings.notifier)
+                                      .update(
+                                        (state) => state.copyWith(
+                                          allowCrashReporting: value ?? false,
+                                        ),
+                                      );
+                                  RestartableApp.restartApp(context);
+                                },
+                                label: "Allow error reporting",
                               ),
                             ),
-                            onChanged: (value) {
-                              ref
-                                  .read(appSettings.notifier)
-                                  .update(
-                                    (state) => state.copyWith(
-                                      allowCrashReporting: value ?? false,
-                                    ),
-                                  );
-                              RestartableApp.restartApp(context);
-                            },
-                            label: "Allow crash reporting",
-                          ),
+                            IconButton(
+                              icon: const Icon(Icons.info),
+                              onPressed: () {
+                                showAlertDialog(
+                                  context,
+                                  title: "Error Reporting",
+                                  content:
+                                      "If allowed, ${Constants.appName} uses Sentry.io to collect error reports."
+                                      "\nIf not allowed, the Sentry SDK will be completely disabled; it will not be initialized on startup, "
+                                      "which is why the soft restart is required to toggle this setting and why 'Report A Bug' is not available if it is disabled."
+                                      "\n"
+                                      "\nIf error reporting is enabled, care is taken to avoid sending any personal/identifiable data such as IP addresses, usernames (even in file paths), device names, location, etc."
+                                      "\nMod names, device info (OS, CPU count, RAM, etc) is sent.",
+                                );
+                              },
+                            ),
+                          ],
                         ),
                       ),
                       Padding(
@@ -1042,7 +1086,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                   decoration: InputDecoration(
                                     border: const OutlineInputBorder(),
                                     isDense: true,
-                                    labelText: "${Constants.appName} scaling",
+                                    labelText: "${Constants.appName} scale",
                                     hintStyle: Theme.of(
                                       context,
                                     ).textTheme.labelLarge,

@@ -25,6 +25,20 @@ class ModTagMapper extends ClassMapperBase<ModTag> {
   static const Field<ModTag, String> _f$id = Field('id', _$id);
   static String _$name(ModTag v) => v.name;
   static const Field<ModTag, String> _f$name = Field('name', _$name);
+  static String _$type(ModTag v) => v.type;
+  static const Field<ModTag, String> _f$type = Field('type', _$type);
+  static ModTagIcon? _$icon(ModTag v) => v.icon;
+  static const Field<ModTag, ModTagIcon> _f$icon = Field(
+    'icon',
+    _$icon,
+    opt: true,
+  );
+  static Color? _$color(ModTag v) => v.color;
+  static const Field<ModTag, Color> _f$color = Field(
+    'color',
+    _$color,
+    opt: true,
+  );
   static bool _$isUserCreated(ModTag v) => v.isUserCreated;
   static const Field<ModTag, bool> _f$isUserCreated = Field(
     'isUserCreated',
@@ -35,6 +49,9 @@ class ModTagMapper extends ClassMapperBase<ModTag> {
   final MappableFields<ModTag> fields = const {
     #id: _f$id,
     #name: _f$name,
+    #type: _f$type,
+    #icon: _f$icon,
+    #color: _f$color,
     #isUserCreated: _f$isUserCreated,
   };
 
@@ -42,6 +59,9 @@ class ModTagMapper extends ClassMapperBase<ModTag> {
     return ModTag(
       id: data.dec(_f$id),
       name: data.dec(_f$name),
+      type: data.dec(_f$type),
+      icon: data.dec(_f$icon),
+      color: data.dec(_f$color),
       isUserCreated: data.dec(_f$isUserCreated),
     );
   }
@@ -92,7 +112,14 @@ extension ModTagValueCopy<$R, $Out> on ObjectCopyWith<$R, ModTag, $Out> {
 
 abstract class ModTagCopyWith<$R, $In extends ModTag, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
-  $R call({String? id, String? name, bool? isUserCreated});
+  $R call({
+    String? id,
+    String? name,
+    String? type,
+    ModTagIcon? icon,
+    Color? color,
+    bool? isUserCreated,
+  });
   ModTagCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
 
@@ -103,10 +130,20 @@ class _ModTagCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, ModTag, $Out>
   @override
   late final ClassMapperBase<ModTag> $mapper = ModTagMapper.ensureInitialized();
   @override
-  $R call({String? id, String? name, bool? isUserCreated}) => $apply(
+  $R call({
+    String? id,
+    String? name,
+    String? type,
+    Object? icon = $none,
+    Object? color = $none,
+    bool? isUserCreated,
+  }) => $apply(
     FieldCopyWithData({
       if (id != null) #id: id,
       if (name != null) #name: name,
+      if (type != null) #type: type,
+      if (icon != $none) #icon: icon,
+      if (color != $none) #color: color,
       if (isUserCreated != null) #isUserCreated: isUserCreated,
     }),
   );
@@ -114,6 +151,9 @@ class _ModTagCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, ModTag, $Out>
   ModTag $make(CopyWithData data) => ModTag(
     id: data.get(#id, or: $value.id),
     name: data.get(#name, or: $value.name),
+    type: data.get(#type, or: $value.type),
+    icon: data.get(#icon, or: $value.icon),
+    color: data.get(#color, or: $value.color),
     isUserCreated: data.get(#isUserCreated, or: $value.isUserCreated),
   );
 

@@ -50,6 +50,7 @@ Future<void> showAlertDialog(
   String? title,
   String? content,
   Widget? widget,
+  List<Widget>? actions,
 }) async {
   assert(content != null || widget != null);
   return showDialog<void>(
@@ -72,14 +73,16 @@ Future<void> showAlertDialog(
             ),
           ),
         ),
-        actions: <Widget>[
-          TextButton(
-            child: const Text('Close'),
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-          ),
-        ],
+        actions:
+            actions ??
+            <Widget>[
+              TextButton(
+                child: const Text('Close'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
       );
     },
   );

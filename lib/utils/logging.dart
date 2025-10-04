@@ -32,11 +32,11 @@ bool didLoggingInitializeSuccessfully = false;
 bool _shouldDebugRiverpod = false;
 
 /// Fine to call multiple times.
-configureLogging({
+Future<void> configureLogging({
   bool printPlatformInfo = false,
   bool allowSentryReporting = false,
   bool consoleOnly = false,
-  bool? shouldDebugRiverpod = null,
+  bool? shouldDebugRiverpod,
 }) async {
   _allowSentryReporting = allowSentryReporting;
 
@@ -327,22 +327,27 @@ class RiverpodDebugObserver extends ProviderObserver {
   ) {}
 }
 
+/////////////////
+// Sentry Section
+
 final lastErrorMessagesAndTimestamps = <String, DateTime>{};
+// If tag key is present, the event won't be rate limited, regardless of the tag's value.
+final reportBugMagicString = "User clicked Report Bug";
 
 SentryFlutterOptions configureSentry(
   SentryFlutterOptions options,
   Settings? settings,
 ) {
+  final userId = getSentryUserId(settings);
+
   // I'm lazy, please don't steal.
-  options.dsn = utf8.decode(
+  final dsn = utf8.decode(
     base64Decode(
       'aHR0cHM6Ly80OTAzMjgyNjBkZWVjMTYzMmQzODMzYTdiNTQzOWRkNUBvNDUwNzU3OTU3MzYwMDI1Ni5pbmdlc3QudXMuc2VudHJ5LmlvLzQ1MDc1Nzk1NzQ2NDg4MzI=',
     ),
   );
-
-  final userId = getSentryUserId(settings);
-
   options
+    ..dsn = dsn
     ..debug = kDebugMode
     ..sendDefaultPii = false
     ..enableUserInteractionBreadcrumbs = false
@@ -350,7 +355,46 @@ SentryFlutterOptions configureSentry(
     ..enableAutoNativeBreadcrumbs = false
     ..enableAutoPerformanceTracing = false
     ..enableUserInteractionTracing = false
-    ..enableWindowMetricBreadcrumbs = false;
+    ..enableWindowMetricBreadcrumbs = false
+    ..release = Constants.version
+    ..dist = Constants.version
+    ..attachScreenshot = true
+    ..privacy.maskAllImages = false
+    ..privacy.maskAllText = false
+    ..privacy.maskAssetImages = false
+    ..feedback.nameLabel = "Username (not required)"
+    ..feedback.namePlaceholder = [
+      "@JohnStarsector",
+      "@JaneStarsector",
+      "@LowHegemon",
+      "@MyLittleStarfarer",
+      "@NotAnAICore",
+      "@DefinitelyAnAICore",
+      "@AlphariusHumani",
+      "@GensNobody",
+      "@No1SebeFan",
+      "@RealGileadPrince",
+      "@TeaAndCotton",
+      "@CareBaird",
+      "@FinlayTipLine",
+      "@CaptainRoger",
+    ].random()
+    ..feedback.emailLabel = "Email (definitely not required!)"
+    // "\n  by entering an email, you agree to receive marketing messages from the TriTachyon Corporation"
+    ..feedback.emailPlaceholder = "you@email.com"
+    ..feedback.isEmailRequired = false
+    ..feedback.messageLabel = "Description"
+    ..feedback.isRequiredLabel = "(required)"
+    ..feedback.showCaptureScreenshot = false
+    ..feedback.messagePlaceholder =
+        "Please describe the issue you are experiencing with ${Constants.appName}."
+        "\n"
+        "\n${Constants.appName} is not affiliated with Fractal Softworks and cannot help with issues with the game, payments, license keys, or mods.";
+
+  options.beforeCaptureScreenshot = (event, hint, shouldDebounce) async {
+    // Only allow screenshots for the report bug flow.
+    return event.message?.formatted == reportBugMagicString;
+  };
 
   options.beforeSend = (event, hint) {
     final message =
@@ -368,7 +412,8 @@ SentryFlutterOptions configureSentry(
       }
 
       // Don't report the same error message more than once every debounceMins minutes.
-      if (lastErrorMessagesAndTimestamps.containsKey(message)) {
+      if (event.message?.formatted != reportBugMagicString &&
+          lastErrorMessagesAndTimestamps.containsKey(message)) {
         final lastTime = lastErrorMessagesAndTimestamps[message];
         if (lastTime != null &&
             DateTime.now().difference(lastTime).inMinutes < debounceMins) {
@@ -388,21 +433,20 @@ SentryFlutterOptions configureSentry(
     }
 
     // Strip out PII as much as possible.
-    return event
-        .copyWith(
-          serverName: "",
-          release: Constants.version,
-          dist: Constants.version,
-          platform: Platform.operatingSystemVersion,
-          user: event.user?.copyWith(id: userId, ipAddress: "127.0.0.1"),
-          contexts: event.contexts.copyWith(
-            device: event.contexts.device?.copyWith(name: "redacted"),
-            culture: event.contexts.culture?.copyWith(
-              timezone: "redacted",
-              locale: "redacted",
-            ),
-          ),
-        )
+    return (event
+          ..serverName = ""
+          ..release = Constants.version
+          ..dist = Constants.version
+          ..platform = Platform.operatingSystemVersion
+          ..user = (event.user
+            ?..id = userId
+            ..ipAddress = "127.0.0.1"
+            ..geo = null)
+          ..contexts = (event.contexts
+            ..device = (event.contexts.device?..name = "redacted")
+            ..culture = (event.contexts.culture
+              ?..timezone = "redacted"
+              ..locale = "redacted")))
         .let((event) {
           try {
             return _scrubSensitiveDataFromSentryEvent(event, hint: hint);
@@ -426,22 +470,17 @@ String getSentryUserId(Settings? settings) {
   // Read user id from file.
   try {
     if (userIdFile.existsSync()) {
-      userId = userIdFile.readAsStringSync();
+      userId = userIdFile.readAsStringSync().trim();
     }
   } catch (e) {
     Fimber.e("Error reading user ID from file.", ex: e);
   }
 
-  // If user id is empty or too long, migrate it or generate a new one.
+  // If user id is empty or too long, generate a new one.
   if (userId.isEmpty || userId.length > 100) {
     try {
-      // Migrate from user id in settings to user id file.
-      if (settings != null && settings.userId.isNotNullOrEmpty()) {
-        userId = settings.userId;
-      } else {
-        // Generate a new user id.
-        userId = const Uuid().v8();
-      }
+      // Generate a new user id.
+      userId = const Uuid().v8();
 
       userIdFile.writeAsStringSync(userId);
     } catch (e) {
@@ -462,21 +501,19 @@ SentryEvent _scrubSensitiveDataFromSentryEvent(
     if (exception.stackTrace != null) {
       final frames = exception.stackTrace!.frames.map((frame) {
         if (frame.fileName != null) {
-          frame = frame.copyWith(fileName: _scrubPath(frame.fileName!));
+          frame.fileName = _scrubPath(frame.fileName!);
         }
         return frame;
       }).toList();
-      exception = exception.copyWith(
-        stackTrace: SentryStackTrace(frames: frames),
-      );
+      exception.stackTrace = SentryStackTrace(frames: frames);
     }
     if (exception.value != null) {
-      exception = exception.copyWith(value: _scrubPath(exception.value!));
+      exception.value = _scrubPath(exception.value!);
     }
     return exception;
   }).toList();
 
-  return event.copyWith(exceptions: exceptions);
+  return event..exceptions = exceptions;
 }
 
 // Function to scrub usernames from the path

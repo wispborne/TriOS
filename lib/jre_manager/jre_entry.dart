@@ -274,6 +274,38 @@ class Jre24InstalledJreEntry extends MikohimeCustomJreEntry {
       silent ? "Miko_Silent.bat" : "Miko_Rouge.bat";
 }
 
+class FastRenderingInstalledJreEntry extends CustomInstalledJreEntry {
+  FastRenderingInstalledJreEntry(
+    super.gamePath,
+    super.jreRelativePath,
+    super.version,
+  );
+
+  @override
+  bool hasAllFilesReadyToLaunch() {
+    return launchFileName(false).toFile().existsSync() &&
+        vmParamsFileRelativePath.toFile().existsSync();
+  }
+
+  @override
+  String launchFileName(bool silent) => "fr.bat";
+
+  @override
+  List<String> missingFiles() {
+    final missingFiles = <String>[];
+    if (!launchFileName(false).toFile().existsSync()) {
+      missingFiles.add(launchFileName(false));
+    }
+    if (!vmParamsFileRelativePath.toFile().existsSync()) {
+      missingFiles.add(vmParamsFileRelativePath);
+    }
+    return missingFiles;
+  }
+
+  @override
+  String get vmParamsFileRelativePath => "fr.vmparams";
+}
+
 abstract class JreToDownload extends JreEntry {
   CustomJreNotifier _createDownloadProvider();
 

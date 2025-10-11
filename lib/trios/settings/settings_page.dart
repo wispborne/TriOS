@@ -13,6 +13,7 @@ import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/utils/util.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/game_paths_setup_widget/game_paths_widget.dart';
@@ -950,15 +951,37 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                         value.allowCrashReporting ?? false,
                                   ),
                                 ),
-                                onChanged: (value) {
-                                  ref
-                                      .read(appSettings.notifier)
-                                      .update(
-                                        (state) => state.copyWith(
-                                          allowCrashReporting: value ?? false,
-                                        ),
-                                      );
-                                  RestartableApp.restartApp(context);
+                                onChanged: (value) async {
+                                  if (!context.mounted) return;
+                                  showAlertDialog(
+                                    context,
+                                    title: "Restart Required",
+                                    content:
+                                        "${Constants.appName} must be restarted to apply this change.",
+                                    actions: [
+                                      TextButton(
+                                        child: const Text('Restart Now'),
+                                        onPressed: () async {
+                                          await ref
+                                              .read(appSettings.notifier)
+                                              .update(
+                                                (state) => state.copyWith(
+                                                  allowCrashReporting:
+                                                      value ?? false,
+                                                ),
+                                              );
+                                          // Must restart TriOS to toggle. Soft restart doesn't properly initialize SentryWidget and Report Bug button doesn't work.
+                                          restartApplication();
+                                        },
+                                      ),
+                                      TextButton(
+                                        child: const Text('Nevermind'),
+                                        onPressed: () {
+                                          Navigator.of(context).pop();
+                                        },
+                                      ),
+                                    ],
+                                  );
                                 },
                                 label: "Allow error reporting",
                               ),
@@ -1159,7 +1182,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                             value,
                                       ),
                                     );
-                                RestartableApp.restartApp(context);
+                                RestartableApp.softRestartApp(context);
                               },
                               label:
                                   "Enable Accessibility Semantics (may cause freezes)",

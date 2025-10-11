@@ -142,6 +142,12 @@ class JreManager extends AsyncNotifier<JreManagerState> {
       }),
     )).whereType<JreEntry>().toList();
 
+    // Look for Fast Rendering
+    final frEntry = FastRenderingInstalledJreEntry(gamePath, Directory.current, JreVersion("1.0.0"));
+    if (frEntry.hasAllFilesReadyToLaunch()) {
+      jres.add(frEntry);
+    }
+
     // Add downloadable JREs
     final downloadableJres = [
       Jre23JreToDownload(gamePath, JreVersion("23-beta")),

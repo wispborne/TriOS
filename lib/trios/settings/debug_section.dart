@@ -267,7 +267,7 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                           ref
                               .read(appSettings.notifier)
                               .update((_) => Settings());
-                          RestartableApp.restartApp(context);
+                          RestartableApp.softRestartApp(context);
                         },
                         child: const Text('Wipe Settings'),
                       ),

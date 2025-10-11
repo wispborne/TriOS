@@ -5,8 +5,8 @@ class RestartableApp extends StatefulWidget {
 
   const RestartableApp({super.key, required this.child});
 
-  static void restartApp(BuildContext context) {
-    context.findAncestorStateOfType<_RestartableAppState>()?.restartApp();
+  static void softRestartApp(BuildContext context) {
+    context.findAncestorStateOfType<_RestartableAppState>()?.softRestartApp();
   }
 
   @override
@@ -16,7 +16,7 @@ class RestartableApp extends StatefulWidget {
 class _RestartableAppState extends State<RestartableApp> {
   Key key = UniqueKey();
 
-  void restartApp() {
+  void softRestartApp() {
     setState(() {
       key = UniqueKey();
     });

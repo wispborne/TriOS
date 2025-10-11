@@ -484,7 +484,7 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
         allowCrashReporting: allowCrashReporting,
       ),
     );
-    RestartableApp.restartApp(context);
+    RestartableApp.softRestartApp(context);
     Navigator.of(context).pop();
   }
 }

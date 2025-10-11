@@ -211,18 +211,15 @@ void main() async {
         },
         appRunner: () {
           Fimber.i("Sentry initialized.");
-          _runTriOS(
-            settings,
-            wrapper: (appWidget) => SentryWidget(child: appWidget),
-          );
+          _runTriOS(settings, withSentry: true);
         },
       );
     } catch (e) {
       Fimber.e("Error initializing Sentry.", ex: e);
-      _runTriOS(settings);
+      _runTriOS(settings, withSentry: false);
     }
   } else {
-    _runTriOS(settings);
+    _runTriOS(settings, withSentry: false);
   }
 
   try {
@@ -294,16 +291,13 @@ void main() async {
 }
 
 // ignore: missing_provider_scope
-void _runTriOS(
-  Settings? appSettings, {
-  Widget Function(Widget appWidget)? wrapper,
-}) => runApp(
-  ConditionalWrap(
-    condition: wrapper != null,
-    wrapper: wrapper!,
-    child: ProviderScope(
-      observers: shouldDebugRiverpod ? [RiverpodDebugObserver()] : [],
-      child: RestartableApp(
+void _runTriOS(Settings? appSettings, {required bool withSentry}) => runApp(
+  RestartableApp(
+    child: ConditionalWrap(
+      condition: withSentry,
+      wrapper: (appWidget) => SentryWidget(child: appWidget),
+      child: ProviderScope(
+        observers: shouldDebugRiverpod ? [RiverpodDebugObserver()] : [],
         child: ExcludeSemantics(
           excluding:
               Platform.isLinux &&

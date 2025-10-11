@@ -62,19 +62,30 @@ class AppSettingNotifier extends Notifier<Settings> {
   }
 
   /// Queues a settings write operation for [newSettings]. Waits [_debounceDuration] before writing.
-  void _scheduleWriteSettings(Settings newSettings) {
+  Future<void> _scheduleWriteSettings(Settings newSettings) async {
     _debounceTimer?.cancel();
+
+    // Completer to await the actual write completion after debounce.
+    final writeCompleted = Completer<void>();
     _debounceTimer = Timer(_debounceDuration, () {
-      _fileManager.writeSync(newSettings);
+      try {
+        _fileManager.writeSync(newSettings);
+        writeCompleted.complete();
+      } catch (e, st) {
+        writeCompleted.completeError(e, st);
+      }
     });
+
+    // Wait until the scheduled write runs.
+    await writeCompleted.future;
   }
 
   /// Updates [Settings] in memory by applying [mutator], optionally handling errors,
   /// and triggers a debounced disk write if changes occur.
-  Settings update(
+  Future<Settings> update(
     Settings Function(Settings currentState) mutator, {
     Settings Function(Object, StackTrace)? onError,
-  }) {
+  }) async {
     final prevState = state;
     var newState = mutator(state);
 
@@ -96,7 +107,7 @@ class AppSettingNotifier extends Notifier<Settings> {
     newState = _recalculatePathsIfNeeded(prevState, newState);
     state = newState;
     Fimber.i("Settings updated: ${prevState.toMap().diff(newState.toMap())}");
-    _scheduleWriteSettings(newState);
+    await _scheduleWriteSettings(newState);
     return newState;
   }
 

@@ -484,3 +484,55 @@ Future<bool> waitForFilesToBeAccessible(
 }
 
 const int intMaxValue = -1 >>> 1;
+
+/// Fully restarts the current application at the OS level.
+/// - Spawns a new process using the current executable and arguments.
+/// - Detaches stdio so the new instance is independent.
+/// - Exits the current process with [exitCode] (default 0).
+///
+/// Notes:
+/// - On Windows, uses detached process + new console to avoid blocking.
+/// - On macOS/Linux, uses detached process.
+/// - You may want to persist any pending settings to disk before calling this.
+Future<void> restartApplication({int exitCode = 0}) async {
+  try {
+    final exe = Platform.resolvedExecutable; // Flutter runner executable
+    final args = <String>[
+      // Preserve the entrypoint script/bundle when running from `dart`.
+      // In a packaged Flutter app, [Platform.script] is typically the app snapshot.
+      if (!Platform.executableArguments.contains('--disable-dart-dev'))
+        Platform.script.toFilePath(),
+      ...Platform.executableArguments.where((a) {
+        // Filter out VM service/debug flags if you don't want to carry them over.
+        // Keep them if you want identical debug behavior during development.
+        return true;
+      }),
+      // If your app reads from `Platform.executableArguments` instead of `args`,
+      // also add the original `Platform.executableArguments` as needed.
+    ];
+
+    // Windows: use CREATE_NEW_CONSOLE-like behavior via mode flags
+    final mode = Platform.isWindows
+        ? ProcessStartMode.detachedWithStdio
+        : ProcessStartMode.detached;
+
+    // If your app expects the original command-line args (from main(List<String> args)),
+    // and you captured them elsewhere, pass those instead of [Platform.executableArguments].
+    await Process.start(
+      exe,
+      args,
+      mode: mode,
+      workingDirectory: Directory.current.path,
+      runInShell:
+          Platform.isWindows, // allows launching .exe reliably on Windows
+    );
+
+    // Give the child a brief moment to spawn (optional, defensive)
+    await Future.delayed(const Duration(milliseconds: 200));
+  } catch (_) {
+    // Best effort restart; if spawn fails, still exit to not leave in bad state.
+  } finally {
+    // Terminate current instance
+    exit(exitCode);
+  }
+}

@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -40,7 +42,10 @@ class _ModListMiniState extends ConsumerState<ModListMini>
   final ScrollController _scrollController = ScrollController();
   final _searchController = SearchController();
 
-  bool hideDisabled = false;
+  // - null: show all
+  // - true: hide disabled
+  // - false: hide enabled
+  bool? hideDisabled;
 
   @override
   Widget build(BuildContext context) {
@@ -66,11 +71,11 @@ class _ModListMiniState extends ConsumerState<ModListMini>
 
     List<Mod> filteredModList = fullModList
         .let(
-          (mods) => hideDisabled
-              ? mods
-                    .where((mod) => !hideDisabled || mod.hasEnabledVariant)
-                    .toList()
-              : mods,
+          (mods) => switch (hideDisabled) {
+            true => mods.where((mod) => mod.hasEnabledVariant).toList(),
+            false => mods.where((mod) => !mod.hasEnabledVariant).toList(),
+            null => mods,
+          },
         )
         .let((mods) => query.isEmpty ? mods : searchMods(mods, query) ?? [])
         .let(
@@ -273,18 +278,52 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            CheckboxWithLabel(
-                              value: hideDisabled,
-                              onChanged: (newValue) {
-                                setState(() {
-                                  hideDisabled = newValue ?? false;
-                                });
+                            MovingTooltipWidget.text(
+                              message: switch (hideDisabled) {
+                                true => "Showing enabled mods only",
+                                false => "Showing disabled mods only",
+                                null => "Showing all mods",
                               },
-                              checkboxScale: 0.8,
-                              textPadding: const EdgeInsets.all(0),
-                              labelWidget: Text(
-                                "Hide Disabled",
-                                style: theme.textTheme.labelMedium,
+                              child: TextButton.icon(
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                  ),
+                                  overlayColor: theme.iconTheme.color,
+                                  minimumSize: const Size(0, 24),
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    // Cycle: all (null) -> hide disabled (true) -> hide enabled (false) -> all (null)
+                                    hideDisabled = switch (hideDisabled) {
+                                      null => true,
+                                      true => false,
+                                      false => null,
+                                    };
+                                  });
+                                },
+                                icon: Icon(
+                                  switch (hideDisabled) {
+                                    true =>
+                                      Icons.check_box_outlined, // only enabled
+                                    false =>
+                                      Icons
+                                          .check_box_outline_blank, // only disabled
+                                    null => Icons.check_box, // all
+                                  },
+                                  size: 16,
+                                  color: theme.iconTheme.color,
+                                ),
+                                label: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 4,
+                                  ),
+                                  child: Text(switch (hideDisabled) {
+                                    true => "Enabled Only",
+                                    false => "Disabled Only",
+                                    null => "Show All",
+                                  }, style: theme.textTheme.labelMedium),
+                                ),
                               ),
                             ),
                             SizedBox(width: 8),
@@ -496,6 +535,8 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                             itemBuilder: (context, index) {
                               if (index == 0 &&
                                   modsWithUpdates.nonNulls.isNotEmpty) {
+                                final modUpdatesCount =
+                                    modsWithUpdates.nonNulls.length;
                                 return Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -521,13 +562,23 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                           MovingTooltipWidget.text(
                                             message: isGameRunning
                                                 ? "Game is running"
-                                                : "Download all ${modsWithUpdates.nonNulls.length} updates",
+                                                : "Download${modUpdatesCount > 1 ? " all" : ""} $modUpdatesCount update${modUpdatesCount == 1 ? "" : "s"}",
                                             child: Disable(
                                               isEnabled: !isGameRunning,
                                               child: SizedBox(
                                                 child: TextButton.icon(
-                                                  label: const Text(
+                                                  style: TextButton.styleFrom(
+                                                    overlayColor:
+                                                        theme.iconTheme.color,
+                                                  ),
+                                                  label: Text(
                                                     "Update All",
+                                                    style: TextStyle(
+                                                      color: theme
+                                                          .textTheme
+                                                          .labelLarge
+                                                          ?.color,
+                                                    ),
                                                   ),
                                                   onPressed: () {
                                                     _onClickedDownloadModUpdatesDialog(
@@ -541,7 +592,7 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                                     size: 24,
                                                     color: Theme.of(
                                                       context,
-                                                    ).colorScheme.primary,
+                                                    ).iconTheme.color,
                                                   ),
                                                 ),
                                               ),

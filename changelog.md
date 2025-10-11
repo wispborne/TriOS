@@ -19,6 +19,7 @@
   - Added popup dialogs to Weapons and Ships that display full information.
   - Option to have Favorited mods not pinned at the top of the mod list.
   - If you use Fast Rendering, its custom vmparams file (`fr.vmparams`) is now modified when you change RAM from within TriOS.
+  - Option to show only disabled mods on the Dashboard mod list.
 - Fixed
   - Ship Viewer filters not working.
   - Custom launcher files are no longer hardcoded to use the game folder as their working directory.

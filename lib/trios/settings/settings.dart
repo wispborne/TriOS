@@ -94,6 +94,8 @@ class Settings with SettingsMappable {
   final bool enableLauncherPrecheck;
   final ModUpdateBehavior modUpdateBehavior;
   final DashboardModListSort dashboardModListSort;
+  final bool dashboardUseLoadOrderForNameSort;
+  final bool modsPageUseLoadOrderForNameSort;
   final bool checkIfGameIsRunning;
   final CompressionLib compressionLib;
   final double windowScaleFactor;
@@ -169,6 +171,8 @@ class Settings with SettingsMappable {
     this.enableLauncherPrecheck = true,
     this.modUpdateBehavior = ModUpdateBehavior.switchToNewVersionIfWasEnabled,
     this.dashboardModListSort = DashboardModListSort.name,
+    this.dashboardUseLoadOrderForNameSort = false,
+    this.modsPageUseLoadOrderForNameSort = false,
     this.checkIfGameIsRunning = true,
     this.compressionLib = CompressionLib.sevenZip,
     this.windowScaleFactor = 1.0,

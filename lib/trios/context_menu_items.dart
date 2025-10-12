@@ -433,6 +433,20 @@ MenuItem buildMenuItemCheckVram(Mod mod, WidgetRef ref) {
   );
 }
 
+MenuItem buildMenuItemOpenInSidebar(
+  Mod mod,
+  WidgetRef ref,
+  Function(Mod? mod) openSidebar,
+) {
+  return MenuItem(
+    label: 'Open in side panel',
+    icon: Icons.view_sidebar,
+    onSelected: () {
+      openSidebar(mod);
+    },
+  );
+}
+
 MenuItem buildMenuItemToggleMuteUpdates(Mod mod, WidgetRef ref) {
   final modsMetadata = ref.watch(AppState.modsMetadata).valueOrNull;
   final isMuted =

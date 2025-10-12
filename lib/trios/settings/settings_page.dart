@@ -1089,7 +1089,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                   ),
                                 )
                                 ? "Using libarchive for extracting. Click to switch to 7zip."
-                                : "Using 7zip for extracting. Click to switch to libarchive.",
+                                : "Using 7zip for extracting (recommended). Click to switch to libarchive.",
                           ),
                         ),
                       ),

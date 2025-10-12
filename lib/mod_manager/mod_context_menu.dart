@@ -4,6 +4,7 @@ import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/context_menu_items.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/widgets/force_game_version_warning_dialog.dart';
@@ -13,6 +14,7 @@ ContextMenu buildModContextMenu(
   WidgetRef ref,
   BuildContext context, {
   bool showSwapToVersion = true,
+  Function(Mod? mod)? openSidebar,
 }) {
   final currentStarsectorVersion = ref.read(
     appSettings.select((s) => s.lastStarsectorVersion),
@@ -27,10 +29,6 @@ ContextMenu buildModContextMenu(
       buildMenuItemOpenFolder(mod),
       buildMenuItemOpenModInfoFile(mod),
       buildMenuItemOpenForumPage(modVariant, context),
-      if (ref.watch(AppState.vramEstimatorProvider).valueOrNull?.isScanning !=
-          true)
-        buildMenuItemCheckVram(mod, ref),
-      buildMenuItemToggleMuteUpdates(mod, ref),
       if (!isGameRunning) menuItemDeleteFolder(mod, context, ref),
       if (isModGameVersionIncorrect(
         currentStarsectorVersion,
@@ -42,7 +40,15 @@ ContextMenu buildModContextMenu(
           ref,
           modVariant,
         ),
+      MenuHeader(text: Constants.appName, disableUppercase: true),
+      if (openSidebar != null)
+      buildMenuItemOpenInSidebar(mod, ref, openSidebar),
+      if (ref.watch(AppState.vramEstimatorProvider).valueOrNull?.isScanning !=
+          true)
+        buildMenuItemCheckVram(mod, ref),
+      buildMenuItemToggleMuteUpdates(mod, ref),
       buildMenuItemViewModWeapons(context, mod, ref),
+      // MenuHeader(text: "Debugging", disableUppercase: true),
       buildMenuItemDebugging(context, mod, ref, isGameRunning),
     ],
     padding: const EdgeInsets.all(8.0),

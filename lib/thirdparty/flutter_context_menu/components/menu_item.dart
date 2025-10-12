@@ -69,7 +69,7 @@ final class MenuItem<T> extends ContextMenuItem<T> {
   ]) {
     bool isFocused = menuState.focusedEntry == this;
 
-    final background = context.colorScheme.surface;
+    final background = context.colorScheme.surfaceContainerLow;
     final normalTextColor = Color.alphaBlend(
       context.colorScheme.onSurface.withOpacity(0.7),
       background,

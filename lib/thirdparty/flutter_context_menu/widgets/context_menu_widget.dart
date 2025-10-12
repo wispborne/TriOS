@@ -60,7 +60,7 @@ class ContextMenuWidget extends StatelessWidget {
     // }
 
     var boxDecoration = BoxDecoration(
-      color: Theme.of(context).colorScheme.surface,
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
       boxShadow: [
         BoxShadow(
           color: Theme.of(context).shadowColor.withValues(alpha: 0.5),
@@ -70,6 +70,10 @@ class ContextMenuWidget extends StatelessWidget {
         ),
       ],
       borderRadius: state.borderRadius ?? BorderRadius.circular(4.0),
+      border: Border.all(
+        width: 1.0,
+        color: Theme.of(context).colorScheme.primaryFixedDim.withValues(alpha: 0.2),
+      ),
     );
 
     return TweenAnimationBuilder<double>(

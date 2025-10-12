@@ -8,6 +8,7 @@ import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/mod_profiles/models/mod_profile.dart';
 import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
+import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
@@ -15,7 +16,6 @@ import 'package:trios/widgets/checkbox_with_label.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/disable_if_cannot_write_mods.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
-import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:vs_scrollbar/vs_scrollbar.dart';
 
 import '../mod_manager/mod_context_menu.dart';
@@ -35,6 +35,11 @@ class ModListMini extends ConsumerStatefulWidget {
 
   @override
   ConsumerState createState() => _ModListMiniState();
+
+  static final modLoadOrderSettingExplanation =
+      "Starsector loads mods in order by their name."
+      "\nIt sorts with whitespace at the top, then uppercase, then lowercase (' x', 'Z', 'a')."
+      "\nIf this option is unchecked, ${Constants.appName} will use a more intuitive sort ('a', ' x', 'Z')";
 }
 
 class _ModListMiniState extends ConsumerState<ModListMini>
@@ -68,6 +73,9 @@ class _ModListMiniState extends ConsumerState<ModListMini>
     final sorting = ref.watch(
       appSettings.select((s) => s.dashboardModListSort),
     );
+    final nameSortType = ref.watch(
+      appSettings.select((s) => s.dashboardUseLoadOrderForNameSort),
+    );
 
     List<Mod> filteredModList = fullModList
         .let(
@@ -81,7 +89,7 @@ class _ModListMiniState extends ConsumerState<ModListMini>
         .let(
           (mods) => switch (sorting) {
             DashboardModListSort.name => mods.sortedByButBetter(
-              (mod) => mod.getSortValueForName(),
+              (mod) => mod.getSortValueForName(nameSortType),
             ),
             DashboardModListSort.author => mods.sortedByButBetter(
               (mod) => mod.getSortValueForAuthor(),
@@ -917,8 +925,6 @@ class _SettingsPopupMenu extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-
     return MovingTooltipWidget.text(
       message: "More Settings",
       child: PopupMenuButton<String>(
@@ -926,45 +932,78 @@ class _SettingsPopupMenu extends ConsumerWidget {
         tooltip: "",
         padding: EdgeInsets.zero,
         itemBuilder: (context) => [
-          PopupMenuItem(
-            child: Consumer(
-              builder: (context, consumerRef, child) {
-                final bool isSwapOnUpdateEnabled = consumerRef.watch(
-                  appSettings.select(
-                    (s) =>
-                        s.modUpdateBehavior ==
-                        ModUpdateBehavior.switchToNewVersionIfWasEnabled,
-                  ),
-                );
-                return MovingTooltipWidget.text(
-                  message:
-                      "When checked, updating an enabled mod switches to the new version.",
-                  child: CheckboxWithLabel(
-                    value: isSwapOnUpdateEnabled,
-                    onChanged: (newValue) {
-                      consumerRef
-                          .read(appSettings.notifier)
-                          .update(
-                            (s) => s.copyWith(
-                              modUpdateBehavior: newValue == true
-                                  ? ModUpdateBehavior
-                                        .switchToNewVersionIfWasEnabled
-                                  : ModUpdateBehavior.doNotChange,
-                            ),
-                          );
-                    },
-                    checkboxScale: 0.8,
-                    textPadding: const EdgeInsets.all(0),
-                    labelWidget: Text(
-                      "Swap on Update",
-                      style: theme.textTheme.labelMedium,
+          _buildToggleSettingMenuItem(
+            context: context,
+            ref: ref,
+            isCheckedSelector: (s) =>
+                s.modUpdateBehavior ==
+                ModUpdateBehavior.switchToNewVersionIfWasEnabled,
+            tooltip:
+                "When checked, updating an enabled mod switches to the new version.",
+            label: "Swap on Update",
+            onChanged: (consumerRef, newValue) {
+              consumerRef
+                  .read(appSettings.notifier)
+                  .update(
+                    (s) => s.copyWith(
+                      modUpdateBehavior: newValue == true
+                          ? ModUpdateBehavior.switchToNewVersionIfWasEnabled
+                          : ModUpdateBehavior.doNotChange,
                     ),
-                  ),
-                );
-              },
-            ),
+                  );
+            },
+          ),
+          _buildToggleSettingMenuItem(
+            context: context,
+            ref: ref,
+            isCheckedSelector: (s) => s.dashboardUseLoadOrderForNameSort,
+            tooltip: ModListMini.modLoadOrderSettingExplanation,
+            label: "Use Load Order for 'Sort by Name'",
+            onChanged: (consumerRef, newValue) {
+              consumerRef
+                  .read(appSettings.notifier)
+                  .update(
+                    (s) =>
+                        s.copyWith(dashboardUseLoadOrderForNameSort: newValue),
+                  );
+            },
           ),
         ],
+      ),
+    );
+  }
+
+  // Generic helper to build a PopupMenuItem with a checkbox that toggles a setting.
+  // - isCheckedSelector: reads a bool from AppSettings
+  // - onChanged: writes the new value back to settings
+  PopupMenuItem<String> _buildToggleSettingMenuItem({
+    required BuildContext context,
+    required WidgetRef ref,
+    required bool Function(Settings s) isCheckedSelector,
+    required void Function(WidgetRef consumerRef, bool? newValue) onChanged,
+    required String label,
+    String? tooltip,
+  }) {
+    final theme = Theme.of(context);
+    return PopupMenuItem(
+      child: Consumer(
+        builder: (context, consumerRef, child) {
+          final isChecked = consumerRef.watch(
+            appSettings.select(isCheckedSelector),
+          );
+          final checkbox = CheckboxWithLabel(
+            value: isChecked,
+            onChanged: (newValue) => onChanged(consumerRef, newValue),
+            checkboxScale: 0.8,
+            textPadding: const EdgeInsets.all(0),
+            labelWidget: Text(label, style: theme.textTheme.labelMedium),
+            showInkwell: false,
+          );
+          if (tooltip?.isNotEmpty == true) {
+            return MovingTooltipWidget.text(message: tooltip!, child: checkbox);
+          }
+          return checkbox;
+        },
       ),
     );
   }

@@ -18,6 +18,7 @@ class CheckboxWithLabel extends StatelessWidget {
   final double checkboxScale;
   final Color? checkColor;
   final bool showGlow;
+  final bool showInkwell;
 
   const CheckboxWithLabel({
     super.key,
@@ -35,6 +36,7 @@ class CheckboxWithLabel extends StatelessWidget {
     this.checkboxScale = 1.0,
     this.checkColor,
     this.showGlow = false,
+    this.showInkwell = true,
   }) : assert(label != null || labelWidget != null);
 
   @override
@@ -89,6 +91,9 @@ class CheckboxWithLabel extends StatelessWidget {
           onChanged(!value!);
         }
       },
+      hoverColor: showInkwell ? null : Colors.transparent,
+      splashColor: showInkwell ? null : Colors.transparent,
+      highlightColor: showInkwell ? null : Colors.transparent,
       borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
       child: Padding(
         padding: const EdgeInsets.only(right: 7),

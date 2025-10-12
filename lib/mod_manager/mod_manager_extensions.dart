@@ -123,8 +123,13 @@ extension ModExt on Mod {
       ? "total conversion"
       : "other";
 
-  Comparable<String>? getSortValueForName() =>
-      findFirstEnabledOrHighestVersion?.modInfo.nameOrId;
+  /// Returns the name of the mod, or the ID if no variant is enabled.
+  /// If [useModLoadOrderSort] is true, the name will be sorted by the mod's load order
+  /// instead of what the user would normally expect from an alphabetical sort.
+  Comparable<String>? getSortValueForName(bool useModLoadOrderSort) =>
+      useModLoadOrderSort
+      ? findFirstEnabledOrHighestVersion?.modInfo.nameOrId
+      : findFirstEnabledOrHighestVersion?.modInfo.nameOrId.trim().toLowerCase();
 
   Comparable<String>? getSortValueForAuthor() =>
       findFirstEnabledOrHighestVersion?.modInfo.author?.toLowerCase() ?? "";

@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:trios/chipper/utils.dart';
 import 'package:trios/dashboard/changelogs.dart';
+import 'package:trios/dashboard/mod_list_basic.dart';
 import 'package:trios/dashboard/mod_list_basic_entry.dart';
 import 'package:trios/dashboard/version_check_icon.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
@@ -97,6 +98,9 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
     final modsMatchingSearch = searchMods(allMods, query) ?? [];
     final modsMetadata = ref.watch(AppState.modsMetadata).valueOrNull;
     final vramEstState = ref.watch(AppState.vramEstimatorProvider);
+    final nameSortType = ref.watch(
+      appSettings.select((s) => s.modsPageUseLoadOrderForNameSort),
+    );
 
     return Stack(
       children: [
@@ -186,7 +190,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                                     setState(() {
                                       selectedMod = modsMatchingSearch.isEmpty
                                           ? null
-                                          : modsMatchingSearch.random();
+                                          : modsMatchingSearch.firstOrNull;
                                     });
                                   },
                                   icon: Icon(Icons.view_sidebar),
@@ -225,7 +229,9 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                   onRowSelected: (mod) {
                     setState(() {
                       if (selectedMod == mod) {
-                        selectedMod = null;
+                        // Don't close mod panel if open, that's annoying.
+                        // It made since when single-click toggled it.
+                        // selectedMod = null;
                       } else {
                         selectedMod = mod;
                       }
@@ -307,6 +313,11 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                                     ref,
                                     context,
                                     showSwapToVersion: true,
+                                    openSidebar: (mod) {
+                                      setState(() {
+                                        selectedMod = mod;
+                                      });
+                                    },
                                   ),
                             child: Container(
                               // This container is so that the context menu gets hit detection.
@@ -425,7 +436,8 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                       key: ModGridHeader.name.name,
                       name: "Name",
                       isSortable: true,
-                      getSortValue: (mod) => mod.getSortValueForName(),
+                      getSortValue: (mod) =>
+                          mod.getSortValueForName(nameSortType),
                       headerCellBuilder: (modifiers) => buildColumnHeader(
                         ModGridHeader.name,
                         modifiers,
@@ -1047,6 +1059,37 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
               },
             ),
           ),
+          PopupMenuItem(
+            onTap: () {
+              ref
+                  .read(appSettings.notifier)
+                  .update(
+                    (s) => s.copyWith(
+                      modsPageUseLoadOrderForNameSort:
+                          !s.modsPageUseLoadOrderForNameSort,
+                    ),
+                  );
+            },
+            child: Builder(
+              builder: (context) {
+                final modsPageUseLoadOrderForNameSort = ref.watch(
+                  appSettings.select((s) => s.modsPageUseLoadOrderForNameSort),
+                );
+                return MovingTooltipWidget.text(
+                  message: ModListMini.modLoadOrderSettingExplanation,
+                  child: ListTile(
+                    dense: true,
+                    leading: Icon(
+                      modsPageUseLoadOrderForNameSort
+                          ? Icons.check_box
+                          : Icons.check_box_outline_blank,
+                    ),
+                    title: Text("Use Load Order When Sorting by Name"),
+                  ),
+                );
+              },
+            ),
+          ),
           PopupMenuDivider(),
           PopupMenuItem(
             onTap: () {
@@ -1213,7 +1256,12 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
           ModGridHeader.changeVariantButton => Container(),
           ModGridHeader.icons => Container(),
           ModGridHeader.modIcon => Container(),
-          ModGridHeader.name => Text('Name', style: headerTextStyle),
+          ModGridHeader.name => MovingTooltipWidget.text(
+            message:
+                "This is also the load order."
+                "\nThe game loads mods alphabetically, in ascending order, by their name.",
+            child: Text('Name', style: headerTextStyle),
+          ),
           ModGridHeader.author => Text('Author', style: headerTextStyle),
           ModGridHeader.updateStatus => Text('Update', style: headerTextStyle),
           ModGridHeader.version => Text('Version', style: headerTextStyle),

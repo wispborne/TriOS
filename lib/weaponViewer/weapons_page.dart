@@ -885,12 +885,10 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
               WispGridCsvExporter.toCsv(_gridController!, includeHeaders: true),
             );
           },
-          child: const Row(
-            children: [
-              Icon(Icons.table_view, size: 18),
-              SizedBox(width: 8),
-              Text('Export to CSV'),
-            ],
+          child: ListTile(
+            dense: true,
+            leading: Icon(Icons.table_view),
+            title: Text("Export to CSV"),
           ),
         ),
       ],

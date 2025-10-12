@@ -26,13 +26,13 @@ final class MenuHeader extends ContextMenuEntry {
   const MenuHeader({
     required this.text,
     this.disableUppercase = false,
-    this.opacity = 0.6,
+    this.opacity = 0.8,
   });
 
   @override
   Widget builder(BuildContext context, ContextMenuState menuState) {
     return Padding(
-      padding: const EdgeInsets.all(8.0),
+      padding: const EdgeInsets.only(left: 4, top: 8, bottom: 4, right: 8),
       child: Align(
         alignment: AlignmentDirectional.centerStart,
         child: Text(

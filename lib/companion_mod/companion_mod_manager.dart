@@ -221,7 +221,9 @@ class CompanionModManager {
   Future<File?> _getImageReplacementsConfigFile() async {
     final modsFolder = ref.read(AppState.modsFolder).valueOrNull;
     if (modsFolder == null) {
-      Fimber.i("Game mods folder not configured. Often happens before game folder has been read yet.");
+      Fimber.i(
+        "Game mods folder not configured. Often happens before game folder has been read yet.",
+      );
       return null;
     }
 
@@ -303,17 +305,16 @@ class CompanionModManager {
   Future<void> updateImageReplacementsConfig(
     Map<String, ReplacedSavedPortrait> replacements,
   ) async {
-    final gameCoreFolder = ref
-        .read(AppState.gameCoreFolder).valueOrNull;
+    final gameCoreFolder = ref.read(AppState.gameCoreFolder).valueOrNull;
+
+    if (gameCoreFolder == null) {
+      throw StateError('Game core folder not configured');
+    }
+
+    final configFile = await _getImageReplacementsConfigFile();
+    if (configFile == null) return;
 
     try {
-      if (gameCoreFolder == null) {
-        throw StateError('Game core folder not configured');
-      }
-
-      final configFile = await _getImageReplacementsConfigFile();
-      if (configFile == null) return;
-
       await _writeReplacementsToFile(
         configFile,
         _convertSavedPortraitMapToPaths(replacements, gameCoreFolder),

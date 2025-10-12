@@ -38,8 +38,10 @@ class ModListMini extends ConsumerStatefulWidget {
 
   static final modLoadOrderSettingExplanation =
       "Starsector loads mods in order by their name."
-      "\nIt sorts with whitespace at the top, then uppercase, then lowercase (' x', 'Z', 'a')."
-      "\nIf this option is unchecked, ${Constants.appName} will use a more intuitive sort ('a', ' x', 'Z')";
+      "\nIt sorts with whitespace at the top, then uppercase, then lowercase ('  x', 'Z', 'a'),"
+      "\nas opposed to a more intuitive sort ('a', '  x', 'Z')."
+      "\n"
+      "\nMods loaded last will (usually) override values from mods loaded earlier.";
 }
 
 class _ModListMiniState extends ConsumerState<ModListMini>
@@ -73,9 +75,6 @@ class _ModListMiniState extends ConsumerState<ModListMini>
     final sorting = ref.watch(
       appSettings.select((s) => s.dashboardModListSort),
     );
-    final nameSortType = ref.watch(
-      appSettings.select((s) => s.dashboardUseLoadOrderForNameSort),
-    );
 
     List<Mod> filteredModList = fullModList
         .let(
@@ -88,8 +87,11 @@ class _ModListMiniState extends ConsumerState<ModListMini>
         .let((mods) => query.isEmpty ? mods : searchMods(mods, query) ?? [])
         .let(
           (mods) => switch (sorting) {
+            DashboardModListSort.loadOrder => mods.sortedByButBetter(
+              (mod) => mod.getSortValueForLoadOrder(),
+            ),
             DashboardModListSort.name => mods.sortedByButBetter(
-              (mod) => mod.getSortValueForName(nameSortType),
+              (mod) => mod.getSortValueForName(),
             ),
             DashboardModListSort.author => mods.sortedByButBetter(
               (mod) => mod.getSortValueForAuthor(),
@@ -357,6 +359,23 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                 tooltip: "",
                                 padding: EdgeInsets.zero,
                                 itemBuilder: (context) => [
+                                  PopupMenuItem(
+                                    value: "loadOrder",
+                                    onTap: () {
+                                      ref
+                                          .read(appSettings.notifier)
+                                          .update(
+                                            (state) => state.copyWith(
+                                              dashboardModListSort:
+                                                  DashboardModListSort
+                                                      .loadOrder,
+                                            ),
+                                          );
+                                    },
+                                    child: Text(
+                                      "Sort by ${getDisplayNameForSort(DashboardModListSort.loadOrder)}",
+                                    ),
+                                  ),
                                   PopupMenuItem(
                                     value: "name",
                                     onTap: () {
@@ -683,6 +702,7 @@ class _ModListMiniState extends ConsumerState<ModListMini>
 
   String getDisplayNameForSort(DashboardModListSort sorting) {
     return switch (sorting) {
+      DashboardModListSort.loadOrder => "Load Order",
       DashboardModListSort.name => "Name",
       DashboardModListSort.author => "Author",
       DashboardModListSort.version => "Version",
@@ -953,21 +973,21 @@ class _SettingsPopupMenu extends ConsumerWidget {
                   );
             },
           ),
-          _buildToggleSettingMenuItem(
-            context: context,
-            ref: ref,
-            isCheckedSelector: (s) => s.dashboardUseLoadOrderForNameSort,
-            tooltip: ModListMini.modLoadOrderSettingExplanation,
-            label: "Use Load Order for 'Sort by Name'",
-            onChanged: (consumerRef, newValue) {
-              consumerRef
-                  .read(appSettings.notifier)
-                  .update(
-                    (s) =>
-                        s.copyWith(dashboardUseLoadOrderForNameSort: newValue),
-                  );
-            },
-          ),
+          // _buildToggleSettingMenuItem(
+          //   context: context,
+          //   ref: ref,
+          //   isCheckedSelector: (s) => s.dashboardUseLoadOrderForNameSort,
+          //   tooltip: ModListMini.modLoadOrderSettingExplanation,
+          //   label: "Use Load Order for 'Sort by Name'",
+          //   onChanged: (consumerRef, newValue) {
+          //     consumerRef
+          //         .read(appSettings.notifier)
+          //         .update(
+          //           (s) =>
+          //               s.copyWith(dashboardUseLoadOrderForNameSort: newValue),
+          //         );
+          //   },
+          // ),
         ],
       ),
     );

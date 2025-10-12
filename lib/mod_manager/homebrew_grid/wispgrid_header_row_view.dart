@@ -421,16 +421,15 @@ class _SortableHeaderState extends ConsumerState<SortableHeader> {
     return InkWell(
       onTap: () {
         widget.updateGridState((WispGridState state) {
-          // if (state.sortField == widget.columnSortField.toString()) {
-          return state.copyWith(
-            sortedColumnKey: widget.columnSortField,
-            isSortDescending: !state.isSortDescending,
-          );
-          // } else {
-          //   return state.copyWith(
-          //       sortField: widget.columnSortField.toString(),
-          //       isSortDescending: !state.isSortDescending);
-          // }
+          if (state.sortedColumnKey == widget.columnSortField) {
+            // Currently sorting by this column - toggle sort direction
+            return state.copyWith(isSortDescending: !state.isSortDescending);
+          } else {
+            // Switching to sort by this column - don't toggle sort direction.
+            return state.copyWith(
+              sortedColumnKey: widget.columnSortField.toString(),
+            );
+          }
         });
       },
       child: Row(

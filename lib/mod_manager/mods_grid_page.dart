@@ -23,6 +23,7 @@ import 'package:trios/models/mod.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/themes/theme_manager.dart';
+import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/thirdparty/dartx/map.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/trios/app_state.dart';
@@ -98,9 +99,16 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
     final modsMatchingSearch = searchMods(allMods, query) ?? [];
     final modsMetadata = ref.watch(AppState.modsMetadata).valueOrNull;
     final vramEstState = ref.watch(AppState.vramEstimatorProvider);
-    final nameSortType = ref.watch(
-      appSettings.select((s) => s.modsPageUseLoadOrderForNameSort),
-    );
+    final loadOrderNumberLookupByModId = allMods
+        .where((mod) => mod.hasEnabledVariant)
+        .sortedByButBetter((mod) => mod.getSortValueForLoadOrder())
+        .let((list) {
+          final lookupMap = <String, int>{};
+          for (int i = 0; i < list.length; i++) {
+            lookupMap[list[i].id] = i + 1; // Don't use 0-based index for UI
+          }
+          return lookupMap;
+        });
 
     return Stack(
       children: [
@@ -433,11 +441,36 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                       defaultState: WispGridColumnState(position: 3, width: 32),
                     ),
                     WispGridColumn<Mod>(
+                      key: ModGridHeader.loadOrder.name,
+                      name: "Load #",
+                      isSortable: true,
+                      getSortValue: (mod) => mod.getSortValueForLoadOrder(),
+                      headerCellBuilder: (modifiers) => buildColumnHeader(
+                        ModGridHeader.loadOrder,
+                        modifiers,
+                      ).child,
+                      itemCellBuilder: (mod, modifiers) => TextTriOS(
+                        loadOrderNumberLookupByModId[mod.id]?.toString() ?? "—",
+                        style: GoogleFonts.roboto(
+                          textStyle: theme.textTheme.labelLarge,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      csvValue: (mod) =>
+                          loadOrderNumberLookupByModId[mod.id]?.toString() ??
+                          "—",
+                      defaultState: WispGridColumnState(
+                        position: 4,
+                        width: 70,
+                        isVisible: false,
+                      ),
+                    ),
+                    WispGridColumn<Mod>(
                       key: ModGridHeader.name.name,
                       name: "Name",
                       isSortable: true,
-                      getSortValue: (mod) =>
-                          mod.getSortValueForName(nameSortType),
+                      getSortValue: (mod) => mod.getSortValueForName(),
                       headerCellBuilder: (modifiers) => buildColumnHeader(
                         ModGridHeader.name,
                         modifiers,
@@ -1059,37 +1092,6 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
               },
             ),
           ),
-          PopupMenuItem(
-            onTap: () {
-              ref
-                  .read(appSettings.notifier)
-                  .update(
-                    (s) => s.copyWith(
-                      modsPageUseLoadOrderForNameSort:
-                          !s.modsPageUseLoadOrderForNameSort,
-                    ),
-                  );
-            },
-            child: Builder(
-              builder: (context) {
-                final modsPageUseLoadOrderForNameSort = ref.watch(
-                  appSettings.select((s) => s.modsPageUseLoadOrderForNameSort),
-                );
-                return MovingTooltipWidget.text(
-                  message: ModListMini.modLoadOrderSettingExplanation,
-                  child: ListTile(
-                    dense: true,
-                    leading: Icon(
-                      modsPageUseLoadOrderForNameSort
-                          ? Icons.check_box
-                          : Icons.check_box_outline_blank,
-                    ),
-                    title: Text("Use Load Order When Sorting by Name"),
-                  ),
-                );
-              },
-            ),
-          ),
           PopupMenuDivider(),
           PopupMenuItem(
             onTap: () {
@@ -1234,6 +1236,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
       ModGridHeader.changeVariantButton => null,
       ModGridHeader.icons => ModGridSortField.icons,
       ModGridHeader.modIcon => ModGridSortField.icons,
+      ModGridHeader.loadOrder => ModGridSortField.loadOrder,
       ModGridHeader.name => ModGridSortField.name,
       ModGridHeader.author => ModGridSortField.author,
       ModGridHeader.version => ModGridSortField.version,
@@ -1256,12 +1259,11 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
           ModGridHeader.changeVariantButton => Container(),
           ModGridHeader.icons => Container(),
           ModGridHeader.modIcon => Container(),
-          ModGridHeader.name => MovingTooltipWidget.text(
-            message:
-                "This is also the load order."
-                "\nThe game loads mods alphabetically, in ascending order, by their name.",
-            child: Text('Name', style: headerTextStyle),
+          ModGridHeader.loadOrder => MovingTooltipWidget.text(
+            message: ModListMini.modLoadOrderSettingExplanation,
+            child: Text('Load #', style: headerTextStyle),
           ),
+          ModGridHeader.name => Text('Name', style: headerTextStyle),
           ModGridHeader.author => Text('Author', style: headerTextStyle),
           ModGridHeader.updateStatus => Text('Update', style: headerTextStyle),
           ModGridHeader.version => Text('Version', style: headerTextStyle),

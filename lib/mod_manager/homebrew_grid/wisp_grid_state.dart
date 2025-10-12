@@ -149,6 +149,7 @@ enum ModGridHeader {
   changeVariantButton,
   icons,
   modIcon,
+  loadOrder,
   name,
   author,
   version,
@@ -174,6 +175,7 @@ enum ModGridGroupEnum {
 enum ModGridSortField {
   enabledState,
   icons,
+  loadOrder,
   name,
   author,
   version,

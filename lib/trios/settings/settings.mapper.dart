@@ -225,6 +225,8 @@ class DashboardModListSortMapper extends EnumMapper<DashboardModListSort> {
   @override
   DashboardModListSort decode(dynamic value) {
     switch (value) {
+      case r'loadOrder':
+        return DashboardModListSort.loadOrder;
       case r'name':
         return DashboardModListSort.name;
       case r'author':
@@ -238,13 +240,15 @@ class DashboardModListSortMapper extends EnumMapper<DashboardModListSort> {
       case r'enabled':
         return DashboardModListSort.enabled;
       default:
-        return DashboardModListSort.values[0];
+        return DashboardModListSort.values[1];
     }
   }
 
   @override
   dynamic encode(DashboardModListSort self) {
     switch (self) {
+      case DashboardModListSort.loadOrder:
+        return r'loadOrder';
       case DashboardModListSort.name:
         return r'name';
       case DashboardModListSort.author:
@@ -625,23 +629,6 @@ class SettingsMapper extends ClassMapperBase<Settings> {
         opt: true,
         def: DashboardModListSort.name,
       );
-  static bool _$dashboardUseLoadOrderForNameSort(Settings v) =>
-      v.dashboardUseLoadOrderForNameSort;
-  static const Field<Settings, bool> _f$dashboardUseLoadOrderForNameSort =
-      Field(
-        'dashboardUseLoadOrderForNameSort',
-        _$dashboardUseLoadOrderForNameSort,
-        opt: true,
-        def: false,
-      );
-  static bool _$modsPageUseLoadOrderForNameSort(Settings v) =>
-      v.modsPageUseLoadOrderForNameSort;
-  static const Field<Settings, bool> _f$modsPageUseLoadOrderForNameSort = Field(
-    'modsPageUseLoadOrderForNameSort',
-    _$modsPageUseLoadOrderForNameSort,
-    opt: true,
-    def: false,
-  );
   static bool _$checkIfGameIsRunning(Settings v) => v.checkIfGameIsRunning;
   static const Field<Settings, bool> _f$checkIfGameIsRunning = Field(
     'checkIfGameIsRunning',
@@ -754,8 +741,6 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #enableLauncherPrecheck: _f$enableLauncherPrecheck,
     #modUpdateBehavior: _f$modUpdateBehavior,
     #dashboardModListSort: _f$dashboardModListSort,
-    #dashboardUseLoadOrderForNameSort: _f$dashboardUseLoadOrderForNameSort,
-    #modsPageUseLoadOrderForNameSort: _f$modsPageUseLoadOrderForNameSort,
     #checkIfGameIsRunning: _f$checkIfGameIsRunning,
     #compressionLib: _f$compressionLib,
     #windowScaleFactor: _f$windowScaleFactor,
@@ -821,12 +806,6 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       enableLauncherPrecheck: data.dec(_f$enableLauncherPrecheck),
       modUpdateBehavior: data.dec(_f$modUpdateBehavior),
       dashboardModListSort: data.dec(_f$dashboardModListSort),
-      dashboardUseLoadOrderForNameSort: data.dec(
-        _f$dashboardUseLoadOrderForNameSort,
-      ),
-      modsPageUseLoadOrderForNameSort: data.dec(
-        _f$modsPageUseLoadOrderForNameSort,
-      ),
       checkIfGameIsRunning: data.dec(_f$checkIfGameIsRunning),
       compressionLib: data.dec(_f$compressionLib),
       windowScaleFactor: data.dec(_f$windowScaleFactor),
@@ -960,8 +939,6 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     bool? enableLauncherPrecheck,
     ModUpdateBehavior? modUpdateBehavior,
     DashboardModListSort? dashboardModListSort,
-    bool? dashboardUseLoadOrderForNameSort,
-    bool? modsPageUseLoadOrderForNameSort,
     bool? checkIfGameIsRunning,
     CompressionLib? compressionLib,
     double? windowScaleFactor,
@@ -1061,8 +1038,6 @@ class _SettingsCopyWithImpl<$R, $Out>
     bool? enableLauncherPrecheck,
     ModUpdateBehavior? modUpdateBehavior,
     DashboardModListSort? dashboardModListSort,
-    bool? dashboardUseLoadOrderForNameSort,
-    bool? modsPageUseLoadOrderForNameSort,
     bool? checkIfGameIsRunning,
     CompressionLib? compressionLib,
     double? windowScaleFactor,
@@ -1139,10 +1114,6 @@ class _SettingsCopyWithImpl<$R, $Out>
       if (modUpdateBehavior != null) #modUpdateBehavior: modUpdateBehavior,
       if (dashboardModListSort != null)
         #dashboardModListSort: dashboardModListSort,
-      if (dashboardUseLoadOrderForNameSort != null)
-        #dashboardUseLoadOrderForNameSort: dashboardUseLoadOrderForNameSort,
-      if (modsPageUseLoadOrderForNameSort != null)
-        #modsPageUseLoadOrderForNameSort: modsPageUseLoadOrderForNameSort,
       if (checkIfGameIsRunning != null)
         #checkIfGameIsRunning: checkIfGameIsRunning,
       if (compressionLib != null) #compressionLib: compressionLib,
@@ -1281,14 +1252,6 @@ class _SettingsCopyWithImpl<$R, $Out>
     dashboardModListSort: data.get(
       #dashboardModListSort,
       or: $value.dashboardModListSort,
-    ),
-    dashboardUseLoadOrderForNameSort: data.get(
-      #dashboardUseLoadOrderForNameSort,
-      or: $value.dashboardUseLoadOrderForNameSort,
-    ),
-    modsPageUseLoadOrderForNameSort: data.get(
-      #modsPageUseLoadOrderForNameSort,
-      or: $value.modsPageUseLoadOrderForNameSort,
     ),
     checkIfGameIsRunning: data.get(
       #checkIfGameIsRunning,

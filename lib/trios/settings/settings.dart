@@ -94,8 +94,6 @@ class Settings with SettingsMappable {
   final bool enableLauncherPrecheck;
   final ModUpdateBehavior modUpdateBehavior;
   final DashboardModListSort dashboardModListSort;
-  final bool dashboardUseLoadOrderForNameSort;
-  final bool modsPageUseLoadOrderForNameSort;
   final bool checkIfGameIsRunning;
   final CompressionLib compressionLib;
   final double windowScaleFactor;
@@ -171,8 +169,6 @@ class Settings with SettingsMappable {
     this.enableLauncherPrecheck = true,
     this.modUpdateBehavior = ModUpdateBehavior.switchToNewVersionIfWasEnabled,
     this.dashboardModListSort = DashboardModListSort.name,
-    this.dashboardUseLoadOrderForNameSort = false,
-    this.modsPageUseLoadOrderForNameSort = false,
     this.checkIfGameIsRunning = true,
     this.compressionLib = CompressionLib.sevenZip,
     this.windowScaleFactor = 1.0,
@@ -205,4 +201,4 @@ enum DashboardGridModUpdateVisibility { allVisible, hideMuted, hideAll }
 enum CompressionLib { sevenZip, libarchive }
 
 @MappableEnum(defaultValue: DashboardModListSort.name)
-enum DashboardModListSort { name, author, version, vram, gameVersion, enabled }
+enum DashboardModListSort { loadOrder, name, author, version, vram, gameVersion, enabled }

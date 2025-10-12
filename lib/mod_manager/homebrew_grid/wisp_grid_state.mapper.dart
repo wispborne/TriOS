@@ -34,6 +34,8 @@ class ModGridHeaderMapper extends EnumMapper<ModGridHeader> {
         return ModGridHeader.icons;
       case r'modIcon':
         return ModGridHeader.modIcon;
+      case r'loadOrder':
+        return ModGridHeader.loadOrder;
       case r'name':
         return ModGridHeader.name;
       case r'author':
@@ -53,7 +55,7 @@ class ModGridHeaderMapper extends EnumMapper<ModGridHeader> {
       case r'tags':
         return ModGridHeader.tags;
       default:
-        return ModGridHeader.values[4];
+        return ModGridHeader.values[5];
     }
   }
 
@@ -68,6 +70,8 @@ class ModGridHeaderMapper extends EnumMapper<ModGridHeader> {
         return r'icons';
       case ModGridHeader.modIcon:
         return r'modIcon';
+      case ModGridHeader.loadOrder:
+        return r'loadOrder';
       case ModGridHeader.name:
         return r'name';
       case ModGridHeader.author:
@@ -174,6 +178,8 @@ class ModGridSortFieldMapper extends EnumMapper<ModGridSortField> {
         return ModGridSortField.enabledState;
       case r'icons':
         return ModGridSortField.icons;
+      case r'loadOrder':
+        return ModGridSortField.loadOrder;
       case r'name':
         return ModGridSortField.name;
       case r'author':
@@ -191,7 +197,7 @@ class ModGridSortFieldMapper extends EnumMapper<ModGridSortField> {
       case r'lastEnabled':
         return ModGridSortField.lastEnabled;
       default:
-        return ModGridSortField.values[2];
+        return ModGridSortField.values[3];
     }
   }
 
@@ -202,6 +208,8 @@ class ModGridSortFieldMapper extends EnumMapper<ModGridSortField> {
         return r'enabledState';
       case ModGridSortField.icons:
         return r'icons';
+      case ModGridSortField.loadOrder:
+        return r'loadOrder';
       case ModGridSortField.name:
         return r'name';
       case ModGridSortField.author:

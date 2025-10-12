@@ -20,9 +20,6 @@
   - Option to have Favorited mods not pinned at the top of the mod list.
   - If you use Fast Rendering, its custom vmparams file (`fr.vmparams`) is now modified when you change RAM from within TriOS.
   - Option to show only disabled mods on the Dashboard mod list.
-  - Option when sorting mods by name to toggle between Starsector sorting (mod load order) and intuitive sorting.
-    - Starsector sorting: `   x`, `Z`, `a`.
-    - Intuitive sorting: `a`, `   x`, `Z`.
 - Fixed
   - Ship Viewer filters not working.
   - Custom launcher files are no longer hardcoded to use the game folder as their working directory.
@@ -35,6 +32,8 @@
   - Mac version now requires MacOS 13 (Ventura, released 2022).
   - Log now waits to load until after mods are loaded in order to hasten startup.
   - Some parts of the Ship and Weapon Viewer UI is persisted across restarts (buttons).
+  - Sorting by mod name now uses an "intuitive" sort (e.g. 'a', ' x', 'Z') instead of Starsector's sort (e.g. '   x', 'Z', 'a').
+    - Added a new column to the mod list to sort by mod load order.
 
 # 1.2.3
 - Fixed

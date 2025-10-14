@@ -9,6 +9,7 @@ import 'package:http/http.dart' as http;
 import 'package:trios/compression/archive.dart';
 import 'package:trios/models/download_progress.dart';
 import 'package:trios/models/version.dart';
+import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/dart_mappable_utils.dart';
@@ -422,9 +423,7 @@ class CustomJreNotifier extends AsyncNotifier<CustomJreDownloadState> {
     _mikohimeDownloadState = CustomJreDownloadState();
     _jdkDownloadState = CustomJreDownloadState();
 
-    final gamePath = ref
-        .read(appSettings.select((value) => value.gameDir))
-        ?.toDirectory();
+    final gamePath = ref.read(AppState.gameFolder).valueOrNull?.toDirectory();
     if (gamePath == null) {
       Fimber.e("Game path not set");
       state = AsyncValue.error("Game path not set", StackTrace.current);

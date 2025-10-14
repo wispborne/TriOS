@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:open_filex/open_filex.dart';
+import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings.dart';
@@ -43,7 +44,7 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
   void initState() {
     super.initState();
     final settings = ref.read(appSettings);
-    gameDirPath = settings.gameDir?.path;
+    gameDirPath = ref.read(AppState.gameFolder).valueOrNull?.path;
     textEditingController = TextEditingController(text: gameDirPath);
     enableMultipleVersions = settings.keepLastNVersions != 1;
     lastNVersionsSetting = enableMultipleVersions

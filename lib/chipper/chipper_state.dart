@@ -54,7 +54,7 @@ class _ChipperLogParserNotifier extends AsyncNotifier<LogChips?> {
   }
 
   void loadDefaultLog() async {
-    final gamePath = ref.read(appSettings.select((value) => value.gameDir));
+    final gamePath = ref.read(AppState.gameFolder).valueOrNull;
     final gameFilesPath = getLogPath(gamePath!);
 
     if (gameFilesPath.existsSync()) {

@@ -37,9 +37,7 @@ class _GamePerformanceWidgetState extends ConsumerState<GamePerformanceWidget>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final gameDir = ref
-        .read(appSettings.select((value) => value.gameDir))
-        ?.toDirectory();
+    final gameDir = ref.read(AppState.gameFolder).valueOrNull?.toDirectory();
 
     if (gameDir == null) {
       return const Center(child: Text("Game directory not set."));

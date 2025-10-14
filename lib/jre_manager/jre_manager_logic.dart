@@ -33,9 +33,7 @@ final doesJre23ExistInGameFolderProvider = FutureProvider<bool>((ref) async {
         gameDir.resolve("Miko_Rouge.bat").toFile().existsSync();
   }
 
-  final gamePath = ref
-      .read(appSettings.select((value) => value.gameDir))
-      ?.toDirectory();
+  final gamePath = ref.read(AppState.gameFolder).valueOrNull?.toDirectory();
   if (gamePath == null) {
     return false;
   }
@@ -70,9 +68,7 @@ class JreManager extends AsyncNotifier<JreManagerState> {
     double ramInMb, {
     bool alsoChangeCustomVmparams = true,
   }) async {
-    final gamePath = ref
-        .read(appSettings.select((value) => value.gameDir))
-        ?.toDirectory();
+    final gamePath = ref.read(AppState.gameFolder).valueOrNull?.toDirectory();
     if (gamePath == null) {
       return;
     }
@@ -191,9 +187,7 @@ class JreManager extends AsyncNotifier<JreManagerState> {
   }
 
   Future<void> changeActiveJre(JreEntryInstalled newJre) async {
-    var gamePath = ref
-        .read(appSettings.select((value) => value.gameDir))
-        ?.toDirectory();
+    var gamePath = ref.read(AppState.gameFolder).valueOrNull?.toDirectory();
     if (gamePath == null || !gamePath.existsSync()) {
       return;
     }
@@ -320,9 +314,7 @@ class JreManager extends AsyncNotifier<JreManagerState> {
 
   _startWatchingJres() async {
     _jreWatcherSubscription?.cancel();
-    final gamePath = ref
-        .read(appSettings.select((value) => value.gameDir))
-        ?.toDirectory();
+    final gamePath = ref.read(AppState.gameFolder).valueOrNull?.toDirectory();
     if (gamePath == null) {
       return;
     }

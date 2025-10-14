@@ -297,7 +297,7 @@ class LauncherButton extends HookConsumerWidget {
   static void _launchGameWithoutPrecheck(WidgetRef ref) {
     if (ref.read(appSettings.select((s) => s.useCustomGameExePath))) {
       launchGameUsingLauncher(
-        ref.read(appSettings.select((s) => s.gameDir))!,
+        ref.read(AppState.gameFolder).valueOrNull!,
         customExePath: ref.read(AppState.gameExecutable).valueOrNull,
       );
     } else if (ref
@@ -492,9 +492,7 @@ class LauncherButton extends HookConsumerWidget {
   /// Launches game with JRE 23.
   static launchGameJre23(WidgetRef ref) async {
     // Starsector folder
-    final gameDir = ref
-        .read(appSettings.select((value) => value.gameDir))
-        ?.toDirectory();
+    final gameDir = ref.read(AppState.gameFolder).valueOrNull?.toDirectory();
     final command =
         ref.read(
           appSettings.select((value) => value.showCustomJreConsoleWindow),

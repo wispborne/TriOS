@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/jre_manager/jre_manager_logic.dart';
+import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
@@ -33,9 +34,7 @@ class _RamChangerState extends ConsumerState<RamChanger> {
   @override
   Widget build(BuildContext context) {
     final currentRamInMb = ref.watch(currentRamAmountInMb);
-    final gamePath = ref
-        .read(appSettings.select((value) => value.gameDir))
-        ?.toDirectory();
+    final gamePath = ref.read(AppState.gameFolder).valueOrNull?.toDirectory();
     if (gamePath == null) {
       return const SizedBox();
     }

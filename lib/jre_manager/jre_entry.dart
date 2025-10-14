@@ -23,9 +23,10 @@ part 'jre_entry.mapper.dart';
 abstract class JreEntry implements Comparable<JreEntry> {
   /// e.g. C:\Program Files (x86)\Starsector
   final Directory gamePath;
+  final Directory gameCorePath;
   JreVersion version;
 
-  JreEntry(this.gamePath, this.version);
+  JreEntry(this.gamePath, this.gameCorePath, this.version);
 
   int get versionInt => version.version;
 
@@ -43,6 +44,10 @@ abstract class JreEntry implements Comparable<JreEntry> {
   @override
   bool operator ==(Object other) =>
       other is JreEntry && version == other.version;
+
+  @override
+  String toString() =>
+      "Type: $runtimeType, Version: $versionString, vmparams: $vmParamsFileRelativePath";
 
   bool isGameVersionSupported(String gameVersion) {
     return _supportedJresForGameVersion(gameVersion).contains(version.version);
@@ -62,9 +67,16 @@ abstract class JreEntryInstalled extends JreEntry {
   String? ramAmountInMb;
   final Directory jreRelativePath;
 
-  JreEntryInstalled(super.gamePath, this.jreRelativePath, super.version) {
+  JreEntryInstalled(
+    super.gamePath,
+    super.gameCorePath,
+    this.jreRelativePath,
+    super.version,
+  ) {
     try {
-      ramAmountInMb = getRamAmountFromVmparamsInMb(readVmParamsFile());
+      if (vmParamsFileAbsolutePath.toFile().existsSync()) {
+        ramAmountInMb = getRamAmountFromVmparamsInMb(readVmParamsFile());
+      }
     } catch (e) {
       Fimber.w("Error reading vmparams file: $vmParamsFileAbsolutePath", ex: e);
     }
@@ -161,6 +173,7 @@ class JreVersion with JreVersionMappable implements Comparable<JreVersion> {
 class StandardInstalledJreEntry extends JreEntryInstalled {
   StandardInstalledJreEntry(
     super.gamePath,
+    super.gameCorePath,
     super.jreRelativePath,
     super.version,
   );
@@ -209,7 +222,12 @@ class StandardInstalledJreEntry extends JreEntryInstalled {
 }
 
 abstract class CustomInstalledJreEntry extends JreEntryInstalled {
-  CustomInstalledJreEntry(super.gamePath, super.jreRelativePath, super.version);
+  CustomInstalledJreEntry(
+    super.gamePath,
+    super.gameCorePath,
+    super.jreRelativePath,
+    super.version,
+  );
 
   @override
   bool get isCustomJre => true;
@@ -217,11 +235,17 @@ abstract class CustomInstalledJreEntry extends JreEntryInstalled {
   @override
   bool get isStandardJre => false;
 
+  /// Runnable file, relative to game folder
   String launchFileName(bool silent);
 }
 
 abstract class MikohimeCustomJreEntry extends CustomInstalledJreEntry {
-  MikohimeCustomJreEntry(super.gamePath, super.jreRelativePath, super.version);
+  MikohimeCustomJreEntry(
+    super.gamePath,
+    super.gameCorePath,
+    super.jreRelativePath,
+    super.version,
+  );
 
   Directory get mikohimeFolder =>
       gamePath.resolve("mikohime").normalize().toDirectory();
@@ -253,7 +277,12 @@ abstract class MikohimeCustomJreEntry extends CustomInstalledJreEntry {
 }
 
 class Jre23InstalledJreEntry extends MikohimeCustomJreEntry {
-  Jre23InstalledJreEntry(super.gamePath, super.jreRelativePath, super.version);
+  Jre23InstalledJreEntry(
+    super.gamePath,
+    super.gameCorePath,
+    super.jreRelativePath,
+    super.version,
+  );
 
   @override
   String get vmParamsFileRelativePath => "Miko_R3.txt";
@@ -264,7 +293,12 @@ class Jre23InstalledJreEntry extends MikohimeCustomJreEntry {
 }
 
 class Jre24InstalledJreEntry extends MikohimeCustomJreEntry {
-  Jre24InstalledJreEntry(super.gamePath, super.jreRelativePath, super.version);
+  Jre24InstalledJreEntry(
+    super.gamePath,
+    super.gameCorePath,
+    super.jreRelativePath,
+    super.version,
+  );
 
   @override
   String get vmParamsFileRelativePath => "Miko_R4.txt";
@@ -277,6 +311,7 @@ class Jre24InstalledJreEntry extends MikohimeCustomJreEntry {
 class FastRenderingInstalledJreEntry extends CustomInstalledJreEntry {
   FastRenderingInstalledJreEntry(
     super.gamePath,
+    super.gameCorePath,
     super.jreRelativePath,
     super.version,
   );
@@ -288,7 +323,7 @@ class FastRenderingInstalledJreEntry extends CustomInstalledJreEntry {
   }
 
   @override
-  String launchFileName(bool silent) => "fr.bat";
+  String launchFileName(bool silent) => gameCorePath.resolve("fr.bat").path;
 
   @override
   List<String> missingFiles() {
@@ -303,13 +338,14 @@ class FastRenderingInstalledJreEntry extends CustomInstalledJreEntry {
   }
 
   @override
-  String get vmParamsFileRelativePath => "fr.vmparams";
+  String get vmParamsFileRelativePath =>
+      gameCorePath.resolve("fr.vmparams").path;
 }
 
 abstract class JreToDownload extends JreEntry {
   CustomJreNotifier _createDownloadProvider();
 
-  JreToDownload(super.gamePath, super.version) {
+  JreToDownload(super.gamePath, super.gameCorePath, super.version) {
     downloadProvider =
         AsyncNotifierProvider<CustomJreNotifier, CustomJreDownloadState>(
           () => _createDownloadProvider(),
@@ -321,13 +357,13 @@ abstract class JreToDownload extends JreEntry {
 }
 
 abstract class CustomJreToDownload extends JreToDownload {
-  CustomJreToDownload(super.gamePath, super.version);
+  CustomJreToDownload(super.gamePath, super.gameCorePath, super.version);
 
   String get versionCheckerUrl;
 }
 
 class Jre23JreToDownload extends CustomJreToDownload {
-  Jre23JreToDownload(super.gamePath, super.version);
+  Jre23JreToDownload(super.gamePath, super.gameCorePath, super.version);
 
   @override
   CustomJreNotifier _createDownloadProvider() =>
@@ -342,7 +378,7 @@ class Jre23JreToDownload extends CustomJreToDownload {
 }
 
 class Jre24JreToDownload extends CustomJreToDownload {
-  Jre24JreToDownload(super.gamePath, super.version);
+  Jre24JreToDownload(super.gamePath, super.gameCorePath, super.version);
 
   @override
   CustomJreNotifier _createDownloadProvider() =>

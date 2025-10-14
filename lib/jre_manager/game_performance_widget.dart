@@ -140,7 +140,7 @@ class _ChangeJreWidgetState extends ConsumerState<ChangeJreWidget> {
                         ))
                       Builder(
                         builder: (context) {
-                          var missingFilesForJre = jre is JreEntryInstalled
+                          final missingFilesForJre = jre is JreEntryInstalled
                               ? jre.missingFiles()
                               : <String>[];
                           final isSupported = jre.isGameVersionSupported(

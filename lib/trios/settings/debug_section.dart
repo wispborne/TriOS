@@ -6,8 +6,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:toastification/toastification.dart';
+import 'package:trios/chipper/utils.dart';
 import 'package:trios/companion_mod/companion_mod_manager.dart';
 import 'package:trios/compression/archive.dart';
+import 'package:trios/jre_manager/jre_manager_logic.dart';
 import 'package:trios/mod_profiles/mod_profiles_manager.dart';
 import 'package:trios/models/download_progress.dart';
 import 'package:trios/onboarding/onboarding_page.dart';
@@ -64,6 +66,7 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
+      spacing: 8,
       children: [
         Padding(
           padding: const EdgeInsets.only(top: 16),
@@ -120,194 +123,165 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
             ],
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.only(top: 16),
-          child: ElevatedButton.icon(
-            icon: const Icon(Icons.security_update_good),
-            onPressed: () async {
-              ref.watch(AppState.selfUpdate.notifier).getLatestRelease().then((
-                release,
-              ) {
-                if (release == null) {
-                  Fimber.d("No release found");
-                  return;
-                }
+        ElevatedButton.icon(
+          icon: const Icon(Icons.security_update_good),
+          onPressed: () async {
+            ref.watch(AppState.selfUpdate.notifier).getLatestRelease().then((
+              release,
+            ) {
+              if (release == null) {
+                Fimber.d("No release found");
+                return;
+              }
 
-                toastification.showCustom(
-                  context: context,
-                  builder: (context, item) => SelfUpdateToast(release, item),
-                );
-              });
-            },
-            label: const Text('Check for update (allow older versions)'),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(top: 16),
-          child: ElevatedButton.icon(
-            icon: const Icon(Icons.folder_special),
-            onPressed: () {
-              final folder = Constants.configDataFolderPath;
-              folder.openInExplorer();
-            },
-            label: const Text('Open ${Constants.appName} Settings Folder'),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(top: 16),
-          child: ElevatedButton.icon(
-            icon: const Icon(Icons.restart_alt),
-            onPressed: () async {
-              showDialog(
-                context: context,
-                builder: (context) => const OnboardingCarousel(),
-                barrierDismissible: false,
-              );
-            },
-            label: const Text('Show Initial Setup Dialog'),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(top: 16),
-          child: ElevatedButton.icon(
-            icon: const Icon(Icons.play_arrow),
-            onPressed: () async {
-              // hardcoded name
-              runZonedGuarded(
-                () {
-                  ref
-                      .read(AppState.selfUpdate.notifier)
-                      .runSelfUpdateScript(
-                        File(
-                          "${Platform.resolvedExecutable.toFile().parent.path}/update-trios/${ScriptGenerator.scriptName()}",
-                        ),
-                      );
-                },
-                (error, stackTrace) {
-                  showSnackBar(
-                    context: context,
-                    content: Text("Error running self-update script: $error"),
-                  );
-                },
-              );
-            },
-            label: const Text('Run existing self-update script if exists'),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(top: 16),
-          child: ElevatedButton.icon(
-            icon: const Icon(Icons.cloud_download_rounded),
-            onPressed: () {
-              final testMod = ref
-                  .read(AppState.modVariants)
-                  .valueOrNull
-                  .orEmpty()
-                  .firstWhere(
-                    (variant) =>
-                        variant.modInfo.id.equalsIgnoreCase("magiclib"),
-                  );
-              ref
-                  .read(downloadManager.notifier)
-                  .addDownload(
-                    "${testMod.modInfo.nameOrId} ${testMod.bestVersion}",
-                    testMod.versionCheckerInfo!.directDownloadURL!,
-                    Directory.systemTemp,
-                    modInfo: testMod.modInfo,
-                  );
-            },
-            label: const Text('Redownload MagicLib (shows toast)'),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(top: 16),
-          child: ElevatedButton.icon(
-            icon: const Icon(Icons.notification_add),
-            onPressed: () {
-              final testMod = ref
-                  .read(AppState.modVariants)
-                  .valueOrNull
-                  .orEmpty()
-                  .firstWhere(
-                    (variant) =>
-                        variant.modInfo.id.equalsIgnoreCase("magiclib"),
-                  );
               toastification.showCustom(
                 context: context,
-                builder: (context, item) => ModAddedToast(testMod, item),
+                builder: (context, item) => SelfUpdateToast(release, item),
               );
-            },
-            label: const Text('Show Mod Added Toast for MagicLib'),
-          ),
+            });
+          },
+          label: const Text('Check for update (allow older versions)'),
         ),
-        Padding(
-          padding: const EdgeInsets.only(top: 16),
-          child: ElevatedButton.icon(
-            icon: const Icon(Icons.clean_hands),
-            onPressed: () {
-              // confirmation prompt
-              showDialog(
-                context: context,
-                builder: (context) {
-                  return AlertDialog(
-                    title: const Text("Are you sure?"),
-                    content: const Text("This will wipe TriOS's settings."),
-                    actions: [
-                      TextButton(
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                        child: const Text('Cancel'),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          ref
-                              .read(AppState.modAudit.notifier)
-                              .updateState((_) => []);
-                          ref
-                              .read(appSettings.notifier)
-                              .update((_) => Settings());
-                          RestartableApp.softRestartApp(context);
-                        },
-                        child: const Text('Wipe Settings'),
-                      ),
-                    ],
-                  );
-                },
-              );
-            },
-            label: const Text('Wipe Settings'),
-          ),
+        ElevatedButton.icon(
+          icon: const Icon(Icons.folder_special),
+          onPressed: () {
+            final folder = Constants.configDataFolderPath;
+            folder.openInExplorer();
+          },
+          label: const Text('Open ${Constants.appName} Settings Folder'),
         ),
-        Padding(
-          padding: const EdgeInsets.only(top: 16),
-          child: ElevatedButton.icon(
-            icon: const Icon(Icons.nearby_error),
-            onPressed: () {
-              throw Exception("This is a test error");
-            },
-            label: const Text('Throw error'),
-          ),
+        ElevatedButton.icon(
+          icon: const Icon(Icons.restart_alt),
+          onPressed: () async {
+            showDialog(
+              context: context,
+              builder: (context) => const OnboardingCarousel(),
+              barrierDismissible: false,
+            );
+          },
+          label: const Text('Show Initial Setup Dialog'),
+        ),
+        ElevatedButton.icon(
+          icon: const Icon(Icons.play_arrow),
+          onPressed: () async {
+            // hardcoded name
+            runZonedGuarded(
+              () {
+                ref
+                    .read(AppState.selfUpdate.notifier)
+                    .runSelfUpdateScript(
+                      File(
+                        "${Platform.resolvedExecutable.toFile().parent.path}/update-trios/${ScriptGenerator.scriptName()}",
+                      ),
+                    );
+              },
+              (error, stackTrace) {
+                showSnackBar(
+                  context: context,
+                  content: Text("Error running self-update script: $error"),
+                );
+              },
+            );
+          },
+          label: const Text('Run existing self-update script if exists'),
+        ),
+        ElevatedButton.icon(
+          icon: const Icon(Icons.cloud_download_rounded),
+          onPressed: () {
+            final testMod = ref
+                .read(AppState.modVariants)
+                .valueOrNull
+                .orEmpty()
+                .firstWhere(
+                  (variant) => variant.modInfo.id.equalsIgnoreCase("magiclib"),
+                );
+            ref
+                .read(downloadManager.notifier)
+                .addDownload(
+                  "${testMod.modInfo.nameOrId} ${testMod.bestVersion}",
+                  testMod.versionCheckerInfo!.directDownloadURL!,
+                  Directory.systemTemp,
+                  modInfo: testMod.modInfo,
+                );
+          },
+          label: const Text('Redownload MagicLib (shows toast)'),
+        ),
+        ElevatedButton.icon(
+          icon: const Icon(Icons.notification_add),
+          onPressed: () {
+            final testMod = ref
+                .read(AppState.modVariants)
+                .valueOrNull
+                .orEmpty()
+                .firstWhere(
+                  (variant) => variant.modInfo.id.equalsIgnoreCase("magiclib"),
+                );
+            toastification.showCustom(
+              context: context,
+              builder: (context, item) => ModAddedToast(testMod, item),
+            );
+          },
+          label: const Text('Show Mod Added Toast for MagicLib'),
+        ),
+        ElevatedButton.icon(
+          icon: const Icon(Icons.clean_hands),
+          onPressed: () {
+            // confirmation prompt
+            showDialog(
+              context: context,
+              builder: (context) {
+                return AlertDialog(
+                  title: const Text("Are you sure?"),
+                  content: const Text("This will wipe TriOS's settings."),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        ref
+                            .read(AppState.modAudit.notifier)
+                            .updateState((_) => []);
+                        ref
+                            .read(appSettings.notifier)
+                            .update((_) => Settings());
+                        RestartableApp.softRestartApp(context);
+                      },
+                      child: const Text('Wipe Settings'),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+          label: const Text('Wipe Settings'),
+        ),
+        ElevatedButton.icon(
+          icon: const Icon(Icons.nearby_error),
+          onPressed: () {
+            throw Exception("This is a test error");
+          },
+          label: const Text('Throw error'),
         ),
         SizedBox(
           width: 200,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Padding(
-                padding: const EdgeInsets.only(top: 16.0),
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.system_security_update_warning),
-                  onPressed: () async {
-                    final latestRelease = await ref
-                        .watch(AppState.selfUpdate.notifier)
-                        .getLatestRelease();
-                    ref
-                        .read(AppState.selfUpdate.notifier)
-                        .updateSelf(latestRelease!);
-                  },
-                  label: const Text("Force Update"),
-                ),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.system_security_update_warning),
+                onPressed: () async {
+                  final latestRelease = await ref
+                      .watch(AppState.selfUpdate.notifier)
+                      .getLatestRelease();
+                  ref
+                      .read(AppState.selfUpdate.notifier)
+                      .updateSelf(latestRelease!);
+                },
+                label: const Text("Force Update"),
               ),
               const SizedBox(height: 4),
               TriOSDownloadProgressIndicator(
@@ -318,97 +292,84 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
             ],
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.only(top: 16),
-          child: ElevatedButton.icon(
-            icon: const Icon(Icons.developer_mode),
-            onPressed: () {
-              getStarsectorVersionFromObf(
-                ref.watch(AppState.modsFolder).valueOrNull!,
-                ref.read(archiveProvider).value!,
-              ).then((value) {
-                showSnackBar(
-                  context: ref.read(AppState.appContext)!,
-                  content: Text("Game version: $value"),
-                );
-              });
-            },
-            label: const Text('Read game version from starfarer_obf.jar.'),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(top: 16),
-          child: ElevatedButton.icon(
-            icon: const Icon(Icons.diversity_1),
-            onPressed: () {
+        ElevatedButton.icon(
+          icon: const Icon(Icons.developer_mode),
+          onPressed: () {
+            getStarsectorVersionFromObf(
+              ref.watch(AppState.modsFolder).valueOrNull!,
+              ref.read(archiveProvider).value!,
+            ).then((value) {
               showSnackBar(
                 context: ref.read(AppState.appContext)!,
-                content: Text(
-                  ref
-                          .refresh(weaponListNotifierProvider)
-                          .valueOrNull
-                          ?.toString() ??
-                      "weh",
-                ),
+                content: Text("Game version: $value"),
               );
-            },
-            label: const Text('Read weapons'),
-          ),
+            });
+          },
+          label: const Text('Read game version from starfarer_obf.jar.'),
         ),
-        Padding(
-          padding: const EdgeInsets.only(top: 16),
-          child: Builder(
-            builder: (context) {
-              return MovingTooltipWidget.text(
-                message: "Read ships from csv and json files",
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.rocket),
-                  onPressed: () async {
-                    showSnackBar(
-                      context: ref.read(AppState.appContext)!,
-                      content: Text(
-                        ref
-                                .refresh(shipListNotifierProvider)
-                                .valueOrNull
-                                ?.toString() ??
-                            "weh",
-                      ),
-                    );
-                  },
-                  label: const Text('Read ships'),
-                ),
-              );
-            },
-          ),
+        ElevatedButton.icon(
+          icon: const Icon(Icons.diversity_1),
+          onPressed: () {
+            showSnackBar(
+              context: ref.read(AppState.appContext)!,
+              content: Text(
+                ref
+                        .refresh(weaponListNotifierProvider)
+                        .valueOrNull
+                        ?.toString() ??
+                    "weh",
+              ),
+            );
+          },
+          label: const Text('Read weapons'),
         ),
-        Padding(
-          padding: const EdgeInsets.only(top: 16),
-          child: Builder(
-            builder: (context) {
-              final path = "F:/Downloads/starsector_install-0.97a-RC11.exe";
-              return MovingTooltipWidget.text(
-                message: "Tries to read from '$path'",
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.folder_zip),
-                  onPressed: () async {
-                    final time = DateTime.now();
-                    final entries = await ref
-                        .read(archiveProvider)
-                        .requireValue
-                        .listFiles(path.toFile());
-                    final timeToRead = time.difference(DateTime.now());
-                    Fimber.i(
-                      "Entries: ${(entries).join('\n')}"
-                      "\nTime to read archive: $timeToRead",
-                    );
-                  },
-                  label: const Text('Read Starsector installer'),
-                ),
-              );
-            },
-          ),
+        Builder(
+          builder: (context) {
+            return MovingTooltipWidget.text(
+              message: "Read ships from csv and json files",
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.rocket),
+                onPressed: () async {
+                  showSnackBar(
+                    context: ref.read(AppState.appContext)!,
+                    content: Text(
+                      ref
+                              .refresh(shipListNotifierProvider)
+                              .valueOrNull
+                              ?.toString() ??
+                          "weh",
+                    ),
+                  );
+                },
+                label: const Text('Read ships'),
+              ),
+            );
+          },
         ),
-        const SizedBox(height: 16),
+        Builder(
+          builder: (context) {
+            final path = "F:/Downloads/starsector_install-0.97a-RC11.exe";
+            return MovingTooltipWidget.text(
+              message: "Tries to read from '$path'",
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.folder_zip),
+                onPressed: () async {
+                  final time = DateTime.now();
+                  final entries = await ref
+                      .read(archiveProvider)
+                      .requireValue
+                      .listFiles(path.toFile());
+                  final timeToRead = time.difference(DateTime.now());
+                  Fimber.i(
+                    "Entries: ${(entries).join('\n')}"
+                    "\nTime to read archive: $timeToRead",
+                  );
+                },
+                label: const Text('Read Starsector installer'),
+              ),
+            );
+          },
+        ),
         ElevatedButton.icon(
           icon: const Icon(Icons.people_alt_outlined),
           label: const Text("Force Replace TriOS Companion Mod"),
@@ -423,7 +384,28 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
             }
           },
         ),
-        const SizedBox(height: 16),
+        ElevatedButton.icon(
+          icon: const Icon(Icons.coffee),
+          label: const Text("Show found JREs / vmparams files"),
+          onPressed: () async {
+            try {
+              showAlertDialog(
+                context,
+                content:
+                    (await ref.read(jreManagerProvider.notifier).findJREs())
+                        .joinToString(
+                          transform: (obj) => "- $obj",
+                          separator: "\n",
+                        ),
+              );
+            } catch (e) {
+              showSnackBar(
+                context: ref.read(AppState.appContext)!,
+                content: Text(e.toString()),
+              );
+            }
+          },
+        ),
         Card(
           child: Padding(
             padding: const EdgeInsets.all(8),

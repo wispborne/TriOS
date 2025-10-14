@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
@@ -51,7 +52,7 @@ class JreManager extends AsyncNotifier<JreManagerState> {
 
   @override
   Future<JreManagerState> build() async {
-    final installedJres = await _findJREs();
+    final installedJres = await findJREs();
     _startWatchingJres();
     final activeJres = installedJres
         .whereType<JreEntryInstalled>()
@@ -85,9 +86,13 @@ class JreManager extends AsyncNotifier<JreManagerState> {
 
   /// Async find all JREs in the game directory,
   /// including any supported downloadable JREs to the list.
-  Future<List<JreEntry>> _findJREs() async {
-    final gamePath = ref.watch(appSettings.select((value) => value.gameDir));
-    if (gamePath == null || !gamePath.existsSync()) {
+  Future<List<JreEntry>> findJREs() async {
+    final gamePath = ref.watch(AppState.gameFolder).valueOrNull;
+    final corePath = ref.watch(AppState.gameCoreFolder).valueOrNull;
+    if (gamePath == null ||
+        !gamePath.existsSync() ||
+        corePath == null ||
+        !corePath.existsSync()) {
       return [];
     }
 
@@ -95,24 +100,24 @@ class JreManager extends AsyncNotifier<JreManagerState> {
 
     final List<JreEntry> jres = (await Future.wait(
       jresRootPath.listSync().whereType<Directory>().map((jrePath) async {
-        var javaExe = getJavaExecutable(jrePath);
+        final javaExe = getJavaExecutable(jrePath);
         if (!javaExe.existsSync()) {
           return null;
         }
 
         String? versionString;
-        var cmd = javaExe.absolute.normalize.path;
+        final cmd = javaExe.absolute.normalize.path;
         try {
-          var process = await Process.start(cmd, [
+          final process = await Process.start(cmd, [
             "-Xmx128m",
             "-Xms32m",
             "-version",
           ]);
-          var lines = await process.stderr
+          final lines = await process.stderr
               .transform(utf8.decoder)
               .transform(const LineSplitter())
               .toList();
-          var versionLine = lines.firstWhere(
+          final versionLine = lines.firstWhere(
             (line) => line.contains(jreVersionRegex),
             orElse: () => lines.first,
           );
@@ -133,25 +138,45 @@ class JreManager extends AsyncNotifier<JreManagerState> {
         final jreVersion = JreVersion(versionString);
         switch (jreVersion.version) {
           case 23:
-            return Jre23InstalledJreEntry(gamePath, jrePath, jreVersion);
+            return Jre23InstalledJreEntry(
+              gamePath,
+              corePath,
+              jrePath,
+              jreVersion,
+            );
           case 24:
-            return Jre24InstalledJreEntry(gamePath, jrePath, jreVersion);
+            return Jre24InstalledJreEntry(
+              gamePath,
+              corePath,
+              jrePath,
+              jreVersion,
+            );
           default:
-            return StandardInstalledJreEntry(gamePath, jrePath, jreVersion);
+            return StandardInstalledJreEntry(
+              gamePath,
+              corePath,
+              jrePath,
+              jreVersion,
+            );
         }
       }),
     )).whereType<JreEntry>().toList();
 
     // Look for Fast Rendering
-    final frEntry = FastRenderingInstalledJreEntry(gamePath, Directory.current, JreVersion("1.0.0"));
+    final frEntry = FastRenderingInstalledJreEntry(
+      gamePath,
+      corePath,
+      Directory.current,
+      JreVersion("1.0.0"),
+    );
     if (frEntry.hasAllFilesReadyToLaunch()) {
       jres.add(frEntry);
     }
 
     // Add downloadable JREs
     final downloadableJres = [
-      Jre23JreToDownload(gamePath, JreVersion("23-beta")),
-      Jre24JreToDownload(gamePath, JreVersion("24-beta")),
+      Jre23JreToDownload(gamePath, corePath, JreVersion("23-beta")),
+      Jre24JreToDownload(gamePath, corePath, JreVersion("24-beta")),
     ];
 
     for (final downloadableJre in downloadableJres) {
@@ -304,7 +329,7 @@ class JreManager extends AsyncNotifier<JreManagerState> {
     final jresDir = generateJresFolderPath(gamePath);
     if (jresDir == null || !jresDir.existsSync()) return;
     _jreWatcherSubscription = jresDir.watch().listen((event) {
-      _findJREs();
+      findJREs();
     });
   }
 }

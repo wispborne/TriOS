@@ -55,8 +55,10 @@ class AppSettingNotifier extends Notifier<Settings> {
     }
 
     final settings = state;
-    configureLogging(
-      allowSentryReporting: settings.allowCrashReporting ?? false,
+    modifyLoggingSettings(
+      (s) => s.copyWith(
+        allowSentryReporting: settings.allowCrashReporting ?? false,
+      ),
     );
     return _applyDefaultsIfNeeded(settings);
   }
@@ -97,10 +99,10 @@ class AppSettingNotifier extends Notifier<Settings> {
     if (prevState.allowCrashReporting != newState.allowCrashReporting) {
       if (newState.allowCrashReporting ?? false) {
         Fimber.i("Crash reporting enabled.");
-        configureLogging(allowSentryReporting: true);
+        modifyLoggingSettings((s) => s.copyWith(allowSentryReporting: true));
       } else {
         Fimber.i("Crash reporting disabled.");
-        configureLogging(allowSentryReporting: false);
+        modifyLoggingSettings((s) => s.copyWith(allowSentryReporting: false));
       }
     }
 

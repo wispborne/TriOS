@@ -1032,27 +1032,67 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       ),
                       Padding(
                         padding: const EdgeInsets.only(top: 16),
-                        child: MovingTooltipWidget.text(
-                          message:
-                              "Whether to check if the game is running and lock parts of ${Constants.appName}."
-                              "\nDisable if ${Constants.appName} is detecting incorrectly.",
-                          child: CheckboxWithLabel(
-                            value: ref.watch(
-                              appSettings.select(
-                                (value) => value.checkIfGameIsRunning,
+                        child: Row(
+                          children: [
+                            MovingTooltipWidget.text(
+                              message:
+                                  "Whether to check if the game is running and lock parts of ${Constants.appName}."
+                                  "\nDisable if ${Constants.appName} is detecting incorrectly.",
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  CheckboxWithLabel(
+                                    value: ref.watch(
+                                      appSettings.select(
+                                        (value) => value.checkIfGameIsRunning,
+                                      ),
+                                    ),
+                                    onChanged: (value) {
+                                      ref
+                                          .read(appSettings.notifier)
+                                          .update(
+                                            (state) => state.copyWith(
+                                              checkIfGameIsRunning: value ?? false,
+                                            ),
+                                          );
+                                    },
+                                    label: "Check if game is running",
+                                  ),
+                                  if (ref
+                                          .watch(AppState.gameRunningCheckError)
+                                          .valueOrNull
+                                          ?.isNotEmpty ==
+                                      true)
+                                    Padding(
+                                      padding: const EdgeInsets.only(left: 48),
+                                      child: Text(
+                                        "Error checking if game is running!"
+                                        "\n${ref.watch(AppState.gameRunningCheckError).valueOrNull?.join("\n")}",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .labelLarge
+                                            ?.copyWith(
+                                              color: Theme.of(
+                                                context,
+                                              ).colorScheme.error,
+                                            ),
+                                      ),
+                                    ),
+                                ],
                               ),
                             ),
-                            onChanged: (value) {
-                              ref
-                                  .read(appSettings.notifier)
-                                  .update(
-                                    (state) => state.copyWith(
-                                      checkIfGameIsRunning: value ?? false,
-                                    ),
-                                  );
-                            },
-                            label: "Check if game is running",
-                          ),
+                            // IconButton(
+                            //   icon: const Icon(Icons.info),
+                            //   onPressed: () {
+                            //     showAlertDialog(
+                            //       context,
+                            //       title: "Check if game is running",
+                            //       content:
+                            //       "",
+                            //     );
+                            //   },
+                            // ),
+                          ],
                         ),
                       ),
                       Padding(

@@ -29,7 +29,7 @@ class LogParser {
 
   Future<LogChips?> parse(String stream) async {
     configureLogging(
-      consoleOnly: true,
+      LoggingSettings(consoleOnly: true),
     ); // Needed because isolate has its own memory.
     String? gameVersion;
     String? os;

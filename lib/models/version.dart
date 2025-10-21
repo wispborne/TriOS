@@ -89,8 +89,9 @@ class Version with VersionMappable implements Comparable<Version> {
   static Version zero() => Version.parse("0.0.0", sanitizeInput: true);
 
   // Precompiled regex and suffix order
-  static final RegExp _regex = RegExp(r'(\d+|[a-zA-Z]+|[-\.]+)');
+  static final RegExp _groupingRegex = RegExp(r'(\d+|[a-zA-Z]+|[-\.]+)');
   static final RegExp _sep = RegExp(r'[\s\-–_]+');
+  static final isLetterRegex = RegExp(r'[a-zA-Z]');
   static final List<String> _suffixOrder = [
     'dev',
     'prerelease',
@@ -100,13 +101,49 @@ class Version with VersionMappable implements Comparable<Version> {
     'rc',
   ];
 
+  // Precomputed rank map for faster lookups
+  static final Map<String, int> _suffixRank = {
+    for (int i = 0; i < _suffixOrder.length; i++) _suffixOrder[i]: i,
+  };
+
+  // Small, bounded LRU caches (very conservative sizes)
+  static const int _maxCacheEntries = 512;
+  static final _normalizedCache = <String, String>{};
+  static final _tokensCache = <String, List<String>>{};
+
+  static String _normalizeSeparatorsCached(String s) {
+    final cached = _normalizedCache[s];
+    if (cached != null) return cached;
+    final normalized = s.replaceAll(_sep, '.');
+    // Simple LRU eviction: remove first key when size exceeded
+    if (_normalizedCache.length >= _maxCacheEntries) {
+      _normalizedCache.remove(_normalizedCache.keys.first);
+    }
+    _normalizedCache[s] = normalized;
+    return normalized;
+  }
+
+  static List<String> _tokenizeCached(String s) {
+    final cached = _tokensCache[s];
+    if (cached != null) return cached;
+    final tokens = _groupingRegex
+        .allMatches(s)
+        .map((m) => m.group(0)!)
+        .toList();
+    if (_tokensCache.length >= _maxCacheEntries) {
+      _tokensCache.remove(_tokensCache.keys.first);
+    }
+    _tokensCache[s] = tokens;
+    return tokens;
+  }
+
   (List<String>, List<String>) _normalizeAndSplitStringsToCompare(
     String a,
     String b,
-    RegExp groupingRegex,
   ) {
-    final aParts = groupingRegex.allMatches(a).map((m) => m.group(0)!).toList();
-    final bParts = groupingRegex.allMatches(b).map((m) => m.group(0)!).toList();
+    // Use cached tokenization for both strings
+    final aParts = _tokenizeCached(a);
+    final bParts = _tokenizeCached(b);
 
     List<String> aResult = [];
     List<String> bResult = [];
@@ -117,8 +154,8 @@ class Version with VersionMappable implements Comparable<Version> {
 
       final aIsNumber = int.tryParse(aPart) != null;
       final bIsNumber = int.tryParse(bPart) != null;
-      final aIsLetter = aPart.contains(RegExp(r'[a-zA-Z]'));
-      final bIsLetter = bPart.contains(RegExp(r'[a-zA-Z]'));
+      final aIsLetter = aPart.contains(isLetterRegex);
+      final bIsLetter = bPart.contains(isLetterRegex);
 
       // If one side is [0] and the other is [g], return [0] and [0,g].
       // This is to handle cases like [1.9.0] and [1.9.g] where [0] should be considered less than [g].
@@ -165,19 +202,15 @@ class Version with VersionMappable implements Comparable<Version> {
 
     final aOriginal = a;
     final bOriginal = b;
-    final aPartsOriginal = _regex
-        .allMatches(a)
-        .map((m) => m.group(0)!)
-        .toList();
-    final bPartsOriginal = _regex
-        .allMatches(b)
-        .map((m) => m.group(0)!)
-        .toList();
+    // Use tokenization cache for originals
+    final aPartsOriginal = _tokenizeCached(a);
+    final bPartsOriginal = _tokenizeCached(b);
 
-    a = a.replaceAll(_sep, '.');
-    b = b.replaceAll(_sep, '.');
+    // Use normalization cache for separator replacement
+    a = _normalizeSeparatorsCached(a);
+    b = _normalizeSeparatorsCached(b);
 
-    final (aParts, bParts) = _normalizeAndSplitStringsToCompare(a, b, _regex);
+    final (aParts, bParts) = _normalizeAndSplitStringsToCompare(a, b);
 
     for (int i = 0; i < max(aParts.length, bParts.length); i++) {
       final aPart = aParts.getOrNull(i) ?? '';
@@ -202,15 +235,13 @@ class Version with VersionMappable implements Comparable<Version> {
       } else {
         final aLow = aPart.toLowerCase();
         final bLow = bPart.toLowerCase();
-        final aContains = _suffixOrder.contains(aLow);
-        final bContains = _suffixOrder.contains(bLow);
-        if (aContains && bContains) {
-          final ai = _suffixOrder.indexOf(aLow);
-          final bi = _suffixOrder.indexOf(bLow);
+        final ai = _suffixRank[aLow];
+        final bi = _suffixRank[bLow];
+        if (ai != null && bi != null) {
           if (ai != bi) return ai > bi ? 1 : -1;
-        } else if (aContains) {
+        } else if (ai != null) {
           return -1;
-        } else if (bContains) {
+        } else if (bi != null) {
           return 1;
         }
 

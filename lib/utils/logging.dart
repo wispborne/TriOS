@@ -3,6 +3,7 @@ import 'dart:io';
 
 // import 'package:fimber/fimber.dart' as f;
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
+import 'package:dart_mappable/dart_mappable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,6 +20,8 @@ import 'package:uuid/uuid.dart';
 import '../trios/constants.dart';
 import '../trios/settings/settings.dart';
 
+part 'logging.mapper.dart';
+
 const logFileName = "TriOS-log.log";
 String? logFolderName;
 String? logFilePath;
@@ -26,26 +29,42 @@ String? logFilePath;
 Logger _consoleLogger = Logger();
 Logger? _fileLogger;
 AdvancedFileOutput? _advancedFileOutput;
-bool _allowSentryReporting = false;
 const useFimber = false;
 bool didLoggingInitializeSuccessfully = false;
-bool _shouldDebugRiverpod = false;
+LoggingSettings _loggingSettings = LoggingSettings();
+
+LoggingSettings get currentSettings => _loggingSettings;
+
+@MappableClass()
+class LoggingSettings with LoggingSettingsMappable {
+  final bool printPlatformInfo;
+  final bool allowSentryReporting;
+  final bool consoleOnly;
+  final bool shouldDebugRiverpod;
+  final Level consoleLoggingLevel;
+  final Level fileLoggingLevel;
+
+  LoggingSettings({
+    this.printPlatformInfo = false,
+    this.allowSentryReporting = false,
+    this.consoleOnly = false,
+    this.shouldDebugRiverpod = false,
+    this.consoleLoggingLevel = kDebugMode ? Level.debug : Level.error,
+    this.fileLoggingLevel = Level.info,
+  });
+}
+
+Future<void> modifyLoggingSettings(
+  LoggingSettings Function(LoggingSettings prevSettings) modifier,
+) {
+  _loggingSettings = modifier(_loggingSettings ?? LoggingSettings());
+  return configureLogging(_loggingSettings!);
+}
 
 /// Fine to call multiple times.
-Future<void> configureLogging({
-  bool printPlatformInfo = false,
-  bool allowSentryReporting = false,
-  bool consoleOnly = false,
-  bool? shouldDebugRiverpod,
-}) async {
-  _allowSentryReporting = allowSentryReporting;
-
-  if (shouldDebugRiverpod != null) {
-    _shouldDebugRiverpod = shouldDebugRiverpod;
-  }
-
+Future<void> configureLogging(LoggingSettings settings) async {
   Fimber.i(
-    "Crash reporting is ${allowSentryReporting ? "enabled" : "disabled"}.",
+    "Crash reporting is ${settings.allowSentryReporting ? "enabled" : "disabled"}.",
   );
   try {
     WidgetsFlutterBinding.ensureInitialized();
@@ -84,13 +103,13 @@ Future<void> configureLogging({
     };
 
     _consoleLogger = Logger(
-      level: kDebugMode ? Level.debug : Level.error,
+      level: settings.consoleLoggingLevel,
       // filter: DevelopmentFilter(), // No console logs in release mode.
       printer: consolePrinter,
       output: ConsoleOutput(),
     );
 
-    if (consoleOnly) {
+    if (settings.consoleOnly) {
       _fileLogger = null;
     } else {
       try {
@@ -112,7 +131,7 @@ Future<void> configureLogging({
           );
 
           _fileLogger = Logger(
-            level: kDebugMode ? Level.debug : Level.info,
+            level: settings.fileLoggingLevel,
             filter: ProductionFilter(),
             printer: PrettyPrinterCustom(
               stackTraceBeginIndex: stackTraceBeginIndex,
@@ -149,11 +168,7 @@ Future<void> configureLogging({
           "Error setting up file logging. Falling back to console only.",
           ex: e,
         );
-        configureLogging(
-          printPlatformInfo: printPlatformInfo,
-          allowSentryReporting: allowSentryReporting,
-          consoleOnly: true,
-        );
+        configureLogging((_loggingSettings).copyWith(consoleOnly: true));
         return;
       }
     }
@@ -168,7 +183,7 @@ Future<void> configureLogging({
 
   didLoggingInitializeSuccessfully = true;
 
-  if (printPlatformInfo) {
+  if (settings.printPlatformInfo) {
     printLoggingStartedInfo();
   }
 }
@@ -278,7 +293,7 @@ class Fimber {
       _fileLogger?.e(message, error: ex, stackTrace: stacktrace);
     }
 
-    if (_allowSentryReporting) {
+    if (_loggingSettings.allowSentryReporting) {
       Sentry.captureException(
         ex,
         stackTrace: stacktrace,
@@ -311,7 +326,7 @@ class RiverpodDebugObserver extends ProviderObserver {
     Object? newValue,
     ProviderContainer container,
   ) {
-    if (_shouldDebugRiverpod) {
+    if (_loggingSettings.shouldDebugRiverpod) {
       Fimber.d(
         "Provider: $provider, prev: ${previousValue.toString().take(200)}, new: ${newValue.toString().take(200)}, container: ${container.toString().take(200)}",
       );

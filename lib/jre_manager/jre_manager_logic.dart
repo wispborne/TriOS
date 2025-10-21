@@ -50,8 +50,10 @@ class JreManager extends AsyncNotifier<JreManagerState> {
 
   @override
   Future<JreManagerState> build() async {
-    final installedJres = await findJREs();
-    _startWatchingJres();
+    final gamePath = ref.watch(AppState.gameFolder).valueOrNull;
+    final corePath = ref.watch(AppState.gameCoreFolder).valueOrNull;
+    final installedJres = await findJREs(gamePath, corePath);
+    _startWatchingJres(gamePath, corePath);
     final activeJres = installedJres
         .whereType<JreEntryInstalled>()
         .where((jre) => jre.hasAllFilesReadyToLaunch())
@@ -82,9 +84,10 @@ class JreManager extends AsyncNotifier<JreManagerState> {
 
   /// Async find all JREs in the game directory,
   /// including any supported downloadable JREs to the list.
-  Future<List<JreEntry>> findJREs() async {
-    final gamePath = ref.watch(AppState.gameFolder).valueOrNull;
-    final corePath = ref.watch(AppState.gameCoreFolder).valueOrNull;
+  Future<List<JreEntry>> findJREs(
+    Directory? gamePath,
+    Directory? corePath,
+  ) async {
     if (gamePath == null ||
         !gamePath.existsSync() ||
         corePath == null ||
@@ -312,16 +315,15 @@ class JreManager extends AsyncNotifier<JreManagerState> {
     return true;
   }
 
-  _startWatchingJres() async {
+  void _startWatchingJres(Directory? gamePath, Directory? corePath) {
     _jreWatcherSubscription?.cancel();
-    final gamePath = ref.read(AppState.gameFolder).valueOrNull?.toDirectory();
     if (gamePath == null) {
       return;
     }
     final jresDir = generateJresFolderPath(gamePath);
     if (jresDir == null || !jresDir.existsSync()) return;
     _jreWatcherSubscription = jresDir.watch().listen((event) {
-      findJREs();
+      findJREs(gamePath, corePath);
     });
   }
 }

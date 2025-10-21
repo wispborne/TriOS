@@ -109,8 +109,10 @@ void main() async {
   try {
     print("Initializing TriOS logging framework...");
     configureLogging(
-      printPlatformInfo: true,
-      shouldDebugRiverpod: shouldDebugRiverpod,
+      LoggingSettings(
+        printPlatformInfo: true,
+        shouldDebugRiverpod: shouldDebugRiverpod,
+      ),
     );
     Fimber.i("${Constants.appTitle} logging started.");
     Fimber.i(
@@ -194,7 +196,7 @@ void main() async {
   // Set up Sentry
   try {
     allowCrashReporting = settings?.allowCrashReporting ?? false;
-    configureLogging(allowSentryReporting: allowCrashReporting);
+    modifyLoggingSettings((s) => s.copyWith(allowSentryReporting: allowCrashReporting));
   } catch (e) {
     Fimber.w("Error reading crash reporting setting.", ex: e);
   }

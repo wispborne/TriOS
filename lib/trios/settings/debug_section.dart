@@ -5,6 +5,7 @@ import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:logger/logger.dart';
 import 'package:toastification/toastification.dart';
 import 'package:trios/chipper/utils.dart';
 import 'package:trios/companion_mod/companion_mod_manager.dart';
@@ -71,6 +72,7 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
         Padding(
           padding: const EdgeInsets.only(top: 16),
           child: Row(
+            spacing: 8,
             children: [
               DropdownMenu<Release?>(
                 dropdownMenuEntries:
@@ -105,7 +107,7 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                   },
                   label: Text(
                     _selectedRelease == null
-                        ? "<- Select a release"
+                        ? "← Select a release"
                         : 'Update to ${_selectedRelease?.tagName}',
                   ),
                 ),
@@ -134,6 +136,8 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                 return;
               }
 
+              if (!context.mounted) return;
+
               toastification.showCustom(
                 context: context,
                 builder: (context, item) => SelfUpdateToast(release, item),
@@ -141,6 +145,82 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
             });
           },
           label: const Text('Check for update (allow older versions)'),
+        ),
+        Row(
+          spacing: 8,
+          children: [
+            DropdownMenu<Level>(
+              initialSelection: currentSettings.consoleLoggingLevel,
+              dropdownMenuEntries:
+                  [
+                    Level.trace,
+                    Level.debug,
+                    Level.info,
+                    Level.warning,
+                    Level.error,
+                    Level.fatal,
+                  ].map((level) {
+                    return DropdownMenuEntry(
+                      value: level,
+                      label: level.name,
+                      leadingIcon: level == Level.trace
+                          ? Icon(Icons.warning)
+                          : null,
+                    );
+                  }).toList(),
+              onSelected: (value) {
+                modifyLoggingSettings(
+                  (s) => s.copyWith(consoleLoggingLevel: value),
+                );
+              },
+            ),
+            MovingTooltipWidget.text(
+              message: "",
+              warningLevel: TooltipWarningLevel.error,
+              child: Text(
+                "← Select console logging level (resets at restart)",
+                style: Theme.of(context).textTheme.labelLarge,
+              ),
+            ),
+          ],
+        ),
+        Row(
+          spacing: 8,
+          children: [
+            DropdownMenu<Level>(
+              initialSelection: currentSettings.fileLoggingLevel,
+              dropdownMenuEntries:
+                  [
+                    Level.trace,
+                    Level.debug,
+                    Level.info,
+                    Level.warning,
+                    Level.error,
+                    Level.fatal,
+                  ].map((level) {
+                    return DropdownMenuEntry(
+                      value: level,
+                      label: level.name,
+                      leadingIcon: level == Level.trace
+                          ? Icon(Icons.warning)
+                          : null,
+                    );
+                  }).toList(),
+              onSelected: (value) {
+                modifyLoggingSettings(
+                  (s) => s.copyWith(fileLoggingLevel: value),
+                );
+              },
+            ),
+            MovingTooltipWidget.text(
+              message: "",
+              warningLevel: TooltipWarningLevel.error,
+              child: Text(
+                "← Select file logging level (resets at restart)",
+                style: Theme.of(context).textTheme.labelLarge,
+              ),
+            ),
+          ],
         ),
         ElevatedButton.icon(
           icon: const Icon(Icons.folder_special),
@@ -392,7 +472,18 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
               showAlertDialog(
                 context,
                 content:
-                    (await ref.read(jreManagerProvider.notifier).findJREs())
+                    (await ref
+                            .read(jreManagerProvider.notifier)
+                            .findJREs(
+                              ref
+                                  .watch(AppState.gameFolder)
+                                  .valueOrNull
+                                  ?.toDirectory(),
+                              ref
+                                  .watch(AppState.gameCoreFolder)
+                                  .valueOrNull
+                                  ?.toDirectory(),
+                            ))
                         .joinToString(
                           transform: (obj) => "- $obj",
                           separator: "\n",

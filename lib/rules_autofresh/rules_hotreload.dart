@@ -29,11 +29,11 @@ class RulesHotReload extends ConsumerStatefulWidget {
 class _RulesHotReloadState extends ConsumerState<RulesHotReload> {
   int _counter = 0;
 
-  _saveVanillaRulesDotCsv(WidgetRef ref) {
+  void _saveVanillaRulesDotCsv(WidgetRef ref) {
     Fimber.i(
       "Detected rules.csv change, touching vanilla rules.csv last modified date. Count: $_counter",
     );
-    final gameCoreDir = ref.read(AppState.modsFolder).valueOrNull;
+    final gameCoreDir = ref.read(AppState.gameCoreFolder).valueOrNull;
     if (gameCoreDir == null) {
       return;
     }

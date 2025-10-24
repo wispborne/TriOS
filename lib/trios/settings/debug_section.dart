@@ -376,7 +376,7 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
           icon: const Icon(Icons.developer_mode),
           onPressed: () {
             getStarsectorVersionFromObf(
-              ref.watch(AppState.modsFolder).valueOrNull!,
+              ref.watch(AppState.gameCoreFolder).valueOrNull!,
               ref.read(archiveProvider).value!,
             ).then((value) {
               showSnackBar(

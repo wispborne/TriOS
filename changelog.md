@@ -22,6 +22,7 @@
   - Option to show only disabled mods on the Dashboard mod list.
   - New fallback method of checking if game is running that uses `wmic` if the main method (which requires a system JDK (not JRE) fails.
   - If "Check If game is running" has errors, they appear on Settings page.
+  - If `modNexusId` is present in a `.version` file but `modForumId` isn't, then the context menu `Open Forum Page` will use the Nexus page instead.
 - Fixed
   - Ship Viewer filters not working.
   - Custom launcher files are no longer hardcoded to use the game folder as their working directory.
@@ -36,6 +37,7 @@
   - Some parts of the Ship and Weapon Viewer UI is persisted across restarts (buttons).
   - Sorting by mod name now uses an "intuitive" sort (e.g. 'a', ' x', 'Z') instead of Starsector's sort (e.g. '   x', 'Z', 'a').
     - Added a new column to the mod list to sort by mod load order.
+  - Context menus (right-click menu) is now slightly prettier.
 
 # 1.2.3
 - Fixed

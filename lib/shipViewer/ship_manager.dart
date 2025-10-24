@@ -23,7 +23,7 @@ final shipListNotifierProvider = StreamProvider<List<Ship>>((ref) async* {
   ref.watch(isLoadingShipsList.notifier).state = true;
   filesProcessed = 0;
   final gameCorePath = ref
-      .watch(AppState.modsFolder).valueOrNull
+      .watch(AppState.gameCoreFolder).valueOrNull
       ?.path;
 
   if (gameCorePath == null || gameCorePath.isEmpty) {

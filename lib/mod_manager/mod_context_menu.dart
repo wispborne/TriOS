@@ -42,12 +42,13 @@ ContextMenu buildModContextMenu(
         ),
       MenuHeader(text: Constants.appName, disableUppercase: true),
       if (openSidebar != null)
-      buildMenuItemOpenInSidebar(mod, ref, openSidebar),
+        buildMenuItemOpenInSidebar(mod, ref, openSidebar),
       if (ref.watch(AppState.vramEstimatorProvider).valueOrNull?.isScanning !=
           true)
         buildMenuItemCheckVram(mod, ref),
       buildMenuItemToggleMuteUpdates(mod, ref),
-      buildMenuItemViewModWeapons(context, mod, ref),
+      if (false) // not done
+        buildMenuItemViewModWeapons(context, mod, ref),
       // MenuHeader(text: "Debugging", disableUppercase: true),
       buildMenuItemDebugging(context, mod, ref, isGameRunning),
     ],

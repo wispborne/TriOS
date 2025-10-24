@@ -22,7 +22,7 @@ final weaponListNotifierProvider = StreamProvider<List<Weapon>>((ref) async* {
   ref.watch(isLoadingWeaponsList.notifier).state = true;
   filesProcessed = 0;
   final gameCorePath = ref
-      .watch(AppState.modsFolder).valueOrNull
+      .watch(AppState.gameCoreFolder).valueOrNull
       ?.path;
 
   if (gameCorePath == null || gameCorePath.isEmpty) {

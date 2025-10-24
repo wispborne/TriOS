@@ -87,7 +87,7 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
     });
   }
 
-  downloadUpdateViaBrowser(
+  void downloadUpdateViaBrowser(
     VersionCheckerInfo remoteVersion, {
     required bool activateVariantOnComplete,
     ModInfo? modInfo,

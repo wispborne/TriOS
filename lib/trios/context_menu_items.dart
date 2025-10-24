@@ -43,12 +43,30 @@ MenuItem<dynamic> buildMenuItemOpenForumPage(
   BuildContext context,
 ) {
   final hasThread = modVariant.versionCheckerInfo?.modThreadId != null;
+  final hasNexusPage = modVariant.versionCheckerInfo?.modNexusId != null;
+  final hasPage = hasThread || hasNexusPage;
   return MenuItem(
-    label: hasThread ? 'Open Forum Page' : 'Open Forum Page (unavailable)',
+    label: hasThread
+        ? 'Open Forum Page'
+        : hasNexusPage
+        ? 'Open Nexus Page'
+        : 'Open Forum Page (unavailable)',
     icon: Icons.open_in_browser,
-    iconOpacity: hasThread ? 1 : 0.5,
+    iconOpacity: hasPage ? 1 : 0.5,
     onSelected: () {
-      if (!hasThread) {
+      if (hasThread) {
+        launchUrl(
+          Uri.parse(
+            "${Constants.forumModPageUrl}${modVariant.versionCheckerInfo?.modThreadId}",
+          ),
+        );
+      } else if (hasNexusPage) {
+        launchUrl(
+          Uri.parse(
+            "${Constants.nexusModsPageUrl}${modVariant.versionCheckerInfo?.modNexusId}",
+          ),
+        );
+      } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -56,13 +74,7 @@ MenuItem<dynamic> buildMenuItemOpenForumPage(
             ),
           ),
         );
-        return;
       }
-      launchUrl(
-        Uri.parse(
-          "${Constants.forumModPageUrl}${modVariant.versionCheckerInfo?.modThreadId}",
-        ),
-      );
     },
   );
 }
@@ -476,7 +488,11 @@ MenuItem buildMenuItemToggleMuteUpdates(Mod mod, WidgetRef ref) {
   );
 }
 
-buildMenuItemViewModWeapons(BuildContext context, Mod mod, WidgetRef ref) {
+MenuItem buildMenuItemViewModWeapons(
+  BuildContext context,
+  Mod mod,
+  WidgetRef ref,
+) {
   return MenuItem(
     label: 'View Mod Weapons',
     icon: Icons.gps_fixed,

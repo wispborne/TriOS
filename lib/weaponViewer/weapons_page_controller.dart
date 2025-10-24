@@ -269,7 +269,7 @@ class WeaponsPageController extends AutoDisposeNotifier<WeaponsPageState> {
 
   /// Get game core directory
   Directory getGameCoreDir() {
-    return Directory(ref.read(AppState.modsFolder).valueOrNull?.path ?? '');
+    return Directory(ref.read(AppState.gameCoreFolder).valueOrNull?.path ?? '');
   }
 
   /// Clear all active filters

@@ -38,6 +38,8 @@
   - Sorting by mod name now uses an "intuitive" sort (e.g. 'a', ' x', 'Z') instead of Starsector's sort (e.g. '   x', 'Z', 'a').
     - Added a new column to the mod list to sort by mod load order.
   - Context menus (right-click menu) is now slightly prettier.
+  - Cleaned up the "Clean up mods" dialog on Settings that lets you remove old versions of mods.
+    - Defaults to not removing currently-enabled mods now.
 
 # 1.2.3
 - Fixed

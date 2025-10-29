@@ -11,7 +11,6 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:toastification/toastification.dart';
 import 'package:trios/catalog/mod_browser_page.dart';
 import 'package:trios/chipper/chipper_home.dart';
-import 'package:trios/chipper/utils.dart';
 import 'package:trios/dashboard/dashboard.dart';
 import 'package:trios/mod_manager/mods_grid_page.dart';
 import 'package:trios/models/version.dart';
@@ -19,7 +18,6 @@ import 'package:trios/portraits/portraits_page.dart';
 import 'package:trios/rules_autofresh/rules_hotreload.dart';
 import 'package:trios/shipViewer/ships_page.dart';
 import 'package:trios/themes/theme_manager.dart';
-import 'package:trios/thirdparty/dartx/comparable.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/navigation.dart';
 import 'package:trios/trios/self_updater/self_updater.dart';
@@ -49,6 +47,7 @@ import 'mod_profiles/mod_profiles_page.dart';
 import 'tips/tips_page.dart';
 import 'trios/app_state.dart';
 import 'trios/drag_drop_handler.dart';
+import 'utils/dialogs.dart';
 
 class AppShell extends ConsumerStatefulWidget {
   const AppShell({super.key, required this.child});
@@ -218,14 +217,14 @@ class _AppShellState extends ConsumerState<AppShell>
     final tabChildren = [
       const Padding(padding: EdgeInsets.all(4), child: Dashboard()),
       const ModsGridPage(),
-      const Padding(padding: EdgeInsets.all(8), child: ModProfilePage()),
+      ModProfilePage(pagePadding: 8),
       const VramEstimatorPage(),
-      const Padding(padding: EdgeInsets.all(8), child: ChipperApp()),
+      const ChipperApp(pagePadding: 8),
       const PortraitsPage(),
       const WeaponsPage(),
       const ShipsPage(),
-      const Padding(padding: EdgeInsets.all(8), child: SettingsPage()),
-      const CatalogPage(),
+      const SettingsPage(pagePadding: 8.0),
+      const CatalogPage(pagePadding: 8),
       const TipsPage(),
     ];
     final theme = Theme.of(context);

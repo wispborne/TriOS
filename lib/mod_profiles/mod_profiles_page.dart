@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
-import 'package:trios/chipper/utils.dart';
 import 'package:trios/mod_manager/audit_page.dart';
 import 'package:trios/mod_profiles/models/shared_mod_list.dart';
 import 'package:trios/mod_profiles/save_reader.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/thirdparty/dartx/string.dart';
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/utils/dialogs.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
@@ -21,7 +21,9 @@ import 'mod_profiles_manager.dart';
 import 'models/mod_profile.dart';
 
 class ModProfilePage extends ConsumerStatefulWidget {
-  const ModProfilePage({super.key});
+  final double pagePadding;
+
+  const ModProfilePage({super.key, required this.pagePadding});
 
   @override
   ConsumerState<ModProfilePage> createState() => _ModProfilePageState();
@@ -47,111 +49,17 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
 
     return Theme(
       data: Theme.of(context).lowContrastCardTheme(),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(left: 4, right: 4, bottom: 4),
-                  child: Row(
-                    children: [
-                      Text(
-                        'Mod Profiles',
-                        style: Theme.of(
-                          context,
-                        ).textTheme.headlineSmall?.copyWith(fontSize: 20),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.info),
-                        onPressed: () {
-                          showDialog(
-                            context: context,
-                            builder: (context) {
-                              return AlertDialog(
-                                title: const Text("Mod Profiles"),
-                                content: const Text(
-                                  "Mod profiles are a way to quickly switch between different mods, including specific versions."
-                                  "\nWhen one is enabled, any mods you change will update the profile as well."
-                                  "\n"
-                                  "\n\nYou can also generate profiles from your saves.",
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () {
-                                      Navigator.of(context).pop();
-                                    },
-                                    child: const Text("OK"),
-                                  ),
-                                ],
-                              );
-                            },
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: modProfilesAsync.when(
-                    data: (modProfilesObj) {
-                      final modProfiles = modProfilesObj.modProfiles
-                          .sortedByButBetter((profile) => profile.dateModified)
-                          .reversed
-                          .toList();
-                      return AlignedGridView.extent(
-                        crossAxisSpacing: axisSpacingForHeightHack,
-                        mainAxisSpacing: 10,
-                        maxCrossAxisExtent: 680,
-                        // crossAxisCount: 2,
-                        itemCount: modProfiles.length + 1,
-                        itemBuilder: (context, index) {
-                          if (index == 0) {
-                            return ConstrainedBox(
-                              constraints: const BoxConstraints(
-                                minHeight: minHeight,
-                              ),
-                              child: Align(
-                                alignment: Alignment.topLeft,
-                                child: _buildNewProfileCard(),
-                              ),
-                            );
-                          } else {
-                            final profile = modProfiles[index - 1];
-
-                            return ModProfileCard(
-                              minHeight: minHeight,
-                              profile: profile,
-                              modProfiles: modProfiles,
-                              save: null,
-                              saves: null,
-                              cardPadding: cardPadding,
-                              actualAxisSpacing: actualAxisSpacing,
-                              axisSpacingForHeightHack:
-                                  axisSpacingForHeightHack,
-                            );
-                          }
-                        },
-                      );
-                    },
-                    loading: () =>
-                        const Center(child: CircularProgressIndicator()),
-                    error: (error, stackTrace) =>
-                        Center(child: Text('Error: $error')),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const VerticalDivider(),
-          Padding(
-            padding: const EdgeInsets.only(left: 0.0),
-            child: SizedBox(
-              width: 320,
+      child: Padding(
+        padding: EdgeInsets.only(
+          top: widget.pagePadding,
+          left: widget.pagePadding,
+          right: widget.pagePadding,
+        ),
+        child: Row(
+          children: [
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
                 children: [
                   Padding(
                     padding: const EdgeInsets.only(
@@ -162,52 +70,83 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                     child: Row(
                       children: [
                         Text(
-                          'Save Games',
+                          'Mod Profiles',
                           style: Theme.of(
                             context,
                           ).textTheme.headlineSmall?.copyWith(fontSize: 20),
                         ),
-                        const Spacer(),
-                        MovingTooltipWidget.text(
-                          message: 'Reread from Saves folder',
-                          child: IconButton(
-                            onPressed: () {
-                              ref.invalidate(saveFileProvider);
-                            },
-                            icon: const Icon(Icons.refresh),
-                          ),
+                        IconButton(
+                          icon: const Icon(Icons.info),
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              builder: (context) {
+                                return AlertDialog(
+                                  title: const Text("Mod Profiles"),
+                                  content: const Text(
+                                    "Mod profiles are a way to quickly switch between different mods, including specific versions."
+                                    "\nWhen one is enabled, any mods you change will update the profile as well."
+                                    "\n"
+                                    "\n\nYou can also generate profiles from your saves.",
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.of(context).pop();
+                                      },
+                                      child: const Text("OK"),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
                         ),
                       ],
                     ),
                   ),
                   Expanded(
-                    child: saveGamesAsync.when(
-                      data: (saveGames) {
-                        saveGames = saveGames
+                    child: modProfilesAsync.when(
+                      data: (modProfilesObj) {
+                        final modProfiles = modProfilesObj.modProfiles
                             .sortedByButBetter(
-                              (save) =>
-                                  save.saveDate ??
-                                  DateTime.fromMicrosecondsSinceEpoch(0),
+                              (profile) => profile.dateModified,
                             )
                             .reversed
                             .toList();
-                        return AlignedGridView.count(
+                        return AlignedGridView.extent(
                           crossAxisSpacing: axisSpacingForHeightHack,
                           mainAxisSpacing: 10,
-                          crossAxisCount: 1,
-                          itemCount: saveGames.length,
+                          maxCrossAxisExtent: 680,
+                          padding: EdgeInsets.only(bottom: widget.pagePadding),
+                          // crossAxisCount: 2,
+                          itemCount: modProfiles.length + 1,
                           itemBuilder: (context, index) {
-                            return ModProfileCard(
-                              minHeight: minHeight,
-                              profile: null,
-                              modProfiles: null,
-                              save: saveGames[index],
-                              saves: saveGames,
-                              cardPadding: cardPadding,
-                              actualAxisSpacing: actualAxisSpacing,
-                              axisSpacingForHeightHack:
-                                  axisSpacingForHeightHack,
-                            );
+                            if (index == 0) {
+                              return ConstrainedBox(
+                                constraints: const BoxConstraints(
+                                  minHeight: minHeight,
+                                ),
+                                child: Align(
+                                  alignment: Alignment.topLeft,
+                                  child: _buildNewProfileCard(),
+                                ),
+                              );
+                            } else {
+                              final profile = modProfiles[index - 1];
+
+                              return ModProfileCard(
+                                minHeight: minHeight,
+                                profile: profile,
+                                modProfiles: modProfiles,
+                                save: null,
+                                saves: null,
+                                cardPadding: cardPadding,
+                                actualAxisSpacing: actualAxisSpacing,
+                                axisSpacingForHeightHack:
+                                    axisSpacingForHeightHack,
+                              );
+                            }
                           },
                         );
                       },
@@ -220,24 +159,102 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                 ],
               ),
             ),
-          ),
-          SizedBox(
-            width: 350,
-            child: Padding(
-              padding: const EdgeInsets.only(left: 8),
-              child: Container(
-                // round edges
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(
-                    ThemeManager.cornerRadius,
-                  ),
+            const VerticalDivider(),
+            Padding(
+              padding: const EdgeInsets.only(left: 0.0),
+              child: SizedBox(
+                width: 320,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        left: 4,
+                        right: 4,
+                        bottom: 4,
+                      ),
+                      child: Row(
+                        children: [
+                          Text(
+                            'Save Games',
+                            style: Theme.of(
+                              context,
+                            ).textTheme.headlineSmall?.copyWith(fontSize: 20),
+                          ),
+                          const Spacer(),
+                          MovingTooltipWidget.text(
+                            message: 'Reread from Saves folder',
+                            child: IconButton(
+                              onPressed: () {
+                                ref.invalidate(saveFileProvider);
+                              },
+                              icon: const Icon(Icons.refresh),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: saveGamesAsync.when(
+                        data: (saveGames) {
+                          saveGames = saveGames
+                              .sortedByButBetter(
+                                (save) =>
+                                    save.saveDate ??
+                                    DateTime.fromMicrosecondsSinceEpoch(0),
+                              )
+                              .reversed
+                              .toList();
+                          return AlignedGridView.count(
+                            crossAxisSpacing: axisSpacingForHeightHack,
+                            mainAxisSpacing: 10,
+                            crossAxisCount: 1,
+                            padding: EdgeInsets.only(bottom: widget.pagePadding),
+                            itemCount: saveGames.length,
+                            itemBuilder: (context, index) {
+                              return ModProfileCard(
+                                minHeight: minHeight,
+                                profile: null,
+                                modProfiles: null,
+                                save: saveGames[index],
+                                saves: saveGames,
+                                cardPadding: cardPadding,
+                                actualAxisSpacing: actualAxisSpacing,
+                                axisSpacingForHeightHack:
+                                    axisSpacingForHeightHack,
+                              );
+                            },
+                          );
+                        },
+                        loading: () =>
+                            const Center(child: CircularProgressIndicator()),
+                        error: (error, stackTrace) =>
+                            Center(child: Text('Error: $error')),
+                      ),
+                    ),
+                  ],
                 ),
-                clipBehavior: Clip.antiAlias,
-                child: const AuditPage(),
               ),
             ),
-          ),
-        ],
+            SizedBox(
+              width: 350,
+              child: Padding(
+                padding: EdgeInsets.only(left: 8, bottom: widget.pagePadding),
+                child: Container(
+                  // round edges
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(
+                      ThemeManager.cornerRadius,
+                    ),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: const AuditPage(),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

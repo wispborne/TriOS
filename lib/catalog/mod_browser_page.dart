@@ -24,12 +24,14 @@ import 'package:trios/widgets/tristate_icon_button.dart';
 
 import '../main.dart';
 import '../trios/download_manager/downloader.dart';
-import '../widgets/multi_split_mixin_view.dart';
 import '../widgets/moving_tooltip.dart';
+import '../widgets/multi_split_mixin_view.dart';
 import 'mod_browser_manager.dart';
 
 class CatalogPage extends ConsumerStatefulWidget {
-  const CatalogPage({super.key});
+  final double pagePadding;
+
+  const CatalogPage({super.key, required this.pagePadding});
 
   @override
   ConsumerState<CatalogPage> createState() => _CatalogPageState();
@@ -98,7 +100,7 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
     }
   }
 
-  _enableWebView() {
+  void _enableWebView() {
     setState(() {
       _webViewStatus = WebViewStatus.loaded;
 
@@ -124,11 +126,10 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
       children: [
         Expanded(
           child: Padding(
-            padding: const EdgeInsets.only(
-              left: 4,
-              right: 4,
-              bottom: 4,
-              top: 4,
+            padding: EdgeInsets.only(
+              left: widget.pagePadding,
+              right: widget.pagePadding,
+              top: widget.pagePadding,
             ),
             child: MultiSplitViewTheme(
               data: MultiSplitViewThemeData(
@@ -153,11 +154,7 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                           SizedBox(
                             height: 50,
                             child: Card(
-                              margin: const EdgeInsets.only(
-                                left: 4,
-                                top: 4,
-                                bottom: 4,
-                              ),
+                              margin: const EdgeInsets.only(bottom: 4),
                               child: Padding(
                                 padding: const EdgeInsets.only(
                                   left: 4,
@@ -266,14 +263,11 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                               ),
                             ),
                           ),
-                          Padding(
-                            padding: const EdgeInsets.only(left: 8),
-                            child: Opacity(
-                              opacity: 0.8,
-                              child: Text(
-                                '${weaponCount ?? "..."} Mods${allMods?.items.length != displayedMods?.length ? " (${displayedMods?.length} shown)" : ""}',
-                                style: Theme.of(context).textTheme.labelMedium,
-                              ),
+                          Opacity(
+                            opacity: 0.8,
+                            child: Text(
+                              '${weaponCount ?? "..."} Mods${allMods?.items.length != displayedMods?.length ? " (${displayedMods?.length} shown)" : ""}',
+                              style: Theme.of(context).textTheme.labelMedium,
                             ),
                           ),
                           Expanded(
@@ -290,6 +284,9 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                                   )
                                 : ListView.builder(
                                     itemExtent: 200,
+                                    padding: EdgeInsets.only(
+                                      bottom: widget.pagePadding,
+                                    ),
                                     itemCount: displayedMods?.length,
                                     itemBuilder: (context, index) {
                                       if (displayedMods == null) {
@@ -299,7 +296,6 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
 
                                       return Padding(
                                         padding: const EdgeInsets.only(
-                                          left: 4,
                                           top: 4,
                                           bottom: 4,
                                         ),
@@ -338,11 +334,7 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                           SizedBox(
                             height: 50,
                             child: Card(
-                              margin: const EdgeInsets.only(
-                                top: 4,
-                                bottom: 4,
-                                right: 4,
-                              ),
+                              margin: const EdgeInsets.only(top: 4, bottom: 4),
                               child: Padding(
                                 padding: const EdgeInsets.only(
                                   left: 8,

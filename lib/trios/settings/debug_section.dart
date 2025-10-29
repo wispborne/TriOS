@@ -19,6 +19,7 @@ import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings.dart';
+import 'package:trios/utils/dialogs.dart' show showAlertDialog;
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/network_util.dart';

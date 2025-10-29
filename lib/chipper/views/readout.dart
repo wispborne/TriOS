@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart';
+import 'package:trios/utils/dialogs.dart';
 
 import '../chipper_state.dart';
 import '../copy.dart';

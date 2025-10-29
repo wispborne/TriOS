@@ -16,6 +16,7 @@ import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
+import 'package:trios/utils/dialogs.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
@@ -534,32 +535,33 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                                     ModChangeType.missingMod ||
                                 change?.changeType ==
                                     ModChangeType.missingVariant)
-                              Padding(
-                                padding: const EdgeInsets.only(right: 4),
-                                child: MovingTooltipWidget.text(
-                                  message: 'Search Catalog',
-                                  child: IconButton.outlined(
-                                    icon: Icon(Icons.search),
-                                    iconSize: 16,
-                                    color: theme.colorScheme.primary,
-                                    constraints: const BoxConstraints(),
-                                    padding: const EdgeInsets.all(2),
-                                    style: OutlinedButton.styleFrom(
-                                      side: BorderSide(
-                                        color: theme.colorScheme.primary
-                                            .withAlpha(128),
+                              if (false) // TODO
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 4),
+                                  child: MovingTooltipWidget.text(
+                                    message: 'Search Catalog',
+                                    child: IconButton.outlined(
+                                      icon: Icon(Icons.search),
+                                      iconSize: 16,
+                                      color: theme.colorScheme.primary,
+                                      constraints: const BoxConstraints(),
+                                      padding: const EdgeInsets.all(2),
+                                      style: OutlinedButton.styleFrom(
+                                        side: BorderSide(
+                                          color: theme.colorScheme.primary
+                                              .withAlpha(128),
+                                        ),
                                       ),
+                                      onPressed: () {
+                                        showAlertDialog(
+                                          context,
+                                          title: "WIP",
+                                          content: "Unimplemented",
+                                        );
+                                      },
                                     ),
-                                    onPressed: () {
-                                      showAlertDialog(
-                                        context,
-                                        title: "WIP",
-                                        content: "Unimplemented",
-                                      );
-                                    },
                                   ),
                                 ),
-                              ),
                             Expanded(
                               child: Text(
                                 mod.modName ?? mod.modId,

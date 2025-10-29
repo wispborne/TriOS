@@ -24,6 +24,7 @@ import 'package:trios/models/version_checker_info.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
+import 'package:trios/utils/dialogs.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/platform_specific.dart';
@@ -886,7 +887,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
     }
   }
 
-  Future<List<ModInfo>> cleanUpAllModVariantsBasedOnRetainSetting({
+  Future<List<ModVariant>> cleanUpAllModVariantsBasedOnRetainSetting({
     bool dryRun = false,
   }) {
     final mods = ref.read(AppState.mods);
@@ -898,7 +899,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
     ).then((it) => it.flattened.toList());
   }
 
-  Future<List<ModInfo>> cleanUpModVariantsBasedOnRetainSetting(
+  Future<List<ModVariant>> cleanUpModVariantsBasedOnRetainSetting(
     String modId,
     List<String> smolIdsToKeep, {
     bool dryRun = false,
@@ -963,7 +964,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
       }
     }
 
-    return variantsToDelete.map((it) => it.modInfo).toList();
+    return variantsToDelete.map((it) => it).toList();
   }
 
   /// You probably want to use `changeActiveModVariantWithForceModGameVersionDialogIfNeeded` instead, which shows a warning if the mod is for a different game version.

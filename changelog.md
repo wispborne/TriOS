@@ -28,6 +28,7 @@
   - Custom launcher files are no longer hardcoded to use the game folder as their working directory.
     - This fixes Fast Rendering, which launches using a .bat in the `starsector-core` folder.
   - VRAM pie chart breaking after refreshing data.
+  - Theme selection menu is no longer a textbox.
 - Changed
   - Cleaned up search bar positioning on Ships and Weapons Viewer pages.
   - CODEX_UNLOCKABLE ships are now hidden by default on the Ship Viewer.

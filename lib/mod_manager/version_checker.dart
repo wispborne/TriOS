@@ -151,10 +151,16 @@ class VersionCheckerAsyncProvider
 
       if (needsUpdate) {
         final future = checkRemoteVersion(modVariant, httpClient);
-        return VersionCheckTask(modVariant, future, wasCached: false);
+        return VersionCheckTask(
+          modVariant,
+          modVariant.versionCheckerInfo,
+          future,
+          wasCached: false,
+        );
       } else {
         return VersionCheckTask(
           modVariant,
+          modVariant.versionCheckerInfo,
           Future.value(cachedResult),
           wasCached: true,
         );
@@ -176,9 +182,10 @@ class VersionCheckerAsyncProvider
         Fimber.e(
           "Error fetching remote version info for ${task.modVariant.modInfo.id}: $e\n$st",
         );
-        final errorResult = RemoteVersionCheckResult(null, null)
-          ..smolId = task.modVariant.smolId
-          ..error = e;
+        final errorResult =
+            RemoteVersionCheckResult(task.localVersion, null, null)
+              ..smolId = task.modVariant.smolId
+              ..error = e;
         _updateCache(errorResult);
       }
     }).toList();
@@ -216,10 +223,16 @@ class VersionCheckerAsyncProvider
 /// Represents a task for checking the version of a mod variant.
 class VersionCheckTask {
   final ModVariant modVariant;
+  final VersionCheckerInfo? localVersion;
   final Future<RemoteVersionCheckResult> future;
   final bool wasCached;
 
-  VersionCheckTask(this.modVariant, this.future, {required this.wasCached});
+  VersionCheckTask(
+    this.modVariant,
+    this.localVersion,
+    this.future, {
+    required this.wasCached,
+  });
 }
 
 /// Result of looking up a remote version checker file.
@@ -229,19 +242,27 @@ class RemoteVersionCheckResult with RemoteVersionCheckResultMappable {
   String? smolId;
   Object? error;
   final VersionCheckerInfo? remoteVersion;
+  final VersionCheckerInfo? localVersion;
+
+  /// Simply returns remote if available, otherwise returns local.
+  final VersionCheckerInfo? remoteVersionWithFallback;
   final String? uri;
   final DateTime timestamp;
 
-  RemoteVersionCheckResult(this.remoteVersion, this.uri, {DateTime? timestamp})
-    : timestamp = timestamp ?? DateTime.now();
+  RemoteVersionCheckResult(
+    this.localVersion,
+    this.remoteVersion,
+    this.uri, {
+    DateTime? timestamp,
+  }) : timestamp = timestamp ?? DateTime.now(),
+       remoteVersionWithFallback = remoteVersion ?? localVersion;
 
   @override
   String toString() =>
       'VersionCheckResult{smolId: $smolId, remoteVersion: $remoteVersion, error: $error, uri: $uri, timestamp: $timestamp}';
 
-  VersionCheckComparison? compareToLocal(ModVariant modVariant) {
-    return VersionCheckComparison.specific(modVariant, this);
-  }
+  VersionCheckComparison? compareToLocal(ModVariant modVariant) =>
+      VersionCheckComparison.specific(modVariant, this);
 }
 
 @MappableClass()
@@ -257,7 +278,7 @@ Future<RemoteVersionCheckResult> checkRemoteVersion(
 ) async {
   var remoteVersionUrl = modVariant.versionCheckerInfo?.masterVersionFile;
   if (remoteVersionUrl == null) {
-    return RemoteVersionCheckResult(null, null)
+    return RemoteVersionCheckResult(modVariant.versionCheckerInfo, null, null)
       ..smolId = modVariant.smolId
       ..error = Exception("No remote version URL for ${modVariant.modInfo.id}");
   }
@@ -281,6 +302,7 @@ Future<RemoteVersionCheckResult> checkRemoteVersion(
     final String body = data;
     if (response.statusCode == 200) {
       return RemoteVersionCheckResult(
+        modVariant.versionCheckerInfo,
         VersionCheckerInfoMapper.fromJson(body.fixJson()),
         remoteVersionUrl,
       )..smolId = modVariant.smolId;
@@ -292,7 +314,11 @@ Future<RemoteVersionCheckResult> checkRemoteVersion(
   } catch (e, st) {
     Fimber.w("Error fetching remote version info for ${modVariant.modInfo.id}");
     Fimber.v(() => '', ex: e, stacktrace: st);
-    return RemoteVersionCheckResult(null, remoteVersionUrl)
+    return RemoteVersionCheckResult(
+        modVariant.versionCheckerInfo,
+        null,
+        remoteVersionUrl,
+      )
       ..smolId = modVariant.smolId
       ..error = e;
   }

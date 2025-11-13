@@ -1681,6 +1681,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                                   ),
                                   child: VersionCheckIcon.fromComparison(
                                     comparison: versionCheckComparison,
+                                    modId: mod.id,
                                     theme: theme,
                                   ),
                                 ),

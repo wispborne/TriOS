@@ -179,7 +179,7 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
               message: "",
               warningLevel: TooltipWarningLevel.error,
               child: Text(
-                "← Select console logging level (resets at restart)",
+                "← Select ${Constants.appName} console logging level (resets at restart)",
                 style: Theme.of(context).textTheme.labelLarge,
               ),
             ),
@@ -217,7 +217,7 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
               message: "",
               warningLevel: TooltipWarningLevel.error,
               child: Text(
-                "← Select file logging level (resets at restart)",
+                "← Select ${Constants.appName} file logging level (resets at restart)",
                 style: Theme.of(context).textTheme.labelLarge,
               ),
             ),

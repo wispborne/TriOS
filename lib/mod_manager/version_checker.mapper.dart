@@ -25,6 +25,10 @@ class RemoteVersionCheckResultMapper
   @override
   final String id = 'RemoteVersionCheckResult';
 
+  static VersionCheckerInfo? _$localVersion(RemoteVersionCheckResult v) =>
+      v.localVersion;
+  static const Field<RemoteVersionCheckResult, VersionCheckerInfo>
+  _f$localVersion = Field('localVersion', _$localVersion);
   static VersionCheckerInfo? _$remoteVersion(RemoteVersionCheckResult v) =>
       v.remoteVersion;
   static const Field<RemoteVersionCheckResult, VersionCheckerInfo>
@@ -52,18 +56,30 @@ class RemoteVersionCheckResultMapper
     _$error,
     mode: FieldMode.member,
   );
+  static VersionCheckerInfo? _$remoteVersionWithFallback(
+    RemoteVersionCheckResult v,
+  ) => v.remoteVersionWithFallback;
+  static const Field<RemoteVersionCheckResult, VersionCheckerInfo>
+  _f$remoteVersionWithFallback = Field(
+    'remoteVersionWithFallback',
+    _$remoteVersionWithFallback,
+    mode: FieldMode.member,
+  );
 
   @override
   final MappableFields<RemoteVersionCheckResult> fields = const {
+    #localVersion: _f$localVersion,
     #remoteVersion: _f$remoteVersion,
     #uri: _f$uri,
     #timestamp: _f$timestamp,
     #smolId: _f$smolId,
     #error: _f$error,
+    #remoteVersionWithFallback: _f$remoteVersionWithFallback,
   };
 
   static RemoteVersionCheckResult _instantiate(DecodingData data) {
     return RemoteVersionCheckResult(
+      data.dec(_f$localVersion),
       data.dec(_f$remoteVersion),
       data.dec(_f$uri),
       timestamp: data.dec(_f$timestamp),
@@ -141,8 +157,11 @@ abstract class RemoteVersionCheckResultCopyWith<
 >
     implements ClassCopyWith<$R, $In, $Out> {
   VersionCheckerInfoCopyWith<$R, VersionCheckerInfo, VersionCheckerInfo>?
+  get localVersion;
+  VersionCheckerInfoCopyWith<$R, VersionCheckerInfo, VersionCheckerInfo>?
   get remoteVersion;
   $R call({
+    VersionCheckerInfo? localVersion,
     VersionCheckerInfo? remoteVersion,
     String? uri,
     DateTime? timestamp,
@@ -163,15 +182,21 @@ class _RemoteVersionCheckResultCopyWithImpl<$R, $Out>
       RemoteVersionCheckResultMapper.ensureInitialized();
   @override
   VersionCheckerInfoCopyWith<$R, VersionCheckerInfo, VersionCheckerInfo>?
+  get localVersion =>
+      $value.localVersion?.copyWith.$chain((v) => call(localVersion: v));
+  @override
+  VersionCheckerInfoCopyWith<$R, VersionCheckerInfo, VersionCheckerInfo>?
   get remoteVersion =>
       $value.remoteVersion?.copyWith.$chain((v) => call(remoteVersion: v));
   @override
   $R call({
+    Object? localVersion = $none,
     Object? remoteVersion = $none,
     Object? uri = $none,
     Object? timestamp = $none,
   }) => $apply(
     FieldCopyWithData({
+      if (localVersion != $none) #localVersion: localVersion,
       if (remoteVersion != $none) #remoteVersion: remoteVersion,
       if (uri != $none) #uri: uri,
       if (timestamp != $none) #timestamp: timestamp,
@@ -179,6 +204,7 @@ class _RemoteVersionCheckResultCopyWithImpl<$R, $Out>
   );
   @override
   RemoteVersionCheckResult $make(CopyWithData data) => RemoteVersionCheckResult(
+    data.get(#localVersion, or: $value.localVersion),
     data.get(#remoteVersion, or: $value.remoteVersion),
     data.get(#uri, or: $value.uri),
     timestamp: data.get(#timestamp, or: $value.timestamp),

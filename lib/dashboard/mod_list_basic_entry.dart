@@ -305,6 +305,7 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                               ),
                               child: VersionCheckIcon.fromComparison(
                                 comparison: versionCheckComparisonResult,
+                                modId: modInfo.id,
                                 theme: theme,
                               ),
                             ),

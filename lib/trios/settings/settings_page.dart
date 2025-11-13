@@ -14,9 +14,10 @@ import 'package:trios/utils/dialogs.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/util.dart';
+import 'package:trios/widgets/changelog_viewer.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
 import 'package:trios/widgets/disable.dart';
-import 'package:trios/widgets/game_paths_setup_widget/game_paths_widget.dart';
+import 'package:trios/widgets/game_paths_widget/game_paths_widget.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/settings_group.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
@@ -62,7 +63,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     const leftTextOptionPadding = 4.0;
-
+    final iconColor = Theme.of(context).iconTheme.color?.withValues(alpha: 0.8);
     return Padding(
       padding: EdgeInsets.only(
         left: widget.pagePadding,
@@ -104,8 +105,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         message:
                             "Play with fire."
                             "\n"
-                            "\nEnabling this will include Prereleases when checking for updates."
-                            "\nPrereleases are *usually* stable, but no guarantees. They contain bugfixes and often add a feature or two that may not be totally finished.",
+                            "\nEnabling this will include Previews when checking for updates."
+                            "\nPreviews are *usually* stable, but no guarantees. They contain bugfixes and often add a feature or two that may not be totally finished.",
                         child: CheckboxWithLabel(
                           value: ref.watch(
                             appSettings.select(
@@ -121,15 +122,91 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                   ),
                                 );
                           },
-                          labelWidget: const TextWithIcon(
-                            text: "Update to ${Constants.appName} pre-releases",
-                            trailing: Icon(Icons.warning_rounded),
+                          labelWidget: TextWithIcon(
+                            text:
+                                "Enable ${Constants.appName} preview releases",
+                            trailing: Transform.rotate(
+                              angle: 0.8,
+                              child: SvgImageIcon(
+                                "assets/images/icon-experimental.svg",
+                                width: 20,
+                                color: iconColor,
+                              ),
+                            ),
+                            // Stack(
+                            //   children: [
+                            //     Transform.rotate(
+                            //       angle: 1.2,
+                            //       child: SvgImageIcon(
+                            //         "assets/images/icon-experimental.svg",
+                            //         width: 24,
+                            //         color: iconColor,
+                            //       ),
+                            //     ),
+                            //     Padding(
+                            //       padding: const EdgeInsets.only(
+                            //         left: 12,
+                            //         top: 12,
+                            //       ),
+                            //       child: Transform.scale(
+                            //         scaleX: 0.8,
+                            //         scaleY: 1.2,
+                            //         child: TriOSAppIcon(
+                            //           height: 24,
+                            //           color: iconColor,
+                            //         ),
+                            //       ),
+                            //     ),
+                            //   ],
+                            // ),
                           ),
                         ),
                       ),
                     ),
                     const SizedBox(height: 8),
-                    CheckForUpdatesButton(ref: ref),
+                    Row(
+                      children: [
+                        CheckForUpdatesButton(ref: ref),
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          child: const Text("Show Changelog"),
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              builder: (context) {
+                                return AlertDialog(
+                                  content: SizedBox(
+                                    width: 600,
+                                    height: 1200,
+                                    child: TriOSChangelogViewer(
+                                      url: Constants.changelogUrl,
+                                      lastestVersionToShow:
+                                          ref.read(
+                                                appSettings.select(
+                                                  (value) =>
+                                                      value.updateToPrereleases,
+                                                ),
+                                              ) ==
+                                              true
+                                          ? null
+                                          : Constants.currentVersion,
+                                    ),
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.of(context).pop();
+                                      },
+                                      child: const Text("Close"),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      ],
+                    ),
                   ],
                 ),
                 SettingsGroup(
@@ -140,8 +217,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         MovingTooltipWidget.text(
                           message:
                               "Change up the colors."
-                              "\nNote: only the default theme of StarsectorTriOSTheme is fully tested.",
+                              "\nNote: only the default theme (StarsectorTriOSTheme) is regularly tested.",
                           child: DropdownMenu(
+                            requestFocusOnTap: false,
                             dropdownMenuEntries:
                                 (ref
                                             .watch(AppState.themeData)
@@ -693,12 +771,17 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              Text(
-                                companionMod == null
+                              TextWithIcon(
+                                text: companionMod == null
                                     ? "The Companion Mod is not installed."
                                     : isCompanionModEnabled
                                     ? "The Companion Mod is set up correctly."
                                     : "The Companion Mod is installed but not enabled.",
+                                trailing: companionMod == null
+                                    ? const Icon(Icons.error)
+                                    : isCompanionModEnabled
+                                    ? const Icon(Icons.check)
+                                    : const Icon(Icons.warning),
                                 style: theme.textTheme.labelLarge,
                               ),
 
@@ -755,7 +838,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                 isEnabled: companionMod != null,
                                 child: ElevatedButton.icon(
                                   icon: Icon(Icons.folder_open),
-                                  label: const Text("Open Folder"),
+                                  label: const Text(
+                                    "Open Companion Mod Folder",
+                                  ),
                                   onPressed: () async {
                                     try {
                                       companionMod

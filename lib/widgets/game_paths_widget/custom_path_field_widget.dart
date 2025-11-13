@@ -7,57 +7,35 @@ import 'package:trios/widgets/moving_tooltip.dart';
 
 /// A reusable widget for custom path fields that can be wired to settings
 class CustomPathField extends ConsumerStatefulWidget {
-  /// The label text for the field
   final String labelText;
-
-  /// The hint text for the field (optional)
   final String? hintText;
-
-  /// Tooltip message for the checkbox (optional)
   final String? checkboxTooltip;
-
-  /// Tooltip message for the text field (optional)
   final String? fieldTooltip;
+  final String initialPath;
 
-  /// Current path value from settings
-  final String currentPath;
-
-  /// Whether the custom path is currently enabled
-  final bool isEnabled;
-
-  /// Whether this field is for selecting directories (true) or files (false)
+  /// Apply will make it wider than this value, if shown.
+  final double width;
+  final bool isChecked;
   final bool isDirectoryPicker;
-
-  /// Initial directory for file picker (optional)
   final String? initialDirectory;
-
-  /// File type filters for file picker (only used when isDirectoryPicker is false)
   final List<String>? allowedExtensions;
-
-  /// Dialog title for the picker
   final String? pickerDialogTitle;
-
-  /// Error message to show when validation fails
   final String? errorMessage;
-
-  /// Callback when the enabled state changes
-  final void Function(bool isEnabled) onEnabledChanged;
-
-  /// Callback when the path value changes
+  final void Function(bool isEnabled) onCheckedChanged;
   final void Function(String path) onPathChanged;
-
-  /// Callback when the path value changes
   final void Function(String path) onSubmitted;
+  final bool Function(String text)? showApplyButton;
 
   const CustomPathField({
     super.key,
     required this.labelText,
-    required this.currentPath,
-    required this.isEnabled,
+    required this.initialPath,
+    required this.isChecked,
     required this.errorMessage,
-    required this.onEnabledChanged,
+    required this.onCheckedChanged,
     required this.onPathChanged,
     required this.onSubmitted,
+    this.width = 700,
     this.hintText,
     this.checkboxTooltip,
     this.fieldTooltip,
@@ -65,6 +43,7 @@ class CustomPathField extends ConsumerStatefulWidget {
     this.initialDirectory,
     this.allowedExtensions,
     this.pickerDialogTitle,
+    this.showApplyButton,
   });
 
   @override
@@ -79,9 +58,9 @@ class _CustomPathFieldState extends ConsumerState<CustomPathField> {
   @override
   void initState() {
     super.initState();
-    _textController = TextEditingController(text: widget.currentPath);
+    _textController = TextEditingController(text: widget.initialPath);
     _focusNode = FocusNode();
-    _lastSubmittedValue = widget.currentPath;
+    _lastSubmittedValue = widget.initialPath;
 
     // Listen for focus changes to auto-submit when user navigates away
     _focusNode.addListener(_onFocusChanged);
@@ -90,9 +69,10 @@ class _CustomPathFieldState extends ConsumerState<CustomPathField> {
   @override
   void didUpdateWidget(CustomPathField oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (_textController.text != widget.currentPath) {
-      _textController.text = widget.currentPath;
-      _lastSubmittedValue = widget.currentPath;
+    if (widget.isChecked != oldWidget.isChecked &&
+        _textController.text != widget.initialPath) {
+      // _textController.text = widget.initialPath;
+      _lastSubmittedValue = widget.initialPath;
     }
   }
 
@@ -112,59 +92,76 @@ class _CustomPathFieldState extends ConsumerState<CustomPathField> {
 
   @override
   Widget build(BuildContext context) {
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 700),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    final showApplyButton = widget.showApplyButton;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: widget.width),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: widget.checkboxTooltip != null
+                    ? MovingTooltipWidget.text(
+                        message: widget.checkboxTooltip!,
+                        child: _buildCheckbox(),
+                      )
+                    : _buildCheckbox(),
+              ),
+              Expanded(
+                child: widget.fieldTooltip != null
+                    ? MovingTooltipWidget.text(
+                        message: widget.fieldTooltip!,
+                        child: _buildTextField(),
+                      )
+                    : _buildTextField(),
+              ),
+              Disable(
+                isEnabled: widget.isChecked,
+                child: IconButton(
+                  icon: const Icon(Icons.folder),
+                  onPressed: _handlePickPath,
+                ),
+              ),
+            ],
+          ),
+        ),
+        if ((showApplyButton != null &&
+                showApplyButton.call(_textController.text) == true) ||
+            _textController.text != widget.initialPath)
           Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: widget.checkboxTooltip != null
-                ? MovingTooltipWidget.text(
-                    message: widget.checkboxTooltip!,
-                    child: _buildCheckbox(),
-                  )
-                : _buildCheckbox(),
-          ),
-          Expanded(
-            child: widget.fieldTooltip != null
-                ? MovingTooltipWidget.text(
-                    message: widget.fieldTooltip!,
-                    child: _buildTextField(),
-                  )
-                : _buildTextField(),
-          ),
-          Disable(
-            isEnabled: widget.isEnabled,
-            child: IconButton(
-              icon: const Icon(Icons.folder),
-              onPressed: _handlePickPath,
+            padding: const EdgeInsets.only(top: 4),
+            child: TextButton.icon(
+              label: const Text("Apply"),
+              icon: const Icon(Icons.check),
+              onPressed: () => widget.onSubmitted(_textController.text),
             ),
           ),
-        ],
-      ),
+      ],
     );
   }
 
   Widget _buildCheckbox() {
     return Checkbox(
-      value: widget.isEnabled,
+      value: widget.isChecked,
       onChanged: (value) {
-        widget.onEnabledChanged(value ?? false);
+        widget.onCheckedChanged(value ?? false);
       },
     );
   }
 
   Widget _buildTextField() {
     return Disable(
-      isEnabled: widget.isEnabled,
+      isEnabled: widget.isChecked,
       child: TextField(
         controller: _textController,
         focusNode: _focusNode,
         decoration: InputDecoration(
           border: const OutlineInputBorder(),
           isDense: true,
-          errorText: widget.isEnabled && widget.errorMessage != null
+          errorText: widget.isChecked && widget.errorMessage != null
               ? widget.errorMessage
               : null,
           labelText: widget.labelText,

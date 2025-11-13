@@ -9,7 +9,12 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/platform_paths.dart';
 import 'package:trios/utils/util.dart';
 
-part 'game_paths_setup_controller.mapper.dart';
+part 'game_paths_controller.mapper.dart';
+
+final gamePathsControllerProvider =
+    AutoDisposeNotifierProvider<GamePathsSetupController, GamePathsSetupState>(
+      GamePathsSetupController.new,
+    );
 
 /// State class for the game paths setup controller
 @MappableClass()
@@ -240,20 +245,15 @@ class GamePathsSetupController
 
     state = state.copyWith(
       customModsPathState: state.customModsPathState.copyWith(
-        pathText: newPath,
         pathExists: newPathExists,
       ),
     );
   }
 
   void submitCustomModsPath(String newPath) async {
-    final newPathExists = await newPath.toDirectory().exists();
-
-    if (newPathExists) {
-      ref
-          .read(appSettings.notifier)
-          .update((s) => s.copyWith(modsDir: Directory(newPath)));
-    }
+    ref
+        .read(appSettings.notifier)
+        .update((s) => s.copyWith(modsDir: Directory(newPath)));
   }
 
   void toggleUseCustomSavesPath(bool value) {
@@ -267,20 +267,15 @@ class GamePathsSetupController
 
     state = state.copyWith(
       customSavesPathState: state.customSavesPathState.copyWith(
-        pathText: newPath,
         pathExists: newPathExists,
       ),
     );
   }
 
   void submitCustomSavesPath(String newPath) async {
-    final newPathExists = await newPath.toDirectory().exists();
-
-    if (newPathExists) {
-      ref
-          .read(appSettings.notifier)
-          .update((s) => s.copyWith(customSavesPath: Directory(newPath)));
-    }
+    ref
+        .read(appSettings.notifier)
+        .update((s) => s.copyWith(customSavesPath: Directory(newPath)));
   }
 
   void toggleUseCustomCorePath(bool value) {
@@ -294,20 +289,15 @@ class GamePathsSetupController
 
     state = state.copyWith(
       customCorePathState: state.customCorePathState.copyWith(
-        pathText: newPath,
         pathExists: newPathExists,
       ),
     );
   }
 
   void submitCustomCorePath(String newPath) async {
-    final newPathExists = await newPath.toDirectory().exists();
-
-    if (newPathExists) {
-      ref
-          .read(appSettings.notifier)
-          .update((s) => s.copyWith(customCoreFolderPath: Directory(newPath)));
-    }
+    ref
+        .read(appSettings.notifier)
+        .update((s) => s.copyWith(customCoreFolderPath: Directory(newPath)));
   }
 
   /// Get the current launch path for display
@@ -320,8 +310,3 @@ class GamePathsSetupController
         "";
   }
 }
-
-final gamePathsSetupControllerProvider =
-    AutoDisposeNotifierProvider<GamePathsSetupController, GamePathsSetupState>(
-      GamePathsSetupController.new,
-    );

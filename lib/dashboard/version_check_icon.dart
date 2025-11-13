@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:trios/models/version_checker_info.dart';
 import 'package:trios/themes/theme_manager.dart';
+import 'package:trios/trios/constants.dart';
 import 'package:trios/widgets/blur.dart';
 import 'package:trios/widgets/conditional_wrap.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
@@ -14,12 +15,14 @@ class VersionCheckIcon extends StatelessWidget {
     required this.localVersionCheck,
     required this.remoteVersionCheck,
     required this.versionCheckComparison,
+    required this.modId,
     required this.theme,
   });
 
   VersionCheckIcon.fromComparison({
     super.key,
     required VersionCheckComparison? comparison,
+    required this.modId,
     required this.theme,
   }) : localVersionCheck = comparison?.variant.versionCheckerInfo,
        remoteVersionCheck = comparison?.remoteVersionCheck,
@@ -28,6 +31,7 @@ class VersionCheckIcon extends StatelessWidget {
   final VersionCheckerInfo? localVersionCheck;
   final RemoteVersionCheckResult? remoteVersionCheck;
   final int? versionCheckComparison;
+  final String modId;
   final ThemeData theme;
 
   @override
@@ -88,23 +92,25 @@ class VersionCheckIcon extends StatelessWidget {
             ),
           ),
         if (localVersionCheck?.modVersion == null)
-          Padding(
-            padding: const EdgeInsets.only(right: 6),
-            child: SizedBox(
-              width: updateIconSize,
-              child: Center(
-                child: ColorFiltered(
-                  colorFilter: greyscale,
-                  child: SvgImageIcon(
-                    "assets/images/icon-help.svg",
-                    width: updateIconSize,
-                    height: updateIconSize,
-                    color: theme.disabledColor.withOpacity(0.35),
+          // Special case for companion mod, which doesn't need a version checker
+          if (modId != Constants.companionModId)
+            Padding(
+              padding: const EdgeInsets.only(right: 6),
+              child: SizedBox(
+                width: updateIconSize,
+                child: Center(
+                  child: ColorFiltered(
+                    colorFilter: greyscale,
+                    child: SvgImageIcon(
+                      "assets/images/icon-help.svg",
+                      width: updateIconSize,
+                      height: updateIconSize,
+                      color: theme.disabledColor.withOpacity(0.35),
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
         if (localVersionCheck != null && remoteVersionCheck == null)
           Padding(
             padding: const EdgeInsets.only(right: 6),

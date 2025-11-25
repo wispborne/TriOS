@@ -284,12 +284,18 @@ class CustomPathFieldStateMapper extends ClassMapperBase<CustomPathFieldState> {
     opt: true,
     def: false,
   );
-  static String _$pathText(CustomPathFieldState v) => v.pathText;
-  static const Field<CustomPathFieldState, String> _f$pathText = Field(
-    'pathText',
-    _$pathText,
+  static String _$defaultPath(CustomPathFieldState v) => v.defaultPath;
+  static const Field<CustomPathFieldState, String> _f$defaultPath = Field(
+    'defaultPath',
+    _$defaultPath,
     opt: true,
     def: '',
+  );
+  static String? _$customPath(CustomPathFieldState v) => v.customPath;
+  static const Field<CustomPathFieldState, String> _f$customPath = Field(
+    'customPath',
+    _$customPath,
+    opt: true,
   );
   static bool _$pathExists(CustomPathFieldState v) => v.pathExists;
   static const Field<CustomPathFieldState, bool> _f$pathExists = Field(
@@ -302,14 +308,16 @@ class CustomPathFieldStateMapper extends ClassMapperBase<CustomPathFieldState> {
   @override
   final MappableFields<CustomPathFieldState> fields = const {
     #useCustomPath: _f$useCustomPath,
-    #pathText: _f$pathText,
+    #defaultPath: _f$defaultPath,
+    #customPath: _f$customPath,
     #pathExists: _f$pathExists,
   };
 
   static CustomPathFieldState _instantiate(DecodingData data) {
     return CustomPathFieldState(
       useCustomPath: data.dec(_f$useCustomPath),
-      pathText: data.dec(_f$pathText),
+      defaultPath: data.dec(_f$defaultPath),
+      customPath: data.dec(_f$customPath),
       pathExists: data.dec(_f$pathExists),
     );
   }
@@ -384,7 +392,12 @@ abstract class CustomPathFieldStateCopyWith<
   $Out
 >
     implements ClassCopyWith<$R, $In, $Out> {
-  $R call({bool? useCustomPath, String? pathText, bool? pathExists});
+  $R call({
+    bool? useCustomPath,
+    String? defaultPath,
+    String? customPath,
+    bool? pathExists,
+  });
   CustomPathFieldStateCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
   );
@@ -399,17 +412,24 @@ class _CustomPathFieldStateCopyWithImpl<$R, $Out>
   late final ClassMapperBase<CustomPathFieldState> $mapper =
       CustomPathFieldStateMapper.ensureInitialized();
   @override
-  $R call({bool? useCustomPath, String? pathText, bool? pathExists}) => $apply(
+  $R call({
+    bool? useCustomPath,
+    String? defaultPath,
+    Object? customPath = $none,
+    bool? pathExists,
+  }) => $apply(
     FieldCopyWithData({
       if (useCustomPath != null) #useCustomPath: useCustomPath,
-      if (pathText != null) #pathText: pathText,
+      if (defaultPath != null) #defaultPath: defaultPath,
+      if (customPath != $none) #customPath: customPath,
       if (pathExists != null) #pathExists: pathExists,
     }),
   );
   @override
   CustomPathFieldState $make(CopyWithData data) => CustomPathFieldState(
     useCustomPath: data.get(#useCustomPath, or: $value.useCustomPath),
-    pathText: data.get(#pathText, or: $value.pathText),
+    defaultPath: data.get(#defaultPath, or: $value.defaultPath),
+    customPath: data.get(#customPath, or: $value.customPath),
     pathExists: data.get(#pathExists, or: $value.pathExists),
   );
 

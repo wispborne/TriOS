@@ -29,9 +29,11 @@ class Settings with SettingsMappable {
   final String? customGameExePath;
   final bool useCustomGameExePath;
 
+  /// Custom mods folder.
   /// DO NOT USE directly; use `AppState.modsFolder`
   @MappableField(hook: DirectoryHook())
   final Directory? modsDir;
+  /// Whether custom mods folder is being used instead of the default
   final bool hasCustomModsDir;
 
   /// DO NOT USE directly; use `AppState.savesFolder`

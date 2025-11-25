@@ -11,7 +11,8 @@ class CustomPathField extends ConsumerStatefulWidget {
   final String? hintText;
   final String? checkboxTooltip;
   final String? fieldTooltip;
-  final String initialPath;
+  final String pathWhenUnchecked;
+  final String? customPathWhenChecked;
 
   /// Apply will make it wider than this value, if shown.
   final double width;
@@ -29,7 +30,8 @@ class CustomPathField extends ConsumerStatefulWidget {
   const CustomPathField({
     super.key,
     required this.labelText,
-    required this.initialPath,
+    required this.pathWhenUnchecked,
+    required this.customPathWhenChecked,
     required this.isChecked,
     required this.errorMessage,
     required this.onCheckedChanged,
@@ -53,46 +55,57 @@ class CustomPathField extends ConsumerStatefulWidget {
 class _CustomPathFieldState extends ConsumerState<CustomPathField> {
   late final TextEditingController _textController;
   late final FocusNode _focusNode;
-  String? _lastSubmittedValue;
+  String? _manuallyEnteredPath;
 
   @override
   void initState() {
     super.initState();
-    _textController = TextEditingController(text: widget.initialPath);
+    _textController = TextEditingController(
+      text: widget.isChecked
+          ? widget.customPathWhenChecked
+          : widget.pathWhenUnchecked,
+    );
     _focusNode = FocusNode();
-    _lastSubmittedValue = widget.initialPath;
+    // _manuallyEnteredPath = widget.customPathWhenChecked;
 
     // Listen for focus changes to auto-submit when user navigates away
-    _focusNode.addListener(_onFocusChanged);
+    // _focusNode.addListener(_onFocusChanged);
   }
 
   @override
   void didUpdateWidget(CustomPathField oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.isChecked != oldWidget.isChecked &&
-        _textController.text != widget.initialPath) {
-      // _textController.text = widget.initialPath;
-      _lastSubmittedValue = widget.initialPath;
-    }
-  }
+    if (widget.isChecked != oldWidget.isChecked) {
+      if (widget.isChecked) {
+        if (_manuallyEnteredPath != null) {
+          _textController.text = _manuallyEnteredPath!;
+        } else {
+          _textController.text =
+              widget.customPathWhenChecked ?? widget.pathWhenUnchecked;
+        }
+      } else {
+        _textController.text = widget.pathWhenUnchecked;
+      }
 
-  void _onFocusChanged() {
-    if (!_focusNode.hasFocus) {
-      _submitIfChanged();
+      widget.onPathChanged(_textController.text);
     }
   }
 
   void _submitIfChanged() {
     final currentText = _textController.text;
-    if (currentText != _lastSubmittedValue) {
-      _lastSubmittedValue = currentText;
-      widget.onSubmitted(currentText);
-    }
+    // if (currentText != _lastSubmittedValue)
+    widget.onSubmitted(currentText);
+    // }
   }
 
   @override
   Widget build(BuildContext context) {
-    final showApplyButton = widget.showApplyButton;
+    final showApplyButton =
+        (widget.showApplyButton?.call(_textController.text) == true) ||
+        (widget.isChecked &&
+            _textController.text.toFile().normalize.path !=
+                widget.customPathWhenChecked?.toFile().normalize.path);
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -118,6 +131,7 @@ class _CustomPathFieldState extends ConsumerState<CustomPathField> {
                       )
                     : _buildTextField(),
               ),
+              SizedBox(width: 4),
               Disable(
                 isEnabled: widget.isChecked,
                 child: IconButton(
@@ -128,15 +142,26 @@ class _CustomPathFieldState extends ConsumerState<CustomPathField> {
             ],
           ),
         ),
-        if ((showApplyButton != null &&
-                showApplyButton.call(_textController.text) == true) ||
-            _textController.text != widget.initialPath)
+        if (showApplyButton)
           Padding(
             padding: const EdgeInsets.only(top: 4),
             child: TextButton.icon(
               label: const Text("Apply"),
               icon: const Icon(Icons.check),
               onPressed: () => widget.onSubmitted(_textController.text),
+            ),
+          ),
+        if (showApplyButton)
+          MovingTooltipWidget.text(
+            message: "Discard change",
+            child: IconButton(
+              icon: Icon(
+                Icons.undo,
+                color: Theme.of(context).colorScheme.primary,
+                size: 20,
+              ),
+              onPressed: () =>
+                  widget.onSubmitted(widget.customPathWhenChecked ?? ""),
             ),
           ),
       ],
@@ -171,6 +196,9 @@ class _CustomPathFieldState extends ConsumerState<CustomPathField> {
         ),
         onChanged: (newPath) {
           widget.onPathChanged(newPath);
+          if (widget.isChecked) {
+            _manuallyEnteredPath = newPath;
+          }
         },
         onSubmitted: (value) {
           _submitIfChanged();
@@ -204,14 +232,13 @@ class _CustomPathFieldState extends ConsumerState<CustomPathField> {
     if (newPath != null) {
       _textController.text = newPath;
       widget.onPathChanged(newPath);
-      _lastSubmittedValue = newPath;
       widget.onSubmitted(newPath);
     }
   }
 
   @override
   void dispose() {
-    _focusNode.removeListener(_onFocusChanged);
+    // _focusNode.removeListener(_onFocusChanged);
     _focusNode.dispose();
     _textController.dispose();
     super.dispose();

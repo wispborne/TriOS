@@ -186,7 +186,7 @@ class PortraitsGridView extends ConsumerWidget {
                     ),
                     if (hasReplacement)
                       MenuItem(
-                        label: 'Clear Replacement',
+                        label: 'Revert to Original',
                         icon: Icons.undo,
                         onSelected: () {
                           ref
@@ -504,7 +504,7 @@ class _PortraitImageWidgetState extends ConsumerState<PortraitImageWidget> {
               child: Padding(
                 padding: const EdgeInsets.only(bottom: 8, right: 8),
                 child: MovingTooltipWidget.text(
-                  message: 'Clear Replacement',
+                  message: 'Revert to Original',
                   child: IconButton(
                     icon: Container(
                       width: 32,

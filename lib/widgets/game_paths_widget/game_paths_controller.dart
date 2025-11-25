@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/thirdparty/dartx/string.dart';
-import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/platform_paths.dart';
@@ -39,17 +38,19 @@ class GamePathsSetupState with GamePathsSetupStateMappable {
 @MappableClass()
 class CustomPathFieldState with CustomPathFieldStateMappable {
   final bool useCustomPath;
-  final String pathText;
+  final String defaultPath;
+  final String? customPath;
   final bool pathExists;
 
   const CustomPathFieldState({
     this.useCustomPath = false,
-    this.pathText = '',
+    this.defaultPath = '',
+    this.customPath,
     this.pathExists = false,
   });
 }
 
-/// Controller for the game paths setup using AutoDisposeNotifier
+/// Controller for [GamePathsWidget]
 class GamePathsSetupController
     extends AutoDisposeNotifier<GamePathsSetupState> {
   @override
@@ -68,8 +69,7 @@ class GamePathsSetupController
 
     // Custom mods path
     final customModsPathTextFromSettings = ref
-        .watch(AppState.modsFolder)
-        .valueOrNull
+        .watch(appSettings.select((s) => s.modsDir))
         ?.path;
     final useCustomModsPath = ref.watch(
       appSettings.select((s) => s.hasCustomModsDir),
@@ -98,57 +98,61 @@ class GamePathsSetupController
     final nonCustomGameExecutable = getDefaultGameExecutable(
       gameFolderPathFromSettings.toDirectory(),
     ).toFile().path.let((p) => p.isEmpty ? "" : p);
-    final customExecutablePathTextToShow = useCustomExecutable
-        ? customExecutablePathTextFromSettings ?? nonCustomGameExecutable
-        : nonCustomGameExecutable;
 
     final nonCustomModsPath =
         generateModsFolderPath(
           gameFolderPathFromSettings.toDirectory(),
         )?.path ??
         "";
-    final customModsPathTextToShow = useCustomModsPath
-        ? customModsPathTextFromSettings ?? nonCustomModsPath
-        : nonCustomModsPath;
 
     final nonCustomSavesPath =
         generateSavesFolderPath(
           gameFolderPathFromSettings.toDirectory(),
         )?.path ??
         "";
-    final customSavesPathTextToShow = useCustomSavesPath
-        ? customSavesPathTextFromSettings ?? nonCustomSavesPath
-        : nonCustomSavesPath;
 
     final nonCustomGameCorePath =
         generateGameCorePath(gameFolderPathFromSettings.toDirectory())?.path ??
         "";
-    final customCorePathTextToShow = useCustomCorePath
-        ? customCorePathTextFromSettings ?? nonCustomGameCorePath
-        : nonCustomGameCorePath;
 
     return GamePathsSetupState(
       gamePathText: gameFolderPathFromSettings,
       gamePathExists: doesGamePathExist,
       customExecutablePathState: CustomPathFieldState(
         useCustomPath: useCustomExecutable,
-        pathText: customExecutablePathTextToShow,
-        pathExists: customExecutablePathTextToShow.toFile().existsSync(),
+        defaultPath: nonCustomGameExecutable,
+        customPath: customExecutablePathTextFromSettings,
+        pathExists: useCustomExecutable
+            ? customExecutablePathTextFromSettings?.toFile().existsSync() ??
+                  false
+            : true,
       ),
       customModsPathState: CustomPathFieldState(
         useCustomPath: useCustomModsPath,
-        pathText: customModsPathTextToShow,
-        pathExists: customModsPathTextToShow.toDirectory().existsSync(),
+        defaultPath: nonCustomModsPath,
+        customPath: customModsPathTextFromSettings,
+        pathExists: useCustomModsPath
+            ? customModsPathTextFromSettings?.toDirectory().existsSync() ??
+                  false
+            : true,
       ),
       customSavesPathState: CustomPathFieldState(
         useCustomPath: useCustomSavesPath,
-        pathText: customSavesPathTextToShow,
-        pathExists: customSavesPathTextToShow.toDirectory().existsSync(),
+        defaultPath: nonCustomSavesPath,
+        customPath: customSavesPathTextFromSettings,
+        pathExists: useCustomSavesPath
+            ? customSavesPathTextFromSettings?.toDirectory().existsSync() ??
+                  false
+            : true,
       ),
       customCorePathState: CustomPathFieldState(
         useCustomPath: useCustomCorePath,
-        pathText: customCorePathTextToShow,
-        pathExists: customCorePathTextToShow.toDirectory().existsSync(),
+        defaultPath: nonCustomGameCorePath,
+        customPath: customCorePathTextFromSettings,
+        pathExists: useCustomCorePath
+            ? customCorePathTextFromSettings?.toDirectory().existsSync() ??
+                  false
+            : true,
       ),
     );
   }
@@ -203,33 +207,16 @@ class GamePathsSetupController
 
   /// Toggle use custom executable setting
   void toggleUseCustomExecutable(bool value) {
-    final currentSettings = ref.read(appSettings);
-    final customPath = currentSettings.customGameExePath ?? "";
-    final gamePath = currentSettings.gameDir?.toDirectory();
-    final currentLaunchPath = gamePath?.let(
-      (dir) => getDefaultGameExecutable(dir).toFile().path,
-    );
-
     // Update the setting
     ref
         .read(appSettings.notifier)
         .update((state) => state.copyWith(useCustomGameExePath: value));
 
-    // Update the displayed path based on the toggle
-    String newDisplayPath;
-    if (!value) {
-      // Show default path when custom is disabled
-      newDisplayPath = currentLaunchPath ?? "";
-    } else {
-      // Show custom path when custom is enabled
-      newDisplayPath = customPath;
-    }
-
     state = state.copyWith(
       customExecutablePathState: state.customExecutablePathState.copyWith(
         useCustomPath: value,
-        pathText: newDisplayPath,
-        pathExists: newDisplayPath.toFile().existsSync(),
+        // customPath: newDisplayPath,
+        // pathExists: newDisplayPath.toFile().existsSync(),
       ),
     );
   }

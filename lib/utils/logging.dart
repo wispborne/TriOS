@@ -229,27 +229,17 @@ class Fimber {
       return;
     }
 
+    final msg = message();
+
     if (useFimber) {
       // f.Fimber.v(() =>message, ex: ex, stacktrace: stacktrace);
     } else {
-      final msg = message();
       _consoleLogger.t(msg, error: ex, stackTrace: stacktrace);
       _fileLogger?.t(msg, error: ex, stackTrace: stacktrace);
     }
-  }
 
-  static void i(String message, {Object? ex, StackTrace? stacktrace}) {
-    if (!didLoggingInitializeSuccessfully) {
-      print(message);
-      return;
-    }
-
-    if (useFimber) {
-      // f.Fimber.i(message, ex: ex, stacktrace: stacktrace);
-    } else {
-      _consoleLogger.i(message, error: ex, stackTrace: stacktrace);
-      _fileLogger?.i(message, error: ex, stackTrace: stacktrace);
-    }
+    // noop if Sentry disabled
+    // Sentry.logger.trace(msg);
   }
 
   static void d(String message, {Object? ex, StackTrace? stacktrace}) {
@@ -264,6 +254,26 @@ class Fimber {
       _consoleLogger.d(message, error: ex, stackTrace: stacktrace);
       _fileLogger?.d(message, error: ex, stackTrace: stacktrace);
     }
+
+    // noop if Sentry disabled
+    // Sentry.logger.debug(message);
+  }
+
+  static void i(String message, {Object? ex, StackTrace? stacktrace}) {
+    if (!didLoggingInitializeSuccessfully) {
+      print(message);
+      return;
+    }
+
+    if (useFimber) {
+      // f.Fimber.i(message, ex: ex, stacktrace: stacktrace);
+    } else {
+      _consoleLogger.i(message, error: ex, stackTrace: stacktrace);
+      _fileLogger?.i(message, error: ex, stackTrace: stacktrace);
+    }
+
+    // noop if Sentry disabled
+    Sentry.logger.info(message);
   }
 
   static void w(String message, {Object? ex, StackTrace? stacktrace}) {
@@ -278,6 +288,9 @@ class Fimber {
       _consoleLogger.w(message, error: ex, stackTrace: stacktrace);
       _fileLogger?.w(message, error: ex, stackTrace: stacktrace);
     }
+
+    // noop if Sentry disabled
+    Sentry.logger.warn(message);
   }
 
   static void e(String message, {Object? ex, StackTrace? stacktrace}) {
@@ -302,6 +315,9 @@ class Fimber {
         },
       );
     }
+
+    // noop if Sentry disabled
+    Sentry.logger.error(message);
   }
 }
 
@@ -377,6 +393,7 @@ SentryFlutterOptions configureSentry(
     ..privacy.maskAllImages = false
     ..privacy.maskAllText = false
     ..privacy.maskAssetImages = false
+    ..enableLogs = true
     ..feedback.nameLabel = "Username (not required)"
     ..feedback.namePlaceholder = [
       "@JohnStarsector",
@@ -471,6 +488,16 @@ SentryFlutterOptions configureSentry(
             return event;
           }
         });
+  };
+
+  // Remove username from log paths.
+  options.beforeSendLog = (SentryLog? log) {
+    if (log == null) {
+      return null;
+    }
+
+    log.body = _scrubPath(log.body);
+    return log;
   };
 
   return options;

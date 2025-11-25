@@ -408,7 +408,7 @@ class _AppShellState extends ConsumerState<AppShell>
                       ),
                       MovingTooltipWidget.text(
                         message:
-                            "Portrait Viewer/Replacer\n\nWarning: spoilers!",
+                            "Portrait Viewer & Replacer\n\nWarning: spoilers!",
                         child: IconButton(
                           icon: SvgImageIcon(
                             "assets/images/icon-account-box-outline.svg",

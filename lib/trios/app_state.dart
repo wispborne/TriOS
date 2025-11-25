@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
@@ -251,20 +252,27 @@ class AppState {
   );
 
   static final modsFolder = FutureProvider<Directory?>((ref) async {
-    final useCustomModsPath = ref.watch(
-      appSettings.select((value) => value.hasCustomModsDir),
-    );
-    final customModsFolder = ref.watch(
-      appSettings.select((value) => value.modsDir),
+    // Compute the *effective* mods path based on settings,
+    // and use that as the only dependency for this provider.
+    final effectiveModsPath = ref.watch(
+      appSettings.select((settings) {
+        final useCustom = settings.hasCustomModsDir;
+        final customModsDir = settings.modsDir;
+        final gameDir = settings.gameDir;
+
+        if (useCustom && customModsDir != null) {
+          // Custom path
+          return customModsDir.normalize.path;
+        }
+
+        // Non-custom path derived from gameDir
+        if (gameDir == null) return null;
+        return generateModsFolderPath(gameDir.toDirectory())?.normalize.path;
+      }),
     );
 
-    if (useCustomModsPath == true) {
-      return customModsFolder?.toDirectory();
-    }
-
-    final gamePath = ref.watch(gameFolder).valueOrNull;
-    if (gamePath == null) return null;
-    return generateModsFolderPath(gamePath)?.toDirectory();
+    if (effectiveModsPath == null) return null;
+    return Directory(effectiveModsPath);
   });
 
   static final savesFolder = FutureProvider<Directory?>((ref) async {
@@ -284,6 +292,7 @@ class AppState {
       if (gamePath == null) return null;
       return generateSavesFolderPath(gamePath)?.toDirectory();
     }
+    return null;
   });
 
   static final gameCoreFolder = FutureProvider<Directory?>((ref) async {
@@ -538,8 +547,8 @@ class _GameRunningChecker extends AsyncNotifier<Result> {
   }
 
   Future<Result?> _checkIfAnyProcessIsRunningUsingGivenJre(
-      String javaExecutablePath,
-      ) async {
+    String javaExecutablePath,
+  ) async {
     final jpsAtHomePath = getAssetsPath().toFile().resolve(
       "common/JpsAtHome.jar",
     );
@@ -649,13 +658,30 @@ var currentFileHandles = 0;
 var maxFileHandles = 2000;
 
 Future<T> withFileHandleLimit<T>(Future<T> Function() function) async {
+  int attempts = 0;
+  const maxAttempts = 50; // Maximum number of retry attempts
+  const backoffMs = 100; // Initial backoff delay in milliseconds
+
   while (currentFileHandles + 1 > maxFileHandles) {
+    if (attempts >= maxAttempts) {
+      throw TimeoutException(
+        'Exceeded maximum attempts waiting for file handles to free up',
+      );
+    }
+
     Fimber.v(
       () =>
           "Waiting for file handles to free up. Current file handles: $currentFileHandles",
     );
-    await Future.delayed(const Duration(milliseconds: 100));
+
+    // Exponential backoff with a max of 5 seconds
+    final delay = Duration(
+      milliseconds: min(backoffMs * pow(2, attempts).round(), 5000),
+    );
+    await Future.delayed(delay);
+    attempts++;
   }
+
   currentFileHandles++;
   try {
     return await function();

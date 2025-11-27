@@ -55,7 +55,7 @@ public class PortraitReplacer {
 
                 return Optional.of(new TextureReplacement(original, replacement));
             } catch (JSONException e) {
-                log.error("Error parsing texture replacement configuration", e);
+                log.warn("Error parsing texture replacement configuration", e);
                 return Optional.empty();
             }
         }
@@ -89,7 +89,7 @@ public class PortraitReplacer {
                     JSONObject entry = config.getJSONObject(i);
                     processReplacementEntry(entry, stats);
                 } catch (JSONException e) {
-                    log.error("Error processing replacement entry at index " + i, e);
+                    log.warn("Error processing replacement entry at index " + i, e);
                     stats.compute("failure", (k, v) -> v + 1);
                 }
             }
@@ -100,7 +100,7 @@ public class PortraitReplacer {
                     stats.get("failure") + " failed");
 
         } catch (Exception e) {
-            log.error("Unexpected error during texture replacement", e);
+            log.warn("Unexpected error during texture replacement", e);
         }
     }
 
@@ -110,7 +110,7 @@ public class PortraitReplacer {
      * @return An Optional containing the JSONArray if successful, empty otherwise
      */
     private static Optional<JSONArray> loadConfigFile() {
-        log.info("Loading configuration from " + CONFIG_PATH);
+        log.info("Loading portrait replacement configuration from " + CONFIG_PATH);
 
         try {
             // Try to load using the game's built-in JSON loader
@@ -119,26 +119,12 @@ public class PortraitReplacer {
             if (json != null && json.has("replacements")) {
                 return Optional.of(json.getJSONArray("replacements"));
             } else if (json != null) {
-                log.warn("Configuration file exists but doesn't contain 'replacements' array");
-
-                // If the JSON is valid but doesn't have the expected structure,
-                // create a sample configuration
-                createSampleConfigFile();
+                log.warn("Portrait replacement configuration file exists but doesn't contain 'replacements' array");
             } else {
-                log.warn("Configuration file not found");
-
-                // Create a sample configuration file
-                createSampleConfigFile();
+                log.debug("Portrait replacement configuration file not found");
             }
         } catch (IOException | JSONException e) {
-            log.error("Error loading configuration file", e);
-
-            // Try to create a sample configuration file even if there was an error
-            try {
-                createSampleConfigFile();
-            } catch (Exception ex) {
-                log.error("Failed to create sample configuration after error", ex);
-            }
+            log.warn("Error loading portrait replacement configuration file", e);
         }
 
         return Optional.empty();
@@ -147,29 +133,29 @@ public class PortraitReplacer {
     /**
      * Creates a sample configuration file
      */
-    private static void createSampleConfigFile() {
-        log.info("Creating sample configuration file");
-
-        try {
-            // Create a sample JSON configuration
-            JSONObject sampleConfig = new JSONObject();
-            JSONArray replacements = new JSONArray();
-
-            // Add sample replacement entries
-            JSONObject replacement1 = new JSONObject();
-            replacement1.put("original", "graphics/portraits/portrait_mercenary01.png");
-            replacement1.put("replacement", "graphics/portraits/portrait_mercenary01.png");
-            replacements.put(replacement1);
-
-            sampleConfig.put("replacements", replacements);
-
-            // Save the sample configuration using the game's settings API
-            Global.getSettings().writeTextFileToCommon(CONFIG_PATH, sampleConfig.toString(2));
-            log.info("Sample configuration file created successfully");
-        } catch (Exception e) {
-            log.error("Failed to create sample configuration file", e);
-        }
-    }
+//    private static void createSampleConfigFile() {
+//        log.info("Creating sample configuration file");
+//
+//        try {
+//            // Create a sample JSON configuration
+//            JSONObject sampleConfig = new JSONObject();
+//            JSONArray replacements = new JSONArray();
+//
+//            // Add sample replacement entries
+//            JSONObject replacement1 = new JSONObject();
+//            replacement1.put("original", "graphics/portraits/portrait_mercenary01.png");
+//            replacement1.put("replacement", "graphics/portraits/portrait_mercenary01.png");
+//            replacements.put(replacement1);
+//
+//            sampleConfig.put("replacements", replacements);
+//
+//            // Save the sample configuration using the game's settings API
+//            Global.getSettings().writeTextFileToCommon(CONFIG_PATH, sampleConfig.toString(2));
+//            log.info("Sample configuration file created successfully");
+//        } catch (Exception e) {
+//            log.warn();("Failed to create sample configuration file", e);
+//        }
+//    }
 
     /**
      * Processes a single replacement entry
@@ -207,7 +193,7 @@ public class PortraitReplacer {
                         log.info("Successfully replaced texture: " + replacement.originalTexture);
                         stats.compute("success", (k, v) -> v + 1);
                     } catch (Exception e) {
-                        log.error("Error replacing texture: " + replacement.originalTexture, e);
+                        log.warn("Error replacing texture: " + replacement.originalTexture, e);
                         stats.compute("failure", (k, v) -> v + 1);
                     }
                 },
@@ -241,7 +227,7 @@ public class PortraitReplacer {
 
             log.debug("Texture replacement completed successfully");
         } catch (Exception e) {
-            log.error("OpenGL error during texture replacement", e);
+            log.warn("OpenGL error during texture replacement", e);
             throw e; // Re-throw to be handled by the caller
         }
     }

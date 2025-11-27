@@ -51,7 +51,7 @@ FileSystemEntity getDefaultGameExecutable(
 /// WARNING: This checks to see if things are set up according to DEFAULTS.
 /// It does not check for custom exe paths, and will fail on Arch Linux because
 /// its script doesn't end in .sh.
-bool validateGameFolderPath(String newGameDir) {
+bool validateGameRootFolderPath(String newGameDir) {
   try {
     if (newGameDir.isEmpty) return false;
     if (Platform.isMacOS) {

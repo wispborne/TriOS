@@ -56,6 +56,9 @@ class LauncherButton extends HookConsumerWidget {
     final gameVersion = ref.watch(AppState.starsectorVersion).valueOrNull ?? "";
     final isCurrentJreValid =
         currentJre?.isGameVersionSupported(gameVersion) ?? true;
+    final useCustomGameExe = ref.watch(
+      appSettings.select((s) => s.useCustomGameExePath),
+    );
 
     final buttonBackgroundColor = isGameRunning
         ? theme.disabledColor
@@ -116,6 +119,16 @@ class LauncherButton extends HookConsumerWidget {
                   Text.rich(
                     TextSpan(
                       children: [
+                        if (useCustomGameExe)
+                          TextSpan(
+                            text: "Executable: ",
+                          ),
+                        if (useCustomGameExe)
+                          TextSpan(
+                            text:
+                                "${ref.watch(AppState.gameExecutable).valueOrNull?.nameWithExtension}\n",
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
                         const TextSpan(text: "Java: "),
                         TextSpan(
                           text:

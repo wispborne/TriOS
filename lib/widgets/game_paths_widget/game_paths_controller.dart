@@ -91,7 +91,7 @@ class GamePathsSetupController
       appSettings.select((s) => s.useCustomCoreFolderPath),
     );
 
-    final doesGamePathExist = validateGameFolderPath(
+    final doesGamePathExist = validateGameRootFolderPath(
       gameFolderPathFromSettings,
     );
 
@@ -158,10 +158,10 @@ class GamePathsSetupController
   }
 
   /// Update game path and validate it
-  void updateGamePath(String newGameDir) {
+  void updateGameRootFolderPath(String newGameDir) {
     newGameDir = newGameDir.isNullOrEmpty ? defaultGamePath().path : newGameDir;
 
-    final dirExists = validateGameFolderPath(newGameDir);
+    final dirExists = validateGameRootFolderPath(newGameDir);
 
     if (dirExists) {
       ref.read(appSettings.notifier).update((settings) {
@@ -193,21 +193,16 @@ class GamePathsSetupController
   }
 
   void submitCustomExecutablePath(String newPath) {
-    final exists = newPath.toFile().existsSync();
-
-    if (exists) {
-      ref
-          .read(appSettings.notifier)
-          .update(
-            (state) =>
-                state.copyWith(customGameExePath: File(newPath).normalize.path),
-          );
-    }
+    ref
+        .read(appSettings.notifier)
+        .update(
+          (state) =>
+              state.copyWith(customGameExePath: File(newPath).normalize.path),
+        );
   }
 
   /// Toggle use custom executable setting
   void toggleUseCustomExecutable(bool value) {
-    // Update the setting
     ref
         .read(appSettings.notifier)
         .update((state) => state.copyWith(useCustomGameExePath: value));
@@ -215,8 +210,6 @@ class GamePathsSetupController
     state = state.copyWith(
       customExecutablePathState: state.customExecutablePathState.copyWith(
         useCustomPath: value,
-        // customPath: newDisplayPath,
-        // pathExists: newDisplayPath.toFile().existsSync(),
       ),
     );
   }

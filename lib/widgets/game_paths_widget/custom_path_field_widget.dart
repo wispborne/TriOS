@@ -1,6 +1,8 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:toastification/toastification.dart';
+import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
@@ -87,7 +89,7 @@ class _CustomPathFieldState extends ConsumerState<CustomPathField> {
         _textController.text = widget.pathWhenUnchecked;
       }
 
-      widget.onPathChanged(_textController.text);
+      // widget.onPathChanged(_textController.text);
     }
   }
 
@@ -160,8 +162,12 @@ class _CustomPathFieldState extends ConsumerState<CustomPathField> {
                 color: Theme.of(context).colorScheme.primary,
                 size: 20,
               ),
-              onPressed: () =>
-                  widget.onSubmitted(widget.customPathWhenChecked ?? ""),
+              onPressed: () {
+                setState(() {
+                  _textController.text = widget.customPathWhenChecked ?? "";
+                  widget.onPathChanged(_textController.text);
+                });
+              },
             ),
           ),
       ],
@@ -189,6 +195,15 @@ class _CustomPathFieldState extends ConsumerState<CustomPathField> {
           errorText: widget.isChecked && widget.errorMessage != null
               ? widget.errorMessage
               : null,
+          errorStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: ThemeManager.vanillaWarningColor,
+          ),
+          errorBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: ThemeManager.vanillaWarningColor),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: ThemeManager.vanillaWarningColor),
+          ),
           labelText: widget.labelText,
           hintText: widget.hintText,
           hintStyle: Theme.of(context).textTheme.labelLarge,

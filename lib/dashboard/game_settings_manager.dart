@@ -55,7 +55,7 @@ class GameSettingsNotifier extends StateNotifier<AsyncValue<GameSettings>> {
 
   Future<void> _initialize() async {
     try {
-      final gameCoreDir = ref.read(AppState.gameCoreFolder).valueOrNull;
+      final gameCoreDir = ref.watch(AppState.gameCoreFolder).valueOrNull;
       if (gameCoreDir == null) {
         return;
       }

@@ -63,14 +63,14 @@ class _GamePathsWidgetState extends ConsumerState<GamePathsWidget> {
                   final newGameDir = await FilePicker.platform
                       .getDirectoryPath();
                   if (newGameDir == null) return;
-                  customGamePathsController.updateGamePath(newGameDir);
+                  customGamePathsController.updateGameRootFolderPath(newGameDir);
                 },
               ),
               if (gamePathController.text != state.gamePathText)
                 TextButton.icon(
                   label: const Text("Apply"),
                   icon: const Icon(Icons.check),
-                  onPressed: () => customGamePathsController.updateGamePath(
+                  onPressed: () => customGamePathsController.updateGameRootFolderPath(
                     gamePathController.text,
                   ),
                 ),

@@ -134,7 +134,7 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
                 Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: Icon(
-                    validateGameFolderPath(textEditingController.text)
+                    validateGameRootFolderPath(textEditingController.text)
                         ? Icons.check
                         : Icons.close,
                   ),
@@ -147,7 +147,7 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
                       hintText: 'Select your game directory',
                     ),
                     validator: (value) =>
-                        value == null || !validateGameFolderPath(value)
+                        value == null || !validateGameRootFolderPath(value)
                         ? 'Game not found'
                         : null,
                     onChanged: (value) => setState(() {
@@ -447,7 +447,7 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
                   child: Disable(
                     isEnabled:
                         gameDirPath != null &&
-                        validateGameFolderPath(gameDirPath!),
+                        validateGameRootFolderPath(gameDirPath!),
                     child: ElevatedButton.icon(
                       icon: Icon(isLast ? Icons.check : Icons.arrow_forward),
                       iconAlignment: IconAlignment.end,

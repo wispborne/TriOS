@@ -31,6 +31,8 @@ class _RamChangerState extends ConsumerState<RamChanger> {
     }
   }
 
+  // TODO: Detect when vmparams files are out of sync and show a warning.
+
   @override
   Widget build(BuildContext context) {
     final currentRamInMb = ref.watch(currentRamAmountInMb);

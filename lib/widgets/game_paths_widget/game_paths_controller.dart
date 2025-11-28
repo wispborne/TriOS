@@ -115,6 +115,8 @@ class GamePathsSetupController
         generateGameCorePath(gameFolderPathFromSettings.toDirectory())?.path ??
         "";
 
+    final customGameExecutableShown =
+        (customExecutablePathTextFromSettings ?? nonCustomGameExecutable);
     return GamePathsSetupState(
       gamePathText: gameFolderPathFromSettings,
       gamePathExists: doesGamePathExist,
@@ -123,8 +125,9 @@ class GamePathsSetupController
         defaultPath: nonCustomGameExecutable,
         customPath: customExecutablePathTextFromSettings,
         pathExists: useCustomExecutable
-            ? customExecutablePathTextFromSettings?.toFile().existsSync() ??
-                  false
+            ? isGameExecutableADirectory()
+                  ? customGameExecutableShown.toDirectory().existsSync()
+                  : customGameExecutableShown.toFile().existsSync()
             : true,
       ),
       customModsPathState: CustomPathFieldState(
@@ -132,8 +135,9 @@ class GamePathsSetupController
         defaultPath: nonCustomModsPath,
         customPath: customModsPathTextFromSettings,
         pathExists: useCustomModsPath
-            ? customModsPathTextFromSettings?.toDirectory().existsSync() ??
-                  false
+            ? (customModsPathTextFromSettings ?? nonCustomModsPath)
+                  .toDirectory()
+                  .existsSync()
             : true,
       ),
       customSavesPathState: CustomPathFieldState(
@@ -141,8 +145,9 @@ class GamePathsSetupController
         defaultPath: nonCustomSavesPath,
         customPath: customSavesPathTextFromSettings,
         pathExists: useCustomSavesPath
-            ? customSavesPathTextFromSettings?.toDirectory().existsSync() ??
-                  false
+            ? (customSavesPathTextFromSettings ?? nonCustomSavesPath)
+                  .toDirectory()
+                  .existsSync()
             : true,
       ),
       customCorePathState: CustomPathFieldState(
@@ -150,8 +155,9 @@ class GamePathsSetupController
         defaultPath: nonCustomGameCorePath,
         customPath: customCorePathTextFromSettings,
         pathExists: useCustomCorePath
-            ? customCorePathTextFromSettings?.toDirectory().existsSync() ??
-                  false
+            ? (customCorePathTextFromSettings ?? nonCustomGameCorePath)
+                  .toDirectory()
+                  .existsSync()
             : true,
       ),
     );

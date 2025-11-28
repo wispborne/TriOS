@@ -48,6 +48,17 @@ FileSystemEntity getDefaultGameExecutable(
   }.toFile().normalize;
 }
 
+/// Returns true if the default game executable is a directory, not a file.
+/// This means MacOS.
+bool isGameExecutableADirectory() {
+  return switch (currentPlatform) {
+    TargetPlatform.windows => false,
+    TargetPlatform.linux => false,
+    TargetPlatform.macOS => true,
+    _ => throw UnsupportedError("Platform not supported: $currentPlatform"),
+  };
+}
+
 /// WARNING: This checks to see if things are set up according to DEFAULTS.
 /// It does not check for custom exe paths, and will fail on Arch Linux because
 /// its script doesn't end in .sh.

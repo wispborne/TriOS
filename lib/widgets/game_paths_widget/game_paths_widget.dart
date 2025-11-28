@@ -35,6 +35,7 @@ class _GamePathsWidgetState extends ConsumerState<GamePathsWidget> {
     final settings = ref.watch(appSettings);
     final theme = Theme.of(context);
 
+    final invalidPathMessage = "Path does not exist";
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -92,7 +93,7 @@ class _GamePathsWidgetState extends ConsumerState<GamePathsWidget> {
           pickerDialogTitle: "Select Starsector launcher",
           errorMessage: state.customExecutablePathState.pathExists
               ? null
-              : "Path does not exist",
+              : invalidPathMessage,
           onCheckedChanged: (isEnabled) {
             customGamePathsController.toggleUseCustomExecutable(isEnabled);
           },
@@ -112,7 +113,7 @@ class _GamePathsWidgetState extends ConsumerState<GamePathsWidget> {
           pickerDialogTitle: "Select Mods folder",
           errorMessage: state.customModsPathState.pathExists
               ? null
-              : "Path does not exist",
+              : invalidPathMessage,
           onCheckedChanged: (isEnabled) {
             customGamePathsController.toggleUseCustomModsPath(isEnabled);
           },
@@ -132,7 +133,7 @@ class _GamePathsWidgetState extends ConsumerState<GamePathsWidget> {
           pickerDialogTitle: "Select Saves folder",
           errorMessage: state.customSavesPathState.pathExists
               ? null
-              : "Path does not exist",
+              : invalidPathMessage,
           onCheckedChanged: (isEnabled) {
             customGamePathsController.toggleUseCustomSavesPath(isEnabled);
           },
@@ -154,7 +155,7 @@ class _GamePathsWidgetState extends ConsumerState<GamePathsWidget> {
           pickerDialogTitle: "Select Core folder",
           errorMessage: state.customCorePathState.pathExists
               ? null
-              : "Path does not exist",
+              : invalidPathMessage,
           onCheckedChanged: (isEnabled) {
             customGamePathsController.toggleUseCustomCorePath(isEnabled);
           },

@@ -106,7 +106,10 @@ class _CustomPathFieldState extends ConsumerState<CustomPathField> {
         (widget.showApplyButton?.call(_textController.text) == true) ||
         (widget.isChecked &&
             _textController.text.toFile().normalize.path !=
-                widget.customPathWhenChecked?.toFile().normalize.path);
+                (widget.customPathWhenChecked ?? widget.pathWhenUnchecked)
+                    .toFile()
+                    .normalize
+                    .path);
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,

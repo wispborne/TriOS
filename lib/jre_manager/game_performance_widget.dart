@@ -10,7 +10,6 @@ import 'package:trios/jre_manager/ram_changer.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
-import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
 import 'package:trios/widgets/conditional_wrap.dart';
@@ -43,8 +42,6 @@ class _GamePerformanceWidgetState extends ConsumerState<GamePerformanceWidget>
       return const Center(child: Text("Game directory not set."));
     }
 
-    final jreManager = ref.watch(jreManagerProvider).value;
-
     return ConstrainedBox(
       constraints: const BoxConstraints(maxHeight: 380),
       child: Row(
@@ -58,12 +55,7 @@ class _GamePerformanceWidgetState extends ConsumerState<GamePerformanceWidget>
               ),
             ),
           ),
-          SizedBox(
-            width: 350,
-            child: ChangeRamWidget(
-              currentRamAmountInMb: jreManager?.activeJre?.ramAmountInMb,
-            ),
-          ),
+          SizedBox(width: 350, child: ChangeRamWidget()),
         ],
       ),
     );
@@ -475,46 +467,64 @@ class _ChangeJreWidgetState extends ConsumerState<ChangeJreWidget> {
   }
 }
 
-class ChangeRamWidget extends StatelessWidget {
-  const ChangeRamWidget({super.key, required this.currentRamAmountInMb});
-
-  final String? currentRamAmountInMb;
+class ChangeRamWidget extends ConsumerWidget {
+  const ChangeRamWidget({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final jreManager = ref.watch(jreManagerProvider).value;
+    final currentRamAmountInMb = jreManager?.activeJre?.ramAmountInMb;
+    final hasMultipleActiveJresWithDifferentRamAmounts =
+        jreManager?.hasMultipleActiveJresWithDifferentRamAmounts ?? false;
+
     return DisableIfCannotWriteGameFolder(
       child: Card(
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const .all(16.0),
           child: SingleChildScrollView(
             child: Column(
               children: [
                 Text("RAM", style: Theme.of(context).textTheme.titleLarge),
-                StyledText(
-                  text: currentRamAmountInMb == null
-                      ? "No vmparams file found."
-                      : "Assigned: <b>${currentRamAmountInMb!} MB</b>",
-                  tags: {
-                    "b": StyledTextTag(
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
+                Row(
+                  spacing: 16,
+                  mainAxisAlignment: .center,
+                  children: [
+                    if (hasMultipleActiveJresWithDifferentRamAmounts)
+                      Padding(
+                        padding: const .only(left: 8.0),
+                        child: const Icon(
+                          Icons.warning_amber,
+                          size: 24,
+                          color: ThemeManager.vanillaWarningColor,
+                        ),
                       ),
+                    StyledText(
+                      text: currentRamAmountInMb == null
+                          ? "No vmparams file found."
+                          : hasMultipleActiveJresWithDifferentRamAmounts
+                          ? "<b>Warning</b>: Not all ways to start the game"
+                          "\nare set to use the same amount of RAM."
+                          "\nPick one RAM option below to set all"
+                          "\nto the same value."
+                          : "Assigned: <b>$currentRamAmountInMb MB</b>",
+                      tags: {
+                        "b": StyledTextTag(
+                          style: Theme.of(context).textTheme.labelLarge
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                      },
+                      style: Theme.of(context).textTheme.labelLarge,
                     ),
-                  },
+                  ],
                 ),
                 const Center(
                   child: Padding(
-                    padding: EdgeInsets.only(
-                      top: 8,
-                      left: 4.0,
-                      right: 4.0,
-                      bottom: 8,
-                    ),
+                    padding: .only(top: 8, left: 4.0, right: 4.0, bottom: 8),
                     child: RamChanger(),
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.only(top: 4),
+                  padding: const .only(top: 4),
                   child: Text(
                     "More RAM is not always better.\n6 or 8 GB is enough for almost any game.\n\nUse the Console Commands mod to view RAM use in the top-left of the console.",
                     textAlign: TextAlign.center,

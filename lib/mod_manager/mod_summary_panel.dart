@@ -37,7 +37,6 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
   @override
   Widget build(BuildContext context) {
     final selectedMod = widget.mod;
-    final theme = Theme.of(context);
     final modVariants = ref.watch(AppState.modVariants).valueOrNull;
     final enabledMods = ref
         .watch(AppState.enabledModsFile)

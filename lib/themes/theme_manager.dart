@@ -292,6 +292,9 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
 }
 
 extension PaletteGeneratorExt on PaletteGenerator? {
+  /// Your widget should use `with PaletteGeneratorMixin` and pass the icon to use for generation as an override.
+  /// This will create the `paletteGenerator` object needed for this extension.
+  ///
   /// Usage:
   /// ```dart
   /// Theme(

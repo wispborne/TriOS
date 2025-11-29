@@ -360,6 +360,9 @@ class JreManagerState {
           as StandardInstalledJreEntry?;
 
   bool get isUsingJre23 => activeJres.any((jre) => jre.versionInt == 23);
+
+  bool get hasMultipleActiveJresWithDifferentRamAmounts =>
+      (activeJres.map((jre) => jre.ramAmountInMb).toSet().length) > 1;
 }
 
 final currentRamAmountInMb = FutureProvider<String?>((ref) async {

@@ -1181,3 +1181,15 @@ extension LinuxTextInputFreezeWorkaround on Widget {
     }
   }
 }
+
+extension ColorFromObject on Object {
+  /// Generates a stable ARGB color derived from this object's hashCode.
+  Color toStableColor() {
+    final int h = hashCode;
+    final int r = (h & 0xFF);
+    final int g = ((h >> 8) & 0xFF);
+    final int b = ((h >> 16) & 0xFF);
+
+    return Color.fromARGB(0xFF, r, g, b);
+  }
+}

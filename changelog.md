@@ -19,6 +19,7 @@
   - Added popup dialogs to Weapons and Ships that display full information.
   - Option to have Favorited mods not pinned at the top of the mod list.
   - If you use Fast Rendering, its custom vmparams file (`fr.vmparams`) is now modified when you change RAM from within TriOS.
+  - Warning if RAM settings are different across launcher config files (e.g. if you have 6gb for vanilla but only 4gb for Fast Rendering).
   - Option to show only disabled mods on the Dashboard mod list.
   - New fallback method of checking if game is running that uses `wmic` if the main method (which requires a system JDK (not JRE) fails.
   - If "Check If game is running" has errors, they appear on Settings page.
@@ -41,8 +42,7 @@
   - Context menus (right-click menu) is now slightly prettier.
   - Cleaned up the "Clean up mods" dialog on Settings that lets you remove old versions of mods.
     - Defaults to not removing currently-enabled mods now.
-  - More warnings around Direct Launch and how it might cause invisible ships.
-    - But it doesn't for everybody, or under all conditions.
+  - More warnings around Direct Launch and how it might cause invisible ships on some PCs.
 
 # 1.2.3
 - Fixed

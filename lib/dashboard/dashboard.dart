@@ -77,7 +77,19 @@ class _DashboardState extends ConsumerState<Dashboard>
                                   title: const Text(
                                     "JRE, RAM, and Game Settings",
                                   ),
-                                  leading: const Icon(Icons.speed, size: 32),
+                                  leading:
+                                      (ref
+                                              .watch(jreManagerProvider)
+                                              .valueOrNull
+                                              ?.hasMultipleActiveJresWithDifferentRamAmounts ??
+                                          false)
+                                      ? const Icon(
+                                          Icons.warning_amber_rounded,
+                                          size: 32,
+                                          color:
+                                              ThemeManager.vanillaWarningColor,
+                                        )
+                                      : const Icon(Icons.speed, size: 32),
                                   subtitle: Text(
                                     "Java ${ref.watch(AppState.activeJre).valueOrNull?.version.versionString ?? "(unknown JRE)"} • ${ref.watch(currentRamAmountInMb).valueOrNull ?? "(unknown RAM)"} MB",
                                   ),

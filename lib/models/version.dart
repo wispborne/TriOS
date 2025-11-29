@@ -95,6 +95,7 @@ class Version with VersionMappable implements Comparable<Version> {
   static final List<String> _suffixOrder = [
     'dev',
     'prerelease',
+    'preview',
     'pre',
     'alpha',
     'beta',

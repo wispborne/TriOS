@@ -119,10 +119,7 @@ class LauncherButton extends HookConsumerWidget {
                   Text.rich(
                     TextSpan(
                       children: [
-                        if (useCustomGameExe)
-                          TextSpan(
-                            text: "Executable: ",
-                          ),
+                        if (useCustomGameExe) TextSpan(text: "Executable: "),
                         if (useCustomGameExe)
                           TextSpan(
                             text:
@@ -168,6 +165,21 @@ class LauncherButton extends HookConsumerWidget {
                       ),
                     ],
                   ),
+                  if (ref.watch(
+                    appSettings.select((s) => s.enableDirectLaunch),
+                  ))
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text(
+                        "Direct Launch is on."
+                            "\nInvisible ships, zoomed-in combat,"
+                            "\nand more may result.",
+                        style: TextStyle(
+                          color: ThemeManager.vanillaWarningColor.withAlpha(200),
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ),
                 ],
               ),
       ),

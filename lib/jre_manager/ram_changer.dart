@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/jre_manager/jre_manager_logic.dart';
@@ -6,6 +8,7 @@ import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/conditional_wrap.dart';
+import 'package:trios/widgets/moving_tooltip.dart';
 
 import '../themes/theme_manager.dart';
 import '../widgets/fixed_height_grid_item.dart';
@@ -35,7 +38,7 @@ class _RamChangerState extends ConsumerState<RamChanger> {
 
   @override
   Widget build(BuildContext context) {
-    final currentRamInMb = ref.watch(currentRamAmountInMb);
+    final activeJres = ref.watch(jreManagerProvider).valueOrNull?.activeJres;
     final gamePath = ref.read(AppState.gameFolder).valueOrNull?.toDirectory();
     if (gamePath == null) {
       return const SizedBox();
@@ -70,27 +73,36 @@ class _RamChangerState extends ConsumerState<RamChanger> {
                 ),
             itemBuilder: (context, index) {
               final ram = ramChoices[index];
-              return ConditionalWrap(
-                condition:
-                    currentRamInMb.value != null &&
-                    ramChoices.findClosest(
+              final activeJreByGb =
+                  activeJres
+                      ?.map(
+                        (jre) => MapEntry(
                           double.tryParse(
-                                currentRamInMb.value!,
+                                jre.ramAmountInMb ?? "",
                               )?.div(mbPerGb.toDouble()) ??
                               0,
-                        ) ==
-                        ram,
-                wrapper: (child) => Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(
-                      ThemeManager.cornerRadius,
+                          jre,
+                        ),
+                      )
+                      .toMap() ??
+                  {};
+
+              return ConditionalWrap(
+                condition: activeJres != null && activeJreByGb[ram] != null,
+                wrapper: (child) => MovingTooltipWidget.text(
+                  message: "${activeJreByGb[ram]!.toString()}",
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(
+                        ThemeManager.cornerRadius,
+                      ),
+                      border: Border.all(
+                        width: 2,
+                        color: Theme.of(context).colorScheme.primaryFixedDim,
+                      ),
                     ),
-                    border: Border.all(
-                      width: 2,
-                      color: Theme.of(context).colorScheme.primaryFixedDim,
-                    ),
+                    child: child,
                   ),
-                  child: child,
                 ),
                 child: ElevatedButton(
                   onPressed: () {

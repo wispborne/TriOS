@@ -93,7 +93,8 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                   children: [
                     Tooltip(
                       message:
-                          "EXPERIMENTAL\nIf you encounter strange issues in-game, disable this.\nPossible issues include: zoomed-in combat, no Windows title bar, invisible ships, probably more.",
+                          "EXPERIMENTAL\nIf you encounter strange issues in-game, disable this."
+                          "\nPossible issues include: invisible ships, zoomed-in combat, no Windows title bar, probably more.",
                       decoration: BoxDecoration(
                         color: Theme.of(context).colorScheme.error,
                         borderRadius: BorderRadius.circular(
@@ -252,9 +253,7 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                         //       style: Theme.of(context).textTheme.labelMedium);
                         // }),
                         Text(
-                          ref
-                                  .watch(AppState.modsFolder).valueOrNull
-                                  ?.path ??
+                          ref.watch(AppState.modsFolder).valueOrNull?.path ??
                               "No mods folder!",
                           style: Theme.of(context).textTheme.labelMedium,
                         ),
@@ -425,13 +424,34 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                       ),
                     ),
                   if (showLauncherControls)
-                    Opacity(
-                      opacity: 0.8,
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 24),
-                        child: Text(
-                          "Note: These settings are separate from the normal launcher's settings.",
-                          style: Theme.of(context).textTheme.labelMedium,
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16),
+                      child: Opacity(
+                        opacity: 0.8,
+                        child: Column(
+                          children: [
+                            Text(
+                              "Note: These settings are separate from the normal launcher's settings.",
+                              style: Theme.of(context).textTheme.labelMedium,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              "If you encounter strange issues in-game, disable Skip Launcher.",
+                              style: Theme.of(context).textTheme.labelMedium
+                                  ?.copyWith(
+                                    color: ThemeManager.vanillaWarningColor
+                                        .withAlpha(200),
+                                  ),
+                            ),
+                            Text(
+                              "Possible issues include: invisible ships, zoomed-in combat, no Windows title bar, probably more.",
+                              style: Theme.of(context).textTheme.labelMedium
+                                  ?.copyWith(
+                                    color: ThemeManager.vanillaWarningColor
+                                        .withAlpha(200),
+                                  ),
+                            ),
+                          ],
                         ),
                       ),
                     ),

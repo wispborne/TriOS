@@ -6,6 +6,7 @@ import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:path/path.dart' as p;
+
 // import 'package:toml/toml.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/util.dart';
@@ -974,6 +975,23 @@ extension ListExt<T> on List<T> {
     final elementsSet = elements.toSet(); // Faster lookup?
     removeWhere((element) => elementsSet.contains(element));
   }
+
+  T findClosest(num targetValue, num Function(T) selector) {
+    T? closestValue;
+    num? minDistance;
+
+    for (final value in this) {
+      final distance = (targetValue - selector(value))
+          .abs(); // Calculate absolute distance
+
+      if (minDistance == null || distance < minDistance) {
+        closestValue = value;
+        minDistance = distance;
+      }
+    }
+
+    return closestValue!; // Assuming the list 'values' will not be empty
+  }
 }
 
 extension IntExt on int {
@@ -1048,26 +1066,13 @@ extension NumListExt on List<num> {
   }
 
   // From Gemini
-  num findClosest(num targetValue) {
-    num? closestValue;
-    num? minDistance;
-
-    for (final value in this) {
-      final distance = (targetValue - value)
-          .abs(); // Calculate absolute distance
-
-      if (minDistance == null || distance < minDistance) {
-        closestValue = value;
-        minDistance = distance;
-      }
-    }
-
-    return closestValue!; // Assuming the list 'values' will not be empty
+  num findClosestNum(num targetValue) {
+    return findClosest(targetValue, (it) => it);
   }
 }
 
 extension ObjectExt<T> on T {
-  also(Function(T) block) {
+  T also(Function(T) block) {
     block(this);
     return this;
   }

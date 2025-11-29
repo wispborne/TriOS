@@ -41,6 +41,8 @@
   - Context menus (right-click menu) is now slightly prettier.
   - Cleaned up the "Clean up mods" dialog on Settings that lets you remove old versions of mods.
     - Defaults to not removing currently-enabled mods now.
+  - More warnings around Direct Launch and how it might cause invisible ships.
+    - But it doesn't for everybody, or under all conditions.
 
 # 1.2.3
 - Fixed

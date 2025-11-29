@@ -13,7 +13,6 @@
     - Added to multi-select menu as well (hold Control or Shift to select multiple mods).
   - Export grid data (mods, ships, weapons) to csv.
   - You may now set custom paths for more game folders: executable, mods, saves, and game data (core).
-    - NOT FINISHED in prerelease version.
   - Ship Viewer now has three options for showing spoilers; none, "show CODEX_UNLOCKABLE", and show all spoilers including <ultra redacted>.
   - Weapon Viewer now shows OP.
   - Added popup dialogs to Weapons and Ships that display full information.

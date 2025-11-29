@@ -10,7 +10,6 @@ import org.json.JSONObject;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 
-import java.io.IOException;
 import java.nio.FloatBuffer;
 import java.util.HashMap;
 import java.util.Map;
@@ -72,7 +71,6 @@ public class PortraitReplacer {
             Optional<JSONArray> configOpt = loadConfigFile();
 
             if (configOpt.isEmpty()) {
-                log.warn("No valid configuration found, texture replacement skipped");
                 return;
             }
 
@@ -114,7 +112,15 @@ public class PortraitReplacer {
 
         try {
             // Try to load using the game's built-in JSON loader
-            JSONObject json = Global.getSettings().loadJSON(CONFIG_PATH);
+            JSONObject json;
+
+            try {
+                json = Global.getSettings().loadJSON(CONFIG_PATH);
+            } catch (Exception ex) {
+                // If config file is missing, no need to show any error in the load, it'll just worry people
+                log.debug("Portrait replacement configuration file not found, not replacing any portraits.");
+                return Optional.empty();
+            }
 
             if (json != null && json.has("replacements")) {
                 return Optional.of(json.getJSONArray("replacements"));
@@ -123,7 +129,7 @@ public class PortraitReplacer {
             } else {
                 log.debug("Portrait replacement configuration file not found");
             }
-        } catch (IOException | JSONException e) {
+        } catch (JSONException e) {
             log.warn("Error loading portrait replacement configuration file", e);
         }
 

@@ -555,6 +555,7 @@ class ModProfileManagerNotifier
                               missingMods,
                               missingVariants,
                               iconColor,
+                              modIconsById,
                               context,
                             ),
                           ],
@@ -681,10 +682,40 @@ class ModProfileManagerNotifier
     List<ModChange> missingMods,
     List<ModChange> missingVariants,
     Color? iconColor,
+    Map<String, String?> modIconsById,
     BuildContext context,
   ) {
     final theme = Theme.of(context);
-    const Color? color = null;
+
+    Widget buildRow(
+      ModChange change,
+      String text,
+      IconData icon,
+      String tooltip,
+    ) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2),
+        child: TextWithIcon(
+          leading: MovingTooltipWidget.text(
+            message: tooltip,
+            child: Icon(icon, color: iconColor, size: 20),
+          ),
+          widget: TextWithIcon(
+            leading: modIconsById[change.modId] != null
+                ? Image.file(modIconsById[change.modId]!.toFile(), width: 20)
+                : null,
+            text: text,
+            style: GoogleFonts.roboto(
+              textStyle: theme.textTheme.labelLarge?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -692,35 +723,41 @@ class ModProfileManagerNotifier
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Missing Mods',
-                style: theme.textTheme.titleMedium?.copyWith(
+              TextWithIcon(
+                text: 'Missing Mods',
+                style: theme.textTheme.labelLarge?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: color,
+                  fontSize: 18,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 8),
               ...missingMods.map((change) {
                 final modId = change.modId;
-                return ListTile(
-                  leading: const Icon(Icons.warning, color: color),
-                  title: Text('Mod "$modId" is missing.'),
-                  dense: true,
+                return buildRow(
+                  change,
+                  'Mod "$modId" is missing.',
+                  Icons.warning,
+                  "Missing Mod",
                 );
               }),
             ],
           ),
+        if (missingMods.isNotEmpty && missingVariants.isNotEmpty)
+          const SizedBox(height: 8),
         if (missingVariants.isNotEmpty)
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Missing Versions',
-                style: theme.textTheme.titleMedium?.copyWith(
+              TextWithIcon(
+                text: 'Missing Versions',
+                style: theme.textTheme.labelLarge?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: color,
+                  fontSize: 18,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
+              const SizedBox(height: 8),
               ...missingVariants.map((change) {
                 final modName =
                     change
@@ -730,17 +767,14 @@ class ModProfileManagerNotifier
                         .nameOrId ??
                     'Unknown Mod (${change.modId})';
                 final hasAlt = change.toVariantAlternate != null;
-                return ListTile(
-                  leading: Icon(
-                    hasAlt ? Icons.upgrade : Icons.warning,
-                    color: iconColor,
-                  ),
-                  title: Text(
-                    hasAlt
-                        ? 'Version ${change.variantAsShallowMod?.version} of "$modName" is not available, so ${change.toVariantAlternate!.bestVersion} will be used instead.'
-                        : 'Version ${change.variantAsShallowMod?.version} of "$modName" is not available.',
-                  ),
-                  dense: true,
+                final text = hasAlt
+                    ? 'Version ${change.variantAsShallowMod?.version} of "$modName" is not available, so ${change.toVariantAlternate!.bestVersion} will be used instead.'
+                    : 'Version ${change.variantAsShallowMod?.version} of "$modName" is not available.';
+                return buildRow(
+                  change,
+                  text,
+                  hasAlt ? Icons.upgrade : Icons.warning,
+                  hasAlt ? "Version substituted" : "Version missing",
                 );
               }),
             ],

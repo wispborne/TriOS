@@ -18,13 +18,15 @@ import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/search.dart';
-import 'package:trios/widgets/multi_split_mixin_view.dart';
 import 'package:trios/widgets/blur.dart';
 import 'package:trios/widgets/expanding_constrained_aligned_widget.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:trios/widgets/multi_split_mixin_view.dart';
 import 'package:trios/widgets/overflow_menu_button.dart';
 import 'package:trios/widgets/toolbar_checkbox_button.dart';
 import 'package:url_launcher/url_launcher_string.dart';
+
+import '../thirdparty/dartx/range.dart';
 
 class PortraitsPage extends ConsumerStatefulWidget {
   const PortraitsPage({super.key});
@@ -425,6 +427,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                       Expanded(
                         child: MultiSplitView(
                           controller: multiSplitController,
+                          resizable: false,
                           axis: Axis.horizontal,
                           dividerBuilder:
                               (
@@ -444,40 +447,18 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                                   child: Column(
                                     mainAxisAlignment:
                                         MainAxisAlignment.spaceEvenly,
-                                    children: [
-                                      Icon(
-                                        Icons.keyboard_double_arrow_left,
-                                        color: highlighted
-                                            ? theme.colorScheme.onSurface
-                                                  .withValues(alpha: 1)
-                                            : theme.colorScheme.onSurface
-                                                  .withValues(alpha: 0.8),
-                                      ),
-                                      Icon(
-                                        Icons.keyboard_double_arrow_left,
-                                        color: highlighted
-                                            ? theme.colorScheme.onSurface
-                                                  .withValues(alpha: 1)
-                                            : theme.colorScheme.onSurface
-                                                  .withValues(alpha: 0.8),
-                                      ),
-                                      Icon(
-                                        Icons.keyboard_double_arrow_left,
-                                        color: highlighted
-                                            ? theme.colorScheme.onSurface
-                                                  .withValues(alpha: 1)
-                                            : theme.colorScheme.onSurface
-                                                  .withValues(alpha: 0.8),
-                                      ),
-                                      Icon(
-                                        Icons.keyboard_double_arrow_left,
-                                        color: highlighted
-                                            ? theme.colorScheme.onSurface
-                                                  .withValues(alpha: 1)
-                                            : theme.colorScheme.onSurface
-                                                  .withValues(alpha: 0.8),
-                                      ),
-                                    ],
+                                    children: (IntRange(1, 10))
+                                        .map(
+                                          (i) => Icon(
+                                            Icons.keyboard_double_arrow_left,
+                                            color: highlighted
+                                                ? theme.colorScheme.onSurface
+                                                      .withValues(alpha: 1)
+                                                : theme.colorScheme.onSurface
+                                                      .withValues(alpha: 0.8),
+                                          ),
+                                        )
+                                        .toList(),
                                   ),
                                 );
                               },
@@ -593,7 +574,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                                             left: 8,
                                           ),
                                           child: Text(
-                                            "Replacements",
+                                            "Replacement Pool",
                                             style: theme.textTheme.titleLarge,
                                           ),
                                         ),

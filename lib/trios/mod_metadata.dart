@@ -84,20 +84,20 @@ class ModMetadataStore extends GenericSettingsAsyncNotifier<ModsMetadata> {
   /// Returns a mod metadata object containing user metadata first and, if not found, base metadata.
   /// Make sure not to write using this, as it combines user and base metadata.
   ModMetadata? getMergedModMetadata(String modId) {
-    return state.valueOrNull?.getMergedModMetadata(modId);
+    return state.value?.getMergedModMetadata(modId);
   }
 
   /// Returns a mod variant metadata object containing user metadata first and, if not found, base metadata.
   /// Make sure not to write using this, as it combines user and base metadata.
   ModVariantMetadata? getMergedModVariantMetadata(String modId, String smolId) {
-    return state.valueOrNull?.getMergedModVariantMetadata(modId, smolId);
+    return state.value?.getMergedModVariantMetadata(modId, smolId);
   }
 
   void updateModUserMetadata(
     String modId,
     ModMetadata Function(ModMetadata oldMetadata) metadataUpdater,
   ) {
-    final userMetadata = state.valueOrNull?.userMetadata.toMap() ?? {};
+    final userMetadata = state.value?.userMetadata.toMap() ?? {};
     userMetadata[modId] = metadataUpdater(
       userMetadata[modId] ?? ModMetadata.empty(),
     );
@@ -108,7 +108,7 @@ class ModMetadataStore extends GenericSettingsAsyncNotifier<ModsMetadata> {
     String modId,
     ModMetadata Function(ModMetadata oldMetadata) metadataUpdater,
   ) {
-    final baseMetadata = state.valueOrNull?.baseMetadata.toMap() ?? {};
+    final baseMetadata = state.value?.baseMetadata.toMap() ?? {};
     baseMetadata[modId] = metadataUpdater(
       baseMetadata[modId] ?? ModMetadata.empty(),
     );
@@ -120,7 +120,7 @@ class ModMetadataStore extends GenericSettingsAsyncNotifier<ModsMetadata> {
     String smolId,
     ModVariantMetadata Function(ModVariantMetadata oldMetadata) metadataUpdater,
   ) {
-    final userMetadata = state.valueOrNull?.userMetadata.toMap() ?? {};
+    final userMetadata = state.value?.userMetadata.toMap() ?? {};
     if (userMetadata[modId] == null) {
       userMetadata[modId] = ModMetadata.empty();
     }
@@ -137,7 +137,7 @@ class ModMetadataStore extends GenericSettingsAsyncNotifier<ModsMetadata> {
     String smolId,
     ModVariantMetadata Function(ModVariantMetadata oldMetadata) metadataUpdater,
   ) {
-    final baseMetadata = state.valueOrNull?.baseMetadata.toMap() ?? {};
+    final baseMetadata = state.value?.baseMetadata.toMap() ?? {};
     if (baseMetadata[modId] == null) {
       baseMetadata[modId] = ModMetadata.empty();
     }

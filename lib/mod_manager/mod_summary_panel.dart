@@ -37,14 +37,14 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
   @override
   Widget build(BuildContext context) {
     final selectedMod = widget.mod;
-    final modVariants = ref.watch(AppState.modVariants).valueOrNull;
+    final modVariants = ref.watch(AppState.modVariants).value;
     final enabledMods = ref
         .watch(AppState.enabledModsFile)
-        .valueOrNull
+        .value
         ?.enabledMods
         .toList();
     final allMods = ref.watch(AppState.mods);
-    final gameVersion = ref.watch(AppState.starsectorVersion).valueOrNull;
+    final gameVersion = ref.watch(AppState.starsectorVersion).value;
     final dependents = selectedMod != null
         ? calculateDependents(
             selectedMod.findFirstEnabledOrHighestVersion!,
@@ -86,13 +86,13 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
               final variant = selectedMod!.findHighestVersion;
               final versionCheck = ref
                   .watch(AppState.versionCheckResults)
-                  .valueOrNull
+                  .value
                   ?.versionCheckResultsBySmolId[variant?.smolId];
               if (variant == null) return const SizedBox();
               final iconFilePath = variant.iconFilePath;
               final modMetadata = ref
                   .watch(AppState.modsMetadata)
-                  .valueOrNull
+                  .value
                   ?.getMergedModMetadata(selectedMod.id);
               final forumThreadId = versionCheck?.remoteVersion?.modThreadId;
               final labelTextStyle = Theme.of(
@@ -565,10 +565,10 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
   }
 
   List<ModVariant> calculateDependents(ModVariant variant) {
-    final modVariants = ref.watch(AppState.modVariants).valueOrNull;
+    final modVariants = ref.watch(AppState.modVariants).value;
     final enabledMods = ref
         .watch(AppState.enabledModsFile)
-        .valueOrNull
+        .value
         ?.enabledMods
         .toList();
     if (modVariants == null || enabledMods == null) return [];

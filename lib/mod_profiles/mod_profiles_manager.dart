@@ -115,7 +115,7 @@ class ModProfileManagerNotifier
     final currentProfileId = ref.watch(
       appSettings.select((s) => s.activeModProfileId),
     );
-    return state.valueOrNull?.modProfiles.firstWhereOrNull(
+    return state.value?.modProfiles.firstWhereOrNull(
       (profile) => profile.id == currentProfileId,
     );
   }
@@ -159,21 +159,21 @@ class ModProfileManagerNotifier
       description: description,
       sortOrder:
           sortOrder ??
-          (state.valueOrNull?.modProfiles.map((e) => e.sortOrder).maxOrNull ??
+          (state.value?.modProfiles.map((e) => e.sortOrder).maxOrNull ??
                   0) +
               1,
     );
 
     updateState(
       (prevState) => prevState.copyWith(
-        modProfiles: [...?state.valueOrNull?.modProfiles, newModProfile],
+        modProfiles: [...?state.value?.modProfiles, newModProfile],
       ),
     );
   }
 
   void updateModProfile(ModProfile updatedProfile) {
     final startingState =
-        state.valueOrNull ?? const ModProfiles(modProfiles: []);
+        state.value ?? const ModProfiles(modProfiles: []);
 
     final newModProfiles = startingState.modProfiles
         .map(
@@ -186,7 +186,7 @@ class ModProfileManagerNotifier
   }
 
   void removeModProfile(String modProfileId) {
-    if (!state.hasValue || state.valueOrNull?.modProfiles.isEmpty == true) {
+    if (!state.hasValue || state.value?.modProfiles.isEmpty == true) {
       return;
     }
 
@@ -348,7 +348,7 @@ class ModProfileManagerNotifier
     final modManagerNotifier = ref.read(modManager.notifier);
 
     try {
-      final profile = state.valueOrNull?.modProfiles.firstWhereOrNull(
+      final profile = state.value?.modProfiles.firstWhereOrNull(
         (profile) => profile.id == modProfileId,
       );
       if (profile == null) {
@@ -364,7 +364,7 @@ class ModProfileManagerNotifier
       }
 
       final allMods = ref.read(AppState.mods);
-      final modVariants = ref.read(AppState.modVariants).valueOrNull ?? [];
+      final modVariants = ref.read(AppState.modVariants).value ?? [];
       final currentlyEnabledModVariants = ref.read(AppState.enabledModVariants);
       final changes = computeModProfileChanges(
         profile,
@@ -401,6 +401,7 @@ class ModProfileManagerNotifier
         await modManagerNotifier.changeActiveModVariant(
           mod,
           change.toVariant,
+          notifyWatchers: false,
           validateDependencies: false,
         );
       }
@@ -453,7 +454,7 @@ class ModProfileManagerNotifier
     }
 
     final allMods = ref.read(AppState.mods);
-    final modVariants = ref.read(AppState.modVariants).valueOrNull ?? [];
+    final modVariants = ref.read(AppState.modVariants).value ?? [];
     final currentlyEnabledModVariants = ref.read(AppState.enabledModVariants);
     final changes = computeModProfileChanges(
       profile,

@@ -64,11 +64,11 @@ enum WeaponSpoilerLevel { noSpoilers, showAllSpoilers }
 
 // Provider for the weapons page controller
 final weaponsPageControllerProvider =
-    AutoDisposeNotifierProvider<WeaponsPageController, WeaponsPageState>(
+    NotifierProvider<WeaponsPageController, WeaponsPageState>(
       () => WeaponsPageController(),
     );
 
-class WeaponsPageController extends AutoDisposeNotifier<WeaponsPageState> {
+class WeaponsPageController extends Notifier<WeaponsPageState> {
   @override
   WeaponsPageState build() {
     // Initialize filter categories
@@ -102,7 +102,7 @@ class WeaponsPageController extends AutoDisposeNotifier<WeaponsPageState> {
     final mods = ref.watch(AppState.mods);
     final isLoadingWeapons = ref.watch(isLoadingWeaponsList);
 
-    final allWeapons = weaponsAsync.valueOrNull ?? [];
+    final allWeapons = weaponsAsync.value ?? [];
 
     // Build search index from current weapons (incremental update)
     Map<String, List<String>> weaponValuesByWeaponId = _updateSearchIndices(
@@ -269,7 +269,7 @@ class WeaponsPageController extends AutoDisposeNotifier<WeaponsPageState> {
 
   /// Get game core directory
   Directory getGameCoreDir() {
-    return Directory(ref.read(AppState.gameCoreFolder).valueOrNull?.path ?? '');
+    return Directory(ref.read(AppState.gameCoreFolder).value?.path ?? '');
   }
 
   /// Clear all active filters

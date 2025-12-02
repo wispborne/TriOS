@@ -32,12 +32,12 @@ class ModSummaryWidget extends ConsumerStatefulWidget {
 class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
   @override
   Widget build(BuildContext context) {
-    final modVariants = ref.watch(AppState.modVariants).valueOrNull;
+    final modVariants = ref.watch(AppState.modVariants).value;
     final mods = ref.watch(AppState.mods);
-    final gameVersion = ref.watch(AppState.starsectorVersion).valueOrNull;
+    final gameVersion = ref.watch(AppState.starsectorVersion).value;
     final enabledMods = ref
         .watch(AppState.enabledModsFile)
-        .valueOrNull
+        .value
         ?.filterOutMissingMods(mods)
         .enabledMods
         .toList();
@@ -47,7 +47,7 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
     final modInfo = modVariant.modInfo;
     var cachedVersionChecks = ref
         .watch(AppState.versionCheckResults)
-        .valueOrNull;
+        .value;
     final versionCheckComparisonResult = modVariant.updateCheck(
       cachedVersionChecks,
     );

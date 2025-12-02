@@ -522,10 +522,7 @@ class _AppShellState extends ConsumerState<AppShell>
             const SizedBox(width: 8),
             Builder(
               builder: (context) {
-                var gameFolderPath = ref
-                    .watch(AppState.gameFolder)
-                    .valueOrNull
-                    ?.path;
+                var gameFolderPath = ref.watch(AppState.gameFolder).value?.path;
                 return gameFolderPath == null
                     ? Container()
                     : MovingTooltipWidget.text(
@@ -935,15 +932,14 @@ class _FilePermissionShieldState extends ConsumerState<FilePermissionShield> {
   Widget build(BuildContext context) {
     // copied from RamChanger
     ref.listen(jreManagerProvider, (prev, next) async {
-      final newState = next.valueOrNull;
-      if (newState != null && prev?.valueOrNull != newState) {
+      final newState = next.value;
+      if (newState != null && prev?.value != newState) {
         await refresh(newState);
       }
     });
 
     final usesCustomJre =
-        ref.watch(jreManagerProvider).valueOrNull?.activeJre?.isCustomJre ??
-        false;
+        ref.watch(jreManagerProvider).value?.activeJre?.isCustomJre ?? false;
 
     if (!_initialized) {
       return const SizedBox();
@@ -953,7 +949,7 @@ class _FilePermissionShieldState extends ConsumerState<FilePermissionShield> {
       (
         description: 'vmparams file',
         isWritable: isStandardVmparamsWritable ?? false,
-        path: ref.watch(AppState.vmParamsFile).valueOrNull?.path,
+        path: ref.watch(AppState.vmParamsFile).value?.path,
       ),
       if (usesCustomJre)
         (

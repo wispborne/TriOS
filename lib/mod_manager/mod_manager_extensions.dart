@@ -141,7 +141,7 @@ extension ModExt on Mod {
   ) {
     final versionCheckResultsNew = ref
         .watch(AppState.versionCheckResults)
-        .valueOrNull;
+        .value;
     final versionCheckComparison = updateCheck(versionCheckResultsNew);
     final updateInt = versionCheckComparison?.comparisonInt;
     final metadata = modsMetadata?.getMergedModMetadata(id);

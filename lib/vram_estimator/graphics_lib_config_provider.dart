@@ -24,7 +24,7 @@ final graphicsLibConfigProvider = Provider<GraphicsLibConfig?>((ref) {
 });
 
 // Rebuilds the GraphicsLibConfig only if GraphicsLib or LunaLib mod variants change.
-GraphicsLibConfig? _buildNewState(List<Mod> mods, Ref<GraphicsLibConfig?> ref) {
+GraphicsLibConfig? _buildNewState(List<Mod> mods, Ref ref) {
   final graphicsLib = mods
       .firstWhereOrNull((element) => element.id == Constants.graphicsLibId)
       ?.findFirstEnabled;
@@ -50,7 +50,7 @@ GraphicsLibConfig? _buildNewState(List<Mod> mods, Ref<GraphicsLibConfig?> ref) {
   GraphicsLibConfig graphicsLibConfig = GraphicsLibConfig.disabled;
 
   if (lunalib != null) {
-    final gameFolder = ref.watch(AppState.gameFolder).valueOrNull;
+    final gameFolder = ref.watch(AppState.gameFolder).value;
     final lunalibGraphicsLibConfigFile = gameFolder
         ?.resolve(
           p.join(

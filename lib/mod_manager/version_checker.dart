@@ -79,7 +79,7 @@ class VersionCheckerAsyncProvider
 
     final List<ModVariant> variantsToCheck =
         (specificVariantsToCheck ?? _getVariantsToCheck()).toList();
-    final metadata = ref.read(AppState.modsMetadata).valueOrNull;
+    final metadata = ref.read(AppState.modsMetadata).value;
 
     if (metadata != null && !evenIfMuted) {
       final mutedIds = variantsToCheck
@@ -210,7 +210,7 @@ class VersionCheckerAsyncProvider
   VersionCheckerState _updateStateWithCache(
     Map<String, RemoteVersionCheckResult> versionCheckResultsCache,
   ) =>
-      state.valueOrNull?.copyWith(
+      state.value?.copyWith(
         versionCheckResultsBySmolId: versionCheckResultsCache,
       ) ??
       VersionCheckerState(versionCheckResultsCache);

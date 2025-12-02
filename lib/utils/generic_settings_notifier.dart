@@ -60,7 +60,7 @@ abstract class GenericSettingsAsyncNotifier<T> extends AsyncNotifier<T> {
     FutureOr<T> Function(T currentState) mutator, {
     FutureOr<T> Function(Object, StackTrace)? onError,
   }) async {
-    final oldValue = state.valueOrNull ?? createDefaultState();
+    final oldValue = state.value ?? createDefaultState();
     try {
       final newValue = await mutator(oldValue);
       if (newValue.hashCode != oldValue.hashCode) {

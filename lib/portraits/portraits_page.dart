@@ -185,7 +185,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
       data: (portraits) {
         // TODO There's no way this is fast.
         final loadedReplacements =
-            ref.watch(AppState.portraitReplacementsManager).valueOrNull ?? {};
+            ref.watch(AppState.portraitReplacementsManager).value ?? {};
         final replacements = loadedReplacements
             .hydrateToPortraitMap(
               portraits.convertToPortraitMap(),

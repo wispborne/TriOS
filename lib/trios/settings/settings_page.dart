@@ -223,7 +223,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                             dropdownMenuEntries:
                                 (ref
                                             .watch(AppState.themeData)
-                                            .valueOrNull
+                                            .value
                                             ?.availableThemes
                                             .entries ??
                                         [])
@@ -1153,14 +1153,14 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                 ),
                                 if (ref
                                         .watch(AppState.gameRunningCheckError)
-                                        .valueOrNull
+                                        .value
                                         ?.isNotEmpty ==
                                     true)
                                   Padding(
                                     padding: const EdgeInsets.only(left: 48),
                                     child: Text(
                                       "Error checking if game is running!"
-                                      "\n${ref.watch(AppState.gameRunningCheckError).valueOrNull?.join("\n")}",
+                                      "\n${ref.watch(AppState.gameRunningCheckError).value?.join("\n")}",
                                       style: Theme.of(context)
                                           .textTheme
                                           .labelLarge

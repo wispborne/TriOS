@@ -62,7 +62,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
     try {
       final installModsResult = await installModFromDisk(
         modInstallSource,
-        ref.read(AppState.modsFolder).valueOrNull!,
+        ref.read(AppState.modsFolder).value!,
         ref.read(AppState.mods),
         (modsBeingInstalled) {
           return showDialog<List<ExtractedModInfo>>(
@@ -971,6 +971,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
   Future<void> changeActiveModVariant(
     Mod mod,
     ModVariant? modVariant, {
+    bool notifyWatchers = true,
     bool validateDependencies = true,
   }) async {
     final isDisablingMod = modVariant == null;
@@ -1071,14 +1072,16 @@ class ModManagerNotifier extends AsyncNotifier<void> {
     //     .shouldAutomaticallyReloadOnFilesChanged = true;
 
     // TODO update ONLY the mod that changed and any dependents/dependencies.
-    await ref
-        .read(AppState.modVariants.notifier)
-        .reloadModVariants(
-          onlyVariants: {
-            ...modInfoEnabledVariants,
-            modVariant,
-          }.nonNulls.toList(),
-        );
+    if (notifyWatchers) {
+      await ref
+          .read(AppState.modVariants.notifier)
+          .reloadModVariants(
+            onlyVariants: {
+              ...modInfoEnabledVariants,
+              modVariant,
+            }.nonNulls.toList(),
+          );
+    }
 
     if (validateDependencies) {
       await validateModDependencies(modsToFreeze: [mod.id]);
@@ -1099,18 +1102,18 @@ class ModManagerNotifier extends AsyncNotifier<void> {
     }
     final modifiedModIds = modsToFreeze?.toSet() ?? {};
     var numModsChangedLastLoop = 0;
-    final gameVersion = ref.read(AppState.starsectorVersion).valueOrNull;
+    final gameVersion = ref.read(AppState.starsectorVersion).value;
 
     do {
       numModsChangedLastLoop = 0;
       final enabledMods = ref
           .read(AppState.enabledModsFile)
-          .valueOrNull
+          .value
           ?.enabledMods
           .toList();
       if (enabledMods == null) return;
 
-      final allVariants = ref.read(AppState.modVariants).valueOrNull ?? [];
+      final allVariants = ref.read(AppState.modVariants).value ?? [];
       final allMods = AppState.getModsFromVariants(
         allVariants,
         enabledMods,
@@ -1216,9 +1219,9 @@ class ModManagerNotifier extends AsyncNotifier<void> {
   }) async {
     // final mods = ref.read(AppState.mods);
     // final mod = mods.firstWhereOrNull((mod) => mod.id == modVariant.modInfo.id);
-    final enabledMods = ref.read(AppState.enabledModsFile).valueOrNull;
+    final enabledMods = ref.read(AppState.enabledModsFile).value;
     Fimber.i("Enabling variant ${modVariant.smolId}");
-    final modsFolderPath = ref.read(AppState.modsFolder).valueOrNull;
+    final modsFolderPath = ref.read(AppState.modsFolder).value;
 
     if (modsFolderPath == null || !modsFolderPath.existsSync()) {
       throw Exception("Mods folder does not exist: $modsFolderPath");
@@ -1283,8 +1286,8 @@ class ModManagerNotifier extends AsyncNotifier<void> {
     bool disableModInVanillaLauncher = true,
     required String reason,
   }) async {
-    final enabledMods = ref.read(AppState.enabledModIds).valueOrNull;
-    final variants = ref.read(AppState.modVariants).valueOrNull ?? [];
+    final enabledMods = ref.read(AppState.enabledModIds).value;
+    final variants = ref.read(AppState.modVariants).value ?? [];
     final mods = AppState.getModsFromVariants(
       variants,
       enabledMods.orEmpty().toList(),

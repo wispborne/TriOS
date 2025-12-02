@@ -79,7 +79,7 @@ class SelfUpdateToast extends ConsumerWidget {
                                 isEnabled:
                                     ref
                                             .watch(AppState.selfUpdate)
-                                            .valueOrNull ==
+                                            .value ==
                                         null ||
                                     ref.watch(AppState.selfUpdate).isLoading,
                                 child: ElevatedButton.icon(
@@ -97,7 +97,7 @@ class SelfUpdateToast extends ConsumerWidget {
                         ),
                         TriOSDownloadProgressIndicator(
                           value:
-                              ref.watch(AppState.selfUpdate).valueOrNull ??
+                              ref.watch(AppState.selfUpdate).value ??
                               TriOSDownloadProgress(
                                 0,
                                 SelfUpdater.getAssetForPlatform(

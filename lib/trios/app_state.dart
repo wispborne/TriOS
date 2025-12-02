@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart' show StateProvider;
 import 'package:trios/changelogs/mod_changelogs_manager.dart';
 import 'package:trios/compression/archive.dart';
 import 'package:trios/jre_manager/jre_entry.dart';
@@ -117,7 +118,7 @@ class AppState {
 
   /// Emits when a mod is added/removed, but not when it's changed (e.g. enabled/disabled)
   static final variantSmolIds = Provider<List<String>>((ref) {
-    final mods = ref.watch(AppState.modVariants).valueOrNull ?? [];
+    final mods = ref.watch(AppState.modVariants).value ?? [];
     return mods.map((mod) => mod.smolId).toList()..sort();
   });
 
@@ -126,9 +127,9 @@ class AppState {
   );
 
   static final modCompatibility = Provider<Map<SmolId, DependencyCheck>>((ref) {
-    final modVariants = ref.watch(AppState.modVariants).valueOrNull ?? [];
-    final gameVersion = ref.watch(AppState.starsectorVersion).valueOrNull;
-    final enabledMods = ref.watch(AppState.enabledModsFile).valueOrNull;
+    final modVariants = ref.watch(AppState.modVariants).value ?? [];
+    final gameVersion = ref.watch(AppState.starsectorVersion).value;
+    final enabledMods = ref.watch(AppState.enabledModsFile).value;
     if (enabledMods == null) return {};
 
     return modVariants.map((variant) {
@@ -179,7 +180,7 @@ class AppState {
         .watch(appSettings.select((value) => value.gameDir))
         ?.toDirectory();
     if (gamePath == null || gamePath.existsSync() == false) return null;
-    final gameCorePath = ref.watch(gameCoreFolder).valueOrNull;
+    final gameCorePath = ref.watch(gameCoreFolder).value;
     if (gameCorePath == null || gameCorePath.existsSync() == false) return null;
 
     try {
@@ -235,7 +236,7 @@ class AppState {
     if (gamePath == null) return false;
 
     final filesAndFolders = [
-      ref.read(enabledModsFile).valueOrNull?.enabledMods.toList(),
+      ref.read(enabledModsFile).value?.enabledMods.toList(),
     ].nonNulls;
     for (final file in filesAndFolders) {
       if (filesAndFolders.isEmpty) {
@@ -288,7 +289,7 @@ class AppState {
         return customSavesPath.toDirectory();
       }
     } else {
-      final gamePath = ref.watch(gameFolder).valueOrNull;
+      final gamePath = ref.watch(gameFolder).value;
       if (gamePath == null) return null;
       return generateSavesFolderPath(gamePath)?.toDirectory();
     }
@@ -308,7 +309,7 @@ class AppState {
         return customCoreFolderPath.toDirectory();
       }
     } else {
-      final gamePath = ref.watch(gameFolder).valueOrNull;
+      final gamePath = ref.watch(gameFolder).value;
       if (gamePath == null) return null;
       return generateGameCorePath(gamePath)?.toDirectory();
     }
@@ -332,7 +333,7 @@ class AppState {
     }
 
     final isJre23 =
-        ref.watch(jreManagerProvider).valueOrNull?.activeJre?.isCustomJre ??
+        ref.watch(jreManagerProvider).value?.activeJre?.isCustomJre ??
         false;
     final gamePath = ref.watch(gameFolder).value?.toDirectory();
     if (gamePath == null) return null;
@@ -355,14 +356,14 @@ class AppState {
   static final vmParamsFile = FutureProvider<File?>((ref) async {
     return ref
         .watch(jreManagerProvider)
-        .valueOrNull
+        .value
         ?.activeJre
         ?.vmParamsFileAbsolutePath
         .toFile();
   });
 
   static final canWriteToStarsectorFolder = FutureProvider<bool>((ref) async {
-    final vmParamsFileLocal = ref.watch(vmParamsFile).valueOrNull;
+    final vmParamsFileLocal = ref.watch(vmParamsFile).value;
     if (vmParamsFileLocal == null) return false;
     final filesAndFolders = [vmParamsFileLocal].nonNulls;
     for (var file in filesAndFolders) {
@@ -375,22 +376,22 @@ class AppState {
   });
 
   static final isEnabledModsFileWritable = FutureProvider<bool>((ref) async {
-    final modsPath = ref.watch(modsFolder).valueOrNull;
+    final modsPath = ref.watch(modsFolder).value;
     if (modsPath == null) return false;
     return ref.read(AppState.enabledModsFile.notifier).isWritable();
   });
 
   static final activeJre = FutureProvider<JreEntryInstalled?>(
-    (ref) async => ref.watch(jreManagerProvider).valueOrNull?.activeJre,
+    (ref) async => ref.watch(jreManagerProvider).value?.activeJre,
   );
 
   static final isGameRunning = FutureProvider<bool>(
     (ref) async =>
-        ref.watch(_isGameRunning).valueOrNull?.wasSuccessful ?? false,
+        ref.watch(_isGameRunning).value?.wasSuccessful ?? false,
   );
 
   static final gameRunningCheckError = FutureProvider<List<Exception>?>(
-    (ref) async => ref.watch(_isGameRunning).valueOrNull?.errors,
+    (ref) async => ref.watch(_isGameRunning).value?.errors,
   );
 
   static final _isGameRunning =
@@ -470,7 +471,7 @@ class _GameRunningChecker extends AsyncNotifier<Result> {
     // try {
     //   final jreFolder = ref
     //       .read(AppState.activeJre)
-    //       .valueOrNull
+    //       .value
     //       ?.jreAbsolutePath;
     //   if (jreFolder != null) {
     //     final starsectorJavaExecutablePath = getJavaExecutable(jreFolder).path;

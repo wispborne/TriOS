@@ -72,8 +72,8 @@ class ShipsPageStatePersisted with ShipsPageStatePersistedMappable {
 @MappableEnum()
 enum SpoilerLevel { showNone, showSlightSpoilers, showAllSpoilers }
 
-/// Controller for the ships page using AutoDisposeNotifier (synchronous)
-class ShipsPageController extends AutoDisposeNotifier<ShipsPageState> {
+/// Controller for the ships page using Notifier (synchronous)
+class ShipsPageController extends Notifier<ShipsPageState> {
   final slightSpoilerTags = ["codex_unlockable"];
   final spoilerTags = ["threat", "dweller"];
 
@@ -125,8 +125,8 @@ class ShipsPageController extends AutoDisposeNotifier<ShipsPageState> {
     final mods = ref.watch(AppState.mods);
     final isLoadingShips = ref.watch(isLoadingShipsList);
 
-    final allShips = shipsAsync.valueOrNull ?? [];
-    final shipSystems = shipSystemsAsync.valueOrNull ?? [];
+    final allShips = shipsAsync.value ?? [];
+    final shipSystems = shipSystemsAsync.value ?? [];
     final shipSystemsMap = shipSystems.associateBy((e) => e.id);
 
     // Build search index from current ships (incremental update)
@@ -297,7 +297,7 @@ class ShipsPageController extends AutoDisposeNotifier<ShipsPageState> {
 
   /// Get game core directory
   Directory getGameCoreDir() {
-    return Directory(ref.read(AppState.gameCoreFolder).valueOrNull?.path ?? '');
+    return Directory(ref.read(AppState.gameCoreFolder).value?.path ?? '');
   }
 
   /// Clear all active filters
@@ -424,6 +424,6 @@ class ShipsPageController extends AutoDisposeNotifier<ShipsPageState> {
 
 /// Provider for the ships page controller
 final shipsPageControllerProvider =
-    AutoDisposeNotifierProvider<ShipsPageController, ShipsPageState>(() {
+    NotifierProvider<ShipsPageController, ShipsPageState>(() {
       return ShipsPageController();
     });

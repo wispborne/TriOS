@@ -436,7 +436,7 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
 
       // Check for existing profiles
       final existingProfiles =
-          ref.read(modProfilesProvider).valueOrNull?.modProfiles ?? [];
+          ref.read(modProfilesProvider).value?.modProfiles ?? [];
       final existingProfileWithId = existingProfiles.firstWhereOrNull(
         (p) => p.id == originalId,
       );

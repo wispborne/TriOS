@@ -44,7 +44,7 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
   void initState() {
     super.initState();
     final settings = ref.read(appSettings);
-    gameDirPath = ref.read(AppState.gameFolder).valueOrNull?.path;
+    gameDirPath = ref.read(AppState.gameFolder).value?.path;
     textEditingController = TextEditingController(text: gameDirPath);
     enableMultipleVersions = settings.keepLastNVersions != 1;
     lastNVersionsSetting = enableMultipleVersions

@@ -1,11 +1,9 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:trios/trios/settings/app_settings_logic.dart';
-import 'package:trios/trios/settings/settings.dart';
+import 'package:flutter_riverpod/legacy.dart' show StateProvider;
 import 'package:trios/widgets/blur.dart';
 
 import '../trios/app_state.dart';
@@ -33,7 +31,7 @@ class _RulesHotReloadState extends ConsumerState<RulesHotReload> {
     Fimber.i(
       "Detected rules.csv change, touching vanilla rules.csv last modified date. Count: $_counter",
     );
-    final gameCoreDir = ref.read(AppState.gameCoreFolder).valueOrNull;
+    final gameCoreDir = ref.read(AppState.gameCoreFolder).value;
     if (gameCoreDir == null) {
       return;
     }
@@ -55,7 +53,7 @@ class _RulesHotReloadState extends ConsumerState<RulesHotReload> {
   @override
   Widget build(BuildContext context) {
     fileChanges.close();
-    final modVariants = ref.watch(AppState.modVariants).valueOrNull;
+    final modVariants = ref.watch(AppState.modVariants).value;
     final modRulesDotCsvFiles =
         modVariants
             ?.map((variant) => getRulesCsvInModFolder(variant.modFolder))

@@ -3,10 +3,9 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart' show StateProvider;
 import 'package:trios/chipper/views/chipper_home.dart';
 import 'package:trios/trios/app_state.dart';
-import 'package:trios/trios/settings/app_settings_logic.dart';
-import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/platform_paths.dart';
 
@@ -32,7 +31,7 @@ class _ChipperLogParserNotifier extends AsyncNotifier<LogChips?> {
   LogChips? build() {
     // Reload when game is closed
     ref.listen(AppState.isGameRunning, (wasRunning, isRunning) {
-      if (wasRunning?.valueOrNull == true && isRunning.valueOrNull == false) {
+      if (wasRunning?.value == true && isRunning.value == false) {
         loadDefaultLog();
       }
     });
@@ -54,7 +53,7 @@ class _ChipperLogParserNotifier extends AsyncNotifier<LogChips?> {
   }
 
   void loadDefaultLog() async {
-    final gamePath = ref.read(AppState.gameFolder).valueOrNull;
+    final gamePath = ref.read(AppState.gameFolder).value;
     final gameFilesPath = getLogPath(gamePath!);
 
     if (gameFilesPath.existsSync()) {

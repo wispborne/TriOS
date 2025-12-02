@@ -74,7 +74,7 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
       final profile = widget.profile;
       final save = widget.save;
       final allMods = ref.read(AppState.mods);
-      final modVariants = ref.read(AppState.modVariants).valueOrNull ?? [];
+      final modVariants = ref.read(AppState.modVariants).value ?? [];
 
       final computed = ModProfileManagerNotifier.computeModProfileChanges(
         profile ??
@@ -139,7 +139,7 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
             .toList();
 
     final modRootFolders = [
-      ref.watch(AppState.gameCoreFolder).valueOrNull,
+      ref.watch(AppState.gameCoreFolder).value,
       ...ref
           .watch(AppState.mods)
           .map((mod) => mod.findFirstEnabledOrHighestVersion?.modFolder),

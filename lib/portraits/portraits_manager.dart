@@ -23,7 +23,7 @@ class PortraitsNotifier
   Future<Map<ModVariant?, List<Portrait>>> build() async {
     // Rebuild when these change (mods added/removed, game folder change)
     ref.watch(AppState.variantSmolIds);
-    final gameCoreFolder = ref.watch(AppState.gameCoreFolder).valueOrNull;
+    final gameCoreFolder = ref.watch(AppState.gameCoreFolder).value;
 
     // Mark loading
     isLoadingPortraits = true;

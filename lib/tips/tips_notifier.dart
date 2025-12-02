@@ -150,7 +150,7 @@ class TipsNotifier extends AsyncNotifier<List<ModTip>> {
     bool dryRun = false,
     bool reloadTipsAfter = true,
   }) async {
-    final current = state.valueOrNull;
+    final current = state.value;
     if (current == null || tipsToRemove.isEmpty) return;
     tipsToRemove = tipsToRemove.toSet().toList();
 
@@ -222,7 +222,7 @@ class TipsNotifier extends AsyncNotifier<List<ModTip>> {
         )
         .toSet();
     final loadedTips =
-        state.valueOrNull
+        state.value
             ?.map(
               (tip) => _createTipHashcode(
                 tip.variants.firstOrNull?.modInfo.id,
@@ -249,7 +249,7 @@ class TipsNotifier extends AsyncNotifier<List<ModTip>> {
     deletedTipsStorageManager.scheduleWriteSettingsToDisk(allRemovedHashes);
 
     if (reloadTipsAfter) {
-      final updatedList = [...?state.valueOrNull];
+      final updatedList = [...?state.value];
 
       for (final hiddenTip in tipsToRemove) {
         final index = updatedList.indexOf(hiddenTip);
@@ -268,7 +268,7 @@ class TipsNotifier extends AsyncNotifier<List<ModTip>> {
   }
 
   bool isHidden(ModTip tip) {
-    final hiddenTips = getHidden(state.valueOrNull.orEmpty().toList());
+    final hiddenTips = getHidden(state.value.orEmpty().toList());
     return hiddenTips.contains(tip);
   }
 
@@ -276,7 +276,7 @@ class TipsNotifier extends AsyncNotifier<List<ModTip>> {
     Iterable<ModTip> tipsToUnhide, {
     bool reloadTipsAfter = true,
   }) async {
-    final current = state.valueOrNull;
+    final current = state.value;
     if (current == null || tipsToUnhide.isEmpty) return;
     tipsToUnhide = tipsToUnhide.toSet().toList();
 

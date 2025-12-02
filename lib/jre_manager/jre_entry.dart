@@ -423,7 +423,7 @@ class CustomJreNotifier extends AsyncNotifier<CustomJreDownloadState> {
     _mikohimeDownloadState = CustomJreDownloadState();
     _jdkDownloadState = CustomJreDownloadState();
 
-    final gamePath = ref.read(AppState.gameFolder).valueOrNull?.toDirectory();
+    final gamePath = ref.read(AppState.gameFolder).value?.toDirectory();
     if (gamePath == null) {
       Fimber.e("Game path not set");
       state = AsyncValue.error("Game path not set", StackTrace.current);

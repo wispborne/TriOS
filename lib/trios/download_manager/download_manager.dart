@@ -141,7 +141,7 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
 
                   if (activateVariantOnComplete) {
                     // final variants =
-                    //     ref.read(AppState.modVariants).valueOrNull ?? [];
+                    //     ref.read(AppState.modVariants).value ?? [];
 
                     // for (final installed in installedVariants) {
                     // Find the variant post-install so we can activate it.

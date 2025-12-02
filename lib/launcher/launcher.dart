@@ -50,10 +50,10 @@ class LauncherButton extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     var theme = Theme.of(context);
-    final isGameRunning = ref.watch(AppState.isGameRunning).valueOrNull == true;
+    final isGameRunning = ref.watch(AppState.isGameRunning).value == true;
 
-    final currentJre = ref.watch(jreManagerProvider).valueOrNull?.activeJre;
-    final gameVersion = ref.watch(AppState.starsectorVersion).valueOrNull ?? "";
+    final currentJre = ref.watch(jreManagerProvider).value?.activeJre;
+    final gameVersion = ref.watch(AppState.starsectorVersion).value ?? "";
     final isCurrentJreValid =
         currentJre?.isGameVersionSupported(gameVersion) ?? true;
     final useCustomGameExe = ref.watch(
@@ -110,7 +110,7 @@ class LauncherButton extends HookConsumerWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'Launch ${ref.watch(AppState.starsectorVersion).valueOrNull}',
+                    'Launch ${ref.watch(AppState.starsectorVersion).value}',
                     style: theme.textTheme.labelLarge?.copyWith(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -123,7 +123,7 @@ class LauncherButton extends HookConsumerWidget {
                         if (useCustomGameExe)
                           TextSpan(
                             text:
-                                "${ref.watch(AppState.gameExecutable).valueOrNull?.nameWithExtension}\n",
+                                "${ref.watch(AppState.gameExecutable).value?.nameWithExtension}\n",
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                         const TextSpan(text: "Java: "),
@@ -131,7 +131,7 @@ class LauncherButton extends HookConsumerWidget {
                           text:
                               ref
                                   .watch(AppState.activeJre)
-                                  .valueOrNull
+                                  .value
                                   ?.version
                                   .versionString ??
                               "(unknown JRE)",
@@ -140,7 +140,7 @@ class LauncherButton extends HookConsumerWidget {
                         const TextSpan(text: "\nRAM: "),
                         TextSpan(
                           text:
-                              "${ref.watch(currentRamAmountInMb).valueOrNull ?? "(unknown RAM)"} MB",
+                              "${ref.watch(currentRamAmountInMb).value ?? "(unknown RAM)"} MB",
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ],
@@ -322,12 +322,12 @@ class LauncherButton extends HookConsumerWidget {
   static void _launchGameWithoutPrecheck(WidgetRef ref) {
     if (ref.read(appSettings.select((s) => s.useCustomGameExePath))) {
       launchGameUsingLauncher(
-        ref.read(AppState.gameFolder).valueOrNull!,
-        customExePath: ref.read(AppState.gameExecutable).valueOrNull,
+        ref.read(AppState.gameFolder).value!,
+        customExePath: ref.read(AppState.gameExecutable).value,
       );
     } else if (ref
             .read(jreManagerProvider)
-            .valueOrNull
+            .value
             ?.activeJre
             ?.isCustomJre ==
         true) {
@@ -340,10 +340,10 @@ class LauncherButton extends HookConsumerWidget {
   static List<LaunchPrecheckError> performLaunchPrecheck(WidgetRef ref) {
     final launchPrecheckFailures = <LaunchPrecheckError?>[];
     final mods = ref.read(AppState.mods);
-    final modsFolder = ref.read(AppState.modsFolder).valueOrNull;
+    final modsFolder = ref.read(AppState.modsFolder).value;
     final enabledMods = ref
         .read(AppState.enabledModsFile)
-        .valueOrNull
+        .value
         ?.filterOutMissingMods(mods)
         .enabledMods
         .toList();
@@ -517,7 +517,7 @@ class LauncherButton extends HookConsumerWidget {
   /// Launches game with JRE 23.
   static launchGameJre23(WidgetRef ref) async {
     // Starsector folder
-    final gameDir = ref.read(AppState.gameFolder).valueOrNull?.toDirectory();
+    final gameDir = ref.read(AppState.gameFolder).value?.toDirectory();
     final command =
         ref.read(
           appSettings.select((value) => value.showCustomJreConsoleWindow),
@@ -546,8 +546,8 @@ class LauncherButton extends HookConsumerWidget {
   /// Launches game without JRE 23.
   static launchGameVanilla(WidgetRef ref) async {
     // Starsector folder
-    var gamePath = ref.read(AppState.gameFolder).valueOrNull;
-    final gameCorePath = ref.read(AppState.gameCoreFolder).valueOrNull;
+    var gamePath = ref.read(AppState.gameFolder).value;
+    final gameCorePath = ref.read(AppState.gameCoreFolder).value;
 
     if (gamePath == null || gameCorePath == null) {
       Fimber.e('Game path or game core path not set');
@@ -566,7 +566,7 @@ class LauncherButton extends HookConsumerWidget {
     var javaExe = getJavaExecutable(getJreDir(gamePath));
     final standardJre = ref
         .read(jreManagerProvider)
-        .valueOrNull
+        .value
         ?.standardInstalledJres
         .first;
     var vmParams = standardJre!.vmParamsFileAbsolutePath;

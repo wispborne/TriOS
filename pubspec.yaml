@@ -40,7 +40,7 @@ dependencies:
  # flutter_cache_manager: ^3.4.1
   flutter_color: ^2.1.0
   google_fonts: ^6.2.1
-  hooks_riverpod: ^2.6.1
+  hooks_riverpod: ^3.0.3
   hashlib: ^2.2.0
   html: ^0.15.6
   image: ^4.5.4
@@ -66,8 +66,8 @@ dependencies:
   pdf: ^3.11.0
   platform_info: ^5.0.0
   plist_parser: ^0.2.5
-  flutter_riverpod: ^2.6.1
-  riverpod_annotation: ^2.6.1
+  flutter_riverpod: ^3.0.3
+  riverpod_annotation: ^3.0.3
   rxdart: ^0.28.0
   scaled_app: ^2.3.0
   screen_retriever: ^0.2.0

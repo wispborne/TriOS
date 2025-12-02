@@ -30,7 +30,7 @@ class CompanionModManager {
   CompanionModManager(this.ref);
 
   Directory? get companionModDefaultFolder {
-    final modsFolder = ref.read(AppState.modsFolder).valueOrNull;
+    final modsFolder = ref.read(AppState.modsFolder).value;
     if (modsFolder == null) {
       return null;
     }
@@ -63,7 +63,7 @@ class CompanionModManager {
   Future<void> copyModToModsFolder({bool overwriteExisting = true}) async {
     try {
       // Get the mods folder path using Riverpod
-      final modsFolder = ref.read(AppState.modsFolder).valueOrNull;
+      final modsFolder = ref.read(AppState.modsFolder).value;
       if (modsFolder == null) {
         throw StateError('Game mods folder not configured');
       }
@@ -116,7 +116,7 @@ class CompanionModManager {
   // Future<void> copyModToGameFolderWithName(String modFolderName) async {
   //   try {
   //     // Get the mods folder path using Riverpod
-  //     final modsFolder = ref.read(AppState.modsFolder).valueOrNull;
+  //     final modsFolder = ref.read(AppState.modsFolder).value;
   //     if (modsFolder == null) {
   //       throw StateError('Game mods folder not configured');
   //     }
@@ -219,7 +219,7 @@ class CompanionModManager {
 
   /// Gets the path to the trios_image_replacements.json config file
   Future<File?> _getImageReplacementsConfigFile() async {
-    final modsFolder = ref.read(AppState.modsFolder).valueOrNull;
+    final modsFolder = ref.read(AppState.modsFolder).value;
     if (modsFolder == null) {
       Fimber.i(
         "Game mods folder not configured. Often happens before game folder has been read yet.",
@@ -305,7 +305,7 @@ class CompanionModManager {
   Future<void> updateImageReplacementsConfig(
     Map<String, ReplacedSavedPortrait> replacements,
   ) async {
-    final gameCoreFolder = ref.read(AppState.gameCoreFolder).valueOrNull;
+    final gameCoreFolder = ref.read(AppState.gameCoreFolder).value;
 
     if (gameCoreFolder == null) {
       throw StateError('Game core folder not configured');

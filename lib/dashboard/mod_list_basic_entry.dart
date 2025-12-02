@@ -145,7 +145,7 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
   Widget build(BuildContext context) {
     var cachedVersionChecks = ref
         .watch(AppState.versionCheckResults)
-        .valueOrNull;
+        .value;
     final mod = widget.mod;
     final modVariant =
         mod.findFirstEnabledOrHighestVersion ?? mod.modVariants.first;
@@ -356,7 +356,7 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
 
                     final modsFolder = ref
                         .read(AppState.modsFolder)
-                        .valueOrNull;
+                        .value;
                     if (modsFolder == null) return;
 
                     try {

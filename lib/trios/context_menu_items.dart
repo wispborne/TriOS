@@ -365,7 +365,7 @@ MenuItem buildMenuItemOpenInSidebar(
 }
 
 MenuItem buildMenuItemToggleMuteUpdates(Mod mod, WidgetRef ref) {
-  final modsMetadata = ref.watch(AppState.modsMetadata).valueOrNull;
+  final modsMetadata = ref.watch(AppState.modsMetadata).value;
   final isMuted =
       modsMetadata?.getMergedModMetadata(mod.id)?.areUpdatesMuted == true;
 

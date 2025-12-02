@@ -28,7 +28,7 @@ class _RamChangerState extends ConsumerState<RamChanger> {
   @override
   void initState() {
     super.initState();
-    final jreManager = ref.read(jreManagerProvider).valueOrNull;
+    final jreManager = ref.read(jreManagerProvider).value;
     if (jreManager != null) {
       setWhetherVmParamsAreWritable(jreManager);
     }
@@ -38,16 +38,16 @@ class _RamChangerState extends ConsumerState<RamChanger> {
 
   @override
   Widget build(BuildContext context) {
-    final jreManager = ref.watch(jreManagerProvider).valueOrNull;
+    final jreManager = ref.watch(jreManagerProvider).value;
     final activeJres = jreManager?.activeJres;
-    final gamePath = ref.read(AppState.gameFolder).valueOrNull?.toDirectory();
+    final gamePath = ref.read(AppState.gameFolder).value?.toDirectory();
     if (gamePath == null) {
       return const SizedBox();
     }
 
     ref.listen(jreManagerProvider, (prev, next) async {
-      final newState = next.valueOrNull;
-      if (newState != null && prev?.valueOrNull != newState) {
+      final newState = next.value;
+      if (newState != null && prev?.value != newState) {
         await setWhetherVmParamsAreWritable(newState);
       }
     });

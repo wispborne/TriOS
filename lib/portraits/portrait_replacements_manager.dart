@@ -58,7 +58,7 @@ class PortraitReplacementsNotifier
 
   /// Gets replacement path for a portrait hash
   Future<SavedPortrait?> _getReplacement(String portraitHash) async {
-    final currentState = state.valueOrNull ?? {};
+    final currentState = state.value ?? {};
     final replacementPortrait = currentState[portraitHash];
 
     if (replacementPortrait != null) {

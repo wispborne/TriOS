@@ -33,7 +33,7 @@ final doesJre23ExistInGameFolderProvider = FutureProvider<bool>((ref) async {
         gameDir.resolve("Miko_Rouge.bat").toFile().existsSync();
   }
 
-  final gamePath = ref.read(AppState.gameFolder).valueOrNull?.toDirectory();
+  final gamePath = ref.read(AppState.gameFolder).value?.toDirectory();
   if (gamePath == null) {
     return false;
   }
@@ -50,8 +50,8 @@ class JreManager extends AsyncNotifier<JreManagerState> {
 
   @override
   Future<JreManagerState> build() async {
-    final gamePath = ref.watch(AppState.gameFolder).valueOrNull;
-    final corePath = ref.watch(AppState.gameCoreFolder).valueOrNull;
+    final gamePath = ref.watch(AppState.gameFolder).value;
+    final corePath = ref.watch(AppState.gameCoreFolder).value;
     final installedJres = await findJREs(gamePath, corePath);
     _startWatchingJres(gamePath, corePath);
     final activeJres = installedJres
@@ -70,12 +70,12 @@ class JreManager extends AsyncNotifier<JreManagerState> {
     double ramInMb, {
     bool alsoChangeCustomVmparams = true,
   }) async {
-    final gamePath = ref.read(AppState.gameFolder).valueOrNull?.toDirectory();
+    final gamePath = ref.read(AppState.gameFolder).value?.toDirectory();
     if (gamePath == null) {
       return;
     }
 
-    for (var jre in state.valueOrNull?.activeJres ?? []) {
+    for (var jre in state.value?.activeJres ?? []) {
       await jre.setRamAmountInMb(ramInMb);
     }
 
@@ -190,13 +190,13 @@ class JreManager extends AsyncNotifier<JreManagerState> {
   }
 
   Future<void> changeActiveJre(JreEntryInstalled newJre) async {
-    var gamePath = ref.read(AppState.gameFolder).valueOrNull?.toDirectory();
+    var gamePath = ref.read(AppState.gameFolder).value?.toDirectory();
     if (gamePath == null || !gamePath.existsSync()) {
       return;
     }
 
     bool didSwapFail = false;
-    final currentJreSource = state.valueOrNull?.activeJre;
+    final currentJreSource = state.value?.activeJre;
 
     if (currentJreSource != null &&
         newJre.version == currentJreSource.version) {
@@ -222,7 +222,7 @@ class JreManager extends AsyncNotifier<JreManagerState> {
     } else if (newJre is MikohimeCustomJreEntry) {
       // Unused, realized too late that there's no way to tell which JRE is associated with which mikohime folder.
       // So I'm just not going to support multiple Himemi JREs.
-      final existingMikohimeJre = state.valueOrNull?.activeJres
+      final existingMikohimeJre = state.value?.activeJres
           .firstWhereOrNull((it) => it is MikohimeCustomJreEntry);
       final needsToReplaceMikohimeJre =
           newJre.jreRelativePath.name != newJre.mikohimeFolder.name;
@@ -273,7 +273,7 @@ class JreManager extends AsyncNotifier<JreManagerState> {
     Directory gamePath,
     StandardInstalledJreEntry newJre,
   ) async {
-    final existingStandardJre = state.valueOrNull?.standardActiveJre;
+    final existingStandardJre = state.value?.standardActiveJre;
     final gameJrePath = gamePath
         .resolve(Constants.gameJreFolderName)
         .toDirectory();
@@ -368,7 +368,7 @@ class JreManagerState {
 final currentRamAmountInMb = FutureProvider<String?>((ref) async {
   return ref
       .watch(jreManagerProvider)
-      .valueOrNull
+      .value
       ?.activeJres
       .firstOrNull
       ?.ramAmountInMb;

@@ -271,7 +271,7 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
           onPressed: () {
             final testMod = ref
                 .read(AppState.modVariants)
-                .valueOrNull
+                .value
                 .orEmpty()
                 .firstWhere(
                   (variant) => variant.modInfo.id.equalsIgnoreCase("magiclib"),
@@ -292,7 +292,7 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
           onPressed: () {
             final testMod = ref
                 .read(AppState.modVariants)
-                .valueOrNull
+                .value
                 .orEmpty()
                 .firstWhere(
                   (variant) => variant.modInfo.id.equalsIgnoreCase("magiclib"),
@@ -367,7 +367,7 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
               const SizedBox(height: 4),
               TriOSDownloadProgressIndicator(
                 value:
-                    ref.watch(AppState.selfUpdate).valueOrNull ??
+                    ref.watch(AppState.selfUpdate).value ??
                     const TriOSDownloadProgress(0, 1, isIndeterminate: false),
               ),
             ],
@@ -377,7 +377,7 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
           icon: const Icon(Icons.developer_mode),
           onPressed: () {
             getStarsectorVersionFromObf(
-              ref.watch(AppState.gameCoreFolder).valueOrNull!,
+              ref.watch(AppState.gameCoreFolder).value!,
               ref.read(archiveProvider).value!,
             ).then((value) {
               showSnackBar(
@@ -396,7 +396,7 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
               content: Text(
                 ref
                         .refresh(weaponListNotifierProvider)
-                        .valueOrNull
+                        .value
                         ?.toString() ??
                     "weh",
               ),
@@ -416,7 +416,7 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                     content: Text(
                       ref
                               .refresh(shipListNotifierProvider)
-                              .valueOrNull
+                              .value
                               ?.toString() ??
                           "weh",
                     ),
@@ -478,11 +478,11 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                             .findJREs(
                               ref
                                   .watch(AppState.gameFolder)
-                                  .valueOrNull
+                                  .value
                                   ?.toDirectory(),
                               ref
                                   .watch(AppState.gameCoreFolder)
-                                  .valueOrNull
+                                  .value
                                   ?.toDirectory(),
                             ))
                         .joinToString(
@@ -578,7 +578,7 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                               child: SelectableText(
                                 ref
                                         .watch(modProfilesProvider)
-                                        .valueOrNull
+                                        .value
                                         ?.toMap()
                                         .prettyPrintJson() ??
                                     "",
@@ -641,7 +641,7 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                               child: SelectableText(
                                 ref
                                         .watch(AppState.versionCheckResults)
-                                        .valueOrNull
+                                        .value
                                         ?.toMap()
                                         .prettyPrintJson() ??
                                     "",
@@ -699,7 +699,7 @@ class _ModCompatibilityFilterWidgetState
         final allSmolIds =
             ref
                 .watch(AppState.modVariants)
-                .valueOrNull
+                .value
                 ?.map((variant) => variant.smolId)
                 .toList() ??
             [];

@@ -28,12 +28,12 @@ class ModDependenciesWidget extends ConsumerStatefulWidget {
 class _ModDependenciesWidgetState extends ConsumerState<ModDependenciesWidget> {
   @override
   Widget build(BuildContext context) {
-    final modVariants = ref.watch(AppState.modVariants).valueOrNull;
+    final modVariants = ref.watch(AppState.modVariants).value;
     final mods = ref.watch(AppState.mods);
-    final gameVersion = ref.watch(AppState.starsectorVersion).valueOrNull;
+    final gameVersion = ref.watch(AppState.starsectorVersion).value;
     final enabledMods = ref
         .watch(AppState.enabledModsFile)
-        .valueOrNull
+        .value
         ?.filterOutMissingMods(mods)
         .enabledMods
         .toList();
@@ -42,7 +42,7 @@ class _ModDependenciesWidgetState extends ConsumerState<ModDependenciesWidget> {
     final modVariant = widget.modVariant;
     final modInfo = modVariant.modInfo;
     // var remoteVersionCheck =
-    //     ref.watch(AppState.versionCheckResults).valueOrNull?[modVariant.smolId];
+    //     ref.watch(AppState.versionCheckResults).value?[modVariant.smolId];
     // final localVersionCheck = modVariant.versionCheckerInfo;
     // final remoteVersionCheck = versionCheck?[modVariant.smolId];
     // final versionCheckComparison =

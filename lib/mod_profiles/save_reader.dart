@@ -25,20 +25,20 @@ class SaveFileNotifier extends AsyncNotifier<List<SaveFile>> {
   }
 
   Future<List<SaveFile>> readAllSaves() async {
-    final gameFolder = ref.watch(AppState.gameFolder).valueOrNull;
+    final gameFolder = ref.watch(AppState.gameFolder).value;
     if (gameFolder == null) {
       Fimber.w("Game folder not set");
       return [];
     }
 
-    final saveDir = ref.watch(AppState.savesFolder).valueOrNull?.toDirectory();
+    final saveDir = ref.watch(AppState.savesFolder).value?.toDirectory();
 
     if (saveDir == null) {
       Fimber.w("Save folder not set");
       return [];
     }
 
-    // if (state.valueOrNull?.isNotEmpty == true) {
+    // if (state.value?.isNotEmpty == true) {
     //   Fimber.i("Saves already loaded, not refreshing.");
     //   return state.value!;
     // }

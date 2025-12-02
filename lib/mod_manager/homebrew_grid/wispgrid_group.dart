@@ -261,7 +261,7 @@ Widget? _vramSummaryOverlayWidget(
   return Builder(
     builder: (context) {
       final vramProvider = ref.watch(AppState.vramEstimatorProvider);
-      final vramMap = vramProvider.valueOrNull?.modVramInfo ?? {};
+      final vramMap = vramProvider.value?.modVramInfo ?? {};
       final graphicsLibConfig = ref.watch(graphicsLibConfigProvider);
       final variantsInGroup = itemsInGroup.nonNulls
           .map((e) => e.findFirstEnabledOrHighestVersion)

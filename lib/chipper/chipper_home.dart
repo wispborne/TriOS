@@ -87,7 +87,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
   void initState() {
     super.initState();
 
-    if (ref.read(ChipperState.logRawContents).valueOrNull == null) {
+    if (ref.read(ChipperState.logRawContents).value == null) {
       ref.read(ChipperState.logRawContents.notifier).loadDefaultLog();
     }
   }
@@ -95,7 +95,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    chips = ref.watch(ChipperState.logRawContents).valueOrNull;
+    chips = ref.watch(ChipperState.logRawContents).value;
     return Padding(
       padding: EdgeInsets.only(
         left: widget.pagePadding,

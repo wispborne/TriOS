@@ -23,7 +23,7 @@ class ModChangelogsManager extends AsyncNotifier<Map<String, ModChangelog>> {
     final httpClient = ref.watch(triOSHttpClient);
     final cachedVersionChecks = ref
         .watch(AppState.versionCheckResults)
-        .valueOrNull;
+        .value;
 
     // Show a spinner only the first time.
     if (!state.hasValue && !state.isLoading && !state.hasError) {
@@ -32,7 +32,7 @@ class ModChangelogsManager extends AsyncNotifier<Map<String, ModChangelog>> {
 
     // Start with whatever we already have.
     final Map<String, ModChangelog> results = Map.of(
-      state.valueOrNull ?? <String, ModChangelog>{},
+      state.value ?? <String, ModChangelog>{},
     );
 
     for (final mod in mods) {

@@ -144,7 +144,7 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
           final firstFile = files.first;
           handleDroppedLogFile(firstFile.path).then((content) {
             if (content == null) {
-              return; // TODO ref.read(ChipperState.logRawContents).valueOrNull;
+              return; // TODO ref.read(ChipperState.logRawContents).value;
             }
             return ref
                 .read(ChipperState.logRawContents.notifier)

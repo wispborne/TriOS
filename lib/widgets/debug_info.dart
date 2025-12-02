@@ -16,7 +16,7 @@ class DebugInfo extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final vcResultsCache =
-        (ref.watch(AppState.versionCheckResults).valueOrNull)
+        (ref.watch(AppState.versionCheckResults).value)
             ?.versionCheckResultsBySmolId ??
         {};
 

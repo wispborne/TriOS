@@ -7,11 +7,11 @@ import 'dart:io';
 import 'package:csv/csv.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart' show StateProvider;
 import 'package:path/path.dart' as p;
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/shipSystemsManager/ship_system.dart';
 import 'package:trios/trios/app_state.dart';
-import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/csv_parse_utils.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
@@ -28,7 +28,7 @@ final shipSystemsStreamProvider = StreamProvider<List<ShipSystem>>((
   int filesProcessed = 0;
 
   final gameCorePath = ref
-      .watch(AppState.gameCoreFolder).valueOrNull
+      .watch(AppState.gameCoreFolder).value
       ?.path;
   if (gameCorePath == null || gameCorePath.isEmpty) {
     throw Exception('Game folder path is not set.');

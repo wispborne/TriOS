@@ -49,7 +49,7 @@ class SelfUpdater extends AsyncNotifier<TriOSDownloadProgress?> {
 
   @override
   Future<TriOSDownloadProgress?> build() async {
-    _archiver = ref.watch(archiveProvider).valueOrNull;
+    _archiver = ref.watch(archiveProvider).value;
     return null;
   }
 

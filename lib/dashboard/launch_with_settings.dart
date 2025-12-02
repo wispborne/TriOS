@@ -65,7 +65,7 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
     // final gameDir = ref.read(appSettings.select((value) => value.gameDir));
     final isUsingCustomJre = ref
         .watch(jreManagerProvider)
-        .valueOrNull
+        .value
         ?.activeJre
         ?.isCustomJre;
     // var currentScreenScaling = ref.watch(appSettings.select((value) => value.launchSettings)).screenScaling ??
@@ -214,7 +214,7 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                             builder: (context) {
                               final path = ref
                                   .watch(AppState.gameExecutable)
-                                  .valueOrNull
+                                  .value
                                   ?.absolute
                                   .path
                                   .let((p) {
@@ -238,14 +238,14 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                           ),
                         ),
                         Text(
-                          ref.watch(AppState.starsectorVersion).valueOrNull ??
+                          ref.watch(AppState.starsectorVersion).value ??
                               "Starsector version unknown",
                           style: Theme.of(context).textTheme.labelMedium,
                         ),
                         // Removed because it's shown on the JRE & RAM Settings tile now.
                         // Builder(builder: (context) {
                         //   final activeJre =
-                        //       ref.watch(AppState.activeJre).valueOrNull?.version;
+                        //       ref.watch(AppState.activeJre).value?.version;
                         //   return Text(
                         //       activeJre != null
                         //           ? "Java ${activeJre.versionString}"
@@ -253,7 +253,7 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                         //       style: Theme.of(context).textTheme.labelMedium);
                         // }),
                         Text(
-                          ref.watch(AppState.modsFolder).valueOrNull?.path ??
+                          ref.watch(AppState.modsFolder).value?.path ??
                               "No mods folder!",
                           style: Theme.of(context).textTheme.labelMedium,
                         ),

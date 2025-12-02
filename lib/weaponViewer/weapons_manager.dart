@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:csv/csv.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart' show StateProvider;
 import 'package:path/path.dart' as p;
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/trios/app_state.dart';
@@ -22,7 +23,7 @@ final weaponListNotifierProvider = StreamProvider<List<Weapon>>((ref) async* {
   ref.watch(isLoadingWeaponsList.notifier).state = true;
   filesProcessed = 0;
   final gameCorePath = ref
-      .watch(AppState.gameCoreFolder).valueOrNull
+      .watch(AppState.gameCoreFolder).value
       ?.path;
 
   if (gameCorePath == null || gameCorePath.isEmpty) {

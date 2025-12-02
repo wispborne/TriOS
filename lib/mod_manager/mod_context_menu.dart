@@ -43,7 +43,7 @@ ContextMenu buildModContextMenu(
       MenuHeader(text: Constants.appName, disableUppercase: true),
       if (openSidebar != null)
         buildMenuItemOpenInSidebar(mod, ref, openSidebar),
-      if (ref.watch(AppState.vramEstimatorProvider).valueOrNull?.isScanning !=
+      if (ref.watch(AppState.vramEstimatorProvider).value?.isScanning !=
           true)
         buildMenuItemCheckVram(mod, ref),
       buildMenuItemToggleMuteUpdates(mod, ref),

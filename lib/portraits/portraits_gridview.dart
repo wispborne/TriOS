@@ -57,7 +57,7 @@ class PortraitsGridView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final modsPath =
-        ref.watch(AppState.modsFolder).valueOrNull ?? Directory("");
+        ref.watch(AppState.modsFolder).value ?? Directory("");
 
     return LayoutBuilder(
       builder: (context, constraints) {

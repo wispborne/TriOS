@@ -36,7 +36,7 @@ class _GamePerformanceWidgetState extends ConsumerState<GamePerformanceWidget>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final gameDir = ref.read(AppState.gameFolder).valueOrNull?.toDirectory();
+    final gameDir = ref.read(AppState.gameFolder).value?.toDirectory();
 
     if (gameDir == null) {
       return const Center(child: Text("Game directory not set."));
@@ -77,13 +77,13 @@ class _ChangeJreWidgetState extends ConsumerState<ChangeJreWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final jreManager = ref.watch(jreManagerProvider).valueOrNull;
+    final jreManager = ref.watch(jreManagerProvider).value;
     // final isUsingCustomJre = jreManager?.activeJre is CustomJreToDownload;
     final jres = jreManager?.installedJres.orEmpty().toList() ?? [];
     // final activeJres = jreManager?.activeJres.orEmpty().toList() ?? [];
     final activeJre = jreManager?.activeJre;
     final gameVersion =
-        ref.watch(AppState.starsectorVersion).valueOrNull ?? "0.0.0";
+        ref.watch(AppState.starsectorVersion).value ?? "0.0.0";
 
     var iconSize = 40.0;
 
@@ -338,7 +338,7 @@ class _ChangeJreWidgetState extends ConsumerState<ChangeJreWidget> {
                                                           .watch(
                                                             jre.downloadProvider,
                                                           )
-                                                          .valueOrNull;
+                                                          .value;
                                                       return downloadState
                                                                   ?.downloadProgress ==
                                                               null

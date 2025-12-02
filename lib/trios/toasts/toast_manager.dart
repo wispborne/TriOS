@@ -33,19 +33,19 @@ class _ToastDisplayerState extends ConsumerState<ToastDisplayer> {
 
     ref.listen(AppState.modVariants, (prevMods, currMods) {
       if (prevMods == null) return;
-      if (prevMods.valueOrNull == null || currMods.valueOrNull == null) return;
-      if (prevMods.valueOrNull?.length == currMods.valueOrNull?.length) return;
+      if (prevMods.value == null || currMods.value == null) return;
+      if (prevMods.value?.length == currMods.value?.length) return;
       final downloads = ref.watch(downloadManager).value.orEmpty().toList();
 
       // modAddedDebouncer.debounce(() async {
       showModAddedToasts(
-        modsAtTimeOfLastRefresh ?? prevMods.valueOrNull,
-        currMods.valueOrNull,
+        modsAtTimeOfLastRefresh ?? prevMods.value,
+        currMods.value,
         downloads,
         context,
         toastDurationMillis,
       );
-      // modsAtTimeOfLastRefresh = currMods.valueOrNull?.toList();
+      // modsAtTimeOfLastRefresh = currMods.value?.toList();
       // });
     });
     final downloads = ref.watch(downloadManager).value.orEmpty().toList();

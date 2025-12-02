@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart' show StateProvider;
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/mod_profiles/models/mod_profile.dart';
@@ -63,15 +64,15 @@ class _ModListMiniState extends ConsumerState<ModListMini>
         .toSet();
     // ref
     //     .watch(AppState.enabledModsFile)
-    //     .valueOrNull
+    //     .value
     //     ?.filterOutMissingMods(fullModList)
     //     .enabledMods;
 
     final modVariants = ref.watch(AppState.modVariants);
     final query = ref.watch(_searchQuery);
-    final versionCheck = ref.watch(AppState.versionCheckResults).valueOrNull;
+    final versionCheck = ref.watch(AppState.versionCheckResults).value;
     final theme = Theme.of(context);
-    final vramEstState = ref.watch(AppState.vramEstimatorProvider).valueOrNull;
+    final vramEstState = ref.watch(AppState.vramEstimatorProvider).value;
     final sorting = ref.watch(
       appSettings.select((s) => s.dashboardModListSort),
     );
@@ -169,7 +170,7 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                         //   context,
                                         // );
                                         copyModListToClipboard(
-                                          variants: modVariants.valueOrNull
+                                          variants: modVariants.value
                                               .orEmpty()
                                               .map(
                                                 ShallowModVariant
@@ -193,7 +194,7 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                           //   context,
                                           // );
                                           copyModListToClipboard(
-                                            variants: modVariants.valueOrNull
+                                            variants: modVariants.value
                                                 .orEmpty()
                                                 .where(
                                                   (it) =>
@@ -217,7 +218,7 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                   //     onSecondaryTap: () {
                                   //       copyModListToClipboard(
                                   //         id: null,
-                                  //         variants: modVariants.valueOrNull
+                                  //         variants: modVariants.value
                                   //             .orEmpty()
                                   //             .map(
                                   //               ShallowModVariant
@@ -238,7 +239,7 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                   //       ),
                                   //       onPressed: () {
                                   //         copyModListToClipboard(
-                                  //           variants: modVariants.valueOrNull
+                                  //           variants: modVariants.value
                                   //               .orEmpty()
                                   //               .where(
                                   //                 (it) =>
@@ -498,7 +499,7 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                     DashboardGridModUpdateVisibility.hideAll;
                 final modsMetadata = ref
                     .watch(AppState.modsMetadata)
-                    .valueOrNull;
+                    .value;
                 final modsWithUpdates =
                     <Mod?>[null] +
                     filteredModList

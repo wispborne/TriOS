@@ -240,7 +240,7 @@ class ModTagStoreNotifier extends GenericSettingsAsyncNotifier<ModTagStore> {
 
   ModTagStore _snapshot() {
     // Prefer live state; fall back to lastKnownValue if build hasn't completed yet.
-    return state.valueOrNull ??
+    return state.value ??
         (settingsManager.lastKnownValue ?? createDefaultState());
   }
 

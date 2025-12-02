@@ -24,7 +24,7 @@ class EnabledModsNotifier extends AsyncNotifier<EnabledMods> {
   Future<EnabledMods> build() async {
     return fileLock.protect(() async {
       await refreshEnabledMods();
-      return state.valueOrNull ?? const EnabledMods({});
+      return state.value ?? const EnabledMods({});
     });
   }
 
@@ -33,7 +33,7 @@ class EnabledModsNotifier extends AsyncNotifier<EnabledMods> {
   }
 
   Future<bool> isWritable() {
-    final modsFolder = ref.read(AppState.modsFolder).valueOrNull;
+    final modsFolder = ref.read(AppState.modsFolder).value;
     if (modsFolder == null) {
       return Future.value(false);
     }
@@ -44,13 +44,13 @@ class EnabledModsNotifier extends AsyncNotifier<EnabledMods> {
     // Prevent concurrent writes to the enabled_mods.json file and make sure
     // that the file is not read while it's being written to.
     await fileLock.protect(() async {
-      final modsFolder = ref.read(AppState.modsFolder).valueOrNull;
+      final modsFolder = ref.read(AppState.modsFolder).value;
       if (modsFolder == null) {
         return;
       }
 
       final enabledModsFile = _getEnabledModsFile(modsFolder);
-      var enabledMods = state.valueOrNull ?? const EnabledMods({});
+      var enabledMods = state.value ?? const EnabledMods({});
 
       if (enabled) {
         enabledMods = enabledMods.copyWith(
@@ -88,7 +88,7 @@ class EnabledModsNotifier extends AsyncNotifier<EnabledMods> {
   /// `allMods` is an optional parameter that filters out mods that don't exist.
   Future<void> refreshEnabledMods() async {
     fileLock.protect(() async {
-      final modsFolder = ref.watch(AppState.modsFolder).valueOrNull;
+      final modsFolder = ref.watch(AppState.modsFolder).value;
 
       if (modsFolder == null || !modsFolder.existsSync()) {
         state = const AsyncValue.data(EnabledMods({}));

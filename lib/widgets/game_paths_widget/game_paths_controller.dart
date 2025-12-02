@@ -11,7 +11,7 @@ import 'package:trios/utils/util.dart';
 part 'game_paths_controller.mapper.dart';
 
 final gamePathsControllerProvider =
-    AutoDisposeNotifierProvider<GamePathsSetupController, GamePathsSetupState>(
+    NotifierProvider<GamePathsSetupController, GamePathsSetupState>(
       GamePathsSetupController.new,
     );
 
@@ -52,7 +52,7 @@ class CustomPathFieldState with CustomPathFieldStateMappable {
 
 /// Controller for [GamePathsWidget]
 class GamePathsSetupController
-    extends AutoDisposeNotifier<GamePathsSetupState> {
+    extends Notifier<GamePathsSetupState> {
   @override
   GamePathsSetupState build() {
     final gameFolderPathFromSettings =

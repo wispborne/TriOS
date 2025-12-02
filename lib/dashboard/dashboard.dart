@@ -41,7 +41,7 @@ class _DashboardState extends ConsumerState<Dashboard>
 
     // For startup performance, wait to load until after mods have loaded.
     if (ref.watch(AppState.mods).isNotEmpty) {
-      if (ref.read(ChipperState.logRawContents).valueOrNull == null) {
+      if (ref.read(ChipperState.logRawContents).value == null) {
         ref.read(ChipperState.logRawContents.notifier).loadDefaultLog();
       }
     }
@@ -49,7 +49,7 @@ class _DashboardState extends ConsumerState<Dashboard>
     final isGameRunning = ref.watch(AppState.isGameRunning).value == true;
     final logfile = ref
         .watch(ChipperState.logRawContents)
-        .valueOrNull
+        .value
         ?.filepath
         ?.toFile();
 
@@ -80,7 +80,7 @@ class _DashboardState extends ConsumerState<Dashboard>
                                   leading:
                                       (ref
                                               .watch(jreManagerProvider)
-                                              .valueOrNull
+                                              .value
                                               ?.hasMultipleActiveJresWithDifferentRamAmounts ??
                                           false)
                                       ? const Icon(
@@ -91,7 +91,7 @@ class _DashboardState extends ConsumerState<Dashboard>
                                         )
                                       : const Icon(Icons.speed, size: 32),
                                   subtitle: Text(
-                                    "Java ${ref.watch(AppState.activeJre).valueOrNull?.version.versionString ?? "(unknown JRE)"} • ${ref.watch(currentRamAmountInMb).valueOrNull ?? "(unknown RAM)"} MB",
+                                    "Java ${ref.watch(AppState.activeJre).value?.version.versionString ?? "(unknown JRE)"} • ${ref.watch(currentRamAmountInMb).value ?? "(unknown RAM)"} MB",
                                   ),
                                   collapsedBackgroundColor: Theme.of(context)
                                       .colorScheme
@@ -114,7 +114,7 @@ class _DashboardState extends ConsumerState<Dashboard>
                         builder: (context) {
                           final errors = ref
                               .watch(ChipperState.logRawContents)
-                              .valueOrNull;
+                              .value;
                           final theme = Theme.of(context);
                           return Column(
                             children: [

@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart' show StateProvider;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:trios/chipper/utils.dart';
 import 'package:trios/dashboard/changelogs.dart';
@@ -97,7 +98,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
 
     final query = _searchController.value.text;
     final modsMatchingSearch = searchMods(allMods, query) ?? [];
-    final modsMetadata = ref.watch(AppState.modsMetadata).valueOrNull;
+    final modsMetadata = ref.watch(AppState.modsMetadata).value;
     final vramEstState = ref.watch(AppState.vramEstimatorProvider);
     final loadOrderNumberLookupByModId = allMods
         .where((mod) => mod.hasEnabledVariant)
@@ -279,7 +280,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                     final isHovering = modifiers.isHovering ?? false;
                     final modMetadata = ref
                         .watch(AppState.modsMetadata)
-                        .valueOrNull
+                        .value
                         ?.userMetadata[item.id];
                     final isFavorited = modMetadata?.isFavorited ?? false;
 
@@ -581,7 +582,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                       name: "VRAM Est.",
                       isSortable: true,
                       getSortValue: (mod) =>
-                          mod.getSortValueForVram(vramEstState.valueOrNull),
+                          mod.getSortValueForVram(vramEstState.value),
                       headerCellBuilder: (modifiers) => buildColumnHeader(
                         ModGridHeader.vramImpact,
                         modifiers,
@@ -593,7 +594,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                       ),
                       csvValue: (mod) => ref
                           .read(AppState.vramEstimatorProvider)
-                          .valueOrNull
+                          .value
                           ?.modVramInfo[mod
                               .findFirstEnabledOrHighestVersion!
                               .smolId]
@@ -867,7 +868,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
     return Builder(
       builder: (context) {
         final vramEst = ref.watch(AppState.vramEstimatorProvider);
-        final isScanningVram = vramEst.valueOrNull?.isScanning == true;
+        final isScanningVram = vramEst.value?.isScanning == true;
         return Animate(
           controller: animationController,
           effects: [
@@ -945,7 +946,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
   Widget buildProfileSelector(bool isGameRunning) {
     return Builder(
       builder: (context) {
-        final profiles = ref.watch(modProfilesProvider).valueOrNull;
+        final profiles = ref.watch(modProfilesProvider).value;
         final activeProfileId = ref.watch(
           appSettings.select((s) => s.activeModProfileId),
         );
@@ -1329,7 +1330,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                 AppState.vramEstimatorProvider,
               );
               final vramProvider = ref.watch(AppState.vramEstimatorProvider);
-              final vramMap = vramProvider.valueOrNull?.modVramInfo ?? {};
+              final vramMap = vramProvider.value?.modVramInfo ?? {};
               final vramEstimate = vramMap[bestVersion.smolId];
               final biggestFish = vramMap
                   .maxBy((e) => e.value.imagesNotIncludingGraphicsLib().sum())
@@ -1421,7 +1422,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                                   child: Disable(
                                     isEnabled:
                                         vramEstimatorState
-                                            .valueOrNull
+                                            .value
                                             ?.isScanning !=
                                         true,
                                     child: MovingTooltipWidget.text(
@@ -1486,7 +1487,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
         );
         final versionCheckResultsNew = ref
             .watch(AppState.versionCheckResults)
-            .valueOrNull;
+            .value;
         //
         final versionCheckComparison = mod.updateCheck(versionCheckResultsNew);
         final localVersionCheck =

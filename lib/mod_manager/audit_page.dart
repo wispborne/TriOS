@@ -24,7 +24,7 @@ class _AuditPageState extends ConsumerState<AuditPage> {
     final modVariantsBySmolId =
         (ref
                     .watch(AppState.modVariants)
-                    .valueOrNull
+                    .value
                     ?.groupBy((ModVariant variant) => variant.smolId) ??
                 {})
             .map((key, value) => MapEntry(key, value.first))
@@ -33,7 +33,7 @@ class _AuditPageState extends ConsumerState<AuditPage> {
 
     // Access persisted audit log from ModAuditNotifier
     final auditLog = groupByTime(
-      (ref.watch(AppState.modAudit).valueOrNull ?? []).reversed.toList(),
+      (ref.watch(AppState.modAudit).value ?? []).reversed.toList(),
     );
 
     final dateFormat = DateFormat.yMMMMd(Intl.getCurrentLocale()).add_jms();

@@ -42,7 +42,7 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
 
     if (!_initializedFileWatcher) {
       _initializedFileWatcher = true;
-      final modsPath = ref.watch(AppState.modsFolder).valueOrNull;
+      final modsPath = ref.watch(AppState.modsFolder).value;
 
       if (modsPath != null && modsPath.existsSync()) {
         addModsFolderFileWatcher(modsPath, (List<File> files) {
@@ -50,7 +50,7 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
         });
       }
     }
-    return state.valueOrNull ?? [];
+    return state.value ?? [];
   }
 
   Future onModsFolderChanged() async {
@@ -80,8 +80,8 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
       Fimber.i(
         "Loading mod variant data from disk (reading mod_info.json files).${(onlyVariants == null) ? "" : " Only reloading ${onlyVariants.joinToString(transform: (it) => it.smolId)}"}",
       );
-      final gamePath = ref.watch(AppState.gameFolder).valueOrNull;
-      final modsPath = ref.watch(AppState.modsFolder).valueOrNull;
+      final gamePath = ref.watch(AppState.gameFolder).value;
+      final modsPath = ref.watch(AppState.modsFolder).value;
       if (gamePath == null || modsPath == null) {
         return;
       }
@@ -114,7 +114,7 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
         state = AsyncValue.data(variants);
       } else {
         // Update only the variants that were changed, keep the rest of the state.
-        final newVariants = state.valueOrNull?.toList() ?? [];
+        final newVariants = state.value?.toList() ?? [];
         for (var variant in onlyVariants) {
           newVariants.removeWhere((it) => it.smolId == variant.smolId);
         }

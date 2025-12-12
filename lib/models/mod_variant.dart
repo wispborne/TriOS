@@ -36,6 +36,7 @@ class ModVariant with ModVariantMappable implements Comparable<ModVariant> {
 
   /// In-memory cache, won't be updated if the mod's icon changes until restart.
   /// Better than re-reading the files every time, though.
+  /// Key is the mod id (not smolId).
   static Map<String, String?> iconCache = {};
 
   String? get iconFilePath {

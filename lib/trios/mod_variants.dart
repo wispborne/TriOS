@@ -4,9 +4,9 @@ import 'dart:io';
 import 'package:collection/collection.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mutex/mutex.dart';
+import 'package:path/path.dart' as p;
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/trios/constants.dart';
-import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/debouncer.dart';
 import 'package:trios/utils/extensions.dart';
 
@@ -26,12 +26,14 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
 
   @override
   Future<List<ModVariant>> build() async {
+    // if (state.value == null && !state.hasError) {
     try {
       await reloadModVariants();
     } catch (e, stacktrace) {
       state = AsyncValue.error(e, stacktrace);
       Fimber.e("Failed to reload mod variants", ex: e, stacktrace: stacktrace);
     }
+    // }
 
     ref.listen(AppState.modsFolder, (previous, next) {
       if (previous != next) {
@@ -46,26 +48,63 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
 
       if (modsPath != null && modsPath.existsSync()) {
         addModsFolderFileWatcher(modsPath, (List<File> files) {
-          _fileWatcherReloadDebouncer.debounce(onModsFolderChanged);
+          _fileWatcherReloadDebouncer.debounce(() {
+            onModsFolderChanged(files);
+            return null;
+          });
         });
       }
     }
     return state.value ?? [];
   }
 
-  Future onModsFolderChanged() async {
-    if (shouldAutomaticallyReloadOnFilesChanged && !_isReloadingInternal) {
-      Fimber.i("Mods folder changed, invalidating mod variants.");
-      ref.invalidateSelf();
+  Future onModsFolderChanged(List<File> files) async {
+    if (!shouldAutomaticallyReloadOnFilesChanged && !_isReloadingInternal) {
+      Fimber.i(
+        "Mods folder changed, reloading mods for files: ${files.joinToString(transform: (it) => it.path)}",
+      );
+      // Fimber.i("Mods folder changed, invalidating mod variants.");
+      // ref.invalidateSelf();
+      // return;
     } else if (!shouldAutomaticallyReloadOnFilesChanged) {
       Fimber.i(
         "Mods folder changed, but not reloading mod variants because shouldAutomaticallyReloadOnFilesChanged is false.",
       );
+      return;
     } else if (_isReloadingInternal) {
       Fimber.i(
         "Mods folder changed, but not reloading mod variants because _isReloadingInternal is true.",
       );
+      return;
     }
+
+    final modsDir = ref.read(AppState.modsFolder).value;
+    if (modsDir == null) return;
+
+    final touchedTopLevelNames = files
+        .map((f) {
+          final rel = p.relative(f.path, from: modsDir.path);
+          if (rel.isEmpty || rel == ".") return null;
+          final parts = p.split(rel);
+          if (parts.isEmpty) return null;
+          final first = parts.first;
+          if (first == "." || first == "..") return null;
+          return first;
+        })
+        .whereType<String>()
+        .toSet();
+
+    if (touchedTopLevelNames.isEmpty) {
+      // Couldn't determine; safest fallback.
+      ref.invalidateSelf();
+      return;
+    }
+
+    final touchedFolders = touchedTopLevelNames
+        .map((name) => modsDir.resolve(name).toDirectory())
+        .toList();
+
+    await reloadModVariantsFromFolders(onlyFolders: touchedFolders);
   }
 
   Future<void> setModVariants(List<ModVariant> newVariants) async {
@@ -75,32 +114,48 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
   }
 
   Future<void> reloadModVariants({List<ModVariant>? onlyVariants}) async {
+    // Delegate to folder-based method (variants -> folders)
+    await reloadModVariantsFromFolders(
+      onlyFolders: onlyVariants?.map((v) => v.modFolder).toList(),
+    );
+  }
+
+  /// Folder-based reload entrypoint (useful for file watchers).
+  Future<void> reloadModVariantsFromFolders({
+    List<Directory>? onlyFolders,
+  }) async {
     _isReloadingInternal = true;
     try {
       Fimber.i(
-        "Loading mod variant data from disk (reading mod_info.json files).${(onlyVariants == null) ? "" : " Only reloading ${onlyVariants.joinToString(transform: (it) => it.smolId)}"}",
+        "Loading mod variant data from disk (reading mod_info.json files)."
+        "${(onlyFolders == null) ? "" : " Only reloading ${onlyFolders.map((d) => d.name).join(", ")}"}",
       );
+
       final gamePath = ref.watch(AppState.gameFolder).value;
       final modsPath = ref.watch(AppState.modsFolder).value;
       if (gamePath == null || modsPath == null) {
         return;
       }
 
-      final variants = onlyVariants == null
+      final folders = onlyFolders
+          ?.where((d) => d.existsSync())
+          .toList(growable: false);
+
+      final variants = folders == null
           ? await getModsVariantsInFolder(
               modsPath.toDirectory(),
               searchRootFolder: false,
             )
           : (await Future.wait(
-              onlyVariants.map((variant) {
+              folders.map((folder) async {
                 try {
                   return getModsVariantsInFolder(
-                    variant.modFolder,
+                    folder,
                     searchRootFolder: true,
                   );
                 } catch (e, st) {
                   Fimber.w(
-                    "Error getting mod variants for ${variant.smolId}",
+                    "Error getting mod variants for folder ${folder.path}",
                     ex: e,
                     stacktrace: st,
                   );
@@ -109,20 +164,25 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
               }),
             )).nonNulls.flattened.toList();
 
-      if (onlyVariants == null) {
-        // Replace the entire state with the new data.
+      if (folders == null) {
         state = AsyncValue.data(variants);
+        ModVariant.iconCache.clear();
       } else {
-        // Update only the variants that were changed, keep the rest of the state.
+        // Remove any variants whose modFolder was reloaded, then add updated ones.
         final newVariants = state.value?.toList() ?? [];
-        for (var variant in onlyVariants) {
-          newVariants.removeWhere((it) => it.smolId == variant.smolId);
-        }
-        newVariants.addAll(variants);
-        state = AsyncValue.data(newVariants);
-      }
+        final folderPaths = folders.map((d) => d.path).toSet();
 
-      ModVariant.iconCache.clear();
+        newVariants.removeWhere(
+          (it) => folderPaths.contains(it.modFolder.path),
+        );
+        newVariants.addAll(variants);
+
+        state = AsyncValue.data(newVariants);
+        // Remove icons of mods/variants that changed.
+        ModVariant.iconCache.removeWhere(
+          (key, value) => variants.any((variant) => variant.modInfo.id == key),
+        );
+      }
     } finally {
       _isReloadingInternal = false;
     }

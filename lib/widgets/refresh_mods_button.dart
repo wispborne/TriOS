@@ -107,7 +107,7 @@ class _RefreshModsButtonState extends ConsumerState<RefreshModsButton> {
   void _refresh() {
     AppState.skipCacheOnNextVersionCheck = true;
     ModVariant.iconCache.clear();
-    ref.invalidate(AppState.modVariants);
+    ref.read(AppState.modVariants.notifier).reloadModVariants();
     ref.invalidate(AppState.changelogsProvider);
   }
 }

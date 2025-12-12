@@ -185,7 +185,7 @@ class ForceGameVersionWarningDialog extends ConsumerWidget {
             refreshModlistAfter: refreshModlistAfter,
           );
     }
-    ref.invalidate(AppState.modVariants);
+    ref.read(AppState.modVariants.notifier).reloadModVariants();
     onForced?.call();
   }
 }

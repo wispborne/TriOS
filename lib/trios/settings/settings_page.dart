@@ -716,9 +716,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                                       .cleanUpAllModVariantsBasedOnRetainSetting(
                                                         dryRun: false,
                                                       );
-                                                  ref.invalidate(
-                                                    AppState.modVariants,
-                                                  );
+                                                  ref.read(AppState.modVariants.notifier).reloadModVariants();
                                                 },
                                                 icon: Icon(Icons.delete),
                                                 label: const Text("Delete"),

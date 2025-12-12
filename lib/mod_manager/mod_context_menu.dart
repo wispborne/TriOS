@@ -94,7 +94,7 @@ ContextMenu buildModBulkActionContextMenu(
                   selectedMods.last.findHighestVersion,
                   validateDependencies: true,
                 );
-            ref.invalidate(AppState.modVariants);
+            ref.read(AppState.modVariants.notifier).reloadModVariants();
           },
         ),
       if (!isGameRunning && selectedMods.any((mod) => mod.hasEnabledVariant))
@@ -124,7 +124,7 @@ ContextMenu buildModBulkActionContextMenu(
                   null,
                   validateDependencies: true,
                 );
-            ref.invalidate(AppState.modVariants);
+            ref.read(AppState.modVariants.notifier).reloadModVariants();
           },
         ),
       // check vram of selected

@@ -16,11 +16,12 @@ import 'package:trios/utils/logging.dart';
 import 'package:trios/weaponViewer/models/weapon.dart';
 
 final isLoadingWeaponsList = StateProvider<bool>((ref) => false);
+final isWeaponsListDirty = StateProvider<bool>((ref) => false);
 final weaponListNotifierProvider = StreamProvider<List<Weapon>>((ref) async* {
   int filesProcessed = 0;
 
   final currentTime = DateTime.now();
-  ref.watch(isLoadingWeaponsList.notifier).state = true;
+  ref.read(isLoadingWeaponsList.notifier).state = true;
   filesProcessed = 0;
   final gameCorePath = ref
       .watch(AppState.gameCoreFolder).value
@@ -30,8 +31,14 @@ final weaponListNotifierProvider = StreamProvider<List<Weapon>>((ref) async* {
     throw Exception('Game folder path is not set.');
   }
 
+  ref.listen(AppState.variantSmolIds, (previous, next) {
+    ref.read(isWeaponsListDirty.notifier).state = true;
+  });
+
+  // Don't watch for mod changes, the background processing is too expensive.
+  // User has to manually refresh weapons viewer.
   final variants = ref
-      .watch(AppState.mods)
+      .read(AppState.mods)
       .map((mod) => mod.findFirstEnabledOrHighestVersion)
       .nonNulls
       .toList();
@@ -69,7 +76,8 @@ final weaponListNotifierProvider = StreamProvider<List<Weapon>>((ref) async* {
     Fimber.w('Errors encountered during parsing:\n${allErrors.join('\n')}');
   }
 
-  ref.watch(isLoadingWeaponsList.notifier).state = false;
+  ref.read(isLoadingWeaponsList.notifier).state = false;
+  ref.read(isWeaponsListDirty.notifier).state = false;
   Fimber.i(
     'Parsed ${allWeapons.length} weapons from ${variants.length + 1} mods and $filesProcessed files in ${DateTime.now().difference(currentTime).inMilliseconds}ms',
   );

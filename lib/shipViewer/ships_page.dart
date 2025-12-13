@@ -129,13 +129,26 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
                   '$total Ships${total != visible ? " ($visible shown)" : ""}',
                   style: theme.textTheme.headlineSmall?.copyWith(fontSize: 20),
                 ),
+                const SizedBox(width: 4),
                 if (controllerState.isLoading)
-                  const Padding(
-                    padding: EdgeInsets.only(left: 8),
+                  Padding(
+                    padding: const .only(left: 8),
                     child: SizedBox(
                       width: 24,
                       height: 24,
                       child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ),
+                if (!controllerState.isLoading)
+                  MovingTooltipWidget.text(
+                    message: "Refresh",
+                    child: Disable(
+                      isEnabled: !controllerState.isLoading,
+                      child: IconButton(
+                        icon: const Icon(Icons.refresh),
+                        onPressed: () =>
+                            ref.invalidate(shipListNotifierProvider),
+                      ),
                     ),
                   ),
                 const SizedBox(width: 8),
@@ -198,16 +211,6 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
                     multiSplitController.areas = areas;
                     setState(() {});
                   },
-                ),
-                MovingTooltipWidget.text(
-                  message: "Refresh",
-                  child: Disable(
-                    isEnabled: !controllerState.isLoading,
-                    child: IconButton(
-                      icon: const Icon(Icons.refresh),
-                      onPressed: () => ref.invalidate(shipListNotifierProvider),
-                    ),
-                  ),
                 ),
                 _buildOverflowButton(
                   context: context,

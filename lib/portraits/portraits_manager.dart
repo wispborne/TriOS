@@ -37,8 +37,7 @@ class PortraitsNotifier
 
       final mods = ref.read(AppState.mods);
       final variants =
-          mods.map((mod) => mod.findFirstEnabledOrHighestVersion).toList() +
-          [null];
+          mods.map((mod) => mod.findFirstEnabledOrHighestVersion).toList();
 
       if (_lastState.isEmpty) {
         Fimber.i("Scanning all portraits for the first time.");

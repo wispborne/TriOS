@@ -16,11 +16,12 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 
 final isLoadingShipsList = StateProvider<bool>((ref) => false);
+final isShipsListDirty = StateProvider<bool>((ref) => false);
 final shipListNotifierProvider = StreamProvider<List<Ship>>((ref) async* {
   int filesProcessed = 0;
 
   final currentTime = DateTime.now();
-  ref.watch(isLoadingShipsList.notifier).state = true;
+  ref.read(isLoadingShipsList.notifier).state = true;
   filesProcessed = 0;
   final gameCorePath = ref
       .watch(AppState.gameCoreFolder).value
@@ -30,8 +31,14 @@ final shipListNotifierProvider = StreamProvider<List<Ship>>((ref) async* {
     throw Exception('Game folder path is not set.');
   }
 
+  ref.listen(AppState.variantSmolIds, (previous, next) {
+    ref.read(isShipsListDirty.notifier).state = true;
+  });
+
+  // Don't watch for mod changes, the background processing is too expensive.
+  // User has to manually refresh ships viewer.
   final variants = ref
-      .watch(AppState.mods)
+      .read(AppState.mods)
       .map((mod) => mod.findFirstEnabledOrHighestVersion)
       .nonNulls
       .toList();
@@ -65,7 +72,8 @@ final shipListNotifierProvider = StreamProvider<List<Ship>>((ref) async* {
     Fimber.w('Ship parsing errors:\n${allErrors.join('\n')}');
   }
 
-  ref.watch(isLoadingShipsList.notifier).state = false;
+  ref.read(isLoadingShipsList.notifier).state = false;
+  ref.read(isShipsListDirty.notifier).state = false;
   Fimber.i(
     'Parsed ${allShips.length} ships from ${variants.length + 1} mods and $filesProcessed files in ${DateTime.now().difference(currentTime).inMilliseconds}ms',
   );

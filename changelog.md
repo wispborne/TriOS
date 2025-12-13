@@ -29,6 +29,7 @@
     - This fixes Fast Rendering, which launches using a .bat in the `starsector-core` folder.
   - VRAM pie chart breaking after refreshing data.
   - Theme selection menu is no longer a textbox.
+  - Mod icons that used vanilla icon paths weren't shown.
 - Changed
   - Cleaned up search bar positioning on Ships and Weapons Viewer pages.
   - CODEX_UNLOCKABLE ships are now hidden by default on the Ship Viewer.

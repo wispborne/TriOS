@@ -43,6 +43,11 @@ class ModVariantMapper extends ClassMapperBase<ModVariant> {
     'hasNonBrickedModInfo',
     _$hasNonBrickedModInfo,
   );
+  static Directory _$gameCoreFolder(ModVariant v) => v.gameCoreFolder;
+  static const Field<ModVariant, Directory> _f$gameCoreFolder = Field(
+    'gameCoreFolder',
+    _$gameCoreFolder,
+  );
 
   @override
   final MappableFields<ModVariant> fields = const {
@@ -50,6 +55,7 @@ class ModVariantMapper extends ClassMapperBase<ModVariant> {
     #versionCheckerInfo: _f$versionCheckerInfo,
     #modFolder: _f$modFolder,
     #hasNonBrickedModInfo: _f$hasNonBrickedModInfo,
+    #gameCoreFolder: _f$gameCoreFolder,
   };
 
   static ModVariant _instantiate(DecodingData data) {
@@ -58,6 +64,7 @@ class ModVariantMapper extends ClassMapperBase<ModVariant> {
       versionCheckerInfo: data.dec(_f$versionCheckerInfo),
       modFolder: data.dec(_f$modFolder),
       hasNonBrickedModInfo: data.dec(_f$hasNonBrickedModInfo),
+      gameCoreFolder: data.dec(_f$gameCoreFolder),
     );
   }
 
@@ -129,6 +136,7 @@ abstract class ModVariantCopyWith<$R, $In extends ModVariant, $Out>
     VersionCheckerInfo? versionCheckerInfo,
     Directory? modFolder,
     bool? hasNonBrickedModInfo,
+    Directory? gameCoreFolder,
   });
   ModVariantCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -155,6 +163,7 @@ class _ModVariantCopyWithImpl<$R, $Out>
     Object? versionCheckerInfo = $none,
     Directory? modFolder,
     bool? hasNonBrickedModInfo,
+    Directory? gameCoreFolder,
   }) => $apply(
     FieldCopyWithData({
       if (modInfo != null) #modInfo: modInfo,
@@ -162,6 +171,7 @@ class _ModVariantCopyWithImpl<$R, $Out>
       if (modFolder != null) #modFolder: modFolder,
       if (hasNonBrickedModInfo != null)
         #hasNonBrickedModInfo: hasNonBrickedModInfo,
+      if (gameCoreFolder != null) #gameCoreFolder: gameCoreFolder,
     }),
   );
   @override
@@ -176,6 +186,7 @@ class _ModVariantCopyWithImpl<$R, $Out>
       #hasNonBrickedModInfo,
       or: $value.hasNonBrickedModInfo,
     ),
+    gameCoreFolder: data.get(#gameCoreFolder, or: $value.gameCoreFolder),
   );
 
   @override

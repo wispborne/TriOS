@@ -194,6 +194,9 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
   }) async {
     final mods = <ModVariant?>[];
     if (!modsFolder.existsSync()) return [];
+    final gameCoreFolder = ref.watch(AppState.gameCoreFolder).value;
+    if (gameCoreFolder == null) return [];
+
     final folders = modsFolder.listSync().whereType<Directory>().toList();
 
     // If we're searching the game's mods folder, we don't want to include `mods/mod_info.json` (invalid mod, and dangerous because its parent folder is `mods`).
@@ -219,6 +222,7 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
           hasNonBrickedModInfo: await modFolder
               .resolve(Constants.unbrickedModInfoFileName)
               .exists(),
+          gameCoreFolder: gameCoreFolder,
         );
 
         Fimber.d("Found mod ${modVariant.smolId} in folder ${modFolder.name}");

@@ -25,12 +25,19 @@ class ModVariant with ModVariantMappable implements Comparable<ModVariant> {
   final Directory modFolder;
   final bool hasNonBrickedModInfo;
 
+  // Really shouldn't be in here, and neither should the icon generation logic.
+  // Should move that to an extension method and have the cache populated when generating variants.
+  final Directory gameCoreFolder;
+
   ModVariant({
     required this.modInfo,
     required this.versionCheckerInfo,
     required this.modFolder,
     required this.hasNonBrickedModInfo,
-  });
+    required this.gameCoreFolder,
+  }) {
+    regenerateIconFilePath(gameCoreFolder);
+  }
 
   String get smolId => createSmolId(modInfo.id, modInfo.version);
 
@@ -39,48 +46,56 @@ class ModVariant with ModVariantMappable implements Comparable<ModVariant> {
   /// Key is the mod id (not smolId).
   static Map<String, String?> iconCache = {};
 
-  String? get iconFilePath {
-    return iconCache.putIfAbsent(modInfo.id, () {
-      var path = modIconFilePaths
-          .map((path) => modFolder.resolve(path))
-          .firstWhereOrNull((file) => file.existsSync())
-          ?.path;
+  String? get iconFilePath => iconCache.putIfAbsent(
+    modInfo.id,
+    () => regenerateIconFilePath(gameCoreFolder),
+  );
 
-      if (path == null) {
-        final lunaSettings = modFolder
-            .resolve("data/config/LunaSettingsConfig.json")
-            .toFile();
-        if (lunaSettings.existsSync()) {
-          try {
-            final lunaSettingsIconPath =
-                (lunaSettings
-                            .readAsStringSyncAllowingMalformed()
-                            .fixJsonToMap()
-                            .entries
-                            .first
-                            .value
-                        as Map<String, dynamic>)
-                    .entries
-                    .firstWhereOrNull(
-                      (entry) => entry.key.toLowerCase().containsIgnoreCase(
-                        "iconPath",
-                      ),
-                    )
-                    ?.value;
-            if (lunaSettingsIconPath is String) {
-              final icon = modFolder.resolve(lunaSettingsIconPath).toFile();
-              if (icon.existsSync()) {
-                path = icon.path;
-              }
+  String? regenerateIconFilePath(Directory gameCoreFolder) {
+    String? path;
+
+    final lunaSettings = modFolder
+        .resolve("data/config/LunaSettingsConfig.json")
+        .toFile();
+    if (lunaSettings.existsSync()) {
+      try {
+        final lunaSettingsIconPath =
+            (lunaSettings
+                        .readAsStringSyncAllowingMalformed()
+                        .fixJsonToMap()
+                        .entries
+                        .first
+                        .value
+                    as Map<String, dynamic>)
+                .entries
+                .firstWhereOrNull(
+                  (entry) =>
+                      entry.key.toLowerCase().containsIgnoreCase("iconPath"),
+                )
+                ?.value;
+        if (lunaSettingsIconPath is String) {
+          final icon = modFolder.resolve(lunaSettingsIconPath).toFile();
+          if (icon.existsSync()) {
+            path = icon.path;
+          } else {
+            // Check to see if it's using a vanilla asset path.
+            final vanillaIcon = gameCoreFolder
+                .resolve(lunaSettingsIconPath)
+                .toFile();
+            if (vanillaIcon.existsSync()) {
+              path = vanillaIcon.path;
             }
-          } catch (e) {
-            Fimber.d("Error reading LunaSettingsConfig.json: $e");
           }
         }
+      } catch (e) {
+        Fimber.d("Error reading LunaSettingsConfig.json: $e");
       }
 
+      iconCache[modInfo.id] = path;
       return path;
-    });
+    }
+
+    return null;
   }
 
   static String generateUniqueVariantFolderName(ModInfo modInfo) =>

@@ -7,7 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart' show StateProvider;
+// import 'package:flutter_riverpod/legacy.dart' show StateProvider;
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
@@ -301,7 +301,7 @@ void _runTriOS(Settings? appSettings, {required bool withSentry}) => runApp(
       condition: withSentry,
       wrapper: (appWidget) => SentryWidget(child: appWidget),
       child: ProviderScope(
-        retry: (retryCount, error) => null, // disable automatic retry added in riverpod 3.0
+        // retry: (retryCount, error) => null, // disable automatic retry added in riverpod 3.0
         observers: shouldDebugRiverpod ? [RiverpodDebugObserver()] : [],
         child: ExcludeSemantics(
           excluding:

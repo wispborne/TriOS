@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart' show StateProvider;
+// import 'package:flutter_riverpod/legacy.dart' show StateProvider;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:trios/chipper/utils.dart';
 import 'package:trios/dashboard/changelogs.dart';

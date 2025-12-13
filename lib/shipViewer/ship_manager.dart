@@ -5,7 +5,7 @@ import 'dart:io';
 import 'package:csv/csv.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart' show StateProvider;
+// import 'package:flutter_riverpod/legacy.dart' show StateProvider;
 import 'package:path/path.dart' as p;
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/shipViewer/models/shipGpt.dart';

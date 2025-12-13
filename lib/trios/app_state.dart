@@ -5,7 +5,7 @@ import 'dart:math';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart' show StateProvider;
+// import 'package:flutter_riverpod/legacy.dart' show StateProvider;
 import 'package:trios/changelogs/mod_changelogs_manager.dart';
 import 'package:trios/compression/archive.dart';
 import 'package:trios/jre_manager/jre_entry.dart';

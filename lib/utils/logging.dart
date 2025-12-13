@@ -321,31 +321,40 @@ class Fimber {
   }
 }
 
-base class RiverpodDebugObserver extends ProviderObserver {
+class RiverpodDebugObserver extends ProviderObserver {
   @override
-  void didAddProvider(ProviderObserverContext context, Object? value) {}
+  void didAddProvider(
+    ProviderBase<Object?> provider,
+    Object? value,
+    ProviderContainer container,
+  ) {}
 
   @override
-  void didDisposeProvider(ProviderObserverContext context) {}
+  void didDisposeProvider(
+    ProviderBase<Object?> provider,
+    ProviderContainer container,
+  ) {}
 
   @override
   void didUpdateProvider(
-    ProviderObserverContext context,
+    ProviderBase<Object?> provider,
     Object? previousValue,
     Object? newValue,
+    ProviderContainer container,
   ) {
     if (_loggingSettings.shouldDebugRiverpod) {
       Fimber.d(
-        "Provider: $context, prev: ${previousValue.toString().take(200)}, new: ${newValue.toString().take(200)}}",
+        "Provider: $provider, prev: ${previousValue.toString().take(200)}, new: ${newValue.toString().take(200)}, container: ${container.toString().take(200)}",
       );
     }
   }
 
   @override
   void providerDidFail(
-    ProviderObserverContext provider,
+    ProviderBase<Object?> provider,
     Object error,
     StackTrace stackTrace,
+    ProviderContainer container,
   ) {}
 }
 

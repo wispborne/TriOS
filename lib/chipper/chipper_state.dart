@@ -59,7 +59,7 @@ class _ChipperLogParserNotifier extends AsyncNotifier<LogChips?> {
     if (gameFilesPath.existsSync()) {
       gameFilesPath.readAsBytes().then((bytes) async {
         final stopwatch = Stopwatch()..start();
-        final content = utf8.decode(bytes.toList(), allowMalformed: true);
+        final content = utf8.decode(bytes, allowMalformed: true);
         final parsedLog = parseLogAndSetState(
           LogFile(gameFilesPath.path, content),
         );

@@ -35,7 +35,7 @@
   - CODEX_UNLOCKABLE ships are now hidden by default on the Ship Viewer.
   - Cleaned up the Filter UI (icon in top-left) on the Ships and Weapons Viewer pages.
   - Mac version now requires MacOS 13 (Ventura, released 2022).
-  - Log now waits to load until after mods are loaded in order to hasten startup.
+  - Log now waits to load until after mods are loaded to hasten startup.
   - Some parts of the Ship and Weapon Viewer UI is persisted across restarts (buttons).
   - Sorting by mod name now uses an "intuitive" sort (e.g. 'a', ' x', 'Z') instead of Starsector's sort (e.g. '   x', 'Z', 'a').
     - Added a new column to the mod list to sort by mod load order.
@@ -43,6 +43,9 @@
   - Cleaned up the "Clean up mods" dialog on Settings that lets you remove old versions of mods.
     - Defaults to not removing currently-enabled mods now.
   - More warnings around Direct Launch and how it might cause invisible ships on some PCs.
+  - Ships, weapons, and portraits no longer automatically refresh in the background when mods are swapped/updated.
+    - This is for performance reasons. Instead, each page has a manual Refresh button.
+    - In the future, I plan to have the page refresh if needed when it's displayed.
 
 # 1.2.3
 - Fixed

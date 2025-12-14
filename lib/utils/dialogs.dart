@@ -106,7 +106,7 @@ Future<void> showDeleteModFoldersConfirmationDialog(
   BuildContext context,
   WidgetRef ref, {
   bool? allowDeletingEnabledModsDefaultState = false,
-  bool dryRun = true,
+  bool dryRun = false,
 }) async {
   Future<void> deleteFolder(String folderPath) async {
     final directory = Directory(folderPath);

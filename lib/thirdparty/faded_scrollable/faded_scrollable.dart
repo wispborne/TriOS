@@ -133,13 +133,17 @@ class FadedScrollable extends StatefulWidget {
 
 class _FadedScrollableState extends State<FadedScrollable> {
   double scrollRatio = 0;
+  bool _isScrollable = false;
 
   _GradientConfig _getGradientConfig() {
     final double upperStop = widget.maxTopScreenRatioFade;
     final double lowerStop = 1 - widget.maxBottomScreenRatioFade;
 
-    final bool shouldFadeTop = scrollRatio > widget.scrollRatioStart;
-    final bool shouldFadeBottom = scrollRatio < widget.scrollRatioEnd;
+    final bool shouldFadeTop =
+        _isScrollable && scrollRatio > widget.scrollRatioStart;
+    final bool shouldFadeBottom =
+        _isScrollable && scrollRatio < widget.scrollRatioEnd;
+
     final List<double> stops = [];
     final List<Color> colors = [];
 
@@ -182,28 +186,38 @@ class _FadedScrollableState extends State<FadedScrollable> {
 
     return NotificationListener<ScrollNotification>(
       onNotification: (notification) {
-        if (notification is ScrollUpdateNotification) {
+        if (notification is ScrollUpdateNotification ||
+            notification is ScrollMetricsNotification) {
+          final metrics = notification.metrics;
+          final maxExtent = metrics.maxScrollExtent;
+
+          final bool isScrollableNow = maxExtent > 0;
+          final double ratio = isScrollableNow
+              ? (metrics.pixels / maxExtent).clamp(0.0, 1.0)
+              : 1.0;
+
           setState(() {
-            scrollRatio =
-                notification.metrics.pixels /
-                notification.metrics.maxScrollExtent;
+            _isScrollable = isScrollableNow;
+            scrollRatio = ratio;
           });
         }
 
         return true;
       },
-      child: ShaderMask(
-        shaderCallback: (Rect rect) {
-          return LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: gradientConfig.colors,
-            stops: gradientConfig.stops,
-          ).createShader(rect);
-        },
-        blendMode: BlendMode.dstOut,
-        child: widget.child,
-      ),
+      child: gradientConfig.colors.isEmpty
+          ? widget.child
+          : ShaderMask(
+              shaderCallback: (Rect rect) {
+                return LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: gradientConfig.colors,
+                  stops: gradientConfig.stops,
+                ).createShader(rect);
+              },
+              blendMode: BlendMode.dstOut,
+              child: widget.child,
+            ),
     );
   }
 }

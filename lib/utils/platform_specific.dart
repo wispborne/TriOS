@@ -4,9 +4,10 @@ import 'dart:io';
 import 'package:ffi/ffi.dart';
 import 'package:win32/win32.dart';
 
-import 'logging.dart'; // Assuming you're using Fimber for logging
+import 'logging.dart';
 
 extension PlatformFileEntityExt on FileSystemEntity {
+  /// Throws an exception if deleting fails.
   void moveToTrash({bool deleteIfFailed = false}) {
     if (Platform.isWindows) {
       _moveToRecycleBinWindows(path, deleteIfFailed);
@@ -76,9 +77,9 @@ void _moveToRecycleBinWindows(String path, bool deleteIfFailed) {
     ..ref.wFunc = FO_DELETE
     ..ref.pFrom = filePath.cast()
     ..ref.fFlags =
-        FILEOPERATION_FLAGS.FOF_ALLOWUNDO |
-        FILEOPERATION_FLAGS.FOF_NOCONFIRMATION |
-        FILEOPERATION_FLAGS.FOF_SILENT;
+        FOF_ALLOWUNDO |
+        FOF_NOCONFIRMATION |
+        FOF_SILENT;
 
   final result = SHFileOperation(fileOpStruct);
 
@@ -94,6 +95,7 @@ void _moveToRecycleBinWindows(String path, bool deleteIfFailed) {
         Fimber.i("Deleted file directly: $path");
       } catch (e) {
         Fimber.e("Failed to delete file directly: $path. Error: $e");
+        rethrow;
       }
     }
   } else {

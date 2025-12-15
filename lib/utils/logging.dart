@@ -155,10 +155,13 @@ Future<void> configureLogging(LoggingSettings settings) async {
                       file.extension == ".log" &&
                       file.nameWithExtension != logFileName,
                 )
-                .forEach(
-                  (FileSystemEntity file) =>
-                      file.moveToTrash(deleteIfFailed: true),
-                );
+                .forEach((FileSystemEntity file) {
+                  try {
+                    file.moveToTrash(deleteIfFailed: true);
+                  } catch (e) {
+                    // Already logged, swallow
+                  }
+                });
           } catch (e) {
             Fimber.e("Error cleaning up old log files.", ex: e);
           }

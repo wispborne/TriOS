@@ -350,12 +350,6 @@ class ShipMapper extends ClassMapperBase<Ship> {
     _$width,
     opt: true,
   );
-  static String? _$hullName(Ship v) => v.hullName;
-  static const Field<Ship, String> _f$hullName = Field(
-    'hullName',
-    _$hullName,
-    opt: true,
-  );
   static String? _$hullSize(Ship v) => v.hullSize;
   static const Field<Ship, String> _f$hullSize = Field(
     'hullSize',
@@ -509,7 +503,6 @@ class ShipMapper extends ClassMapperBase<Ship> {
     #collisionRadius: _f$collisionRadius,
     #height: _f$height,
     #width: _f$width,
-    #hullName: _f$hullName,
     #hullSize: _f$hullSize,
     #shieldCenter: _f$shieldCenter,
     #shieldRadius: _f$shieldRadius,
@@ -583,7 +576,6 @@ class ShipMapper extends ClassMapperBase<Ship> {
       collisionRadius: data.dec(_f$collisionRadius),
       height: data.dec(_f$height),
       width: data.dec(_f$width),
-      hullName: data.dec(_f$hullName),
       hullSize: data.dec(_f$hullSize),
       shieldCenter: data.dec(_f$shieldCenter),
       shieldRadius: data.dec(_f$shieldRadius),
@@ -722,7 +714,6 @@ abstract class ShipCopyWith<$R, $In extends Ship, $Out>
     double? collisionRadius,
     double? height,
     double? width,
-    String? hullName,
     String? hullSize,
     List<double>? shieldCenter,
     double? shieldRadius,
@@ -905,7 +896,6 @@ class _ShipCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Ship, $Out>
     Object? collisionRadius = $none,
     Object? height = $none,
     Object? width = $none,
-    Object? hullName = $none,
     Object? hullSize = $none,
     Object? shieldCenter = $none,
     Object? shieldRadius = $none,
@@ -975,7 +965,6 @@ class _ShipCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Ship, $Out>
       if (collisionRadius != $none) #collisionRadius: collisionRadius,
       if (height != $none) #height: height,
       if (width != $none) #width: width,
-      if (hullName != $none) #hullName: hullName,
       if (hullSize != $none) #hullSize: hullSize,
       if (shieldCenter != $none) #shieldCenter: shieldCenter,
       if (shieldRadius != $none) #shieldRadius: shieldRadius,
@@ -1047,7 +1036,6 @@ class _ShipCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Ship, $Out>
     collisionRadius: data.get(#collisionRadius, or: $value.collisionRadius),
     height: data.get(#height, or: $value.height),
     width: data.get(#width, or: $value.width),
-    hullName: data.get(#hullName, or: $value.hullName),
     hullSize: data.get(#hullSize, or: $value.hullSize),
     shieldCenter: data.get(#shieldCenter, or: $value.shieldCenter),
     shieldRadius: data.get(#shieldRadius, or: $value.shieldRadius),

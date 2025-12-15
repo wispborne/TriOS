@@ -11,7 +11,6 @@ import 'package:trios/shipViewer/filter_widget.dart';
 import 'package:trios/shipViewer/models/shipGpt.dart';
 import 'package:trios/shipViewer/ship_manager.dart';
 import 'package:trios/shipViewer/ships_page_controller.dart';
-import 'package:trios/themes/theme.dart';
 import 'package:trios/themes/theme_manager.dart' show ThemeManager;
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/trios/app_state.dart';
@@ -555,7 +554,7 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
         csvValue: (ship) => _getPathForSpriteName(ship, gameCoreDir).path,
         defaultState: WispGridColumnState(position: position++, width: 50),
       ),
-      col('hullName', 'Name', (s) => s.hullName, width: 200),
+      col('hullName', 'Name', (s) => s.hullNameForDisplay(), width: 200),
       col('hullSize', 'Hull', (s) => s.hullSizeForDisplay(), width: 80),
       WispGridColumn(
         key: 'weaponSlotCount',
@@ -756,12 +755,19 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
       mainAxisSize: MainAxisSize.min,
       children: [
         Row(
+          crossAxisAlignment: .start,
           children: [
             Expanded(
-              child: Text(
-                s.hullName ?? s.id ?? 'Ship',
-                style: theme.textTheme.titleLarge,
-                overflow: TextOverflow.ellipsis,
+              child: Column(
+                crossAxisAlignment: .start,
+                children: [
+                  Text(
+                    s.hullNameForDisplay(),
+                    style: theme.textTheme.titleLarge,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(s.id, style: theme.textTheme.labelSmall),
+                ],
               ),
             ),
             IconButton(

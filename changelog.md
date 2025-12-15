@@ -30,6 +30,9 @@
   - VRAM pie chart breaking after refreshing data.
   - Theme selection menu is no longer a textbox.
   - Mod icons that used vanilla icon paths weren't shown.
+  - Ship names are now based on ship_data.csv, not .ship files.
+  - When reading ships and weapons, column names are now trimmed of whitespace.
+    - Fixes Mayasuran Navy ships not having the correct names due to the name column being ` name` instead of `name`.
 - Changed
   - Cleaned up search bar positioning on Ships and Weapons Viewer pages.
   - CODEX_UNLOCKABLE ships are now hidden by default on the Ship Viewer.

@@ -99,7 +99,6 @@ class Ship with ShipMappable implements WispGridItem {
   final double? collisionRadius;
   final double? height;
   final double? width;
-  final String? hullName;
   final String? hullSize;
   final List<double>? shieldCenter;
   final double? shieldRadius;
@@ -178,7 +177,6 @@ class Ship with ShipMappable implements WispGridItem {
     this.collisionRadius,
     this.height,
     this.width,
-    this.hullName,
     this.hullSize,
     this.shieldCenter,
     this.shieldRadius,
@@ -208,4 +206,6 @@ class Ship with ShipMappable implements WispGridItem {
         hullSize?.toTitleCase() ??
         "(unknown)";
   }
+
+  String hullNameForDisplay() => name ?? designation ?? id;
 }

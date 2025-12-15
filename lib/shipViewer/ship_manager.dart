@@ -160,7 +160,7 @@ Future<ShipParseResult> _parseShips(
     return ShipParseResult(ships, errors, filesProcessed);
   }
 
-  final headers = rows.first.map((e) => e.toString()).toList();
+  final headers = rows.first.map((e) => e.toString().trim()).toList();
 
   for (var i = 1; i < rows.length; i++) {
     final row = rows[i];
@@ -214,6 +214,9 @@ Future<ShipParseResult> _parseShips(
     try {
       final ship = ShipMapper.fromMap(data)..modVariant = modVariant;
       ships.add(ship);
+      if (modName.contains("ayasu")) {
+        Fimber.d("Mayasu ship: ${ship.id}");
+      }
     } catch (e) {
       errors.add('[$modName] Failed to create ship for id "$shipId": $e');
     }

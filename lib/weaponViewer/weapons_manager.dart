@@ -216,7 +216,7 @@ Future<ParseResult> _parseWeaponsCsv(
   }
 
   // Extract headers from the first row
-  final headers = rows.first.map((e) => e.toString()).toList();
+  final headers = rows.first.map((e) => e.toString().trim()).toList();
 
   for (var i = 1; i < rows.length; i++) {
     final row = rows[i];

@@ -15,6 +15,7 @@ import 'package:trios/portraits/portrait_replacements_manager.dart';
 import 'package:trios/portraits/portraits_gridview.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
+import 'package:trios/utils/dialogs.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/search.dart';
@@ -53,7 +54,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
 
   void _refreshPortraits() {
     // Invalidate the provider to trigger a reload
-    ref.invalidate(AppState.portraits);
+    ref.read(AppState.portraits.notifier).rescan();
   }
 
   void _showReplacementsDialog(Map<String, Portrait> replacements) async {
@@ -98,7 +99,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
 
   Widget _buildGridSearchBar(SearchController controller, String hintText) {
     return Container(
-      padding: const EdgeInsets.only(left: 8, right: 8, bottom: 4),
+      padding: const .only(left: 8, right: 8, bottom: 4),
       child: SizedBox(
         height: 30,
         child: SearchAnchor(
@@ -114,7 +115,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                     : IconButton(
                         icon: const Icon(Icons.clear),
                         constraints: const BoxConstraints(),
-                        padding: EdgeInsets.zero,
+                        padding: .zero,
                         onPressed: () {
                           controller.clear();
                           setState(() {});
@@ -151,10 +152,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             CircularProgressIndicator(),
-            Padding(
-              padding: EdgeInsets.all(16),
-              child: Text('Loading portraits...'),
-            ),
+            Padding(padding: .all(16), child: Text('Loading portraits...')),
           ],
         ),
       ),
@@ -236,25 +234,28 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
         );
         final isCompanionModEnabled = companionMod?.hasEnabledVariant == true;
         multiSplitController.areas = areas;
+        final textColor = Theme.of(context).colorScheme.onSurface;
+        final replacementPoolString = "Replacement Pool";
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.all(4),
+              padding: const .all(4),
               child: SizedBox(
                 height: 50,
                 child: Card(
                   child: Padding(
-                    padding: const EdgeInsets.only(left: 8, right: 8),
+                    padding: const .only(left: 8, right: 8),
                     child: Stack(
                       children: [
                         Row(
+                          crossAxisAlignment: .center,
                           children: [
                             if (!isCompanionModEnabled)
                               buildCompanionModWarningIcon(theme, companionMod),
                             Padding(
-                              padding: const EdgeInsets.only(),
+                              padding: const .only(),
                               child: Text(
                                 'Portrait${inReplaceMode ? ' Replacer' : ' Viewer'}',
                                 style: theme.textTheme.headlineSmall?.copyWith(
@@ -262,29 +263,25 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                                 ),
                               ),
                             ),
-                            MovingTooltipWidget.text(
-                              message:
-                                  "Displays images that are *likely* to be portraits from your enabled or highest-version mods.\n\nBecause mods may use any image as a portrait, this is not an exact science, but best guesses.",
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Icon(Icons.info),
+                            if (!inReplaceMode)
+                              MovingTooltipWidget.text(
+                                message:
+                                    "Displays images that are *likely* to be portraits from your enabled or highest-version mods.\n\nBecause mods may use any image as a portrait, this is not an exact science, but best guesses.",
+                                child: Padding(
+                                  padding: const .only(left: 8, right: 8),
+                                  child: Icon(Icons.info),
+                                ),
                               ),
-                            ),
-                            TextButton.icon(
+                            IconButton(
                               onPressed:
                                   ref
                                       .read(AppState.portraits.notifier)
                                       .isLoadingPortraits
                                   ? null
                                   : _refreshPortraits,
-                              style: ButtonStyle(
-                                foregroundColor: WidgetStateProperty.all(
-                                  theme.colorScheme.onSurface,
-                                ),
-                              ),
                               icon:
                                   ref
-                                      .read(AppState.portraits.notifier)
+                                      .watch(AppState.portraits.notifier)
                                       .isLoadingPortraits
                                   ? const SizedBox(
                                       width: 24,
@@ -294,9 +291,8 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                                       ),
                                     )
                                   : const Icon(Icons.refresh),
-                              label: const Text('Reload'),
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 4),
                             MovingTooltipWidget.text(
                               message:
                                   "In this mode, drag and drop images from the right pane to replace images on the left pane.",
@@ -314,13 +310,44 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                                 },
                               ),
                             ),
+                            const SizedBox(width: 8),
                             if (inReplaceMode)
                               Padding(
-                                padding: const EdgeInsets.only(left: 16),
-                                child: Text(
-                                  "Drag portraits from the right to the left",
-                                  style: theme.textTheme.labelLarge?.copyWith(
-                                    fontStyle: FontStyle.italic,
+                                padding: const .only(left: 8),
+                                child: TriOSToolbarItem(
+                                  child: TextButton.icon(
+                                    icon: Icon(Icons.help, color: textColor),
+                                    label: Text(
+                                      "Tutorial",
+                                      style: TextStyle(color: textColor),
+                                    ),
+                                    onPressed: () => showMyDialog(
+                                      context,
+                                      title: Text("Portrait Replacement"),
+                                      body: [
+                                        Text(
+                                          "Usage",
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        Text(
+                                          "On the left side are the portraits that you will see in-game."
+                                          "\nGrab portraits from the $replacementPoolString on the right side and move them to the left side to replace what you see in-game.",
+                                        ),
+                                        const SizedBox(height: 32),
+                                        Text(
+                                          "How It Works",
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        Text(
+                                          "A list of portraits to replace is saved as a json file. The ${Constants.appName} Companion Mod reads that file when you load your game and swaps the portraits during that game session."
+                                          "\nIt does not change any mod files - replacement is all done in-memory, in-game.",
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
@@ -396,7 +423,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
             ),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.only(left: 8, right: 8),
+                padding: const .only(left: 8, right: 8),
                 child: MultiSplitViewTheme(
                   data: MultiSplitViewThemeData(
                     dividerThickness: 24,
@@ -414,7 +441,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                     children: [
                       if (!inReplaceMode)
                         Padding(
-                          padding: const EdgeInsets.only(left: 8, bottom: 6),
+                          padding: const .only(left: 8, bottom: 6),
                           child: Text(
                             '${total ?? "..."} images${total != visible ? " ($visible shown)" : ""}',
                             style: theme.textTheme.labelMedium?.copyWith(
@@ -494,7 +521,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                                           CrossAxisAlignment.start,
                                       children: [
                                         // Padding(
-                                        //   padding: const EdgeInsets.only(
+                                        //   padding: const .only(
                                         //     left: 8,
                                         //   ),
                                         //   child: Text(
@@ -515,7 +542,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                                       alignment:
                                           AlignmentDirectional.centerStart,
                                       child: Padding(
-                                        padding: const EdgeInsets.only(
+                                        padding: const .only(
                                           left: 8,
                                           bottom: 4,
                                         ),
@@ -570,11 +597,9 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                                           CrossAxisAlignment.start,
                                       children: [
                                         Padding(
-                                          padding: const EdgeInsets.only(
-                                            left: 8,
-                                          ),
+                                          padding: const .only(left: 8),
                                           child: Text(
-                                            "Replacement Pool",
+                                            "${replacementPoolString}",
                                             style: theme.textTheme.titleLarge,
                                           ),
                                         ),
@@ -591,7 +616,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                                       alignment:
                                           AlignmentDirectional.centerStart,
                                       child: Padding(
-                                        padding: const EdgeInsets.only(
+                                        padding: const .only(
                                           left: 8,
                                           bottom: 4,
                                         ),
@@ -663,11 +688,11 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
 
   Padding buildCompanionModWarningIcon(ThemeData theme, Mod? companionMod) {
     return Padding(
-      padding: const EdgeInsets.all(0),
+      padding: const .all(0),
       child: Stack(
         children: [
           Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: const .all(8.0),
             child: Opacity(
               opacity: 0.9,
               child: Blur(
@@ -722,7 +747,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                   : IconButton(
                       icon: const Icon(Icons.clear),
                       constraints: const BoxConstraints(),
-                      padding: EdgeInsets.zero,
+                      padding: .zero,
                       onPressed: () {
                         controller.clear();
                         setState(() {});
@@ -912,7 +937,7 @@ class ReplacementListItem extends StatelessWidget {
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(8.0),
+        padding: const .all(8.0),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -954,7 +979,7 @@ class ReplacementListItem extends StatelessWidget {
             const SizedBox(width: 8),
             // Arrow
             const Padding(
-              padding: EdgeInsets.symmetric(vertical: 20),
+              padding: .symmetric(vertical: 20),
               child: Icon(Icons.arrow_forward, size: 24),
             ),
             const SizedBox(width: 8),

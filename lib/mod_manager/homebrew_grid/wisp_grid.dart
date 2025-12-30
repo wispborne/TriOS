@@ -11,6 +11,7 @@ import 'package:trios/mod_manager/homebrew_grid/wispgrid_header_row_view.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_row_view.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/utils/util.dart';
 
 // TODO use a keyfinder function instead of requiring implementing WispGridItem
 abstract class WispGridItem {
@@ -602,26 +603,7 @@ extension WispGridCsvExport<T extends WispGridItem> on _WispGridState<T> {
       }
     }
 
-    return _convertRowsToCsv(csvRows);
-  }
-
-  /// Converts rows of data to properly escaped CSV format
-  String _convertRowsToCsv(List<List<String>> rows) {
-    return rows
-        .map((row) => row.map((cell) => _escapeCsvValue(cell)).join(','))
-        .join('\n');
-  }
-
-  /// Properly escapes a CSV value by wrapping in quotes if necessary
-  String _escapeCsvValue(String value) {
-    if (value.contains(',') ||
-        value.contains('\n') ||
-        value.contains('\r') ||
-        value.contains('"')) {
-      final escapedValue = value.replaceAll('"', '""');
-      return '"$escapedValue"';
-    }
-    return value;
+    return convertRowsToCsv(csvRows);
   }
 }
 

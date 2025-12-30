@@ -4,90 +4,140 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-Future<void> showExportOrCopyDialog(BuildContext context, String csv) async {
+Future<void> showExportOrCopyDialog(
+  BuildContext context,
+  String Function() getGridCsvString,
+  String Function()? getAllDataCsvString,
+) async {
+  String? selectedOption;
+
   await showDialog<void>(
     context: context,
     barrierDismissible: true,
     builder: (ctx) {
-      return Dialog(
-        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minWidth: 420, maxWidth: 560),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
+      final options = <String>[
+        if (getAllDataCsvString != null) 'All Data',
+        'Grid Data',
+      ];
+      selectedOption ??= options.first;
+
+      String getCsv(String userOption) => userOption == 'All Data'
+          ? getAllDataCsvString!()
+          : getGridCsvString();
+
+      return StatefulBuilder(
+        builder: (context, setState) {
+          return Dialog(
+            insetPadding: const EdgeInsets.symmetric(
+              horizontal: 24,
+              vertical: 24,
+            ),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minWidth: 420, maxWidth: 560),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.exit_to_app, size: 24),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Export Data',
-                      style: Theme.of(ctx).textTheme.titleLarge,
+                    Row(
+                      children: [
+                        const Icon(Icons.exit_to_app, size: 24),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Export Data',
+                          style: Theme.of(ctx).textTheme.titleLarge,
+                        ),
+                        const Spacer(),
+                      ],
                     ),
-                    const Spacer(),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                Center(
-                  child: Wrap(
-                    alignment: WrapAlignment.center,
-                    spacing: 16,
-                    runSpacing: 16,
-                    children: [
-                      ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          minimumSize: const Size(220, 64),
-                        ),
-                        icon: const Icon(Icons.copy_all),
-                        label: const Text('Copy to Clipboard'),
-                        onPressed: () async {
-                          await Clipboard.setData(ClipboardData(text: csv));
-                          if (ctx.mounted) {
-                            ScaffoldMessenger.of(ctx).showSnackBar(
-                              const SnackBar(
-                                content: Text('Copied to clipboard!'),
+                    if (getAllDataCsvString != null) ...[
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: options.map((option) {
+                          return Padding(
+                            padding: const .symmetric(horizontal: 4.0),
+                            child: SizedBox(
+                              width: 200,
+                              child: RadioListTile<String>(
+                                dense: true,
+                                value: option,
+                                groupValue: selectedOption!,
+                                title: Text(option),
+                                onChanged: (value) {
+                                  if (value != null) {
+                                    setState(() => selectedOption = value);
+                                  }
+                                },
                               ),
-                            );
-                          }
-                        },
-                      ),
-                      ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          minimumSize: const Size(220, 64),
-                        ),
-                        icon: const Icon(Icons.save_alt),
-                        label: const Text('Save to File'),
-                        onPressed: () async {
-                          final path = await _pickSaveLocation(ctx);
-                          if (path == null) return;
-                          final file = File(path);
-                          await file.writeAsString(csv);
-                          if (ctx.mounted) {
-                            ScaffoldMessenger.of(ctx).showSnackBar(
-                              SnackBar(content: Text('Saved: $path')),
-                            );
-                          }
-                        },
+                            ),
+                          );
+                        }).toList(),
                       ),
                     ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  children: [
-                    const Spacer(),
-                    TextButton(
-                      onPressed: () => Navigator.of(ctx).pop(),
-                      child: const Text('Close'),
+                    const SizedBox(height: 24),
+                    Center(
+                      child: Wrap(
+                        alignment: WrapAlignment.center,
+                        spacing: 16,
+                        runSpacing: 16,
+                        children: [
+                          ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              minimumSize: const Size(220, 64),
+                            ),
+                            icon: const Icon(Icons.copy_all),
+                            label: const Text('Copy to Clipboard'),
+                            onPressed: () async {
+                              await Clipboard.setData(
+                                ClipboardData(text: getCsv(selectedOption!)),
+                              );
+                              if (ctx.mounted) {
+                                ScaffoldMessenger.of(ctx).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Copied to clipboard!'),
+                                  ),
+                                );
+                              }
+                            },
+                          ),
+                          ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              minimumSize: const Size(220, 64),
+                            ),
+                            icon: const Icon(Icons.save_alt),
+                            label: const Text('Save to File'),
+                            onPressed: () async {
+                              final path = await _pickSaveLocation(ctx);
+                              if (path == null) return;
+                              final file = File(path);
+                              await file.writeAsString(getCsv(selectedOption!));
+                              if (ctx.mounted) {
+                                ScaffoldMessenger.of(ctx).showSnackBar(
+                                  SnackBar(content: Text('Saved: $path')),
+                                );
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      children: [
+                        const Spacer(),
+                        TextButton(
+                          onPressed: () => Navigator.of(ctx).pop(),
+                          child: const Text('Close'),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
+              ),
             ),
-          ),
-        ),
+          );
+        },
       );
     },
   );

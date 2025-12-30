@@ -114,4 +114,9 @@ class PortraitsNotifier
       isLoadingPortraits = false;
     }
   }
+
+  Future<void> rescan() async {
+    _fullRescanRequested = true;
+    await build();
+  }
 }

@@ -685,7 +685,11 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
 
             showExportOrCopyDialog(
               context,
-              WispGridCsvExporter.toCsv(_gridController!, includeHeaders: true),
+              () => WispGridCsvExporter.toCsv(
+                _gridController!,
+                includeHeaders: true,
+              ),
+              () => ref.read(shipListNotifierProvider.notifier).allShipsAsCsv(),
             );
           },
           child: const Row(

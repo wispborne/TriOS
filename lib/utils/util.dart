@@ -537,3 +537,22 @@ Future<void> restartApplication({int exitCode = 0}) async {
     exit(exitCode);
   }
 }
+
+/// Converts rows of data to properly escaped CSV format
+String convertRowsToCsv(List<List<String>> rows) {
+  return rows
+      .map((row) => row.map((cell) => escapeCsvValue(cell)).join(','))
+      .join('\n');
+}
+
+/// Properly escapes a CSV value by wrapping in quotes if necessary
+String escapeCsvValue(String value) {
+  if (value.contains(',') ||
+      value.contains('\n') ||
+      value.contains('\r') ||
+      value.contains('"')) {
+    final escapedValue = value.replaceAll('"', '""');
+    return '"$escapedValue"';
+  }
+  return value;
+}

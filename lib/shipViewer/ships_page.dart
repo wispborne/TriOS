@@ -685,6 +685,7 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
 
             showExportOrCopyDialog(
               context,
+              "ship",
               () => WispGridCsvExporter.toCsv(
                 _gridController!,
                 includeHeaders: true,

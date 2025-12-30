@@ -1208,6 +1208,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
               if (controller == null) return;
               showExportOrCopyDialog(
                 context,
+                "mod",
                   () => WispGridCsvExporter.toCsv(controller!, includeHeaders: true),
                 null
               );

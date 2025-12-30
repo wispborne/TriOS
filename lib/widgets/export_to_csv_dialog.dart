@@ -3,25 +3,42 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:trios/thirdparty/dartx/string.dart';
 
+enum _ExportOption {
+  allData('All Data'),
+  gridData('Grid Data');
+
+  const _ExportOption(this.label);
+
+  final String label;
+}
+
+/// Shows a dialog allowing the user to export data to a CSV file or copy it to the clipboard.
+///
+/// [nameOfThingBeingExported] is the name of the thing being exported, e.g. 'weapon' or 'ship'.
+/// [getGridCsvString] is a function that returns the CSV string for the grid data.
+/// [getAllDataCsvString] is an optional function that returns the CSV string for all data.
 Future<void> showExportOrCopyDialog(
   BuildContext context,
+  String nameOfThingBeingExported,
   String Function() getGridCsvString,
   String Function()? getAllDataCsvString,
 ) async {
-  String? selectedOption;
+  _ExportOption? selectedOption;
 
   await showDialog<void>(
     context: context,
     barrierDismissible: true,
     builder: (ctx) {
-      final options = <String>[
-        if (getAllDataCsvString != null) 'All Data',
-        'Grid Data',
+      final options = <_ExportOption>[
+        if (getAllDataCsvString != null) _ExportOption.allData,
+        _ExportOption.gridData,
       ];
       selectedOption ??= options.first;
 
-      String getCsv(String userOption) => userOption == 'All Data'
+      String getCsv(_ExportOption userOption) =>
+          userOption == _ExportOption.allData
           ? getAllDataCsvString!()
           : getGridCsvString();
 
@@ -44,7 +61,7 @@ Future<void> showExportOrCopyDialog(
                         const Icon(Icons.exit_to_app, size: 24),
                         const SizedBox(width: 8),
                         Text(
-                          'Export Data',
+                          'Export ${nameOfThingBeingExported.capitalize()} Data',
                           style: Theme.of(ctx).textTheme.titleLarge,
                         ),
                         const Spacer(),
@@ -59,11 +76,25 @@ Future<void> showExportOrCopyDialog(
                             padding: const .symmetric(horizontal: 4.0),
                             child: SizedBox(
                               width: 200,
-                              child: RadioListTile<String>(
+                              child: RadioListTile<_ExportOption>(
                                 dense: true,
                                 value: option,
                                 groupValue: selectedOption!,
-                                title: Text(option),
+                                title: Column(
+                                  crossAxisAlignment: .start,
+                                  children: [
+                                    Text(
+                                      option.label,
+                                      style: Theme.of(ctx).textTheme.bodyMedium,
+                                    ),
+                                    Text(switch (option) {
+                                      _ExportOption.allData =>
+                                        'All loaded $nameOfThingBeingExported data and fields.',
+                                      _ExportOption.gridData =>
+                                        'Only the $nameOfThingBeingExported data and fields visible in the grid.',
+                                    }, style: Theme.of(ctx).textTheme.labelMedium),
+                                  ],
+                                ),
                                 onChanged: (value) {
                                   if (value != null) {
                                     setState(() => selectedOption = value);

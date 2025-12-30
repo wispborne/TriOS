@@ -884,6 +884,7 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
 
             showExportOrCopyDialog(
               context,
+              "weapon",
               () => WispGridCsvExporter.toCsv(
                 _gridController!,
                 includeHeaders: true,

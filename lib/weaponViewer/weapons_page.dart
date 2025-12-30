@@ -889,7 +889,9 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
                 _gridController!,
                 includeHeaders: true,
               ),
-              () => throw "not done!",
+              () => ref
+                  .read(weaponListNotifierProvider.notifier)
+                  .allWeaponsAsCsv(),
             );
           },
           child: ListTile(

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:collection/collection.dart';
@@ -12,7 +11,6 @@ import 'package:open_filex/open_filex.dart';
 import 'package:path/path.dart' as p;
 import 'package:trios/compression/archive.dart';
 import 'package:trios/mod_manager/audit_log.dart';
-import 'package:trios/mod_manager/mod_context_menu.dart';
 import 'package:trios/mod_manager/mod_install_source.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_manager/version_checker.dart';
@@ -33,7 +31,6 @@ import 'package:trios/widgets/force_game_version_warning_dialog.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/text_with_icon.dart';
 
-import '../chipper/utils.dart';
 import '../models/mod.dart';
 import '../models/mod_info.dart';
 import '../models/version.dart';
@@ -1467,6 +1464,34 @@ class ModManagerNotifier extends AsyncNotifier<void> {
       Fimber.e("Error while changing mod variant", ex: e, stacktrace: st);
       rethrow;
     }
+  }
+
+  String allModsAsCsv() {
+    final allMods = ref.read(AppState.mods);
+
+    final modFields = allMods.isNotEmpty
+        ? allMods.first.findFirstEnabledOrHighestVersion?.modInfo
+                  .toMap()
+                  .keys
+                  .toList() ??
+              []
+        : [];
+    List<List<dynamic>> rows = [modFields];
+
+    if (allMods.isNotEmpty) {
+      rows.addAll(
+        allMods.map((mod) {
+          final variant = mod.findFirstEnabledOrHighestVersion;
+          return variant?.modInfo.toMap().values.toList() ?? [];
+        }).toList(),
+      );
+    }
+
+    final csvContent = const ListToCsvConverter(
+      convertNullTo: "",
+    ).convert(rows);
+
+    return csvContent;
   }
 }
 

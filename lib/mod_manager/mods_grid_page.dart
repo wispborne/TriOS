@@ -1,13 +1,12 @@
 import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 // import 'package:flutter_riverpod/legacy.dart' show StateProvider;
 import 'package:google_fonts/google_fonts.dart';
-import 'package:trios/chipper/utils.dart';
 import 'package:trios/dashboard/changelogs.dart';
 import 'package:trios/dashboard/mod_list_basic.dart';
 import 'package:trios/dashboard/mod_list_basic_entry.dart';
@@ -24,7 +23,6 @@ import 'package:trios/models/mod.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/themes/theme_manager.dart';
-import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/thirdparty/dartx/map.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/trios/app_state.dart';
@@ -1209,8 +1207,11 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
               showExportOrCopyDialog(
                 context,
                 "mod",
-                  () => WispGridCsvExporter.toCsv(controller!, includeHeaders: true),
-                null
+                () => WispGridCsvExporter.toCsv(
+                  controller!,
+                  includeHeaders: true,
+                ),
+                () => ref.read(modManager.notifier).allModsAsCsv(),
               );
             },
             child: ListTile(
@@ -1423,9 +1424,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                                   opacity: 0.5,
                                   child: Disable(
                                     isEnabled:
-                                        vramEstimatorState
-                                            .value
-                                            ?.isScanning !=
+                                        vramEstimatorState.value?.isScanning !=
                                         true,
                                     child: MovingTooltipWidget.text(
                                       message: "Estimate VRAM usage",

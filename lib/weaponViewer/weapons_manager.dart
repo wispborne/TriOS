@@ -5,11 +5,11 @@ import 'dart:io';
 import 'package:csv/csv.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 // import 'package:flutter_riverpod/legacy.dart' show StateProvider;
 import 'package:path/path.dart' as p;
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/trios/app_state.dart';
-import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/csv_parse_utils.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
@@ -17,73 +17,101 @@ import 'package:trios/weaponViewer/models/weapon.dart';
 
 final isLoadingWeaponsList = StateProvider<bool>((ref) => false);
 final isWeaponsListDirty = StateProvider<bool>((ref) => false);
-final weaponListNotifierProvider = StreamProvider<List<Weapon>>((ref) async* {
-  int filesProcessed = 0;
 
-  final currentTime = DateTime.now();
-  ref.read(isLoadingWeaponsList.notifier).state = true;
-  filesProcessed = 0;
-  final gameCorePath = ref
-      .watch(AppState.gameCoreFolder).value
-      ?.path;
+final weaponListNotifierProvider =
+    StreamNotifierProvider<WeaponListNotifier, List<Weapon>>(
+      WeaponListNotifier.new,
+    );
 
-  if (gameCorePath == null || gameCorePath.isEmpty) {
-    throw Exception('Game folder path is not set.');
-  }
+class WeaponListNotifier extends StreamNotifier<List<Weapon>> {
+  @override
+  Stream<List<Weapon>> build() async* {
+    int filesProcessed = 0;
 
-  ref.listen(AppState.variantSmolIds, (previous, next) {
-    ref.read(isWeaponsListDirty.notifier).state = true;
-  });
+    final currentTime = DateTime.now();
+    ref.read(isLoadingWeaponsList.notifier).state = true;
+    filesProcessed = 0;
+    final gameCorePath = ref.watch(AppState.gameCoreFolder).value?.path;
 
-  // Don't watch for mod changes, the background processing is too expensive.
-  // User has to manually refresh weapons viewer.
-  final variants = ref
-      .read(AppState.mods)
-      .map((mod) => mod.findFirstEnabledOrHighestVersion)
-      .nonNulls
-      .toList();
-
-  final allErrors = <String>[]; // To store all error messages
-  List<Weapon> allWeapons = <Weapon>[]; // To store all parsed weapons
-
-  // Parse the core game weapons
-  final coreResult = await _parseWeaponsCsv(Directory(gameCorePath), null);
-  filesProcessed += coreResult.filesProcessed;
-  // only add non-duplicate weapons
-  allWeapons.addAll(coreResult.weapons);
-  allWeapons = allWeapons.distinctBy((e) => e.id).toList();
-
-  if (coreResult.errors.isNotEmpty) {
-    allErrors.addAll(coreResult.errors);
-  }
-
-  // Parse each mod's weapons individually
-  for (final variant in variants) {
-    final modResult = await _parseWeaponsCsv(variant.modFolder, variant);
-    filesProcessed += modResult.filesProcessed;
-    allWeapons.addAll(modResult.weapons);
-    allWeapons = allWeapons.distinctBy((e) => e.id).toList();
-
-    if (modResult.errors.isNotEmpty) {
-      allErrors.addAll(modResult.errors);
+    if (gameCorePath == null || gameCorePath.isEmpty) {
+      throw Exception('Game folder path is not set.');
     }
 
-    yield allWeapons;
+    ref.listen(AppState.variantSmolIds, (previous, next) {
+      ref.read(isWeaponsListDirty.notifier).state = true;
+    });
+
+    // Don't watch for mod changes, the background processing is too expensive.
+    // User has to manually refresh weapons viewer.
+    final variants = ref
+        .read(AppState.mods)
+        .map((mod) => mod.findFirstEnabledOrHighestVersion)
+        .nonNulls
+        .toList();
+
+    final allErrors = <String>[]; // To store all error messages
+    List<Weapon> allWeapons = <Weapon>[]; // To store all parsed weapons
+
+    // Parse the core game weapons
+    final coreResult = await _parseWeaponsCsv(Directory(gameCorePath), null);
+    filesProcessed += coreResult.filesProcessed;
+    // only add non-duplicate weapons
+    allWeapons.addAll(coreResult.weapons);
+    allWeapons = allWeapons.distinctBy((e) => e.id).toList();
+
+    if (coreResult.errors.isNotEmpty) {
+      allErrors.addAll(coreResult.errors);
+    }
+
+    // Parse each mod's weapons individually
+    for (final variant in variants) {
+      final modResult = await _parseWeaponsCsv(variant.modFolder, variant);
+      filesProcessed += modResult.filesProcessed;
+      allWeapons.addAll(modResult.weapons);
+      allWeapons = allWeapons.distinctBy((e) => e.id).toList();
+
+      if (modResult.errors.isNotEmpty) {
+        allErrors.addAll(modResult.errors);
+      }
+
+      yield allWeapons;
+    }
+
+    // Print out all collected errors at the end
+    if (allErrors.isNotEmpty) {
+      Fimber.w('Errors encountered during parsing:\n${allErrors.join('\n')}');
+    }
+
+    ref.read(isLoadingWeaponsList.notifier).state = false;
+    ref.read(isWeaponsListDirty.notifier).state = false;
+    Fimber.i(
+      'Parsed ${allWeapons.length} weapons from ${variants.length + 1} mods and $filesProcessed files in ${DateTime.now().difference(currentTime).inMilliseconds}ms',
+    );
+
+    // yield weapons;
   }
 
-  // Print out all collected errors at the end
-  if (allErrors.isNotEmpty) {
-    Fimber.w('Errors encountered during parsing:\n${allErrors.join('\n')}');
+  String allWeaponsAsCsv() {
+    final allWeapons = state.value ?? [];
+
+    final weaponFields = allWeapons.isNotEmpty
+        ? allWeapons.first.toMap().keys.toList()
+        : [];
+    List<List<dynamic>> rows = [weaponFields];
+
+    if (allWeapons.isNotEmpty) {
+      rows.addAll(
+        allWeapons.map((weapon) => weapon.toMap().values.toList()).toList(),
+      );
+    }
+
+    final csvContent = const ListToCsvConverter(
+      convertNullTo: "",
+    ).convert(rows);
+
+    return csvContent;
   }
-
-  ref.read(isLoadingWeaponsList.notifier).state = false;
-  ref.read(isWeaponsListDirty.notifier).state = false;
-  Fimber.i(
-    'Parsed ${allWeapons.length} weapons from ${variants.length + 1} mods and $filesProcessed files in ${DateTime.now().difference(currentTime).inMilliseconds}ms',
-  );
-
-  // yield weapons;
-});
+}
 
 /// Takes fields from the weapon_data.csv and all .wpn files,
 /// dumps them into a 2d map (all weapon key-value pairs, grouped by id),

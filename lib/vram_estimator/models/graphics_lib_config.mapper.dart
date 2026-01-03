@@ -27,6 +27,8 @@ class GraphicsLibConfigMapper extends ClassMapperBase<GraphicsLibConfig> {
     'areAnyEffectsEnabled',
     _$areAnyEffectsEnabled,
     key: r'enableShaders',
+    opt: true,
+    def: false,
   );
   static bool _$areGfxLibNormalMapsEnabled(GraphicsLibConfig v) =>
       v.areGfxLibNormalMapsEnabled;
@@ -35,6 +37,8 @@ class GraphicsLibConfigMapper extends ClassMapperBase<GraphicsLibConfig> {
         'areGfxLibNormalMapsEnabled',
         _$areGfxLibNormalMapsEnabled,
         key: r'enableNormal',
+        opt: true,
+        def: false,
       );
   static bool _$areGfxLibMaterialMapsEnabled(GraphicsLibConfig v) =>
       v.areGfxLibMaterialMapsEnabled;
@@ -43,6 +47,8 @@ class GraphicsLibConfigMapper extends ClassMapperBase<GraphicsLibConfig> {
         'areGfxLibMaterialMapsEnabled',
         _$areGfxLibMaterialMapsEnabled,
         key: r'loadMaterial',
+        opt: true,
+        def: false,
       );
   static bool _$areGfxLibSurfaceMapsEnabled(GraphicsLibConfig v) =>
       v.areGfxLibSurfaceMapsEnabled;
@@ -51,16 +57,22 @@ class GraphicsLibConfigMapper extends ClassMapperBase<GraphicsLibConfig> {
         'areGfxLibSurfaceMapsEnabled',
         _$areGfxLibSurfaceMapsEnabled,
         key: r'loadSurface',
+        opt: true,
+        def: false,
       );
   static bool _$autoGenNormals(GraphicsLibConfig v) => v.autoGenNormals;
   static const Field<GraphicsLibConfig, bool> _f$autoGenNormals = Field(
     'autoGenNormals',
     _$autoGenNormals,
+    opt: true,
+    def: false,
   );
   static bool _$preloadAllMaps(GraphicsLibConfig v) => v.preloadAllMaps;
   static const Field<GraphicsLibConfig, bool> _f$preloadAllMaps = Field(
     'preloadAllMaps',
     _$preloadAllMaps,
+    opt: true,
+    def: false,
   );
 
   @override

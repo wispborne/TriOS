@@ -63,12 +63,16 @@ GraphicsLibConfig? _buildNewState(List<Mod> mods, Ref ref) {
 
     if (lunalibGraphicsLibConfigFile != null &&
         lunalibGraphicsLibConfigFile.existsSync()) {
-      final config = GraphicsLibLunaConfigMapper.fromJson(
-        lunalibGraphicsLibConfigFile.readAsStringSync().fixJson(),
-      );
-      Fimber.d("Lunalib config for GraphicsLib: $config");
+      try {
+        final config = GraphicsLibLunaConfigMapper.fromJson(
+          lunalibGraphicsLibConfigFile.readAsStringSync().fixJson(),
+        );
+        Fimber.d("Lunalib config for GraphicsLib: $config");
 
-      graphicsLibConfig = config.toGraphicsLibConfig();
+        graphicsLibConfig = config.toGraphicsLibConfig();
+      } catch (e) {
+        Fimber.e("Failed to parse LunaLib GraphicsLib config: $e");
+      }
     }
   } else {
     File configFile = graphicsLib.modFolder
@@ -79,10 +83,15 @@ GraphicsLibConfig? _buildNewState(List<Mod> mods, Ref ref) {
       return null;
     }
 
-    graphicsLibConfig = GraphicsLibConfigMapper.fromJson(
-      configFile.readAsStringSync().fixJson(),
-    );
-    Fimber.d("GraphicsLib config: $graphicsLibConfig");
+    try {
+      graphicsLibConfig = GraphicsLibConfigMapper.fromJson(
+        configFile.readAsStringSync().fixJson(),
+      );
+      Fimber.d("GraphicsLib config: $graphicsLibConfig");
+    } catch (e) {
+      Fimber.e("Failed to parse GraphicsLib config: $e");
+      return null;
+    }
   }
 
   if (!graphicsLibConfig.areAnyEffectsEnabled) {

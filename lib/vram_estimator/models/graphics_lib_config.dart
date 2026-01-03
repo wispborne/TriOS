@@ -24,12 +24,12 @@ class GraphicsLibConfig with GraphicsLibConfigMappable {
   final bool preloadAllMaps;
 
   const GraphicsLibConfig({
-    required this.areAnyEffectsEnabled,
-    required this.areGfxLibNormalMapsEnabled,
-    required this.areGfxLibMaterialMapsEnabled,
-    required this.areGfxLibSurfaceMapsEnabled,
-    required this.autoGenNormals,
-    required this.preloadAllMaps,
+    this.areAnyEffectsEnabled = false,
+    this.areGfxLibNormalMapsEnabled = false,
+    this.areGfxLibMaterialMapsEnabled = false,
+    this.areGfxLibSurfaceMapsEnabled = false,
+    this.autoGenNormals = false,
+    this.preloadAllMaps = false,
   });
 
   static const disabled = GraphicsLibConfig(

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -150,8 +151,9 @@ class SevenZip implements ArchiveInterface {
     final result = await Process.run(sevenZipExecutable.path, [
       'l',
       '-slt',
+      '-sccUTF-8', // Tells 7zip to use UTF-8 for the output instead of DOS
       archiveFile.path,
-    ]);
+    ], stdoutEncoding: utf8);
 
     if (result.exitCode != 0) {
       throw Exception(
@@ -186,7 +188,8 @@ class SevenZip implements ArchiveInterface {
       archiveFile.path,
       '-o${destination.path}',
       '-y',
-    ]);
+      '-sccUTF-8', // Tells 7zip to use UTF-8 for the output instead of DOS
+    ], stdoutEncoding: utf8);
 
     if (result.exitCode != 0) {
       throw Exception(

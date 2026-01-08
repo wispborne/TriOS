@@ -24,6 +24,7 @@
   - If "Check If game is running" has errors, they appear on Settings page.
   - If `modNexusId` is present in a `.version` file but `modForumId` isn't, then the context menu `Open Forum Page` will use the Nexus page instead.
 - Fixed
+  - Chinese and other non-DOS characters in file paths causing mods to not install fully or at all.
   - Ship Viewer filters not working.
   - Custom launcher files are no longer hardcoded to use the game folder as their working directory.
     - This fixes Fast Rendering, which launches using a .bat in the `starsector-core` folder.

@@ -84,7 +84,7 @@ class PortraitReplacementsNotifier
   /// Syncs replacements to companion mod with portrait mapping
   Future<void> syncToCompanionModWithPortraits() async {
     try {
-      final replacements = await _storage.readSettingsFromDisk({});
+      final replacements = await _storage.read({});
       final companionModManager = ref.read(companionModManagerProvider);
 
       await companionModManager.updateImageReplacementsConfig(replacements);
@@ -98,7 +98,7 @@ class PortraitReplacementsNotifier
   /// Internal method to load replacements from storage
   Future<Map<String, SavedPortrait>> _loadReplacements() async {
     try {
-      final replacements = await _storage.readSettingsFromDisk({});
+      final replacements = await _storage.read({});
       await _syncToCompanionMod(replacements);
       return replacements.toMapWithoutReplacedSavePortrait();
     } catch (e) {
@@ -113,12 +113,12 @@ class PortraitReplacementsNotifier
     SavedPortrait replacement,
   ) async {
     try {
-      final replacements = await _storage.readSettingsFromDisk({});
+      final replacements = await _storage.read({});
       replacements[original.hash] = ReplacedSavedPortrait(
         original: original,
         replacement: replacement,
       );
-      await _storage.scheduleWriteSettingsToDisk(replacements);
+      _storage.scheduleWrite(replacements);
       await _syncToCompanionMod(replacements);
 
       Fimber.i('Portrait replacement saved: $original -> $replacement');
@@ -134,13 +134,13 @@ class PortraitReplacementsNotifier
     SavedPortrait original,
   ) async {
     try {
-      final replacements = await _storage.readSettingsFromDisk({});
-      replacements.remove(original.hash);
-      await _storage.scheduleWriteSettingsToDisk(replacements);
+      final replacements = await _storage.read({});
+      final removedValue = replacements.remove(original.hash);
+      _storage.scheduleWrite(replacements);
       await _syncToCompanionMod(replacements);
 
       Fimber.i(
-        'Portrait replacement removed: ${original.relativePath.toFile().name}',
+        'Portrait replacement removed. Original: ${original.relativePath.toFile().name}. Replacement (removed): ${removedValue?.replacement.relativePath.toFile().name}',
       );
       return replacements.toMapWithoutReplacedSavePortrait();
     } catch (e) {
@@ -153,7 +153,7 @@ class PortraitReplacementsNotifier
   Future<Map<String, SavedPortrait>> _clearReplacements() async {
     try {
       const replacements = <String, ReplacedSavedPortrait>{};
-      await _storage.scheduleWriteSettingsToDisk(replacements);
+      _storage.scheduleWrite(replacements);
       await _syncToCompanionMod(replacements);
 
       Fimber.i('All portrait replacements cleared');

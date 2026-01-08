@@ -93,7 +93,7 @@ class ModProfileManagerNotifier
           await existingJsonFile.rename("${existingJsonFile.path}.bak");
           initialState = modProfiles;
           state = AsyncData(initialState);
-          await settingsManager.scheduleWriteSettingsToDisk(initialState);
+          await settingsManager.scheduleWrite(initialState);
         }
       } catch (e, stack) {
         Fimber.e(

@@ -21,10 +21,12 @@ import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/search.dart';
 import 'package:trios/widgets/blur.dart';
 import 'package:trios/widgets/expanding_constrained_aligned_widget.dart';
+import 'package:trios/widgets/mode_switcher.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/multi_split_mixin_view.dart';
 import 'package:trios/widgets/overflow_menu_button.dart';
 import 'package:trios/widgets/toolbar_checkbox_button.dart';
+import 'package:trios/widgets/trios_expansion_tile.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 import '../thirdparty/dartx/range.dart';
@@ -36,6 +38,8 @@ class PortraitsPage extends ConsumerStatefulWidget {
   ConsumerState<PortraitsPage> createState() => _PortraitsPageState();
 }
 
+enum _PortraitsMode { viewer, replacer }
+
 class _PortraitsPageState extends ConsumerState<PortraitsPage>
     with AutomaticKeepAliveClientMixin<PortraitsPage>, MultiSplitViewMixin {
   @override
@@ -45,7 +49,9 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
   final SearchController _rightSearchController = SearchController();
   bool showOnlyReplaced = false;
   bool showOnlyEnabledMods = false;
-  bool inReplaceMode = false;
+  _PortraitsMode mode = _PortraitsMode.viewer;
+
+  bool get inReplaceMode => mode == _PortraitsMode.replacer;
 
   @override
   List<Area> get areas => inReplaceMode
@@ -77,6 +83,11 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
       builder: (context) => ReplacementsDialog(
         replacements: replacements,
         hashToPortrait: hashToPortrait,
+        onDelete: (portrait) {
+          ref
+              .read(AppState.portraitReplacementsManager.notifier)
+              .removeReplacement(portrait);
+        },
       ),
     );
   }
@@ -256,12 +267,42 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                               buildCompanionModWarningIcon(theme, companionMod),
                             Padding(
                               padding: const .only(),
-                              child: Text(
-                                'Portrait${inReplaceMode ? ' Replacer' : ' Viewer'}',
-                                style: theme.textTheme.headlineSmall?.copyWith(
-                                  fontSize: 20,
+                              child: MovingTooltipWidget.text(
+                                message:
+                                    "Portrait Viewer: View and search portraits from your mods."
+                                    "\nPortrait Replacer: Drag and drop portraits from the right pane to replace portraits on the left pane.",
+                                child: ModeSwitcher(
+                                  selected: mode,
+                                  modes: {
+                                    _PortraitsMode.viewer: 'Viewer',
+                                    _PortraitsMode.replacer: 'Replacer',
+                                  },
+                                  modeIcons: {
+                                    _PortraitsMode.viewer: const Icon(
+                                      Icons.portrait,
+                                    ),
+                                    _PortraitsMode.replacer: const Icon(
+                                      Icons.swap_horiz,
+                                    ),
+                                  },
+                                  onChanged: (value) {
+                                    setState(() {
+                                      // Copy the Viewer search to the Replacer search if it's not empty
+                                      if (_searchController.text.isNotEmpty) {
+                                        _leftSearchController.text =
+                                            _searchController.text;
+                                      }
+                                      mode = value;
+                                    });
+                                  },
                                 ),
                               ),
+                              // Text(
+                              //   'Portrait${inReplaceMode ? ' Replacer' : ' Viewer'}',
+                              //   style: theme.textTheme.headlineSmall?.copyWith(
+                              //     fontSize: 20,
+                              //   ),
+                              // ),
                             ),
                             if (!inReplaceMode)
                               MovingTooltipWidget.text(
@@ -292,24 +333,22 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                                     )
                                   : const Icon(Icons.refresh),
                             ),
-                            const SizedBox(width: 4),
-                            MovingTooltipWidget.text(
-                              message:
-                                  "In this mode, drag and drop images from the right pane to replace images on the left pane.",
-                              child: TriOSToolbarCheckboxButton(
-                                text: "Replace Mode",
-                                value: inReplaceMode,
-                                onChanged: (value) {
-                                  setState(() {
-                                    if (_searchController.text.isNotEmpty) {
-                                      _leftSearchController.text =
-                                          _searchController.text;
-                                    }
-                                    inReplaceMode = value ?? false;
-                                  });
-                                },
-                              ),
-                            ),
+                            // const SizedBox(width: 4),
+                            // MovingTooltipWidget.text(
+                            //   message:
+                            //       "In this mode, drag and drop images from the right pane to replace images on the left pane.",
+                            //   child: TriOSToolbarCheckboxButton(
+                            //     text: "Replace Mode",
+                            //     value: inReplaceMode,
+                            //     onChanged: (value) {
+                            //       setState(() {
+                            //         mode = (value ?? false)
+                            //             ? _PortraitsMode.replacer
+                            //             : _PortraitsMode.viewer;
+                            //       });
+                            //     },
+                            //   ),
+                            // ),
                             const SizedBox(width: 8),
                             if (inReplaceMode)
                               Padding(
@@ -325,26 +364,44 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                                       context,
                                       title: Text("Portrait Replacement"),
                                       body: [
-                                        Text(
-                                          "Usage",
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
+                                        ConstrainedBox(
+                                          constraints: const BoxConstraints(
+                                            maxWidth: 800,
                                           ),
-                                        ),
-                                        Text(
-                                          "On the left side are the portraits that you will see in-game."
-                                          "\nGrab portraits from the $replacementPoolString on the right side and move them to the left side to replace what you see in-game.",
-                                        ),
-                                        const SizedBox(height: 32),
-                                        Text(
-                                          "How It Works",
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
+                                          child: Column(
+                                            crossAxisAlignment: .start,
+                                            children: [
+                                              Text(
+                                                "How To Use",
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 20,
+                                                ),
+                                              ),
+                                              Text(
+                                                "On the left side are the portraits that you will see in-game."
+                                                "\nOn the right side is the $replacementPoolString - your options for replacing images on the left."
+                                                "\n\nGrab portraits from the right side and move them to the left side to replace what you see in-game.",
+                                              ),
+                                              const SizedBox(height: 24),
+                                              TriOSExpansionTile(
+                                                leading: const Icon(
+                                                  Icons.menu_book,
+                                                ),
+                                                title: Text("Under the Hood"),
+                                                children: [
+                                                  Padding(
+                                                    padding: const .all(8.0),
+                                                    child: Text(
+                                                      "A list of portraits to replace is saved as a json file (in the ${Constants.appName} data folder, which is synced one-way to the Companion Mod)."
+                                                      "\nThe ${Constants.appName} Companion Mod reads that file when you load your game, then swaps the portraits for that game session only."
+                                                      "\nIt does not change any mod files - replacement is all done in-memory, in-game.",
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
                                           ),
-                                        ),
-                                        Text(
-                                          "A list of portraits to replace is saved as a json file. The ${Constants.appName} Companion Mod reads that file when you load your game and swaps the portraits during that game session."
-                                          "\nIt does not change any mod files - replacement is all done in-memory, in-game.",
                                         ),
                                       ],
                                     ),
@@ -403,6 +460,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                                 ),
                               ),
                             ),
+                            const Spacer(),
                             OverflowMenuButton(
                               menuItems: [
                                 OverflowMenuItem(
@@ -599,7 +657,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                                         Padding(
                                           padding: const .only(left: 8),
                                           child: Text(
-                                            "${replacementPoolString}",
+                                            replacementPoolString,
                                             style: theme.textTheme.titleLarge,
                                           ),
                                         ),
@@ -805,7 +863,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
   void _onSelectedPortraitToReplace(Portrait selectedPortrait) {
     setState(() {
       _leftSearchController.text = selectedPortrait.relativePath;
-      inReplaceMode = true;
+      mode = _PortraitsMode.replacer;
     });
   }
 
@@ -876,11 +934,13 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
 class ReplacementsDialog extends StatelessWidget {
   final Map<String, Portrait> replacements;
   final Map<String, Portrait> hashToPortrait;
+  final Function(Portrait)? onDelete;
 
   const ReplacementsDialog({
     super.key,
     required this.replacements,
     required this.hashToPortrait,
+    this.onDelete,
   });
 
   @override
@@ -892,17 +952,33 @@ class ReplacementsDialog extends StatelessWidget {
         height: 600,
         child: replacements.isEmpty
             ? const Center(child: Text('No portrait replacements found.'))
-            : ListView.builder(
-                itemCount: replacements.length,
-                itemBuilder: (context, index) {
-                  final entry = replacements.entries.elementAt(index);
-                  final originalHash = entry.key;
-                  final replacementPath = entry.value;
+            : StatefulBuilder(
+                builder: (context, setState) {
+                  return ListView.builder(
+                    itemCount: replacements.length,
+                    itemBuilder: (context, index) {
+                      final entry = replacements.entries.elementAt(index);
+                      final originalHash = entry.key;
+                      final replacementPath = entry.value;
 
-                  return ReplacementListItem(
-                    originalHash: originalHash,
-                    replacementPath: replacementPath.imageFile.path,
-                    originalPortrait: hashToPortrait[originalHash],
+                      final original = hashToPortrait[originalHash];
+                      if (original == null) {
+                        return const Center(
+                          child: Text('Original portrait not found'),
+                        );
+                      }
+                      return ReplacementListItem(
+                        originalHash: originalHash,
+                        replacementPath: replacementPath.imageFile.path,
+                        originalPortrait: original,
+                        onDelete: (portrait) {
+                          setState(() {
+                            onDelete?.call(portrait);
+                            replacements.remove(originalHash);
+                          });
+                        },
+                      );
+                    },
                   );
                 },
               ),
@@ -920,20 +996,22 @@ class ReplacementsDialog extends StatelessWidget {
 class ReplacementListItem extends StatelessWidget {
   final String originalHash;
   final String replacementPath;
-  final Portrait? originalPortrait;
+  final Portrait originalPortrait;
+  final Function(Portrait)? onDelete;
 
   const ReplacementListItem({
     super.key,
     required this.originalHash,
     required this.replacementPath,
-    this.originalPortrait,
+    required this.originalPortrait,
+    this.onDelete,
   });
 
   @override
   Widget build(BuildContext context) {
     final replacementFile = File(replacementPath);
     final fileExists = replacementFile.existsSync();
-    final originalExists = originalPortrait?.imageFile.existsSync() ?? false;
+    final originalExists = originalPortrait.imageFile.existsSync();
 
     return Card(
       child: Padding(
@@ -951,11 +1029,11 @@ class ReplacementListItem extends StatelessWidget {
                 ),
                 borderRadius: BorderRadius.circular(4),
               ),
-              child: originalPortrait != null && originalExists
+              child: originalExists
                   ? ClipRRect(
                       borderRadius: BorderRadius.circular(4),
                       child: Image.file(
-                        originalPortrait!.imageFile,
+                        originalPortrait.imageFile,
                         width: 64,
                         height: 64,
                         fit: BoxFit.cover,
@@ -1019,12 +1097,12 @@ class ReplacementListItem extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Original: ${originalPortrait?.imageFile.path.split(Platform.pathSeparator).last ?? "Unknown"}',
+                    'Original: ${originalPortrait.imageFile.path.split(Platform.pathSeparator).last ?? "Unknown"}',
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  if (originalPortrait != null && originalExists)
+                  if (originalExists)
                     Text(
-                      'Path: ${originalPortrait!.imageFile.path}',
+                      originalPortrait.imageFile.path,
                       style: const TextStyle(fontSize: 12, color: Colors.grey),
                     ),
                   if (!originalExists)
@@ -1038,7 +1116,7 @@ class ReplacementListItem extends StatelessWidget {
                     style: TextStyle(color: fileExists ? null : Colors.red),
                   ),
                   Text(
-                    'Path: ${replacementFile.path}',
+                    replacementFile.path,
                     style: const TextStyle(fontSize: 12, color: Colors.grey),
                   ),
                   if (!fileExists)
@@ -1057,11 +1135,11 @@ class ReplacementListItem extends StatelessWidget {
             // Actions
             Column(
               children: [
-                if (originalPortrait != null && originalExists)
+                if (originalExists)
                   IconButton(
                     icon: const Icon(Icons.open_in_new),
                     onPressed: () =>
-                        launchUrlString(originalPortrait!.imageFile.path),
+                        launchUrlString(originalPortrait.imageFile.path),
                     tooltip: 'Open original image',
                   ),
                 if (fileExists)
@@ -1076,6 +1154,12 @@ class ReplacementListItem extends StatelessWidget {
                     onPressed: () =>
                         launchUrlString(replacementFile.parent.path),
                     tooltip: 'Open folder',
+                  ),
+                if (onDelete != null)
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline, color: Colors.red),
+                    onPressed: () => onDelete?.call(originalPortrait),
+                    tooltip: 'Remove replacement',
                   ),
               ],
             ),

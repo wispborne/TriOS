@@ -36,7 +36,8 @@ class ModVariant with ModVariantMappable implements Comparable<ModVariant> {
     required this.hasNonBrickedModInfo,
     required this.gameCoreFolder,
   }) {
-    regenerateIconFilePath(gameCoreFolder);
+    // Calculate the icon path now so it's cached.
+    iconCache[modInfo.id] = _calculateIconPath(gameCoreFolder);
   }
 
   String get smolId => createSmolId(modInfo.id, modInfo.version);
@@ -48,11 +49,20 @@ class ModVariant with ModVariantMappable implements Comparable<ModVariant> {
 
   String? get iconFilePath => iconCache.putIfAbsent(
     modInfo.id,
-    () => regenerateIconFilePath(gameCoreFolder),
+    () => _calculateIconPath(gameCoreFolder),
   );
 
-  String? regenerateIconFilePath(Directory gameCoreFolder) {
+  String? _calculateIconPath(Directory gameCoreFolder) {
     String? path;
+
+    final pathInRootFolder = modIconFilePaths
+        .map((path) => modFolder.resolve(path))
+        .firstWhereOrNull((file) => file.existsSync())
+        ?.path;
+
+    if (pathInRootFolder != null) {
+      return pathInRootFolder;
+    }
 
     final lunaSettings = modFolder
         .resolve("data/config/LunaSettingsConfig.json")
@@ -91,7 +101,6 @@ class ModVariant with ModVariantMappable implements Comparable<ModVariant> {
         Fimber.d("Error reading LunaSettingsConfig.json: $e");
       }
 
-      iconCache[modInfo.id] = path;
       return path;
     }
 
@@ -181,7 +190,7 @@ String createSmolId(String id, Version? version) {
       '${id.replaceAll(smolIdAllowedChars, '').take(6)}-${versionString.replaceAll(smolIdAllowedChars, '').take(9)}-${(id.hashCode + version.hashCode).abs()}';
   _smolIdCache[cacheKey] = result;
 
-  if (_smolIdCache.length > 1000) {
+  if (_smolIdCache.length > 10000) {
     _smolIdCache.clear();
   }
 

@@ -77,7 +77,7 @@ class ModMetadataStore extends GenericSettingsAsyncNotifier<ModsMetadata> {
     );
 
     if (isDirty) {
-      settingsManager.scheduleWriteSettingsToDisk(settings);
+      settingsManager.scheduleWrite(settings);
     }
   }
 

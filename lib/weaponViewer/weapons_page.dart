@@ -127,6 +127,7 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
             padding: const EdgeInsets.symmetric(horizontal: 8),
             child: Row(
               children: [
+                const SizedBox(width: 4),
                 Text(
                   '$total Weapons${total != visible ? " ($visible shown)" : ""}',
                   style: theme.textTheme.headlineSmall?.copyWith(fontSize: 20),

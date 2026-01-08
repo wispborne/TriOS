@@ -112,7 +112,7 @@ class VersionCheckerAsyncProvider
         AppState.skipCacheOnNextVersionCheck = false;
       });
     } else if (_versionCheckResultsCache.isEmpty) {
-      final versionResultsOnDisk = await settingsManager.readSettingsFromDisk(
+      final versionResultsOnDisk = await settingsManager.read(
         createDefaultState(),
       );
       _versionCheckResultsCache.addAll(

@@ -50,13 +50,10 @@ abstract class GenericAsyncSettingsManager<T> {
       Future.value(Constants.configDataFolderPath);
 
   /// Reads settings from disk, or uses the provided fallback state if there's any error.
-  Future<T> readSettingsFromDisk(
-    T fallback, {
-    bool useCachedValue = false,
-  }) async {
-    if (useCachedValue && lastKnownValue != null) {
+  Future<T> read(T fallback, {bool forceLoadFromDisk = false}) async {
+    if (!forceLoadFromDisk && lastKnownValue != null) {
       Fimber.v(() => "Returning cached value instead of reading from disk.");
-      return Future.value(lastKnownValue);
+      return lastKnownValue!;
     }
 
     settingsFile = await _getFile();
@@ -85,7 +82,9 @@ abstract class GenericAsyncSettingsManager<T> {
   }
 
   /// Schedules a write operation to disk for the given state.
-  Future<void> scheduleWriteSettingsToDisk(T newState) {
+  /// You do not need to await this unless you need to wait until the write is complete.
+  /// The write will be debounced so that only the last write is actually written to disk.
+  Future<void> scheduleWrite(T newState) {
     lastKnownValue = newState;
     _debounceTimer?.cancel();
     if (_writeCompleter == null || _writeCompleter!.isCompleted) {

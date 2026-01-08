@@ -24,7 +24,7 @@ abstract class GenericSettingsAsyncNotifier<T> extends AsyncNotifier<T> {
       state = AsyncValue.loading();
       Fimber.i("Building settings notifier: $runtimeType");
       try {
-        final loadedState = await settingsManager.readSettingsFromDisk(
+        final loadedState = await settingsManager.read(
           createDefaultState(),
         );
         state = AsyncData(loadedState);
@@ -65,7 +65,7 @@ abstract class GenericSettingsAsyncNotifier<T> extends AsyncNotifier<T> {
       final newValue = await mutator(oldValue);
       if (newValue.hashCode != oldValue.hashCode) {
         state = AsyncData(newValue);
-        settingsManager.scheduleWriteSettingsToDisk(newValue);
+        settingsManager.scheduleWrite(newValue);
       } else {
         Fimber.v(() => "No settings change detected.");
       }

@@ -124,6 +124,7 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
             padding: const EdgeInsets.symmetric(horizontal: 8),
             child: Row(
               children: [
+                const SizedBox(width: 4),
                 Text(
                   '$total Ships${total != visible ? " ($visible shown)" : ""}',
                   style: theme.textTheme.headlineSmall?.copyWith(fontSize: 20),

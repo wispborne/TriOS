@@ -56,8 +56,7 @@ class PortraitsGridView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final modsPath =
-        ref.watch(AppState.modsFolder).value ?? Directory("");
+    final modsPath = ref.watch(AppState.modsFolder).value ?? Directory("");
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -363,9 +362,9 @@ class _PortraitImageWidgetState extends ConsumerState<PortraitImageWidget> {
                 );
               },
             ),
-            if (widget.showPickReplacementIcon)
+            if (widget.showPickReplacementIcon && _isHovering)
               Align(
-                alignment: Alignment.bottomRight,
+                alignment: Alignment.topLeft,
                 child: Padding(
                   padding: const EdgeInsets.only(bottom: 0, right: 2),
                   child: MovingTooltipWidget.text(

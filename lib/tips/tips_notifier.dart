@@ -234,7 +234,7 @@ class TipsNotifier extends AsyncNotifier<List<ModTip>> {
     var currentDeletedTips = <String>[];
     try {
       currentDeletedTips =
-          (await deletedTipsStorageManager.readSettingsFromDisk(
+          (await deletedTipsStorageManager.read(
             {},
           )).orEmpty().toList();
     } catch (e, stacktrace) {
@@ -246,7 +246,7 @@ class TipsNotifier extends AsyncNotifier<List<ModTip>> {
     }
     final allRemovedHashes = (currentDeletedTips + removedTipHashcodes.toList())
         .toSet();
-    deletedTipsStorageManager.scheduleWriteSettingsToDisk(allRemovedHashes);
+    deletedTipsStorageManager.scheduleWrite(allRemovedHashes);
 
     if (reloadTipsAfter) {
       final updatedList = [...?state.value];
@@ -336,7 +336,7 @@ class TipsNotifier extends AsyncNotifier<List<ModTip>> {
     var currentDeletedTips = <String>[];
     try {
       currentDeletedTips =
-          (await deletedTipsStorageManager.readSettingsFromDisk(
+          (await deletedTipsStorageManager.read(
             {},
           )).orEmpty().toList();
     } catch (e, stacktrace) {
@@ -351,7 +351,7 @@ class TipsNotifier extends AsyncNotifier<List<ModTip>> {
     final newDeletedSet = currentDeletedTips
         .where((hash) => !unhiddenTipHashes.contains(hash))
         .toSet();
-    deletedTipsStorageManager.scheduleWriteSettingsToDisk(newDeletedSet);
+    deletedTipsStorageManager.scheduleWrite(newDeletedSet);
 
     // Finally, update in-memory state so UI immediately reflects the changes:
     if (reloadTipsAfter) {
@@ -390,7 +390,7 @@ class TipsNotifier extends AsyncNotifier<List<ModTip>> {
     List<Mod> modsToCheck,
   ) async {
     final removedTipHashes = await deletedTipsStorageManager
-        .readSettingsFromDisk({}, useCachedValue: true);
+        .read({});
     if (removedTipHashes.isEmpty) {
       return [];
     }

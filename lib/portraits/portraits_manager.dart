@@ -2,7 +2,6 @@ import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/portraits/portrait_model.dart';
 import 'package:trios/trios/app_state.dart';
-import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/logging.dart';
 
 import '../models/mod_variant.dart';
@@ -36,8 +35,14 @@ class PortraitsNotifier
       }
 
       final mods = ref.read(AppState.mods);
-      final variants =
-          mods.map((mod) => mod.findFirstEnabledOrHighestVersion).toList();
+      final variants = mods
+          .map((mod) => mod.findFirstEnabledOrHighestVersion)
+          .toList();
+
+      // Always include null (Vanilla) in the variants list
+      if (!variants.contains(null)) {
+        variants.add(null);
+      }
 
       if (_lastState.isEmpty) {
         Fimber.i("Scanning all portraits for the first time.");
@@ -96,7 +101,7 @@ class PortraitsNotifier
       } else {
         // Full rescan path
         await for (final result in scanner.scanVariantsStream(
-          variants + [null],
+          variants,
           gameCoreFolder,
         )) {
           state = AsyncValue.data(result);

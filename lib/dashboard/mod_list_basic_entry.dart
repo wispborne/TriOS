@@ -91,6 +91,7 @@ class ModListBasicEntry extends ConsumerStatefulWidget {
                   versionCheckComparison,
                   localVersionCheck,
                   remoteVersionCheck,
+                  mod,
                   true,
                   true,
                 ),
@@ -129,6 +130,7 @@ class ModListBasicEntry extends ConsumerStatefulWidget {
                 versionCheckComparison,
                 localVersionCheck,
                 remoteVersionCheck,
+                mod,
                 true,
                 false,
               ),
@@ -143,9 +145,7 @@ class ModListBasicEntry extends ConsumerStatefulWidget {
 class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
   @override
   Widget build(BuildContext context) {
-    var cachedVersionChecks = ref
-        .watch(AppState.versionCheckResults)
-        .value;
+    var cachedVersionChecks = ref.watch(AppState.versionCheckResults).value;
     final mod = widget.mod;
     final modVariant =
         mod.findFirstEnabledOrHighestVersion ?? mod.modVariants.first;
@@ -354,9 +354,7 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                       }
                     }
 
-                    final modsFolder = ref
-                        .read(AppState.modsFolder)
-                        .value;
+                    final modsFolder = ref.read(AppState.modsFolder).value;
                     if (modsFolder == null) return;
 
                     try {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:trios/models/mod.dart';
 import 'package:trios/models/version_checker_info.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/constants.dart';
@@ -15,11 +16,13 @@ class VersionCheckTextReadout extends ConsumerStatefulWidget {
   final RemoteVersionCheckResult? remoteVersionCheck;
   final bool showClickToDownloadIfPossible;
   final bool showRightClickToExpand;
+  final Mod mod;
 
   const VersionCheckTextReadout(
     this.versionCheckComparison,
     this.localVersionCheck,
     this.remoteVersionCheck,
+    this.mod,
     this.showClickToDownloadIfPossible,
     this.showRightClickToExpand, {
     super.key,

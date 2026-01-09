@@ -581,7 +581,7 @@ class ModProfileManagerNotifier
               icon: hasMissingModsOrVariants ? const Icon(Icons.warning) : null,
               label: Text(
                 hasMissingModsOrVariants
-                    ? 'Activate (ignore missing)'
+                    ? 'Activate (ignore missing mods)'
                     : 'Activate',
               ),
             ),

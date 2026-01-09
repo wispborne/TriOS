@@ -877,6 +877,15 @@ class DonateView extends StatelessWidget {
               spacing: 4,
               children: [
                 ListTile(
+                  title: const Text("Ko-Fi"),
+                  leading: Icon(Icons.coffee, size: 20),
+                  tileColor: Theme.of(context).colorScheme.surfaceContainer,
+                  onTap: () {
+                    Constants.kofiUrl.openAsUriInBrowser();
+                    Navigator.of(context).pop();
+                  },
+                ),
+                ListTile(
                   title: const Text("Patreon"),
                   leading: SvgImageIcon(
                     "assets/images/icon-patreon.svg",
@@ -885,15 +894,6 @@ class DonateView extends StatelessWidget {
                   tileColor: Theme.of(context).colorScheme.surfaceContainer,
                   onTap: () {
                     Constants.patreonUrl.openAsUriInBrowser();
-                    Navigator.of(context).pop();
-                  },
-                ),
-                ListTile(
-                  title: const Text("Ko-Fi"),
-                  leading: Icon(Icons.coffee, size: 20),
-                  tileColor: Theme.of(context).colorScheme.surfaceContainer,
-                  onTap: () {
-                    Constants.kofiUrl.openAsUriInBrowser();
                     Navigator.of(context).pop();
                   },
                 ),

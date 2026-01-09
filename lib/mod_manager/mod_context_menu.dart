@@ -14,6 +14,7 @@ ContextMenu buildModContextMenu(
   WidgetRef ref,
   BuildContext context, {
   bool showSwapToVersion = true,
+  bool showEstimateVram = true,
   Function(Mod? mod)? openSidebar,
 }) {
   final currentStarsectorVersion = ref.read(
@@ -43,8 +44,7 @@ ContextMenu buildModContextMenu(
       MenuHeader(text: Constants.appName, disableUppercase: true),
       if (openSidebar != null)
         buildMenuItemOpenInSidebar(mod, ref, openSidebar),
-      if (ref.watch(AppState.vramEstimatorProvider).value?.isScanning !=
-          true)
+      if (showEstimateVram && ref.watch(AppState.vramEstimatorProvider).value?.isScanning != true)
         buildMenuItemCheckVram(mod, ref),
       buildMenuItemToggleMuteUpdates(mod, ref),
       if (false) // not done

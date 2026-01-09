@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/models/version_checker_info.dart';
 import 'package:trios/themes/theme_manager.dart';
+import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/widgets/blur.dart';
 import 'package:trios/widgets/conditional_wrap.dart';
+import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 
 import '../mod_manager/mod_manager_logic.dart';
 import '../mod_manager/version_checker.dart';
 
-class VersionCheckIcon extends StatelessWidget {
+class VersionCheckIcon extends ConsumerWidget {
   const VersionCheckIcon({
     super.key,
     required this.localVersionCheck,
@@ -35,7 +38,7 @@ class VersionCheckIcon extends StatelessWidget {
   final ThemeData theme;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     const updateIconSize = 20.0;
     var hasDirectDownload =
         remoteVersionCheck?.remoteVersion?.directDownloadURL != null;
@@ -43,88 +46,109 @@ class VersionCheckIcon extends StatelessWidget {
       -1 => theme.colorScheme.secondary,
       _ => theme.disabledColor.withOpacity(0.5),
     };
+    final metadata = ref
+        .watch(AppState.modsMetadata)
+        .valueOrNull
+        ?.getMergedModMetadata(modId);
+    final areUpdatesMuted = metadata != null && metadata.areUpdatesMuted;
 
-    return Row(
-      children: [
-        if (localVersionCheck?.modVersion != null &&
-            remoteVersionCheck?.remoteVersion?.modVersion != null)
-          Padding(
-            padding: const EdgeInsets.only(right: 6),
-            child: ConditionalWrap(
-              condition: versionCheckComparison == -1,
-              wrapper: (child) =>
-                  Blur(blurX: 0, blurY: 0, blurOpacity: 0.7, child: child),
-              child: Builder(
-                builder: (context) {
-                  if (versionCheckComparison == -1 && hasDirectDownload) {
-                    return Icon(
-                      Icons.download,
-                      size: updateIconSize,
-                      color: iconColor,
-                    );
-                  } else if (versionCheckComparison == -1 &&
-                      !hasDirectDownload) {
-                    return SvgImageIcon(
-                      "assets/images/icon-update-badge.svg",
-                      width: updateIconSize,
-                      height: updateIconSize,
-                      color: iconColor,
-                    );
-                  } else {
-                    return Icon(
-                      Icons.check,
-                      size: updateIconSize,
-                      color: iconColor,
-                    );
-                  }
-                },
+    return (areUpdatesMuted)
+        ? MovingTooltipWidget.text(
+            message: "Updates muted",
+            child: Padding(
+              padding: const .only(right: 6),
+              child: Icon(
+                Icons.notifications_off,
+                size: 20.0,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
               ),
             ),
-          ),
-        if (localVersionCheck?.modVersion != null &&
-            remoteVersionCheck?.error != null)
-          Padding(
-            padding: const EdgeInsets.only(right: 6),
-            child: Icon(
-              Icons.error_outline,
-              size: updateIconSize,
-              color: ThemeManager.vanillaWarningColor.withOpacity(0.5),
-            ),
-          ),
-        if (localVersionCheck?.modVersion == null)
-          // Special case for companion mod, which doesn't need a version checker
-          if (modId != Constants.companionModId)
-            Padding(
-              padding: const EdgeInsets.only(right: 6),
-              child: SizedBox(
-                width: updateIconSize,
-                child: Center(
-                  child: ColorFiltered(
-                    colorFilter: greyscale,
-                    child: SvgImageIcon(
-                      "assets/images/icon-help.svg",
-                      width: updateIconSize,
-                      height: updateIconSize,
-                      color: theme.disabledColor.withOpacity(0.35),
+          )
+        : Row(
+            children: [
+              if (localVersionCheck?.modVersion != null &&
+                  remoteVersionCheck?.remoteVersion?.modVersion != null)
+                Padding(
+                  padding: const .only(right: 6),
+                  child: ConditionalWrap(
+                    condition: versionCheckComparison == -1,
+                    wrapper: (child) => Blur(
+                      blurX: 0,
+                      blurY: 0,
+                      blurOpacity: 0.7,
+                      child: child,
+                    ),
+                    child: Builder(
+                      builder: (context) {
+                        if (versionCheckComparison == -1 && hasDirectDownload) {
+                          return Icon(
+                            Icons.download,
+                            size: updateIconSize,
+                            color: iconColor,
+                          );
+                        } else if (versionCheckComparison == -1 &&
+                            !hasDirectDownload) {
+                          return SvgImageIcon(
+                            "assets/images/icon-update-badge.svg",
+                            width: updateIconSize,
+                            height: updateIconSize,
+                            color: iconColor,
+                          );
+                        } else {
+                          return Icon(
+                            Icons.check,
+                            size: updateIconSize,
+                            color: iconColor,
+                          );
+                        }
+                      },
                     ),
                   ),
                 ),
-              ),
-            ),
-        if (localVersionCheck != null && remoteVersionCheck == null)
-          Padding(
-            padding: const EdgeInsets.only(right: 6),
-            child: ColorFiltered(
-              colorFilter: greyscale,
-              child: Text(
-                "…",
-                style: theme.textTheme.labelLarge?.copyWith(
-                  color: theme.disabledColor.withOpacity(0.35),
+              if (localVersionCheck?.modVersion != null &&
+                  remoteVersionCheck?.error != null)
+                Padding(
+                  padding: const .only(right: 6),
+                  child: Icon(
+                    Icons.error_outline,
+                    size: updateIconSize,
+                    color: ThemeManager.vanillaWarningColor.withOpacity(0.5),
+                  ),
                 ),
-              ),
-            ),
-          ),
-      ],
-    );
+              if (localVersionCheck?.modVersion == null)
+                // Special case for companion mod, which doesn't need a version checker
+                if (modId != Constants.companionModId)
+                  Padding(
+                    padding: const .only(right: 6),
+                    child: SizedBox(
+                      width: updateIconSize,
+                      child: Center(
+                        child: ColorFiltered(
+                          colorFilter: greyscale,
+                          child: SvgImageIcon(
+                            "assets/images/icon-help.svg",
+                            width: updateIconSize,
+                            height: updateIconSize,
+                            color: theme.disabledColor.withOpacity(0.35),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              if (localVersionCheck != null && remoteVersionCheck == null)
+                Padding(
+                  padding: const .only(right: 6),
+                  child: ColorFiltered(
+                    colorFilter: greyscale,
+                    child: Text(
+                      "…",
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        color: theme.disabledColor.withOpacity(0.35),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          );
   }
 }

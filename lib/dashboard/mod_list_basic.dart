@@ -672,6 +672,7 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                   mod,
                                   ref,
                                   context,
+                                  showEstimateVram: false,
                                 ),
                                 child: ModListBasicEntry(
                                   mod: mod,

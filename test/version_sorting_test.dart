@@ -16,7 +16,7 @@ void main() {
       ['1.1.0', '1.1.b'],
       ['1.12.SSS', '1.12.1'],
       ['0.14.5b', '0.15'],
-      ['2023.05.05', '2024.10.04', '2025.03.30']
+      ['2023.05.05', '2024.10.04', '2025.03.30'],
     ];
 
     for (final pair in correctPairs) {
@@ -43,7 +43,7 @@ void main() {
 
   test('benchmark', () {
     // Disable slow console log output
-    configureLogging(consoleOnly: true);
+    configureLogging(LoggingSettings(consoleOnly: true));
 
     final iterations = 1000;
     final versions = _expectedList

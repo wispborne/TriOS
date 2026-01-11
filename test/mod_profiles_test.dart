@@ -23,6 +23,7 @@ void main() {
               versionCheckerInfo: null,
               modFolder: Directory(''),
               hasNonBrickedModInfo: true,
+              gameCoreFolder: Directory(''),
             ),
           ],
         ),
@@ -34,6 +35,7 @@ void main() {
           versionCheckerInfo: null,
           modFolder: Directory(''),
           hasNonBrickedModInfo: true,
+          gameCoreFolder: Directory(''),
         ),
       ];
 
@@ -81,6 +83,7 @@ void main() {
               versionCheckerInfo: null,
               modFolder: Directory(''),
               hasNonBrickedModInfo: true,
+              gameCoreFolder: Directory(''),
             ),
           ],
         ),
@@ -95,6 +98,7 @@ void main() {
           versionCheckerInfo: null,
           modFolder: Directory(''),
           hasNonBrickedModInfo: true,
+          gameCoreFolder: Directory(''),
         ),
       ];
 
@@ -108,6 +112,7 @@ void main() {
           versionCheckerInfo: null,
           modFolder: Directory(''),
           hasNonBrickedModInfo: true,
+          gameCoreFolder: Directory(''),
         ),
       ];
 
@@ -146,12 +151,14 @@ void main() {
               versionCheckerInfo: null,
               modFolder: Directory(''),
               hasNonBrickedModInfo: true,
+              gameCoreFolder: Directory(''),
             ),
             ModVariant(
               modInfo: ModInfo(id: 'modA', version: newVersion),
               versionCheckerInfo: null,
               modFolder: Directory(''),
               hasNonBrickedModInfo: true,
+              gameCoreFolder: Directory(''),
             ),
           ],
         ),
@@ -163,6 +170,7 @@ void main() {
           versionCheckerInfo: null,
           modFolder: Directory(''),
           hasNonBrickedModInfo: true,
+          gameCoreFolder: Directory(''),
         ),
       ];
 
@@ -173,6 +181,7 @@ void main() {
           versionCheckerInfo: null,
           modFolder: Directory(''),
           hasNonBrickedModInfo: true,
+          gameCoreFolder: Directory(''),
         ),
       ];
 
@@ -254,6 +263,7 @@ void main() {
                 versionCheckerInfo: null,
                 modFolder: Directory(''),
                 hasNonBrickedModInfo: true,
+                gameCoreFolder: Directory(''),
               ),
             ],
           ),
@@ -270,6 +280,7 @@ void main() {
             versionCheckerInfo: null,
             modFolder: Directory(''),
             hasNonBrickedModInfo: true,
+            gameCoreFolder: Directory(''),
           ),
         ];
 
@@ -279,6 +290,7 @@ void main() {
             versionCheckerInfo: null,
             modFolder: Directory(''),
             hasNonBrickedModInfo: true,
+            gameCoreFolder: Directory(''),
           ),
         ];
 
@@ -334,6 +346,7 @@ void main() {
               versionCheckerInfo: null,
               modFolder: Directory(''),
               hasNonBrickedModInfo: true,
+              gameCoreFolder: Directory(''),
             ),
           ],
         ),
@@ -347,6 +360,7 @@ void main() {
               versionCheckerInfo: null,
               modFolder: Directory(''),
               hasNonBrickedModInfo: true,
+              gameCoreFolder: Directory(''),
             ),
           ],
         ),
@@ -360,12 +374,14 @@ void main() {
               versionCheckerInfo: null,
               modFolder: Directory(''),
               hasNonBrickedModInfo: true,
+              gameCoreFolder: Directory(''),
             ),
             ModVariant(
               modInfo: ModInfo(id: 'modC', version: v110),
               versionCheckerInfo: null,
               modFolder: Directory(''),
               hasNonBrickedModInfo: true,
+              gameCoreFolder: Directory(''),
             ),
           ],
         ),
@@ -380,6 +396,7 @@ void main() {
               versionCheckerInfo: null,
               modFolder: Directory(''),
               hasNonBrickedModInfo: true,
+              gameCoreFolder: Directory(''),
             ),
           ],
         ),
@@ -392,30 +409,35 @@ void main() {
           versionCheckerInfo: null,
           modFolder: Directory(''),
           hasNonBrickedModInfo: true,
+          gameCoreFolder: Directory(''),
         ),
         ModVariant(
           modInfo: ModInfo(id: 'modB', version: v100),
           versionCheckerInfo: null,
           modFolder: Directory(''),
           hasNonBrickedModInfo: true,
+          gameCoreFolder: Directory(''),
         ),
         ModVariant(
           modInfo: ModInfo(id: 'modC', version: v100),
           versionCheckerInfo: null,
           modFolder: Directory(''),
           hasNonBrickedModInfo: true,
+          gameCoreFolder: Directory(''),
         ),
         ModVariant(
           modInfo: ModInfo(id: 'modC', version: v110),
           versionCheckerInfo: null,
           modFolder: Directory(''),
           hasNonBrickedModInfo: true,
+          gameCoreFolder: Directory(''),
         ),
         ModVariant(
           modInfo: ModInfo(id: 'modE', version: v200),
           versionCheckerInfo: null,
           modFolder: Directory(''),
           hasNonBrickedModInfo: true,
+          gameCoreFolder: Directory(''),
         ),
       ];
 
@@ -428,12 +450,14 @@ void main() {
           versionCheckerInfo: null,
           modFolder: Directory(''),
           hasNonBrickedModInfo: true,
+          gameCoreFolder: Directory(''),
         ),
         ModVariant(
           modInfo: ModInfo(id: 'modC', version: v100),
           versionCheckerInfo: null,
           modFolder: Directory(''),
           hasNonBrickedModInfo: true,
+          gameCoreFolder: Directory(''),
         ),
       ];
 

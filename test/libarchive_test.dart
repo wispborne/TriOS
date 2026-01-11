@@ -11,7 +11,7 @@ void main() {
 
   // Time taken: 0:00:00.332460
   test("LibArchive read test", () {
-    configureLogging();
+    configureLogging(LoggingSettings());
 
     final time = DateTime.now();
     final libArchive = LibArchive.fromPath(assetsPath);
@@ -27,7 +27,7 @@ void main() {
   });
 
   test("LibArchive extraction test", () async {
-    configureLogging();
+    configureLogging(LoggingSettings());
 
     final time = DateTime.now();
     final libArchive = LibArchive.fromPath(assetsPath);

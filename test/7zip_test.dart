@@ -13,7 +13,7 @@ void main() {
 
   // Time taken: 0:00:00.161736
   test("7zip read test", () async {
-    configureLogging();
+    configureLogging(LoggingSettings());
     final time = DateTime.now();
 
     final sevenZ = getSevenZip();
@@ -28,7 +28,7 @@ void main() {
   });
 
   test("7zip read game test", () async {
-    configureLogging();
+    configureLogging(LoggingSettings());
     final sevenZ = getSevenZip();
     var archivePath = "F:/Downloads/starsector_install-0.97a-RC11.exe".toFile();
     final archiveEntries = await sevenZ.listFiles(archivePath);
@@ -41,7 +41,7 @@ void main() {
   });
 
   test("7zip extraction test", () async {
-    configureLogging();
+    configureLogging(LoggingSettings());
     final time = DateTime.now();
     final sevenZ = getSevenZip();
     var archivePath =

@@ -7,6 +7,7 @@
   - **Import Mod Profiles** and Modlists (contributed by hihahahalol)
     - Copy your mod profile or list to the clipboard and send it to someone else.
     - Copy someone else's and import it.
+    - This will not automatically download mods.
   - Report A Bug
     - New icon (hidable) to submit a bug report, optionally with a full screenshot.
   - Menu option: Delete Mod (all versions)

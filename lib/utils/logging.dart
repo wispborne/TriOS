@@ -57,8 +57,8 @@ class LoggingSettings with LoggingSettingsMappable {
 Future<void> modifyLoggingSettings(
   LoggingSettings Function(LoggingSettings prevSettings) modifier,
 ) {
-  _loggingSettings = modifier(_loggingSettings ?? LoggingSettings());
-  return configureLogging(_loggingSettings!);
+  _loggingSettings = modifier(_loggingSettings);
+  return configureLogging(_loggingSettings);
 }
 
 /// Fine to call multiple times.

@@ -8,7 +8,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // Import Riverpod
 import 'package:html/parser.dart';
 import 'package:trios/mod_manager/version_checker.dart';
-import 'package:trios/trios/providers.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/http_client.dart';
 

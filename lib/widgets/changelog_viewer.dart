@@ -8,7 +8,6 @@ import 'package:trios/utils/http_client.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 
 import '../trios/constants.dart';
-import '../trios/providers.dart';
 import '../utils/extensions.dart';
 
 class TriOSChangelogViewer extends ConsumerStatefulWidget {

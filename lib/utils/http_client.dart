@@ -3,7 +3,18 @@ import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/logging.dart';
+
+final triOSHttpClient = Provider<TriOSHttpClient>(
+  (ref) => TriOSHttpClient(
+    config: ApiClientConfig(),
+    maxConcurrentRequests: ref.watch(
+      appSettings.select((s) => s.maxHttpRequestsAtOnce),
+    ),
+  ),
+);
 
 // Custom response class to encapsulate useful details
 class TriOSHttpResponse<T> {

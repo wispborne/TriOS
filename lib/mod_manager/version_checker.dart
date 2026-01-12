@@ -4,7 +4,6 @@ import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:dart_mappable/dart_mappable.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mutex/mutex.dart';
 import 'package:path/path.dart' as p;
 import 'package:trios/thirdparty/dartx/map.dart';
@@ -17,7 +16,6 @@ import 'package:trios/utils/logging.dart';
 import '../models/mod_variant.dart';
 import '../models/version_checker_info.dart';
 import '../trios/app_state.dart';
-import '../trios/providers.dart';
 import 'mod_manager_logic.dart';
 
 part 'version_checker.mapper.dart';

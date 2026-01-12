@@ -9,7 +9,6 @@ import 'package:trios/mod_manager/version_checker.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/models/version_checker_info.dart';
 import 'package:trios/trios/app_state.dart';
-import 'package:trios/trios/providers.dart';
 import 'package:trios/utils/http_client.dart';
 import 'package:trios/utils/logging.dart';
 

@@ -1,3 +1,7 @@
+# 1.3.2
+- Fixed
+  - Mod downloads never completing.
+
 # 1.3.1
 - Fixed
   - TriOS not launching for some users.

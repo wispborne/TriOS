@@ -23,12 +23,10 @@ final downloadManager =
     );
 
 class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
-  static late DownloadManager _downloadManager;
   final _downloads = List<Download>.empty(growable: true);
 
   @override
   FutureOr<List<Download>> build() {
-    _downloadManager = DownloadManager(ref: ref);
     return _downloads;
   }
 
@@ -42,49 +40,50 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
     Directory destination, {
     ModInfo? modInfo,
   }) async {
-    return _downloadManager.addDownload(uri, destination.path, null).then((
-      value,
-    ) {
-      if (value == null) {
-        return null;
-      }
-      // generate guid for id
-      final id = const Uuid().v4();
-      final download = modInfo == null
-          ? Download(id, displayName, value)
-          : ModDownload(id, displayName, value, modInfo);
-      _downloads.add(download);
-      state = AsyncValue.data(_downloads);
+    return ref
+        .read(downloadManagerInstance)
+        .addDownload(uri, destination.path, null)
+        .then((value) {
+          if (value == null) {
+            return null;
+          }
+          // generate guid for id
+          final id = const Uuid().v4();
+          final download = modInfo == null
+              ? Download(id, displayName, value)
+              : ModDownload(id, displayName, value, modInfo);
+          _downloads.add(download);
+          state = AsyncValue.data(_downloads);
 
-      // Just for debugging.
-      value.status.addListener(() async {
-        switch (value.status.value) {
-          case DownloadStatus.queued:
-            Fimber.d("Download queued: $uri");
-            break;
-          case DownloadStatus.retrievingFileInfo:
-            Fimber.d("Retrieving file info: $uri");
-            break;
-          case DownloadStatus.downloading:
-            Fimber.d("Downloading: $uri");
-            break;
-          case DownloadStatus.paused:
-            Fimber.d("Download paused: $uri");
-            break;
-          case DownloadStatus.completed:
-            Fimber.d("Download complete: $uri");
-            break;
-          case DownloadStatus.failed:
-            Fimber.w("Download failed: $uri");
-            break;
-          case DownloadStatus.canceled:
-            Fimber.d("Download canceled: $uri");
-            break;
-        }
-        ref.invalidateSelf(); // Forces a call to build() to re-fetch the list of downloads
-      });
-      return download;
-    });
+          // Just for debugging.
+          value.status.addListener(() async {
+            switch (value.status.value) {
+              case DownloadStatus.queued:
+                Fimber.d("Download queued: $uri");
+                break;
+              case DownloadStatus.retrievingFileInfo:
+                Fimber.d("Retrieving file info: $uri");
+                break;
+              case DownloadStatus.downloading:
+                Fimber.d("Downloading: $uri");
+                break;
+              case DownloadStatus.paused:
+                Fimber.d("Download paused: $uri");
+                break;
+              case DownloadStatus.completed:
+                Fimber.d("Download complete: $uri");
+                break;
+              case DownloadStatus.failed:
+                Fimber.w("Download failed: $uri");
+                break;
+              case DownloadStatus.canceled:
+                Fimber.d("Download canceled: $uri");
+                break;
+            }
+            ref.invalidateSelf(); // Forces a call to build() to re-fetch the list of downloads
+          });
+          return download;
+        });
   }
 
   void downloadUpdateViaBrowser(

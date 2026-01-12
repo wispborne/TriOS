@@ -17,6 +17,10 @@ import 'download_request.dart';
 import 'download_status.dart';
 import 'download_task.dart';
 
+final downloadManagerInstance = Provider<DownloadManager>(
+  (ref) => DownloadManager(ref: ref),
+);
+
 class DownloadManager {
   final Map<String, DownloadTask> _cache = <String, DownloadTask>{};
   final Queue<DownloadRequest> _queue = Queue();
@@ -26,19 +30,12 @@ class DownloadManager {
   int maxConcurrentTasks = 2;
   int runningTasks = 0;
 
-  final Ref ref; // Reference to Riverpod's ref to access providers
+  final Ref ref;
 
-  // Singleton pattern with ref
-  static DownloadManager? _instance;
-
-  DownloadManager._internal(this.ref);
-
-  factory DownloadManager({required Ref ref, int? maxConcurrentTasks}) {
-    _instance ??= DownloadManager._internal(ref);
+  DownloadManager({required this.ref, int? maxConcurrentTasks}) {
     if (maxConcurrentTasks != null) {
-      _instance!.maxConcurrentTasks = maxConcurrentTasks;
+      this.maxConcurrentTasks = maxConcurrentTasks;
     }
-    return _instance!;
   }
 
   void Function(int, int) createDownloadProgressCallback(
@@ -64,7 +61,19 @@ class DownloadManager {
   }) async {
     late String partialFilePath;
     late File partialFile;
-    final TriOSHttpClient httpClient = ref.watch(triOSHttpClient);
+
+    // Check if the container is still alive before reading.
+    // However, Ref doesn't have a simple 'isDisposed' check, but we can try-catch it.
+    final TriOSHttpClient httpClient;
+    try {
+      httpClient = ref.read(triOSHttpClient);
+    } catch (e) {
+      Fimber.w(
+        'Could not read triOSHttpClient, container might be disposed: $e',
+      );
+      return;
+    }
+
     final originalUrl = url;
     final startTime = DateTime.now().millisecondsSinceEpoch;
     Fimber.d(
@@ -656,7 +665,15 @@ class DownloadManager {
   /// Returns null if there was an error.
   Future<HttpHeaders?> fetchHeaders(String url) async {
     try {
-      final httpClient = ref.watch(triOSHttpClient);
+      final TriOSHttpClient httpClient;
+      try {
+        httpClient = ref.read(triOSHttpClient);
+      } catch (e) {
+        Fimber.w(
+          'Could not read triOSHttpClient in fetchHeaders, container might be disposed: $e',
+        );
+        return null;
+      }
 
       // Send a HEAD request to the URL
       final response = await httpClient.get(url, headers: {'method': 'HEAD'});

@@ -1,3 +1,8 @@
+# 1.3.1
+- Fixed
+  - TriOS not launching for some users.
+    - Updated a bunch of dependencies (Flutter & Dart SDK, many others). One of them fixed the crash. 
+
 # 1.3.0
 - Added
   - **Portrait Replacer**

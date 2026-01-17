@@ -288,6 +288,44 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
           label: const Text('Redownload MagicLib (shows toast)'),
         ),
         ElevatedButton.icon(
+          icon: const Icon(Icons.group_work),
+          onPressed: () {
+            // Get multiple mods with download URLs to test grouping
+            final testMods = ref
+                .read(AppState.modVariants)
+                .value
+                .orEmpty()
+                .where((variant) =>
+                    variant.versionCheckerInfo?.directDownloadURL != null)
+                .take(5)
+                .toList();
+
+            if (testMods.isEmpty) {
+              showSnackBar(
+                context: context,
+                content: const Text('No mods with download URLs found for testing'),
+              );
+              return;
+            }
+
+            // Start all downloads rapidly to trigger grouping
+            for (final mod in testMods) {
+              ref.read(downloadManager.notifier).addDownload(
+                    "${mod.modInfo.nameOrId} ${mod.bestVersion}",
+                    mod.versionCheckerInfo!.directDownloadURL!,
+                    Directory.systemTemp,
+                    modInfo: mod.modInfo,
+                  );
+            }
+
+            showSnackBar(
+              context: context,
+              content: Text('Started ${testMods.length} test downloads - check grouped toast!'),
+            );
+          },
+          label: const Text('Test Notification Grouping (download 5 mods)'),
+        ),
+        ElevatedButton.icon(
           icon: const Icon(Icons.notification_add),
           onPressed: () {
             final testMod = ref

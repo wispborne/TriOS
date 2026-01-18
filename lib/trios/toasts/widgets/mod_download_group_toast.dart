@@ -11,6 +11,7 @@ import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/download_progress_indicator.dart';
+import 'package:trios/widgets/text_trios.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 import '../../download_manager/download_manager.dart';
@@ -65,35 +66,34 @@ class ModDownloadGroupToast extends ConsumerStatefulWidget {
       _ModDownloadGroupToastState();
 }
 
-class _ModDownloadGroupToastState
-    extends ConsumerState<ModDownloadGroupToast> {
+class _ModDownloadGroupToastState extends ConsumerState<ModDownloadGroupToast> {
   PaletteGenerator? palette;
   final Map<String, VoidCallback> _statusListeners = {};
 
-  Future<void> _generatePalette() async {
-    // Try to get palette from first mod's icon
-    final firstModDownload = widget.group.items
-        .whereType<ModDownload>()
-        .firstOrNull;
-
-    if (firstModDownload != null) {
-      final installedMod = ref
-          .read(AppState.modVariants)
-          .value
-          .orEmpty()
-          .firstWhereOrNull(
-            (ModVariant element) =>
-                element.smolId == firstModDownload.modInfo.smolId,
-          );
-
-      if (installedMod?.iconFilePath.isNotNullOrEmpty() == true) {
-        final icon = Image.file((installedMod!.iconFilePath ?? "").toFile());
-        palette = await PaletteGenerator.fromImageProvider(icon.image);
-        if (!mounted) return;
-        setState(() {});
-      }
-    }
-  }
+  // Future<void> _generatePalette() async {
+  //   // Try to get palette from first mod's icon
+  //   final firstModDownload = widget.group.items
+  //       .whereType<ModDownload>()
+  //       .firstOrNull;
+  //
+  //   if (firstModDownload != null) {
+  //     final installedMod = ref
+  //         .read(AppState.modVariants)
+  //         .value
+  //         .orEmpty()
+  //         .firstWhereOrNull(
+  //           (ModVariant element) =>
+  //               element.smolId == firstModDownload.modInfo.smolId,
+  //         );
+  //
+  //     if (installedMod?.iconFilePath.isNotNullOrEmpty() == true) {
+  //       final icon = Image.file((installedMod!.iconFilePath ?? "").toFile());
+  //       palette = await PaletteGenerator.fromImageProvider(icon.image);
+  //       if (!mounted) return;
+  //       setState(() {});
+  //     }
+  //   }
+  // }
 
   @override
   void initState() {
@@ -101,7 +101,7 @@ class _ModDownloadGroupToastState
     widget.item.pause();
 
     // Generate palette
-    _generatePalette();
+    // _generatePalette();
 
     // Add status listeners for all downloads
     for (final download in widget.group.items) {
@@ -152,6 +152,7 @@ class _ModDownloadGroupToastState
     final completedCount = group.completedCount;
     final totalCount = downloads.length;
     final failedCount = group.failedCount;
+    final successfulCount = completedCount - failedCount;
     final allComplete = group.allItemsCompleted();
 
     final timeElapsed = (item.elapsedDuration?.inMilliseconds ?? 0);
@@ -175,7 +176,7 @@ class _ModDownloadGroupToastState
     }
 
     return Padding(
-      padding: const EdgeInsets.only(top: 4, right: 32),
+      padding: const .only(top: 4, right: 24),
       child: Container(
         decoration: const BoxDecoration(
           boxShadow: [
@@ -193,7 +194,7 @@ class _ModDownloadGroupToastState
               final theme = Theme.of(context);
               return Card(
                 child: Container(
-                  padding: const EdgeInsets.all(12.0),
+                  padding: const .all(8),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.surface,
                     borderRadius: BorderRadius.circular(
@@ -211,92 +212,111 @@ class _ModDownloadGroupToastState
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Header row
-                      Row(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(right: 12),
-                            child: Tooltip(
-                              message: allComplete
-                                  ? 'All downloads complete'
-                                  : 'Downloading mods',
-                              child: Icon(
-                                size: 32,
-                                allComplete
-                                    ? Icons.check_circle
-                                    : Icons.downloading,
-                                color: allComplete
-                                    ? theme.colorScheme.secondary
-                                    : theme.iconTheme.color,
+                      // Header row - clickable to expand/collapse
+                      InkWell(
+                        onTap: () {
+                          setState(() {
+                            group.isExpanded = !group.isExpanded;
+                          });
+                        },
+                        borderRadius: BorderRadius.circular(
+                          ThemeManager.cornerRadius,
+                        ),
+                        child: Row(
+                          children: [
+                            Padding(
+                              padding: const .only(right: 12),
+                              child: Tooltip(
+                                message: allComplete
+                                    ? 'All downloads complete'
+                                    : 'Downloading mods',
+                                child: Icon(
+                                  size: 32,
+                                  allComplete
+                                      ? Icons.check_circle
+                                      : Icons.downloading,
+                                  color: allComplete
+                                      ? theme.colorScheme.secondary
+                                      : theme.iconTheme.color,
+                                ),
                               ),
                             ),
-                          ),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  allComplete
-                                      ? 'Downloaded $totalCount ${totalCount == 1 ? 'mod' : 'mods'}'
-                                      : 'Downloading $totalCount ${totalCount == 1 ? 'mod' : 'mods'}',
-                                  style: theme.textTheme.bodyMedium,
-                                ),
-                                Opacity(
-                                  opacity: 0.9,
-                                  child: Text(
-                                    failedCount > 0
-                                        ? '$completedCount complete, $failedCount failed'
-                                        : '$completedCount of $totalCount complete',
-                                    style: theme.textTheme.labelMedium,
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    allComplete
+                                        ? 'Downloaded $totalCount ${totalCount == 1 ? 'mod' : 'mods'}'
+                                        : 'Downloading $totalCount ${totalCount == 1 ? 'mod' : 'mods'}',
+                                    style: theme.textTheme.bodyMedium,
                                   ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          // Expand/collapse button
-                          IconButton(
-                            onPressed: () {
-                              setState(() {
-                                group.isExpanded = !group.isExpanded;
-                              });
-                            },
-                            icon: Icon(
-                              group.isExpanded
-                                  ? Icons.expand_less
-                                  : Icons.expand_more,
-                            ),
-                            tooltip: group.isExpanded ? 'Collapse' : 'Expand',
-                          ),
-                          // Close button with timer
-                          Padding(
-                            padding: const EdgeInsets.only(left: 8),
-                            child: Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                SizedBox(
-                                  width: 32,
-                                  height: 32,
-                                  child: CircularProgressIndicator(
-                                    value: (timeTotal - timeElapsed) / timeTotal,
-                                    strokeWidth: 3,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      theme.colorScheme.onSurface,
+                                  Opacity(
+                                    opacity: 0.9,
+                                    child: Text(
+                                      failedCount > 0
+                                          ? '$successfulCount successful, $failedCount failed'
+                                          : '$completedCount of $totalCount complete',
+                                      style: theme.textTheme.labelMedium,
                                     ),
                                   ),
-                                ),
-                                IconButton(
-                                  onPressed: () => toastification.dismiss(item),
-                                  icon: const Icon(Icons.close),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
-                        ],
+                            // Expand/collapse button
+                            IconButton(
+                              onPressed: () {
+                                setState(() {
+                                  group.isExpanded = !group.isExpanded;
+                                });
+                              },
+                              icon: Icon(
+                                group.isExpanded
+                                    ? Icons.expand_less
+                                    : Icons.expand_more,
+                              ),
+                              tooltip: group.isExpanded ? 'Collapse' : 'Expand',
+                            ),
+                            // Close button with timer
+                            Padding(
+                              padding: const .only(left: 8),
+                              child: Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  Builder(
+                                    builder: (context) {
+                                      final percent =
+                                          (timeTotal - timeElapsed) / timeTotal;
+                                      return percent > 0.95
+                                          ? SizedBox.shrink()
+                                          : SizedBox(
+                                              width: 32,
+                                              height: 32,
+                                              child: CircularProgressIndicator(
+                                                value: percent,
+                                                strokeWidth: 3,
+                                                valueColor:
+                                                    AlwaysStoppedAnimation<Color>(
+                                                      theme.colorScheme.onSurface,
+                                                    ),
+                                                ),
+                                            );
+                                    },
+                                  ),
+                                  IconButton(
+                                    onPressed: () => toastification.dismiss(item),
+                                    icon: const Icon(Icons.close),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                       // Aggregate progress bar
                       if (!allComplete)
                         Padding(
-                          padding: const EdgeInsets.only(top: 8),
+                          padding: const .only(top: 8),
                           child: TriOSDownloadProgressIndicator(
                             value: TriOSDownloadProgress(
                               (aggregateProgress * 1000000).toInt(),
@@ -305,12 +325,17 @@ class _ModDownloadGroupToastState
                             ),
                           ),
                         ),
-                      // Expanded list of individual downloads
-                      if (group.isExpanded)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: _buildExpandedList(theme),
-                        ),
+                      // Expanded list of individual downloads with animation
+                      AnimatedSize(
+                        duration: const Duration(milliseconds: 150),
+                        curve: Curves.easeInOut,
+                        child: group.isExpanded
+                            ? Padding(
+                                padding: const .only(top: 8),
+                                child: _buildExpandedList(theme),
+                              )
+                            : const SizedBox.shrink(),
+                      ),
                     ],
                   ),
                 ),
@@ -334,10 +359,12 @@ class _ModDownloadGroupToastState
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        ...downloadsToShow.map((download) => _buildDownloadItem(download, theme)),
+        ...downloadsToShow.map(
+          (download) => _buildDownloadItem(download, theme),
+        ),
         if (hasMore)
           Padding(
-            padding: const EdgeInsets.only(top: 8),
+            padding: const .only(top: 8),
             child: Text(
               '+${downloads.length - maxToShow} more',
               style: theme.textTheme.labelMedium?.copyWith(
@@ -366,9 +393,9 @@ class _ModDownloadGroupToastState
         : null;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
+      padding: const .only(bottom: 6),
       child: Container(
-        padding: const EdgeInsets.all(6),
+        padding: const .all(6),
         decoration: BoxDecoration(
           color: theme.colorScheme.surface.withOpacity(0.5),
           borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
@@ -383,7 +410,7 @@ class _ModDownloadGroupToastState
             Row(
               children: [
                 Padding(
-                  padding: const EdgeInsets.only(right: 6),
+                  padding: const .only(right: 6),
                   child: Tooltip(
                     message: status.displayString,
                     child: Icon(
@@ -400,7 +427,8 @@ class _ModDownloadGroupToastState
                       color: switch (status) {
                         DownloadStatus.completed => theme.colorScheme.secondary,
                         DownloadStatus.failed => ThemeManager.vanillaErrorColor,
-                        DownloadStatus.canceled => ThemeManager.vanillaErrorColor,
+                        DownloadStatus.canceled =>
+                          ThemeManager.vanillaErrorColor,
                         _ => theme.iconTheme.color,
                       },
                     ),
@@ -419,7 +447,7 @@ class _ModDownloadGroupToastState
                       ),
                       if (status == DownloadStatus.failed &&
                           downloadTask.error != null)
-                        Text(
+                        TextTriOS(
                           downloadTask.error.toString(),
                           style: theme.textTheme.labelSmall?.copyWith(
                             color: ThemeManager.vanillaErrorColor,
@@ -452,11 +480,12 @@ class _ModDownloadGroupToastState
                 status != DownloadStatus.failed &&
                 status != DownloadStatus.canceled)
               Padding(
-                padding: const EdgeInsets.only(top: 4),
+                padding: const .only(top: 4),
                 child: ValueListenableBuilder(
                   valueListenable: downloadTask.downloaded,
                   builder: (context, downloaded, child) {
-                    final isIndeterminate = status == DownloadStatus.queued ||
+                    final isIndeterminate =
+                        status == DownloadStatus.queued ||
                         status == DownloadStatus.retrievingFileInfo;
                     return TriOSDownloadProgressIndicator(
                       color: status == DownloadStatus.failed
@@ -475,7 +504,7 @@ class _ModDownloadGroupToastState
                 (status == DownloadStatus.completed ||
                     status == DownloadStatus.failed))
               Padding(
-                padding: const EdgeInsets.only(top: 4),
+                padding: const .only(top: 4),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
@@ -520,10 +549,7 @@ class _ModDownloadGroupToastState
                                   installedMod,
                                 );
                           },
-                          icon: const Icon(
-                            Icons.power_settings_new,
-                            size: 14,
-                          ),
+                          icon: const Icon(Icons.power_settings_new, size: 14),
                           label: Text(
                             "Enable",
                             style: theme.textTheme.bodySmall?.copyWith(

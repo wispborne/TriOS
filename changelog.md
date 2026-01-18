@@ -1,3 +1,8 @@
+# 1.3.3
+- Fixed
+  - Linux: Not starting on some Linux forks due to the Execute bit being set in Sentry's SDK.
+    - Note: this was due to a bug in Sentry and was fixed by Sentry.
+
 # 1.3.2
 - Fixed
   - Mod downloads never completing.

@@ -1,7 +1,10 @@
 # 1.3.3
+- Added
+  - Debug setting: "Allow insecure HTTPS connections" to help with mod downloads failing due to SSL certificate verification issues.
 - Fixed
   - Linux: Not starting on some Linux forks due to the Execute bit being set in Sentry's SDK.
     - Note: this was due to a bug in Sentry and was fixed by Sentry.
+  - "Clean Up" button for removing old mods didn't work due to a debug flag being left on.
 
 # 1.3.2
 - Fixed

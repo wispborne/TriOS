@@ -110,6 +110,7 @@ class Settings with SettingsMappable {
   final bool showForceUpdateWarning;
   final bool showDonationButton;
   final bool showReportBugButton;
+  final bool allowInsecureConnections;
 
   Settings({
     this.gameDir,
@@ -179,7 +180,8 @@ class Settings with SettingsMappable {
     this.activeModProfileId,
     this.showForceUpdateWarning = true,
     this.showDonationButton = true,
-    this.showReportBugButton = true
+    this.showReportBugButton = true,
+    this.allowInsecureConnections = false
   });
 }
 

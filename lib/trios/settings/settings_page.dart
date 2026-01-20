@@ -654,7 +654,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                       final modsThatWouldBeRemoved = await ref
                                           .read(modManager.notifier)
                                           .cleanUpAllModVariantsBasedOnRetainSetting(
-                                            dryRun: true,
+                                            // dryRun: true,
                                           );
 
                                       if (!mounted) return;

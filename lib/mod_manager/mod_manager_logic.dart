@@ -2,20 +2,15 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:collection/collection.dart';
-import 'package:csv/csv.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:open_filex/open_filex.dart';
 import 'package:path/path.dart' as p;
 import 'package:trios/compression/archive.dart';
 import 'package:trios/mod_manager/audit_log.dart';
 import 'package:trios/mod_manager/mod_install_source.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_manager/version_checker.dart';
-import 'package:trios/mod_profiles/models/mod_profile.dart';
-import 'package:trios/mod_profiles/models/shared_mod_list.dart';
 import 'package:trios/models/mod_info_json.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/models/version_checker_info.dart';
@@ -28,22 +23,32 @@ import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/platform_specific.dart';
 import 'package:trios/utils/util.dart';
 import 'package:trios/widgets/force_game_version_warning_dialog.dart';
-import 'package:trios/widgets/moving_tooltip.dart';
-import 'package:trios/widgets/text_with_icon.dart';
+import 'package:trios/mod_manager/widgets/mod_installation_dialog.dart';
+import 'package:trios/mod_manager/widgets/mod_installation_error_dialog.dart';
+import 'package:trios/mod_manager/utils/mod_file_utils.dart';
+import 'package:trios/mod_manager/utils/mod_list_exporter.dart' as exporter;
+import 'package:trios/mod_manager/services/_mod_variant_core.dart';
 
 import '../models/mod.dart';
 import '../models/mod_info.dart';
 import '../models/version.dart';
-import '../themes/theme_manager.dart';
 import '../trios/settings/settings.dart';
+
+// Re-export utilities for backward compatibility
+export 'utils/mod_file_utils.dart';
+export 'utils/mod_list_exporter.dart';
 
 final modManager = AsyncNotifierProvider<ModManagerNotifier, void>(
   ModManagerNotifier.new,
 );
 
 class ModManagerNotifier extends AsyncNotifier<void> {
+  // Internal services
+  late final ModVariantCore _variantCore;
+
   @override
   FutureOr<void> build() {
+    _variantCore = ModVariantCore();
     return null;
   }
 
@@ -62,244 +67,10 @@ class ModManagerNotifier extends AsyncNotifier<void> {
         ref.read(AppState.modsFolder).value!,
         ref.read(AppState.mods),
         (modsBeingInstalled) {
-          return showDialog<List<ExtractedModInfo>>(
-            context: context,
-            builder: (context) {
-              // Start by selecting to install variants that are not already installed.
-              final List<ExtractedModInfo> extractedFilesToInstall =
-                  modsBeingInstalled
-                      .where((it) => it.alreadyExistingVariant == null)
-                      .map((it) => it.modInfo)
-                      .distinctBy((it) => it.modInfo.smolId)
-                      .toList();
-
-              return StatefulBuilder(
-                builder: (context, setState) {
-                  return AlertDialog(
-                    title: const Text("Install mods"),
-                    content: ConstrainedBox(
-                      constraints: const BoxConstraints(minWidth: 400),
-                      child: SingleChildScrollView(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            ...modsBeingInstalled.map(
-                              (it) => Builder(
-                                builder: (context) {
-                                  final isSelected = extractedFilesToInstall
-                                      .contains(it.modInfo);
-                                  final gameVersion = ref.watch(
-                                    appSettings.select(
-                                      (s) => s.lastStarsectorVersion,
-                                    ),
-                                  );
-
-                                  final themeData = Theme.of(context);
-                                  final iconColor = themeData.iconTheme.color
-                                      ?.withOpacity(0.7);
-                                  const iconSize = 20.0;
-                                  const subtitleSize = 14.0;
-                                  return MovingTooltipWidget.framed(
-                                    tooltipWidget: ConstrainedBox(
-                                      constraints: const BoxConstraints(
-                                        maxWidth: 500,
-                                      ),
-                                      child: Text(
-                                        it.modInfo.modInfo
-                                            .toMap()
-                                            .prettyPrintJson(),
-                                        style: const TextStyle(fontSize: 12),
-                                      ),
-                                    ),
-                                    child: CheckboxListTile(
-                                      title: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          // Mod name
-                                          Text(
-                                            "${it.modInfo.modInfo.name}",
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-
-                                          // Version and game version
-                                          TextWithIcon(
-                                            leading: Icon(
-                                              Icons.info,
-                                              size: iconSize,
-                                              color: iconColor,
-                                            ),
-                                            widget: Text.rich(
-                                              TextSpan(
-                                                children: [
-                                                  TextSpan(
-                                                    text:
-                                                        "v${it.modInfo.modInfo.version}",
-                                                    style: const TextStyle(
-                                                      fontSize: subtitleSize,
-                                                    ),
-                                                  ),
-                                                  // bullet separator
-                                                  TextSpan(
-                                                    text: " • ",
-                                                    style: TextStyle(
-                                                      fontSize: subtitleSize,
-                                                      color: iconColor,
-                                                    ),
-                                                  ),
-                                                  TextSpan(
-                                                    text: it
-                                                        .modInfo
-                                                        .modInfo
-                                                        .gameVersion,
-                                                    style: TextStyle(
-                                                      fontSize: subtitleSize,
-                                                      color:
-                                                          (it.modInfo.modInfo
-                                                                      .isCompatibleWithGame(
-                                                                        gameVersion,
-                                                                      )
-                                                                      .getGameCompatibilityColor() ??
-                                                                  themeData
-                                                                      .colorScheme
-                                                                      .onSurface)
-                                                              .withOpacity(0.9),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-
-                                          // File path
-                                          TextWithIcon(
-                                            leading: Icon(
-                                              Icons.folder,
-                                              size: iconSize,
-                                              color: iconColor,
-                                            ),
-                                            text: it
-                                                .modInfo
-                                                .extractedFile
-                                                .relativePath,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: const TextStyle(
-                                              fontSize: subtitleSize,
-                                            ),
-                                          ),
-
-                                          // Description
-                                          Padding(
-                                            padding: const EdgeInsets.only(
-                                              top: 4,
-                                              left: iconSize + 9,
-                                            ),
-                                            child: TextWithIcon(
-                                              // leading: SvgImageIcon(
-                                              //   "assets/images/icon-text.svg",
-                                              //   width: iconSize,
-                                              //   color: iconColor,
-                                              // ),
-                                              text:
-                                                  it.modInfo.modInfo.description
-                                                      ?.takeWhile(
-                                                        (it) =>
-                                                            it != "\n" &&
-                                                            it != ".",
-                                                      ) ??
-                                                  "",
-                                              maxLines: 2,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                color: themeData
-                                                    .colorScheme
-                                                    .onSurface
-                                                    .withOpacity(0.9),
-                                              ),
-                                            ),
-                                          ),
-                                          it.alreadyExistingVariant != null
-                                              ? Text(
-                                                  isSelected
-                                                      ? "(existing mod will be replaced)"
-                                                      : "(already exists)",
-                                                  style: TextStyle(
-                                                    color: ThemeManager
-                                                        .vanillaWarningColor,
-                                                    fontSize: 12,
-                                                  ),
-                                                )
-                                              : const SizedBox(),
-                                        ],
-                                      ),
-                                      value: isSelected,
-                                      onChanged: (value) {
-                                        if (value == false) {
-                                          setState(() {
-                                            extractedFilesToInstall.remove(
-                                              it.modInfo,
-                                            );
-                                          });
-                                        } else {
-                                          setState(() {
-                                            // Only allow user to select one mod with the same id and version.
-                                            extractedFilesToInstall.removeWhere(
-                                              (existing) =>
-                                                  existing.modInfo.smolId ==
-                                                  it.modInfo.modInfo.smolId,
-                                            );
-                                            extractedFilesToInstall.add(
-                                              it.modInfo,
-                                            );
-                                          });
-                                        }
-                                      },
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            if (modsBeingInstalled
-                                    .distinctBy(
-                                      (it) => it.modInfo.modInfo.smolId,
-                                    )
-                                    .length !=
-                                modsBeingInstalled.length)
-                              Text(
-                                "Multiple mods have the same id and version. Only one of those may be selected.",
-                                style: Theme.of(context).textTheme.labelLarge
-                                    ?.copyWith(
-                                      color: ThemeManager.vanillaWarningColor,
-                                    ),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () {
-                          Navigator.of(context).pop(<ExtractedModInfo>[]);
-                        },
-                        child: const Text("Cancel"),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.of(context).pop(extractedFilesToInstall);
-                        },
-                        child: const Text("Install"),
-                      ),
-                    ],
-                  );
-                },
-              );
-            },
+          return ModInstallationDialog.show(
+            context,
+            candidates: modsBeingInstalled,
+            gameVersion: ref.read(appSettings.select((s) => s.lastStarsectorVersion)),
           );
         },
       );
@@ -359,90 +130,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
           .where((it) => it.err != null)
           .toList();
       if (errors.isNotEmpty) {
-        showAlertDialog(
-          context,
-          title: "Error",
-          widget: Builder(
-            builder: (context) {
-              final theme = Theme.of(context);
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  RichText(
-                    text: TextSpan(
-                      children: [
-                        TextSpan(
-                          text: errors.length == 1
-                              ? "There was an error while installing.\nPlease install the mod manually."
-                              : "There were errors while installing.\nPlease install the mods manually.\n",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                        TextSpan(
-                          text:
-                              "Check the ${Constants.appName} logs for more information.\n\n",
-                        ),
-                      ],
-                    ),
-                  ),
-                  ...errors.map((failedMod) {
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.error_outline),
-                            const SizedBox(width: 8),
-                            Text(
-                              "${failedMod.modInfo.name} ${failedMod.modInfo.version}",
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          child: Row(
-                            children: [
-                              OutlinedButton(
-                                onPressed: () {
-                                  OpenFilex.open(
-                                    failedMod.sourceFileEntity.parent.path,
-                                  );
-                                },
-                                child: const Text("Show mod file"),
-                              ),
-                              const SizedBox(width: 8),
-                              OutlinedButton(
-                                onPressed: () {
-                                  OpenFilex.open(
-                                    failedMod.destinationFolder.path,
-                                  );
-                                },
-                                child: const Text(
-                                  "Open Starsector mods folder",
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        SelectableText(
-                          "${failedMod.err}\n",
-                          style: theme.textTheme.bodySmall,
-                        ),
-                      ],
-                    );
-                  }),
-                ],
-              );
-            },
-          ),
-        );
+        await ModInstallationErrorDialog.show(context, errors);
       }
 
       return installModsResult;
@@ -850,7 +538,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
         Fimber.i(
           "There is already an enabled variant for ${modInfo.id}. Disabling newly installed variant ${modInfo.smolId} so both aren't enabled.",
         );
-        disableModInfoFile(newModFolder, modInfo.smolId);
+        _variantCore.brickModInfoFile(newModFolder, modInfo.smolId);
       }
 
       await cleanUpModVariantsBasedOnRetainSetting(modInfo.id, [
@@ -1256,24 +944,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
   }
 
   Future<void> _enableModInfoFile(ModVariant modVariant) async {
-    // Look for any disabled mod_info files in the folder.
-    final disabledModInfoFiles =
-        (await Constants.modInfoFileDisabledNames
-                .map((it) => modVariant.modFolder.resolve(it).toFile())
-                .whereAsync((it) async => await it.isWritable()))
-            .toList();
-
-    // And re-enable one.
-    if (!modVariant.isModInfoEnabled) {
-      disabledModInfoFiles.firstOrNull?.let((disabledModInfoFile) async {
-        disabledModInfoFile.renameSync(
-          modVariant.modFolder.resolve(Constants.modInfoFileName).path,
-        );
-        Fimber.i(
-          "Re-enabled ${modVariant.smolId}: renamed ${disabledModInfoFile.nameWithExtension} to ${Constants.modInfoFileName}.",
-        );
-      });
-    }
+    await _variantCore.unbrickModInfoFile(modVariant);
   }
 
   /// Use with caution. Prefer to use [changeActiveModVariant] instead.
@@ -1294,7 +965,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
     );
 
     if (brickModInfo) {
-      disableModInfoFile(modVariant.modFolder, modVariant.smolId);
+      _variantCore.brickModInfoFile(modVariant.modFolder, modVariant.smolId);
     }
 
     if (disableModInVanillaLauncher) {
@@ -1327,19 +998,9 @@ class ModManagerNotifier extends AsyncNotifier<void> {
     Fimber.i("Disabling '${modVariant.smolId}': success.");
   }
 
+  // Moved to _ModVariantCore service
   void disableModInfoFile(Directory modFolder, String smolId) {
-    final modInfoFile = modFolder.resolve(Constants.unbrickedModInfoFileName);
-
-    if (!modInfoFile.existsSync()) {
-      throw Exception("mod_info.json not found in ${modFolder.absolute}");
-    }
-
-    modInfoFile.renameSync(
-      modInfoFile.parent.resolve(Constants.modInfoFileDisabledNames.first).path,
-    );
-    Fimber.i(
-      "Disabled '$smolId': renamed to '${Constants.modInfoFileDisabledNames.first}'.",
-    );
+    _variantCore.brickModInfoFile(modFolder, smolId);
   }
 
   Future<void> _disableModInEnabledMods(String modId) async {
@@ -1467,31 +1128,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
   }
 
   String allModsAsCsv() {
-    final allMods = ref.read(AppState.mods);
-
-    final modFields = allMods.isNotEmpty
-        ? allMods.first.findFirstEnabledOrHighestVersion?.modInfo
-                  .toMap()
-                  .keys
-                  .toList() ??
-              []
-        : [];
-    List<List<dynamic>> rows = [modFields];
-
-    if (allMods.isNotEmpty) {
-      rows.addAll(
-        allMods.map((mod) {
-          final variant = mod.findFirstEnabledOrHighestVersion;
-          return variant?.modInfo.toMap().values.toList() ?? [];
-        }).toList(),
-      );
-    }
-
-    final csvContent = const ListToCsvConverter(
-      convertNullTo: "",
-    ).convert(rows);
-
-    return csvContent;
+    return exporter.allModsAsCsv(ref.read(AppState.mods));
   }
 }
 
@@ -1520,95 +1157,7 @@ typedef InstallModResult = ({
   StackTrace? st,
 });
 
-VersionCheckerInfo? getVersionCheckerInfo(File versionFile) {
-  if (!versionFile.existsSync()) return null;
-  try {
-    var info = VersionCheckerInfoMapper.fromJson(
-      versionFile.readAsStringSync().fixJson(),
-    );
-
-    if (info.modThreadId != null) {
-      info = info.copyWith(
-        modThreadId: info.modThreadId?.replaceAll(RegExp(r'[^0-9.]'), ''),
-      );
-
-      if (info.modThreadId!.trimStart("0").isEmpty) {
-        info = info.copyWith(modThreadId: null);
-      }
-    }
-
-    return info;
-  } catch (e, st) {
-    Fimber.e(
-      "Unable to read version checker json file in ${versionFile.absolute}. ($e)\n$st",
-    );
-    return null;
-  }
-}
-
-File? getVersionFile(Directory modFolder) {
-  final csv = File(p.join(modFolder.path, Constants.versionCheckerCsvPath));
-  if (!csv.existsSync()) return null;
-  try {
-    return modFolder
-        .resolve(
-          (const CsvToListConverter(
-                eol: "\n",
-              ).convert(csv.readAsStringSync().replaceAll("\r\n", "\n"))[1][0]
-              as String),
-        )
-        .toFile();
-  } catch (e, st) {
-    Fimber.e(
-      "Unable to read version checker csv file in ${modFolder.absolute}. ($e)\n$st",
-    );
-    return null;
-  }
-}
-
-Future<ModInfo?> getModInfo(
-  Directory modFolder,
-  StringBuffer progressText,
-) async {
-  try {
-    final possibleModInfos = [
-      Constants.modInfoFileName,
-      ...Constants.modInfoFileDisabledNames,
-    ].map((it) => modFolder.resolve(it).toFile()).toList();
-
-    return possibleModInfos.firstWhereOrNull((file) => file.existsSync())?.let((
-      modInfoFile,
-    ) async {
-      var rawString = await withFileHandleLimit(
-        () => modInfoFile.readAsString(),
-      );
-      var jsonEncodedYaml = (rawString).replaceAll("\t", "  ").fixJson();
-
-      // try {
-      final model = ModInfo.fromJsonModel(
-        ModInfoJsonMapper.fromJson(jsonEncodedYaml),
-        modFolder,
-      );
-
-      // Fimber.v(() =>"Using 0.9.5a mod_info.json format for ${modInfoFile.absolute}");
-
-      return model;
-      // } catch (e) {
-      //   final model = ModInfoModel_091a.fromJson(jsonEncodedYaml);
-      //
-      //   Fimber.v(() =>"Using 0.9.1a mod_info.json format for ${modInfoFile.absolute}");
-      //
-      //   return ModInfo(model.id, modFolder, model.name, model.version.toString(), model.gameVersion);
-      // }
-    });
-  } catch (e, st) {
-    Fimber.v(
-      () =>
-          "Unable to find or read 'mod_info.json' in ${modFolder.absolute}. ($e)\n$st",
-    );
-    return null;
-  }
-}
+// Functions moved to utils/mod_file_utils.dart and re-exported above
 
 // Future<void> disableMod(
 //     String modInfoId, Directory modsFolder, WidgetRef ref) async {
@@ -1647,50 +1196,7 @@ Future<ModInfo?> getModInfo(
 //   Result.success(Unit)
 //   }
 
-/// NOT THREAD SAFE.
-/// Watches the mods folder for changes and calls [onUpdated] when a mod_info.json file is added, removed, or modified.
-/// [cancelController] is used to cancel the stream.
-/// [onUpdated] is called with a list of all mod_info.json files found in the mods folder.
-/// Uses a static variable to keep track of the last paths and last modified times of the mod_info.json files.
-watchModsFolder(
-  Directory modsFolder,
-  Ref ref,
-  Function(List<File> modInfoFilesFound) onUpdated,
-  StreamController cancelController,
-) async {
-  // Only run the mod folder check if the window is focused.
-  // Checks every second to see if it's still in the background.
-  while (!cancelController.isClosed) {
-    var delaySeconds = ref.read(AppState.isWindowFocused)
-        ? ref.read(
-            appSettings.select((value) => value.secondsBetweenModFolderChecks),
-          )
-        : 1;
-    await Future.delayed(Duration(seconds: delaySeconds));
-    // TODO: re-add full manual scan, minus time-based diffing.
-    // if (ref.read(AppState.isWindowFocused)) {
-    //   checkModsFolderForUpdates(modsFolder, onUpdated);
-    // }
-  }
-}
-
-addModsFolderFileWatcher(
-  Directory modsFolder,
-  Function(List<File> modInfoFilesFound) onUpdated,
-) {
-  modsFolder.watch()
-    ..listen((event) {
-      if (event.type == FileSystemEvent.create ||
-          event.type == FileSystemEvent.delete ||
-          event.type == FileSystemEvent.modify) {
-        // checkModsFolderForUpdates(modsFolder, (_) {});
-        onUpdated([event.path.toFile()]);
-      }
-    })
-    ..handleError((error) {
-      Fimber.w("Error watching mods folder: $error");
-    });
-}
+// File watcher functions moved to utils/mod_file_utils.dart
 
 // final _lastPathsAndLastModified = <String, DateTime>{};
 
@@ -1723,26 +1229,7 @@ addModsFolderFileWatcher(
 //   }
 // }
 
-/// Looks for a mod_info.json file in the mod folder. Returns a disabled one if no enabled one is found.
-File? getModInfoFile(Directory modFolder) {
-  final regularModInfoFile = modFolder
-      .resolve(Constants.modInfoFileName)
-      .toFile();
-  if (regularModInfoFile.existsSync()) {
-    return regularModInfoFile;
-  }
-
-  for (var disabledModInfoFileName in Constants.modInfoFileDisabledNames) {
-    final disabledModInfoFile = modFolder
-        .resolve(disabledModInfoFileName)
-        .toFile();
-    if (disabledModInfoFile.existsSync()) {
-      return disabledModInfoFile;
-    }
-  }
-
-  return null;
-}
+// getModInfoFile moved to utils/mod_file_utils.dart
 
 // /// SmolId, StreamController.
 // final Map<String, StreamController<File?>> _modFoldersBeingWatched = {};
@@ -1775,96 +1262,7 @@ File? getModInfoFile(Directory modFolder) {
 //   });
 // }
 
-void copyModListToClipboardFromIds(
-  Set<String>? modIds,
-  List<Mod> allMods,
-  BuildContext context,
-) {
-  final enabledModsList = modIds
-      .orEmpty()
-      .map((id) => allMods.firstWhereOrNull((mod) => mod.id == id))
-      .nonNulls
-      .toList()
-      .sortedByName;
-  copyModListToClipboardFromMods(enabledModsList, context);
-}
-
-void copyModListToClipboard({
-  String? id,
-  String? name,
-  String? description,
-  required List<ShallowModVariant> variants,
-  DateTime? dateCreated,
-  DateTime? dateModified,
-  required BuildContext context,
-}) {
-  final sharedList = createSharedModListFromVariants(
-    id,
-    name,
-    description,
-    dateCreated,
-    dateModified,
-    variants,
-  );
-  copySharedModListToClipboard(sharedList, context);
-}
-
-void copyModListToClipboardFromMods(List<Mod> mods, BuildContext context) {
-  Clipboard.setData(
-    ClipboardData(
-      text:
-          "Mods (${mods.length})\n${mods.map((mod) {
-            final variant = mod.findFirstEnabledOrHighestVersion;
-            return "${variant?.modInfo.name}  v${variant?.modInfo.version}  [${mod.id}]";
-          }).join('\n')}",
-    ),
-  );
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(content: Text("Copied mod list to clipboard.")),
-  );
-}
-
-void copySharedModListToClipboard(
-  SharedModList sharedModList,
-  BuildContext context,
-) {
-  Clipboard.setData(ClipboardData(text: sharedModList.toShareString()));
-  // Clipboard.setData(ClipboardData(text: sharedModList.toMap().prettyPrintJson()));
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(
-      content: Text(
-        "Copied mod list to clipboard. Import via Mod Profiles page.",
-      ),
-    ),
-  );
-}
-
-SharedModList createSharedModListFromVariants(
-  String? id,
-  String? name,
-  String? description,
-  DateTime? dateCreated,
-  DateTime? dateModified,
-  List<ShallowModVariant> variants,
-) {
-  final enabledModVariants = variants.map((variant) {
-    return SharedModVariant(
-      modId: variant.modId,
-      modName: variant.modName,
-      smolVariantId: variant.smolVariantId,
-      versionName: variant.version,
-    );
-  }).toList();
-
-  return SharedModList.create(
-    id: id,
-    name: name,
-    description: description ?? "Generated mod list from TriOS",
-    mods: enabledModVariants,
-    dateCreated: dateCreated,
-    dateModified: dateModified,
-  );
-}
+// Mod list export functions moved to utils/mod_list_exporter.dart
 
 GameCompatibility compareGameVersions(
   String? modGameVersion,
@@ -1952,14 +1350,7 @@ ModDependencySatisfiedState getTopDependencySeverity(
   return mostOrLeastSevere.firstOrNull ?? Missing();
 }
 
-ModVariant? getModVariantForModInfo(
-  ModInfo modInfo,
-  List<ModVariant> modVariants,
-) {
-  return modVariants.firstWhereOrNull(
-    (it) => it.modInfo.smolId == modInfo.smolId,
-  );
-}
+// getModVariantForModInfo moved to utils/mod_file_utils.dart
 
 class VersionCheckComparison {
   final ModVariant variant;

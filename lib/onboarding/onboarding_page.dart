@@ -8,11 +8,9 @@ import 'package:open_filex/open_filex.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
-import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/platform_paths.dart';
 import 'package:trios/utils/util.dart';
-import 'package:trios/widgets/code.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/restartable_app.dart';
@@ -52,10 +50,6 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
         : null;
     allowCrashReporting = settings.allowCrashReporting ?? false;
     pages = [];
-    if (Platform.isMacOS &&
-        settings.compressionLib == CompressionLib.libarchive) {
-      pages.add(() => _buildMacOSPage());
-    }
     pages.add(() => _buildGameDirectoryAndModPreferencesPage());
     pages.add(() => _buildCrashReportingPage());
   }
@@ -331,52 +325,6 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
                 allowCrashReporting = value!;
               });
             },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMacOSPage() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Transform.translate(
-            offset: const Offset(-12, 0),
-            child: Icon(Icons.apple, size: 72),
-          ),
-          Text(
-            "MacOS-only Instructions",
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            "Required for self-update, mod updates & mod installs.",
-            style: TextStyle(fontStyle: FontStyle.italic),
-          ),
-          const SizedBox(height: 16),
-          Text("1. Open the Terminal app."),
-          const SizedBox(height: 8),
-          Text("2. Paste into Terminal to install Homebrew: "),
-          Padding(
-            padding: const EdgeInsets.only(left: 16),
-            child: Code(
-              showCopyButton: true,
-              child: SelectableText(
-                '/bin/bash -c "\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"',
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text("3. Paste into Terminal to install compression libs: "),
-          Padding(
-            padding: const EdgeInsets.only(left: 16),
-            child: Code(
-              showCopyButton: true,
-              child: SelectableText("brew install xz zstd zlib"),
-            ),
           ),
         ],
       ),

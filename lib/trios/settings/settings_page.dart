@@ -1187,44 +1187,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       ),
                     ),
                     Padding(
-                      padding: const EdgeInsets.only(top: 16),
-                      child: MovingTooltipWidget.text(
-                        message:
-                            "7zip is recommended. libarchive is the old library; use it if 7zip doesn't work."
-                            "\n\nlibarchive support will be removed (to save disk space) if I do not hear that anybody needs it.",
-                        child: CheckboxWithLabel(
-                          value: ref.watch(
-                            appSettings.select(
-                              (value) =>
-                                  value.compressionLib ==
-                                  CompressionLib.sevenZip,
-                            ),
-                          ),
-                          onChanged: (value) {
-                            ref
-                                .read(appSettings.notifier)
-                                .update(
-                                  (state) => state.copyWith(
-                                    compressionLib: value!
-                                        ? CompressionLib.sevenZip
-                                        : CompressionLib.libarchive,
-                                  ),
-                                );
-                          },
-                          label:
-                              ref.watch(
-                                appSettings.select(
-                                  (value) =>
-                                      value.compressionLib ==
-                                      CompressionLib.libarchive,
-                                ),
-                              )
-                              ? "Using libarchive for extracting. Click to switch to 7zip."
-                              : "Using 7zip for extracting (recommended). Click to switch to libarchive.",
-                        ),
-                      ),
-                    ),
-                    Padding(
                       padding: const EdgeInsets.only(top: 24),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.center,

@@ -5,6 +5,9 @@
   - Linux: Not starting on some Linux forks due to the Execute bit being set in Sentry's SDK.
     - Note: this was due to a bug in Sentry and was fixed by Sentry.
   - "Clean Up" button for removing old mods didn't work due to a debug flag being left on.
+  - Mod Profiles: activating a profile now correctly reports Missing Version when the mod is installed but the profile references a version you don't have, instead of incorrectly reporting the whole mod as missing.
+- Changed
+  - Removed `libarchive`, which was replaced by 7zip in 1.1.0.
 
 # 1.3.2
 - Fixed

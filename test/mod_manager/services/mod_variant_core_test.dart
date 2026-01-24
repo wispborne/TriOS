@@ -213,8 +213,7 @@ void main() {
         expect(disabledFile.existsSync(), isTrue);
 
         // Act 2: Unbrick the mod
-        final modVariant = ModVariant(
-          smolId: smolId,
+        final modVariant = createTestModVariant(
           modFolder: modFolder,
           isModInfoEnabled: false,
         );

@@ -164,7 +164,15 @@ void main() {
         ),
       ];
 
+      // Include BOTH variants here so computeModProfileChanges can resolve fromVariant and toVariant.
       final modVariants = [
+        ModVariant(
+          modInfo: ModInfo(id: 'modA', version: oldVersion),
+          versionCheckerInfo: null,
+          modFolder: Directory(''),
+          hasNonBrickedModInfo: true,
+          gameCoreFolder: Directory(''),
+        ),
         ModVariant(
           modInfo: ModInfo(id: 'modA', version: newVersion),
           versionCheckerInfo: null,
@@ -211,6 +219,8 @@ void main() {
       expect(changes, hasLength(1));
       expect(changes.first.changeType, ModChangeType.swap);
       expect(changes.first.modId, 'modA');
+      expect(changes.first.fromVariant?.modInfo.version, oldVersion);
+      expect(changes.first.toVariant?.modInfo.version, newVersion);
     });
 
     test('detects missing mod in profile', () {
@@ -249,7 +259,6 @@ void main() {
     test(
       'missing variant if mod is present but variant not found in modVariants',
       () {
-        // Both versions parse as 1.0.0, but we won't add the matching smolVariantId to modVariants
         final version = Version.parse("1.0.0", sanitizeInput: true);
 
         final allMods = [
@@ -257,7 +266,6 @@ void main() {
             id: 'modA',
             isEnabledInGame: true,
             modVariants: [
-              // Only "modA-100" is present, but the profile variant will be "modA-101"
               ModVariant(
                 modInfo: ModInfo(id: 'modA', version: version),
                 versionCheckerInfo: null,
@@ -269,11 +277,7 @@ void main() {
           ),
         ];
 
-        // Notice how the actual smolId for the variant we do have doesn't match the profile's smolId.
-        final existingSmolId = createSmolId(
-          'modA',
-          version,
-        ); // e.g. "modA-100-..."
+        final existingSmolId = createSmolId('modA', version);
         final modVariants = [
           ModVariant(
             modInfo: ModInfo(id: 'modA', version: version),
@@ -294,8 +298,8 @@ void main() {
           ),
         ];
 
-        // We'll artificially create a different smolId to simulate mismatch
-        final profileVariantSmolId = existingSmolId.replaceAll("100", "101");
+        // Make a guaranteed-nonexistent smolId. (Don't rely on replaceAll("100", ...) – smol IDs aren't shaped that way.)
+        final profileVariantSmolId = '${existingSmolId}__does_not_exist';
 
         final profile = ModProfile(
           id: 'profile1',

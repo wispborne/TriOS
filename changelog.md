@@ -1,6 +1,8 @@
 # 1.3.3
 - Added
   - Debug setting: "Allow insecure HTTPS connections" to help with mod downloads failing due to SSL certificate verification issues.
+  - Portraits now read game data to display more info.
+  - Portrait Viewer/Replacer now has filters.
 - Fixed
   - Linux: Not starting on some Linux forks due to the Execute bit being set in Sentry's SDK.
     - Note: this was due to a bug in Sentry and was fixed by Sentry.

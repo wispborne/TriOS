@@ -114,7 +114,7 @@ extension StringExt on String {
     }
   }
 
-  Map<String, dynamic> fixJsonToMap() {
+  Map<String, dynamic> parseJsonToMap() {
     return jsonDecode(fixJson());
   }
 

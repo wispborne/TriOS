@@ -10,9 +10,13 @@ import 'package:trios/companion_mod/companion_mod_manager.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/models/mod_variant.dart';
+import 'package:trios/portraits/portrait_metadata.dart';
+import 'package:trios/portraits/portrait_metadata_manager.dart';
 import 'package:trios/portraits/portrait_model.dart';
 import 'package:trios/portraits/portrait_replacements_manager.dart';
 import 'package:trios/portraits/portraits_gridview.dart';
+import 'package:trios/shipViewer/filter_widget.dart';
+import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/dialogs.dart';
@@ -40,6 +44,25 @@ class PortraitsPage extends ConsumerStatefulWidget {
 
 enum _PortraitsMode { viewer, replacer }
 
+/// Identifies which filter pane to use.
+enum _FilterPane { main, left, right }
+
+/// Helper class to hold portrait info for filtering.
+class _PortraitFilterItem {
+  final Portrait portrait;
+  final ModVariant? variant;
+  final PortraitMetadata? metadata;
+
+  _PortraitFilterItem({
+    required this.portrait,
+    required this.variant,
+    this.metadata,
+  });
+
+  String get modName => variant?.modInfo.nameOrId ?? 'Vanilla';
+  String get genderString => metadata?.gender?.toString() ?? 'Unknown';
+}
+
 class _PortraitsPageState extends ConsumerState<PortraitsPage>
     with AutomaticKeepAliveClientMixin<PortraitsPage>, MultiSplitViewMixin {
   @override
@@ -47,9 +70,75 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
   final SearchController _searchController = SearchController();
   final SearchController _leftSearchController = SearchController();
   final SearchController _rightSearchController = SearchController();
+  final ScrollController _filterScrollController = ScrollController();
+  final ScrollController _leftFilterScrollController = ScrollController();
+  final ScrollController _rightFilterScrollController = ScrollController();
+
   bool showOnlyReplaced = false;
   bool showOnlyEnabledMods = false;
+  bool showOnlyWithMetadata = true; // "Confirmed Portraits" filter
+  bool showFilters = true;
   _PortraitsMode mode = _PortraitsMode.viewer;
+
+  // Filter categories for the main/viewer sidebar
+  late final GridFilter<_PortraitFilterItem> _modFilter;
+  late final GridFilter<_PortraitFilterItem> _genderFilter;
+  late List<GridFilter<_PortraitFilterItem>> _filterCategories;
+
+  // Filter categories for the left pane (Replacer mode)
+  late final GridFilter<_PortraitFilterItem> _leftModFilter;
+  late final GridFilter<_PortraitFilterItem> _leftGenderFilter;
+  late List<GridFilter<_PortraitFilterItem>> _leftFilterCategories;
+  bool _leftShowOnlyWithMetadata = true;
+  bool _leftShowOnlyReplaced = false;
+  bool _leftShowOnlyEnabledMods = false;
+  bool _leftShowFilters = true;
+
+  // Filter categories for the right pane (Replacer mode)
+  late final GridFilter<_PortraitFilterItem> _rightModFilter;
+  late final GridFilter<_PortraitFilterItem> _rightGenderFilter;
+  late List<GridFilter<_PortraitFilterItem>> _rightFilterCategories;
+  bool _rightShowOnlyWithMetadata = true;
+  bool _rightShowOnlyReplaced = false;
+  bool _rightShowOnlyEnabledMods = false;
+  bool _rightShowFilters = true;
+
+  @override
+  void initState() {
+    super.initState();
+    // Main/Viewer filters
+    _modFilter = GridFilter<_PortraitFilterItem>(
+      name: 'Mod',
+      valueGetter: (item) => item.modName,
+    );
+    _genderFilter = GridFilter<_PortraitFilterItem>(
+      name: 'Gender',
+      valueGetter: (item) => item.genderString,
+    );
+    _filterCategories = [_modFilter, _genderFilter];
+
+    // Left pane filters (Replacer mode)
+    _leftModFilter = GridFilter<_PortraitFilterItem>(
+      name: 'Mod',
+      valueGetter: (item) => item.modName,
+    );
+    _leftGenderFilter = GridFilter<_PortraitFilterItem>(
+      name: 'Gender',
+      valueGetter: (item) => item.genderString,
+    );
+    _leftFilterCategories = [_leftModFilter, _leftGenderFilter];
+
+    // Right pane filters (Replacer mode)
+    _rightModFilter = GridFilter<_PortraitFilterItem>(
+      name: 'Mod',
+      valueGetter: (item) => item.modName,
+    );
+    _rightGenderFilter = GridFilter<_PortraitFilterItem>(
+      name: 'Gender',
+      valueGetter: (item) => item.genderString,
+    );
+    _rightFilterCategories = [_rightModFilter, _rightGenderFilter];
+  }
 
   bool get inReplaceMode => mode == _PortraitsMode.replacer;
 
@@ -61,6 +150,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
   void _refreshPortraits() {
     // Invalidate the provider to trigger a reload
     ref.read(AppState.portraits.notifier).rescan();
+    ref.read(AppState.portraitMetadata.notifier).rescan();
   }
 
   void _showReplacementsDialog(Map<String, Portrait> replacements) async {
@@ -95,17 +185,414 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
   List<({Portrait image, ModVariant? variant})> _filterImages(
     List<({Portrait image, ModVariant? variant})> images,
     String query,
+    Map<String, PortraitMetadata> metadata,
   ) {
     if (query.isEmpty) return images;
+
+    final lowerQuery = query.toLowerCase();
 
     return images.where((item) {
       final variant = item.variant;
       final portrait = item.image;
 
-      return (query.toLowerCase() == 'vanilla' && variant == null) ||
-          searchModVariants([?variant], query).isNotEmpty ||
-          portrait.imageFile.path.toLowerCase().contains(query.toLowerCase());
+      // Check vanilla
+      if (lowerQuery == 'vanilla' && variant == null) return true;
+
+      // Check mod name
+      if (searchModVariants([?variant], query).isNotEmpty) return true;
+
+      // Check file path
+      if (portrait.imageFile.path.toLowerCase().contains(lowerQuery)) return true;
+
+      // Check portrait metadata (gender, factions, portrait ID)
+      final portraitMetadata = metadata.getMetadataFor(portrait.relativePath);
+      if (portraitMetadata.hasMetadata) {
+        // Check portrait ID (from settings.json)
+        if (portraitMetadata.portraitId?.toLowerCase().contains(lowerQuery) ?? false) {
+          return true;
+        }
+
+        // Check gender (male, female)
+        if (portraitMetadata.gender.toString().toLowerCase().contains(lowerQuery)) {
+          return true;
+        }
+
+        // Check faction names
+        for (final faction in portraitMetadata.factions) {
+          if (faction.id.toLowerCase().contains(lowerQuery) ||
+              (faction.displayName?.toLowerCase().contains(lowerQuery) ?? false)) {
+            return true;
+          }
+        }
+      }
+
+      return false;
     }).toList();
+  }
+
+  /// Returns the filter categories for the specified pane.
+  List<GridFilter<_PortraitFilterItem>> _getFilterCategories(_FilterPane pane) {
+    return switch (pane) {
+      _FilterPane.main => _filterCategories,
+      _FilterPane.left => _leftFilterCategories,
+      _FilterPane.right => _rightFilterCategories,
+    };
+  }
+
+  /// Returns the scroll controller for the specified pane.
+  ScrollController _getFilterScrollController(_FilterPane pane) {
+    return switch (pane) {
+      _FilterPane.main => _filterScrollController,
+      _FilterPane.left => _leftFilterScrollController,
+      _FilterPane.right => _rightFilterScrollController,
+    };
+  }
+
+  /// Returns whether filters are visible for the specified pane.
+  bool _getShowFilters(_FilterPane pane) {
+    return switch (pane) {
+      _FilterPane.main => showFilters,
+      _FilterPane.left => _leftShowFilters,
+      _FilterPane.right => _rightShowFilters,
+    };
+  }
+
+  /// Sets whether filters are visible for the specified pane.
+  void _setShowFilters(_FilterPane pane, bool value) {
+    setState(() {
+      switch (pane) {
+        case _FilterPane.main:
+          showFilters = value;
+        case _FilterPane.left:
+          _leftShowFilters = value;
+        case _FilterPane.right:
+          _rightShowFilters = value;
+      }
+    });
+  }
+
+  /// Returns the "Confirmed Portraits" filter value for the specified pane.
+  bool _getShowOnlyWithMetadata(_FilterPane pane) {
+    return switch (pane) {
+      _FilterPane.main => showOnlyWithMetadata,
+      _FilterPane.left => _leftShowOnlyWithMetadata,
+      _FilterPane.right => _rightShowOnlyWithMetadata,
+    };
+  }
+
+  /// Sets the "Confirmed Portraits" filter value for the specified pane.
+  void _setShowOnlyWithMetadata(_FilterPane pane, bool value) {
+    setState(() {
+      switch (pane) {
+        case _FilterPane.main:
+          showOnlyWithMetadata = value;
+        case _FilterPane.left:
+          _leftShowOnlyWithMetadata = value;
+        case _FilterPane.right:
+          _rightShowOnlyWithMetadata = value;
+      }
+    });
+  }
+
+  /// Returns the "View Replaced" filter value for the specified pane.
+  bool _getShowOnlyReplaced(_FilterPane pane) {
+    return switch (pane) {
+      _FilterPane.main => showOnlyReplaced,
+      _FilterPane.left => _leftShowOnlyReplaced,
+      _FilterPane.right => _rightShowOnlyReplaced,
+    };
+  }
+
+  /// Sets the "View Replaced" filter value for the specified pane.
+  void _setShowOnlyReplaced(_FilterPane pane, bool value) {
+    setState(() {
+      switch (pane) {
+        case _FilterPane.main:
+          showOnlyReplaced = value;
+        case _FilterPane.left:
+          _leftShowOnlyReplaced = value;
+        case _FilterPane.right:
+          _rightShowOnlyReplaced = value;
+      }
+    });
+  }
+
+  /// Returns the "Only Enabled" filter value for the specified pane.
+  bool _getShowOnlyEnabledMods(_FilterPane pane) {
+    return switch (pane) {
+      _FilterPane.main => showOnlyEnabledMods,
+      _FilterPane.left => _leftShowOnlyEnabledMods,
+      _FilterPane.right => _rightShowOnlyEnabledMods,
+    };
+  }
+
+  /// Sets the "Only Enabled" filter value for the specified pane.
+  void _setShowOnlyEnabledMods(_FilterPane pane, bool value) {
+    setState(() {
+      switch (pane) {
+        case _FilterPane.main:
+          showOnlyEnabledMods = value;
+        case _FilterPane.left:
+          _leftShowOnlyEnabledMods = value;
+        case _FilterPane.right:
+          _rightShowOnlyEnabledMods = value;
+      }
+    });
+  }
+
+  /// Apply grid filter categories (mod, gender) to the list of portraits.
+  List<({Portrait image, ModVariant? variant})> _applyGridFilters(
+    List<({Portrait image, ModVariant? variant})> images,
+    Map<String, PortraitMetadata> metadata, {
+    _FilterPane pane = _FilterPane.main,
+  }) {
+    final filterCategories = _getFilterCategories(pane);
+
+    // Convert to filter items for processing
+    var items = images.map((item) {
+      final portraitMetadata = metadata.getMetadataFor(item.image.relativePath);
+      return _PortraitFilterItem(
+        portrait: item.image,
+        variant: item.variant,
+        metadata: portraitMetadata.hasMetadata ? portraitMetadata : null,
+      );
+    }).toList();
+
+    // Apply each filter category
+    for (final filter in filterCategories) {
+      if (filter.hasActiveFilters) {
+        items = items.where((item) {
+          final value = filter.valueGetter(item);
+          final filterState = filter.filterStates[value];
+
+          if (filterState == false) return false; // Explicitly excluded
+
+          final hasIncludedValues = filter.filterStates.values.contains(true);
+          if (hasIncludedValues) {
+            return filterState == true; // Must be explicitly included
+          }
+
+          return true; // Only exclusions, allow anything not excluded
+        }).toList();
+      }
+    }
+
+    // Convert back to the original format
+    return items
+        .map((item) => (image: item.portrait, variant: item.variant))
+        .toList();
+  }
+
+  void _clearAllFilters(_FilterPane pane) {
+    setState(() {
+      for (final filter in _getFilterCategories(pane)) {
+        filter.filterStates.clear();
+      }
+    });
+  }
+
+  void _updateFilterStates(
+    GridFilter<_PortraitFilterItem> filter,
+    Map<String, bool?> states,
+  ) {
+    setState(() {
+      filter.filterStates.clear();
+      filter.filterStates.addAll(states);
+    });
+  }
+
+  Widget _buildFiltersSection(
+    ThemeData theme,
+    List<_PortraitFilterItem> filterItems, {
+    _FilterPane pane = _FilterPane.main,
+  }) {
+    if (!_getShowFilters(pane)) {
+      return Padding(
+        padding: const EdgeInsets.only(left: 4),
+        child: Card(
+          child: InkWell(
+            onTap: () => _setShowFilters(pane, true),
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: MovingTooltipWidget.text(
+                message: "Show filters",
+                child: const Icon(Icons.filter_list, size: 16),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return _buildFilterPanel(theme, filterItems, pane: pane);
+  }
+
+  Widget _buildFilterPanel(
+    ThemeData theme,
+    List<_PortraitFilterItem> filterItems, {
+    _FilterPane pane = _FilterPane.main,
+  }) {
+    final filterCategories = _getFilterCategories(pane);
+    final scrollController = _getFilterScrollController(pane);
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: Card(
+          child: Scrollbar(
+            thumbVisibility: true,
+            controller: scrollController,
+            child: Padding(
+              padding: const EdgeInsets.only(
+                left: 8,
+                right: 16,
+                top: 8,
+                bottom: 8,
+              ),
+              child: SizedBox(
+                width: 280,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header
+                    Row(
+                      children: [
+                        MovingTooltipWidget.text(
+                          message: "Hide filters",
+                          child: InkWell(
+                            onTap: () => _setShowFilters(pane, false),
+                            borderRadius: BorderRadius.circular(
+                              ThemeManager.cornerRadius,
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(4),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.filter_list, size: 16),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Filters',
+                                    style: theme.textTheme.titleMedium
+                                        ?.copyWith(fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const Spacer(),
+                        if (filterCategories.any((f) => f.hasActiveFilters))
+                          TriOSToolbarItem(
+                            elevation: 0,
+                            child: TextButton.icon(
+                              onPressed: () => _clearAllFilters(pane),
+                              icon: const Icon(Icons.clear_all, size: 16),
+                              label: const Text('Clear'),
+                              style: TextButton.styleFrom(
+                                foregroundColor: theme.colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    // Scrollable filter content
+                    Expanded(
+                      child: ScrollConfiguration(
+                        behavior: ScrollConfiguration.of(context)
+                            .copyWith(scrollbars: false),
+                        child: SingleChildScrollView(
+                          controller: scrollController,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Checkbox filters section
+                              _buildCheckboxFilters(theme, pane: pane),
+                              const SizedBox(height: 8),
+                              // Grid filter categories (Mod, Gender)
+                              ...filterCategories.map((filter) {
+                                return GridFilterWidget<_PortraitFilterItem>(
+                                  filter: filter,
+                                  items: filterItems,
+                                  filterStates: filter.filterStates,
+                                  onSelectionChanged: (states) {
+                                    _updateFilterStates(filter, states);
+                                  },
+                                );
+                              }),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCheckboxFilters(ThemeData theme, {_FilterPane pane = _FilterPane.main}) {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      color: theme.colorScheme.surfaceContainer,
+      child: Padding(
+        padding: const EdgeInsets.all(8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // "Confirmed Portraits" checkbox
+            MovingTooltipWidget.text(
+              message:
+                  "Only show images that are confirmed portraits (found in faction files or settings.json)",
+              child: CheckboxListTile(
+                title: const Text('Confirmed Portraits'),
+                subtitle: const Text('Has faction or ID data'),
+                dense: true,
+                visualDensity: VisualDensity.compact,
+                contentPadding: EdgeInsets.zero,
+                value: _getShowOnlyWithMetadata(pane),
+                onChanged: (value) =>
+                    _setShowOnlyWithMetadata(pane, value ?? true),
+              ),
+            ),
+            // "View Replaced" checkbox
+            MovingTooltipWidget.text(
+              message: "Only show images that have replacements",
+              child: CheckboxListTile(
+                title: const Text('View Replaced'),
+                subtitle: const Text('Has a replacement set'),
+                dense: true,
+                visualDensity: VisualDensity.compact,
+                contentPadding: EdgeInsets.zero,
+                value: _getShowOnlyReplaced(pane),
+                onChanged: (value) =>
+                    _setShowOnlyReplaced(pane, value ?? false),
+              ),
+            ),
+            // "Only Enabled" checkbox
+            MovingTooltipWidget.text(
+              message: "Only show images from enabled mods",
+              child: CheckboxListTile(
+                title: const Text('Only Enabled'),
+                subtitle: const Text('From enabled mods only'),
+                dense: true,
+                visualDensity: VisualDensity.compact,
+                contentPadding: EdgeInsets.zero,
+                value: _getShowOnlyEnabledMods(pane),
+                onChanged: (value) =>
+                    _setShowOnlyEnabledMods(pane, value ?? false),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildGridSearchBar(SearchController controller, String hintText) {
@@ -207,6 +694,9 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
             .toMap()
             .cast<String, Portrait>();
 
+        // Get portrait metadata for filtering by gender/faction
+        final portraitMetadata = ref.watch(AppState.portraitMetadata).value ?? {};
+
         final List<({Portrait image, ModVariant? variant})> modsAndImages =
             portraits.entries
                 .expand(
@@ -231,11 +721,32 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
           sortedImages = filterToOnlyEnabledMods(sortedImages, allMods);
         }
 
+        // Apply "Confirmed Portraits" filter (only show portraits with metadata)
+        if (showOnlyWithMetadata) {
+          sortedImages = sortedImages.where((item) {
+            final meta = portraitMetadata.getMetadataFor(item.image.relativePath);
+            return meta.hasMetadata;
+          }).toList();
+        }
+
+        // Apply grid filters (mod, gender)
+        sortedImages = _applyGridFilters(sortedImages, portraitMetadata);
+
         // Apply search filter (only when not in replace mode)
         if (!inReplaceMode) {
           final query = _searchController.value.text;
-          sortedImages = _filterImages(sortedImages, query);
+          sortedImages = _filterImages(sortedImages, query, portraitMetadata);
         }
+
+        // Create filter items for the sidebar (before search filter)
+        final filterItems = modsAndImages.map((item) {
+          final meta = portraitMetadata.getMetadataFor(item.image.relativePath);
+          return _PortraitFilterItem(
+            portrait: item.image,
+            variant: item.variant,
+            metadata: meta.hasMetadata ? meta : null,
+          );
+        }).toList();
 
         final theme = Theme.of(context);
         final visible = sortedImages.length;
@@ -438,28 +949,6 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                                 alignment: Alignment.centerRight,
                                 child: buildSearchBox(),
                               ),
-                            const SizedBox(width: 8),
-                            MovingTooltipWidget.text(
-                              message: "Only view images with replacements",
-                              child: TriOSToolbarCheckboxButton(
-                                text: "View Replaced",
-                                value: showOnlyReplaced,
-                                onChanged: (value) => setState(
-                                  () => showOnlyReplaced = value ?? false,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            MovingTooltipWidget.text(
-                              message: "Only view images from enabled mods",
-                              child: TriOSToolbarCheckboxButton(
-                                text: "Only Enabled",
-                                value: showOnlyEnabledMods,
-                                onChanged: (value) => setState(
-                                  () => showOnlyEnabledMods = value ?? false,
-                                ),
-                              ),
-                            ),
                             const Spacer(),
                             OverflowMenuButton(
                               menuItems: [
@@ -550,157 +1039,252 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                           builder: (context, area) {
                             switch (area.id) {
                               case 'main':
-                                return PortraitsGridView(
-                                  modsAndImages: sortedImages,
-                                  allPortraits: modsAndImages,
-                                  replacements: replacements,
-                                  showPickReplacementIcon: true,
-                                  onSelectedPortraitToReplace:
-                                      _onSelectedPortraitToReplace,
-                                  onAddRandomReplacement: _addRandomReplacement,
+                                return Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildFiltersSection(theme, filterItems),
+                                    Expanded(
+                                      child: PortraitsGridView(
+                                        modsAndImages: sortedImages,
+                                        allPortraits: modsAndImages,
+                                        replacements: replacements,
+                                        showPickReplacementIcon: true,
+                                        onSelectedPortraitToReplace:
+                                            _onSelectedPortraitToReplace,
+                                        onAddRandomReplacement: _addRandomReplacement,
+                                      ),
+                                    ),
+                                  ],
                                 );
                               case 'left':
-                                var leftSortedImages = sortedImages;
-                                if (showOnlyReplaced) {
+                                // Start with base sorted images
+                                var leftSortedImages = modsAndImages.toList();
+
+                                // Apply "Only Enabled" filter
+                                if (_getShowOnlyEnabledMods(_FilterPane.left)) {
+                                  leftSortedImages = filterToOnlyEnabledMods(leftSortedImages, allMods);
+                                }
+
+                                // Apply "Confirmed Portraits" filter
+                                if (_getShowOnlyWithMetadata(_FilterPane.left)) {
+                                  leftSortedImages = leftSortedImages.where((item) {
+                                    final meta = portraitMetadata.getMetadataFor(item.image.relativePath);
+                                    return meta.hasMetadata;
+                                  }).toList();
+                                }
+
+                                // Apply grid filters (mod, gender)
+                                leftSortedImages = _applyGridFilters(
+                                  leftSortedImages,
+                                  portraitMetadata,
+                                  pane: _FilterPane.left,
+                                );
+
+                                // Apply "View Replaced" filter
+                                if (_getShowOnlyReplaced(_FilterPane.left)) {
                                   leftSortedImages = filterToOnlyReplacedImages(
-                                    sortedImages,
+                                    leftSortedImages,
                                     replacements,
                                   );
                                 }
+
+                                // Apply search filter
                                 final leftFilteredImages = _filterImages(
                                   leftSortedImages,
                                   _leftSearchController.value.text,
+                                  portraitMetadata,
                                 );
-                                return Column(
+
+                                // Create filter items for left sidebar
+                                final leftFilterItems = modsAndImages.map((item) {
+                                  final meta = portraitMetadata.getMetadataFor(item.image.relativePath);
+                                  return _PortraitFilterItem(
+                                    portrait: item.image,
+                                    variant: item.variant,
+                                    metadata: meta.hasMetadata ? meta : null,
+                                  );
+                                }).toList();
+
+                                return Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        // Padding(
-                                        //   padding: const .only(
-                                        //     left: 8,
-                                        //   ),
-                                        //   child: Text(
-                                        //     "Portraits",
-                                        //     style: theme.textTheme.titleLarge,
-                                        //   ),
-                                        // ),
-                                        // const SizedBox(width: 8),
-                                        Expanded(
-                                          child: _buildGridSearchBar(
-                                            _leftSearchController,
-                                            "Filter...",
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    Align(
-                                      alignment:
-                                          AlignmentDirectional.centerStart,
-                                      child: Padding(
-                                        padding: const .only(
-                                          left: 8,
-                                          bottom: 4,
-                                        ),
-                                        child: Text(
-                                          '${leftFilteredImages.length} images',
-                                          style: theme.textTheme.labelSmall
-                                              ?.copyWith(
-                                                color: theme
-                                                    .colorScheme
-                                                    .onSurface
-                                                    .withValues(alpha: 0.8),
-                                              ),
-                                        ),
-                                      ),
-                                    ),
+                                    _buildFiltersSection(theme, leftFilterItems, pane: _FilterPane.left),
                                     Expanded(
-                                      child: PortraitsGridView(
-                                        modsAndImages: leftFilteredImages,
-                                        allPortraits: modsAndImages,
-                                        replacements: replacements,
-                                        showPickReplacementIcon: false,
-                                        onAddRandomReplacement:
-                                            _addRandomReplacement,
-                                        onSelectedPortraitToReplace:
-                                            _onSelectedPortraitToReplace,
-                                        onAcceptDraggable: (original, replacement) {
-                                          ref
-                                              .read(
-                                                AppState
-                                                    .portraitReplacementsManager
-                                                    .notifier,
-                                              )
-                                              .saveReplacement(
-                                                original,
-                                                replacement,
-                                              );
-                                        },
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Expanded(
+                                                child: _buildGridSearchBar(
+                                                  _leftSearchController,
+                                                  "Filter...",
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          Align(
+                                            alignment:
+                                                AlignmentDirectional.centerStart,
+                                            child: Padding(
+                                              padding: const EdgeInsets.only(
+                                                left: 8,
+                                                bottom: 4,
+                                              ),
+                                              child: Text(
+                                                '${leftFilteredImages.length} images',
+                                                style: theme.textTheme.labelSmall
+                                                    ?.copyWith(
+                                                      color: theme
+                                                          .colorScheme
+                                                          .onSurface
+                                                          .withValues(alpha: 0.8),
+                                                    ),
+                                              ),
+                                            ),
+                                          ),
+                                          Expanded(
+                                            child: PortraitsGridView(
+                                              modsAndImages: leftFilteredImages,
+                                              allPortraits: modsAndImages,
+                                              replacements: replacements,
+                                              showPickReplacementIcon: false,
+                                              onAddRandomReplacement:
+                                                  _addRandomReplacement,
+                                              onSelectedPortraitToReplace:
+                                                  _onSelectedPortraitToReplace,
+                                              onAcceptDraggable: (original, replacement) {
+                                                ref
+                                                    .read(
+                                                      AppState
+                                                          .portraitReplacementsManager
+                                                          .notifier,
+                                                    )
+                                                    .saveReplacement(
+                                                      original,
+                                                      replacement,
+                                                    );
+                                              },
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ],
                                 );
                               case 'right':
-                                final rightFilteredImages = _filterImages(
-                                  sortedImages,
-                                  _rightSearchController.value.text,
+                                // Start with base sorted images
+                                var rightSortedImages = modsAndImages.toList();
+
+                                // Apply "Only Enabled" filter
+                                if (_getShowOnlyEnabledMods(_FilterPane.right)) {
+                                  rightSortedImages = filterToOnlyEnabledMods(rightSortedImages, allMods);
+                                }
+
+                                // Apply "Confirmed Portraits" filter
+                                if (_getShowOnlyWithMetadata(_FilterPane.right)) {
+                                  rightSortedImages = rightSortedImages.where((item) {
+                                    final meta = portraitMetadata.getMetadataFor(item.image.relativePath);
+                                    return meta.hasMetadata;
+                                  }).toList();
+                                }
+
+                                // Apply grid filters (mod, gender)
+                                rightSortedImages = _applyGridFilters(
+                                  rightSortedImages,
+                                  portraitMetadata,
+                                  pane: _FilterPane.right,
                                 );
-                                return Column(
+
+                                // Apply "View Replaced" filter
+                                if (_getShowOnlyReplaced(_FilterPane.right)) {
+                                  rightSortedImages = filterToOnlyReplacedImages(
+                                    rightSortedImages,
+                                    replacements,
+                                  );
+                                }
+
+                                // Apply search filter
+                                final rightFilteredImages = _filterImages(
+                                  rightSortedImages,
+                                  _rightSearchController.value.text,
+                                  portraitMetadata,
+                                );
+
+                                // Create filter items for right sidebar
+                                final rightFilterItems = modsAndImages.map((item) {
+                                  final meta = portraitMetadata.getMetadataFor(item.image.relativePath);
+                                  return _PortraitFilterItem(
+                                    portrait: item.image,
+                                    variant: item.variant,
+                                    metadata: meta.hasMetadata ? meta : null,
+                                  );
+                                }).toList();
+
+                                return Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Padding(
-                                          padding: const .only(left: 8),
-                                          child: Text(
-                                            replacementPoolString,
-                                            style: theme.textTheme.titleLarge,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Expanded(
-                                          child: _buildGridSearchBar(
-                                            _rightSearchController,
-                                            "Filter...",
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    Align(
-                                      alignment:
-                                          AlignmentDirectional.centerStart,
-                                      child: Padding(
-                                        padding: const .only(
-                                          left: 8,
-                                          bottom: 4,
-                                        ),
-                                        child: Text(
-                                          '${rightFilteredImages.length} images',
-                                          style: theme.textTheme.labelSmall
-                                              ?.copyWith(
-                                                color: theme
-                                                    .colorScheme
-                                                    .onSurface
-                                                    .withValues(alpha: 0.8),
-                                              ),
-                                        ),
-                                      ),
-                                    ),
+                                    _buildFiltersSection(theme, rightFilterItems, pane: _FilterPane.right),
                                     Expanded(
-                                      child: PortraitsGridView(
-                                        modsAndImages: rightFilteredImages,
-                                        allPortraits: modsAndImages,
-                                        replacements: {},
-                                        showPickReplacementIcon: false,
-                                        onAddRandomReplacement:
-                                            _addRandomReplacement,
-                                        onSelectedPortraitToReplace:
-                                            _onSelectedPortraitToReplace,
-                                        isDraggable: true,
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Padding(
+                                                padding: const EdgeInsets.only(left: 8),
+                                                child: Text(
+                                                  replacementPoolString,
+                                                  style: theme.textTheme.titleLarge,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Expanded(
+                                                child: _buildGridSearchBar(
+                                                  _rightSearchController,
+                                                  "Filter...",
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          Align(
+                                            alignment:
+                                                AlignmentDirectional.centerStart,
+                                            child: Padding(
+                                              padding: const EdgeInsets.only(
+                                                left: 8,
+                                                bottom: 4,
+                                              ),
+                                              child: Text(
+                                                '${rightFilteredImages.length} images',
+                                                style: theme.textTheme.labelSmall
+                                                    ?.copyWith(
+                                                      color: theme
+                                                          .colorScheme
+                                                          .onSurface
+                                                          .withValues(alpha: 0.8),
+                                                    ),
+                                              ),
+                                            ),
+                                          ),
+                                          Expanded(
+                                            child: PortraitsGridView(
+                                              modsAndImages: rightFilteredImages,
+                                              allPortraits: modsAndImages,
+                                              replacements: {},
+                                              showPickReplacementIcon: false,
+                                              onAddRandomReplacement:
+                                                  _addRandomReplacement,
+                                              onSelectedPortraitToReplace:
+                                                  _onSelectedPortraitToReplace,
+                                              isDraggable: true,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ],
@@ -857,6 +1441,9 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
     _searchController.dispose();
     _leftSearchController.dispose();
     _rightSearchController.dispose();
+    _filterScrollController.dispose();
+    _leftFilterScrollController.dispose();
+    _rightFilterScrollController.dispose();
     super.dispose();
   }
 

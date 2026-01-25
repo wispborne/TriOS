@@ -123,7 +123,7 @@ class TipsNotifier extends AsyncNotifier<List<ModTip>> {
     if (tipsFile.existsSync()) {
       return (
         tips: TipsMapper.fromMap(
-          (await tipsFile.toFile().readAsString()).fixJsonToMap(),
+          (await tipsFile.toFile().readAsString()).parseJsonToMap(),
         ),
         file: tipsFile,
       );
@@ -136,7 +136,7 @@ class TipsNotifier extends AsyncNotifier<List<ModTip>> {
     if (tipsFile.existsSync()) {
       return (
         tips: TipsMapper.fromMap(
-          tipsFile.toFile().readAsStringSync().fixJsonToMap(),
+          tipsFile.toFile().readAsStringSync().parseJsonToMap(),
         ),
         file: tipsFile,
       );

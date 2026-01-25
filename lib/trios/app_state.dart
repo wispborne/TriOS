@@ -14,6 +14,8 @@ import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/download_progress.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/models/result.dart';
+import 'package:trios/portraits/portrait_metadata.dart';
+import 'package:trios/portraits/portrait_metadata_manager.dart';
 import 'package:trios/portraits/portrait_model.dart';
 import 'package:trios/portraits/portrait_replacements_manager.dart';
 import 'package:trios/portraits/portraits_manager.dart';
@@ -175,6 +177,15 @@ class AppState {
         PortraitReplacementsNotifier,
         Map<String, SavedPortrait>
       >(() => PortraitReplacementsNotifier());
+
+  /// Portrait metadata extracted from faction files.
+  /// Key is relative portrait path, value is metadata (gender, factions).
+  static final portraitMetadata =
+      AsyncNotifierProvider<
+        PortraitMetadataNotifier,
+        Map<String, PortraitMetadata>
+      >(PortraitMetadataNotifier.new);
+
   static final starsectorVersion = FutureProvider<String?>((ref) async {
     final gamePath = ref
         .watch(appSettings.select((value) => value.gameDir))

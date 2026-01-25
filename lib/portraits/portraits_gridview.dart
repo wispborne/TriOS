@@ -4,9 +4,13 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/models/mod_variant.dart';
+import 'package:trios/portraits/portrait_metadata.dart';
+import 'package:trios/portraits/portrait_metadata_manager.dart';
 import 'package:trios/portraits/portrait_model.dart';
+import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/widgets/conditional_wrap.dart';
@@ -54,9 +58,45 @@ class PortraitsGridView extends ConsumerWidget {
     return null;
   }
 
+  /// Builds a widget displaying portrait metadata (gender, factions, ID).
+  Widget _buildMetadataSection(
+    BuildContext context,
+    PortraitMetadata metadata,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Portrait ID row (from settings.json)
+        if (metadata.portraitId != null) ...[
+          Text('ID: ${metadata.portraitId}'),
+          const SizedBox(height: 4),
+        ],
+        // Gender row
+        if (metadata.gender != null)
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            spacing: 4,
+            children: [
+              Text(
+                'Gender: ${metadata.portraitId == Constants.gargoyleCharId ? "Gargoyle" : metadata.gender}',
+              ),
+              Icon(_getGenderIcon(metadata.gender!), size: 16),
+            ],
+          ),
+        // Factions row
+        if (metadata.factions.isNotEmpty) ...[
+          Text(
+            'Factions: ${metadata.factions.map((f) => f.toString()).sorted().join(', ')}',
+          ),
+        ],
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final modsPath = ref.watch(AppState.modsFolder).value ?? Directory("");
+    final portraitMetadata = ref.watch(AppState.portraitMetadata).value ?? {};
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -105,6 +145,11 @@ class PortraitsGridView extends ConsumerWidget {
                 Fimber.w('Error reading replacement file size: $error');
               }
             }
+
+            // Get portrait metadata (gender, factions)
+            final metadata = portraitMetadata.getMetadataFor(
+              portrait.relativePath,
+            );
 
             return MovingTooltipWidget.framed(
               tooltipWidget: Row(
@@ -162,6 +207,13 @@ class PortraitsGridView extends ConsumerWidget {
                       Text(
                         'Dimensions: ${portrait.width} x ${portrait.height}',
                       ),
+                      // Portrait metadata (gender, factions)
+                      if (metadata.hasMetadata) ...[
+                        const SizedBox(height: 8),
+                        Divider(color: Theme.of(context).colorScheme.onSurface),
+                        const SizedBox(height: 4),
+                        _buildMetadataSection(context, metadata),
+                      ],
                     ],
                   ),
                 ],
@@ -276,6 +328,7 @@ class PortraitsGridView extends ConsumerWidget {
                       showPickReplacementIcon: showPickReplacementIcon,
                       onSelectedPortraitToReplace: onSelectedPortraitToReplace,
                       isDraggable: isDraggable,
+                      metadata: metadata,
                     ),
                   ),
                 ),
@@ -295,6 +348,7 @@ class PortraitImageWidget extends ConsumerStatefulWidget {
   final void Function(Portrait selectedPortrait) onSelectedPortraitToReplace;
   final bool isDraggable;
   final bool showPickReplacementIcon;
+  final PortraitMetadata? metadata;
 
   const PortraitImageWidget({
     super.key,
@@ -304,6 +358,7 @@ class PortraitImageWidget extends ConsumerStatefulWidget {
     required this.showPickReplacementIcon,
     required this.onSelectedPortraitToReplace,
     required this.isDraggable,
+    this.metadata,
   });
 
   @override
@@ -398,6 +453,32 @@ class _PortraitImageWidgetState extends ConsumerState<PortraitImageWidget> {
                       onPressed: () {
                         widget.onSelectedPortraitToReplace(portrait);
                       },
+                    ),
+                  ),
+                ),
+              ),
+            // Gender indicator for portraits with metadata
+            if (widget.metadata?.hasMetadata == true &&
+                widget.metadata!.gender != null)
+              Align(
+                alignment: Alignment.topRight,
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: Container(
+                    width: 20,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.black.withValues(alpha: 0.6),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.0),
+                        width: 1,
+                      ),
+                    ),
+                    child: Icon(
+                      _getGenderIcon(widget.metadata!.gender!),
+                      size: 14,
+                      color: Colors.white.withValues(alpha: 0.9),
                     ),
                   ),
                 ),
@@ -543,4 +624,12 @@ class _PortraitImageWidgetState extends ConsumerState<PortraitImageWidget> {
       },
     );
   }
+}
+
+IconData? _getGenderIcon(PortraitGender gender) {
+  return switch (gender) {
+    PortraitGender.male => Icons.male,
+    PortraitGender.female => Icons.female,
+    _ => null,
+  };
 }

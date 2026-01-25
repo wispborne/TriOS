@@ -1024,7 +1024,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
 
     // Replace the game version in the mod_info.json file.
     // Don't use the code model, we want to keep any extra fields that might not be in the model.
-    final modInfoJson = modInfoFile.readAsStringSync().fixJsonToMap();
+    final modInfoJson = modInfoFile.readAsStringSync().parseJsonToMap();
     modInfoJson["gameVersion"] = newGameVersion;
     modInfoJson["originalGameVersion"] = modVariant.modInfo.gameVersion;
     await modInfoFile.writeAsString(jsonEncodePrettily(modInfoJson));

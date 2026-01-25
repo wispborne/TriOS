@@ -152,7 +152,7 @@ Future<ParseResult> _parseWeaponsCsv(
     try {
       final wpnContent = await wpnFile.readAsString(encoding: utf8);
       final cleanedContent = wpnContent.removeJsonComments();
-      final jsonData = cleanedContent.fixJsonToMap();
+      final jsonData = cleanedContent.parseJsonToMap();
       final weaponId = jsonData['id'] as String?;
       if (weaponId != null) {
         // Extract only the specified fields

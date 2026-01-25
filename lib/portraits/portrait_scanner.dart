@@ -103,7 +103,7 @@ class PortraitScanner {
       final imageBytes = await file.readAsBytes();
       final (width, height) = await _getImageSize(file.path, imageBytes);
 
-      if (_isValidPortraitSize(width, height)) {
+      // if (_isValidPortraitSize(width, height)) {
         return Portrait.fromBytes(
           modVariant: modVariant,
           imageFile: file,
@@ -114,7 +114,7 @@ class PortraitScanner {
           height: height,
           imageBytes: imageBytes,
         );
-      }
+      // }
     } catch (e) {
       Fimber.w('Error processing ${file.path}: $e');
     }

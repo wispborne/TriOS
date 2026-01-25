@@ -72,7 +72,7 @@ class ModVariant with ModVariantMappable implements Comparable<ModVariant> {
         final lunaSettingsIconPath =
             (lunaSettings
                         .readAsStringSyncAllowingMalformed()
-                        .fixJsonToMap()
+                        .parseJsonToMap()
                         .entries
                         .first
                         .value

@@ -138,7 +138,7 @@ class ShipListNotifier extends StreamNotifier<List<Ship>> {
       try {
         final raw = await shipFile.readAsString(encoding: utf8);
         final cleaned = raw.removeJsonComments();
-        final map = cleaned.fixJsonToMap();
+        final map = cleaned.parseJsonToMap();
         final id = map['hullId'] as String?;
         if (id != null) {
           shipJsonData[id] = map;

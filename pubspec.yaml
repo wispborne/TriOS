@@ -136,10 +136,6 @@ flutter:
   assets:
     - assets/images/
     - assets/images/chipper/
-    - assets/windows/libarchive/bin/
-    - assets/macos/libarchive/bin/
-    - assets/macos/libarchive/lib/
-    - assets/linux/libarchive/lib/
     - assets/SMOL_Themes.json
     - assets/common/
     - assets/windows/7zip/

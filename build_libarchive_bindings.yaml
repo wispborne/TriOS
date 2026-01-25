@@ -1,9 +1,0 @@
-# Usage: `dart run ffigen --config build_libarchive_bindings.yaml`
-
-name: LibArchiveBinding
-output: lib/libarchive/libarchive_bindings.dart
-headers:
-  entry-points:
-    - assets/libarchive/windows/include/archive.h
-    - assets/libarchive/windows/include/archive_entry.h
-

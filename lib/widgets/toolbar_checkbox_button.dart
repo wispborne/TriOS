@@ -38,24 +38,41 @@ class TriOSToolbarCheckboxButton extends StatelessWidget {
 class TriOSToolbarItem extends StatelessWidget {
   final double? elevation;
   final Widget child;
+  final bool showOutline;
 
-  const TriOSToolbarItem({super.key, this.elevation, required this.child});
+  const TriOSToolbarItem({
+    super.key,
+    this.elevation,
+    required this.child,
+    this.showOutline = true,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return SizedBox(
       height: 30,
-      child: Card.outlined(
-        elevation: elevation,
-        margin: const EdgeInsets.symmetric(),
-        child: DefaultTextStyle.merge(
-          child: child,
-          style: theme.textTheme.labelLarge?.copyWith(
-            color: theme.colorScheme.onSurface,
-          ),
-        ),
-      ),
+      child: showOutline
+          ? Card.outlined(
+              elevation: elevation,
+              margin: const EdgeInsets.symmetric(),
+              child: DefaultTextStyle.merge(
+                child: child,
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: theme.colorScheme.onSurface,
+                ),
+              ),
+            )
+          : Card(
+              elevation: elevation,
+              margin: const EdgeInsets.symmetric(),
+              child: DefaultTextStyle.merge(
+                child: child,
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: theme.colorScheme.onSurface,
+                ),
+              ),
+            ),
     );
   }
 }

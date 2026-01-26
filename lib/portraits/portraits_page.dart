@@ -60,6 +60,7 @@ class _PortraitFilterItem {
   });
 
   String get modName => variant?.modInfo.nameOrId ?? 'Vanilla';
+
   String get genderString => metadata?.gender?.toString() ?? 'Unknown';
 }
 
@@ -79,6 +80,10 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
   bool showOnlyWithMetadata = true; // "Confirmed Portraits" filter
   bool showFilters = true;
   _PortraitsMode mode = _PortraitsMode.viewer;
+  static const double _portraitSizeMin = 64;
+  static const double _portraitSizeMax = 192;
+  static const double _portraitSizeStep = 8;
+  double _portraitSize = 128;
 
   // Filter categories for the main/viewer sidebar
   late final GridFilter<_PortraitFilterItem> _modFilter;
@@ -202,25 +207,30 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
       if (searchModVariants([?variant], query).isNotEmpty) return true;
 
       // Check file path
-      if (portrait.imageFile.path.toLowerCase().contains(lowerQuery)) return true;
+      if (portrait.imageFile.path.toLowerCase().contains(lowerQuery))
+        return true;
 
       // Check portrait metadata (gender, factions, portrait ID)
       final portraitMetadata = metadata.getMetadataFor(portrait.relativePath);
       if (portraitMetadata.hasMetadata) {
         // Check portrait ID (from settings.json)
-        if (portraitMetadata.portraitId?.toLowerCase().contains(lowerQuery) ?? false) {
+        if (portraitMetadata.portraitId?.toLowerCase().contains(lowerQuery) ??
+            false) {
           return true;
         }
 
         // Check gender (male, female)
-        if (portraitMetadata.gender.toString().toLowerCase().contains(lowerQuery)) {
+        if (portraitMetadata.gender.toString().toLowerCase().contains(
+          lowerQuery,
+        )) {
           return true;
         }
 
         // Check faction names
         for (final faction in portraitMetadata.factions) {
           if (faction.id.toLowerCase().contains(lowerQuery) ||
-              (faction.displayName?.toLowerCase().contains(lowerQuery) ?? false)) {
+              (faction.displayName?.toLowerCase().contains(lowerQuery) ??
+                  false)) {
             return true;
           }
         }
@@ -452,7 +462,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                 bottom: 8,
               ),
               child: SizedBox(
-                width: 280,
+                width: 200,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -501,8 +511,9 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                     // Scrollable filter content
                     Expanded(
                       child: ScrollConfiguration(
-                        behavior: ScrollConfiguration.of(context)
-                            .copyWith(scrollbars: false),
+                        behavior: ScrollConfiguration.of(
+                          context,
+                        ).copyWith(scrollbars: false),
                         child: SingleChildScrollView(
                           controller: scrollController,
                           child: Column(
@@ -537,7 +548,10 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
     );
   }
 
-  Widget _buildCheckboxFilters(ThemeData theme, {_FilterPane pane = _FilterPane.main}) {
+  Widget _buildCheckboxFilters(
+    ThemeData theme, {
+    _FilterPane pane = _FilterPane.main,
+  }) {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
       color: theme.colorScheme.surfaceContainer,
@@ -552,7 +566,6 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                   "Only show images that are confirmed portraits (found in faction files or settings.json)",
               child: CheckboxListTile(
                 title: const Text('Confirmed Portraits'),
-                subtitle: const Text('Has faction or ID data'),
                 dense: true,
                 visualDensity: VisualDensity.compact,
                 contentPadding: EdgeInsets.zero,
@@ -565,8 +578,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
             MovingTooltipWidget.text(
               message: "Only show images that have replacements",
               child: CheckboxListTile(
-                title: const Text('View Replaced'),
-                subtitle: const Text('Has a replacement set'),
+                title: const Text('Only Your Changes'),
                 dense: true,
                 visualDensity: VisualDensity.compact,
                 contentPadding: EdgeInsets.zero,
@@ -579,8 +591,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
             MovingTooltipWidget.text(
               message: "Only show images from enabled mods",
               child: CheckboxListTile(
-                title: const Text('Only Enabled'),
-                subtitle: const Text('From enabled mods only'),
+                title: const Text('Only Enabled Mods'),
                 dense: true,
                 visualDensity: VisualDensity.compact,
                 contentPadding: EdgeInsets.zero,
@@ -632,6 +643,53 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
               (BuildContext context, SearchController controller) {
                 return [];
               },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPortraitSizeControl(ThemeData theme) {
+    return TriOSToolbarItem(
+      showOutline: false,
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          spacing: 0,
+          children: [
+            Icon(Icons.grid_4x4),
+            SizedBox(
+              width: 160,
+              child: SliderTheme(
+                data: theme.sliderTheme.copyWith(
+                  trackHeight: 2,
+                  overlayShape: const RoundSliderOverlayShape(
+                    overlayRadius: 10,
+                  ),
+                  thumbShape: const RoundSliderThumbShape(
+                    enabledThumbRadius: 8,
+                  ),
+                ),
+                child: Slider(
+                  value: _portraitSize,
+                  min: _portraitSizeMin,
+                  max: _portraitSizeMax,
+                  divisions:
+                      ((_portraitSizeMax - _portraitSizeMin) /
+                              _portraitSizeStep)
+                          .round(),
+                  label: _portraitSize.round().toString(),
+                  onChanged: (value) {
+                    setState(() {
+                      _portraitSize = value;
+                    });
+                  },
+                ),
+              ),
+            ),
+            Icon(Icons.grid_3x3),
+          ],
         ),
       ),
     );
@@ -695,7 +753,8 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
             .cast<String, Portrait>();
 
         // Get portrait metadata for filtering by gender/faction
-        final portraitMetadata = ref.watch(AppState.portraitMetadata).value ?? {};
+        final portraitMetadata =
+            ref.watch(AppState.portraitMetadata).value ?? {};
 
         final List<({Portrait image, ModVariant? variant})> modsAndImages =
             portraits.entries
@@ -724,7 +783,9 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
         // Apply "Confirmed Portraits" filter (only show portraits with metadata)
         if (showOnlyWithMetadata) {
           sortedImages = sortedImages.where((item) {
-            final meta = portraitMetadata.getMetadataFor(item.image.relativePath);
+            final meta = portraitMetadata.getMetadataFor(
+              item.image.relativePath,
+            );
             return meta.hasMetadata;
           }).toList();
         }
@@ -949,7 +1010,9 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                                 alignment: Alignment.centerRight,
                                 child: buildSearchBox(),
                               ),
+                            const SizedBox(width: 8),
                             const Spacer(),
+                            _buildPortraitSizeControl(theme),
                             OverflowMenuButton(
                               menuItems: [
                                 OverflowMenuItem(
@@ -1049,9 +1112,11 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                                         allPortraits: modsAndImages,
                                         replacements: replacements,
                                         showPickReplacementIcon: true,
+                                        portraitSize: _portraitSize,
                                         onSelectedPortraitToReplace:
                                             _onSelectedPortraitToReplace,
-                                        onAddRandomReplacement: _addRandomReplacement,
+                                        onAddRandomReplacement:
+                                            _addRandomReplacement,
                                       ),
                                     ),
                                   ],
@@ -1062,13 +1127,23 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
 
                                 // Apply "Only Enabled" filter
                                 if (_getShowOnlyEnabledMods(_FilterPane.left)) {
-                                  leftSortedImages = filterToOnlyEnabledMods(leftSortedImages, allMods);
+                                  leftSortedImages = filterToOnlyEnabledMods(
+                                    leftSortedImages,
+                                    allMods,
+                                  );
                                 }
 
                                 // Apply "Confirmed Portraits" filter
-                                if (_getShowOnlyWithMetadata(_FilterPane.left)) {
-                                  leftSortedImages = leftSortedImages.where((item) {
-                                    final meta = portraitMetadata.getMetadataFor(item.image.relativePath);
+                                if (_getShowOnlyWithMetadata(
+                                  _FilterPane.left,
+                                )) {
+                                  leftSortedImages = leftSortedImages.where((
+                                    item,
+                                  ) {
+                                    final meta = portraitMetadata
+                                        .getMetadataFor(
+                                          item.image.relativePath,
+                                        );
                                     return meta.hasMetadata;
                                   }).toList();
                                 }
@@ -1096,8 +1171,12 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                                 );
 
                                 // Create filter items for left sidebar
-                                final leftFilterItems = modsAndImages.map((item) {
-                                  final meta = portraitMetadata.getMetadataFor(item.image.relativePath);
+                                final leftFilterItems = modsAndImages.map((
+                                  item,
+                                ) {
+                                  final meta = portraitMetadata.getMetadataFor(
+                                    item.image.relativePath,
+                                  );
                                   return _PortraitFilterItem(
                                     portrait: item.image,
                                     variant: item.variant,
@@ -1108,10 +1187,15 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                                 return Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    _buildFiltersSection(theme, leftFilterItems, pane: _FilterPane.left),
+                                    _buildFiltersSection(
+                                      theme,
+                                      leftFilterItems,
+                                      pane: _FilterPane.left,
+                                    ),
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Row(
                                             crossAxisAlignment:
@@ -1126,8 +1210,8 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                                             ],
                                           ),
                                           Align(
-                                            alignment:
-                                                AlignmentDirectional.centerStart,
+                                            alignment: AlignmentDirectional
+                                                .centerStart,
                                             child: Padding(
                                               padding: const EdgeInsets.only(
                                                 left: 8,
@@ -1135,12 +1219,16 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                                               ),
                                               child: Text(
                                                 '${leftFilteredImages.length} images',
-                                                style: theme.textTheme.labelSmall
+                                                style: theme
+                                                    .textTheme
+                                                    .labelSmall
                                                     ?.copyWith(
                                                       color: theme
                                                           .colorScheme
                                                           .onSurface
-                                                          .withValues(alpha: 0.8),
+                                                          .withValues(
+                                                            alpha: 0.8,
+                                                          ),
                                                     ),
                                               ),
                                             ),
@@ -1151,22 +1239,24 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                                               allPortraits: modsAndImages,
                                               replacements: replacements,
                                               showPickReplacementIcon: false,
+                                              portraitSize: _portraitSize,
                                               onAddRandomReplacement:
                                                   _addRandomReplacement,
                                               onSelectedPortraitToReplace:
                                                   _onSelectedPortraitToReplace,
-                                              onAcceptDraggable: (original, replacement) {
-                                                ref
-                                                    .read(
-                                                      AppState
-                                                          .portraitReplacementsManager
-                                                          .notifier,
-                                                    )
-                                                    .saveReplacement(
-                                                      original,
-                                                      replacement,
-                                                    );
-                                              },
+                                              onAcceptDraggable:
+                                                  (original, replacement) {
+                                                    ref
+                                                        .read(
+                                                          AppState
+                                                              .portraitReplacementsManager
+                                                              .notifier,
+                                                        )
+                                                        .saveReplacement(
+                                                          original,
+                                                          replacement,
+                                                        );
+                                                  },
                                             ),
                                           ),
                                         ],
@@ -1179,14 +1269,26 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                                 var rightSortedImages = modsAndImages.toList();
 
                                 // Apply "Only Enabled" filter
-                                if (_getShowOnlyEnabledMods(_FilterPane.right)) {
-                                  rightSortedImages = filterToOnlyEnabledMods(rightSortedImages, allMods);
+                                if (_getShowOnlyEnabledMods(
+                                  _FilterPane.right,
+                                )) {
+                                  rightSortedImages = filterToOnlyEnabledMods(
+                                    rightSortedImages,
+                                    allMods,
+                                  );
                                 }
 
                                 // Apply "Confirmed Portraits" filter
-                                if (_getShowOnlyWithMetadata(_FilterPane.right)) {
-                                  rightSortedImages = rightSortedImages.where((item) {
-                                    final meta = portraitMetadata.getMetadataFor(item.image.relativePath);
+                                if (_getShowOnlyWithMetadata(
+                                  _FilterPane.right,
+                                )) {
+                                  rightSortedImages = rightSortedImages.where((
+                                    item,
+                                  ) {
+                                    final meta = portraitMetadata
+                                        .getMetadataFor(
+                                          item.image.relativePath,
+                                        );
                                     return meta.hasMetadata;
                                   }).toList();
                                 }
@@ -1200,10 +1302,11 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
 
                                 // Apply "View Replaced" filter
                                 if (_getShowOnlyReplaced(_FilterPane.right)) {
-                                  rightSortedImages = filterToOnlyReplacedImages(
-                                    rightSortedImages,
-                                    replacements,
-                                  );
+                                  rightSortedImages =
+                                      filterToOnlyReplacedImages(
+                                        rightSortedImages,
+                                        replacements,
+                                      );
                                 }
 
                                 // Apply search filter
@@ -1214,8 +1317,12 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                                 );
 
                                 // Create filter items for right sidebar
-                                final rightFilterItems = modsAndImages.map((item) {
-                                  final meta = portraitMetadata.getMetadataFor(item.image.relativePath);
+                                final rightFilterItems = modsAndImages.map((
+                                  item,
+                                ) {
+                                  final meta = portraitMetadata.getMetadataFor(
+                                    item.image.relativePath,
+                                  );
                                   return _PortraitFilterItem(
                                     portrait: item.image,
                                     variant: item.variant,
@@ -1226,20 +1333,29 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                                 return Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    _buildFiltersSection(theme, rightFilterItems, pane: _FilterPane.right),
+                                    _buildFiltersSection(
+                                      theme,
+                                      rightFilterItems,
+                                      pane: _FilterPane.right,
+                                    ),
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Row(
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.start,
                                             children: [
                                               Padding(
-                                                padding: const EdgeInsets.only(left: 8),
+                                                padding: const EdgeInsets.only(
+                                                  left: 8,
+                                                ),
                                                 child: Text(
                                                   replacementPoolString,
-                                                  style: theme.textTheme.titleLarge,
+                                                  style: theme
+                                                      .textTheme
+                                                      .titleLarge,
                                                 ),
                                               ),
                                               const SizedBox(width: 8),
@@ -1252,8 +1368,8 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                                             ],
                                           ),
                                           Align(
-                                            alignment:
-                                                AlignmentDirectional.centerStart,
+                                            alignment: AlignmentDirectional
+                                                .centerStart,
                                             child: Padding(
                                               padding: const EdgeInsets.only(
                                                 left: 8,
@@ -1261,22 +1377,28 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                                               ),
                                               child: Text(
                                                 '${rightFilteredImages.length} images',
-                                                style: theme.textTheme.labelSmall
+                                                style: theme
+                                                    .textTheme
+                                                    .labelSmall
                                                     ?.copyWith(
                                                       color: theme
                                                           .colorScheme
                                                           .onSurface
-                                                          .withValues(alpha: 0.8),
+                                                          .withValues(
+                                                            alpha: 0.8,
+                                                          ),
                                                     ),
                                               ),
                                             ),
                                           ),
                                           Expanded(
                                             child: PortraitsGridView(
-                                              modsAndImages: rightFilteredImages,
+                                              modsAndImages:
+                                                  rightFilteredImages,
                                               allPortraits: modsAndImages,
                                               replacements: {},
                                               showPickReplacementIcon: false,
+                                              portraitSize: _portraitSize,
                                               onAddRandomReplacement:
                                                   _addRandomReplacement,
                                               onSelectedPortraitToReplace:

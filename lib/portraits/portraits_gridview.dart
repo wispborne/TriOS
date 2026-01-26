@@ -21,6 +21,7 @@ class PortraitsGridView extends ConsumerWidget {
   final List<({Portrait image, ModVariant? variant})> modsAndImages;
   final List<({Portrait image, ModVariant? variant})> allPortraits;
   final Map<String, Portrait> replacements;
+  final double portraitSize;
   final Future<void> Function(
     Portrait,
     List<({Portrait image, ModVariant? variant})>,
@@ -37,6 +38,7 @@ class PortraitsGridView extends ConsumerWidget {
     required this.modsAndImages,
     required this.allPortraits,
     required this.replacements,
+    required this.portraitSize,
     required this.onAddRandomReplacement,
     required this.onSelectedPortraitToReplace,
     required this.showPickReplacementIcon,
@@ -97,15 +99,16 @@ class PortraitsGridView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final portraitMetadata = ref.watch(AppState.portraitMetadata).value ?? {};
+    const gridSpacing = 8.0;
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        int crossAxisCount = (constraints.maxWidth ~/ 150).clamp(1, 100);
         return GridView.builder(
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
-            crossAxisSpacing: 8,
-            mainAxisSpacing: 8,
+          gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+            maxCrossAxisExtent: portraitSize + gridSpacing,
+            mainAxisExtent: portraitSize,
+            crossAxisSpacing: gridSpacing,
+            mainAxisSpacing: gridSpacing,
           ),
           itemCount: modsAndImages.length,
           itemBuilder: (context, index) {
@@ -329,6 +332,7 @@ class PortraitsGridView extends ConsumerWidget {
                       onSelectedPortraitToReplace: onSelectedPortraitToReplace,
                       isDraggable: isDraggable,
                       metadata: metadata,
+                      size: portraitSize,
                     ),
                   ),
                 ),
@@ -349,6 +353,7 @@ class PortraitImageWidget extends ConsumerStatefulWidget {
   final bool isDraggable;
   final bool showPickReplacementIcon;
   final PortraitMetadata? metadata;
+  final double size;
 
   const PortraitImageWidget({
     super.key,
@@ -358,6 +363,7 @@ class PortraitImageWidget extends ConsumerStatefulWidget {
     required this.showPickReplacementIcon,
     required this.onSelectedPortraitToReplace,
     required this.isDraggable,
+    required this.size,
     this.metadata,
   });
 
@@ -380,8 +386,8 @@ class _PortraitImageWidgetState extends ConsumerState<PortraitImageWidget> {
           ? SystemMouseCursors.move
           : SystemMouseCursors.basic,
       child: SizedBox(
-        width: 128,
-        height: 128,
+        width: widget.size,
+        height: widget.size,
         child: widget.hasReplacement
             ? _buildStackedCards(theme, ref)
             : _buildSingleCard(widget.originalPortrait),
@@ -490,6 +496,9 @@ class _PortraitImageWidgetState extends ConsumerState<PortraitImageWidget> {
   }
 
   Widget _buildStackedCards(ThemeData theme, WidgetRef ref) {
+    final backCardInset = widget.size * 0.125;
+    final frontCardInset = widget.size * 0.094;
+    final actionInset = widget.size * 0.0625;
     final replacementFile = _isHovering
         ? widget.originalPortrait.imageFile
         : File(widget.replacementPath!);
@@ -504,7 +513,7 @@ class _PortraitImageWidgetState extends ConsumerState<PortraitImageWidget> {
           children: [
             // Back card (original image) - always visible at bottom-right
             Container(
-              padding: const EdgeInsets.only(left: 16, top: 16),
+              padding: EdgeInsets.only(left: backCardInset, top: backCardInset),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(4),
                 boxShadow: [
@@ -534,7 +543,10 @@ class _PortraitImageWidgetState extends ConsumerState<PortraitImageWidget> {
             ),
             // Front card (replacement image) - covers most of the original
             Padding(
-              padding: const EdgeInsets.only(bottom: 12, right: 12),
+              padding: EdgeInsets.only(
+                bottom: frontCardInset,
+                right: frontCardInset,
+              ),
               child: Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(4),
@@ -582,7 +594,10 @@ class _PortraitImageWidgetState extends ConsumerState<PortraitImageWidget> {
             Align(
               alignment: Alignment.bottomRight,
               child: Padding(
-                padding: const EdgeInsets.only(bottom: 8, right: 8),
+                padding: EdgeInsets.only(
+                  bottom: actionInset,
+                  right: actionInset,
+                ),
                 child: MovingTooltipWidget.text(
                   message: 'Revert to Original',
                   child: IconButton(

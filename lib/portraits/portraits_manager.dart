@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/portraits/portrait_metadata.dart';
 import 'package:trios/portraits/portrait_model.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/logging.dart';
@@ -26,6 +29,13 @@ class PortraitsNotifier
 
     // Mark loading
     isLoadingPortraits = true;
+
+    // Wait for metadata to finish loading.
+    while (ref.read(AppState.portraitMetadata.notifier).isLoading) {
+      await Future.delayed(Duration(milliseconds: 100));
+    }
+
+    final metadata = ref.watch(AppState.portraitMetadata);
 
     try {
       if (gameCoreFolder == null) {
@@ -100,12 +110,30 @@ class PortraitsNotifier
         }
       } else {
         // Full rescan path
+        final metadataMap = metadata.value ?? {};
+        var baseState = <ModVariant?, List<Portrait>>{};
+        if (metadataMap.isNotEmpty) {
+          final knownPortraits = await _loadKnownPortraitsFromMetadata(
+            scanner,
+            variants,
+            gameCoreFolder,
+            metadataMap,
+          );
+          if (knownPortraits.isNotEmpty) {
+            baseState = Map.from(knownPortraits);
+            state = AsyncValue.data(knownPortraits);
+            _lastState = knownPortraits;
+          }
+        }
+
         await for (final result in scanner.scanVariantsStream(
           variants,
           gameCoreFolder,
         )) {
-          state = AsyncValue.data(result);
-          _lastState = result;
+          final merged = <ModVariant?, List<Portrait>>{...baseState, ...result};
+          state = AsyncValue.data(merged);
+          _lastState = merged;
+          baseState = merged;
         }
       }
 
@@ -123,5 +151,25 @@ class PortraitsNotifier
   Future<void> rescan() async {
     _fullRescanRequested = true;
     await build();
+  }
+
+  Future<Map<ModVariant?, List<Portrait>>> _loadKnownPortraitsFromMetadata(
+    PortraitScanner scanner,
+    List<ModVariant?> variants,
+    Directory gameCoreFolder,
+    Map<String, PortraitMetadata> metadataMap,
+  ) async {
+    final relativePaths = metadataMap.keys;
+    final knownPortraits = <ModVariant?, List<Portrait>>{};
+
+    for (final variant in variants) {
+      knownPortraits[variant] = await scanner.scanKnownPortraits(
+        variant,
+        gameCoreFolder,
+        relativePaths,
+      );
+    }
+
+    return knownPortraits;
   }
 }

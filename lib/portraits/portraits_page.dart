@@ -153,9 +153,8 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
       : [Area(id: 'main')];
 
   void _refreshPortraits() {
-    // Invalidate the provider to trigger a reload
-    ref.read(AppState.portraits.notifier).rescan();
     ref.read(AppState.portraitMetadata.notifier).rescan();
+    ref.read(AppState.portraits.notifier).rescan();
   }
 
   void _showReplacementsDialog(Map<String, Portrait> replacements) async {
@@ -563,7 +562,9 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
             // "Confirmed Portraits" checkbox
             MovingTooltipWidget.text(
               message:
-                  "Only show images that are confirmed portraits (found in faction files or settings.json)",
+                  "Only show images that are confirmed portraits."
+                      "\n\nPortraits defined in .faction files have genders."
+                      "\nPortraits from settings.json files do not.",
               child: CheckboxListTile(
                 title: const Text('Confirmed Portraits'),
                 dense: true,
@@ -876,10 +877,15 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                               //   ),
                               // ),
                             ),
-                            if (!inReplaceMode)
+                            // if (!inReplaceMode)
                               MovingTooltipWidget.text(
                                 message:
-                                    "Displays images that are *likely* to be portraits from your enabled or highest-version mods.\n\nBecause mods may use any image as a portrait, this is not an exact science, but best guesses.",
+                                    "Displays images that are *likely* to be portraits from the highest version of each mod."
+                                        "\n\nBecause mods may use any image as a portrait and load images dynamically in code, this is not an exact science, but best guesses."
+                                        "\nPortraits must be:"
+                                        "\n- Square"
+                                        "\n- Between 128x128 and 256x256"
+                                        "\n- An image file",
                                 child: Padding(
                                   padding: const .only(left: 8, right: 8),
                                   child: Icon(Icons.info),

@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui';
 
+import 'package:path/path.dart' as p;
 import 'package:trios/portraits/portrait_model.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/extensions.dart';
@@ -36,6 +37,35 @@ class PortraitScanner {
     }
 
     Fimber.i('Portrait scan completed in ${timer.elapsedMilliseconds}ms');
+  }
+
+  /// Scans a known set of portrait paths for a single variant.
+  Future<List<Portrait>> scanKnownPortraits(
+    ModVariant? variant,
+    Directory gameCoreFolder,
+    Iterable<String> relativePaths,
+  ) async {
+    if (variant != null && !await variant.modFolder.exists()) return [];
+    if (_isGraphicsLib(variant)) return [];
+
+    final portraits = <Portrait>[];
+    final uniqueHashes = <String>{};
+    final baseFolder = variant?.modFolder ?? gameCoreFolder;
+
+    for (final relativePath in relativePaths) {
+      final normalizedPath = _normalizeRelativePath(relativePath);
+      final file = File(p.join(baseFolder.path, normalizedPath));
+      if (!await file.exists()) continue;
+      if (_isBlocklisted(variant, file.path)) continue;
+      if (!await _isValidImageFile(file)) continue;
+
+      final portrait = await _processImageFile(file, variant, gameCoreFolder);
+      if (portrait != null && uniqueHashes.add(portrait.hash)) {
+        portraits.add(portrait);
+      }
+    }
+
+    return portraits;
   }
 
   /// Scans multiple mod variants (non-streaming)
@@ -134,6 +164,13 @@ class PortraitScanner {
 
     final fileSize = await file.length();
     return fileSize >= minSizeInBytes;
+  }
+
+  String _normalizeRelativePath(String relativePath) {
+    if (relativePath.startsWith('/')) {
+      return relativePath.substring(1);
+    }
+    return relativePath;
   }
 
   Future<(int, int)> _getImageSize(String path, Uint8List data) async {

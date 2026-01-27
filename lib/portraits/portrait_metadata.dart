@@ -17,7 +17,7 @@ enum PortraitGender {
       case PortraitGender.female:
         return 'Female';
       case PortraitGender.any:
-        return 'Any';
+        return 'Unknown';
     }
   }
 }

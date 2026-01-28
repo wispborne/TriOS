@@ -73,6 +73,23 @@ class PortraitReplacementsNotifier
     return null;
   }
 
+  /// Gets known portrait relative paths from existing replacements.
+  /// Includes both original and replacement entries.
+  Future<Set<String>> getKnownReplacementRelativePaths() async {
+    try {
+      final replacements = await _storage.read({});
+      final paths = <String>{};
+      for (final entry in replacements.values) {
+        paths.add(entry.original.relativePath);
+        paths.add(entry.replacement.relativePath);
+      }
+      return paths;
+    } catch (e) {
+      Fimber.w('Failed to load replacement portrait paths: $e');
+      return {};
+    }
+  }
+
   /// Clears all replacements
   Future<void> clearReplacements() async {
     // state = const AsyncValue.loading();

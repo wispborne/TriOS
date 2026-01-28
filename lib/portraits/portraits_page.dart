@@ -819,7 +819,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
         final isCompanionModEnabled = companionMod?.hasEnabledVariant == true;
         multiSplitController.areas = areas;
         final textColor = Theme.of(context).colorScheme.onSurface;
-        final replacementPoolString = "Replacement Pool";
+        final replacementPoolString = "Portrait Pool";
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,

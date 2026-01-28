@@ -126,6 +126,26 @@ class PortraitsNotifier
           }
         }
 
+        final knownReplacementPaths = await ref
+            .read(AppState.portraitReplacementsManager.notifier)
+            .getKnownReplacementRelativePaths();
+        if (knownReplacementPaths.isNotEmpty) {
+          final knownReplacementPortraits = await _loadKnownPortraitsFromPaths(
+            scanner,
+            variants,
+            gameCoreFolder,
+            knownReplacementPaths,
+          );
+          if (knownReplacementPortraits.isNotEmpty) {
+            baseState = _mergeKnownPortraits(
+              baseState,
+              knownReplacementPortraits,
+            );
+            state = AsyncValue.data(baseState);
+            _lastState = baseState;
+          }
+        }
+
         await for (final result in scanner.scanVariantsStream(
           variants,
           gameCoreFolder,
@@ -159,17 +179,59 @@ class PortraitsNotifier
     Directory gameCoreFolder,
     Map<String, PortraitMetadata> metadataMap,
   ) async {
-    final relativePaths = metadataMap.keys;
+    return _loadKnownPortraitsFromPaths(
+      scanner,
+      variants,
+      gameCoreFolder,
+      metadataMap.keys,
+    );
+  }
+
+  Future<Map<ModVariant?, List<Portrait>>> _loadKnownPortraitsFromPaths(
+    PortraitScanner scanner,
+    List<ModVariant?> variants,
+    Directory gameCoreFolder,
+    Iterable<String> relativePaths,
+  ) async {
     final knownPortraits = <ModVariant?, List<Portrait>>{};
 
     for (final variant in variants) {
-      knownPortraits[variant] = await scanner.scanKnownPortraits(
+      final knownPortraitsForVariant = await scanner.scanKnownPortraits(
         variant,
         gameCoreFolder,
         relativePaths,
       );
+      if (knownPortraitsForVariant.isNotEmpty) {
+        knownPortraits[variant] = knownPortraitsForVariant;
+      }
     }
 
     return knownPortraits;
+  }
+
+  Map<ModVariant?, List<Portrait>> _mergeKnownPortraits(
+    Map<ModVariant?, List<Portrait>> base,
+    Map<ModVariant?, List<Portrait>> additions,
+  ) {
+    final merged = Map<ModVariant?, List<Portrait>>.from(base);
+
+    for (final entry in additions.entries) {
+      final existing = merged[entry.key] ?? const <Portrait>[];
+      if (existing.isEmpty) {
+        merged[entry.key] = entry.value;
+        continue;
+      }
+
+      final hashes = existing.map((portrait) => portrait.hash).toSet();
+      final combined = <Portrait>[...existing];
+      for (final portrait in entry.value) {
+        if (hashes.add(portrait.hash)) {
+          combined.add(portrait);
+        }
+      }
+      merged[entry.key] = combined;
+    }
+
+    return merged;
   }
 }

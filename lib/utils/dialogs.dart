@@ -8,6 +8,7 @@ import 'package:open_filex/open_filex.dart';
 import 'package:path/path.dart' as p;
 import 'package:trios/about/about_page.dart';
 import 'package:trios/models/mod_variant.dart';
+import 'package:trios/themes/theme.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/thirdparty/faded_scrollable/faded_scrollable.dart';
 import 'package:trios/trios/app_state.dart';
@@ -15,6 +16,7 @@ import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/platform_specific.dart';
 import 'package:trios/widgets/disable.dart';
+import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/trios_app_icon.dart';
 
 import 'logging.dart';
@@ -177,10 +179,24 @@ Future<void> showDeleteModFoldersConfirmationDialog(
                           fontWeight: FontWeight.bold,
                         ),
                       ),
+                    if (variant.modInfo.id == Constants.companionModId)
+                      Padding(
+                        padding: const .only(left: 4),
+                        child: MovingTooltipWidget.text(
+                          message:
+                              "Deleting the Companion Mod will also delete any custom images you've imported with the Portrait Replacer!"
+                              ""
+                              "\n\nIf you've used ${Constants.appName} to import custom portraits, you'll need to re-import them if you want to use them again.",
+                          child: Icon(
+                            Icons.warning,
+                            color: ThemeManager.vanillaWarningColor,
+                          ),
+                        ),
+                      ),
                   ],
                 ),
                 Text(
-                  "${variant.modFolder.path}",
+                  variant.modFolder.path,
                   style: theme.textTheme.labelMedium?.copyWith(
                     color: theme.textTheme.bodyMedium?.color?.withAlpha(200),
                   ),

@@ -79,19 +79,9 @@ class CompanionModManager {
         p.join(modsFolder.path, Constants.companionModFolderName),
       );
 
-      // Delete if exists
-      if (await destinationPath.exists()) {
-        if (!overwriteExisting) {
-          Fimber.i(
-            "Companion Mod already exists and overwriteExisting is false. Skipping copy to mods folder.",
-          );
-          return;
-        }
-
-        await destinationPath.delete(recursive: true);
+      if (!await destinationPath.exists()) {
+        await destinationPath.create(recursive: true);
       }
-
-      await destinationPath.create(recursive: true);
 
       // Copy mod files from assets
       await _copyModFiles(destinationPath);
@@ -112,44 +102,6 @@ class CompanionModManager {
     }
   }
 
-  /// Alternative method that allows specifying a custom mod folder name
-  // Future<void> copyModToGameFolderWithName(String modFolderName) async {
-  //   try {
-  //     // Get the mods folder path using Riverpod
-  //     final modsFolder = ref.read(AppState.modsFolder).value;
-  //     if (modsFolder == null) {
-  //       throw StateError('Game mods folder not configured');
-  //     }
-  //
-  //     // Get the current game version using Riverpod
-  //     final gameVersion = await ref.read(AppState.starsectorVersion.future);
-  //     if (gameVersion == null) {
-  //       throw StateError('Game version not available');
-  //     }
-  //
-  //     // Create destination directory with custom name
-  //     final destinationPath = Directory(p.join(modsFolder.path, modFolderName));
-  //     await destinationPath.create(recursive: true);
-  //
-  //     // Copy mod files from assets
-  //     await _copyModFiles(destinationPath);
-  //
-  //     // Update mod_info.json with current game version
-  //     await _updateModInfo(destinationPath, gameVersion);
-  //
-  //     Fimber.i(
-  //       'TriOS companion mod copied successfully to ${destinationPath.path}',
-  //     );
-  //   } catch (e, stackTrace) {
-  //     Fimber.e(
-  //       'Failed to copy companion mod: $e',
-  //       ex: e,
-  //       stacktrace: stackTrace,
-  //     );
-  //     rethrow;
-  //   }
-  // }
-
   Mod? getLoadedCompanionMod() {
     return ref
         .read(AppState.mods)
@@ -160,9 +112,6 @@ class CompanionModManager {
   Future<void> _copyModFiles(Directory destination) async {
     // In Flutter, assets are embedded in the app bundle and accessed differently
     // We'll need to read from the bundle and write to the destination
-
-    // For now, we'll assume the mod files are available as individual assets
-    // You may need to adjust this based on your actual asset structure
     final assetFiles = await _getAssetFiles();
 
     for (final assetFile in assetFiles) {
@@ -173,7 +122,19 @@ class CompanionModManager {
       await destinationFile.parent.create(recursive: true);
 
       // Copy the file
-      await assetFile.copy(destinationFile.path);
+      try {
+        if (await assetFile.exists()) {
+          await assetFile.delete();
+        }
+
+        await assetFile.copy(destinationFile.path);
+      } catch (e, st) {
+        Fimber.e(
+          "Error deleting or copying existing file '${assetFile.path}' when (re)installing Companion Mod.",
+          ex: e,
+          stacktrace: st,
+        );
+      }
     }
   }
 

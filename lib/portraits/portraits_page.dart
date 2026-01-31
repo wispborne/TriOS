@@ -1,11 +1,16 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:collection/collection.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:multi_split_view/multi_split_view.dart';
+import 'package:path/path.dart' as p;
 import 'package:trios/companion_mod/companion_mod_manager.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/mod.dart';
@@ -14,7 +19,9 @@ import 'package:trios/portraits/portrait_metadata.dart';
 import 'package:trios/portraits/portrait_metadata_manager.dart';
 import 'package:trios/portraits/portrait_model.dart';
 import 'package:trios/portraits/portrait_replacements_manager.dart';
+import 'package:trios/portraits/portrait_scanner.dart';
 import 'package:trios/portraits/portraits_gridview.dart';
+import 'package:trios/portraits/portraits_page_controller.dart';
 import 'package:trios/shipViewer/filter_widget.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/app_state.dart';
@@ -32,8 +39,7 @@ import 'package:trios/widgets/overflow_menu_button.dart';
 import 'package:trios/widgets/toolbar_checkbox_button.dart';
 import 'package:trios/widgets/trios_expansion_tile.dart';
 import 'package:url_launcher/url_launcher_string.dart';
-
-import '../thirdparty/dartx/range.dart';
+import 'package:trios/thirdparty/dartx/range.dart';
 
 class PortraitsPage extends ConsumerStatefulWidget {
   const PortraitsPage({super.key});
@@ -414,6 +420,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
     ThemeData theme,
     List<_PortraitFilterItem> filterItems, {
     _FilterPane pane = _FilterPane.main,
+    required bool showOnlyYourChangesFilter,
   }) {
     if (!_getShowFilters(pane)) {
       return Padding(
@@ -434,13 +441,19 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
       );
     }
 
-    return _buildFilterPanel(theme, filterItems, pane: pane);
+    return _buildFilterPanel(
+      theme,
+      filterItems,
+      pane: pane,
+      showOnlyYourChangesFilter: showOnlyYourChangesFilter,
+    );
   }
 
   Widget _buildFilterPanel(
     ThemeData theme,
     List<_PortraitFilterItem> filterItems, {
     _FilterPane pane = _FilterPane.main,
+    required bool showOnlyYourChangesFilter,
   }) {
     final filterCategories = _getFilterCategories(pane);
     final scrollController = _getFilterScrollController(pane);
@@ -519,7 +532,12 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               // Checkbox filters section
-                              _buildCheckboxFilters(theme, pane: pane),
+                              _buildCheckboxFilters(
+                                theme,
+                                pane: pane,
+                                showOnlyYourChangesFilter:
+                                    showOnlyYourChangesFilter,
+                              ),
                               const SizedBox(height: 8),
                               // Grid filter categories (Mod, Gender)
                               ...filterCategories.map((filter) {
@@ -550,6 +568,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
   Widget _buildCheckboxFilters(
     ThemeData theme, {
     _FilterPane pane = _FilterPane.main,
+    required bool showOnlyYourChangesFilter,
   }) {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
@@ -563,8 +582,8 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
             MovingTooltipWidget.text(
               message:
                   "Only show images that are confirmed portraits."
-                      "\n\nPortraits defined in .faction files have genders."
-                      "\nPortraits from settings.json files do not.",
+                  "\n\nPortraits defined in .faction files have genders."
+                  "\nPortraits from settings.json files do not.",
               child: CheckboxListTile(
                 title: const Text('Confirmed Portraits'),
                 dense: true,
@@ -576,18 +595,19 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
               ),
             ),
             // "View Replaced" checkbox
-            MovingTooltipWidget.text(
-              message: "Only show images that have replacements",
-              child: CheckboxListTile(
-                title: const Text('Only Your Changes'),
-                dense: true,
-                visualDensity: VisualDensity.compact,
-                contentPadding: EdgeInsets.zero,
-                value: _getShowOnlyReplaced(pane),
-                onChanged: (value) =>
-                    _setShowOnlyReplaced(pane, value ?? false),
+            if (showOnlyYourChangesFilter)
+              MovingTooltipWidget.text(
+                message: "Only show images that have replacements",
+                child: CheckboxListTile(
+                  title: const Text('Only Your Changes'),
+                  dense: true,
+                  visualDensity: VisualDensity.compact,
+                  contentPadding: EdgeInsets.zero,
+                  value: _getShowOnlyReplaced(pane),
+                  onChanged: (value) =>
+                      _setShowOnlyReplaced(pane, value ?? false),
+                ),
               ),
-            ),
             // "Only Enabled" checkbox
             MovingTooltipWidget.text(
               message: "Only show images from enabled mods",
@@ -609,7 +629,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
 
   Widget _buildGridSearchBar(SearchController controller, String hintText) {
     return Container(
-      padding: const .only(left: 8, right: 8, bottom: 4),
+      padding: const .only(left: 8, right: 8),
       child: SizedBox(
         height: 30,
         child: SearchAnchor(
@@ -878,19 +898,19 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                               // ),
                             ),
                             // if (!inReplaceMode)
-                              MovingTooltipWidget.text(
-                                message:
-                                    "Displays images that are *likely* to be portraits from the highest version of each mod."
-                                        "\n\nBecause mods may use any image as a portrait and load images dynamically in code, this is not an exact science, but best guesses."
-                                        "\nPortraits must be:"
-                                        "\n- Square"
-                                        "\n- Between 128x128 and 256x256"
-                                        "\n- An image file",
-                                child: Padding(
-                                  padding: const .only(left: 8, right: 8),
-                                  child: Icon(Icons.info),
-                                ),
+                            MovingTooltipWidget.text(
+                              message:
+                                  "Displays images that are *likely* to be portraits from the highest version of each mod."
+                                  "\n\nBecause mods may use any image as a portrait and load images dynamically in code, this is not an exact science, but best guesses."
+                                  "\nPortraits must be:"
+                                  "\n- Square"
+                                  "\n- Between 128x128 and 256x256"
+                                  "\n- An image file",
+                              child: Padding(
+                                padding: const .only(left: 8, right: 8),
+                                child: Icon(Icons.info),
                               ),
+                            ),
                             IconButton(
                               onPressed:
                                   ref
@@ -1111,7 +1131,11 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                                 return Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    _buildFiltersSection(theme, filterItems),
+                                    _buildFiltersSection(
+                                      theme,
+                                      filterItems,
+                                      showOnlyYourChangesFilter: true,
+                                    ),
                                     Expanded(
                                       child: PortraitsGridView(
                                         modsAndImages: sortedImages,
@@ -1197,6 +1221,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                                       theme,
                                       leftFilterItems,
                                       pane: _FilterPane.left,
+                                      showOnlyYourChangesFilter: true,
                                     ),
                                     Expanded(
                                       child: Column(
@@ -1343,6 +1368,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                                       theme,
                                       rightFilterItems,
                                       pane: _FilterPane.right,
+                                      showOnlyYourChangesFilter: false,
                                     ),
                                     Expanded(
                                       child: Column(
@@ -1351,24 +1377,38 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                                         children: [
                                           Row(
                                             crossAxisAlignment:
-                                                CrossAxisAlignment.start,
+                                                CrossAxisAlignment.center,
                                             children: [
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                  left: 8,
-                                                ),
-                                                child: Text(
-                                                  replacementPoolString,
-                                                  style: theme
-                                                      .textTheme
-                                                      .titleLarge,
+                                              Text(
+                                                replacementPoolString,
+                                                style:
+                                                    theme.textTheme.titleLarge,
+                                              ),
+                                              Expanded(
+                                                child: Padding(
+                                                  padding: const .only(
+                                                    left: 8.0,
+                                                  ),
+                                                  child: _buildGridSearchBar(
+                                                    _rightSearchController,
+                                                    "Filter...",
+                                                  ),
                                                 ),
                                               ),
-                                              const SizedBox(width: 8),
-                                              Expanded(
-                                                child: _buildGridSearchBar(
-                                                  _rightSearchController,
-                                                  "Filter...",
+                                              MovingTooltipWidget.text(
+                                                message:
+                                                    "Import custom images to use as portrait replacements",
+                                                child: IconButton(
+                                                  onPressed: () => ref
+                                                      .read(
+                                                        portraitsPageControllerProvider
+                                                            .notifier,
+                                                      )
+                                                      .importPortraits(context),
+                                                  icon: const Icon(
+                                                    Icons.add_photo_alternate,
+                                                    size: 22,
+                                                  ),
                                                 ),
                                               ),
                                             ],

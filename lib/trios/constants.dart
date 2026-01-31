@@ -110,6 +110,8 @@ class Constants {
   /// getApplicationSupportDirectory()
   static late final Directory configDataFolderPath; // Set in main
 
+  static final portraitsSupportedImageFileExtensions = ['jpg', 'jpeg', 'png', 'webp'];
+
   static const modAuthorAliases = [
     ["RustyCabbage", "rubi", "ceruleanpancake"],
     ["Wisp", "Wispborne", "Tartiflette and Wispborne"],

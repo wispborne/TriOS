@@ -81,7 +81,7 @@ class PortraitsGridView extends ConsumerWidget {
             spacing: 4,
             children: [
               Text(
-                'Gender: ${metadata.portraitId == Constants.gargoyleCharId ? "Gargoyle" : metadata.gender}',
+                '${metadata.portraitId == Constants.gargoyleCharId ? "Gargoyle" : metadata.gender}',
               ),
               Icon(_getGenderIcon(metadata.gender!), size: 16),
             ],

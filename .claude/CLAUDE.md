@@ -1,0 +1,3 @@
+- Align widgets using an 8.0 dip grid.
+- Use the new `spacing` parameter in Rows and Columns instead of adding SizedBoxes, if you need to add even spacing.
+- Make use of the new dot shorthands in Dart, when it makes sense.

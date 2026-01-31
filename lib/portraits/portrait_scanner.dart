@@ -8,8 +8,7 @@ import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/vram_estimator/image_reader/png_chatgpt.dart';
-
-import '../models/mod_variant.dart';
+import 'package:trios/models/mod_variant.dart';
 
 /// Handles scanning mod folders for portrait images
 class PortraitScanner {
@@ -59,7 +58,12 @@ class PortraitScanner {
       if (_isBlocklisted(variant, file.path)) continue;
       if (!await _isValidImageFile(file)) continue;
 
-      final portrait = await _processImageFile(file, variant, gameCoreFolder);
+      final portrait = await _processImageFile(
+        file,
+        variant,
+        gameCoreFolder,
+        skipSizeCheck: true,
+      );
       if (portrait != null && uniqueHashes.add(portrait.hash)) {
         portraits.add(portrait);
       }
@@ -113,6 +117,7 @@ class PortraitScanner {
           entity,
           variant,
           gameCoreFolder,
+          skipSizeCheck: false,
         );
         if (portrait != null && uniqueHashes.add(portrait.hash)) {
           portraits.add(portrait);
@@ -127,13 +132,14 @@ class PortraitScanner {
   Future<Portrait?> _processImageFile(
     File file,
     ModVariant? modVariant,
-    Directory gameCoreFolder,
-  ) async {
+    Directory gameCoreFolder, {
+    required bool skipSizeCheck,
+  }) async {
     try {
       final imageBytes = await file.readAsBytes();
       final (width, height) = await _getImageSize(file.path, imageBytes);
 
-      // if (_isValidPortraitSize(width, height)) {
+      if (skipSizeCheck || isValidPortraitSize(width, height)) {
         return Portrait.fromBytes(
           modVariant: modVariant,
           imageFile: file,
@@ -144,7 +150,7 @@ class PortraitScanner {
           height: height,
           imageBytes: imageBytes,
         );
-      // }
+      }
     } catch (e) {
       Fimber.w('Error processing ${file.path}: $e');
     }
@@ -154,7 +160,10 @@ class PortraitScanner {
   bool _isGraphicsLib(ModVariant? variant) =>
       variant?.modInfo.id == Constants.graphicsLibId;
 
-  bool _isValidPortraitSize(int width, int height) {
+  /// Returns whether the given dimensions are valid for a portrait.
+  ///
+  /// Portraits must be square and between [minWidth] and [maxWidth] pixels.
+  static bool isValidPortraitSize(int width, int height) {
     return width == height && width >= minWidth && width <= maxWidth;
   }
 

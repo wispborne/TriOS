@@ -602,6 +602,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
     final mod = ref
         .read(AppState.mods)
         .firstWhereOrNull((it) => it.id == modId);
+
     if (mod == null) {
       Fimber.e("Mod not found: $modId");
       return [];
@@ -905,7 +906,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
     // final mods = ref.read(AppState.mods);
     // final mod = mods.firstWhereOrNull((mod) => mod.id == modVariant.modInfo.id);
     final enabledMods = ref.read(AppState.enabledModsFile).value;
-    Fimber.i("Enabling variant ${modVariant.smolId}");
+    Fimber.i("Enabling variant ${modVariant.smolId} (also in vanilla launcher: $enableInVanillaLauncher)");
     final modsFolderPath = ref.read(AppState.modsFolder).value;
 
     if (modsFolderPath == null || !modsFolderPath.existsSync()) {

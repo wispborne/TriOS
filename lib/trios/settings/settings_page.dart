@@ -387,9 +387,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 ),
                 Builder(
                   builder: (context) {
-                    final lastNVersionsSetting = ref.watch(
-                      appSettings.select((s) => s.keepLastNVersions),
-                    );
+                    final lastNVersionsSetting = ref
+                        .watch(appSettings.select((s) => s.keepLastNVersions))
+                        ?.coerceAtLeast(1);
                     final enableMultipleVersions = lastNVersionsSetting != 1;
                     return SettingsGroup(
                       name: "Mod Organization",
@@ -527,9 +527,14 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                               children: [
                                 IntrinsicWidth(
                                   child: MovingTooltipWidget.text(
-                                    message: lastNVersionsSetting == null
-                                        ? "TriOS will never automatically remove mod versions."
-                                        : "Installing or updating a mod will remove all but the last $lastNVersionsSetting highest versions.",
+                                    message: switch (lastNVersionsSetting) {
+                                      null =>
+                                        "TriOS will never automatically remove mod versions.",
+                                      1 =>
+                                        "Installing or updating a mod will replace the mod.",
+                                      _ =>
+                                        "Installing or updating a mod will remove all but the last $lastNVersionsSetting highest versions.",
+                                    },
                                     child: RadioListTile(
                                       title: const Text(
                                         "Keep all mod versions",
@@ -588,53 +593,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                 ),
                               ],
                             ),
-                            // Padding(
-                            //   padding: const EdgeInsets.only(
-                            //       left: leftTextOptionPadding, top: 8),
-                            //   child: Row(
-                            //     children: [
-                            //       MovingTooltipWidget.text(
-                            //         message:
-                            //             "If you have multiple versions of a mod, this will keep the last N versions of each mod."
-                            //             "\n\nOlder versions will be automatically deleted when a new one is installed.",
-                            //         child: Row(
-                            //           children: [
-                            //             const Text("Keep last "),
-                            //             Padding(
-                            //               padding: const EdgeInsets.symmetric(
-                            //                   horizontal: 8),
-                            //               child: DropdownButton<int>(
-                            //                 value: lastNVersionsSetting,
-                            //                 items: [
-                            //                   for (int i = 1; i <= 10; i++)
-                            //                     DropdownMenuItem(
-                            //                         value: i, child: Text(" $i")),
-                            //                   const DropdownMenuItem(
-                            //                       value: null, child: Text(" ∞")),
-                            //                 ],
-                            //                 onChanged: (value) {
-                            //                   ref.read(appSettings.notifier).update(
-                            //                         (state) => state.copyWith(
-                            //                             keepLastNVersions:
-                            //                                 value == -1
-                            //                                     ? null
-                            //                                     : value),
-                            //                       );
-                            //                 },
-                            //                 isDense: true,
-                            //                 // decoration: const InputDecoration(
-                            //                 //   border: OutlineInputBorder(),
-                            //                 // ),
-                            //               ),
-                            //             ),
-                            //             Text(
-                            //                 " version${lastNVersionsSetting == 1 ? "" : "s"} of each mod"),
-                            //           ],
-                            //         ),
-                            //       ),
-                            //     ],
-                            //   ),
-                            // ),
                             Disable(
                               isEnabled: lastNVersionsSetting != null,
                               child: Padding(
@@ -653,77 +611,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                     onPressed: () async {
                                       final modsThatWouldBeRemoved = await ref
                                           .read(modManager.notifier)
-                                          .cleanUpAllModVariantsBasedOnRetainSetting(
-                                            // dryRun: true,
-                                          );
+                                          .cleanUpAllModVariantsBasedOnRetainSetting();
 
-                                      if (!mounted) return;
+                                      if (!context.mounted) return;
                                       showDeleteModFoldersConfirmationDialog(
                                         modsThatWouldBeRemoved,
-                                        // .map((mod) => mod)
-                                        // .toList(),
                                         context,
                                         ref,
-                                      );
-                                      return;
-                                      showDialog(
-                                        context: context,
-                                        builder: (context) {
-                                          return AlertDialog(
-                                            title: const Text("Delete mods"),
-                                            content: SingleChildScrollView(
-                                              child: Column(
-                                                children: [
-                                                  Text(
-                                                    "Are you sure you want to delete ${modsThatWouldBeRemoved.length} mods?",
-                                                  ),
-                                                  const SizedBox(height: 8),
-                                                  if (modsThatWouldBeRemoved
-                                                      .isNotEmpty)
-                                                    Column(
-                                                      crossAxisAlignment:
-                                                          CrossAxisAlignment
-                                                              .start,
-                                                      children: [],
-                                                      // modsThatWouldBeRemoved
-                                                      //     .map(
-                                                      //       (mod) => Text(
-                                                      //         "- ${mod.nameOrId} ${mod.version}",
-                                                      //       ),
-                                                      //     )
-                                                      //     .toList(),
-                                                    ),
-                                                ],
-                                              ),
-                                            ),
-                                            actions: [
-                                              TextButton(
-                                                onPressed: () {
-                                                  Navigator.of(context).pop();
-                                                },
-                                                child: Text(
-                                                  "Cancel",
-                                                  style: theme
-                                                      .textTheme
-                                                      .labelLarge,
-                                                ),
-                                              ),
-                                              TextButton.icon(
-                                                onPressed: () async {
-                                                  Navigator.of(context).pop();
-                                                  await ref
-                                                      .read(modManager.notifier)
-                                                      .cleanUpAllModVariantsBasedOnRetainSetting(
-                                                        dryRun: false,
-                                                      );
-                                                  ref.read(AppState.modVariants.notifier).reloadModVariants();
-                                                },
-                                                icon: Icon(Icons.delete),
-                                                label: const Text("Delete"),
-                                              ),
-                                            ],
-                                          );
-                                        },
                                       );
                                     },
                                     label: const Text("Clean up..."),

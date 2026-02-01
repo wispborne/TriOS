@@ -1,3 +1,4 @@
+import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_color/flutter_color.dart';
@@ -8,6 +9,7 @@ import 'package:trios/models/version.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/disable.dart';
@@ -45,6 +47,11 @@ class _ModVersionSelectionDropdownState
     final buttonWidth = widget.width;
     final mainVariant = widget.mod.findFirstEnabledOrHighestVersion;
     final hasMultipleEnabled = widget.mod.enabledVariants.length > 1;
+    final groupsOfMultipleSameVersionInModsFolder =
+        widget.mod.modVariants.groupBy((it) => it.bestVersion)
+          ..removeWhere((k, v) => v.length < 2);
+    final hasMultipleSameVersionInModsFolder =
+        groupsOfMultipleSameVersionInModsFolder.isNotEmpty;
     final modCompatibilityMap = ref.watch(AppState.modCompatibility);
     final dependencyChecks = widget.mod.modVariants.map((v) {
       return modCompatibilityMap[v.smolId];
@@ -53,6 +60,8 @@ class _ModVersionSelectionDropdownState
         dependencyChecks.isCompatibleWithGameVersion;
     final mainDependencyCheck = modCompatibilityMap[mainVariant?.smolId];
     final modDependenciesSatisfied = mainDependencyCheck?.dependencyChecks;
+    final useWarningUi =
+        hasMultipleEnabled || hasMultipleSameVersionInModsFolder;
 
     // TODO consolidate this logic with the logic in smol2.
     final areAllDependenciesSatisfied = modDependenciesSatisfied?.every(
@@ -70,20 +79,20 @@ class _ModVersionSelectionDropdownState
         (!isSupportedByGameVersion || areAllDependenciesSatisfied != true);
 
     // Button color logic
-    final buttonColor = switch ((hasMultipleEnabled, isEnabled)) {
+    final buttonColor = switch ((useWarningUi, isEnabled)) {
       (true, _) => errorColor,
       (false, true) => theme.colorScheme.secondary,
       _ => theme.colorScheme.surface,
     };
 
-    final textColor = switch ((hasMultipleEnabled, isEnabled)) {
+    final textColor = switch ((useWarningUi, isEnabled)) {
       (true, _) => theme.colorScheme.onSecondary.darker(20),
       (false, true) => theme.colorScheme.onSecondary,
       _ => theme.colorScheme.onSurface,
     };
 
     final borderColor = (isButtonEnabled && !isButtonPseudoDisabled)
-        ? (hasMultipleEnabled
+        ? (useWarningUi
               ? ThemeManager.vanillaErrorColor.darker(20)
               : theme.colorScheme.secondary.darker(20))
         : ThemeManager.vanillaErrorColor.withOpacity(isEnabled ? 0.8 : 0.4);
@@ -118,18 +127,21 @@ class _ModVersionSelectionDropdownState
 
     const gameVersionMessage =
         "This mod requires a different version of the game";
-    final errorTooltip = hasMultipleEnabled
-        ? "Warning"
-              "\nYou have two or more enabled mod folders for ${mainVariant?.modInfo.nameOrId}. The game will pick one at 'random'."
-              "\nSelect one version from the dropdown."
-        : areAllDependenciesSatisfied == false
-        ? "Requires ${modDependenciesSatisfied?.where((it) => !it.canBeSatisfiedWithInstalledMods).joinToString(transform: (it) => it.dependency.nameOrId)}"
-        : null;
+    final errorTooltip = switch (true) {
+      _ when hasMultipleEnabled =>
+        "Warning"
+            "\nYou have two or more enabled mod folders for ${mainVariant?.modInfo.nameOrId}. The game will pick one at 'random'."
+            "\nSelect one version from the dropdown.",
+      _ when areAllDependenciesSatisfied == false =>
+        "Requires ${modDependenciesSatisfied?.where((it) => !it.canBeSatisfiedWithInstalledMods).joinToString(transform: (it) => it.dependency.nameOrId)}",
+
+      _ when hasMultipleSameVersionInModsFolder =>
+        "Warning"
+            "\nYou have two or more of the same version (${groupsOfMultipleSameVersionInModsFolder.keys.join(", ")}) of this mod in your mods folder. ${Constants.appName} may not handle this correctly."
+            "\nPlease remove one manually.",
+      _ => null,
+    };
     final warningIcon = Icon(Icons.warning, color: textColor, size: 20);
-    final currentStarsectorVersion = ref.watch(
-      appSettings.select((s) => s.lastStarsectorVersion),
-    );
-    final isGameRunning = ref.watch(AppState.isGameRunning).value == true;
 
     //////// Single variant button
     if (isSingleVariant) {
@@ -163,7 +175,7 @@ class _ModVersionSelectionDropdownState
               style: buttonStyle,
               child: Stack(
                 children: [
-                  (hasMultipleEnabled
+                  (useWarningUi
                       ? Align(
                           alignment: Alignment.centerLeft,
                           child: warningIcon,
@@ -229,7 +241,7 @@ class _ModVersionSelectionDropdownState
           hint: buildDropdownButton(
             dropdownWidth,
             buttonStyle,
-            hasMultipleEnabled,
+            useWarningUi,
             warningIcon,
             null,
             textColor,
@@ -249,7 +261,7 @@ class _ModVersionSelectionDropdownState
               return buildDropdownButton(
                 dropdownWidth,
                 buttonStyle,
-                hasMultipleEnabled,
+                useWarningUi,
                 warningIcon,
                 item,
                 textColor,
@@ -277,7 +289,7 @@ class _ModVersionSelectionDropdownState
   Widget buildDropdownButton(
     double dropdownWidth,
     ButtonStyle buttonStyle,
-    bool hasMultipleEnabled,
+    bool useWarningUi,
     Icon warningIcon,
     DropdownItem<ModVariant?>? item,
     Color textColor,
@@ -294,7 +306,7 @@ class _ModVersionSelectionDropdownState
               ),
         child: Stack(
           children: [
-            (hasMultipleEnabled
+            (useWarningUi
                 ? Align(alignment: Alignment.centerLeft, child: warningIcon)
                 : Container()),
             Row(

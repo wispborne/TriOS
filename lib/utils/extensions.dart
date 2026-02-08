@@ -137,18 +137,7 @@ extension StringExt on String {
 
   // Helper for comparing number-like strings
   int compareRecognizingNumbers(String str2) {
-    final chunks1 = splitIntoAlphaAndNumeric();
-    final chunks2 = str2.splitIntoAlphaAndNumeric();
-
-    for (var i = 0; i < chunks1.length || i < chunks2.length; i++) {
-      final chunk1 = _getSafeChunk(chunks1, i);
-      final chunk2 = _getSafeChunk(chunks2, i);
-
-      final result = _compareChunks(chunk1, chunk2);
-      if (result != 0) return result;
-    }
-
-    return 0;
+    return _compareRecognizingNumbers(this, str2);
   }
 
   String filter(bool Function(String) predicate) =>
@@ -359,6 +348,22 @@ List<_SubstitutionPart> _parseStarsectorSubstitutions({
 
   flushLiteral();
   return parts;
+}
+
+// Helper for comparing number-like strings
+int _compareRecognizingNumbers(String str1, String str2) {
+  final chunks1 = str1.splitIntoAlphaAndNumeric();
+  final chunks2 = str2.splitIntoAlphaAndNumeric();
+
+  for (var i = 0; i < chunks1.length || i < chunks2.length; i++) {
+    final chunk1 = _getSafeChunk(chunks1, i);
+    final chunk2 = _getSafeChunk(chunks2, i);
+
+    final result = _compareChunks(chunk1, chunk2);
+    if (result != 0) return result;
+  }
+
+  return 0;
 }
 
 extension StringMapExt on Map<String, dynamic> {

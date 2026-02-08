@@ -1,9 +1,7 @@
 import 'dart:core';
 
-import 'package:collection/collection.dart';
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:trios/models/version.dart';
-import 'package:trios/utils/extensions.dart';
 
 import '../utils/dart_mappable_utils.dart';
 
@@ -78,20 +76,14 @@ class VersionObject with VersionObjectMappable {
 
   int compareTo(VersionObject? other) {
     if (other == null) return 0;
+    if (major == other.major && minor == other.minor && patch == other.patch) {
+      return 0;
+    }
 
-    var result = (major.toString().compareRecognizingNumbers(
-      other.major.toString(),
-    ));
-    if (result != 0) return result;
+    final str1 = toString();
+    final str2 = other.toString();
+    if (str1 == str2) return 0;
 
-    result = (minor.toString().compareRecognizingNumbers(
-      other.minor.toString(),
-    ));
-    if (result != 0) return result;
-
-    result = (patch.toString().compareRecognizingNumbers(
-      other.patch.toString(),
-    ));
-    return result;
+    return Version.parse(str1).compareTo(Version.parse(str2));
   }
 }

@@ -5,6 +5,7 @@
   - Portrait Viewer/Replacer now has filters.
   - Warning if there are two of the same mod with the same version in your mods folder.
 - Fixed
+  - Version Checker not using correct comparison algorithm (did not take special cases such as "RC" into account).
   - Linux: Not starting on some Linux forks due to the Execute bit being set in Sentry's SDK.
     - Note: this was due to a bug in Sentry and was fixed by Sentry.
   - "Clean Up" button for removing old mods didn't work due to a debug flag being left on.

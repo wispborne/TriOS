@@ -105,6 +105,9 @@ extension StringExt on String {
     fixed = fixed.replaceAll("\t", "  ");
     // Remove trailing commas. Thank you SkillExtra.
     fixed = fixed.trimEnd(",");
+    // Removes lines starting with //, which are not valid json or yaml comments.
+    // Thank you Epitaph Frost.
+    fixed = fixed.split("\n").where((it) => !it.trim().startsWith("//")).join("\n");
 
     try {
       return json.encode(loadYaml(fixed));

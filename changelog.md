@@ -10,6 +10,7 @@
     - Note: this was due to a bug in Sentry and was fixed by Sentry.
   - "Clean Up" button for removing old mods didn't work due to a debug flag being left on.
   - Mod Profiles: activating a profile now correctly reports Missing Version when the mod is installed but the profile references a version you don't have, instead of incorrectly reporting the whole mod as missing.
+  - Mods that use `//` as comments in their mod_info.json file no longer fail to install/show (e.g. Epitaph Frost).
 - Changed
   - Removed `libarchive`, which was replaced by 7zip in 1.1.0.
 

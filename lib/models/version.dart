@@ -35,19 +35,15 @@ class Version with VersionMappable implements Comparable<Version> {
     final a = raw ?? toString();
     final b = other.raw ?? other.toString();
     return compareVersions(a, b);
-
-    // var result = (major.compareRecognizingNumbers(other.major));
-    // if (result != 0) return result;
-    //
-    // result = (minor.compareRecognizingNumbers(other.minor));
-    // if (result != 0) return result;
-    //
-    // result = (patch.compareRecognizingNumbers(other.patch));
-    // if (result != 0) return result;
-    //
-    // result = ((build ?? "0").compareRecognizingNumbers(other.build ?? ""));
-    // return result;
   }
+
+  bool operator >(Version other) => compareTo(other) > 0;
+
+  bool operator <(Version other) => compareTo(other) < 0;
+
+  bool operator >=(Version other) => compareTo(other) >= 0;
+
+  bool operator <=(Version other) => compareTo(other) <= 0;
 
   @override
   bool operator ==(Object other) => other is Version && compareTo(other) == 0;

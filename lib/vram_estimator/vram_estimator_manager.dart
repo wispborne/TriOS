@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/generic_settings_manager.dart';
 import 'package:trios/utils/generic_settings_notifier.dart';
 import 'package:trios/utils/logging.dart';
@@ -42,6 +45,10 @@ class VramEstimatorManager
 
   @override
   String get fileName => "TriOS-VRAM_CheckerCache.json";
+
+  @override
+  Future<Directory> getConfigDataFolderPath() =>
+      Future.value(Constants.cacheDirPath);
 
   @override
   VramEstimatorManagerState Function(Map<String, dynamic> map) get fromMap =>

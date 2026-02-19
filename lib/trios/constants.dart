@@ -1,11 +1,12 @@
 import 'dart:io';
 
 import 'package:intl/intl.dart';
+import 'package:path/path.dart' as p;
 import 'package:trios/models/version.dart';
 import 'package:trios/utils/extensions.dart';
 
 class Constants {
-  static const version = "1.3.3-preview08";
+  static const version = "1.3.3-preview09";
   static Version currentVersion = Version.parse(version);
 
   static const appName = "TriOS";
@@ -109,6 +110,10 @@ class Constants {
 
   /// getApplicationSupportDirectory()
   static late final Directory configDataFolderPath; // Set in main
+
+  /// Subdirectory under [configDataFolderPath] used for cached network data.
+  static Directory get cacheDirPath =>
+      Directory(p.join(configDataFolderPath.path, 'cache'));
 
   static final portraitsSupportedImageFileExtensions = ['jpg', 'jpeg', 'png', 'webp'];
 

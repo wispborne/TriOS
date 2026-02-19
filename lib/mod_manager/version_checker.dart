@@ -16,6 +16,7 @@ import 'package:trios/utils/logging.dart';
 import '../models/mod_variant.dart';
 import '../models/version_checker_info.dart';
 import '../trios/app_state.dart';
+import '../trios/constants.dart';
 import 'mod_manager_logic.dart';
 
 part 'version_checker.mapper.dart';
@@ -27,6 +28,10 @@ class VersionCheckerManager
 
   @override
   String get fileName => "trios_version_checker_cache.${fileFormat.name}";
+
+  @override
+  Future<Directory> getConfigDataFolderPath() =>
+      Future.value(Constants.cacheDirPath);
 
   @override
   VersionCheckerState Function(Map<String, dynamic> map) get fromMap =>

@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 // import 'package:flutter_riverpod/legacy.dart' show StateProvider;
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
+import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:scaled_app/scaled_app.dart';
 import 'package:screen_retriever/screen_retriever.dart';
@@ -124,6 +125,9 @@ void main() async {
     print("Error initializing logging. $ex");
     loggingError = ex;
   }
+
+  // Migrate old cache files into the new cache/ subdirectory.
+  _migrateCacheFiles();
 
   try {
     final locale = PlatformDispatcher.instance.locale;
@@ -292,6 +296,40 @@ void main() async {
       Fimber.w("Error cleaning up old self-update files.", ex: error);
     },
   );
+}
+
+/// Moves legacy cache files from [Constants.configDataFolderPath] into the
+/// `cache/` subdirectory so all caches live in one place.
+void _migrateCacheFiles() {
+  const filesToMigrate = [
+    'trios_version_checker_cache.json',
+    'TriOS-VRAM_CheckerCache.json',
+  ];
+
+  try {
+    final configDir = Constants.configDataFolderPath;
+    final cacheDir = Constants.cacheDirPath;
+
+    for (final fileName in filesToMigrate) {
+      final oldFile = File(p.join(configDir.path, fileName));
+      if (oldFile.existsSync()) {
+        if (!cacheDir.existsSync()) {
+          cacheDir.createSync(recursive: true);
+        }
+        final newFile = File(p.join(cacheDir.path, fileName));
+        if (!newFile.existsSync()) {
+          oldFile.renameSync(newFile.path);
+          Fimber.i('Migrated $fileName to cache/');
+        } else {
+          // New file already exists, just delete the old one.
+          oldFile.deleteSync();
+          Fimber.i('Deleted old $fileName (already exists in cache/)');
+        }
+      }
+    }
+  } catch (e) {
+    Fimber.w('Error migrating cache files', ex: e);
+  }
 }
 
 // ignore: missing_provider_scope

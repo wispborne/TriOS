@@ -1,7 +1,9 @@
-// import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-// import 'package:flutter_riverpod/legacy.dart' show StateProvider;
 import 'package:http/http.dart' as http;
+import 'package:path/path.dart' as p;
 import 'package:trios/catalog/models/scraped_mod.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/logging.dart';
@@ -13,22 +15,18 @@ final browseModsNotifierProvider = StreamProvider<ScrapedModsRepo>((
 ) async* {
   final currentTime = DateTime.now();
   ref.watch(isLoadingCatalog.notifier).state = true;
-  // final cache = CacheManager(Config("trios_modrepo_cache"));
   String modRepo;
 
   try {
-    // final cache = CacheManager(Config("trios_modrepo_cache"));
-    modRepo = (await http.get(Uri.parse(Constants.modRepoUrl))).body;
-    // (await cache.getSingleFile(Constants.modRepoUrl)).readAsStringSync();
+    modRepo = await _fetchModRepoWithCache();
   } catch (ex, st) {
     Fimber.w('Failed to fetch mod repo', ex: ex, stacktrace: st);
     ref.watch(isLoadingCatalog.notifier).state = false;
-    // cache.emptyCache();
     return;
   }
 
   try {
-    final scrapedMods = ScrapedModsRepoMapper.fromJson((modRepo).toString());
+    final scrapedMods = ScrapedModsRepoMapper.fromJson(modRepo);
 
     ref.watch(isLoadingCatalog.notifier).state = false;
     Fimber.i(
@@ -42,3 +40,43 @@ final browseModsNotifierProvider = StreamProvider<ScrapedModsRepo>((
     return;
   }
 });
+
+const _cacheMaxAge = Duration(hours: 1);
+
+Future<String> _fetchModRepoWithCache() async {
+  final cacheDir = Constants.cacheDirPath;
+  final cacheFile = File(p.join(cacheDir.path, 'mod_repo.json'));
+  final metaFile = File(p.join(cacheDir.path, 'mod_repo.meta'));
+
+  // Try reading from cache.
+  if (cacheFile.existsSync() && metaFile.existsSync()) {
+    try {
+      final meta = jsonDecode(metaFile.readAsStringSync());
+      final cachedAt = DateTime.parse(meta['cachedAt'] as String);
+
+      if (DateTime.now().difference(cachedAt) < _cacheMaxAge) {
+        Fimber.i('Using cached mod repo (cached ${DateTime.now().difference(cachedAt).inMinutes}m ago)');
+        return cacheFile.readAsStringSync();
+      }
+    } catch (e) {
+      Fimber.w('Failed to read mod repo cache, will re-fetch', ex: e);
+    }
+  }
+
+  // Fetch fresh data.
+  final response = await http.get(Uri.parse(Constants.modRepoUrl));
+  final body = response.body;
+
+  // Write to cache.
+  try {
+    if (!cacheDir.existsSync()) {
+      cacheDir.createSync(recursive: true);
+    }
+    cacheFile.writeAsStringSync(body);
+    metaFile.writeAsStringSync(jsonEncode({'cachedAt': DateTime.now().toIso8601String()}));
+  } catch (e) {
+    Fimber.w('Failed to write mod repo cache', ex: e);
+  }
+
+  return body;
+}

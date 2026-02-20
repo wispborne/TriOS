@@ -10,7 +10,12 @@ import 'package:trios/compression/archive.dart';
 import 'package:trios/mod_manager/audit_log.dart';
 import 'package:trios/mod_manager/mod_install_source.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
+import 'package:trios/mod_manager/services/_mod_variant_core.dart';
+import 'package:trios/mod_manager/utils/mod_file_utils.dart';
+import 'package:trios/mod_manager/utils/mod_list_exporter.dart' as exporter;
 import 'package:trios/mod_manager/version_checker.dart';
+import 'package:trios/mod_manager/widgets/mod_installation_dialog.dart';
+import 'package:trios/mod_manager/widgets/mod_installation_error_dialog.dart';
 import 'package:trios/models/mod_info_json.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/models/version_checker_info.dart';
@@ -23,11 +28,6 @@ import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/platform_specific.dart';
 import 'package:trios/utils/util.dart';
 import 'package:trios/widgets/force_game_version_warning_dialog.dart';
-import 'package:trios/mod_manager/widgets/mod_installation_dialog.dart';
-import 'package:trios/mod_manager/widgets/mod_installation_error_dialog.dart';
-import 'package:trios/mod_manager/utils/mod_file_utils.dart';
-import 'package:trios/mod_manager/utils/mod_list_exporter.dart' as exporter;
-import 'package:trios/mod_manager/services/_mod_variant_core.dart';
 
 import '../models/mod.dart';
 import '../models/mod_info.dart';
@@ -70,7 +70,9 @@ class ModManagerNotifier extends AsyncNotifier<void> {
           return ModInstallationDialog.show(
             context,
             candidates: modsBeingInstalled,
-            gameVersion: ref.read(appSettings.select((s) => s.lastStarsectorVersion)),
+            gameVersion: ref.read(
+              appSettings.select((s) => s.lastStarsectorVersion),
+            ),
           );
         },
       );
@@ -906,7 +908,9 @@ class ModManagerNotifier extends AsyncNotifier<void> {
     // final mods = ref.read(AppState.mods);
     // final mod = mods.firstWhereOrNull((mod) => mod.id == modVariant.modInfo.id);
     final enabledMods = ref.read(AppState.enabledModsFile).value;
-    Fimber.i("Enabling variant ${modVariant.smolId} (also in vanilla launcher: $enableInVanillaLauncher)");
+    Fimber.i(
+      "Enabling variant ${modVariant.smolId} (also in vanilla launcher: $enableInVanillaLauncher)",
+    );
     final modsFolderPath = ref.read(AppState.modsFolder).value;
 
     if (modsFolderPath == null || !modsFolderPath.existsSync()) {
@@ -1025,7 +1029,9 @@ class ModManagerNotifier extends AsyncNotifier<void> {
 
     // Replace the game version in the mod_info.json file.
     // Don't use the code model, we want to keep any extra fields that might not be in the model.
-    final modInfoJson = modInfoFile.readAsStringSync().parseJsonToMap();
+    final modInfoJson = await modInfoFile
+        .readAsStringSync()
+        .parseJsonToMapAsync();
     modInfoJson["gameVersion"] = newGameVersion;
     modInfoJson["originalGameVersion"] = modVariant.modInfo.gameVersion;
     await modInfoFile.writeAsString(jsonEncodePrettily(modInfoJson));

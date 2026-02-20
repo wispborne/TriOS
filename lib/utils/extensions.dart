@@ -117,8 +117,16 @@ extension StringExt on String {
     }
   }
 
+  Future<String> fixJsonAsync() {
+    return Future.microtask(() => fixJson());
+  }
+
   Map<String, dynamic> parseJsonToMap() {
     return jsonDecode(fixJson());
+  }
+
+  Future<Map<String, dynamic>> parseJsonToMapAsync() {
+    return Future.microtask(() => parseJsonToMap());
   }
 
   /// Returns a string having leading characters from the chars array removed.

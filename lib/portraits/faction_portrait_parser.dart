@@ -152,7 +152,7 @@ class FactionPortraitParser {
     try {
       final content = await factionFile.readAsString();
       final jsonContent = content.removeJsonComments();
-      final factionData = jsonContent.parseJsonToMap();
+      final factionData = await jsonContent.parseJsonToMapAsync();
 
       final factionId = factionData['id'] as String?;
       if (factionId == null) return {};

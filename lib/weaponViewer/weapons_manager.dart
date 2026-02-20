@@ -61,6 +61,9 @@ class WeaponListNotifier extends StreamNotifier<List<Weapon>> {
 
     final allErrors = <String>[]; // To store all error messages
     List<Weapon> allWeapons = <Weapon>[]; // To store all parsed weapons
+    // Throttle UI rebuilds during loading: yield at most once per 500ms.
+    const yieldInterval = Duration(milliseconds: 500);
+    var lastYieldTime = DateTime.fromMillisecondsSinceEpoch(0);
 
     // Parse the core game weapons
     final coreResult = await _parseWeaponsCsv(Directory(gameCorePath), null);
@@ -84,8 +87,15 @@ class WeaponListNotifier extends StreamNotifier<List<Weapon>> {
         allErrors.addAll(modResult.errors);
       }
 
-      yield allWeapons;
+      final now = DateTime.now();
+      if (now.difference(lastYieldTime) >= yieldInterval) {
+        yield allWeapons;
+        lastYieldTime = now;
+      }
     }
+
+    // Always yield the final complete list.
+    yield allWeapons;
 
     // Print out all collected errors at the end
     if (allErrors.isNotEmpty) {
@@ -162,7 +172,7 @@ Future<ParseResult> _parseWeaponsCsv(
     try {
       final wpnContent = await wpnFile.readAsString(encoding: utf8);
       final cleanedContent = wpnContent.removeJsonComments();
-      final jsonData = cleanedContent.parseJsonToMap();
+      final jsonData = await cleanedContent.parseJsonToMapAsync();
       final weaponId = jsonData['id'] as String?;
       if (weaponId != null) {
         // Extract only the specified fields

@@ -123,7 +123,7 @@ class TipsNotifier extends AsyncNotifier<List<ModTip>> {
     if (tipsFile.existsSync()) {
       return (
         tips: TipsMapper.fromMap(
-          (await tipsFile.toFile().readAsString()).parseJsonToMap(),
+          await (await tipsFile.toFile().readAsString()).parseJsonToMapAsync(),
         ),
         file: tipsFile,
       );
@@ -233,10 +233,9 @@ class TipsNotifier extends AsyncNotifier<List<ModTip>> {
         [];
     var currentDeletedTips = <String>[];
     try {
-      currentDeletedTips =
-          (await deletedTipsStorageManager.read(
-            {},
-          )).orEmpty().toList();
+      currentDeletedTips = (await deletedTipsStorageManager.read(
+        {},
+      )).orEmpty().toList();
     } catch (e, stacktrace) {
       Fimber.e(
         "Error reading deleted tips from disk. Wiping.",
@@ -335,10 +334,9 @@ class TipsNotifier extends AsyncNotifier<List<ModTip>> {
 
     var currentDeletedTips = <String>[];
     try {
-      currentDeletedTips =
-          (await deletedTipsStorageManager.read(
-            {},
-          )).orEmpty().toList();
+      currentDeletedTips = (await deletedTipsStorageManager.read(
+        {},
+      )).orEmpty().toList();
     } catch (e, stacktrace) {
       Fimber.e(
         "Error reading deleted tips from disk",
@@ -389,8 +387,7 @@ class TipsNotifier extends AsyncNotifier<List<ModTip>> {
   Future<List<Pair<String, ModTip>>> _checkForModsWithPreviouslyDeletedTips(
     List<Mod> modsToCheck,
   ) async {
-    final removedTipHashes = await deletedTipsStorageManager
-        .read({});
+    final removedTipHashes = await deletedTipsStorageManager.read({});
     if (removedTipHashes.isEmpty) {
       return [];
     }

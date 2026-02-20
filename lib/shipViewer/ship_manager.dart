@@ -60,6 +60,9 @@ class ShipListNotifier extends StreamNotifier<List<Ship>> {
 
     final allErrors = <String>[];
     List<Ship> allShips = <Ship>[];
+    // Throttle UI rebuilds during loading: yield at most once per 500ms.
+    const yieldInterval = Duration(milliseconds: 500);
+    var lastYieldTime = DateTime.fromMillisecondsSinceEpoch(0);
 
     final coreResult = await _parseShips(Directory(gameCorePath), null);
     filesProcessed += coreResult.filesProcessed;
@@ -80,8 +83,15 @@ class ShipListNotifier extends StreamNotifier<List<Ship>> {
         allErrors.addAll(modResult.errors);
       }
 
-      yield allShips;
+      final now = DateTime.now();
+      if (now.difference(lastYieldTime) >= yieldInterval) {
+        yield allShips;
+        lastYieldTime = now;
+      }
     }
+
+    // Always yield the final complete list.
+    yield allShips;
 
     if (allErrors.isNotEmpty) {
       Fimber.w('Ship parsing errors:\n${allErrors.join('\n')}');
@@ -148,7 +158,7 @@ class ShipListNotifier extends StreamNotifier<List<Ship>> {
       try {
         final raw = await shipFile.readAsString(encoding: utf8);
         final cleaned = raw.removeJsonComments();
-        final map = cleaned.parseJsonToMap();
+        final map = await cleaned.parseJsonToMapAsync();
         final id = map['hullId'] as String?;
         if (id != null) {
           shipJsonData[id] = map;

@@ -15,6 +15,8 @@
 - Changed
   - Removed `libarchive`, which was replaced by 7zip in 1.1.0.
   - Ship/Weapon filters are now sorted alphabetically (except hull sizes).
+  - Loading ships/weapons is slightly less laggy now (limited UI rebuilds and moved some logic to async).
+  - Updated the WebView library on the Catalog page to the next beta version; hopefully it is more stable, not less.
 
 # 1.3.2
 - Fixed

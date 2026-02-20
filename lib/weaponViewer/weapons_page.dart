@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
@@ -493,6 +494,18 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
 
   Column _buildInfoPane(Weapon w, ThemeData theme, BuildContext context) {
     final imagePaths = spritesForWeapon(w);
+
+    Widget section(String title) => Padding(
+      padding: const EdgeInsets.only(top: 12, bottom: 4),
+      child: Text(
+        title,
+        style: theme.textTheme.labelMedium?.copyWith(
+          fontWeight: FontWeight.bold,
+          color: theme.colorScheme.primary,
+        ),
+      ),
+    );
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -500,10 +513,16 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
         Row(
           children: [
             Expanded(
-              child: Text(
-                w.name ?? w.id ?? 'Weapon',
-                style: theme.textTheme.titleLarge,
-                overflow: TextOverflow.ellipsis,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    w.name ?? w.id,
+                    style: theme.textTheme.titleLarge,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(w.id, style: theme.textTheme.labelSmall),
+                ],
               ),
             ),
             IconButton(
@@ -588,7 +607,10 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
         _kv('Type', w.weaponType?.toTitleCase(), theme),
         _kv('Size', w.size?.toTitleCase(), theme),
         _kv('Tech/Manufacturer', w.techManufacturer, theme),
-        const SizedBox(height: 12),
+        _kv('Spec Class', w.specClass, theme),
+        _kv('Raw Type', w.type, theme),
+        // Combat
+        section('Combat'),
         Wrap(
           runSpacing: 6,
           children: [
@@ -599,6 +621,13 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
             _chip('Range', _fmtNum(w.range)),
             _chip('Turn Rate', _fmtNum(w.turnRate)),
             _chip('OP', _fmtNum(w.ops)),
+          ],
+        ),
+        // Fire Mechanics
+        section('Fire Mechanics'),
+        Wrap(
+          runSpacing: 6,
+          children: [
             _chip('Ammo', _fmtNum(w.ammo)),
             _chip('Ammo/Sec', _fmtNum(w.ammoPerSec)),
             _chip('Reload Size', _fmtNum(w.reloadSize)),
@@ -608,23 +637,49 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
             _chip('Chargedown', _fmtNum(w.chargedown)),
             _chip('Burst Size', _fmtNum(w.burstSize)),
             _chip('Burst Delay', _fmtNum(w.burstDelay)),
+          ],
+        ),
+        // Accuracy & Spread
+        section('Accuracy & Spread'),
+        Wrap(
+          runSpacing: 6,
+          children: [
             _chip('Min Spread', _fmtNum(w.minSpread)),
             _chip('Max Spread', _fmtNum(w.maxSpread)),
             _chip('Spread/Shot', _fmtNum(w.spreadPerShot)),
             _chip('Spread Decay/Sec', _fmtNum(w.spreadDecayPerSec)),
+            _chip('Autofire Acc Bonus', _fmtNum(w.autofireAccBonus)),
+            if ((w.extraArcForAI ?? '').isNotEmpty)
+              _chip('Extra Arc (AI)', w.extraArcForAI!),
+          ],
+        ),
+        // Projectile
+        section('Projectile'),
+        Wrap(
+          runSpacing: 6,
+          children: [
             _chip('Beam Speed', _fmtNum(w.beamSpeed)),
             _chip('Proj Speed', _fmtNum(w.projSpeed)),
             _chip('Launch Speed', _fmtNum(w.launchSpeed)),
             _chip('Flight Time', _fmtNum(w.flightTime)),
             _chip('Proj HP', _fmtNum(w.projHitpoints)),
-            _chip('Autofire Acc Bonus', _fmtNum(w.autofireAccBonus)),
-            if ((w.extraArcForAI ?? '').isNotEmpty)
-              _chip('Extra Arc (AI)', w.extraArcForAI!),
+          ],
+        ),
+        // Misc
+        section('Misc'),
+        Wrap(
+          runSpacing: 6,
+          children: [
+            _chip('Tier', _fmtNum(w.tier)),
+            _chip('Rarity', _fmtNum(w.rarity)),
+            _chip('Base Value', '${_fmtCredits(w.baseValue)}¢'),
+            if (w.number != null) _chip('Number', _fmtNum(w.number)),
+            if (w.noDPSInTooltip == true) _chip('No DPS In Tooltip', 'Yes'),
             if ((w.hints ?? '').isNotEmpty) _chip('Hints', w.hints!),
             if ((w.tags ?? '').isNotEmpty) _chip('Tags', w.tags!),
             if ((w.groupTag ?? '').isNotEmpty) _chip('Group Tag', w.groupTag!),
             if ((w.forWeaponTooltip ?? '').isNotEmpty)
-              _chip('Tooltip', w.forWeaponTooltip!),
+              _chip('For Weapon Tooltip', w.forWeaponTooltip!),
             if ((w.primaryRoleStr ?? '').isNotEmpty)
               _chip('Primary Role', w.primaryRoleStr!),
             if ((w.speedStr ?? '').isNotEmpty) _chip('Speed', w.speedStr!),
@@ -634,11 +689,6 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
               _chip('Turn Rate (txt)', w.turnRateStr!),
             if ((w.accuracyStr ?? '').isNotEmpty)
               _chip('Accuracy', w.accuracyStr!),
-            if (w.noDPSInTooltip == true) _chip('No DPS In Tooltip', 'Yes'),
-            if (w.number != null) _chip('Number', _fmtNum(w.number)),
-            if ((w.specClass ?? '').isNotEmpty)
-              _chip('Spec Class', w.specClass!),
-            if ((w.type ?? '').isNotEmpty) _chip('Type', w.type!),
           ],
         ),
       ],
@@ -650,6 +700,11 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
     double d => d.toStringAsFixed(d % 1 == 0 ? 0 : 2),
     _ => n.toString(),
   };
+
+  String _fmtCredits(num? n) {
+    if (n == null) return '-';
+    return NumberFormat.decimalPattern().format(n.round());
+  }
 
   Widget _kv(String? k, String? v, ThemeData theme) {
     return Padding(
@@ -677,8 +732,8 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
         color: Colors.black.withOpacity(0.05),
         borderRadius: BorderRadius.circular(16),
       ),
-      child: RichText(
-        text: TextSpan(
+      child: SelectableText.rich(
+        TextSpan(
           style: const TextStyle(fontSize: 11, color: Colors.white70),
           children: [
             TextSpan(
@@ -700,7 +755,7 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
           if (weaponSpritePath != null)
             buildOpenSingleFolderMenuItem(
               weapon.csvFile.parent,
-              secondFolder: weapon.wpnFile?.parent,
+              secondFolder: weapon.wpnFile?.parent,damag
               label: 'Open weapon data folder(s)',
             ),
         ],

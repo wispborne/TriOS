@@ -6,7 +6,7 @@ import 'package:trios/models/version.dart';
 import 'package:trios/utils/extensions.dart';
 
 class Constants {
-  static const version = "1.3.3-preview09";
+  static const version = "1.3.3-preview10";
   static Version currentVersion = Version.parse(version);
 
   static const appName = "TriOS";

@@ -1,4 +1,3 @@
-import 'package:dart_mappable/dart_mappable.dart';
 import 'package:flutter/material.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/text_trios.dart';
@@ -8,6 +7,13 @@ class GridFilter<T> {
   final String Function(T) valueGetter;
   final String Function(String)? displayNameGetter;
 
+  /// Custom comparator for sorting filter chip values (raw IDs).
+  /// When set, takes precedence over [displayNameGetter]-based sorting.
+  final Comparator<String>? sortComparator;
+
+  /// If true, doesn't sort by display name or custom sort.
+  final bool useDefaultSort;
+
   // Map of values to filter states:
   // true = include, false = exclude, null = no filter
   final Map<String, bool?> filterStates = {};
@@ -16,6 +22,8 @@ class GridFilter<T> {
     required this.name,
     required this.valueGetter,
     this.displayNameGetter,
+    this.sortComparator,
+    this.useDefaultSort = false,
   });
 
   Set<String> get includedValues => filterStates.entries
@@ -73,7 +81,18 @@ class _GridFilterWidgetState<T> extends State<GridFilterWidget<T>> {
         .where((value) => value.isNotEmpty)
         .toSet()
         .toList();
-    values.sort();
+
+    if (!widget.filter.useDefaultSort) {
+      final comparator = widget.filter.sortComparator;
+      final displayName = widget.filter.displayNameGetter;
+      if (comparator != null) {
+        values.sort(comparator);
+      } else if (displayName != null) {
+        values.sort((a, b) => displayName(a).compareTo(displayName(b)));
+      } else {
+        values.sort();
+      }
+    }
     _uniqueValues = values;
   }
 
@@ -146,9 +165,11 @@ class _GridFilterWidgetState<T> extends State<GridFilterWidget<T>> {
         children: [
           InkWell(
             onTap: () => setState(() => _isExpanded = !_isExpanded),
-            borderRadius: const BorderRadius.only(
+            borderRadius: .only(
               topLeft: Radius.circular(12),
               topRight: Radius.circular(12),
+              bottomLeft: !_isExpanded ? .circular(12) : .zero,
+              bottomRight: !_isExpanded ? .circular(12) : .zero,
             ),
             child: Padding(
               padding: const EdgeInsets.all(4),
@@ -250,7 +271,7 @@ class _GridFilterWidgetState<T> extends State<GridFilterWidget<T>> {
               ),
             ),
           ),
-          const Divider(height: 1),
+          if (_isExpanded) const Divider(height: 1),
           if (_isExpanded)
             Padding(
               padding: const EdgeInsets.all(4),

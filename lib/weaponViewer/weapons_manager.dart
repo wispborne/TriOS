@@ -34,7 +34,17 @@ class WeaponListNotifier extends StreamNotifier<List<Weapon>> {
     final gameCorePath = ref.watch(AppState.gameCoreFolder).value?.path;
 
     if (gameCorePath == null || gameCorePath.isEmpty) {
-      throw Exception('Game folder path is not set.');
+      ref.read(isLoadingWeaponsList.notifier).state = false;
+      return;
+    }
+
+    // Watch modVariants so we rebuild once it resolves on startup.
+    // We still use ref.read(AppState.mods) below to avoid re-loading every
+    // time mod state changes (e.g. enable/disable).
+    final modVariantsAsync = ref.watch(AppState.modVariants);
+    if (!modVariantsAsync.hasValue) {
+      ref.read(isLoadingWeaponsList.notifier).state = false;
+      return;
     }
 
     ref.listen(AppState.variantSmolIds, (previous, next) {

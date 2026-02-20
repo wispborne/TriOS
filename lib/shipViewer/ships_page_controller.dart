@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:csv/csv.dart';
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/models/mod.dart';
@@ -88,6 +87,7 @@ class ShipsPageController extends Notifier<ShipsPageState> {
       GridFilter<Ship>(
         name: 'Hull Size',
         valueGetter: (ship) => ship.hullSizeForDisplay(),
+        useDefaultSort: true, // Sorts by hull size by default
       ),
       GridFilter<Ship>(
         name: 'Mod',

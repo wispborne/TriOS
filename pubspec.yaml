@@ -38,7 +38,7 @@ dependencies:
   hashlib: ^2.3.0
   html: ^0.15.6
   image: ^4.7.2
-  flutter_inappwebview: ^6.2.0-beta.3
+  flutter_inappwebview: ^6.2.0-beta.2
   intl: ^0.20.2
   json_annotation: ^4.9.0
   ktx: ^1.1.6

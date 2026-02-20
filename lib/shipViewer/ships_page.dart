@@ -561,9 +561,10 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
         key: 'weaponSlotCount',
         name: 'Wpns',
         isSortable: true,
-        getSortValue: (ship) => ship.weaponSlots?.length ?? 0,
-        itemCellBuilder: (item, _) => Text('${item.weaponSlots?.length ?? 0}'),
-        csvValue: (ship) => ship.weaponSlots?.length.toString(),
+        getSortValue: (ship) => ship.mountableWeaponSlotCount,
+        itemCellBuilder: (item, _) =>
+            Text('${item.mountableWeaponSlotCount}'),
+        csvValue: (ship) => ship.mountableWeaponSlotCount.toString(),
         defaultState: WispGridColumnState(position: position++, width: 120),
       ),
       col('techManufacturer', 'Tech', (s) => s.techManufacturer, width: 220),
@@ -843,7 +844,7 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
             _chip('Max Flux', _fmtNum(s.maxFlux)),
             _chip('Flux Diss', _fmtNum(s.fluxDissipation)),
             _chip('Shield', s.shieldType?.toTitleCase() ?? '-'),
-            _chip('Weapons', _fmtNum(s.weaponSlots?.length)),
+            _chip('Weapons', _fmtNum(s.mountableWeaponSlotCount)),
             if ((s.designation ?? '').isNotEmpty)
               _chip('Designation', s.designation!),
             if ((s.tags ?? []).isNotEmpty) _chip('Tags', s.tags!.join(", ")),

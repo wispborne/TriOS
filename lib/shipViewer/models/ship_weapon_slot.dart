@@ -25,4 +25,18 @@ class ShipWeaponSlot with ShipWeaponSlotMappable {
     this.type = '',
     this.renderOrderMod,
   });
+
+  static const _mountableTypes = {
+    'BALLISTIC',
+    'ENERGY',
+    'MISSILE',
+    'COMPOSITE',
+    'HYBRID',
+    'SYNERGY',
+    'UNIVERSAL',
+  };
+
+  /// Whether this slot is an actual mountable weapon slot (not decorative,
+  /// system, built-in, launch bay, or station module).
+  bool get isMountable => _mountableTypes.contains(type.toUpperCase());
 }

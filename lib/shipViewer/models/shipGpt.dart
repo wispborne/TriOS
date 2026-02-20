@@ -208,4 +208,9 @@ class Ship with ShipMappable implements WispGridItem {
   }
 
   String hullNameForDisplay() => name ?? designation ?? id;
+
+  /// Number of weapon slots that accept mountable weapons (excludes
+  /// decorative, system, built-in, launch bay, and station module slots).
+  int get mountableWeaponSlotCount =>
+      weaponSlots?.where((s) => s.isMountable).length ?? 0;
 }

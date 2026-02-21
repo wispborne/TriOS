@@ -180,6 +180,7 @@ Future<ParseResult> _parseWeaponsCsv(
           'specClass': jsonData['specClass'],
           'type': jsonData['type'],
           'size': jsonData['size'],
+          'damageType': jsonData['damageType'],
           'turretSprite': p
               .join(folder.path, jsonData['turretSprite'])
               .toFile()

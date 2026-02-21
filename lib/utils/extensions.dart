@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart' show NumberFormat;
 import 'package:open_filex/open_filex.dart';
 import 'package:path/path.dart' as p;
 
@@ -107,7 +108,10 @@ extension StringExt on String {
     fixed = fixed.trimEnd(",");
     // Removes lines starting with //, which are not valid json or yaml comments.
     // Thank you Epitaph Frost.
-    fixed = fixed.split("\n").where((it) => !it.trim().startsWith("//")).join("\n");
+    fixed = fixed
+        .split("\n")
+        .where((it) => !it.trim().startsWith("//"))
+        .join("\n");
 
     try {
       return json.encode(loadYaml(fixed));
@@ -1054,6 +1058,14 @@ extension IntExt on int {
 
   int coerceAtMost(int maximumValue) {
     return this > maximumValue ? maximumValue : this;
+  }
+}
+
+extension NumExt on num? {
+  String asCredits() {
+    final n = this;
+    if (n == null) return '-';
+    return "${NumberFormat.decimalPattern().format(n.round())}¢";
   }
 }
 

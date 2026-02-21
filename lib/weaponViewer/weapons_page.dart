@@ -24,6 +24,7 @@ import 'package:trios/weaponViewer/weapons_page_controller.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/expanding_constrained_aligned_widget.dart';
 import 'package:trios/widgets/export_to_csv_dialog.dart';
+import 'package:trios/widgets/ingame_weapon_tooltip.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/text_trios.dart';
 import 'package:trios/widgets/toolbar_checkbox_button.dart';
@@ -672,7 +673,7 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
           children: [
             _chip('Tier', _fmtNum(w.tier)),
             _chip('Rarity', _fmtNum(w.rarity)),
-            _chip('Base Value', '${_fmtCredits(w.baseValue)}¢'),
+            _chip('Base Value', w.baseValue.asCredits()),
             if (w.number != null) _chip('Number', _fmtNum(w.number)),
             if (w.noDPSInTooltip == true) _chip('No DPS In Tooltip', 'Yes'),
             if ((w.hints ?? '').isNotEmpty) _chip('Hints', w.hints!),
@@ -700,11 +701,6 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
     double d => d.toStringAsFixed(d % 1 == 0 ? 0 : 2),
     _ => n.toString(),
   };
-
-  String _fmtCredits(num? n) {
-    if (n == null) return '-';
-    return NumberFormat.decimalPattern().format(n.round());
-  }
 
   Widget _kv(String? k, String? v, ThemeData theme) {
     return Padding(
@@ -755,7 +751,7 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
           if (weaponSpritePath != null)
             buildOpenSingleFolderMenuItem(
               weapon.csvFile.parent,
-              secondFolder: weapon.wpnFile?.parent,damag
+              secondFolder: weapon.wpnFile?.parent,
               label: 'Open weapon data folder(s)',
             ),
         ],
@@ -814,10 +810,16 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
         itemCellBuilder: (item, _) => MovingTooltipWidget.framed(
           tooltipWidget: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 400),
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: SingleChildScrollView(
-                child: _buildInfoPane(item, theme, context),
+            child: CtrlSwappedTooltip(
+                ctrlBuilder: (ctx) => Padding(
+                padding: const EdgeInsets.all(8),
+                child: SingleChildScrollView(
+                  child: _buildInfoPane(item, theme, ctx),
+                ),
+              ),
+              defaultBuilder: (ctx) => Padding(
+                padding: const EdgeInsets.all(8),
+                child: IngameWeaponTooltip.buildWeaponContent(item, ctx),
               ),
             ),
           ),

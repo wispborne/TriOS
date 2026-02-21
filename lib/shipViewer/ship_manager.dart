@@ -161,6 +161,11 @@ class ShipListNotifier extends StreamNotifier<List<Ship>> {
         final map = await cleaned.parseJsonToMapAsync();
         final id = map['hullId'] as String?;
         if (id != null) {
+          final spriteName = map['spriteName'] as String?;
+          if (spriteName != null) {
+            map['spriteFile'] =
+                p.join(folder.path, spriteName).toFile().normalize.path;
+          }
           shipJsonData[id] = map;
         } else {
           errors.add('[$modName] .ship file ${shipFile.path} missing "hullId"');

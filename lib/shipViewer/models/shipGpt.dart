@@ -103,6 +103,11 @@ class Ship with ShipMappable implements WispGridItem {
   final List<double>? shieldCenter;
   final double? shieldRadius;
   final String? spriteName;
+
+  /// Resolved absolute path to the ship sprite image.
+  /// Derived from [spriteName] at parse time by [ship_manager.dart].
+  final String? spriteFile;
+
   final String? style;
   final double? viewOffset;
 
@@ -181,6 +186,7 @@ class Ship with ShipMappable implements WispGridItem {
     this.shieldCenter,
     this.shieldRadius,
     this.spriteName,
+    this.spriteFile,
     this.style,
     this.viewOffset,
     this.engineSlots,

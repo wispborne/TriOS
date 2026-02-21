@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
@@ -22,6 +21,8 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/expanding_constrained_aligned_widget.dart';
 import 'package:trios/widgets/export_to_csv_dialog.dart';
+import 'package:trios/widgets/ingame_ship_tooltip.dart';
+import 'package:trios/widgets/ingame_weapon_tooltip.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/text_trios.dart';
 import 'package:trios/widgets/toolbar_checkbox_button.dart';
@@ -516,10 +517,16 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
         itemCellBuilder: (item, _) => MovingTooltipWidget.framed(
           tooltipWidget: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 420),
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: SingleChildScrollView(
-                child: _buildShipInfoPane(item, theme, controllerState),
+            child: CtrlSwappedTooltip(
+              ctrlBuilder: (ctx) => Padding(
+                padding: const EdgeInsets.all(8),
+                child: SingleChildScrollView(
+                  child: _buildShipInfoPane(item, theme, controllerState),
+                ),
+              ),
+              defaultBuilder: (ctx) => Padding(
+                padding: const EdgeInsets.all(8),
+                child: IngameShipTooltip.buildShipContent(item, ctx),
               ),
             ),
           ),
@@ -610,7 +617,7 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
         col('fuelPerLY', 'Fuel/LY', (s) => s.fuelPerLY),
         col('range', 'Range', (s) => s.range),
         col('maxBurn', 'Max Burn', (s) => s.maxBurn),
-        col('baseValue', 'Credits (base, ¢)', (s) => s.baseValue),
+        col('baseValue', 'Credits (base)', (s) => s.baseValue.asCredits()),
         col('crPercentPerDay', 'CR%/Day', (s) => s.crPercentPerDay),
         col('crToDeploy', 'CR to Deploy', (s) => s.crToDeploy),
         col('peakCrSec', 'PPT', (s) => s.peakCrSec),
@@ -843,8 +850,7 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
         _kv('Style', s.style?.toTitleCase(), theme),
         _kv(
           'System',
-          controllerState.shipSystemsMap[s.systemId ?? ""]?.name ??
-              s.systemId,
+          controllerState.shipSystemsMap[s.systemId ?? ""]?.name ?? s.systemId,
           theme,
         ),
         _kv(
@@ -916,7 +922,7 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
         Wrap(
           runSpacing: 6,
           children: [
-            _chip('Base Value', '${_fmtCredits(s.baseValue)}¢'),
+            _chip('Base Value', s.baseValue.asCredits()),
             _chip('CR%/Day', _fmtNum(s.crPercentPerDay)),
             _chip('CR to Deploy', _fmtNum(s.crToDeploy)),
             _chip('PPT (s)', _fmtNum(s.peakCrSec)),
@@ -936,8 +942,7 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
             _chip('Max Pieces', _fmtNum(s.maxPieces)),
             _chip('Travel Drive', s.travelDrive ?? '-'),
             _chip('Collision Radius', _fmtNum(s.collisionRadius)),
-            if ((s.hints ?? []).isNotEmpty)
-              _chip('Hints', s.hints!.join(', ')),
+            if ((s.hints ?? []).isNotEmpty) _chip('Hints', s.hints!.join(', ')),
             if ((s.tags ?? []).isNotEmpty) _chip('Tags', s.tags!.join(', ')),
             if ((s.builtInMods ?? []).isNotEmpty)
               _chip('Built-in Mods', s.builtInMods!.join(', ')),
@@ -956,11 +961,6 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
     double d => d.toStringAsFixed(d % 1 == 0 ? 0 : 2),
     _ => n.toString(),
   };
-
-  String _fmtCredits(num? n) {
-    if (n == null) return '-';
-    return NumberFormat.decimalPattern().format(n.round());
-  }
 
   Widget _kv(String? k, String? v, ThemeData theme) {
     return Padding(

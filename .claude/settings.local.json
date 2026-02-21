@@ -8,7 +8,9 @@
       "Bash(wc:*)",
       "Bash(flutter test:*)",
       "Bash(flutter build:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(ls:*)",
+      "Bash(head:*)"
     ]
   }
 }
